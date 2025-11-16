@@ -6,9 +6,12 @@
 import { useState } from 'react'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+
+type PageView = 'login' | 'register' | 'forgot-password'
 
 function App() {
-  const [showRegister, setShowRegister] = useState(false)
+  const [currentPage, setCurrentPage] = useState<PageView>('login')
 
   const handleLoginSuccess = () => {
     // TODO: Navigate to home/dashboard when routing is implemented
@@ -20,19 +23,28 @@ function App() {
     console.log('Registration successful! Redirecting to home...')
   }
 
-  if (showRegister) {
+  if (currentPage === 'register') {
     return (
       <RegisterPage
-        onBackToLogin={() => setShowRegister(false)}
+        onBackToLogin={() => setCurrentPage('login')}
         onRegisterSuccess={handleRegisterSuccess}
+      />
+    )
+  }
+
+  if (currentPage === 'forgot-password') {
+    return (
+      <ForgotPasswordPage
+        onBackToLoginClick={() => setCurrentPage('login')}
       />
     )
   }
 
   return (
     <LoginPage
-      onRegisterClick={() => setShowRegister(true)}
+      onRegisterClick={() => setCurrentPage('register')}
       onLoginSuccess={handleLoginSuccess}
+      onForgotPasswordClick={() => setCurrentPage('forgot-password')}
     />
   )
 }

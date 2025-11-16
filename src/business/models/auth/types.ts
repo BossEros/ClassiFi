@@ -30,6 +30,15 @@ export interface User {
   createdAt: Date
 }
 
+export interface ForgotPasswordData {
+  email: string
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean
+  message?: string
+}
+
 export interface AuthResponse {
   success: boolean
   message?: string

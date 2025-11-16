@@ -1,18 +1,16 @@
 /**
- * Login Page Component
+ * Forgot Password Page Component
  * Part of the Presentation Layer - Pages
  */
 
-import { Lock } from 'lucide-react'
-import { LoginForm } from '../components/forms/LoginForm'
+import { KeyRound } from 'lucide-react'
+import { ForgotPasswordForm } from '../components/forms/ForgotPasswordForm'
 
-interface LoginPageProps {
-  onRegisterClick?: () => void
-  onLoginSuccess?: () => void
-  onForgotPasswordClick?: () => void
+interface ForgotPasswordPageProps {
+  onBackToLoginClick?: () => void
 }
 
-export function LoginPage({ onRegisterClick, onLoginSuccess, onForgotPasswordClick }: LoginPageProps) {
+export function ForgotPasswordPage({ onBackToLoginClick }: ForgotPasswordPageProps) {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
       {/* Background decorative elements */}
@@ -21,29 +19,24 @@ export function LoginPage({ onRegisterClick, onLoginSuccess, onForgotPasswordCli
         <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
       </div>
 
-      {/* Login Card */}
+      {/* Forgot Password Card */}
       <div className="w-full max-w-md relative">
         <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600 mb-4 shadow-lg shadow-purple-500/30">
-              <Lock className="w-8 h-8 text-white" />
+              <KeyRound className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-white tracking-tight">
-              Welcome to{' '}
-              <span className="bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
-                ClassiFi
-              </span>
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              Forgot Password?
             </h1>
-            <p className="text-gray-400 text-sm">Sign in to your account to continue</p>
+            <p className="text-gray-400 text-sm">
+              No worries, we'll help you reset it
+            </p>
           </div>
 
-          {/* Login Form */}
-          <LoginForm
-            onSuccess={onLoginSuccess}
-            onRegisterClick={onRegisterClick}
-            onForgotPasswordClick={onForgotPasswordClick}
-          />
+          {/* Forgot Password Form */}
+          <ForgotPasswordForm onBackToLoginClick={onBackToLoginClick} />
         </div>
 
         {/* Footer Text */}

@@ -6,13 +6,16 @@
 import * as authRepository from '../../../data/repositories/auth/authRepository'
 import {
   validateLoginCredentials,
-  validateRegistrationData
+  validateRegistrationData,
+  validateForgotPasswordData
 } from '../../validation/authValidation'
 import type {
   LoginCredentials,
   RegisterData,
   AuthResponse,
-  User
+  User,
+  ForgotPasswordData,
+  ForgotPasswordResponse
 } from '../../models/auth/types'
 
 /**
@@ -171,4 +174,35 @@ function storeAuthData(token: string, user: User): void {
 function clearAuthData(): void {
   localStorage.removeItem('authToken')
   localStorage.removeItem('user')
+}
+
+/**
+ * Handles forgot password request with validation
+ *
+ * @param data - Forgot password data containing email
+ * @returns Response indicating success or failure
+ */
+export async function requestPasswordReset(
+  data: ForgotPasswordData
+): Promise<ForgotPasswordResponse> {
+  // Validate email
+  const validationResult = validateForgotPasswordData(data)
+
+  if (!validationResult.isValid) {
+    return {
+      success: false,
+      message: validationResult.errors.map((e) => e.message).join(', ')
+    }
+  }
+
+  // Request password reset via repository
+  try {
+    const response = await authRepository.forgotPassword(data)
+    return response
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to process request'
+    }
+  }
 }

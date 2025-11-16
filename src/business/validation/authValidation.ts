@@ -6,6 +6,7 @@
 import type {
   LoginCredentials,
   RegisterData,
+  ForgotPasswordData,
   ValidationResult,
   ValidationError
 } from '../models/auth/types'
@@ -189,4 +190,31 @@ export function isStrongPassword(password: string): boolean {
   const hasNumber = /[0-9]/.test(password)
 
   return hasUpperCase && hasLowerCase && hasNumber
+}
+
+/**
+ * Validates forgot password data
+ */
+export function validateForgotPasswordData(
+  data: ForgotPasswordData
+): ValidationResult {
+  const errors: ValidationError[] = []
+
+  // Email validation
+  if (!data.email || data.email.trim() === '') {
+    errors.push({
+      field: 'email',
+      message: 'Email address is required'
+    })
+  } else if (!isValidEmail(data.email)) {
+    errors.push({
+      field: 'email',
+      message: 'Please enter a valid email address'
+    })
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
 }

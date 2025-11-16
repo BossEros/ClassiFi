@@ -12,9 +12,10 @@ import { loginUser } from '@/business/services/auth/authService'
 interface LoginFormProps {
   onSuccess?: () => void
   onRegisterClick?: () => void
+  onForgotPasswordClick?: () => void
 }
 
-export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
+export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -78,6 +79,7 @@ export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
           </label>
           <button
             type="button"
+            onClick={onForgotPasswordClick}
             className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
             tabIndex={-1}
           >

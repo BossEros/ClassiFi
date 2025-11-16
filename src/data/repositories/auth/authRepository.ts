@@ -7,7 +7,9 @@
 import type {
   LoginCredentials,
   RegisterData,
-  AuthResponse
+  AuthResponse,
+  ForgotPasswordData,
+  ForgotPasswordResponse
 } from '../../../business/models/auth/types'
 
 /**
@@ -116,5 +118,36 @@ export async function verifyToken(token: string): Promise<boolean> {
     setTimeout(() => {
       resolve(!!token)
     }, 500)
+  })
+}
+
+/**
+ * Sends a password reset request for the given email
+ *
+ * @param data - Forgot password data containing email
+ * @returns Response indicating success or failure
+ */
+export async function forgotPassword(
+  data: ForgotPasswordData
+): Promise<ForgotPasswordResponse> {
+  // TODO: Replace with actual API call when backend is ready
+  // const response = await apiClient.post<ForgotPasswordResponse>('/auth/forgot-password', data)
+  // if (response.error) {
+  //   return { success: false, message: response.error }
+  // }
+  // return response.data!
+
+  // Simulated API call for now
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      console.log('Forgot password request for:', data.email)
+
+      // Simulate successful request
+      // Note: For security, we always return success even if email doesn't exist
+      resolve({
+        success: true,
+        message: 'If an account exists with this email, you will receive password reset instructions.'
+      })
+    }, 1500)
   })
 }
