@@ -3,10 +3,11 @@
  * Part of the Business Logic Layer
  */
 
-export type UserRole = 'student' | 'instructor'
+export type UserRole = 'student' | 'teacher' | 'admin'
 
 export interface LoginCredentials {
-  username: string
+  username?: string // Optional: for backward compatibility
+  email?: string // Primary authentication method with Supabase
   password: string
 }
 

@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
-import { Eye, EyeOff, Lock, User, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react'
 import { loginUser } from '@/business/services/auth/authService'
 
 interface LoginFormProps {
@@ -17,7 +17,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +27,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
     setIsLoading(true)
     setError(null)
 
-    const result = await loginUser({ username, password })
+    const result = await loginUser({ email, password })
 
     setIsLoading(false)
 
@@ -47,22 +47,22 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
         </div>
       )}
 
-      {/* Username Field */}
+      {/* Email Field */}
       <div className="space-y-2">
-        <label htmlFor="username" className="block text-sm font-medium text-gray-300">
-          Username
+        <label htmlFor="email" className="block text-sm font-medium text-gray-300">
+          Email
         </label>
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <User className="w-5 h-5" />
+            <Mail className="w-5 h-5" />
           </div>
           <Input
-            id="username"
-            name="username"
-            type="text"
-            placeholder="Enter your username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            id="email"
+            name="email"
+            type="email"
+            placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="pl-11"
             required
             aria-required="true"

@@ -5,12 +5,14 @@
 
 import { KeyRound } from 'lucide-react'
 import { ForgotPasswordForm } from '../components/forms/ForgotPasswordForm'
+import { useNavigate } from 'react-router-dom'
 
-interface ForgotPasswordPageProps {
-  onBackToLoginClick?: () => void
-}
+export function ForgotPasswordPage() {
+  const navigate = useNavigate()
 
-export function ForgotPasswordPage({ onBackToLoginClick }: ForgotPasswordPageProps) {
+  const handleBackToLogin = () => {
+    navigate('/login')
+  }
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
       {/* Background decorative elements */}
@@ -36,7 +38,7 @@ export function ForgotPasswordPage({ onBackToLoginClick }: ForgotPasswordPagePro
           </div>
 
           {/* Forgot Password Form */}
-          <ForgotPasswordForm onBackToLoginClick={onBackToLoginClick} />
+          <ForgotPasswordForm onBackToLoginClick={handleBackToLogin} />
         </div>
 
         {/* Footer Text */}

@@ -5,14 +5,22 @@
 
 import { Lock } from 'lucide-react'
 import { LoginForm } from '../components/forms/LoginForm'
+import { useNavigate } from 'react-router-dom'
 
-interface LoginPageProps {
-  onRegisterClick?: () => void
-  onLoginSuccess?: () => void
-  onForgotPasswordClick?: () => void
-}
+export function LoginPage() {
+  const navigate = useNavigate()
 
-export function LoginPage({ onRegisterClick, onLoginSuccess, onForgotPasswordClick }: LoginPageProps) {
+  const handleLoginSuccess = () => {
+    navigate('/dashboard')
+  }
+
+  const handleRegisterClick = () => {
+    navigate('/register')
+  }
+
+  const handleForgotPasswordClick = () => {
+    navigate('/forgot-password')
+  }
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
       {/* Background decorative elements */}
@@ -40,9 +48,9 @@ export function LoginPage({ onRegisterClick, onLoginSuccess, onForgotPasswordCli
 
           {/* Login Form */}
           <LoginForm
-            onSuccess={onLoginSuccess}
-            onRegisterClick={onRegisterClick}
-            onForgotPasswordClick={onForgotPasswordClick}
+            onSuccess={handleLoginSuccess}
+            onRegisterClick={handleRegisterClick}
+            onForgotPasswordClick={handleForgotPasswordClick}
           />
         </div>
 

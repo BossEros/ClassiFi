@@ -3,49 +3,31 @@
  * Part of the Presentation Layer
  */
 
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
-
-type PageView = 'login' | 'register' | 'forgot-password'
+import { DashboardPage } from './pages/DashboardPage'
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<PageView>('login')
-
-  const handleLoginSuccess = () => {
-    // TODO: Navigate to home/dashboard when routing is implemented
-    console.log('Login successful! Redirecting to home...')
-  }
-
-  const handleRegisterSuccess = () => {
-    // TODO: Navigate to home/dashboard when routing is implemented
-    console.log('Registration successful! Redirecting to home...')
-  }
-
-  if (currentPage === 'register') {
-    return (
-      <RegisterPage
-        onBackToLogin={() => setCurrentPage('login')}
-        onRegisterSuccess={handleRegisterSuccess}
-      />
-    )
-  }
-
-  if (currentPage === 'forgot-password') {
-    return (
-      <ForgotPasswordPage
-        onBackToLoginClick={() => setCurrentPage('login')}
-      />
-    )
-  }
-
   return (
-    <LoginPage
-      onRegisterClick={() => setCurrentPage('register')}
-      onLoginSuccess={handleLoginSuccess}
-      onForgotPasswordClick={() => setCurrentPage('forgot-password')}
-    />
+    <BrowserRouter>
+      <Routes>
+        {/* Default route - redirect to login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* Authentication routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        {/* Protected routes */}
+        <Route path="/dashboard" element={<DashboardPage />} />
+
+        {/* Catch all - redirect to login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

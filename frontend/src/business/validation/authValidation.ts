@@ -19,16 +19,16 @@ export function validateLoginCredentials(
 ): ValidationResult {
   const errors: ValidationError[] = []
 
-  // Username validation
-  if (!credentials.username || credentials.username.trim() === '') {
+  // Email validation (required for Supabase authentication)
+  if (!credentials.email || credentials.email.trim() === '') {
     errors.push({
-      field: 'username',
-      message: 'Username is required'
+      field: 'email',
+      message: 'Email is required'
     })
-  } else if (credentials.username.length < 3) {
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)) {
     errors.push({
-      field: 'username',
-      message: 'Username must be at least 3 characters'
+      field: 'email',
+      message: 'Please enter a valid email address'
     })
   }
 

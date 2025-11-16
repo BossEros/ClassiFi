@@ -167,15 +167,15 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
 
             <button
               type="button"
-              onClick={() => setRole('instructor')}
+              onClick={() => setRole('teacher')}
               className={`p-8 rounded-2xl border-2 transition-all ${
-                role === 'instructor'
+                role === 'teacher'
                   ? 'border-purple-500 bg-purple-500/10'
                   : 'border-white/10 bg-white/5 hover:bg-white/10'
               }`}
             >
               <Users className="w-12 h-12 mx-auto mb-4 text-white" />
-              <p className="text-white font-medium">I am an instructor</p>
+              <p className="text-white font-medium">I am a teacher</p>
             </button>
           </div>
 
