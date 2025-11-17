@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ClassiFi is a thesis project implementing a React + TypeScript + Vite application following a **3-Tier Layered Architecture** pattern. The project currently implements authentication UI (login and registration) and is in early development.
+ClassiFi is a thesis project implementing a full-stack application with a **React + TypeScript + Vite** frontend and a **FastAPI + Python** backend, both following a **3-Tier Layered Architecture** pattern. The project features a complete authentication system with Supabase integration and is in active development.
 
 ## Architecture Pattern: 3-Tier Layered Architecture
 
@@ -57,7 +57,7 @@ The project follows a strict 3-tier architecture to separate concerns and improv
 
 ```
 ClassiFi/
-├── src/
+├── src/                           # FRONTEND (React + TypeScript + Vite)
 │   ├── presentation/              # PRESENTATION LAYER
 │   │   ├── components/
 │   │   │   ├── ui/               # Reusable UI primitives (Button, Input)
@@ -91,23 +91,61 @@ ClassiFi/
 │   ├── main.tsx                   # Application entry point
 │   └── index.css                  # Global styles
 │
+├── backend/                       # BACKEND (FastAPI + Python)
+│   ├── presentation/              # PRESENTATION LAYER
+│   │   ├── routers/              # API endpoint routes
+│   │   │   └── auth.py           # Authentication endpoints
+│   │   ├── schemas/              # Pydantic request/response models
+│   │   │   └── auth.py           # Auth schemas
+│   │   ├── middleware/           # Request/response pipeline
+│   │   └── main.py               # FastAPI app entry point
+│   │
+│   ├── business/                  # BUSINESS LOGIC LAYER
+│   │   ├── services/             # Business logic orchestration
+│   │   │   └── auth_service.py   # Auth business logic
+│   │   ├── validation/           # Business rule validation
+│   │   └── models/               # Domain models
+│   │
+│   ├── data/                      # DATA ACCESS LAYER
+│   │   ├── models/               # SQLAlchemy database models
+│   │   │   └── user.py           # User model
+│   │   ├── repositories/         # Data access patterns
+│   │   │   └── user_repository.py # User repository
+│   │   └── database.py           # Database connection config
+│   │
+│   ├── shared/                    # SHARED UTILITIES
+│   │   ├── config.py             # Environment configuration
+│   │   └── supabase_client.py    # Supabase client singleton
+│   │
+│   ├── venv/                      # Python virtual environment
+│   ├── .env                       # Environment variables
+│   ├── .env.example              # Environment template
+│   ├── requirements.txt          # Python dependencies
+│   └── README.md                 # Backend documentation
+│
+├── database/                      # DATABASE
+│   └── migrations/               # SQL migration files
+│       └── 002_add_supabase_integration.sql
+│
 ├── public/                        # Static assets
 ├── index.html                     # HTML entry point
 ├── vite.config.ts                 # Vite configuration
 ├── tsconfig.json                  # TypeScript configuration
-├── package.json                   # Dependencies and scripts
+├── package.json                   # Frontend dependencies
 └── eslint.config.js               # ESLint configuration
 ```
 
 ## Development Commands
 
-All commands should be run from the **root directory**:
+### Frontend Commands
+
+Run from the **root directory**:
 
 ```bash
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (http://localhost:5173)
 npm run dev
 
 # Build for production
@@ -120,6 +158,33 @@ npm run lint
 npm run preview
 ```
 
+### Backend Commands
+
+Run from the **backend/** directory:
+
+```bash
+# Activate virtual environment
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # macOS/Linux
+
+# Install dependencies (first time only)
+pip install -r requirements.txt
+
+# Start development server (http://localhost:8000)
+uvicorn presentation.main:app --reload --host 0.0.0.0 --port 8000
+
+# Access API documentation
+# Swagger UI: http://localhost:8000/docs
+# ReDoc: http://localhost:8000/redoc
+```
+
+### Database Commands
+
+```bash
+# Run migrations (execute in Supabase SQL Editor)
+# File: database/migrations/002_add_supabase_integration.sql
+```
+
 ## Technology Stack
 
 ### Frontend
@@ -130,9 +195,30 @@ npm run preview
 - **lucide-react**: Icon library
 - **ESLint**: Code linting with TypeScript and React-specific rules
 
-### UI Component Utilities
+### Frontend UI Component Utilities
 - **class-variance-authority**: For managing component variants
 - **clsx + tailwind-merge**: Combined in `cn()` utility for conditional className merging
+
+### Backend
+- **FastAPI 0.109.0**: Modern Python web framework with async support
+- **Python 3.12.10**: Programming language
+- **Uvicorn 0.27.0**: ASGI server
+- **SQLAlchemy 2.0.25**: ORM for database operations
+- **PostgreSQL**: Database (via Supabase)
+- **Pydantic 2.5.3**: Data validation using Python type annotations
+- **Alembic 1.13.1**: Database migration tool
+- **python-jose 3.3.0**: JWT token handling
+- **passlib 1.7.4**: Password hashing
+
+### Database
+- **PostgreSQL**: Primary database (Supabase-hosted)
+- **Supabase Auth**: Authentication service
+- **SQLAlchemy**: ORM and query builder
+
+### Authentication
+- **Supabase**: Handles password storage, user management, and token generation
+- **Hybrid System**: Supabase Auth + local PostgreSQL for user data
+- **JWT Tokens**: Access tokens for API authentication
 
 ## Code Conventions
 
@@ -248,10 +334,13 @@ Custom cache directory is configured: `C:/temp/vite-cache`
 
 ### Current Limitations
 
-- Backend is not yet implemented (using simulated API calls)
-- Authentication is currently UI-only (simulated with setTimeout)
-- No routing library implemented (will need React Router or similar)
+- No routing library implemented yet (will need React Router or similar)
 - No global state management (will need Context API or state library)
+- Frontend not yet connected to backend API (still using simulated calls)
+- Backend validation layer is empty (structure exists but not implemented)
+- No backend tests written yet (pytest configured but no test files)
+- Email verification flow not implemented
+- Refresh token handling not implemented
 
 ## Authentication Flow Example
 
@@ -270,6 +359,191 @@ authRepository makes API call to backend
           ↓
 Response flows back up: Data → Business → Presentation
 ```
+
+## Backend Implementation Details
+
+### Backend Architecture
+
+The backend mirrors the frontend's 3-tier architecture:
+
+**Presentation Layer** (`backend/presentation/`):
+- REST API endpoints using FastAPI routers
+- Pydantic schemas for request/response validation
+- HTTP status codes and error responses
+- API documentation (Swagger/ReDoc)
+
+**Business Logic Layer** (`backend/business/`):
+- Service orchestration and business rules
+- Transaction management
+- Supabase authentication integration
+- Error handling and rollback logic
+
+**Data Access Layer** (`backend/data/`):
+- SQLAlchemy ORM models
+- Repository pattern for data access
+- Database session management
+- CRUD operations
+
+**Shared Layer** (`backend/shared/`):
+- Configuration management
+- External service clients (Supabase)
+- Utility functions
+
+### Database Schema
+
+**User Model** (`backend/data/models/user.py`):
+```python
+class User(Base):
+    __tablename__ = "users"
+
+    id: int                          # Primary key
+    supabase_user_id: UUID           # Links to Supabase auth.users (unique)
+    username: str(50)                # Unique, indexed
+    email: str(100)                  # Unique, indexed
+    first_name: str(50)
+    last_name: str(50)
+    role: Enum                       # student, teacher, admin
+    created_at: datetime             # Auto-set on creation
+    updated_at: datetime             # Auto-updated on modification
+```
+
+**User Roles:**
+- `STUDENT` - "student"
+- `TEACHER` - "teacher"
+- `ADMIN` - "admin"
+
+### API Endpoints
+
+Base URL: `http://localhost:8000`
+
+**Health Endpoints:**
+- `GET /` - API status
+- `GET /health` - Health check
+
+**Authentication Endpoints** (`/api/auth`):
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Authenticate user
+- `POST /api/auth/verify` - Verify access token
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/logout` - Logout user
+
+### Backend Validation
+
+**Current Backend Validation** (`backend/presentation/schemas/auth.py`):
+
+**RegisterRequest:**
+- `email`: EmailStr (Pydantic email validation)
+- `username`: 3-50 chars, alphanumeric + underscores only (`^[a-zA-Z0-9_]+$`)
+- `password`: Min 8 chars, at least 1 uppercase, 1 lowercase, 1 number
+- `confirm_password`: Must match password
+- `first_name`: 2-50 chars
+- `last_name`: 2-50 chars
+- `role`: One of student/teacher/admin
+
+**LoginRequest:**
+- `email`: EmailStr
+- `password`: Min 6 chars
+
+**Uniqueness Validation:**
+- Email uniqueness: Checked in `user_repository.check_email_exists()`
+- Username uniqueness: Checked in `user_repository.check_username_exists()`
+
+### Supabase Integration
+
+The backend uses a **hybrid authentication approach**:
+
+**Supabase Responsibilities:**
+- Secure password storage and hashing
+- User authentication (sign in/sign up)
+- JWT token generation and validation
+- Password reset emails
+- User session management
+
+**Local Database Responsibilities:**
+- User profile data (username, first_name, last_name, role)
+- Business-specific user information
+- Indexed queries for fast lookups
+- Application-specific user relationships
+
+**Two Supabase Clients:**
+1. `supabase` (Service Role): Admin operations, bypasses RLS
+2. `supabase_anon` (Anonymous): Respects Row Level Security
+
+**Registration Flow:**
+1. Validate request data (Pydantic)
+2. Check username/email uniqueness in local DB
+3. Create Supabase Auth user with `sign_up()`
+4. Store metadata in Supabase (username, role, etc.)
+5. Create local DB record with `supabase_user_id`
+6. Return user data + access token
+7. Rollback Supabase user if local DB creation fails
+
+**Login Flow:**
+1. Authenticate with Supabase using `sign_in_with_password()`
+2. Extract `supabase_user_id` from response
+3. Fetch user data from local database
+4. Return user data + access token
+
+### Environment Configuration
+
+**Required Environment Variables** (`.env`):
+```bash
+# Supabase
+SUPABASE_URL=your-project-url
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Database
+DATABASE_URL=postgresql://user:pass@host:port/database
+
+# App Configuration
+APP_NAME="ClassiFi API"
+APP_VERSION="1.0.0"
+DEBUG=True
+ENVIRONMENT=development
+
+# CORS
+FRONTEND_URL=http://localhost:5173
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+
+# API
+API_PREFIX=/api
+```
+
+### Backend Development Workflow
+
+When adding new backend features:
+
+1. **Define Pydantic Schemas** in `backend/presentation/schemas/`
+2. **Create Database Model** in `backend/data/models/` (if needed)
+3. **Implement Repository** in `backend/data/repositories/`
+4. **Create Service** in `backend/business/services/`
+5. **Define Router Endpoints** in `backend/presentation/routers/`
+6. **Register Router** in `backend/presentation/main.py`
+7. **Create Migration** in `database/migrations/` (if schema changes)
+
+### Backend Layer Boundaries
+
+**CRITICAL Backend Rules:**
+
+1. **Presentation Layer (Routers/Schemas)**:
+   - May import from: Business Layer, Shared Layer
+   - NEVER import from: Data Layer directly
+   - Example: Router calls `auth_service.register_user()`, not `user_repository.create_user()`
+
+2. **Business Layer (Services)**:
+   - May import from: Data Layer, Shared Layer
+   - NEVER import from: Presentation Layer
+   - Example: Service calls repository and applies business logic
+
+3. **Data Layer (Models/Repositories)**:
+   - May import from: Shared Layer only
+   - NEVER import from: Presentation or Business Layers
+   - Example: Repository only handles database operations
+
+4. **Shared Layer**:
+   - No imports from any other layer
+   - Pure utilities, config, and external clients only
 
 ## Byterover MCP Integration
 

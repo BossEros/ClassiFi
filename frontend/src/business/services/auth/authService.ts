@@ -5,9 +5,9 @@
 
 import * as authRepository from '../../../data/repositories/auth/authRepository'
 import {
-  validateLoginCredentials,
+  validateLoginData,
   validateRegistrationData,
-  validateForgotPasswordData
+  validateEmail
 } from '../../validation/authValidation'
 import type {
   LoginCredentials,
@@ -28,12 +28,15 @@ export async function loginUser(
   credentials: LoginCredentials
 ): Promise<AuthResponse> {
   // Validate credentials
-  const validationResult = validateLoginCredentials(credentials)
+  const validationResult = validateLoginData({
+    email: credentials.email || credentials.username || '',
+    password: credentials.password
+  })
 
   if (!validationResult.isValid) {
     return {
       success: false,
-      message: validationResult.errors.map((e) => e.message).join(', ')
+      message: Object.values(validationResult.errors).join(', ')
     }
   }
 
@@ -63,12 +66,20 @@ export async function loginUser(
  */
 export async function registerUser(data: RegisterData): Promise<AuthResponse> {
   // Validate registration data
-  const validationResult = validateRegistrationData(data)
+  const validationResult = validateRegistrationData({
+    role: data.role,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email,
+    username: data.username,
+    password: data.password,
+    confirmPassword: data.confirmPassword
+  })
 
   if (!validationResult.isValid) {
     return {
       success: false,
-      message: validationResult.errors.map((e) => e.message).join(', ')
+      message: Object.values(validationResult.errors).join(', ')
     }
   }
 
@@ -186,12 +197,12 @@ export async function requestPasswordReset(
   data: ForgotPasswordData
 ): Promise<ForgotPasswordResponse> {
   // Validate email
-  const validationResult = validateForgotPasswordData(data)
+  const emailError = validateEmail(data.email)
 
-  if (!validationResult.isValid) {
+  if (emailError) {
     return {
       success: false,
-      message: validationResult.errors.map((e) => e.message).join(', ')
+      message: emailError
     }
   }
 

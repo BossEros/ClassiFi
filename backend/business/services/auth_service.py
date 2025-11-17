@@ -57,11 +57,11 @@ class AuthService:
 
         # Check if username already exists
         if self.user_repo.check_username_exists(username):
-            return False, "Username already exists", None, None
+            return False, "This username is already taken. Please choose a different username.", None, None
 
         # Check if email already exists
         if self.user_repo.check_email_exists(email):
-            return False, "Email already exists", None, None
+            return False, "An account with this email already exists. Please use a different email or try logging in.", None, None
 
         try:
             # Step 1: Create Supabase auth user with metadata
@@ -124,7 +124,19 @@ class AuthService:
             return True, "Registration successful", user_data, token
 
         except Exception as e:
-            return False, f"Registration failed: {str(e)}", None, None
+            error_msg = str(e).lower()
+
+            # Check for specific errors
+            if "user already registered" in error_msg or "already exists" in error_msg:
+                return False, "An account with this email already exists. Please try logging in instead.", None, None
+            elif "invalid email" in error_msg or "email" in error_msg and "invalid" in error_msg:
+                return False, "Invalid email format. Please enter a valid email address.", None, None
+            elif "password" in error_msg and ("weak" in error_msg or "short" in error_msg):
+                return False, "Password is too weak. Please use a stronger password with at least 8 characters.", None, None
+            elif "network" in error_msg or "connection" in error_msg:
+                return False, "Unable to connect to the server. Please check your internet connection and try again.", None, None
+            else:
+                return False, f"Registration failed. Please try again or contact support if the issue persists.", None, None
 
     def login_user(
         self,
@@ -182,7 +194,21 @@ class AuthService:
             return True, "Login successful", user_data, token
 
         except Exception as e:
-            return False, f"Login failed: {str(e)}", None, None
+            error_msg = str(e).lower()
+
+            # Check for specific Supabase error messages
+            if "invalid login credentials" in error_msg or "invalid credentials" in error_msg:
+                return False, "Invalid email or password. Please check your credentials and try again.", None, None
+            elif "email not confirmed" in error_msg or "email_not_confirmed" in error_msg:
+                return False, "Please verify your email address before logging in. Check your inbox for the confirmation email.", None, None
+            elif "user not found" in error_msg:
+                return False, "No account found with this email address. Please register first.", None, None
+            elif "too many requests" in error_msg or "rate limit" in error_msg:
+                return False, "Too many login attempts. Please wait a few minutes and try again.", None, None
+            elif "network" in error_msg or "connection" in error_msg:
+                return False, "Unable to connect to the server. Please check your internet connection and try again.", None, None
+            else:
+                return False, f"Login failed. Please try again or contact support if the issue persists.", None, None
 
     def verify_token(self, token: str) -> Tuple[bool, Optional[dict]]:
         """
@@ -236,8 +262,52 @@ class AuthService:
             Tuple of (success, message)
         """
         try:
-            supabase.auth.reset_password_email(email)
+            # Send password reset email with redirect to frontend
+            supabase.auth.reset_password_for_email(
+                email,
+                {
+                    "redirect_to": "http://localhost:5173/reset-password"
+                }
+            )
             # Always return success for security (don't reveal if email exists)
             return True, "If the email exists, a password reset link has been sent"
         except Exception as e:
-            return False, f"Failed to send password reset email: {str(e)}"
+            error_msg = str(e).lower()
+            if "network" in error_msg or "connection" in error_msg:
+                return False, "Unable to send reset email. Please check your connection and try again."
+            return False, "Failed to send password reset email. Please try again later."
+
+    def reset_password(self, access_token: str, new_password: str) -> Tuple[bool, str]:
+        """
+        Reset user's password using the access token from reset email
+
+        Args:
+            access_token: Access token from password reset email (from Supabase redirect)
+            new_password: New password to set
+
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            # Update the user's password using the access token
+            response = supabase.auth.update_user(
+                access_token,
+                {"password": new_password}
+            )
+
+            if not response.user:
+                return False, "Invalid or expired reset link. Please request a new password reset."
+
+            return True, "Password has been reset successfully. You can now log in with your new password."
+
+        except Exception as e:
+            error_msg = str(e).lower()
+
+            if "invalid" in error_msg or "expired" in error_msg:
+                return False, "Invalid or expired reset link. Please request a new password reset."
+            elif "weak" in error_msg or "password" in error_msg:
+                return False, "Password does not meet security requirements. Please use a stronger password."
+            elif "network" in error_msg or "connection" in error_msg:
+                return False, "Unable to reset password. Please check your connection and try again."
+            else:
+                return False, "Failed to reset password. Please try again or request a new reset link."

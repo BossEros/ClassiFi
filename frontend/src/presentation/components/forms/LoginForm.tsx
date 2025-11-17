@@ -8,6 +8,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react'
 import { loginUser } from '@/business/services/auth/authService'
+import { validateLoginData, validateField } from '@/business/validation/authValidation'
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -21,11 +22,22 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
+    setFieldErrors({})
+
+    // Validate login data
+    const validationResult = validateLoginData({ email, password })
+
+    if (!validationResult.isValid) {
+      setFieldErrors(validationResult.errors)
+      setIsLoading(false)
+      return
+    }
 
     const result = await loginUser({ email, password })
 
@@ -35,6 +47,27 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
       onSuccess?.()
     } else {
       setError(result.message || 'Login failed')
+    }
+  }
+
+  // Handle field blur for real-time validation
+  const handleFieldBlur = (fieldName: string, value: string) => {
+    // For login, don't validate password complexity on blur
+    // Only validate it's not empty on form submit
+    if (fieldName === 'password') {
+      return
+    }
+
+    const error = validateField(fieldName, value)
+
+    if (error) {
+      setFieldErrors(prev => ({ ...prev, [fieldName]: error }))
+    } else {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
     }
   }
 
@@ -63,12 +96,16 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={(e) => handleFieldBlur('email', e.target.value)}
             className="pl-11"
             required
             aria-required="true"
             disabled={isLoading}
           />
         </div>
+        {fieldErrors.email && (
+          <p className="text-sm text-red-400">{fieldErrors.email}</p>
+        )}
       </div>
 
       {/* Password Field */}
@@ -97,6 +134,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onBlur={(e) => handleFieldBlur('password', e.target.value)}
             className="pl-11 pr-11"
             required
             aria-required="true"
@@ -113,6 +151,9 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
+        {fieldErrors.password && (
+          <p className="text-sm text-red-400">{fieldErrors.password}</p>
+        )}
       </div>
 
       {/* Submit Button */}

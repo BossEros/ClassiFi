@@ -3,7 +3,7 @@
  * Part of the Data Access Layer
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
 
 export interface ApiRequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -53,8 +53,21 @@ class ApiClient {
       const data = await response.json()
 
       if (!response.ok) {
+        // Extract error message from different possible response formats
+        let errorMessage = 'An error occurred'
+
+        if (data.detail) {
+          // FastAPI HTTPException format
+          errorMessage = data.detail
+        } else if (data.message) {
+          // Custom error format
+          errorMessage = data.message
+        } else if (typeof data === 'string') {
+          errorMessage = data
+        }
+
         return {
-          error: data.message || 'An error occurred',
+          error: errorMessage,
           status: response.status
         }
       }
@@ -65,7 +78,7 @@ class ApiClient {
       }
     } catch (error) {
       return {
-        error: error instanceof Error ? error.message : 'Network error',
+        error: error instanceof Error ? error.message : 'Unable to connect to the server. Please check your internet connection.',
         status: 0
       }
     }

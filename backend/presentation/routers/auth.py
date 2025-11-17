@@ -12,6 +12,7 @@ from presentation.schemas.auth import (
     AuthResponse,
     ErrorResponse,
     ForgotPasswordRequest,
+    ResetPasswordRequest,
     UserResponse
 )
 from business.services.auth_service import AuthService
@@ -187,6 +188,54 @@ async def forgot_password(
 
     return AuthResponse(
         success=True,  # Always return True for security
+        message=message
+    )
+
+
+@router.post("/reset-password", response_model=AuthResponse)
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Reset user password using access token from reset email
+
+    This endpoint:
+    1. Validates the new password
+    2. Checks if passwords match
+    3. Updates the password in Supabase using the access token
+
+    **Request Body:**
+    - access_token: Access token from password reset email (Supabase redirect)
+    - new_password: New password (min 8 chars, uppercase, lowercase, number, special char)
+    - confirm_password: Password confirmation
+
+    **Response:**
+    - success: Boolean indicating success
+    - message: Success or error message
+    """
+    # Check if passwords match
+    if not request.validate_passwords_match():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Passwords do not match"
+        )
+
+    auth_service = AuthService(db)
+
+    success, message = auth_service.reset_password(
+        access_token=request.access_token,
+        new_password=request.new_password
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
+
+    return AuthResponse(
+        success=True,
         message=message
     )
 

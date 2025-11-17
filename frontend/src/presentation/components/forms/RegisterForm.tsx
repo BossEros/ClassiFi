@@ -8,6 +8,11 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Eye, EyeOff, ArrowLeft, GraduationCap, Users } from 'lucide-react'
 import { registerUser } from '@/business/services/auth/authService'
+import {
+  validateRegistrationData,
+  validateField,
+  type ValidationResult
+} from '@/business/validation/authValidation'
 import type {
   RegistrationStep,
   RegistrationStepInfo,
@@ -32,6 +37,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const steps: RegistrationStepInfo[] = [
     { id: 'role', label: 'Role' },
@@ -44,18 +50,36 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
 
   const handleNext = () => {
     setError(null)
+    setFieldErrors({})
 
     if (currentStep === 'role' && role) {
       setCurrentStep('personal')
-    } else if (currentStep === 'personal' && firstName && lastName && email) {
+    } else if (currentStep === 'personal') {
+      // Validate personal details
+      const errors: Record<string, string> = {}
+      const firstNameError = validateField('firstName', firstName)
+      const lastNameError = validateField('lastName', lastName)
+      const emailError = validateField('email', email)
+
+      if (firstNameError) errors.firstName = firstNameError
+      if (lastNameError) errors.lastName = lastNameError
+      if (emailError) errors.email = emailError
+
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
+        return
+      }
+
       setCurrentStep('credentials')
-    } else if (currentStep === 'credentials' && username && password && confirmPassword) {
+    } else if (currentStep === 'credentials') {
+      // Validate credentials before submission
       handleSubmit()
     }
   }
 
   const handleBack = () => {
     setError(null)
+    setFieldErrors({})
 
     if (currentStep === 'personal') setCurrentStep('role')
     else if (currentStep === 'credentials') setCurrentStep('personal')
@@ -66,6 +90,24 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
 
     setIsLoading(true)
     setError(null)
+    setFieldErrors({})
+
+    // Validate all registration data
+    const validationResult = validateRegistrationData({
+      role,
+      firstName,
+      lastName,
+      email,
+      username,
+      password,
+      confirmPassword
+    })
+
+    if (!validationResult.isValid) {
+      setFieldErrors(validationResult.errors)
+      setIsLoading(false)
+      return
+    }
 
     const result = await registerUser({
       role,
@@ -83,6 +125,22 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       setCurrentStep('complete')
     } else {
       setError(result.message || 'Registration failed')
+    }
+  }
+
+  // Handle field blur for real-time validation
+  const handleFieldBlur = (fieldName: string, value: string) => {
+    const additionalData = fieldName === 'confirmPassword' ? { password } : undefined
+    const error = validateField(fieldName, value, additionalData)
+
+    if (error) {
+      setFieldErrors(prev => ({ ...prev, [fieldName]: error }))
+    } else {
+      setFieldErrors(prev => {
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
     }
   }
 
@@ -203,8 +261,12 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 placeholder="Enter your first name..."
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                onBlur={(e) => handleFieldBlur('firstName', e.target.value)}
                 required
               />
+              {fieldErrors.firstName && (
+                <p className="text-sm text-red-400">{fieldErrors.firstName}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -217,8 +279,12 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 placeholder="Enter your last name..."
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                onBlur={(e) => handleFieldBlur('lastName', e.target.value)}
                 required
               />
+              {fieldErrors.lastName && (
+                <p className="text-sm text-red-400">{fieldErrors.lastName}</p>
+              )}
             </div>
           </div>
 
@@ -232,8 +298,12 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               placeholder="Enter your email address..."
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onBlur={(e) => handleFieldBlur('email', e.target.value)}
               required
             />
+            {fieldErrors.email && (
+              <p className="text-sm text-red-400">{fieldErrors.email}</p>
+            )}
           </div>
 
           <Button onClick={handleNext} disabled={!canProceed()}>
@@ -259,8 +329,13 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               placeholder="Enter your username..."
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              onBlur={(e) => handleFieldBlur('username', e.target.value)}
               required
             />
+            {fieldErrors.username && (
+              <p className="text-sm text-red-400">{fieldErrors.username}</p>
+            )}
+            <p className="text-xs text-gray-500">Letters, numbers, and underscores only</p>
           </div>
 
           <div className="space-y-2">
@@ -274,6 +349,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 placeholder="Enter your password..."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={(e) => handleFieldBlur('password', e.target.value)}
                 className="pr-11"
                 required
               />
@@ -286,6 +362,12 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {fieldErrors.password && (
+              <p className="text-sm text-red-400">{fieldErrors.password}</p>
+            )}
+            <p className="text-xs text-gray-500">
+              Must be 8+ characters with uppercase, lowercase, number, and special character
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -299,6 +381,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 placeholder="Enter your password again..."
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                onBlur={(e) => handleFieldBlur('confirmPassword', e.target.value)}
                 className="pr-11"
                 required
               />
@@ -311,6 +394,9 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {fieldErrors.confirmPassword && (
+              <p className="text-sm text-red-400">{fieldErrors.confirmPassword}</p>
+            )}
           </div>
 
           <Button onClick={handleNext} disabled={!canProceed() || isLoading} className="mt-6">

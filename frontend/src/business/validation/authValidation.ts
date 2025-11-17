@@ -1,220 +1,292 @@
 /**
- * Authentication validation rules
+ * Authentication Validation Rules
  * Part of the Business Logic Layer
+ *
+ * Provides client-side validation for authentication forms.
+ * These validations provide immediate user feedback before API calls.
+ * Server-side validation is the final authority.
  */
 
-import type {
-  LoginCredentials,
-  RegisterData,
-  ForgotPasswordData,
-  ValidationResult,
-  ValidationError
-} from '../models/auth/types'
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Record<string, string>;
+}
 
-/**
- * Validates login credentials
- */
-export function validateLoginCredentials(
-  credentials: LoginCredentials
-): ValidationResult {
-  const errors: ValidationError[] = []
+export interface RegisterData {
+  role: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+}
 
-  // Email validation (required for Supabase authentication)
-  if (!credentials.email || credentials.email.trim() === '') {
-    errors.push({
-      field: 'email',
-      message: 'Email is required'
-    })
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(credentials.email)) {
-    errors.push({
-      field: 'email',
-      message: 'Please enter a valid email address'
-    })
-  }
-
-  // Password validation
-  if (!credentials.password || credentials.password.trim() === '') {
-    errors.push({
-      field: 'password',
-      message: 'Password is required'
-    })
-  } else if (credentials.password.length < 6) {
-    errors.push({
-      field: 'password',
-      message: 'Password must be at least 6 characters'
-    })
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  }
+export interface LoginData {
+  email: string;
+  password: string;
 }
 
 /**
- * Validates registration data
+ * Email validation regex pattern
+ * Validates standard email format: user@domain.tld
  */
-export function validateRegistrationData(
-  data: RegisterData
-): ValidationResult {
-  const errors: ValidationError[] = []
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Role validation
-  if (!data.role) {
-    errors.push({
-      field: 'role',
-      message: 'Please select a role'
-    })
-  }
+/**
+ * Username validation regex pattern
+ * Allows only alphanumeric characters and underscores
+ */
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
-  // First name validation
-  if (!data.firstName || data.firstName.trim() === '') {
-    errors.push({
-      field: 'firstName',
-      message: 'First name is required'
-    })
-  } else if (data.firstName.length < 2) {
-    errors.push({
-      field: 'firstName',
-      message: 'First name must be at least 2 characters'
-    })
-  }
-
-  // Last name validation
-  if (!data.lastName || data.lastName.trim() === '') {
-    errors.push({
-      field: 'lastName',
-      message: 'Last name is required'
-    })
-  } else if (data.lastName.length < 2) {
-    errors.push({
-      field: 'lastName',
-      message: 'Last name must be at least 2 characters'
-    })
-  }
-
-  // Email validation
-  if (!data.email || data.email.trim() === '') {
-    errors.push({
-      field: 'email',
-      message: 'Email is required'
-    })
-  } else {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(data.email)) {
-      errors.push({
-        field: 'email',
-        message: 'Please enter a valid email address'
-      })
-    }
-  }
-
-  // Username validation
-  if (!data.username || data.username.trim() === '') {
-    errors.push({
-      field: 'username',
-      message: 'Username is required'
-    })
-  } else if (data.username.length < 3) {
-    errors.push({
-      field: 'username',
-      message: 'Username must be at least 3 characters'
-    })
-  } else if (!/^[a-zA-Z0-9_]+$/.test(data.username)) {
-    errors.push({
-      field: 'username',
-      message: 'Username can only contain letters, numbers, and underscores'
-    })
-  }
-
-  // Password validation
-  if (!data.password || data.password.trim() === '') {
-    errors.push({
-      field: 'password',
-      message: 'Password is required'
-    })
-  } else if (data.password.length < 8) {
-    errors.push({
-      field: 'password',
-      message: 'Password must be at least 8 characters'
-    })
-  } else {
-    // Password strength checks
-    const hasUpperCase = /[A-Z]/.test(data.password)
-    const hasLowerCase = /[a-z]/.test(data.password)
-    const hasNumber = /[0-9]/.test(data.password)
-
-    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-      errors.push({
-        field: 'password',
-        message: 'Password must contain uppercase, lowercase, and numbers'
-      })
-    }
-  }
-
-  // Confirm password validation
-  if (!data.confirmPassword || data.confirmPassword.trim() === '') {
-    errors.push({
-      field: 'confirmPassword',
-      message: 'Please confirm your password'
-    })
-  } else if (data.password !== data.confirmPassword) {
-    errors.push({
-      field: 'confirmPassword',
-      message: 'Passwords do not match'
-    })
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  }
-}
+/**
+ * Password validation patterns
+ */
+const PASSWORD_PATTERNS = {
+  uppercase: /[A-Z]/,
+  lowercase: /[a-z]/,
+  number: /[0-9]/,
+  specialChar: /[!@#$%^&*(),.?":{}|<>]/,
+};
 
 /**
  * Validates email format
  */
-export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
+export const validateEmail = (email: string): string | null => {
+  if (!email) {
+    return 'Email is required';
+  }
+
+  if (!EMAIL_PATTERN.test(email)) {
+    return 'Please enter a valid email address';
+  }
+
+  return null;
+};
 
 /**
- * Validates password strength
+ * Validates username format and length
  */
-export function isStrongPassword(password: string): boolean {
-  if (password.length < 8) return false
+export const validateUsername = (username: string): string | null => {
+  if (!username) {
+    return 'Username is required';
+  }
 
-  const hasUpperCase = /[A-Z]/.test(password)
-  const hasLowerCase = /[a-z]/.test(password)
-  const hasNumber = /[0-9]/.test(password)
+  if (username.length < 3) {
+    return 'Username must be at least 3 characters long';
+  }
 
-  return hasUpperCase && hasLowerCase && hasNumber
-}
+  if (username.length > 50) {
+    return 'Username must not exceed 50 characters';
+  }
+
+  if (!USERNAME_PATTERN.test(username)) {
+    return 'Username can only contain letters, numbers, and underscores';
+  }
+
+  return null;
+};
 
 /**
- * Validates forgot password data
+ * Validates password complexity
+ * Requirements:
+ * - Minimum 8 characters
+ * - At least 1 uppercase letter
+ * - At least 1 lowercase letter
+ * - At least 1 number
+ * - At least 1 special character
  */
-export function validateForgotPasswordData(
-  data: ForgotPasswordData
-): ValidationResult {
-  const errors: ValidationError[] = []
+export const validatePassword = (password: string): string | null => {
+  if (!password) {
+    return 'Password is required';
+  }
 
-  // Email validation
-  if (!data.email || data.email.trim() === '') {
-    errors.push({
-      field: 'email',
-      message: 'Email address is required'
-    })
-  } else if (!isValidEmail(data.email)) {
-    errors.push({
-      field: 'email',
-      message: 'Please enter a valid email address'
-    })
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+
+  if (!PASSWORD_PATTERNS.uppercase.test(password)) {
+    return 'Password must contain at least one uppercase letter';
+  }
+
+  if (!PASSWORD_PATTERNS.lowercase.test(password)) {
+    return 'Password must contain at least one lowercase letter';
+  }
+
+  if (!PASSWORD_PATTERNS.number.test(password)) {
+    return 'Password must contain at least one number';
+  }
+
+  if (!PASSWORD_PATTERNS.specialChar.test(password)) {
+    return 'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)';
+  }
+
+  return null;
+};
+
+/**
+ * Validates that passwords match
+ */
+export const validatePasswordsMatch = (
+  password: string,
+  confirmPassword: string
+): string | null => {
+  if (!confirmPassword) {
+    return 'Please confirm your password';
+  }
+
+  if (password !== confirmPassword) {
+    return 'Passwords do not match';
+  }
+
+  return null;
+};
+
+/**
+ * Validates first name
+ */
+export const validateFirstName = (firstName: string): string | null => {
+  if (!firstName) {
+    return 'First name is required';
+  }
+
+  if (firstName.length < 2) {
+    return 'First name must be at least 2 characters long';
+  }
+
+  if (firstName.length > 50) {
+    return 'First name must not exceed 50 characters';
+  }
+
+  return null;
+};
+
+/**
+ * Validates last name
+ */
+export const validateLastName = (lastName: string): string | null => {
+  if (!lastName) {
+    return 'Last name is required';
+  }
+
+  if (lastName.length < 2) {
+    return 'Last name must be at least 2 characters long';
+  }
+
+  if (lastName.length > 50) {
+    return 'Last name must not exceed 50 characters';
+  }
+
+  return null;
+};
+
+/**
+ * Validates role selection
+ */
+export const validateRole = (role: string): string | null => {
+  if (!role) {
+    return 'Please select a role';
+  }
+
+  const validRoles = ['student', 'teacher', 'admin'];
+  if (!validRoles.includes(role)) {
+    return 'Invalid role selected';
+  }
+
+  return null;
+};
+
+/**
+ * Validates complete registration form data
+ * Returns validation result with all errors
+ */
+export const validateRegistrationData = (
+  data: RegisterData
+): ValidationResult => {
+  const errors: Record<string, string> = {};
+
+  // Validate each field
+  const roleError = validateRole(data.role);
+  if (roleError) errors.role = roleError;
+
+  const firstNameError = validateFirstName(data.firstName);
+  if (firstNameError) errors.firstName = firstNameError;
+
+  const lastNameError = validateLastName(data.lastName);
+  if (lastNameError) errors.lastName = lastNameError;
+
+  const emailError = validateEmail(data.email);
+  if (emailError) errors.email = emailError;
+
+  const usernameError = validateUsername(data.username);
+  if (usernameError) errors.username = usernameError;
+
+  const passwordError = validatePassword(data.password);
+  if (passwordError) errors.password = passwordError;
+
+  const confirmPasswordError = validatePasswordsMatch(
+    data.password,
+    data.confirmPassword
+  );
+  if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+};
+
+/**
+ * Validates login form data
+ * Returns validation result with all errors
+ * Note: Only checks if fields are present, not complexity (that's for registration)
+ */
+export const validateLoginData = (data: LoginData): ValidationResult => {
+  const errors: Record<string, string> = {};
+
+  const emailError = validateEmail(data.email);
+  if (emailError) errors.email = emailError;
+
+  if (!data.password) {
+    errors.password = 'Password is required';
+  } else if (data.password.length < 1) {
+    errors.password = 'Password cannot be empty';
   }
 
   return {
-    isValid: errors.length === 0,
-    errors
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+};
+
+/**
+ * Validates individual field for real-time validation
+ * Used for showing errors as the user types
+ */
+export const validateField = (
+  fieldName: string,
+  value: string,
+  additionalData?: Record<string, string>
+): string | null => {
+  switch (fieldName) {
+    case 'email':
+      return validateEmail(value);
+    case 'username':
+      return validateUsername(value);
+    case 'password':
+      return validatePassword(value);
+    case 'confirmPassword':
+      return validatePasswordsMatch(
+        additionalData?.password || '',
+        value
+      );
+    case 'firstName':
+      return validateFirstName(value);
+    case 'lastName':
+      return validateLastName(value);
+    case 'role':
+      return validateRole(value);
+    default:
+      return null;
   }
-}
+};

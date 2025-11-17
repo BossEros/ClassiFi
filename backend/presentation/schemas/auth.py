@@ -10,6 +10,22 @@ from datetime import datetime
 import re
 
 
+def validate_password_complexity(password: str) -> str:
+    """
+    Reusable password validation function
+    Used by both RegisterRequest and ResetPasswordRequest
+    """
+    if not re.search(r'[A-Z]', password):
+        raise ValueError('Password must contain at least one uppercase letter')
+    if not re.search(r'[a-z]', password):
+        raise ValueError('Password must contain at least one lowercase letter')
+    if not re.search(r'[0-9]', password):
+        raise ValueError('Password must contain at least one number')
+    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+        raise ValueError('Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)')
+    return password
+
+
 class UserRoleEnum(str, Enum):
     """User role enumeration"""
     STUDENT = "student"
@@ -41,13 +57,7 @@ class RegisterRequest(BaseModel):
     @classmethod
     def validate_password(cls, v: str) -> str:
         """Validate password strength"""
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'[0-9]', v):
-            raise ValueError('Password must contain at least one number')
-        return v
+        return validate_password_complexity(v)
 
     def validate_passwords_match(self) -> bool:
         """Check if passwords match"""
@@ -103,3 +113,25 @@ class ForgotPasswordRequest(BaseModel):
     Request schema for forgot password
     """
     email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """
+    Request schema for resetting password
+    """
+    access_token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str = Field(..., min_length=8)
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_password_strength(cls, v: str) -> str:
+        """
+        Validate password strength - reuses same validation as RegisterRequest
+        This ensures consistency across registration and password reset
+        """
+        return validate_password_complexity(v)
+
+    def validate_passwords_match(self) -> bool:
+        """Check if passwords match"""
+        return self.new_password == self.confirm_password
