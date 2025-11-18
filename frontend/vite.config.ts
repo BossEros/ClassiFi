@@ -9,7 +9,7 @@ export default defineConfig({
   cacheDir: 'C:/temp/vite-cache',
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
+      '@': path.resolve(__dirname, '.'),
     },
   },
 })
