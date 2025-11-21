@@ -1,8 +1,3 @@
-/**
- * Authentication Repository
- * Part of the Data Access Layer - Handles all auth-related API calls
- */
-
 import { apiClient } from '../../api/apiClient'
 import { supabase } from '../../api/supabaseClient'
 import type {
@@ -17,18 +12,31 @@ import type {
 } from '../../../business/models/auth/types'
 
 /**
+ * Backend user data structure (snake_case from API)
+ */
+interface BackendUser {
+  id: string | number
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+  role: string
+  created_at: string
+}
+
+/**
  * Transforms backend user response (snake_case) to frontend User interface (camelCase)
  * @param backendUser - User object from backend with snake_case fields
  * @returns User object with camelCase fields
  */
-function transformUserResponse(backendUser: any): User {
+function transformUserResponse(backendUser: BackendUser): User {
   return {
-    id: backendUser.id?.toString() || backendUser.id,
+    id: typeof backendUser.id === 'string' ? backendUser.id : backendUser.id.toString(),
     username: backendUser.username,
     email: backendUser.email,
     firstName: backendUser.first_name,
     lastName: backendUser.last_name,
-    role: backendUser.role,
+    role: backendUser.role as 'student' | 'teacher' | 'admin',
     createdAt: new Date(backendUser.created_at)
   }
 }
@@ -56,7 +64,7 @@ export async function login(
   // Transform snake_case user response to camelCase
   const authResponse = response.data!
   if (authResponse.user) {
-    authResponse.user = transformUserResponse(authResponse.user)
+    authResponse.user = transformUserResponse(authResponse.user as unknown as BackendUser)
   }
 
   return authResponse
@@ -88,7 +96,7 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
   // Transform snake_case user response to camelCase
   const authResponse = response.data!
   if (authResponse.user) {
-    authResponse.user = transformUserResponse(authResponse.user)
+    authResponse.user = transformUserResponse(authResponse.user as unknown as BackendUser)
   }
 
   return authResponse
@@ -191,7 +199,7 @@ export async function resetPassword(
     if (updateError) {
       // Handle specific Supabase errors
       const errorMsg = updateError.message.toLowerCase()
-      
+
       if (errorMsg.includes('expired') || errorMsg.includes('invalid') || errorMsg.includes('token')) {
         return {
           success: false,

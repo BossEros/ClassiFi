@@ -47,7 +47,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
         code += chars.charAt(Math.floor(Math.random() * chars.length))
       }
       setClassCode(code)
-    } catch (err) {
+    } catch {
       setError('Failed to generate class code')
     } finally {
       setIsGenerating(false)
@@ -73,8 +73,9 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
       })
       onSuccess()
       onClose()
-    } catch (err: any) {
-      setError(err.message || 'Failed to create class. Please try again.')
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create class. Please try again.'
+      setError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

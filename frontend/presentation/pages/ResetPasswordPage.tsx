@@ -39,7 +39,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
         const hash = window.location.hash
         const hashParams = new URLSearchParams(hash.substring(1))
         const searchParams = new URLSearchParams(window.location.search)
-        
+
         const accessToken = hashParams.get('access_token')
         const refreshToken = hashParams.get('refresh_token')
         const tokenType = hashParams.get('type') || searchParams.get('type')
@@ -113,7 +113,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           }
         }
 
-      } catch (err) {
+      } catch {
         if (isMounted) {
           setTokenError(true)
           setError('Failed to verify reset link. Please request a new password reset.')

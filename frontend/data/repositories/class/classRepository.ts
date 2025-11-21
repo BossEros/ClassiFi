@@ -7,12 +7,24 @@ import { apiClient } from '../../api/apiClient'
 import type { Class } from '../../../business/models/dashboard/types'
 
 /**
+ * Backend class data structure (snake_case from API)
+ */
+interface BackendClass {
+  id: number
+  name: string
+  code: string
+  description?: string
+  student_count?: number
+  created_at?: string
+}
+
+/**
  * Backend response structure for class creation
  */
 interface CreateClassBackendResponse {
   success: boolean
   message?: string
-  class: any
+  class: BackendClass
 }
 
 /**
@@ -21,7 +33,7 @@ interface CreateClassBackendResponse {
 interface ClassListBackendResponse {
   success: boolean
   message?: string
-  classes: any[]
+  classes: BackendClass[]
 }
 
 /**
@@ -37,7 +49,7 @@ export interface CreateClassRequest {
 /**
  * Transforms backend class response (snake_case) to frontend Class interface (camelCase)
  */
-function transformClassResponse(backendClass: any): Class {
+function transformClassResponse(backendClass: BackendClass): Class {
   return {
     id: backendClass.id,
     name: backendClass.name,

@@ -7,25 +7,52 @@ import { apiClient } from '../../api/apiClient'
 import type { DashboardData, Class, Task } from '../../../business/models/dashboard/types'
 
 /**
+ * Backend class data structure (snake_case from API)
+ */
+interface BackendClass {
+  id: number
+  name: string
+  code: string
+  description?: string
+  student_count?: number
+  created_at?: string
+}
+
+/**
+ * Backend task data structure (snake_case from API)
+ */
+interface BackendTask {
+  id: number
+  title: string
+  description?: string
+  class_id: number
+  class_name: string
+  programming_language: string
+  deadline: string
+  allow_resubmission: boolean
+  created_at?: string
+}
+
+/**
  * Backend response structure for dashboard data
  */
 interface DashboardBackendResponse {
   success: boolean
   message?: string
-  recent_classes: any[]
-  pending_tasks: any[]
+  recent_classes: BackendClass[]
+  pending_tasks: BackendTask[]
 }
 
 /**
  * Transforms backend class response (snake_case) to frontend Class interface (camelCase)
  */
-function transformClassResponse(backendClass: any): Class {
+function transformClassResponse(backendClass: BackendClass): Class {
   return {
     id: backendClass.id,
     name: backendClass.name,
     code: backendClass.code,
     description: backendClass.description,
-    studentCount: backendClass.student_count,
+    studentCount: backendClass.student_count ?? 0,
     createdAt: backendClass.created_at ? new Date(backendClass.created_at) : undefined
   }
 }
@@ -33,11 +60,11 @@ function transformClassResponse(backendClass: any): Class {
 /**
  * Transforms backend task response (snake_case) to frontend Task interface (camelCase)
  */
-function transformTaskResponse(backendTask: any): Task {
+function transformTaskResponse(backendTask: BackendTask): Task {
   return {
     id: backendTask.id,
     title: backendTask.title,
-    description: backendTask.description,
+    description: backendTask.description ?? '',
     classId: backendTask.class_id,
     className: backendTask.class_name,
     programmingLanguage: backendTask.programming_language,
@@ -84,7 +111,7 @@ export async function getDashboardData(
  * @returns List of recent classes
  */
 export async function getRecentClasses(teacherId: number, limit: number = 5): Promise<Class[]> {
-  const response = await apiClient.get<{ success: boolean; message?: string; classes: any[] }>(
+  const response = await apiClient.get<{ success: boolean; message?: string; classes: BackendClass[] }>(
     `/teacher/dashboard/${teacherId}/classes?limit=${limit}`
   )
 
@@ -103,7 +130,7 @@ export async function getRecentClasses(teacherId: number, limit: number = 5): Pr
  * @returns List of pending tasks
  */
 export async function getPendingTasks(teacherId: number, limit: number = 10): Promise<Task[]> {
-  const response = await apiClient.get<{ success: boolean; message?: string; tasks: any[] }>(
+  const response = await apiClient.get<{ success: boolean; message?: string; tasks: BackendTask[] }>(
     `/teacher/dashboard/${teacherId}/tasks?limit=${limit}`
   )
 
