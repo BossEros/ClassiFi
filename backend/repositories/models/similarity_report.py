@@ -29,9 +29,9 @@ class SimilarityReport(Base):
     report_file_path = Column(Text, nullable=True)
 
     # Relationships
-    assignment = relationship("Assignment", back_populates="similarity_reports")
-    teacher = relationship("User", foreign_keys=[teacher_id])
-    similarity_results = relationship("SimilarityResult", back_populates="report", cascade="all, delete-orphan")
+    assignment = relationship("Assignment", back_populates="similarity_reports", lazy="selectin")
+    teacher = relationship("User", foreign_keys=[teacher_id], lazy="selectin")
+    similarity_results = relationship("SimilarityResult", back_populates="report", cascade="all, delete-orphan", lazy="selectin")
 
     # Table arguments for constraints and indexes
     __table_args__ = (

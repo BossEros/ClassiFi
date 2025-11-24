@@ -38,9 +38,9 @@ class Assignment(Base):
     is_active = Column(Boolean, nullable=False, default=True)
 
     # Relationships
-    class_obj = relationship("Class", back_populates="assignments")
-    submissions = relationship("Submission", back_populates="assignment", cascade="all, delete-orphan")
-    similarity_reports = relationship("SimilarityReport", back_populates="assignment", cascade="all, delete-orphan")
+    class_obj = relationship("Class", back_populates="assignments", lazy="selectin")
+    submissions = relationship("Submission", back_populates="assignment", cascade="all, delete-orphan", lazy="selectin")
+    similarity_reports = relationship("SimilarityReport", back_populates="assignment", cascade="all, delete-orphan", lazy="selectin")
 
     def __repr__(self):
         return f"<Assignment(id={self.id}, name='{self.assignment_name}', class_id={self.class_id})>"

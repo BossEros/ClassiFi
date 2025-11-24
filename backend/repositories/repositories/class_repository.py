@@ -4,20 +4,24 @@ Part of the Data Access Layer
 Handles database operations for classes
 """
 
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_, func
+from sqlalchemy.orm import selectinload
 from repositories.models.class_model import Class
 from repositories.models.enrollment import Enrollment
 from typing import List, Optional
+import sys
 
 
 class ClassRepository:
     """Repository for class-related database operations"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
+        print(f"[DEBUGGER:ClassRepository.__init__:19] db type: {type(db)}", file=sys.stderr, flush=True)
+        print(f"[DEBUGGER:ClassRepository.__init__:20] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
         self.db = db
 
-    def get_class_by_id(self, class_id: int) -> Optional[Class]:
+    async def get_class_by_id(self, class_id: int) -> Optional[Class]:
         """
         Get a class by ID
 
@@ -27,9 +31,12 @@ class ClassRepository:
         Returns:
             Class object or None if not found
         """
-        return self.db.query(Class).filter(Class.id == class_id).first()
+        result = await self.db.execute(
+            select(Class).where(Class.id == class_id)
+        )
+        return result.scalar_one_or_none()
 
-    def get_class_by_code(self, class_code: str) -> Optional[Class]:
+    async def get_class_by_code(self, class_code: str) -> Optional[Class]:
         """
         Get a class by class code
 
@@ -39,9 +46,12 @@ class ClassRepository:
         Returns:
             Class object or None if not found
         """
-        return self.db.query(Class).filter(Class.class_code == class_code).first()
+        result = await self.db.execute(
+            select(Class).where(Class.class_code == class_code)
+        )
+        return result.scalar_one_or_none()
 
-    def get_classes_by_teacher(
+    async def get_classes_by_teacher(
         self,
         teacher_id: int,
         active_only: bool = True
@@ -56,14 +66,16 @@ class ClassRepository:
         Returns:
             List of Class objects
         """
-        query = self.db.query(Class).filter(Class.teacher_id == teacher_id)
+        query = select(Class).where(Class.teacher_id == teacher_id)
 
         if active_only:
-            query = query.filter(Class.is_active == True)
+            query = query.where(Class.is_active == True)
 
-        return query.order_by(Class.created_at.desc()).all()
+        query = query.order_by(Class.created_at.desc())
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
 
-    def get_recent_classes_by_teacher(
+    async def get_recent_classes_by_teacher(
         self,
         teacher_id: int,
         limit: int = 5
@@ -78,18 +90,24 @@ class ClassRepository:
         Returns:
             List of Class objects
         """
-        return (
-            self.db.query(Class)
-            .filter(and_(
+        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:91] teacher_id={teacher_id}, limit={limit}", file=sys.stderr, flush=True)
+        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:92] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
+        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:93] Building query...", file=sys.stderr, flush=True)
+        query = (
+            select(Class)
+            .where(and_(
                 Class.teacher_id == teacher_id,
                 Class.is_active == True
             ))
             .order_by(Class.created_at.desc())
             .limit(limit)
-            .all()
         )
+        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:102] About to execute query", file=sys.stderr, flush=True)
+        result = await self.db.execute(query)
+        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:104] Query executed successfully", file=sys.stderr, flush=True)
+        return list(result.scalars().all())
 
-    def create_class(
+    async def create_class(
         self,
         teacher_id: int,
         class_name: str,
@@ -117,12 +135,12 @@ class ClassRepository:
         )
 
         self.db.add(new_class)
-        self.db.commit()
-        self.db.refresh(new_class)
+        await self.db.commit()
+        await self.db.refresh(new_class)
 
         return new_class
 
-    def update_class(
+    async def update_class(
         self,
         class_id: int,
         **kwargs
@@ -137,7 +155,7 @@ class ClassRepository:
         Returns:
             Updated Class object or None if not found
         """
-        class_obj = self.get_class_by_id(class_id)
+        class_obj = await self.get_class_by_id(class_id)
 
         if not class_obj:
             return None
@@ -146,14 +164,14 @@ class ClassRepository:
             if hasattr(class_obj, key):
                 setattr(class_obj, key, value)
 
-        self.db.commit()
-        self.db.refresh(class_obj)
+        await self.db.commit()
+        await self.db.refresh(class_obj)
 
         return class_obj
 
-    def delete_class(self, class_id: int) -> bool:
+    async def delete_class(self, class_id: int) -> bool:
         """
-        Delete a class (sets is_active to False)
+        Delete a class permanently (hard delete with cascade)
 
         Args:
             class_id: ID of the class to delete
@@ -161,17 +179,17 @@ class ClassRepository:
         Returns:
             True if deleted, False if not found
         """
-        class_obj = self.get_class_by_id(class_id)
+        class_obj = await self.get_class_by_id(class_id)
 
         if not class_obj:
             return False
 
-        class_obj.is_active = False
-        self.db.commit()
+        await self.db.delete(class_obj)
+        await self.db.commit()
 
         return True
 
-    def get_student_count(self, class_id: int) -> int:
+    async def get_student_count(self, class_id: int) -> int:
         """
         Get the number of students in a class
 
@@ -181,11 +199,17 @@ class ClassRepository:
         Returns:
             Number of students enrolled in the class
         """
-        return self.db.query(Enrollment).filter(
-            Enrollment.class_id == class_id
-        ).count()
+        print(f"[DEBUGGER:ClassRepository.get_student_count:198] class_id={class_id}", file=sys.stderr, flush=True)
+        print(f"[DEBUGGER:ClassRepository.get_student_count:199] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
+        result = await self.db.execute(
+            select(func.count()).select_from(Enrollment).where(
+                Enrollment.class_id == class_id
+            )
+        )
+        print(f"[DEBUGGER:ClassRepository.get_student_count:205] Query executed", file=sys.stderr, flush=True)
+        return result.scalar() or 0
 
-    def check_class_code_exists(self, class_code: str) -> bool:
+    async def check_class_code_exists(self, class_code: str) -> bool:
         """
         Check if a class code already exists
 
@@ -195,5 +219,26 @@ class ClassRepository:
         Returns:
             True if code exists, False otherwise
         """
-        existing_class = self.get_class_by_code(class_code)
+        existing_class = await self.get_class_by_code(class_code)
         return existing_class is not None
+
+    async def get_enrolled_students(self, class_id: int) -> List:
+        """
+        Get all students enrolled in a class
+
+        Args:
+            class_id: ID of the class
+
+        Returns:
+            List of User objects (students)
+        """
+        from repositories.models.user import User
+
+        query = (
+            select(User)
+            .join(Enrollment, User.id == Enrollment.student_id)
+            .where(Enrollment.class_id == class_id)
+            .order_by(User.last_name.asc(), User.first_name.asc())
+        )
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

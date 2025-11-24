@@ -30,9 +30,9 @@ class SimilarityResult(Base):
     analyzed_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
 
     # Relationships
-    report = relationship("SimilarityReport", back_populates="similarity_results")
-    submission1 = relationship("Submission", foreign_keys=[submission1_id])
-    submission2 = relationship("Submission", foreign_keys=[submission2_id])
+    report = relationship("SimilarityReport", back_populates="similarity_results", lazy="selectin")
+    submission1 = relationship("Submission", foreign_keys=[submission1_id], lazy="selectin")
+    submission2 = relationship("Submission", foreign_keys=[submission2_id], lazy="selectin")
 
     # Table arguments for constraints and indexes
     __table_args__ = (

@@ -4,12 +4,14 @@
  */
 
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
+import { ToastProvider } from '@/shared/context/ToastContext'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
 import { ClassesPage } from './pages/ClassesPage'
+import { ClassDetailPage } from './pages/ClassDetailPage'
 import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
@@ -57,8 +59,9 @@ function AuthRedirectHandler() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthRedirectHandler />
-      <Routes>
+      <ToastProvider>
+        <AuthRedirectHandler />
+        <Routes>
         {/* Default route - redirect to login */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
@@ -87,6 +90,14 @@ function App() {
           }
         />
         <Route
+          path="/dashboard/classes/:classId"
+          element={
+            <ProtectedRoute>
+              <ClassDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/tasks"
           element={
             <ProtectedRoute>
@@ -105,7 +116,8 @@ function App() {
 
         {/* Catch all - redirect to login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+        </Routes>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

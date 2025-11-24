@@ -5,7 +5,7 @@ Defines API endpoints for authentication
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.auth import (
     RegisterRequest,
     LoginRequest,
@@ -23,7 +23,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Register a new user
@@ -60,7 +60,7 @@ async def register(
     auth_service = AuthService(db)
 
     # Register user
-    success, message, user_data, token = auth_service.register_user(
+    success, message, user_data, token = await auth_service.register_user(
         email=request.email,
         password=request.password,
         username=request.username,
@@ -89,7 +89,7 @@ async def register(
 @router.post("/login", response_model=AuthResponse)
 async def login(
     request: LoginRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Login a user
@@ -111,7 +111,7 @@ async def login(
     """
     auth_service = AuthService(db)
 
-    success, message, user_data, token = auth_service.login_user(
+    success, message, user_data, token = await auth_service.login_user(
         email=request.email,
         password=request.password
     )
@@ -135,7 +135,7 @@ async def login(
 @router.post("/verify", response_model=AuthResponse)
 async def verify_token(
     token: str,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Verify a Supabase access token
@@ -149,7 +149,7 @@ async def verify_token(
     """
     auth_service = AuthService(db)
 
-    is_valid, user_data = auth_service.verify_token(token)
+    is_valid, user_data = await auth_service.verify_token(token)
 
     if not is_valid:
         raise HTTPException(
@@ -169,7 +169,7 @@ async def verify_token(
 @router.post("/forgot-password", response_model=AuthResponse)
 async def forgot_password(
     request: ForgotPasswordRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Request a password reset email
@@ -183,7 +183,7 @@ async def forgot_password(
     """
     auth_service = AuthService(db)
 
-    success, message = auth_service.request_password_reset(request.email)
+    success, message = await auth_service.request_password_reset(request.email)
 
     return AuthResponse(
         success=True,  # Always return True for security

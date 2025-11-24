@@ -5,7 +5,7 @@ Defines API endpoints for teacher dashboard
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.teacher_dashboard import (
     DashboardDataResponse,
     RecentClassesResponse,
@@ -15,6 +15,7 @@ from api.schemas.teacher_dashboard import (
 )
 from services.services.teacher_dashboard_service import TeacherDashboardService
 from repositories.database import get_db
+import sys
 
 router = APIRouter(prefix="/teacher/dashboard", tags=["Teacher Dashboard"])
 
@@ -24,7 +25,7 @@ async def get_teacher_dashboard(
     teacher_id: int,
     recent_classes_limit: int = 12,
     pending_tasks_limit: int = 10,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get complete dashboard data for a teacher
@@ -42,13 +43,19 @@ async def get_teacher_dashboard(
     - recent_classes: List of recent classes
     - pending_tasks: List of pending assignments/tasks
     """
+    print(f"[DEBUGGER:get_teacher_dashboard:45] Endpoint called - teacher_id={teacher_id}", file=sys.stderr, flush=True)
+    print(f"[DEBUGGER:get_teacher_dashboard:46] db type: {type(db)}", file=sys.stderr, flush=True)
+    print(f"[DEBUGGER:get_teacher_dashboard:47] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
+    print(f"[DEBUGGER:get_teacher_dashboard:48] Creating TeacherDashboardService...", file=sys.stderr, flush=True)
     dashboard_service = TeacherDashboardService(db)
 
-    success, message, data = dashboard_service.get_dashboard_data(
+    print(f"[DEBUGGER:get_teacher_dashboard:51] Calling get_dashboard_data...", file=sys.stderr, flush=True)
+    success, message, data = await dashboard_service.get_dashboard_data(
         teacher_id,
         recent_classes_limit=recent_classes_limit,
         pending_tasks_limit=pending_tasks_limit
     )
+    print(f"[DEBUGGER:get_teacher_dashboard:56] get_dashboard_data returned - success={success}", file=sys.stderr, flush=True)
 
     if not success:
         raise HTTPException(
@@ -68,7 +75,7 @@ async def get_teacher_dashboard(
 async def get_recent_classes(
     teacher_id: int,
     limit: int = 5,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get recent classes for a teacher
@@ -86,7 +93,7 @@ async def get_recent_classes(
     """
     dashboard_service = TeacherDashboardService(db)
 
-    success, message, classes_data = dashboard_service.get_recent_classes(
+    success, message, classes_data = await dashboard_service.get_recent_classes(
         teacher_id=teacher_id,
         limit=limit
     )
@@ -108,7 +115,7 @@ async def get_recent_classes(
 async def get_pending_tasks(
     teacher_id: int,
     limit: int = 10,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Get pending tasks for a teacher
@@ -126,7 +133,7 @@ async def get_pending_tasks(
     """
     dashboard_service = TeacherDashboardService(db)
 
-    success, message, tasks_data = dashboard_service.get_pending_tasks(
+    success, message, tasks_data = await dashboard_service.get_pending_tasks(
         teacher_id=teacher_id,
         limit=limit
     )

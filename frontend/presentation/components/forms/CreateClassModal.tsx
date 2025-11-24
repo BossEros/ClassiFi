@@ -9,7 +9,8 @@ import { X, Check, RefreshCw } from 'lucide-react'
 import { Input } from '@/presentation/components/ui/Input'
 import { Textarea } from '@/presentation/components/ui/Textarea'
 import { Button } from '@/presentation/components/ui/Button'
-import { createClass } from '@/business/services/class/classService'
+import { createClass, generateClassCode } from '@/business/services/class/classService'
+import { validateClassName, validateClassDescription, validateCreateClassData } from '@/business/validation/classValidation'
 
 interface CreateClassModalProps {
   isOpen: boolean
@@ -21,31 +22,41 @@ interface CreateClassModalProps {
 export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: CreateClassModalProps) {
   const [className, setClassName] = useState('')
   const [description, setDescription] = useState('')
-  const [classCode, setClassCode] = useState('Auto-generated')
+  const [classCode, setClassCode] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [classNameError, setClassNameError] = useState<string | null>(null)
+  const [descriptionError, setDescriptionError] = useState<string | null>(null)
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       setClassName('')
       setDescription('')
-      setClassCode('Auto-generated')
+      setClassCode('')
       setError(null)
+      setClassNameError(null)
+      setDescriptionError(null)
     }
   }, [isOpen])
+
+  // Validate field on blur
+  const handleClassNameBlur = () => {
+    const error = validateClassName(className)
+    setClassNameError(error)
+  }
+
+  const handleDescriptionBlur = () => {
+    const error = validateClassDescription(description)
+    setDescriptionError(error)
+  }
 
   const handleGenerateCode = async () => {
     setIsGenerating(true)
     setError(null)
     try {
-      // Generate a random class code
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-      let code = ''
-      for (let i = 0; i < 6; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length))
-      }
+      const code = await generateClassCode()
       setClassCode(code)
     } catch {
       setError('Failed to generate class code')
@@ -58,10 +69,24 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
     e.preventDefault()
     setError(null)
 
-    if (!className.trim()) {
-      setError('Class name is required')
+    // Validate all fields
+    const validation = validateCreateClassData({ className, description })
+
+    if (!validation.isValid) {
+      setClassNameError(validation.errors.className || null)
+      setDescriptionError(validation.errors.description || null)
       return
     }
+
+    // Validate class code is generated
+    if (!classCode) {
+      setError('Please generate a class code')
+      return
+    }
+
+    // Clear field errors
+    setClassNameError(null)
+    setDescriptionError(null)
 
     setIsSubmitting(true)
     try {
@@ -69,7 +94,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
         teacherId,
         className: className.trim(),
         description: description.trim() || undefined,
-        classCode: classCode === 'Auto-generated' ? undefined : classCode
+        classCode
       })
       onSuccess()
       onClose()
@@ -129,10 +154,18 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
               type="text"
               placeholder="Enter course name..."
               value={className}
-              onChange={(e) => setClassName(e.target.value)}
+              onChange={(e) => {
+                setClassName(e.target.value)
+                if (classNameError) setClassNameError(null)
+              }}
+              onBlur={handleClassNameBlur}
               disabled={isSubmitting}
               required
+              className={classNameError ? 'border-red-500/50' : ''}
             />
+            {classNameError && (
+              <p className="text-xs text-red-400">{classNameError}</p>
+            )}
           </div>
 
           {/* Description */}
@@ -144,10 +177,18 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
               id="description"
               placeholder="Enter course description..."
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value)
+                if (descriptionError) setDescriptionError(null)
+              }}
+              onBlur={handleDescriptionBlur}
               disabled={isSubmitting}
               rows={4}
+              className={descriptionError ? 'border-red-500/50' : ''}
             />
+            {descriptionError && (
+              <p className="text-xs text-red-400">{descriptionError}</p>
+            )}
           </div>
 
           {/* Class Code */}
@@ -160,6 +201,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
                 id="classCode"
                 type="text"
                 value={classCode}
+                placeholder="Click Generate"
                 readOnly
                 className="flex-1 bg-white/5"
                 disabled={isSubmitting}
@@ -178,7 +220,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
               </Button>
             </div>
             <p className="text-xs text-gray-500">
-              * Students will use this code to join the class
+              * Click Generate to create a class code. Students will use this code to join.
             </p>
           </div>
 
@@ -195,7 +237,7 @@ export function CreateClassModal({ isOpen, onClose, onSuccess, teacherId }: Crea
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !className.trim()}
+              disabled={isSubmitting || !className.trim() || !classCode || !!classNameError || !!descriptionError}
               className="flex-1"
             >
               {isSubmitting ? (

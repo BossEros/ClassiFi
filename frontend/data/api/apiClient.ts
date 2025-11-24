@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 
 export interface ApiRequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -122,8 +122,12 @@ class ApiClient {
   /**
    * DELETE request
    */
-  async delete<T>(endpoint: string, headers?: HeadersInit): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE', headers })
+  async delete<T>(
+    endpoint: string,
+    body?: unknown,
+    headers?: HeadersInit
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: 'DELETE', body, headers })
   }
 }
 

@@ -26,9 +26,9 @@ class Class(Base):
     is_active = Column(Boolean, nullable=False, default=True)
 
     # Relationships
-    teacher = relationship("User", back_populates="classes")
-    assignments = relationship("Assignment", back_populates="class_obj", cascade="all, delete-orphan")
-    enrollments = relationship("Enrollment", back_populates="class_obj", cascade="all, delete-orphan")
+    teacher = relationship("User", back_populates="classes", lazy="selectin")
+    assignments = relationship("Assignment", back_populates="class_obj", cascade="all, delete-orphan", lazy="selectin")
+    enrollments = relationship("Enrollment", back_populates="class_obj", cascade="all, delete-orphan", lazy="selectin")
 
     def __repr__(self):
         return f"<Class(id={self.id}, name='{self.class_name}', code='{self.class_code}')>"

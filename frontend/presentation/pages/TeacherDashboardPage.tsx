@@ -105,10 +105,7 @@ export function TeacherDashboardPage() {
                   <ClassCard
                     key={classItem.id}
                     classItem={classItem}
-                    onClick={() => {
-                      // TODO: Navigate to class details
-                      console.log('Navigate to class:', classItem.id)
-                    }}
+                    onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
                   />
                 ))}
               </div>

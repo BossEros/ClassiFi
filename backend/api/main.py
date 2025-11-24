@@ -5,31 +5,56 @@ Part of the API Layer
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.routers import auth, teacher_dashboard, class_router
+from contextlib import asynccontextmanager
+from api.v1.router import api_router as api_v1_router
+from api.middleware.error_handler import register_exception_handlers
 from shared.config import settings
+from repositories.database import engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Application lifespan events
+    Manages database connection lifecycle
+    """
+    # Startup: Database connection is handled by the engine
+    # The async engine manages its own connection pool
+    print(f"[STARTUP] Starting {settings.app_name} v{settings.app_version}")
+    print(f"[STARTUP] Environment: {settings.environment}")
+    print(f"[STARTUP] Database: Connected")
+
+    yield
+
+    # Shutdown: Dispose of database engine and close connections
+    print("[SHUTDOWN] Database: Disconnecting...")
+    await engine.dispose()
+    print("[SHUTDOWN] Shutdown complete")
+
 
 # Create FastAPI application
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     description="ClassiFi Backend API - 3-Tier Layered Architecture",
-    debug=settings.debug
+    debug=settings.debug,
+    lifespan=lifespan
 )
 
-# Configure CORS - CRITICAL: This must be configured correctly for frontend to work
-# Allow all origins in development (you can restrict this in production)
+# Configure CORS using settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for now
+    allow_origins=settings.cors_origins,  # Use configured origins
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth.router, prefix=settings.api_prefix)
-app.include_router(teacher_dashboard.router, prefix=settings.api_prefix)
-app.include_router(class_router.router, prefix=settings.api_prefix)
+# Register error handlers
+register_exception_handlers(app)
+
+# Include API v1 router
+app.include_router(api_v1_router, prefix=f"{settings.api_prefix}/v1")
 
 
 @app.get("/")

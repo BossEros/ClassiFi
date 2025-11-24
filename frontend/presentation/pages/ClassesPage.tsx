@@ -4,8 +4,8 @@
  * Displays all classes for the teacher with ability to create new classes
  */
 
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Grid3x3, Plus } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent } from '@/presentation/components/ui/Card'
@@ -14,16 +14,30 @@ import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
 import { CreateClassModal } from '@/presentation/components/forms/CreateClassModal'
 import { getCurrentUser } from '@/business/services/auth/authService'
 import { getAllClasses } from '@/business/services/class/classService'
+import { useToast } from '@/shared/context/ToastContext'
 import type { User } from '@/business/models/auth/types'
 import type { Class } from '@/business/models/dashboard/types'
 
 export function ClassesPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { showToast } = useToast()
+  const hasShownDeleteToast = useRef(false)
   const [user, setUser] = useState<User | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Show toast if redirected from class deletion
+  useEffect(() => {
+    if (location.state?.deleted && !hasShownDeleteToast.current) {
+      hasShownDeleteToast.current = true
+      showToast('Class deleted successfully')
+      // Clear state to prevent showing again on refresh
+      navigate(location.pathname, { replace: true })
+    }
+  }, [location.state, location.pathname, showToast, navigate])
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -53,6 +67,9 @@ export function ClassesPage() {
   }, [navigate])
 
   const handleCreateSuccess = async () => {
+    // Show success toast
+    showToast('Class created successfully')
+
     // Refresh the classes list
     if (user) {
       try {
@@ -113,10 +130,7 @@ export function ClassesPage() {
                 <ClassCard
                   key={classItem.id}
                   classItem={classItem}
-                  onClick={() => {
-                    // TODO: Navigate to class details
-                    console.log('Navigate to class:', classItem.id)
-                  }}
+                  onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
                 />
               ))}
             </div>

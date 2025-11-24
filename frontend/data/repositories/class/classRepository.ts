@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from '../../api/apiClient'
-import type { Class } from '../../../business/models/dashboard/types'
+import type { Class, Assignment, EnrolledStudent } from '../../../business/models/dashboard/types'
 
 /**
  * Backend class data structure (snake_case from API)
@@ -24,7 +24,16 @@ interface BackendClass {
 interface CreateClassBackendResponse {
   success: boolean
   message?: string
-  class: BackendClass
+  class_info: BackendClass
+}
+
+/**
+ * Backend response structure for generate code
+ */
+interface GenerateCodeBackendResponse {
+  success: boolean
+  code: string
+  message?: string
 }
 
 /**
@@ -80,7 +89,28 @@ export async function createClass(request: CreateClassRequest): Promise<Class> {
     throw new Error(response.data.message || 'Failed to create class')
   }
 
-  return transformClassResponse(response.data.class)
+  return transformClassResponse(response.data.class_info)
+}
+
+/**
+ * Generates a unique class code from the backend
+ *
+ * @returns Generated unique class code
+ */
+export async function generateClassCode(): Promise<string> {
+  const response = await apiClient.get<GenerateCodeBackendResponse>(
+    '/classes/generate-code'
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to generate class code')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to generate class code')
+  }
+
+  return response.data.code
 }
 
 /**
@@ -103,5 +133,230 @@ export async function getAllClasses(teacherId: number): Promise<Class[]> {
   }
 
   return response.data.classes.map(transformClassResponse)
+}
+
+/**
+ * Backend assignment data structure (snake_case from API)
+ */
+interface BackendAssignment {
+  id: number
+  title: string
+  description: string
+  programming_language: string
+  deadline?: string
+  allow_resubmission: boolean
+  is_checked: boolean
+  created_at?: string
+}
+
+/**
+ * Backend student data structure (snake_case from API)
+ */
+interface BackendStudent {
+  id: number
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+  full_name: string
+  enrolled_at?: string
+}
+
+/**
+ * Backend response structure for class detail
+ */
+interface ClassDetailBackendResponse {
+  success: boolean
+  message?: string
+  class_info: BackendClass
+}
+
+/**
+ * Backend response structure for assignments list
+ */
+interface AssignmentListBackendResponse {
+  success: boolean
+  message?: string
+  assignments: BackendAssignment[]
+}
+
+/**
+ * Backend response structure for students list
+ */
+interface StudentListBackendResponse {
+  success: boolean
+  message?: string
+  students: BackendStudent[]
+}
+
+/**
+ * Backend response structure for delete operation
+ */
+interface DeleteClassBackendResponse {
+  success: boolean
+  message?: string
+}
+
+/**
+ * Backend response structure for update operation
+ */
+interface UpdateClassBackendResponse {
+  success: boolean
+  message?: string
+  class_info: BackendClass
+}
+
+/**
+ * Request structure for updating a class
+ */
+export interface UpdateClassBackendRequest {
+  teacher_id: number
+  class_name?: string
+  description?: string
+}
+
+/**
+ * Transforms backend assignment response to frontend Assignment interface
+ */
+function transformAssignmentResponse(backendAssignment: BackendAssignment): Assignment {
+  return {
+    id: backendAssignment.id,
+    title: backendAssignment.title,
+    description: backendAssignment.description,
+    programmingLanguage: backendAssignment.programming_language,
+    deadline: backendAssignment.deadline ? new Date(backendAssignment.deadline) : new Date(),
+    allowResubmission: backendAssignment.allow_resubmission,
+    isChecked: backendAssignment.is_checked,
+    createdAt: backendAssignment.created_at ? new Date(backendAssignment.created_at) : undefined
+  }
+}
+
+/**
+ * Transforms backend student response to frontend EnrolledStudent interface
+ */
+function transformStudentResponse(backendStudent: BackendStudent): EnrolledStudent {
+  return {
+    id: backendStudent.id,
+    username: backendStudent.username,
+    email: backendStudent.email,
+    firstName: backendStudent.first_name,
+    lastName: backendStudent.last_name,
+    fullName: backendStudent.full_name,
+    enrolledAt: backendStudent.enrolled_at ? new Date(backendStudent.enrolled_at) : undefined
+  }
+}
+
+/**
+ * Fetches a class by ID
+ *
+ * @param classId - ID of the class
+ * @param teacherId - Optional teacher ID for authorization
+ * @returns Class data
+ */
+export async function getClassById(classId: number, teacherId?: number): Promise<Class> {
+  const url = teacherId
+    ? `/classes/${classId}?teacher_id=${teacherId}`
+    : `/classes/${classId}`
+
+  const response = await apiClient.get<ClassDetailBackendResponse>(url)
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to fetch class')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch class')
+  }
+
+  return transformClassResponse(response.data.class_info)
+}
+
+/**
+ * Fetches all assignments for a class
+ *
+ * @param classId - ID of the class
+ * @returns List of assignments
+ */
+export async function getClassAssignments(classId: number): Promise<Assignment[]> {
+  const response = await apiClient.get<AssignmentListBackendResponse>(
+    `/classes/${classId}/assignments`
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to fetch assignments')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch assignments')
+  }
+
+  return response.data.assignments.map(transformAssignmentResponse)
+}
+
+/**
+ * Fetches all students enrolled in a class
+ *
+ * @param classId - ID of the class
+ * @returns List of enrolled students
+ */
+export async function getClassStudents(classId: number): Promise<EnrolledStudent[]> {
+  const response = await apiClient.get<StudentListBackendResponse>(
+    `/classes/${classId}/students`
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to fetch students')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch students')
+  }
+
+  return response.data.students.map(transformStudentResponse)
+}
+
+/**
+ * Deletes a class permanently (hard delete with cascade)
+ *
+ * @param classId - ID of the class to delete
+ * @param teacherId - ID of the teacher (for authorization)
+ */
+export async function deleteClass(classId: number, teacherId: number): Promise<void> {
+  const response = await apiClient.delete<DeleteClassBackendResponse>(
+    `/classes/${classId}`,
+    { teacher_id: teacherId }
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to delete class')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to delete class')
+  }
+}
+
+/**
+ * Updates a class
+ *
+ * @param classId - ID of the class to update
+ * @param request - Update data
+ * @returns Updated class data
+ */
+export async function updateClass(classId: number, request: UpdateClassBackendRequest): Promise<Class> {
+  const response = await apiClient.put<UpdateClassBackendResponse>(
+    `/classes/${classId}`,
+    request
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to update class')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to update class')
+  }
+
+  return transformClassResponse(response.data.class_info)
 }
 

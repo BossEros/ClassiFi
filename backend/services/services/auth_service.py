@@ -4,10 +4,11 @@ Part of the Services Layer
 Handles authentication logic and coordinates between Supabase and local database
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.repositories.user_repository import UserRepository
 from repositories.models.user import UserRole
 from shared.supabase_client import supabase
+from shared.config import settings
 from typing import Optional, Tuple
 from uuid import UUID
 
@@ -18,11 +19,11 @@ class AuthService:
     Coordinates between Supabase Auth and local users table
     """
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.user_repo = UserRepository(db)
 
-    def register_user(
+    async def register_user(
         self,
         email: str,
         password: str,
@@ -56,11 +57,11 @@ class AuthService:
             return False, "Invalid role. Must be 'student' or 'teacher'", None, None
 
         # Check if username already exists
-        if self.user_repo.check_username_exists(username):
+        if await self.user_repo.check_username_exists(username):
             return False, "This username is already taken. Please choose a different username.", None, None
 
         # Check if email already exists
-        if self.user_repo.check_email_exists(email):
+        if await self.user_repo.check_email_exists(email):
             return False, "An account with this email already exists. Please use a different email or try logging in.", None, None
 
         try:
@@ -87,7 +88,7 @@ class AuthService:
             supabase_user_id = UUID(supabase_response.user.id)
 
             # Step 2: Create user in local database
-            user = self.user_repo.create_user(
+            user = await self.user_repo.create_user(
                 supabase_user_id=supabase_user_id,
                 username=username,
                 email=email,
@@ -138,7 +139,7 @@ class AuthService:
             else:
                 return False, f"Registration failed. Please try again or contact support if the issue persists.", None, None
 
-    def login_user(
+    async def login_user(
         self,
         email: str,
         password: str
@@ -156,7 +157,7 @@ class AuthService:
             supabase_user_id = UUID(supabase_response.user.id)
 
             # Step 2: Fetch user from local database
-            user = self.user_repo.get_user_by_supabase_id(supabase_user_id)
+            user = await self.user_repo.get_user_by_supabase_id(supabase_user_id)
 
             if not user:
                 return False, "User not found in database", None, None
@@ -196,7 +197,7 @@ class AuthService:
             else:
                 return False, f"Login failed. Please try again or contact support if the issue persists.", None, None
 
-    def verify_token(self, token: str) -> Tuple[bool, Optional[dict]]:
+    async def verify_token(self, token: str) -> Tuple[bool, Optional[dict]]:
         try:
             user_response = supabase.auth.get_user(token)
 
@@ -205,7 +206,7 @@ class AuthService:
 
             supabase_user_id = UUID(user_response.user.id)
 
-            user = self.user_repo.get_user_by_supabase_id(supabase_user_id)
+            user = await self.user_repo.get_user_by_supabase_id(supabase_user_id)
 
             if not user:
                 return False, None
@@ -226,12 +227,12 @@ class AuthService:
         except Exception:
             return False, None
 
-    def request_password_reset(self, email: str) -> Tuple[bool, str]:
+    async def request_password_reset(self, email: str) -> Tuple[bool, str]:
         try:
             supabase.auth.reset_password_for_email(
                 email,
                 {
-                    "redirect_to": "http://localhost:5173/reset-password"
+                    "redirect_to": f"{settings.frontend_url}/reset-password"
                 }
             )
             return True, "If the email exists, a password reset link has been sent"

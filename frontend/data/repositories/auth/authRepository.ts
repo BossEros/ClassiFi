@@ -11,9 +11,6 @@ import type {
   ResetPasswordResponse
 } from '../../../business/models/auth/types'
 
-/**
- * Backend user data structure (snake_case from API)
- */
 interface BackendUser {
   id: string | number
   username: string
@@ -24,11 +21,6 @@ interface BackendUser {
   created_at: string
 }
 
-/**
- * Transforms backend user response (snake_case) to frontend User interface (camelCase)
- * @param backendUser - User object from backend with snake_case fields
- * @returns User object with camelCase fields
- */
 function transformUserResponse(backendUser: BackendUser): User {
   return {
     id: typeof backendUser.id === 'string' ? backendUser.id : backendUser.id.toString(),
@@ -41,13 +33,7 @@ function transformUserResponse(backendUser: BackendUser): User {
   }
 }
 
-/**
- * Authenticates a user with login credentials
- * Uses backend API which handles both Supabase auth and database sync
- *
- * @param credentials - User login credentials
- * @returns Authentication response with user data and token
- */
+
 export async function login(
   credentials: LoginCredentials
 ): Promise<AuthResponse> {
@@ -70,13 +56,7 @@ export async function login(
   return authResponse
 }
 
-/**
- * Registers a new user
- * Calls backend API which handles both Supabase auth and database insertion
- *
- * @param data - User registration data
- * @returns Authentication response with user data and token
- */
+
 export async function register(data: RegisterData): Promise<AuthResponse> {
   // Call backend API for registration
   const response = await apiClient.post<AuthResponse>('/auth/register', {
@@ -102,10 +82,6 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
   return authResponse
 }
 
-/**
- * Logs out the current user
- * Signs out from Supabase and clears local session
- */
 export async function logout(): Promise<void> {
   // Sign out from Supabase
   await supabase.auth.signOut()
@@ -115,13 +91,7 @@ export async function logout(): Promise<void> {
   localStorage.removeItem('user')
 }
 
-/**
- * Verifies the current authentication token
- * Calls backend API to verify Supabase token
- *
- * @param token - Supabase access token to verify
- * @returns True if token is valid, false otherwise
- */
+
 export async function verifyToken(token: string): Promise<boolean> {
   // Call backend API to verify token
   const response = await apiClient.post<AuthResponse>(`/auth/verify?token=${token}`, {})
@@ -133,13 +103,7 @@ export async function verifyToken(token: string): Promise<boolean> {
   return response.data?.success ?? false
 }
 
-/**
- * Sends a password reset request for the given email
- * Calls backend API which triggers Supabase password reset email
- *
- * @param data - Forgot password data containing email
- * @returns Response indicating success or failure
- */
+
 export async function forgotPassword(
   data: ForgotPasswordData
 ): Promise<ForgotPasswordResponse> {
@@ -155,16 +119,7 @@ export async function forgotPassword(
   return response.data!
 }
 
-/**
- * Resets user password using Supabase session established from reset email link
- * Uses Supabase's recommended frontend-only approach
- * 
- * When user clicks reset link, Supabase automatically establishes a session
- * (via detectSessionInUrl: true). We then call updateUser() directly.
- *
- * @param data - Reset password data containing new password
- * @returns Response indicating success or failure
- */
+
 export async function resetPassword(
   data: ResetPasswordData
 ): Promise<ResetPasswordResponse> {

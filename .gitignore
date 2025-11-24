@@ -166,3 +166,8 @@ docs/**/node_modules/
 *.zip
 *.rar
 *.7z
+
+.agent
+.cursor
+.claude
+

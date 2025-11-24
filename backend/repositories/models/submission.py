@@ -28,8 +28,8 @@ class Submission(Base):
     is_latest = Column(Boolean, nullable=False, default=True)
 
     # Relationships
-    assignment = relationship("Assignment", back_populates="submissions")
-    student = relationship("User", back_populates="submissions")
+    assignment = relationship("Assignment", back_populates="submissions", lazy="selectin")
+    student = relationship("User", back_populates="submissions", lazy="selectin")
 
     # Table arguments for constraints and indexes
     __table_args__ = (

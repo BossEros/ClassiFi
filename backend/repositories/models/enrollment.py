@@ -23,8 +23,8 @@ class Enrollment(Base):
     enrolled_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
 
     # Relationships
-    student = relationship("User", back_populates="enrollments")
-    class_obj = relationship("Class", back_populates="enrollments")
+    student = relationship("User", back_populates="enrollments", lazy="selectin")
+    class_obj = relationship("Class", back_populates="enrollments", lazy="selectin")
 
     # Table arguments for constraints and indexes
     __table_args__ = (

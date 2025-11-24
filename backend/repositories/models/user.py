@@ -38,9 +38,9 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), default=func.now())
 
     # Relationships
-    classes = relationship("Class", back_populates="teacher", cascade="all, delete-orphan")
-    enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
-    submissions = relationship("Submission", back_populates="student", cascade="all, delete-orphan")
+    classes = relationship("Class", back_populates="teacher", cascade="all, delete-orphan", lazy="selectin")
+    enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan", lazy="selectin")
+    submissions = relationship("Submission", back_populates="student", cascade="all, delete-orphan", lazy="selectin")
 
     def __repr__(self):
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}', role='{self.role.value}')>"

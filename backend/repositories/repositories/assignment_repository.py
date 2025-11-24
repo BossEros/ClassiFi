@@ -4,20 +4,24 @@ Part of the Data Access Layer
 Handles database operations for assignments
 """
 
-from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
+from sqlalchemy.orm import selectinload
 from repositories.models.assignment import Assignment, ProgrammingLanguage
 from typing import List, Optional
 from datetime import datetime
+import sys
 
 
 class AssignmentRepository:
     """Repository for assignment-related database operations"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
+        print(f"[DEBUGGER:AssignmentRepository.__init__:19] db type: {type(db)}", file=sys.stderr, flush=True)
+        print(f"[DEBUGGER:AssignmentRepository.__init__:20] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
         self.db = db
 
-    def get_assignment_by_id(self, assignment_id: int) -> Optional[Assignment]:
+    async def get_assignment_by_id(self, assignment_id: int) -> Optional[Assignment]:
         """
         Get an assignment by ID
 
@@ -27,9 +31,12 @@ class AssignmentRepository:
         Returns:
             Assignment object or None if not found
         """
-        return self.db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        result = await self.db.execute(
+            select(Assignment).where(Assignment.id == assignment_id)
+        )
+        return result.scalar_one_or_none()
 
-    def get_assignments_by_class(
+    async def get_assignments_by_class(
         self,
         class_id: int,
         active_only: bool = True
@@ -44,14 +51,16 @@ class AssignmentRepository:
         Returns:
             List of Assignment objects
         """
-        query = self.db.query(Assignment).filter(Assignment.class_id == class_id)
+        query = select(Assignment).where(Assignment.class_id == class_id)
 
         if active_only:
-            query = query.filter(Assignment.is_active == True)
+            query = query.where(Assignment.is_active == True)
 
-        return query.order_by(Assignment.deadline.asc()).all()
+        query = query.order_by(Assignment.deadline.asc())
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
 
-    def get_pending_assignments_by_teacher(
+    async def get_pending_assignments_by_teacher(
         self,
         teacher_id: int,
         limit: Optional[int] = None
@@ -70,9 +79,10 @@ class AssignmentRepository:
         from repositories.models.class_model import Class
 
         query = (
-            self.db.query(Assignment)
+            select(Assignment)
+            .options(selectinload(Assignment.class_obj))
             .join(Class, Assignment.class_id == Class.id)
-            .filter(and_(
+            .where(and_(
                 Class.teacher_id == teacher_id,
                 Assignment.is_active == True,
                 Assignment.deadline >= datetime.now()
@@ -83,9 +93,10 @@ class AssignmentRepository:
         if limit:
             query = query.limit(limit)
 
-        return query.all()
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
 
-    def get_assignments_needing_review_by_teacher(
+    async def get_assignments_needing_review_by_teacher(
         self,
         teacher_id: int,
         limit: Optional[int] = None
@@ -102,14 +113,18 @@ class AssignmentRepository:
         Returns:
             List of Assignment objects
         """
+        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:115] teacher_id={teacher_id}, limit={limit}", file=sys.stderr, flush=True)
+        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:116] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
         from repositories.models.class_model import Class
 
         # TODO: Join with submissions table to filter assignments with pending reviews
         # For now, return all active assignments
+        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:121] Building query...", file=sys.stderr, flush=True)
         query = (
-            self.db.query(Assignment)
+            select(Assignment)
+            .options(selectinload(Assignment.class_obj))
             .join(Class, Assignment.class_id == Class.id)
-            .filter(and_(
+            .where(and_(
                 Class.teacher_id == teacher_id,
                 Assignment.is_active == True
             ))
@@ -119,9 +134,12 @@ class AssignmentRepository:
         if limit:
             query = query.limit(limit)
 
-        return query.all()
+        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:136] About to execute query", file=sys.stderr, flush=True)
+        result = await self.db.execute(query)
+        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:138] Query executed successfully", file=sys.stderr, flush=True)
+        return list(result.scalars().all())
 
-    def create_assignment(
+    async def create_assignment(
         self,
         class_id: int,
         assignment_name: str,
@@ -155,12 +173,12 @@ class AssignmentRepository:
         )
 
         self.db.add(new_assignment)
-        self.db.commit()
-        self.db.refresh(new_assignment)
+        await self.db.commit()
+        await self.db.refresh(new_assignment)
 
         return new_assignment
 
-    def update_assignment(
+    async def update_assignment(
         self,
         assignment_id: int,
         **kwargs
@@ -175,7 +193,7 @@ class AssignmentRepository:
         Returns:
             Updated Assignment object or None if not found
         """
-        assignment = self.get_assignment_by_id(assignment_id)
+        assignment = await self.get_assignment_by_id(assignment_id)
 
         if not assignment:
             return None
@@ -184,12 +202,12 @@ class AssignmentRepository:
             if hasattr(assignment, key):
                 setattr(assignment, key, value)
 
-        self.db.commit()
-        self.db.refresh(assignment)
+        await self.db.commit()
+        await self.db.refresh(assignment)
 
         return assignment
 
-    def delete_assignment(self, assignment_id: int) -> bool:
+    async def delete_assignment(self, assignment_id: int) -> bool:
         """
         Delete an assignment (sets is_active to False)
 
@@ -199,12 +217,12 @@ class AssignmentRepository:
         Returns:
             True if deleted, False if not found
         """
-        assignment = self.get_assignment_by_id(assignment_id)
+        assignment = await self.get_assignment_by_id(assignment_id)
 
         if not assignment:
             return False
 
         assignment.is_active = False
-        self.db.commit()
+        await self.db.commit()
 
         return True

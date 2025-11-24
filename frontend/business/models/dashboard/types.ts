@@ -19,6 +19,33 @@ export interface Task {
   createdAt?: Date
 }
 
+export interface Assignment {
+  id: number
+  title: string
+  description: string
+  programmingLanguage: string
+  deadline: Date
+  allowResubmission: boolean
+  isChecked: boolean
+  createdAt?: Date
+}
+
+export interface EnrolledStudent {
+  id: number
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  fullName: string
+  enrolledAt?: Date
+}
+
+export interface ClassDetailData {
+  classInfo: Class
+  assignments: Assignment[]
+  students: EnrolledStudent[]
+}
+
 export interface NavigationItem {
   id: string
   label: string
