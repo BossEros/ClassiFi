@@ -10,13 +10,31 @@ import { RegisterPage } from './pages/RegisterPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
+import { StudentDashboardPage } from './pages/StudentDashboardPage'
 import { ClassesPage } from './pages/ClassesPage'
 import { ClassDetailPage } from './pages/ClassDetailPage'
 import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
+import { getCurrentUser } from '@/business/services/auth/authService'
 import { useEffect } from 'react'
+
+// Component to render dashboard based on user role
+function RoleBasedDashboard() {
+  const user = getCurrentUser()
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (user.role === 'student') {
+    return <StudentDashboardPage />
+  }
+
+  // Default to teacher dashboard for teachers and admins
+  return <TeacherDashboardPage />
+}
 
 // Component to handle redirects for Supabase email confirmation and password reset
 function AuthRedirectHandler() {
@@ -77,7 +95,7 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <TeacherDashboardPage />
+              <RoleBasedDashboard />
             </ProtectedRoute>
           }
         />

@@ -242,3 +242,30 @@ class ClassRepository:
         )
         result = await self.db.execute(query)
         return list(result.scalars().all())
+
+    async def get_classes_by_student(
+        self,
+        student_id: int,
+        active_only: bool = True
+    ) -> List[Class]:
+        """
+        Get all classes a student is enrolled in
+
+        Args:
+            student_id: ID of the student
+            active_only: If True, only return active classes
+
+        Returns:
+            List of Class objects
+        """
+        query = (
+            select(Class)
+            .join(Enrollment, Class.id == Enrollment.class_id)
+            .where(Enrollment.student_id == student_id)
+        )
+        if active_only:
+            query = query.where(Class.is_active == True)
+        query = query.order_by(Enrollment.enrolled_at.desc())
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

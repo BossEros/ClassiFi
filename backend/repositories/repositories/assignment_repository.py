@@ -226,3 +226,42 @@ class AssignmentRepository:
         await self.db.commit()
 
         return True
+
+    async def get_pending_assignments_for_student(
+        self,
+        student_id: int,
+        limit: Optional[int] = None
+    ) -> List[Assignment]:
+        """
+        Get pending assignments for all classes a student is enrolled in
+        Returns assignments that haven't passed their deadline yet
+
+        Args:
+            student_id: ID of the student
+            limit: Optional limit on number of assignments to return
+
+        Returns:
+            List of Assignment objects
+        """
+        from repositories.models.class_model import Class
+        from repositories.models.enrollment import Enrollment
+
+        query = (
+            select(Assignment)
+            .options(selectinload(Assignment.class_obj))
+            .join(Class, Assignment.class_id == Class.id)
+            .join(Enrollment, Class.id == Enrollment.class_id)
+            .where(and_(
+                Enrollment.student_id == student_id,
+                Assignment.is_active == True,
+                Class.is_active == True,
+                Assignment.deadline >= datetime.now()
+            ))
+            .order_by(Assignment.deadline.asc())
+        )
+
+        if limit:
+            query = query.limit(limit)
+
+        result = await self.db.execute(query)
+        return list(result.scalars().all())

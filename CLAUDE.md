@@ -29,26 +29,26 @@ The project follows a strict 3-tier architecture to separate concerns and improv
 
 ### Layer Responsibilities
 
-**Presentation Layer** (`src/presentation/`):
+**Presentation Layer** (`presentation/`):
 - UI components, pages, and forms
 - User interactions and event handling
 - Display logic only (no business rules)
 - Calls business logic layer for operations
 
-**Business Logic Layer** (`src/business/`):
+**Business Logic Layer** (`business/`):
 - Application business rules and logic
 - Data validation and transformation
 - Service orchestration
 - Model/type definitions
 - No direct API calls (uses data layer)
 
-**Data Access Layer** (`src/data/`):
+**Data Access Layer** (`repositories/`):
 - API communication
 - Data persistence and retrieval
 - External service integration
 - Repository pattern implementation
 
-**Shared Layer** (`src/shared/`):
+**Shared Layer** (`shared/`):
 - Utilities used across all layers
 - Constants and configuration
 - Helper functions
@@ -57,30 +57,42 @@ The project follows a strict 3-tier architecture to separate concerns and improv
 
 ```
 ClassiFi/
-├── src/                           # FRONTEND (React + TypeScript + Vite)
+├── frontend/                      # FRONTEND (React + TypeScript + Vite)
 │   ├── presentation/              # PRESENTATION LAYER
 │   │   ├── components/
 │   │   │   ├── ui/               # Reusable UI primitives (Button, Input)
-│   │   │   └── forms/            # Form components (LoginForm, RegisterForm)
+│   │   │   ├── forms/            # Form components (LoginForm, RegisterForm)
+│   │   │   └── dashboard/        # Dashboard components
 │   │   ├── pages/                # Page components (LoginPage, RegisterPage)
 │   │   └── App.tsx               # Main application component
 │   │
 │   ├── business/                  # BUSINESS LOGIC LAYER
 │   │   ├── models/
-│   │   │   └── auth/             # Auth-related types and interfaces
+│   │   │   ├── auth/             # Auth-related types and interfaces
+│   │   │   │   └── types.ts
+│   │   │   └── dashboard/        # Dashboard types
 │   │   │       └── types.ts
 │   │   ├── services/
-│   │   │   └── auth/             # Auth service (business logic)
-│   │   │       └── authService.ts
+│   │   │   ├── auth/             # Auth service (business logic)
+│   │   │   │   └── authService.ts
+│   │   │   ├── dashboard/        # Dashboard service
+│   │   │   │   └── teacherDashboardService.ts
+│   │   │   └── class/            # Class service
+│   │   │       └── classService.ts
 │   │   └── validation/           # Validation rules
 │   │       └── authValidation.ts
 │   │
 │   ├── data/                      # DATA ACCESS LAYER
 │   │   ├── api/
-│   │   │   └── apiClient.ts      # Base API client
+│   │   │   ├── apiClient.ts      # Base API client
+│   │   │   └── supabaseClient.ts # Supabase client
 │   │   └── repositories/
-│   │       └── auth/             # Auth repository (API calls)
-│   │           └── authRepository.ts
+│   │       ├── auth/             # Auth repository (API calls)
+│   │       │   └── authRepository.ts
+│   │       ├── dashboard/        # Dashboard repository
+│   │       │   └── teacherDashboardRepository.ts
+│   │       └── class/            # Class repository
+│   │           └── classRepository.ts
 │   │
 │   ├── shared/                    # SHARED UTILITIES
 │   │   ├── utils/
@@ -89,10 +101,15 @@ ClassiFi/
 │   │       └── index.ts          # App-wide constants
 │   │
 │   ├── main.tsx                   # Application entry point
-│   └── index.css                  # Global styles
+│   ├── index.css                  # Global styles
+│   ├── index.html                # HTML entry point
+│   ├── vite.config.ts            # Vite configuration
+│   ├── tsconfig.json             # TypeScript configuration
+│   ├── package.json              # Frontend dependencies
+│   └── eslint.config.js          # ESLint configuration
 │
 ├── backend/                       # BACKEND (FastAPI + Python)
-│   ├── presentation/              # PRESENTATION LAYER
+│   ├── api/                       # API LAYER
 │   │   ├── routers/              # API endpoint routes
 │   │   │   └── auth.py           # Authentication endpoints
 │   │   ├── schemas/              # Pydantic request/response models
@@ -100,13 +117,13 @@ ClassiFi/
 │   │   ├── middleware/           # Request/response pipeline
 │   │   └── main.py               # FastAPI app entry point
 │   │
-│   ├── business/                  # BUSINESS LOGIC LAYER
+│   ├── services/                  # SERVICES LAYER
 │   │   ├── services/             # Business logic orchestration
 │   │   │   └── auth_service.py   # Auth business logic
 │   │   ├── validation/           # Business rule validation
 │   │   └── models/               # Domain models
 │   │
-│   ├── data/                      # DATA ACCESS LAYER
+│   ├── repositories/             # DATA ACCESS LAYER
 │   │   ├── models/               # SQLAlchemy database models
 │   │   │   └── user.py           # User model
 │   │   ├── repositories/         # Data access patterns
@@ -127,12 +144,7 @@ ClassiFi/
 │   └── migrations/               # SQL migration files
 │       └── 002_add_supabase_integration.sql
 │
-├── public/                        # Static assets
-├── index.html                     # HTML entry point
-├── vite.config.ts                 # Vite configuration
-├── tsconfig.json                  # TypeScript configuration
-├── package.json                   # Frontend dependencies
-└── eslint.config.js               # ESLint configuration
+│   └── public/                    # Static assets
 ```
 
 ## Development Commands
@@ -171,7 +183,7 @@ source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 
 # Start development server (http://localhost:8000)
-uvicorn presentation.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
 
 # Access API documentation
 # Swagger UI: http://localhost:8000/docs
@@ -247,7 +259,7 @@ uvicorn presentation.main:app --reload --host 0.0.0.0 --port 8000
 
 ### Path Aliases
 
-The project uses `@/` as an alias for `./src/`:
+The project uses `@/` as an alias for the frontend root directory:
 ```typescript
 import { cn } from '@/shared/utils/cn'
 import { Button } from '@/presentation/components/ui/Button'
@@ -255,37 +267,37 @@ import { loginUser } from '@/business/services/auth/authService'
 ```
 
 This is configured in both:
-- `vite.config.ts` (resolve.alias)
-- `tsconfig.json` (compilerOptions.paths)
+- `frontend/vite.config.ts` (resolve.alias: `'@': path.resolve(__dirname, '.')`)
+- `frontend/tsconfig.json` (compilerOptions.paths: `"@/*": ["./*"]`)
 
 ### Component Organization
 
-1. **UI Components** (`src/presentation/components/ui/`):
+1. **UI Components** (`frontend/presentation/components/ui/`):
    - Reusable, generic UI primitives
    - Follow a consistent pattern with forwardRef
    - Use the `cn()` utility for className merging
    - Accept standard HTML element props
    - Example: `Button`, `Input`
 
-2. **Form Components** (`src/presentation/components/forms/`):
+2. **Form Components** (`frontend/presentation/components/forms/`):
    - Handle form state and user input
    - Call business layer services for operations
    - Display validation errors from business layer
    - Example: `LoginForm`, `RegisterForm`
 
-3. **Page Components** (`src/presentation/pages/`):
+3. **Page Components** (`frontend/presentation/pages/`):
    - Compose forms and UI components
    - Handle page-level state and navigation
    - Example: `LoginPage`, `RegisterPage`
 
-4. **Services** (`src/business/services/`):
+4. **Services** (`frontend/business/services/`):
    - Contain business logic and orchestration
    - Call validation functions
    - Call repository methods for data operations
    - Return standardized response objects
    - Example: `authService`
 
-5. **Repositories** (`src/data/repositories/`):
+5. **Repositories** (`frontend/data/repositories/`):
    - Handle all API communication
    - Return raw data from API
    - No business logic or validation
@@ -294,7 +306,7 @@ This is configured in both:
 ### TypeScript Conventions
 
 - Use TypeScript for all new files
-- Define interfaces in `src/business/models/`
+- Define interfaces in `business/models/`
 - Leverage type inference where appropriate
 - Use strict type checking
 
@@ -315,12 +327,12 @@ Currently uses React's built-in `useState` for local state. No global state mana
 
 When adding new features, follow this workflow:
 
-1. **Define Types** in `src/business/models/`
-2. **Create Validation** in `src/business/validation/`
-3. **Create Repository** in `src/data/repositories/` for API calls
-4. **Create Service** in `src/business/services/` for business logic
-5. **Create UI Components** in `src/presentation/components/`
-6. **Create Page** in `src/presentation/pages/` if needed
+1. **Define Types** in `frontend/business/models/`
+2. **Create Validation** in `frontend/business/validation/`
+3. **Create Repository** in `frontend/data/repositories/` for API calls
+4. **Create Service** in `frontend/business/services/` for business logic
+5. **Create UI Components** in `frontend/presentation/components/`
+6. **Create Page** in `frontend/presentation/pages/` if needed
 
 ### Path Configuration
 
@@ -366,19 +378,19 @@ Response flows back up: Data → Business → Presentation
 
 The backend mirrors the frontend's 3-tier architecture:
 
-**Presentation Layer** (`backend/presentation/`):
+**API Layer** (`backend/api/`):
 - REST API endpoints using FastAPI routers
 - Pydantic schemas for request/response validation
 - HTTP status codes and error responses
 - API documentation (Swagger/ReDoc)
 
-**Business Logic Layer** (`backend/business/`):
+**Services Layer** (`backend/services/`):
 - Service orchestration and business rules
 - Transaction management
 - Supabase authentication integration
 - Error handling and rollback logic
 
-**Data Access Layer** (`backend/data/`):
+**Data Access Layer** (`backend/repositories/`):
 - SQLAlchemy ORM models
 - Repository pattern for data access
 - Database session management
@@ -391,7 +403,7 @@ The backend mirrors the frontend's 3-tier architecture:
 
 ### Database Schema
 
-**User Model** (`backend/data/models/user.py`):
+**User Model** (`backend/repositories/models/user.py`):
 ```python
 class User(Base):
     __tablename__ = "users"
@@ -429,7 +441,7 @@ Base URL: `http://localhost:8000`
 
 ### Backend Validation
 
-**Current Backend Validation** (`backend/presentation/schemas/auth.py`):
+**Current Backend Validation** (`backend/api/schemas/auth.py`):
 
 **RegisterRequest:**
 - `email`: EmailStr (Pydantic email validation)
@@ -514,31 +526,31 @@ API_PREFIX=/api
 
 When adding new backend features:
 
-1. **Define Pydantic Schemas** in `backend/presentation/schemas/`
-2. **Create Database Model** in `backend/data/models/` (if needed)
-3. **Implement Repository** in `backend/data/repositories/`
-4. **Create Service** in `backend/business/services/`
-5. **Define Router Endpoints** in `backend/presentation/routers/`
-6. **Register Router** in `backend/presentation/main.py`
+1. **Define Pydantic Schemas** in `backend/api/schemas/`
+2. **Create Database Model** in `backend/repositories/models/` (if needed)
+3. **Implement Repository** in `backend/repositories/repositories/`
+4. **Create Service** in `backend/services/services/`
+5. **Define Router Endpoints** in `backend/api/routers/`
+6. **Register Router** in `backend/api/main.py`
 7. **Create Migration** in `database/migrations/` (if schema changes)
 
 ### Backend Layer Boundaries
 
 **CRITICAL Backend Rules:**
 
-1. **Presentation Layer (Routers/Schemas)**:
-   - May import from: Business Layer, Shared Layer
+1. **API Layer (Routers/Schemas)**:
+   - May import from: Services Layer, Shared Layer
    - NEVER import from: Data Layer directly
    - Example: Router calls `auth_service.register_user()`, not `user_repository.create_user()`
 
-2. **Business Layer (Services)**:
+2. **Services Layer (Services)**:
    - May import from: Data Layer, Shared Layer
-   - NEVER import from: Presentation Layer
+   - NEVER import from: API Layer
    - Example: Service calls repository and applies business logic
 
 3. **Data Layer (Models/Repositories)**:
    - May import from: Shared Layer only
-   - NEVER import from: Presentation or Business Layers
+   - NEVER import from: API or Services Layers
    - Example: Repository only handles database operations
 
 4. **Shared Layer**:
@@ -553,3 +565,24 @@ This project uses the Byterover MCP server for knowledge management:
 - **byterover-retrieve-knowledge**: Use before starting new tasks or making architectural decisions
 
 See `.cursor/rules/byterover-rules.mdc` for detailed usage guidelines.
+
+[byterover-mcp]
+
+[byterover-mcp]
+
+You are given two tools from Byterover MCP server, including
+## 1. `byterover-store-knowledge`
+You `MUST` always use this tool when:
+
++ Learning new patterns, APIs, or architectural decisions from the codebase
++ Encountering error solutions or debugging techniques
++ Finding reusable code patterns or utility functions
++ Completing any significant task or plan implementation
+
+## 2. `byterover-retrieve-knowledge`
+You `MUST` always use this tool when:
+
++ Starting any new task or implementation to gather relevant context
++ Before making architectural decisions to understand existing patterns
++ When debugging issues to check for previous solutions
++ Working with unfamiliar parts of the codebase

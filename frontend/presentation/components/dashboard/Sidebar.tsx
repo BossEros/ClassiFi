@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, Grid3x3, List, Clock, Menu, X, LogOut } from 'lucide-react'
+import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText } from 'lucide-react'
 import { NavItem } from './NavItem'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'
@@ -14,11 +14,17 @@ import { getCurrentUser } from '@/business/services/auth/authService'
 import type { User } from '@/business/models/auth/types'
 import { APP_NAME } from '@/shared/constants'
 
-const navigationItems = [
+const teacherNavigationItems = [
   { id: 'home', label: 'Home', path: '/dashboard', icon: Home },
   { id: 'classes', label: 'Classes', path: '/dashboard/classes', icon: Grid3x3 },
   { id: 'tasks', label: 'All Tasks', path: '/dashboard/tasks', icon: List },
   { id: 'history', label: 'Analysis History', path: '/dashboard/history', icon: Clock }
+]
+
+const studentNavigationItems = [
+  { id: 'home', label: 'Home', path: '/dashboard', icon: Home },
+  { id: 'classes', label: 'My Classes', path: '/dashboard/classes', icon: Grid3x3 },
+  { id: 'assignments', label: 'Assignments', path: '/dashboard/assignments', icon: FileText }
 ]
 
 export function Sidebar() {
@@ -69,7 +75,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-          {navigationItems.map((item) => (
+          {(user?.role === 'student' ? studentNavigationItems : teacherNavigationItems).map((item) => (
             <NavItem
               key={item.id}
               item={item}
