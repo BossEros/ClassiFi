@@ -6,9 +6,11 @@ Handles business logic for class operations
 
 import random
 import string
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.repositories.class_repository import ClassRepository
 from repositories.repositories.assignment_repository import AssignmentRepository
+from repositories.models.assignment import ProgrammingLanguage
 from typing import Tuple, Dict, Any, List, Optional
 
 
@@ -96,6 +98,7 @@ class ClassService:
             return True, "Class created successfully", class_data
 
         except Exception as e:
+            await self.db.rollback()
             return False, f"Failed to create class: {str(e)}", {}
 
     async def get_all_classes_by_teacher(
@@ -206,7 +209,11 @@ class ClassService:
                 # For now, isChecked is based on whether deadline has passed
                 # This can be enhanced later to check actual submission reviews
                 from datetime import datetime
-                is_checked = assignment.deadline < datetime.now()
+                if assignment.deadline.tzinfo:
+                    now = datetime.now(assignment.deadline.tzinfo)
+                else:
+                    now = datetime.now()
+                is_checked = assignment.deadline < now
 
                 assignments_data.append({
                     "id": assignment.id,
@@ -297,6 +304,7 @@ class ClassService:
                 return False, "Failed to delete class"
 
         except Exception as e:
+            await self.db.rollback()
             return False, f"Failed to delete class: {str(e)}"
 
     async def update_class(
@@ -364,4 +372,317 @@ class ClassService:
             return True, "Class updated successfully", class_data
 
         except Exception as e:
+            await self.db.rollback()
             return False, f"Failed to update class: {str(e)}", {}
+
+    async def create_assignment(
+        self,
+        class_id: int,
+        teacher_id: int,
+        assignment_name: str,
+        description: str,
+        programming_language: str,
+        deadline: datetime,
+        allow_resubmission: bool = True
+    ) -> Tuple[bool, str, Dict[str, Any]]:
+        """
+        Create a new assignment for a class
+
+        Args:
+            class_id: ID of the class
+            teacher_id: ID of the teacher (for authorization)
+            assignment_name: Name of the assignment
+            description: Assignment description
+            programming_language: Programming language (python or java)
+            deadline: Assignment deadline
+            allow_resubmission: Whether to allow resubmissions
+
+        Returns:
+            Tuple of (success, message, assignment_data)
+        """
+        try:
+            # Verify class exists and is active
+            class_obj = await self.class_repo.get_class_by_id(class_id)
+
+            if not class_obj:
+                return False, "Class not found", {}
+
+            if not class_obj.is_active:
+                return False, "Class has been deleted", {}
+
+            # Check authorization - teacher must own the class
+            if class_obj.teacher_id != teacher_id:
+                return False, "Unauthorized to create assignments for this class", {}
+
+            # Validate deadline is in the future
+            now = datetime.now(deadline.tzinfo) if deadline.tzinfo else datetime.now()
+            if deadline <= now:
+                return False, "Deadline must be in the future", {}
+
+            # Convert programming language string to enum
+            try:
+                prog_lang_enum = ProgrammingLanguage(programming_language.lower())
+            except ValueError:
+                return False, f"Invalid programming language. Must be 'python' or 'java'", {}
+
+            # Create the assignment
+            assignment = await self.assignment_repo.create_assignment(
+                class_id=class_id,
+                assignment_name=assignment_name.strip(),
+                description=description.strip(),
+                programming_language=prog_lang_enum,
+                deadline=deadline,
+                allow_resubmission=allow_resubmission
+            )
+
+            # Format response
+            assignment_data = {
+                "id": assignment.id,
+                "class_id": assignment.class_id,
+                "title": assignment.assignment_name,
+                "description": assignment.description,
+                "programming_language": assignment.programming_language.value,
+                "deadline": assignment.deadline.isoformat() if assignment.deadline else None,
+                "allow_resubmission": assignment.allow_resubmission,
+                "is_active": assignment.is_active,
+                "created_at": assignment.created_at.isoformat() if assignment.created_at else None
+            }
+
+            return True, "Assignment created successfully", assignment_data
+
+        except Exception as e:
+            await self.db.rollback()
+            return False, f"Failed to create assignment: {str(e)}", {}
+
+    async def update_assignment(
+        self,
+        assignment_id: int,
+        teacher_id: int,
+        assignment_name: Optional[str] = None,
+        description: Optional[str] = None,
+        programming_language: Optional[str] = None,
+        deadline: Optional[datetime] = None,
+        allow_resubmission: Optional[bool] = None
+    ) -> Tuple[bool, str, Dict[str, Any]]:
+        """
+        Update an assignment
+        
+        Args:
+            assignment_id: ID of the assignment
+            teacher_id: ID of the teacher (for authorization)
+            assignment_name: New name
+            description: New description
+            programming_language: New programming language
+            deadline: New deadline
+            allow_resubmission: New allow_resubmission setting
+            
+        Returns:
+            Tuple of (success, message, assignment_data)
+        """
+        try:
+            # Get assignment
+            assignment = await self.assignment_repo.get_assignment_by_id(assignment_id)
+            
+            if not assignment:
+                return False, "Assignment not found", {}
+                
+            if not assignment.is_active:
+                return False, "Assignment has been deleted", {}
+                
+            # Verify class and authorization
+            class_obj = await self.class_repo.get_class_by_id(assignment.class_id)
+            if not class_obj or class_obj.teacher_id != teacher_id:
+                return False, "Unauthorized to update this assignment", {}
+                
+            # Validate deadline if provided
+            if deadline:
+                now = datetime.now(deadline.tzinfo) if deadline.tzinfo else datetime.now()
+                if deadline <= now:
+                    return False, "Deadline must be in the future", {}
+                    
+            # Convert programming language if provided
+            prog_lang_enum = None
+            if programming_language:
+                try:
+                    prog_lang_enum = ProgrammingLanguage(programming_language.lower())
+                except ValueError:
+                    return False, f"Invalid programming language. Must be 'python' or 'java'", {}
+            
+            # Prepare update data
+            update_data = {}
+            if assignment_name is not None:
+                update_data['assignment_name'] = assignment_name.strip()
+            if description is not None:
+                update_data['description'] = description.strip()
+            if prog_lang_enum is not None:
+                update_data['programming_language'] = prog_lang_enum
+            if deadline is not None:
+                update_data['deadline'] = deadline
+            if allow_resubmission is not None:
+                update_data['allow_resubmission'] = allow_resubmission
+                
+            if not update_data:
+                return False, "No fields to update", {}
+                
+            # Update assignment
+            updated_assignment = await self.assignment_repo.update_assignment(
+                assignment_id,
+                **update_data
+            )
+            
+            if not updated_assignment:
+                return False, "Failed to update assignment", {}
+                
+            # Format response
+            assignment_data = {
+                "id": updated_assignment.id,
+                "class_id": updated_assignment.class_id,
+                "title": updated_assignment.assignment_name,
+                "description": updated_assignment.description,
+                "programming_language": updated_assignment.programming_language.value,
+                "deadline": updated_assignment.deadline.isoformat() if updated_assignment.deadline else None,
+                "allow_resubmission": updated_assignment.allow_resubmission,
+                "is_active": updated_assignment.is_active,
+                "created_at": updated_assignment.created_at.isoformat() if updated_assignment.created_at else None
+            }
+            
+            return True, "Assignment updated successfully", assignment_data
+            
+        except Exception as e:
+            await self.db.rollback()
+            return False, f"Failed to update assignment: {str(e)}", {}
+
+    async def delete_assignment(
+        self,
+        assignment_id: int,
+        teacher_id: int
+    ) -> Tuple[bool, str]:
+        """
+        Delete an assignment (hard delete)
+        
+        Args:
+            assignment_id: ID of the assignment
+            teacher_id: ID of the teacher (for authorization)
+            
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            # Get assignment
+            assignment = await self.assignment_repo.get_assignment_by_id(assignment_id)
+            
+            if not assignment:
+                return False, "Assignment not found"
+                
+            # Verify class and authorization
+            class_obj = await self.class_repo.get_class_by_id(assignment.class_id)
+            if not class_obj or class_obj.teacher_id != teacher_id:
+                return False, "Unauthorized to delete this assignment"
+                
+            # Delete assignment
+            success = await self.assignment_repo.delete_assignment(assignment_id)
+            
+            if success:
+                return True, "Assignment deleted successfully"
+            else:
+                return False, "Failed to delete assignment"
+                
+        except Exception as e:
+            await self.db.rollback()
+            return False, f"Failed to delete assignment: {str(e)}"
+
+    async def remove_student(
+        self,
+        class_id: int,
+        student_id: int,
+        teacher_id: int
+    ) -> Tuple[bool, str]:
+        """
+        Remove a student from a class
+
+        Args:
+            class_id: ID of the class
+            student_id: ID of the student to remove
+            teacher_id: ID of the teacher (for authorization)
+
+        Returns:
+            Tuple of (success, message)
+        """
+        try:
+            # Verify class exists
+            class_obj = await self.class_repo.get_class_by_id(class_id)
+
+            if not class_obj:
+                return False, "Class not found"
+
+            # Check authorization - teacher must own the class
+            if class_obj.teacher_id != teacher_id:
+                return False, "Unauthorized to remove students from this class"
+
+            # Remove student
+            success = await self.class_repo.remove_student(class_id, student_id)
+
+            if success:
+                return True, "Student removed successfully"
+            else:
+                return False, "Student not found in this class"
+
+        except Exception as e:
+            await self.db.rollback()
+            
+    async def get_assignment_details(
+        self,
+        assignment_id: int,
+        user_id: int
+    ) -> Tuple[bool, str, Dict[str, Any]]:
+        """
+        Get assignment details by ID
+
+        Args:
+            assignment_id: ID of the assignment
+            user_id: ID of the user requesting details
+
+        Returns:
+            Tuple of (success, message, assignment_data)
+        """
+        try:
+            # Get assignment
+            assignment = await self.assignment_repo.get_assignment_by_id(assignment_id)
+
+            if not assignment:
+                return False, "Assignment not found", {}
+
+            if not assignment.is_active:
+                return False, "Assignment has been deleted", {}
+
+            # Verify class exists
+            class_obj = await self.class_repo.get_class_by_id(assignment.class_id)
+            if not class_obj:
+                return False, "Class not found", {}
+
+            # Check authorization
+            # User must be either the teacher of the class or a student enrolled in the class
+            is_teacher = class_obj.teacher_id == user_id
+            is_student = await self.class_repo.is_student_enrolled(assignment.class_id, user_id)
+
+            if not (is_teacher or is_student):
+                return False, "Unauthorized to view this assignment", {}
+
+            # Format response
+            assignment_data = {
+                "id": assignment.id,
+                "class_id": assignment.class_id,
+                "class_name": class_obj.class_name,
+                "title": assignment.assignment_name,
+                "description": assignment.description,
+                "programming_language": assignment.programming_language.value,
+                "deadline": assignment.deadline.isoformat() if assignment.deadline else None,
+                "allow_resubmission": assignment.allow_resubmission,
+                "is_active": assignment.is_active,
+                "created_at": assignment.created_at.isoformat() if assignment.created_at else None
+            }
+
+            return True, "Assignment details retrieved successfully", assignment_data
+
+        except Exception as e:
+            return False, f"Failed to fetch assignment details: {str(e)}", {}

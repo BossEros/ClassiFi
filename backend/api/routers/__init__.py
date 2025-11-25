@@ -4,6 +4,6 @@ Part of the API Layer
 Exports all API routers
 """
 
-from api.routers import auth, teacher_dashboard, student_dashboard, class_router
+from api.routers import auth, teacher_dashboard, student_dashboard, class_router, submission_router
 
-__all__ = ["auth", "teacher_dashboard", "student_dashboard", "class_router"]
+__all__ = ["auth", "teacher_dashboard", "student_dashboard", "class_router", "submission_router"]

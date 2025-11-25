@@ -22,6 +22,11 @@ from api.schemas.class_schema import (
     UpdateClassResponse,
     GenerateCodeResponse
 )
+from api.schemas.assignment_schema import (
+    CreateAssignmentRequest,
+    CreateAssignmentResponse,
+    AssignmentDetailResponse
+)
 from services.services.class_service import ClassService
 from repositories.database import get_db
 
@@ -221,6 +226,68 @@ async def update_class(
     )
 
 
+@router.post("/{class_id}/assignments", response_model=CreateAssignmentResponse, status_code=status.HTTP_201_CREATED)
+async def create_assignment(
+    class_id: int,
+    request: CreateAssignmentRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Create a new assignment for a class
+
+    **Path Parameters:**
+    - class_id: ID of the class
+
+    **Request Body:**
+    - teacher_id: ID of the teacher (for authorization)
+    - assignment_name: Name of the assignment (1-150 characters)
+    - description: Assignment description (min 10 characters)
+    - programming_language: "python" or "java"
+    - deadline: Assignment deadline (must be in the future)
+    - allow_resubmission: Whether to allow resubmissions (default: True)
+
+    **Response:**
+    - success: Boolean indicating success
+    - message: Success or error message
+    - assignment: Created assignment data
+    """
+    class_service = ClassService(db)
+
+    # Ensure class_id from path matches request
+    if request.class_id != class_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Class ID in path must match class ID in request body"
+        )
+
+    success, message, assignment_data = await class_service.create_assignment(
+        class_id=class_id,
+        teacher_id=request.teacher_id,
+        assignment_name=request.assignment_name,
+        description=request.description,
+        programming_language=request.programming_language,
+        deadline=request.deadline,
+        allow_resubmission=request.allow_resubmission
+    )
+
+    if not success:
+        error_code = status.HTTP_400_BAD_REQUEST
+        if "not found" in message.lower():
+            error_code = status.HTTP_404_NOT_FOUND
+        elif "unauthorized" in message.lower():
+            error_code = status.HTTP_403_FORBIDDEN
+        raise HTTPException(
+            status_code=error_code,
+            detail=message
+        )
+
+    return CreateAssignmentResponse(
+        success=True,
+        message=message,
+        assignment=AssignmentDetailResponse(**assignment_data)
+    )
+
+
 @router.get("/{class_id}/assignments", response_model=AssignmentListResponse)
 async def get_class_assignments(
     class_id: int,
@@ -315,6 +382,50 @@ async def delete_class(
     success, message = await class_service.delete_class(
         class_id=class_id,
         teacher_id=request.teacher_id
+    )
+
+    if not success:
+        error_code = status.HTTP_404_NOT_FOUND
+        if "Unauthorized" in message:
+            error_code = status.HTTP_403_FORBIDDEN
+        raise HTTPException(
+            status_code=error_code,
+            detail=message
+        )
+
+    return DeleteClassResponse(
+        success=True,
+        message=message
+    )
+
+
+@router.delete("/{class_id}/students/{student_id}", response_model=DeleteClassResponse)
+async def remove_student(
+    class_id: int,
+    student_id: int,
+    teacher_id: int = Query(..., description="ID of the teacher (for authorization)"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Remove a student from a class
+
+    **Path Parameters:**
+    - class_id: ID of the class
+    - student_id: ID of the student to remove
+
+    **Query Parameters:**
+    - teacher_id: ID of the teacher (for authorization)
+
+    **Response:**
+    - success: Boolean indicating success
+    - message: Success or error message
+    """
+    class_service = ClassService(db)
+
+    success, message = await class_service.remove_student(
+        class_id=class_id,
+        student_id=student_id,
+        teacher_id=teacher_id
     )
 
     if not success:

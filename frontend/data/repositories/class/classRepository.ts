@@ -216,6 +216,57 @@ export interface UpdateClassBackendRequest {
 }
 
 /**
+ * Request structure for creating an assignment (backend format)
+ */
+export interface CreateAssignmentBackendRequest {
+  class_id: number
+  teacher_id: number
+  assignment_name: string
+  description: string
+  programming_language: 'python' | 'java'
+  deadline: string  // ISO string
+  allow_resubmission: boolean
+}
+
+/**
+ * Backend response structure for assignment creation
+ */
+interface CreateAssignmentBackendResponse {
+  success: boolean
+  message?: string
+  assignment?: BackendAssignment
+}
+
+/**
+ * Request structure for updating an assignment (backend format)
+ */
+export interface UpdateAssignmentBackendRequest {
+  teacher_id: number
+  assignment_name?: string
+  description?: string
+  programming_language?: 'python' | 'java'
+  deadline?: string
+  allow_resubmission?: boolean
+}
+
+/**
+ * Backend response structure for assignment update
+ */
+interface UpdateAssignmentBackendResponse {
+  success: boolean
+  message?: string
+  assignment?: BackendAssignment
+}
+
+/**
+ * Backend response structure for assignment deletion
+ */
+interface DeleteAssignmentBackendResponse {
+  success: boolean
+  message?: string
+}
+
+/**
  * Transforms backend assignment response to frontend Assignment interface
  */
 function transformAssignmentResponse(backendAssignment: BackendAssignment): Assignment {
@@ -358,5 +409,108 @@ export async function updateClass(classId: number, request: UpdateClassBackendRe
   }
 
   return transformClassResponse(response.data.class_info)
+}
+
+/**
+ * Creates a new assignment for a class
+ *
+ * @param classId - ID of the class
+ * @param request - Assignment creation data (backend format)
+ * @returns Created assignment data
+ */
+export async function createAssignment(
+  classId: number,
+  request: CreateAssignmentBackendRequest
+): Promise<Assignment> {
+  const response = await apiClient.post<CreateAssignmentBackendResponse>(
+    `/classes/${classId}/assignments`,
+    request
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to create assignment')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to create assignment')
+  }
+
+  if (!response.data.assignment) {
+    throw new Error('No assignment data returned')
+  }
+
+  return transformAssignmentResponse(response.data.assignment)
+}
+
+/**
+ * Updates an assignment
+ *
+ * @param assignmentId - ID of the assignment to update
+ * @param request - Assignment update data (backend format)
+ * @returns Updated assignment data
+ */
+export async function updateAssignment(
+  assignmentId: number,
+  request: UpdateAssignmentBackendRequest
+): Promise<Assignment> {
+  const response = await apiClient.put<UpdateAssignmentBackendResponse>(
+    `/assignments/${assignmentId}`,
+    request
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to update assignment')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to update assignment')
+  }
+
+  if (!response.data.assignment) {
+    throw new Error('No assignment data returned')
+  }
+
+  return transformAssignmentResponse(response.data.assignment)
+}
+
+/**
+ * Deletes an assignment
+ *
+ * @param assignmentId - ID of the assignment to delete
+ * @param teacherId - ID of the teacher (for authorization)
+ */
+export async function deleteAssignment(assignmentId: number, teacherId: number): Promise<void> {
+  const response = await apiClient.delete<DeleteAssignmentBackendResponse>(
+    `/assignments/${assignmentId}?teacher_id=${teacherId}`
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to delete assignment')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to delete assignment')
+  }
+}
+
+/**
+ * Removes a student from a class
+ *
+ * @param classId - ID of the class
+ * @param studentId - ID of the student to remove
+ * @param teacherId - ID of the teacher (for authorization)
+ */
+export async function removeStudent(classId: number, studentId: number, teacherId: number): Promise<void> {
+  const response = await apiClient.delete<{ success: boolean; message?: string }>(
+    `/classes/${classId}/students/${studentId}?teacher_id=${teacherId}`
+  )
+
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'Failed to remove student')
+  }
+
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to remove student')
+  }
 }
 

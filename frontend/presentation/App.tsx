@@ -13,6 +13,8 @@ import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
 import { StudentDashboardPage } from './pages/StudentDashboardPage'
 import { ClassesPage } from './pages/ClassesPage'
 import { ClassDetailPage } from './pages/ClassDetailPage'
+import { AssignmentDetailPage } from './pages/AssignmentDetailPage'
+import { AssignmentSubmissionsPage } from './pages/AssignmentSubmissionsPage'
 import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
@@ -34,6 +36,23 @@ function RoleBasedDashboard() {
 
   // Default to teacher dashboard for teachers and admins
   return <TeacherDashboardPage />
+}
+
+// Component to handle classes page - students should see their dashboard instead
+function RoleBasedClassesPage() {
+  const user = getCurrentUser()
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Students should use the dashboard for their class list
+  if (user.role === 'student') {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  // Teachers see the full classes page
+  return <ClassesPage />
 }
 
 // Component to handle redirects for Supabase email confirmation and password reset
@@ -103,7 +122,7 @@ function App() {
           path="/dashboard/classes"
           element={
             <ProtectedRoute>
-              <ClassesPage />
+              <RoleBasedClassesPage />
             </ProtectedRoute>
           }
         />
@@ -112,6 +131,22 @@ function App() {
           element={
             <ProtectedRoute>
               <ClassDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/assignments/:assignmentId"
+          element={
+            <ProtectedRoute>
+              <AssignmentDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/assignments/:assignmentId/submissions"
+          element={
+            <ProtectedRoute>
+              <AssignmentSubmissionsPage />
             </ProtectedRoute>
           }
         />

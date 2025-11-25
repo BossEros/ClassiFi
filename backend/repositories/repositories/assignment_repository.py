@@ -5,7 +5,7 @@ Handles database operations for assignments
 """
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_
+from sqlalchemy import select, and_, func
 from sqlalchemy.orm import selectinload
 from repositories.models.assignment import Assignment, ProgrammingLanguage
 from typing import List, Optional
@@ -85,7 +85,7 @@ class AssignmentRepository:
             .where(and_(
                 Class.teacher_id == teacher_id,
                 Assignment.is_active == True,
-                Assignment.deadline >= datetime.now()
+                Assignment.deadline >= func.now()
             ))
             .order_by(Assignment.deadline.asc())
         )
@@ -209,7 +209,7 @@ class AssignmentRepository:
 
     async def delete_assignment(self, assignment_id: int) -> bool:
         """
-        Delete an assignment (sets is_active to False)
+        Delete an assignment (hard delete)
 
         Args:
             assignment_id: ID of the assignment to delete
@@ -222,7 +222,7 @@ class AssignmentRepository:
         if not assignment:
             return False
 
-        assignment.is_active = False
+        await self.db.delete(assignment)
         await self.db.commit()
 
         return True
@@ -255,7 +255,7 @@ class AssignmentRepository:
                 Enrollment.student_id == student_id,
                 Assignment.is_active == True,
                 Class.is_active == True,
-                Assignment.deadline >= datetime.now()
+                Assignment.deadline >= func.now()
             ))
             .order_by(Assignment.deadline.asc())
         )

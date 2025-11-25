@@ -85,3 +85,19 @@ export interface CreateClassResponse {
   class: Class
 }
 
+export interface CreateAssignmentRequest {
+  classId: number
+  teacherId: number
+  assignmentName: string
+  description: string
+  programmingLanguage: 'python' | 'java'
+  deadline: Date
+  allowResubmission: boolean
+}
+
+export interface CreateAssignmentResponse {
+  success: boolean
+  message?: string
+  assignment?: Assignment
+}
+

@@ -13,8 +13,8 @@ from enum import Enum
 
 class ProgrammingLanguage(str, Enum):
     """Enum for supported programming languages"""
-    PYTHON = "python"
-    JAVA = "java"
+    python = "python"
+    java = "java"
 
 
 class Assignment(Base):

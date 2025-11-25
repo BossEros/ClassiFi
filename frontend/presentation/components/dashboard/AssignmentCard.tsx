@@ -5,12 +5,14 @@
 
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { cn } from '@/shared/utils/cn'
-import { Clock, Check, Circle, Code } from 'lucide-react'
+import { Clock, Check, Circle, Pencil, Trash2 } from 'lucide-react'
 import type { Assignment } from '@/business/models/dashboard/types'
 
 interface AssignmentCardProps {
   assignment: Assignment
   onClick?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
   className?: string
 }
 
@@ -36,75 +38,74 @@ function getDeadlineColor(date: Date): string {
   return 'text-gray-400'
 }
 
-function getLanguageLabel(language: string): string {
-  const labels: Record<string, string> = {
-    python: 'Python',
-    java: 'Java'
-  }
-  return labels[language.toLowerCase()] || language
-}
-
-function getLanguageColor(language: string): string {
-  const colors: Record<string, string> = {
-    python: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-    java: 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-  }
-  return colors[language.toLowerCase()] || 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-}
-
-export function AssignmentCard({ assignment, onClick, className }: AssignmentCardProps) {
+export function AssignmentCard({ assignment, onClick, onEdit, onDelete, className }: AssignmentCardProps) {
   const deadlineColor = getDeadlineColor(assignment.deadline)
-  const languageColor = getLanguageColor(assignment.programmingLanguage)
 
   return (
     <Card
       variant="interactive"
       onClick={onClick}
-      className={cn('w-full', className)}
+      className={cn('w-full group transition-all duration-200 hover:border-purple-500/30', className)}
     >
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-4">
           {/* Check status indicator */}
-          <div className="flex-shrink-0 mt-0.5">
+          <div className="flex-shrink-0">
             {assignment.isChecked ? (
-              <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
-                <Check className="w-4 h-4 text-green-400" />
+              <div className="w-10 h-10 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center transition-colors group-hover:bg-green-500/20">
+                <Check className="w-5 h-5 text-green-400" />
               </div>
             ) : (
-              <div className="w-6 h-6 rounded-full border-2 border-gray-500 flex items-center justify-center">
-                <Circle className="w-3 h-3 text-gray-500" />
+              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:border-purple-500/50">
+                <Circle className="w-5 h-5 text-gray-500 group-hover:text-purple-400 transition-colors" />
               </div>
             )}
           </div>
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-base font-semibold text-white tracking-tight truncate">
-                {assignment.title}
-              </h3>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0 space-y-1">
+                <h3 className="text-base font-medium text-white truncate group-hover:text-purple-100 transition-colors">
+                  {assignment.title}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <Clock className={cn('w-3.5 h-3.5', deadlineColor)} />
+                  <span className={cn('text-xs font-medium', deadlineColor)}>
+                    Due {formatDeadline(assignment.deadline)}
+                  </span>
+                </div>
+              </div>
 
-              {/* Language badge */}
-              <span className={cn(
-                'flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium border flex-shrink-0',
-                languageColor
-              )}>
-                <Code className="w-3 h-3" />
-                {getLanguageLabel(assignment.programmingLanguage)}
-              </span>
-            </div>
-
-            {/* Description preview */}
-            <p className="text-sm text-gray-400 mt-1 line-clamp-2">
-              {assignment.description}
-            </p>
-
-            {/* Deadline */}
-            <div className="flex items-center gap-2 mt-3">
-              <Clock className={cn('w-4 h-4 flex-shrink-0', deadlineColor)} />
-              <span className={cn('text-sm font-medium', deadlineColor)}>
-                Due: {formatDeadline(assignment.deadline)}
-              </span>
+              {/* Actions */}
+              {(onEdit || onDelete) && (
+                <div className="flex items-center gap-1 pl-3 border-l border-white/10">
+                  {onEdit && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEdit()
+                      }}
+                      className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                      title="Edit Assignment"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onDelete()
+                      }}
+                      className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
+                      title="Delete Assignment"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

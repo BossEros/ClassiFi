@@ -4,7 +4,20 @@
  */
 
 import * as classRepository from '../../../data/repositories/class/classRepository'
-import type { Class, Assignment, EnrolledStudent, ClassDetailData } from '../../models/dashboard/types'
+import { validateCreateAssignmentData } from '../../validation/assignmentValidation'
+import type { Class, Assignment, EnrolledStudent, ClassDetailData, CreateAssignmentRequest } from '../../models/dashboard/types'
+
+/**
+ * Request structure for updating an assignment (frontend format)
+ */
+export interface UpdateAssignmentRequest {
+  teacherId: number
+  assignmentName?: string
+  description?: string
+  programmingLanguage?: 'python' | 'java'
+  deadline?: Date
+  allowResubmission?: boolean
+}
 
 /**
  * Request structure for creating a class (frontend format)
@@ -206,5 +219,135 @@ export async function updateClass(classId: number, request: UpdateClassRequest):
   }
 
   return await classRepository.updateClass(classId, backendRequest)
+}
+
+/**
+ * Creates a new assignment for a class with validation
+ *
+ * @param request - Assignment creation data (frontend format)
+ * @returns Created assignment data
+ */
+export async function createAssignment(request: CreateAssignmentRequest): Promise<Assignment> {
+  // Validate all fields
+  const validation = validateCreateAssignmentData(request)
+
+  if (!validation.isValid) {
+    const firstError = Object.values(validation.errors)[0]
+    throw new Error(firstError)
+  }
+
+  // Validate IDs
+  if (!request.classId || request.classId <= 0) {
+    throw new Error('Invalid class ID')
+  }
+
+  if (!request.teacherId || request.teacherId <= 0) {
+    throw new Error('Invalid teacher ID')
+  }
+
+  // Transform frontend format to backend format
+  const backendRequest: classRepository.CreateAssignmentBackendRequest = {
+    class_id: request.classId,
+    teacher_id: request.teacherId,
+    assignment_name: request.assignmentName.trim(),
+    description: request.description.trim(),
+    programming_language: request.programmingLanguage,
+    deadline: request.deadline.toISOString(),
+    allow_resubmission: request.allowResubmission
+  }
+
+  return await classRepository.createAssignment(request.classId, backendRequest)
+}
+
+/**
+ * Updates an assignment with validation
+ *
+ * @param assignmentId - ID of the assignment to update
+ * @param request - Assignment update data (frontend format)
+ * @returns Updated assignment data
+ */
+export async function updateAssignment(assignmentId: number, request: UpdateAssignmentRequest): Promise<Assignment> {
+  if (!assignmentId || assignmentId <= 0) {
+    throw new Error('Invalid assignment ID')
+  }
+
+  if (!request.teacherId || request.teacherId <= 0) {
+    throw new Error('Invalid teacher ID')
+  }
+
+  // Validate fields if provided
+  if (request.assignmentName !== undefined) {
+    if (request.assignmentName.trim().length === 0) {
+      throw new Error('Assignment title is required')
+    }
+    if (request.assignmentName.trim().length > 150) {
+      throw new Error('Assignment title must be 150 characters or less')
+    }
+  }
+
+  if (request.description !== undefined) {
+    if (request.description.trim().length < 10) {
+      throw new Error('Description must be at least 10 characters')
+    }
+  }
+
+  if (request.deadline) {
+    if (request.deadline <= new Date()) {
+      throw new Error('Deadline must be in the future')
+    }
+  }
+
+  // Transform frontend format to backend format
+  const backendRequest: classRepository.UpdateAssignmentBackendRequest = {
+    teacher_id: request.teacherId,
+    assignment_name: request.assignmentName?.trim(),
+    description: request.description?.trim(),
+    programming_language: request.programmingLanguage,
+    deadline: request.deadline?.toISOString(),
+    allow_resubmission: request.allowResubmission
+  }
+
+  return await classRepository.updateAssignment(assignmentId, backendRequest)
+}
+
+/**
+ * Deletes an assignment
+ *
+ * @param assignmentId - ID of the assignment to delete
+ * @param teacherId - ID of the teacher (for authorization)
+ */
+export async function deleteAssignment(assignmentId: number, teacherId: number): Promise<void> {
+  if (!assignmentId || assignmentId <= 0) {
+    throw new Error('Invalid assignment ID')
+  }
+
+  if (!teacherId || teacherId <= 0) {
+    throw new Error('Invalid teacher ID')
+  }
+
+  await classRepository.deleteAssignment(assignmentId, teacherId)
+}
+
+/**
+ * Removes a student from a class
+ *
+ * @param classId - ID of the class
+ * @param studentId - ID of the student to remove
+ * @param teacherId - ID of the teacher (for authorization)
+ */
+export async function removeStudent(classId: number, studentId: number, teacherId: number): Promise<void> {
+  if (!classId || classId <= 0) {
+    throw new Error('Invalid class ID')
+  }
+
+  if (!studentId || studentId <= 0) {
+    throw new Error('Invalid student ID')
+  }
+
+  if (!teacherId || teacherId <= 0) {
+    throw new Error('Invalid teacher ID')
+  }
+
+  await classRepository.removeStudent(classId, studentId, teacherId)
 }
 

@@ -269,3 +269,53 @@ class ClassRepository:
 
         result = await self.db.execute(query)
         return list(result.scalars().all())
+
+    async def remove_student(self, class_id: int, student_id: int) -> bool:
+        """
+        Remove a student from a class (delete enrollment)
+
+        Args:
+            class_id: ID of the class
+            student_id: ID of the student
+
+        Returns:
+            True if removed, False if not found
+        """
+        result = await self.db.execute(
+            select(Enrollment).where(
+                and_(
+                    Enrollment.class_id == class_id,
+                    Enrollment.student_id == student_id
+                )
+            )
+        )
+        enrollment = result.scalar_one_or_none()
+
+        if not enrollment:
+            return False
+
+        await self.db.delete(enrollment)
+        await self.db.commit()
+
+        return True
+
+    async def is_student_enrolled(self, class_id: int, student_id: int) -> bool:
+        """
+        Check if a student is enrolled in a class
+
+        Args:
+            class_id: ID of the class
+            student_id: ID of the student
+
+        Returns:
+            True if enrolled, False otherwise
+        """
+        result = await self.db.execute(
+            select(Enrollment).where(
+                and_(
+                    Enrollment.class_id == class_id,
+                    Enrollment.student_id == student_id
+                )
+            )
+        )
+        return result.scalar_one_or_none() is not None
