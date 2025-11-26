@@ -61,7 +61,7 @@ export function ClassDetailPage() {
   const isStudent = user?.role === 'student'
 
   const tabs = [
-    { id: 'assignments', label: 'Assignments', icon: ClipboardList },
+    { id: 'assignments', label: 'Coursework', icon: ClipboardList },
     { id: 'students', label: 'Students', icon: Users }
   ]
 
@@ -153,13 +153,13 @@ export function ClassDetailPage() {
     // Add new assignment to the list
     setAssignments([assignment, ...assignments])
     setAssignments([assignment, ...assignments])
-    showToast('Assignment created successfully')
+    showToast('Coursework created successfully')
   }
 
   const handleUpdateAssignmentSuccess = async (updatedAssignment: Assignment) => {
     setAssignments(assignments.map(a => a.id === updatedAssignment.id ? updatedAssignment : a))
     setAssignmentToEdit(undefined)
-    showToast('Assignment updated successfully')
+    showToast('Coursework updated successfully')
   }
 
   const handleEditAssignment = (assignment: Assignment) => {
@@ -181,12 +181,12 @@ export function ClassDetailPage() {
 
       // Remove from list
       setAssignments(assignments.filter(a => a.id !== assignmentToDelete.id))
-      showToast('Assignment deleted successfully')
+      showToast('Coursework deleted successfully')
       setIsDeleteAssignmentModalOpen(false)
       setAssignmentToDelete(null)
     } catch (err) {
       console.error('Failed to delete assignment:', err)
-      showToast('Failed to delete assignment', 'error')
+      showToast('Failed to delete coursework', 'error')
     } finally {
       setIsDeletingAssignment(false)
     }
@@ -338,7 +338,7 @@ export function ClassDetailPage() {
                 className="w-auto px-4 h-10"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Add Assignment
+                Add Coursework
               </Button>
             )}
           </div>
@@ -365,23 +365,23 @@ export function ClassDetailPage() {
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                     <ClipboardList className="w-8 h-8 text-gray-500" />
                   </div>
-                  <p className="text-gray-300 font-medium mb-1">No assignments yet</p>
+                  <p className="text-gray-300 font-medium mb-1">No coursework yet</p>
                   {isTeacher ? (
                     <>
                       <p className="text-sm text-gray-500 mb-4">
-                        Create your first assignment to get started.
+                        Create your first coursework to get started.
                       </p>
                       <Button
                         onClick={() => setIsCreateAssignmentModalOpen(true)}
                         className="w-auto"
                       >
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Assignment
+                        Add Coursework
                       </Button>
                     </>
                   ) : (
                     <p className="text-sm text-gray-500">
-                      Your teacher hasn't created any assignments yet.
+                      Your teacher hasn't created any coursework yet.
                     </p>
                   )}
                 </div>

@@ -94,13 +94,13 @@ export function DeleteAssignmentModal({
                     id="delete-assignment-modal-title"
                     className="text-xl font-semibold text-white text-center mb-2"
                 >
-                    Delete Assignment
+                    Delete Coursework
                 </h2>
 
                 {/* Description */}
                 <p className="text-gray-400 text-center mb-6">
                     Are you sure you want to delete <span className="text-white font-medium">{assignmentTitle}</span>?
-                    This action cannot be undone. All student submissions for this assignment will be permanently removed.
+                    This action cannot be undone. All student submissions for this coursework will be permanently removed.
                 </p>
 
                 {/* Actions */}
@@ -129,7 +129,7 @@ export function DeleteAssignmentModal({
                             'disabled:opacity-50 disabled:cursor-not-allowed'
                         )}
                     >
-                        {isDeleting ? 'Deleting...' : 'Delete Assignment'}
+                        {isDeleting ? 'Deleting...' : 'Delete Coursework'}
                     </button>
                 </div>
             </div>
