@@ -151,8 +151,7 @@ export function ClassDetailPage() {
 
   const handleCreateAssignmentSuccess = async (assignment: Assignment) => {
     // Add new assignment to the list
-    setAssignments([assignment, ...assignments])
-    setAssignments([assignment, ...assignments])
+    setAssignments(prev => [assignment, ...prev])
     showToast('Coursework created successfully')
   }
 
