@@ -263,240 +263,240 @@ export function ClassDetailPage() {
       ) : (
         /* Main Content */
         <>
-      {/* Page Header */}
-      <div className="mb-6">
-        {/* Back button and title row */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(isStudent ? '/dashboard' : '/dashboard/classes')}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-white">
-                {classInfo?.name}
-              </h1>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-sm text-gray-400">
-                  Class Code: <span className="text-purple-400 font-mono">{classInfo?.code}</span>
-                </span>
-                <span className="text-gray-600">•</span>
-                <span className="text-sm text-gray-400">
-                  {classInfo?.studentCount} {classInfo?.studentCount === 1 ? 'Student' : 'Students'}
-                </span>
+          {/* Page Header */}
+          <div className="mb-6">
+            {/* Back button and title row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => navigate(isStudent ? '/dashboard' : '/dashboard/classes')}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-400" />
+                </button>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">
+                    {classInfo?.name}
+                  </h1>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-sm text-gray-400">
+                      Class Code: <span className="text-purple-400 font-mono">{classInfo?.code}</span>
+                    </span>
+                    <span className="text-gray-600">•</span>
+                    <span className="text-sm text-gray-400">
+                      {classInfo?.studentCount} {classInfo?.studentCount === 1 ? 'Student' : 'Students'}
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* Teacher controls: Edit and Delete */}
+              {isTeacher && <DropdownMenu items={dropdownItems} />}
+
+              {/* Student controls: Leave Class */}
+              {isStudent && (
+                <Button
+                  onClick={() => setIsLeaveModalOpen(true)}
+                  className="w-auto px-4 h-10 bg-red-600 hover:bg-red-700 text-white"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Leave Class
+                </Button>
+              )}
             </div>
-          </div>
 
-          {/* Teacher controls: Edit and Delete */}
-          {isTeacher && <DropdownMenu items={dropdownItems} />}
-
-          {/* Student controls: Leave Class */}
-          {isStudent && (
-            <Button
-              onClick={() => setIsLeaveModalOpen(true)}
-              className="w-auto px-4 h-10 bg-red-600 hover:bg-red-700 text-white"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Leave Class
-            </Button>
-          )}
-        </div>
-
-        {/* Description if exists */}
-        {classInfo?.description && (
-          <p className="text-gray-400 text-sm mb-4 max-w-2xl">
-            {classInfo.description}
-          </p>
-        )}
-
-        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
-      {/* Tabs and Content */}
-      <Card>
-        <CardHeader className="pb-0">
-          <div className="flex items-center justify-between">
-            <Tabs
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={(tabId) => setActiveTab(tabId as TabType)}
-            />
-            {/* Only teachers can add assignments */}
-            {isTeacher && activeTab === 'assignments' && (
-              <Button
-                onClick={() => setIsCreateAssignmentModalOpen(true)}
-                className="w-auto px-4 h-10"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Assignment
-              </Button>
+            {/* Description if exists */}
+            {classInfo?.description && (
+              <p className="text-gray-400 text-sm mb-4 max-w-2xl">
+                {classInfo.description}
+              </p>
             )}
+
+            <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </div>
-        </CardHeader>
 
-        <CardContent className="pt-0">
-          {/* Assignments Tab */}
-          {activeTab === 'assignments' && (
-            <TabPanel>
-              {assignments.length > 0 ? (
-                <div className="space-y-3">
-                  {assignments.map((assignment) => (
-                    <AssignmentCard
-                      key={assignment.id}
-                      assignment={assignment}
-                      onClick={() => handleAssignmentClick(assignment.id)}
-                      onEdit={isTeacher ? () => handleEditAssignment(assignment) : undefined}
-                      onDelete={isTeacher ? () => handleDeleteAssignmentClick(assignment) : undefined}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                    <ClipboardList className="w-8 h-8 text-gray-500" />
-                  </div>
-                  <p className="text-gray-300 font-medium mb-1">No assignments yet</p>
-                  {isTeacher ? (
-                    <>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Create your first assignment to get started.
-                      </p>
-                      <Button
-                        onClick={() => setIsCreateAssignmentModalOpen(true)}
-                        className="w-auto"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Assignment
-                      </Button>
-                    </>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Tabs and Content */}
+          <Card>
+            <CardHeader className="pb-0">
+              <div className="flex items-center justify-between">
+                <Tabs
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onTabChange={(tabId) => setActiveTab(tabId as TabType)}
+                />
+                {/* Only teachers can add assignments */}
+                {isTeacher && activeTab === 'assignments' && (
+                  <Button
+                    onClick={() => setIsCreateAssignmentModalOpen(true)}
+                    className="w-auto px-4 h-10"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Assignment
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-0">
+              {/* Assignments Tab */}
+              {activeTab === 'assignments' && (
+                <TabPanel>
+                  {assignments.length > 0 ? (
+                    <div className="space-y-3">
+                      {assignments.map((assignment) => (
+                        <AssignmentCard
+                          key={assignment.id}
+                          assignment={assignment}
+                          onClick={() => handleAssignmentClick(assignment.id)}
+                          onEdit={isTeacher ? () => handleEditAssignment(assignment) : undefined}
+                          onDelete={isTeacher ? () => handleDeleteAssignmentClick(assignment) : undefined}
+                        />
+                      ))}
+                    </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
-                      Your teacher hasn't created any assignments yet.
-                    </p>
+                    <div className="py-12 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                        <ClipboardList className="w-8 h-8 text-gray-500" />
+                      </div>
+                      <p className="text-gray-300 font-medium mb-1">No assignments yet</p>
+                      {isTeacher ? (
+                        <>
+                          <p className="text-sm text-gray-500 mb-4">
+                            Create your first assignment to get started.
+                          </p>
+                          <Button
+                            onClick={() => setIsCreateAssignmentModalOpen(true)}
+                            className="w-auto"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Assignment
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          Your teacher hasn't created any assignments yet.
+                        </p>
+                      )}
+                    </div>
                   )}
-                </div>
+                </TabPanel>
               )}
-            </TabPanel>
+
+              {/* Students Tab */}
+              {activeTab === 'students' && (
+                <TabPanel>
+                  {students.length > 0 ? (
+                    <div className="space-y-3">
+                      {students.map((student) => (
+                        <StudentListItem
+                          key={student.id}
+                          student={student}
+                          onRemove={isTeacher ? () => handleRemoveStudentClick(student) : undefined}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-12 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                        <Users className="w-8 h-8 text-gray-500" />
+                      </div>
+                      <p className="text-gray-300 font-medium mb-1">No students enrolled</p>
+                      <p className="text-sm text-gray-500">
+                        Share the class code <span className="text-purple-400 font-mono">{classInfo?.code}</span> with your students.
+                      </p>
+                    </div>
+                  )}
+                </TabPanel>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Teacher Modals */}
+          {isTeacher && (
+            <>
+              {/* Delete Class Modal */}
+              <DeleteClassModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteClass}
+                isDeleting={isDeleting}
+              />
+
+              {/* Edit Class Modal */}
+              {classInfo && (
+                <EditClassModal
+                  isOpen={isEditModalOpen}
+                  onClose={() => setIsEditModalOpen(false)}
+                  onSuccess={handleEditSuccess}
+                  teacherId={parseInt(user.id)}
+                  classData={classInfo}
+                />
+              )}
+
+              {/* Delete Assignment Modal */}
+              <DeleteAssignmentModal
+                isOpen={isDeleteAssignmentModalOpen}
+                onClose={() => {
+                  setIsDeleteAssignmentModalOpen(false)
+                  setAssignmentToDelete(null)
+                }}
+                onConfirm={handleConfirmDeleteAssignment}
+                isDeleting={isDeletingAssignment}
+                assignmentTitle={assignmentToDelete?.title}
+              />
+
+              {/* Remove Student Modal */}
+              {studentToRemove && classId && (
+                <RemoveStudentModal
+                  isOpen={isRemoveStudentModalOpen}
+                  onClose={() => {
+                    setIsRemoveStudentModalOpen(false)
+                    setStudentToRemove(null)
+                  }}
+                  onSuccess={handleRemoveStudentSuccess}
+                  classId={parseInt(classId)}
+                  teacherId={parseInt(user.id)}
+                  studentId={studentToRemove.id}
+                  studentName={studentToRemove.fullName}
+                />
+              )}
+            </>
           )}
 
-          {/* Students Tab */}
-          {activeTab === 'students' && (
-            <TabPanel>
-              {students.length > 0 ? (
-                <div className="space-y-3">
-                  {students.map((student) => (
-                    <StudentListItem
-                      key={student.id}
-                      student={student}
-                      onRemove={isTeacher ? () => handleRemoveStudentClick(student) : undefined}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                    <Users className="w-8 h-8 text-gray-500" />
-                  </div>
-                  <p className="text-gray-300 font-medium mb-1">No students enrolled</p>
-                  <p className="text-sm text-gray-500">
-                    Share the class code <span className="text-purple-400 font-mono">{classInfo?.code}</span> with your students.
-                  </p>
-                </div>
-              )}
-            </TabPanel>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Teacher Modals */}
-      {isTeacher && (
-        <>
-          {/* Delete Class Modal */}
-          <DeleteClassModal
-            isOpen={isDeleteModalOpen}
-            onClose={() => setIsDeleteModalOpen(false)}
-            onConfirm={handleDeleteClass}
-            isDeleting={isDeleting}
-          />
-
-          {/* Edit Class Modal */}
-          {classInfo && (
-            <EditClassModal
-              isOpen={isEditModalOpen}
-              onClose={() => setIsEditModalOpen(false)}
-              onSuccess={handleEditSuccess}
-              teacherId={parseInt(user.id)}
-              classData={classInfo}
+          {/* Student Modals */}
+          {isStudent && classInfo && (
+            <LeaveClassModal
+              isOpen={isLeaveModalOpen}
+              onClose={() => setIsLeaveModalOpen(false)}
+              onSuccess={handleLeaveSuccess}
+              studentId={parseInt(user.id)}
+              classId={parseInt(classId!)}
+              className={classInfo.name}
             />
           )}
 
-          {/* Delete Assignment Modal */}
-          <DeleteAssignmentModal
-            isOpen={isDeleteAssignmentModalOpen}
-            onClose={() => {
-              setIsDeleteAssignmentModalOpen(false)
-              setAssignmentToDelete(null)
-            }}
-            onConfirm={handleConfirmDeleteAssignment}
-            isDeleting={isDeletingAssignment}
-            assignmentTitle={assignmentToDelete?.title}
-          />
-
-          {/* Remove Student Modal */}
-          {studentToRemove && classId && (
-            <RemoveStudentModal
-              isOpen={isRemoveStudentModalOpen}
+          {/* Create Assignment Modal */}
+          {isTeacher && classInfo && (
+            <CreateAssignmentModal
+              isOpen={isCreateAssignmentModalOpen}
               onClose={() => {
-                setIsRemoveStudentModalOpen(false)
-                setStudentToRemove(null)
+                setIsCreateAssignmentModalOpen(false)
+                setAssignmentToEdit(undefined)
               }}
-              onSuccess={handleRemoveStudentSuccess}
-              classId={parseInt(classId)}
+              onSuccess={assignmentToEdit ? handleUpdateAssignmentSuccess : handleCreateAssignmentSuccess}
+              classId={parseInt(classId!)}
               teacherId={parseInt(user.id)}
-              studentId={studentToRemove.id}
-              studentName={studentToRemove.fullName}
+              assignment={assignmentToEdit}
             />
           )}
-        </>
-      )}
-
-
-      {/* Student Modals */}
-      {isStudent && classInfo && (
-        <LeaveClassModal
-          isOpen={isLeaveModalOpen}
-          onClose={() => setIsLeaveModalOpen(false)}
-          onSuccess={handleLeaveSuccess}
-          studentId={parseInt(user.id)}
-          classId={parseInt(classId!)}
-          className={classInfo.name}
-        />
-      )}
-
-      {/* Create Assignment Modal */}
-      {isTeacher && classInfo && (
-        <CreateAssignmentModal
-          isOpen={isCreateAssignmentModalOpen}
-          onClose={() => {
-            setIsCreateAssignmentModalOpen(false)
-            setAssignmentToEdit(undefined)
-          }}
-          onSuccess={assignmentToEdit ? handleUpdateAssignmentSuccess : handleCreateAssignmentSuccess}
-          classId={parseInt(classId!)}
-          teacherId={parseInt(user.id)}
-          assignment={assignmentToEdit}
-        />
-      )}
         </>
       )}
     </DashboardLayout>
