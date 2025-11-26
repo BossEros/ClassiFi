@@ -157,7 +157,7 @@ export function CreateAssignmentModal({
       onClose()
     } catch (err) {
       console.error('Failed to save assignment:', err)
-      setError(err instanceof Error ? err.message : 'Failed to save assignment')
+      setError(err instanceof Error ? err.message : 'Failed to save coursework')
     } finally {
       setIsSubmitting(false)
     }
@@ -182,9 +182,9 @@ export function CreateAssignmentModal({
               <FileCode className="w-5 h-5 text-purple-400" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">{assignment ? 'Edit Assignment' : 'Create Assignment'}</h2>
+              <h2 className="text-xl font-bold text-white">{assignment ? 'Edit Coursework' : 'Create Coursework'}</h2>
               <p className="text-sm text-gray-400 mt-0.5">
-                {assignment ? 'Update assignment details' : 'Add a new assignment for your students'}
+                {assignment ? 'Update coursework details' : 'Add new coursework for your students'}
               </p>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function CreateAssignmentModal({
           {/* Assignment Name */}
           <div className="space-y-2">
             <label htmlFor="assignmentName" className="text-sm font-medium text-white">
-              Assignment Title <span className="text-red-400">*</span>
+              Coursework Title <span className="text-red-400">*</span>
             </label>
             <Input
               id="assignmentName"
@@ -344,7 +344,7 @@ export function CreateAssignmentModal({
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              {assignment ? 'Update Assignment' : 'Create Assignment'}
+              {assignment ? 'Update Coursework' : 'Create Coursework'}
             </Button>
           </div>
         </form>

@@ -87,7 +87,7 @@ export function AssignmentCard({ assignment, onClick, onEdit, onDelete, classNam
                         onEdit()
                       }}
                       className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                      title="Edit Assignment"
+                      title="Edit Coursework"
                     >
                       <Pencil className="w-4 h-4" />
                     </button>
@@ -99,7 +99,7 @@ export function AssignmentCard({ assignment, onClick, onEdit, onDelete, classNam
                         onDelete()
                       }}
                       className="p-2 rounded-lg hover:bg-red-500/10 text-gray-400 hover:text-red-400 transition-colors"
-                      title="Delete Assignment"
+                      title="Delete Coursework"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

@@ -24,7 +24,7 @@ const teacherNavigationItems = [
 const studentNavigationItems = [
   { id: 'home', label: 'Home', path: '/dashboard', icon: Home },
   { id: 'classes', label: 'My Classes', path: '/dashboard/classes', icon: Grid3x3 },
-  { id: 'assignments', label: 'Assignments', path: '/dashboard/assignments', icon: FileText }
+  { id: 'assignments', label: 'Coursework', path: '/dashboard/assignments', icon: FileText }
 ]
 
 export function Sidebar() {
