@@ -41,7 +41,7 @@ export function AssignmentsPage() {
         setSubmissions(data)
       } catch (err) {
         console.error('Failed to fetch submissions:', err)
-        setError('Failed to load assignments. Please try refreshing the page.')
+        setError('Failed to load coursework. Please try refreshing the page.')
       } finally {
         setIsLoading(false)
       }
@@ -67,10 +67,10 @@ export function AssignmentsPage() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <FileText className="w-6 h-6 text-white" />
-          <h1 className="text-3xl font-bold text-white">My Assignments</h1>
+          <h1 className="text-3xl font-bold text-white">My Coursework</h1>
         </div>
         <p className="text-gray-400 ml-9">
-          View all your assignments and submissions
+          View all your coursework and submissions
         </p>
         <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-4"></div>
       </div>
@@ -88,7 +88,7 @@ export function AssignmentsPage() {
           {isLoading ? (
             <div className="py-12 text-center">
               <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading assignments...</p>
+              <p className="text-gray-400">Loading coursework...</p>
             </div>
           ) : submissions.length > 0 ? (
             <div className="space-y-3">
@@ -101,7 +101,7 @@ export function AssignmentsPage() {
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h3 className="text-base font-medium text-white mb-1">
-                        {submission.assignmentName || `Assignment ${submission.assignmentId}`}
+                        {submission.assignmentName || `Coursework ${submission.assignmentId}`}
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-400">
                         <Calendar className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export function AssignmentsPage() {
               </div>
               <p className="text-gray-300 font-medium mb-1">No submissions yet</p>
               <p className="text-sm text-gray-500">
-                Your submitted assignments will appear here.
+                Your submitted coursework will appear here.
               </p>
             </div>
           )}

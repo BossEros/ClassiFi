@@ -129,7 +129,7 @@ export function AssignmentSubmissionsPage() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto"></div>
-            <p className="text-gray-400">Loading assignment submissions...</p>
+            <p className="text-gray-400">Loading coursework submissions...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -144,7 +144,7 @@ export function AssignmentSubmissionsPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 text-red-400">
               <Inbox className="w-5 h-5" />
-              <p className="font-medium">{error || 'Assignment not found'}</p>
+              <p className="font-medium">{error || 'Coursework not found'}</p>
             </div>
             <Button onClick={handleBack} className="mt-4">
               Go Back

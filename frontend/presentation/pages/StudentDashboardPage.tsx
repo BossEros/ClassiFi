@@ -130,7 +130,7 @@ export function StudentDashboardPage() {
           <CardHeader className="pb-4">
             <CardTitle className="text-xl">Pending</CardTitle>
             <CardDescription className="text-sm mt-1.5">
-              Assignments that need your attention
+              Coursework that needs your attention
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -175,7 +175,7 @@ export function StudentDashboardPage() {
                 </div>
                 <p className="text-gray-300 font-semibold text-sm mb-1.5">All caught up!</p>
                 <p className="text-xs text-gray-500">
-                  New assignments will appear here when assigned.
+                  New coursework will appear here when assigned.
                 </p>
               </div>
             )}
