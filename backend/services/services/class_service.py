@@ -208,11 +208,9 @@ class ClassService:
             for assignment in assignments:
                 # For now, isChecked is based on whether deadline has passed
                 # This can be enhanced later to check actual submission reviews
-                from datetime import datetime
-                if assignment.deadline.tzinfo:
-                    now = datetime.now(assignment.deadline.tzinfo)
-                else:
-                    now = datetime.now()
+                from datetime import datetime, timezone
+                # Use timezone-aware UTC for comparison
+                now = datetime.now(timezone.utc)
                 is_checked = assignment.deadline < now
 
                 assignments_data.append({
@@ -414,8 +412,12 @@ class ClassService:
             if class_obj.teacher_id != teacher_id:
                 return False, "Unauthorized to create assignments for this class", {}
 
-            # Validate deadline is in the future
-            now = datetime.now(deadline.tzinfo) if deadline.tzinfo else datetime.now()
+            # Validate deadline is in the future (use timezone-aware UTC)
+            from datetime import timezone as tz
+            now = datetime.now(tz.utc)
+            # Ensure deadline is timezone-aware
+            if deadline.tzinfo is None:
+                deadline = deadline.replace(tzinfo=tz.utc)
             if deadline <= now:
                 return False, "Deadline must be in the future", {}
 
@@ -494,9 +496,13 @@ class ClassService:
             if not class_obj or class_obj.teacher_id != teacher_id:
                 return False, "Unauthorized to update this assignment", {}
                 
-            # Validate deadline if provided
+            # Validate deadline if provided (use timezone-aware UTC)
             if deadline:
-                now = datetime.now(deadline.tzinfo) if deadline.tzinfo else datetime.now()
+                from datetime import timezone as tz
+                now = datetime.now(tz.utc)
+                # Ensure deadline is timezone-aware
+                if deadline.tzinfo is None:
+                    deadline = deadline.replace(tzinfo=tz.utc)
                 if deadline <= now:
                     return False, "Deadline must be in the future", {}
                     

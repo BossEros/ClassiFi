@@ -55,17 +55,6 @@ export function TeacherDashboardPage() {
     fetchData()
   }, [navigate])
 
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-300 text-sm">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <DashboardLayout>
       {/* Page Header */}
@@ -76,9 +65,11 @@ export function TeacherDashboardPage() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Home</h1>
         </div>
-        <p className="text-gray-300 ml-11 text-sm">
-          Welcome back, <span className="text-white font-semibold">{user.firstName}</span>! Here's what's happening today.
-        </p>
+        {user && (
+          <p className="text-gray-300 ml-11 text-sm">
+            Welcome back, <span className="text-white font-semibold">{user.firstName}</span>! Here's what's happening today.
+          </p>
+        )}
       </div>
 
       {/* Error Message */}
@@ -99,8 +90,13 @@ export function TeacherDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {classes.length > 0 ? (
-              <div className="  grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {isLoading ? (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading dashboard...</p>
+              </div>
+            ) : classes.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {classes.map((classItem) => (
                   <ClassCard
                     key={classItem.id}
@@ -132,7 +128,12 @@ export function TeacherDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {tasks.length > 0 ? (
+            {isLoading ? (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading...</p>
+              </div>
+            ) : tasks.length > 0 ? (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {tasks.map((task) => (
                   <TaskCard

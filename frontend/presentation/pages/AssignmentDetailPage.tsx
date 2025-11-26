@@ -83,7 +83,8 @@ export function AssignmentDetailPage() {
         }
       } catch (err) {
         console.error('Failed to fetch assignment data:', err)
-        setError('Failed to load assignment. Please try again.')
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load assignment. Please try again.'
+        setError(errorMessage)
       } finally {
         setIsLoading(false)
       }
@@ -161,39 +162,6 @@ export function AssignmentDetailPage() {
     }
   }
 
-  if (isLoading || !user) {
-    return (
-      <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading assignment...</p>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
-  if (error && !assignment) {
-    return (
-      <DashboardLayout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-              <FileCode className="w-8 h-8 text-red-400" />
-            </div>
-            <p className="text-gray-300 font-medium mb-2">Error Loading Assignment</p>
-            <p className="text-sm text-gray-500 mb-4">{error}</p>
-            <Button onClick={() => navigate('/dashboard')} className="w-auto">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </div>
-        </div>
-      </DashboardLayout>
-    )
-  }
-
   // Temporary assignment data (replace with actual data from API)
   const tempAssignment = assignment || {
     id: parseInt(assignmentId || '0'),
@@ -214,6 +182,39 @@ export function AssignmentDetailPage() {
 
   return (
     <DashboardLayout>
+      {/* Loading State */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading assignment...</p>
+          </div>
+        </div>
+      ) : error && !assignment ? (
+        /* Error State */
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+              <FileCode className="w-8 h-8 text-red-400" />
+            </div>
+            <p className="text-gray-300 font-medium mb-2">
+              {error.toLowerCase().includes('unauthorized') ? 'Access Denied' : 'Error Loading Assignment'}
+            </p>
+            <p className="text-sm text-gray-500 mb-4">{error}</p>
+            {error.toLowerCase().includes('unauthorized') && (
+              <p className="text-xs text-gray-600 mb-4">
+                You don't have permission to view this assignment. Make sure you're enrolled in the class.
+              </p>
+            )}
+            <Button onClick={() => navigate('/dashboard')} className="w-auto">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      ) : (
+        /* Main Content */
+        <>
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -494,6 +495,8 @@ export function AssignmentDetailPage() {
           )}
         </div>
       </div>
+        </>
+      )}
     </DashboardLayout>
   )
 }

@@ -50,8 +50,16 @@ export async function submitAssignment(
         errorMessage = data
       }
 
-      return {
+      // Log detailed error information for debugging
+      console.error('Submission failed:', {
+        status: response.status,
+        statusText: response.statusText,
         error: errorMessage,
+        responseData: data
+      })
+
+      return {
+        error: `${errorMessage} (Status: ${response.status})`,
         status: response.status
       }
     }
@@ -77,8 +85,13 @@ export async function submitAssignment(
       status: response.status
     }
   } catch (error) {
+    // Log network or other errors
+    console.error('Submission error (network or other):', error)
+
     return {
-      error: error instanceof Error ? error.message : 'Failed to submit assignment',
+      error: error instanceof Error
+        ? `Network error: ${error.message}. Make sure the backend server is running.`
+        : 'Failed to submit assignment',
       status: 0
     }
   }
@@ -187,18 +200,18 @@ export async function getAssignmentById(
   assignmentId: number,
   userId: number
 ): Promise<ApiResponse<AssignmentDetailResponse>> {
-  const response = await apiClient.get<AssignmentDetailResponse>(
+  const response = await apiClient.get<any>(
     `/assignments/${assignmentId}?user_id=${userId}`
   )
 
-  if (response.data) {
+  if (response.data && response.data.assignment) {
     // Convert snake_case to camelCase
-    // The API returns the assignment object directly inside the response wrapper
-    // We need to ensure the types match
-    const assignmentData = response.data.assignment as any
+    // The API returns GetAssignmentResponse with structure: { success, message, assignment }
+    const assignmentData = response.data.assignment
 
     response.data = {
-      ...response.data,
+      success: response.data.success,
+      message: response.data.message,
       assignment: {
         id: assignmentData.id,
         classId: assignmentData.class_id,
@@ -209,7 +222,7 @@ export async function getAssignmentById(
         deadline: new Date(assignmentData.deadline),
         allowResubmission: assignmentData.allow_resubmission,
         isActive: assignmentData.is_active,
-        createdAt: new Date(assignmentData.created_at)
+        createdAt: assignmentData.created_at ? new Date(assignmentData.created_at) : undefined
       }
     }
   }

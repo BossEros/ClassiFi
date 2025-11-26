@@ -6,27 +6,22 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, Grid3x3, FileText, Plus } from 'lucide-react'
+import { Home, Grid3x3, FileText } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
-import { Button } from '@/presentation/components/ui/Button'
-import { JoinClassModal } from '@/presentation/components/forms/JoinClassModal'
 import { getCurrentUser } from '@/business/services/auth/authService'
 import { getDashboardData } from '@/business/services/dashboard/studentDashboardService'
-import { useToast } from '@/shared/context/ToastContext'
 import type { User } from '@/business/models/auth/types'
 import type { Class, Task } from '@/business/models/dashboard/types'
 
 export function StudentDashboardPage() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
   const [user, setUser] = useState<User | null>(null)
   const [enrolledClasses, setEnrolledClasses] = useState<Class[]>([])
   const [pendingAssignments, setPendingAssignments] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
 
   const fetchDashboardData = async (studentId: number) => {
     try {
@@ -55,16 +50,6 @@ export function StudentDashboardPage() {
     fetchDashboardData(currentUser.id)
   }, [navigate])
 
-  const handleJoinClass = () => {
-    setIsJoinModalOpen(true)
-  }
-
-  const handleJoinSuccess = (classInfo: Class) => {
-    // Add the new class to the list
-    setEnrolledClasses((prev) => [classInfo, ...prev])
-    showToast(`Successfully joined ${classInfo.name}!`, 'success')
-  }
-
   const formatDeadline = (deadline: Date) => {
     const now = new Date()
     const diff = deadline.getTime() - now.getTime()
@@ -74,17 +59,6 @@ export function StudentDashboardPage() {
     if (days === 0) return 'Due today'
     if (days === 1) return 'Due tomorrow'
     return `Due in ${days} days`
-  }
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-300 text-sm">Loading dashboard...</p>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -97,9 +71,11 @@ export function StudentDashboardPage() {
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Home</h1>
         </div>
-        <p className="text-gray-300 ml-11 text-sm">
-          Welcome back, <span className="text-white font-semibold">{user.firstName}</span>! Here's what's happening today.
-        </p>
+        {user && (
+          <p className="text-gray-300 ml-11 text-sm">
+            Welcome back, <span className="text-white font-semibold">{user.firstName}</span>! Here's what's happening today.
+          </p>
+        )}
       </div>
 
       {/* Error Message */}
@@ -114,24 +90,18 @@ export function StudentDashboardPage() {
         {/* My Classes Panel */}
         <Card className="lg:col-span-7 h-fit">
           <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-xl">My Classes</CardTitle>
-                <CardDescription className="text-sm mt-1.5">
-                  Classes you're enrolled in
-                </CardDescription>
-              </div>
-              <Button
-                onClick={handleJoinClass}
-                className="w-auto px-4 h-9"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Join Class
-              </Button>
-            </div>
+            <CardTitle className="text-xl">My Classes</CardTitle>
+            <CardDescription className="text-sm mt-1.5">
+              Classes you're enrolled in
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            {enrolledClasses.length > 0 ? (
+            {isLoading ? (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading dashboard...</p>
+              </div>
+            ) : enrolledClasses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {enrolledClasses.map((classItem) => (
                   <ClassCard
@@ -147,16 +117,9 @@ export function StudentDashboardPage() {
                   <Grid3x3 className="w-8 h-8 text-gray-500" />
                 </div>
                 <p className="text-gray-300 font-semibold text-sm mb-1.5">No classes yet</p>
-                <p className="text-xs text-gray-500 mb-4">
-                  Join a class using a class code from your teacher.
+                <p className="text-xs text-gray-500">
+                  Join a class from the "My Classes" page.
                 </p>
-                <Button
-                  onClick={handleJoinClass}
-                  className="w-auto"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Join Class
-                </Button>
               </div>
             )}
           </CardContent>
@@ -171,7 +134,12 @@ export function StudentDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {pendingAssignments.length > 0 ? (
+            {isLoading ? (
+              <div className="py-12 text-center">
+                <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-400">Loading...</p>
+              </div>
+            ) : pendingAssignments.length > 0 ? (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {pendingAssignments.map((assignment) => (
                   <div
@@ -214,14 +182,6 @@ export function StudentDashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Join Class Modal */}
-      <JoinClassModal
-        isOpen={isJoinModalOpen}
-        onClose={() => setIsJoinModalOpen(false)}
-        onSuccess={handleJoinSuccess}
-        studentId={user.id}
-      />
     </DashboardLayout>
   )
 }

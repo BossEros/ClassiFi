@@ -12,7 +12,9 @@ import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import { TeacherDashboardPage } from './pages/TeacherDashboardPage'
 import { StudentDashboardPage } from './pages/StudentDashboardPage'
 import { ClassesPage } from './pages/ClassesPage'
+import { StudentClassesPage } from './pages/StudentClassesPage'
 import { ClassDetailPage } from './pages/ClassDetailPage'
+import { AssignmentsPage } from './pages/AssignmentsPage'
 import { AssignmentDetailPage } from './pages/AssignmentDetailPage'
 import { AssignmentSubmissionsPage } from './pages/AssignmentSubmissionsPage'
 import { TasksPage } from './pages/TasksPage'
@@ -38,7 +40,7 @@ function RoleBasedDashboard() {
   return <TeacherDashboardPage />
 }
 
-// Component to handle classes page - students should see their dashboard instead
+// Component to handle classes page - show different pages based on role
 function RoleBasedClassesPage() {
   const user = getCurrentUser()
 
@@ -46,9 +48,9 @@ function RoleBasedClassesPage() {
     return <Navigate to="/login" replace />
   }
 
-  // Students should use the dashboard for their class list
+  // Students see their enrolled classes page
   if (user.role === 'student') {
-    return <Navigate to="/dashboard" replace />
+    return <StudentClassesPage />
   }
 
   // Teachers see the full classes page
@@ -131,6 +133,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ClassDetailPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/assignments"
+          element={
+            <ProtectedRoute>
+              <AssignmentsPage />
             </ProtectedRoute>
           }
         />

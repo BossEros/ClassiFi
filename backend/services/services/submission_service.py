@@ -4,16 +4,16 @@ Part of the Services Layer
 Handles business logic for assignment submission operations
 """
 
-import os
 import uuid
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Tuple, Dict, Any, List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.repositories.submission_repository import SubmissionRepository
 from repositories.repositories.assignment_repository import AssignmentRepository
 from repositories.repositories.enrollment_repository import EnrollmentRepository
 from fastapi import UploadFile
+from shared.supabase_client import supabase
 
 
 class SubmissionService:
@@ -22,7 +22,7 @@ class SubmissionService:
     """
 
     # File storage configuration
-    UPLOAD_DIR = Path("uploads/submissions")
+    BUCKET_NAME = "submissions"
     MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
     ALLOWED_EXTENSIONS = {
         "python": [".py", ".ipynb"],
@@ -34,9 +34,6 @@ class SubmissionService:
         self.submission_repo = SubmissionRepository(db)
         self.assignment_repo = AssignmentRepository(db)
         self.enrollment_repo = EnrollmentRepository(db)
-
-        # Ensure upload directory exists
-        self.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     def _validate_file_extension(
         self,
@@ -69,7 +66,7 @@ class SubmissionService:
         student_id: int
     ) -> Tuple[str, str, int]:
         """
-        Save uploaded file to disk
+        Save uploaded file to Supabase Storage
 
         Args:
             file: Uploaded file
@@ -77,27 +74,64 @@ class SubmissionService:
             student_id: ID of the student
 
         Returns:
-            Tuple of (file_name, file_path, file_size)
+            Tuple of (file_name, storage_path, file_size)
         """
         # Generate unique filename
         file_ext = Path(file.filename).suffix
         unique_filename = f"{student_id}_{assignment_id}_{uuid.uuid4()}{file_ext}"
 
-        # Create assignment-specific directory
-        assignment_dir = self.UPLOAD_DIR / str(assignment_id)
-        assignment_dir.mkdir(parents=True, exist_ok=True)
+        # Storage path: assignments/{assignment_id}/students/{student_id}/{filename}
+        storage_path = f"assignments/{assignment_id}/students/{student_id}/{unique_filename}"
 
-        # Full file path
-        file_path = assignment_dir / unique_filename
-
-        # Write file to disk
+        # Read file content
         content = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
-
         file_size = len(content)
 
-        return file.filename, str(file_path), file_size
+        # Upload to Supabase Storage
+        try:
+            result = supabase.storage.from_(self.BUCKET_NAME).upload(
+                path=storage_path,
+                file=content,
+                file_options={
+                    "content-type": file.content_type or "application/octet-stream",
+                    "upsert": "false"  # Don't overwrite existing files
+                }
+            )
+
+            # Check if upload was successful
+            if hasattr(result, 'error') and result.error:
+                raise Exception(f"Supabase upload failed: {result.error}")
+
+            return file.filename, storage_path, file_size
+
+        except Exception as e:
+            raise Exception(f"Failed to upload file to storage: {str(e)}")
+
+    def get_file_download_url(self, file_path: str, expires_in: int = 3600) -> str:
+        """
+        Generate a signed URL for downloading a file from Supabase Storage
+
+        Args:
+            file_path: Storage path of the file
+            expires_in: URL expiration time in seconds (default: 1 hour)
+
+        Returns:
+            Signed URL for file download
+        """
+        try:
+            result = supabase.storage.from_(self.BUCKET_NAME).create_signed_url(
+                path=file_path,
+                expires_in=expires_in
+            )
+
+            if hasattr(result, 'error') and result.error:
+                raise Exception(f"Failed to create signed URL: {result.error}")
+
+            # Return the signed URL
+            return result.get('signedURL', '')
+
+        except Exception as e:
+            raise Exception(f"Failed to generate download URL: {str(e)}")
 
     async def submit_assignment(
         self,
@@ -133,8 +167,9 @@ class SubmissionService:
             if not is_enrolled:
                 return False, "You are not enrolled in this class", {}
 
-            # 4. Check deadline
-            if assignment.deadline < datetime.now():
+            # 4. Check deadline (use timezone-aware datetime for comparison)
+            current_time = datetime.now(timezone.utc)
+            if assignment.deadline < current_time:
                 return False, "Assignment deadline has passed", {}
 
             # 5. Check if resubmission is allowed

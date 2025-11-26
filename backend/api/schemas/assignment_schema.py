@@ -6,7 +6,7 @@ Pydantic models for assignment operations
 
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class CreateAssignmentRequest(BaseModel):
@@ -45,12 +45,13 @@ class CreateAssignmentRequest(BaseModel):
     @classmethod
     def validate_deadline(cls, v: datetime) -> datetime:
         """Validate deadline is in the future"""
-        # Ensure we compare with timezone-aware now if v is timezone-aware
-        if v.tzinfo:
-            now = datetime.now(v.tzinfo)
-        else:
-            now = datetime.now()
-            
+        # Always use UTC for comparison to match database timezone
+        now = datetime.now(timezone.utc)
+
+        # If v is naive, make it UTC-aware
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+
         if v <= now:
             raise ValueError('Deadline must be in the future')
         return v
@@ -97,12 +98,14 @@ class UpdateAssignmentRequest(BaseModel):
         """Validate deadline is in the future"""
         if v is None:
             return v
-        # Ensure we compare with timezone-aware now if v is timezone-aware
-        if v.tzinfo:
-            now = datetime.now(v.tzinfo)
-        else:
-            now = datetime.now()
-            
+
+        # Always use UTC for comparison to match database timezone
+        now = datetime.now(timezone.utc)
+
+        # If v is naive, make it UTC-aware
+        if v.tzinfo is None:
+            v = v.replace(tzinfo=timezone.utc)
+
         if v <= now:
             raise ValueError('Deadline must be in the future')
         return v

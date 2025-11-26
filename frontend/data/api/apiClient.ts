@@ -51,7 +51,10 @@ class ApiClient {
         // Extract error message from different possible response formats
         let errorMessage = 'An error occurred'
 
-        if (data.detail) {
+        if (data.error && data.error.message) {
+          // Backend error format: { success: false, error: { message: "..." } }
+          errorMessage = data.error.message
+        } else if (data.detail) {
           // FastAPI HTTPException format
           errorMessage = data.detail
         } else if (data.message) {

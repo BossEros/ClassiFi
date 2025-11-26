@@ -1,43 +1,31 @@
 /**
- * Classes Page Component
+ * Student Classes Page Component
  * Part of the Presentation Layer - Pages
- * Displays all classes for the teacher with ability to create new classes
+ * Displays all enrolled classes for the student
  */
 
-import { useEffect, useState, useRef } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Grid3x3, Plus } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
-import { CreateClassModal } from '@/presentation/components/forms/CreateClassModal'
+import { JoinClassModal } from '@/presentation/components/forms/JoinClassModal'
 import { getCurrentUser } from '@/business/services/auth/authService'
-import { getAllClasses } from '@/business/services/class/classService'
+import { getDashboardData } from '@/business/services/dashboard/studentDashboardService'
 import { useToast } from '@/shared/context/ToastContext'
 import type { User } from '@/business/models/auth/types'
 import type { Class } from '@/business/models/dashboard/types'
 
-export function ClassesPage() {
+export function StudentClassesPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { showToast } = useToast()
-  const hasShownDeleteToast = useRef(false)
   const [user, setUser] = useState<User | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
-  // Show toast if redirected from class deletion
-  useEffect(() => {
-    if (location.state?.deleted && !hasShownDeleteToast.current) {
-      hasShownDeleteToast.current = true
-      showToast('Class deleted successfully')
-      // Clear state to prevent showing again on refresh
-      navigate(location.pathname, { replace: true })
-    }
-  }, [location.state, location.pathname, showToast, navigate])
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -48,13 +36,13 @@ export function ClassesPage() {
 
     setUser(currentUser)
 
-    // Fetch all classes
+    // Fetch enrolled classes
     const fetchClasses = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const allClasses = await getAllClasses(parseInt(currentUser.id))
-        setClasses(allClasses)
+        const data = await getDashboardData(parseInt(currentUser.id))
+        setClasses(data.enrolledClasses)
       } catch (err) {
         console.error('Failed to fetch classes:', err)
         setError('Failed to load classes. Please try refreshing the page.')
@@ -66,19 +54,10 @@ export function ClassesPage() {
     fetchClasses()
   }, [navigate])
 
-  const handleCreateSuccess = async () => {
-    // Show success toast
-    showToast('Class created successfully')
-
-    // Refresh the classes list
-    if (user) {
-      try {
-        const allClasses = await getAllClasses(parseInt(user.id))
-        setClasses(allClasses)
-      } catch (err) {
-        console.error('Failed to refresh classes:', err)
-      }
-    }
+  const handleJoinSuccess = (classInfo: Class) => {
+    // Add the new class to the list
+    setClasses((prev) => [classInfo, ...prev])
+    showToast(`Successfully joined ${classInfo.name}!`, 'success')
   }
 
   return (
@@ -88,15 +67,15 @@ export function ClassesPage() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
             <Grid3x3 className="w-6 h-6 text-white" />
-            <h1 className="text-3xl font-bold text-white">Classes</h1>
+            <h1 className="text-3xl font-bold text-white">My Classes</h1>
           </div>
           <Button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsJoinModalOpen(true)}
             className="w-auto px-6"
             disabled={isLoading}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Create a Class
+            Join a Class
           </Button>
         </div>
         <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mb-4"></div>
@@ -132,32 +111,31 @@ export function ClassesPage() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                 <Grid3x3 className="w-8 h-8 text-gray-500" />
               </div>
-              <p className="text-gray-300 font-medium mb-1">No classes found</p>
+              <p className="text-gray-300 font-medium mb-1">No classes yet</p>
               <p className="text-sm text-gray-500 mb-4">
-                Create your first class to get started.
+                Join a class using a class code from your teacher.
               </p>
               <Button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => setIsJoinModalOpen(true)}
                 className="w-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Create a Class
+                Join a Class
               </Button>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Create Class Modal */}
+      {/* Join Class Modal */}
       {user && (
-        <CreateClassModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={handleCreateSuccess}
-          teacherId={parseInt(user.id)}
+        <JoinClassModal
+          isOpen={isJoinModalOpen}
+          onClose={() => setIsJoinModalOpen(false)}
+          onSuccess={handleJoinSuccess}
+          studentId={user.id}
         />
       )}
     </DashboardLayout>
   )
 }
-
