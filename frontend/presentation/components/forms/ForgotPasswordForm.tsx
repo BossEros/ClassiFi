@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react'
-import { requestPasswordReset } from '@/business/services/auth/authService'
+import { requestPasswordReset } from '@/business/services/authService'
 
 interface ForgotPasswordFormProps {
   onBackToLoginClick?: () => void

@@ -3,7 +3,7 @@ import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'
 import { CheckCircle, Clock, AlertCircle, FileCode, ArrowRight } from 'lucide-react'
 import type { Submission } from '@/business/models/assignment/types'
-import { formatFileSize } from '@/business/services/assignment/assignmentService'
+import { formatFileSize } from '@/business/services/assignmentService'
 
 interface SubmissionCardProps {
   submission: Submission

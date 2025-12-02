@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { X, Check, RefreshCw, Users } from 'lucide-react'
 import { Input } from '@/presentation/components/ui/Input'
 import { Button } from '@/presentation/components/ui/Button'
-import { joinClass } from '@/business/services/dashboard/studentDashboardService'
+import { joinClass } from '@/business/services/studentDashboardService'
 import type { Class } from '@/business/models/dashboard/types'
 
 interface JoinClassModalProps {

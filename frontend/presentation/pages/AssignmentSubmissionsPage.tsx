@@ -6,8 +6,8 @@ import { Button } from '@/presentation/components/ui/Button'
 import { Input } from '@/presentation/components/ui/Input'
 import { SubmissionCard } from '@/presentation/components/dashboard/SubmissionCard'
 import { ArrowLeft, Search, Shield, Calendar, Code, FileText, Inbox } from 'lucide-react'
-import { getCurrentUser } from '@/business/services/auth/authService'
-import { getAssignmentById, getAssignmentSubmissions } from '@/business/services/assignment/assignmentService'
+import { getCurrentUser } from '@/business/services/authService'
+import { getAssignmentById, getAssignmentSubmissions } from '@/business/services/assignmentService'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
 
 export function AssignmentSubmissionsPage() {

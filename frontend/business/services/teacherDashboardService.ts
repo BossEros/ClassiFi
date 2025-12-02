@@ -3,8 +3,8 @@
  * Business logic for the teacher dashboard.
  */
 
-import * as dashboardRepository from '../../../data/repositories/dashboard/teacherDashboardRepository'
-import type { DashboardData, Class, Task } from '../../models/dashboard/types'
+import * as dashboardRepository from '../../data/repositories/dashboard/teacherDashboardRepository'
+import type { DashboardData, Class, Task } from '../models/dashboard/types'
 
 /**
  * Fetches complete dashboard data for a teacher

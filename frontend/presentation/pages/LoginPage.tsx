@@ -1,6 +1,6 @@
 import { LoginForm } from '../components/forms/LoginForm'
 import { useNavigate } from 'react-router-dom'
-import { getCurrentUser } from '@/business/services/auth/authService'
+import { getCurrentUser } from '@/business/services/authService'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -8,7 +8,7 @@ export function LoginPage() {
   const handleLoginSuccess = () => {
     // Get the logged-in user to check their role
     const user = getCurrentUser()
-    
+
     if (user) {
       // Redirect teachers to the teacher dashboard
       if (user.role === 'teacher') {

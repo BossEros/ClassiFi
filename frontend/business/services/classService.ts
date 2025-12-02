@@ -3,10 +3,10 @@
  * Part of the Business Logic Layer - Contains class business logic
  */
 
-import * as classRepository from '../../../data/repositories/class/classRepository'
-import { validateCreateAssignmentData } from '../../validation/assignmentValidation'
-import type { Class, Assignment, EnrolledStudent, ClassDetailData, CreateAssignmentRequest } from '../../models/dashboard/types'
-import type { UpdateAssignmentRequest } from '../../models/assignment/types'
+import * as classRepository from '../../data/repositories/class/classRepository'
+import { validateCreateAssignmentData } from '../validation/assignmentValidation'
+import type { Class, Assignment, EnrolledStudent, ClassDetailData, CreateAssignmentRequest } from '../models/dashboard/types'
+import type { UpdateAssignmentRequest } from '../models/assignment/types'
 
 /**
  * Request structure for creating a class (frontend format)

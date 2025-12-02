@@ -3,9 +3,9 @@
  * Business logic for the student dashboard.
  */
 
-import * as dashboardRepository from '../../../data/repositories/dashboard/studentDashboardRepository'
-import type { StudentDashboardData, JoinClassResponse } from '../../../data/repositories/dashboard/studentDashboardRepository'
-import type { Class, Task } from '../../models/dashboard/types'
+import * as dashboardRepository from '../../data/repositories/dashboard/studentDashboardRepository'
+import type { StudentDashboardData, JoinClassResponse } from '../../data/repositories/dashboard/studentDashboardRepository'
+import type { Class, Task } from '../models/dashboard/types'
 
 /**
  * Fetches complete dashboard data for a student

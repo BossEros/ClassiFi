@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Eye, EyeOff, ArrowLeft, GraduationCap, Users } from 'lucide-react'
-import { registerUser } from '@/business/services/auth/authService'
+import { registerUser } from '@/business/services/authService'
 import {
   validateRegistrationData,
   validateField

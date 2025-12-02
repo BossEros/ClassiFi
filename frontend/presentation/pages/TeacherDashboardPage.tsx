@@ -5,8 +5,8 @@ import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLa
 import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
 import { TaskCard } from '@/presentation/components/dashboard/TaskCard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
-import { getCurrentUser } from '@/business/services/auth/authService'
-import { getDashboardData } from '@/business/services/dashboard/teacherDashboardService'
+import { getCurrentUser } from '@/business/services/authService'
+import { getDashboardData } from '@/business/services/teacherDashboardService'
 import type { User } from '@/business/models/auth/types'
 import type { Class, Task } from '@/business/models/dashboard/types'
 

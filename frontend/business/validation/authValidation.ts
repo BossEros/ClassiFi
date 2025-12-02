@@ -1,12 +1,3 @@
-/**
- * Authentication Validation Rules
- * Part of the Business Logic Layer
- *
- * Provides client-side validation for authentication forms.
- * These validations provide immediate user feedback before API calls.
- * Server-side validation is the final authority.
- */
-
 export interface ValidationResult {
   isValid: boolean;
   errors: Record<string, string>;

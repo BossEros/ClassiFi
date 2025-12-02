@@ -16,7 +16,7 @@ import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
-import { getCurrentUser } from '@/business/services/auth/authService'
+import { getCurrentUser } from '@/business/services/authService'
 import { useEffect } from 'react'
 
 // Component to render dashboard based on user role
@@ -96,84 +96,84 @@ function App() {
       <ToastProvider>
         <AuthRedirectHandler />
         <Routes>
-        {/* Default route - redirect to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Default route - redirect to login */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Authentication routes */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password" element={<ResetPasswordPage onSuccess={() => window.location.href = '/login'} />} />
-        <Route path="/confirm-email" element={<EmailConfirmationPage onRedirectToLogin={() => window.location.href = '/login'} />} />
+          {/* Authentication routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage onSuccess={() => window.location.href = '/login'} />} />
+          <Route path="/confirm-email" element={<EmailConfirmationPage onRedirectToLogin={() => window.location.href = '/login'} />} />
 
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <RoleBasedDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/classes"
-          element={
-            <ProtectedRoute>
-              <RoleBasedClassesPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/classes/:classId"
-          element={
-            <ProtectedRoute>
-              <ClassDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/assignments"
-          element={
-            <ProtectedRoute>
-              <AssignmentsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/assignments/:assignmentId"
-          element={
-            <ProtectedRoute>
-              <AssignmentDetailPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/assignments/:assignmentId/submissions"
-          element={
-            <ProtectedRoute>
-              <AssignmentSubmissionsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/tasks"
-          element={
-            <ProtectedRoute>
-              <TasksPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/history"
-          element={
-            <ProtectedRoute>
-              <HistoryPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <RoleBasedDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes"
+            element={
+              <ProtectedRoute>
+                <RoleBasedClassesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/:classId"
+            element={
+              <ProtectedRoute>
+                <ClassDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/assignments"
+            element={
+              <ProtectedRoute>
+                <AssignmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/assignments/:assignmentId"
+            element={
+              <ProtectedRoute>
+                <AssignmentDetailPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/assignments/:assignmentId/submissions"
+            element={
+              <ProtectedRoute>
+                <AssignmentSubmissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/tasks"
+            element={
+              <ProtectedRoute>
+                <TasksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/history"
+            element={
+              <ProtectedRoute>
+                <HistoryPage />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Catch all - redirect to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* Catch all - redirect to login */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </ToastProvider>
     </BrowserRouter>

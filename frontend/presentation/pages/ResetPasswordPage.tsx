@@ -3,7 +3,7 @@ import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Eye, EyeOff, Lock, CheckCircle, XCircle } from 'lucide-react'
 import { validatePassword, validatePasswordsMatch } from '@/business/validation/authValidation'
-import { resetPassword } from '@/business/services/auth/authService'
+import { resetPassword } from '@/business/services/authService'
 import { supabase } from '@/data/api/supabaseClient'
 
 interface ResetPasswordPageProps {

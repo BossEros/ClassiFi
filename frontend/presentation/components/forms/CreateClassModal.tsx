@@ -3,7 +3,7 @@ import { X, Check, RefreshCw } from 'lucide-react'
 import { Input } from '@/presentation/components/ui/Input'
 import { Textarea } from '@/presentation/components/ui/Textarea'
 import { Button } from '@/presentation/components/ui/Button'
-import { createClass, generateClassCode } from '@/business/services/class/classService'
+import { createClass, generateClassCode } from '@/business/services/classService'
 import { validateClassName, validateClassDescription, validateCreateClassData } from '@/business/validation/classValidation'
 
 interface CreateClassModalProps {

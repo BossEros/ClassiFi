@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X, Trash2, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/presentation/components/ui/Button'
-import { removeStudent } from '@/business/services/class/classService'
+import { removeStudent } from '@/business/services/classService'
 
 interface RemoveStudentModalProps {
     isOpen: boolean

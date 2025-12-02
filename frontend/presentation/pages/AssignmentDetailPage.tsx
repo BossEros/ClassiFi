@@ -4,7 +4,7 @@ import { ArrowLeft, Upload, FileCode, Clock, Calendar, Code, CheckCircle, Refres
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
-import { getCurrentUser } from '@/business/services/auth/authService'
+import { getCurrentUser } from '@/business/services/authService'
 import {
   submitAssignment,
   getSubmissionHistory,
@@ -12,7 +12,7 @@ import {
   getAssignmentById,
   formatFileSize,
   validateFile
-} from '@/business/services/assignment/assignmentService'
+} from '@/business/services/assignmentService'
 import { useToast } from '@/shared/context/ToastContext'
 import type { User } from '@/business/models/auth/types'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'

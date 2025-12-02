@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X, LogOut, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/presentation/components/ui/Button'
-import { leaveClass } from '@/business/services/dashboard/studentDashboardService'
+import { leaveClass } from '@/business/services/studentDashboardService'
 
 interface LeaveClassModalProps {
   isOpen: boolean

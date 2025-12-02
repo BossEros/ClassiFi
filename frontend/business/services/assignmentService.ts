@@ -3,13 +3,13 @@
  * Business logic for assignments and submissions.
  */
 
-import * as assignmentRepository from '../../../data/repositories/assignment/assignmentRepository'
+import * as assignmentRepository from '../../data/repositories/assignment/assignmentRepository'
 import type {
   Submission,
   SubmissionHistoryResponse,
   AssignmentDetail,
   SubmitAssignmentRequest
-} from '../../models/assignment/types'
+} from '../models/assignment/types'
 
 /**
  * Maximum file size for submissions (10MB)

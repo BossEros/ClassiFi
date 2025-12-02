@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom'
-import { getCurrentUser } from '@/business/services/auth/authService'
+import { getCurrentUser } from '@/business/services/authService'
 
 interface ProtectedRouteProps {
   children: React.ReactNode

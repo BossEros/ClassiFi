@@ -4,8 +4,8 @@ import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText } from 'lucide-re
 import { NavItem } from './NavItem'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'
-import { logoutUser } from '@/business/services/auth/authService'
-import { getCurrentUser } from '@/business/services/auth/authService'
+import { logoutUser } from '@/business/services/authService'
+import { getCurrentUser } from '@/business/services/authService'
 import type { User } from '@/business/models/auth/types'
 import { APP_NAME } from '@/shared/constants'
 

@@ -4,7 +4,7 @@ import { Input } from '@/presentation/components/ui/Input'
 import { Textarea } from '@/presentation/components/ui/Textarea'
 import { Select, type SelectOption } from '@/presentation/components/ui/Select'
 import { Button } from '@/presentation/components/ui/Button'
-import { createAssignment, updateAssignment } from '@/business/services/class/classService'
+import { createAssignment, updateAssignment } from '@/business/services/classService'
 import {
   validateAssignmentTitle,
   validateDescription,

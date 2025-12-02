@@ -3,14 +3,14 @@
  * Handles user authentication, registration, and session management.
  */
 
-import * as authRepository from '../../../data/repositories/auth/authRepository'
+import * as authRepository from '../../data/repositories/auth/authRepository'
 import {
   validateLoginData,
   validateRegistrationData,
   validateEmail,
   validatePassword,
   validatePasswordsMatch
-} from '../../validation/authValidation'
+} from '../validation/authValidation'
 import type {
   LoginRequest,
   RegisterRequest,
@@ -20,7 +20,7 @@ import type {
   ForgotPasswordResponse,
   ResetPasswordRequest,
   ResetPasswordResponse
-} from '../../models/auth/types'
+} from '../models/auth/types'
 
 
 export async function loginUser(

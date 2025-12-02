@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { FileText, Calendar, Clock } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent } from '@/presentation/components/ui/Card'
-import { getCurrentUser } from '@/business/services/auth/authService'
-import { getStudentSubmissions } from '@/business/services/assignment/assignmentService'
-
+import { getCurrentUser } from '@/business/services/authService'
+import { getStudentSubmissions } from '@/business/services/assignmentService'
 import type { User } from '@/business/models/auth/types'
+
 import type { Submission } from '@/business/models/assignment/types'
 
 export function AssignmentsPage() {

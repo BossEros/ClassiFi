@@ -1,9 +1,3 @@
-/**
- * Assignment Validation
- * Part of the Business Logic Layer
- * Validation functions for assignment creation and editing
- */
-
 import type { CreateAssignmentRequest } from '../models/dashboard/types'
 
 export interface ValidationResult {
