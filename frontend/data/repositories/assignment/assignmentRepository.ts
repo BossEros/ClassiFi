@@ -6,6 +6,7 @@
 
 import { apiClient, type ApiResponse } from '../../api/apiClient'
 import type {
+  SubmitAssignmentRequest,
   SubmitAssignmentResponse,
   SubmissionListResponse,
   SubmissionHistoryResponse,
@@ -19,16 +20,14 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
  * Uses multipart/form-data instead of JSON
  */
 export async function submitAssignment(
-  assignmentId: number,
-  studentId: number,
-  file: File
+  request: SubmitAssignmentRequest
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
     // Create FormData for file upload
     const formData = new FormData()
-    formData.append('assignment_id', assignmentId.toString())
-    formData.append('student_id', studentId.toString())
-    formData.append('file', file)
+    formData.append('assignment_id', request.assignmentId.toString())
+    formData.append('student_id', request.studentId.toString())
+    formData.append('file', request.file)
 
     // Make request with fetch directly (apiClient doesn't support FormData)
     const response = await fetch(`${API_BASE_URL}/submissions`, {

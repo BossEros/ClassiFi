@@ -1,8 +1,3 @@
-/**
- * Utility function for merging Tailwind CSS classes
- * Part of the Shared Layer
- */
-
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 

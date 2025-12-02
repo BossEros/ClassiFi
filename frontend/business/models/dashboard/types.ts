@@ -100,4 +100,3 @@ export interface CreateAssignmentResponse {
   message?: string
   assignment?: Assignment
 }
-

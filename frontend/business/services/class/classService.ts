@@ -6,18 +6,7 @@
 import * as classRepository from '../../../data/repositories/class/classRepository'
 import { validateCreateAssignmentData } from '../../validation/assignmentValidation'
 import type { Class, Assignment, EnrolledStudent, ClassDetailData, CreateAssignmentRequest } from '../../models/dashboard/types'
-
-/**
- * Request structure for updating an assignment (frontend format)
- */
-export interface UpdateAssignmentRequest {
-  teacherId: number
-  assignmentName?: string
-  description?: string
-  programmingLanguage?: 'python' | 'java'
-  deadline?: Date
-  allowResubmission?: boolean
-}
+import type { UpdateAssignmentRequest } from '../../models/assignment/types'
 
 /**
  * Request structure for creating a class (frontend format)

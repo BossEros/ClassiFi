@@ -1,6 +1,6 @@
 /**
  * Teacher Dashboard Service
- * Part of the Business Logic Layer - Contains dashboard business logic
+ * Business logic for the teacher dashboard.
  */
 
 import * as dashboardRepository from '../../../data/repositories/dashboard/teacherDashboardRepository'

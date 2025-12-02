@@ -1,8 +1,3 @@
-/**
- * Delete Assignment Modal Component
- * Part of the Presentation Layer - Form Components
- */
-
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
 import { AlertTriangle, X } from 'lucide-react'

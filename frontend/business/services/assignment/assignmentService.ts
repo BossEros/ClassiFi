@@ -1,14 +1,14 @@
 /**
  * Assignment Service
- * Part of the Business Logic Layer
- * Contains assignment and submission business logic
+ * Business logic for assignments and submissions.
  */
 
 import * as assignmentRepository from '../../../data/repositories/assignment/assignmentRepository'
 import type {
   Submission,
   SubmissionHistoryResponse,
-  AssignmentDetail
+  AssignmentDetail,
+  SubmitAssignmentRequest
 } from '../../models/assignment/types'
 
 /**
@@ -79,39 +79,29 @@ export function formatFileSize(bytes: number): string {
 /**
  * Submits an assignment with file upload
  *
- * @param assignmentId - ID of the assignment
- * @param studentId - ID of the student
- * @param file - File to submit
- * @param programmingLanguage - Programming language of the assignment
+ * @param request - Submit assignment request containing all necessary data
  * @returns Submission data
  */
 export async function submitAssignment(
-  assignmentId: number,
-  studentId: number,
-  file: File,
-  programmingLanguage: string
+  request: SubmitAssignmentRequest
 ): Promise<Submission> {
   // Validate inputs
-  if (!assignmentId || assignmentId <= 0) {
+  if (!request.assignmentId || request.assignmentId <= 0) {
     throw new Error('Invalid assignment ID')
   }
 
-  if (!studentId || studentId <= 0) {
+  if (!request.studentId || request.studentId <= 0) {
     throw new Error('Invalid student ID')
   }
 
   // Validate file
-  const validationError = validateFile(file, programmingLanguage)
+  const validationError = validateFile(request.file, request.programmingLanguage)
   if (validationError) {
     throw new Error(validationError)
   }
 
   // Submit to repository
-  const response = await assignmentRepository.submitAssignment(
-    assignmentId,
-    studentId,
-    file
-  )
+  const response = await assignmentRepository.submitAssignment(request)
 
   if (response.error) {
     throw new Error(response.error)

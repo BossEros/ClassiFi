@@ -1,8 +1,3 @@
-/**
- * Login Page Component
- * Part of the Presentation Layer - Pages
- */
-
 import { LoginForm } from '../components/forms/LoginForm'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUser } from '@/business/services/auth/authService'

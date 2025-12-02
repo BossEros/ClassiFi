@@ -1,8 +1,3 @@
-/**
- * Forgot Password Page Component
- * Part of the Presentation Layer - Pages
- */
-
 import { ForgotPasswordForm } from '../components/forms/ForgotPasswordForm'
 import { useNavigate } from 'react-router-dom'
 

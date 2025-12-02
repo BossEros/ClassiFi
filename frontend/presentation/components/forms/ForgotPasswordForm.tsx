@@ -1,8 +1,3 @@
-/**
- * Forgot Password Form Component
- * Part of the Presentation Layer - Form Components
- */
-
 import { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'

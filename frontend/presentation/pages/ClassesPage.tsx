@@ -1,9 +1,3 @@
-/**
- * Classes Page Component
- * Part of the Presentation Layer - Pages
- * Displays all classes for the teacher with ability to create new classes
- */
-
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Grid3x3, Plus } from 'lucide-react'

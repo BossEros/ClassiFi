@@ -1,8 +1,3 @@
-/**
- * Navigation Item Component
- * Part of the Presentation Layer - Dashboard Components
- */
-
 import { NavLink } from 'react-router-dom'
 import { cn } from '@/shared/utils/cn'
 import type { NavigationItem } from '@/business/models/dashboard/types'

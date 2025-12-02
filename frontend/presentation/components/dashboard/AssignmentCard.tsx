@@ -1,8 +1,3 @@
-/**
- * Assignment Card Component
- * Part of the Presentation Layer - Dashboard Components
- */
-
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { cn } from '@/shared/utils/cn'
 import { Clock, Check, Circle, Pencil, Trash2 } from 'lucide-react'

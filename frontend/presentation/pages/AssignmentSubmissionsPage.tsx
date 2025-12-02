@@ -1,9 +1,3 @@
-/**
- * Assignment Submissions Page
- * Part of the Presentation Layer - Pages
- * Displays all student submissions for a specific assignment (Teacher View)
- */
-
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'

@@ -1,8 +1,3 @@
-/**
- * Sidebar Component
- * Part of the Presentation Layer - Dashboard Components
- */
-
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText } from 'lucide-react'

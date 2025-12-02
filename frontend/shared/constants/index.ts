@@ -1,8 +1,3 @@
-/**
- * Application-wide constants
- * Part of the Shared Layer
- */
-
 export const APP_NAME = 'ClassiFi'
 
 export const ROUTES = {

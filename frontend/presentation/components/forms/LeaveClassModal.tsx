@@ -1,9 +1,3 @@
-/**
- * Leave Class Modal Component
- * Part of the Presentation Layer - Forms
- * Confirmation modal for students to leave/unenroll from a class
- */
-
 import { useState } from 'react'
 import { X, LogOut, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/presentation/components/ui/Button'

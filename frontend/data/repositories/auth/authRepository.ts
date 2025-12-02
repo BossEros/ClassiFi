@@ -1,13 +1,13 @@
 import { apiClient } from '../../api/apiClient'
 import { supabase } from '../../api/supabaseClient'
 import type {
-  LoginCredentials,
-  RegisterData,
+  LoginRequest,
+  RegisterRequest,
   AuthResponse,
   User,
-  ForgotPasswordData,
+  ForgotPasswordRequest,
   ForgotPasswordResponse,
-  ResetPasswordData,
+  ResetPasswordRequest,
   ResetPasswordResponse
 } from '../../../business/models/auth/types'
 
@@ -35,7 +35,7 @@ function transformUserResponse(backendUser: BackendUser): User {
 
 
 export async function login(
-  credentials: LoginCredentials
+  credentials: LoginRequest
 ): Promise<AuthResponse> {
   // Call backend API for login
   const response = await apiClient.post<AuthResponse>('/auth/login', {
@@ -57,7 +57,7 @@ export async function login(
 }
 
 
-export async function register(data: RegisterData): Promise<AuthResponse> {
+export async function register(data: RegisterRequest): Promise<AuthResponse> {
   // Call backend API for registration
   const response = await apiClient.post<AuthResponse>('/auth/register', {
     role: data.role,
@@ -105,7 +105,7 @@ export async function verifyToken(token: string): Promise<boolean> {
 
 
 export async function forgotPassword(
-  data: ForgotPasswordData
+  data: ForgotPasswordRequest
 ): Promise<ForgotPasswordResponse> {
   // Call backend API for password reset
   const response = await apiClient.post<ForgotPasswordResponse>('/auth/forgot-password', {
@@ -121,7 +121,7 @@ export async function forgotPassword(
 
 
 export async function resetPassword(
-  data: ResetPasswordData
+  data: ResetPasswordRequest
 ): Promise<ResetPasswordResponse> {
   try {
     // Check if Supabase has established a session from the reset link

@@ -1,9 +1,3 @@
-/**
- * Assignments Page Component
- * Part of the Presentation Layer - Pages
- * Displays all assignments for students
- */
-
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FileText, Calendar, Clock } from 'lucide-react'
@@ -11,13 +5,13 @@ import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { getCurrentUser } from '@/business/services/auth/authService'
 import { getStudentSubmissions } from '@/business/services/assignment/assignmentService'
-import { useToast } from '@/shared/context/ToastContext'
+
 import type { User } from '@/business/models/auth/types'
 import type { Submission } from '@/business/models/assignment/types'
 
 export function AssignmentsPage() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
+
   const [user, setUser] = useState<User | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -49,17 +43,6 @@ export function AssignmentsPage() {
 
     fetchSubmissions()
   }, [navigate])
-
-  const formatDeadline = (deadline: Date) => {
-    const now = new Date()
-    const diff = deadline.getTime() - now.getTime()
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-
-    if (days < 0) return 'Overdue'
-    if (days === 0) return 'Due today'
-    if (days === 1) return 'Due tomorrow'
-    return `Due in ${days} days`
-  }
 
   return (
     <DashboardLayout>

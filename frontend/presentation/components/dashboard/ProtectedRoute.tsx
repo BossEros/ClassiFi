@@ -1,9 +1,3 @@
-/**
- * Protected Route Component
- * Part of the Presentation Layer - Dashboard Components
- * Wraps routes that require authentication
- */
-
 import { Navigate } from 'react-router-dom'
 import { getCurrentUser } from '@/business/services/auth/authService'
 

@@ -1,8 +1,3 @@
-/**
- * Email Confirmation Page
- * Handles email confirmation from Supabase and redirects to login
- */
-
 import { useEffect, useState } from 'react'
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '../components/ui/Button'

@@ -1,9 +1,3 @@
-/**
- * Create Assignment Modal Component
- * Part of the Presentation Layer - Forms
- * Modal form for creating a new assignment
- */
-
 import { useState, useEffect } from 'react'
 import { X, Plus, RefreshCw, FileCode, Calendar, Code } from 'lucide-react'
 import { Input } from '@/presentation/components/ui/Input'

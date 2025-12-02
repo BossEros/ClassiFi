@@ -1,8 +1,3 @@
-/**
- * Registration Form Component
- * Part of the Presentation Layer - Form Components
- */
-
 import { useState } from 'react'
 import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
@@ -171,13 +166,12 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             {steps.map((step, index) => (
               <div
                 key={step.id}
-                className={`transition-colors ${
-                  index === 0
-                    ? 'text-left'
-                    : index === steps.length - 1
+                className={`transition-colors ${index === 0
+                  ? 'text-left'
+                  : index === steps.length - 1
                     ? 'text-right'
                     : 'text-center'
-                } ${index <= currentStepIndex ? 'text-white font-medium' : 'text-gray-400'}`}
+                  } ${index <= currentStepIndex ? 'text-white font-medium' : 'text-gray-400'}`}
               >
                 {step.label}
               </div>
@@ -212,11 +206,10 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setRole('student')}
-              className={`p-8 rounded-2xl border-2 transition-all ${
-                role === 'student'
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:bg-white/10'
-              }`}
+              className={`p-8 rounded-2xl border-2 transition-all ${role === 'student'
+                ? 'border-purple-500 bg-purple-500/10'
+                : 'border-white/10 bg-white/5 hover:bg-white/10'
+                }`}
             >
               <GraduationCap className="w-12 h-12 mx-auto mb-4 text-white" />
               <p className="text-white font-medium">I am a student</p>
@@ -225,11 +218,10 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             <button
               type="button"
               onClick={() => setRole('teacher')}
-              className={`p-8 rounded-2xl border-2 transition-all ${
-                role === 'teacher'
-                  ? 'border-purple-500 bg-purple-500/10'
-                  : 'border-white/10 bg-white/5 hover:bg-white/10'
-              }`}
+              className={`p-8 rounded-2xl border-2 transition-all ${role === 'teacher'
+                ? 'border-purple-500 bg-purple-500/10'
+                : 'border-white/10 bg-white/5 hover:bg-white/10'
+                }`}
             >
               <Users className="w-12 h-12 mx-auto mb-4 text-white" />
               <p className="text-white font-medium">I am a teacher</p>
@@ -439,10 +431,10 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               </svg>
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">Account Creation Complete</h1>
-            <p className="text-gray-400">Click the button to proceed to the home page.</p>
+            <p className="text-gray-400">Click the button to proceed to the login page.</p>
           </div>
 
-          <Button onClick={onSuccess}>Proceed to Home</Button>
+          <Button onClick={onSuccess}>Proceed to Login</Button>
         </div>
       )}
     </div>

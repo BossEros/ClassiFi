@@ -1,9 +1,3 @@
-/**
- * Student Dashboard Page Component
- * Part of the Presentation Layer - Pages
- * Main dashboard view for students with My Classes and Pending Assignments panels
- */
-
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, Grid3x3, FileText } from 'lucide-react'
@@ -47,9 +41,12 @@ export function StudentDashboardPage() {
     }
 
     setUser(currentUser)
-    fetchDashboardData(currentUser.id)
+    fetchDashboardData(parseInt(currentUser.id))
   }, [navigate])
 
+  /**
+   * Calculates days remaining until the deadline.
+   */
   const formatDeadline = (deadline: Date) => {
     const now = new Date()
     const diff = deadline.getTime() - now.getTime()
@@ -157,11 +154,10 @@ export function StudentDashboardPage() {
                       <span className="text-xs text-gray-400">
                         {assignment.programmingLanguage}
                       </span>
-                      <span className={`text-xs font-medium ${
-                        new Date(assignment.deadline) < new Date()
-                          ? 'text-red-400'
-                          : 'text-purple-400'
-                      }`}>
+                      <span className={`text-xs font-medium ${new Date(assignment.deadline) < new Date()
+                        ? 'text-red-400'
+                        : 'text-purple-400'
+                        }`}>
                         {formatDeadline(new Date(assignment.deadline))}
                       </span>
                     </div>

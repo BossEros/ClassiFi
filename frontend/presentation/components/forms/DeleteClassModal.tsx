@@ -1,11 +1,5 @@
-/**
- * Delete Class Modal Component
- * Part of the Presentation Layer - Form Components
- */
-
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
-import { Button } from '@/presentation/components/ui/Button'
 import { AlertTriangle, X } from 'lucide-react'
 
 interface DeleteClassModalProps {

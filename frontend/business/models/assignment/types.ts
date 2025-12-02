@@ -1,12 +1,18 @@
 /**
- * Assignment and Submission Types
- * Part of the Business Logic Layer
- * Type definitions for assignments and submissions
+ * Type definitions for assignments and submissions.
  */
 
+// ============================================================================
+// Core Types
+// ============================================================================
+
+/**
+ * Represents a student's submission for an assignment.
+ */
 export interface Submission {
   id: number
   assignmentId: number
+  
   studentId: number
   fileName: string
   fileSize: number
@@ -17,31 +23,9 @@ export interface Submission {
   studentName?: string
 }
 
-export interface SubmitAssignmentRequest {
-  assignmentId: number
-  studentId: number
-  file: File
-}
-
-export interface SubmitAssignmentResponse {
-  success: boolean
-  message?: string
-  submission?: Submission
-}
-
-export interface SubmissionListResponse {
-  success: boolean
-  message?: string
-  submissions: Submission[]
-}
-
-export interface SubmissionHistoryResponse {
-  success: boolean
-  message?: string
-  submissions: Submission[]
-  totalSubmissions: number
-}
-
+/**
+ * Detailed information about an assignment, including submission status.
+ */
 export interface AssignmentDetail {
   id: number
   classId: number
@@ -53,12 +37,72 @@ export interface AssignmentDetail {
   allowResubmission: boolean
   createdAt?: Date
   isActive: boolean
-  // Submission status for the current student
   hasSubmitted?: boolean
   latestSubmission?: Submission
   submissionCount?: number
 }
 
+// ============================================================================
+// Request Schemas
+// ============================================================================
+
+/**
+ * Payload for submitting an assignment.
+ */
+export interface SubmitAssignmentRequest {
+  assignmentId: number
+  studentId: number
+  file: File
+  programmingLanguage: string
+}
+
+/**
+ * Payload for updating an assignment.
+ */
+export interface UpdateAssignmentRequest {
+  teacherId: number
+  assignmentName?: string
+  description?: string
+  programmingLanguage?: 'python' | 'java'
+  deadline?: Date
+  allowResubmission?: boolean
+}
+
+// ============================================================================
+// Response Schemas
+// ============================================================================
+
+/**
+ * Response for submitting an assignment.
+ */
+export interface SubmitAssignmentResponse {
+  success: boolean
+  message?: string
+  submission?: Submission
+}
+
+/**
+ * Response for listing submissions.
+ */
+export interface SubmissionListResponse {
+  success: boolean
+  message?: string
+  submissions: Submission[]
+}
+
+/**
+ * Response for listing submission history.
+ */
+export interface SubmissionHistoryResponse {
+  success: boolean
+  message?: string
+  submissions: Submission[]
+  totalSubmissions: number
+}
+
+/**
+ * Response for getting assignment detail.
+ */
 export interface AssignmentDetailResponse {
   success: boolean
   message?: string

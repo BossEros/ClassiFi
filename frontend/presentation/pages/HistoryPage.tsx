@@ -1,9 +1,3 @@
-/**
- * Analysis History Page Component
- * Part of the Presentation Layer - Pages
- * Placeholder for analysis history page
- */
-
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
 import { Clock } from 'lucide-react'

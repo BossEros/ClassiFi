@@ -1,9 +1,3 @@
-/**
- * Submission Card Component
- * Part of the Presentation Layer - Dashboard Components
- * Displays individual student submission information
- */
-
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'

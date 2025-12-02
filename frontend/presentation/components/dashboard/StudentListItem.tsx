@@ -1,8 +1,3 @@
-/**
- * Student List Item Component
- * Part of the Presentation Layer - Dashboard Components
- */
-
 import { cn } from '@/shared/utils/cn'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { Trash2 } from 'lucide-react'

@@ -1,9 +1,3 @@
-/**
- * Toast Context
- * Part of the Shared Layer - Context
- * Provides toast notification functionality across the app
- */
-
 import * as React from 'react'
 import { ToastContainer } from '@/presentation/components/ui/Toast'
 import type { ToastVariant } from '@/presentation/components/ui/Toast'

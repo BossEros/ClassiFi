@@ -1,6 +1,6 @@
 /**
  * Student Dashboard Service
- * Part of the Business Logic Layer - Contains student dashboard business logic
+ * Business logic for the student dashboard.
  */
 
 import * as dashboardRepository from '../../../data/repositories/dashboard/studentDashboardRepository'

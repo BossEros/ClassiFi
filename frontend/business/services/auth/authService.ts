@@ -1,3 +1,8 @@
+/**
+ * Authentication Service
+ * Handles user authentication, registration, and session management.
+ */
+
 import * as authRepository from '../../../data/repositories/auth/authRepository'
 import {
   validateLoginData,
@@ -7,19 +12,19 @@ import {
   validatePasswordsMatch
 } from '../../validation/authValidation'
 import type {
-  LoginCredentials,
-  RegisterData,
+  LoginRequest,
+  RegisterRequest,
   AuthResponse,
   User,
-  ForgotPasswordData,
+  ForgotPasswordRequest,
   ForgotPasswordResponse,
-  ResetPasswordData,
+  ResetPasswordRequest,
   ResetPasswordResponse
 } from '../../models/auth/types'
 
 
 export async function loginUser(
-  credentials: LoginCredentials
+  credentials: LoginRequest
 ): Promise<AuthResponse> {
   // Validate credentials
   const validationResult = validateLoginData({
@@ -52,7 +57,7 @@ export async function loginUser(
   }
 }
 
-export async function registerUser(data: RegisterData): Promise<AuthResponse> {
+export async function registerUser(data: RegisterRequest): Promise<AuthResponse> {
   // Validate registration data
   const validationResult = validateRegistrationData({
     role: data.role,
@@ -147,7 +152,7 @@ function clearAuthData(): void {
 }
 
 export async function requestPasswordReset(
-  data: ForgotPasswordData
+  data: ForgotPasswordRequest
 ): Promise<ForgotPasswordResponse> {
   // Validate email
   const emailError = validateEmail(data.email)
@@ -172,7 +177,7 @@ export async function requestPasswordReset(
 }
 
 export async function resetPassword(
-  data: ResetPasswordData
+  data: ResetPasswordRequest
 ): Promise<ResetPasswordResponse> {
   // Validate new password
   const passwordError = validatePassword(data.newPassword)

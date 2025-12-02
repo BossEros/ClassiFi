@@ -1,9 +1,3 @@
-/**
- * Toast Component
- * Part of the Presentation Layer - UI Components
- * Displays temporary notification messages
- */
-
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react'

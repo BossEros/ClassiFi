@@ -1,9 +1,3 @@
-/**
- * Select Component
- * Part of the Presentation Layer - UI Components
- * Styled select dropdown following the design system
- */
-
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
 

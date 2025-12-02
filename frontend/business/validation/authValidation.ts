@@ -12,7 +12,7 @@ export interface ValidationResult {
   errors: Record<string, string>;
 }
 
-export interface RegisterData {
+export interface RegisterRequest {
   role: string;
   firstName: string;
   lastName: string;
@@ -22,7 +22,7 @@ export interface RegisterData {
   confirmPassword: string;
 }
 
-export interface LoginData {
+export interface LoginValidationData {
   email: string;
   password: string;
 }
@@ -201,7 +201,7 @@ export const validateRole = (role: string): string | null => {
  * Returns validation result with all errors
  */
 export const validateRegistrationData = (
-  data: RegisterData
+  data: RegisterRequest
 ): ValidationResult => {
   const errors: Record<string, string> = {};
 
@@ -241,7 +241,7 @@ export const validateRegistrationData = (
  * Returns validation result with all errors
  * Note: Only checks if fields are present, not complexity (that's for registration)
  */
-export const validateLoginData = (data: LoginData): ValidationResult => {
+export const validateLoginData = (data: LoginValidationData): ValidationResult => {
   const errors: Record<string, string> = {};
 
   const emailError = validateEmail(data.email);

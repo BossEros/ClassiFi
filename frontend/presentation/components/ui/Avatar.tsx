@@ -1,8 +1,3 @@
-/**
- * Avatar Component
- * Part of the Presentation Layer - UI Components
- */
-
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
 

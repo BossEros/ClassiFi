@@ -1,8 +1,3 @@
-/**
- * Registration Page Component
- * Part of the Presentation Layer - Pages
- */
-
 import { RegisterForm } from '../components/forms/RegisterForm'
 import { useNavigate } from 'react-router-dom'
 
@@ -14,7 +9,7 @@ export function RegisterPage() {
   }
 
   const handleRegisterSuccess = () => {
-    navigate('/dashboard')
+    navigate('/login')
   }
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">

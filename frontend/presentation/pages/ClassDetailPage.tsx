@@ -1,9 +1,3 @@
-/**
- * Class Detail Page Component
- * Part of the Presentation Layer - Pages
- * Displays class details with assignments and students tabs
- */
-
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ClipboardList, Users, Plus, Trash2, Pencil, LogOut } from 'lucide-react'
@@ -321,72 +315,72 @@ export function ClassDetailPage() {
             </div>
           )}
 
-      {/* Tabs and Content */}
-      <Card>
-        <CardHeader className="pb-0">
-          <div className="flex items-center justify-between">
-            <Tabs
-              tabs={tabs}
-              activeTab={activeTab}
-              onTabChange={(tabId) => setActiveTab(tabId as TabType)}
-            />
-            {/* Only teachers can add assignments */}
-            {isTeacher && activeTab === 'assignments' && (
-              <Button
-                onClick={() => setIsCreateAssignmentModalOpen(true)}
-                className="w-auto px-4 h-10"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Coursework
-              </Button>
-            )}
-          </div>
-        </CardHeader>
+          {/* Tabs and Content */}
+          <Card>
+            <CardHeader className="pb-0">
+              <div className="flex items-center justify-between">
+                <Tabs
+                  tabs={tabs}
+                  activeTab={activeTab}
+                  onTabChange={(tabId) => setActiveTab(tabId as TabType)}
+                />
+                {/* Only teachers can add assignments */}
+                {isTeacher && activeTab === 'assignments' && (
+                  <Button
+                    onClick={() => setIsCreateAssignmentModalOpen(true)}
+                    className="w-auto px-4 h-10"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Coursework
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
 
-        <CardContent className="pt-0">
-          {/* Assignments Tab */}
-          {activeTab === 'assignments' && (
-            <TabPanel>
-              {assignments.length > 0 ? (
-                <div className="space-y-3">
-                  {assignments.map((assignment) => (
-                    <AssignmentCard
-                      key={assignment.id}
-                      assignment={assignment}
-                      onClick={() => handleAssignmentClick(assignment.id)}
-                      onEdit={isTeacher ? () => handleEditAssignment(assignment) : undefined}
-                      onDelete={isTeacher ? () => handleDeleteAssignmentClick(assignment) : undefined}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                    <ClipboardList className="w-8 h-8 text-gray-500" />
-                  </div>
-                  <p className="text-gray-300 font-medium mb-1">No coursework yet</p>
-                  {isTeacher ? (
-                    <>
-                      <p className="text-sm text-gray-500 mb-4">
-                        Create your first coursework to get started.
-                      </p>
-                      <Button
-                        onClick={() => setIsCreateAssignmentModalOpen(true)}
-                        className="w-auto"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Coursework
-                      </Button>
-                    </>
+            <CardContent className="pt-0">
+              {/* Assignments Tab */}
+              {activeTab === 'assignments' && (
+                <TabPanel>
+                  {assignments.length > 0 ? (
+                    <div className="space-y-3">
+                      {assignments.map((assignment) => (
+                        <AssignmentCard
+                          key={assignment.id}
+                          assignment={assignment}
+                          onClick={() => handleAssignmentClick(assignment.id)}
+                          onEdit={isTeacher ? () => handleEditAssignment(assignment) : undefined}
+                          onDelete={isTeacher ? () => handleDeleteAssignmentClick(assignment) : undefined}
+                        />
+                      ))}
+                    </div>
                   ) : (
-                    <p className="text-sm text-gray-500">
-                      Your teacher hasn't created any coursework yet.
-                    </p>
+                    <div className="py-12 text-center">
+                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                        <ClipboardList className="w-8 h-8 text-gray-500" />
+                      </div>
+                      <p className="text-gray-300 font-medium mb-1">No coursework yet</p>
+                      {isTeacher ? (
+                        <>
+                          <p className="text-sm text-gray-500 mb-4">
+                            Create your first coursework to get started.
+                          </p>
+                          <Button
+                            onClick={() => setIsCreateAssignmentModalOpen(true)}
+                            className="w-auto"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Coursework
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          Your teacher hasn't created any coursework yet.
+                        </p>
+                      )}
+                    </div>
                   )}
-                </div>
+                </TabPanel>
               )}
-            </TabPanel>
-          )}
 
               {/* Students Tab */}
               {activeTab === 'students' && (

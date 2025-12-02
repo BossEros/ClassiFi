@@ -1,9 +1,3 @@
-/**
- * Create Class Modal Component
- * Part of the Presentation Layer - Forms
- * Modal form for creating a new class
- */
-
 import { useState, useEffect } from 'react'
 import { X, Check, RefreshCw } from 'lucide-react'
 import { Input } from '@/presentation/components/ui/Input'

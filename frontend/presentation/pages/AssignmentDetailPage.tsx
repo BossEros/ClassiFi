@@ -1,9 +1,3 @@
-/**
- * Assignment Detail Page Component
- * Part of the Presentation Layer - Pages
- * Displays assignment details and allows students to submit their work
- */
-
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Upload, FileCode, Clock, Calendar, Code, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react'
@@ -129,12 +123,12 @@ export function AssignmentDetailPage() {
       setIsSubmitting(true)
       setError(null)
 
-      const submission = await submitAssignment(
-        parseInt(assignmentId),
-        parseInt(user.id),
-        selectedFile,
-        assignment.programmingLanguage
-      )
+      const submission = await submitAssignment({
+        assignmentId: parseInt(assignmentId),
+        studentId: parseInt(user.id),
+        file: selectedFile,
+        programmingLanguage: assignment.programmingLanguage
+      })
 
       // Add new submission to history
       setSubmissions([submission, ...submissions])
@@ -162,7 +156,7 @@ export function AssignmentDetailPage() {
     }
   }
 
-  // Temporary assignment data (replace with actual data from API)
+  // Fallback data if assignment is not yet loaded or found
   const tempAssignment = assignment || {
     id: parseInt(assignmentId || '0'),
     title: 'Assignment Title',
@@ -215,286 +209,286 @@ export function AssignmentDetailPage() {
       ) : (
         /* Main Content */
         <>
-      {/* Page Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-400" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-white">{tempAssignment.title}</h1>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="flex items-center gap-1.5 text-sm text-gray-400">
-                  <Code className="w-4 h-4" />
-                  {tempAssignment.programmingLanguage.charAt(0).toUpperCase() + tempAssignment.programmingLanguage.slice(1)}
-                </span>
-                <span className="text-gray-600">•</span>
-                <span className="flex items-center gap-1.5 text-sm text-gray-400">
-                  <Calendar className="w-4 h-4" />
-                  Due {tempAssignment.deadline.toLocaleDateString()}
-                </span>
+          {/* Page Header */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
+                >
+                  <ArrowLeft className="w-5 h-5 text-gray-400" />
+                </button>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">{tempAssignment.title}</h1>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="flex items-center gap-1.5 text-sm text-gray-400">
+                      <Code className="w-4 h-4" />
+                      {tempAssignment.programmingLanguage.charAt(0).toUpperCase() + tempAssignment.programmingLanguage.slice(1)}
+                    </span>
+                    <span className="text-gray-600">•</span>
+                    <span className="flex items-center gap-1.5 text-sm text-gray-400">
+                      <Calendar className="w-4 h-4" />
+                      Due {tempAssignment.deadline.toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
               </div>
+
+              {/* Teacher Actions */}
+              {isTeacher && (
+                <Button
+                  onClick={() => showToast('Checking for similarities...', 'info')}
+                  className="w-auto bg-purple-600 hover:bg-purple-700"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Check Similarities
+                </Button>
+              )}
             </div>
+            <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </div>
 
-          {/* Teacher Actions */}
-          {isTeacher && (
-            <Button
-              onClick={() => showToast('Checking for similarities...', 'info')}
-              className="w-auto bg-purple-600 hover:bg-purple-700"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Check Similarities
-            </Button>
-          )}
-        </div>
-        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-red-400 text-sm">{error}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column - Assignment Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Assignment Description */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Description</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-300 whitespace-pre-wrap">{tempAssignment.description}</p>
-            </CardContent>
-          </Card>
-
-          {/* File Upload Section - Only for Students */}
-          {!isTeacher && canResubmit && (
-            <Card>
-              <CardHeader>
-                <CardTitle>{hasSubmitted ? 'Resubmit Coursework' : 'Submit Coursework'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* File Input */}
-                  <div>
-                    <label
-                      htmlFor="file-upload"
-                      className="block w-full p-8 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-white/5 transition-colors"
-                    >
-                      <input
-                        id="file-upload"
-                        ref={fileInputRef}
-                        type="file"
-                        className="hidden"
-                        onChange={handleFileSelect}
-                        accept={tempAssignment.programmingLanguage === 'python' ? '.py,.ipynb' : '.java,.jar'}
-                      />
-                      <div className="text-center">
-                        <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                        <p className="text-gray-300 font-medium mb-1">Click to select file</p>
-                        <p className="text-sm text-gray-500">
-                          {tempAssignment.programmingLanguage === 'python'
-                            ? 'Accepted: .py, .ipynb'
-                            : 'Accepted: .java, .jar'}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-2">Maximum file size: 10MB</p>
-                      </div>
-                    </label>
-
-                    {/* File Error */}
-                    {fileError && (
-                      <p className="mt-2 text-sm text-red-400">{fileError}</p>
-                    )}
-
-                    {/* Selected File Info */}
-                    {selectedFile && !fileError && (
-                      <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <FileCode className="w-5 h-5 text-purple-400" />
-                            <div>
-                              <p className="text-gray-300 font-medium">{selectedFile.name}</p>
-                              <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={handleClearFile}
-                            className="text-gray-400 hover:text-white transition-colors"
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Submit Button */}
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={!selectedFile || isSubmitting || !!fileError}
-                    className="w-full"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Submit Coursework
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-red-400 text-sm">{error}</p>
+            </div>
           )}
 
-          {/* Resubmission Not Allowed Message - Only for Students */}
-          {!isTeacher && !canResubmit && (
-            <Card>
-              <CardContent className="py-8">
-                <div className="text-center">
-                  <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-400" />
-                  <p className="text-gray-300 font-medium mb-1">Coursework Submitted</p>
-                  <p className="text-sm text-gray-500">
-                    Resubmission is not allowed for this coursework.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-
-        {/* Right Column - Submission History */}
-        <div className="space-y-6">
-          {/* Submission Status */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Submission Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {hasSubmitted ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-500/20">
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                    </div>
-                    <div>
-                      <p className="text-gray-300 font-medium">Submitted</p>
-                      <p className="text-sm text-gray-500">{submissions.length} submission(s)</p>
-                    </div>
-                  </div>
-                  <div className="pt-4 border-t border-white/10">
-                    <p className="text-sm text-gray-400 mb-1">Latest Submission:</p>
-                    <p className="text-gray-300 font-mono text-sm">{latestSubmission?.fileName}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {latestSubmission?.submittedAt && new Date(latestSubmission.submittedAt).toLocaleString()}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-yellow-500/20">
-                    <Clock className="w-5 h-5 text-yellow-400" />
-                  </div>
-                  <div>
-                    <p className="text-gray-300 font-medium">Not Submitted</p>
-                    <p className="text-sm text-gray-500">No submissions yet</p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Submission History / Student List */}
-          {isTeacher ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Student Submissions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {submissions.length > 0 ? (
-                  <div className="space-y-3">
-                    {submissions.map((submission) => (
-                      <div
-                        key={submission.id}
-                        className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
-                        onClick={() => {
-                          // TODO: View submission details
-                          showToast(`Viewing submission by ${submission.studentName || 'Student'}`)
-                        }}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <p className="text-gray-300 font-medium text-sm">
-                            {submission.studentName || 'Unknown Student'}
-                          </p>
-                          <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
-                            Submitted
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(submission.fileSize)} •{' '}
-                          {new Date(submission.submittedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-400 text-sm">No submissions yet</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ) : (
-            submissions.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Assignment Details */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Assignment Description */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Submission History</CardTitle>
+                  <CardTitle>Description</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {submissions.map((submission, index) => (
-                      <div
-                        key={submission.id}
-                        className="p-3 bg-white/5 rounded-lg border border-white/10"
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <p className="text-gray-300 font-medium text-sm">
-                            Submission #{submission.submissionNumber}
-                          </p>
-                          {index === 0 && (
-                            <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
-                              Latest
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(submission.fileSize)} •{' '}
-                          {new Date(submission.submittedAt).toLocaleString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-gray-300 whitespace-pre-wrap">{tempAssignment.description}</p>
                 </CardContent>
               </Card>
-            )
-          )}
-        </div>
-      </div>
+
+              {/* File Upload Section - Only for Students */}
+              {!isTeacher && canResubmit && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{hasSubmitted ? 'Resubmit Coursework' : 'Submit Coursework'}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* File Input */}
+                      <div>
+                        <label
+                          htmlFor="file-upload"
+                          className="block w-full p-8 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-white/5 transition-colors"
+                        >
+                          <input
+                            id="file-upload"
+                            ref={fileInputRef}
+                            type="file"
+                            className="hidden"
+                            onChange={handleFileSelect}
+                            accept={tempAssignment.programmingLanguage === 'python' ? '.py,.ipynb' : '.java,.jar'}
+                          />
+                          <div className="text-center">
+                            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                            <p className="text-gray-300 font-medium mb-1">Click to select file</p>
+                            <p className="text-sm text-gray-500">
+                              {tempAssignment.programmingLanguage === 'python'
+                                ? 'Accepted: .py, .ipynb'
+                                : 'Accepted: .java, .jar'}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-2">Maximum file size: 10MB</p>
+                          </div>
+                        </label>
+
+                        {/* File Error */}
+                        {fileError && (
+                          <p className="mt-2 text-sm text-red-400">{fileError}</p>
+                        )}
+
+                        {/* Selected File Info */}
+                        {selectedFile && !fileError && (
+                          <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <FileCode className="w-5 h-5 text-purple-400" />
+                                <div>
+                                  <p className="text-gray-300 font-medium">{selectedFile.name}</p>
+                                  <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={handleClearFile}
+                                className="text-gray-400 hover:text-white transition-colors"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Submit Button */}
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={!selectedFile || isSubmitting || !!fileError}
+                        className="w-full"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Submit Coursework
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Resubmission Not Allowed Message - Only for Students */}
+              {!isTeacher && !canResubmit && (
+                <Card>
+                  <CardContent className="py-8">
+                    <div className="text-center">
+                      <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-400" />
+                      <p className="text-gray-300 font-medium mb-1">Coursework Submitted</p>
+                      <p className="text-sm text-gray-500">
+                        Resubmission is not allowed for this coursework.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Column - Submission History */}
+            <div className="space-y-6">
+              {/* Submission Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Submission Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {hasSubmitted ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-green-500/20">
+                          <CheckCircle className="w-5 h-5 text-green-400" />
+                        </div>
+                        <div>
+                          <p className="text-gray-300 font-medium">Submitted</p>
+                          <p className="text-sm text-gray-500">{submissions.length} submission(s)</p>
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t border-white/10">
+                        <p className="text-sm text-gray-400 mb-1">Latest Submission:</p>
+                        <p className="text-gray-300 font-mono text-sm">{latestSubmission?.fileName}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {latestSubmission?.submittedAt && new Date(latestSubmission.submittedAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-yellow-500/20">
+                        <Clock className="w-5 h-5 text-yellow-400" />
+                      </div>
+                      <div>
+                        <p className="text-gray-300 font-medium">Not Submitted</p>
+                        <p className="text-sm text-gray-500">No submissions yet</p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Submission History / Student List */}
+              {isTeacher ? (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Student Submissions</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {submissions.length > 0 ? (
+                      <div className="space-y-3">
+                        {submissions.map((submission) => (
+                          <div
+                            key={submission.id}
+                            className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
+                            onClick={() => {
+                              // TODO: View submission details
+                              showToast(`Viewing submission by ${submission.studentName || 'Student'}`)
+                            }}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <p className="text-gray-300 font-medium text-sm">
+                                {submission.studentName || 'Unknown Student'}
+                              </p>
+                              <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
+                                Submitted
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(submission.fileSize)} •{' '}
+                              {new Date(submission.submittedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-400 text-sm">No submissions yet</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                submissions.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Submission History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {submissions.map((submission, index) => (
+                          <div
+                            key={submission.id}
+                            className="p-3 bg-white/5 rounded-lg border border-white/10"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <p className="text-gray-300 font-medium text-sm">
+                                Submission #{submission.submissionNumber}
+                              </p>
+                              {index === 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
+                                  Latest
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
+                            <p className="text-xs text-gray-500">
+                              {formatFileSize(submission.fileSize)} •{' '}
+                              {new Date(submission.submittedAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              )}
+            </div>
+          </div>
         </>
       )}
     </DashboardLayout>

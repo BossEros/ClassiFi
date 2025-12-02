@@ -1,9 +1,3 @@
-/**
- * Remove Student Modal Component
- * Part of the Presentation Layer - Forms
- * Confirmation modal for teachers to remove a student from a class
- */
-
 import { useState } from 'react'
 import { X, Trash2, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Button } from '@/presentation/components/ui/Button'

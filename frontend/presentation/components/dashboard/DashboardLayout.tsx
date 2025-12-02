@@ -1,9 +1,3 @@
-/**
- * Dashboard Layout Component
- * Part of the Presentation Layer - Dashboard Components
- * Wraps sidebar and main content area
- */
-
 import { Sidebar } from './Sidebar'
 import { cn } from '@/shared/utils/cn'
 

@@ -1,8 +1,3 @@
-/**
- * Main Application Component
- * Part of the Presentation Layer
- */
-
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { ToastProvider } from '@/shared/context/ToastContext'
 import { LoginPage } from './pages/LoginPage'

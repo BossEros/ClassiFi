@@ -1,9 +1,3 @@
-/**
- * Teacher Dashboard Page Component
- * Part of the Presentation Layer - Pages
- * Main dashboard view with Recent Classes and To-Check panels
- */
-
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Home, Grid3x3, ClipboardList } from 'lucide-react'
@@ -140,7 +134,7 @@ export function TeacherDashboardPage() {
                     key={task.id}
                     task={task}
                     onClick={() => {
-                      // TODO: Navigate to task details
+                      // Placeholder: Navigate to task details
                       console.log('Navigate to task:', task.id)
                     }}
                   />

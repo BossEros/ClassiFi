@@ -1,9 +1,3 @@
-/**
- * Student Classes Page Component
- * Part of the Presentation Layer - Pages
- * Displays all enrolled classes for the student
- */
-
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Grid3x3, Plus } from 'lucide-react'
@@ -133,7 +127,7 @@ export function StudentClassesPage() {
           isOpen={isJoinModalOpen}
           onClose={() => setIsJoinModalOpen(false)}
           onSuccess={handleJoinSuccess}
-          studentId={user.id}
+          studentId={parseInt(user.id)}
         />
       )}
     </DashboardLayout>

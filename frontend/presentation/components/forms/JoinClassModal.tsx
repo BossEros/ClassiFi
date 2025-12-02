@@ -1,9 +1,3 @@
-/**
- * Join Class Modal Component
- * Part of the Presentation Layer - Forms
- * Modal form for students to join a class using a class code
- */
-
 import { useState, useEffect } from 'react'
 import { X, Check, RefreshCw, Users } from 'lucide-react'
 import { Input } from '@/presentation/components/ui/Input'

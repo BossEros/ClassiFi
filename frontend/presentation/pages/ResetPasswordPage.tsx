@@ -1,8 +1,3 @@
-/**
- * Reset Password Page
- * Allows users to set a new password after clicking reset link in email
- */
-
 import { useState, useEffect } from 'react'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
