@@ -1,4 +1,4 @@
-import * as classRepository from '../../data/repositories/classRepository'
+import * as classRepository from '@/data/repositories/classRepository'
 import { validateCreateAssignmentData } from '../validation/assignmentValidation'
 import type { Class, Assignment, EnrolledStudent, ClassDetailData, CreateAssignmentRequest } from '../models/dashboard/types'
 import type { UpdateAssignmentRequest } from '../models/assignment/types'

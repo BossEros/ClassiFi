@@ -1,4 +1,4 @@
-import * as assignmentRepository from '../../data/repositories/assignmentRepository'
+import * as assignmentRepository from '@/data/repositories/assignmentRepository'
 import type {
   Submission,
   SubmissionHistoryResponse,

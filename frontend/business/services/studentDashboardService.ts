@@ -1,5 +1,5 @@
-import * as dashboardRepository from '../../data/repositories/studentDashboardRepository'
-import type { StudentDashboardData, JoinClassResponse } from '../../data/repositories/studentDashboardRepository'
+import * as dashboardRepository from '@/data/repositories/studentDashboardRepository'
+import type { StudentDashboardData, JoinClassResponse } from '@/data/repositories/studentDashboardRepository'
 import type { Class, Task } from '../models/dashboard/types'
 
 /**

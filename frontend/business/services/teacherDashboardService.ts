@@ -1,5 +1,5 @@
-import * as dashboardRepository from '../../data/repositories/teacherDashboardRepository'
-import type { DashboardData, Class, Task } from '../models/dashboard/types'
+import * as dashboardRepository from '@/data/repositories/teacherDashboardRepository'
+import type { DashboardData, Class, Task } from '@/business/models/dashboard/types'
 
 /**
  * Fetches complete dashboard data for a teacher

@@ -1,4 +1,4 @@
-import * as authRepository from '../../data/repositories/authRepository'
+import * as authRepository from '@/data/repositories/authRepository'
 import {
   validateLoginData,
   validateRegistrationData,
