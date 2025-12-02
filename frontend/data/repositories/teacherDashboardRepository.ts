@@ -1,10 +1,5 @@
-/**
- * Teacher Dashboard Repository
- * Part of the Data Access Layer - Handles API calls for teacher dashboard
- */
-
-import { apiClient } from '../../api/apiClient'
-import type { DashboardData, Class, Task } from '../../../business/models/dashboard/types'
+import { apiClient } from '../api/apiClient'
+import type { DashboardData, Class, Task } from '../../business/models/dashboard/types'
 
 /**
  * Backend class data structure (snake_case from API)

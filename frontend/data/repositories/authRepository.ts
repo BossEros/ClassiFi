@@ -1,5 +1,5 @@
-import { apiClient } from '../../api/apiClient'
-import { supabase } from '../../api/supabaseClient'
+import { apiClient } from '../api/apiClient'
+import { supabase } from '../api/supabaseClient'
 import type {
   LoginRequest,
   RegisterRequest,
@@ -9,7 +9,7 @@ import type {
   ForgotPasswordResponse,
   ResetPasswordRequest,
   ResetPasswordResponse
-} from '../../../business/models/auth/types'
+} from '../../business/models/auth/types'
 
 interface BackendUser {
   id: string | number

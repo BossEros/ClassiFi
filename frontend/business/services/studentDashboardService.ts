@@ -1,10 +1,5 @@
-/**
- * Student Dashboard Service
- * Business logic for the student dashboard.
- */
-
-import * as dashboardRepository from '../../data/repositories/dashboard/studentDashboardRepository'
-import type { StudentDashboardData, JoinClassResponse } from '../../data/repositories/dashboard/studentDashboardRepository'
+import * as dashboardRepository from '../../data/repositories/studentDashboardRepository'
+import type { StudentDashboardData, JoinClassResponse } from '../../data/repositories/studentDashboardRepository'
 import type { Class, Task } from '../models/dashboard/types'
 
 /**

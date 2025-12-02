@@ -1,18 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Calendar, Clock } from 'lucide-react'
+import { FileText, Calendar } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { getCurrentUser } from '@/business/services/authService'
 import { getStudentSubmissions } from '@/business/services/assignmentService'
-import type { User } from '@/business/models/auth/types'
 
 import type { Submission } from '@/business/models/assignment/types'
 
 export function AssignmentsPage() {
   const navigate = useNavigate()
 
-  const [user, setUser] = useState<User | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -23,8 +21,6 @@ export function AssignmentsPage() {
       navigate('/login')
       return
     }
-
-    setUser(currentUser)
 
     // Fetch all student submissions
     const fetchSubmissions = async () => {

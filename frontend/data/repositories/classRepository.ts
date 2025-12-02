@@ -1,10 +1,5 @@
-/**
- * Class Repository
- * Part of the Data Access Layer - Handles API calls for classes
- */
-
-import { apiClient } from '../../api/apiClient'
-import type { Class, Assignment, EnrolledStudent } from '../../../business/models/dashboard/types'
+import { apiClient } from '../api/apiClient'
+import type { Class, Assignment, EnrolledStudent } from '../../business/models/dashboard/types'
 
 /**
  * Backend class data structure (snake_case from API)

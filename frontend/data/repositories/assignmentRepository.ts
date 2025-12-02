@@ -1,17 +1,11 @@
-/**
- * Assignment Repository
- * Part of the Data Access Layer
- * Handles API calls for assignment and submission operations
- */
-
-import { apiClient, type ApiResponse } from '../../api/apiClient'
+import { apiClient, type ApiResponse } from '../api/apiClient'
 import type {
   SubmitAssignmentRequest,
   SubmitAssignmentResponse,
   SubmissionListResponse,
   SubmissionHistoryResponse,
   AssignmentDetailResponse
-} from '../../../business/models/assignment/types'
+} from '../../business/models/assignment/types'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 

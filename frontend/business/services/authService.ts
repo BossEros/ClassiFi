@@ -1,9 +1,4 @@
-/**
- * Authentication Service
- * Handles user authentication, registration, and session management.
- */
-
-import * as authRepository from '../../data/repositories/auth/authRepository'
+import * as authRepository from '../../data/repositories/authRepository'
 import {
   validateLoginData,
   validateRegistrationData,

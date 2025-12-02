@@ -1,9 +1,4 @@
-/**
- * Assignment Service
- * Business logic for assignments and submissions.
- */
-
-import * as assignmentRepository from '../../data/repositories/assignment/assignmentRepository'
+import * as assignmentRepository from '../../data/repositories/assignmentRepository'
 import type {
   Submission,
   SubmissionHistoryResponse,
