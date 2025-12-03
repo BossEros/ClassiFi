@@ -79,12 +79,6 @@ async def get_current_active_user(
     Raises:
         HTTPException: 403 if user is inactive
     """
-    # Add your custom logic here (e.g., check if user is active)
-    # if not current_user.is_active:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_403_FORBIDDEN,
-    #         detail="Inactive user"
-    #     )
 
     return current_user
 

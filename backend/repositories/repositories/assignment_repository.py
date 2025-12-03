@@ -11,8 +11,6 @@ class AssignmentRepository:
     """Repository for assignment-related database operations"""
 
     def __init__(self, db: AsyncSession):
-        print(f"[DEBUGGER:AssignmentRepository.__init__:19] db type: {type(db)}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:AssignmentRepository.__init__:20] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
         self.db = db
 
     async def get_assignment_by_id(self, assignment_id: int) -> Optional[Assignment]:
@@ -95,25 +93,11 @@ class AssignmentRepository:
         teacher_id: int,
         limit: Optional[int] = None
     ) -> List[Assignment]:
-        """
-        Get assignments that need review for all classes taught by a teacher
-        This is a placeholder - you'll need to implement this when you have
-        a submissions table to check which assignments have ungraded submissions
 
-        Args:
-            teacher_id: ID of the teacher
-            limit: Optional limit on number of assignments to return
-
-        Returns:
-            List of Assignment objects
-        """
-        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:115] teacher_id={teacher_id}, limit={limit}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:116] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
         from repositories.models.class_model import Class
 
         # TODO: Join with submissions table to filter assignments with pending reviews
         # For now, return all active assignments
-        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:121] Building query...", file=sys.stderr, flush=True)
         query = (
             select(Assignment)
             .options(selectinload(Assignment.class_obj))
@@ -128,9 +112,7 @@ class AssignmentRepository:
         if limit:
             query = query.limit(limit)
 
-        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:136] About to execute query", file=sys.stderr, flush=True)
         result = await self.db.execute(query)
-        print(f"[DEBUGGER:AssignmentRepository.get_assignments_needing_review_by_teacher:138] Query executed successfully", file=sys.stderr, flush=True)
         return list(result.scalars().all())
 
     async def create_assignment(

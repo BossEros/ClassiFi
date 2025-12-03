@@ -37,19 +37,12 @@ async def get_teacher_dashboard(
     - recent_classes: List of recent classes
     - pending_tasks: List of pending assignments/tasks
     """
-    print(f"[DEBUGGER:get_teacher_dashboard:45] Endpoint called - teacher_id={teacher_id}", file=sys.stderr, flush=True)
-    print(f"[DEBUGGER:get_teacher_dashboard:46] db type: {type(db)}", file=sys.stderr, flush=True)
-    print(f"[DEBUGGER:get_teacher_dashboard:47] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
-    print(f"[DEBUGGER:get_teacher_dashboard:48] Creating TeacherDashboardService...", file=sys.stderr, flush=True)
     dashboard_service = TeacherDashboardService(db)
-
-    print(f"[DEBUGGER:get_teacher_dashboard:51] Calling get_dashboard_data...", file=sys.stderr, flush=True)
     success, message, data = await dashboard_service.get_dashboard_data(
         teacher_id,
         recent_classes_limit=recent_classes_limit,
         pending_tasks_limit=pending_tasks_limit
     )
-    print(f"[DEBUGGER:get_teacher_dashboard:56] get_dashboard_data returned - success={success}", file=sys.stderr, flush=True)
 
     if not success:
         raise HTTPException(

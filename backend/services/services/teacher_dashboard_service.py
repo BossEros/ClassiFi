@@ -12,17 +12,9 @@ class TeacherDashboardService:
     """
 
     def __init__(self, db: AsyncSession):
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:23] Initializing service", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:24] db type: {type(db)}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:25] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:26] db module: {db.__class__.__module__}", file=sys.stderr, flush=True)
         self.db = db
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:28] Creating ClassRepository", file=sys.stderr, flush=True)
         self.class_repo = ClassRepository(db)
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:30] class_repo.db type: {type(self.class_repo.db)}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:31] Creating AssignmentRepository", file=sys.stderr, flush=True)
         self.assignment_repo = AssignmentRepository(db)
-        print(f"[DEBUGGER:TeacherDashboardService.__init__:33] assignment_repo.db type: {type(self.assignment_repo.db)}", file=sys.stderr, flush=True)
 
     async def get_dashboard_data(
         self,
@@ -42,27 +34,17 @@ class TeacherDashboardService:
             Tuple of (success, message, dashboard_data)
         """
         try:
-            print(f"[DEBUGGER:get_dashboard_data:51] Entered method - teacher_id={teacher_id}", file=sys.stderr, flush=True)
-            print(f"[DEBUGGER:get_dashboard_data:52] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
-            print(f"[DEBUGGER:get_dashboard_data:53] self.class_repo.db type: {type(self.class_repo.db)}", file=sys.stderr, flush=True)
-            print(f"[DEBUGGER:get_dashboard_data:54] About to call get_recent_classes_by_teacher", file=sys.stderr, flush=True)
-
             # Get recent classes
             recent_classes = await self.class_repo.get_recent_classes_by_teacher(
                 teacher_id=teacher_id,
                 limit=recent_classes_limit
             )
 
-            print(f"[DEBUGGER:get_dashboard_data:61] Retrieved {len(recent_classes)} recent classes", file=sys.stderr, flush=True)
-            print(f"[DEBUGGER:get_dashboard_data:62] About to call get_assignments_needing_review_by_teacher", file=sys.stderr, flush=True)
-
             # Get pending assignments that need review
             pending_tasks = await self.assignment_repo.get_assignments_needing_review_by_teacher(
                 teacher_id=teacher_id,
                 limit=pending_tasks_limit
             )
-
-            print(f"[DEBUGGER:get_dashboard_data:69] Retrieved {len(pending_tasks)} pending tasks", file=sys.stderr, flush=True)
 
             # Format classes data
             classes_data = []
@@ -100,9 +82,6 @@ class TeacherDashboardService:
             return True, "Dashboard data retrieved successfully", dashboard_data
 
         except Exception as e:
-            print(f"[DEBUGGER:get_dashboard_data:EXCEPTION] Exception caught: {str(e)}", file=sys.stderr, flush=True)
-            print(f"[DEBUGGER:get_dashboard_data:EXCEPTION] Exception type: {type(e)}", file=sys.stderr, flush=True)
-            print(f"[DEBUGGER:get_dashboard_data:EXCEPTION] Full traceback:", file=sys.stderr, flush=True)
             traceback.print_exc(file=sys.stderr)
             sys.stderr.flush()
             return False, f"Failed to fetch dashboard data: {str(e)}", {}

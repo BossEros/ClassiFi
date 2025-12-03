@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from repositories.database import Base
 
-
 class Class(Base):
     """
     SQLAlchemy model for classes table

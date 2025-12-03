@@ -11,8 +11,6 @@ class ClassRepository:
     """Repository for class-related database operations"""
 
     def __init__(self, db: AsyncSession):
-        print(f"[DEBUGGER:ClassRepository.__init__:19] db type: {type(db)}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:ClassRepository.__init__:20] db class: {db.__class__.__name__}", file=sys.stderr, flush=True)
         self.db = db
 
     async def get_class_by_id(self, class_id: int) -> Optional[Class]:
@@ -84,9 +82,6 @@ class ClassRepository:
         Returns:
             List of Class objects
         """
-        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:91] teacher_id={teacher_id}, limit={limit}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:92] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:93] Building query...", file=sys.stderr, flush=True)
         query = (
             select(Class)
             .where(and_(
@@ -96,9 +91,7 @@ class ClassRepository:
             .order_by(Class.created_at.desc())
             .limit(limit)
         )
-        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:102] About to execute query", file=sys.stderr, flush=True)
         result = await self.db.execute(query)
-        print(f"[DEBUGGER:ClassRepository.get_recent_classes_by_teacher:104] Query executed successfully", file=sys.stderr, flush=True)
         return list(result.scalars().all())
 
     async def create_class(
@@ -193,14 +186,11 @@ class ClassRepository:
         Returns:
             Number of students enrolled in the class
         """
-        print(f"[DEBUGGER:ClassRepository.get_student_count:198] class_id={class_id}", file=sys.stderr, flush=True)
-        print(f"[DEBUGGER:ClassRepository.get_student_count:199] self.db type: {type(self.db)}", file=sys.stderr, flush=True)
         result = await self.db.execute(
             select(func.count()).select_from(Enrollment).where(
                 Enrollment.class_id == class_id
             )
         )
-        print(f"[DEBUGGER:ClassRepository.get_student_count:205] Query executed", file=sys.stderr, flush=True)
         return result.scalar() or 0
 
     async def check_class_code_exists(self, class_code: str) -> bool:
