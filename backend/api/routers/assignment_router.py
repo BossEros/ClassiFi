@@ -1,9 +1,3 @@
-"""
-Assignment Router
-Part of the API Layer
-Defines API endpoints for assignment operations
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.assignment_schema import (

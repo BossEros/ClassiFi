@@ -1,9 +1,3 @@
-"""
-Submission Repository
-Part of the Data Access Layer
-Handles database operations for assignment submissions
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
 from sqlalchemy.orm import selectinload

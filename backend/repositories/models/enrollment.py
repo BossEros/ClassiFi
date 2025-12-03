@@ -1,9 +1,3 @@
-"""
-Enrollment Model
-Part of the Data Access Layer
-Represents student enrollment in classes
-"""
-
 from sqlalchemy import Column, Integer, ForeignKey, TIMESTAMP, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

@@ -1,9 +1,3 @@
-"""
-Class Model
-Part of the Data Access Layer
-Represents a class/course in the system
-"""
-
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, TIMESTAMP
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

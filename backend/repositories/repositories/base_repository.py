@@ -1,9 +1,3 @@
-"""
-Base Repository with Generic CRUD Operations
-Part of the Data Access Layer
-Implements the Repository pattern with async/await
-"""
-
 from typing import Generic, TypeVar, Type, Optional, List, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete

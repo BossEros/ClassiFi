@@ -1,8 +1,3 @@
-"""
-API v1 Router
-Aggregates all v1 endpoints
-"""
-
 from fastapi import APIRouter
 from api.routers import auth, teacher_dashboard, student_dashboard, class_router, submission_router, assignment_router
 

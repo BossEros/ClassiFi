@@ -1,9 +1,3 @@
-"""
-Student Dashboard Router
-Part of the API Layer
-Defines API endpoints for student dashboard
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.student_dashboard import (

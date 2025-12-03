@@ -1,9 +1,3 @@
-"""
-Submission Model
-Part of the Data Access Layer
-Represents student code submissions for assignments
-"""
-
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, TIMESTAMP, UniqueConstraint, Index, CheckConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

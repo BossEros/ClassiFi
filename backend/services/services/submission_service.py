@@ -1,9 +1,3 @@
-"""
-Submission Service
-Part of the Services Layer
-Handles business logic for assignment submission operations
-"""
-
 import uuid
 from pathlib import Path
 from datetime import datetime, timezone

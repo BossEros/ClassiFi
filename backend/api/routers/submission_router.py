@@ -1,9 +1,3 @@
-"""
-Submission Router
-Part of the API Layer
-Defines API endpoints for assignment submission operations
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel

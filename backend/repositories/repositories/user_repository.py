@@ -1,9 +1,3 @@
-"""
-User Repository
-Part of the Data Access Layer
-Handles all database operations for the users table
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError

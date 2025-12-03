@@ -1,8 +1,3 @@
-"""
-Database Connection Configuration
-Part of the Data Access Layer
-"""
-
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from shared.config import settings

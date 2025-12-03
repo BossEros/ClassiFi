@@ -1,8 +1,3 @@
-"""
-Teacher Dashboard Schemas (Request/Response models)
-Part of the API Layer
-"""
-
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime

@@ -1,8 +1,3 @@
-"""
-Student Dashboard Schemas (Request/Response models)
-Part of the API Layer
-"""
-
 from pydantic import BaseModel, Field
 from typing import List, Optional
 

@@ -1,9 +1,3 @@
-"""
-Assignment Model
-Part of the Data Access Layer
-Represents an assignment for a class
-"""
-
 from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, TIMESTAMP, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

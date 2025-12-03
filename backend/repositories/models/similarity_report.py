@@ -1,9 +1,3 @@
-"""
-SimilarityReport Model
-Part of the Data Access Layer
-Represents class-wide similarity analysis reports
-"""
-
 from sqlalchemy import Column, Integer, Text, ForeignKey, TIMESTAMP, CheckConstraint, Index, DECIMAL
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

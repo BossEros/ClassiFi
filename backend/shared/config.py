@@ -1,8 +1,3 @@
-"""
-Application Configuration
-Part of the Shared Layer
-"""
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 

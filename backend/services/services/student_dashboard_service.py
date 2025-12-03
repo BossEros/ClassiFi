@@ -1,9 +1,3 @@
-"""
-Student Dashboard Service
-Part of the Services Layer
-Handles business logic for student dashboard data and class enrollment
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.repositories.class_repository import ClassRepository
 from repositories.repositories.assignment_repository import AssignmentRepository

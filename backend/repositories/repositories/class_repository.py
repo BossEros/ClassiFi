@@ -1,9 +1,3 @@
-"""
-Class Repository
-Part of the Data Access Layer
-Handles database operations for classes
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, func
 from sqlalchemy.orm import selectinload

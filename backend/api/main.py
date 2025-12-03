@@ -1,8 +1,3 @@
-"""
-FastAPI Application Entry Point
-Part of the API Layer
-"""
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -18,7 +13,7 @@ async def lifespan(app: FastAPI):
     Application lifespan events
     Manages database connection lifecycle
     """
-    # Startup: Database connection is handled by the engine
+    # Startup
     # The async engine manages its own connection pool
     print(f"[STARTUP] Starting {settings.app_name} v{settings.app_version}")
     print(f"[STARTUP] Environment: {settings.environment}")
@@ -26,7 +21,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown: Dispose of database engine and close connections
+    # Shutdown
     print("[SHUTDOWN] Database: Disconnecting...")
     await engine.dispose()
     print("[SHUTDOWN] Shutdown complete")

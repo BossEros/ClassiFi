@@ -1,9 +1,3 @@
-"""
-Authentication Router
-Part of the API Layer
-Defines API endpoints for authentication
-"""
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from api.schemas.auth import (

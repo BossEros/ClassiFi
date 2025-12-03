@@ -1,9 +1,3 @@
-"""
-Submission Schemas (Request/Response models)
-Part of the API Layer
-Pydantic models for assignment submission requests and responses
-"""
-
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime

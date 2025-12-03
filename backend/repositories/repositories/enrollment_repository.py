@@ -1,9 +1,3 @@
-"""
-Enrollment Repository
-Part of the Data Access Layer
-Handles database operations for class enrollments
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from repositories.models.enrollment import Enrollment

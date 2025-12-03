@@ -1,9 +1,3 @@
-"""
-Assignment Schemas (Request/Response models)
-Part of the API Layer
-Pydantic models for assignment operations
-"""
-
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
 from datetime import datetime, timezone

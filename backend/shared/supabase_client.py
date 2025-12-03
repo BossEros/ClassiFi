@@ -1,8 +1,3 @@
-"""
-Supabase Client Configuration
-Part of the Shared Layer
-"""
-
 from supabase import create_client, Client, ClientOptions
 from shared.config import settings
 

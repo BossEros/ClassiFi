@@ -1,9 +1,3 @@
-"""
-SimilarityResult Model
-Part of the Data Access Layer
-Represents pairwise similarity comparison results
-"""
-
 from sqlalchemy import Column, Integer, Boolean, ForeignKey, TIMESTAMP, UniqueConstraint, Index, CheckConstraint, DECIMAL
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship

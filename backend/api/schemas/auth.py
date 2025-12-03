@@ -1,8 +1,3 @@
-"""
-Authentication Schemas (Request/Response models)
-Part of the API Layer
-"""
-
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from enum import Enum
 from typing import Optional

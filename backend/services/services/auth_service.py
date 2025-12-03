@@ -1,9 +1,3 @@
-"""
-Authentication Service
-Part of the Services Layer
-Handles authentication logic and coordinates between Supabase and local database
-"""
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from repositories.repositories.user_repository import UserRepository
 from repositories.models.user import UserRole
