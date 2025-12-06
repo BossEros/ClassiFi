@@ -9,7 +9,7 @@ ClassiFi is designed to facilitate classroom interactions between instructors an
 ## Architecture
 
 This project follows a **3-Tier Layered Architecture** in both frontend and backend:
-
+add
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    FRONTEND (React)                      │
