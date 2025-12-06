@@ -195,9 +195,14 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 text-center">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        </div>
+        <div className="w-full max-w-md relative">
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 text-center">
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                 <CheckCircle className="w-10 h-10 text-white" />
@@ -219,9 +224,14 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 text-center">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        </div>
+        <div className="w-full max-w-md relative">
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 text-center">
             <div className="flex justify-center mb-6">
               <div className="w-10 h-10 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
             </div>
@@ -235,9 +245,14 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
 
   if (tokenError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 p-4">
-        <div className="w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8 text-center">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+        {/* Background decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        </div>
+        <div className="w-full max-w-md relative">
+          <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 text-center">
             <div className="flex justify-center mb-6">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center">
                 <XCircle className="w-10 h-10 text-white" />
@@ -255,10 +270,16 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-indigo-900 p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="w-full max-w-md relative">
         {/* Card */}
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/20 p-8">
+        <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">Reset Your Password</h1>
@@ -276,7 +297,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
 
             {/* New Password */}
             <div className="space-y-2">
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-200">
                 New Password
               </label>
               <div className="relative">
@@ -290,7 +311,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   onBlur={(e) => handleFieldBlur('newPassword', e.target.value)}
-                  className="pl-11 pr-11"
+                  className="pl-11 pr-11 placeholder:text-gray-400"
                   required
                   disabled={isLoading}
                 />
@@ -306,14 +327,14 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
               {fieldErrors.newPassword && (
                 <p className="text-sm text-red-400">{fieldErrors.newPassword}</p>
               )}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-400">
                 Must be 8+ characters with uppercase, lowercase, number, and special character
               </p>
             </div>
 
             {/* Confirm Password */}
             <div className="space-y-2">
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-200">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -327,7 +348,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   onBlur={(e) => handleFieldBlur('confirmPassword', e.target.value)}
-                  className="pl-11 pr-11"
+                  className="pl-11 pr-11 placeholder:text-gray-400"
                   required
                   disabled={isLoading}
                 />
