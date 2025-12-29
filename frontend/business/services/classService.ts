@@ -15,21 +15,6 @@ import type {
  * @returns Created class data
  */
 export async function createClass(request: CreateClassRequest): Promise<Class> {
-  // Validate class name
-  if (!request.className || request.className.trim().length === 0) {
-    throw new Error('Class name is required')
-  }
-
-  if (request.className.trim().length > 100) {
-    throw new Error('Class name must be 100 characters or less')
-  }
-
-  // Validate description if provided
-  if (request.description && request.description.length > 1000) {
-    throw new Error('Description must be 1000 characters or less')
-  }
-
-  // Pass directly to repository (backend uses camelCase)
   return await classRepository.createClass({
     teacherId: request.teacherId,
     className: request.className.trim(),
@@ -166,22 +151,6 @@ export async function updateClass(classId: number, request: UpdateClassRequest):
     throw new Error('Invalid teacher ID')
   }
 
-  // Validate class name if provided
-  if (request.className !== undefined) {
-    if (request.className.trim().length === 0) {
-      throw new Error('Class name cannot be empty')
-    }
-    if (request.className.trim().length > 100) {
-      throw new Error('Class name must be 100 characters or less')
-    }
-  }
-
-  // Validate description if provided
-  if (request.description && request.description.length > 1000) {
-    throw new Error('Description must be 1000 characters or less')
-  }
-
-  // Pass directly to repository (backend uses camelCase)
   return await classRepository.updateClass(classId, {
     teacherId: request.teacherId,
     className: request.className?.trim(),

@@ -129,7 +129,7 @@ export async function getClassStudents(classId: number): Promise<EnrolledStudent
  * Deletes a class
  */
 export async function deleteClass(classId: number, teacherId: number): Promise<void> {
-  const response = await apiClient.delete<DeleteResponse>(`/classes/${classId}`, { teacherId })
+  const response = await apiClient.delete<DeleteResponse>(`/classes/${classId}?teacherId=${teacherId}`)
 
   if (response.error || !response.data?.success) {
     throw new Error(response.error || response.data?.message || 'Failed to delete class')

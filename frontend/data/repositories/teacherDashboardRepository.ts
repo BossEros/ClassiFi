@@ -1,36 +1,65 @@
-import { apiClient } from '../api/apiClient'
-import type { DashboardData, Class, Task } from '../../business/models/dashboard/types'
+import { apiClient } from '@/data/api/apiClient'
 
-/**
- * Response types matching backend API
- */
+// ============================================================================
+// Raw Backend Response Types (matching API shape exactly)
+// ============================================================================
+
+interface ClassResponse {
+  id: number
+  teacherId: number
+  className: string
+  classCode: string
+  description: string | null
+  isActive: boolean
+  createdAt: string
+}
+
+interface TaskResponse {
+  id: number
+  classId: number
+  assignmentName: string
+  description: string | null
+  programmingLanguage: string
+  deadline: string
+  allowResubmission: boolean
+  isActive: boolean
+  createdAt: string
+  className?: string
+  submissionCount?: number
+}
+
 interface TeacherDashboardResponse {
   success: boolean
   message?: string
-  recentClasses: Class[]
-  pendingTasks: Task[]
+  recentClasses: ClassResponse[]
+  pendingTasks: TaskResponse[]
 }
 
 interface ClassListResponse {
   success: boolean
   message?: string
-  classes: Class[]
+  classes: ClassResponse[]
 }
 
 interface TaskListResponse {
   success: boolean
   message?: string
-  tasks: Task[]
+  tasks: TaskResponse[]
 }
+
+// ============================================================================
+// Repository Functions (return raw API data)
+// ============================================================================
 
 /**
  * Fetches complete dashboard data for a teacher
+ * @returns Raw backend response data
  */
 export async function getDashboardData(
   teacherId: number,
   recentClassesLimit: number = 12,
   pendingTasksLimit: number = 10
-): Promise<DashboardData> {
+): Promise<TeacherDashboardResponse> {
   const response = await apiClient.get<TeacherDashboardResponse>(
     `/teacher/dashboard/${teacherId}?recentClassesLimit=${recentClassesLimit}&pendingTasksLimit=${pendingTasksLimit}`
   )
@@ -39,16 +68,14 @@ export async function getDashboardData(
     throw new Error(response.error || 'Failed to fetch dashboard data')
   }
 
-  return {
-    recentClasses: response.data.recentClasses,
-    pendingTasks: response.data.pendingTasks
-  }
+  return response.data
 }
 
 /**
  * Fetches recent classes for a teacher
+ * @returns Raw backend response data
  */
-export async function getRecentClasses(teacherId: number, limit: number = 5): Promise<Class[]> {
+export async function getRecentClasses(teacherId: number, limit: number = 5): Promise<ClassListResponse> {
   const response = await apiClient.get<ClassListResponse>(
     `/teacher/dashboard/${teacherId}/classes?limit=${limit}`
   )
@@ -57,13 +84,14 @@ export async function getRecentClasses(teacherId: number, limit: number = 5): Pr
     throw new Error(response.error || 'Failed to fetch recent classes')
   }
 
-  return response.data.classes
+  return response.data
 }
 
 /**
  * Fetches pending tasks for a teacher
+ * @returns Raw backend response data
  */
-export async function getPendingTasks(teacherId: number, limit: number = 10): Promise<Task[]> {
+export async function getPendingTasks(teacherId: number, limit: number = 10): Promise<TaskListResponse> {
   const response = await apiClient.get<TaskListResponse>(
     `/teacher/dashboard/${teacherId}/tasks?limit=${limit}`
   )
@@ -72,5 +100,8 @@ export async function getPendingTasks(teacherId: number, limit: number = 10): Pr
     throw new Error(response.error || 'Failed to fetch pending tasks')
   }
 
-  return response.data.tasks
+  return response.data
 }
+
+// Export response types for consumers
+export type { TeacherDashboardResponse, ClassListResponse, TaskListResponse, ClassResponse, TaskResponse }

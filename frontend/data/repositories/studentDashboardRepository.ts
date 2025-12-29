@@ -1,32 +1,57 @@
-import { apiClient } from '../api/apiClient'
-import type { Class, Task } from '../../business/models/dashboard/types'
+import { apiClient } from '@/data/api/apiClient'
 
-/**
- * Response types matching backend API
- */
-interface StudentDashboardResponse {
+// ============================================================================
+// Raw Backend Response Types (matching API shape exactly)
+// ============================================================================
+
+interface ClassResponse {
+  id: number
+  teacherId: number
+  className: string
+  classCode: string
+  description: string | null
+  isActive: boolean
+  createdAt: string
+  teacherName?: string
+}
+
+interface AssignmentResponse {
+  id: number
+  classId: number
+  assignmentName: string
+  description: string | null
+  programmingLanguage: string
+  deadline: string
+  allowResubmission: boolean
+  isActive: boolean
+  createdAt: string
+  className?: string
+  hasSubmitted?: boolean
+}
+
+interface StudentDashboardBackendResponse {
   success: boolean
   message?: string
-  enrolledClasses: Class[]
-  pendingAssignments: Task[]
+  enrolledClasses: ClassResponse[]
+  pendingAssignments: AssignmentResponse[]
 }
 
 interface ClassListResponse {
   success: boolean
   message?: string
-  classes: Class[]
+  classes: ClassResponse[]
 }
 
 interface AssignmentListResponse {
   success: boolean
   message?: string
-  assignments: Task[]
+  assignments: AssignmentResponse[]
 }
 
 interface JoinClassResponse {
   success: boolean
   message: string
-  classInfo?: Class
+  classInfo?: ClassResponse
 }
 
 interface LeaveClassResponse {
@@ -34,23 +59,20 @@ interface LeaveClassResponse {
   message: string
 }
 
-/**
- * Student dashboard data structure
- */
-export interface StudentDashboardData {
-  enrolledClasses: Class[]
-  pendingAssignments: Task[]
-}
+// ============================================================================
+// Repository Functions (return raw API data)
+// ============================================================================
 
 /**
  * Fetches complete dashboard data for a student
+ * @returns Raw backend response data
  */
 export async function getDashboardData(
   studentId: number,
   enrolledClassesLimit: number = 12,
   pendingAssignmentsLimit: number = 10
-): Promise<StudentDashboardData> {
-  const response = await apiClient.get<StudentDashboardResponse>(
+): Promise<StudentDashboardBackendResponse> {
+  const response = await apiClient.get<StudentDashboardBackendResponse>(
     `/student/dashboard/${studentId}?enrolledClassesLimit=${enrolledClassesLimit}&pendingAssignmentsLimit=${pendingAssignmentsLimit}`
   )
 
@@ -58,16 +80,14 @@ export async function getDashboardData(
     throw new Error(response.error || 'Failed to fetch dashboard data')
   }
 
-  return {
-    enrolledClasses: response.data.enrolledClasses,
-    pendingAssignments: response.data.pendingAssignments
-  }
+  return response.data
 }
 
 /**
  * Fetches enrolled classes for a student
+ * @returns Raw backend response data
  */
-export async function getEnrolledClasses(studentId: number, limit?: number): Promise<Class[]> {
+export async function getEnrolledClasses(studentId: number, limit?: number): Promise<ClassListResponse> {
   let url = `/student/dashboard/${studentId}/classes`
   if (limit) {
     url += `?limit=${limit}`
@@ -79,13 +99,14 @@ export async function getEnrolledClasses(studentId: number, limit?: number): Pro
     throw new Error(response.error || 'Failed to fetch enrolled classes')
   }
 
-  return response.data.classes
+  return response.data
 }
 
 /**
  * Fetches pending assignments for a student
+ * @returns Raw backend response data
  */
-export async function getPendingAssignments(studentId: number, limit: number = 10): Promise<Task[]> {
+export async function getPendingAssignments(studentId: number, limit: number = 10): Promise<AssignmentListResponse> {
   const response = await apiClient.get<AssignmentListResponse>(
     `/student/dashboard/${studentId}/assignments?limit=${limit}`
   )
@@ -94,11 +115,12 @@ export async function getPendingAssignments(studentId: number, limit: number = 1
     throw new Error(response.error || 'Failed to fetch pending assignments')
   }
 
-  return response.data.assignments
+  return response.data
 }
 
 /**
  * Join a class using a class code
+ * @returns Raw backend response data
  */
 export async function joinClass(studentId: number, classCode: string): Promise<JoinClassResponse> {
   const response = await apiClient.post<JoinClassResponse>('/student/dashboard/join', {
@@ -107,10 +129,7 @@ export async function joinClass(studentId: number, classCode: string): Promise<J
   })
 
   if (response.error || !response.data) {
-    return {
-      success: false,
-      message: response.error || 'Failed to join class'
-    }
+    throw new Error(response.error || 'Failed to join class')
   }
 
   return response.data
@@ -118,6 +137,7 @@ export async function joinClass(studentId: number, classCode: string): Promise<J
 
 /**
  * Leave a class
+ * @returns Raw backend response data
  */
 export async function leaveClass(studentId: number, classId: number): Promise<LeaveClassResponse> {
   const response = await apiClient.post<LeaveClassResponse>('/student/dashboard/leave', {
@@ -126,11 +146,19 @@ export async function leaveClass(studentId: number, classId: number): Promise<Le
   })
 
   if (response.error || !response.data) {
-    return {
-      success: false,
-      message: response.error || 'Failed to leave class'
-    }
+    throw new Error(response.error || 'Failed to leave class')
   }
 
   return response.data
+}
+
+// Export response types for consumers
+export type {
+  StudentDashboardBackendResponse,
+  ClassListResponse,
+  AssignmentListResponse,
+  JoinClassResponse,
+  LeaveClassResponse,
+  ClassResponse,
+  AssignmentResponse
 }
