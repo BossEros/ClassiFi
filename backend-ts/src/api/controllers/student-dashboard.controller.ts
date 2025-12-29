@@ -1,8 +1,7 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { StudentDashboardService } from '../../services/student-dashboard.service.js';
-import { JoinClassRequestSchema, LeaveClassRequestSchema, type JoinClassRequest, type LeaveClassRequest } from '../schemas/dashboard.schema.js';
-import { BadRequestError } from '../middlewares/error-handler.js';
-
+import { StudentDashboardService } from '@/services/student-dashboard.service.js';
+import { JoinClassRequestSchema, LeaveClassRequestSchema, type JoinClassRequest, type LeaveClassRequest } from '@/api/schemas/dashboard.schema.js';
+import { BadRequestError } from '@/api/middlewares/error-handler.js';
 const dashboardService = new StudentDashboardService();
 
 /** Student dashboard routes - /api/v1/student/dashboard/* */
