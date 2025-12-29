@@ -3,7 +3,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react'
 import { loginUser } from '@/business/services/authService'
-import { validateLoginData, validateField } from '@/business/validation/authValidation'
+import { validateField } from '@/business/validation/authValidation'
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -24,15 +24,6 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
     setIsLoading(true)
     setError(null)
     setFieldErrors({})
-
-    // Validate login data
-    const validationResult = validateLoginData({ email, password })
-
-    if (!validationResult.isValid) {
-      setFieldErrors(validationResult.errors)
-      setIsLoading(false)
-      return
-    }
 
     const result = await loginUser({ email, password })
 

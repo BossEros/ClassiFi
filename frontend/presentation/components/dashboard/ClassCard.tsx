@@ -23,12 +23,12 @@ export function ClassCard({ classItem, onClick, className }: ClassCardProps) {
         <div className="space-y-3 relative">
           {/* Class name */}
           <h3 className="text-base font-semibold text-white tracking-tight pr-12">
-            {classItem.name}
+            {classItem.className}
           </h3>
 
           {/* Class code */}
           <p className="text-sm text-gray-400">
-            Code: <span className="text-purple-400 font-mono">{classItem.code}</span>
+            Code: <span className="text-purple-400 font-mono">{classItem.classCode}</span>
           </p>
 
           <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />

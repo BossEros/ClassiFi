@@ -36,6 +36,7 @@ export function LoginPage() {
   const handleForgotPasswordClick = () => {
     navigate('/forgot-password')
   }
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
       {/* Background decorative elements */}

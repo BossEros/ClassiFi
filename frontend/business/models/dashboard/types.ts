@@ -1,35 +1,49 @@
+/** Class model - matches backend ClassDTO */
 export interface Class {
   id: number
-  name: string
-  code: string
-  description?: string
-  studentCount: number
-  createdAt?: Date
+  className: string
+  classCode: string
+  description?: string | null
+  studentCount?: number
+  createdAt?: Date | string
+  isActive?: boolean
+  teacherId?: number
+  teacherName?: string
+  assignmentCount?: number
 }
 
+/** Task/Assignment model for dashboard - matches backend */
 export interface Task {
   id: number
-  title: string
+  assignmentName: string
   description: string
   classId: number
   className: string
   programmingLanguage: string
-  deadline: Date
+  deadline: Date | string
   allowResubmission: boolean
-  createdAt?: Date
+  createdAt?: Date | string
+  hasSubmitted?: boolean
+  submissionCount?: number
+  totalStudents?: number
 }
 
+/** Assignment model for class detail - matches backend */
 export interface Assignment {
   id: number
-  title: string
+  assignmentName: string
   description: string
   programmingLanguage: string
-  deadline: Date
+  deadline: Date | string
   allowResubmission: boolean
-  isChecked: boolean
-  createdAt?: Date
+  isActive?: boolean
+  createdAt?: Date | string
+  submissionCount?: number
+  hasSubmitted?: boolean
+  className?: string
 }
 
+/** Enrolled student model - matches backend */
 export interface EnrolledStudent {
   id: number
   username: string
@@ -37,7 +51,7 @@ export interface EnrolledStudent {
   firstName: string
   lastName: string
   fullName: string
-  enrolledAt?: Date
+  enrolledAt?: Date | string
 }
 
 export interface ClassDetailData {
@@ -63,40 +77,4 @@ export interface DashboardStats {
 export interface DashboardData {
   recentClasses: Class[]
   pendingTasks: Task[]
-}
-
-export interface DashboardResponse {
-  success: boolean
-  message?: string
-  recentClasses: Class[]
-  pendingTasks: Task[]
-}
-
-export interface CreateClassRequest {
-  teacherId: number
-  className: string
-  description?: string
-  classCode?: string
-}
-
-export interface CreateClassResponse {
-  success: boolean
-  message?: string
-  class: Class
-}
-
-export interface CreateAssignmentRequest {
-  classId: number
-  teacherId: number
-  assignmentName: string
-  description: string
-  programmingLanguage: 'python' | 'java'
-  deadline: Date
-  allowResubmission: boolean
-}
-
-export interface CreateAssignmentResponse {
-  success: boolean
-  message?: string
-  assignment?: Assignment
 }

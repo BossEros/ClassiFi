@@ -1,5 +1,4 @@
-import { ClassRepository, AssignmentRepository, SubmissionRepository } from '../repositories/index.js';
-
+import { ClassRepository, AssignmentRepository, SubmissionRepository } from '@/repositories/index.js';
 /**
  * Business logic for teacher dashboard operations.
  */

@@ -12,7 +12,7 @@
 export interface Submission {
   id: number
   assignmentId: number
-  
+
   studentId: number
   fileName: string
   fileSize: number
@@ -30,12 +30,12 @@ export interface AssignmentDetail {
   id: number
   classId: number
   className: string
-  title: string
+  assignmentName: string
   description: string
   programmingLanguage: string
-  deadline: Date
+  deadline: Date | string
   allowResubmission: boolean
-  createdAt?: Date
+  createdAt?: Date | string
   isActive: boolean
   hasSubmitted?: boolean
   latestSubmission?: Submission

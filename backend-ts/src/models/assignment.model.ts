@@ -9,8 +9,7 @@ import {
     pgEnum,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { classes } from './class.model.js';
-
+import { classes } from '@/models/class.model.js';
 /** Programming language enum for assignments */
 export const programmingLanguageEnum = pgEnum('programming_language', ['python', 'java']);
 

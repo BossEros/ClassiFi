@@ -1,4 +1,4 @@
-import type { CreateAssignmentRequest } from '../models/dashboard/types'
+import type { CreateAssignmentRequest } from '@/data/api/types'
 
 export interface ValidationResult {
   isValid: boolean

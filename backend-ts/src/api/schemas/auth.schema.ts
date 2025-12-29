@@ -4,8 +4,8 @@ import { z } from 'zod';
 export const UserRoleSchema = z.enum(['student', 'teacher', 'admin']);
 export type UserRole = z.infer<typeof UserRoleSchema>;
 
-/** Register request schema */
-export const RegisterRequestSchema = z.object({
+/** Register request base schema (for Swagger docs) */
+const RegisterRequestBaseSchema = z.object({
     email: z.string().email('Invalid email format'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
@@ -16,10 +16,19 @@ export const RegisterRequestSchema = z.object({
     firstName: z.string().min(1, 'First name is required').max(50),
     lastName: z.string().min(1, 'Last name is required').max(50),
     role: z.enum(['student', 'teacher']),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
 });
+
+/** Register request schema with password confirmation validation */
+export const RegisterRequestSchema = RegisterRequestBaseSchema.refine(
+    (data) => data.password === data.confirmPassword,
+    {
+        message: 'Passwords do not match',
+        path: ['confirmPassword'],
+    }
+);
+
+/** For Swagger documentation (schemas with refine don't convert to JSON Schema) */
+export const RegisterRequestSchemaForDocs = RegisterRequestBaseSchema;
 
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 

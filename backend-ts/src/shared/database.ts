@@ -1,7 +1,6 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
-import { settings } from './config.js';
-
+import { settings } from '@/shared/config.js';
 /** PostgreSQL connection client */
 const connectionString = settings.databaseUrl;
 

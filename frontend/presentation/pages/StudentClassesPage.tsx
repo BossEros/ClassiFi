@@ -51,7 +51,7 @@ export function StudentClassesPage() {
   const handleJoinSuccess = (classInfo: Class) => {
     // Add the new class to the list
     setClasses((prev) => [classInfo, ...prev])
-    showToast(`Successfully joined ${classInfo.name}!`, 'success')
+    showToast(`Successfully joined ${classInfo.className}!`, 'success')
   }
 
   return (

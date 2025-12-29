@@ -11,9 +11,8 @@ import {
     check,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-import { assignments } from './assignment.model.js';
-import { users } from './user.model.js';
-
+import { assignments } from '@/models/assignment.model.js';
+import { users } from '@/models/user.model.js';
 /** Submissions table - stores student code submissions for assignments */
 export const submissions = pgTable('submissions', {
     id: serial('id').primaryKey(),

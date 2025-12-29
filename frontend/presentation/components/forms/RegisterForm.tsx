@@ -3,10 +3,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Eye, EyeOff, ArrowLeft, GraduationCap, Users } from 'lucide-react'
 import { registerUser } from '@/business/services/authService'
-import {
-  validateRegistrationData,
-  validateField
-} from '@/business/validation/authValidation'
+import { validateField } from '@/business/validation/authValidation'
 import type {
   RegistrationStep,
   RegistrationStepInfo,
@@ -85,23 +82,6 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
     setIsLoading(true)
     setError(null)
     setFieldErrors({})
-
-    // Validate all registration data
-    const validationResult = validateRegistrationData({
-      role,
-      firstName,
-      lastName,
-      email,
-      username,
-      password,
-      confirmPassword
-    })
-
-    if (!validationResult.isValid) {
-      setFieldErrors(validationResult.errors)
-      setIsLoading(false)
-      return
-    }
 
     const result = await registerUser({
       role,

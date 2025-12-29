@@ -1,9 +1,8 @@
-import { db } from '../shared/database.js';
+import { db } from '@/shared/database.js';
 import { eq, and, desc } from 'drizzle-orm';
-import { assignments, type Assignment, type NewAssignment } from '../models/index.js';
-import { BaseRepository } from './base.repository.js';
+import { assignments, type Assignment, type NewAssignment } from '@/models/index.js';
+import { BaseRepository } from '@/repositories/base.repository.js';
 import { injectable } from 'tsyringe';
-
 /** Programming language type */
 export type ProgrammingLanguage = 'python' | 'java';
 

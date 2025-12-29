@@ -9,9 +9,8 @@ import {
     check,
 } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
-import { assignments } from './assignment.model.js';
-import { users } from './user.model.js';
-
+import { assignments } from '@/models/assignment.model.js';
+import { users } from '@/models/user.model.js';
 /** Similarity reports table - stores class-wide similarity analysis reports */
 export const similarityReports = pgTable('similarity_reports', {
     id: serial('id').primaryKey(),

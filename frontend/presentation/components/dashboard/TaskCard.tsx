@@ -9,7 +9,8 @@ interface TaskCardProps {
   className?: string
 }
 
-function formatDeadline(date: Date): string {
+function formatDeadline(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
   const options: Intl.DateTimeFormatOptions = {
     year: 'numeric',
     month: 'long',
@@ -17,12 +18,13 @@ function formatDeadline(date: Date): string {
     hour: '2-digit',
     minute: '2-digit'
   }
-  return date.toLocaleString('en-US', options)
+  return dateObj.toLocaleString('en-US', options)
 }
 
-function getDeadlineColor(date: Date): string {
+function getDeadlineColor(date: Date | string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date
   const now = new Date()
-  const diffTime = date.getTime() - now.getTime()
+  const diffTime = dateObj.getTime() - now.getTime()
   const diffDays = diffTime / (1000 * 60 * 60 * 24)
 
   if (diffDays < 0) return 'text-red-400'
@@ -43,7 +45,7 @@ export function TaskCard({ task, onClick, className }: TaskCardProps) {
       <CardContent className="p-4">
         <div className="space-y-3">
           <h3 className="text-base font-semibold text-white tracking-tight">
-            {task.title}
+            {task.assignmentName}
           </h3>
           <div className="space-y-2">
             <p className="text-sm text-gray-400">

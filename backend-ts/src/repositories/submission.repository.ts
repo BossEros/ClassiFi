@@ -1,9 +1,8 @@
-import { db } from '../shared/database.js';
+import { db } from '@/shared/database.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { submissions, assignments, users, type Submission, type NewSubmission } from '../models/index.js';
-import { BaseRepository } from './base.repository.js';
+import { submissions, users, type Submission, type NewSubmission } from '@/models/index.js';
+import { BaseRepository } from '@/repositories/base.repository.js';
 import { injectable } from 'tsyringe';
-
 /**
  * Repository for submission-related database operations.
  */

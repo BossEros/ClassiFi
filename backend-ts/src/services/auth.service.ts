@@ -1,17 +1,15 @@
 import { inject, injectable } from 'tsyringe';
-import { UserRepository, type UserRole } from '../repositories/user.repository.js';
-import { supabase } from '../shared/supabase.js';
-import { settings } from '../shared/config.js';
-import { toUserDTO, type UserDTO } from '../shared/mappers.js';
+import { UserRepository, type UserRole } from '@/repositories/user.repository.js';
+import { supabase } from '@/shared/supabase.js';
+import { settings } from '@/shared/config.js';
+import { toUserDTO, type UserDTO } from '@/shared/mappers.js';
 import {
     UserAlreadyExistsError,
     InvalidCredentialsError,
     UserNotFoundError,
     EmailNotVerifiedError,
     InvalidRoleError,
-} from '../shared/errors.js';
-
-/** Auth result type */
+} from '@/shared/errors.js';/** Auth result type */
 interface AuthResult {
     userData: UserDTO;
     token: string | null;
@@ -29,7 +27,6 @@ export class AuthService {
 
     /**
      * Register a new user.
-     * @throws {InvalidRoleError} If role is not 'student' or 'teacher'
      * @throws {UserAlreadyExistsError} If username or email exists
      */
     async registerUser(
@@ -40,10 +37,6 @@ export class AuthService {
         lastName: string,
         role: string
     ): Promise<AuthResult> {
-        // Validate role
-        if (role !== 'student' && role !== 'teacher') {
-            throw new InvalidRoleError("student' or 'teacher");
-        }
 
         // Check if username already exists
         if (await this.userRepo.checkUsernameExists(username)) {
@@ -73,20 +66,31 @@ export class AuthService {
             throw new Error(supabaseError?.message ?? 'Failed to create Supabase user');
         }
 
-        // Create user in local database
-        const user = await this.userRepo.createUser({
-            supabaseUserId: supabaseData.user.id,
-            username,
-            email,
-            firstName,
-            lastName,
-            role: role as UserRole,
-        });
+        // Create user in local database with rollback on failure
+        try {
+            const user = await this.userRepo.createUser({
+                supabaseUserId: supabaseData.user.id,
+                username,
+                email,
+                firstName,
+                lastName,
+                role: role as UserRole,
+            });
 
-        return {
-            userData: toUserDTO(user),
-            token: supabaseData.session?.access_token ?? null,
-        };
+            return {
+                userData: toUserDTO(user),
+                token: supabaseData.session?.access_token ?? null,
+            };
+        } catch (error) {
+            // Rollback: Delete the Supabase user to prevent orphaned records
+            try {
+                await supabase.auth.admin.deleteUser(supabaseData.user.id);
+            } catch (rollbackError) {
+                // Log rollback failure but throw original error
+                console.error('Failed to rollback Supabase user:', rollbackError);
+            }
+            throw error;
+        }
     }
 
     /**

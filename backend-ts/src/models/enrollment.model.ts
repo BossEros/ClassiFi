@@ -7,9 +7,8 @@ import {
     index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
-import { users } from './user.model.js';
-import { classes } from './class.model.js';
-
+import { users } from '@/models/user.model.js';
+import { classes } from '@/models/class.model.js';
 /** Enrollments table - links students to classes (many-to-many) */
 export const enrollments = pgTable('enrollments', {
     id: serial('id').primaryKey(),

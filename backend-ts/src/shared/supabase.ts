@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { settings } from './config.js';
-
+import { settings } from '@/shared/config.js';
 /** Supabase client for authentication and file storage */
 export const supabase = createClient(
     settings.supabaseUrl,

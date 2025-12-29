@@ -17,10 +17,10 @@ export async function submitAssignment(
   request: SubmitAssignmentRequest
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
-    // Create FormData for file upload
+    // Create FormData for file upload - use camelCase keys
     const formData = new FormData()
-    formData.append('assignment_id', request.assignmentId.toString())
-    formData.append('student_id', request.studentId.toString())
+    formData.append('assignmentId', request.assignmentId.toString())
+    formData.append('studentId', request.studentId.toString())
     formData.append('file', request.file)
 
     // Make request with fetch directly (apiClient doesn't support FormData)
@@ -43,7 +43,6 @@ export async function submitAssignment(
         errorMessage = data
       }
 
-      // Log detailed error information for debugging
       console.error('Submission failed:', {
         status: response.status,
         statusText: response.statusText,
@@ -57,19 +56,19 @@ export async function submitAssignment(
       }
     }
 
-    // Convert snake_case to camelCase
+    // Backend now returns camelCase - direct mapping
     const responseData: SubmitAssignmentResponse = {
       success: data.success,
       message: data.message,
       submission: data.submission ? {
         id: data.submission.id,
-        assignmentId: data.submission.assignment_id,
-        studentId: data.submission.student_id,
-        fileName: data.submission.file_name,
-        fileSize: data.submission.file_size,
-        submissionNumber: data.submission.submission_number,
-        submittedAt: new Date(data.submission.submitted_at),
-        isLatest: data.submission.is_latest
+        assignmentId: data.submission.assignmentId,
+        studentId: data.submission.studentId,
+        fileName: data.submission.fileName,
+        fileSize: data.submission.fileSize,
+        submissionNumber: data.submission.submissionNumber,
+        submittedAt: new Date(data.submission.submittedAt),
+        isLatest: data.submission.isLatest
       } : undefined
     }
 
@@ -78,7 +77,6 @@ export async function submitAssignment(
       status: response.status
     }
   } catch (error) {
-    // Log network or other errors
     console.error('Submission error (network or other):', error)
 
     return {
@@ -102,18 +100,18 @@ export async function getSubmissionHistory(
   )
 
   if (response.data) {
-    // Convert snake_case to camelCase and date strings to Date objects
+    // Backend returns camelCase - convert date strings to Date objects
     response.data = {
       ...response.data,
       submissions: response.data.submissions.map((sub: any) => ({
         id: sub.id,
-        assignmentId: sub.assignment_id,
-        studentId: sub.student_id,
-        fileName: sub.file_name,
-        fileSize: sub.file_size,
-        submissionNumber: sub.submission_number,
-        submittedAt: new Date(sub.submitted_at),
-        isLatest: sub.is_latest
+        assignmentId: sub.assignmentId,
+        studentId: sub.studentId,
+        fileName: sub.fileName,
+        fileSize: sub.fileSize,
+        submissionNumber: sub.submissionNumber,
+        submittedAt: new Date(sub.submittedAt),
+        isLatest: sub.isLatest
       }))
     }
   }
@@ -129,23 +127,23 @@ export async function getStudentSubmissions(
   latestOnly: boolean = true
 ): Promise<ApiResponse<SubmissionListResponse>> {
   const response = await apiClient.get<SubmissionListResponse>(
-    `/submissions/student/${studentId}?latest_only=${latestOnly}`
+    `/submissions/student/${studentId}?latestOnly=${latestOnly}`
   )
 
   if (response.data) {
-    // Convert snake_case to camelCase
+    // Backend returns camelCase - convert date strings to Date objects
     response.data = {
       ...response.data,
       submissions: response.data.submissions.map((sub: any) => ({
         id: sub.id,
-        assignmentId: sub.assignment_id,
-        studentId: sub.student_id,
-        fileName: sub.file_name,
-        fileSize: sub.file_size,
-        submissionNumber: sub.submission_number,
-        submittedAt: new Date(sub.submitted_at),
-        isLatest: sub.is_latest,
-        assignmentName: sub.assignment_name
+        assignmentId: sub.assignmentId,
+        studentId: sub.studentId,
+        fileName: sub.fileName,
+        fileSize: sub.fileSize,
+        submissionNumber: sub.submissionNumber,
+        submittedAt: new Date(sub.submittedAt),
+        isLatest: sub.isLatest,
+        assignmentName: sub.assignmentName
       }))
     }
   }
@@ -161,23 +159,23 @@ export async function getAssignmentSubmissions(
   latestOnly: boolean = true
 ): Promise<ApiResponse<SubmissionListResponse>> {
   const response = await apiClient.get<SubmissionListResponse>(
-    `/submissions/assignment/${assignmentId}?latest_only=${latestOnly}`
+    `/submissions/assignment/${assignmentId}?latestOnly=${latestOnly}`
   )
 
   if (response.data) {
-    // Convert snake_case to camelCase
+    // Backend returns camelCase - convert date strings to Date objects
     response.data = {
       ...response.data,
       submissions: response.data.submissions.map((sub: any) => ({
         id: sub.id,
-        assignmentId: sub.assignment_id,
-        studentId: sub.student_id,
-        fileName: sub.file_name,
-        fileSize: sub.file_size,
-        submissionNumber: sub.submission_number,
-        submittedAt: new Date(sub.submitted_at),
-        isLatest: sub.is_latest,
-        studentName: sub.student_name
+        assignmentId: sub.assignmentId,
+        studentId: sub.studentId,
+        fileName: sub.fileName,
+        fileSize: sub.fileSize,
+        submissionNumber: sub.submissionNumber,
+        submittedAt: new Date(sub.submittedAt),
+        isLatest: sub.isLatest,
+        studentName: sub.studentName
       }))
     }
   }
@@ -187,19 +185,17 @@ export async function getAssignmentSubmissions(
 
 /**
  * Get assignment details by ID
- * Note: Uses the existing classes endpoint
  */
 export async function getAssignmentById(
   assignmentId: number,
   userId: number
 ): Promise<ApiResponse<AssignmentDetailResponse>> {
   const response = await apiClient.get<any>(
-    `/assignments/${assignmentId}?user_id=${userId}`
+    `/assignments/${assignmentId}?userId=${userId}`
   )
 
   if (response.data && response.data.assignment) {
-    // Convert snake_case to camelCase
-    // The API returns GetAssignmentResponse with structure: { success, message, assignment }
+    // Backend returns camelCase - convert date strings to Date objects
     const assignmentData = response.data.assignment
 
     response.data = {
@@ -207,15 +203,15 @@ export async function getAssignmentById(
       message: response.data.message,
       assignment: {
         id: assignmentData.id,
-        classId: assignmentData.class_id,
-        className: assignmentData.class_name,
-        title: assignmentData.title,
+        classId: assignmentData.classId,
+        className: assignmentData.className,
+        title: assignmentData.assignmentName,
         description: assignmentData.description,
-        programmingLanguage: assignmentData.programming_language,
+        programmingLanguage: assignmentData.programmingLanguage,
         deadline: new Date(assignmentData.deadline),
-        allowResubmission: assignmentData.allow_resubmission,
-        isActive: assignmentData.is_active,
-        createdAt: assignmentData.created_at ? new Date(assignmentData.created_at) : undefined
+        allowResubmission: assignmentData.allowResubmission,
+        isActive: assignmentData.isActive,
+        createdAt: assignmentData.createdAt ? new Date(assignmentData.createdAt) : undefined
       }
     }
   }

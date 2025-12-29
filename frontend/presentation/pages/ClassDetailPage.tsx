@@ -269,11 +269,11 @@ export function ClassDetailPage() {
                 </button>
                 <div>
                   <h1 className="text-2xl font-bold text-white">
-                    {classInfo?.name}
+                    {classInfo?.className}
                   </h1>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-sm text-gray-400">
-                      Class Code: <span className="text-purple-400 font-mono">{classInfo?.code}</span>
+                      Class Code: <span className="text-purple-400 font-mono">{classInfo?.classCode}</span>
                     </span>
                     <span className="text-gray-600">•</span>
                     <span className="text-sm text-gray-400">
@@ -402,7 +402,7 @@ export function ClassDetailPage() {
                       </div>
                       <p className="text-gray-300 font-medium mb-1">No students enrolled</p>
                       <p className="text-sm text-gray-500">
-                        Share the class code <span className="text-purple-400 font-mono">{classInfo?.code}</span> with your students.
+                        Share the class code <span className="text-purple-400 font-mono">{classInfo?.classCode}</span> with your students.
                       </p>
                     </div>
                   )}
@@ -442,7 +442,7 @@ export function ClassDetailPage() {
                 }}
                 onConfirm={handleConfirmDeleteAssignment}
                 isDeleting={isDeletingAssignment}
-                assignmentTitle={assignmentToDelete?.title}
+                assignmentTitle={assignmentToDelete?.assignmentName}
               />
 
               {/* Remove Student Modal */}
@@ -472,7 +472,7 @@ export function ClassDetailPage() {
               onSuccess={handleLeaveSuccess}
               studentId={parseInt(user.id)}
               classId={parseInt(classId!)}
-              className={classInfo.name}
+              className={classInfo.className}
             />
           )}
 

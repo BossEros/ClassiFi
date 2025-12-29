@@ -1,5 +1,4 @@
-import { ClassRepository, EnrollmentRepository, AssignmentRepository, SubmissionRepository, UserRepository } from '../repositories/index.js';
-
+import { ClassRepository, EnrollmentRepository, AssignmentRepository, SubmissionRepository, UserRepository } from '@/repositories/index.js';
 /**
  * Business logic for student dashboard operations.
  */

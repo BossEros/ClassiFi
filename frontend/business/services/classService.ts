@@ -1,17 +1,12 @@
 import * as classRepository from '@/data/repositories/classRepository'
 import { validateCreateAssignmentData } from '../validation/assignmentValidation'
-import type { Class, Assignment, EnrolledStudent, ClassDetailData, CreateAssignmentRequest } from '../models/dashboard/types'
+import type { Class, Assignment, EnrolledStudent, ClassDetailData } from '../models/dashboard/types'
 import type { UpdateAssignmentRequest } from '../models/assignment/types'
-
-/**
- * Request structure for creating a class (frontend format)
- */
-export interface CreateClassRequest {
-  teacherId: number
-  className: string
-  description?: string
-  classCode?: string
-}
+import type {
+  CreateClassRequest,
+  UpdateClassRequest,
+  CreateAssignmentRequest
+} from '@/data/api/types'
 
 /**
  * Creates a new class with validation
@@ -34,15 +29,12 @@ export async function createClass(request: CreateClassRequest): Promise<Class> {
     throw new Error('Description must be 1000 characters or less')
   }
 
-  // Transform frontend format to backend format
-  const backendRequest: classRepository.CreateClassRequest = {
-    teacher_id: request.teacherId,
-    class_name: request.className.trim(),
-    description: request.description?.trim() || undefined,
-    class_code: request.classCode || undefined
-  }
-
-  return await classRepository.createClass(backendRequest)
+  // Pass directly to repository (backend uses camelCase)
+  return await classRepository.createClass({
+    teacherId: request.teacherId,
+    className: request.className.trim(),
+    description: request.description?.trim() || undefined
+  })
 }
 
 /**
@@ -155,14 +147,8 @@ export async function deleteClass(classId: number, teacherId: number): Promise<v
   await classRepository.deleteClass(classId, teacherId)
 }
 
-/**
- * Request structure for updating a class (frontend format)
- */
-export interface UpdateClassRequest {
-  teacherId: number
-  className?: string
-  description?: string
-}
+// Re-export UpdateClassRequest from centralized types
+export type { UpdateClassRequest } from '@/data/api/types'
 
 /**
  * Updates a class with validation
@@ -195,14 +181,12 @@ export async function updateClass(classId: number, request: UpdateClassRequest):
     throw new Error('Description must be 1000 characters or less')
   }
 
-  // Transform frontend format to backend format
-  const backendRequest: classRepository.UpdateClassBackendRequest = {
-    teacher_id: request.teacherId,
-    class_name: request.className?.trim(),
+  // Pass directly to repository (backend uses camelCase)
+  return await classRepository.updateClass(classId, {
+    teacherId: request.teacherId,
+    className: request.className?.trim(),
     description: request.description?.trim()
-  }
-
-  return await classRepository.updateClass(classId, backendRequest)
+  })
 }
 
 /**
@@ -229,18 +213,15 @@ export async function createAssignment(request: CreateAssignmentRequest): Promis
     throw new Error('Invalid teacher ID')
   }
 
-  // Transform frontend format to backend format
-  const backendRequest: classRepository.CreateAssignmentBackendRequest = {
-    class_id: request.classId,
-    teacher_id: request.teacherId,
-    assignment_name: request.assignmentName.trim(),
+  // Pass directly to repository (backend uses camelCase)
+  return await classRepository.createAssignment(request.classId, {
+    teacherId: request.teacherId,
+    assignmentName: request.assignmentName.trim(),
     description: request.description.trim(),
-    programming_language: request.programmingLanguage,
-    deadline: request.deadline.toISOString(),
-    allow_resubmission: request.allowResubmission
-  }
-
-  return await classRepository.createAssignment(request.classId, backendRequest)
+    programmingLanguage: request.programmingLanguage,
+    deadline: typeof request.deadline === 'string' ? request.deadline : request.deadline.toISOString(),
+    allowResubmission: request.allowResubmission
+  })
 }
 
 /**
@@ -281,17 +262,15 @@ export async function updateAssignment(assignmentId: number, request: UpdateAssi
     }
   }
 
-  // Transform frontend format to backend format
-  const backendRequest: classRepository.UpdateAssignmentBackendRequest = {
-    teacher_id: request.teacherId,
-    assignment_name: request.assignmentName?.trim(),
+  // Pass directly to repository (backend uses camelCase)
+  return await classRepository.updateAssignment(assignmentId, {
+    teacherId: request.teacherId,
+    assignmentName: request.assignmentName?.trim(),
     description: request.description?.trim(),
-    programming_language: request.programmingLanguage,
-    deadline: request.deadline?.toISOString(),
-    allow_resubmission: request.allowResubmission
-  }
-
-  return await classRepository.updateAssignment(assignmentId, backendRequest)
+    programmingLanguage: request.programmingLanguage,
+    deadline: request.deadline ? (typeof request.deadline === 'string' ? request.deadline : request.deadline.toISOString()) : undefined,
+    allowResubmission: request.allowResubmission
+  })
 }
 
 /**

@@ -1,11 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import { authRoutes } from '../../controllers/auth.controller.js';
-import { classRoutes } from '../../controllers/class.controller.js';
-import { assignmentRoutes } from '../../controllers/assignment.controller.js';
-import { submissionRoutes } from '../../controllers/submission.controller.js';
-import { studentDashboardRoutes } from '../../controllers/student-dashboard.controller.js';
-import { teacherDashboardRoutes } from '../../controllers/teacher-dashboard.controller.js';
-
+import { authRoutes } from '@/api/controllers/auth.controller.js';
+import { classRoutes } from '@/api/controllers/class.controller.js';
+import { assignmentRoutes } from '@/api/controllers/assignment.controller.js';
+import { submissionRoutes } from '@/api/controllers/submission.controller.js';
+import { studentDashboardRoutes } from '@/api/controllers/student-dashboard.controller.js';
+import { teacherDashboardRoutes } from '@/api/controllers/teacher-dashboard.controller.js';
 /** API v1 routes aggregator */
 export async function apiV1Routes(app: FastifyInstance): Promise<void> {
     // Auth routes - /api/v1/auth/*

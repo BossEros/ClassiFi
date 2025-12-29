@@ -5,8 +5,7 @@
 import type { FastifyInstance } from 'fastify';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import { settings } from '../../shared/config.js';
-
+import { settings } from '@/shared/config.js';
 /** Configure Swagger documentation */
 export async function setupSwagger(app: FastifyInstance): Promise<void> {
     await app.register(swagger, {
@@ -36,69 +35,6 @@ export async function setupSwagger(app: FastifyInstance): Promise<void> {
                         type: 'http',
                         scheme: 'bearer',
                         bearerFormat: 'JWT',
-                    },
-                },
-                schemas: {
-                    Error: {
-                        type: 'object',
-                        properties: {
-                            success: { type: 'boolean', example: false },
-                            message: { type: 'string' },
-                        },
-                    },
-                    User: {
-                        type: 'object',
-                        properties: {
-                            id: { type: 'integer' },
-                            supabaseUserId: { type: 'string', nullable: true },
-                            username: { type: 'string' },
-                            email: { type: 'string', format: 'email' },
-                            firstName: { type: 'string' },
-                            lastName: { type: 'string' },
-                            role: { type: 'string', enum: ['student', 'teacher', 'admin'] },
-                            createdAt: { type: 'string', format: 'date-time' },
-                        },
-                    },
-                    Class: {
-                        type: 'object',
-                        properties: {
-                            id: { type: 'integer' },
-                            teacherId: { type: 'integer' },
-                            className: { type: 'string' },
-                            classCode: { type: 'string' },
-                            description: { type: 'string', nullable: true },
-                            createdAt: { type: 'string', format: 'date-time' },
-                            isActive: { type: 'boolean' },
-                            studentCount: { type: 'integer' },
-                        },
-                    },
-                    Assignment: {
-                        type: 'object',
-                        properties: {
-                            id: { type: 'integer' },
-                            classId: { type: 'integer' },
-                            assignmentName: { type: 'string' },
-                            description: { type: 'string' },
-                            programmingLanguage: { type: 'string', enum: ['python', 'java'] },
-                            deadline: { type: 'string', format: 'date-time' },
-                            allowResubmission: { type: 'boolean' },
-                            createdAt: { type: 'string', format: 'date-time' },
-                            isActive: { type: 'boolean' },
-                        },
-                    },
-                    Submission: {
-                        type: 'object',
-                        properties: {
-                            id: { type: 'integer' },
-                            assignmentId: { type: 'integer' },
-                            studentId: { type: 'integer' },
-                            fileName: { type: 'string' },
-                            filePath: { type: 'string' },
-                            fileSize: { type: 'integer' },
-                            submissionNumber: { type: 'integer' },
-                            submittedAt: { type: 'string', format: 'date-time' },
-                            isLatest: { type: 'boolean' },
-                        },
                     },
                 },
             },
