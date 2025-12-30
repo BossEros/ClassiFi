@@ -149,3 +149,20 @@ export class InvalidRoleError extends BadRequestError {
         this.name = 'InvalidRoleError';
     }
 }
+
+// ============ File/Storage Errors ============
+
+export class UploadFailedError extends ApiError {
+    constructor(reason: string) {
+        super(`File upload failed: ${reason}`, 500);
+        this.name = 'UploadFailedError';
+    }
+}
+
+export class StudentNotInClassError extends NotFoundError {
+    constructor() {
+        super('Student not found in this class');
+        this.name = 'StudentNotInClassError';
+    }
+}
+

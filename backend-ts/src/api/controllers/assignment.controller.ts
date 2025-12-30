@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { container } from 'tsyringe';
 import { ClassService } from '../../services/class.service.js';
 import {
     UpdateAssignmentRequestSchema,
@@ -8,9 +9,7 @@ import {
     AssignmentDetailResponseSchema,
     type UpdateAssignmentRequest
 } from '../schemas/assignment.schema.js';
-import { BadRequestError, NotFoundError, ForbiddenError } from '../middlewares/error-handler.js';
-
-const classService = new ClassService();
+import { BadRequestError } from '../middlewares/error-handler.js';
 
 // Helper to convert Zod schema to JSON Schema for Swagger
 const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
@@ -49,6 +48,7 @@ const SuccessMessageSchema = z.object({
 
 /** Assignment routes - /api/v1/assignments/* */
 export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
+    const classService = container.resolve<ClassService>('ClassService');
 
     /**
      * GET /:assignmentId
@@ -72,22 +72,12 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid parameters');
             }
 
-            const result = await classService.getAssignmentDetails(assignmentId, userId);
-
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            const assignment = await classService.getAssignmentDetails(assignmentId, userId);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                assignment: result.assignment,
+                message: 'Assignment retrieved successfully',
+                assignment,
             });
         },
     });
@@ -115,25 +105,15 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
 
             const { teacherId, ...updateData } = request.body;
 
-            const result = await classService.updateAssignment(assignmentId, teacherId, {
+            const assignment = await classService.updateAssignment(assignmentId, teacherId, {
                 ...updateData,
                 deadline: updateData.deadline ? new Date(updateData.deadline) : undefined,
             });
 
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
-
             return reply.send({
                 success: true,
-                message: result.message,
-                assignment: result.assignment,
+                message: 'Assignment updated successfully',
+                assignment,
             });
         },
     });
@@ -160,21 +140,11 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid parameters');
             }
 
-            const result = await classService.deleteAssignment(assignmentId, teacherId);
-
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            await classService.deleteAssignment(assignmentId, teacherId);
 
             return reply.send({
                 success: true,
-                message: result.message,
+                message: 'Assignment deleted successfully',
             });
         },
     });

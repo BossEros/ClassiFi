@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { container } from 'tsyringe';
 import { StudentDashboardService } from '@/services/student-dashboard.service.js';
 import {
     JoinClassRequestSchema,
@@ -12,8 +13,6 @@ import {
     type LeaveClassRequest
 } from '@/api/schemas/dashboard.schema.js';
 import { BadRequestError } from '@/api/middlewares/error-handler.js';
-
-const dashboardService = new StudentDashboardService();
 
 // Helper to convert Zod schema to JSON Schema for Swagger
 const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
@@ -47,18 +46,19 @@ const AssignmentListResponseSchema = z.object({
 });
 
 const JoinClassResponseSchema = z.object({
-    success: z.boolean(),
+    success: z.literal(true),
     message: z.string(),
-    classInfo: DashboardClassResponseSchema.optional(),
+    classInfo: DashboardClassResponseSchema,
 });
 
 const SuccessMessageSchema = z.object({
-    success: z.boolean(),
+    success: z.literal(true),
     message: z.string(),
 });
 
 /** Student dashboard routes - /api/v1/student/dashboard/* */
 export async function studentDashboardRoutes(app: FastifyInstance): Promise<void> {
+    const dashboardService = container.resolve<StudentDashboardService>('StudentDashboardService');
 
     /**
      * GET /:studentId
@@ -86,21 +86,17 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
                 throw new BadRequestError('Invalid student ID');
             }
 
-            const result = await dashboardService.getDashboardData(
+            const data = await dashboardService.getDashboardData(
                 studentId,
                 enrolledClassesLimit,
                 pendingAssignmentsLimit
             );
 
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
-
             return reply.send({
                 success: true,
-                message: result.message,
-                enrolledClasses: result.data.enrolledClasses,
-                pendingAssignments: result.data.pendingAssignments,
+                message: 'Dashboard data retrieved successfully',
+                enrolledClasses: data.enrolledClasses,
+                pendingAssignments: data.pendingAssignments,
             });
         },
     });
@@ -127,12 +123,12 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
                 throw new BadRequestError('Invalid student ID');
             }
 
-            const result = await dashboardService.getEnrolledClasses(studentId, limit);
+            const classes = await dashboardService.getEnrolledClasses(studentId, limit);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                classes: result.classes,
+                message: 'Enrolled classes retrieved successfully',
+                classes,
             });
         },
     });
@@ -159,12 +155,12 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
                 throw new BadRequestError('Invalid student ID');
             }
 
-            const result = await dashboardService.getPendingAssignments(studentId, limit);
+            const assignments = await dashboardService.getPendingAssignments(studentId, limit);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                assignments: result.assignments,
+                message: 'Pending assignments retrieved successfully',
+                assignments,
             });
         },
     });
@@ -185,12 +181,12 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
         handler: async (request, reply) => {
             const { studentId, classCode } = request.body;
 
-            const result = await dashboardService.joinClass(studentId, classCode);
+            const classData = await dashboardService.joinClass(studentId, classCode);
 
             return reply.send({
-                success: result.success,
-                message: result.message,
-                classInfo: result.classData,
+                success: true,
+                message: 'Successfully joined the class!',
+                classInfo: classData,
             });
         },
     });
@@ -211,11 +207,11 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
         handler: async (request, reply) => {
             const { studentId, classId } = request.body;
 
-            const result = await dashboardService.leaveClass(studentId, classId);
+            await dashboardService.leaveClass(studentId, classId);
 
             return reply.send({
-                success: result.success,
-                message: result.message,
+                success: true,
+                message: 'Successfully left the class.',
             });
         },
     });

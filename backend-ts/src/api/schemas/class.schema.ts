@@ -66,23 +66,23 @@ export type DeleteClassRequest = z.infer<typeof DeleteClassRequestSchema>;
 // Param & Query Schemas (for OpenAPI docs)
 // ============================================================================
 
-/** Class ID param schema */
+/** Class ID param schema (auto-coerces string to number) */
 export const ClassIdParamSchema = z.object({
-    classId: z.string(),
+    classId: z.coerce.number().int().positive(),
 });
 
 export type ClassIdParam = z.infer<typeof ClassIdParamSchema>;
 
-/** Teacher ID param schema */
+/** Teacher ID param schema (auto-coerces string to number) */
 export const TeacherIdParamSchema = z.object({
-    teacherId: z.string(),
+    teacherId: z.coerce.number().int().positive(),
 });
 
 export type TeacherIdParam = z.infer<typeof TeacherIdParamSchema>;
 
-/** Student ID param schema */
+/** Student ID param schema (auto-coerces string to number) */
 export const StudentIdParamSchema = z.object({
-    studentId: z.string(),
+    studentId: z.coerce.number().int().positive(),
 });
 
 export type StudentIdParam = z.infer<typeof StudentIdParamSchema>;
@@ -171,7 +171,7 @@ export type GetClassResponse = z.infer<typeof GetClassResponseSchema>;
 export const UpdateClassResponseSchema = z.object({
     success: z.literal(true),
     message: z.string(),
-    classInfo: ClassResponseSchema,
+    class: ClassResponseSchema,
 });
 
 export type UpdateClassResponse = z.infer<typeof UpdateClassResponseSchema>;

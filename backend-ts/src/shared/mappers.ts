@@ -39,6 +39,10 @@ export interface ClassDTO {
     className: string;
     classCode: string;
     description: string | null;
+    yearLevel: number;
+    semester: number;
+    academicYear: string;
+    schedule: any;
     createdAt: string;
     isActive: boolean;
     studentCount?: number;
@@ -56,6 +60,10 @@ export function toClassDTO(
         className: classData.className,
         classCode: classData.classCode,
         description: classData.description,
+        yearLevel: classData.yearLevel,
+        semester: classData.semester,
+        academicYear: classData.academicYear,
+        schedule: classData.schedule,
         createdAt: classData.createdAt?.toISOString() ?? new Date().toISOString(),
         isActive: classData.isActive ?? true,
         ...extras,

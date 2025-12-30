@@ -1,29 +1,37 @@
 import { v4 as uuidv4 } from 'uuid';
-import { ClassRepository, AssignmentRepository, EnrollmentRepository, UserRepository } from '../repositories/index.js';
-import type { Class, Assignment, ClassSchedule } from '../models/index.js';
+import { inject, injectable } from 'tsyringe';
+import { ClassRepository } from '../repositories/class.repository.js';
+import { AssignmentRepository } from '../repositories/assignment.repository.js';
+import { EnrollmentRepository } from '../repositories/enrollment.repository.js';
+import { UserRepository } from '../repositories/user.repository.js';
+import type { ClassSchedule } from '../models/index.js';
+import { toClassDTO, toAssignmentDTO, type ClassDTO, type AssignmentDTO } from '../shared/mappers.js';
+import {
+    ClassNotFoundError,
+    NotClassOwnerError,
+    AssignmentNotFoundError,
+    InvalidRoleError,
+    StudentNotInClassError,
+} from '../shared/errors.js';
 
 /**
  * Business logic for class-related operations.
+ * Uses domain errors for exceptional conditions.
  */
+@injectable()
 export class ClassService {
-    private classRepo: ClassRepository;
-    private assignmentRepo: AssignmentRepository;
-    private enrollmentRepo: EnrollmentRepository;
-    private userRepo: UserRepository;
-
-    constructor() {
-        this.classRepo = new ClassRepository();
-        this.assignmentRepo = new AssignmentRepository();
-        this.enrollmentRepo = new EnrollmentRepository();
-        this.userRepo = new UserRepository();
-    }
+    constructor(
+        @inject('ClassRepository') private classRepo: ClassRepository,
+        @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
+        @inject('EnrollmentRepository') private enrollmentRepo: EnrollmentRepository,
+        @inject('UserRepository') private userRepo: UserRepository
+    ) { }
 
     /** Generate a unique class code */
     async generateClassCode(): Promise<string> {
         let code: string;
         let exists = true;
 
-        // Generate until we find a unique code
         while (exists) {
             code = uuidv4().substring(0, 8).toUpperCase();
             exists = await this.classRepo.checkClassCodeExists(code);
@@ -42,133 +50,57 @@ export class ClassService {
         academicYear: string,
         schedule: ClassSchedule,
         description?: string
-    ): Promise<{ success: boolean; message: string; classData?: any }> {
-        try {
-            // Verify teacher exists
-            const teacher = await this.userRepo.getUserById(teacherId);
-            if (!teacher) {
-                return { success: false, message: 'Teacher not found' };
-            }
-
-            if (teacher.role !== 'teacher') {
-                return { success: false, message: 'User is not a teacher' };
-            }
-
-            // Create the class
-            const newClass = await this.classRepo.createClass({
-                teacherId,
-                className,
-                classCode,
-                yearLevel,
-                semester,
-                academicYear,
-                schedule,
-                description,
-            });
-
-            const studentCount = await this.classRepo.getStudentCount(newClass.id);
-
-            return {
-                success: true,
-                message: 'Class created successfully',
-                classData: {
-                    id: newClass.id,
-                    teacherId: newClass.teacherId,
-                    className: newClass.className,
-                    classCode: newClass.classCode,
-                    description: newClass.description,
-                    yearLevel: newClass.yearLevel,
-                    semester: newClass.semester,
-                    academicYear: newClass.academicYear,
-                    schedule: newClass.schedule,
-                    createdAt: newClass.createdAt?.toISOString(),
-                    isActive: newClass.isActive,
-                    studentCount,
-                },
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to create class' };
+    ): Promise<ClassDTO> {
+        // Verify teacher exists
+        const teacher = await this.userRepo.getUserById(teacherId);
+        if (!teacher) {
+            throw new InvalidRoleError('teacher');
         }
+
+        if (teacher.role !== 'teacher') {
+            throw new InvalidRoleError('teacher');
+        }
+
+        // Create the class
+        const newClass = await this.classRepo.createClass({
+            teacherId,
+            className,
+            classCode,
+            yearLevel,
+            semester,
+            academicYear,
+            schedule,
+            description,
+        });
+
+        const studentCount = await this.classRepo.getStudentCount(newClass.id);
+        return toClassDTO(newClass, { studentCount });
     }
 
     /** Get a class by ID */
-    async getClassById(
-        classId: number,
-        teacherId?: number
-    ): Promise<{ success: boolean; message: string; classData?: any }> {
-        try {
-            const classData = await this.classRepo.getClassById(classId);
+    async getClassById(classId: number, teacherId?: number): Promise<ClassDTO> {
+        const classData = await this.classRepo.getClassById(classId);
 
-            if (!classData) {
-                return { success: false, message: 'Class not found' };
-            }
-
-            // Optional authorization check
-            if (teacherId && classData.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized access to this class' };
-            }
-
-            const studentCount = await this.classRepo.getStudentCount(classId);
-
-            return {
-                success: true,
-                message: 'Class retrieved successfully',
-                classData: {
-                    id: classData.id,
-                    teacherId: classData.teacherId,
-                    className: classData.className,
-                    classCode: classData.classCode,
-                    description: classData.description,
-                    yearLevel: classData.yearLevel,
-                    semester: classData.semester,
-                    academicYear: classData.academicYear,
-                    schedule: classData.schedule,
-                    createdAt: classData.createdAt?.toISOString(),
-                    isActive: classData.isActive,
-                    studentCount,
-                },
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to retrieve class' };
+        if (!classData) {
+            throw new ClassNotFoundError(classId);
         }
+
+        // Optional authorization check
+        if (teacherId && classData.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
+
+        const studentCount = await this.classRepo.getStudentCount(classId);
+        return toClassDTO(classData, { studentCount });
     }
 
-    /** Get all classes for a teacher */
-    async getClassesByTeacher(
-        teacherId: number,
-        activeOnly: boolean = true
-    ): Promise<{ success: boolean; message: string; classes: any[] }> {
-        try {
-            const classes = await this.classRepo.getClassesByTeacher(teacherId, activeOnly);
-
-            const classesWithCounts = await Promise.all(
-                classes.map(async (c) => {
-                    const studentCount = await this.classRepo.getStudentCount(c.id);
-                    return {
-                        id: c.id,
-                        teacherId: c.teacherId,
-                        className: c.className,
-                        classCode: c.classCode,
-                        description: c.description,
-                        yearLevel: c.yearLevel,
-                        semester: c.semester,
-                        academicYear: c.academicYear,
-                        schedule: c.schedule,
-                        createdAt: c.createdAt?.toISOString(),
-                        isActive: c.isActive,
-                        studentCount,
-                    };
-                })
-            );
-
-            return {
-                success: true,
-                message: 'Classes retrieved successfully',
-                classes: classesWithCounts,
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to retrieve classes', classes: [] };
-        }
+    /**
+     * Get all classes for a teacher.
+     * Uses optimized single query to avoid N+1 problem.
+     */
+    async getClassesByTeacher(teacherId: number, activeOnly: boolean = true): Promise<ClassDTO[]> {
+        const classesWithCounts = await this.classRepo.getClassesWithStudentCounts(teacherId, activeOnly);
+        return classesWithCounts.map((c) => toClassDTO(c, { studentCount: c.studentCount }));
     }
 
     /** Update a class */
@@ -184,75 +116,40 @@ export class ClassService {
             academicYear?: string;
             schedule?: ClassSchedule;
         }
-    ): Promise<{ success: boolean; message: string; classData?: any }> {
-        try {
-            const existingClass = await this.classRepo.getClassById(classId);
+    ): Promise<ClassDTO> {
+        const existingClass = await this.classRepo.getClassById(classId);
 
-            if (!existingClass) {
-                return { success: false, message: 'Class not found' };
-            }
-
-            if (existingClass.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized to update this class' };
-            }
-
-            const updatedClass = await this.classRepo.updateClass(classId, data);
-
-            if (!updatedClass) {
-                return { success: false, message: 'Failed to update class' };
-            }
-
-            const studentCount = await this.classRepo.getStudentCount(classId);
-
-            return {
-                success: true,
-                message: 'Class updated successfully',
-                classData: {
-                    id: updatedClass.id,
-                    teacherId: updatedClass.teacherId,
-                    className: updatedClass.className,
-                    classCode: updatedClass.classCode,
-                    description: updatedClass.description,
-                    yearLevel: updatedClass.yearLevel,
-                    semester: updatedClass.semester,
-                    academicYear: updatedClass.academicYear,
-                    schedule: updatedClass.schedule,
-                    createdAt: updatedClass.createdAt?.toISOString(),
-                    isActive: updatedClass.isActive,
-                    studentCount,
-                },
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to update class' };
+        if (!existingClass) {
+            throw new ClassNotFoundError(classId);
         }
+
+        if (existingClass.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
+
+        const updatedClass = await this.classRepo.updateClass(classId, data);
+
+        if (!updatedClass) {
+            throw new ClassNotFoundError(classId);
+        }
+
+        const studentCount = await this.classRepo.getStudentCount(classId);
+        return toClassDTO(updatedClass, { studentCount });
     }
 
     /** Delete a class */
-    async deleteClass(
-        classId: number,
-        teacherId: number
-    ): Promise<{ success: boolean; message: string }> {
-        try {
-            const existingClass = await this.classRepo.getClassById(classId);
+    async deleteClass(classId: number, teacherId: number): Promise<void> {
+        const existingClass = await this.classRepo.getClassById(classId);
 
-            if (!existingClass) {
-                return { success: false, message: 'Class not found' };
-            }
-
-            if (existingClass.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized to delete this class' };
-            }
-
-            const deleted = await this.classRepo.deleteClass(classId);
-
-            if (!deleted) {
-                return { success: false, message: 'Failed to delete class' };
-            }
-
-            return { success: true, message: 'Class deleted successfully' };
-        } catch (error) {
-            return { success: false, message: 'Failed to delete class' };
+        if (!existingClass) {
+            throw new ClassNotFoundError(classId);
         }
+
+        if (existingClass.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
+
+        await this.classRepo.deleteClass(classId);
     }
 
     /** Create an assignment for a class */
@@ -266,159 +163,83 @@ export class ClassService {
             deadline: Date;
             allowResubmission?: boolean;
         }
-    ): Promise<{ success: boolean; message: string; assignment?: any }> {
-        try {
-            const classData = await this.classRepo.getClassById(classId);
+    ): Promise<AssignmentDTO> {
+        const classData = await this.classRepo.getClassById(classId);
 
-            if (!classData) {
-                return { success: false, message: 'Class not found' };
-            }
-
-            if (classData.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized to create assignment for this class' };
-            }
-
-            const assignment = await this.assignmentRepo.createAssignment({
-                classId,
-                assignmentName: data.assignmentName,
-                description: data.description,
-                programmingLanguage: data.programmingLanguage,
-                deadline: data.deadline,
-                allowResubmission: data.allowResubmission,
-            });
-
-            return {
-                success: true,
-                message: 'Assignment created successfully',
-                assignment: {
-                    id: assignment.id,
-                    classId: assignment.classId,
-                    assignmentName: assignment.assignmentName,
-                    description: assignment.description,
-                    programmingLanguage: assignment.programmingLanguage,
-                    deadline: assignment.deadline?.toISOString(),
-                    allowResubmission: assignment.allowResubmission,
-                    createdAt: assignment.createdAt?.toISOString(),
-                    isActive: assignment.isActive,
-                },
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to create assignment' };
+        if (!classData) {
+            throw new ClassNotFoundError(classId);
         }
+
+        if (classData.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
+
+        const assignment = await this.assignmentRepo.createAssignment({
+            classId,
+            assignmentName: data.assignmentName,
+            description: data.description,
+            programmingLanguage: data.programmingLanguage,
+            deadline: data.deadline,
+            allowResubmission: data.allowResubmission,
+        });
+
+        return toAssignmentDTO(assignment);
     }
 
     /** Get all assignments for a class */
-    async getClassAssignments(
-        classId: number
-    ): Promise<{ success: boolean; message: string; assignments: any[] }> {
-        try {
-            const assignments = await this.assignmentRepo.getAssignmentsByClassId(classId);
-
-            return {
-                success: true,
-                message: 'Assignments retrieved successfully',
-                assignments: assignments.map((a) => ({
-                    id: a.id,
-                    classId: a.classId,
-                    assignmentName: a.assignmentName,
-                    description: a.description,
-                    programmingLanguage: a.programmingLanguage,
-                    deadline: a.deadline?.toISOString(),
-                    allowResubmission: a.allowResubmission,
-                    createdAt: a.createdAt?.toISOString(),
-                    isActive: a.isActive,
-                })),
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to retrieve assignments', assignments: [] };
-        }
+    async getClassAssignments(classId: number): Promise<AssignmentDTO[]> {
+        const assignments = await this.assignmentRepo.getAssignmentsByClassId(classId);
+        return assignments.map((a) => toAssignmentDTO(a));
     }
 
     /** Get all students enrolled in a class */
-    async getClassStudents(
-        classId: number
-    ): Promise<{ success: boolean; message: string; students: any[] }> {
-        try {
-            const students = await this.classRepo.getEnrolledStudents(classId);
-
-            return {
-                success: true,
-                message: 'Students retrieved successfully',
-                students: students.map((s) => ({
-                    id: s.id,
-                    username: s.username,
-                    email: s.email,
-                    firstName: s.firstName,
-                    lastName: s.lastName,
-                })),
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to retrieve students', students: [] };
-        }
+    async getClassStudents(classId: number): Promise<Array<{
+        id: number;
+        username: string;
+        email: string;
+        firstName: string;
+        lastName: string;
+    }>> {
+        const students = await this.classRepo.getEnrolledStudents(classId);
+        return students.map((s) => ({
+            id: s.id,
+            username: s.username,
+            email: s.email,
+            firstName: s.firstName,
+            lastName: s.lastName,
+        }));
     }
 
     /** Remove a student from a class */
-    async removeStudent(
-        classId: number,
-        studentId: number,
-        teacherId: number
-    ): Promise<{ success: boolean; message: string }> {
-        try {
-            const classData = await this.classRepo.getClassById(classId);
+    async removeStudent(classId: number, studentId: number, teacherId: number): Promise<void> {
+        const classData = await this.classRepo.getClassById(classId);
 
-            if (!classData) {
-                return { success: false, message: 'Class not found' };
-            }
+        if (!classData) {
+            throw new ClassNotFoundError(classId);
+        }
 
-            if (classData.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized to remove students from this class' };
-            }
+        if (classData.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
 
-            const removed = await this.classRepo.removeStudent(classId, studentId);
+        const removed = await this.classRepo.removeStudent(classId, studentId);
 
-            if (!removed) {
-                return { success: false, message: 'Student not found in this class' };
-            }
-
-            return { success: true, message: 'Student removed successfully' };
-        } catch (error) {
-            return { success: false, message: 'Failed to remove student' };
+        if (!removed) {
+            throw new StudentNotInClassError();
         }
     }
 
     /** Get assignment details */
-    async getAssignmentDetails(
-        assignmentId: number,
-        userId: number
-    ): Promise<{ success: boolean; message: string; assignment?: any }> {
-        try {
-            const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
+    async getAssignmentDetails(assignmentId: number, userId: number): Promise<AssignmentDTO> {
+        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
 
-            if (!assignment) {
-                return { success: false, message: 'Assignment not found' };
-            }
-
-            const classData = await this.classRepo.getClassById(assignment.classId);
-
-            return {
-                success: true,
-                message: 'Assignment retrieved successfully',
-                assignment: {
-                    id: assignment.id,
-                    classId: assignment.classId,
-                    assignmentName: assignment.assignmentName,
-                    description: assignment.description,
-                    programmingLanguage: assignment.programmingLanguage,
-                    deadline: assignment.deadline?.toISOString(),
-                    allowResubmission: assignment.allowResubmission,
-                    createdAt: assignment.createdAt?.toISOString(),
-                    isActive: assignment.isActive,
-                    className: classData?.className,
-                },
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to retrieve assignment' };
+        if (!assignment) {
+            throw new AssignmentNotFoundError(assignmentId);
         }
+
+        const classData = await this.classRepo.getClassById(assignment.classId);
+
+        return toAssignmentDTO(assignment, { className: classData?.className });
     }
 
     /** Update an assignment */
@@ -432,73 +253,42 @@ export class ClassService {
             deadline?: Date;
             allowResubmission?: boolean;
         }
-    ): Promise<{ success: boolean; message: string; assignment?: any }> {
-        try {
-            const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
+    ): Promise<AssignmentDTO> {
+        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
 
-            if (!assignment) {
-                return { success: false, message: 'Assignment not found' };
-            }
-
-            const classData = await this.classRepo.getClassById(assignment.classId);
-
-            if (!classData || classData.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized to update this assignment' };
-            }
-
-            const updatedAssignment = await this.assignmentRepo.updateAssignment(assignmentId, data);
-
-            if (!updatedAssignment) {
-                return { success: false, message: 'Failed to update assignment' };
-            }
-
-            return {
-                success: true,
-                message: 'Assignment updated successfully',
-                assignment: {
-                    id: updatedAssignment.id,
-                    classId: updatedAssignment.classId,
-                    assignmentName: updatedAssignment.assignmentName,
-                    description: updatedAssignment.description,
-                    programmingLanguage: updatedAssignment.programmingLanguage,
-                    deadline: updatedAssignment.deadline?.toISOString(),
-                    allowResubmission: updatedAssignment.allowResubmission,
-                    createdAt: updatedAssignment.createdAt?.toISOString(),
-                    isActive: updatedAssignment.isActive,
-                },
-            };
-        } catch (error) {
-            return { success: false, message: 'Failed to update assignment' };
+        if (!assignment) {
+            throw new AssignmentNotFoundError(assignmentId);
         }
+
+        const classData = await this.classRepo.getClassById(assignment.classId);
+
+        if (!classData || classData.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
+
+        const updatedAssignment = await this.assignmentRepo.updateAssignment(assignmentId, data);
+
+        if (!updatedAssignment) {
+            throw new AssignmentNotFoundError(assignmentId);
+        }
+
+        return toAssignmentDTO(updatedAssignment);
     }
 
     /** Delete an assignment */
-    async deleteAssignment(
-        assignmentId: number,
-        teacherId: number
-    ): Promise<{ success: boolean; message: string }> {
-        try {
-            const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
+    async deleteAssignment(assignmentId: number, teacherId: number): Promise<void> {
+        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
 
-            if (!assignment) {
-                return { success: false, message: 'Assignment not found' };
-            }
-
-            const classData = await this.classRepo.getClassById(assignment.classId);
-
-            if (!classData || classData.teacherId !== teacherId) {
-                return { success: false, message: 'Unauthorized to delete this assignment' };
-            }
-
-            const deleted = await this.assignmentRepo.deleteAssignment(assignmentId);
-
-            if (!deleted) {
-                return { success: false, message: 'Failed to delete assignment' };
-            }
-
-            return { success: true, message: 'Assignment deleted successfully' };
-        } catch (error) {
-            return { success: false, message: 'Failed to delete assignment' };
+        if (!assignment) {
+            throw new AssignmentNotFoundError(assignmentId);
         }
+
+        const classData = await this.classRepo.getClassById(assignment.classId);
+
+        if (!classData || classData.teacherId !== teacherId) {
+            throw new NotClassOwnerError();
+        }
+
+        await this.assignmentRepo.deleteAssignment(assignmentId);
     }
 }

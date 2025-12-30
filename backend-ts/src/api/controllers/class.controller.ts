@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { container } from 'tsyringe';
 import { ClassService } from '../../services/class.service.js';
 import {
     CreateClassRequestSchema,
@@ -27,9 +28,7 @@ import {
     AssignmentResponseSchema,
     type CreateAssignmentRequest
 } from '../schemas/assignment.schema.js';
-import { BadRequestError, NotFoundError, ForbiddenError } from '../middlewares/error-handler.js';
-
-const classService = new ClassService();
+import { BadRequestError } from '../middlewares/error-handler.js';
 
 // Helper to convert Zod schema to JSON Schema for Swagger
 const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
@@ -55,6 +54,7 @@ const ClassStudentParamsSchema = z.object({
 
 /** Class routes - /api/v1/classes/* */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
+    const classService = container.resolve<ClassService>('ClassService');
 
     /**
      * POST /
@@ -71,7 +71,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         },
         handler: async (request, reply) => {
             const { teacherId, className, classCode, yearLevel, semester, academicYear, schedule, description } = request.body;
-            const result = await classService.createClass(
+            const classData = await classService.createClass(
                 teacherId,
                 className,
                 classCode,
@@ -82,14 +82,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 description
             );
 
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
-
             return reply.status(201).send({
                 success: true,
-                message: result.message,
-                class: result.classData,
+                message: 'Class created successfully',
+                class: classData,
             });
         },
     });
@@ -139,12 +135,12 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid teacher ID');
             }
 
-            const result = await classService.getClassesByTeacher(teacherId, activeOnly);
+            const classes = await classService.getClassesByTeacher(teacherId, activeOnly);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                classes: result.classes,
+                message: 'Classes retrieved successfully',
+                classes,
             });
         },
     });
@@ -171,22 +167,12 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid class ID');
             }
 
-            const result = await classService.getClassById(classId, teacherId);
-
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            const classData = await classService.getClassById(classId, teacherId);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                class: result.classData,
+                message: 'Class retrieved successfully',
+                class: classData,
             });
         },
     });
@@ -214,7 +200,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
 
             const { teacherId, className, description, isActive, yearLevel, semester, academicYear, schedule } = request.body;
 
-            const result = await classService.updateClass(classId, teacherId, {
+            const classData = await classService.updateClass(classId, teacherId, {
                 className,
                 description,
                 isActive,
@@ -224,20 +210,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 schedule,
             });
 
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
-
             return reply.send({
                 success: true,
-                message: result.message,
-                classInfo: result.classData,
+                message: 'Class updated successfully',
+                class: classData,
             });
         },
     });
@@ -264,21 +240,11 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
             }
 
             const { teacherId } = request.body;
-            const result = await classService.deleteClass(classId, teacherId);
-
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            await classService.deleteClass(classId, teacherId);
 
             return reply.send({
                 success: true,
-                message: result.message,
+                message: 'Class deleted successfully',
             });
         },
     });
@@ -306,7 +272,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
 
             const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission } = request.body;
 
-            const result = await classService.createAssignment(classId, teacherId, {
+            const assignment = await classService.createAssignment(classId, teacherId, {
                 assignmentName,
                 description,
                 programmingLanguage,
@@ -314,20 +280,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 allowResubmission,
             });
 
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
-
             return reply.status(201).send({
                 success: true,
-                message: result.message,
-                assignment: result.assignment,
+                message: 'Assignment created successfully',
+                assignment,
             });
         },
     });
@@ -352,12 +308,12 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid class ID');
             }
 
-            const result = await classService.getClassAssignments(classId);
+            const assignments = await classService.getClassAssignments(classId);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                assignments: result.assignments,
+                message: 'Assignments retrieved successfully',
+                assignments,
             });
         },
     });
@@ -382,12 +338,12 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid class ID');
             }
 
-            const result = await classService.getClassStudents(classId);
+            const students = await classService.getClassStudents(classId);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                students: result.students,
+                message: 'Students retrieved successfully',
+                students,
             });
         },
     });
@@ -415,21 +371,11 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid ID parameters');
             }
 
-            const result = await classService.removeStudent(classId, studentId, teacherId);
-
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            await classService.removeStudent(classId, studentId, teacherId);
 
             return reply.send({
                 success: true,
-                message: result.message,
+                message: 'Student removed successfully',
             });
         },
     });

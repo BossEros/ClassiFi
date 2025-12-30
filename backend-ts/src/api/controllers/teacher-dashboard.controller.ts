@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
+import { container } from 'tsyringe';
 import { TeacherDashboardService } from '../../services/teacher-dashboard.service.js';
 import {
     TeacherDashboardResponseSchema,
@@ -8,8 +9,6 @@ import {
     DashboardTaskResponseSchema,
 } from '../schemas/dashboard.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
-
-const dashboardService = new TeacherDashboardService();
 
 // Helper to convert Zod schema to JSON Schema for Swagger
 const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
@@ -44,6 +43,7 @@ const TaskListResponseSchema = z.object({
 
 /** Teacher dashboard routes - /api/v1/teacher/dashboard/* */
 export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void> {
+    const dashboardService = container.resolve<TeacherDashboardService>('TeacherDashboardService');
 
     /**
      * GET /:teacherId
@@ -71,21 +71,17 @@ export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void
                 throw new BadRequestError('Invalid teacher ID');
             }
 
-            const result = await dashboardService.getDashboardData(
+            const data = await dashboardService.getDashboardData(
                 teacherId,
                 recentClassesLimit,
                 pendingTasksLimit
             );
 
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
-
             return reply.send({
                 success: true,
-                message: result.message,
-                recentClasses: result.data.recentClasses,
-                pendingTasks: result.data.pendingTasks,
+                message: 'Dashboard data retrieved successfully',
+                recentClasses: data.recentClasses,
+                pendingTasks: data.pendingTasks,
             });
         },
     });
@@ -112,12 +108,12 @@ export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void
                 throw new BadRequestError('Invalid teacher ID');
             }
 
-            const result = await dashboardService.getRecentClasses(teacherId, limit);
+            const classes = await dashboardService.getRecentClasses(teacherId, limit);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                classes: result.classes,
+                message: 'Recent classes retrieved successfully',
+                classes,
             });
         },
     });
@@ -144,12 +140,12 @@ export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void
                 throw new BadRequestError('Invalid teacher ID');
             }
 
-            const result = await dashboardService.getPendingTasks(teacherId, limit);
+            const tasks = await dashboardService.getPendingTasks(teacherId, limit);
 
             return reply.send({
                 success: true,
-                message: result.message,
-                tasks: result.tasks,
+                message: 'Pending tasks retrieved successfully',
+                tasks,
             });
         },
     });

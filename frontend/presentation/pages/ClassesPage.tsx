@@ -5,7 +5,6 @@ import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
-// import { CreateClassModal } from '@/presentation/components/forms/CreateClassModal'
 import { getCurrentUser } from '@/business/services/authService'
 import { getAllClasses } from '@/business/services/classService'
 import { useToast } from '@/shared/context/ToastContext'
