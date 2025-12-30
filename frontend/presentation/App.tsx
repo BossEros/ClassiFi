@@ -15,6 +15,7 @@ import { AssignmentSubmissionsPage } from './pages/AssignmentSubmissionsPage'
 import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { ClassFormPage } from './pages/ClassFormPage'
+import { CourseworkFormPage } from './pages/CourseworkFormPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
 import { getCurrentUser } from '@/business/services/authService'
@@ -137,6 +138,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ClassFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/:classId/coursework/new"
+            element={
+              <ProtectedRoute>
+                <CourseworkFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/:classId/coursework/:assignmentId/edit"
+            element={
+              <ProtectedRoute>
+                <CourseworkFormPage />
               </ProtectedRoute>
             }
           />

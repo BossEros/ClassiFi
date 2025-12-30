@@ -4,7 +4,7 @@ import { assignments, type Assignment, type NewAssignment } from '@/models/index
 import { BaseRepository } from '@/repositories/base.repository.js';
 import { injectable } from 'tsyringe';
 /** Programming language type */
-export type ProgrammingLanguage = 'python' | 'java';
+export type ProgrammingLanguage = 'python' | 'java' | 'c';
 
 /**
  * Repository for assignment-related database operations.
@@ -48,6 +48,7 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
         programmingLanguage: ProgrammingLanguage;
         deadline: Date;
         allowResubmission?: boolean;
+        maxAttempts?: number | null;
     }): Promise<Assignment> {
         const results = await this.db
             .insert(assignments)
@@ -58,6 +59,7 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
                 programmingLanguage: data.programmingLanguage,
                 deadline: data.deadline,
                 allowResubmission: data.allowResubmission ?? true,
+                maxAttempts: data.maxAttempts ?? null,
                 isActive: true,
             })
             .returning();
@@ -68,7 +70,7 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
     /** Update an assignment */
     async updateAssignment(
         assignmentId: number,
-        data: Partial<Pick<NewAssignment, 'assignmentName' | 'description' | 'programmingLanguage' | 'deadline' | 'allowResubmission' | 'isActive'>>
+        data: Partial<Pick<NewAssignment, 'assignmentName' | 'description' | 'programmingLanguage' | 'deadline' | 'allowResubmission' | 'maxAttempts' | 'isActive'>>
     ): Promise<Assignment | undefined> {
         const updateData = Object.fromEntries(
             Object.entries(data).filter(([_, v]) => v !== undefined)

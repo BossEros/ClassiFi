@@ -200,4 +200,13 @@ export declare const ErrorResponseSchema: z.ZodObject<{
     error?: string | undefined;
 }>;
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+/** Verify token query schema */
+export declare const VerifyQuerySchema: z.ZodObject<{
+    token: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    token: string;
+}, {
+    token: string;
+}>;
+export type VerifyQuery = z.infer<typeof VerifyQuerySchema>;
 //# sourceMappingURL=auth.schema.d.ts.map

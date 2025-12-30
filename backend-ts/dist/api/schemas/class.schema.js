@@ -19,7 +19,7 @@ export const ScheduleSchema = z.object({
 // ============================================================================
 /** Create class request schema */
 export const CreateClassRequestSchema = z.object({
-    teacherId: z.number().int().positive(),
+    teacherId: z.number().int().min(1),
     className: z.string().min(1).max(100),
     description: z.string().max(1000).optional(),
     classCode: z.string().length(8),
@@ -30,7 +30,7 @@ export const CreateClassRequestSchema = z.object({
 });
 /** Update class request schema */
 export const UpdateClassRequestSchema = z.object({
-    teacherId: z.number().int().positive(),
+    teacherId: z.number().int().min(1),
     className: z.string().min(1).max(100).optional(),
     description: z.string().max(1000).optional().nullable(),
     isActive: z.boolean().optional(),
@@ -41,22 +41,22 @@ export const UpdateClassRequestSchema = z.object({
 });
 /** Delete class request schema */
 export const DeleteClassRequestSchema = z.object({
-    teacherId: z.number().int().positive(),
+    teacherId: z.number().int().min(1),
 });
 // ============================================================================
 // Param & Query Schemas (for OpenAPI docs)
 // ============================================================================
-/** Class ID param schema */
+/** Class ID param schema (auto-coerces string to number) */
 export const ClassIdParamSchema = z.object({
-    classId: z.string(),
+    classId: z.coerce.number().int().min(1),
 });
-/** Teacher ID param schema */
+/** Teacher ID param schema (auto-coerces string to number) */
 export const TeacherIdParamSchema = z.object({
-    teacherId: z.string(),
+    teacherId: z.coerce.number().int().min(1),
 });
-/** Student ID param schema */
+/** Student ID param schema (auto-coerces string to number) */
 export const StudentIdParamSchema = z.object({
-    studentId: z.string(),
+    studentId: z.coerce.number().int().min(1),
 });
 /** Get classes query schema */
 export const GetClassesQuerySchema = z.object({
@@ -117,7 +117,7 @@ export const GetClassResponseSchema = z.object({
 export const UpdateClassResponseSchema = z.object({
     success: z.literal(true),
     message: z.string(),
-    classInfo: ClassResponseSchema,
+    class: ClassResponseSchema,
 });
 /** Class list response schema */
 export const ClassListResponseSchema = z.object({
@@ -136,5 +136,10 @@ export const ClassStudentsResponseSchema = z.object({
     success: z.literal(true),
     message: z.string(),
     students: z.array(StudentResponseSchema),
+});
+/** Combined params for student removal (classId + studentId) */
+export const ClassStudentParamsSchema = z.object({
+    classId: z.string(),
+    studentId: z.string(),
 });
 //# sourceMappingURL=class.schema.js.map

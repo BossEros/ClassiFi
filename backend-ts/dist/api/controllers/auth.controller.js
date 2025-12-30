@@ -1,18 +1,8 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
-import { RegisterRequestSchemaForDocs, LoginRequestSchema, ForgotPasswordRequestSchema, AuthResponseSchema, } from '../schemas/auth.schema.js';
+import { toJsonSchema } from '../utils/swagger.js';
+import { SuccessMessageSchema } from '../schemas/common.schema.js';
+import { RegisterRequestSchemaForDocs, LoginRequestSchema, ForgotPasswordRequestSchema, AuthResponseSchema, VerifyQuerySchema, } from '../schemas/auth.schema.js';
 import { ApiError } from '../middlewares/error-handler.js';
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema) => zodToJsonSchema(schema, { target: 'openApi3' });
-// Shared response schemas
-const SuccessMessageSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-});
-const VerifyQuerySchema = z.object({
-    token: z.string(),
-});
 /** Auth routes - /api/v1/auth/* */
 export async function authRoutes(app) {
     const authService = container.resolve('AuthService');

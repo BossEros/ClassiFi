@@ -1,45 +1,16 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
 import { TeacherDashboardService } from '../../services/teacher-dashboard.service.js';
+import { toJsonSchema } from '../utils/swagger.js';
+import { LimitQuerySchema } from '../schemas/common.schema.js';
+import { TeacherIdParamSchema } from '../schemas/class.schema.js';
 import {
     TeacherDashboardResponseSchema,
-    DashboardClassResponseSchema,
-    DashboardTaskResponseSchema,
+    TeacherDashboardQuerySchema,
+    DashboardClassListResponseSchema,
+    TaskListResponseSchema,
 } from '../schemas/dashboard.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
-
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
-
-// Param schemas
-const TeacherIdParamSchema = z.object({
-    teacherId: z.string(),
-});
-
-// Query schemas
-const DashboardQuerySchema = z.object({
-    recentClassesLimit: z.string().optional(),
-    pendingTasksLimit: z.string().optional(),
-});
-
-const LimitQuerySchema = z.object({
-    limit: z.string().optional(),
-});
-
-// Response schemas
-const ClassListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    classes: z.array(DashboardClassResponseSchema),
-});
-
-const TaskListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    tasks: z.array(DashboardTaskResponseSchema),
-});
 
 /** Teacher dashboard routes - /api/v1/teacher/dashboard/* */
 export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void> {
@@ -57,7 +28,7 @@ export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void
             tags: ['Teacher Dashboard'],
             summary: 'Get complete dashboard data for a teacher',
             params: toJsonSchema(TeacherIdParamSchema),
-            querystring: toJsonSchema(DashboardQuerySchema),
+            querystring: toJsonSchema(TeacherDashboardQuerySchema),
             response: {
                 200: toJsonSchema(TeacherDashboardResponseSchema),
             },
@@ -97,7 +68,7 @@ export async function teacherDashboardRoutes(app: FastifyInstance): Promise<void
             params: toJsonSchema(TeacherIdParamSchema),
             querystring: toJsonSchema(LimitQuerySchema),
             response: {
-                200: toJsonSchema(ClassListResponseSchema),
+                200: toJsonSchema(DashboardClassListResponseSchema),
             },
         },
         handler: async (request, reply) => {

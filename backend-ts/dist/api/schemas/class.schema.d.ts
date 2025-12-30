@@ -126,31 +126,31 @@ export declare const DeleteClassRequestSchema: z.ZodObject<{
     teacherId: number;
 }>;
 export type DeleteClassRequest = z.infer<typeof DeleteClassRequestSchema>;
-/** Class ID param schema */
+/** Class ID param schema (auto-coerces string to number) */
 export declare const ClassIdParamSchema: z.ZodObject<{
-    classId: z.ZodString;
+    classId: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    classId: string;
+    classId: number;
 }, {
-    classId: string;
+    classId: number;
 }>;
 export type ClassIdParam = z.infer<typeof ClassIdParamSchema>;
-/** Teacher ID param schema */
+/** Teacher ID param schema (auto-coerces string to number) */
 export declare const TeacherIdParamSchema: z.ZodObject<{
-    teacherId: z.ZodString;
+    teacherId: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    teacherId: string;
+    teacherId: number;
 }, {
-    teacherId: string;
+    teacherId: number;
 }>;
 export type TeacherIdParam = z.infer<typeof TeacherIdParamSchema>;
-/** Student ID param schema */
+/** Student ID param schema (auto-coerces string to number) */
 export declare const StudentIdParamSchema: z.ZodObject<{
-    studentId: z.ZodString;
+    studentId: z.ZodNumber;
 }, "strip", z.ZodTypeAny, {
-    studentId: string;
+    studentId: number;
 }, {
-    studentId: string;
+    studentId: number;
 }>;
 export type StudentIdParam = z.infer<typeof StudentIdParamSchema>;
 /** Get classes query schema */
@@ -495,7 +495,7 @@ export type GetClassResponse = z.infer<typeof GetClassResponseSchema>;
 export declare const UpdateClassResponseSchema: z.ZodObject<{
     success: z.ZodLiteral<true>;
     message: z.ZodString;
-    classInfo: z.ZodObject<{
+    class: z.ZodObject<{
         id: z.ZodNumber;
         teacherId: z.ZodNumber;
         className: z.ZodString;
@@ -558,7 +558,7 @@ export declare const UpdateClassResponseSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     message: string;
     success: true;
-    classInfo: {
+    class: {
         id: number;
         createdAt: string;
         teacherId: number;
@@ -579,7 +579,7 @@ export declare const UpdateClassResponseSchema: z.ZodObject<{
 }, {
     message: string;
     success: true;
-    classInfo: {
+    class: {
         id: number;
         createdAt: string;
         teacherId: number;
@@ -767,4 +767,16 @@ export declare const ClassStudentsResponseSchema: z.ZodObject<{
     }[];
 }>;
 export type ClassStudentsResponse = z.infer<typeof ClassStudentsResponseSchema>;
+/** Combined params for student removal (classId + studentId) */
+export declare const ClassStudentParamsSchema: z.ZodObject<{
+    classId: z.ZodString;
+    studentId: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    classId: string;
+    studentId: string;
+}, {
+    classId: string;
+    studentId: string;
+}>;
+export type ClassStudentParams = z.infer<typeof ClassStudentParamsSchema>;
 //# sourceMappingURL=class.schema.d.ts.map

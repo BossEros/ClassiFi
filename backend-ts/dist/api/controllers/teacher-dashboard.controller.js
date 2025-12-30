@@ -1,36 +1,12 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { TeacherDashboardService } from '../../services/teacher-dashboard.service.js';
-import { TeacherDashboardResponseSchema, DashboardClassResponseSchema, DashboardTaskResponseSchema, } from '../schemas/dashboard.schema.js';
+import { container } from 'tsyringe';
+import { toJsonSchema } from '../utils/swagger.js';
+import { LimitQuerySchema } from '../schemas/common.schema.js';
+import { TeacherIdParamSchema } from '../schemas/class.schema.js';
+import { TeacherDashboardResponseSchema, TeacherDashboardQuerySchema, DashboardClassListResponseSchema, TaskListResponseSchema, } from '../schemas/dashboard.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
-const dashboardService = new TeacherDashboardService();
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema) => zodToJsonSchema(schema, { target: 'openApi3' });
-// Param schemas
-const TeacherIdParamSchema = z.object({
-    teacherId: z.string(),
-});
-// Query schemas
-const DashboardQuerySchema = z.object({
-    recentClassesLimit: z.string().optional(),
-    pendingTasksLimit: z.string().optional(),
-});
-const LimitQuerySchema = z.object({
-    limit: z.string().optional(),
-});
-// Response schemas
-const ClassListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    classes: z.array(DashboardClassResponseSchema),
-});
-const TaskListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    tasks: z.array(DashboardTaskResponseSchema),
-});
 /** Teacher dashboard routes - /api/v1/teacher/dashboard/* */
 export async function teacherDashboardRoutes(app) {
+    const dashboardService = container.resolve('TeacherDashboardService');
     /**
      * GET /:teacherId
      * Get complete dashboard data for a teacher
@@ -40,7 +16,7 @@ export async function teacherDashboardRoutes(app) {
             tags: ['Teacher Dashboard'],
             summary: 'Get complete dashboard data for a teacher',
             params: toJsonSchema(TeacherIdParamSchema),
-            querystring: toJsonSchema(DashboardQuerySchema),
+            querystring: toJsonSchema(TeacherDashboardQuerySchema),
             response: {
                 200: toJsonSchema(TeacherDashboardResponseSchema),
             },
@@ -52,15 +28,12 @@ export async function teacherDashboardRoutes(app) {
             if (isNaN(teacherId)) {
                 throw new BadRequestError('Invalid teacher ID');
             }
-            const result = await dashboardService.getDashboardData(teacherId, recentClassesLimit, pendingTasksLimit);
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
+            const data = await dashboardService.getDashboardData(teacherId, recentClassesLimit, pendingTasksLimit);
             return reply.send({
                 success: true,
-                message: result.message,
-                recentClasses: result.data.recentClasses,
-                pendingTasks: result.data.pendingTasks,
+                message: 'Dashboard data retrieved successfully',
+                recentClasses: data.recentClasses,
+                pendingTasks: data.pendingTasks,
             });
         },
     });
@@ -75,7 +48,7 @@ export async function teacherDashboardRoutes(app) {
             params: toJsonSchema(TeacherIdParamSchema),
             querystring: toJsonSchema(LimitQuerySchema),
             response: {
-                200: toJsonSchema(ClassListResponseSchema),
+                200: toJsonSchema(DashboardClassListResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -84,11 +57,11 @@ export async function teacherDashboardRoutes(app) {
             if (isNaN(teacherId)) {
                 throw new BadRequestError('Invalid teacher ID');
             }
-            const result = await dashboardService.getRecentClasses(teacherId, limit);
+            const classes = await dashboardService.getRecentClasses(teacherId, limit);
             return reply.send({
                 success: true,
-                message: result.message,
-                classes: result.classes,
+                message: 'Recent classes retrieved successfully',
+                classes,
             });
         },
     });
@@ -112,11 +85,11 @@ export async function teacherDashboardRoutes(app) {
             if (isNaN(teacherId)) {
                 throw new BadRequestError('Invalid teacher ID');
             }
-            const result = await dashboardService.getPendingTasks(teacherId, limit);
+            const tasks = await dashboardService.getPendingTasks(teacherId, limit);
             return reply.send({
                 success: true,
-                message: result.message,
-                tasks: result.tasks,
+                message: 'Pending tasks retrieved successfully',
+                tasks,
             });
         },
     });

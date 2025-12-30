@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1'
 
 export interface ApiRequestConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
@@ -10,6 +10,14 @@ export interface ApiResponse<T> {
   data?: T
   error?: string
   status: number
+}
+
+/**
+ * Gets the auth token from localStorage
+ * This is where the authService stores the token after login
+ */
+function getAuthToken(): string | null {
+  return localStorage.getItem('authToken')
 }
 
 /**
@@ -33,8 +41,12 @@ class ApiClient {
 
     const url = `${this.baseURL}${endpoint}`
 
+    // Get auth token and build headers
+    // Only include Content-Type for requests with a body
+    const authToken = getAuthToken()
     const requestHeaders: HeadersInit = {
-      'Content-Type': 'application/json',
+      ...(body && { 'Content-Type': 'application/json' }),
+      ...(authToken && { Authorization: `Bearer ${authToken}` }),
       ...headers
     }
 

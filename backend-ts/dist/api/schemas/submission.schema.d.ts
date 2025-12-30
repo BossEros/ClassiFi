@@ -330,4 +330,40 @@ export declare const SubmissionDetailResponseSchema: z.ZodObject<{
     studentUsername?: string | undefined;
 }>;
 export type SubmissionDetailResponse = z.infer<typeof SubmissionDetailResponseSchema>;
+/** Submission ID param schema */
+export declare const SubmissionIdParamSchema: z.ZodObject<{
+    submissionId: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    submissionId: string;
+}, {
+    submissionId: string;
+}>;
+export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>;
+/** History params schema (assignmentId + studentId) */
+export declare const HistoryParamsSchema: z.ZodObject<{
+    assignmentId: z.ZodString;
+    studentId: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    assignmentId: string;
+    studentId: string;
+}, {
+    assignmentId: string;
+    studentId: string;
+}>;
+export type HistoryParams = z.infer<typeof HistoryParamsSchema>;
+/** Download response schema */
+export declare const DownloadResponseSchema: z.ZodObject<{
+    success: z.ZodLiteral<true>;
+    message: z.ZodString;
+    downloadUrl: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    message: string;
+    success: true;
+    downloadUrl: string;
+}, {
+    message: string;
+    success: true;
+    downloadUrl: string;
+}>;
+export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;
 //# sourceMappingURL=submission.schema.d.ts.map

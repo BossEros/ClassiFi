@@ -1,60 +1,21 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
 import { StudentDashboardService } from '@/services/student-dashboard.service.js';
+import { toJsonSchema } from '@/api/utils/swagger.js';
+import { SuccessMessageSchema, LimitQuerySchema } from '@/api/schemas/common.schema.js';
+import { StudentIdParamSchema } from '@/api/schemas/class.schema.js';
 import {
     JoinClassRequestSchema,
     LeaveClassRequestSchema,
     StudentDashboardResponseSchema,
-    DashboardClassResponseSchema,
-    DashboardAssignmentResponseSchema,
+    StudentDashboardQuerySchema,
+    DashboardClassListResponseSchema,
+    DashboardAssignmentListResponseSchema,
+    JoinClassResponseSchema,
     type JoinClassRequest,
     type LeaveClassRequest
 } from '@/api/schemas/dashboard.schema.js';
 import { BadRequestError } from '@/api/middlewares/error-handler.js';
-
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
-
-// Param schemas
-const StudentIdParamSchema = z.object({
-    studentId: z.string(),
-});
-
-// Query schemas
-const DashboardQuerySchema = z.object({
-    enrolledClassesLimit: z.string().optional(),
-    pendingAssignmentsLimit: z.string().optional(),
-});
-
-const LimitQuerySchema = z.object({
-    limit: z.string().optional(),
-});
-
-// Response schemas
-const ClassListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    classes: z.array(DashboardClassResponseSchema),
-});
-
-const AssignmentListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignments: z.array(DashboardAssignmentResponseSchema),
-});
-
-const JoinClassResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    classInfo: DashboardClassResponseSchema,
-});
-
-const SuccessMessageSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-});
 
 /** Student dashboard routes - /api/v1/student/dashboard/* */
 export async function studentDashboardRoutes(app: FastifyInstance): Promise<void> {
@@ -72,7 +33,7 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
             tags: ['Student Dashboard'],
             summary: 'Get complete dashboard data for a student',
             params: toJsonSchema(StudentIdParamSchema),
-            querystring: toJsonSchema(DashboardQuerySchema),
+            querystring: toJsonSchema(StudentDashboardQuerySchema),
             response: {
                 200: toJsonSchema(StudentDashboardResponseSchema),
             },
@@ -112,7 +73,7 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
             params: toJsonSchema(StudentIdParamSchema),
             querystring: toJsonSchema(LimitQuerySchema),
             response: {
-                200: toJsonSchema(ClassListResponseSchema),
+                200: toJsonSchema(DashboardClassListResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -144,7 +105,7 @@ export async function studentDashboardRoutes(app: FastifyInstance): Promise<void
             params: toJsonSchema(StudentIdParamSchema),
             querystring: toJsonSchema(LimitQuerySchema),
             response: {
-                200: toJsonSchema(AssignmentListResponseSchema),
+                200: toJsonSchema(DashboardAssignmentListResponseSchema),
             },
         },
         handler: async (request, reply) => {

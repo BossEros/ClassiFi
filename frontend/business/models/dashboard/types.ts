@@ -34,6 +34,7 @@ export interface Task {
   programmingLanguage: string
   deadline: Date | string
   allowResubmission: boolean
+  maxAttempts?: number | null
   isActive?: boolean
   createdAt?: Date | string
   submissionCount?: number

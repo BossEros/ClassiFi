@@ -52,18 +52,20 @@ export interface CreateAssignmentRequest {
     teacherId: number
     assignmentName: string
     description: string
-    programmingLanguage: 'python' | 'java'
+    programmingLanguage: 'python' | 'java' | 'c'
     deadline: Date | string
     allowResubmission: boolean
+    maxAttempts?: number | null
 }
 
 export interface UpdateAssignmentRequest {
     teacherId: number
     assignmentName?: string
     description?: string
-    programmingLanguage?: 'python' | 'java'
+    programmingLanguage?: 'python' | 'java' | 'c'
     deadline?: string
     allowResubmission?: boolean
+    maxAttempts?: number | null
 }
 
 // ============================================================================

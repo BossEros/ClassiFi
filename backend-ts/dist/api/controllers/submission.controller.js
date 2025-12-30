@@ -1,40 +1,13 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { SubmissionService } from '../../services/submission.service.js';
-import { SubmitAssignmentResponseSchema, SubmissionListResponseSchema, SubmissionHistoryResponseSchema, } from '../schemas/submission.schema.js';
-import { BadRequestError, NotFoundError } from '../middlewares/error-handler.js';
-const submissionService = new SubmissionService();
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema) => zodToJsonSchema(schema, { target: 'openApi3' });
-// Param schemas
-const SubmissionIdParamSchema = z.object({
-    submissionId: z.string(),
-});
-const AssignmentIdParamSchema = z.object({
-    assignmentId: z.string(),
-});
-const StudentIdParamSchema = z.object({
-    studentId: z.string(),
-});
-const HistoryParamsSchema = z.object({
-    assignmentId: z.string(),
-    studentId: z.string(),
-});
-// Query schemas
-const LatestOnlyQuerySchema = z.object({
-    latestOnly: z.string().optional(),
-});
-const StudentIdQuerySchema = z.object({
-    studentId: z.string(),
-});
-// Response schemas
-const DownloadResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    downloadUrl: z.string(),
-});
+import { container } from 'tsyringe';
+import { toJsonSchema } from '../utils/swagger.js';
+import { LatestOnlyQuerySchema, StudentIdQuerySchema } from '../schemas/common.schema.js';
+import { AssignmentIdParamSchema } from '../schemas/assignment.schema.js';
+import { StudentIdParamSchema } from '../schemas/class.schema.js';
+import { SubmitAssignmentResponseSchema, SubmissionListResponseSchema, SubmissionHistoryResponseSchema, SubmissionIdParamSchema, HistoryParamsSchema, DownloadResponseSchema, } from '../schemas/submission.schema.js';
+import { BadRequestError } from '../middlewares/error-handler.js';
 /** Submission routes - /api/v1/submissions/* */
 export async function submissionRoutes(app) {
+    const submissionService = container.resolve('SubmissionService');
     /**
      * POST /
      * Submit an assignment (file upload)
@@ -60,18 +33,15 @@ export async function submissionRoutes(app) {
                 throw new BadRequestError('Assignment ID and Student ID are required');
             }
             const buffer = await data.toBuffer();
-            const result = await submissionService.submitAssignment(assignmentId, studentId, {
+            const submission = await submissionService.submitAssignment(assignmentId, studentId, {
                 filename: data.filename,
                 data: buffer,
                 mimetype: data.mimetype,
             });
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
             return reply.status(201).send({
                 success: true,
-                message: result.message,
-                submission: result.submission,
+                message: 'Assignment submitted successfully',
+                submission,
             });
         },
     });
@@ -94,12 +64,12 @@ export async function submissionRoutes(app) {
             if (isNaN(assignmentId) || isNaN(studentId)) {
                 throw new BadRequestError('Invalid parameters');
             }
-            const result = await submissionService.getSubmissionHistory(assignmentId, studentId);
+            const submissions = await submissionService.getSubmissionHistory(assignmentId, studentId);
             return reply.send({
                 success: true,
-                message: result.message,
-                submissions: result.submissions,
-                totalSubmissions: result.submissions.length,
+                message: 'Submission history retrieved successfully',
+                submissions,
+                totalSubmissions: submissions.length,
             });
         },
     });
@@ -123,14 +93,11 @@ export async function submissionRoutes(app) {
             if (isNaN(assignmentId)) {
                 throw new BadRequestError('Invalid assignment ID');
             }
-            const result = await submissionService.getAssignmentSubmissions(assignmentId, latestOnly);
-            if (!result.success) {
-                throw new NotFoundError(result.message);
-            }
+            const submissions = await submissionService.getAssignmentSubmissions(assignmentId, latestOnly);
             return reply.send({
                 success: true,
-                message: result.message,
-                submissions: result.submissions,
+                message: 'Submissions retrieved successfully',
+                submissions,
             });
         },
     });
@@ -154,11 +121,11 @@ export async function submissionRoutes(app) {
             if (isNaN(studentId)) {
                 throw new BadRequestError('Invalid student ID');
             }
-            const result = await submissionService.getStudentSubmissions(studentId, latestOnly);
+            const submissions = await submissionService.getStudentSubmissions(studentId, latestOnly);
             return reply.send({
                 success: true,
-                message: result.message,
-                submissions: result.submissions,
+                message: 'Submissions retrieved successfully',
+                submissions,
             });
         },
     });

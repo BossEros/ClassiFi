@@ -1,33 +1,20 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
 import { AuthService } from '../../services/auth.service.js';
+import { toJsonSchema } from '../utils/swagger.js';
+import { SuccessMessageSchema } from '../schemas/common.schema.js';
 import {
     RegisterRequestSchemaForDocs,
     LoginRequestSchema,
     ForgotPasswordRequestSchema,
     AuthResponseSchema,
+    VerifyQuerySchema,
     type RegisterRequest,
     type LoginRequest,
     type ForgotPasswordRequest,
+    type VerifyQuery,
 } from '../schemas/auth.schema.js';
 import { ApiError } from '../middlewares/error-handler.js';
-
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
-
-// Shared response schemas
-const SuccessMessageSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-});
-
-const VerifyQuerySchema = z.object({
-    token: z.string(),
-});
-
-type VerifyQuery = z.infer<typeof VerifyQuerySchema>;
 
 /** Auth routes - /api/v1/auth/* */
 export async function authRoutes(app: FastifyInstance): Promise<void> {

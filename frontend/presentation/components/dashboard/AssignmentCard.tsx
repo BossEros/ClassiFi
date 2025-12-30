@@ -2,6 +2,7 @@ import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { cn } from '@/shared/utils/cn'
 import { Clock, Check, Circle, Pencil, Trash2 } from 'lucide-react'
 import type { Assignment } from '@/business/models/dashboard/types'
+import { formatDeadline, getDeadlineColor } from '@/shared/utils/dateUtils'
 
 interface AssignmentCardProps {
   assignment: Assignment
@@ -9,30 +10,6 @@ interface AssignmentCardProps {
   onEdit?: () => void
   onDelete?: () => void
   className?: string
-}
-
-function formatDeadline(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  }
-  return dateObj.toLocaleString('en-US', options)
-}
-
-function getDeadlineColor(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date
-  const now = new Date()
-  const diffTime = dateObj.getTime() - now.getTime()
-  const diffDays = diffTime / (1000 * 60 * 60 * 24)
-
-  if (diffDays < 0) return 'text-red-400'
-  if (diffDays < 1) return 'text-orange-400'
-  if (diffDays < 3) return 'text-yellow-400'
-  return 'text-gray-400'
 }
 
 export function AssignmentCard({ assignment, onClick, onEdit, onDelete, className }: AssignmentCardProps) {

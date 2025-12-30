@@ -38,4 +38,25 @@ export const SubmissionDetailResponseSchema = SubmissionResponseSchema.extend({
     assignmentName: z.string().optional(),
     className: z.string().optional(),
 });
+// ============================================================================
+// Param Schemas (from controller)
+// ============================================================================
+/** Submission ID param schema */
+export const SubmissionIdParamSchema = z.object({
+    submissionId: z.string(),
+});
+/** History params schema (assignmentId + studentId) */
+export const HistoryParamsSchema = z.object({
+    assignmentId: z.string(),
+    studentId: z.string(),
+});
+// ============================================================================
+// Response Schemas (from controller)
+// ============================================================================
+/** Download response schema */
+export const DownloadResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    downloadUrl: z.string(),
+});
 //# sourceMappingURL=submission.schema.js.map

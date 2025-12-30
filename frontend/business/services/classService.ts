@@ -199,7 +199,8 @@ export async function createAssignment(request: CreateAssignmentRequest): Promis
     description: request.description.trim(),
     programmingLanguage: request.programmingLanguage,
     deadline: typeof request.deadline === 'string' ? request.deadline : request.deadline.toISOString(),
-    allowResubmission: request.allowResubmission
+    allowResubmission: request.allowResubmission,
+    maxAttempts: request.maxAttempts
   })
 }
 
@@ -248,7 +249,8 @@ export async function updateAssignment(assignmentId: number, request: UpdateAssi
     description: request.description?.trim(),
     programmingLanguage: request.programmingLanguage,
     deadline: request.deadline ? (typeof request.deadline === 'string' ? request.deadline : request.deadline.toISOString()) : undefined,
-    allowResubmission: request.allowResubmission
+    allowResubmission: request.allowResubmission,
+    maxAttempts: request.maxAttempts
   })
 }
 

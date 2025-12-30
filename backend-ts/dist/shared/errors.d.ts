@@ -60,4 +60,10 @@ export declare class UnauthorizedAccessError extends ForbiddenError {
 export declare class InvalidRoleError extends BadRequestError {
     constructor(expectedRole: string);
 }
+export declare class UploadFailedError extends ApiError {
+    constructor(reason: string);
+}
+export declare class StudentNotInClassError extends NotFoundError {
+    constructor();
+}
 //# sourceMappingURL=errors.d.ts.map

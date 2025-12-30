@@ -1,30 +1,11 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { ClassService } from '../../services/class.service.js';
-import { CreateClassRequestSchema, UpdateClassRequestSchema, DeleteClassRequestSchema, ClassIdParamSchema, TeacherIdParamSchema, GetClassesQuerySchema, GetClassByIdQuerySchema, TeacherIdQuerySchema, CreateClassResponseSchema, GetClassResponseSchema, UpdateClassResponseSchema, ClassListResponseSchema, GenerateCodeResponseSchema, ClassStudentsResponseSchema, SuccessMessageSchema, } from '../schemas/class.schema.js';
-import { CreateAssignmentRequestSchema, AssignmentResponseSchema } from '../schemas/assignment.schema.js';
-import { BadRequestError, NotFoundError, ForbiddenError } from '../middlewares/error-handler.js';
-const classService = new ClassService();
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema) => zodToJsonSchema(schema, { target: 'openApi3' });
-// Shared response schemas for assignments
-const AssignmentListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignments: z.array(AssignmentResponseSchema),
-});
-const CreateAssignmentResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignment: AssignmentResponseSchema,
-});
-// Combined params for student removal
-const ClassStudentParamsSchema = z.object({
-    classId: z.string(),
-    studentId: z.string(),
-});
+import { container } from 'tsyringe';
+import { toJsonSchema } from '../utils/swagger.js';
+import { CreateClassRequestSchema, UpdateClassRequestSchema, DeleteClassRequestSchema, ClassIdParamSchema, TeacherIdParamSchema, GetClassesQuerySchema, GetClassByIdQuerySchema, TeacherIdQuerySchema, CreateClassResponseSchema, GetClassResponseSchema, UpdateClassResponseSchema, ClassListResponseSchema, GenerateCodeResponseSchema, ClassStudentsResponseSchema, SuccessMessageSchema, ClassStudentParamsSchema, } from '../schemas/class.schema.js';
+import { CreateAssignmentRequestSchema, AssignmentListResponseSchema, CreateAssignmentResponseSchema } from '../schemas/assignment.schema.js';
+import { BadRequestError } from '../middlewares/error-handler.js';
 /** Class routes - /api/v1/classes/* */
 export async function classRoutes(app) {
+    const classService = container.resolve('ClassService');
     /**
      * POST /
      * Create a new class
@@ -40,14 +21,11 @@ export async function classRoutes(app) {
         },
         handler: async (request, reply) => {
             const { teacherId, className, classCode, yearLevel, semester, academicYear, schedule, description } = request.body;
-            const result = await classService.createClass(teacherId, className, classCode, yearLevel, semester, academicYear, schedule, description);
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
+            const classData = await classService.createClass(teacherId, className, classCode, yearLevel, semester, academicYear, schedule, description);
             return reply.status(201).send({
                 success: true,
-                message: result.message,
-                class: result.classData,
+                message: 'Class created successfully',
+                class: classData,
             });
         },
     });
@@ -92,11 +70,11 @@ export async function classRoutes(app) {
             if (isNaN(teacherId)) {
                 throw new BadRequestError('Invalid teacher ID');
             }
-            const result = await classService.getClassesByTeacher(teacherId, activeOnly);
+            const classes = await classService.getClassesByTeacher(teacherId, activeOnly);
             return reply.send({
                 success: true,
-                message: result.message,
-                classes: result.classes,
+                message: 'Classes retrieved successfully',
+                classes,
             });
         },
     });
@@ -120,20 +98,11 @@ export async function classRoutes(app) {
             if (isNaN(classId)) {
                 throw new BadRequestError('Invalid class ID');
             }
-            const result = await classService.getClassById(classId, teacherId);
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            const classData = await classService.getClassById(classId, teacherId);
             return reply.send({
                 success: true,
-                message: result.message,
-                class: result.classData,
+                message: 'Class retrieved successfully',
+                class: classData,
             });
         },
     });
@@ -156,25 +125,20 @@ export async function classRoutes(app) {
             if (isNaN(classId)) {
                 throw new BadRequestError('Invalid class ID');
             }
-            const { teacherId, className, description, isActive } = request.body;
-            const result = await classService.updateClass(classId, teacherId, {
+            const { teacherId, className, description, isActive, yearLevel, semester, academicYear, schedule } = request.body;
+            const classData = await classService.updateClass(classId, teacherId, {
                 className,
                 description,
                 isActive,
+                yearLevel,
+                semester,
+                academicYear,
+                schedule,
             });
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
             return reply.send({
                 success: true,
-                message: result.message,
-                classInfo: result.classData,
+                message: 'Class updated successfully',
+                class: classData,
             });
         },
     });
@@ -198,19 +162,10 @@ export async function classRoutes(app) {
                 throw new BadRequestError('Invalid class ID');
             }
             const { teacherId } = request.body;
-            const result = await classService.deleteClass(classId, teacherId);
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            await classService.deleteClass(classId, teacherId);
             return reply.send({
                 success: true,
-                message: result.message,
+                message: 'Class deleted successfully',
             });
         },
     });
@@ -233,27 +188,19 @@ export async function classRoutes(app) {
             if (isNaN(classId)) {
                 throw new BadRequestError('Invalid class ID');
             }
-            const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission } = request.body;
-            const result = await classService.createAssignment(classId, teacherId, {
+            const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission, maxAttempts } = request.body;
+            const assignment = await classService.createAssignment(classId, teacherId, {
                 assignmentName,
                 description,
                 programmingLanguage,
                 deadline: new Date(deadline),
                 allowResubmission,
+                maxAttempts,
             });
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
             return reply.status(201).send({
                 success: true,
-                message: result.message,
-                assignment: result.assignment,
+                message: 'Assignment created successfully',
+                assignment,
             });
         },
     });
@@ -275,11 +222,11 @@ export async function classRoutes(app) {
             if (isNaN(classId)) {
                 throw new BadRequestError('Invalid class ID');
             }
-            const result = await classService.getClassAssignments(classId);
+            const assignments = await classService.getClassAssignments(classId);
             return reply.send({
                 success: true,
-                message: result.message,
-                assignments: result.assignments,
+                message: 'Assignments retrieved successfully',
+                assignments,
             });
         },
     });
@@ -301,11 +248,11 @@ export async function classRoutes(app) {
             if (isNaN(classId)) {
                 throw new BadRequestError('Invalid class ID');
             }
-            const result = await classService.getClassStudents(classId);
+            const students = await classService.getClassStudents(classId);
             return reply.send({
                 success: true,
-                message: result.message,
-                students: result.students,
+                message: 'Students retrieved successfully',
+                students,
             });
         },
     });
@@ -330,19 +277,10 @@ export async function classRoutes(app) {
             if (isNaN(classId) || isNaN(studentId) || isNaN(teacherId)) {
                 throw new BadRequestError('Invalid ID parameters');
             }
-            const result = await classService.removeStudent(classId, studentId, teacherId);
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            await classService.removeStudent(classId, studentId, teacherId);
             return reply.send({
                 success: true,
-                message: result.message,
+                message: 'Student removed successfully',
             });
         },
     });

@@ -154,8 +154,7 @@ export function ClassDetailPage() {
   }
 
   const handleEditAssignment = (assignment: Assignment) => {
-    setAssignmentToEdit(assignment)
-    setIsCreateAssignmentModalOpen(true)
+    navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`)
   }
 
   const handleDeleteAssignmentClick = (assignment: Assignment) => {
@@ -306,7 +305,7 @@ export function ClassDetailPage() {
                 {/* Only teachers can add assignments */}
                 {isTeacher && activeTab === 'assignments' && (
                   <Button
-                    onClick={() => setIsCreateAssignmentModalOpen(true)}
+                    onClick={() => navigate(`/dashboard/classes/${classId}/coursework/new`)}
                     className="w-auto px-4 h-10"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -344,7 +343,7 @@ export function ClassDetailPage() {
                             Create your first coursework to get started.
                           </p>
                           <Button
-                            onClick={() => setIsCreateAssignmentModalOpen(true)}
+                            onClick={() => navigate(`/dashboard/classes/${classId}/coursework/new`)}
                             className="w-auto"
                           >
                             <Plus className="w-4 h-4 mr-2" />

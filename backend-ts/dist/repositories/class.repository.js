@@ -55,6 +55,46 @@ let ClassRepository = class ClassRepository extends BaseRepository {
             .orderBy(desc(classes.createdAt))
             .limit(limit);
     }
+    /**
+     * Get all classes by teacher WITH student counts in a single query.
+     * Optimized to avoid N+1 query problem.
+     */
+    async getClassesWithStudentCounts(teacherId, activeOnly = true) {
+        const studentCountSubquery = this.db
+            .select({
+            classId: enrollments.classId,
+            count: sql `count(*)`.as('count'),
+        })
+            .from(enrollments)
+            .groupBy(enrollments.classId)
+            .as('student_counts');
+        const condition = activeOnly
+            ? and(eq(classes.teacherId, teacherId), eq(classes.isActive, true))
+            : eq(classes.teacherId, teacherId);
+        const results = await this.db
+            .select({
+            id: classes.id,
+            teacherId: classes.teacherId,
+            className: classes.className,
+            classCode: classes.classCode,
+            description: classes.description,
+            yearLevel: classes.yearLevel,
+            semester: classes.semester,
+            academicYear: classes.academicYear,
+            schedule: classes.schedule,
+            createdAt: classes.createdAt,
+            isActive: classes.isActive,
+            studentCount: sql `COALESCE(${studentCountSubquery.count}, 0)`,
+        })
+            .from(classes)
+            .leftJoin(studentCountSubquery, eq(classes.id, studentCountSubquery.classId))
+            .where(condition)
+            .orderBy(desc(classes.createdAt));
+        return results.map((r) => ({
+            ...r,
+            studentCount: Number(r.studentCount),
+        }));
+    }
     /** Create a new class */
     async createClass(data) {
         const results = await this.db

@@ -68,21 +68,21 @@ export type DeleteClassRequest = z.infer<typeof DeleteClassRequestSchema>;
 
 /** Class ID param schema (auto-coerces string to number) */
 export const ClassIdParamSchema = z.object({
-    classId: z.coerce.number().int().positive(),
+    classId: z.coerce.number().int().min(1),
 });
 
 export type ClassIdParam = z.infer<typeof ClassIdParamSchema>;
 
 /** Teacher ID param schema (auto-coerces string to number) */
 export const TeacherIdParamSchema = z.object({
-    teacherId: z.coerce.number().int().positive(),
+    teacherId: z.coerce.number().int().min(1),
 });
 
 export type TeacherIdParam = z.infer<typeof TeacherIdParamSchema>;
 
 /** Student ID param schema (auto-coerces string to number) */
 export const StudentIdParamSchema = z.object({
-    studentId: z.coerce.number().int().positive(),
+    studentId: z.coerce.number().int().min(1),
 });
 
 export type StudentIdParam = z.infer<typeof StudentIdParamSchema>;
@@ -202,3 +202,11 @@ export const ClassStudentsResponseSchema = z.object({
 });
 
 export type ClassStudentsResponse = z.infer<typeof ClassStudentsResponseSchema>;
+
+/** Combined params for student removal (classId + studentId) */
+export const ClassStudentParamsSchema = z.object({
+    classId: z.string(),
+    studentId: z.string(),
+});
+
+export type ClassStudentParams = z.infer<typeof ClassStudentParamsSchema>;

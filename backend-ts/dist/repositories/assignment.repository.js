@@ -48,6 +48,7 @@ let AssignmentRepository = class AssignmentRepository extends BaseRepository {
             programmingLanguage: data.programmingLanguage,
             deadline: data.deadline,
             allowResubmission: data.allowResubmission ?? true,
+            maxAttempts: data.maxAttempts ?? null,
             isActive: true,
         })
             .returning();

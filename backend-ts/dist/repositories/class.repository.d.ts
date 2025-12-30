@@ -13,6 +13,13 @@ export declare class ClassRepository extends BaseRepository<typeof classes, Clas
     getClassesByTeacher(teacherId: number, activeOnly?: boolean): Promise<Class[]>;
     /** Get most recent classes taught by a teacher */
     getRecentClassesByTeacher(teacherId: number, limit?: number): Promise<Class[]>;
+    /**
+     * Get all classes by teacher WITH student counts in a single query.
+     * Optimized to avoid N+1 query problem.
+     */
+    getClassesWithStudentCounts(teacherId: number, activeOnly?: boolean): Promise<(Class & {
+        studentCount: number;
+    })[]>;
     /** Create a new class */
     createClass(data: {
         teacherId: number;

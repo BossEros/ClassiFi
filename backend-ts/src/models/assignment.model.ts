@@ -11,7 +11,7 @@ import {
 import { relations } from 'drizzle-orm';
 import { classes } from '@/models/class.model.js';
 /** Programming language enum for assignments */
-export const programmingLanguageEnum = pgEnum('programming_language', ['python', 'java']);
+export const programmingLanguageEnum = pgEnum('programming_language', ['python', 'java', 'c']);
 
 /** Assignments table - represents assignments for classes */
 export const assignments = pgTable('assignments', {
@@ -22,6 +22,7 @@ export const assignments = pgTable('assignments', {
     programmingLanguage: programmingLanguageEnum('programming_language').notNull(),
     deadline: timestamp('deadline', { withTimezone: true }).notNull(),
     allowResubmission: boolean('allow_resubmission').default(true).notNull(),
+    maxAttempts: integer('max_attempts'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     isActive: boolean('is_active').default(true).notNull(),
 });

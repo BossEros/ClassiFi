@@ -1,8 +1,7 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
 import { ClassService } from '../../services/class.service.js';
+import { toJsonSchema } from '../utils/swagger.js';
 import {
     CreateClassRequestSchema,
     UpdateClassRequestSchema,
@@ -19,6 +18,7 @@ import {
     GenerateCodeResponseSchema,
     ClassStudentsResponseSchema,
     SuccessMessageSchema,
+    ClassStudentParamsSchema,
     type CreateClassRequest,
     type UpdateClassRequest,
     type DeleteClassRequest,
@@ -26,31 +26,11 @@ import {
 import {
     CreateAssignmentRequestSchema,
     AssignmentResponseSchema,
+    AssignmentListResponseSchema,
+    CreateAssignmentResponseSchema,
     type CreateAssignmentRequest
 } from '../schemas/assignment.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
-
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
-
-// Shared response schemas for assignments
-const AssignmentListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignments: z.array(AssignmentResponseSchema),
-});
-
-const CreateAssignmentResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignment: AssignmentResponseSchema,
-});
-
-// Combined params for student removal
-const ClassStudentParamsSchema = z.object({
-    classId: z.string(),
-    studentId: z.string(),
-});
 
 /** Class routes - /api/v1/classes/* */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
@@ -270,7 +250,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid class ID');
             }
 
-            const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission } = request.body;
+            const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission, maxAttempts } = request.body;
 
             const assignment = await classService.createAssignment(classId, teacherId, {
                 assignmentName,
@@ -278,6 +258,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 programmingLanguage,
                 deadline: new Date(deadline),
                 allowResubmission,
+                maxAttempts,
             });
 
             return reply.status(201).send({

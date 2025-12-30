@@ -1,1 +1,1 @@
-{"version":3,"file":"assignment.controller.d.ts","sourceRoot":"","sources":["../../../src/api/controllers/assignment.controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,SAAS,CAAC;AAiD/C,gDAAgD;AAChD,wBAAsB,gBAAgB,CAAC,GAAG,EAAE,eAAe,GAAG,OAAO,CAAC,IAAI,CAAC,CAkI1E"}
+{"version":3,"file":"assignment.controller.d.ts","sourceRoot":"","sources":["../../../src/api/controllers/assignment.controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,SAAS,CAAC;AAgB/C,gDAAgD;AAChD,wBAAsB,gBAAgB,CAAC,GAAG,EAAE,eAAe,GAAG,OAAO,CAAC,IAAI,CAAC,CAqG1E"}

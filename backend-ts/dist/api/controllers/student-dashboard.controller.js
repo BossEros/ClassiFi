@@ -1,45 +1,12 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { StudentDashboardService } from '@/services/student-dashboard.service.js';
-import { JoinClassRequestSchema, LeaveClassRequestSchema, StudentDashboardResponseSchema, DashboardClassResponseSchema, DashboardAssignmentResponseSchema } from '@/api/schemas/dashboard.schema.js';
+import { container } from 'tsyringe';
+import { toJsonSchema } from '@/api/utils/swagger.js';
+import { SuccessMessageSchema, LimitQuerySchema } from '@/api/schemas/common.schema.js';
+import { StudentIdParamSchema } from '@/api/schemas/class.schema.js';
+import { JoinClassRequestSchema, LeaveClassRequestSchema, StudentDashboardResponseSchema, StudentDashboardQuerySchema, DashboardClassListResponseSchema, DashboardAssignmentListResponseSchema, JoinClassResponseSchema } from '@/api/schemas/dashboard.schema.js';
 import { BadRequestError } from '@/api/middlewares/error-handler.js';
-const dashboardService = new StudentDashboardService();
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema) => zodToJsonSchema(schema, { target: 'openApi3' });
-// Param schemas
-const StudentIdParamSchema = z.object({
-    studentId: z.string(),
-});
-// Query schemas
-const DashboardQuerySchema = z.object({
-    enrolledClassesLimit: z.string().optional(),
-    pendingAssignmentsLimit: z.string().optional(),
-});
-const LimitQuerySchema = z.object({
-    limit: z.string().optional(),
-});
-// Response schemas
-const ClassListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    classes: z.array(DashboardClassResponseSchema),
-});
-const AssignmentListResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignments: z.array(DashboardAssignmentResponseSchema),
-});
-const JoinClassResponseSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-    classInfo: DashboardClassResponseSchema.optional(),
-});
-const SuccessMessageSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-});
 /** Student dashboard routes - /api/v1/student/dashboard/* */
 export async function studentDashboardRoutes(app) {
+    const dashboardService = container.resolve('StudentDashboardService');
     /**
      * GET /:studentId
      * Get complete dashboard data for a student
@@ -49,7 +16,7 @@ export async function studentDashboardRoutes(app) {
             tags: ['Student Dashboard'],
             summary: 'Get complete dashboard data for a student',
             params: toJsonSchema(StudentIdParamSchema),
-            querystring: toJsonSchema(DashboardQuerySchema),
+            querystring: toJsonSchema(StudentDashboardQuerySchema),
             response: {
                 200: toJsonSchema(StudentDashboardResponseSchema),
             },
@@ -61,15 +28,12 @@ export async function studentDashboardRoutes(app) {
             if (isNaN(studentId)) {
                 throw new BadRequestError('Invalid student ID');
             }
-            const result = await dashboardService.getDashboardData(studentId, enrolledClassesLimit, pendingAssignmentsLimit);
-            if (!result.success) {
-                throw new BadRequestError(result.message);
-            }
+            const data = await dashboardService.getDashboardData(studentId, enrolledClassesLimit, pendingAssignmentsLimit);
             return reply.send({
                 success: true,
-                message: result.message,
-                enrolledClasses: result.data.enrolledClasses,
-                pendingAssignments: result.data.pendingAssignments,
+                message: 'Dashboard data retrieved successfully',
+                enrolledClasses: data.enrolledClasses,
+                pendingAssignments: data.pendingAssignments,
             });
         },
     });
@@ -84,7 +48,7 @@ export async function studentDashboardRoutes(app) {
             params: toJsonSchema(StudentIdParamSchema),
             querystring: toJsonSchema(LimitQuerySchema),
             response: {
-                200: toJsonSchema(ClassListResponseSchema),
+                200: toJsonSchema(DashboardClassListResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -93,11 +57,11 @@ export async function studentDashboardRoutes(app) {
             if (isNaN(studentId)) {
                 throw new BadRequestError('Invalid student ID');
             }
-            const result = await dashboardService.getEnrolledClasses(studentId, limit);
+            const classes = await dashboardService.getEnrolledClasses(studentId, limit);
             return reply.send({
                 success: true,
-                message: result.message,
-                classes: result.classes,
+                message: 'Enrolled classes retrieved successfully',
+                classes,
             });
         },
     });
@@ -112,7 +76,7 @@ export async function studentDashboardRoutes(app) {
             params: toJsonSchema(StudentIdParamSchema),
             querystring: toJsonSchema(LimitQuerySchema),
             response: {
-                200: toJsonSchema(AssignmentListResponseSchema),
+                200: toJsonSchema(DashboardAssignmentListResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -121,11 +85,11 @@ export async function studentDashboardRoutes(app) {
             if (isNaN(studentId)) {
                 throw new BadRequestError('Invalid student ID');
             }
-            const result = await dashboardService.getPendingAssignments(studentId, limit);
+            const assignments = await dashboardService.getPendingAssignments(studentId, limit);
             return reply.send({
                 success: true,
-                message: result.message,
-                assignments: result.assignments,
+                message: 'Pending assignments retrieved successfully',
+                assignments,
             });
         },
     });
@@ -144,11 +108,11 @@ export async function studentDashboardRoutes(app) {
         },
         handler: async (request, reply) => {
             const { studentId, classCode } = request.body;
-            const result = await dashboardService.joinClass(studentId, classCode);
+            const classData = await dashboardService.joinClass(studentId, classCode);
             return reply.send({
-                success: result.success,
-                message: result.message,
-                classInfo: result.classData,
+                success: true,
+                message: 'Successfully joined the class!',
+                classInfo: classData,
             });
         },
     });
@@ -167,10 +131,10 @@ export async function studentDashboardRoutes(app) {
         },
         handler: async (request, reply) => {
             const { studentId, classId } = request.body;
-            const result = await dashboardService.leaveClass(studentId, classId);
+            await dashboardService.leaveClass(studentId, classId);
             return reply.send({
-                success: result.success,
-                message: result.message,
+                success: true,
+                message: 'Successfully left the class.',
             });
         },
     });

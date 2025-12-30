@@ -63,9 +63,10 @@ export interface UpdateAssignmentRequest {
   teacherId: number
   assignmentName?: string
   description?: string
-  programmingLanguage?: 'python' | 'java'
+  programmingLanguage?: 'python' | 'java' | 'c'
   deadline?: Date
   allowResubmission?: boolean
+  maxAttempts?: number | null
 }
 
 // ============================================================================

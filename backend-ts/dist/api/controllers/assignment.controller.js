@@ -1,39 +1,13 @@
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { ClassService } from '../../services/class.service.js';
-import { UpdateAssignmentRequestSchema, AssignmentResponseSchema, AssignmentDetailResponseSchema } from '../schemas/assignment.schema.js';
-import { BadRequestError, NotFoundError, ForbiddenError } from '../middlewares/error-handler.js';
-const classService = new ClassService();
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema) => zodToJsonSchema(schema, { target: 'openApi3' });
-// Param schemas
-const AssignmentIdParamSchema = z.object({
-    assignmentId: z.string(),
-});
-// Query schemas
-const UserIdQuerySchema = z.object({
-    userId: z.string(),
-});
-const TeacherIdQuerySchema = z.object({
-    teacherId: z.string(),
-});
-// Response schemas
-const GetAssignmentResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignment: AssignmentDetailResponseSchema,
-});
-const UpdateAssignmentResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignment: AssignmentResponseSchema,
-});
-const SuccessMessageSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-});
+import { container } from 'tsyringe';
+import { toJsonSchema } from '../utils/swagger.js';
+import { SuccessMessageSchema } from '../schemas/common.schema.js';
+import { TeacherIdQuerySchema } from '../schemas/class.schema.js';
+import { UpdateAssignmentRequestSchema, AssignmentIdParamSchema, GetAssignmentResponseSchema, UpdateAssignmentResponseSchema } from '../schemas/assignment.schema.js';
+import { UserIdQuerySchema } from '../schemas/common.schema.js';
+import { BadRequestError } from '../middlewares/error-handler.js';
 /** Assignment routes - /api/v1/assignments/* */
 export async function assignmentRoutes(app) {
+    const classService = container.resolve('ClassService');
     /**
      * GET /:assignmentId
      * Get assignment details
@@ -54,20 +28,11 @@ export async function assignmentRoutes(app) {
             if (isNaN(assignmentId) || isNaN(userId)) {
                 throw new BadRequestError('Invalid parameters');
             }
-            const result = await classService.getAssignmentDetails(assignmentId, userId);
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            const assignment = await classService.getAssignmentDetails(assignmentId, userId);
             return reply.send({
                 success: true,
-                message: result.message,
-                assignment: result.assignment,
+                message: 'Assignment retrieved successfully',
+                assignment,
             });
         },
     });
@@ -91,23 +56,14 @@ export async function assignmentRoutes(app) {
                 throw new BadRequestError('Invalid assignment ID');
             }
             const { teacherId, ...updateData } = request.body;
-            const result = await classService.updateAssignment(assignmentId, teacherId, {
+            const assignment = await classService.updateAssignment(assignmentId, teacherId, {
                 ...updateData,
                 deadline: updateData.deadline ? new Date(updateData.deadline) : undefined,
             });
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
             return reply.send({
                 success: true,
-                message: result.message,
-                assignment: result.assignment,
+                message: 'Assignment updated successfully',
+                assignment,
             });
         },
     });
@@ -131,19 +87,10 @@ export async function assignmentRoutes(app) {
             if (isNaN(assignmentId) || isNaN(teacherId)) {
                 throw new BadRequestError('Invalid parameters');
             }
-            const result = await classService.deleteAssignment(assignmentId, teacherId);
-            if (!result.success) {
-                if (result.message.includes('not found')) {
-                    throw new NotFoundError(result.message);
-                }
-                if (result.message.includes('Unauthorized')) {
-                    throw new ForbiddenError(result.message);
-                }
-                throw new BadRequestError(result.message);
-            }
+            await classService.deleteAssignment(assignmentId, teacherId);
             return reply.send({
                 success: true,
-                message: result.message,
+                message: 'Assignment deleted successfully',
             });
         },
     });

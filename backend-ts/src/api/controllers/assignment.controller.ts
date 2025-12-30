@@ -1,50 +1,18 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
 import { ClassService } from '../../services/class.service.js';
+import { toJsonSchema } from '../utils/swagger.js';
+import { SuccessMessageSchema } from '../schemas/common.schema.js';
+import { TeacherIdQuerySchema } from '../schemas/class.schema.js';
 import {
     UpdateAssignmentRequestSchema,
-    AssignmentResponseSchema,
-    AssignmentDetailResponseSchema,
+    AssignmentIdParamSchema,
+    GetAssignmentResponseSchema,
+    UpdateAssignmentResponseSchema,
     type UpdateAssignmentRequest
 } from '../schemas/assignment.schema.js';
+import { UserIdQuerySchema } from '../schemas/common.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
-
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
-
-// Param schemas
-const AssignmentIdParamSchema = z.object({
-    assignmentId: z.string(),
-});
-
-// Query schemas
-const UserIdQuerySchema = z.object({
-    userId: z.string(),
-});
-
-const TeacherIdQuerySchema = z.object({
-    teacherId: z.string(),
-});
-
-// Response schemas
-const GetAssignmentResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignment: AssignmentDetailResponseSchema,
-});
-
-const UpdateAssignmentResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    assignment: AssignmentResponseSchema,
-});
-
-const SuccessMessageSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-});
 
 /** Assignment routes - /api/v1/assignments/* */
 export async function assignmentRoutes(app: FastifyInstance): Promise<void> {

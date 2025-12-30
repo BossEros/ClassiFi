@@ -1,7 +1,7 @@
 import { assignments, type Assignment, type NewAssignment } from '@/models/index.js';
 import { BaseRepository } from '@/repositories/base.repository.js';
 /** Programming language type */
-export type ProgrammingLanguage = 'python' | 'java';
+export type ProgrammingLanguage = 'python' | 'java' | 'c';
 /**
  * Repository for assignment-related database operations.
  */
@@ -19,9 +19,10 @@ export declare class AssignmentRepository extends BaseRepository<typeof assignme
         programmingLanguage: ProgrammingLanguage;
         deadline: Date;
         allowResubmission?: boolean;
+        maxAttempts?: number | null;
     }): Promise<Assignment>;
     /** Update an assignment */
-    updateAssignment(assignmentId: number, data: Partial<Pick<NewAssignment, 'assignmentName' | 'description' | 'programmingLanguage' | 'deadline' | 'allowResubmission' | 'isActive'>>): Promise<Assignment | undefined>;
+    updateAssignment(assignmentId: number, data: Partial<Pick<NewAssignment, 'assignmentName' | 'description' | 'programmingLanguage' | 'deadline' | 'allowResubmission' | 'maxAttempts' | 'isActive'>>): Promise<Assignment | undefined>;
     /** Delete an assignment (hard delete) */
     deleteAssignment(assignmentId: number): Promise<boolean>;
     /** Deactivate an assignment (soft delete) */

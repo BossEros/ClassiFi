@@ -1,52 +1,19 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { z } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { container } from 'tsyringe';
 import { SubmissionService } from '../../services/submission.service.js';
+import { toJsonSchema } from '../utils/swagger.js';
+import { LatestOnlyQuerySchema, StudentIdQuerySchema } from '../schemas/common.schema.js';
+import { AssignmentIdParamSchema } from '../schemas/assignment.schema.js';
+import { StudentIdParamSchema } from '../schemas/class.schema.js';
 import {
-    SubmissionResponseSchema,
     SubmitAssignmentResponseSchema,
     SubmissionListResponseSchema,
     SubmissionHistoryResponseSchema,
+    SubmissionIdParamSchema,
+    HistoryParamsSchema,
+    DownloadResponseSchema,
 } from '../schemas/submission.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
-
-// Helper to convert Zod schema to JSON Schema for Swagger
-const toJsonSchema = (schema: z.ZodType) => zodToJsonSchema(schema, { target: 'openApi3' });
-
-// Param schemas
-const SubmissionIdParamSchema = z.object({
-    submissionId: z.string(),
-});
-
-const AssignmentIdParamSchema = z.object({
-    assignmentId: z.string(),
-});
-
-const StudentIdParamSchema = z.object({
-    studentId: z.string(),
-});
-
-const HistoryParamsSchema = z.object({
-    assignmentId: z.string(),
-    studentId: z.string(),
-});
-
-// Query schemas
-const LatestOnlyQuerySchema = z.object({
-    latestOnly: z.string().optional(),
-});
-
-const StudentIdQuerySchema = z.object({
-    studentId: z.string(),
-});
-
-// Response schemas
-const DownloadResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    downloadUrl: z.string(),
-});
 
 /** Submission routes - /api/v1/submissions/* */
 export async function submissionRoutes(app: FastifyInstance): Promise<void> {

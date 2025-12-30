@@ -159,9 +159,10 @@ export class ClassService {
         data: {
             assignmentName: string;
             description: string;
-            programmingLanguage: 'python' | 'java';
+            programmingLanguage: 'python' | 'java' | 'c';
             deadline: Date;
             allowResubmission?: boolean;
+            maxAttempts?: number | null;
         }
     ): Promise<AssignmentDTO> {
         const classData = await this.classRepo.getClassById(classId);
@@ -181,6 +182,7 @@ export class ClassService {
             programmingLanguage: data.programmingLanguage,
             deadline: data.deadline,
             allowResubmission: data.allowResubmission,
+            maxAttempts: data.maxAttempts,
         });
 
         return toAssignmentDTO(assignment);
@@ -249,9 +251,10 @@ export class ClassService {
         data: {
             assignmentName?: string;
             description?: string;
-            programmingLanguage?: 'python' | 'java';
+            programmingLanguage?: 'python' | 'java' | 'c';
             deadline?: Date;
             allowResubmission?: boolean;
+            maxAttempts?: number | null;
         }
     ): Promise<AssignmentDTO> {
         const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);

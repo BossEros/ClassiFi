@@ -1,1 +1,1 @@
-{"version":3,"file":"class.controller.d.ts","sourceRoot":"","sources":["../../../src/api/controllers/class.controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,SAAS,CAAC;AAuD/C,uCAAuC;AACvC,wBAAsB,WAAW,CAAC,GAAG,EAAE,eAAe,GAAG,OAAO,CAAC,IAAI,CAAC,CAuXrE"}
+{"version":3,"file":"class.controller.d.ts","sourceRoot":"","sources":["../../../src/api/controllers/class.controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,SAAS,CAAC;AAkC/C,uCAAuC;AACvC,wBAAsB,WAAW,CAAC,GAAG,EAAE,eAAe,GAAG,OAAO,CAAC,IAAI,CAAC,CAuUrE"}

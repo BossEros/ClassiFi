@@ -75,3 +75,63 @@ export const TeacherDashboardResponseSchema = z.object({
 });
 
 export type TeacherDashboardResponse = z.infer<typeof TeacherDashboardResponseSchema>;
+
+// ============================================================================
+// Query Schemas (from controllers)
+// ============================================================================
+
+/** Student dashboard query schema */
+export const StudentDashboardQuerySchema = z.object({
+    enrolledClassesLimit: z.string().optional(),
+    pendingAssignmentsLimit: z.string().optional(),
+});
+
+export type StudentDashboardQuery = z.infer<typeof StudentDashboardQuerySchema>;
+
+/** Teacher dashboard query schema */
+export const TeacherDashboardQuerySchema = z.object({
+    recentClassesLimit: z.string().optional(),
+    pendingTasksLimit: z.string().optional(),
+});
+
+export type TeacherDashboardQuery = z.infer<typeof TeacherDashboardQuerySchema>;
+
+// ============================================================================
+// Response Schemas (from controllers)
+// ============================================================================
+
+/** Dashboard class list response schema */
+export const DashboardClassListResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    classes: z.array(DashboardClassResponseSchema),
+});
+
+export type DashboardClassListResponse = z.infer<typeof DashboardClassListResponseSchema>;
+
+/** Dashboard assignment list response schema */
+export const DashboardAssignmentListResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    assignments: z.array(DashboardAssignmentResponseSchema),
+});
+
+export type DashboardAssignmentListResponse = z.infer<typeof DashboardAssignmentListResponseSchema>;
+
+/** Task list response schema */
+export const TaskListResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    tasks: z.array(DashboardTaskResponseSchema),
+});
+
+export type TaskListResponse = z.infer<typeof TaskListResponseSchema>;
+
+/** Join class response schema */
+export const JoinClassResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    classInfo: DashboardClassResponseSchema,
+});
+
+export type JoinClassResponse = z.infer<typeof JoinClassResponseSchema>;

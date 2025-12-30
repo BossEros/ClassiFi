@@ -54,4 +54,8 @@ export const ErrorResponseSchema = z.object({
     message: z.string(),
     error: z.string().optional(),
 });
+/** Verify token query schema */
+export const VerifyQuerySchema = z.object({
+    token: z.string(),
+});
 //# sourceMappingURL=auth.schema.js.map

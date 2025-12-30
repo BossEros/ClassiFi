@@ -79,3 +79,10 @@ export const ErrorResponseSchema = z.object({
 });
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>;
+
+/** Verify token query schema */
+export const VerifyQuerySchema = z.object({
+    token: z.string(),
+});
+
+export type VerifyQuery = z.infer<typeof VerifyQuerySchema>;

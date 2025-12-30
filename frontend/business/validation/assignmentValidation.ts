@@ -47,9 +47,9 @@ export const validateProgrammingLanguage = (language: string): string | null => 
     return 'Programming language is required'
   }
 
-  const validLanguages = ['python', 'java']
+  const validLanguages = ['python', 'java', 'c']
   if (!validLanguages.includes(language.toLowerCase())) {
-    return 'Invalid programming language. Must be Python or Java'
+    return 'Invalid programming language. Must be Python, Java, or C'
   }
 
   return null

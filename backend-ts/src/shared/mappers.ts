@@ -80,6 +80,7 @@ export interface AssignmentDTO {
     programmingLanguage: string;
     deadline: string;
     allowResubmission: boolean;
+    maxAttempts: number | null;
     createdAt: string;
     isActive: boolean;
     submissionCount?: number;
@@ -99,6 +100,7 @@ export function toAssignmentDTO(
         programmingLanguage: assignment.programmingLanguage,
         deadline: assignment.deadline?.toISOString() ?? '',
         allowResubmission: assignment.allowResubmission ?? true,
+        maxAttempts: assignment.maxAttempts ?? null,
         createdAt: assignment.createdAt?.toISOString() ?? new Date().toISOString(),
         isActive: assignment.isActive ?? true,
         ...extras,

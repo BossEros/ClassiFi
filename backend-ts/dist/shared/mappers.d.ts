@@ -20,6 +20,10 @@ export interface ClassDTO {
     className: string;
     classCode: string;
     description: string | null;
+    yearLevel: number;
+    semester: number;
+    academicYear: string;
+    schedule: any;
     createdAt: string;
     isActive: boolean;
     studentCount?: number;
@@ -39,6 +43,7 @@ export interface AssignmentDTO {
     programmingLanguage: string;
     deadline: string;
     allowResubmission: boolean;
+    maxAttempts: number | null;
     createdAt: string;
     isActive: boolean;
     submissionCount?: number;

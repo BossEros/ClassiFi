@@ -7,7 +7,14 @@ import type {
   AssignmentDetailResponse
 } from '../../business/models/assignment/types'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1'
+
+/**
+ * Gets the auth token from localStorage
+ */
+function getAuthToken(): string | null {
+  return localStorage.getItem('authToken')
+}
 
 /**
  * Submit an assignment with file upload
@@ -23,9 +30,13 @@ export async function submitAssignment(
     formData.append('studentId', request.studentId.toString())
     formData.append('file', request.file)
 
+    // Get auth token
+    const authToken = getAuthToken()
+
     // Make request with fetch directly (apiClient doesn't support FormData)
     const response = await fetch(`${API_BASE_URL}/submissions`, {
       method: 'POST',
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
       body: formData
       // Don't set Content-Type header - browser will set it with boundary
     })
@@ -205,11 +216,13 @@ export async function getAssignmentById(
         id: assignmentData.id,
         classId: assignmentData.classId,
         className: assignmentData.className,
+        assignmentName: assignmentData.assignmentName,
         title: assignmentData.assignmentName,
         description: assignmentData.description,
         programmingLanguage: assignmentData.programmingLanguage,
         deadline: new Date(assignmentData.deadline),
         allowResubmission: assignmentData.allowResubmission,
+        maxAttempts: assignmentData.maxAttempts ?? null,
         isActive: assignmentData.isActive,
         createdAt: assignmentData.createdAt ? new Date(assignmentData.createdAt) : undefined
       }

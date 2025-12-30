@@ -53,3 +53,35 @@ export const SubmissionDetailResponseSchema = SubmissionResponseSchema.extend({
 });
 
 export type SubmissionDetailResponse = z.infer<typeof SubmissionDetailResponseSchema>;
+
+// ============================================================================
+// Param Schemas (from controller)
+// ============================================================================
+
+/** Submission ID param schema */
+export const SubmissionIdParamSchema = z.object({
+    submissionId: z.string(),
+});
+
+export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>;
+
+/** History params schema (assignmentId + studentId) */
+export const HistoryParamsSchema = z.object({
+    assignmentId: z.string(),
+    studentId: z.string(),
+});
+
+export type HistoryParams = z.infer<typeof HistoryParamsSchema>;
+
+// ============================================================================
+// Response Schemas (from controller)
+// ============================================================================
+
+/** Download response schema */
+export const DownloadResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    downloadUrl: z.string(),
+});
+
+export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;

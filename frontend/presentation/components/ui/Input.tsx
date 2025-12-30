@@ -14,6 +14,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           'hover:bg-white/10 hover:border-white/20',
           'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 focus:bg-white/10',
           'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/5',
+          // Dark theme styling for number input spinner buttons
+          '[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+          '[appearance:textfield]',
+          // Dark theme styling for datetime-local picker
+          '[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-50 [&::-webkit-calendar-picker-indicator]:hover:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer',
+          '[&::-webkit-datetime-edit]:text-white [&::-webkit-datetime-edit-fields-wrapper]:text-white',
           className
         )}
         ref={ref}
@@ -25,3 +31,4 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input'
 
 export { Input }
+

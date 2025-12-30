@@ -29,13 +29,13 @@ export const StudentDashboardResponseSchema = z.object({
 });
 /** Join class request */
 export const JoinClassRequestSchema = z.object({
-    studentId: z.number().int().positive(),
+    studentId: z.number().int().min(1),
     classCode: z.string().min(1),
 });
 /** Leave class request */
 export const LeaveClassRequestSchema = z.object({
-    studentId: z.number().int().positive(),
-    classId: z.number().int().positive(),
+    studentId: z.number().int().min(1),
+    classId: z.number().int().min(1),
 });
 /** Teacher dashboard task response */
 export const DashboardTaskResponseSchema = z.object({
@@ -53,5 +53,45 @@ export const TeacherDashboardResponseSchema = z.object({
     message: z.string(),
     recentClasses: z.array(DashboardClassResponseSchema),
     pendingTasks: z.array(DashboardTaskResponseSchema),
+});
+// ============================================================================
+// Query Schemas (from controllers)
+// ============================================================================
+/** Student dashboard query schema */
+export const StudentDashboardQuerySchema = z.object({
+    enrolledClassesLimit: z.string().optional(),
+    pendingAssignmentsLimit: z.string().optional(),
+});
+/** Teacher dashboard query schema */
+export const TeacherDashboardQuerySchema = z.object({
+    recentClassesLimit: z.string().optional(),
+    pendingTasksLimit: z.string().optional(),
+});
+// ============================================================================
+// Response Schemas (from controllers)
+// ============================================================================
+/** Dashboard class list response schema */
+export const DashboardClassListResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    classes: z.array(DashboardClassResponseSchema),
+});
+/** Dashboard assignment list response schema */
+export const DashboardAssignmentListResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    assignments: z.array(DashboardAssignmentResponseSchema),
+});
+/** Task list response schema */
+export const TaskListResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    tasks: z.array(DashboardTaskResponseSchema),
+});
+/** Join class response schema */
+export const JoinClassResponseSchema = z.object({
+    success: z.literal(true),
+    message: z.string(),
+    classInfo: DashboardClassResponseSchema,
 });
 //# sourceMappingURL=dashboard.schema.js.map

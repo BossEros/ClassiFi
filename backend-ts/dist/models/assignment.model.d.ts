@@ -1,5 +1,5 @@
 /** Programming language enum for assignments */
-export declare const programmingLanguageEnum: import("drizzle-orm/pg-core").PgEnum<["python", "java"]>;
+export declare const programmingLanguageEnum: import("drizzle-orm/pg-core").PgEnum<["python", "java", "c"]>;
 /** Assignments table - represents assignments for classes */
 export declare const assignments: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "assignments";
@@ -78,14 +78,14 @@ export declare const assignments: import("drizzle-orm/pg-core").PgTableWithColum
             tableName: "assignments";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "python" | "java";
+            data: "python" | "java" | "c";
             driverParam: string;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: ["python", "java"];
+            enumValues: ["python", "java", "c"];
             baseColumn: never;
             identity: undefined;
             generated: undefined;
@@ -116,6 +116,23 @@ export declare const assignments: import("drizzle-orm/pg-core").PgTableWithColum
             driverParam: boolean;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        maxAttempts: import("drizzle-orm/pg-core").PgColumn<{
+            name: "max_attempts";
+            tableName: "assignments";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: false;
+            hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
