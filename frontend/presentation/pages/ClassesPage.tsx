@@ -5,11 +5,10 @@ import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
-import { CreateClassModal } from '@/presentation/components/forms/CreateClassModal'
+// import { CreateClassModal } from '@/presentation/components/forms/CreateClassModal'
 import { getCurrentUser } from '@/business/services/authService'
 import { getAllClasses } from '@/business/services/classService'
 import { useToast } from '@/shared/context/ToastContext'
-import type { User } from '@/business/models/auth/types'
 import type { Class } from '@/business/models/dashboard/types'
 
 export function ClassesPage() {
@@ -17,11 +16,10 @@ export function ClassesPage() {
   const location = useLocation()
   const { showToast } = useToast()
   const hasShownDeleteToast = useRef(false)
-  const [user, setUser] = useState<User | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+
 
   // Show toast if redirected from class deletion
   useEffect(() => {
@@ -39,8 +37,6 @@ export function ClassesPage() {
       navigate('/login')
       return
     }
-
-    setUser(currentUser)
 
     // Fetch all classes
     const fetchClasses = async () => {
@@ -60,21 +56,6 @@ export function ClassesPage() {
     fetchClasses()
   }, [navigate])
 
-  const handleCreateSuccess = async () => {
-    // Show success toast
-    showToast('Class created successfully')
-
-    // Refresh the classes list
-    if (user) {
-      try {
-        const allClasses = await getAllClasses(parseInt(user.id))
-        setClasses(allClasses)
-      } catch (err) {
-        console.error('Failed to refresh classes:', err)
-      }
-    }
-  }
-
   return (
     <DashboardLayout>
       {/* Page Header */}
@@ -85,7 +66,7 @@ export function ClassesPage() {
             <h1 className="text-3xl font-bold text-white">Classes</h1>
           </div>
           <Button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => navigate('/dashboard/classes/new')}
             className="w-auto px-6"
             disabled={isLoading}
           >
@@ -131,7 +112,7 @@ export function ClassesPage() {
                 Create your first class to get started.
               </p>
               <Button
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => navigate('/dashboard/classes/new')}
                 className="w-auto"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -142,15 +123,7 @@ export function ClassesPage() {
         </CardContent>
       </Card>
 
-      {/* Create Class Modal */}
-      {user && (
-        <CreateClassModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={handleCreateSuccess}
-          teacherId={parseInt(user.id)}
-        />
-      )}
+      {/* Create Class Modal Removed */}
     </DashboardLayout>
   )
 }

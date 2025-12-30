@@ -1,0 +1,63 @@
+/**
+ * Domain-Specific Error Classes
+ * Extends base API errors with domain context
+ */
+import { ApiError, NotFoundError, BadRequestError, ForbiddenError } from '../api/middlewares/error-handler.js';
+export declare class UserNotFoundError extends NotFoundError {
+    constructor(identifier: string | number);
+}
+export declare class UserAlreadyExistsError extends BadRequestError {
+    constructor(field: 'email' | 'username', value: string);
+}
+export declare class InvalidCredentialsError extends ApiError {
+    constructor();
+}
+export declare class EmailNotVerifiedError extends ApiError {
+    constructor();
+}
+export declare class ClassNotFoundError extends NotFoundError {
+    constructor(identifier: string | number);
+}
+export declare class ClassCodeAlreadyExistsError extends BadRequestError {
+    constructor(code: string);
+}
+export declare class NotClassOwnerError extends ForbiddenError {
+    constructor();
+}
+export declare class ClassInactiveError extends BadRequestError {
+    constructor();
+}
+export declare class AssignmentNotFoundError extends NotFoundError {
+    constructor(assignmentId: number);
+}
+export declare class AssignmentInactiveError extends BadRequestError {
+    constructor();
+}
+export declare class DeadlinePassedError extends BadRequestError {
+    constructor();
+}
+export declare class NotEnrolledError extends ForbiddenError {
+    constructor();
+}
+export declare class AlreadyEnrolledError extends BadRequestError {
+    constructor();
+}
+export declare class SubmissionNotFoundError extends NotFoundError {
+    constructor(submissionId: number);
+}
+export declare class ResubmissionNotAllowedError extends BadRequestError {
+    constructor();
+}
+export declare class InvalidFileTypeError extends BadRequestError {
+    constructor(expected: string[], received: string);
+}
+export declare class FileTooLargeError extends BadRequestError {
+    constructor(maxSizeMB: number);
+}
+export declare class UnauthorizedAccessError extends ForbiddenError {
+    constructor(resource: string);
+}
+export declare class InvalidRoleError extends BadRequestError {
+    constructor(expectedRole: string);
+}
+//# sourceMappingURL=errors.d.ts.map

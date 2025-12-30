@@ -145,7 +145,7 @@ export function StudentDashboardPage() {
                     className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
                   >
                     <h4 className="text-sm font-medium text-white mb-1 truncate">
-                      {assignment.title}
+                      {assignment.assignmentName}
                     </h4>
                     <p className="text-xs text-gray-400 mb-2 truncate">
                       {assignment.className}

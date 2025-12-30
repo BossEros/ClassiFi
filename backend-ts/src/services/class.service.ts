@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { ClassRepository, AssignmentRepository, EnrollmentRepository, UserRepository } from '../repositories/index.js';
-import type { Class, Assignment } from '../models/index.js';
+import type { Class, Assignment, ClassSchedule } from '../models/index.js';
 
 /**
  * Business logic for class-related operations.
@@ -36,6 +36,11 @@ export class ClassService {
     async createClass(
         teacherId: number,
         className: string,
+        classCode: string,
+        yearLevel: number,
+        semester: number,
+        academicYear: string,
+        schedule: ClassSchedule,
         description?: string
     ): Promise<{ success: boolean; message: string; classData?: any }> {
         try {
@@ -49,14 +54,15 @@ export class ClassService {
                 return { success: false, message: 'User is not a teacher' };
             }
 
-            // Generate unique class code
-            const classCode = await this.generateClassCode();
-
             // Create the class
             const newClass = await this.classRepo.createClass({
                 teacherId,
                 className,
                 classCode,
+                yearLevel,
+                semester,
+                academicYear,
+                schedule,
                 description,
             });
 
@@ -71,6 +77,10 @@ export class ClassService {
                     className: newClass.className,
                     classCode: newClass.classCode,
                     description: newClass.description,
+                    yearLevel: newClass.yearLevel,
+                    semester: newClass.semester,
+                    academicYear: newClass.academicYear,
+                    schedule: newClass.schedule,
                     createdAt: newClass.createdAt?.toISOString(),
                     isActive: newClass.isActive,
                     studentCount,
@@ -109,6 +119,10 @@ export class ClassService {
                     className: classData.className,
                     classCode: classData.classCode,
                     description: classData.description,
+                    yearLevel: classData.yearLevel,
+                    semester: classData.semester,
+                    academicYear: classData.academicYear,
+                    schedule: classData.schedule,
                     createdAt: classData.createdAt?.toISOString(),
                     isActive: classData.isActive,
                     studentCount,
@@ -136,6 +150,10 @@ export class ClassService {
                         className: c.className,
                         classCode: c.classCode,
                         description: c.description,
+                        yearLevel: c.yearLevel,
+                        semester: c.semester,
+                        academicYear: c.academicYear,
+                        schedule: c.schedule,
                         createdAt: c.createdAt?.toISOString(),
                         isActive: c.isActive,
                         studentCount,
@@ -157,7 +175,15 @@ export class ClassService {
     async updateClass(
         classId: number,
         teacherId: number,
-        data: { className?: string; description?: string | null; isActive?: boolean }
+        data: {
+            className?: string;
+            description?: string | null;
+            isActive?: boolean;
+            yearLevel?: number;
+            semester?: number;
+            academicYear?: string;
+            schedule?: ClassSchedule;
+        }
     ): Promise<{ success: boolean; message: string; classData?: any }> {
         try {
             const existingClass = await this.classRepo.getClassById(classId);
@@ -187,6 +213,10 @@ export class ClassService {
                     className: updatedClass.className,
                     classCode: updatedClass.classCode,
                     description: updatedClass.description,
+                    yearLevel: updatedClass.yearLevel,
+                    semester: updatedClass.semester,
+                    academicYear: updatedClass.academicYear,
+                    schedule: updatedClass.schedule,
                     createdAt: updatedClass.createdAt?.toISOString(),
                     isActive: updatedClass.isActive,
                     studentCount,

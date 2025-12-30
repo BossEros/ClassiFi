@@ -18,7 +18,12 @@ export async function createClass(request: CreateClassRequest): Promise<Class> {
   return await classRepository.createClass({
     teacherId: request.teacherId,
     className: request.className.trim(),
-    description: request.description?.trim() || undefined
+    description: request.description?.trim() || undefined,
+    classCode: request.classCode,
+    yearLevel: request.yearLevel,
+    semester: request.semester,
+    academicYear: request.academicYear,
+    schedule: request.schedule,
   })
 }
 

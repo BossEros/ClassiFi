@@ -159,7 +159,7 @@ export function AssignmentDetailPage() {
   // Fallback data if assignment is not yet loaded or found
   const tempAssignment = assignment || {
     id: parseInt(assignmentId || '0'),
-    title: 'Assignment Title',
+    assignmentName: 'Assignment Title',
     description: 'Assignment description will be loaded from the API',
     programmingLanguage: 'python',
     deadline: new Date(),
@@ -220,7 +220,7 @@ export function AssignmentDetailPage() {
                   <ArrowLeft className="w-5 h-5 text-gray-400" />
                 </button>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">{tempAssignment.title}</h1>
+                  <h1 className="text-2xl font-bold text-white">{tempAssignment.assignmentName}</h1>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="flex items-center gap-1.5 text-sm text-gray-400">
                       <Code className="w-4 h-4" />
@@ -229,7 +229,7 @@ export function AssignmentDetailPage() {
                     <span className="text-gray-600">•</span>
                     <span className="flex items-center gap-1.5 text-sm text-gray-400">
                       <Calendar className="w-4 h-4" />
-                      Due {tempAssignment.deadline.toLocaleDateString()}
+                      Due {new Date(tempAssignment.deadline).toLocaleDateString()}
                     </span>
                   </div>
                 </div>

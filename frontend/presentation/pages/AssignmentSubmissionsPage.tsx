@@ -106,7 +106,7 @@ export function AssignmentSubmissionsPage() {
   }
 
   // Format deadline
-  const formatDeadline = (date: Date) => {
+  const formatDeadline = (date: Date | string) => {
     return new Date(date).toLocaleString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -164,7 +164,7 @@ export function AssignmentSubmissionsPage() {
 
         {/* Assignment Info */}
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold text-white">{assignment.title}</h1>
+          <h1 className="text-3xl font-bold text-white">{assignment.assignmentName}</h1>
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
             <div className="flex items-center gap-2">
@@ -266,7 +266,7 @@ export function AssignmentSubmissionsPage() {
                 <SubmissionCard
                   key={submission.id}
                   submission={submission}
-                  deadline={assignment.deadline}
+                  deadline={new Date(assignment.deadline)}
                   onClick={handleViewSubmission}
                 />
               ))}

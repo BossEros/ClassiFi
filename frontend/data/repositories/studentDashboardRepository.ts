@@ -13,6 +13,15 @@ interface ClassResponse {
   isActive: boolean
   createdAt: string
   teacherName?: string
+  // New fields
+  yearLevel: number
+  semester: number
+  academicYear: string
+  schedule: {
+    days: ('monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday')[]
+    startTime: string
+    endTime: string
+  }
 }
 
 interface AssignmentResponse {

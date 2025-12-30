@@ -1,9 +1,23 @@
+/** Days of the week for class schedule */
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+/** Schedule for class meetings */
+export interface Schedule {
+  days: DayOfWeek[]
+  startTime: string
+  endTime: string
+}
+
 /** Class model - matches backend ClassDTO */
 export interface Class {
   id: number
   className: string
   classCode: string
   description?: string | null
+  yearLevel: number
+  semester: number
+  academicYear: string
+  schedule: Schedule
   studentCount?: number
   createdAt?: Date | string
   isActive?: boolean
@@ -16,23 +30,7 @@ export interface Class {
 export interface Task {
   id: number
   assignmentName: string
-  description: string
-  classId: number
-  className: string
-  programmingLanguage: string
-  deadline: Date | string
-  allowResubmission: boolean
-  createdAt?: Date | string
-  hasSubmitted?: boolean
-  submissionCount?: number
-  totalStudents?: number
-}
-
-/** Assignment model for class detail - matches backend */
-export interface Assignment {
-  id: number
-  assignmentName: string
-  description: string
+  description: string | null
   programmingLanguage: string
   deadline: Date | string
   allowResubmission: boolean
@@ -42,6 +40,9 @@ export interface Assignment {
   hasSubmitted?: boolean
   className?: string
 }
+
+/** Assignment alias for Task - both represent the same domain concept */
+export type Assignment = Task
 
 /** Enrolled student model - matches backend */
 export interface EnrolledStudent {
@@ -56,7 +57,7 @@ export interface EnrolledStudent {
 
 export interface ClassDetailData {
   classInfo: Class
-  assignments: Assignment[]
+  assignments: Task[]
   students: EnrolledStudent[]
 }
 

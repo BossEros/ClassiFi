@@ -1,6 +1,5 @@
+import type { StudentDashboardBackendResponse, JoinClassResponse } from '@/data/repositories/studentDashboardRepository'
 import * as dashboardRepository from '@/data/repositories/studentDashboardRepository'
-import type { StudentDashboardData, JoinClassResponse } from '@/data/repositories/studentDashboardRepository'
-import type { Class, Task } from '../models/dashboard/types'
 
 /**
  * Fetches complete dashboard data for a student
@@ -8,7 +7,7 @@ import type { Class, Task } from '../models/dashboard/types'
  * @param studentId - ID of the student
  * @returns Dashboard data with enrolled classes and pending assignments
  */
-export async function getDashboardData(studentId: number): Promise<StudentDashboardData> {
+export async function getDashboardData(studentId: number): Promise<StudentDashboardBackendResponse> {
   try {
     return await dashboardRepository.getDashboardData(studentId)
   } catch (error) {
@@ -24,7 +23,7 @@ export async function getDashboardData(studentId: number): Promise<StudentDashbo
  * @param limit - Maximum number of classes to return
  * @returns List of enrolled classes
  */
-export async function getEnrolledClasses(studentId: number, limit?: number): Promise<Class[]> {
+export async function getEnrolledClasses(studentId: number, limit?: number): Promise<dashboardRepository.ClassListResponse> {
   try {
     return await dashboardRepository.getEnrolledClasses(studentId, limit)
   } catch (error) {
@@ -40,7 +39,7 @@ export async function getEnrolledClasses(studentId: number, limit?: number): Pro
  * @param limit - Maximum number of assignments to return (default: 10)
  * @returns List of pending assignments
  */
-export async function getPendingAssignments(studentId: number, limit: number = 10): Promise<Task[]> {
+export async function getPendingAssignments(studentId: number, limit: number = 10): Promise<dashboardRepository.AssignmentListResponse> {
   try {
     return await dashboardRepository.getPendingAssignments(studentId, limit)
   } catch (error) {

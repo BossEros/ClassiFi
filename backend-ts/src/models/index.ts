@@ -9,7 +9,7 @@ export type { User, NewUser } from './user.model.js';
 
 // Class model
 export { classes, classesRelations } from './class.model.js';
-export type { Class, NewClass } from './class.model.js';
+export type { Class, NewClass, ClassSchedule } from './class.model.js';
 
 // Assignment model
 export { assignments, assignmentsRelations, programmingLanguageEnum } from './assignment.model.js';

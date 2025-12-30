@@ -1,0 +1,188 @@
+/** Similarity results table - stores pairwise similarity comparison results */
+export declare const similarityResults: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "similarity_results";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "similarity_results";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        reportId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "report_id";
+            tableName: "similarity_results";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        submission1Id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "submission1_id";
+            tableName: "similarity_results";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        submission2Id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "submission2_id";
+            tableName: "similarity_results";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        structuralScore: import("drizzle-orm/pg-core").PgColumn<{
+            name: "structural_score";
+            tableName: "similarity_results";
+            dataType: "string";
+            columnType: "PgNumeric";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        semanticScore: import("drizzle-orm/pg-core").PgColumn<{
+            name: "semantic_score";
+            tableName: "similarity_results";
+            dataType: "string";
+            columnType: "PgNumeric";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        hybridScore: import("drizzle-orm/pg-core").PgColumn<{
+            name: "hybrid_score";
+            tableName: "similarity_results";
+            dataType: "string";
+            columnType: "PgNumeric";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        matchingSegments: import("drizzle-orm/pg-core").PgColumn<{
+            name: "matching_segments";
+            tableName: "similarity_results";
+            dataType: "json";
+            columnType: "PgJsonb";
+            data: unknown;
+            driverParam: unknown;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        isFlagged: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_flagged";
+            tableName: "similarity_results";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        analyzedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "analyzed_at";
+            tableName: "similarity_results";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+/** Similarity result relations */
+export declare const similarityResultsRelations: import("drizzle-orm").Relations<"similarity_results", {
+    report: import("drizzle-orm").One<"similarity_reports", true>;
+    submission1: import("drizzle-orm").One<"submissions", true>;
+    submission2: import("drizzle-orm").One<"submissions", true>;
+}>;
+/** Type definitions for SimilarityResult */
+export type SimilarityResult = typeof similarityResults.$inferSelect;
+export type NewSimilarityResult = typeof similarityResults.$inferInsert;
+//# sourceMappingURL=similarity-result.model.d.ts.map

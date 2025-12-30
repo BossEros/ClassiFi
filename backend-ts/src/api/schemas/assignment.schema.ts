@@ -6,7 +6,7 @@ export type ProgrammingLanguage = z.infer<typeof ProgrammingLanguageSchema>;
 
 /** Create assignment request schema */
 export const CreateAssignmentRequestSchema = z.object({
-    teacherId: z.number().int().positive(),
+    teacherId: z.number().int().min(1),
     assignmentName: z.string().min(1).max(150),
     description: z.string().min(1),
     programmingLanguage: ProgrammingLanguageSchema,
@@ -18,7 +18,7 @@ export type CreateAssignmentRequest = z.infer<typeof CreateAssignmentRequestSche
 
 /** Update assignment request schema */
 export const UpdateAssignmentRequestSchema = z.object({
-    teacherId: z.number().int().positive(),
+    teacherId: z.number().int().min(1),
     assignmentName: z.string().min(1).max(150).optional(),
     description: z.string().min(1).optional(),
     programmingLanguage: ProgrammingLanguageSchema.optional(),

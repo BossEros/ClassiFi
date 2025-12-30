@@ -3,7 +3,19 @@
  * These types define the contract between frontend and backend API.
  */
 
-import type { Class, Assignment, Task } from '@/business/models/dashboard/types'
+import type { Class, Task } from '@/business/models/dashboard/types'
+
+// ============================================================================
+// Shared Types
+// ============================================================================
+
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+export interface Schedule {
+    days: DayOfWeek[]
+    startTime: string // HH:MM format
+    endTime: string   // HH:MM format
+}
 
 // ============================================================================
 // Class Request DTOs
@@ -13,6 +25,11 @@ export interface CreateClassRequest {
     teacherId: number
     className: string
     description?: string
+    classCode: string
+    yearLevel: 1 | 2 | 3 | 4
+    semester: 1 | 2
+    academicYear: string // Format: YYYY-YYYY (e.g., "2024-2025")
+    schedule: Schedule
 }
 
 export interface UpdateClassRequest {
@@ -20,6 +37,10 @@ export interface UpdateClassRequest {
     className?: string
     description?: string
     isActive?: boolean
+    yearLevel?: 1 | 2 | 3 | 4
+    semester?: 1 | 2
+    academicYear?: string
+    schedule?: Schedule
 }
 
 // ============================================================================
@@ -58,7 +79,7 @@ export interface CreateClassResponse {
 export interface CreateAssignmentResponse {
     success: boolean
     message?: string
-    assignment?: Assignment
+    assignment?: Task
 }
 
 // ============================================================================

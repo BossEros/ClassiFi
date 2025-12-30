@@ -1,6 +1,6 @@
 import { db } from '../shared/database.js';
 import { eq, and, desc, sql } from 'drizzle-orm';
-import { classes, enrollments, users, type Class, type NewClass } from '../models/index.js';
+import { classes, enrollments, users, type Class, type NewClass, type ClassSchedule } from '../models/index.js';
 import { BaseRepository } from './base.repository.js';
 import { injectable } from 'tsyringe';
 
@@ -67,6 +67,10 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
         teacherId: number;
         className: string;
         classCode: string;
+        yearLevel: number;
+        semester: number;
+        academicYear: string;
+        schedule: ClassSchedule;
         description?: string;
     }): Promise<Class> {
         const results = await this.db
@@ -75,6 +79,10 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
                 teacherId: data.teacherId,
                 className: data.className,
                 classCode: data.classCode,
+                yearLevel: data.yearLevel,
+                semester: data.semester,
+                academicYear: data.academicYear,
+                schedule: data.schedule,
                 description: data.description ?? null,
                 isActive: true,
             })
@@ -86,7 +94,7 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
     /** Update a class */
     async updateClass(
         classId: number,
-        data: Partial<Pick<NewClass, 'className' | 'description' | 'isActive'>>
+        data: Partial<Pick<NewClass, 'className' | 'description' | 'isActive' | 'yearLevel' | 'semester' | 'academicYear' | 'schedule'>>
     ): Promise<Class | undefined> {
         const updateData = Object.fromEntries(
             Object.entries(data).filter(([_, v]) => v !== undefined)
@@ -160,6 +168,10 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
                 className: classes.className,
                 classCode: classes.classCode,
                 description: classes.description,
+                yearLevel: classes.yearLevel,
+                semester: classes.semester,
+                academicYear: classes.academicYear,
+                schedule: classes.schedule,
                 createdAt: classes.createdAt,
                 isActive: classes.isActive,
             })

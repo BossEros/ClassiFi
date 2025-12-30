@@ -39,7 +39,7 @@ export type StudentDashboardResponse = z.infer<typeof StudentDashboardResponseSc
 
 /** Join class request */
 export const JoinClassRequestSchema = z.object({
-    studentId: z.number().int().positive(),
+    studentId: z.number().int().min(1),
     classCode: z.string().min(1),
 });
 
@@ -47,8 +47,8 @@ export type JoinClassRequest = z.infer<typeof JoinClassRequestSchema>;
 
 /** Leave class request */
 export const LeaveClassRequestSchema = z.object({
-    studentId: z.number().int().positive(),
-    classId: z.number().int().positive(),
+    studentId: z.number().int().min(1),
+    classId: z.number().int().min(1),
 });
 
 export type LeaveClassRequest = z.infer<typeof LeaveClassRequestSchema>;

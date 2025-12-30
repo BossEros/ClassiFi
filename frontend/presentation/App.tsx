@@ -14,6 +14,7 @@ import { AssignmentDetailPage } from './pages/AssignmentDetailPage'
 import { AssignmentSubmissionsPage } from './pages/AssignmentSubmissionsPage'
 import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
+import { CreateClassPage } from './pages/CreateClassPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
 import { getCurrentUser } from '@/business/services/authService'
@@ -120,6 +121,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <RoleBasedClassesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/new"
+            element={
+              <ProtectedRoute>
+                <CreateClassPage />
               </ProtectedRoute>
             }
           />
