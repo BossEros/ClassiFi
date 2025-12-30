@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, BookOpen, Calendar, Clock, RefreshCw, Check, X, Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { ArrowLeft, BookOpen, Calendar, Clock, RefreshCw, Check, X, Plus, Edit } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/presentation/components/ui/Card'
 import { getCurrentUser } from '@/business/services/authService'
-import { createClass, generateClassCode } from '@/business/services/classService'
+import { createClass, generateClassCode, getClassById, updateClass } from '@/business/services/classService'
 import { Input } from '@/presentation/components/ui/Input'
 import { Textarea } from '@/presentation/components/ui/Textarea'
 import { Button } from '@/presentation/components/ui/Button'
@@ -69,11 +69,17 @@ function getCurrentAcademicYear(): string {
 
 const TIME_OPTIONS = generateTimeOptions()
 
-export function CreateClassPage() {
+export function ClassFormPage() {
     const navigate = useNavigate()
+    const { classId } = useParams<{ classId: string }>()
     const { showToast } = useToast()
     const currentUser = getCurrentUser()
+
+    // Determine if we're in edit mode
+    const isEditMode = !!classId
+
     const [isLoading, setIsLoading] = useState(false)
+    const [isFetching, setIsFetching] = useState(isEditMode)
     const [isGenerating, setIsGenerating] = useState(false)
     const [errors, setErrors] = useState<FormErrors>({})
 
@@ -90,6 +96,35 @@ export function CreateClassPage() {
             endTime: '09:30',
         },
     })
+
+    // Fetch existing class data when in edit mode
+    useEffect(() => {
+        if (isEditMode && classId) {
+            const user = getCurrentUser()
+            if (!user) return
+
+            const fetchClassData = async () => {
+                setIsFetching(true)
+                try {
+                    const classData = await getClassById(parseInt(classId), parseInt(user.id))
+                    setFormData({
+                        className: classData.className,
+                        description: classData.description || '',
+                        classCode: classData.classCode,
+                        yearLevel: classData.yearLevel as 1 | 2 | 3 | 4,
+                        semester: classData.semester as 1 | 2,
+                        academicYear: classData.academicYear,
+                        schedule: classData.schedule,
+                    })
+                } catch (error) {
+                    setErrors({ general: 'Failed to load class data. Please try again.' })
+                } finally {
+                    setIsFetching(false)
+                }
+            }
+            fetchClassData()
+        }
+    }, [isEditMode, classId])
 
     const handleGenerateCode = async () => {
         setIsGenerating(true)
@@ -158,31 +193,60 @@ export function CreateClassPage() {
         if (!validateForm()) return
 
         if (!currentUser?.id) {
-            setErrors({ general: 'You must be logged in to create a class' })
+            setErrors({ general: 'You must be logged in' })
             return
         }
 
         setIsLoading(true)
 
         try {
-            await createClass({
-                teacherId: parseInt(currentUser.id),
-                className: formData.className.trim(),
-                description: formData.description.trim() || undefined,
-                classCode: formData.classCode,
-                yearLevel: formData.yearLevel,
-                semester: formData.semester,
-                academicYear: formData.academicYear,
-                schedule: formData.schedule,
-            })
-
-            showToast('Class created successfully')
-            navigate('/dashboard/classes')
+            if (isEditMode && classId) {
+                // Update existing class
+                await updateClass(parseInt(classId), {
+                    teacherId: parseInt(currentUser.id),
+                    className: formData.className.trim(),
+                    description: formData.description.trim() || undefined,
+                    yearLevel: formData.yearLevel,
+                    semester: formData.semester,
+                    academicYear: formData.academicYear,
+                    schedule: formData.schedule,
+                })
+                showToast('Class updated successfully')
+                navigate(`/dashboard/classes/${classId}`)
+            } else {
+                // Create new class
+                await createClass({
+                    teacherId: parseInt(currentUser.id),
+                    className: formData.className.trim(),
+                    description: formData.description.trim() || undefined,
+                    classCode: formData.classCode,
+                    yearLevel: formData.yearLevel,
+                    semester: formData.semester,
+                    academicYear: formData.academicYear,
+                    schedule: formData.schedule,
+                })
+                showToast('Class created successfully')
+                navigate('/dashboard/classes')
+            }
         } catch {
-            setErrors({ general: 'Failed to create class. Please try again.' })
+            setErrors({ general: `Failed to ${isEditMode ? 'update' : 'create'} class. Please try again.` })
         } finally {
             setIsLoading(false)
         }
+    }
+
+    // Show loading state while fetching class data in edit mode
+    if (isFetching) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center min-h-[400px]">
+                    <div className="text-center">
+                        <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-400">Loading class data...</p>
+                    </div>
+                </div>
+            </DashboardLayout>
+        )
     }
 
     return (
@@ -192,9 +256,15 @@ export function CreateClassPage() {
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-purple-500/20">
-                            <Plus className="w-5 h-5 text-purple-300" />
+                            {isEditMode ? (
+                                <Edit className="w-5 h-5 text-purple-300" />
+                            ) : (
+                                <Plus className="w-5 h-5 text-purple-300" />
+                            )}
                         </div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Create New Class</h1>
+                        <h1 className="text-2xl font-bold text-white tracking-tight">
+                            {isEditMode ? 'Edit Class' : 'Create New Class'}
+                        </h1>
                     </div>
                     <Button
                         type="button"
@@ -205,7 +275,9 @@ export function CreateClassPage() {
                         Back
                     </Button>
                 </div>
-                <p className="text-gray-400 ml-11 text-sm">Set up a new class for your students</p>
+                <p className="text-gray-400 ml-11 text-sm">
+                    {isEditMode ? 'Update your class information' : 'Set up a new class for your students'}
+                </p>
                 <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-4"></div>
             </div>
 
@@ -278,28 +350,32 @@ export function CreateClassPage() {
                                         <Input
                                             type="text"
                                             value={formData.classCode}
-                                            placeholder="Click Generate"
+                                            placeholder={isEditMode ? "" : "Click Generate"}
                                             readOnly
-                                            className={`flex-1 bg-white/5 font-mono text-lg tracking-wider uppercase ${errors.classCode ? 'border-red-500/50' : ''}`}
-                                            disabled={isLoading}
+                                            className={`flex-1 bg-white/5 font-mono text-lg tracking-wider uppercase ${errors.classCode ? 'border-red-500/50' : ''} ${isEditMode ? 'text-gray-400 cursor-not-allowed' : ''}`}
+                                            disabled={isLoading || isEditMode}
                                         />
-                                        <Button
-                                            type="button"
-                                            onClick={handleGenerateCode}
-                                            disabled={isGenerating || isLoading}
-                                            className="w-auto px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20"
-                                        >
-                                            {isGenerating ? (
-                                                <RefreshCw className="w-4 h-4 animate-spin" />
-                                            ) : (
-                                                'Generate'
-                                            )}
-                                        </Button>
+                                        {!isEditMode && (
+                                            <Button
+                                                type="button"
+                                                onClick={handleGenerateCode}
+                                                disabled={isGenerating || isLoading}
+                                                className="w-auto px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                                            >
+                                                {isGenerating ? (
+                                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    'Generate'
+                                                )}
+                                            </Button>
+                                        )}
                                     </div>
                                     {errors.classCode && (
                                         <p className="text-xs text-red-400">{errors.classCode}</p>
                                     )}
-                                    <p className="text-xs text-gray-500">Students will use this code to join the class</p>
+                                    <p className="text-xs text-gray-500">
+                                        {isEditMode ? 'Class code cannot be changed after creation' : 'Students will use this code to join the class'}
+                                    </p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -467,7 +543,7 @@ export function CreateClassPage() {
                                     ) : (
                                         <Check className="w-4 h-4 mr-2" />
                                     )}
-                                    Create Class
+                                    {isEditMode ? 'Save Changes' : 'Create Class'}
                                 </Button>
                                 <Button
                                     type="button"
@@ -487,4 +563,6 @@ export function CreateClassPage() {
     )
 }
 
-export default CreateClassPage
+// Export with both names for backwards compatibility
+export { ClassFormPage as CreateClassPage }
+export default ClassFormPage

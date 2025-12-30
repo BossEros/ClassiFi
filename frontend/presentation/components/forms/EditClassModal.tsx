@@ -23,7 +23,7 @@ export function EditClassModal({ isOpen, onClose, onSuccess, teacherId, classDat
   // Populate form with class data when modal opens
   useEffect(() => {
     if (isOpen && classData) {
-      setClassName(classData.name)
+      setClassName(classData.className)
       setDescription(classData.description || '')
       setError(null)
     }
@@ -31,7 +31,7 @@ export function EditClassModal({ isOpen, onClose, onSuccess, teacherId, classDat
 
   // Check if any changes have been made
   const hasChanges =
-    className.trim() !== classData.name ||
+    className.trim() !== classData.className ||
     (description.trim() || '') !== (classData.description || '')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -44,7 +44,7 @@ export function EditClassModal({ isOpen, onClose, onSuccess, teacherId, classDat
     }
 
     // Determine which fields changed
-    const nameChanged = className.trim() !== classData.name
+    const nameChanged = className.trim() !== classData.className
     const descriptionChanged = (description.trim() || '') !== (classData.description || '')
 
     setIsSubmitting(true)
@@ -141,7 +141,7 @@ export function EditClassModal({ isOpen, onClose, onSuccess, teacherId, classDat
             <Input
               id="classCode"
               type="text"
-              value={classData.code}
+              value={classData.classCode}
               readOnly
               className="bg-white/5 text-gray-400 cursor-not-allowed"
               disabled

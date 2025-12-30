@@ -9,7 +9,6 @@ import { DropdownMenu } from '@/presentation/components/ui/DropdownMenu'
 import { AssignmentCard } from '@/presentation/components/dashboard/AssignmentCard'
 import { StudentListItem } from '@/presentation/components/dashboard/StudentListItem'
 import { DeleteClassModal } from '@/presentation/components/forms/DeleteClassModal'
-import { EditClassModal } from '@/presentation/components/forms/EditClassModal'
 import { LeaveClassModal } from '@/presentation/components/forms/LeaveClassModal'
 import { CreateAssignmentModal } from '@/presentation/components/forms/CreateAssignmentModal'
 import { DeleteAssignmentModal } from '@/presentation/components/forms/DeleteAssignmentModal'
@@ -36,7 +35,6 @@ export function ClassDetailPage() {
   const [activeTab, setActiveTab] = useState<TabType>('assignments')
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
   const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
 
@@ -186,26 +184,7 @@ export function ClassDetailPage() {
   }
 
   const handleEditClass = () => {
-    setIsEditModalOpen(true)
-  }
-
-  const handleEditSuccess = async () => {
-    // Refresh class data after successful edit
-    if (classId && user) {
-      try {
-        // Only pass teacherId if user is actually a teacher
-        const data = await getClassDetailData(
-          parseInt(classId),
-          isTeacher ? parseInt(user.id) : undefined
-        )
-        setClassInfo(data.classInfo)
-        setAssignments(data.assignments)
-        setStudents(data.students)
-        showToast('Class updated successfully')
-      } catch (err) {
-        console.error('Failed to refresh class data:', err)
-      }
-    }
+    navigate(`/dashboard/classes/${classId}/edit`)
   }
 
   const dropdownItems = [
@@ -422,16 +401,7 @@ export function ClassDetailPage() {
                 isDeleting={isDeleting}
               />
 
-              {/* Edit Class Modal */}
-              {classInfo && (
-                <EditClassModal
-                  isOpen={isEditModalOpen}
-                  onClose={() => setIsEditModalOpen(false)}
-                  onSuccess={handleEditSuccess}
-                  teacherId={parseInt(user.id)}
-                  classData={classInfo}
-                />
-              )}
+
 
               {/* Delete Assignment Modal */}
               <DeleteAssignmentModal

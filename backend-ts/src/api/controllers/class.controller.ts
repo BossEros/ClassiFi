@@ -212,12 +212,16 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid class ID');
             }
 
-            const { teacherId, className, description, isActive } = request.body;
+            const { teacherId, className, description, isActive, yearLevel, semester, academicYear, schedule } = request.body;
 
             const result = await classService.updateClass(classId, teacherId, {
                 className,
                 description,
                 isActive,
+                yearLevel,
+                semester,
+                academicYear,
+                schedule,
             });
 
             if (!result.success) {

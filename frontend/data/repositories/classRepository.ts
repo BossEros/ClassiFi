@@ -140,13 +140,13 @@ export async function deleteClass(classId: number, teacherId: number): Promise<v
  * Updates a class
  */
 export async function updateClass(classId: number, request: UpdateClassRequest): Promise<Class> {
-  const response = await apiClient.put<ClassResponse>(`/classes/${classId}`, request)
+  const response = await apiClient.put<{ success: boolean; message?: string; classInfo?: Class }>(`/classes/${classId}`, request)
 
-  if (response.error || !response.data?.success || !response.data.class) {
+  if (response.error || !response.data?.success || !response.data.classInfo) {
     throw new Error(response.error || response.data?.message || 'Failed to update class')
   }
 
-  return response.data.class
+  return response.data.classInfo
 }
 
 /**

@@ -159,7 +159,12 @@ export async function updateClass(classId: number, request: UpdateClassRequest):
   return await classRepository.updateClass(classId, {
     teacherId: request.teacherId,
     className: request.className?.trim(),
-    description: request.description?.trim()
+    description: request.description?.trim(),
+    yearLevel: request.yearLevel,
+    semester: request.semester,
+    academicYear: request.academicYear,
+    schedule: request.schedule,
+    isActive: request.isActive,
   })
 }
 
