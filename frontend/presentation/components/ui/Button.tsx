@@ -1,10 +1,13 @@
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
+import { Loader2 } from 'lucide-react'
 
-export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement>
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  isLoading?: boolean
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, children, isLoading, disabled, ...props }, ref) => {
     return (
       <button
         className={cn(
@@ -18,9 +21,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'cursor-pointer',
           className
         )}
+        disabled={isLoading || disabled}
         ref={ref}
         {...props}
       >
+        {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
         {children}
       </button>
     )

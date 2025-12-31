@@ -6,7 +6,6 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  cacheDir: 'C:/temp/vite-cache',
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
