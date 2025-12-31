@@ -1,5 +1,6 @@
 import * as classRepository from '@/data/repositories/classRepository'
-import { validateCreateAssignmentData } from '../validation/assignmentValidation'
+import { validateCreateAssignmentData, validateUpdateAssignmentData } from '../validation/assignmentValidation'
+import { validateId } from '@/shared/utils/validators'
 import type { Class, Assignment, EnrolledStudent, ClassDetailData } from '../models/dashboard/types'
 import type { UpdateAssignmentRequest } from '../models/assignment/types'
 import type {
@@ -43,10 +44,7 @@ export async function generateClassCode(): Promise<string> {
  * @returns List of all classes
  */
 export async function getAllClasses(teacherId: number): Promise<Class[]> {
-  if (!teacherId || teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
-
+  validateId(teacherId, 'teacher')
   return await classRepository.getAllClasses(teacherId)
 }
 
@@ -72,10 +70,7 @@ export async function getClassById(classId: number, teacherId?: number): Promise
  * @returns List of assignments
  */
 export async function getClassAssignments(classId: number): Promise<Assignment[]> {
-  if (!classId || classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
-
+  validateId(classId, 'class')
   return await classRepository.getClassAssignments(classId)
 }
 
@@ -86,10 +81,7 @@ export async function getClassAssignments(classId: number): Promise<Assignment[]
  * @returns List of enrolled students
  */
 export async function getClassStudents(classId: number): Promise<EnrolledStudent[]> {
-  if (!classId || classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
-
+  validateId(classId, 'class')
   return await classRepository.getClassStudents(classId)
 }
 
@@ -101,9 +93,7 @@ export async function getClassStudents(classId: number): Promise<EnrolledStudent
  * @returns Complete class detail data
  */
 export async function getClassDetailData(classId: number, teacherId?: number): Promise<ClassDetailData> {
-  if (!classId || classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
+  validateId(classId, 'class')
 
   // Fetch all data in parallel for better performance
   const [classInfo, assignments, students] = await Promise.all([
@@ -126,14 +116,8 @@ export async function getClassDetailData(classId: number, teacherId?: number): P
  * @param teacherId - ID of the teacher (for authorization)
  */
 export async function deleteClass(classId: number, teacherId: number): Promise<void> {
-  if (!classId || classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
-
-  if (!teacherId || teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
-
+  validateId(classId, 'class')
+  validateId(teacherId, 'teacher')
   await classRepository.deleteClass(classId, teacherId)
 }
 
@@ -148,13 +132,8 @@ export type { UpdateClassRequest } from '@/data/api/types'
  * @returns Updated class data
  */
 export async function updateClass(classId: number, request: UpdateClassRequest): Promise<Class> {
-  if (!classId || classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
-
-  if (!request.teacherId || request.teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
+  validateId(classId, 'class')
+  validateId(request.teacherId, 'teacher')
 
   return await classRepository.updateClass(classId, {
     teacherId: request.teacherId,
@@ -184,13 +163,8 @@ export async function createAssignment(request: CreateAssignmentRequest): Promis
   }
 
   // Validate IDs
-  if (!request.classId || request.classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
-
-  if (!request.teacherId || request.teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
+  validateId(request.classId, 'class')
+  validateId(request.teacherId, 'teacher')
 
   // Pass directly to repository (backend uses camelCase)
   return await classRepository.createAssignment(request.classId, {
@@ -212,35 +186,10 @@ export async function createAssignment(request: CreateAssignmentRequest): Promis
  * @returns Updated assignment data
  */
 export async function updateAssignment(assignmentId: number, request: UpdateAssignmentRequest): Promise<Assignment> {
-  if (!assignmentId || assignmentId <= 0) {
-    throw new Error('Invalid assignment ID')
-  }
+  validateId(assignmentId, 'assignment')
 
-  if (!request.teacherId || request.teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
-
-  // Validate fields if provided
-  if (request.assignmentName !== undefined) {
-    if (request.assignmentName.trim().length === 0) {
-      throw new Error('Assignment title is required')
-    }
-    if (request.assignmentName.trim().length > 150) {
-      throw new Error('Assignment title must be 150 characters or less')
-    }
-  }
-
-  if (request.description !== undefined) {
-    if (request.description.trim().length < 10) {
-      throw new Error('Description must be at least 10 characters')
-    }
-  }
-
-  if (request.deadline) {
-    if (request.deadline <= new Date()) {
-      throw new Error('Deadline must be in the future')
-    }
-  }
+  // Validate all fields using centralized validation
+  validateUpdateAssignmentData(request)
 
   // Pass directly to repository (backend uses camelCase)
   return await classRepository.updateAssignment(assignmentId, {
@@ -261,14 +210,8 @@ export async function updateAssignment(assignmentId: number, request: UpdateAssi
  * @param teacherId - ID of the teacher (for authorization)
  */
 export async function deleteAssignment(assignmentId: number, teacherId: number): Promise<void> {
-  if (!assignmentId || assignmentId <= 0) {
-    throw new Error('Invalid assignment ID')
-  }
-
-  if (!teacherId || teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
-
+  validateId(assignmentId, 'assignment')
+  validateId(teacherId, 'teacher')
   await classRepository.deleteAssignment(assignmentId, teacherId)
 }
 
@@ -280,18 +223,9 @@ export async function deleteAssignment(assignmentId: number, teacherId: number):
  * @param teacherId - ID of the teacher (for authorization)
  */
 export async function removeStudent(classId: number, studentId: number, teacherId: number): Promise<void> {
-  if (!classId || classId <= 0) {
-    throw new Error('Invalid class ID')
-  }
-
-  if (!studentId || studentId <= 0) {
-    throw new Error('Invalid student ID')
-  }
-
-  if (!teacherId || teacherId <= 0) {
-    throw new Error('Invalid teacher ID')
-  }
-
+  validateId(classId, 'class')
+  validateId(studentId, 'student')
+  validateId(teacherId, 'teacher')
   await classRepository.removeStudent(classId, studentId, teacherId)
 }
 

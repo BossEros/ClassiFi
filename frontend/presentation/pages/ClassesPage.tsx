@@ -19,7 +19,6 @@ export function ClassesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-
   // Show toast if redirected from class deletion
   useEffect(() => {
     if (location.state?.deleted && !hasShownDeleteToast.current) {

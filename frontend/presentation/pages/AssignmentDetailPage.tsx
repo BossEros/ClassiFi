@@ -10,12 +10,14 @@ import {
   getSubmissionHistory,
   getAssignmentSubmissions,
   getAssignmentById,
-  formatFileSize,
   validateFile
 } from '@/business/services/assignmentService'
+import { formatFileSize } from '@/shared/utils/formatUtils'
+import { formatDateTime } from '@/shared/utils/dateUtils'
 import { useToast } from '@/shared/context/ToastContext'
 import type { User } from '@/business/models/auth/types'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
+
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
@@ -393,7 +395,7 @@ export function AssignmentDetailPage() {
                         <p className="text-sm text-gray-400 mb-1">Latest Submission:</p>
                         <p className="text-gray-300 font-mono text-sm">{latestSubmission?.fileName}</p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {latestSubmission?.submittedAt && new Date(latestSubmission.submittedAt).toLocaleString()}
+                          {latestSubmission?.submittedAt && formatDateTime(latestSubmission.submittedAt)}
                         </p>
                       </div>
                     </div>
@@ -440,7 +442,7 @@ export function AssignmentDetailPage() {
                             <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
                             <p className="text-xs text-gray-500">
                               {formatFileSize(submission.fileSize)} •{' '}
-                              {new Date(submission.submittedAt).toLocaleString()}
+                              {formatDateTime(submission.submittedAt)}
                             </p>
                           </div>
                         ))}
@@ -478,7 +480,7 @@ export function AssignmentDetailPage() {
                             <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
                             <p className="text-xs text-gray-500">
                               {formatFileSize(submission.fileSize)} •{' '}
-                              {new Date(submission.submittedAt).toLocaleString()}
+                              {formatDateTime(submission.submittedAt)}
                             </p>
                           </div>
                         ))}

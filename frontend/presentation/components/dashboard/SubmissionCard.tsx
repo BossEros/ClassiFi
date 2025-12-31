@@ -3,32 +3,14 @@ import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'
 import { CheckCircle, Clock, AlertCircle, FileCode, ArrowRight } from 'lucide-react'
 import type { Submission } from '@/business/models/assignment/types'
-import { formatFileSize } from '@/business/services/assignmentService'
+import { formatFileSize } from '@/shared/utils/formatUtils'
+import { formatTimeAgo, isLateSubmission } from '@/shared/utils/dateUtils'
 
 interface SubmissionCardProps {
   submission: Submission
   deadline: Date
   onClick?: () => void
   className?: string
-}
-
-function formatTimeAgo(date: Date): string {
-  const now = new Date()
-  const diffTime = now.getTime() - date.getTime()
-  const diffMinutes = Math.floor(diffTime / (1000 * 60))
-  const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-  if (diffMinutes < 1) return 'Just now'
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`
-  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
-  if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
-
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function isLateSubmission(submittedAt: Date, deadline: Date): boolean {
-  return submittedAt.getTime() > deadline.getTime()
 }
 
 export function SubmissionCard({ submission, deadline, onClick, className }: SubmissionCardProps) {

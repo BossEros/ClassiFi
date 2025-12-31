@@ -8,7 +8,9 @@ import { SubmissionCard } from '@/presentation/components/dashboard/SubmissionCa
 import { ArrowLeft, Search, Shield, Calendar, Code, FileText, Inbox } from 'lucide-react'
 import { getCurrentUser } from '@/business/services/authService'
 import { getAssignmentById, getAssignmentSubmissions } from '@/business/services/assignmentService'
+import { formatDeadline } from '@/shared/utils/dateUtils'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
+
 
 export function AssignmentSubmissionsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
@@ -105,16 +107,6 @@ export function AssignmentSubmissionsPage() {
     }
   }
 
-  // Format deadline
-  const formatDeadline = (date: Date | string) => {
-    return new Date(date).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
 
   // Loading state
   if (loading) {

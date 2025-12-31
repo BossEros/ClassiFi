@@ -1,4 +1,5 @@
 import * as assignmentRepository from '@/data/repositories/assignmentRepository'
+import { validateId } from '@/shared/utils/validators'
 import type {
   Submission,
   SubmissionHistoryResponse,
@@ -55,21 +56,9 @@ export function validateFile(file: File, programmingLanguage: string): string | 
   return null
 }
 
-/**
- * Formats file size in human-readable format
- *
- * @param bytes - File size in bytes
- * @returns Formatted file size string
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes'
+// Re-export formatFileSize from shared utils for backward compatibility
+export { formatFileSize } from '@/shared/utils/formatUtils'
 
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
-}
 
 /**
  * Submits an assignment with file upload
@@ -81,13 +70,8 @@ export async function submitAssignment(
   request: SubmitAssignmentRequest
 ): Promise<Submission> {
   // Validate inputs
-  if (!request.assignmentId || request.assignmentId <= 0) {
-    throw new Error('Invalid assignment ID')
-  }
-
-  if (!request.studentId || request.studentId <= 0) {
-    throw new Error('Invalid student ID')
-  }
+  validateId(request.assignmentId, 'assignment')
+  validateId(request.studentId, 'student')
 
   // Validate file
   const validationError = validateFile(request.file, request.programmingLanguage)
@@ -120,13 +104,8 @@ export async function getSubmissionHistory(
   assignmentId: number,
   studentId: number
 ): Promise<SubmissionHistoryResponse> {
-  if (!assignmentId || assignmentId <= 0) {
-    throw new Error('Invalid assignment ID')
-  }
-
-  if (!studentId || studentId <= 0) {
-    throw new Error('Invalid student ID')
-  }
+  validateId(assignmentId, 'assignment')
+  validateId(studentId, 'student')
 
   const response = await assignmentRepository.getSubmissionHistory(
     assignmentId,
@@ -155,9 +134,7 @@ export async function getStudentSubmissions(
   studentId: number,
   latestOnly: boolean = true
 ): Promise<Submission[]> {
-  if (!studentId || studentId <= 0) {
-    throw new Error('Invalid student ID')
-  }
+  validateId(studentId, 'student')
 
   const response = await assignmentRepository.getStudentSubmissions(
     studentId,
@@ -186,9 +163,7 @@ export async function getAssignmentSubmissions(
   assignmentId: number,
   latestOnly: boolean = true
 ): Promise<Submission[]> {
-  if (!assignmentId || assignmentId <= 0) {
-    throw new Error('Invalid assignment ID')
-  }
+  validateId(assignmentId, 'assignment')
 
   const response = await assignmentRepository.getAssignmentSubmissions(
     assignmentId,
@@ -216,9 +191,7 @@ export async function getAssignmentById(
   assignmentId: number,
   userId: number
 ): Promise<AssignmentDetail> {
-  if (!assignmentId || assignmentId <= 0) {
-    throw new Error('Invalid assignment ID')
-  }
+  validateId(assignmentId, 'assignment')
 
   const response = await assignmentRepository.getAssignmentById(
     assignmentId,

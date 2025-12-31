@@ -122,3 +122,41 @@ export const validateCreateAssignmentData = (
     errors
   }
 }
+
+/**
+ * Validate update assignment data (partial - only validates provided fields)
+ * Throws an error if validation fails
+ */
+export const validateUpdateAssignmentData = (
+  data: {
+    teacherId?: number
+    assignmentName?: string
+    description?: string
+    deadline?: Date | string
+  }
+): void => {
+  // Validate teacher ID (required for authorization)
+  // Import validateId inline to avoid circular dependency
+  if (!data.teacherId || data.teacherId <= 0) {
+    throw new Error('Invalid teacher ID')
+  }
+
+  // Validate title if provided
+  if (data.assignmentName !== undefined) {
+    const titleError = validateAssignmentTitle(data.assignmentName)
+    if (titleError) throw new Error(titleError)
+  }
+
+  // Validate description if provided
+  if (data.description !== undefined) {
+    const descError = validateDescription(data.description)
+    if (descError) throw new Error(descError)
+  }
+
+  // Validate deadline if provided
+  if (data.deadline !== undefined) {
+    const deadlineError = validateDeadline(data.deadline)
+    if (deadlineError) throw new Error(deadlineError)
+  }
+}
+

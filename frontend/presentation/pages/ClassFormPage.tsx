@@ -9,6 +9,9 @@ import { Input } from '@/presentation/components/ui/Input'
 import { Textarea } from '@/presentation/components/ui/Textarea'
 import { Button } from '@/presentation/components/ui/Button'
 import { useToast } from '@/shared/context/ToastContext'
+import { DAYS, TIME_OPTIONS } from '@/shared/constants/schedule'
+import { formatTimeDisplay } from '@/shared/utils/timeUtils'
+import { getCurrentAcademicYear } from '@/shared/utils/dateUtils'
 import type { Schedule, DayOfWeek } from '@/business/models/dashboard/types'
 
 interface FormData {
@@ -28,46 +31,6 @@ interface FormErrors {
     schedule?: string
     general?: string
 }
-
-const DAYS: { value: DayOfWeek; label: string; short: string }[] = [
-    { value: 'monday', label: 'Monday', short: 'Mon' },
-    { value: 'tuesday', label: 'Tuesday', short: 'Tue' },
-    { value: 'wednesday', label: 'Wednesday', short: 'Wed' },
-    { value: 'thursday', label: 'Thursday', short: 'Thu' },
-    { value: 'friday', label: 'Friday', short: 'Fri' },
-    { value: 'saturday', label: 'Saturday', short: 'Sat' },
-    { value: 'sunday', label: 'Sunday', short: 'Sun' },
-]
-
-function generateTimeOptions(): string[] {
-    const times: string[] = []
-    for (let hour = 6; hour <= 21; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
-            const h = hour.toString().padStart(2, '0')
-            const m = minute.toString().padStart(2, '0')
-            times.push(`${h}:${m}`)
-        }
-    }
-    return times
-}
-
-function formatTimeDisplay(time: string): string {
-    const [h, m] = time.split(':')
-    const hour = parseInt(h, 10)
-    const suffix = hour >= 12 ? 'PM' : 'AM'
-    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour
-    return `${displayHour}:${m} ${suffix}`
-}
-
-function getCurrentAcademicYear(): string {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    // If we're past June, use current-next year, otherwise use previous-current year
-    const startYear = now.getMonth() >= 5 ? currentYear : currentYear - 1
-    return `${startYear}-${startYear + 1}`
-}
-
-const TIME_OPTIONS = generateTimeOptions()
 
 export function ClassFormPage() {
     const navigate = useNavigate()
