@@ -143,12 +143,9 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
       </div>
 
       {/* Submit Button */}
-      <Button type="submit" className="w-full group" disabled={isLoading}>
+      <Button type="submit" className="w-full group" isLoading={isLoading}>
         {isLoading ? (
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            <span>Signing in...</span>
-          </div>
+          'Signing in...'
         ) : (
           <div className="flex items-center justify-center space-x-2">
             <span>Sign In</span>

@@ -370,15 +370,8 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             )}
           </div>
 
-          <Button onClick={handleNext} disabled={!canProceed() || isLoading} className="mt-6">
-            {isLoading ? (
-              <div className="flex items-center justify-center space-x-2">
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Creating Account...</span>
-              </div>
-            ) : (
-              'Create My Account'
-            )}
+          <Button onClick={handleNext} disabled={!canProceed()} isLoading={isLoading} className="mt-6">
+            {isLoading ? 'Creating Account...' : 'Create My Account'}
           </Button>
 
           <p className="text-center text-xs text-gray-500">
