@@ -1,0 +1,1 @@
+{"version":3,"file":"identifiable.d.ts","sourceRoot":"","sources":["../../../../src/lib/plagiarism/util/identifiable.ts"],"names":[],"mappings":"AAAA;;;GAGG;AACH,8BAAsB,YAAY;IAC9B,OAAO,CAAC,MAAM,CAAC,MAAM,CAAK;IAE1B,SAAgB,EAAE,EAAE,MAAM,CAAC;IAE3B,SAAS,aAAa,EAAE,CAAC,EAAE,MAAM;IASjC;;OAEG;WACW,cAAc,IAAI,IAAI;CAGvC"}

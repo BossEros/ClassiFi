@@ -4,7 +4,7 @@ function formatZodError(error) {
     return {
         success: false,
         message: 'Validation failed',
-        errors: error.errors.map(e => ({
+        errors: error.issues.map(e => ({
             field: e.path.join('.'),
             message: e.message,
         })),

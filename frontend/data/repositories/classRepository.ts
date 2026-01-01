@@ -28,10 +28,20 @@ interface AssignmentListResponse {
   assignments: Assignment[]
 }
 
+// Backend response type (does not include fullName - we compute it on the frontend)
+interface StudentBackendResponse {
+  id: number
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+  enrolledAt?: string
+}
+
 interface StudentListResponse {
   success: boolean
   message?: string
-  students: EnrolledStudent[]
+  students: StudentBackendResponse[]
 }
 
 interface DeleteResponse {
@@ -114,6 +124,7 @@ export async function getClassAssignments(classId: number): Promise<Assignment[]
 
 /**
  * Fetches all students enrolled in a class
+ * Transforms backend response to include computed fullName
  */
 export async function getClassStudents(classId: number): Promise<EnrolledStudent[]> {
   const response = await apiClient.get<StudentListResponse>(`/classes/${classId}/students`)
@@ -122,7 +133,11 @@ export async function getClassStudents(classId: number): Promise<EnrolledStudent
     throw new Error(response.error || response.data?.message || 'Failed to fetch students')
   }
 
-  return response.data.students
+  // Transform backend response to include computed fullName
+  return response.data.students.map(student => ({
+    ...student,
+    fullName: `${student.firstName} ${student.lastName}`.trim()
+  }))
 }
 
 /**

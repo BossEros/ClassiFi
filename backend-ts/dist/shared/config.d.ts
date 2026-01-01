@@ -12,39 +12,17 @@ declare const EnvSchema: z.ZodObject<{
     DATABASE_URL: z.ZodString;
     APP_NAME: z.ZodDefault<z.ZodString>;
     APP_VERSION: z.ZodDefault<z.ZodString>;
-    DEBUG: z.ZodDefault<z.ZodEffects<z.ZodString, boolean, string>>;
-    ENVIRONMENT: z.ZodDefault<z.ZodEnum<["development", "staging", "production"]>>;
-    PORT: z.ZodDefault<z.ZodEffects<z.ZodString, number, string>>;
+    DEBUG: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<boolean, string>>;
+    ENVIRONMENT: z.ZodDefault<z.ZodEnum<{
+        development: "development";
+        staging: "staging";
+        production: "production";
+    }>>;
+    PORT: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<number, string>>;
     FRONTEND_URL: z.ZodDefault<z.ZodString>;
-    ALLOWED_ORIGINS: z.ZodDefault<z.ZodEffects<z.ZodString, string[], string>>;
+    ALLOWED_ORIGINS: z.ZodPipe<z.ZodDefault<z.ZodString>, z.ZodTransform<string[], string>>;
     API_PREFIX: z.ZodDefault<z.ZodString>;
-}, "strip", z.ZodTypeAny, {
-    SUPABASE_URL: string;
-    SUPABASE_ANON_KEY: string;
-    SUPABASE_SERVICE_ROLE_KEY: string;
-    DATABASE_URL: string;
-    APP_NAME: string;
-    APP_VERSION: string;
-    DEBUG: boolean;
-    ENVIRONMENT: "development" | "staging" | "production";
-    PORT: number;
-    FRONTEND_URL: string;
-    ALLOWED_ORIGINS: string[];
-    API_PREFIX: string;
-}, {
-    SUPABASE_URL: string;
-    SUPABASE_ANON_KEY: string;
-    SUPABASE_SERVICE_ROLE_KEY: string;
-    DATABASE_URL: string;
-    APP_NAME?: string | undefined;
-    APP_VERSION?: string | undefined;
-    DEBUG?: string | undefined;
-    ENVIRONMENT?: "development" | "staging" | "production" | undefined;
-    PORT?: string | undefined;
-    FRONTEND_URL?: string | undefined;
-    ALLOWED_ORIGINS?: string | undefined;
-    API_PREFIX?: string | undefined;
-}>;
+}, z.core.$strip>;
 /** Validated environment type */
 export type Env = z.infer<typeof EnvSchema>;
 /** Validated environment variables */

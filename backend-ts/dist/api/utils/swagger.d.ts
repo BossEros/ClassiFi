@@ -3,7 +3,7 @@ import { z } from 'zod';
  * Convert Zod schema to JSON Schema for OpenAPI/Swagger documentation.
  * Used by all controllers to define request/response schemas.
  */
-export declare const toJsonSchema: (schema: z.ZodType) => object & {
+export declare const toJsonSchema: (schema: z.ZodType<any>) => object & {
     $schema?: string | undefined;
     definitions?: {
         [key: string]: object;

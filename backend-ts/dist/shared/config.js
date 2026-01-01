@@ -15,12 +15,12 @@ const EnvSchema = z.object({
     // Application
     APP_NAME: z.string().default('ClassiFi API'),
     APP_VERSION: z.string().default('1.0.0'),
-    DEBUG: z.string().transform(v => v === 'true' || v === 'True').default('false'),
+    DEBUG: z.string().default('false').transform(v => v === 'true' || v === 'True'),
     ENVIRONMENT: z.enum(['development', 'staging', 'production']).default('development'),
-    PORT: z.string().transform(Number).default('8001'),
+    PORT: z.string().default('8001').transform(Number),
     // CORS
     FRONTEND_URL: z.string().url().default('http://localhost:5173'),
-    ALLOWED_ORIGINS: z.string().transform(v => v.split(',')).default('http://localhost:5173'),
+    ALLOWED_ORIGINS: z.string().default('http://localhost:5173').transform(v => v.split(',')),
     // API
     API_PREFIX: z.string().default('/api'),
 });
@@ -29,7 +29,7 @@ function validateEnv() {
     const result = EnvSchema.safeParse(process.env);
     if (!result.success) {
         console.error('❌ Invalid environment variables:');
-        for (const error of result.error.errors) {
+        for (const error of result.error.issues) {
             console.error(`   - ${error.path.join('.')}: ${error.message}`);
         }
         process.exit(1);

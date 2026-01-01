@@ -1,0 +1,46 @@
+{
+  "name": "@classifi/plagiarism-detection",
+  "version": "1.0.0",
+  "description": "Source code plagiarism detection library using Winnow fingerprinting algorithm",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "npx ts-node examples/basic-usage.ts"
+  },
+  "keywords": [
+    "plagiarism",
+    "detection",
+    "similarity",
+    "code",
+    "winnow",
+    "fingerprint"
+  ],
+  "author": "ClassiFi",
+  "license": "MIT",
+  "dependencies": {
+    "tree-sitter": "^0.21.1",
+    "tree-sitter-java": "^0.21.0",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-c": "^0.21.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "typescript": "^5.3.0",
+    "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "monaco-editor": "^0.45.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "monaco-editor": {
+      "optional": true
+    }
+  }
+}

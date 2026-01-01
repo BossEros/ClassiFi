@@ -35,6 +35,7 @@ export interface AssignmentDetail {
   programmingLanguage: string
   deadline: Date | string
   allowResubmission: boolean
+  maxAttempts?: number | null
   createdAt?: Date | string
   isActive: boolean
   hasSubmitted?: boolean

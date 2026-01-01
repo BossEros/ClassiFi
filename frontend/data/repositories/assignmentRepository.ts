@@ -24,10 +24,10 @@ export async function submitAssignment(
   request: SubmitAssignmentRequest
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
-    // Create FormData for file upload - use camelCase keys
+    // Create FormData for file upload - use snake_case keys to match backend
     const formData = new FormData()
-    formData.append('assignmentId', request.assignmentId.toString())
-    formData.append('studentId', request.studentId.toString())
+    formData.append('assignment_id', request.assignmentId.toString())
+    formData.append('student_id', request.studentId.toString())
     formData.append('file', request.file)
 
     // Get auth token

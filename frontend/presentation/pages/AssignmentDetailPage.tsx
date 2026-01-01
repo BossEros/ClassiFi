@@ -231,7 +231,7 @@ export function AssignmentDetailPage() {
                     <span className="text-gray-600">•</span>
                     <span className="flex items-center gap-1.5 text-sm text-gray-400">
                       <Calendar className="w-4 h-4" />
-                      Due {new Date(tempAssignment.deadline).toLocaleDateString()}
+                      Due {formatDateTime(tempAssignment.deadline)}
                     </span>
                   </div>
                 </div>
@@ -374,6 +374,45 @@ export function AssignmentDetailPage() {
 
             {/* Right Column - Submission History */}
             <div className="space-y-6">
+              {/* Assignment Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Assignment Info</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Deadline */}
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-purple-500/20">
+                        <Clock className="w-5 h-5 text-purple-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-400">Deadline</p>
+                        <p className="text-gray-300 font-medium">{formatDateTime(tempAssignment.deadline)}</p>
+                      </div>
+                    </div>
+                    {/* Resubmission Policy */}
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${tempAssignment.allowResubmission ? 'bg-green-500/20' : 'bg-yellow-500/20'}`}>
+                        <RefreshCw className={`w-5 h-5 ${tempAssignment.allowResubmission ? 'text-green-400' : 'text-yellow-400'}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-400">Resubmission</p>
+                        <p className="text-gray-300 font-medium">
+                          {tempAssignment.allowResubmission ? (
+                            tempAssignment.maxAttempts
+                              ? `Allowed (max ${tempAssignment.maxAttempts} attempts)`
+                              : 'Allowed (unlimited)'
+                          ) : (
+                            'Not allowed'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Submission Status */}
               <Card>
                 <CardHeader>

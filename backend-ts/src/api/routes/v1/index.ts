@@ -5,6 +5,7 @@ import { assignmentRoutes } from '@/api/controllers/assignment.controller.js';
 import { submissionRoutes } from '@/api/controllers/submission.controller.js';
 import { studentDashboardRoutes } from '@/api/controllers/student-dashboard.controller.js';
 import { teacherDashboardRoutes } from '@/api/controllers/teacher-dashboard.controller.js';
+import { plagiarismRoutes } from '@/api/controllers/plagiarism.controller.js';
 import { authMiddleware } from '@/api/middlewares/auth.middleware.js';
 
 /**
@@ -28,6 +29,9 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
     // Teacher dashboard routes - /api/v1/teacher/dashboard/*
     await app.register(teacherDashboardRoutes, { prefix: '/teacher/dashboard' });
+
+    // Plagiarism detection routes - /api/v1/plagiarism/*
+    await app.register(plagiarismRoutes, { prefix: '/plagiarism' });
 }
 
 /** API v1 routes aggregator */
