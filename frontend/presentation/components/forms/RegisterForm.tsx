@@ -234,9 +234,13 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onChange={(e) => setFirstName(e.target.value)}
                 onBlur={(e) => handleFieldBlur('firstName', e.target.value)}
                 required
+                hasError={!!fieldErrors.firstName}
+                aria-describedby={fieldErrors.firstName ? "firstName-error" : undefined}
               />
               {fieldErrors.firstName && (
-                <p className="text-sm text-red-400">{fieldErrors.firstName}</p>
+                <p id="firstName-error" className="text-sm text-red-400" role="alert">
+                  {fieldErrors.firstName}
+                </p>
               )}
             </div>
 
@@ -252,9 +256,13 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onChange={(e) => setLastName(e.target.value)}
                 onBlur={(e) => handleFieldBlur('lastName', e.target.value)}
                 required
+                hasError={!!fieldErrors.lastName}
+                aria-describedby={fieldErrors.lastName ? "lastName-error" : undefined}
               />
               {fieldErrors.lastName && (
-                <p className="text-sm text-red-400">{fieldErrors.lastName}</p>
+                <p id="lastName-error" className="text-sm text-red-400" role="alert">
+                  {fieldErrors.lastName}
+                </p>
               )}
             </div>
           </div>
@@ -271,9 +279,13 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               onChange={(e) => setEmail(e.target.value)}
               onBlur={(e) => handleFieldBlur('email', e.target.value)}
               required
+              hasError={!!fieldErrors.email}
+              aria-describedby={fieldErrors.email ? "email-error" : undefined}
             />
             {fieldErrors.email && (
-              <p className="text-sm text-red-400">{fieldErrors.email}</p>
+              <p id="email-error" className="text-sm text-red-400" role="alert">
+                {fieldErrors.email}
+              </p>
             )}
           </div>
 
@@ -302,9 +314,13 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               onChange={(e) => setUsername(e.target.value)}
               onBlur={(e) => handleFieldBlur('username', e.target.value)}
               required
+              hasError={!!fieldErrors.username}
+              aria-describedby={fieldErrors.username ? "username-error" : undefined}
             />
             {fieldErrors.username && (
-              <p className="text-sm text-red-400">{fieldErrors.username}</p>
+              <p id="username-error" className="text-sm text-red-400" role="alert">
+                {fieldErrors.username}
+              </p>
             )}
             <p className="text-xs text-gray-500">Letters, numbers, and underscores only</p>
           </div>
@@ -323,6 +339,8 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onBlur={(e) => handleFieldBlur('password', e.target.value)}
                 className="pr-11"
                 required
+                hasError={!!fieldErrors.password}
+                aria-describedby={fieldErrors.password ? "password-error" : undefined}
               />
               <button
                 type="button"
@@ -334,7 +352,9 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               </button>
             </div>
             {fieldErrors.password && (
-              <p className="text-sm text-red-400">{fieldErrors.password}</p>
+              <p id="password-error" className="text-sm text-red-400" role="alert">
+                {fieldErrors.password}
+              </p>
             )}
             <p className="text-xs text-gray-500">
               Must be 8+ characters with uppercase, lowercase, number, and special character
@@ -355,6 +375,8 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onBlur={(e) => handleFieldBlur('confirmPassword', e.target.value)}
                 className="pr-11"
                 required
+                hasError={!!fieldErrors.confirmPassword}
+                aria-describedby={fieldErrors.confirmPassword ? "confirmPassword-error" : undefined}
               />
               <button
                 type="button"
@@ -366,7 +388,9 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               </button>
             </div>
             {fieldErrors.confirmPassword && (
-              <p className="text-sm text-red-400">{fieldErrors.confirmPassword}</p>
+              <p id="confirmPassword-error" className="text-sm text-red-400" role="alert">
+                {fieldErrors.confirmPassword}
+              </p>
             )}
           </div>
 
