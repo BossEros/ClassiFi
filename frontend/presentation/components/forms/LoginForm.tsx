@@ -3,7 +3,7 @@ import { Input } from '../ui/Input'
 import { Button } from '../ui/Button'
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from 'lucide-react'
 import { loginUser } from '@/business/services/authService'
-import { validateField } from '@/business/validation/authValidation'
+import { validateField, validateLoginData } from '@/business/validation/authValidation'
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -24,6 +24,14 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
     setIsLoading(true)
     setError(null)
     setFieldErrors({})
+
+    // Validate form data before submitting
+    const validation = validateLoginData({ email, password })
+    if (!validation.isValid) {
+      setFieldErrors(validation.errors)
+      setIsLoading(false)
+      return
+    }
 
     const result = await loginUser({ email, password })
 
@@ -61,7 +69,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
     <form onSubmit={handleLogin} className="space-y-5" noValidate>
       {/* Error Message */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
           {error}
         </div>
       )}
@@ -87,10 +95,12 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!fieldErrors.email}
+            aria-describedby={fieldErrors.email ? "email-error" : undefined}
           />
         </div>
         {fieldErrors.email && (
-          <p className="text-sm text-red-400">{fieldErrors.email}</p>
+          <p id="email-error" className="text-sm text-red-400" role="alert">{fieldErrors.email}</p>
         )}
       </div>
 
@@ -104,7 +114,6 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             type="button"
             onClick={onForgotPasswordClick}
             className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium cursor-pointer"
-            tabIndex={-1}
           >
             Forgot password?
           </button>
@@ -125,20 +134,21 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!fieldErrors.password}
+            aria-describedby={fieldErrors.password ? "password-error" : undefined}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors focus:outline-none focus:text-gray-300"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
-            tabIndex={-1}
             disabled={isLoading}
           >
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
         {fieldErrors.password && (
-          <p className="text-sm text-red-400">{fieldErrors.password}</p>
+          <p id="password-error" className="text-sm text-red-400" role="alert">{fieldErrors.password}</p>
         )}
       </div>
 
