@@ -234,6 +234,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onChange={(e) => setFirstName(e.target.value)}
                 onBlur={(e) => handleFieldBlur('firstName', e.target.value)}
                 required
+                hasError={!!fieldErrors.firstName}
               />
               {fieldErrors.firstName && (
                 <p className="text-sm text-red-400">{fieldErrors.firstName}</p>
@@ -252,6 +253,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onChange={(e) => setLastName(e.target.value)}
                 onBlur={(e) => handleFieldBlur('lastName', e.target.value)}
                 required
+                hasError={!!fieldErrors.lastName}
               />
               {fieldErrors.lastName && (
                 <p className="text-sm text-red-400">{fieldErrors.lastName}</p>
@@ -271,6 +273,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               onChange={(e) => setEmail(e.target.value)}
               onBlur={(e) => handleFieldBlur('email', e.target.value)}
               required
+              hasError={!!fieldErrors.email}
             />
             {fieldErrors.email && (
               <p className="text-sm text-red-400">{fieldErrors.email}</p>
@@ -302,6 +305,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               onChange={(e) => setUsername(e.target.value)}
               onBlur={(e) => handleFieldBlur('username', e.target.value)}
               required
+              hasError={!!fieldErrors.username}
             />
             {fieldErrors.username && (
               <p className="text-sm text-red-400">{fieldErrors.username}</p>
@@ -323,6 +327,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onBlur={(e) => handleFieldBlur('password', e.target.value)}
                 className="pr-11"
                 required
+                hasError={!!fieldErrors.password}
               />
               <button
                 type="button"
@@ -355,6 +360,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 onBlur={(e) => handleFieldBlur('confirmPassword', e.target.value)}
                 className="pr-11"
                 required
+                hasError={!!fieldErrors.confirmPassword}
               />
               <button
                 type="button"

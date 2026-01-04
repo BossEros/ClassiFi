@@ -87,6 +87,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!fieldErrors.email}
           />
         </div>
         {fieldErrors.email && (
@@ -125,6 +126,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!fieldErrors.password}
           />
           <button
             type="button"
