@@ -1,14 +1,7 @@
-/**
- * Plagiarism Service
- * Part of the Business Logic Layer
- * Handles plagiarism detection operations
- */
-
 import * as plagiarismRepository from '@/data/repositories/plagiarismRepository'
 import { validateId } from '@/shared/utils/validators'
 import type { AnalyzeResponse, PairResponse, FileResponse, ResultDetailsResponse } from '@/data/repositories/plagiarismRepository'
 
-// Re-export types for convenience
 export type { AnalyzeResponse, PairResponse, FileResponse, ResultDetailsResponse }
 
 /**

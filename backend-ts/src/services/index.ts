@@ -1,8 +1,3 @@
-/**
- * Services Index
- * Re-exports all service classes
- */
-
 export { AuthService } from './auth.service.js';
 export { ClassService } from './class.service.js';
 export { SubmissionService } from './submission.service.js';

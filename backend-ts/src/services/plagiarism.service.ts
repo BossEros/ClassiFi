@@ -4,19 +4,35 @@ import {
     File,
     Report,
     Pair,
-    Fragment,
     LanguageName
 } from '../lib/plagiarism/index.js';
 import { SubmissionRepository } from '../repositories/submission.repository.js';
 import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { SimilarityRepository } from '../repositories/similarity.repository.js';
 import { supabase } from '../shared/supabase.js';
+import {
+    PLAGIARISM_CONFIG,
+    PLAGIARISM_LANGUAGE_MAP,
+    toPlagiarismPairDTO,
+    toPlagiarismFragmentDTO,
+    type PlagiarismPairDTO,
+    type PlagiarismFragmentDTO,
+    type PlagiarismSummaryDTO,
+} from '../shared/mappers.js';
+import {
+    AssignmentNotFoundError,
+    PlagiarismReportNotFoundError,
+    PlagiarismResultNotFoundError,
+    PlagiarismPairNotFoundError,
+    InsufficientFilesError,
+    UnsupportedLanguageError,
+    LanguageRequiredError,
+    FileDownloadError,
+    InsufficientDownloadedFilesError,
+} from '../shared/errors.js';
 
-/**
- * Request body for analyzing files.
- */
+/** Request body for analyzing files */
 export interface AnalyzeRequest {
-    /** Array of files to analyze */
     files: Array<{
         id?: string;
         path: string;
@@ -24,98 +40,32 @@ export interface AnalyzeRequest {
         studentId?: string;
         studentName?: string;
     }>;
-    /** Programming language (java, python, c) */
     language: LanguageName;
-    /** Optional: Template/boilerplate file to ignore */
     templateFile?: {
         path: string;
         content: string;
     };
-    /** Optional: Similarity threshold (0-1, default 0.5) */
     threshold?: number;
-    /** Optional: k-gram length (default 23) */
     kgramLength?: number;
 }
 
-/**
- * Response for analyze endpoint.
- */
+/** Response for analyze endpoint */
 export interface AnalyzeResponse {
-    /** Unique ID for this analysis */
     reportId: string;
-    /** Summary statistics */
-    summary: {
-        totalFiles: number;
-        totalPairs: number;
-        suspiciousPairs: number;
-        averageSimilarity: number;
-        maxSimilarity: number;
-    };
-    /** All pairs sorted by similarity (descending) */
-    pairs: PairResponse[];
-    /** Any warnings during analysis */
+    summary: PlagiarismSummaryDTO;
+    pairs: PlagiarismPairDTO[];
     warnings: string[];
 }
 
-/**
- * A pair in the response.
- */
-export interface PairResponse {
-    id: number;
-    leftFile: FileResponse;
-    rightFile: FileResponse;
-    structuralScore: number;
-    semanticScore: number;
-    hybridScore: number;
-    overlap: number;
-    longest: number;
-}
-
-/**
- * A file in the response.
- */
-export interface FileResponse {
-    id: number;
-    path: string;
-    filename: string;
-    lineCount: number;
-    studentId?: string;
-    studentName?: string;
-}
-
-/**
- * Response with fragment details.
- */
+/** Response with pair details and fragments */
 export interface PairDetailsResponse {
-    pair: PairResponse;
-    fragments: FragmentResponse[];
+    pair: PlagiarismPairDTO;
+    fragments: PlagiarismFragmentDTO[];
     leftCode: string;
     rightCode: string;
 }
 
-/**
- * A fragment in the response.
- */
-export interface FragmentResponse {
-    id: number;
-    leftSelection: {
-        startRow: number;
-        startCol: number;
-        endRow: number;
-        endCol: number;
-    };
-    rightSelection: {
-        startRow: number;
-        startCol: number;
-        endRow: number;
-        endCol: number;
-    };
-    length: number;
-}
-
-/**
- * Stored report for retrieval.
- */
+/** Stored report for retrieval (internal) */
 interface StoredReport {
     id: string;
     createdAt: Date;
@@ -124,6 +74,7 @@ interface StoredReport {
 
 /**
  * Business logic for plagiarism detection operations.
+ * Uses domain errors for exceptional conditions.
  */
 @injectable()
 export class PlagiarismService {
@@ -136,159 +87,89 @@ export class PlagiarismService {
         @inject('SimilarityRepository') private similarityRepo: SimilarityRepository
     ) { }
 
-    /**
-     * Analyze files for plagiarism.
-     */
+    // ========================================================================
+    // Public Methods
+    // ========================================================================
+
+    /** Analyze files for plagiarism */
     async analyzeFiles(request: AnalyzeRequest): Promise<AnalyzeResponse> {
         // Validate request
-        if (!request.files || request.files.length < 2) {
-            throw new Error('At least 2 files are required for analysis');
-        }
-
-        if (!request.language) {
-            throw new Error('Language is required (java, python, or c)');
-        }
+        this.validateAnalyzeRequest(request);
 
         // Create detector
         const detector = new PlagiarismDetector({
             language: request.language,
-            kgramLength: request.kgramLength ?? 23,
-            kgramsInWindow: 17,
+            kgramLength: request.kgramLength ?? PLAGIARISM_CONFIG.DEFAULT_KGRAM_LENGTH,
+            kgramsInWindow: PLAGIARISM_CONFIG.DEFAULT_KGRAMS_IN_WINDOW,
         });
 
         // Convert to File objects
         const files = request.files.map(f => new File(
             f.path,
             f.content,
-            {
-                studentId: f.studentId,
-                studentName: f.studentName,
-            }
+            { studentId: f.studentId, studentName: f.studentName }
         ));
 
         // Optional template file
-        let ignoredFile: File | undefined;
-        if (request.templateFile) {
-            ignoredFile = new File(
-                request.templateFile.path,
-                request.templateFile.content
-            );
-        }
+        const ignoredFile = request.templateFile
+            ? new File(request.templateFile.path, request.templateFile.content)
+            : undefined;
 
         // Run analysis
         const report = await detector.analyze(files, ignoredFile);
 
-        // Generate report ID
-        const reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Generate and store report
+        const reportId = this.generateReportId();
+        this.reportsStore.set(reportId, { id: reportId, createdAt: new Date(), report });
 
-        // Store report for later detail queries
-        this.reportsStore.set(reportId, {
-            id: reportId,
-            createdAt: new Date(),
-            report,
-        });
-
-        // Get summary
-        const summary = report.getSummary();
-        const threshold = request.threshold ?? 0.5;
-
-        // Get pairs
-        const pairs = report.getPairs();
-
-        return {
-            reportId,
-            summary: {
-                totalFiles: summary.totalFiles,
-                totalPairs: summary.totalPairs,
-                suspiciousPairs: pairs.filter(p => p.similarity >= threshold).length,
-                averageSimilarity: summary.averageSimilarity,
-                maxSimilarity: summary.maxSimilarity,
-            },
-            pairs: pairs.map(pair => this.pairToResponse(pair)),
-            warnings: summary.warnings,
-        };
+        // Build response
+        const threshold = request.threshold ?? PLAGIARISM_CONFIG.DEFAULT_THRESHOLD;
+        return this.buildAnalyzeResponse(reportId, report, threshold);
     }
 
-    /**
-     * Get pair details with fragments.
-     */
+    /** Get pair details with fragments */
     async getPairDetails(reportId: string, pairId: number): Promise<PairDetailsResponse> {
-        // Get stored report
         const stored = this.reportsStore.get(reportId);
         if (!stored) {
-            throw new Error('Report not found');
+            throw new PlagiarismReportNotFoundError(reportId);
         }
 
-        // Find the pair
         const pairs = stored.report.getPairs();
         const pair = pairs.find(p => p.id === pairId);
         if (!pair) {
-            throw new Error('Pair not found');
+            throw new PlagiarismPairNotFoundError(pairId);
         }
 
-        // Get fragments
         const fragments = stored.report.getFragments(pair);
 
         return {
-            pair: this.pairToResponse(pair),
-            fragments: fragments.map((f, i) => ({
-                id: i,
-                leftSelection: {
-                    startRow: f.leftSelection.startRow,
-                    startCol: f.leftSelection.startCol,
-                    endRow: f.leftSelection.endRow,
-                    endCol: f.leftSelection.endCol,
-                },
-                rightSelection: {
-                    startRow: f.rightSelection.startRow,
-                    startCol: f.rightSelection.startCol,
-                    endRow: f.rightSelection.endRow,
-                    endCol: f.rightSelection.endCol,
-                },
-                length: f.length,
-            })),
+            pair: toPlagiarismPairDTO(pair),
+            fragments: fragments.map((f, i) => toPlagiarismFragmentDTO(f, i)),
             leftCode: pair.leftFile.content,
             rightCode: pair.rightFile.content,
         };
     }
 
-    /**
-     * Get report by ID.
-     */
+    /** Get report by ID */
     async getReport(reportId: string): Promise<AnalyzeResponse | null> {
         const stored = this.reportsStore.get(reportId);
         if (!stored) {
             return null;
         }
 
-        const summary = stored.report.getSummary();
-        const pairs = stored.report.getPairs();
-
-        return {
-            reportId: stored.id,
-            summary: {
-                totalFiles: summary.totalFiles,
-                totalPairs: summary.totalPairs,
-                suspiciousPairs: pairs.filter(p => p.similarity >= 0.5).length,
-                averageSimilarity: summary.averageSimilarity,
-                maxSimilarity: summary.maxSimilarity,
-            },
-            pairs: pairs.map(pair => this.pairToResponse(pair)),
-            warnings: summary.warnings,
-        };
+        return this.buildAnalyzeResponse(
+            stored.id,
+            stored.report,
+            PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+        );
     }
 
-    /**
-     * Delete a report.
-     */
+    /** Delete a report */
     async deleteReport(reportId: string): Promise<boolean> {
         return this.reportsStore.delete(reportId);
     }
 
-    /**
-     * Get result details from database with fragments and file content.
-     * This is the database-backed version intended for production use.
-     */
+    /** Get result details from database with fragments and file content */
     async getResultDetails(resultId: number): Promise<{
         result: {
             id: number;
@@ -298,19 +179,14 @@ export class PlagiarismService {
             overlap: number;
             longestFragment: number;
         };
-        fragments: Array<{
-            id: number;
-            leftSelection: { startRow: number; startCol: number; endRow: number; endCol: number };
-            rightSelection: { startRow: number; startCol: number; endRow: number; endCol: number };
-            length: number;
-        }>;
+        fragments: PlagiarismFragmentDTO[];
         leftFile: { filename: string; content: string; lineCount: number; studentName: string };
         rightFile: { filename: string; content: string; lineCount: number; studentName: string };
     }> {
         // Fetch result with fragments from database
         const data = await this.similarityRepo.getResultWithFragments(resultId);
         if (!data) {
-            throw new Error('Result not found');
+            throw new PlagiarismResultNotFoundError(resultId);
         }
 
         const { result, fragments } = data;
@@ -322,23 +198,14 @@ export class PlagiarismService {
         ]);
 
         if (!submission1 || !submission2) {
-            throw new Error('Submissions not found');
+            throw new PlagiarismResultNotFoundError(resultId);
         }
 
         // Download file content from Supabase
-        const [file1Data, file2Data] = await Promise.all([
-            supabase.storage.from('submissions').download(submission1.submission.filePath),
-            supabase.storage.from('submissions').download(submission2.submission.filePath),
-        ]);
-
-        if (file1Data.error || file2Data.error) {
-            throw new Error('Failed to download file content');
-        }
-
-        const [leftContent, rightContent] = await Promise.all([
-            file1Data.data.text(),
-            file2Data.data.text(),
-        ]);
+        const [leftContent, rightContent] = await this.downloadSubmissionFiles(
+            submission1.submission.filePath,
+            submission2.submission.filePath
+        );
 
         return {
             result: {
@@ -349,7 +216,7 @@ export class PlagiarismService {
                 overlap: result.overlap,
                 longestFragment: result.longestFragment,
             },
-            fragments: fragments.map(f => ({
+            fragments: fragments.map((f, i) => ({
                 id: f.id,
                 leftSelection: {
                     startRow: f.leftStartRow,
@@ -381,64 +248,116 @@ export class PlagiarismService {
     }
 
     /**
-     * Convert a Pair to a response object.
-     */
-    private pairToResponse(pair: Pair): PairResponse {
-        return {
-            id: pair.id,
-            leftFile: {
-                id: pair.leftFile.id,
-                path: pair.leftFile.path,
-                filename: pair.leftFile.filename,
-                lineCount: pair.leftFile.lineCount,
-                studentId: pair.leftFile.info?.studentId,
-                studentName: pair.leftFile.info?.studentName,
-            },
-            rightFile: {
-                id: pair.rightFile.id,
-                path: pair.rightFile.path,
-                filename: pair.rightFile.filename,
-                lineCount: pair.rightFile.lineCount,
-                studentId: pair.rightFile.info?.studentId,
-                studentName: pair.rightFile.info?.studentName,
-            },
-            structuralScore: pair.similarity,
-            semanticScore: 0,
-            hybridScore: 0,
-            overlap: pair.overlap,
-            longest: pair.longest,
-        };
-    }
-
-    /**
      * Analyze all submissions for an assignment.
      * Fetches submissions, downloads file content from Supabase, and runs analysis.
      * Persists the report and results to the database.
      */
     async analyzeAssignmentSubmissions(assignmentId: number, teacherId?: number): Promise<AnalyzeResponse> {
-        // Get the assignment to determine programming language
-        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
-        if (!assignment) {
-            throw new Error(`Assignment with ID ${assignmentId} not found`);
+        // Step 1: Validate and fetch assignment
+        const assignment = await this.validateAndFetchAssignment(assignmentId);
+
+        // Step 2: Fetch and download submission files
+        const files = await this.fetchSubmissionFiles(assignmentId);
+
+        // Step 3: Run plagiarism analysis
+        const language = this.getLanguage(assignment.programmingLanguage);
+        const { report, pairs } = await this.runPlagiarismAnalysis(files, language);
+
+        // Step 4: Persist report to database
+        const { dbReport, resultIdMap } = await this.persistReportToDatabase(
+            assignmentId,
+            teacherId,
+            report,
+            pairs
+        );
+
+        // Step 5: Build and return response
+        return this.buildAssignmentAnalysisResponse(dbReport.id, report, pairs, resultIdMap);
+    }
+
+    // ========================================================================
+    // Private Helper Methods
+    // ========================================================================
+
+    /** Validate analyze request */
+    private validateAnalyzeRequest(request: AnalyzeRequest): void {
+        if (!request.files || request.files.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED) {
+            throw new InsufficientFilesError(
+                PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED,
+                request.files?.length ?? 0
+            );
         }
 
-        // Get all latest submissions for this assignment
+        if (!request.language) {
+            throw new LanguageRequiredError();
+        }
+    }
+
+    /** Generate a unique report ID */
+    private generateReportId(): string {
+        return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /** Build analyze response from report */
+    private buildAnalyzeResponse(
+        reportId: string,
+        report: Report,
+        threshold: number
+    ): AnalyzeResponse {
+        const summary = report.getSummary();
+        const pairs = report.getPairs();
+
+        return {
+            reportId,
+            summary: {
+                totalFiles: summary.totalFiles,
+                totalPairs: summary.totalPairs,
+                suspiciousPairs: pairs.filter(p => p.similarity >= threshold).length,
+                averageSimilarity: summary.averageSimilarity,
+                maxSimilarity: summary.maxSimilarity,
+            },
+            pairs: pairs.map(pair => toPlagiarismPairDTO(pair)),
+            warnings: summary.warnings,
+        };
+    }
+
+    /** Validate assignment exists and return it */
+    private async validateAndFetchAssignment(assignmentId: number) {
+        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
+        if (!assignment) {
+            throw new AssignmentNotFoundError(assignmentId);
+        }
+        return assignment;
+    }
+
+    /** Get validated language name */
+    private getLanguage(programmingLanguage: string): LanguageName {
+        const language = PLAGIARISM_LANGUAGE_MAP[programmingLanguage.toLowerCase()];
+        if (!language) {
+            throw new UnsupportedLanguageError(programmingLanguage);
+        }
+        return language;
+    }
+
+    /** Fetch and download all submission files for an assignment */
+    private async fetchSubmissionFiles(assignmentId: number): Promise<File[]> {
         const submissionsWithInfo = await this.submissionRepo.getSubmissionsWithStudentInfo(
             assignmentId,
             true // latestOnly
         );
 
-        if (submissionsWithInfo.length < 2) {
-            throw new Error('At least 2 submissions are required for plagiarism analysis');
+        if (submissionsWithInfo.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED) {
+            throw new InsufficientFilesError(
+                PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED,
+                submissionsWithInfo.length
+            );
         }
 
-        // Download file content for each submission from Supabase
-        const files: Array<File> = [];
+        const files: File[] = [];
 
         for (const item of submissionsWithInfo) {
             const { submission, studentName } = item;
 
-            // Download file content from Supabase storage
             const { data, error } = await supabase.storage
                 .from('submissions')
                 .download(submission.filePath);
@@ -448,63 +367,122 @@ export class PlagiarismService {
                 continue;
             }
 
-            // Convert Blob to text
             const content = await data.text();
 
-            // Create Dolos File object with metadata
             files.push(new File(
                 submission.fileName,
                 content,
                 {
                     studentId: submission.studentId.toString(),
                     studentName: studentName,
-                    submissionId: submission.id.toString(), // Important for mapping back
+                    submissionId: submission.id.toString(),
                 }
             ));
         }
 
-        if (files.length < 2) {
-            throw new Error('Could not download enough files for analysis (need at least 2)');
+        if (files.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED) {
+            throw new InsufficientDownloadedFilesError(
+                PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED,
+                files.length
+            );
         }
 
-        // Map programming language to supported language name
-        const languageMap: Record<string, LanguageName> = {
-            python: 'python',
-            java: 'java',
-            c: 'c',
-        };
+        return files;
+    }
 
-        const language = languageMap[assignment.programmingLanguage.toLowerCase()];
-        if (!language) {
-            throw new Error(`Unsupported programming language: ${assignment.programmingLanguage}`);
+    /** Download two submission files and return their content */
+    private async downloadSubmissionFiles(
+        filePath1: string,
+        filePath2: string
+    ): Promise<[string, string]> {
+        const [file1Data, file2Data] = await Promise.all([
+            supabase.storage.from('submissions').download(filePath1),
+            supabase.storage.from('submissions').download(filePath2),
+        ]);
+
+        if (file1Data.error || file2Data.error) {
+            throw new FileDownloadError(0, 'Failed to download file content');
         }
 
-        // Initialize detector
+        const [leftContent, rightContent] = await Promise.all([
+            file1Data.data.text(),
+            file2Data.data.text(),
+        ]);
+
+        return [leftContent, rightContent];
+    }
+
+    /** Run plagiarism detection on files */
+    private async runPlagiarismAnalysis(
+        files: File[],
+        language: LanguageName
+    ): Promise<{ report: Report; pairs: Pair[] }> {
         const detector = new PlagiarismDetector({
-            language: language,
-            kgramLength: 23,
-            kgramsInWindow: 17,
+            language,
+            kgramLength: PLAGIARISM_CONFIG.DEFAULT_KGRAM_LENGTH,
+            kgramsInWindow: PLAGIARISM_CONFIG.DEFAULT_KGRAMS_IN_WINDOW,
         });
 
-        // Run analysis
         const report = await detector.analyze(files);
         const pairs = report.getPairs();
 
-        // Persist report to database
+        return { report, pairs };
+    }
+
+    /** Persist report, results, and fragments to database */
+    private async persistReportToDatabase(
+        assignmentId: number,
+        teacherId: number | undefined,
+        report: Report,
+        pairs: Pair[]
+    ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
+        // Create report
         const dbReport = await this.similarityRepo.createReport({
             assignmentId,
             teacherId: teacherId ?? null,
             totalSubmissions: report.files.length,
             totalComparisons: pairs.length,
-            flaggedPairs: pairs.filter((p: Pair) => p.similarity >= 0.5).length,
-            averageSimilarity: (pairs.reduce((sum: number, p: Pair) => sum + p.similarity, 0) / Math.max(1, pairs.length)).toFixed(4),
-            highestSimilarity: (Math.max(...pairs.map((p: Pair) => p.similarity), 0)).toFixed(4),
+            flaggedPairs: pairs.filter(p => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD).length,
+            averageSimilarity: (pairs.reduce((sum, p) => sum + p.similarity, 0) / Math.max(1, pairs.length)).toFixed(4),
+            highestSimilarity: (Math.max(...pairs.map(p => p.similarity), 0)).toFixed(4),
         });
 
+        // Prepare results for batch insert
+        const { resultsToInsert, pairMap, swappedMap } = this.prepareResultsForInsert(dbReport.id, pairs);
+
+        // Batch insert results and fragments
+        const resultIdMap = new Map<string, number>();
+
+        if (resultsToInsert.length > 0) {
+            const insertedResults = await this.similarityRepo.createResults(resultsToInsert);
+
+            // Build result ID map and insert fragments
+            for (const result of insertedResults) {
+                const key = `${result.submission1Id}-${result.submission2Id}`;
+                resultIdMap.set(key, result.id);
+            }
+
+            // Prepare and insert fragments
+            const fragmentsToInsert = this.prepareFragmentsForInsert(insertedResults, pairMap, swappedMap);
+            if (fragmentsToInsert.length > 0) {
+                await this.similarityRepo.createFragments(fragmentsToInsert);
+            }
+        }
+
+        return { dbReport, resultIdMap };
+    }
+
+    /** Prepare results for database insertion */
+    private prepareResultsForInsert(
+        reportId: number,
+        pairs: Pair[]
+    ): {
+        resultsToInsert: any[];
+        pairMap: Map<string, Pair>;
+        swappedMap: Map<string, boolean>;
+    } {
         const resultsToInsert: any[] = [];
-        // Map from submission pair key to Dolos Pair for fragment processing later
         const pairMap = new Map<string, Pair>();
-        // Track which pairs had their left/right swapped to maintain sub1 < sub2 ordering
         const swappedMap = new Map<string, boolean>();
 
         for (const pair of pairs) {
@@ -513,19 +491,15 @@ export class PlagiarismService {
 
             if (!leftSubId || !rightSubId) continue;
 
-            // Determine if we need to swap to ensure sub1 < sub2
             const needsSwap = leftSubId > rightSubId;
-            const [sub1, sub2] = needsSwap
-                ? [rightSubId, leftSubId]
-                : [leftSubId, rightSubId];
+            const [sub1, sub2] = needsSwap ? [rightSubId, leftSubId] : [leftSubId, rightSubId];
 
-            // Store pairing to find fragments later
             const key = `${sub1}-${sub2}`;
             pairMap.set(key, pair);
             swappedMap.set(key, needsSwap);
 
             resultsToInsert.push({
-                reportId: dbReport.id,
+                reportId,
                 submission1Id: sub1,
                 submission2Id: sub2,
                 structuralScore: pair.similarity.toFixed(4),
@@ -537,82 +511,81 @@ export class PlagiarismService {
                 rightCovered: pair.rightCovered,
                 leftTotal: pair.leftTotal,
                 rightTotal: pair.rightTotal,
-                isFlagged: pair.similarity >= 0.5,
+                isFlagged: pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
             });
         }
 
-        // Batch insert results
-        let resultIdMap = new Map<string, number>();
-        if (resultsToInsert.length > 0) {
-            const insertedResults = await this.similarityRepo.createResults(resultsToInsert);
+        return { resultsToInsert, pairMap, swappedMap };
+    }
 
-            // Build map from submission pair key to database result ID
-            for (const result of insertedResults) {
-                const key = `${result.submission1Id}-${result.submission2Id}`;
-                resultIdMap.set(key, result.id);
-            }
+    /** Prepare fragments for database insertion */
+    private prepareFragmentsForInsert(
+        insertedResults: any[],
+        pairMap: Map<string, Pair>,
+        swappedMap: Map<string, boolean>
+    ): any[] {
+        const fragmentsToInsert: any[] = [];
 
-            // Prepare fragments for batch insertion
-            const fragmentsToInsert: any[] = [];
+        for (const result of insertedResults) {
+            const key = `${result.submission1Id}-${result.submission2Id}`;
+            const pair = pairMap.get(key);
+            const swapped = swappedMap.get(key) || false;
 
-            for (const result of insertedResults) {
-                const key = `${result.submission1Id}-${result.submission2Id}`;
-                const pair = pairMap.get(key);
-                const swapped = swappedMap.get(key) || false;
+            if (pair) {
+                const fragments = pair.buildFragments();
 
-                if (pair) {
-                    const fragments = pair.buildFragments();
-
-                    for (const frag of fragments) {
-                        // If submissions were swapped, swap left/right coordinates too
-                        if (swapped) {
-                            fragmentsToInsert.push({
-                                similarityResultId: result.id,
-                                leftStartRow: frag.rightSelection.startRow,
-                                leftStartCol: frag.rightSelection.startCol,
-                                leftEndRow: frag.rightSelection.endRow,
-                                leftEndCol: frag.rightSelection.endCol,
-                                rightStartRow: frag.leftSelection.startRow,
-                                rightStartCol: frag.leftSelection.startCol,
-                                rightEndRow: frag.leftSelection.endRow,
-                                rightEndCol: frag.leftSelection.endCol,
-                                length: frag.length,
-                            });
-                        } else {
-                            fragmentsToInsert.push({
-                                similarityResultId: result.id,
-                                leftStartRow: frag.leftSelection.startRow,
-                                leftStartCol: frag.leftSelection.startCol,
-                                leftEndRow: frag.leftSelection.endRow,
-                                leftEndCol: frag.leftSelection.endCol,
-                                rightStartRow: frag.rightSelection.startRow,
-                                rightStartCol: frag.rightSelection.startCol,
-                                rightEndRow: frag.rightSelection.endRow,
-                                rightEndCol: frag.rightSelection.endCol,
-                                length: frag.length,
-                            });
-                        }
+                for (const frag of fragments) {
+                    if (swapped) {
+                        fragmentsToInsert.push({
+                            similarityResultId: result.id,
+                            leftStartRow: frag.rightSelection.startRow,
+                            leftStartCol: frag.rightSelection.startCol,
+                            leftEndRow: frag.rightSelection.endRow,
+                            leftEndCol: frag.rightSelection.endCol,
+                            rightStartRow: frag.leftSelection.startRow,
+                            rightStartCol: frag.leftSelection.startCol,
+                            rightEndRow: frag.leftSelection.endRow,
+                            rightEndCol: frag.leftSelection.endCol,
+                            length: frag.length,
+                        });
+                    } else {
+                        fragmentsToInsert.push({
+                            similarityResultId: result.id,
+                            leftStartRow: frag.leftSelection.startRow,
+                            leftStartCol: frag.leftSelection.startCol,
+                            leftEndRow: frag.leftSelection.endRow,
+                            leftEndCol: frag.leftSelection.endCol,
+                            rightStartRow: frag.rightSelection.startRow,
+                            rightStartCol: frag.rightSelection.startCol,
+                            rightEndRow: frag.rightSelection.endRow,
+                            rightEndCol: frag.rightSelection.endCol,
+                            length: frag.length,
+                        });
                     }
                 }
             }
-
-            // Batch insert fragments
-            if (fragmentsToInsert.length > 0) {
-                await this.similarityRepo.createFragments(fragmentsToInsert);
-            }
         }
 
-        // Return simplified response with database result IDs
+        return fragmentsToInsert;
+    }
+
+    /** Build response for assignment analysis */
+    private buildAssignmentAnalysisResponse(
+        reportId: number,
+        report: Report,
+        pairs: Pair[],
+        resultIdMap: Map<string, number>
+    ): AnalyzeResponse {
         return {
-            reportId: dbReport.id.toString(),
+            reportId: reportId.toString(),
             summary: {
                 totalFiles: report.files.length,
                 totalPairs: pairs.length,
-                suspiciousPairs: pairs.filter((p: Pair) => p.similarity >= 0.5).length,
-                averageSimilarity: parseFloat((pairs.reduce((sum: number, p: Pair) => sum + p.similarity, 0) / Math.max(1, pairs.length)).toFixed(4)),
-                maxSimilarity: parseFloat((Math.max(...pairs.map((p: Pair) => p.similarity), 0)).toFixed(4)),
+                suspiciousPairs: pairs.filter(p => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD).length,
+                averageSimilarity: parseFloat((pairs.reduce((sum, p) => sum + p.similarity, 0) / Math.max(1, pairs.length)).toFixed(4)),
+                maxSimilarity: parseFloat((Math.max(...pairs.map(p => p.similarity), 0)).toFixed(4)),
             },
-            pairs: pairs.map((p: Pair) => {
+            pairs: pairs.map(p => {
                 const leftSubId = parseInt(p.leftFile.info?.submissionId || '0');
                 const rightSubId = parseInt(p.rightFile.info?.submissionId || '0');
                 const [sub1, sub2] = leftSubId < rightSubId ? [leftSubId, rightSubId] : [rightSubId, leftSubId];
@@ -620,7 +593,7 @@ export class PlagiarismService {
                 const resultId = resultIdMap.get(key) ?? 0;
 
                 return {
-                    id: resultId, // Database result ID for fetching details
+                    id: resultId,
                     leftFile: {
                         id: leftSubId,
                         path: p.leftFile.path,

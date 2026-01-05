@@ -43,9 +43,9 @@ export async function generateClassCode(): Promise<string> {
  * @param teacherId - ID of the teacher
  * @returns List of all classes
  */
-export async function getAllClasses(teacherId: number): Promise<Class[]> {
+export async function getAllClasses(teacherId: number, activeOnly?: boolean): Promise<Class[]> {
   validateId(teacherId, 'teacher')
-  return await classRepository.getAllClasses(teacherId)
+  return await classRepository.getAllClasses(teacherId, activeOnly)
 }
 
 /**

@@ -1,14 +1,5 @@
-/**
- * Plagiarism Repository
- * Part of the Data Access Layer
- * Handles API calls for plagiarism detection operations
- */
-
 import { apiClient, type ApiResponse } from '../api/apiClient'
 
-/**
- * Response types for plagiarism API
- */
 export interface AnalyzeResponse {
     reportId: string
     summary: {

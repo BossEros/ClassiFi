@@ -1,9 +1,5 @@
 import { apiClient } from '@/data/api/apiClient'
 
-// ============================================================================
-// Raw Backend Response Types (matching API shape exactly)
-// ============================================================================
-
 interface ClassResponse {
   id: number
   teacherId: number
@@ -67,10 +63,6 @@ interface LeaveClassResponse {
   success: boolean
   message: string
 }
-
-// ============================================================================
-// Repository Functions (return raw API data)
-// ============================================================================
 
 /**
  * Fetches complete dashboard data for a student

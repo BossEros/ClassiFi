@@ -88,6 +88,7 @@ export class SubmissionService {
         const submissionNumber = submissionCount + 1;
 
         // Upload file to Supabase Storage
+        // Upload file to Supabase Storage
         const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`;
 
         const { error: uploadError } = await supabase.storage
@@ -98,6 +99,7 @@ export class SubmissionService {
             });
 
         if (uploadError) {
+            console.error('Submission upload error:', uploadError);
             throw new UploadFailedError(uploadError.message);
         }
 

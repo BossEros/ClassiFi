@@ -85,8 +85,9 @@ export async function generateClassCode(): Promise<string> {
 /**
  * Fetches all classes for a teacher
  */
-export async function getAllClasses(teacherId: number): Promise<Class[]> {
-  const response = await apiClient.get<ClassListResponse>(`/classes/teacher/${teacherId}`)
+export async function getAllClasses(teacherId: number, activeOnly?: boolean): Promise<Class[]> {
+  const query = activeOnly !== undefined ? `?activeOnly=${activeOnly}` : ''
+  const response = await apiClient.get<ClassListResponse>(`/classes/teacher/${teacherId}${query}`)
 
   if (response.error || !response.data?.success) {
     throw new Error(response.error || response.data?.message || 'Failed to fetch classes')

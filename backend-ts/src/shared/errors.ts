@@ -166,3 +166,61 @@ export class StudentNotInClassError extends NotFoundError {
     }
 }
 
+// ============ Plagiarism Errors ============
+
+export class PlagiarismReportNotFoundError extends NotFoundError {
+    constructor(reportId: string) {
+        super(`Plagiarism report not found: ${reportId}`);
+        this.name = 'PlagiarismReportNotFoundError';
+    }
+}
+
+export class PlagiarismResultNotFoundError extends NotFoundError {
+    constructor(resultId: number) {
+        super(`Plagiarism result not found: ${resultId}`);
+        this.name = 'PlagiarismResultNotFoundError';
+    }
+}
+
+export class PlagiarismPairNotFoundError extends NotFoundError {
+    constructor(pairId: number) {
+        super(`Plagiarism pair not found: ${pairId}`);
+        this.name = 'PlagiarismPairNotFoundError';
+    }
+}
+
+export class InsufficientFilesError extends BadRequestError {
+    constructor(required: number, provided: number) {
+        super(`At least ${required} files are required for plagiarism analysis, but only ${provided} were provided`);
+        this.name = 'InsufficientFilesError';
+    }
+}
+
+export class UnsupportedLanguageError extends BadRequestError {
+    constructor(language: string) {
+        super(`Unsupported programming language for plagiarism detection: ${language}`);
+        this.name = 'UnsupportedLanguageError';
+    }
+}
+
+export class LanguageRequiredError extends BadRequestError {
+    constructor() {
+        super('Programming language is required (java, python, or c)');
+        this.name = 'LanguageRequiredError';
+    }
+}
+
+export class FileDownloadError extends ApiError {
+    constructor(submissionId: number, reason: string) {
+        super(`Failed to download file for submission ${submissionId}: ${reason}`, 500);
+        this.name = 'FileDownloadError';
+    }
+}
+
+export class InsufficientDownloadedFilesError extends BadRequestError {
+    constructor(required: number, downloaded: number) {
+        super(`Could not download enough files for analysis. Need at least ${required}, but only ${downloaded} were downloaded successfully`);
+        this.name = 'InsufficientDownloadedFilesError';
+    }
+}
+

@@ -1,0 +1,170 @@
+/** Submissions table - stores student code submissions for assignments */
+export declare const submissions: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "submissions";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "submissions";
+            dataType: "number";
+            columnType: "PgSerial";
+            data: number;
+            driverParam: number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        assignmentId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "assignment_id";
+            tableName: "submissions";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        studentId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "student_id";
+            tableName: "submissions";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        fileName: import("drizzle-orm/pg-core").PgColumn<{
+            name: "file_name";
+            tableName: "submissions";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        filePath: import("drizzle-orm/pg-core").PgColumn<{
+            name: "file_path";
+            tableName: "submissions";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        fileSize: import("drizzle-orm/pg-core").PgColumn<{
+            name: "file_size";
+            tableName: "submissions";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        submissionNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "submission_number";
+            tableName: "submissions";
+            dataType: "number";
+            columnType: "PgInteger";
+            data: number;
+            driverParam: string | number;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        submittedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "submitted_at";
+            tableName: "submissions";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        isLatest: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_latest";
+            tableName: "submissions";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+/** Submission relations */
+export declare const submissionsRelations: import("drizzle-orm").Relations<"submissions", {
+    assignment: import("drizzle-orm").One<"assignments", true>;
+    student: import("drizzle-orm").One<"users", true>;
+}>;
+/** Type definitions for Submission */
+export type Submission = typeof submissions.$inferSelect;
+export type NewSubmission = typeof submissions.$inferInsert;
+//# sourceMappingURL=submission.model.d.ts.map

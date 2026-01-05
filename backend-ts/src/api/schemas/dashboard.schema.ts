@@ -10,6 +10,11 @@ export const DashboardClassResponseSchema = z.object({
     assignmentCount: z.number().optional(),
     teacherName: z.string().optional(),
     createdAt: z.string(),
+    isActive: z.boolean(),
+    yearLevel: z.number(),
+    semester: z.number(),
+    academicYear: z.string(),
+    schedule: z.any(), // Using any for schedule structure for now to match ClassDTO
 });
 
 export type DashboardClassResponse = z.infer<typeof DashboardClassResponseSchema>;

@@ -18,6 +18,7 @@ import { HistoryPage } from './pages/HistoryPage'
 import { ClassFormPage } from './pages/ClassFormPage'
 import { CourseworkFormPage } from './pages/CourseworkFormPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
+import { SettingsPage } from './pages/SettingsPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
 import { getCurrentUser } from '@/business/services/authService'
 import { useEffect } from 'react'
@@ -211,6 +212,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <HistoryPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/settings"
+            element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             }
           />
