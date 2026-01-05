@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
-import { FileData, MatchFragment, CodeRegion, MATCH_COLORS, regionToMonacoRange } from './types';
+import type { FileData, MatchFragment, CodeRegion } from './types';
+import { MATCH_COLORS } from './types';
 
 interface PairCodeEditorProps {
     /** Which side of the comparison (left or right file) */
@@ -195,7 +196,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
         for (const sel of selections) {
             let className = 'plagiarism-match';
-            let color = MATCH_COLORS.match;
+            let color: string = MATCH_COLORS.match;
 
             if (sel.fragment === 'ignored') {
                 className = 'plagiarism-match-ignored';
@@ -341,16 +342,17 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            {/* File info header */}
+            {/* File info header - dark theme */}
             <div style={{
                 padding: '8px 12px',
-                backgroundColor: '#f5f5f5',
-                borderBottom: '1px solid #e0e0e0',
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 fontSize: '14px',
                 fontWeight: 500,
+                color: '#fff',
             }}>
                 {file.filename}
-                <span style={{ marginLeft: '8px', color: '#666', fontWeight: 400 }}>
+                <span style={{ marginLeft: '8px', color: '#9ca3af', fontWeight: 400 }}>
                     ({file.lineCount} lines)
                 </span>
             </div>

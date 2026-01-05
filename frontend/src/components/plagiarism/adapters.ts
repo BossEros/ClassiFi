@@ -1,15 +1,54 @@
-import { Report, Pair, Fragment } from '../index.js';
-import { FilePair, FileData, MatchFragment, CodeRegion } from './types';
+import type { FilePair, MatchFragment } from './types';
 
 /**
- * Convert library types to component-friendly types.
- * Use this to bridge the analysis library with the React components.
+ * These adapters convert backend API responses to frontend component types.
+ * NOTE: The original Dolos library adapters have been replaced with API-based adapters.
  */
 
+// Interface for raw pair data from API
+interface ApiPairData {
+    id: number;
+    leftFile: {
+        id: number;
+        path: string;
+        filename: string;
+        content: string;
+        lineCount: number;
+    };
+    rightFile: {
+        id: number;
+        path: string;
+        filename: string;
+        content: string;
+        lineCount: number;
+    };
+    similarity: number;
+    overlap: number;
+    longest: number;
+}
+
+// Interface for raw fragment data from API
+interface ApiFragmentData {
+    id: number;
+    leftSelection: {
+        startRow: number;
+        startCol: number;
+        endRow: number;
+        endCol: number;
+    };
+    rightSelection: {
+        startRow: number;
+        startCol: number;
+        endRow: number;
+        endCol: number;
+    };
+    length: number;
+}
+
 /**
- * Convert a Pair from the library to a FilePair for the UI components.
+ * Convert API pair data to FilePair for UI components.
  */
-export function pairToFilePair(pair: Pair, fragments: Fragment[]): FilePair {
+export function pairToFilePair(pair: ApiPairData, fragments: ApiFragmentData[]): FilePair {
     return {
         id: pair.id,
         leftFile: {
@@ -34,45 +73,13 @@ export function pairToFilePair(pair: Pair, fragments: Fragment[]): FilePair {
 }
 
 /**
- * Convert a Fragment from the library to a MatchFragment for the UI.
+ * Convert API fragment data to MatchFragment for UI.
  */
-export function fragmentToMatchFragment(fragment: Fragment, id: number): MatchFragment {
+export function fragmentToMatchFragment(fragment: ApiFragmentData, id: number): MatchFragment {
     return {
-        id,
-        leftSelection: {
-            startRow: fragment.leftSelection.startRow,
-            startCol: fragment.leftSelection.startCol,
-            endRow: fragment.leftSelection.endRow,
-            endCol: fragment.leftSelection.endCol,
-        },
-        rightSelection: {
-            startRow: fragment.rightSelection.startRow,
-            startCol: fragment.rightSelection.startCol,
-            endRow: fragment.rightSelection.endRow,
-            endCol: fragment.rightSelection.endCol,
-        },
+        id: fragment.id ?? id,
+        leftSelection: fragment.leftSelection,
+        rightSelection: fragment.rightSelection,
         length: fragment.length,
     };
-}
-
-/**
- * Convert a Report to an array of FilePairs for display.
- */
-export function reportToFilePairs(report: Report): FilePair[] {
-    const pairs = report.getPairs();
-    return pairs.map(pair => {
-        const fragments = report.getFragments(pair);
-        return pairToFilePair(pair, fragments);
-    });
-}
-
-/**
- * Get suspicious pairs (above threshold) as FilePairs.
- */
-export function getSuspiciousFilePairs(report: Report, threshold = 0.5): FilePair[] {
-    const pairs = report.getSuspiciousPairs(threshold);
-    return pairs.map(pair => {
-        const fragments = report.getFragments(pair);
-        return pairToFilePair(pair, fragments);
-    });
 }

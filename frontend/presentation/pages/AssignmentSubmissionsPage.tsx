@@ -5,10 +5,12 @@ import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { Input } from '@/presentation/components/ui/Input'
 import { SubmissionCard } from '@/presentation/components/dashboard/SubmissionCard'
-import { ArrowLeft, Search, Shield, Calendar, Code, FileText, Inbox } from 'lucide-react'
+import { ArrowLeft, Search, Shield, Calendar, Code, FileText, Inbox, Loader2 } from 'lucide-react'
 import { getCurrentUser } from '@/business/services/authService'
 import { getAssignmentById, getAssignmentSubmissions } from '@/business/services/assignmentService'
+import { analyzeAssignmentSubmissions } from '@/business/services/plagiarismService'
 import { formatDeadline } from '@/shared/utils/dateUtils'
+import { useToast } from '@/shared/context/ToastContext'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
 
 
@@ -22,6 +24,8 @@ export function AssignmentSubmissionsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const { showToast } = useToast()
 
   // Fetch data on mount
   useEffect(() => {
@@ -86,9 +90,27 @@ export function AssignmentSubmissionsPage() {
   const lateCount = totalSubmissions - onTimeCount
 
   // Handle Check Similarities button
-  const handleCheckSimilarities = () => {
-    // Placeholder implementation - show toast/alert
-    alert('Plagiarism detection coming soon!')
+  const handleCheckSimilarities = async () => {
+    if (!assignmentId) return
+
+    try {
+      setIsAnalyzing(true)
+      const results = await analyzeAssignmentSubmissions(parseInt(assignmentId))
+      showToast(
+        `Analysis complete! Found ${results.summary.suspiciousPairs} suspicious pairs.`,
+        results.summary.suspiciousPairs > 0 ? 'info' : 'success'
+      )
+      // Navigate to results page with the analysis data
+      navigate(`/dashboard/assignments/${assignmentId}/similarity`, {
+        state: { results }
+      })
+    } catch (err) {
+      console.error('Plagiarism analysis failed:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Analysis failed'
+      showToast(errorMessage, 'error')
+    } finally {
+      setIsAnalyzing(false)
+    }
   }
 
   // Handle view submission details
@@ -204,11 +226,20 @@ export function AssignmentSubmissionsPage() {
         <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
           <Button
             onClick={handleCheckSimilarities}
-            disabled={totalSubmissions < 2}
+            disabled={totalSubmissions < 2 || isAnalyzing}
             className="flex items-center justify-center gap-2"
           >
-            <Shield className="w-4 h-4" />
-            <span>Check Similarities</span>
+            {isAnalyzing ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Analyzing...</span>
+              </>
+            ) : (
+              <>
+                <Shield className="w-4 h-4" />
+                <span>Check Similarities</span>
+              </>
+            )}
           </Button>
 
           <div className="flex-1 max-w-md relative">

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FilePair } from './types';
+import type { FilePair } from './types';
 import { SimilarityBadge } from './SimilarityBadge';
 
 type SortKey = 'similarity' | 'leftFile' | 'rightFile' | 'longest' | 'overlap';

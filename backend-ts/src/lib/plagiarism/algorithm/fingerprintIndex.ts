@@ -9,7 +9,6 @@ import { FileEntry } from "./types.js";
 import { assert, assertDefined } from "../util/utils.js";
 
 export type Hash = number;
-export { FileEntry } from "./types.js";
 
 /**
  * The FingerprintIndex is the main comparison engine.

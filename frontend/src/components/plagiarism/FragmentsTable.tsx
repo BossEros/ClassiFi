@@ -1,5 +1,5 @@
 import React from 'react';
-import { MatchFragment, CodeRegion } from './types';
+import type { MatchFragment, CodeRegion } from './types';
 
 interface FragmentsTableProps {
     fragments: MatchFragment[];

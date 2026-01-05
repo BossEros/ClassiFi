@@ -81,6 +81,57 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     });
 
     /**
+     * POST /analyze/assignment/:assignmentId
+     * Analyze all submissions for an assignment
+     */
+    app.post<{ Params: { assignmentId: string } }>('/analyze/assignment/:assignmentId', {
+        schema: {
+            tags: ['Plagiarism'],
+            summary: 'Analyze all submissions for an assignment',
+            description: 'Fetches all latest submissions for the specified assignment, downloads their content, and runs plagiarism detection.',
+            params: {
+                type: 'object',
+                required: ['assignmentId'],
+                properties: {
+                    assignmentId: { type: 'string', description: 'ID of the assignment to analyze' },
+                },
+            },
+            response: {
+                200: {
+                    type: 'object',
+                    properties: {
+                        reportId: { type: 'string' },
+                        summary: {
+                            type: 'object',
+                            properties: {
+                                totalFiles: { type: 'number' },
+                                totalPairs: { type: 'number' },
+                                suspiciousPairs: { type: 'number' },
+                                averageSimilarity: { type: 'number' },
+                                maxSimilarity: { type: 'number' },
+                            },
+                        },
+                        pairs: { type: 'array' },
+                        warnings: { type: 'array', items: { type: 'string' } },
+                    },
+                },
+            },
+        },
+        handler: async (request, reply) => {
+            try {
+                const assignmentId = parseInt(request.params.assignmentId, 10);
+                if (isNaN(assignmentId)) {
+                    throw new BadRequestError('Invalid assignment ID');
+                }
+                const result = await plagiarismService.analyzeAssignmentSubmissions(assignmentId);
+                return reply.send(result);
+            } catch (error) {
+                throw new BadRequestError((error as Error).message);
+            }
+        },
+    });
+
+    /**
      * GET /reports/:reportId
      * Get a report by ID
      */
@@ -167,6 +218,37 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
             }
 
             return reply.send({ success: true });
+        },
+    });
+
+    /**
+     * GET /results/:resultId/details
+     * Get result details with fragments and file content (from database)
+     */
+    app.get<{ Params: { resultId: string } }>('/results/:resultId/details', {
+        schema: {
+            tags: ['Plagiarism'],
+            summary: 'Get result details with fragments and file content',
+            params: {
+                type: 'object',
+                required: ['resultId'],
+                properties: {
+                    resultId: { type: 'string' },
+                },
+            },
+        },
+        handler: async (request, reply) => {
+            const resultId = parseInt(request.params.resultId, 10);
+            if (isNaN(resultId)) {
+                throw new BadRequestError('Invalid result ID');
+            }
+
+            try {
+                const details = await plagiarismService.getResultDetails(resultId);
+                return reply.send(details);
+            } catch (error) {
+                return reply.status(404).send({ error: (error as Error).message });
+            }
         },
     });
 }

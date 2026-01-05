@@ -1,6 +1,6 @@
 import { TokenizedFile } from "../file/tokenizedFile.js";
 import { Identifiable } from "../util/identifiable.js";
-import { ASTRegion } from "./pairedOccurrence.js";
+import { ASTRegion } from "./astRegion.js";
 
 /**
  * Represents an occurrence of a fingerprint in a specific file.

@@ -1,5 +1,6 @@
 // React components for plagiarism detection visualization (Phase 3)
 export { PairCodeEditor } from './PairCodeEditor';
+export { PairCodeDiff } from './PairCodeDiff';
 export { PairComparison } from './PairComparison';
 export { SimilarityBadge } from './SimilarityBadge';
 export { FragmentsTable } from './FragmentsTable';
@@ -15,10 +16,8 @@ export type {
 
 export { MATCH_COLORS, regionToMonacoRange } from './types';
 
-// Adapters
+// Adapters for API data
 export {
     pairToFilePair,
     fragmentToMatchFragment,
-    reportToFilePairs,
-    getSuspiciousFilePairs,
 } from './adapters';

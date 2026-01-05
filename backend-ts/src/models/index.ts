@@ -27,6 +27,9 @@ export type { Submission, NewSubmission } from './submission.model.js';
 export { similarityReports, similarityReportsRelations } from './similarity-report.model.js';
 export type { SimilarityReport, NewSimilarityReport } from './similarity-report.model.js';
 
+// Match Fragment model
+export { matchFragments, matchFragmentsRelations } from './match-fragment.model.js';
+
 // Similarity Result model
 export { similarityResults, similarityResultsRelations } from './similarity-result.model.js';
 export type { SimilarityResult, NewSimilarityResult } from './similarity-result.model.js';

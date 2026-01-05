@@ -162,4 +162,22 @@ export class SubmissionRepository extends BaseRepository<typeof submissions, Sub
 
         return await query;
     }
+
+    /** Get a single submission with student name */
+    async getSubmissionWithStudent(submissionId: number): Promise<{
+        submission: Submission;
+        studentName: string;
+    } | null> {
+        const results = await this.db
+            .select({
+                submission: submissions,
+                studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+            })
+            .from(submissions)
+            .innerJoin(users, eq(submissions.studentId, users.id))
+            .where(eq(submissions.id, submissionId))
+            .limit(1);
+
+        return results[0] ?? null;
+    }
 }

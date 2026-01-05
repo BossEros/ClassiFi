@@ -12,6 +12,7 @@ import { ClassDetailPage } from './pages/ClassDetailPage'
 import { AssignmentsPage } from './pages/AssignmentsPage'
 import { AssignmentDetailPage } from './pages/AssignmentDetailPage'
 import { AssignmentSubmissionsPage } from './pages/AssignmentSubmissionsPage'
+import { SimilarityResultsPage } from './pages/SimilarityResultsPage'
 import { TasksPage } from './pages/TasksPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { ClassFormPage } from './pages/ClassFormPage'
@@ -186,6 +187,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AssignmentSubmissionsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/assignments/:assignmentId/similarity"
+            element={
+              <ProtectedRoute>
+                <SimilarityResultsPage />
               </ProtectedRoute>
             }
           />
