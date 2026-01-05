@@ -107,8 +107,7 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
           <button
             type="button"
             onClick={onForgotPasswordClick}
-            className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium cursor-pointer"
-            tabIndex={-1}
+            className="text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium cursor-pointer focus-visible:outline-none focus-visible:underline"
           >
             Forgot password?
           </button>
@@ -135,9 +134,8 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors focus:outline-none focus:text-gray-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors rounded-md p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
-            tabIndex={-1}
             disabled={isLoading}
           >
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
