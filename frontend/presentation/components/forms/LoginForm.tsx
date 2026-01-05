@@ -87,10 +87,14 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!fieldErrors.email}
+            aria-describedby={fieldErrors.email ? "email-error" : undefined}
           />
         </div>
         {fieldErrors.email && (
-          <p className="text-sm text-red-400">{fieldErrors.email}</p>
+          <p id="email-error" className="text-sm text-red-400" role="alert">
+            {fieldErrors.email}
+          </p>
         )}
       </div>
 
@@ -125,6 +129,8 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!fieldErrors.password}
+            aria-describedby={fieldErrors.password ? "password-error" : undefined}
           />
           <button
             type="button"
@@ -138,7 +144,9 @@ export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }:
           </button>
         </div>
         {fieldErrors.password && (
-          <p className="text-sm text-red-400">{fieldErrors.password}</p>
+          <p id="password-error" className="text-sm text-red-400" role="alert">
+            {fieldErrors.password}
+          </p>
         )}
       </div>
 
