@@ -1,8 +1,3 @@
-/**
- * DTO Mappers
- * Convert between database entities and API response objects
- */
-
 import type { User, Class, Assignment, Submission, Enrollment } from '../models/index.js';
 
 // ============ User Mappers ============
@@ -15,6 +10,7 @@ export interface UserDTO {
     firstName: string;
     lastName: string;
     role: string;
+    avatarUrl: string | null;
     createdAt: string;
 }
 
@@ -27,6 +23,7 @@ export function toUserDTO(user: User): UserDTO {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        avatarUrl: user.avatarUrl ?? null,
         createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
     };
 }
@@ -192,6 +189,10 @@ export function toDashboardClassDTO(
         className: classData.className,
         classCode: classData.classCode,
         description: classData.description,
+        yearLevel: classData.yearLevel,
+        semester: classData.semester,
+        academicYear: classData.academicYear,
+        schedule: classData.schedule,
         createdAt: classData.createdAt?.toISOString() ?? new Date().toISOString(),
         isActive: classData.isActive ?? true,
         ...extras,

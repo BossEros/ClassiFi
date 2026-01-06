@@ -82,7 +82,7 @@ export class UserRepository extends BaseRepository<typeof users, User, NewUser> 
     /** Update user information */
     async updateUser(
         userId: number,
-        data: Partial<Pick<NewUser, 'username' | 'email' | 'firstName' | 'lastName' | 'role'>>
+        data: Partial<Pick<NewUser, 'username' | 'email' | 'firstName' | 'lastName' | 'role' | 'avatarUrl'>>
     ): Promise<User | undefined> {
         // Filter out undefined values
         const updateData = Object.fromEntries(

@@ -21,6 +21,7 @@ export interface User {
   firstName: string
   lastName: string
   role: UserRole
+  avatarUrl?: string
   createdAt: Date
 }
 
@@ -95,6 +96,39 @@ export interface ForgotPasswordResponse {
  * Response for reset password request.
  */
 export interface ResetPasswordResponse {
+  success: boolean
+  message?: string
+}
+
+/**
+ * Payload for change password request (when logged in).
+ */
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
+/**
+ * Response for change password request.
+ */
+export interface ChangePasswordResponse {
+  success: boolean
+  message?: string
+}
+
+/**
+ * Payload for delete account request.
+ */
+export interface DeleteAccountRequest {
+  password: string
+  confirmation: string // User must type "DELETE" to confirm
+}
+
+/**
+ * Response for delete account request.
+ */
+export interface DeleteAccountResponse {
   success: boolean
   message?: string
 }

@@ -4,19 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/pre
 import { Button } from '@/presentation/components/ui/Button'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { getCurrentUser } from '@/business/services/authService'
-// import { useToast } from '@/shared/context/ToastContext'
 import type { User } from '@/business/models/auth/types'
-import { Settings, User as UserIcon, Lock, Mail, Bell } from 'lucide-react'
+import { Settings, User as UserIcon, Lock, Mail, Bell, Camera, Trash2, AlertTriangle } from 'lucide-react'
+import { ChangePasswordModal, DeleteAccountModal, AvatarUploadModal } from '@/presentation/components/settings'
 
 export function SettingsPage() {
     const [user, setUser] = useState<User | null>(null)
+    const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+    const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
+    const [isAvatarUploadOpen, setIsAvatarUploadOpen] = useState(false)
 
     useEffect(() => {
         const currentUser = getCurrentUser()
         setUser(currentUser)
     }, [])
 
+    const handleAvatarSuccess = (avatarUrl: string) => {
+        // Update user state to reflect new avatar
+        if (user) {
+            setUser({ ...user, avatarUrl })
+        }
+    }
 
+    const handlePasswordChangeSuccess = () => {
+        // Optionally show a toast or refresh user data
+    }
 
     if (!user) return null
 
@@ -51,11 +63,22 @@ export function SettingsPage() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="flex items-center gap-6 p-4 rounded-xl bg-white/5 border border-white/5">
-                            <Avatar
-                                size="lg"
-                                fallback={userInitials}
-                                className="w-20 h-20 text-xl border-2 border-purple-500/30"
-                            />
+                            {/* Clickable Avatar with Edit Overlay */}
+                            <div
+                                className="relative group cursor-pointer"
+                                onClick={() => setIsAvatarUploadOpen(true)}
+                            >
+                                <Avatar
+                                    size="lg"
+                                    src={user.avatarUrl}
+                                    fallback={userInitials}
+                                    className="w-20 h-20 text-xl border-2 border-purple-500/30 transition-all duration-200 group-hover:border-purple-500/60"
+                                />
+                                {/* Edit overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <Camera className="w-6 h-6 text-white" />
+                                </div>
+                            </div>
                             <div>
                                 <h3 className="text-xl font-semibold text-white">
                                     {user.firstName} {user.lastName}
@@ -64,7 +87,6 @@ export function SettingsPage() {
                                     <span className="px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-medium capitalize">
                                         {user.role}
                                     </span>
-                                    <span className="text-gray-400 text-sm">{user.username}</span>
                                 </div>
                             </div>
                         </div>
@@ -95,7 +117,7 @@ export function SettingsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Security Settings (Placeholder for now) */}
+                {/* Security & Notifications Row */}
                 <div className="grid md:grid-cols-2 gap-6">
                     <Card className="border-white/10 bg-slate-900/50 backdrop-blur-xl">
                         <CardHeader>
@@ -110,19 +132,13 @@ export function SettingsPage() {
                                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
                                     <div>
                                         <p className="text-sm font-medium text-white">Password</p>
-                                        <p className="text-xs text-gray-400">Last changed recently</p>
+                                        <p className="text-xs text-gray-400">Change your password</p>
                                     </div>
-                                    <Button className="w-auto h-8 px-3 text-xs border border-white/10 bg-transparent hover:bg-white/10">
+                                    <Button
+                                        onClick={() => setIsChangePasswordOpen(true)}
+                                        className="w-auto h-8 px-3 text-xs border border-white/10 bg-transparent hover:bg-white/10"
+                                    >
                                         Change
-                                    </Button>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                                    <div className="opacity-50">
-                                        <p className="text-sm font-medium text-white">Two-Factor Auth</p>
-                                        <p className="text-xs text-gray-400">Not enabled</p>
-                                    </div>
-                                    <Button disabled className="w-auto h-8 px-3 text-xs border border-white/10 bg-transparent opacity-50 cursor-not-allowed">
-                                        Setup
                                     </Button>
                                 </div>
                             </div>
@@ -159,7 +175,56 @@ export function SettingsPage() {
                         </CardContent>
                     </Card>
                 </div>
+
+                {/* Danger Zone */}
+                <Card className="border-red-500/20 bg-slate-900/50 backdrop-blur-xl">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-red-400">
+                            <AlertTriangle className="w-5 h-5" />
+                            Danger Zone
+                        </CardTitle>
+                        <CardDescription>Irreversible actions</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+                            <div>
+                                <p className="text-sm font-medium text-white flex items-center gap-2">
+                                    <Trash2 className="w-4 h-4 text-red-400" />
+                                    Delete Account
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Permanently delete your account and all associated data
+                                </p>
+                            </div>
+                            <Button
+                                onClick={() => setIsDeleteAccountOpen(true)}
+                                className="w-auto h-9 px-4 text-xs bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:text-red-300"
+                            >
+                                Delete Account
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
+
+            {/* Modals */}
+            <ChangePasswordModal
+                isOpen={isChangePasswordOpen}
+                onClose={() => setIsChangePasswordOpen(false)}
+                onSuccess={handlePasswordChangeSuccess}
+            />
+
+            <DeleteAccountModal
+                isOpen={isDeleteAccountOpen}
+                onClose={() => setIsDeleteAccountOpen(false)}
+            />
+
+            <AvatarUploadModal
+                isOpen={isAvatarUploadOpen}
+                onClose={() => setIsAvatarUploadOpen(false)}
+                onSuccess={handleAvatarSuccess}
+                currentAvatarUrl={user.avatarUrl}
+            />
         </DashboardLayout>
     )
 }

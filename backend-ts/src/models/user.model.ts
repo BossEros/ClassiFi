@@ -21,6 +21,7 @@ export const users = pgTable('users', {
     firstName: varchar('first_name', { length: 50 }).notNull(),
     lastName: varchar('last_name', { length: 50 }).notNull(),
     role: userRoleEnum('role').notNull(),
+    avatarUrl: text('avatar_url'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

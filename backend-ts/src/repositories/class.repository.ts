@@ -187,6 +187,7 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
         email: string;
         firstName: string;
         lastName: string;
+        avatarUrl: string | null;
     }>> {
         const results = await this.db
             .select({
@@ -195,6 +196,7 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
                 email: users.email,
                 firstName: users.firstName,
                 lastName: users.lastName,
+                avatarUrl: users.avatarUrl,
             })
             .from(enrollments)
             .innerJoin(users, eq(enrollments.studentId, users.id))

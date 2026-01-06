@@ -29,10 +29,32 @@ export function Sidebar() {
   const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
 
-  // Get user on mount
+  // Get user on mount and listen for storage changes
   useEffect(() => {
     const currentUser = getCurrentUser()
     setUser(currentUser)
+
+    // Listen for storage changes (when avatar is updated)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user') {
+        const updatedUser = getCurrentUser()
+        setUser(updatedUser)
+      }
+    }
+
+    // Listen for custom event dispatched within the same tab
+    const handleUserUpdate = () => {
+      const updatedUser = getCurrentUser()
+      setUser(updatedUser)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('userUpdated', handleUserUpdate)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('userUpdated', handleUserUpdate)
+    }
   }, [])
 
   const handleLogout = async () => {
@@ -86,6 +108,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2 mb-2 px-1.5">
             <Avatar
               size="sm"
+              src={user?.avatarUrl}
               fallback={userInitials}
               alt={user ? `${user.firstName} ${user.lastName}` : 'User'}
             />

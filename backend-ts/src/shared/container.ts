@@ -20,6 +20,7 @@ import { SubmissionService } from '../services/submission.service.js';
 import { StudentDashboardService } from '../services/student-dashboard.service.js';
 import { TeacherDashboardService } from '../services/teacher-dashboard.service.js';
 import { PlagiarismService } from '../services/plagiarism.service.js';
+import { UserService } from '../services/user.service.js';
 
 // Register repositories as singletons
 container.registerSingleton('UserRepository', UserRepository);
@@ -36,5 +37,6 @@ container.registerSingleton('SubmissionService', SubmissionService);
 container.registerSingleton('StudentDashboardService', StudentDashboardService);
 container.registerSingleton('TeacherDashboardService', TeacherDashboardService);
 container.registerSingleton('PlagiarismService', PlagiarismService);
+container.registerSingleton('UserService', UserService);
 
 export { container };

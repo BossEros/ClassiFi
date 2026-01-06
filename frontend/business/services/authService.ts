@@ -14,7 +14,11 @@ import type {
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     ResetPasswordRequest,
-    ResetPasswordResponse
+    ResetPasswordResponse,
+    ChangePasswordRequest,
+    ChangePasswordResponse,
+    DeleteAccountRequest,
+    DeleteAccountResponse
 } from '../models/auth/types'
 
 
@@ -197,3 +201,90 @@ export async function resetPassword(
         }
     }
 }
+
+/**
+ * Change password for authenticated user.
+ * Validates passwords and calls repository.
+ */
+export async function changePassword(
+    data: ChangePasswordRequest
+): Promise<ChangePasswordResponse> {
+    // Validate new password strength
+    const passwordError = validatePassword(data.newPassword)
+
+    if (passwordError) {
+        return {
+            success: false,
+            message: passwordError
+        }
+    }
+
+    // Validate passwords match
+    const matchError = validatePasswordsMatch(data.newPassword, data.confirmPassword)
+
+    if (matchError) {
+        return {
+            success: false,
+            message: matchError
+        }
+    }
+
+    // Validate new password is different from current
+    if (data.currentPassword === data.newPassword) {
+        return {
+            success: false,
+            message: 'New password must be different from current password'
+        }
+    }
+
+    try {
+        const response = await authRepository.changePassword(data)
+        return response
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to change password'
+        }
+    }
+}
+
+/**
+ * Delete user account.
+ * Requires password confirmation and "DELETE" text confirmation.
+ */
+export async function deleteAccount(
+    data: DeleteAccountRequest
+): Promise<DeleteAccountResponse> {
+    // Validate confirmation text
+    if (data.confirmation !== 'DELETE') {
+        return {
+            success: false,
+            message: 'Please type DELETE to confirm account deletion'
+        }
+    }
+
+    // Validate password is provided
+    if (!data.password || data.password.trim() === '') {
+        return {
+            success: false,
+            message: 'Password is required to delete your account'
+        }
+    }
+
+    try {
+        const response = await authRepository.deleteAccount(data)
+
+        // Clear local auth data on successful deletion
+        if (response.success) {
+            clearAuthData()
+        }
+
+        return response
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to delete account'
+        }
+    }
+}
+

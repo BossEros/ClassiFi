@@ -53,6 +53,7 @@ export interface EnrolledStudent {
   firstName: string
   lastName: string
   fullName: string
+  avatarUrl?: string | null
   enrolledAt?: Date | string
 }
 

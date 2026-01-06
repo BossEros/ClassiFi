@@ -201,6 +201,7 @@ export class ClassService {
         email: string;
         firstName: string;
         lastName: string;
+        avatarUrl: string | null;
     }>> {
         const students = await this.classRepo.getEnrolledStudents(classId);
         return students.map((s) => ({
@@ -209,6 +210,7 @@ export class ClassService {
             email: s.email,
             firstName: s.firstName,
             lastName: s.lastName,
+            avatarUrl: s.avatarUrl,
         }));
     }
 
