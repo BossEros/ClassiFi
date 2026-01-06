@@ -7,7 +7,7 @@ export declare class UserNotFoundError extends NotFoundError {
     constructor(identifier: string | number);
 }
 export declare class UserAlreadyExistsError extends BadRequestError {
-    constructor(field: 'email' | 'username', value: string);
+    constructor(email: string);
 }
 export declare class InvalidCredentialsError extends ApiError {
     constructor();

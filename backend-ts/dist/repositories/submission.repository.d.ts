@@ -30,7 +30,6 @@ export declare class SubmissionRepository extends BaseRepository<typeof submissi
     getSubmissionsWithStudentInfo(assignmentId: number, latestOnly?: boolean): Promise<Array<{
         submission: Submission;
         studentName: string;
-        studentUsername: string;
     }>>;
     /** Get a single submission with student name */
     getSubmissionWithStudent(submissionId: number): Promise<{

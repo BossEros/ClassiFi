@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
     validateEmail,
-    validateUsername,
     validatePassword,
     validatePasswordsMatch,
     validateFirstName,
@@ -22,24 +21,6 @@ describe('Auth Validation', () => {
 
         it('should return null for valid email', () => {
             expect(validateEmail('test@example.com')).toBeNull();
-        });
-    });
-
-    describe('validateUsername', () => {
-        it('should return error for empty username', () => {
-            expect(validateUsername('')).toBe('Username is required');
-        });
-
-        it('should return error for short username', () => {
-            expect(validateUsername('ab')).toBe('Username must be at least 3 characters long');
-        });
-
-        it('should return error for invalid characters', () => {
-            expect(validateUsername('user name')).toBe('Username can only contain letters, numbers, and underscores');
-        });
-
-        it('should return null for valid username', () => {
-            expect(validateUsername('valid_user_123')).toBeNull();
         });
     });
 
@@ -139,7 +120,6 @@ describe('Auth Validation', () => {
             firstName: 'John',
             lastName: 'Doe',
             email: 'john@example.com',
-            username: 'johndoe',
             password: 'ValidPass1!',
             confirmPassword: 'ValidPass1!'
         };

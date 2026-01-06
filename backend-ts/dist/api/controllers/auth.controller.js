@@ -20,8 +20,8 @@ export async function authRoutes(app) {
             },
         },
         handler: async (request, reply) => {
-            const { email, password, confirmPassword, username, firstName, lastName, role } = request.body;
-            const result = await authService.registerUser(email, password, username, firstName, lastName, role);
+            const { email, password, confirmPassword, firstName, lastName, role } = request.body;
+            const result = await authService.registerUser(email, password, firstName, lastName, role);
             return reply.status(201).send({
                 success: true,
                 message: 'Registration successful',

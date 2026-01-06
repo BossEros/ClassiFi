@@ -1,16 +1,12 @@
-/**
- * DTO Mappers
- * Convert between database entities and API response objects
- */
 export function toUserDTO(user) {
     return {
         id: user.id,
         supabaseUserId: user.supabaseUserId,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        avatarUrl: user.avatarUrl ?? null,
         createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
     };
 }
@@ -62,7 +58,6 @@ export function toSubmissionDTO(submission, extras) {
 export function toStudentDTO(user) {
     return {
         id: user.id,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -75,7 +70,12 @@ export function toDashboardClassDTO(classData, extras) {
         className: classData.className,
         classCode: classData.classCode,
         description: classData.description,
+        yearLevel: classData.yearLevel,
+        semester: classData.semester,
+        academicYear: classData.academicYear,
+        schedule: classData.schedule,
         createdAt: classData.createdAt?.toISOString() ?? new Date().toISOString(),
+        isActive: classData.isActive ?? true,
         ...extras,
     };
 }

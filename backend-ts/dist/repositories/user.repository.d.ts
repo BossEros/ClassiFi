@@ -11,7 +11,6 @@ export declare class UserRepository extends BaseRepository<typeof users, User, N
     /** Create a new user */
     createUser(data: {
         supabaseUserId: string;
-        username: string;
         email: string;
         firstName: string;
         lastName: string;
@@ -23,14 +22,10 @@ export declare class UserRepository extends BaseRepository<typeof users, User, N
     getUserBySupabaseId(supabaseUserId: string): Promise<User | undefined>;
     /** Get user by email address */
     getUserByEmail(email: string): Promise<User | undefined>;
-    /** Get user by username */
-    getUserByUsername(username: string): Promise<User | undefined>;
     /** Update user information */
-    updateUser(userId: number, data: Partial<Pick<NewUser, 'username' | 'email' | 'firstName' | 'lastName' | 'role'>>): Promise<User | undefined>;
+    updateUser(userId: number, data: Partial<Pick<NewUser, 'email' | 'firstName' | 'lastName' | 'role' | 'avatarUrl'>>): Promise<User | undefined>;
     /** Delete a user */
     deleteUser(userId: number): Promise<boolean>;
-    /** Check if username already exists */
-    checkUsernameExists(username: string): Promise<boolean>;
     /** Check if email already exists */
     checkEmailExists(email: string): Promise<boolean>;
 }

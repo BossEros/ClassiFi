@@ -139,7 +139,6 @@ export type ClassResponse = z.infer<typeof ClassResponseSchema>;
 /** Student response schema */
 export declare const StudentResponseSchema: z.ZodObject<{
     id: z.ZodNumber;
-    username: z.ZodString;
     email: z.ZodString;
     firstName: z.ZodString;
     lastName: z.ZodString;
@@ -292,7 +291,6 @@ export declare const ClassStudentsResponseSchema: z.ZodObject<{
     message: z.ZodString;
     students: z.ZodArray<z.ZodObject<{
         id: z.ZodNumber;
-        username: z.ZodString;
         email: z.ZodString;
         firstName: z.ZodString;
         lastName: z.ZodString;

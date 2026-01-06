@@ -1,5 +1,6 @@
 import { UserRepository } from '@/repositories/user.repository.js';
 import { type UserDTO } from '@/shared/mappers.js';
+/** Auth result type */
 interface AuthResult {
     userData: UserDTO;
     token: string | null;
@@ -13,9 +14,9 @@ export declare class AuthService {
     constructor(userRepo: UserRepository);
     /**
      * Register a new user.
-     * @throws {UserAlreadyExistsError} If username or email exists
+     * @throws {UserAlreadyExistsError} If email exists
      */
-    registerUser(email: string, password: string, username: string, firstName: string, lastName: string, role: string): Promise<AuthResult>;
+    registerUser(email: string, password: string, firstName: string, lastName: string, role: string): Promise<AuthResult>;
     /**
      * Login a user
      * @throws {InvalidCredentialsError} If credentials are invalid

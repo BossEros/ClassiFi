@@ -42,10 +42,10 @@ export declare class ClassRepository extends BaseRepository<typeof classes, Clas
     /** Get all students enrolled in a class */
     getEnrolledStudents(classId: number): Promise<Array<{
         id: number;
-        username: string;
         email: string;
         firstName: string;
         lastName: string;
+        avatarUrl: string | null;
     }>>;
     /** Get all classes a student is enrolled in */
     getClassesByStudent(studentId: number, activeOnly?: boolean): Promise<Class[]>;

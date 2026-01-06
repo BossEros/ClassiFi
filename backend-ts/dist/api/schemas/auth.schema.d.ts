@@ -11,7 +11,6 @@ export declare const RegisterRequestSchema: z.ZodObject<{
     email: z.ZodString;
     password: z.ZodString;
     confirmPassword: z.ZodString;
-    username: z.ZodString;
     firstName: z.ZodString;
     lastName: z.ZodString;
     role: z.ZodEnum<{
@@ -24,7 +23,6 @@ export declare const RegisterRequestSchemaForDocs: z.ZodObject<{
     email: z.ZodString;
     password: z.ZodString;
     confirmPassword: z.ZodString;
-    username: z.ZodString;
     firstName: z.ZodString;
     lastName: z.ZodString;
     role: z.ZodEnum<{
@@ -48,7 +46,6 @@ export type ForgotPasswordRequest = z.infer<typeof ForgotPasswordRequestSchema>;
 export declare const UserResponseSchema: z.ZodObject<{
     id: z.ZodNumber;
     supabaseUserId: z.ZodNullable<z.ZodString>;
-    username: z.ZodString;
     email: z.ZodString;
     firstName: z.ZodString;
     lastName: z.ZodString;
@@ -67,7 +64,6 @@ export declare const AuthResponseSchema: z.ZodObject<{
     user: z.ZodNullable<z.ZodOptional<z.ZodObject<{
         id: z.ZodNumber;
         supabaseUserId: z.ZodNullable<z.ZodString>;
-        username: z.ZodString;
         email: z.ZodString;
         firstName: z.ZodString;
         lastName: z.ZodString;

@@ -15,7 +15,7 @@ import { UserRepository } from '@/repositories/user.repository.js';
 import { supabase } from '@/shared/supabase.js';
 import { settings } from '@/shared/config.js';
 import { toUserDTO } from '@/shared/mappers.js';
-import { UserAlreadyExistsError, InvalidCredentialsError, UserNotFoundError, EmailNotVerifiedError, } from '@/shared/errors.js'; /** Auth result type */
+import { UserAlreadyExistsError, InvalidCredentialsError, UserNotFoundError, EmailNotVerifiedError, } from '@/shared/errors.js';
 /**
  * Business logic for authentication operations.
  * Coordinates between Supabase Auth and local users table.
@@ -27,16 +27,12 @@ let AuthService = class AuthService {
     }
     /**
      * Register a new user.
-     * @throws {UserAlreadyExistsError} If username or email exists
+     * @throws {UserAlreadyExistsError} If email exists
      */
-    async registerUser(email, password, username, firstName, lastName, role) {
-        // Check if username already exists
-        if (await this.userRepo.checkUsernameExists(username)) {
-            throw new UserAlreadyExistsError('username', username);
-        }
+    async registerUser(email, password, firstName, lastName, role) {
         // Check if email already exists
         if (await this.userRepo.checkEmailExists(email)) {
-            throw new UserAlreadyExistsError('email', email);
+            throw new UserAlreadyExistsError(email);
         }
         // Create Supabase auth user with metadata
         const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
@@ -44,7 +40,6 @@ let AuthService = class AuthService {
             password,
             options: {
                 data: {
-                    username,
                     first_name: firstName,
                     last_name: lastName,
                     role,
@@ -58,7 +53,6 @@ let AuthService = class AuthService {
         try {
             const user = await this.userRepo.createUser({
                 supabaseUserId: supabaseData.user.id,
-                username,
                 email,
                 firstName,
                 lastName,

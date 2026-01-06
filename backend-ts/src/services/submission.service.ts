@@ -129,7 +129,6 @@ export class SubmissionService {
         return submissions.map((s) =>
             toSubmissionDTO(s.submission, {
                 studentName: s.studentName,
-                studentUsername: s.studentUsername,
             })
         );
     }

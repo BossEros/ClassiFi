@@ -48,7 +48,6 @@ export type Assignment = Task
 /** Enrolled student model - matches backend */
 export interface EnrolledStudent {
   id: number
-  username: string
   email: string
   firstName: string
   lastName: string

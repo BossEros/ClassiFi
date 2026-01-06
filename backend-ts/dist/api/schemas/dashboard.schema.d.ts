@@ -9,6 +9,11 @@ export declare const DashboardClassResponseSchema: z.ZodObject<{
     assignmentCount: z.ZodOptional<z.ZodNumber>;
     teacherName: z.ZodOptional<z.ZodString>;
     createdAt: z.ZodString;
+    isActive: z.ZodBoolean;
+    yearLevel: z.ZodNumber;
+    semester: z.ZodNumber;
+    academicYear: z.ZodString;
+    schedule: z.ZodAny;
 }, z.core.$strip>;
 export type DashboardClassResponse = z.infer<typeof DashboardClassResponseSchema>;
 /** Dashboard assignment response */
@@ -35,6 +40,11 @@ export declare const StudentDashboardResponseSchema: z.ZodObject<{
         assignmentCount: z.ZodOptional<z.ZodNumber>;
         teacherName: z.ZodOptional<z.ZodString>;
         createdAt: z.ZodString;
+        isActive: z.ZodBoolean;
+        yearLevel: z.ZodNumber;
+        semester: z.ZodNumber;
+        academicYear: z.ZodString;
+        schedule: z.ZodAny;
     }, z.core.$strip>>;
     pendingAssignments: z.ZodArray<z.ZodObject<{
         id: z.ZodNumber;
@@ -83,6 +93,11 @@ export declare const TeacherDashboardResponseSchema: z.ZodObject<{
         assignmentCount: z.ZodOptional<z.ZodNumber>;
         teacherName: z.ZodOptional<z.ZodString>;
         createdAt: z.ZodString;
+        isActive: z.ZodBoolean;
+        yearLevel: z.ZodNumber;
+        semester: z.ZodNumber;
+        academicYear: z.ZodString;
+        schedule: z.ZodAny;
     }, z.core.$strip>>;
     pendingTasks: z.ZodArray<z.ZodObject<{
         id: z.ZodNumber;
@@ -120,6 +135,11 @@ export declare const DashboardClassListResponseSchema: z.ZodObject<{
         assignmentCount: z.ZodOptional<z.ZodNumber>;
         teacherName: z.ZodOptional<z.ZodString>;
         createdAt: z.ZodString;
+        isActive: z.ZodBoolean;
+        yearLevel: z.ZodNumber;
+        semester: z.ZodNumber;
+        academicYear: z.ZodString;
+        schedule: z.ZodAny;
     }, z.core.$strip>>;
 }, z.core.$strip>;
 export type DashboardClassListResponse = z.infer<typeof DashboardClassListResponseSchema>;
@@ -166,6 +186,11 @@ export declare const JoinClassResponseSchema: z.ZodObject<{
         assignmentCount: z.ZodOptional<z.ZodNumber>;
         teacherName: z.ZodOptional<z.ZodString>;
         createdAt: z.ZodString;
+        isActive: z.ZodBoolean;
+        yearLevel: z.ZodNumber;
+        semester: z.ZodNumber;
+        academicYear: z.ZodString;
+        schedule: z.ZodAny;
     }, z.core.$strip>;
 }, z.core.$strip>;
 export type JoinClassResponse = z.infer<typeof JoinClassResponseSchema>;

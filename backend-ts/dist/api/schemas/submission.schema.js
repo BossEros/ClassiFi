@@ -11,7 +11,6 @@ export const SubmissionResponseSchema = z.object({
     submittedAt: z.string(),
     isLatest: z.boolean(),
     studentName: z.string().optional(),
-    studentUsername: z.string().optional(),
     assignmentName: z.string().optional(),
 });
 /** Submit assignment response schema */

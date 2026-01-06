@@ -306,7 +306,6 @@ export const settings = { ... };  // Typed settings object
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   supabaseUserId: varchar('supabase_user_id', { length: 255 }).unique(),
-  username: varchar('username', { length: 50 }).notNull().unique(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   firstName: varchar('first_name', { length: 50 }).notNull(),
   lastName: varchar('last_name', { length: 50 }).notNull(),
@@ -331,7 +330,7 @@ Handles authentication with Supabase coordination:
 
 ```typescript
 class AuthService {
-  registerUser(email, password, username, ...)  // Create user
+  registerUser(email, password, firstName, lastName, role)  // Create user
   loginUser(email, password)                    // Authenticate
   verifyToken(token)                            // Validate JWT
   requestPasswordReset(email)                   // Send reset email

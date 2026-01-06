@@ -13,7 +13,6 @@ declare module 'fastify' {
         user?: {
             id: number;
             supabaseUserId: string | null;
-            username: string;
             email: string;
             firstName: string;
             lastName: string;

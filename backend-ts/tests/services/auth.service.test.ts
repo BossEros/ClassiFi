@@ -46,7 +46,6 @@ describe('AuthService', () => {
         vi.clearAllMocks();
 
         mockUserRepo = {
-            checkUsernameExists: vi.fn(),
             checkEmailExists: vi.fn(),
             createUser: vi.fn(),
             getUserBySupabaseId: vi.fn(),
@@ -64,7 +63,6 @@ describe('AuthService', () => {
         const validRegistration = {
             email: 'new@example.com',
             password: 'password123',
-            username: 'newuser',
             firstName: 'New',
             lastName: 'User',
             role: 'student',
@@ -73,12 +71,10 @@ describe('AuthService', () => {
         it('should successfully register a new user', async () => {
             const mockUser = createMockUser({
                 email: validRegistration.email,
-                username: validRegistration.username,
             });
             const supabaseUserId = 'new-supabase-id';
             const accessToken = 'test-access-token';
 
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockResolvedValue(mockUser);
 
@@ -94,7 +90,6 @@ describe('AuthService', () => {
             const result = await authService.registerUser(
                 validRegistration.email,
                 validRegistration.password,
-                validRegistration.username,
                 validRegistration.firstName,
                 validRegistration.lastName,
                 validRegistration.role
@@ -104,7 +99,6 @@ describe('AuthService', () => {
             expect(result.token).toBe(accessToken);
             expect(mockUserRepo.createUser).toHaveBeenCalledWith({
                 supabaseUserId,
-                username: validRegistration.username,
                 email: validRegistration.email,
                 firstName: validRegistration.firstName,
                 lastName: validRegistration.lastName,
@@ -112,32 +106,13 @@ describe('AuthService', () => {
             });
         });
 
-        it('should throw UserAlreadyExistsError if username exists', async () => {
-            mockUserRepo.checkUsernameExists.mockResolvedValue(true);
-
-            await expect(
-                authService.registerUser(
-                    validRegistration.email,
-                    validRegistration.password,
-                    'existinguser',
-                    validRegistration.firstName,
-                    validRegistration.lastName,
-                    validRegistration.role
-                )
-            ).rejects.toThrow(UserAlreadyExistsError);
-
-            expect(mockUserRepo.checkEmailExists).not.toHaveBeenCalled();
-        });
-
         it('should throw UserAlreadyExistsError if email exists', async () => {
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(true);
 
             await expect(
                 authService.registerUser(
                     'existing@example.com',
                     validRegistration.password,
-                    validRegistration.username,
                     validRegistration.firstName,
                     validRegistration.lastName,
                     validRegistration.role
@@ -146,7 +121,6 @@ describe('AuthService', () => {
         });
 
         it('should throw error when Supabase signup fails', async () => {
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
 
             const { supabase } = await import('../../src/shared/supabase.js');
@@ -159,7 +133,6 @@ describe('AuthService', () => {
                 authService.registerUser(
                     validRegistration.email,
                     validRegistration.password,
-                    validRegistration.username,
                     validRegistration.firstName,
                     validRegistration.lastName,
                     validRegistration.role
@@ -168,7 +141,6 @@ describe('AuthService', () => {
         });
 
         it('should throw error when Supabase returns no user', async () => {
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
 
             const { supabase } = await import('../../src/shared/supabase.js');
@@ -181,7 +153,6 @@ describe('AuthService', () => {
                 authService.registerUser(
                     validRegistration.email,
                     validRegistration.password,
-                    validRegistration.username,
                     validRegistration.firstName,
                     validRegistration.lastName,
                     validRegistration.role
@@ -191,7 +162,6 @@ describe('AuthService', () => {
 
         it('should rollback Supabase user when database insert fails', async () => {
             const supabaseUserId = 'temp-supabase-id';
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockRejectedValue(new Error('Database insert failed'));
 
@@ -208,7 +178,6 @@ describe('AuthService', () => {
                 authService.registerUser(
                     validRegistration.email,
                     validRegistration.password,
-                    validRegistration.username,
                     validRegistration.firstName,
                     validRegistration.lastName,
                     validRegistration.role
@@ -220,7 +189,6 @@ describe('AuthService', () => {
 
         it('should still throw original error even if rollback fails', async () => {
             const supabaseUserId = 'temp-supabase-id';
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockRejectedValue(new Error('Database insert failed'));
 
@@ -240,7 +208,6 @@ describe('AuthService', () => {
                 authService.registerUser(
                     validRegistration.email,
                     validRegistration.password,
-                    validRegistration.username,
                     validRegistration.firstName,
                     validRegistration.lastName,
                     validRegistration.role
@@ -250,7 +217,6 @@ describe('AuthService', () => {
 
         it('should return null token when session is not provided', async () => {
             const mockUser = createMockUser();
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockResolvedValue(mockUser);
 
@@ -266,7 +232,6 @@ describe('AuthService', () => {
             const result = await authService.registerUser(
                 validRegistration.email,
                 validRegistration.password,
-                validRegistration.username,
                 validRegistration.firstName,
                 validRegistration.lastName,
                 validRegistration.role
@@ -277,7 +242,6 @@ describe('AuthService', () => {
 
         it('should work for teacher role', async () => {
             const mockTeacher = createMockTeacher();
-            mockUserRepo.checkUsernameExists.mockResolvedValue(false);
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockResolvedValue(mockTeacher);
 
@@ -293,7 +257,6 @@ describe('AuthService', () => {
             const result = await authService.registerUser(
                 'teacher@example.com',
                 'password123',
-                'teacher1',
                 'Test',
                 'Teacher',
                 'teacher'
@@ -422,7 +385,6 @@ describe('AuthService', () => {
             const result = await authService.verifyToken('valid-token');
 
             expect(result.id).toBe(mockUser.id);
-            expect(result.username).toBe(mockUser.username);
             expect(result.email).toBe(mockUser.email);
         });
 

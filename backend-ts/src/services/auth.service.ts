@@ -9,7 +9,9 @@ import {
     UserNotFoundError,
     EmailNotVerifiedError,
     InvalidRoleError,
-} from '@/shared/errors.js';/** Auth result type */
+} from '@/shared/errors.js';
+
+/** Auth result type */
 interface AuthResult {
     userData: UserDTO;
     token: string | null;
@@ -27,25 +29,19 @@ export class AuthService {
 
     /**
      * Register a new user.
-     * @throws {UserAlreadyExistsError} If username or email exists
+     * @throws {UserAlreadyExistsError} If email exists
      */
     async registerUser(
         email: string,
         password: string,
-        username: string,
         firstName: string,
         lastName: string,
         role: string
     ): Promise<AuthResult> {
 
-        // Check if username already exists
-        if (await this.userRepo.checkUsernameExists(username)) {
-            throw new UserAlreadyExistsError('username', username);
-        }
-
         // Check if email already exists
         if (await this.userRepo.checkEmailExists(email)) {
-            throw new UserAlreadyExistsError('email', email);
+            throw new UserAlreadyExistsError(email);
         }
 
         // Create Supabase auth user with metadata
@@ -54,7 +50,6 @@ export class AuthService {
             password,
             options: {
                 data: {
-                    username,
                     first_name: firstName,
                     last_name: lastName,
                     role,
@@ -70,7 +65,6 @@ export class AuthService {
         try {
             const user = await this.userRepo.createUser({
                 supabaseUserId: supabaseData.user.id,
-                username,
                 email,
                 firstName,
                 lastName,

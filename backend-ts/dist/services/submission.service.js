@@ -77,6 +77,7 @@ let SubmissionService = class SubmissionService {
         const submissionCount = await this.submissionRepo.getSubmissionCount(assignmentId, studentId);
         const submissionNumber = submissionCount + 1;
         // Upload file to Supabase Storage
+        // Upload file to Supabase Storage
         const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`;
         const { error: uploadError } = await supabase.storage
             .from('submissions')
@@ -85,6 +86,7 @@ let SubmissionService = class SubmissionService {
             upsert: false,
         });
         if (uploadError) {
+            console.error('Submission upload error:', uploadError);
             throw new UploadFailedError(uploadError.message);
         }
         // Create submission record
@@ -108,7 +110,6 @@ let SubmissionService = class SubmissionService {
         const submissions = await this.submissionRepo.getSubmissionsWithStudentInfo(assignmentId, latestOnly);
         return submissions.map((s) => toSubmissionDTO(s.submission, {
             studentName: s.studentName,
-            studentUsername: s.studentUsername,
         }));
     }
     /** Get all submissions by a student */

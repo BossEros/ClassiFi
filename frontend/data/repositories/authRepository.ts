@@ -18,7 +18,7 @@ export async function login(
     credentials: LoginRequest
 ): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/login', {
-        email: credentials.email || credentials.username,
+        email: credentials.email,
         password: credentials.password
     })
 
@@ -35,7 +35,6 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        username: data.username,
         password: data.password,
         confirmPassword: data.confirmPassword
     })

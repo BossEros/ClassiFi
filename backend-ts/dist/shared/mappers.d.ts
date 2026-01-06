@@ -1,16 +1,12 @@
-/**
- * DTO Mappers
- * Convert between database entities and API response objects
- */
 import type { User, Class, Assignment, Submission } from '../models/index.js';
 export interface UserDTO {
     id: number;
     supabaseUserId: string | null;
-    username: string;
     email: string;
     firstName: string;
     lastName: string;
     role: string;
+    avatarUrl: string | null;
     createdAt: string;
 }
 export declare function toUserDTO(user: User): UserDTO;
@@ -66,19 +62,16 @@ export interface SubmissionDTO {
     submittedAt: string;
     isLatest: boolean;
     studentName?: string;
-    studentUsername?: string;
     assignmentName?: string;
     className?: string;
 }
 export declare function toSubmissionDTO(submission: Submission, extras?: {
     studentName?: string;
-    studentUsername?: string;
     assignmentName?: string;
     className?: string;
 }): SubmissionDTO;
 export interface StudentDTO {
     id: number;
-    username: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -94,6 +87,11 @@ export interface DashboardClassDTO {
     assignmentCount?: number;
     teacherName?: string;
     createdAt: string;
+    isActive: boolean;
+    yearLevel: number;
+    semester: number;
+    academicYear: string;
+    schedule: any;
 }
 export declare function toDashboardClassDTO(classData: Class, extras?: {
     studentCount?: number;

@@ -51,10 +51,10 @@ export declare class ClassService {
     /** Get all students enrolled in a class */
     getClassStudents(classId: number): Promise<Array<{
         id: number;
-        username: string;
         email: string;
         firstName: string;
         lastName: string;
+        avatarUrl: string | null;
     }>>;
     /** Remove a student from a class */
     removeStudent(classId: number, studentId: number, teacherId: number): Promise<void>;

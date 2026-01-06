@@ -40,7 +40,6 @@ vi.mock('../../src/models/index.js', () => ({
         id: 'id',
         firstName: 'firstName',
         lastName: 'lastName',
-        username: 'username',
     },
 }));
 
@@ -234,11 +233,9 @@ describe('SubmissionRepository', () => {
             const submissionWithInfo = {
                 submission: createMockSubmission({ id: 1 }),
                 studentName: 'John Doe',
-                studentUsername: 'johndoe',
             };
 
             expect(submissionWithInfo.studentName).toBe('John Doe');
-            expect(submissionWithInfo.studentUsername).toBe('johndoe');
         });
 
         it('should order by submitted date descending', () => {

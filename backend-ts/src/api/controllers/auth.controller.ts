@@ -34,12 +34,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
             },
         },
         handler: async (request, reply) => {
-            const { email, password, confirmPassword, username, firstName, lastName, role } = request.body;
+            const { email, password, confirmPassword, firstName, lastName, role } = request.body;
 
             const result = await authService.registerUser(
                 email,
                 password,
-                username,
                 firstName,
                 lastName,
                 role

@@ -5,6 +5,7 @@ import { submissionRoutes } from '@/api/controllers/submission.controller.js';
 import { studentDashboardRoutes } from '@/api/controllers/student-dashboard.controller.js';
 import { teacherDashboardRoutes } from '@/api/controllers/teacher-dashboard.controller.js';
 import { plagiarismRoutes } from '@/api/controllers/plagiarism.controller.js';
+import { userRoutes } from '@/api/controllers/user.controller.js';
 import { authMiddleware } from '@/api/middlewares/auth.middleware.js';
 /**
  * Protected routes wrapper - applies auth middleware to all routes
@@ -24,6 +25,8 @@ async function protectedRoutes(app) {
     await app.register(teacherDashboardRoutes, { prefix: '/teacher/dashboard' });
     // Plagiarism detection routes - /api/v1/plagiarism/*
     await app.register(plagiarismRoutes, { prefix: '/plagiarism' });
+    // User account routes - /api/v1/user/*
+    await app.register(userRoutes, { prefix: '/user' });
 }
 /** API v1 routes aggregator */
 export async function apiV1Routes(app) {

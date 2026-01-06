@@ -147,10 +147,10 @@ let ClassRepository = class ClassRepository extends BaseRepository {
         const results = await this.db
             .select({
             id: users.id,
-            username: users.username,
             email: users.email,
             firstName: users.firstName,
             lastName: users.lastName,
+            avatarUrl: users.avatarUrl,
         })
             .from(enrollments)
             .innerJoin(users, eq(enrollments.studentId, users.id))

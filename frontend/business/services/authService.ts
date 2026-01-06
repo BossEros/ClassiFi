@@ -27,7 +27,7 @@ export async function loginUser(
 ): Promise<AuthResponse> {
     // Validate credentials
     const validationResult = validateLoginData({
-        email: credentials.email || credentials.username || '',
+        email: credentials.email,
         password: credentials.password
     })
 
@@ -62,7 +62,6 @@ export async function registerUser(data: RegisterRequest): Promise<AuthResponse>
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        username: data.username,
         password: data.password,
         confirmPassword: data.confirmPassword
     })

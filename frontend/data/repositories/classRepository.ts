@@ -31,7 +31,6 @@ interface AssignmentListResponse {
 // Backend response type (does not include fullName - we compute it on the frontend)
 interface StudentBackendResponse {
   id: number
-  username: string
   email: string
   firstName: string
   lastName: string

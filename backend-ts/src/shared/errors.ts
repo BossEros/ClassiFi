@@ -15,8 +15,8 @@ export class UserNotFoundError extends NotFoundError {
 }
 
 export class UserAlreadyExistsError extends BadRequestError {
-    constructor(field: 'email' | 'username', value: string) {
-        super(`User with ${field} '${value}' already exists`);
+    constructor(email: string) {
+        super(`User with email '${email}' already exists`);
         this.name = 'UserAlreadyExistsError';
     }
 }

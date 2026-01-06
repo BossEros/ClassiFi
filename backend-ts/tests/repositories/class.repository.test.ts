@@ -41,7 +41,6 @@ vi.mock('../../src/models/index.js', () => ({
         id: 'id',
         firstName: 'firstName',
         lastName: 'lastName',
-        username: 'username',
         email: 'email',
     },
 }));

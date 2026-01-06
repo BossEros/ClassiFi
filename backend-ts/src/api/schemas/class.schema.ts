@@ -133,7 +133,6 @@ export type ClassResponse = z.infer<typeof ClassResponseSchema>;
 /** Student response schema */
 export const StudentResponseSchema = z.object({
     id: z.number(),
-    username: z.string(),
     email: z.string(),
     firstName: z.string(),
     lastName: z.string(),

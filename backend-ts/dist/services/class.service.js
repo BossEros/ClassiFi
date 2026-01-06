@@ -145,10 +145,10 @@ let ClassService = class ClassService {
         const students = await this.classRepo.getEnrolledStudents(classId);
         return students.map((s) => ({
             id: s.id,
-            username: s.username,
             email: s.email,
             firstName: s.firstName,
             lastName: s.lastName,
+            avatarUrl: s.avatarUrl,
         }));
     }
     /** Remove a student from a class */

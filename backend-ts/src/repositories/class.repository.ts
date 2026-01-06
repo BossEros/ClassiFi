@@ -183,7 +183,6 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
     /** Get all students enrolled in a class */
     async getEnrolledStudents(classId: number): Promise<Array<{
         id: number;
-        username: string;
         email: string;
         firstName: string;
         lastName: string;
@@ -192,7 +191,6 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
         const results = await this.db
             .select({
                 id: users.id,
-                username: users.username,
                 email: users.email,
                 firstName: users.firstName,
                 lastName: users.lastName,

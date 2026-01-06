@@ -11,7 +11,6 @@ export declare const SubmissionResponseSchema: z.ZodObject<{
     submittedAt: z.ZodString;
     isLatest: z.ZodBoolean;
     studentName: z.ZodOptional<z.ZodString>;
-    studentUsername: z.ZodOptional<z.ZodString>;
     assignmentName: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export type SubmissionResponse = z.infer<typeof SubmissionResponseSchema>;
@@ -30,7 +29,6 @@ export declare const SubmitAssignmentResponseSchema: z.ZodObject<{
         submittedAt: z.ZodString;
         isLatest: z.ZodBoolean;
         studentName: z.ZodOptional<z.ZodString>;
-        studentUsername: z.ZodOptional<z.ZodString>;
         assignmentName: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
@@ -50,7 +48,6 @@ export declare const SubmissionListResponseSchema: z.ZodObject<{
         submittedAt: z.ZodString;
         isLatest: z.ZodBoolean;
         studentName: z.ZodOptional<z.ZodString>;
-        studentUsername: z.ZodOptional<z.ZodString>;
         assignmentName: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
 }, z.core.$strip>;
@@ -70,7 +67,6 @@ export declare const SubmissionHistoryResponseSchema: z.ZodObject<{
         submittedAt: z.ZodString;
         isLatest: z.ZodBoolean;
         studentName: z.ZodOptional<z.ZodString>;
-        studentUsername: z.ZodOptional<z.ZodString>;
         assignmentName: z.ZodOptional<z.ZodString>;
     }, z.core.$strip>>;
     totalSubmissions: z.ZodNumber;
@@ -88,7 +84,6 @@ export declare const SubmissionDetailResponseSchema: z.ZodObject<{
     submittedAt: z.ZodString;
     isLatest: z.ZodBoolean;
     studentName: z.ZodOptional<z.ZodString>;
-    studentUsername: z.ZodOptional<z.ZodString>;
     assignmentName: z.ZodOptional<z.ZodString>;
     className: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;

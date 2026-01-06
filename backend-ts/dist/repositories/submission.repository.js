@@ -105,7 +105,6 @@ let SubmissionRepository = class SubmissionRepository extends BaseRepository {
             .select({
             submission: submissions,
             studentName: sql `concat(${users.firstName}, ' ', ${users.lastName})`,
-            studentUsername: users.username,
         })
             .from(submissions)
             .innerJoin(users, eq(submissions.studentId, users.id))

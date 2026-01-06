@@ -33,50 +33,54 @@ vi.mock('../../src/shared/supabase.js', () => ({
 }));
 
 // Mock PlagiarismDetector
+const mockReport = {
+    getSummary: () => ({
+        totalFiles: 2,
+        totalPairs: 1,
+        averageSimilarity: 0.5,
+        maxSimilarity: 0.8,
+        warnings: [],
+    }),
+    getPairs: () => [{
+        id: 1,
+        similarity: 0.8,
+        overlap: 50,
+        longest: 10,
+        leftCovered: 40,
+        rightCovered: 45,
+        leftTotal: 80,
+        rightTotal: 90,
+        leftFile: {
+            path: 'file1.py',
+            filename: 'file1.py',
+            content: 'print("hello")',
+            lineCount: 1,
+            info: { studentId: '1', studentName: 'Student 1' },
+        },
+        rightFile: {
+            path: 'file2.py',
+            filename: 'file2.py',
+            content: 'print("hello")',
+            lineCount: 1,
+            info: { studentId: '2', studentName: 'Student 2' },
+        },
+        buildFragments: () => [],
+    }],
+    getFragments: () => [{
+        leftSelection: { startRow: 1, startCol: 1, endRow: 1, endCol: 10 },
+        rightSelection: { startRow: 1, startCol: 1, endRow: 1, endCol: 10 },
+        length: 10,
+    }],
+    files: [{ path: 'file1.py' }, { path: 'file2.py' }],
+};
+
+class MockPlagiarismDetector {
+    analyze = vi.fn().mockResolvedValue(mockReport);
+}
+
 vi.mock('../../src/lib/plagiarism/index.js', () => ({
-    PlagiarismDetector: vi.fn().mockImplementation(() => ({
-        analyze: vi.fn().mockResolvedValue({
-            getSummary: () => ({
-                totalFiles: 2,
-                totalPairs: 1,
-                averageSimilarity: 0.5,
-                maxSimilarity: 0.8,
-                warnings: [],
-            }),
-            getPairs: () => [{
-                id: 1,
-                similarity: 0.8,
-                overlap: 50,
-                longest: 10,
-                leftCovered: 40,
-                rightCovered: 45,
-                leftTotal: 80,
-                rightTotal: 90,
-                leftFile: {
-                    path: 'file1.py',
-                    filename: 'file1.py',
-                    content: 'print("hello")',
-                    lineCount: 1,
-                    info: { studentId: '1', studentName: 'Student 1' },
-                },
-                rightFile: {
-                    path: 'file2.py',
-                    filename: 'file2.py',
-                    content: 'print("hello")',
-                    lineCount: 1,
-                    info: { studentId: '2', studentName: 'Student 2' },
-                },
-                buildFragments: () => [],
-            }],
-            getFragments: () => [{
-                leftSelection: { startRow: 1, startCol: 1, endRow: 1, endCol: 10 },
-                rightSelection: { startRow: 1, startCol: 1, endRow: 1, endCol: 10 },
-                length: 10,
-            }],
-            files: [{ path: 'file1.py' }, { path: 'file2.py' }],
-        }),
-    })),
-    File: vi.fn().mockImplementation((path, content, info) => ({
+    PlagiarismDetector: vi.fn().mockImplementation(() => new MockPlagiarismDetector()),
+    File: vi.fn().mockImplementation((path: string, content: string, info?: any) => ({
         path,
         filename: path,
         content,
@@ -419,12 +423,10 @@ describe('PlagiarismService', () => {
                 {
                     submission: { ...createMockSubmission({ id: 1 }), filePath: 'path1' },
                     studentName: 'Student 1',
-                    studentUsername: 'student1',
                 },
                 {
                     submission: { ...createMockSubmission({ id: 2 }), filePath: 'path2' },
                     studentName: 'Student 2',
-                    studentUsername: 'student2',
                 },
             ];
 

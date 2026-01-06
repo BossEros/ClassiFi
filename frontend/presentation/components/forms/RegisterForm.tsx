@@ -21,7 +21,6 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
-  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -88,7 +87,6 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       firstName,
       lastName,
       email,
-      username,
       password,
       confirmPassword
     })
@@ -121,7 +119,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
   const canProceed = () => {
     if (currentStep === 'role') return role !== null
     if (currentStep === 'personal') return firstName && lastName && email
-    if (currentStep === 'credentials') return username && password && confirmPassword
+    if (currentStep === 'credentials') return password && confirmPassword
     return false
   }
 
@@ -299,30 +297,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       {currentStep === 'credentials' && (
         <div className="space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-white">Set Your Login Credentials</h1>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="username" className="block text-sm font-medium text-gray-300">
-              Username
-            </label>
-            <Input
-              id="username"
-              type="text"
-              placeholder="Enter your username..."
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              onBlur={(e) => handleFieldBlur('username', e.target.value)}
-              required
-              hasError={!!fieldErrors.username}
-              aria-describedby={fieldErrors.username ? "username-error" : undefined}
-            />
-            {fieldErrors.username && (
-              <p id="username-error" className="text-sm text-red-400" role="alert">
-                {fieldErrors.username}
-              </p>
-            )}
-            <p className="text-xs text-gray-500">Letters, numbers, and underscores only</p>
+            <h1 className="text-3xl font-bold text-white">Set Your Password</h1>
           </div>
 
           <div className="space-y-2">

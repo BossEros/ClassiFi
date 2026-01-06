@@ -20,7 +20,6 @@ export class UserRepository extends BaseRepository<typeof users, User, NewUser> 
     /** Create a new user */
     async createUser(data: {
         supabaseUserId: string;
-        username: string;
         email: string;
         firstName: string;
         lastName: string;
@@ -30,7 +29,6 @@ export class UserRepository extends BaseRepository<typeof users, User, NewUser> 
             .insert(users)
             .values({
                 supabaseUserId: data.supabaseUserId,
-                username: data.username,
                 email: data.email,
                 firstName: data.firstName,
                 lastName: data.lastName,
@@ -68,21 +66,10 @@ export class UserRepository extends BaseRepository<typeof users, User, NewUser> 
         return results[0];
     }
 
-    /** Get user by username */
-    async getUserByUsername(username: string): Promise<User | undefined> {
-        const results = await this.db
-            .select()
-            .from(users)
-            .where(eq(users.username, username))
-            .limit(1);
-
-        return results[0];
-    }
-
     /** Update user information */
     async updateUser(
         userId: number,
-        data: Partial<Pick<NewUser, 'username' | 'email' | 'firstName' | 'lastName' | 'role' | 'avatarUrl'>>
+        data: Partial<Pick<NewUser, 'email' | 'firstName' | 'lastName' | 'role' | 'avatarUrl'>>
     ): Promise<User | undefined> {
         // Filter out undefined values
         const updateData = Object.fromEntries(
@@ -99,17 +86,6 @@ export class UserRepository extends BaseRepository<typeof users, User, NewUser> 
     /** Delete a user */
     async deleteUser(userId: number): Promise<boolean> {
         return await this.delete(userId);
-    }
-
-    /** Check if username already exists */
-    async checkUsernameExists(username: string): Promise<boolean> {
-        const results = await this.db
-            .select({ id: users.id })
-            .from(users)
-            .where(eq(users.username, username))
-            .limit(1);
-
-        return results.length > 0;
     }
 
     /** Check if email already exists */

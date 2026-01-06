@@ -25,7 +25,6 @@ let UserRepository = class UserRepository extends BaseRepository {
             .insert(users)
             .values({
             supabaseUserId: data.supabaseUserId,
-            username: data.username,
             email: data.email,
             firstName: data.firstName,
             lastName: data.lastName,
@@ -56,15 +55,6 @@ let UserRepository = class UserRepository extends BaseRepository {
             .limit(1);
         return results[0];
     }
-    /** Get user by username */
-    async getUserByUsername(username) {
-        const results = await this.db
-            .select()
-            .from(users)
-            .where(eq(users.username, username))
-            .limit(1);
-        return results[0];
-    }
     /** Update user information */
     async updateUser(userId, data) {
         // Filter out undefined values
@@ -77,15 +67,6 @@ let UserRepository = class UserRepository extends BaseRepository {
     /** Delete a user */
     async deleteUser(userId) {
         return await this.delete(userId);
-    }
-    /** Check if username already exists */
-    async checkUsernameExists(username) {
-        const results = await this.db
-            .select({ id: users.id })
-            .from(users)
-            .where(eq(users.username, username))
-            .limit(1);
-        return results.length > 0;
     }
     /** Check if email already exists */
     async checkEmailExists(email) {

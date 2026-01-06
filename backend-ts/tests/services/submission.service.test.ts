@@ -385,7 +385,6 @@ describe('SubmissionService', () => {
                 {
                     submission: createMockSubmission({ id: 1 }),
                     studentName: 'John Doe',
-                    studentUsername: 'johndoe',
                 },
             ];
             mockSubmissionRepo.getSubmissionsWithStudentInfo.mockResolvedValue(submissionsWithInfo);
@@ -394,7 +393,6 @@ describe('SubmissionService', () => {
 
             expect(result).toHaveLength(1);
             expect(result[0].studentName).toBe('John Doe');
-            expect(result[0].studentUsername).toBe('johndoe');
         });
 
         it('should pass latestOnly parameter correctly', async () => {

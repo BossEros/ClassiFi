@@ -143,13 +143,11 @@ export class SubmissionRepository extends BaseRepository<typeof submissions, Sub
     ): Promise<Array<{
         submission: Submission;
         studentName: string;
-        studentUsername: string;
     }>> {
         const query = this.db
             .select({
                 submission: submissions,
                 studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
-                studentUsername: users.username,
             })
             .from(submissions)
             .innerJoin(users, eq(submissions.studentId, users.id))

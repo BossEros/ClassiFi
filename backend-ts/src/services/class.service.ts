@@ -197,7 +197,6 @@ export class ClassService {
     /** Get all students enrolled in a class */
     async getClassStudents(classId: number): Promise<Array<{
         id: number;
-        username: string;
         email: string;
         firstName: string;
         lastName: string;
@@ -206,7 +205,6 @@ export class ClassService {
         const students = await this.classRepo.getEnrolledStudents(classId);
         return students.map((s) => ({
             id: s.id,
-            username: s.username,
             email: s.email,
             firstName: s.firstName,
             lastName: s.lastName,

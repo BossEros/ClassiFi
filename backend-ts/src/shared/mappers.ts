@@ -5,7 +5,6 @@ import type { User, Class, Assignment, Submission, Enrollment } from '../models/
 export interface UserDTO {
     id: number;
     supabaseUserId: string | null;
-    username: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -18,7 +17,6 @@ export function toUserDTO(user: User): UserDTO {
     return {
         id: user.id,
         supabaseUserId: user.supabaseUserId,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -117,14 +115,13 @@ export interface SubmissionDTO {
     submittedAt: string;
     isLatest: boolean;
     studentName?: string;
-    studentUsername?: string;
     assignmentName?: string;
     className?: string;
 }
 
 export function toSubmissionDTO(
     submission: Submission,
-    extras?: { studentName?: string; studentUsername?: string; assignmentName?: string; className?: string }
+    extras?: { studentName?: string; assignmentName?: string; className?: string }
 ): SubmissionDTO {
     return {
         id: submission.id,
@@ -144,7 +141,6 @@ export function toSubmissionDTO(
 
 export interface StudentDTO {
     id: number;
-    username: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -154,7 +150,6 @@ export interface StudentDTO {
 export function toStudentDTO(user: User): StudentDTO {
     return {
         id: user.id,
-        username: user.username,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,

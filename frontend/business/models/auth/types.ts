@@ -16,7 +16,6 @@ export type UserRole = 'student' | 'teacher' | 'admin'
  */
 export interface User {
   id: string
-  username: string
   email: string
   firstName: string
   lastName: string
@@ -33,10 +32,8 @@ export interface User {
  * Payload for login request.
  */
 export interface LoginRequest {
-  /** Optional: for backward compatibility */
-  username?: string
   /** Primary authentication method with Supabase */
-  email?: string
+  email: string
   password: string
 }
 
@@ -48,7 +45,6 @@ export interface RegisterRequest {
   firstName: string
   lastName: string
   email: string
-  username: string
   password: string
   confirmPassword: string
 }
