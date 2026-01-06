@@ -5,12 +5,12 @@ import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { Input } from '@/presentation/components/ui/Input'
 import { ArrowLeft, Search, AlertTriangle, FileCode, BarChart3, Users, Loader2, X, Layers, GitCompare, ListFilter } from 'lucide-react'
-import { SimilarityBadge } from '@/src/components/plagiarism/SimilarityBadge'
-import { PairComparison } from '@/src/components/plagiarism/PairComparison'
-import { PairCodeDiff } from '@/src/components/plagiarism/PairCodeDiff'
+import { SimilarityBadge } from '@/presentation/components/plagiarism/SimilarityBadge'
+import { PairComparison } from '@/presentation/components/plagiarism/PairComparison'
+import { PairCodeDiff } from '@/presentation/components/plagiarism/PairCodeDiff'
+import type { FilePair } from '@/presentation/components/plagiarism/types'
 import { getResultDetails } from '@/business/services/plagiarismService'
 import type { AnalyzeResponse, PairResponse } from '@/data/repositories/plagiarismRepository'
-import type { FilePair } from '@/src/components/plagiarism/types'
 
 interface LocationState {
     results: AnalyzeResponse
