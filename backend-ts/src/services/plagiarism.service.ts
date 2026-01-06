@@ -542,7 +542,7 @@ export class PlagiarismService {
         }
 
         // Batch insert results
-        let resultIdMap = new Map<string, number>();
+        const resultIdMap = new Map<string, number>();
         if (resultsToInsert.length > 0) {
             const insertedResults = await this.similarityRepo.createResults(resultsToInsert);
 
