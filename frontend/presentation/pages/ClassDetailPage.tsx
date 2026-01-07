@@ -262,7 +262,7 @@ export function ClassDetailPage() {
               </div>
 
               {/* Teacher controls: Edit and Delete */}
-              {isTeacher && <DropdownMenu items={dropdownItems} />}
+              {isTeacher && <DropdownMenu items={dropdownItems} triggerLabel="Class options" />}
 
               {/* Student controls: Leave Class */}
               {isStudent && (
