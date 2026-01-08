@@ -13,9 +13,10 @@ interface DropdownMenuItem {
 interface DropdownMenuProps {
   items: DropdownMenuItem[]
   className?: string
+  triggerLabel?: string
 }
 
-export function DropdownMenu({ items, className }: DropdownMenuProps) {
+export function DropdownMenu({ items, className, triggerLabel }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement>(null)
 
@@ -46,6 +47,7 @@ export function DropdownMenu({ items, className }: DropdownMenuProps) {
   return (
     <div ref={menuRef} className={cn('relative', className)}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'p-2 rounded-lg transition-colors duration-200',
@@ -53,6 +55,7 @@ export function DropdownMenu({ items, className }: DropdownMenuProps) {
           'focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900',
           isOpen && 'bg-white/10'
         )}
+        aria-label={triggerLabel || 'More options'}
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
