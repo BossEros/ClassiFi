@@ -6,6 +6,7 @@ import {
     timestamp,
     uuid,
     pgEnum,
+    boolean,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -21,6 +22,7 @@ export const users = pgTable('users', {
     lastName: varchar('last_name', { length: 50 }).notNull(),
     role: userRoleEnum('role').notNull(),
     avatarUrl: text('avatar_url'),
+    isActive: boolean('is_active').default(true).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 });

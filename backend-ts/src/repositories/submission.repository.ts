@@ -57,6 +57,31 @@ export class SubmissionRepository extends BaseRepository<typeof submissions, Sub
             .orderBy(desc(submissions.submittedAt));
     }
 
+    /** 
+     * Get all submissions for a class (via assignments).
+     * Used for cleanup during class deletion.
+     */
+    async getSubmissionsByClass(classId: number): Promise<Submission[]> {
+        // We need to import assignments model to join
+        const { assignments } = await import('@/models/index.js');
+
+        return await this.db
+            .select({
+                id: submissions.id,
+                assignmentId: submissions.assignmentId,
+                studentId: submissions.studentId,
+                fileName: submissions.fileName,
+                filePath: submissions.filePath,
+                fileSize: submissions.fileSize,
+                submissionNumber: submissions.submissionNumber,
+                submittedAt: submissions.submittedAt,
+                isLatest: submissions.isLatest
+            })
+            .from(submissions)
+            .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+            .where(eq(assignments.classId, classId));
+    }
+
     /** Get submission history for a student-assignment pair */
     async getSubmissionHistory(
         assignmentId: number,

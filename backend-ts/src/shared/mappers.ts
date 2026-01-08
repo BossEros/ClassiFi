@@ -10,6 +10,7 @@ export interface UserDTO {
     lastName: string;
     role: string;
     avatarUrl: string | null;
+    isActive: boolean;
     createdAt: string;
 }
 
@@ -22,6 +23,7 @@ export function toUserDTO(user: User): UserDTO {
         lastName: user.lastName,
         role: user.role,
         avatarUrl: user.avatarUrl ?? null,
+        isActive: user.isActive ?? true,
         createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
     };
 }

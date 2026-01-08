@@ -4,6 +4,8 @@ import { ClassRepository } from '../repositories/class.repository.js';
 import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { EnrollmentRepository } from '../repositories/enrollment.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
+import { SubmissionRepository } from '../repositories/submission.repository.js';
+import { supabase } from '../shared/supabase.js';
 import type { ClassSchedule } from '../models/index.js';
 import { toClassDTO, toAssignmentDTO, type ClassDTO, type AssignmentDTO } from '../shared/mappers.js';
 import {
@@ -24,7 +26,8 @@ export class ClassService {
         @inject('ClassRepository') private classRepo: ClassRepository,
         @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
         @inject('EnrollmentRepository') private enrollmentRepo: EnrollmentRepository,
-        @inject('UserRepository') private userRepo: UserRepository
+        @inject('UserRepository') private userRepo: UserRepository,
+        @inject('SubmissionRepository') private submissionRepo: SubmissionRepository
     ) { }
 
     /** Generate a unique class code */
@@ -149,6 +152,45 @@ export class ClassService {
             throw new NotClassOwnerError();
         }
 
+        await this.performClassDeletion(classId);
+    }
+
+    /**
+     * Delete a class without ownership check (Admin only).
+     * Performs safe cleanup of all associated files.
+     */
+    async forceDeleteClass(classId: number): Promise<void> {
+        const existingClass = await this.classRepo.getClassById(classId);
+        if (!existingClass) {
+            throw new ClassNotFoundError(classId);
+        }
+        await this.performClassDeletion(classId);
+    }
+
+    /**
+     * Shared helper to safely delete a class and its associated files.
+     */
+    private async performClassDeletion(classId: number): Promise<void> {
+        // 1. Clean up submission files
+        try {
+            const submissions = await this.submissionRepo.getSubmissionsByClass(classId);
+            if (submissions.length > 0) {
+                const filePaths = submissions.map(s => s.filePath);
+                if (filePaths.length > 0) {
+                    const { error } = await supabase.storage.from('submissions').remove(filePaths);
+                    if (error) {
+                        console.error('Failed to delete submission files:', error);
+                    } else {
+                        console.log(`Deleted ${filePaths.length} submission files for class ${classId}`);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error cleaning up class submission files:', error);
+            // Continue with deletion anyway
+        }
+
+        // 2. Delete class from database (cascades to assignments, submissions, enrollments)
         await this.classRepo.deleteClass(classId);
     }
 

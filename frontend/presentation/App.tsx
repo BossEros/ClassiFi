@@ -19,6 +19,9 @@ import { ClassFormPage } from './pages/ClassFormPage'
 import { CourseworkFormPage } from './pages/CourseworkFormPage'
 import { EmailConfirmationPage } from './pages/EmailConfirmationPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AdminDashboardPage } from './pages/AdminDashboardPage'
+import { AdminUsersPage } from './pages/AdminUsersPage'
+import { AdminClassesPage } from './pages/AdminClassesPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
 import { getCurrentUser } from '@/business/services/authService'
 import { useEffect } from 'react'
@@ -33,6 +36,10 @@ function RoleBasedDashboard() {
 
   if (user.role === 'student') {
     return <StudentDashboardPage />
+  }
+
+  if (user.role === 'admin') {
+    return <AdminDashboardPage />
   }
 
   // Default to teacher dashboard for teachers and admins
@@ -50,6 +57,11 @@ function RoleBasedClassesPage() {
   // Students see their enrolled classes page
   if (user.role === 'student') {
     return <StudentClassesPage />
+  }
+
+  // Admins see the admin classes oversight page
+  if (user.role === 'admin') {
+    return <AdminClassesPage />
   }
 
   // Teachers see the full classes page
@@ -220,6 +232,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <SettingsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/users"
+            element={
+              <ProtectedRoute>
+                <AdminUsersPage />
               </ProtectedRoute>
             }
           />
