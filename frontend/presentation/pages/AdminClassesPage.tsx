@@ -471,7 +471,11 @@ export function AdminClassesPage() {
                                     ))
                                 ) : classes.length > 0 ? (
                                     classes.map((cls) => (
-                                        <tr key={cls.id} className="group hover:bg-white/[0.02] transition-colors duration-200">
+                                        <tr
+                                            key={cls.id}
+                                            onClick={() => navigate(`/dashboard/classes/${cls.id}`)}
+                                            className="group hover:bg-white/[0.02] transition-colors duration-200 cursor-pointer"
+                                        >
                                             <td className="px-6 py-5">
                                                 <div className="space-y-1.5">
                                                     <div className="flex items-center gap-2">

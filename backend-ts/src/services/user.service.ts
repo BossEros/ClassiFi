@@ -1,17 +1,18 @@
 import { inject, injectable } from 'tsyringe';
 import { UserRepository } from '@/repositories/user.repository.js';
 import { SubmissionRepository } from '@/repositories/submission.repository.js';
-import { supabase } from '@/shared/supabase.js';
+import { StorageService } from '@/services/storage.service.js';
+import { SupabaseAuthAdapter } from '@/services/supabase-auth.adapter.js';
 import { UserNotFoundError } from '@/shared/errors.js';
 
-/**
- * Business logic for user account operations.
- */
+
 @injectable()
 export class UserService {
     constructor(
         @inject('UserRepository') private userRepo: UserRepository,
-        @inject('SubmissionRepository') private submissionRepo: SubmissionRepository
+        @inject('SubmissionRepository') private submissionRepo: SubmissionRepository,
+        @inject('StorageService') private storageService: StorageService,
+        @inject('SupabaseAuthAdapter') private authAdapter: SupabaseAuthAdapter
     ) { }
 
     /**
@@ -24,39 +25,21 @@ export class UserService {
         const user = await this.userRepo.getUserById(userId);
 
         if (!user) {
-            throw new UserNotFoundError(userId.toString());
+            throw new UserNotFoundError(userId);
         }
 
-        // Clean up avatar from Supabase Storage
-        if (user.avatarUrl && user.avatarUrl.includes('/avatars/')) {
-            try {
-                // Extract filename from URL (e.g., "123.jpg")
-                const urlParts = user.avatarUrl.split('/avatars/');
-                if (urlParts.length > 1) {
-                    const fileName = urlParts[1].split('?')[0]; // Remove query params
-                    await supabase.storage.from('avatars').remove([fileName]);
-                    console.log(`Deleted avatar file: ${fileName}`);
-                }
-            } catch (error) {
-                console.error('Failed to delete avatar from storage:', error);
-                // Continue with deletion anyway
-            }
+        // Clean up avatar from Supabase Storage using StorageService
+        if (user.avatarUrl) {
+            await this.storageService.deleteAvatar(user.avatarUrl);
         }
 
         // Get all submissions to clean up files before cascade delete
         try {
             const submissions = await this.submissionRepo.getSubmissionsByStudent(userId, false);
+            
             if (submissions.length > 0) {
-                // Extract file paths and delete from storage
                 const filePaths = submissions.map(s => s.filePath);
-                if (filePaths.length > 0) {
-                    const { error } = await supabase.storage.from('submissions').remove(filePaths);
-                    if (error) {
-                        console.error('Failed to delete submission files:', error);
-                    } else {
-                        console.log(`Deleted ${filePaths.length} submission files`);
-                    }
-                }
+                await this.storageService.deleteSubmissionFiles(filePaths);
             }
         } catch (error) {
             console.error('Error cleaning up submission files:', error);
@@ -72,16 +55,7 @@ export class UserService {
 
         // Delete from Supabase Auth if supabaseUserId exists
         if (user.supabaseUserId) {
-            try {
-                const { error } = await supabase.auth.admin.deleteUser(user.supabaseUserId);
-                if (error) {
-                    console.error('Failed to delete user from Supabase Auth:', error);
-                    // Don't throw - local DB is already deleted
-                }
-            } catch (error) {
-                console.error('Error deleting from Supabase Auth:', error);
-                // Don't throw - local DB is already deleted
-            }
+            await this.authAdapter.deleteUser(user.supabaseUserId);
         }
     }
 
@@ -93,7 +67,7 @@ export class UserService {
         const user = await this.userRepo.getUserById(userId);
 
         if (!user) {
-            throw new UserNotFoundError(userId.toString());
+            throw new UserNotFoundError(userId);
         }
 
         await this.userRepo.updateUser(userId, { avatarUrl });

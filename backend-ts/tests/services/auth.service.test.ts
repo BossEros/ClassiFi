@@ -1,10 +1,7 @@
-/**
- * AuthService Unit Tests
- * Comprehensive tests for registration, login, and forgot password functionality
- */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthService } from '../../src/services/auth.service.js';
 import { UserRepository } from '../../src/repositories/user.repository.js';
+import { SupabaseAuthAdapter } from '../../src/services/supabase-auth.adapter.js';
 import { createMockUser, createMockTeacher } from '../utils/factories.js';
 import {
     UserAlreadyExistsError,
@@ -15,22 +12,8 @@ import {
 
 // Mock the UserRepository
 vi.mock('../../src/repositories/user.repository.js');
-
-// Mock Supabase
-vi.mock('../../src/shared/supabase.js', () => ({
-    supabase: {
-        auth: {
-            signUp: vi.fn(),
-            signInWithPassword: vi.fn(),
-            getUser: vi.fn(),
-            resetPasswordForEmail: vi.fn(),
-            admin: {
-                deleteUser: vi.fn(),
-            },
-        },
-    },
-}));
-
+// Mock the SupabaseAuthAdapter
+vi.mock('../../src/services/supabase-auth.adapter.js');
 // Mock config
 vi.mock('../../src/shared/config.js', () => ({
     settings: {
@@ -41,6 +24,7 @@ vi.mock('../../src/shared/config.js', () => ({
 describe('AuthService', () => {
     let authService: AuthService;
     let mockUserRepo: any;
+    let mockAuthAdapter: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -51,7 +35,18 @@ describe('AuthService', () => {
             getUserBySupabaseId: vi.fn(),
         };
 
-        authService = new AuthService(mockUserRepo as UserRepository);
+        mockAuthAdapter = {
+            signUp: vi.fn(),
+            signInWithPassword: vi.fn(),
+            getUser: vi.fn(),
+            resetPasswordForEmail: vi.fn(),
+            deleteUser: vi.fn(),
+        };
+
+        authService = new AuthService(
+            mockUserRepo as UserRepository,
+            mockAuthAdapter as SupabaseAuthAdapter
+        );
     });
 
     afterEach(() => {
@@ -78,13 +73,9 @@ describe('AuthService', () => {
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockResolvedValue(mockUser);
 
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: {
-                    user: { id: supabaseUserId },
-                    session: { access_token: accessToken },
-                },
-                error: null,
+            mockAuthAdapter.signUp.mockResolvedValue({
+                user: { id: supabaseUserId },
+                token: accessToken
             });
 
             const result = await authService.registerUser(
@@ -104,6 +95,15 @@ describe('AuthService', () => {
                 lastName: validRegistration.lastName,
                 role: validRegistration.role,
             });
+            expect(mockAuthAdapter.signUp).toHaveBeenCalledWith(
+                validRegistration.email,
+                validRegistration.password,
+                {
+                    first_name: validRegistration.firstName,
+                    last_name: validRegistration.lastName,
+                    role: validRegistration.role,
+                }
+            );
         });
 
         it('should throw UserAlreadyExistsError if email exists', async () => {
@@ -118,16 +118,13 @@ describe('AuthService', () => {
                     validRegistration.role
                 )
             ).rejects.toThrow(UserAlreadyExistsError);
+
+            expect(mockAuthAdapter.signUp).not.toHaveBeenCalled();
         });
 
         it('should throw error when Supabase signup fails', async () => {
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: { user: null },
-                error: { message: 'Supabase error occurred' },
-            });
+            mockAuthAdapter.signUp.mockRejectedValue(new Error('Supabase error occurred'));
 
             await expect(
                 authService.registerUser(
@@ -142,12 +139,7 @@ describe('AuthService', () => {
 
         it('should throw error when Supabase returns no user', async () => {
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: { user: null, session: null },
-                error: null,
-            });
+            mockAuthAdapter.signUp.mockResolvedValue({ user: null, token: null });
 
             await expect(
                 authService.registerUser(
@@ -165,13 +157,9 @@ describe('AuthService', () => {
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockRejectedValue(new Error('Database insert failed'));
 
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: {
-                    user: { id: supabaseUserId },
-                    session: { access_token: 'token' },
-                },
-                error: null,
+            mockAuthAdapter.signUp.mockResolvedValue({
+                user: { id: supabaseUserId },
+                token: 'token'
             });
 
             await expect(
@@ -184,25 +172,19 @@ describe('AuthService', () => {
                 )
             ).rejects.toThrow('Database insert failed');
 
-            expect(supabase.auth.admin.deleteUser).toHaveBeenCalledWith(supabaseUserId);
+            expect(mockAuthAdapter.deleteUser).toHaveBeenCalledWith(supabaseUserId);
         });
 
         it('should still throw original error even if rollback fails', async () => {
             const supabaseUserId = 'temp-supabase-id';
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockRejectedValue(new Error('Database insert failed'));
+            mockAuthAdapter.deleteUser.mockRejectedValue(new Error('Rollback failed'));
 
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: {
-                    user: { id: supabaseUserId },
-                    session: { access_token: 'token' },
-                },
-                error: null,
+            mockAuthAdapter.signUp.mockResolvedValue({
+                user: { id: supabaseUserId },
+                token: 'token'
             });
-            (supabase.auth.admin.deleteUser as any).mockRejectedValue(
-                new Error('Rollback failed')
-            );
 
             await expect(
                 authService.registerUser(
@@ -220,13 +202,9 @@ describe('AuthService', () => {
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockResolvedValue(mockUser);
 
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: {
-                    user: { id: 'supabase-id' },
-                    session: null,
-                },
-                error: null,
+            mockAuthAdapter.signUp.mockResolvedValue({
+                user: { id: 'supabase-id' },
+                token: null
             });
 
             const result = await authService.registerUser(
@@ -245,13 +223,9 @@ describe('AuthService', () => {
             mockUserRepo.checkEmailExists.mockResolvedValue(false);
             mockUserRepo.createUser.mockResolvedValue(mockTeacher);
 
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signUp as any).mockResolvedValue({
-                data: {
-                    user: { id: 'teacher-supabase-id' },
-                    session: { access_token: 'token' },
-                },
-                error: null,
+            mockAuthAdapter.signUp.mockResolvedValue({
+                user: { id: 'teacher-supabase-id' },
+                token: 'token'
             });
 
             const result = await authService.registerUser(
@@ -278,13 +252,9 @@ describe('AuthService', () => {
             const supabaseUserId = 'supabase-id';
             const accessToken = 'test-access-token';
 
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signInWithPassword as any).mockResolvedValue({
-                data: {
-                    user: { id: supabaseUserId },
-                    session: { access_token: accessToken },
-                },
-                error: null,
+            mockAuthAdapter.signInWithPassword.mockResolvedValue({
+                accessToken,
+                user: { id: supabaseUserId }
             });
             mockUserRepo.getUserBySupabaseId.mockResolvedValue(mockUser);
 
@@ -295,14 +265,14 @@ describe('AuthService', () => {
 
             expect(result.userData.email).toBe(mockUser.email);
             expect(result.token).toBe(accessToken);
+            expect(mockAuthAdapter.signInWithPassword).toHaveBeenCalledWith(
+                validCredentials.email,
+                validCredentials.password
+            );
         });
 
         it('should throw InvalidCredentialsError for wrong password', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signInWithPassword as any).mockResolvedValue({
-                data: { user: null, session: null },
-                error: { message: 'Invalid login credentials' },
-            });
+            mockAuthAdapter.signInWithPassword.mockRejectedValue(new InvalidCredentialsError());
 
             await expect(
                 authService.loginUser(validCredentials.email, 'wrongpassword')
@@ -310,11 +280,7 @@ describe('AuthService', () => {
         });
 
         it('should throw EmailNotVerifiedError when email is not confirmed', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signInWithPassword as any).mockResolvedValue({
-                data: { user: null, session: null },
-                error: { message: 'Email not confirmed' },
-            });
+            mockAuthAdapter.signInWithPassword.mockRejectedValue(new EmailNotVerifiedError());
 
             await expect(
                 authService.loginUser(validCredentials.email, validCredentials.password)
@@ -322,10 +288,9 @@ describe('AuthService', () => {
         });
 
         it('should throw InvalidCredentialsError when Supabase returns no user', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signInWithPassword as any).mockResolvedValue({
-                data: { user: null, session: { access_token: 'token' } },
-                error: null,
+            mockAuthAdapter.signInWithPassword.mockResolvedValue({
+                accessToken: 'token',
+                user: null
             });
 
             await expect(
@@ -334,13 +299,9 @@ describe('AuthService', () => {
         });
 
         it('should throw UserNotFoundError when user not in local database', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signInWithPassword as any).mockResolvedValue({
-                data: {
-                    user: { id: 'orphan-supabase-id' },
-                    session: { access_token: 'token' },
-                },
-                error: null,
+            mockAuthAdapter.signInWithPassword.mockResolvedValue({
+                accessToken: 'token',
+                user: { id: 'orphan-supabase-id' }
             });
             mockUserRepo.getUserBySupabaseId.mockResolvedValue(undefined);
 
@@ -348,76 +309,33 @@ describe('AuthService', () => {
                 authService.loginUser(validCredentials.email, validCredentials.password)
             ).rejects.toThrow(UserNotFoundError);
         });
-
-        it('should return null token when session is not provided', async () => {
-            const mockUser = createMockUser();
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.signInWithPassword as any).mockResolvedValue({
-                data: {
-                    user: { id: 'supabase-id' },
-                    session: null,
-                },
-                error: null,
-            });
-            mockUserRepo.getUserBySupabaseId.mockResolvedValue(mockUser);
-
-            const result = await authService.loginUser(
-                validCredentials.email,
-                validCredentials.password
-            );
-
-            expect(result.token).toBeNull();
-        });
     });
 
     // ============ verifyToken Tests ============
     describe('verifyToken', () => {
         it('should return user data for valid token', async () => {
             const mockUser = createMockUser();
-            const { supabase } = await import('../../src/shared/supabase.js');
 
-            (supabase.auth.getUser as any).mockResolvedValue({
-                data: { user: { id: 'supabase-id' } },
-                error: null,
-            });
+            mockAuthAdapter.getUser.mockResolvedValue({ id: 'supabase-id' });
             mockUserRepo.getUserBySupabaseId.mockResolvedValue(mockUser);
 
             const result = await authService.verifyToken('valid-token');
 
             expect(result.id).toBe(mockUser.id);
             expect(result.email).toBe(mockUser.email);
+            expect(mockAuthAdapter.getUser).toHaveBeenCalledWith('valid-token');
         });
 
         it('should throw InvalidCredentialsError for invalid token', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.getUser as any).mockResolvedValue({
-                data: { user: null },
-                error: { message: 'Invalid token' },
-            });
+            mockAuthAdapter.getUser.mockResolvedValue(null);
 
             await expect(authService.verifyToken('invalid-token')).rejects.toThrow(
                 InvalidCredentialsError
             );
         });
 
-        it('should throw InvalidCredentialsError when Supabase returns no user', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.getUser as any).mockResolvedValue({
-                data: { user: null },
-                error: null,
-            });
-
-            await expect(authService.verifyToken('token-with-no-user')).rejects.toThrow(
-                InvalidCredentialsError
-            );
-        });
-
         it('should throw UserNotFoundError when user not in local database', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.getUser as any).mockResolvedValue({
-                data: { user: { id: 'orphan-supabase-id' } },
-                error: null,
-            });
+            mockAuthAdapter.getUser.mockResolvedValue({ id: 'orphan-supabase-id' });
             mockUserRepo.getUserBySupabaseId.mockResolvedValue(undefined);
 
             await expect(authService.verifyToken('valid-token-orphan-user')).rejects.toThrow(
@@ -430,30 +348,23 @@ describe('AuthService', () => {
     describe('requestPasswordReset', () => {
         it('should call Supabase resetPasswordForEmail with correct parameters', async () => {
             const email = 'reset@example.com';
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.resetPasswordForEmail as any).mockResolvedValue({});
+            mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined);
 
             await authService.requestPasswordReset(email);
 
-            expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(email, {
-                redirectTo: 'http://localhost:3000/reset-password',
-            });
+            expect(mockAuthAdapter.resetPasswordForEmail).toHaveBeenCalledWith(email, 'http://localhost:3000/reset-password');
         });
 
         it('should not throw error even if email does not exist (security)', async () => {
             const email = 'nonexistent@example.com';
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.resetPasswordForEmail as any).mockResolvedValue({});
+            mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined);
 
             await expect(authService.requestPasswordReset(email)).resolves.not.toThrow();
         });
 
         it('should propagate Supabase errors', async () => {
             const email = 'error@example.com';
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.auth.resetPasswordForEmail as any).mockRejectedValue(
-                new Error('Rate limit exceeded')
-            );
+            mockAuthAdapter.resetPasswordForEmail.mockRejectedValue(new Error('Rate limit exceeded'));
 
             await expect(authService.requestPasswordReset(email)).rejects.toThrow(
                 'Rate limit exceeded'

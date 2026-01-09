@@ -1,10 +1,6 @@
-/**
- * TeacherDashboardService Unit Tests
- * Comprehensive tests for teacher dashboard operations
- */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TeacherDashboardService } from '../../src/services/teacher-dashboard.service.js';
-import { createMockClass, createMockAssignment, createMockSubmission } from '../utils/factories.js';
+import { createMockClass, createMockAssignment } from '../utils/factories.js';
 
 describe('TeacherDashboardService', () => {
     let dashboardService: TeacherDashboardService;
@@ -17,12 +13,15 @@ describe('TeacherDashboardService', () => {
 
         mockClassRepo = {
             getRecentClassesByTeacher: vi.fn(),
+            getRecentClassesWithStudentCounts: vi.fn(),
             getClassesByTeacher: vi.fn(),
+            getClassesWithStudentCounts: vi.fn(),
             getStudentCount: vi.fn(),
         };
 
         mockAssignmentRepo = {
-            getAssignmentsByClassId: vi.fn(),
+            getAssignmentsByClassIds: vi.fn(),
+            getPendingTasksForTeacher: vi.fn(),
         };
 
         mockSubmissionRepo = {
@@ -43,8 +42,9 @@ describe('TeacherDashboardService', () => {
     // ============ getDashboardData Tests ============
     describe('getDashboardData', () => {
         it('should return combined dashboard data', async () => {
-            mockClassRepo.getRecentClassesByTeacher.mockResolvedValue([]);
-            mockClassRepo.getClassesByTeacher.mockResolvedValue([]);
+            mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue([]);
+            mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue([]);
+            mockAssignmentRepo.getPendingTasksForTeacher.mockResolvedValue([]);
 
             const result = await dashboardService.getDashboardData(1);
 
@@ -53,48 +53,57 @@ describe('TeacherDashboardService', () => {
         });
 
         it('should respect limit parameters', async () => {
-            mockClassRepo.getRecentClassesByTeacher.mockResolvedValue([]);
-            mockClassRepo.getClassesByTeacher.mockResolvedValue([]);
+            mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue([]);
+            mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue([]);
+            mockAssignmentRepo.getPendingTasksForTeacher.mockResolvedValue([]);
 
             await dashboardService.getDashboardData(1, 5, 3);
 
-            expect(mockClassRepo.getRecentClassesByTeacher).toHaveBeenCalledWith(1, 5);
+            expect(mockClassRepo.getRecentClassesWithStudentCounts).toHaveBeenCalledWith(1, 5);
+            expect(mockAssignmentRepo.getPendingTasksForTeacher).toHaveBeenCalledWith(1, 3);
         });
     });
 
     // ============ getRecentClasses Tests ============
     describe('getRecentClasses', () => {
         it('should return recent classes with student and assignment counts', async () => {
-            const mockClasses = [
-                createMockClass({ id: 1 }),
-                createMockClass({ id: 2 }),
+            const mockClassesWithCounts = [
+                { ...createMockClass({ id: 1 }), studentCount: 15 },
+                { ...createMockClass({ id: 2 }), studentCount: 15 },
             ];
             const assignments = [
-                createMockAssignment({ id: 1 }),
-                createMockAssignment({ id: 2 }),
+                createMockAssignment({ id: 1, classId: 1 }),
+                createMockAssignment({ id: 2, classId: 2 }),
+                createMockAssignment({ id: 3, classId: 1 }),
             ];
 
-            mockClassRepo.getRecentClassesByTeacher.mockResolvedValue(mockClasses);
-            mockClassRepo.getStudentCount.mockResolvedValue(15);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
+            mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue(mockClassesWithCounts);
+            mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue(assignments);
 
             const result = await dashboardService.getRecentClasses(1);
 
+            expect(mockAssignmentRepo.getAssignmentsByClassIds).toHaveBeenCalledWith([1, 2], true);
             expect(result).toHaveLength(2);
-            expect(result[0].studentCount).toBe(15);
-            expect(result[0].assignmentCount).toBe(2);
+
+            // Function groups assignments by classId
+            const class1 = result.find(c => c.id === 1);
+            expect(class1?.assignmentCount).toBe(2);
+
+            const class2 = result.find(c => c.id === 2);
+            expect(class2?.assignmentCount).toBe(1);
         });
 
         it('should use default limit of 5', async () => {
-            mockClassRepo.getRecentClassesByTeacher.mockResolvedValue([]);
+            mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue([]);
+            mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue([]);
 
             await dashboardService.getRecentClasses(1);
 
-            expect(mockClassRepo.getRecentClassesByTeacher).toHaveBeenCalledWith(1, 5);
+            expect(mockClassRepo.getRecentClassesWithStudentCounts).toHaveBeenCalledWith(1, 5);
         });
 
         it('should return empty array when no classes', async () => {
-            mockClassRepo.getRecentClassesByTeacher.mockResolvedValue([]);
+            mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue([]);
 
             const result = await dashboardService.getRecentClasses(1);
 
@@ -104,144 +113,57 @@ describe('TeacherDashboardService', () => {
 
     // ============ getPendingTasks Tests ============
     describe('getPendingTasks', () => {
-        it('should return pending tasks sorted by deadline', async () => {
-            const now = Date.now();
-            const mockClasses = [createMockClass({ id: 1, className: 'Test Class' })];
-            const assignments = [
-                createMockAssignment({
+        it('should return pending tasks from repository', async () => {
+            const mockTasks = [
+                {
                     id: 1,
-                    deadline: new Date(now + 200000),
-                    assignmentName: 'Assignment 1'
-                }),
-                createMockAssignment({
+                    assignmentName: 'Task 1',
+                    className: 'Class A',
+                    classId: 101,
+                    deadline: new Date('2023-12-31'),
+                    submissionCount: 5,
+                    studentCount: 20
+                },
+                {
                     id: 2,
-                    deadline: new Date(now + 100000),
-                    assignmentName: 'Assignment 2'
-                }),
+                    assignmentName: 'Task 2',
+                    className: 'Class B',
+                    classId: 102,
+                    deadline: new Date('2024-01-01'),
+                    submissionCount: 0,
+                    studentCount: 15
+                }
             ];
 
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([createMockSubmission()]);
-            mockClassRepo.getStudentCount.mockResolvedValue(20);
+            mockAssignmentRepo.getPendingTasksForTeacher.mockResolvedValue(mockTasks);
 
-            const result = await dashboardService.getPendingTasks(1);
+            const result = await dashboardService.getPendingTasks(1, 10);
 
+            expect(mockAssignmentRepo.getPendingTasksForTeacher).toHaveBeenCalledWith(1, 10);
             expect(result).toHaveLength(2);
-            // Should be sorted by deadline ascending
-            expect(new Date(result[0].deadline).getTime()).toBeLessThan(
-                new Date(result[1].deadline).getTime()
-            );
+            expect(result[0].assignmentName).toBe('Task 1');
+            expect(result[0].submissionCount).toBe(5);
+            expect(result[0].totalStudents).toBe(20);
         });
 
-        it('should include assignments with submissions', async () => {
-            const pastDeadline = new Date(Date.now() - 10000);
-            const mockClasses = [createMockClass({ id: 1 })];
-            const assignments = [
-                createMockAssignment({ id: 1, deadline: pastDeadline }),
+        it('should map null deadline to empty string', async () => {
+            const mockTasks = [
+                {
+                    id: 1,
+                    assignmentName: 'Task 1',
+                    className: 'Class A',
+                    classId: 101,
+                    deadline: null,
+                    submissionCount: 5,
+                    studentCount: 20
+                }
             ];
 
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([createMockSubmission()]);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
+            mockAssignmentRepo.getPendingTasksForTeacher.mockResolvedValue(mockTasks);
 
             const result = await dashboardService.getPendingTasks(1);
 
-            expect(result).toHaveLength(1);
-        });
-
-        it('should include assignments with upcoming deadlines', async () => {
-            const futureDeadline = new Date(Date.now() + 100000);
-            const mockClasses = [createMockClass({ id: 1 })];
-            const assignments = [
-                createMockAssignment({ id: 1, deadline: futureDeadline }),
-            ];
-
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([]);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
-
-            const result = await dashboardService.getPendingTasks(1);
-
-            expect(result).toHaveLength(1);
-        });
-
-        it('should exclude assignments with no submissions and past deadlines', async () => {
-            const pastDeadline = new Date(Date.now() - 10000);
-            const mockClasses = [createMockClass({ id: 1 })];
-            const assignments = [
-                createMockAssignment({ id: 1, deadline: pastDeadline }),
-            ];
-
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([]);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
-
-            const result = await dashboardService.getPendingTasks(1);
-
-            expect(result).toHaveLength(0);
-        });
-
-        it('should respect limit parameter', async () => {
-            const futureDeadline = new Date(Date.now() + 100000);
-            const mockClasses = [createMockClass({ id: 1 })];
-            const assignments = [
-                createMockAssignment({ id: 1, deadline: futureDeadline }),
-                createMockAssignment({ id: 2, deadline: futureDeadline }),
-                createMockAssignment({ id: 3, deadline: futureDeadline }),
-            ];
-
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([]);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
-
-            const result = await dashboardService.getPendingTasks(1, 2);
-
-            expect(result).toHaveLength(2);
-        });
-
-        it('should handle null deadline correctly', async () => {
-            const mockClasses = [createMockClass({ id: 1 })];
-            const assignments = [
-                createMockAssignment({ id: 1, deadline: null as any }),
-                createMockAssignment({ id: 2, deadline: new Date(Date.now() + 100000) }),
-            ];
-
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([createMockSubmission()]);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
-
-            const result = await dashboardService.getPendingTasks(1);
-
-            // Only the one with submission should be included (since null deadline isn't in future)
-            expect(result.length).toBeGreaterThanOrEqual(1);
-        });
-
-        it('should include correct submission and student counts', async () => {
-            const futureDeadline = new Date(Date.now() + 100000);
-            const mockClasses = [createMockClass({ id: 1, className: 'Test Class' })];
-            const assignments = [
-                createMockAssignment({ id: 1, deadline: futureDeadline, assignmentName: 'Test' }),
-            ];
-            const submissions = [
-                createMockSubmission({ id: 1 }),
-                createMockSubmission({ id: 2 }),
-            ];
-
-            mockClassRepo.getClassesByTeacher.mockResolvedValue(mockClasses);
-            mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue(assignments);
-            mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue(submissions);
-            mockClassRepo.getStudentCount.mockResolvedValue(25);
-
-            const result = await dashboardService.getPendingTasks(1);
-
-            expect(result[0].submissionCount).toBe(2);
-            expect(result[0].totalStudents).toBe(25);
+            expect(result[0].deadline).toBe('');
         });
     });
 });

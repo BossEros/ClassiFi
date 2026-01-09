@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { Input } from '@/presentation/components/ui/Input'
-import { ArrowLeft, Search, AlertTriangle, FileCode, BarChart3, Users, Loader2, X, Layers, GitCompare, ListFilter } from 'lucide-react'
+import { ArrowLeft, Search, AlertTriangle, FileCode, BarChart3, Users, Loader2, X, Layers, GitCompare } from 'lucide-react'
 import { SimilarityBadge } from '@/src/components/plagiarism/SimilarityBadge'
 import { PairComparison } from '@/src/components/plagiarism/PairComparison'
 import { PairCodeDiff } from '@/src/components/plagiarism/PairCodeDiff'

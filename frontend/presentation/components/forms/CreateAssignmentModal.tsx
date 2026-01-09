@@ -54,8 +54,8 @@ export function CreateAssignmentModal({
   useEffect(() => {
     if (isOpen) {
       if (assignment) {
-        setAssignmentName(assignment.title)
-        setDescription(assignment.description)
+        setAssignmentName(assignment.assignmentName)
+        setDescription(assignment.description ?? '')
         setProgrammingLanguage(assignment.programmingLanguage as 'python' | 'java')
         // Format date for datetime-local input (YYYY-MM-DDThh:mm)
         const date = new Date(assignment.deadline)

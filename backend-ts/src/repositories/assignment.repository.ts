@@ -1,6 +1,6 @@
 import { db } from '@/shared/database.js';
-import { eq, and, desc } from 'drizzle-orm';
-import { assignments, type Assignment, type NewAssignment } from '@/models/index.js';
+import { eq, and, desc, inArray, sql, or, gt, asc } from 'drizzle-orm';
+import { assignments, classes, submissions, enrollments, type Assignment, type NewAssignment } from '@/models/index.js';
 import { BaseRepository } from '@/repositories/base.repository.js';
 import { injectable } from 'tsyringe';
 /** Programming language type */
@@ -38,6 +38,96 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
             .from(assignments)
             .where(eq(assignments.classId, classId))
             .orderBy(desc(assignments.deadline));
+    }
+
+    /** Get assignments for multiple classes */
+    async getAssignmentsByClassIds(
+        classIds: number[],
+        activeOnly: boolean = true
+    ): Promise<Assignment[]> {
+        if (classIds.length === 0) {
+            return [];
+        }
+
+        if (activeOnly) {
+            return await this.db
+                .select()
+                .from(assignments)
+                .where(and(inArray(assignments.classId, classIds), eq(assignments.isActive, true)))
+                .orderBy(desc(assignments.deadline));
+        }
+
+        return await this.db
+            .select()
+            .from(assignments)
+            .where(inArray(assignments.classId, classIds))
+            .orderBy(desc(assignments.deadline));
+    }
+
+    /**
+     * Get pending tasks for a teacher.
+     * Combines logic to check for upcoming deadlines or ungraded submissions.
+     * Optimized to avoid N+1 query problem.
+     */
+    async getPendingTasksForTeacher(
+        teacherId: number,
+        limit: number = 10
+    ): Promise<Array<{
+        id: number;
+        assignmentName: string;
+        deadline: Date | null;
+        classId: number;
+        className: string;
+        studentCount: number;
+        submissionCount: number;
+    }>> {
+        const now = new Date();
+
+        // Subquery for student counts per class
+        const classStudentCounts = this.db.select({
+            classId: enrollments.classId,
+            count: sql<number>`count(*)`.as('studentCount')
+        }).from(enrollments).groupBy(enrollments.classId).as('csc');
+
+        // Subquery for latest submission counts per assignment
+        const assignmentSubmissionCounts = this.db.select({
+            assignmentId: submissions.assignmentId,
+            count: sql<number>`count(*)`.as('submissionCount')
+        }).from(submissions).where(eq(submissions.isLatest, true)).groupBy(submissions.assignmentId).as('asc');
+
+        const results = await this.db.select({
+            id: assignments.id,
+            assignmentName: assignments.assignmentName,
+            deadline: assignments.deadline,
+            classId: classes.id,
+            className: classes.className,
+            studentCount: sql<number>`COALESCE(${classStudentCounts.count}, 0)`,
+            submissionCount: sql<number>`COALESCE(${assignmentSubmissionCounts.count}, 0)`
+        })
+            .from(assignments)
+            .innerJoin(classes, eq(assignments.classId, classes.id))
+            .leftJoin(classStudentCounts, eq(classes.id, classStudentCounts.classId))
+            .leftJoin(assignmentSubmissionCounts, eq(assignments.id, assignmentSubmissionCounts.assignmentId))
+            .where(
+                and(
+                    eq(classes.teacherId, teacherId),
+                    eq(classes.isActive, true),
+                    eq(assignments.isActive, true),
+                    or(
+                        gt(assignments.deadline, now),
+                        gt(sql`COALESCE(${assignmentSubmissionCounts.count}, 0)`, 0)
+                    )
+                )
+            )
+            .orderBy(asc(assignments.deadline))
+            .limit(limit);
+
+        return results.map(r => ({
+            ...r,
+            studentCount: Number(r.studentCount),
+            submissionCount: Number(r.submissionCount),
+            deadline: r.deadline ? new Date(r.deadline) : null
+        }));
     }
 
     /** Create a new assignment */

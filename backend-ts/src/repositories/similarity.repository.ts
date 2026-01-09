@@ -99,4 +99,17 @@ export class SimilarityRepository extends BaseRepository<typeof similarityReport
         const fragments = await this.getFragmentsByResult(resultId);
         return { result, fragments };
     }
+
+    /**
+     * Get total report count.
+     * Used for admin analytics dashboard.
+     */
+    async getReportCount(): Promise<number> {
+        const { count } = await import('drizzle-orm');
+        const result = await this.db
+            .select({ count: count() })
+            .from(similarityReports);
+        return Number(result[0]?.count ?? 0);
+    }
 }
+

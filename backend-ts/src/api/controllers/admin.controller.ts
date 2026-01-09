@@ -4,7 +4,10 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { container } from 'tsyringe';
-import { AdminService } from '../../services/admin.service.js';
+import { AdminUserService } from '../../services/admin/admin-user.service.js';
+import { AdminAnalyticsService } from '../../services/admin/admin-analytics.service.js';
+import { AdminClassService } from '../../services/admin/admin-class.service.js';
+import { AdminEnrollmentService } from '../../services/admin/admin-enrollment.service.js';
 import { authMiddleware } from '../middlewares/auth.middleware.js';
 import { adminMiddleware } from '../middlewares/admin.middleware.js';
 import { toJsonSchema } from '../utils/swagger.js';
@@ -46,7 +49,11 @@ import type { ClassSchedule } from '../../models/index.js';
 
 /** Admin routes - /api/v1/admin/* */
 export async function adminRoutes(app: FastifyInstance): Promise<void> {
-    const adminService = container.resolve<AdminService>('AdminService');
+    // Resolve focused admin services
+    const adminUserService = container.resolve<AdminUserService>('AdminUserService');
+    const adminAnalyticsService = container.resolve<AdminAnalyticsService>('AdminAnalyticsService');
+    const adminClassService = container.resolve<AdminClassService>('AdminClassService');
+    const adminEnrollmentService = container.resolve<AdminEnrollmentService>('AdminEnrollmentService');
 
     // All routes require auth + admin role
     const preHandler = [authMiddleware, adminMiddleware];
@@ -70,7 +77,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         handler: async (request, reply) => {
             const { page, limit, search, role, status } = request.query;
 
-            const result = await adminService.getAllUsers({
+            const result = await adminUserService.getAllUsers({
                 page,
                 limit,
                 search,
@@ -99,7 +106,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleUserResponseSchema) },
         },
         handler: async (request, reply) => {
-            const user = await adminService.getUserById(request.params.id);
+            const user = await adminUserService.getUserById(request.params.id);
 
             return reply.send({
                 success: true,
@@ -122,7 +129,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 201: toJsonSchema(SingleUserResponseSchema) },
         },
         handler: async (request, reply) => {
-            const user = await adminService.adminCreateUser(request.body);
+            const user = await adminUserService.createUser(request.body);
 
             return reply.status(201).send({
                 success: true,
@@ -146,7 +153,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleUserResponseSchema) },
         },
         handler: async (request, reply) => {
-            const user = await adminService.updateUserDetails(
+            const user = await adminUserService.updateUserDetails(
                 request.params.id,
                 request.body
             );
@@ -173,7 +180,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleUserResponseSchema) },
         },
         handler: async (request, reply) => {
-            const user = await adminService.updateUserEmail(
+            const user = await adminUserService.updateUserEmail(
                 request.params.id,
                 request.body.email
             );
@@ -200,7 +207,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleUserResponseSchema) },
         },
         handler: async (request, reply) => {
-            const user = await adminService.updateUserRole(
+            const user = await adminUserService.updateUserRole(
                 request.params.id,
                 request.body.role
             );
@@ -227,7 +234,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleUserResponseSchema) },
         },
         handler: async (request, reply) => {
-            const user = await adminService.toggleUserStatus(request.params.id);
+            const user = await adminUserService.toggleUserStatus(request.params.id);
 
             return reply.send({
                 success: true,
@@ -250,7 +257,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SuccessResponseSchema) },
         },
         handler: async (request, reply) => {
-            await adminService.adminDeleteUser(request.params.id);
+            await adminUserService.deleteUser(request.params.id);
 
             return reply.send({
                 success: true,
@@ -274,7 +281,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(AdminStatsResponseSchema) },
         },
         handler: async (request, reply) => {
-            const stats = await adminService.getAdminStats();
+            const stats = await adminAnalyticsService.getAdminStats();
 
             return reply.send({
                 success: true,
@@ -297,7 +304,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(ActivityResponseSchema) },
         },
         handler: async (request, reply) => {
-            const activity = await adminService.getRecentActivity(request.query.limit);
+            const activity = await adminAnalyticsService.getRecentActivity(request.query.limit);
 
             return reply.send({
                 success: true,
@@ -327,7 +334,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
         handler: async (request, reply) => {
             const { page, limit, search, teacherId, status, yearLevel, semester, academicYear } = request.query;
 
-            const result = await adminService.getAllClasses({
+            const result = await adminClassService.getAllClasses({
                 page,
                 limit,
                 search,
@@ -359,7 +366,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleClassResponseSchema) },
         },
         handler: async (request, reply) => {
-            const classData = await adminService.getClassById(request.params.id);
+            const classData = await adminClassService.getClassById(request.params.id);
 
             return reply.send({
                 success: true,
@@ -383,7 +390,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 201: toJsonSchema(SingleClassResponseSchema) },
         },
         handler: async (request, reply) => {
-            const classData = await adminService.adminCreateClass({
+            const classData = await adminClassService.createClass({
                 teacherId: request.body.teacherId,
                 className: request.body.className,
                 yearLevel: request.body.yearLevel,
@@ -418,13 +425,13 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleClassResponseSchema) },
         },
         handler: async (request, reply) => {
-            const classData = await adminService.adminUpdateClass(
+            const classData = await adminClassService.updateClass(
                 request.params.id,
                 request.body as any
             );
 
             // Fetch the class again to get teacher name
-            const fullClass = await adminService.getClassById(request.params.id);
+            const fullClass = await adminClassService.getClassById(request.params.id);
 
             return reply.send({
                 success: true,
@@ -447,7 +454,7 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SuccessResponseSchema) },
         },
         handler: async (request, reply) => {
-            await adminService.adminDeleteClass(request.params.id);
+            await adminClassService.deleteClass(request.params.id);
 
             return reply.send({
                 success: true,
@@ -471,12 +478,12 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleClassResponseSchema) },
         },
         handler: async (request, reply) => {
-            await adminService.reassignClassTeacher(
+            await adminClassService.reassignClassTeacher(
                 request.params.id,
                 request.body.teacherId
             );
 
-            const fullClass = await adminService.getClassById(request.params.id);
+            const fullClass = await adminClassService.getClassById(request.params.id);
 
             return reply.send({
                 success: true,
@@ -499,9 +506,9 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(SingleClassResponseSchema) },
         },
         handler: async (request, reply) => {
-            await adminService.archiveClass(request.params.id);
+            await adminClassService.archiveClass(request.params.id);
 
-            const fullClass = await adminService.getClassById(request.params.id);
+            const fullClass = await adminClassService.getClassById(request.params.id);
 
             return reply.send({
                 success: true,
@@ -524,11 +531,111 @@ export async function adminRoutes(app: FastifyInstance): Promise<void> {
             response: { 200: toJsonSchema(TeachersListResponseSchema) },
         },
         handler: async (request, reply) => {
-            const teachers = await adminService.getAllTeachers();
+            const teachers = await adminUserService.getAllTeachers();
 
             return reply.send({
                 success: true,
                 teachers,
+            });
+        },
+    });
+
+    // ============ Class Enrollment Management ============
+
+    /**
+     * GET /classes/:id/students
+     * Get all students enrolled in a class
+     */
+    app.get<{ Params: ClassParams }>('/classes/:id/students', {
+        preHandler,
+        schema: {
+            tags: ['Admin - Enrollment'],
+            summary: 'Get class students',
+            description: 'Get all students enrolled in a specific class',
+            security: [{ bearerAuth: [] }],
+            params: toJsonSchema(ClassParamsSchema),
+        },
+        handler: async (request, reply) => {
+            const students = await adminEnrollmentService.getClassStudents(request.params.id);
+
+            return reply.send({
+                success: true,
+                students: students.map(s => ({
+                    id: s.id,
+                    firstName: s.firstName,
+                    lastName: s.lastName,
+                    email: s.email,
+                    avatarUrl: s.avatarUrl,
+                    enrolledAt: s.enrolledAt,
+                })),
+            });
+        },
+    });
+
+    /**
+     * GET /classes/:id/assignments
+     * Get all assignments for a class
+     */
+    app.get<{ Params: ClassParams }>('/classes/:id/assignments', {
+        preHandler,
+        schema: {
+            tags: ['Admin - Enrollment'],
+            summary: 'Get class assignments',
+            description: 'Get all assignments for a specific class',
+            security: [{ bearerAuth: [] }],
+            params: toJsonSchema(ClassParamsSchema),
+        },
+        handler: async (request, reply) => {
+            const assignments = await adminClassService.getClassAssignments(request.params.id);
+
+            return reply.send({
+                success: true,
+                assignments,
+            });
+        },
+    });
+
+    /**
+     * POST /classes/:id/students
+     * Add a student to a class
+     */
+    app.post<{ Params: ClassParams; Body: { studentId: number } }>('/classes/:id/students', {
+        preHandler,
+        schema: {
+            tags: ['Admin - Enrollment'],
+            summary: 'Enroll student in class',
+            description: 'Add a student to a class',
+            security: [{ bearerAuth: [] }],
+            params: toJsonSchema(ClassParamsSchema),
+        },
+        handler: async (request, reply) => {
+            await adminEnrollmentService.addStudentToClass(request.params.id, request.body.studentId);
+
+            return reply.send({
+                success: true,
+                message: 'Student enrolled successfully',
+            });
+        },
+    });
+
+    /**
+     * DELETE /classes/:id/students/:studentId
+     * Remove a student from a class
+     */
+    app.delete<{ Params: { id: number; studentId: number } }>('/classes/:id/students/:studentId', {
+        preHandler,
+        schema: {
+            tags: ['Admin - Enrollment'],
+            summary: 'Remove student from class',
+            description: 'Remove a student from a class',
+            security: [{ bearerAuth: [] }],
+        },
+        handler: async (request, reply) => {
+            await adminEnrollmentService.removeStudentFromClass(request.params.id, request.params.studentId);
+
+            return reply.send({
+                success: true,
+                message: 'Student removed successfully',
             });
         },
     });

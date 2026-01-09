@@ -1,4 +1,5 @@
 import { apiClient, type ApiResponse } from '../api/apiClient'
+import { mapSubmission, mapSubmissionWithAssignment, mapSubmissionWithStudent } from '../mappers'
 import type {
   SubmitAssignmentRequest,
   SubmitAssignmentResponse,
@@ -67,20 +68,11 @@ export async function submitAssignment(
       }
     }
 
-    // Backend now returns camelCase - direct mapping
+    // Backend now returns camelCase - use centralized mapper
     const responseData: SubmitAssignmentResponse = {
       success: data.success,
       message: data.message,
-      submission: data.submission ? {
-        id: data.submission.id,
-        assignmentId: data.submission.assignmentId,
-        studentId: data.submission.studentId,
-        fileName: data.submission.fileName,
-        fileSize: data.submission.fileSize,
-        submissionNumber: data.submission.submissionNumber,
-        submittedAt: new Date(data.submission.submittedAt),
-        isLatest: data.submission.isLatest
-      } : undefined
+      submission: data.submission ? mapSubmission(data.submission) : undefined
     }
 
     return {
@@ -111,19 +103,10 @@ export async function getSubmissionHistory(
   )
 
   if (response.data) {
-    // Backend returns camelCase - convert date strings to Date objects
+    // Backend returns camelCase - use centralized mapper
     response.data = {
       ...response.data,
-      submissions: response.data.submissions.map((sub: any) => ({
-        id: sub.id,
-        assignmentId: sub.assignmentId,
-        studentId: sub.studentId,
-        fileName: sub.fileName,
-        fileSize: sub.fileSize,
-        submissionNumber: sub.submissionNumber,
-        submittedAt: new Date(sub.submittedAt),
-        isLatest: sub.isLatest
-      }))
+      submissions: response.data.submissions.map(mapSubmission)
     }
   }
 
@@ -142,20 +125,10 @@ export async function getStudentSubmissions(
   )
 
   if (response.data) {
-    // Backend returns camelCase - convert date strings to Date objects
+    // Backend returns camelCase - use centralized mapper
     response.data = {
       ...response.data,
-      submissions: response.data.submissions.map((sub: any) => ({
-        id: sub.id,
-        assignmentId: sub.assignmentId,
-        studentId: sub.studentId,
-        fileName: sub.fileName,
-        fileSize: sub.fileSize,
-        submissionNumber: sub.submissionNumber,
-        submittedAt: new Date(sub.submittedAt),
-        isLatest: sub.isLatest,
-        assignmentName: sub.assignmentName
-      }))
+      submissions: response.data.submissions.map(mapSubmissionWithAssignment)
     }
   }
 
@@ -174,20 +147,10 @@ export async function getAssignmentSubmissions(
   )
 
   if (response.data) {
-    // Backend returns camelCase - convert date strings to Date objects
+    // Backend returns camelCase - use centralized mapper
     response.data = {
       ...response.data,
-      submissions: response.data.submissions.map((sub: any) => ({
-        id: sub.id,
-        assignmentId: sub.assignmentId,
-        studentId: sub.studentId,
-        fileName: sub.fileName,
-        fileSize: sub.fileSize,
-        submissionNumber: sub.submissionNumber,
-        submittedAt: new Date(sub.submittedAt),
-        isLatest: sub.isLatest,
-        studentName: sub.studentName
-      }))
+      submissions: response.data.submissions.map(mapSubmissionWithStudent)
     }
   }
 

@@ -22,6 +22,8 @@ import { SettingsPage } from './pages/SettingsPage'
 import { AdminDashboardPage } from './pages/AdminDashboardPage'
 import { AdminUsersPage } from './pages/AdminUsersPage'
 import { AdminClassesPage } from './pages/AdminClassesPage'
+import { AdminClassDetailPage } from './pages/AdminClassDetailPage'
+import AdminEnrollmentsPage from './pages/AdminEnrollmentsPage'
 import { ProtectedRoute } from './components/dashboard/ProtectedRoute'
 import { getCurrentUser } from '@/business/services/authService'
 import { useEffect } from 'react'
@@ -66,6 +68,21 @@ function RoleBasedClassesPage() {
 
   // Teachers see the full classes page
   return <ClassesPage />
+}
+
+// Component to handle class detail page - show admin version for admins
+function RoleBasedClassDetailPage() {
+  const user = getCurrentUser()
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (user.role === 'admin') {
+    return <AdminClassDetailPage />
+  }
+
+  return <ClassDetailPage />
 }
 
 // Component to handle redirects for Supabase email confirmation and password reset
@@ -175,7 +192,7 @@ function App() {
             path="/dashboard/classes/:classId"
             element={
               <ProtectedRoute>
-                <ClassDetailPage />
+                <RoleBasedClassDetailPage />
               </ProtectedRoute>
             }
           />
@@ -240,6 +257,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <AdminUsersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/enrollments"
+            element={
+              <ProtectedRoute>
+                <AdminEnrollmentsPage />
               </ProtectedRoute>
             }
           />

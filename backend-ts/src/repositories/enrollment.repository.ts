@@ -80,4 +80,35 @@ export class EnrollmentRepository extends BaseRepository<typeof enrollments, Enr
 
         return results[0];
     }
+
+    /**
+     * Get enrolled students with user info for a class.
+     * Used for admin enrollment management.
+     */
+    async getEnrolledStudentsWithInfo(classId: number): Promise<Array<{
+        user: {
+            id: number;
+            email: string;
+            firstName: string;
+            lastName: string;
+            avatarUrl: string | null;
+            role: string;
+            isActive: boolean;
+            createdAt: Date | null;
+        };
+        enrolledAt: Date | null;
+    }>> {
+        const { users } = await import('../models/index.js');
+
+        return await this.db
+            .select({
+                user: users,
+                enrolledAt: enrollments.enrolledAt,
+            })
+            .from(enrollments)
+            .innerJoin(users, eq(enrollments.studentId, users.id))
+            .where(eq(enrollments.classId, classId))
+            .orderBy(users.firstName);
+    }
 }
+

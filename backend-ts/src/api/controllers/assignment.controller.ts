@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { container } from 'tsyringe';
-import { ClassService } from '../../services/class.service.js';
+import { AssignmentService } from '../../services/assignment.service.js';
 import { toJsonSchema } from '../utils/swagger.js';
 import { SuccessMessageSchema } from '../schemas/common.schema.js';
 import { TeacherIdQuerySchema } from '../schemas/class.schema.js';
@@ -16,7 +16,7 @@ import { BadRequestError } from '../middlewares/error-handler.js';
 
 /** Assignment routes - /api/v1/assignments/* */
 export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
-    const classService = container.resolve<ClassService>('ClassService');
+    const assignmentService = container.resolve<AssignmentService>('AssignmentService');
 
     /**
      * GET /:assignmentId
@@ -34,13 +34,12 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
         },
         handler: async (request, reply) => {
             const assignmentId = parseInt(request.params.assignmentId, 10);
-            const userId = parseInt(request.query.userId, 10);
 
-            if (isNaN(assignmentId) || isNaN(userId)) {
-                throw new BadRequestError('Invalid parameters');
+            if (isNaN(assignmentId)) {
+                throw new BadRequestError('Invalid assignment ID');
             }
 
-            const assignment = await classService.getAssignmentDetails(assignmentId, userId);
+            const assignment = await assignmentService.getAssignmentDetails(assignmentId);
 
             return reply.send({
                 success: true,
@@ -73,7 +72,7 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
 
             const { teacherId, ...updateData } = request.body;
 
-            const assignment = await classService.updateAssignment(assignmentId, teacherId, {
+            const assignment = await assignmentService.updateAssignment(assignmentId, teacherId, {
                 ...updateData,
                 deadline: updateData.deadline ? new Date(updateData.deadline) : undefined,
             });
@@ -108,7 +107,7 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid parameters');
             }
 
-            await classService.deleteAssignment(assignmentId, teacherId);
+            await assignmentService.deleteAssignment(assignmentId, teacherId);
 
             return reply.send({
                 success: true,

@@ -17,23 +17,6 @@ vi.mock('../../src/repositories/submission.repository.js');
 vi.mock('../../src/repositories/assignment.repository.js');
 vi.mock('../../src/repositories/similarity.repository.js');
 
-// Mock Supabase Mocks using vi.hoisted
-const supabaseMocks = vi.hoisted(() => {
-    const mockDownload = vi.fn();
-    const mockFrom = vi.fn(() => ({
-        download: mockDownload,
-    }));
-    return { mockDownload, mockFrom };
-});
-
-vi.mock('../../src/shared/supabase.js', () => ({
-    supabase: {
-        storage: {
-            from: supabaseMocks.mockFrom,
-        },
-    },
-}));
-
 // Mock PlagiarismDetector
 vi.mock('../../src/lib/plagiarism/index.js', () => {
     const mockReport = {
@@ -105,6 +88,7 @@ describe('PlagiarismService', () => {
     let mockSubmissionRepo: any;
     let mockAssignmentRepo: any;
     let mockSimilarityRepo: any;
+    let mockStorageService: any;
 
     beforeEach(() => {
         mockSubmissionRepo = {
@@ -120,6 +104,14 @@ describe('PlagiarismService', () => {
             createFragments: vi.fn(),
             getResultWithFragments: vi.fn(),
         };
+        mockStorageService = {
+            upload: vi.fn().mockResolvedValue('path/to/file'),
+            download: vi.fn().mockResolvedValue('code content'),
+            deleteFiles: vi.fn(),
+            getSignedUrl: vi.fn().mockResolvedValue('https://example.com/signed-url'),
+            deleteSubmissionFiles: vi.fn(),
+            deleteAvatar: vi.fn(),
+        };
 
         // Reset Factory Mocks
         (PlagiarismService as any).prototype.reportsStore = new Map();
@@ -127,7 +119,8 @@ describe('PlagiarismService', () => {
         plagiarismService = new PlagiarismService(
             mockSubmissionRepo,
             mockAssignmentRepo,
-            mockSimilarityRepo
+            mockSimilarityRepo,
+            mockStorageService
         );
     });
 
@@ -258,17 +251,14 @@ describe('PlagiarismService', () => {
             mockSimilarityRepo.createReport.mockResolvedValue({ id: 1 });
             mockSimilarityRepo.createResults.mockResolvedValue([]);
             mockSimilarityRepo.createFragments.mockResolvedValue([]);
-
-            const mockBlob = { text: () => Promise.resolve('code content') };
-
-            // Setup successful download mock using the hoisted mock object
-            supabaseMocks.mockDownload.mockResolvedValue({ data: mockBlob, error: null });
+            // StorageService.download is already mocked in beforeEach
 
             const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1);
 
             expect(result).toBeDefined();
             expect(result.reportId).toBeDefined();
             expect(mockSimilarityRepo.createReport).toHaveBeenCalled();
+            expect(mockStorageService.download).toHaveBeenCalled();
         });
 
         it('should throw InsufficientDownloadedFilesError when file downloads fail', async () => {
@@ -286,9 +276,8 @@ describe('PlagiarismService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockSubmissionRepo.getSubmissionsWithStudentInfo.mockResolvedValue(submissions);
-
-            // Setup failed download mock using the hoisted mock object
-            supabaseMocks.mockDownload.mockResolvedValue({ data: null, error: { message: 'Download failed' } });
+            // Setup failed download by throwing error
+            mockStorageService.download.mockRejectedValue(new Error('Download failed'));
 
             await expect(
                 plagiarismService.analyzeAssignmentSubmissions(1)

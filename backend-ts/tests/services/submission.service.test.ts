@@ -22,7 +22,7 @@ vi.mock('../../src/repositories/assignment.repository.js');
 vi.mock('../../src/repositories/enrollment.repository.js');
 vi.mock('../../src/repositories/class.repository.js');
 
-// Mock Supabase
+// Mock Supabase (for legacy tests that still use it)
 vi.mock('../../src/shared/supabase.js', () => ({
     supabase: {
         storage: {
@@ -40,6 +40,7 @@ describe('SubmissionService', () => {
     let mockAssignmentRepo: any;
     let mockEnrollmentRepo: any;
     let mockClassRepo: any;
+    let mockStorageService: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -63,11 +64,21 @@ describe('SubmissionService', () => {
 
         mockClassRepo = {};
 
+        mockStorageService = {
+            upload: vi.fn().mockResolvedValue('path/to/file'),
+            download: vi.fn(),
+            deleteFiles: vi.fn(),
+            getSignedUrl: vi.fn().mockResolvedValue('https://example.com/signed-url'),
+            deleteSubmissionFiles: vi.fn(),
+            deleteAvatar: vi.fn(),
+        };
+
         submissionService = new SubmissionService(
             mockSubmissionRepo,
             mockAssignmentRepo,
             mockEnrollmentRepo,
-            mockClassRepo
+            mockClassRepo,
+            mockStorageService
         );
     });
 
@@ -100,17 +111,14 @@ describe('SubmissionService', () => {
             mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
             mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                upload: vi.fn().mockResolvedValue({ error: null }),
-            });
+            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, validFile);
 
             expect(result).toBeDefined();
             expect(result.id).toBe(mockSubmission.id);
             expect(mockSubmissionRepo.createSubmission).toHaveBeenCalled();
+            expect(mockStorageService.upload).toHaveBeenCalled();
         });
 
         it('should throw AssignmentNotFoundError when assignment does not exist', async () => {
@@ -156,11 +164,7 @@ describe('SubmissionService', () => {
             mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
             mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                upload: vi.fn().mockResolvedValue({ error: null }),
-            });
+            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, validFile);
             expect(result).toBeDefined();
@@ -211,11 +215,7 @@ describe('SubmissionService', () => {
             mockSubmissionRepo.getLatestSubmission.mockResolvedValue(existingSubmission);
             mockSubmissionRepo.getSubmissionCount.mockResolvedValue(1);
             mockSubmissionRepo.createSubmission.mockResolvedValue(newSubmission);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                upload: vi.fn().mockResolvedValue({ error: null }),
-            });
+            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, validFile);
             expect(result).toBeDefined();
@@ -273,11 +273,7 @@ describe('SubmissionService', () => {
             mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
             mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                upload: vi.fn().mockResolvedValue({ error: null }),
-            });
+            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, javaFile);
             expect(result).toBeDefined();
@@ -303,7 +299,7 @@ describe('SubmissionService', () => {
             ).rejects.toThrow(FileTooLargeError);
         });
 
-        it('should throw UploadFailedError when Supabase upload fails', async () => {
+        it('should throw UploadFailedError when StorageService upload fails', async () => {
             const assignment = createMockAssignment({
                 isActive: true,
                 deadline: futureDeadline,
@@ -314,11 +310,7 @@ describe('SubmissionService', () => {
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
             mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
             mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                upload: vi.fn().mockResolvedValue({ error: { message: 'Upload failed' } }),
-            });
+            mockStorageService.upload.mockRejectedValue(new Error('Upload failed'));
 
             await expect(
                 submissionService.submitAssignment(1, 1, validFile)
@@ -339,11 +331,7 @@ describe('SubmissionService', () => {
             mockSubmissionRepo.getLatestSubmission.mockResolvedValue(createMockSubmission());
             mockSubmissionRepo.getSubmissionCount.mockResolvedValue(3);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                upload: vi.fn().mockResolvedValue({ error: null }),
-            });
+            // StorageService.upload is already mocked in beforeEach
 
             await submissionService.submitAssignment(1, 1, validFile);
 
@@ -437,56 +425,29 @@ describe('SubmissionService', () => {
 
     // ============ getFileDownloadUrl Tests ============
     describe('getFileDownloadUrl', () => {
-        it('should return signed URL from Supabase', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                createSignedUrl: vi.fn().mockResolvedValue({
-                    data: { signedUrl: 'https://example.com/signed-url' },
-                }),
-            });
+        it('should return signed URL from StorageService', async () => {
+            mockStorageService.getSignedUrl.mockResolvedValue('https://example.com/signed-url');
 
             const result = await submissionService.getFileDownloadUrl('test/path');
 
             expect(result).toBe('https://example.com/signed-url');
-        });
-
-        it('should return empty string when signed URL is not available', async () => {
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                createSignedUrl: vi.fn().mockResolvedValue({ data: null }),
-            });
-
-            const result = await submissionService.getFileDownloadUrl('test/path');
-
-            expect(result).toBe('');
+            expect(mockStorageService.getSignedUrl).toHaveBeenCalledWith('submissions', 'test/path', 3600);
         });
 
         it('should use custom expiresIn value', async () => {
-            const createSignedUrlMock = vi.fn().mockResolvedValue({
-                data: { signedUrl: 'https://example.com/url' },
-            });
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                createSignedUrl: createSignedUrlMock,
-            });
+            mockStorageService.getSignedUrl.mockResolvedValue('https://example.com/url');
 
             await submissionService.getFileDownloadUrl('test/path', 7200);
 
-            expect(createSignedUrlMock).toHaveBeenCalledWith('test/path', 7200);
+            expect(mockStorageService.getSignedUrl).toHaveBeenCalledWith('submissions', 'test/path', 7200);
         });
 
         it('should default expiresIn to 3600', async () => {
-            const createSignedUrlMock = vi.fn().mockResolvedValue({
-                data: { signedUrl: 'https://example.com/url' },
-            });
-            const { supabase } = await import('../../src/shared/supabase.js');
-            (supabase.storage.from as any).mockReturnValue({
-                createSignedUrl: createSignedUrlMock,
-            });
+            mockStorageService.getSignedUrl.mockResolvedValue('https://example.com/url');
 
             await submissionService.getFileDownloadUrl('test/path');
 
-            expect(createSignedUrlMock).toHaveBeenCalledWith('test/path', 3600);
+            expect(mockStorageService.getSignedUrl).toHaveBeenCalledWith('submissions', 'test/path', 3600);
         });
     });
 });

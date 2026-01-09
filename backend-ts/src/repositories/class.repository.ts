@@ -1,8 +1,21 @@
 import { db } from '../shared/database.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, count, ilike, or } from 'drizzle-orm';
 import { classes, enrollments, users, type Class, type NewClass, type ClassSchedule } from '../models/index.js';
 import { BaseRepository } from './base.repository.js';
 import { injectable } from 'tsyringe';
+import type { PaginatedResult } from './user.repository.js';
+
+/** Filter options for admin class queries */
+export interface ClassFilterOptions {
+    page: number;
+    limit: number;
+    search?: string;
+    teacherId?: number;
+    status?: 'active' | 'archived';
+    yearLevel?: number;
+    semester?: number;
+    academicYear?: string;
+}
 
 /**
  * Repository for class-related database operations.
@@ -60,6 +73,50 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
             .where(and(eq(classes.teacherId, teacherId), eq(classes.isActive, true)))
             .orderBy(desc(classes.createdAt))
             .limit(limit);
+    }
+
+    /**
+     * Get recent classes by teacher WITH student counts in a single query.
+     * Optimized to avoid N+1 query problem.
+     */
+    async getRecentClassesWithStudentCounts(
+        teacherId: number,
+        limit: number = 5
+    ): Promise<(Class & { studentCount: number })[]> {
+        const studentCountSubquery = this.db
+            .select({
+                classId: enrollments.classId,
+                count: sql<number>`count(*)`.as('count'),
+            })
+            .from(enrollments)
+            .groupBy(enrollments.classId)
+            .as('student_counts');
+
+        const results = await this.db
+            .select({
+                id: classes.id,
+                teacherId: classes.teacherId,
+                className: classes.className,
+                classCode: classes.classCode,
+                description: classes.description,
+                yearLevel: classes.yearLevel,
+                semester: classes.semester,
+                academicYear: classes.academicYear,
+                schedule: classes.schedule,
+                createdAt: classes.createdAt,
+                isActive: classes.isActive,
+                studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
+            })
+            .from(classes)
+            .leftJoin(studentCountSubquery, eq(classes.id, studentCountSubquery.classId))
+            .where(and(eq(classes.teacherId, teacherId), eq(classes.isActive, true)))
+            .orderBy(desc(classes.createdAt))
+            .limit(limit);
+
+        return results.map((r) => ({
+            ...r,
+            studentCount: Number(r.studentCount),
+        }));
     }
 
     /**
@@ -141,7 +198,7 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
     /** Update a class */
     async updateClass(
         classId: number,
-        data: Partial<Pick<NewClass, 'className' | 'description' | 'isActive' | 'yearLevel' | 'semester' | 'academicYear' | 'schedule'>>
+        data: Partial<Pick<NewClass, 'className' | 'description' | 'isActive' | 'yearLevel' | 'semester' | 'academicYear' | 'schedule' | 'teacherId'>>
     ): Promise<Class | undefined> {
         const updateData = Object.fromEntries(
             Object.entries(data).filter(([_, v]) => v !== undefined)
@@ -180,29 +237,6 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
         return results.length > 0;
     }
 
-    /** Get all students enrolled in a class */
-    async getEnrolledStudents(classId: number): Promise<Array<{
-        id: number;
-        email: string;
-        firstName: string;
-        lastName: string;
-        avatarUrl: string | null;
-    }>> {
-        const results = await this.db
-            .select({
-                id: users.id,
-                email: users.email,
-                firstName: users.firstName,
-                lastName: users.lastName,
-                avatarUrl: users.avatarUrl,
-            })
-            .from(enrollments)
-            .innerJoin(users, eq(enrollments.studentId, users.id))
-            .where(eq(enrollments.classId, classId));
-
-        return results;
-    }
-
     /** Get all classes a student is enrolled in */
     async getClassesByStudent(
         studentId: number,
@@ -234,24 +268,224 @@ export class ClassRepository extends BaseRepository<typeof classes, Class, NewCl
         return await query;
     }
 
-    /** Remove a student from a class */
-    async removeStudent(classId: number, studentId: number): Promise<boolean> {
-        const results = await this.db
-            .delete(enrollments)
-            .where(and(eq(enrollments.classId, classId), eq(enrollments.studentId, studentId)))
-            .returning();
+    /**
+     * Get all classes a student is enrolled in WITH student counts and teacher info.
+     * Optimized to avoid N+1 query problem.
+     */
+    async getClassesByStudentWithDetails(
+        studentId: number,
+        activeOnly: boolean = true
+    ): Promise<(Class & { studentCount: number; teacherName: string })[]> {
+        const studentCountSubquery = this.db
+            .select({
+                classId: enrollments.classId,
+                count: sql<number>`count(*)`.as('count'),
+            })
+            .from(enrollments)
+            .groupBy(enrollments.classId)
+            .as('student_counts');
 
-        return results.length > 0;
+        const condition = activeOnly
+            ? and(eq(enrollments.studentId, studentId), eq(classes.isActive, true))
+            : eq(enrollments.studentId, studentId);
+
+        const results = await this.db
+            .select({
+                id: classes.id,
+                teacherId: classes.teacherId,
+                className: classes.className,
+                classCode: classes.classCode,
+                description: classes.description,
+                yearLevel: classes.yearLevel,
+                semester: classes.semester,
+                academicYear: classes.academicYear,
+                schedule: classes.schedule,
+                createdAt: classes.createdAt,
+                isActive: classes.isActive,
+                studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
+                teacherFirstName: users.firstName,
+                teacherLastName: users.lastName,
+            })
+            .from(enrollments)
+            .innerJoin(classes, eq(enrollments.classId, classes.id))
+            .innerJoin(users, eq(classes.teacherId, users.id))
+            .leftJoin(studentCountSubquery, eq(classes.id, studentCountSubquery.classId))
+            .where(condition)
+            .orderBy(desc(classes.createdAt));
+
+        return results.map((r) => ({
+            ...r,
+            studentCount: Number(r.studentCount),
+            teacherName: `${r.teacherFirstName} ${r.teacherLastName}`,
+        }));
     }
 
-    /** Check if a student is enrolled in a class */
-    async isStudentEnrolled(classId: number, studentId: number): Promise<boolean> {
-        const results = await this.db
-            .select({ id: enrollments.id })
+    /**
+     * Get all classes with pagination and filters.
+     * Moved from AdminService to follow DIP.
+     */
+    async getAllClassesFiltered(options: ClassFilterOptions): Promise<PaginatedResult<Class & { studentCount: number; teacherName?: string }>> {
+        const { page, limit, search, teacherId, status, yearLevel, semester, academicYear } = options;
+        const offset = (page - 1) * limit;
+
+        // Build where conditions
+        const conditions: ReturnType<typeof eq>[] = [];
+
+        if (search) {
+            conditions.push(
+                or(
+                    ilike(classes.className, `%${search}%`),
+                    ilike(classes.classCode, `%${search}%`),
+                    ilike(classes.description, `%${search}%`)
+                )!
+            );
+        }
+
+        if (teacherId) {
+            conditions.push(eq(classes.teacherId, teacherId));
+        }
+
+        if (status === 'active') {
+            conditions.push(eq(classes.isActive, true));
+        } else if (status === 'archived') {
+            conditions.push(eq(classes.isActive, false));
+        }
+
+        if (yearLevel) {
+            conditions.push(eq(classes.yearLevel, yearLevel));
+        }
+
+        if (semester) {
+            conditions.push(eq(classes.semester, semester));
+        }
+
+        if (academicYear) {
+            conditions.push(eq(classes.academicYear, academicYear));
+        }
+
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+        // Get total count
+        const countResult = await this.db
+            .select({ count: count() })
+            .from(classes)
+            .where(whereClause);
+
+        const total = Number(countResult[0]?.count ?? 0);
+
+        // Get paginated data with teacher info
+        const studentCountSubquery = this.db
+            .select({
+                classId: enrollments.classId,
+                count: sql<number>`count(*)`.as('count'),
+            })
             .from(enrollments)
-            .where(and(eq(enrollments.classId, classId), eq(enrollments.studentId, studentId)))
+            .groupBy(enrollments.classId)
+            .as('student_counts');
+
+        const data = await this.db
+            .select({
+                id: classes.id,
+                teacherId: classes.teacherId,
+                className: classes.className,
+                classCode: classes.classCode,
+                description: classes.description,
+                yearLevel: classes.yearLevel,
+                semester: classes.semester,
+                academicYear: classes.academicYear,
+                schedule: classes.schedule,
+                createdAt: classes.createdAt,
+                isActive: classes.isActive,
+                studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
+                teacherName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+            })
+            .from(classes)
+            .leftJoin(studentCountSubquery, eq(classes.id, studentCountSubquery.classId))
+            .leftJoin(users, eq(classes.teacherId, users.id))
+            .where(whereClause)
+            .orderBy(desc(classes.createdAt))
+            .limit(limit)
+            .offset(offset);
+
+        return {
+            data: data.map(r => ({
+                ...r,
+                studentCount: Number(r.studentCount),
+            })),
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
+    /**
+     * Get a class with teacher name.
+     * Used by admin views.
+     */
+    async getClassWithTeacher(classId: number): Promise<(Class & { teacherName: string }) | undefined> {
+        const results = await this.db
+            .select({
+                id: classes.id,
+                teacherId: classes.teacherId,
+                className: classes.className,
+                classCode: classes.classCode,
+                description: classes.description,
+                yearLevel: classes.yearLevel,
+                semester: classes.semester,
+                academicYear: classes.academicYear,
+                schedule: classes.schedule,
+                createdAt: classes.createdAt,
+                isActive: classes.isActive,
+                teacherName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+            })
+            .from(classes)
+            .leftJoin(users, eq(classes.teacherId, users.id))
+            .where(eq(classes.id, classId))
             .limit(1);
 
-        return results.length > 0;
+        return results[0] as (Class & { teacherName: string }) | undefined;
+    }
+
+    /**
+     * Get class counts (total and active).
+     * Used for admin analytics dashboard.
+     */
+    async getClassCounts(): Promise<{ total: number; active: number }> {
+        const totalResult = await this.db.select({ count: count() }).from(classes);
+        const activeResult = await this.db
+            .select({ count: count() })
+            .from(classes)
+            .where(eq(classes.isActive, true));
+
+        return {
+            total: Number(totalResult[0]?.count ?? 0),
+            active: Number(activeResult[0]?.count ?? 0),
+        };
+    }
+
+    /**
+     * Get most recent classes with teacher info.
+     * Used for admin activity feed.
+     */
+    async getRecentClassesWithTeacher(limit: number = 10): Promise<Array<{
+        class: Class;
+        teacherName: string;
+    }>> {
+        const results = await this.db
+            .select({
+                class: classes,
+                teacher: users,
+            })
+            .from(classes)
+            .leftJoin(users, eq(classes.teacherId, users.id))
+            .orderBy(desc(classes.createdAt))
+            .limit(limit);
+
+        return results.map(row => ({
+            class: row.class,
+            teacherName: row.teacher ? `${row.teacher.firstName} ${row.teacher.lastName}` : 'Unknown',
+        }));
     }
 }
+

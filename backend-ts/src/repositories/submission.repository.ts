@@ -203,4 +203,16 @@ export class SubmissionRepository extends BaseRepository<typeof submissions, Sub
 
         return results[0] ?? null;
     }
+
+    /**
+     * Get total submission count.
+     * Used for admin analytics dashboard.
+     */
+    async getTotalCount(): Promise<number> {
+        const result = await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(submissions);
+        return Number(result[0]?.count ?? 0);
+    }
 }
+

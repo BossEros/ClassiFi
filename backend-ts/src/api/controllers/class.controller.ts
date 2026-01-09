@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { container } from 'tsyringe';
 import { ClassService } from '../../services/class.service.js';
+import { AssignmentService } from '../../services/assignment.service.js';
 import { toJsonSchema } from '../utils/swagger.js';
 import {
     CreateClassRequestSchema,
@@ -35,6 +36,7 @@ import { BadRequestError } from '../middlewares/error-handler.js';
 /** Class routes - /api/v1/classes/* */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
     const classService = container.resolve<ClassService>('ClassService');
+    const assignmentService = container.resolve<AssignmentService>('AssignmentService');
 
     /**
      * POST /
@@ -252,7 +254,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
 
             const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission, maxAttempts } = request.body;
 
-            const assignment = await classService.createAssignment(classId, teacherId, {
+            const assignment = await assignmentService.createAssignment(classId, teacherId, {
                 assignmentName,
                 description,
                 programmingLanguage,

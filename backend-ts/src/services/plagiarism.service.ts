@@ -9,7 +9,7 @@ import {
 import { SubmissionRepository } from '../repositories/submission.repository.js';
 import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { SimilarityRepository } from '../repositories/similarity.repository.js';
-import { supabase } from '../shared/supabase.js';
+import { StorageService } from './storage.service.js';
 import {
     PLAGIARISM_CONFIG,
     PLAGIARISM_LANGUAGE_MAP,
@@ -84,7 +84,8 @@ export class PlagiarismService {
     constructor(
         @inject('SubmissionRepository') private submissionRepo: SubmissionRepository,
         @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
-        @inject('SimilarityRepository') private similarityRepo: SimilarityRepository
+        @inject('SimilarityRepository') private similarityRepo: SimilarityRepository,
+        @inject('StorageService') private storageService: StorageService
     ) { }
 
     // ========================================================================
@@ -150,8 +151,15 @@ export class PlagiarismService {
         };
     }
 
-    /** Get report by ID */
+    /** Get report by ID - checks database first for numeric IDs, then in-memory */
     async getReport(reportId: string): Promise<AnalyzeResponse | null> {
+        // Try to parse as numeric ID (database report)
+        const numericId = parseInt(reportId, 10);
+        if (!isNaN(numericId)) {
+            return this.getReportFromDatabase(numericId);
+        }
+
+        // Fall back to in-memory for string-based ad-hoc reports
         const stored = this.reportsStore.get(reportId);
         if (!stored) {
             return null;
@@ -164,9 +172,72 @@ export class PlagiarismService {
         );
     }
 
-    /** Delete a report */
+    /** Delete a report - checks database first for numeric IDs, then in-memory */
     async deleteReport(reportId: string): Promise<boolean> {
+        // Try to parse as numeric ID (database report)
+        const numericId = parseInt(reportId, 10);
+        if (!isNaN(numericId)) {
+            return this.similarityRepo.deleteReport(numericId);
+        }
+
+        // Fall back to in-memory for string-based ad-hoc reports
         return this.reportsStore.delete(reportId);
+    }
+
+    /** Get report from database and reconstruct response */
+    private async getReportFromDatabase(reportId: number): Promise<AnalyzeResponse | null> {
+        const report = await this.similarityRepo.getReportById(reportId);
+        if (!report) {
+            return null;
+        }
+
+        const results = await this.similarityRepo.getResultsByReport(reportId);
+
+        // Build pairs from database results
+        const pairs: PlagiarismPairDTO[] = await Promise.all(
+            results.map(async (result) => {
+                const submission1 = await this.submissionRepo.getSubmissionWithStudent(result.submission1Id);
+                const submission2 = await this.submissionRepo.getSubmissionWithStudent(result.submission2Id);
+
+                return {
+                    id: result.id,
+                    leftFile: {
+                        id: result.submission1Id,
+                        path: submission1?.submission.filePath || '',
+                        filename: submission1?.submission.fileName || 'Unknown',
+                        lineCount: 0,
+                        studentId: submission1?.submission.studentId?.toString(),
+                        studentName: submission1?.studentName || 'Unknown',
+                    },
+                    rightFile: {
+                        id: result.submission2Id,
+                        path: submission2?.submission.filePath || '',
+                        filename: submission2?.submission.fileName || 'Unknown',
+                        lineCount: 0,
+                        studentId: submission2?.submission.studentId?.toString(),
+                        studentName: submission2?.studentName || 'Unknown',
+                    },
+                    structuralScore: parseFloat(result.structuralScore),
+                    semanticScore: parseFloat(result.semanticScore || '0'),
+                    hybridScore: parseFloat(result.hybridScore || '0'),
+                    overlap: result.overlap,
+                    longest: result.longestFragment,
+                };
+            })
+        );
+
+        return {
+            reportId: reportId.toString(),
+            summary: {
+                totalFiles: report.totalSubmissions,
+                totalPairs: report.totalComparisons,
+                suspiciousPairs: report.flaggedPairs,
+                averageSimilarity: parseFloat(report.averageSimilarity || '0'),
+                maxSimilarity: parseFloat(report.highestSimilarity || '0'),
+            },
+            pairs,
+            warnings: [],
+        };
     }
 
     /** Get result details from database with fragments and file content */
@@ -339,7 +410,7 @@ export class PlagiarismService {
         return language;
     }
 
-    /** Fetch and download all submission files for an assignment */
+    /** Fetch and download all submission files for an assignment using StorageService */
     private async fetchSubmissionFiles(assignmentId: number): Promise<File[]> {
         const submissionsWithInfo = await this.submissionRepo.getSubmissionsWithStudentInfo(
             assignmentId,
@@ -358,26 +429,22 @@ export class PlagiarismService {
         for (const item of submissionsWithInfo) {
             const { submission, studentName } = item;
 
-            const { data, error } = await supabase.storage
-                .from('submissions')
-                .download(submission.filePath);
+            try {
+                const content = await this.storageService.download('submissions', submission.filePath);
 
-            if (error) {
-                console.warn(`Failed to download file for submission ${submission.id}: ${error.message}`);
+                files.push(new File(
+                    submission.fileName,
+                    content,
+                    {
+                        studentId: submission.studentId.toString(),
+                        studentName: studentName,
+                        submissionId: submission.id.toString(),
+                    }
+                ));
+            } catch (error) {
+                console.warn(`Failed to download file for submission ${submission.id}:`, error);
                 continue;
             }
-
-            const content = await data.text();
-
-            files.push(new File(
-                submission.fileName,
-                content,
-                {
-                    studentId: submission.studentId.toString(),
-                    studentName: studentName,
-                    submissionId: submission.id.toString(),
-                }
-            ));
         }
 
         if (files.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED) {
@@ -390,26 +457,21 @@ export class PlagiarismService {
         return files;
     }
 
-    /** Download two submission files and return their content */
+    /** Download two submission files and return their content using StorageService */
     private async downloadSubmissionFiles(
         filePath1: string,
         filePath2: string
     ): Promise<[string, string]> {
-        const [file1Data, file2Data] = await Promise.all([
-            supabase.storage.from('submissions').download(filePath1),
-            supabase.storage.from('submissions').download(filePath2),
-        ]);
+        try {
+            const [leftContent, rightContent] = await Promise.all([
+                this.storageService.download('submissions', filePath1),
+                this.storageService.download('submissions', filePath2),
+            ]);
 
-        if (file1Data.error || file2Data.error) {
+            return [leftContent, rightContent];
+        } catch (error) {
             throw new FileDownloadError(0, 'Failed to download file content');
         }
-
-        const [leftContent, rightContent] = await Promise.all([
-            file1Data.data.text(),
-            file2Data.data.text(),
-        ]);
-
-        return [leftContent, rightContent];
     }
 
     /** Run plagiarism detection on files */
@@ -620,5 +682,7 @@ export class PlagiarismService {
             warnings: [],
         };
     }
+
+
 }
 

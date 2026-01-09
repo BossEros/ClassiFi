@@ -1,25 +1,21 @@
-import { v4 as uuidv4 } from 'uuid';
 import { inject, injectable } from 'tsyringe';
 import { ClassRepository } from '../repositories/class.repository.js';
 import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { EnrollmentRepository } from '../repositories/enrollment.repository.js';
 import { UserRepository } from '../repositories/user.repository.js';
 import { SubmissionRepository } from '../repositories/submission.repository.js';
-import { supabase } from '../shared/supabase.js';
+import { StorageService } from './storage.service.js';
 import type { ClassSchedule } from '../models/index.js';
 import { toClassDTO, toAssignmentDTO, type ClassDTO, type AssignmentDTO } from '../shared/mappers.js';
+import { generateUniqueClassCode } from '../shared/utils.js';
 import {
     ClassNotFoundError,
     NotClassOwnerError,
-    AssignmentNotFoundError,
     InvalidRoleError,
     StudentNotInClassError,
 } from '../shared/errors.js';
 
-/**
- * Business logic for class-related operations.
- * Uses domain errors for exceptional conditions.
- */
+
 @injectable()
 export class ClassService {
     constructor(
@@ -27,20 +23,13 @@ export class ClassService {
         @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
         @inject('EnrollmentRepository') private enrollmentRepo: EnrollmentRepository,
         @inject('UserRepository') private userRepo: UserRepository,
-        @inject('SubmissionRepository') private submissionRepo: SubmissionRepository
+        @inject('SubmissionRepository') private submissionRepo: SubmissionRepository,
+        @inject('StorageService') private storageService: StorageService
     ) { }
 
-    /** Generate a unique class code */
+    /** Generate a unique class code using shared utility */
     async generateClassCode(): Promise<string> {
-        let code: string;
-        let exists = true;
-
-        while (exists) {
-            code = uuidv4().substring(0, 8).toUpperCase();
-            exists = await this.classRepo.checkClassCodeExists(code);
-        }
-
-        return code!;
+        return await generateUniqueClassCode(this.classRepo);
     }
 
     /** Create a new class */
@@ -56,6 +45,7 @@ export class ClassService {
     ): Promise<ClassDTO> {
         // Verify teacher exists
         const teacher = await this.userRepo.getUserById(teacherId);
+
         if (!teacher) {
             throw new InvalidRoleError('teacher');
         }
@@ -77,6 +67,7 @@ export class ClassService {
         });
 
         const studentCount = await this.classRepo.getStudentCount(newClass.id);
+        
         return toClassDTO(newClass, { studentCount });
     }
 
@@ -168,22 +159,35 @@ export class ClassService {
     }
 
     /**
+     * Delete all classes owned by a teacher.
+     * Used for admin user deletion to ensure proper file cleanup.
+     */
+    async deleteClassesByTeacher(teacherId: number): Promise<void> {
+        // Get ALL classes (active and inactive)
+        const teacherClasses = await this.classRepo.getClassesWithStudentCounts(teacherId, false);
+
+        // Delete each class with file cleanup
+        for (const cls of teacherClasses) {
+            try {
+                await this.performClassDeletion(cls.id);
+            } catch (error) {
+                console.error(`Failed to delete class ${cls.id} for teacher ${teacherId}:`, error);
+                // Continue with other classes - don't block user deletion
+            }
+        }
+    }
+
+    /**
      * Shared helper to safely delete a class and its associated files.
      */
     private async performClassDeletion(classId: number): Promise<void> {
-        // 1. Clean up submission files
+        // 1. Clean up submission files using StorageService
         try {
             const submissions = await this.submissionRepo.getSubmissionsByClass(classId);
+
             if (submissions.length > 0) {
                 const filePaths = submissions.map(s => s.filePath);
-                if (filePaths.length > 0) {
-                    const { error } = await supabase.storage.from('submissions').remove(filePaths);
-                    if (error) {
-                        console.error('Failed to delete submission files:', error);
-                    } else {
-                        console.log(`Deleted ${filePaths.length} submission files for class ${classId}`);
-                    }
-                }
+                await this.storageService.deleteSubmissionFiles(filePaths);
             }
         } catch (error) {
             console.error('Error cleaning up class submission files:', error);
@@ -194,45 +198,10 @@ export class ClassService {
         await this.classRepo.deleteClass(classId);
     }
 
-    /** Create an assignment for a class */
-    async createAssignment(
-        classId: number,
-        teacherId: number,
-        data: {
-            assignmentName: string;
-            description: string;
-            programmingLanguage: 'python' | 'java' | 'c';
-            deadline: Date;
-            allowResubmission?: boolean;
-            maxAttempts?: number | null;
-        }
-    ): Promise<AssignmentDTO> {
-        const classData = await this.classRepo.getClassById(classId);
-
-        if (!classData) {
-            throw new ClassNotFoundError(classId);
-        }
-
-        if (classData.teacherId !== teacherId) {
-            throw new NotClassOwnerError();
-        }
-
-        const assignment = await this.assignmentRepo.createAssignment({
-            classId,
-            assignmentName: data.assignmentName,
-            description: data.description,
-            programmingLanguage: data.programmingLanguage,
-            deadline: data.deadline,
-            allowResubmission: data.allowResubmission,
-            maxAttempts: data.maxAttempts,
-        });
-
-        return toAssignmentDTO(assignment);
-    }
-
-    /** Get all assignments for a class */
+    /** Get all assignments for a class (delegates to AssignmentRepository) */
     async getClassAssignments(classId: number): Promise<AssignmentDTO[]> {
         const assignments = await this.assignmentRepo.getAssignmentsByClassId(classId);
+
         return assignments.map((a) => toAssignmentDTO(a));
     }
 
@@ -244,13 +213,14 @@ export class ClassService {
         lastName: string;
         avatarUrl: string | null;
     }>> {
-        const students = await this.classRepo.getEnrolledStudents(classId);
-        return students.map((s) => ({
-            id: s.id,
-            email: s.email,
-            firstName: s.firstName,
-            lastName: s.lastName,
-            avatarUrl: s.avatarUrl,
+        const studentsWithInfo = await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId);
+
+        return studentsWithInfo.map((s) => ({
+            id: s.user.id,
+            email: s.user.email,
+            firstName: s.user.firstName,
+            lastName: s.user.lastName,
+            avatarUrl: s.user.avatarUrl ?? null,
         }));
     }
 
@@ -266,74 +236,10 @@ export class ClassService {
             throw new NotClassOwnerError();
         }
 
-        const removed = await this.classRepo.removeStudent(classId, studentId);
+        const removed = await this.enrollmentRepo.unenrollStudent(studentId, classId);
 
         if (!removed) {
             throw new StudentNotInClassError();
         }
-    }
-
-    /** Get assignment details */
-    async getAssignmentDetails(assignmentId: number, userId: number): Promise<AssignmentDTO> {
-        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
-
-        if (!assignment) {
-            throw new AssignmentNotFoundError(assignmentId);
-        }
-
-        const classData = await this.classRepo.getClassById(assignment.classId);
-
-        return toAssignmentDTO(assignment, { className: classData?.className });
-    }
-
-    /** Update an assignment */
-    async updateAssignment(
-        assignmentId: number,
-        teacherId: number,
-        data: {
-            assignmentName?: string;
-            description?: string;
-            programmingLanguage?: 'python' | 'java' | 'c';
-            deadline?: Date;
-            allowResubmission?: boolean;
-            maxAttempts?: number | null;
-        }
-    ): Promise<AssignmentDTO> {
-        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
-
-        if (!assignment) {
-            throw new AssignmentNotFoundError(assignmentId);
-        }
-
-        const classData = await this.classRepo.getClassById(assignment.classId);
-
-        if (!classData || classData.teacherId !== teacherId) {
-            throw new NotClassOwnerError();
-        }
-
-        const updatedAssignment = await this.assignmentRepo.updateAssignment(assignmentId, data);
-
-        if (!updatedAssignment) {
-            throw new AssignmentNotFoundError(assignmentId);
-        }
-
-        return toAssignmentDTO(updatedAssignment);
-    }
-
-    /** Delete an assignment */
-    async deleteAssignment(assignmentId: number, teacherId: number): Promise<void> {
-        const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
-
-        if (!assignment) {
-            throw new AssignmentNotFoundError(assignmentId);
-        }
-
-        const classData = await this.classRepo.getClassById(assignment.classId);
-
-        if (!classData || classData.teacherId !== teacherId) {
-            throw new NotClassOwnerError();
-        }
-
-        await this.assignmentRepo.deleteAssignment(assignmentId);
     }
 }

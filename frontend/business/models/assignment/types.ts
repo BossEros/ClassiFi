@@ -23,6 +23,14 @@ export interface Submission {
   studentName?: string
 }
 
+export interface SubmissionWithAssignment extends Submission {
+  assignmentName: string
+}
+
+export interface SubmissionWithStudent extends Submission {
+  studentName: string
+}
+
 /**
  * Detailed information about an assignment, including submission status.
  */

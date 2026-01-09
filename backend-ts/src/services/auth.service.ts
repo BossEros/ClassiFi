@@ -1,6 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import { UserRepository, type UserRole } from '@/repositories/user.repository.js';
-import { supabase } from '@/shared/supabase.js';
+import { SupabaseAuthAdapter } from '@/services/supabase-auth.adapter.js';
 import { settings } from '@/shared/config.js';
 import { toUserDTO, type UserDTO } from '@/shared/mappers.js';
 import {
@@ -24,7 +24,8 @@ interface AuthResult {
 @injectable()
 export class AuthService {
     constructor(
-        @inject('UserRepository') private userRepo: UserRepository
+        @inject('UserRepository') private userRepo: UserRepository,
+        @inject('SupabaseAuthAdapter') private authAdapter: SupabaseAuthAdapter
     ) { }
 
     /**
@@ -45,26 +46,24 @@ export class AuthService {
         }
 
         // Create Supabase auth user with metadata
-        const { data: supabaseData, error: supabaseError } = await supabase.auth.signUp({
+        const { user: supabaseUser, token } = await this.authAdapter.signUp(
             email,
             password,
-            options: {
-                data: {
-                    first_name: firstName,
-                    last_name: lastName,
-                    role,
-                },
-            },
-        });
+            {
+                first_name: firstName,
+                last_name: lastName,
+                role,
+            }
+        );
 
-        if (supabaseError || !supabaseData.user) {
-            throw new Error(supabaseError?.message ?? 'Failed to create Supabase user');
+        if (!supabaseUser) {
+            throw new Error('Failed to create Supabase user');
         }
 
         // Create user in local database with rollback on failure
         try {
             const user = await this.userRepo.createUser({
-                supabaseUserId: supabaseData.user.id,
+                supabaseUserId: supabaseUser.id,
                 email,
                 firstName,
                 lastName,
@@ -73,12 +72,12 @@ export class AuthService {
 
             return {
                 userData: toUserDTO(user),
-                token: supabaseData.session?.access_token ?? null,
+                token: token ?? null,
             };
         } catch (error) {
             // Rollback: Delete the Supabase user to prevent orphaned records
             try {
-                await supabase.auth.admin.deleteUser(supabaseData.user.id);
+                await this.authAdapter.deleteUser(supabaseUser.id);
             } catch (rollbackError) {
                 // Log rollback failure but throw original error
                 console.error('Failed to rollback Supabase user:', rollbackError);
@@ -93,31 +92,21 @@ export class AuthService {
      * @throws {UserNotFoundError} If user not in local database
      */
     async loginUser(email: string, password: string): Promise<AuthResult> {
-        const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        const { accessToken, user: supabaseUser } = await this.authAdapter.signInWithPassword(email, password);
 
-        if (supabaseError) {
-            if (supabaseError.message.toLowerCase().includes('email not confirmed')) {
-                throw new EmailNotVerifiedError();
-            }
+        if (!supabaseUser) {
             throw new InvalidCredentialsError();
         }
 
-        if (!supabaseData.user) {
-            throw new InvalidCredentialsError();
-        }
-
-        const user = await this.userRepo.getUserBySupabaseId(supabaseData.user.id);
+        const user = await this.userRepo.getUserBySupabaseId(supabaseUser.id);
 
         if (!user) {
-            throw new UserNotFoundError(supabaseData.user.id);
+            throw new UserNotFoundError(supabaseUser.id);
         }
 
         return {
             userData: toUserDTO(user),
-            token: supabaseData.session?.access_token ?? null,
+            token: accessToken,
         };
     }
 
@@ -126,9 +115,9 @@ export class AuthService {
      * @throws {InvalidCredentialsError} If token is invalid
      */
     async verifyToken(token: string): Promise<UserDTO> {
-        const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+        const supabaseUser = await this.authAdapter.getUser(token);
 
-        if (error || !supabaseUser) {
+        if (!supabaseUser) {
             throw new InvalidCredentialsError();
         }
 
@@ -143,8 +132,6 @@ export class AuthService {
 
     /** Request a password reset email */
     async requestPasswordReset(email: string): Promise<void> {
-        await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${settings.frontendUrl}/reset-password`,
-        });
+        await this.authAdapter.resetPasswordForEmail(email, `${settings.frontendUrl}/reset-password`);
     }
 }

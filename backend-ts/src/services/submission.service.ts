@@ -3,7 +3,7 @@ import { SubmissionRepository } from '../repositories/submission.repository.js';
 import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { EnrollmentRepository } from '../repositories/enrollment.repository.js';
 import { ClassRepository } from '../repositories/class.repository.js';
-import { supabase } from '../shared/supabase.js';
+import { StorageService } from './storage.service.js';
 import { toSubmissionDTO, type SubmissionDTO } from '../shared/mappers.js';
 import {
     AssignmentNotFoundError,
@@ -26,7 +26,8 @@ export class SubmissionService {
         @inject('SubmissionRepository') private submissionRepo: SubmissionRepository,
         @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
         @inject('EnrollmentRepository') private enrollmentRepo: EnrollmentRepository,
-        @inject('ClassRepository') private classRepo: ClassRepository
+        @inject('ClassRepository') private classRepo: ClassRepository,
+        @inject('StorageService') private storageService: StorageService
     ) { }
 
     /** Submit an assignment */
@@ -87,20 +88,14 @@ export class SubmissionService {
         const submissionCount = await this.submissionRepo.getSubmissionCount(assignmentId, studentId);
         const submissionNumber = submissionCount + 1;
 
-        // Upload file to Supabase Storage
-        // Upload file to Supabase Storage
+        // Upload file using StorageService
         const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`;
 
-        const { error: uploadError } = await supabase.storage
-            .from('submissions')
-            .upload(filePath, file.data, {
-                contentType: file.mimetype,
-                upsert: false,
-            });
-
-        if (uploadError) {
-            console.error('Submission upload error:', uploadError);
-            throw new UploadFailedError(uploadError.message);
+        try {
+            await this.storageService.upload('submissions', filePath, file.data, file.mimetype);
+        } catch (error) {
+            console.error('Submission upload error:', error);
+            throw new UploadFailedError(error instanceof Error ? error.message : 'Unknown upload error');
         }
 
         // Create submission record
@@ -139,12 +134,8 @@ export class SubmissionService {
         return submissions.map((s) => toSubmissionDTO(s));
     }
 
-    /** Get file download URL */
+    /** Get file download URL using StorageService */
     async getFileDownloadUrl(filePath: string, expiresIn: number = 3600): Promise<string> {
-        const { data } = await supabase.storage
-            .from('submissions')
-            .createSignedUrl(filePath, expiresIn);
-
-        return data?.signedUrl ?? '';
+        return await this.storageService.getSignedUrl('submissions', filePath, expiresIn);
     }
 }

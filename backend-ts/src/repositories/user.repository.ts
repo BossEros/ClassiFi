@@ -1,11 +1,29 @@
 import { db } from '../shared/database.js';
-import { eq } from 'drizzle-orm';
+import { eq, or, ilike, and, desc, count, sql } from 'drizzle-orm';
 import { users, type User, type NewUser } from '../models/index.js';
 import { BaseRepository } from './base.repository.js';
 import { injectable } from 'tsyringe';
 
 /** User role type */
 export type UserRole = 'student' | 'teacher' | 'admin';
+
+/** Filter options for user queries */
+export interface UserFilterOptions {
+    page: number;
+    limit: number;
+    search?: string;
+    role?: UserRole;
+    status?: 'active' | 'inactive';
+}
+
+/** Paginated result structure */
+export interface PaginatedResult<T> {
+    data: T[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
 
 /**
  * Repository for user-related database operations.
@@ -98,4 +116,123 @@ export class UserRepository extends BaseRepository<typeof users, User, NewUser> 
 
         return results.length > 0;
     }
+
+    /**
+     * Get all users with pagination and filters.
+     * Moved from AdminService to follow DIP.
+     */
+    async getAllUsersFiltered(options: UserFilterOptions): Promise<PaginatedResult<User>> {
+        const { page, limit, search, role, status } = options;
+        const offset = (page - 1) * limit;
+
+        // Build where conditions
+        const conditions: ReturnType<typeof eq>[] = [];
+
+        if (search) {
+            conditions.push(
+                or(
+                    ilike(users.email, `%${search}%`),
+                    ilike(users.firstName, `%${search}%`),
+                    ilike(users.lastName, `%${search}%`)
+                )!
+            );
+        }
+
+        if (role) {
+            conditions.push(eq(users.role, role));
+        }
+
+        if (status === 'active') {
+            conditions.push(eq(users.isActive, true));
+        } else if (status === 'inactive') {
+            conditions.push(eq(users.isActive, false));
+        }
+
+        const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+        // Get total count
+        const countResult = await this.db
+            .select({ count: count() })
+            .from(users)
+            .where(whereClause);
+
+        const total = Number(countResult[0]?.count ?? 0);
+
+        // Get paginated data
+        const data = await this.db
+            .select()
+            .from(users)
+            .where(whereClause)
+            .orderBy(desc(users.createdAt))
+            .limit(limit)
+            .offset(offset);
+
+        return {
+            data,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
+
+    /**
+     * Toggle user active status.
+     * Moved from AdminService to follow DIP.
+     */
+    async toggleActiveStatus(userId: number): Promise<User | undefined> {
+        const user = await this.findById(userId);
+        if (!user) return undefined;
+
+        const newStatus = !user.isActive;
+        const results = await this.db
+            .update(users)
+            .set({ isActive: newStatus })
+            .where(eq(users.id, userId))
+            .returning();
+
+        return results[0];
+    }
+
+    /** Get all users by role */
+    async getUsersByRole(role: UserRole): Promise<User[]> {
+        return await this.db
+            .select()
+            .from(users)
+            .where(eq(users.role, role))
+            .orderBy(desc(users.createdAt));
+    }
+
+    /**
+     * Get user counts grouped by role.
+     * Used for admin analytics dashboard.
+     */
+    async getCountsByRole(): Promise<Record<string, number>> {
+        const results = await this.db
+            .select({
+                role: users.role,
+                count: count(),
+            })
+            .from(users)
+            .groupBy(users.role);
+
+        const roleMap: Record<string, number> = {};
+        results.forEach(row => {
+            roleMap[row.role] = Number(row.count);
+        });
+        return roleMap;
+    }
+
+    /**
+     * Get most recent users.
+     * Used for admin activity feed.
+     */
+    async getRecentUsers(limit: number = 10): Promise<User[]> {
+        return await this.db
+            .select()
+            .from(users)
+            .orderBy(desc(users.createdAt))
+            .limit(limit);
+    }
 }
+

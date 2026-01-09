@@ -9,7 +9,11 @@ import type { DashboardData, Class, Task } from '@/business/models/dashboard/typ
  */
 export async function getDashboardData(teacherId: number): Promise<DashboardData> {
   try {
-    return await dashboardRepository.getDashboardData(teacherId)
+    const response = await dashboardRepository.getDashboardData(teacherId)
+    return {
+      recentClasses: response.recentClasses as unknown as Class[],
+      pendingTasks: response.pendingTasks as unknown as Task[]
+    }
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
     throw error
@@ -25,7 +29,8 @@ export async function getDashboardData(teacherId: number): Promise<DashboardData
  */
 export async function getRecentClasses(teacherId: number, limit: number = 5): Promise<Class[]> {
   try {
-    return await dashboardRepository.getRecentClasses(teacherId, limit)
+    const response = await dashboardRepository.getRecentClasses(teacherId, limit)
+    return response.classes as unknown as Class[]
   } catch (error) {
     console.error('Error fetching recent classes:', error)
     throw error
@@ -41,7 +46,8 @@ export async function getRecentClasses(teacherId: number, limit: number = 5): Pr
  */
 export async function getPendingTasks(teacherId: number, limit: number = 10): Promise<Task[]> {
   try {
-    return await dashboardRepository.getPendingTasks(teacherId, limit)
+    const response = await dashboardRepository.getPendingTasks(teacherId, limit)
+    return response.tasks as unknown as Task[]
   } catch (error) {
     console.error('Error fetching pending tasks:', error)
     throw error

@@ -1,7 +1,3 @@
-/**
- * Dependency Injection Container Configuration
- * Using tsyringe for constructor injection
- */
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 
@@ -21,7 +17,15 @@ import { StudentDashboardService } from '../services/student-dashboard.service.j
 import { TeacherDashboardService } from '../services/teacher-dashboard.service.js';
 import { PlagiarismService } from '../services/plagiarism.service.js';
 import { UserService } from '../services/user.service.js';
-import { AdminService } from '../services/admin.service.js';
+import { StorageService } from '../services/storage.service.js';
+import { AssignmentService } from '../services/assignment.service.js';
+import { SupabaseAuthAdapter } from '../services/supabase-auth.adapter.js';
+
+// Admin Services (focused, single-responsibility)
+import { AdminUserService } from '../services/admin/admin-user.service.js';
+import { AdminAnalyticsService } from '../services/admin/admin-analytics.service.js';
+import { AdminClassService } from '../services/admin/admin-class.service.js';
+import { AdminEnrollmentService } from '../services/admin/admin-enrollment.service.js';
 
 // Register repositories as singletons
 container.registerSingleton('UserRepository', UserRepository);
@@ -31,7 +35,12 @@ container.registerSingleton('EnrollmentRepository', EnrollmentRepository);
 container.registerSingleton('SubmissionRepository', SubmissionRepository);
 container.registerSingleton('SimilarityRepository', SimilarityRepository);
 
+// Register infrastructure adapters as singletons
+container.registerSingleton('SupabaseAuthAdapter', SupabaseAuthAdapter);
+
 // Register services as singletons
+container.registerSingleton('StorageService', StorageService);
+container.registerSingleton('AssignmentService', AssignmentService);
 container.registerSingleton('AuthService', AuthService);
 container.registerSingleton('ClassService', ClassService);
 container.registerSingleton('SubmissionService', SubmissionService);
@@ -39,6 +48,12 @@ container.registerSingleton('StudentDashboardService', StudentDashboardService);
 container.registerSingleton('TeacherDashboardService', TeacherDashboardService);
 container.registerSingleton('PlagiarismService', PlagiarismService);
 container.registerSingleton('UserService', UserService);
-container.registerSingleton('AdminService', AdminService);
+
+// Register focused admin services as singletons
+container.registerSingleton('AdminUserService', AdminUserService);
+container.registerSingleton('AdminAnalyticsService', AdminAnalyticsService);
+container.registerSingleton('AdminClassService', AdminClassService);
+container.registerSingleton('AdminEnrollmentService', AdminEnrollmentService);
 
 export { container };
+

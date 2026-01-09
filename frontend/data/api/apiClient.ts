@@ -45,8 +45,8 @@ class ApiClient {
     // Only include Content-Type for requests with a body
     const authToken = getAuthToken()
     const requestHeaders: HeadersInit = {
-      ...(body && { 'Content-Type': 'application/json' }),
-      ...(authToken && { Authorization: `Bearer ${authToken}` }),
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
       ...headers
     }
 

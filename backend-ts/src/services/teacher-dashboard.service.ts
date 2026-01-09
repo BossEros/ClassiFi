@@ -33,61 +33,38 @@ export class TeacherDashboardService {
 
     /** Get recent classes for a teacher */
     async getRecentClasses(teacherId: number, limit: number = 5): Promise<DashboardClassDTO[]> {
-        const classes = await this.classRepo.getRecentClassesByTeacher(teacherId, limit);
+        // Use optimized query that fetches student counts in a single query
+        const classesWithCounts = await this.classRepo.getRecentClassesWithStudentCounts(teacherId, limit);
 
-        const classesWithDetails = await Promise.all(
-            classes.map(async (c) => {
-                const studentCount = await this.classRepo.getStudentCount(c.id);
-                const assignments = await this.assignmentRepo.getAssignmentsByClassId(c.id, true);
+        // Optimized: Batch fetch assignments for all classes
+        const classIds = classesWithCounts.map(c => c.id);
+        const assignments = await this.assignmentRepo.getAssignmentsByClassIds(classIds, true);
 
-                return toDashboardClassDTO(c, {
-                    studentCount,
-                    assignmentCount: assignments.length,
-                });
-            })
-        );
+        // Group assignments by classId
+        const assignmentCountMap = new Map<number, number>();
+        for (const assignment of assignments) {
+            const count = assignmentCountMap.get(assignment.classId) || 0;
+            assignmentCountMap.set(assignment.classId, count + 1);
+        }
 
-        return classesWithDetails;
+        return classesWithCounts.map(c => toDashboardClassDTO(c, {
+            studentCount: c.studentCount,
+            assignmentCount: assignmentCountMap.get(c.id) || 0,
+        }));
     }
 
     /** Get pending tasks for a teacher (assignments needing review) */
     async getPendingTasks(teacherId: number, limit: number = 10): Promise<PendingTaskDTO[]> {
-        // Get all teacher's classes
-        const classes = await this.classRepo.getClassesByTeacher(teacherId, true);
+        const tasks = await this.assignmentRepo.getPendingTasksForTeacher(teacherId, limit);
 
-        const now = new Date();
-        const tasks: PendingTaskDTO[] = [];
-
-        for (const classData of classes) {
-            const assignments = await this.assignmentRepo.getAssignmentsByClassId(classData.id, true);
-
-            for (const assignment of assignments) {
-                // Get submission count
-                const submissions = await this.submissionRepo.getSubmissionsByAssignment(assignment.id, true);
-                const studentCount = await this.classRepo.getStudentCount(classData.id);
-
-                // Only include if there are submissions or deadline is upcoming
-                if (submissions.length > 0 || (assignment.deadline && assignment.deadline > now)) {
-                    tasks.push({
-                        id: assignment.id,
-                        assignmentName: assignment.assignmentName,
-                        className: classData.className,
-                        classId: classData.id,
-                        deadline: assignment.deadline?.toISOString() ?? '',
-                        submissionCount: submissions.length,
-                        totalStudents: studentCount,
-                    });
-                }
-            }
-        }
-
-        // Sort by deadline
-        tasks.sort((a, b) => {
-            if (!a.deadline) return 1;
-            if (!b.deadline) return -1;
-            return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-        });
-
-        return tasks.slice(0, limit);
+        return tasks.map(t => ({
+            id: t.id,
+            assignmentName: t.assignmentName,
+            className: t.className,
+            classId: t.classId,
+            deadline: t.deadline?.toISOString() ?? '',
+            submissionCount: t.submissionCount,
+            totalStudents: t.studentCount
+        }));
     }
 }

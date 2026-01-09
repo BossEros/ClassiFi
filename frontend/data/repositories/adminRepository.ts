@@ -3,98 +3,31 @@
  * API calls for admin-only operations: users, analytics, and classes
  */
 import { apiClient } from '../api/apiClient'
+import type {
+    AdminUser,
+    AdminClass,
+    AdminStats,
+    ActivityItem,
+    PaginatedResponse,
+    CreateUserData,
+    CreateClassData,
+    UpdateClassData,
+    EnrolledStudent,
+    ClassAssignment,
+} from '@/business/models/admin/types'
 
-// ============ Types ============
-
-export interface AdminUser {
-    id: number
-    email: string
-    firstName: string
-    lastName: string
-    role: 'student' | 'teacher' | 'admin'
-    avatarUrl: string | null
-    isActive: boolean
-    createdAt: string
-}
-
-export interface PaginatedResponse<T> {
-    success: boolean
-    data: T[]
-    total: number
-    page: number
-    limit: number
-    totalPages: number
-}
-
-export interface AdminStats {
-    totalUsers: number
-    totalStudents: number
-    totalTeachers: number
-    totalAdmins: number
-    totalClasses: number
-    activeClasses: number
-    totalSubmissions: number
-    totalPlagiarismReports: number
-}
-
-export interface ActivityItem {
-    id: string
-    type: string
-    description: string
-    user: string
-    target: string
-    timestamp: string
-}
-
-export interface ClassSchedule {
-    days: string[]
-    startTime: string
-    endTime: string
-}
-
-export interface AdminClass {
-    id: number
-    className: string
-    classCode: string
-    teacherId: number
-    yearLevel: number
-    semester: number
-    academicYear: string
-    schedule: ClassSchedule
-    description: string | null
-    isActive: boolean
-    studentCount: number
-    createdAt: string
-    teacherName: string
-}
-
-export interface CreateUserData {
-    email: string
-    password: string
-    firstName: string
-    lastName: string
-    role: 'student' | 'teacher' | 'admin'
-}
-
-export interface CreateClassData {
-    teacherId: number
-    className: string
-    yearLevel: number
-    semester: number
-    academicYear: string
-    schedule: ClassSchedule
-    description?: string
-}
-
-export interface UpdateClassData {
-    className?: string
-    description?: string | null
-    isActive?: boolean
-    yearLevel?: number
-    semester?: number
-    academicYear?: string
-    schedule?: ClassSchedule
-    teacherId?: number
+// Re-export types for backward compatibility
+export type {
+    AdminUser,
+    AdminClass,
+    AdminStats,
+    ActivityItem,
+    PaginatedResponse,
+    CreateUserData,
+    CreateClassData,
+    UpdateClassData,
+    EnrolledStudent,
+    ClassAssignment,
 }
 
 // ============ User Management ============
@@ -351,6 +284,64 @@ export async function archiveClass(classId: number): Promise<{ success: boolean;
 export async function getAllTeachers(): Promise<{ success: boolean; teachers: AdminUser[] }> {
     const response = await apiClient.get<{ success: boolean; teachers: AdminUser[] }>(
         '/admin/teachers'
+    )
+
+    if (response.error) {
+        throw new Error(response.error)
+    }
+
+    return response.data!
+}
+
+
+// ============ Class Enrollment Management ============
+
+export async function getClassStudents(classId: number): Promise<{ success: boolean; students: EnrolledStudent[] }> {
+    const response = await apiClient.get<{ success: boolean; students: EnrolledStudent[] }>(
+        `/admin/classes/${classId}/students`
+    )
+
+    if (response.error) {
+        throw new Error(response.error)
+    }
+
+    // Transform to include fullName
+    const students = response.data!.students.map(student => ({
+        ...student,
+        fullName: `${student.firstName} ${student.lastName}`.trim()
+    }))
+
+    return { success: true, students }
+}
+
+export async function getClassAssignments(classId: number): Promise<{ success: boolean; assignments: ClassAssignment[] }> {
+    const response = await apiClient.get<{ success: boolean; assignments: ClassAssignment[] }>(
+        `/admin/classes/${classId}/assignments`
+    )
+
+    if (response.error) {
+        throw new Error(response.error)
+    }
+
+    return response.data!
+}
+
+export async function addStudentToClass(classId: number, studentId: number): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.post<{ success: boolean; message: string }>(
+        `/admin/classes/${classId}/students`,
+        { studentId }
+    )
+
+    if (response.error) {
+        throw new Error(response.error)
+    }
+
+    return response.data!
+}
+
+export async function removeStudentFromClass(classId: number, studentId: number): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+        `/admin/classes/${classId}/students/${studentId}`
     )
 
     if (response.error) {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText, Settings, Users } from 'lucide-react'
+import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText, Settings, Users, GraduationCap } from 'lucide-react'
 import { NavItem } from './NavItem'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'
@@ -28,6 +28,7 @@ const adminNavigationItems = [
   { id: 'home', label: 'Dashboard', path: '/dashboard', icon: Home },
   { id: 'users', label: 'Users', path: '/dashboard/users', icon: Users },
   { id: 'classes', label: 'Classes', path: '/dashboard/classes', icon: Grid3x3 },
+  { id: 'enrollments', label: 'Enrollments', path: '/dashboard/enrollments', icon: GraduationCap },
   { id: 'settings', label: 'Settings', path: '/dashboard/settings', icon: Settings }
 ]
 

@@ -25,6 +25,7 @@ describe('StudentDashboardService', () => {
 
         mockClassRepo = {
             getClassesByStudent: vi.fn(),
+            getClassesByStudentWithDetails: vi.fn(),
             getStudentCount: vi.fn(),
             getClassByCode: vi.fn(),
         };
@@ -63,12 +64,12 @@ describe('StudentDashboardService', () => {
     // ============ getDashboardData Tests ============
     describe('getDashboardData', () => {
         it('should return combined dashboard data', async () => {
-            const mockClasses = [createMockClass({ id: 1 })];
-            const teacher = createMockUser({ id: 2, firstName: 'Test', lastName: 'Teacher', role: 'teacher' });
+            const mockClassesWithDetails = [
+                { ...createMockClass({ id: 1 }), studentCount: 10, teacherName: 'Test Teacher' }
+            ];
 
-            mockClassRepo.getClassesByStudent.mockResolvedValue(mockClasses);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
-            mockUserRepo.getUserById.mockResolvedValue(teacher);
+            mockClassRepo.getClassesByStudentWithDetails.mockResolvedValue(mockClassesWithDetails);
+            mockClassRepo.getClassesByStudent.mockResolvedValue([createMockClass({ id: 1 })]);
             mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue([]);
 
             const result = await dashboardService.getDashboardData(1);
@@ -78,31 +79,26 @@ describe('StudentDashboardService', () => {
         });
 
         it('should respect limit parameters', async () => {
+            mockClassRepo.getClassesByStudentWithDetails.mockResolvedValue([]);
             mockClassRepo.getClassesByStudent.mockResolvedValue([]);
             mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue([]);
 
             await dashboardService.getDashboardData(1, 5, 3);
 
-            // Verify limits are passed
-            expect(mockClassRepo.getClassesByStudent).toHaveBeenCalled();
+            // Verify getClassesByStudentWithDetails is called
+            expect(mockClassRepo.getClassesByStudentWithDetails).toHaveBeenCalled();
         });
     });
 
     // ============ getEnrolledClasses Tests ============
     describe('getEnrolledClasses', () => {
         it('should return enrolled classes with teacher names', async () => {
-            const mockClasses = [
-                createMockClass({ id: 1, teacherId: 2 }),
-                createMockClass({ id: 2, teacherId: 3 }),
+            const mockClassesWithDetails = [
+                { ...createMockClass({ id: 1, teacherId: 2 }), studentCount: 10, teacherName: 'John Doe' },
+                { ...createMockClass({ id: 2, teacherId: 3 }), studentCount: 10, teacherName: 'Jane Smith' },
             ];
-            const teacher1 = createMockUser({ id: 2, firstName: 'John', lastName: 'Doe' });
-            const teacher2 = createMockUser({ id: 3, firstName: 'Jane', lastName: 'Smith' });
 
-            mockClassRepo.getClassesByStudent.mockResolvedValue(mockClasses);
-            mockClassRepo.getStudentCount.mockResolvedValue(10);
-            mockUserRepo.getUserById
-                .mockResolvedValueOnce(teacher1)
-                .mockResolvedValueOnce(teacher2);
+            mockClassRepo.getClassesByStudentWithDetails.mockResolvedValue(mockClassesWithDetails);
 
             const result = await dashboardService.getEnrolledClasses(1);
 
@@ -112,32 +108,30 @@ describe('StudentDashboardService', () => {
         });
 
         it('should apply limit when provided', async () => {
-            const mockClasses = [
-                createMockClass({ id: 1 }),
-                createMockClass({ id: 2 }),
-                createMockClass({ id: 3 }),
+            const mockClassesWithDetails = [
+                { ...createMockClass({ id: 1 }), studentCount: 5, teacherName: 'Test Teacher' },
+                { ...createMockClass({ id: 2 }), studentCount: 5, teacherName: 'Test Teacher' },
+                { ...createMockClass({ id: 3 }), studentCount: 5, teacherName: 'Test Teacher' },
             ];
-            const teacher = createMockUser({ firstName: 'Test', lastName: 'Teacher' });
 
-            mockClassRepo.getClassesByStudent.mockResolvedValue(mockClasses);
-            mockClassRepo.getStudentCount.mockResolvedValue(5);
-            mockUserRepo.getUserById.mockResolvedValue(teacher);
+            mockClassRepo.getClassesByStudentWithDetails.mockResolvedValue(mockClassesWithDetails);
 
             const result = await dashboardService.getEnrolledClasses(1, 2);
 
             expect(result).toHaveLength(2);
         });
 
-        it('should handle teacher not found', async () => {
-            const mockClasses = [createMockClass({ id: 1, teacherId: 999 })];
+        it('should handle classes with teacher info from batch query', async () => {
+            // With batch query, teacher info is always included
+            const mockClassesWithDetails = [
+                { ...createMockClass({ id: 1, teacherId: 999 }), studentCount: 5, teacherName: 'Unknown Teacher' }
+            ];
 
-            mockClassRepo.getClassesByStudent.mockResolvedValue(mockClasses);
-            mockClassRepo.getStudentCount.mockResolvedValue(5);
-            mockUserRepo.getUserById.mockResolvedValue(undefined);
+            mockClassRepo.getClassesByStudentWithDetails.mockResolvedValue(mockClassesWithDetails);
 
             const result = await dashboardService.getEnrolledClasses(1);
 
-            expect(result[0].teacherName).toBeUndefined();
+            expect(result[0].teacherName).toBe('Unknown Teacher');
         });
     });
 
