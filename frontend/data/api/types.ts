@@ -57,6 +57,8 @@ export interface CreateAssignmentRequest {
     allowResubmission: boolean
     maxAttempts?: number | null
     templateCode?: string | null
+    totalScore: number
+    scheduledDate?: Date | string | null
 }
 
 export interface UpdateAssignmentRequest {
@@ -68,6 +70,8 @@ export interface UpdateAssignmentRequest {
     allowResubmission?: boolean
     maxAttempts?: number | null
     templateCode?: string | null
+    totalScore?: number
+    scheduledDate?: Date | string | null
 }
 
 // ============================================================================

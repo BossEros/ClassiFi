@@ -84,3 +84,12 @@ export const DownloadResponseSchema = z.object({
 });
 
 export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;
+
+/** Submission content response schema */
+export const SubmissionContentResponseSchema = z.object({
+    success: z.boolean(),
+    content: z.string(),
+    language: z.string().optional(),
+});
+
+export type SubmissionContentResponse = z.infer<typeof SubmissionContentResponseSchema>;

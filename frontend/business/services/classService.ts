@@ -176,6 +176,8 @@ export async function createAssignment(request: CreateAssignmentRequest): Promis
     allowResubmission: request.allowResubmission,
     maxAttempts: request.maxAttempts,
     templateCode: request.templateCode,
+    totalScore: request.totalScore,
+    scheduledDate: request.scheduledDate ? (typeof request.scheduledDate === 'string' ? request.scheduledDate : request.scheduledDate.toISOString()) : null,
   })
 }
 
@@ -202,6 +204,8 @@ export async function updateAssignment(assignmentId: number, request: UpdateAssi
     allowResubmission: request.allowResubmission,
     maxAttempts: request.maxAttempts,
     templateCode: request.templateCode,
+    totalScore: request.totalScore,
+    scheduledDate: request.scheduledDate ? (typeof request.scheduledDate === 'string' ? request.scheduledDate : request.scheduledDate.toISOString()) : null,
   })
 }
 

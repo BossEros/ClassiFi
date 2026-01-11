@@ -12,7 +12,6 @@
 export interface Submission {
   id: number
   assignmentId: number
-
   studentId: number
   fileName: string
   fileSize: number
@@ -21,6 +20,7 @@ export interface Submission {
   isLatest: boolean
   assignmentName?: string
   studentName?: string
+  grade?: number
 }
 
 export interface SubmissionWithAssignment extends Submission {
@@ -79,6 +79,8 @@ export interface UpdateAssignmentRequest {
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
+  totalScore?: number
+  scheduledDate?: Date | string | null
 }
 
 // ============================================================================

@@ -194,3 +194,25 @@ export async function getAssignmentById(
 
   return response
 }
+
+/**
+ * Get submission content for preview
+ */
+export async function getSubmissionContent(
+  submissionId: number
+): Promise<ApiResponse<{ success: boolean; content: string; language?: string }>> {
+  return await apiClient.get(
+    `/submissions/${submissionId}/content`
+  )
+}
+
+/**
+ * Get submission download URL
+ */
+export async function getSubmissionDownloadUrl(
+  submissionId: number
+): Promise<ApiResponse<{ success: boolean; message: string; downloadUrl: string }>> {
+  return await apiClient.get<{ success: boolean; message: string; downloadUrl: string }>(
+    `/submissions/${submissionId}/download`
+  )
+}

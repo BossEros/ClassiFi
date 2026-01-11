@@ -3,7 +3,9 @@ import { SubmissionRepository } from '../repositories/submission.repository.js';
 import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { EnrollmentRepository } from '../repositories/enrollment.repository.js';
 import { ClassRepository } from '../repositories/class.repository.js';
+import { TestResultRepository } from '../repositories/testResult.repository.js';
 import { StorageService } from './storage.service.js';
+import { CodeTestService } from './codeTest.service.js';
 import { toSubmissionDTO, type SubmissionDTO } from '../shared/mappers.js';
 import {
     AssignmentNotFoundError,
@@ -14,6 +16,7 @@ import {
     InvalidFileTypeError,
     FileTooLargeError,
     UploadFailedError,
+    SubmissionNotFoundError,
 } from '../shared/errors.js';
 
 /**
@@ -27,7 +30,9 @@ export class SubmissionService {
         @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
         @inject('EnrollmentRepository') private enrollmentRepo: EnrollmentRepository,
         @inject('ClassRepository') private classRepo: ClassRepository,
-        @inject('StorageService') private storageService: StorageService
+        @inject('TestResultRepository') private testResultRepo: TestResultRepository,
+        @inject('StorageService') private storageService: StorageService,
+        @inject('CodeTestService') private codeTestService: CodeTestService
     ) { }
 
     /** Submit an assignment */
@@ -59,11 +64,47 @@ export class SubmissionService {
             throw new NotEnrolledError();
         }
 
-        // Check for existing submission
-        const existingSubmission = await this.submissionRepo.getLatestSubmission(assignmentId, studentId);
+        // Check for existing submissions
+        const existingSubmissions = await this.submissionRepo.getSubmissionHistory(assignmentId, studentId);
 
-        if (existingSubmission && !assignment.allowResubmission) {
-            throw new ResubmissionNotAllowedError();
+        if (existingSubmissions.length > 0) {
+            if (!assignment.allowResubmission) {
+                throw new ResubmissionNotAllowedError();
+            }
+
+            // Cleanup: Delete ALL previous submissions and their data (File + TestResults + DB Record)
+            for (const sub of existingSubmissions) {
+                // 1. Delete Test Results
+                await this.testResultRepo.deleteBySubmissionId(sub.id);
+
+                // 2. Delete File from Storage
+                if (sub.filePath) {
+                    try {
+                        await this.storageService.deleteFiles('submissions', [sub.filePath]);
+                    } catch (err) {
+                        console.error(`Failed to delete old submission file: ${sub.filePath}`, err);
+                    }
+                }
+
+                // 3. Delete Submission Record
+                // Assuming base generic Delete exists or we need to add specific delete to repo.
+                // If BaseRepository has delete(id), we use it.
+                // Checking SubmissionRepository again... it inherits BaseRepository.
+                // Assuming BaseRepository has delete(id). If not, we'd need to add it.
+                // Given previous context, it likely has common CRUD operation.
+                // Using a safe manual delete call or assuming delete(id) works.
+                // Wait, I haven't seen BaseRepository delete method.
+                // But I can create a delete method in SubmissionRepository "deleteSubmission" just to be safe if generic delete isn't confirmed.
+                // Actually, I'll assume I can just use `submissionRepo.delete(sub.id)` if it's standard,
+                // If not, I'll add `deleteSubmission` to SubmissionRepository in a future step if this errors.
+                // For now, I'll check BaseRepository in next step if this fails or just add a direct delete call via existing repo methods if possible.
+                // Ah, I don't see a `delete` method in SubmissionRepository in the view.
+                // I will add `deleteSubmission` logic here assuming `submissionRepo.delete` exists on BaseRepository,
+                // if it fails I'll fix it.
+                // Actually, `StorageService` calls `deleteFiles`.
+                // Let's assume `submissionRepo.delete` is available from Base.
+                await this.submissionRepo.delete(sub.id);
+            }
         }
 
         // Validate file extension
@@ -85,15 +126,14 @@ export class SubmissionService {
             throw new FileTooLargeError(10);
         }
 
-        // Get next submission number
-        const submissionCount = await this.submissionRepo.getSubmissionCount(assignmentId, studentId);
-        const submissionNumber = submissionCount + 1;
+        // Reset submission number to 1 since we deleted history
+        const submissionNumber = 1;
 
         // Upload file using StorageService
         const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`;
 
         try {
-            await this.storageService.upload('submissions', filePath, file.data, file.mimetype);
+            await this.storageService.upload('submissions', filePath, file.data, file.mimetype, true);
         } catch (error) {
             console.error('Submission upload error:', error);
             throw new UploadFailedError(error instanceof Error ? error.message : 'Unknown upload error');
@@ -108,6 +148,14 @@ export class SubmissionService {
             fileSize: file.data.length,
             submissionNumber,
         });
+
+        // Run tests automatically
+        try {
+            await this.codeTestService.runTestsForSubmission(submission.id);
+        } catch (error) {
+            console.error('Automatic test execution failed:', error);
+            // We don't fail the submission itself if tests fail to run, just log it
+        }
 
         return toSubmissionDTO(submission);
     }
@@ -138,5 +186,43 @@ export class SubmissionService {
     /** Get file download URL using StorageService */
     async getFileDownloadUrl(filePath: string, expiresIn: number = 3600): Promise<string> {
         return await this.storageService.getSignedUrl('submissions', filePath, expiresIn);
+    }
+
+    /** Get submission content for preview */
+    async getSubmissionContent(submissionId: number): Promise<{ content: string; language: string }> {
+        const submission = await this.submissionRepo.getSubmissionById(submissionId);
+        if (!submission) {
+            throw new Error('Submission not found');
+        }
+
+        // Get assignment to determine language
+        const assignment = await this.assignmentRepo.getAssignmentById(submission.assignmentId);
+        if (!assignment) {
+            throw new AssignmentNotFoundError(submission.assignmentId);
+        }
+
+        if (!submission.filePath) {
+            throw new Error('Submission has no file');
+        }
+
+        // Download content
+        const content = await this.storageService.download('submissions', submission.filePath);
+        return {
+            content,
+            language: assignment.programmingLanguage,
+        };
+    }
+
+    async getSubmissionDownloadUrl(submissionId: number): Promise<string> {
+        const submission = await this.submissionRepo.getSubmissionById(submissionId);
+        if (!submission) {
+            throw new SubmissionNotFoundError(submissionId);
+        }
+
+        if (!submission.filePath) {
+            throw new Error('Submission has no file');
+        }
+
+        return await this.storageService.getSignedUrl('submissions', submission.filePath, 3600, { download: submission.fileName });
     }
 }

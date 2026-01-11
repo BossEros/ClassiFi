@@ -24,6 +24,8 @@ export const assignments = pgTable('assignments', {
     allowResubmission: boolean('allow_resubmission').default(true).notNull(),
     maxAttempts: integer('max_attempts'),
     templateCode: text('template_code'),
+    totalScore: integer('total_score').default(100).notNull(),
+    scheduledDate: timestamp('scheduled_date', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     isActive: boolean('is_active').default(true).notNull(),
 });

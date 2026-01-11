@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import Editor from '@monaco-editor/react'
-import { ArrowLeft, FileCode, Calendar, Code, RefreshCw, Check, X, Plus, Edit, ChevronDown } from 'lucide-react'
+import { FileCode, Calendar, Code, RefreshCw, Check, X, ChevronDown } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/presentation/components/ui/Card'
 import { getCurrentUser } from '@/business/services/authService'
 import { createAssignment, updateAssignment, getClassById } from '@/business/services/classService'
 import { getAssignmentById } from '@/data/repositories/assignmentRepository'
@@ -11,6 +10,7 @@ import { Input } from '@/presentation/components/ui/Input'
 import { Textarea } from '@/presentation/components/ui/Textarea'
 import { Select, type SelectOption } from '@/presentation/components/ui/Select'
 import { Button } from '@/presentation/components/ui/Button'
+import { BackButton } from '@/presentation/components/ui/BackButton'
 import { useToast } from '@/shared/context/ToastContext'
 import {
     validateAssignmentTitle,
@@ -38,6 +38,8 @@ interface FormData {
     allowResubmission: boolean
     maxAttempts: number | null
     templateCode: string
+    totalScore: number
+    scheduledDate: string | null
 }
 
 interface FormErrors {
@@ -81,6 +83,8 @@ export function CourseworkFormPage() {
         allowResubmission: true,
         maxAttempts: null,
         templateCode: '',
+        totalScore: 100,
+        scheduledDate: null,
     })
 
     // Fetch class name and existing assignment data when in edit mode
@@ -111,11 +115,13 @@ export function CourseworkFormPage() {
                             allowResubmission: assignment.allowResubmission,
                             maxAttempts: (assignment as any).maxAttempts ?? null,
                             templateCode: (assignment as any).templateCode ?? '',
+                            totalScore: (assignment as any).totalScore ?? 100,
+                            scheduledDate: (assignment as any).scheduledDate ? new Date((assignment as any).scheduledDate).toISOString().slice(0, 16) : null,
                         })
                         setShowTemplateCode(!!(assignment as any).templateCode)
                     }
                 }
-            } catch (error) {
+            } catch (_error) {
                 setErrors({ general: 'Failed to load data. Please try again.' })
             } finally {
                 setIsFetching(false)
@@ -238,6 +244,8 @@ export function CourseworkFormPage() {
                     allowResubmission: formData.allowResubmission,
                     maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
                     templateCode: formData.templateCode || null,
+                    totalScore: formData.totalScore,
+                    scheduledDate: formData.scheduledDate ? new Date(formData.scheduledDate) : null,
                 })
                 showToast('Coursework updated successfully')
             } else {
@@ -252,6 +260,8 @@ export function CourseworkFormPage() {
                     allowResubmission: formData.allowResubmission,
                     maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
                     templateCode: formData.templateCode || null,
+                    totalScore: formData.totalScore,
+                    scheduledDate: formData.scheduledDate ? new Date(formData.scheduledDate) : null,
                 })
 
                 // Create pending test cases if any
@@ -297,42 +307,27 @@ export function CourseworkFormPage() {
         <DashboardLayout>
             {/* Page Header */}
             <div className="mb-8">
-                <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-purple-500/20">
-                            {isEditMode ? (
-                                <Edit className="w-5 h-5 text-purple-300" />
-                            ) : (
-                                <Plus className="w-5 h-5 text-purple-300" />
-                            )}
-                        </div>
+                <BackButton />
+                <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-4">
                         <div>
-                            <h1 className="text-2xl font-bold text-white tracking-tight">
-                                {isEditMode ? 'Edit Coursework' : 'Create Coursework'}
+                            <h1 className="text-3xl font-bold text-white tracking-tight">
+                                {isEditMode ? 'Edit Coursework' : 'Create Coursework for'}
+                                {className && <span className="text-purple-400"> {className}</span>}
                             </h1>
-                            {className && (
-                                <p className="text-sm text-gray-400 mt-0.5">
-                                    {className}
-                                </p>
-                            )}
                         </div>
                     </div>
-                    <Button
-                        type="button"
-                        onClick={() => navigate(-1)}
-                        className="w-auto px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20"
-                    >
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back
-                    </Button>
                 </div>
                 <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-4"></div>
             </div>
 
             {/* Error Banner */}
             {errors.general && (
-                <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-                    <p className="text-sm text-red-400">{errors.general}</p>
+                <div className="mb-8 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
+                    <div className="p-2 rounded-full bg-red-500/20">
+                        <X className="w-4 h-4 text-red-400" />
+                    </div>
+                    <p className="text-sm text-red-400 font-medium">{errors.general}</p>
                 </div>
             )}
 
@@ -342,32 +337,32 @@ export function CourseworkFormPage() {
                     {/* Left Column - Basic Information */}
                     <div className="lg:col-span-2 space-y-6">
                         {/* Basic Information Card */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-purple-500/20">
-                                        <FileCode className="w-5 h-5 text-purple-300" />
-                                    </div>
-                                    <div>
-                                        <CardTitle>Basic Information</CardTitle>
-                                        <CardDescription className="mt-1">Enter the coursework details</CardDescription>
-                                    </div>
+                        {/* Basic Information Card */}
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
+                                    <FileCode className="w-5 h-5 text-blue-400" />
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-5">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">Basic Information</h2>
+                                    <p className="text-sm text-gray-400">Enter the coursework details below</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
                                 {/* Coursework Title */}
                                 <div className="space-y-2">
-                                    <label htmlFor="assignmentName" className="text-sm font-medium text-white">
+                                    <label htmlFor="assignmentName" className="text-sm font-medium text-gray-300">
                                         Coursework Title <span className="text-red-400">*</span>
                                     </label>
                                     <Input
                                         id="assignmentName"
                                         type="text"
-                                        placeholder="e.g., Fibonacci Sequence"
+                                        placeholder="e.g., Fibonacci Sequence Implementation"
                                         value={formData.assignmentName}
                                         onChange={e => handleInputChange('assignmentName', e.target.value)}
                                         disabled={isLoading}
-                                        className={errors.assignmentName ? 'border-red-500/50' : ''}
+                                        className={`bg-black/20 border-white/10 text-white placeholder-gray-500 focus:ring-blue-500/40 focus:border-transparent rounded-xl h-11 transition-all ${errors.assignmentName ? 'border-red-500/50' : 'hover:bg-black/30'}`}
                                         maxLength={150}
                                     />
                                     {errors.assignmentName && (
@@ -380,17 +375,17 @@ export function CourseworkFormPage() {
 
                                 {/* Description */}
                                 <div className="space-y-2">
-                                    <label htmlFor="description" className="text-sm font-medium text-white">
+                                    <label htmlFor="description" className="text-sm font-medium text-gray-300">
                                         Description <span className="text-red-400">*</span>
                                     </label>
                                     <Textarea
                                         id="description"
-                                        placeholder="Describe what students need to do..."
+                                        placeholder="Provide detailed instructions for your students..."
                                         value={formData.description}
                                         onChange={e => handleInputChange('description', e.target.value)}
                                         disabled={isLoading}
-                                        className={errors.description ? 'border-red-500/50' : ''}
-                                        rows={4}
+                                        className={`bg-black/20 border-white/10 text-white placeholder-gray-500 focus:ring-blue-500/40 focus:border-transparent rounded-xl transition-all resize-y min-h-[120px] ${errors.description ? 'border-red-500/50' : 'hover:bg-black/30'}`}
+                                        rows={5}
                                     />
                                     {errors.description && (
                                         <p className="text-xs text-red-400">{errors.description}</p>
@@ -402,8 +397,8 @@ export function CourseworkFormPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {/* Programming Language */}
                                     <div className="space-y-2">
-                                        <label htmlFor="programmingLanguage" className="text-sm font-medium text-white flex items-center gap-2">
-                                            <Code className="w-4 h-4" />
+                                        <label htmlFor="programmingLanguage" className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                            <Code className="w-4 h-4 text-blue-400" />
                                             Programming Language <span className="text-red-400">*</span>
                                         </label>
                                         <Select
@@ -419,12 +414,29 @@ export function CourseworkFormPage() {
                                             <p className="text-xs text-red-400">{errors.programmingLanguage}</p>
                                         )}
                                     </div>
+
+                                    {/* Total Score */}
+                                    <div className="space-y-2">
+                                        <label htmlFor="totalScore" className="text-sm font-medium text-gray-300">
+                                            Total Score <span className="text-red-400">*</span>
+                                        </label>
+                                        <Input
+                                            id="totalScore"
+                                            type="number"
+                                            value={formData.totalScore}
+                                            onChange={(e) => handleInputChange('totalScore', parseInt(e.target.value) || 0)}
+                                            placeholder="100"
+                                            min="1"
+                                            disabled={isLoading}
+                                            className="h-11 bg-black/20 border-white/10 text-white focus:ring-blue-500/40 rounded-xl hover:bg-black/30 w-full"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Deadline - Full Width Section */}
-                                <div className="space-y-3 pt-2">
-                                    <label className="text-sm font-medium text-white flex items-center gap-2">
-                                        <Calendar className="w-4 h-4" />
+                                <div className="space-y-3 pt-4">
+                                    <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-orange-400" />
                                         Deadline <span className="text-red-400">*</span>
                                     </label>
 
@@ -449,8 +461,8 @@ export function CourseworkFormPage() {
                                                     type="button"
                                                     onClick={() => handleInputChange('deadline', presetValue)}
                                                     disabled={isLoading}
-                                                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${isSelected
-                                                        ? 'bg-purple-500/30 border-purple-500/50 text-purple-300'
+                                                    className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all duration-200 ${isSelected
+                                                        ? 'bg-orange-500/10 border-orange-500/20 text-orange-400 shadow-[0_0_10px_rgba(249,115,22,0.1)]'
                                                         : 'bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white'
                                                         }`}
                                                 >
@@ -476,7 +488,7 @@ export function CourseworkFormPage() {
                                                     handleInputChange('deadline', `${e.target.value}T${time}`)
                                                 }}
                                                 disabled={isLoading}
-                                                className={`h-10 w-auto ${errors.deadline ? 'border-red-500/50' : ''}`}
+                                                className={`h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-orange-500/40 rounded-xl ${errors.deadline ? 'border-red-500/50' : 'hover:bg-black/30'}`}
                                             />
                                         </div>
                                         <div className="space-y-1">
@@ -495,138 +507,196 @@ export function CourseworkFormPage() {
                                                     }
                                                 }}
                                                 disabled={isLoading || !formData.deadline.split('T')[0]}
-                                                className={`h-10 w-auto ${errors.deadline ? 'border-red-500/50' : ''}`}
+                                                className={`h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-orange-500/40 rounded-xl ${errors.deadline ? 'border-red-500/50' : 'hover:bg-black/30'}`}
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Deadline Preview */}
-                                    {formData.deadline && (
-                                        <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                                            <div className="flex items-center justify-between">
-                                                <div>
-                                                    <p className="text-xs text-purple-300 font-medium">Selected Deadline</p>
-                                                    <p className="text-sm text-white mt-0.5">
-                                                        {new Date(formData.deadline).toLocaleString('en-US', {
-                                                            weekday: 'long',
-                                                            month: 'long',
-                                                            day: 'numeric',
-                                                            year: 'numeric',
-                                                            hour: 'numeric',
-                                                            minute: '2-digit',
-                                                            hour12: true
-                                                        })}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="text-xs text-purple-300">Time remaining</p>
-                                                    <p className="text-sm font-medium text-white">
-                                                        {formatTimeRemaining(formData.deadline)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {errors.deadline && (
-                                        <p className="text-xs text-red-400">{errors.deadline}</p>
-                                    )}
                                 </div>
 
-                                {/* Template Code (Optional) */}
+                                {/* Scheduled Release */}
                                 <div className="space-y-3 pt-4 border-t border-white/10">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowTemplateCode(!showTemplateCode)}
-                                        className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
-                                    >
-                                        <Code className="w-4 h-4" />
-                                        Template Code (Optional)
-                                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showTemplateCode ? 'rotate-180' : ''}`} />
-                                    </button>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+                                            <Calendar className="w-4 h-4 text-purple-400" />
+                                            Scheduled Release
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={!!formData.scheduledDate}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        const now = new Date();
+                                                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                                                        handleInputChange('scheduledDate', now.toISOString().slice(0, 16));
+                                                    } else {
+                                                        handleInputChange('scheduledDate', null);
+                                                    }
+                                                }}
+                                                className="rounded border-white/10 bg-black/20 text-purple-600 focus:ring-purple-500/40"
+                                            />
+                                            <span className="text-xs text-gray-400">Schedule for later</span>
+                                        </div>
+                                    </div>
 
-                                    {showTemplateCode && (
-                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <p className="text-xs text-gray-500">
-                                                Provide starter/template code that will be excluded from similarity analysis.
-                                                Students won't be flagged for using this code.
-                                            </p>
-                                            <div className="rounded-lg overflow-hidden border border-white/10">
-                                                <Editor
-                                                    height="300px"
-                                                    theme="vs-dark"
-                                                    language={formData.programmingLanguage || 'plaintext'}
-                                                    value={formData.templateCode}
-                                                    onChange={(value) => handleInputChange('templateCode', value || '')}
-                                                    options={{
-                                                        minimap: { enabled: false },
-                                                        fontSize: 14,
-                                                        lineNumbers: 'on',
-                                                        scrollBeyondLastLine: false,
-                                                        automaticLayout: true,
-                                                        padding: { top: 16, bottom: 16 },
-                                                        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
-                                                        formatOnPaste: true,
-                                                        formatOnType: true,
+                                    {formData.scheduledDate && (
+                                        <div className="flex items-end gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <div className="space-y-1">
+                                                <label htmlFor="scheduled-date" className="text-xs text-gray-400">
+                                                    📅 Date
+                                                </label>
+                                                <Input
+                                                    id="scheduled-date"
+                                                    type="date"
+                                                    value={formData.scheduledDate.split('T')[0] || ''}
+                                                    onChange={e => {
+                                                        const time = formData.scheduledDate?.split('T')[1] || '00:00'
+                                                        handleInputChange('scheduledDate', `${e.target.value}T${time}`)
                                                     }}
+                                                    className="h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-purple-500/40 rounded-xl hover:bg-black/30"
                                                 />
                                             </div>
-                                            {formData.templateCode && (
-                                                <div className="flex justify-end px-2">
-                                                    <p className="text-xs text-gray-500">
-                                                        {formData.templateCode.split('\n').length} lines • {formData.templateCode.length} characters
-                                                    </p>
-                                                </div>
-                                            )}
+                                            <div className="space-y-1">
+                                                <label htmlFor="scheduled-time" className="text-xs text-gray-400">
+                                                    ⏰ Time
+                                                </label>
+                                                <Input
+                                                    id="scheduled-time"
+                                                    type="time"
+                                                    value={formData.scheduledDate.split('T')[1] || ''}
+                                                    onChange={e => {
+                                                        const date = formData.scheduledDate?.split('T')[0] || ''
+                                                        if (date) {
+                                                            handleInputChange('scheduledDate', `${date}T${e.target.value}`)
+                                                        }
+                                                    }}
+                                                    className="h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-purple-500/40 rounded-xl hover:bg-black/30"
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Test Cases Section */}
-                                <TestCaseList
-                                    testCases={testCases}
-                                    pendingTestCases={pendingTestCases}
-                                    isLoading={isLoadingTestCases}
-                                    isEditMode={isEditMode}
-                                    assignmentId={assignmentId ? parseInt(assignmentId) : undefined}
-                                    onAdd={handleAddTestCase}
-                                    onAddPending={handleAddPendingTestCase}
-                                    onUpdate={handleUpdateTestCase}
-                                    onUpdatePending={handleUpdatePendingTestCase}
-                                    onDelete={handleDeleteTestCase}
-                                    onDeletePending={handleDeletePendingTestCase}
-                                />
-                            </CardContent>
-                        </Card>
+                                {/* Deadline Preview */}
+                                {formData.deadline && (
+                                    <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <p className="text-xs text-orange-400 font-medium uppercase tracking-wider mb-1">Selected Deadline</p>
+                                                <p className="text-sm text-white font-medium">
+                                                    {new Date(formData.deadline).toLocaleString('en-US', {
+                                                        weekday: 'long',
+                                                        month: 'long',
+                                                        day: 'numeric',
+                                                        year: 'numeric',
+                                                        hour: 'numeric',
+                                                        minute: '2-digit',
+                                                        hour12: true
+                                                    })}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-xs text-orange-400 font-medium uppercase tracking-wider mb-1">Time remaining</p>
+                                                <p className="text-sm font-medium text-white font-mono">
+                                                    {formatTimeRemaining(formData.deadline)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {errors.deadline && (
+                                    <p className="text-xs text-red-400">{errors.deadline}</p>
+                                )}
+                            </div>
+
+                            {/* Template Code (Optional) */}
+                            <div className="space-y-3 pt-4 border-t border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowTemplateCode(!showTemplateCode)}
+                                    className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                                >
+                                    <Code className="w-4 h-4" />
+                                    Template Code (Optional)
+                                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showTemplateCode ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {showTemplateCode && (
+                                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <p className="text-xs text-gray-500">
+                                            Provide starter/template code that will be excluded from similarity analysis.
+                                            Students won't be flagged for using this code.
+                                        </p>
+                                        <div className="rounded-xl overflow-hidden border border-white/10">
+                                            <Editor
+                                                height="300px"
+                                                theme="vs-dark"
+                                                language={formData.programmingLanguage || 'plaintext'}
+                                                value={formData.templateCode}
+                                                onChange={(value) => handleInputChange('templateCode', value || '')}
+                                                options={{
+                                                    minimap: { enabled: false },
+                                                    fontSize: 14,
+                                                    lineNumbers: 'on',
+                                                    scrollBeyondLastLine: false,
+                                                    automaticLayout: true,
+                                                    padding: { top: 16, bottom: 16 },
+                                                    fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                                                    formatOnPaste: true,
+                                                    formatOnType: true,
+                                                }}
+                                            />
+                                        </div>
+                                        {formData.templateCode && (
+                                            <div className="flex justify-end px-2">
+                                                <p className="text-xs text-gray-500">
+                                                    {formData.templateCode.split('\n').length} lines • {formData.templateCode.length} characters
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Test Cases Section */}
+                            <TestCaseList
+                                testCases={testCases}
+                                pendingTestCases={pendingTestCases}
+                                isLoading={isLoadingTestCases}
+                                isEditMode={isEditMode}
+                                assignmentId={assignmentId ? parseInt(assignmentId) : undefined}
+                                onAdd={handleAddTestCase}
+                                onAddPending={handleAddPendingTestCase}
+                                onUpdate={handleUpdateTestCase}
+                                onUpdatePending={handleUpdatePendingTestCase}
+                                onDelete={handleDeleteTestCase}
+                                onDeletePending={handleDeletePendingTestCase}
+                            />
+                        </div>
                     </div>
 
                     {/* Right Column - Submission Settings & Actions */}
                     <div className="space-y-6">
                         {/* Submission Settings Card */}
-                        <Card>
-                            <CardHeader>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-lg bg-green-500/20">
-                                        <RefreshCw className="w-5 h-5 text-green-300" />
-                                    </div>
-                                    <div>
-                                        <CardTitle>Submission Settings</CardTitle>
-                                        <CardDescription className="mt-1">Configure resubmission options</CardDescription>
-                                    </div>
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                    <RefreshCw className="w-5 h-5 text-emerald-400" />
                                 </div>
-                            </CardHeader>
-                            <CardContent className="space-y-5">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-white">Submission Settings</h2>
+                                    <p className="text-sm text-gray-400">Configure resubmission options</p>
+                                </div>
+                            </div>
+                            <div className="space-y-5">
                                 {/* Allow Resubmission */}
-                                <div className="flex items-center gap-3 p-4 rounded-lg bg-white/5 border border-white/10">
-                                    <input
-                                        id="allowResubmission"
-                                        type="checkbox"
-                                        checked={formData.allowResubmission}
-                                        onChange={(e) => handleInputChange('allowResubmission', e.target.checked)}
-                                        disabled={isLoading}
-                                        className="w-5 h-5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
-                                    />
-                                    <label htmlFor="allowResubmission" className="text-sm text-gray-300 cursor-pointer">
+                                <div className="flex items-center gap-3 p-4 rounded-xl bg-black/20 border border-white/5 hover:border-white/10 transition-all cursor-pointer" onClick={() => handleInputChange('allowResubmission', !formData.allowResubmission)}>
+                                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${formData.allowResubmission ? 'bg-emerald-500 border-emerald-500' : 'border-white/20 bg-white/5'}`}>
+                                        {formData.allowResubmission && <Check className="w-3.5 h-3.5 text-white" />}
+                                    </div>
+                                    <label className="text-sm text-gray-300 cursor-pointer select-none">
                                         Allow students to resubmit
                                     </label>
                                 </div>
@@ -634,7 +704,7 @@ export function CourseworkFormPage() {
                                 {/* Max Attempts - Only shown when resubmission is allowed */}
                                 {formData.allowResubmission && (
                                     <div className="space-y-2">
-                                        <label htmlFor="maxAttempts" className="text-sm font-medium text-white">
+                                        <label htmlFor="maxAttempts" className="text-sm font-medium text-gray-300">
                                             Max Attempts
                                         </label>
                                         <Input
@@ -647,7 +717,7 @@ export function CourseworkFormPage() {
                                                 handleInputChange('maxAttempts', value === '' ? null : parseInt(value, 10))
                                             }}
                                             disabled={isLoading}
-                                            className={errors.maxAttempts ? 'border-red-500/50' : ''}
+                                            className={`bg-black/20 border-white/10 text-white placeholder-gray-500 focus:ring-emerald-500/40 focus:border-transparent rounded-xl h-11 ${errors.maxAttempts ? 'border-red-500/50' : 'hover:bg-black/30'}`}
                                             min={1}
                                             max={99}
                                         />
@@ -659,16 +729,16 @@ export function CourseworkFormPage() {
                                         </p>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
                         {/* Action Buttons Card */}
-                        <Card>
-                            <CardContent className="p-6 space-y-3">
+                        <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden p-6">
+                            <div className="space-y-3">
                                 <Button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full"
+                                    className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     {isLoading ? (
                                         <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -681,17 +751,17 @@ export function CourseworkFormPage() {
                                     type="button"
                                     onClick={() => navigate(-1)}
                                     disabled={isLoading}
-                                    className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                                    className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl transition-all"
                                 >
                                     <X className="w-4 h-4 mr-2" />
                                     Cancel
                                 </Button>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </form>
-        </DashboardLayout>
+        </DashboardLayout >
     )
 }
 

@@ -20,7 +20,7 @@ export interface IStorageService {
      * @param contentType - The MIME type of the file
      * @returns The file path if successful
      */
-    upload(bucket: string, path: string, data: Buffer, contentType: string): Promise<string>;
+    upload(bucket: string, path: string, data: Buffer, contentType: string, upsert?: boolean): Promise<string>;
 
     /**
      * Download a file from storage.
@@ -45,7 +45,7 @@ export interface IStorageService {
      * @param expiresIn - URL expiration time in seconds
      * @returns The signed URL
      */
-    getSignedUrl(bucket: string, path: string, expiresIn: number): Promise<string>;
+    getSignedUrl(bucket: string, path: string, expiresIn: number, options?: { download?: string | boolean }): Promise<string>;
 }
 
 /**
@@ -61,13 +61,14 @@ export class StorageService implements IStorageService {
         bucket: string,
         path: string,
         data: Buffer,
-        contentType: string
+        contentType: string,
+        upsert: boolean = false
     ): Promise<string> {
         const { error } = await supabase.storage
             .from(bucket)
             .upload(path, data, {
                 contentType,
-                upsert: false,
+                upsert,
             });
 
         if (error) {
@@ -120,10 +121,15 @@ export class StorageService implements IStorageService {
     /**
      * Get a signed URL for file download.
      */
-    async getSignedUrl(bucket: string, path: string, expiresIn: number = 3600): Promise<string> {
+    async getSignedUrl(
+        bucket: string,
+        path: string,
+        expiresIn: number = 3600,
+        options?: { download?: string | boolean }
+    ): Promise<string> {
         const { data, error } = await supabase.storage
             .from(bucket)
-            .createSignedUrl(path, expiresIn);
+            .createSignedUrl(path, expiresIn, options);
 
         if (error) {
             console.error(`Storage signed URL error for ${path}:`, error);

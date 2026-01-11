@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Upload, FileCode, Clock, Calendar, Code, CheckCircle, RefreshCw, AlertCircle, Play, ChevronDown } from 'lucide-react'
+import { Upload, FileCode, Clock, Calendar, Code, CheckCircle, RefreshCw, AlertCircle, Play, ChevronDown, Eye, Download } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
@@ -11,14 +11,18 @@ import {
   getSubmissionHistory,
   getAssignmentSubmissions,
   getAssignmentById,
-  validateFile
+  validateFile,
+
+  getSubmissionContent,
+  getSubmissionDownloadUrl
 } from '@/business/services/assignmentService'
 import { formatFileSize } from '@/shared/utils/formatUtils'
 import { formatDateTime } from '@/shared/utils/dateUtils'
 import { useToast } from '@/shared/context/ToastContext'
-import { runTestsPreview, type TestPreviewResult } from '@/business/services/testService'
+import { runTestsPreview, type TestPreviewResult, getTestResultsForSubmission } from '@/business/services/testService'
 import type { User } from '@/business/models/auth/types'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
+import { CodePreviewModal } from '@/presentation/components/modals/CodePreviewModal'
 
 
 export function AssignmentDetailPage() {
@@ -38,6 +42,14 @@ export function AssignmentDetailPage() {
   const [isRunningPreview, setIsRunningPreview] = useState(false)
   const [previewResults, setPreviewResults] = useState<TestPreviewResult | null>(null)
   const [expandedPreviewTests, setExpandedPreviewTests] = useState<Set<number>>(new Set())
+  const [submissionTestResults, setSubmissionTestResults] = useState<TestPreviewResult | null>(null)
+  const [expandedSubmissionTests, setExpandedSubmissionTests] = useState<Set<number>>(new Set())
+
+  // Preview Modal State
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewContent, setPreviewContent] = useState('')
+  const [previewLanguage, setPreviewLanguage] = useState('')
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -73,7 +85,24 @@ export function AssignmentDetailPage() {
             parseInt(assignmentId),
             parseInt(currentUser.id)
           )
-          setSubmissions(historyResponse.submissions)
+
+          // Sort submissions by submissionNumber descending (newest first)
+          // This ensures consistent ordering with handleSubmit (which prepends)
+          // and ensures submissions[0] is interpreted as the latest in the render logic
+          const sortedSubmissions = [...historyResponse.submissions].sort((a, b) => b.submissionNumber - a.submissionNumber)
+          setSubmissions(sortedSubmissions)
+
+          // Fetch test results for the latest submission
+          const latestSubmission = sortedSubmissions.find(s => s.isLatest) || sortedSubmissions[0]
+
+          if (latestSubmission) {
+            try {
+              const results = await getTestResultsForSubmission(latestSubmission.id)
+              setSubmissionTestResults(results)
+            } catch (e) {
+              console.error('Failed to load test results for latest submission', e)
+            }
+          }
         } else if (currentUser.role === 'teacher' || currentUser.role === 'admin') {
           // Fetch all submissions for teacher
           const allSubmissions = await getAssignmentSubmissions(
@@ -140,6 +169,18 @@ export function AssignmentDetailPage() {
       // Add new submission to history
       setSubmissions([submission, ...submissions])
 
+      // Clear preview results
+      setPreviewResults(null)
+      setExpandedPreviewTests(new Set())
+
+      // Fetch and show new submission test results
+      try {
+        const results = await getTestResultsForSubmission(submission.id)
+        setSubmissionTestResults(results)
+      } catch (e) {
+        console.error('Failed to load test results for new submission', e)
+      }
+
       // Clear selected file
       setSelectedFile(null)
       if (fileInputRef.current) {
@@ -167,6 +208,18 @@ export function AssignmentDetailPage() {
 
   const togglePreviewTestExpand = (index: number) => {
     setExpandedPreviewTests(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }
+
+  const toggleSubmissionTestExpand = (index: number) => {
+    setExpandedSubmissionTests(prev => {
       const next = new Set(prev)
       if (next.has(index)) {
         next.delete(index)
@@ -206,6 +259,32 @@ export function AssignmentDetailPage() {
       showToast(err instanceof Error ? err.message : 'Failed to run tests')
     } finally {
       setIsRunningPreview(false)
+    }
+  }
+
+
+  const handleSubmissionPreview = async (submissionId: number) => {
+    try {
+      setIsPreviewLoading(true)
+      const data = await getSubmissionContent(submissionId)
+      setPreviewContent(data.content)
+      setPreviewLanguage(data.language || 'plaintext')
+      setShowPreview(true)
+    } catch (err) {
+      console.error('Failed to load submission content:', err)
+      showToast('Failed to load submission content', 'error')
+    } finally {
+      setIsPreviewLoading(false)
+    }
+  }
+
+  const handleSubmissionDownload = async (submissionId: number) => {
+    try {
+      const url = await getSubmissionDownloadUrl(submissionId)
+      window.open(url, '_blank')
+    } catch (err) {
+      console.error('Failed to download submission:', err)
+      showToast('Failed to download submission', 'error')
     }
   }
 
@@ -267,16 +346,25 @@ export function AssignmentDetailPage() {
                 {/* Removed old back button */}
                 <div>
                   <h1 className="text-2xl font-bold text-white">{tempAssignment.assignmentName}</h1>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center gap-1.5 text-sm text-gray-400">
-                      <Code className="w-4 h-4" />
-                      {tempAssignment.programmingLanguage.charAt(0).toUpperCase() + tempAssignment.programmingLanguage.slice(1)}
-                    </span>
-                    <span className="text-gray-600">•</span>
-                    <span className="flex items-center gap-1.5 text-sm text-gray-400">
-                      <Calendar className="w-4 h-4" />
-                      Due {formatDateTime(tempAssignment.deadline)}
-                    </span>
+                  <div className="flex items-center gap-3 mt-3">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                      <Calendar className="w-3.5 h-3.5 text-blue-400" />
+                      <span className="text-xs font-medium text-blue-100">
+                        Due {formatDateTime(tempAssignment.deadline)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                      <RefreshCw className={`w-3.5 h-3.5 ${tempAssignment.allowResubmission ? 'text-green-400' : 'text-yellow-400'}`} />
+                      <span className={`text-xs font-medium ${tempAssignment.allowResubmission ? 'text-green-100' : 'text-yellow-100'}`}>
+                        {tempAssignment.allowResubmission ? (
+                          tempAssignment.maxAttempts
+                            ? `${tempAssignment.maxAttempts} Attempts Allowed`
+                            : 'Unlimited Attempts'
+                        ) : (
+                          'Single Submission'
+                        )}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -307,7 +395,7 @@ export function AssignmentDetailPage() {
             {/* Left Column - Assignment Details */}
             <div className="lg:col-span-2 space-y-6">
               {/* Assignment Description */}
-              <Card>
+              <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle>Description</CardTitle>
                 </CardHeader>
@@ -328,7 +416,7 @@ export function AssignmentDetailPage() {
                       <div>
                         <label
                           htmlFor="file-upload"
-                          className="block w-full p-8 border-2 border-dashed border-white/20 rounded-lg cursor-pointer hover:border-purple-500/50 hover:bg-white/5 transition-colors"
+                          className="block w-full p-8 border border-dashed border-white/20 rounded-xl cursor-pointer hover:border-purple-500/50 hover:bg-white/[0.02] transition-all group"
                         >
                           <input
                             id="file-upload"
@@ -345,8 +433,10 @@ export function AssignmentDetailPage() {
                             }
                           />
                           <div className="text-center">
-                            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                            <p className="text-gray-300 font-medium mb-1">Click to select file</p>
+                            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                              <Upload className="w-6 h-6 text-purple-400" />
+                            </div>
+                            <p className="text-gray-200 font-medium mb-1">Click to select file</p>
                             <p className="text-sm text-gray-500">
                               {tempAssignment.programmingLanguage === 'python'
                                 ? 'Accepted: .py, .ipynb'
@@ -387,101 +477,23 @@ export function AssignmentDetailPage() {
                           <Button
                             onClick={handleRunPreviewTests}
                             disabled={isRunningPreview || isSubmitting}
-                            className="w-full mt-4 !bg-gradient-to-r !from-gray-600 !to-gray-700 hover:!from-gray-500 hover:!to-gray-600"
+                            className="w-full mt-4 h-11 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-gray-900 border border-white/10 shadow-lg shadow-black/20 transition-all duration-300 group"
                           >
                             {isRunningPreview ? (
                               <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Running Tests...
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin text-purple-400" />
+                                <span className="text-gray-300">Running Tests...</span>
                               </>
                             ) : (
                               <>
-                                <Play className="w-4 h-4 mr-2" />
-                                Run Tests
+                                <Play className="w-4 h-4 mr-2 text-purple-400 group-hover:scale-110 transition-transform" />
+                                <span className="text-gray-200 font-medium">Run Tests</span>
                               </>
                             )}
                           </Button>
                         )}
 
-                        {/* Test Results */}
-                        {previewResults && (
-                          <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                            <div className="flex items-center justify-between mb-3">
-                              <h4 className="text-sm font-medium text-gray-300">Test Results</h4>
-                              <span className={`text-sm font-medium ${previewResults.percentage === 100 ? 'text-green-400' : 'text-yellow-400'}`}>
-                                {previewResults.passed}/{previewResults.total} Passed ({previewResults.percentage}%)
-                              </span>
-                            </div>
-                            <div className="space-y-2">
-                              {previewResults.results.map((result, index) => {
-                                const isExpanded = expandedPreviewTests.has(index)
-                                const isAccepted = result.status === 'Accepted'
-                                return (
-                                  <div key={index} className="rounded-lg border border-white/10 overflow-hidden">
-                                    {/* Test Header - Clickable */}
-                                    <button
-                                      onClick={() => !result.isHidden && togglePreviewTestExpand(index)}
-                                      className={`w-full flex items-center justify-between p-3 ${isAccepted ? 'bg-green-500/10' : 'bg-red-500/10'
-                                        } hover:bg-white/[0.08] transition-colors`}
-                                    >
-                                      <div className="flex items-center gap-2">
-                                        <span className="w-5 h-5 flex items-center justify-center rounded bg-white/10 text-xs text-gray-400">
-                                          {index + 1}
-                                        </span>
-                                        <span className="text-sm text-gray-300">{result.name}</span>
-                                        {result.isHidden && (
-                                          <span className="text-xs text-gray-500">(Hidden)</span>
-                                        )}
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <span className={`text-xs font-medium ${isAccepted ? 'text-green-400' : 'text-red-400'}`}>
-                                          {result.status}
-                                        </span>
-                                        {!result.isHidden && (
-                                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                        )}
-                                      </div>
-                                    </button>
 
-                                    {/* Expanded Details */}
-                                    {isExpanded && !result.isHidden && (
-                                      <div className="p-3 border-t border-white/10 space-y-2 bg-black/20">
-                                        <div className="flex gap-4 text-xs text-gray-500">
-                                          <span>Time: {result.executionTimeMs.toFixed(2)}ms</span>
-                                          <span>Memory: {result.memoryUsedKb} KB</span>
-                                        </div>
-                                        {result.input && (
-                                          <div>
-                                            <p className="text-xs text-gray-400 mb-1">Input:</p>
-                                            <pre className="p-2 bg-white/5 rounded text-xs text-gray-300 overflow-x-auto font-mono">{result.input}</pre>
-                                          </div>
-                                        )}
-                                        {result.expectedOutput && (
-                                          <div>
-                                            <p className="text-xs text-gray-400 mb-1">Expected Output:</p>
-                                            <pre className="p-2 bg-white/5 rounded text-xs text-gray-300 overflow-x-auto font-mono">{result.expectedOutput}</pre>
-                                          </div>
-                                        )}
-                                        {result.actualOutput && (
-                                          <div>
-                                            <p className="text-xs text-gray-400 mb-1">Your Output:</p>
-                                            <pre className={`p-2 rounded text-xs overflow-x-auto font-mono ${isAccepted ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300'}`}>{result.actualOutput}</pre>
-                                          </div>
-                                        )}
-                                        {result.errorMessage && (
-                                          <div>
-                                            <p className="text-xs text-gray-400 mb-1">Error:</p>
-                                            <pre className="p-2 bg-red-500/10 rounded text-xs text-red-300 overflow-x-auto font-mono">{result.errorMessage}</pre>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
 
                       {/* Submit Button */}
@@ -509,7 +521,7 @@ export function AssignmentDetailPage() {
 
               {/* Resubmission Not Allowed Message - Only for Students */}
               {!isTeacher && !canResubmit && (
-                <Card>
+                <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
                   <CardContent className="py-8">
                     <div className="text-center">
                       <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-400" />
@@ -525,47 +537,10 @@ export function AssignmentDetailPage() {
 
             {/* Right Column - Submission History */}
             <div className="space-y-6">
-              {/* Assignment Info */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Assignment Info</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {/* Deadline */}
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-purple-500/20">
-                        <Clock className="w-5 h-5 text-purple-400" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-400">Deadline</p>
-                        <p className="text-gray-300 font-medium">{formatDateTime(tempAssignment.deadline)}</p>
-                      </div>
-                    </div>
-                    {/* Resubmission Policy */}
-                    <div className="flex items-center gap-3">
-                      <div className={`p-2 rounded-lg ${tempAssignment.allowResubmission ? 'bg-green-500/20' : 'bg-yellow-500/20'}`}>
-                        <RefreshCw className={`w-5 h-5 ${tempAssignment.allowResubmission ? 'text-green-400' : 'text-yellow-400'}`} />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-400">Resubmission</p>
-                        <p className="text-gray-300 font-medium">
-                          {tempAssignment.allowResubmission ? (
-                            tempAssignment.maxAttempts
-                              ? `Allowed (max ${tempAssignment.maxAttempts} attempts)`
-                              : 'Allowed (unlimited)'
-                          ) : (
-                            'Not allowed'
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+
 
               {/* Submission Status */}
-              <Card>
+              <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
                 <CardHeader>
                   <CardTitle>Submission Status</CardTitle>
                 </CardHeader>
@@ -587,7 +562,50 @@ export function AssignmentDetailPage() {
                         <p className="text-xs text-gray-500 mt-1">
                           {latestSubmission?.submittedAt && formatDateTime(latestSubmission.submittedAt)}
                         </p>
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            onClick={() => latestSubmission && handleSubmissionPreview(latestSubmission.id)}
+                            disabled={isPreviewLoading}
+                            className="flex-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
+                          >
+                            {isPreviewLoading ? (
+                              <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" />
+                            ) : (
+                              <Eye className="w-3.5 h-3.5 mr-2" />
+                            )}
+                            Preview
+                          </Button>
+                          <Button
+                            onClick={() => latestSubmission && handleSubmissionDownload(latestSubmission.id)}
+                            className="flex-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
+                          >
+                            <Download className="w-3.5 h-3.5 mr-2" />
+                            Download
+                          </Button>
+                        </div>
                       </div>
+
+                      {/* Score / Grade Display */}
+                      <div className="pt-4 border-t border-white/10">
+                        <p className="text-sm text-gray-400 mb-1">Score:</p>
+                        {latestSubmission?.grade !== undefined && latestSubmission?.grade !== null ? (
+                          <div className="flex items-baseline gap-1">
+                            <span className={`text-2xl font-bold ${latestSubmission.grade >= 75
+                              ? 'text-green-400'
+                              : latestSubmission.grade >= 50
+                                ? 'text-yellow-400'
+                                : 'text-red-400'
+                              }`}>
+                              {latestSubmission.grade}
+                            </span>
+                            <span className="text-sm text-gray-500">/ 100</span>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500 italic">Not graded yet</p>
+                        )}
+                      </div>
+
+
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
@@ -603,9 +621,141 @@ export function AssignmentDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Submission History / Student List */}
-              {isTeacher ? (
-                <Card>
+              {/* Test Results Card - Handles both Preview and Submission results */}
+              {(previewResults || submissionTestResults) && (() => {
+                const activeResults = previewResults || submissionTestResults
+                if (!activeResults) return null
+                const isPreview = !!previewResults
+                const expandedSet = isPreview ? expandedPreviewTests : expandedSubmissionTests
+                const toggleFn = isPreview ? togglePreviewTestExpand : toggleSubmissionTestExpand
+
+                return (
+                  <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="flex items-center gap-2">
+                        <Code className="w-5 h-5 text-purple-400" />
+                        {isPreview ? 'Preview Test Results' : 'Test Results'}
+                      </CardTitle>
+                      <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${activeResults.percentage === 100
+                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                        : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                        }`}>
+                        {activeResults.passed}/{activeResults.total} Passed ({activeResults.percentage}%)
+                      </span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {activeResults.results.map((result, index) => {
+                          const isAccepted = result.status === 'Accepted'
+                          const isExpanded = expandedSet.has(index)
+
+                          return (
+                            <div key={index} className="rounded-lg border border-white/5 overflow-hidden bg-black/20">
+                              <button
+                                onClick={() => !result.isHidden && toggleFn(index)}
+                                className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-mono border ${isAccepted
+                                    ? 'bg-green-500/10 text-green-400 border-green-500/20'
+                                    : 'bg-red-500/10 text-red-400 border-red-500/20'
+                                    }`}>
+                                    {index + 1}
+                                  </span>
+                                  <div className="flex flex-col items-start">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-medium text-gray-200">
+                                        {result.name}
+                                      </span>
+                                      {result.isHidden && (
+                                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-white/5 text-gray-500 border border-white/5 uppercase tracking-wider font-semibold">
+                                          Hidden
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className={`text-xs ${isAccepted ? 'text-green-500/70' : 'text-red-500/70'}`}>
+                                      {result.status}
+                                    </span>
+                                  </div>
+                                </div>
+                                {!result.isHidden && (
+                                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                                )}
+                              </button>
+
+                              {isExpanded && !result.isHidden && (
+                                <div className="border-t border-white/5 bg-gray-950/50 p-4 space-y-4">
+                                  <div className="grid grid-cols-1 gap-4">
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-blue-500"></span>
+                                        Input
+                                      </p>
+                                      <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
+                                        <pre className={`text-xs font-mono whitespace-pre-wrap ${!result.input ? 'text-gray-500 italic' : 'text-gray-300'}`}>
+                                          {result.input || '(No input required)'}
+                                        </pre>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {result.expectedOutput && (
+                                      <div>
+                                        <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
+                                          <span className="w-1 h-1 rounded-full bg-gray-500"></span>
+                                          Expected
+                                        </p>
+                                        <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
+                                          <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">{result.expectedOutput}</pre>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {(result.actualOutput || !isAccepted) && (
+                                      <div>
+                                        <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
+                                          <span className={`w-1 h-1 rounded-full ${isAccepted ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                                          Actual
+                                        </p>
+                                        <div className={`p-3 rounded-lg border max-h-60 overflow-y-auto custom-scrollbar ${isAccepted
+                                          ? 'bg-green-500/5 border-green-500/10'
+                                          : 'bg-red-500/5 border-red-500/10'
+                                          }`}>
+                                          <pre className={`text-xs font-mono whitespace-pre-wrap ${isAccepted ? 'text-green-300' : 'text-red-300'
+                                            } ${!result.actualOutput ? 'italic opacity-50' : ''}`}>
+                                            {result.actualOutput || '(No output generated)'}
+                                          </pre>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {result.errorMessage && (
+                                    <div>
+                                      <p className="text-[10px] uppercase tracking-wider font-semibold text-red-500 mb-1.5 flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-red-500"></span>
+                                        Error
+                                      </p>
+                                      <div className="p-3 bg-red-950/20 rounded-lg border border-red-500/20 max-h-60 overflow-y-auto custom-scrollbar">
+                                        <pre className="text-xs text-red-400 font-mono whitespace-pre-wrap">{result.errorMessage}</pre>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })()}
+
+              {/* Student List - only for Teachers */}
+              {isTeacher && (
+                <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
                   <CardHeader>
                     <CardTitle>Student Submissions</CardTitle>
                   </CardHeader>
@@ -615,11 +765,8 @@ export function AssignmentDetailPage() {
                         {submissions.map((submission) => (
                           <div
                             key={submission.id}
-                            className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors cursor-pointer"
-                            onClick={() => {
-                              // TODO: View submission details
-                              showToast(`Viewing submission by ${submission.studentName || 'Student'}`)
-                            }}
+                            className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group"
+                            onClick={() => handleSubmissionPreview(submission.id)}
                           >
                             <div className="flex items-start justify-between mb-2">
                               <p className="text-gray-300 font-medium text-sm">
@@ -644,46 +791,20 @@ export function AssignmentDetailPage() {
                     )}
                   </CardContent>
                 </Card>
-              ) : (
-                submissions.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Submission History</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {submissions.map((submission, index) => (
-                          <div
-                            key={submission.id}
-                            className="p-3 bg-white/5 rounded-lg border border-white/10"
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <p className="text-gray-300 font-medium text-sm">
-                                Submission #{submission.submissionNumber}
-                              </p>
-                              {index === 0 && (
-                                <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
-                                  Latest
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
-                            <p className="text-xs text-gray-500">
-                              {formatFileSize(submission.fileSize)} •{' '}
-                              {formatDateTime(submission.submittedAt)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
               )}
             </div>
           </div>
         </>
       )}
+
+      {/* Code Preview Modal */}
+      <CodePreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        code={previewContent}
+        fileName={latestSubmission?.fileName || 'Code Preview'}
+        language={previewLanguage}
+      />
     </DashboardLayout>
   )
 }
-

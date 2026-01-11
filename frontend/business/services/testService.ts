@@ -50,3 +50,56 @@ export async function runTestsPreview(
 
     return response.data.data
 }
+
+/**
+ * Get test results for a specific submission
+ */
+export async function getTestResultsForSubmission(submissionId: number): Promise<TestPreviewResult> {
+    const response = await apiClient.get<any>(`/submissions/${submissionId}/test-results`)
+
+    if (!response.data || !response.data.success) {
+        throw new Error(response.data?.message || response.error || 'Failed to fetch test results')
+    }
+
+    const data = response.data.data
+
+    // Handle both array (legacy) and object (new) response formats
+    let rawResults: any[] = []
+    let passed = 0
+    let total = 0
+    let percentage = 0
+
+    if (Array.isArray(data)) {
+        rawResults = data
+        total = rawResults.length
+        passed = rawResults.filter((r: any) => r.status === 'Accepted').length
+        percentage = total > 0 ? Math.round((passed / total) * 100) : 0
+    } else {
+        // Backend returns TestExecutionSummary
+        rawResults = data.results || []
+        passed = data.passed
+        total = data.total
+        percentage = data.percentage
+    }
+
+    // Map backend response to TestResultDetail
+    const mappedResults: TestResultDetail[] = rawResults.map((r: any) => ({
+        testCaseId: r.testCaseId,
+        name: r.name || r.testCase?.name || `Test Case ${r.testCaseId}`,
+        status: r.status,
+        isHidden: r.isHidden || r.testCase?.isHidden || false,
+        executionTimeMs: r.executionTimeMs || (r.executionTime ? parseFloat(r.executionTime) * 1000 : 0),
+        memoryUsedKb: r.memoryUsedKb || r.memoryUsed || 0,
+        input: r.input,
+        expectedOutput: r.expectedOutput || r.testCase?.expectedOutput,
+        actualOutput: r.actualOutput,
+        errorMessage: r.errorMessage
+    }))
+
+    return {
+        passed,
+        total,
+        percentage,
+        results: mappedResults
+    }
+}

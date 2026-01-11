@@ -209,3 +209,54 @@ export async function getAssignmentById(
 
   return response.data.assignment
 }
+
+/**
+ * Gets submission content for preview
+ *
+ * @param submissionId - ID of the submission
+ * @returns Object containing content and language
+ */
+export async function getSubmissionContent(
+  submissionId: number
+): Promise<{ content: string; language?: string }> {
+  validateId(submissionId, 'submission')
+
+  const response = await assignmentRepository.getSubmissionContent(submissionId)
+
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  if (!response.data) {
+    throw new Error('Failed to fetch submission content')
+  }
+
+  return {
+    content: response.data.content,
+    language: response.data.language
+  }
+}
+
+/**
+ * Gets submission download URL
+ * 
+ * @param submissionId - ID of the submission
+ * @returns Download URL
+ */
+export async function getSubmissionDownloadUrl(
+  submissionId: number
+): Promise<string> {
+  validateId(submissionId, 'submission')
+
+  const response = await assignmentRepository.getSubmissionDownloadUrl(submissionId)
+
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  if (!response.data || !response.data.downloadUrl) {
+    throw new Error('Failed to generate download URL')
+  }
+
+  return response.data.downloadUrl
+}

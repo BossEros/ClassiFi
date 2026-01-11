@@ -12,6 +12,7 @@ import {
     SubmissionIdParamSchema,
     HistoryParamsSchema,
     DownloadResponseSchema,
+    SubmissionContentResponseSchema,
 } from '../schemas/submission.schema.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
 
@@ -163,31 +164,59 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
      * GET /:submissionId/download
      * Get download URL for a submission
      */
-    app.get<{ Params: { submissionId: string }; Querystring: { studentId: string } }>('/:submissionId/download', {
+    app.get<{ Params: { submissionId: string } }>('/:submissionId/download', {
         schema: {
             tags: ['Submissions'],
             summary: 'Get download URL for a submission',
             params: toJsonSchema(SubmissionIdParamSchema),
-            querystring: toJsonSchema(StudentIdQuerySchema),
             response: {
                 200: toJsonSchema(DownloadResponseSchema),
             },
         },
         handler: async (request, reply) => {
             const submissionId = parseInt(request.params.submissionId, 10);
-            const studentId = parseInt(request.query.studentId, 10);
 
-            if (isNaN(submissionId) || isNaN(studentId)) {
+            if (isNaN(submissionId)) {
                 throw new BadRequestError('Invalid parameters');
             }
 
-            // Note: In a full implementation, we would verify authorization here
-            // and generate a signed URL from the actual file path
+            // Verify authorization and generate signed URL
+            const downloadUrl = await submissionService.getSubmissionDownloadUrl(submissionId);
 
             return reply.send({
                 success: true,
                 message: 'Download URL generated successfully',
-                downloadUrl: '', // Would be generated from the actual file path
+                downloadUrl,
+            });
+        },
+    });
+
+    /**
+     * GET /:submissionId/content
+     * Get submission content for preview
+     */
+    app.get<{ Params: { submissionId: string } }>('/:submissionId/content', {
+        schema: {
+            tags: ['Submissions'],
+            summary: 'Get submission content for preview',
+            params: toJsonSchema(SubmissionIdParamSchema),
+            response: {
+                200: toJsonSchema(SubmissionContentResponseSchema),
+            },
+        },
+        handler: async (request, reply) => {
+            const submissionId = parseInt(request.params.submissionId, 10);
+
+            if (isNaN(submissionId)) {
+                throw new BadRequestError('Invalid submission ID');
+            }
+
+            const result = await submissionService.getSubmissionContent(submissionId);
+
+            return reply.send({
+                success: true,
+                content: result.content,
+                language: result.language,
             });
         },
     });

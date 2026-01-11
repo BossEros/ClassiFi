@@ -175,9 +175,9 @@ export function TestCaseList({
                                 return (
                                     <div
                                         key={uniqueKey}
-                                        className={`flex items-center gap-3 p-3 rounded-lg border group hover:bg-white/[0.07] transition-colors ${isPending
-                                            ? 'bg-purple-500/5 border-purple-500/20'
-                                            : 'bg-white/5 border-white/10'
+                                        className={`flex items-center gap-3 p-3 rounded-xl border group transition-all duration-200 ${isPending
+                                            ? 'bg-purple-500/5 border-purple-500/20 hover:bg-purple-500/10'
+                                            : 'bg-black/20 border-white/5 hover:border-white/10 hover:bg-black/30'
                                             }`}
                                     >
                                         {/* Drag Handle */}
@@ -244,11 +244,13 @@ export function TestCaseList({
                             })}
                         </div>
                     ) : (
-                        <div className="p-6 rounded-lg bg-white/5 border border-dashed border-white/20 text-center">
-                            <FlaskConical className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-                            <p className="text-sm text-gray-400">No test cases yet</p>
-                            <p className="text-xs text-gray-500 mt-1">
-                                Add test cases to automatically grade submissions
+                        <div className="p-8 rounded-xl bg-black/20 border-2 border-dashed border-white/10 text-center hover:bg-black/30 hover:border-white/20 transition-all group">
+                            <div className="w-12 h-12 rounded-full bg-white/5 mx-auto mb-3 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <FlaskConical className="w-6 h-6 text-gray-400 group-hover:text-blue-400 transition-colors" />
+                            </div>
+                            <p className="text-sm font-medium text-gray-300">No test cases defined</p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-[250px] mx-auto">
+                                Add test cases to verify student submissions automatically.
                             </p>
                         </div>
                     )}
@@ -258,10 +260,10 @@ export function TestCaseList({
                         type="button"
                         onClick={handleOpenAdd}
                         disabled={isLoading}
-                        className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                        className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white border border-dashed border-white/20 hover:border-white/30 rounded-xl transition-all"
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Test Case
+                        Add New Test Case
                     </Button>
                 </div>
             )}

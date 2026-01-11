@@ -204,6 +204,7 @@ export class CodeTestService {
             memoryUsedKb: r.memoryUsed ?? 0,
             // Only include details for non-hidden tests
             ...(r.testCase.isHidden ? {} : {
+                input: r.testCase.input,
                 expectedOutput: r.testCase.expectedOutput,
                 actualOutput: r.actualOutput ?? undefined,
                 errorMessage: r.errorMessage ?? undefined,

@@ -9,6 +9,7 @@ export interface TestResultWithCase extends TestResult {
         name: string;
         isHidden: boolean;
         expectedOutput: string;
+        input: string;
     };
 }
 
@@ -48,6 +49,7 @@ export class TestResultRepository {
                 testCaseName: testCases.name,
                 testCaseIsHidden: testCases.isHidden,
                 testCaseExpectedOutput: testCases.expectedOutput,
+                testCaseInput: testCases.input,
             })
             .from(testResults)
             .innerJoin(testCases, eq(testResults.testCaseId, testCases.id))
@@ -68,6 +70,7 @@ export class TestResultRepository {
                 name: r.testCaseName,
                 isHidden: r.testCaseIsHidden,
                 expectedOutput: r.testCaseExpectedOutput,
+                input: r.testCaseInput,
             },
         }));
     }
