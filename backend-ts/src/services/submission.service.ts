@@ -71,6 +71,7 @@ export class SubmissionService {
         const validExtensions: Record<string, string[]> = {
             python: ['py'],
             java: ['java'],
+            c: ['c', 'h'],
         };
 
         const allowedExtensions = validExtensions[assignment.programmingLanguage] ?? [];

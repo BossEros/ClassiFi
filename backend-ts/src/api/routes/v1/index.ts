@@ -8,6 +8,7 @@ import { teacherDashboardRoutes } from '@/api/controllers/teacher-dashboard.cont
 import { plagiarismRoutes } from '@/api/controllers/plagiarism.controller.js';
 import { userRoutes } from '@/api/controllers/user.controller.js';
 import { adminRoutes } from '@/api/controllers/admin.controller.js';
+import { testCaseRoutes } from '@/api/controllers/testCase.controller.js';
 import { authMiddleware } from '@/api/middlewares/auth.middleware.js';
 
 /**
@@ -40,6 +41,9 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
     // Admin routes - /api/v1/admin/* (admin middleware applied in controller)
     await app.register(adminRoutes, { prefix: '/admin' });
+
+    // Test case and code testing routes - /api/v1/*
+    await app.register(testCaseRoutes);
 }
 
 /** API v1 routes aggregator */

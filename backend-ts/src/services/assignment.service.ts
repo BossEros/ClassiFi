@@ -31,6 +31,7 @@ export class AssignmentService {
             deadline: Date;
             allowResubmission?: boolean;
             maxAttempts?: number | null;
+            templateCode?: string | null;
         }
     ): Promise<AssignmentDTO> {
         // Verify class exists and teacher owns it
@@ -44,6 +45,7 @@ export class AssignmentService {
             deadline: data.deadline,
             allowResubmission: data.allowResubmission,
             maxAttempts: data.maxAttempts,
+            templateCode: data.templateCode,
         });
 
         return toAssignmentDTO(assignment);
@@ -88,6 +90,7 @@ export class AssignmentService {
             deadline?: Date;
             allowResubmission?: boolean;
             maxAttempts?: number | null;
+            templateCode?: string | null;
         }
     ): Promise<AssignmentDTO> {
         const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
@@ -131,7 +134,7 @@ export class AssignmentService {
      */
     async getAssignmentById(assignmentId: number): Promise<AssignmentDTO | null> {
         const assignment = await this.assignmentRepo.getAssignmentById(assignmentId);
-        
+
         return assignment ? toAssignmentDTO(assignment) : null;
     }
 }

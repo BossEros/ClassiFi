@@ -17,7 +17,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024
  */
 const ALLOWED_EXTENSIONS: Record<string, string[]> = {
   python: ['.py', '.ipynb'],
-  java: ['.java', '.jar']
+  java: ['.java', '.jar'],
+  c: ['.c', '.h']
 }
 
 /**

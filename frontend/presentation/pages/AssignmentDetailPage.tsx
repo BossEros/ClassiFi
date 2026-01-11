@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Upload, FileCode, Clock, Calendar, Code, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react'
+import { Upload, FileCode, Clock, Calendar, Code, CheckCircle, RefreshCw, AlertCircle, Play, ChevronDown } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
+import { BackButton } from '@/presentation/components/ui/BackButton'
 import { getCurrentUser } from '@/business/services/authService'
 import {
   submitAssignment,
@@ -15,6 +16,7 @@ import {
 import { formatFileSize } from '@/shared/utils/formatUtils'
 import { formatDateTime } from '@/shared/utils/dateUtils'
 import { useToast } from '@/shared/context/ToastContext'
+import { runTestsPreview, type TestPreviewResult } from '@/business/services/testService'
 import type { User } from '@/business/models/auth/types'
 import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
 
@@ -33,6 +35,9 @@ export function AssignmentDetailPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
+  const [isRunningPreview, setIsRunningPreview] = useState(false)
+  const [previewResults, setPreviewResults] = useState<TestPreviewResult | null>(null)
+  const [expandedPreviewTests, setExpandedPreviewTests] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -153,8 +158,54 @@ export function AssignmentDetailPage() {
   const handleClearFile = () => {
     setSelectedFile(null)
     setFileError(null)
+    setPreviewResults(null)
+    setExpandedPreviewTests(new Set())
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
+    }
+  }
+
+  const togglePreviewTestExpand = (index: number) => {
+    setExpandedPreviewTests(prev => {
+      const next = new Set(prev)
+      if (next.has(index)) {
+        next.delete(index)
+      } else {
+        next.add(index)
+      }
+      return next
+    })
+  }
+
+  const handleRunPreviewTests = async () => {
+    if (!selectedFile || !assignment || !assignmentId) return
+
+    try {
+      setIsRunningPreview(true)
+      setPreviewResults(null)
+
+      // Read file content
+      const fileContent = await selectedFile.text()
+
+      // Run preview tests
+      const results = await runTestsPreview(
+        fileContent,
+        assignment.programmingLanguage as 'python' | 'java' | 'c',
+        parseInt(assignmentId)
+      )
+
+      setPreviewResults(results)
+
+      if (results.percentage === 100) {
+        showToast(`All ${results.total} tests passed! You can now submit.`)
+      } else {
+        showToast(`${results.passed}/${results.total} tests passed`)
+      }
+    } catch (err) {
+      console.error('Failed to run preview tests:', err)
+      showToast(err instanceof Error ? err.message : 'Failed to run tests')
+    } finally {
+      setIsRunningPreview(false)
     }
   }
 
@@ -202,10 +253,7 @@ export function AssignmentDetailPage() {
                 You don't have permission to view this coursework. Make sure you're enrolled in the class.
               </p>
             )}
-            <Button onClick={() => navigate('/dashboard')} className="w-auto">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
-            </Button>
+            <BackButton to="/dashboard" label="Back to Dashboard" className="mx-auto" />
           </div>
         </div>
       ) : (
@@ -213,14 +261,10 @@ export function AssignmentDetailPage() {
         <>
           {/* Page Header */}
           <div className="mb-6">
+            <BackButton />
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-400" />
-                </button>
+                {/* Removed old back button */}
                 <div>
                   <h1 className="text-2xl font-bold text-white">{tempAssignment.assignmentName}</h1>
                   <div className="flex items-center gap-3 mt-1">
@@ -292,7 +336,13 @@ export function AssignmentDetailPage() {
                             type="file"
                             className="hidden"
                             onChange={handleFileSelect}
-                            accept={tempAssignment.programmingLanguage === 'python' ? '.py,.ipynb' : '.java,.jar'}
+                            accept={
+                              tempAssignment.programmingLanguage === 'python'
+                                ? '.py,.ipynb'
+                                : tempAssignment.programmingLanguage === 'java'
+                                  ? '.java,.jar'
+                                  : '.c,.h'
+                            }
                           />
                           <div className="text-center">
                             <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -328,6 +378,107 @@ export function AssignmentDetailPage() {
                               >
                                 ✕
                               </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Run Tests Button */}
+                        {selectedFile && !fileError && (
+                          <Button
+                            onClick={handleRunPreviewTests}
+                            disabled={isRunningPreview || isSubmitting}
+                            className="w-full mt-4 !bg-gradient-to-r !from-gray-600 !to-gray-700 hover:!from-gray-500 hover:!to-gray-600"
+                          >
+                            {isRunningPreview ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                Running Tests...
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4 mr-2" />
+                                Run Tests
+                              </>
+                            )}
+                          </Button>
+                        )}
+
+                        {/* Test Results */}
+                        {previewResults && (
+                          <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                            <div className="flex items-center justify-between mb-3">
+                              <h4 className="text-sm font-medium text-gray-300">Test Results</h4>
+                              <span className={`text-sm font-medium ${previewResults.percentage === 100 ? 'text-green-400' : 'text-yellow-400'}`}>
+                                {previewResults.passed}/{previewResults.total} Passed ({previewResults.percentage}%)
+                              </span>
+                            </div>
+                            <div className="space-y-2">
+                              {previewResults.results.map((result, index) => {
+                                const isExpanded = expandedPreviewTests.has(index)
+                                const isAccepted = result.status === 'Accepted'
+                                return (
+                                  <div key={index} className="rounded-lg border border-white/10 overflow-hidden">
+                                    {/* Test Header - Clickable */}
+                                    <button
+                                      onClick={() => !result.isHidden && togglePreviewTestExpand(index)}
+                                      className={`w-full flex items-center justify-between p-3 ${isAccepted ? 'bg-green-500/10' : 'bg-red-500/10'
+                                        } hover:bg-white/[0.08] transition-colors`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="w-5 h-5 flex items-center justify-center rounded bg-white/10 text-xs text-gray-400">
+                                          {index + 1}
+                                        </span>
+                                        <span className="text-sm text-gray-300">{result.name}</span>
+                                        {result.isHidden && (
+                                          <span className="text-xs text-gray-500">(Hidden)</span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-medium ${isAccepted ? 'text-green-400' : 'text-red-400'}`}>
+                                          {result.status}
+                                        </span>
+                                        {!result.isHidden && (
+                                          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                        )}
+                                      </div>
+                                    </button>
+
+                                    {/* Expanded Details */}
+                                    {isExpanded && !result.isHidden && (
+                                      <div className="p-3 border-t border-white/10 space-y-2 bg-black/20">
+                                        <div className="flex gap-4 text-xs text-gray-500">
+                                          <span>Time: {result.executionTimeMs.toFixed(2)}ms</span>
+                                          <span>Memory: {result.memoryUsedKb} KB</span>
+                                        </div>
+                                        {result.input && (
+                                          <div>
+                                            <p className="text-xs text-gray-400 mb-1">Input:</p>
+                                            <pre className="p-2 bg-white/5 rounded text-xs text-gray-300 overflow-x-auto font-mono">{result.input}</pre>
+                                          </div>
+                                        )}
+                                        {result.expectedOutput && (
+                                          <div>
+                                            <p className="text-xs text-gray-400 mb-1">Expected Output:</p>
+                                            <pre className="p-2 bg-white/5 rounded text-xs text-gray-300 overflow-x-auto font-mono">{result.expectedOutput}</pre>
+                                          </div>
+                                        )}
+                                        {result.actualOutput && (
+                                          <div>
+                                            <p className="text-xs text-gray-400 mb-1">Your Output:</p>
+                                            <pre className={`p-2 rounded text-xs overflow-x-auto font-mono ${isAccepted ? 'bg-green-500/10 text-green-300' : 'bg-red-500/10 text-red-300'}`}>{result.actualOutput}</pre>
+                                          </div>
+                                        )}
+                                        {result.errorMessage && (
+                                          <div>
+                                            <p className="text-xs text-gray-400 mb-1">Error:</p>
+                                            <pre className="p-2 bg-red-500/10 rounded text-xs text-red-300 overflow-x-auto font-mono">{result.errorMessage}</pre>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
                         )}
@@ -535,3 +686,4 @@ export function AssignmentDetailPage() {
     </DashboardLayout>
   )
 }
+

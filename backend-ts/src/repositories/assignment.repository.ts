@@ -139,6 +139,7 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
         deadline: Date;
         allowResubmission?: boolean;
         maxAttempts?: number | null;
+        templateCode?: string | null;
     }): Promise<Assignment> {
         const results = await this.db
             .insert(assignments)
@@ -150,6 +151,7 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
                 deadline: data.deadline,
                 allowResubmission: data.allowResubmission ?? true,
                 maxAttempts: data.maxAttempts ?? null,
+                templateCode: data.templateCode ?? null,
                 isActive: true,
             })
             .returning();
@@ -160,7 +162,7 @@ export class AssignmentRepository extends BaseRepository<typeof assignments, Ass
     /** Update an assignment */
     async updateAssignment(
         assignmentId: number,
-        data: Partial<Pick<NewAssignment, 'assignmentName' | 'description' | 'programmingLanguage' | 'deadline' | 'allowResubmission' | 'maxAttempts' | 'isActive'>>
+        data: Partial<Pick<NewAssignment, 'assignmentName' | 'description' | 'programmingLanguage' | 'deadline' | 'allowResubmission' | 'maxAttempts' | 'isActive' | 'templateCode'>>
     ): Promise<Assignment | undefined> {
         const updateData = Object.fromEntries(
             Object.entries(data).filter(([_, v]) => v !== undefined)

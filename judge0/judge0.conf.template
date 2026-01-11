@@ -1,0 +1,43 @@
+# Judge0 Configuration File (Template)
+# Copy to judge0.conf and update passwords before use
+# See: https://github.com/judge0/judge0/blob/master/judge0.conf.default
+
+# =============================================================================
+# PostgreSQL Configuration
+# =============================================================================
+POSTGRES_HOST=db
+POSTGRES_PORT=5432
+POSTGRES_DB=judge0
+POSTGRES_USER=judge0
+POSTGRES_PASSWORD=CHANGE_THIS_PASSWORD
+
+# =============================================================================
+# Redis Configuration
+# =============================================================================
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=CHANGE_THIS_PASSWORD
+
+# =============================================================================
+# Judge0 Core Settings
+# =============================================================================
+JUDGE0_TELEMETRY_ENABLE=false
+ENABLE_WAIT_RESULT=true
+MAX_QUEUE_SIZE=100
+
+# =============================================================================
+# Resource Limits
+# =============================================================================
+CPU_TIME_LIMIT=5
+WALL_TIME_LIMIT=10
+MEMORY_LIMIT=131072
+STACK_LIMIT=65536
+MAX_PROCESSES_AND_OR_THREADS=60
+MAX_FILE_SIZE=4096
+
+# =============================================================================
+# Submission Settings
+# =============================================================================
+ENABLE_BATCHED_SUBMISSIONS=true
+MAX_SUBMISSION_BATCH_SIZE=20
+ENABLE_ADDITIONAL_FILES=false

@@ -1,0 +1,279 @@
+import { useState } from 'react';
+import { Plus, Trash2, Edit2, GripVertical, EyeOff, Clock, ChevronDown, FlaskConical } from 'lucide-react';
+import { Button } from '@/presentation/components/ui/Button';
+import { TestCaseModal } from './TestCaseModal';
+import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/data/repositories/testCaseRepository';
+
+// Pending test case (before assignment is created)
+export interface PendingTestCase {
+    tempId: string; // Temporary ID for tracking
+    name: string;
+    input: string;
+    expectedOutput: string;
+    isHidden: boolean;
+    timeLimit: number;
+    sortOrder: number;
+}
+
+interface TestCaseListProps {
+    testCases: TestCase[];
+    pendingTestCases?: PendingTestCase[];
+    isLoading?: boolean;
+    isEditMode: boolean;
+    assignmentId?: number;
+    onAdd: (data: CreateTestCaseRequest) => Promise<void>;
+    onAddPending?: (data: PendingTestCase) => void;
+    onUpdate: (id: number, data: UpdateTestCaseRequest) => Promise<void>;
+    onUpdatePending?: (tempId: string, data: PendingTestCase) => void;
+    onDelete: (id: number) => Promise<void>;
+    onDeletePending?: (tempId: string) => void;
+}
+
+export function TestCaseList({
+    testCases,
+    pendingTestCases = [],
+    isLoading = false,
+    isEditMode,
+    onAdd,
+    onAddPending,
+    onUpdate,
+    onUpdatePending,
+    onDelete,
+    onDeletePending,
+}: TestCaseListProps) {
+    // Create a unified type for display
+    interface DisplayTestCase {
+        id: number;
+        tempId?: string;
+        assignmentId: number;
+        name: string;
+        input: string;
+        expectedOutput: string;
+        isHidden: boolean;
+        timeLimit: number;
+        sortOrder: number;
+        createdAt: string;
+    }
+
+    const allTestCases: DisplayTestCase[] = [
+        ...testCases,
+        ...pendingTestCases.map(p => ({
+            id: -1, // Marker for pending
+            tempId: p.tempId,
+            assignmentId: 0,
+            name: p.name,
+            input: p.input,
+            expectedOutput: p.expectedOutput,
+            isHidden: p.isHidden,
+            timeLimit: p.timeLimit,
+            sortOrder: p.sortOrder,
+            createdAt: '',
+        })),
+    ];
+
+    const [showSection, setShowSection] = useState(allTestCases.length > 0);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingTestCase, setEditingTestCase] = useState<(TestCase & { tempId?: string }) | null>(null);
+    const [savingId, setSavingId] = useState<number | string | null>(null);
+    const [deletingId, setDeletingId] = useState<number | string | null>(null);
+
+    const handleOpenAdd = () => {
+        setEditingTestCase(null);
+        setModalOpen(true);
+    };
+
+    const handleOpenEdit = (tc: TestCase & { tempId?: string }) => {
+        setEditingTestCase(tc);
+        setModalOpen(true);
+    };
+
+    const handleSave = async (data: CreateTestCaseRequest | UpdateTestCaseRequest) => {
+        try {
+            if (editingTestCase) {
+                // Editing existing
+                if (editingTestCase.tempId) {
+                    // Pending test case
+                    onUpdatePending?.(editingTestCase.tempId, {
+                        tempId: editingTestCase.tempId,
+                        name: data.name || '',
+                        input: data.input || '',
+                        expectedOutput: data.expectedOutput || '',
+                        isHidden: data.isHidden ?? false,
+                        timeLimit: data.timeLimit ?? 5,
+                        sortOrder: editingTestCase.sortOrder,
+                    });
+                } else {
+                    // Persisted test case
+                    setSavingId(editingTestCase.id);
+                    await onUpdate(editingTestCase.id, data as UpdateTestCaseRequest);
+                }
+            } else {
+                // Adding new
+                if (isEditMode) {
+                    await onAdd(data as CreateTestCaseRequest);
+                } else {
+                    // Create pending test case
+                    onAddPending?.({
+                        tempId: `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                        name: data.name || '',
+                        input: data.input || '',
+                        expectedOutput: data.expectedOutput || '',
+                        isHidden: data.isHidden ?? false,
+                        timeLimit: data.timeLimit ?? 5,
+                        sortOrder: pendingTestCases.length,
+                    });
+                }
+            }
+            setModalOpen(false);
+        } finally {
+            setSavingId(null);
+        }
+    };
+
+    const handleDelete = async (tc: TestCase & { tempId?: string }) => {
+        if (!confirm('Are you sure you want to delete this test case?')) return;
+        try {
+            if (tc.tempId) {
+                setDeletingId(tc.tempId);
+                onDeletePending?.(tc.tempId);
+            } else {
+                setDeletingId(tc.id);
+                await onDelete(tc.id);
+            }
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    return (
+        <div className="space-y-3 pt-4 border-t border-white/10">
+            {/* Section Toggle */}
+            <button
+                type="button"
+                onClick={() => setShowSection(!showSection)}
+                className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+            >
+                <FlaskConical className="w-4 h-4" />
+                Test Cases {allTestCases.length > 0 && `(${allTestCases.length})`}
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showSection ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showSection && (
+                <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <p className="text-xs text-gray-500">
+                        Define test cases to automatically verify student submissions.
+                        {!isEditMode && pendingTestCases.length > 0 && ' (will be saved when assignment is created)'}
+                    </p>
+
+                    {/* Test Case List */}
+                    {allTestCases.length > 0 ? (
+                        <div className="space-y-2">
+                            {allTestCases.map((tc, index) => {
+                                const isPending = !!tc.tempId;
+                                const uniqueKey = tc.tempId ?? `tc-${tc.id}`;
+
+                                return (
+                                    <div
+                                        key={uniqueKey}
+                                        className={`flex items-center gap-3 p-3 rounded-lg border group hover:bg-white/[0.07] transition-colors ${isPending
+                                            ? 'bg-purple-500/5 border-purple-500/20'
+                                            : 'bg-white/5 border-white/10'
+                                            }`}
+                                    >
+                                        {/* Drag Handle */}
+                                        <div className="opacity-0 group-hover:opacity-50 cursor-grab">
+                                            <GripVertical className="w-4 h-4 text-gray-500" />
+                                        </div>
+
+                                        {/* Index */}
+                                        <span className="w-6 h-6 flex items-center justify-center rounded bg-white/10 text-xs text-gray-400">
+                                            {index + 1}
+                                        </span>
+
+                                        {/* Name */}
+                                        <span className="flex-1 text-sm text-white truncate">
+                                            {tc.name}
+                                        </span>
+
+                                        {/* Badges */}
+                                        <div className="flex items-center gap-2">
+                                            {isPending && (
+                                                <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs">
+                                                    Pending
+                                                </span>
+                                            )}
+                                            {tc.isHidden && (
+                                                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs">
+                                                    <EyeOff className="w-3 h-3" />
+                                                    Hidden
+                                                </span>
+                                            )}
+                                            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-gray-400 text-xs">
+                                                <Clock className="w-3 h-3" />
+                                                {tc.timeLimit}s
+                                            </span>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleOpenEdit(tc as TestCase & { tempId?: string })}
+                                                disabled={isLoading || savingId === uniqueKey}
+                                                className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDelete(tc as TestCase & { tempId?: string })}
+                                                disabled={isLoading || deletingId === uniqueKey}
+                                                className="p-1.5 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+                                                title="Delete"
+                                            >
+                                                {deletingId === uniqueKey ? (
+                                                    <div className="w-4 h-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="p-6 rounded-lg bg-white/5 border border-dashed border-white/20 text-center">
+                            <FlaskConical className="w-8 h-8 text-gray-500 mx-auto mb-2" />
+                            <p className="text-sm text-gray-400">No test cases yet</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Add test cases to automatically grade submissions
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Add Button - Always show */}
+                    <Button
+                        type="button"
+                        onClick={handleOpenAdd}
+                        disabled={isLoading}
+                        className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Test Case
+                    </Button>
+                </div>
+            )}
+
+            {/* Modal */}
+            <TestCaseModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onSave={handleSave}
+                testCase={editingTestCase}
+                isLoading={savingId !== null}
+            />
+        </div>
+    );
+}

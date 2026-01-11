@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent } from '@/presentation/components/ui/Card'
-import { Button } from '@/presentation/components/ui/Button'
 import { Input } from '@/presentation/components/ui/Input'
-import { ArrowLeft, Search, AlertTriangle, FileCode, BarChart3, Users, Loader2, X, Layers, GitCompare } from 'lucide-react'
+import { BackButton } from '@/presentation/components/ui/BackButton'
+import { Search, AlertTriangle, FileCode, BarChart3, Users, Loader2, X, Layers, GitCompare } from 'lucide-react'
 import { SimilarityBadge } from '@/src/components/plagiarism/SimilarityBadge'
 import { PairComparison } from '@/src/components/plagiarism/PairComparison'
 import { PairCodeDiff } from '@/src/components/plagiarism/PairCodeDiff'
@@ -18,7 +18,6 @@ interface LocationState {
 
 export function SimilarityResultsPage() {
     const { assignmentId } = useParams<{ assignmentId: string }>()
-    const navigate = useNavigate()
     const location = useLocation()
 
     const [results, setResults] = useState<AnalyzeResponse | null>(null)
@@ -83,10 +82,6 @@ export function SimilarityResultsPage() {
 
         return pairs
     }, [results, searchQuery, sortBy, sortOrder])
-
-    const handleBack = () => {
-        navigate(`/dashboard/assignments/${assignmentId}/submissions`)
-    }
 
     const handleSort = (key: 'similarity' | 'overlap' | 'longest') => {
         if (sortBy === key) {
@@ -163,7 +158,11 @@ export function SimilarityResultsPage() {
                             <AlertTriangle className="w-12 h-12 text-yellow-400 mx-auto" />
                             <h3 className="text-lg font-semibold text-white">No Results Available</h3>
                             <p className="text-gray-400">Please run a similarity check first.</p>
-                            <Button onClick={handleBack}>Go Back</Button>
+                            <BackButton
+                                to={`/dashboard/assignments/${assignmentId}/submissions`}
+                                label="Go Back"
+                                className="mx-auto mt-4"
+                            />
                         </div>
                     </CardContent>
                 </Card>
@@ -175,13 +174,11 @@ export function SimilarityResultsPage() {
         <DashboardLayout>
             <div className="space-y-6 max-w-[1600px]">
                 {/* Back Button */}
-                <button
-                    onClick={handleBack}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-                >
-                    <ArrowLeft className="w-4 h-4" />
-                    <span className="text-sm font-medium">Back to Submissions</span>
-                </button>
+                {/* Back Button */}
+                <BackButton
+                    to={`/dashboard/assignments/${assignmentId}/submissions`}
+                    label="Back to Submissions"
+                />
 
                 {/* Header */}
                 <div className="space-y-2">

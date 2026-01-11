@@ -8,6 +8,8 @@ import { AssignmentRepository } from '../repositories/assignment.repository.js';
 import { EnrollmentRepository } from '../repositories/enrollment.repository.js';
 import { SubmissionRepository } from '../repositories/submission.repository.js';
 import { SimilarityRepository } from '../repositories/similarity.repository.js';
+import { TestCaseRepository } from '../repositories/testCase.repository.js';
+import { TestResultRepository } from '../repositories/testResult.repository.js';
 
 // Services
 import { AuthService } from '../services/auth.service.js';
@@ -20,6 +22,9 @@ import { UserService } from '../services/user.service.js';
 import { StorageService } from '../services/storage.service.js';
 import { AssignmentService } from '../services/assignment.service.js';
 import { SupabaseAuthAdapter } from '../services/supabase-auth.adapter.js';
+import { Judge0Service } from '../services/judge0.service.js';
+import { CodeTestService } from '../services/codeTest.service.js';
+import { CODE_EXECUTOR_TOKEN } from '../services/interfaces/codeExecutor.interface.js';
 
 // Admin Services (focused, single-responsibility)
 import { AdminUserService } from '../services/admin/admin-user.service.js';
@@ -34,6 +39,8 @@ container.registerSingleton('AssignmentRepository', AssignmentRepository);
 container.registerSingleton('EnrollmentRepository', EnrollmentRepository);
 container.registerSingleton('SubmissionRepository', SubmissionRepository);
 container.registerSingleton('SimilarityRepository', SimilarityRepository);
+container.registerSingleton('TestCaseRepository', TestCaseRepository);
+container.registerSingleton('TestResultRepository', TestResultRepository);
 
 // Register infrastructure adapters as singletons
 container.registerSingleton('SupabaseAuthAdapter', SupabaseAuthAdapter);
@@ -48,6 +55,10 @@ container.registerSingleton('StudentDashboardService', StudentDashboardService);
 container.registerSingleton('TeacherDashboardService', TeacherDashboardService);
 container.registerSingleton('PlagiarismService', PlagiarismService);
 container.registerSingleton('UserService', UserService);
+
+// Register code execution services
+container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service);
+container.registerSingleton('CodeTestService', CodeTestService);
 
 // Register focused admin services as singletons
 container.registerSingleton('AdminUserService', AdminUserService);

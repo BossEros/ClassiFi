@@ -56,6 +56,7 @@ export interface CreateAssignmentRequest {
     deadline: Date | string
     allowResubmission: boolean
     maxAttempts?: number | null
+    templateCode?: string | null
 }
 
 export interface UpdateAssignmentRequest {
@@ -66,6 +67,7 @@ export interface UpdateAssignmentRequest {
     deadline?: string
     allowResubmission?: boolean
     maxAttempts?: number | null
+    templateCode?: string | null
 }
 
 // ============================================================================

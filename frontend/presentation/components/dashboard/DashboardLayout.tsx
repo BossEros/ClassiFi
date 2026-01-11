@@ -8,12 +8,12 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, className }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 flex">
       <Sidebar />
       <main
         className={cn(
           'flex-1 lg:ml-0 overflow-y-auto',
-          'min-h-screen',
+          'h-full',
           className
         )}
       >

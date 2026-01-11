@@ -49,6 +49,8 @@ export interface AssignmentDetail {
   hasSubmitted?: boolean
   latestSubmission?: Submission
   submissionCount?: number
+  templateCode?: string | null
+  hasTemplateCode?: boolean
 }
 
 // ============================================================================
@@ -76,6 +78,7 @@ export interface UpdateAssignmentRequest {
   deadline?: Date
   allowResubmission?: boolean
   maxAttempts?: number | null
+  templateCode?: string | null
 }
 
 // ============================================================================

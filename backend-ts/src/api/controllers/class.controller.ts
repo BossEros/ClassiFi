@@ -252,7 +252,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 throw new BadRequestError('Invalid class ID');
             }
 
-            const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission, maxAttempts } = request.body;
+            const { teacherId, assignmentName, description, programmingLanguage, deadline, allowResubmission, maxAttempts, templateCode } = request.body;
 
             const assignment = await assignmentService.createAssignment(classId, teacherId, {
                 assignmentName,
@@ -261,6 +261,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
                 deadline: new Date(deadline),
                 allowResubmission,
                 maxAttempts,
+                templateCode,
             });
 
             return reply.status(201).send({

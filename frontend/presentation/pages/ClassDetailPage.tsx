@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ClipboardList, Users, Plus, Trash2, Pencil, LogOut } from 'lucide-react'
+import { ClipboardList, Users, Plus, Trash2, Pencil, LogOut } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardHeader } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
+import { BackButton } from '@/presentation/components/ui/BackButton'
 import { Tabs, TabPanel } from '@/presentation/components/ui/Tabs'
 import { DropdownMenu } from '@/presentation/components/ui/DropdownMenu'
 import { AssignmentCard } from '@/presentation/components/dashboard/AssignmentCard'
 import { StudentListItem } from '@/presentation/components/dashboard/StudentListItem'
 import { DeleteClassModal } from '@/presentation/components/forms/DeleteClassModal'
 import { LeaveClassModal } from '@/presentation/components/forms/LeaveClassModal'
-import { CreateAssignmentModal } from '@/presentation/components/forms/CreateAssignmentModal'
 import { DeleteAssignmentModal } from '@/presentation/components/forms/DeleteAssignmentModal'
 import { RemoveStudentModal } from '@/presentation/components/forms/RemoveStudentModal'
 import { getCurrentUser } from '@/business/services/authService'
@@ -36,13 +36,11 @@ export function ClassDetailPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
-  const [isCreateAssignmentModalOpen, setIsCreateAssignmentModalOpen] = useState(false)
 
   // Assignment management state
   const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] = useState(false)
   const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment | null>(null)
   const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
-  const [assignmentToEdit, setAssignmentToEdit] = useState<Assignment | undefined>(undefined)
 
   // Student management state
   const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] = useState(false)
@@ -141,18 +139,6 @@ export function ClassDetailPage() {
     navigate('/dashboard')
   }
 
-  const handleCreateAssignmentSuccess = async (assignment: Assignment) => {
-    // Add new assignment to the list
-    setAssignments(prev => [assignment, ...prev])
-    showToast('Coursework created successfully')
-  }
-
-  const handleUpdateAssignmentSuccess = async (updatedAssignment: Assignment) => {
-    setAssignments(assignments.map(a => a.id === updatedAssignment.id ? updatedAssignment : a))
-    setAssignmentToEdit(undefined)
-    showToast('Coursework updated successfully')
-  }
-
   const handleEditAssignment = (assignment: Assignment) => {
     navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`)
   }
@@ -222,13 +208,11 @@ export function ClassDetailPage() {
             </div>
             <p className="text-gray-300 font-medium mb-2">Error Loading Class</p>
             <p className="text-sm text-gray-500 mb-4">{error}</p>
-            <Button
-              onClick={() => navigate(isStudent ? '/dashboard' : '/dashboard/classes')}
-              className="w-auto"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to {isStudent ? 'Dashboard' : 'Classes'}
-            </Button>
+            <BackButton
+              to={isStudent ? '/dashboard' : '/dashboard/classes'}
+              label={`Back to ${isStudent ? 'Dashboard' : 'Classes'}`}
+              className="mx-auto"
+            />
           </div>
         </div>
       ) : (
@@ -236,15 +220,10 @@ export function ClassDetailPage() {
         <>
           {/* Page Header */}
           <div className="mb-6">
+            <BackButton to={isStudent ? '/dashboard' : '/dashboard/classes'} />
             {/* Back button and title row */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <button
-                  onClick={() => navigate(isStudent ? '/dashboard' : '/dashboard/classes')}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors duration-200"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-400" />
-                </button>
                 <div>
                   <h1 className="text-2xl font-bold text-white">
                     {classInfo?.className}
@@ -442,21 +421,6 @@ export function ClassDetailPage() {
               studentId={parseInt(user.id)}
               classId={parseInt(classId!)}
               className={classInfo.className}
-            />
-          )}
-
-          {/* Create Assignment Modal */}
-          {isTeacher && classInfo && (
-            <CreateAssignmentModal
-              isOpen={isCreateAssignmentModalOpen}
-              onClose={() => {
-                setIsCreateAssignmentModalOpen(false)
-                setAssignmentToEdit(undefined)
-              }}
-              onSuccess={assignmentToEdit ? handleUpdateAssignmentSuccess : handleCreateAssignmentSuccess}
-              classId={parseInt(classId!)}
-              teacherId={parseInt(user.id)}
-              assignment={assignmentToEdit}
             />
           )}
         </>

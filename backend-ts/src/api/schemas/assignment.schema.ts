@@ -13,6 +13,7 @@ export const CreateAssignmentRequestSchema = z.object({
     deadline: z.string().datetime(),
     allowResubmission: z.boolean().default(true),
     maxAttempts: z.number().int().min(1).max(99).nullable().optional(),
+    templateCode: z.string().max(50000).nullable().optional(),
 });
 
 export type CreateAssignmentRequest = z.infer<typeof CreateAssignmentRequestSchema>;
@@ -26,6 +27,7 @@ export const UpdateAssignmentRequestSchema = z.object({
     deadline: z.string().datetime().optional(),
     allowResubmission: z.boolean().optional(),
     maxAttempts: z.number().int().min(1).max(99).nullable().optional(),
+    templateCode: z.string().max(50000).nullable().optional(),
 });
 
 export type UpdateAssignmentRequest = z.infer<typeof UpdateAssignmentRequestSchema>;
@@ -42,6 +44,8 @@ export const AssignmentResponseSchema = z.object({
     maxAttempts: z.number().nullable().optional(),
     createdAt: z.string(),
     isActive: z.boolean(),
+    templateCode: z.string().nullable().optional(),
+    hasTemplateCode: z.boolean().optional(),
     submissionCount: z.number().optional(),
     hasSubmitted: z.boolean().optional(),
 });

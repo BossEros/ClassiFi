@@ -80,6 +80,8 @@ export interface AssignmentDTO {
     maxAttempts: number | null;
     createdAt: string;
     isActive: boolean;
+    templateCode: string | null;
+    hasTemplateCode: boolean;
     submissionCount?: number;
     hasSubmitted?: boolean;
     className?: string;
@@ -100,6 +102,8 @@ export function toAssignmentDTO(
         maxAttempts: assignment.maxAttempts ?? null,
         createdAt: assignment.createdAt?.toISOString() ?? new Date().toISOString(),
         isActive: assignment.isActive ?? true,
+        templateCode: assignment.templateCode ?? null,
+        hasTemplateCode: !!assignment.templateCode,
         ...extras,
     };
 }

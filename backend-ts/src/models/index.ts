@@ -33,3 +33,11 @@ export { matchFragments, matchFragmentsRelations } from './match-fragment.model.
 // Similarity Result model
 export { similarityResults, similarityResultsRelations } from './similarity-result.model.js';
 export type { SimilarityResult, NewSimilarityResult } from './similarity-result.model.js';
+
+// Test Case model
+export { testCases, testCasesRelations } from './test-case.model.js';
+export type { TestCase, NewTestCase } from './test-case.model.js';
+
+// Test Result model
+export { testResults, testResultsRelations } from './test-result.model.js';
+export type { TestResult, NewTestResult } from './test-result.model.js';

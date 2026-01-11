@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileCode, Calendar, Code, RefreshCw, Check, X, Plus, Edit } from 'lucide-react'
+import Editor from '@monaco-editor/react'
+import { ArrowLeft, FileCode, Calendar, Code, RefreshCw, Check, X, Plus, Edit, ChevronDown } from 'lucide-react'
 import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/presentation/components/ui/Card'
 import { getCurrentUser } from '@/business/services/authService'
@@ -18,6 +19,16 @@ import {
     validateDeadline
 } from '@/business/validation/assignmentValidation'
 import { formatTimeRemaining } from '@/shared/utils/dateUtils'
+import { TestCaseList, type PendingTestCase } from '@/presentation/components/forms/TestCaseList'
+import {
+    getTestCases,
+    createTestCase,
+    updateTestCase,
+    deleteTestCase,
+    type TestCase,
+    type CreateTestCaseRequest,
+    type UpdateTestCaseRequest,
+} from '@/data/repositories/testCaseRepository'
 
 interface FormData {
     assignmentName: string
@@ -26,6 +37,7 @@ interface FormData {
     deadline: string
     allowResubmission: boolean
     maxAttempts: number | null
+    templateCode: string
 }
 
 interface FormErrors {
@@ -56,6 +68,10 @@ export function CourseworkFormPage() {
     const [isFetching, setIsFetching] = useState(isEditMode)
     const [errors, setErrors] = useState<FormErrors>({})
     const [className, setClassName] = useState('')
+    const [showTemplateCode, setShowTemplateCode] = useState(false)
+    const [testCases, setTestCases] = useState<TestCase[]>([])
+    const [pendingTestCases, setPendingTestCases] = useState<PendingTestCase[]>([])
+    const [isLoadingTestCases, setIsLoadingTestCases] = useState(false)
 
     const [formData, setFormData] = useState<FormData>({
         assignmentName: '',
@@ -64,6 +80,7 @@ export function CourseworkFormPage() {
         deadline: '',
         allowResubmission: true,
         maxAttempts: null,
+        templateCode: '',
     })
 
     // Fetch class name and existing assignment data when in edit mode
@@ -93,7 +110,9 @@ export function CourseworkFormPage() {
                             deadline: deadline.toISOString().slice(0, 16),
                             allowResubmission: assignment.allowResubmission,
                             maxAttempts: (assignment as any).maxAttempts ?? null,
+                            templateCode: (assignment as any).templateCode ?? '',
                         })
+                        setShowTemplateCode(!!(assignment as any).templateCode)
                     }
                 }
             } catch (error) {
@@ -104,6 +123,62 @@ export function CourseworkFormPage() {
         }
         fetchData()
     }, [classId, isEditMode, assignmentId])
+
+    // Fetch test cases when in edit mode
+    useEffect(() => {
+        const fetchTestCases = async () => {
+            if (!isEditMode || !assignmentId) return
+            setIsLoadingTestCases(true)
+            try {
+                const response = await getTestCases(parseInt(assignmentId))
+                if (response.data?.testCases) {
+                    setTestCases(response.data.testCases)
+                }
+            } catch (error) {
+                console.error('Failed to load test cases:', error)
+            } finally {
+                setIsLoadingTestCases(false)
+            }
+        }
+        fetchTestCases()
+    }, [isEditMode, assignmentId])
+
+    // Test case handlers
+    const handleAddTestCase = async (data: CreateTestCaseRequest) => {
+        if (!assignmentId) return
+        const response = await createTestCase(parseInt(assignmentId), data)
+        if (response.data?.testCase) {
+            setTestCases(prev => [...prev, response.data!.testCase])
+            showToast('Test case added')
+        }
+    }
+
+    const handleUpdateTestCase = async (id: number, data: UpdateTestCaseRequest) => {
+        const response = await updateTestCase(id, data)
+        if (response.data?.testCase) {
+            setTestCases(prev => prev.map(tc => tc.id === id ? response.data!.testCase : tc))
+            showToast('Test case updated')
+        }
+    }
+
+    const handleDeleteTestCase = async (id: number) => {
+        await deleteTestCase(id)
+        setTestCases(prev => prev.filter(tc => tc.id !== id))
+        showToast('Test case deleted')
+    }
+
+    // Pending test case handlers (for create mode)
+    const handleAddPendingTestCase = (data: PendingTestCase) => {
+        setPendingTestCases(prev => [...prev, data])
+    }
+
+    const handleUpdatePendingTestCase = (tempId: string, data: PendingTestCase) => {
+        setPendingTestCases(prev => prev.map(tc => tc.tempId === tempId ? data : tc))
+    }
+
+    const handleDeletePendingTestCase = (tempId: string) => {
+        setPendingTestCases(prev => prev.filter(tc => tc.tempId !== tempId))
+    }
 
     const handleInputChange = (field: keyof FormData, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }))
@@ -162,11 +237,12 @@ export function CourseworkFormPage() {
                     deadline: new Date(formData.deadline),
                     allowResubmission: formData.allowResubmission,
                     maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
+                    templateCode: formData.templateCode || null,
                 })
                 showToast('Coursework updated successfully')
             } else {
                 // Create new assignment
-                await createAssignment({
+                const newAssignment = await createAssignment({
                     classId: parseInt(classId),
                     teacherId: parseInt(currentUser.id),
                     assignmentName: formData.assignmentName.trim(),
@@ -175,8 +251,25 @@ export function CourseworkFormPage() {
                     deadline: new Date(formData.deadline),
                     allowResubmission: formData.allowResubmission,
                     maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
+                    templateCode: formData.templateCode || null,
                 })
-                showToast('Coursework created successfully')
+
+                // Create pending test cases if any
+                if (pendingTestCases.length > 0 && newAssignment?.id) {
+                    for (const pending of pendingTestCases) {
+                        await createTestCase(newAssignment.id, {
+                            name: pending.name,
+                            input: pending.input,
+                            expectedOutput: pending.expectedOutput,
+                            isHidden: pending.isHidden,
+                            timeLimit: pending.timeLimit,
+                            sortOrder: pending.sortOrder,
+                        })
+                    }
+                    showToast(`Coursework created with ${pendingTestCases.length} test case(s)`)
+                } else {
+                    showToast('Coursework created successfully')
+                }
             }
             navigate(`/dashboard/classes/${classId}`)
         } catch {
@@ -439,6 +532,70 @@ export function CourseworkFormPage() {
                                         <p className="text-xs text-red-400">{errors.deadline}</p>
                                     )}
                                 </div>
+
+                                {/* Template Code (Optional) */}
+                                <div className="space-y-3 pt-4 border-t border-white/10">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowTemplateCode(!showTemplateCode)}
+                                        className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                                    >
+                                        <Code className="w-4 h-4" />
+                                        Template Code (Optional)
+                                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showTemplateCode ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    {showTemplateCode && (
+                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <p className="text-xs text-gray-500">
+                                                Provide starter/template code that will be excluded from similarity analysis.
+                                                Students won't be flagged for using this code.
+                                            </p>
+                                            <div className="rounded-lg overflow-hidden border border-white/10">
+                                                <Editor
+                                                    height="300px"
+                                                    theme="vs-dark"
+                                                    language={formData.programmingLanguage || 'plaintext'}
+                                                    value={formData.templateCode}
+                                                    onChange={(value) => handleInputChange('templateCode', value || '')}
+                                                    options={{
+                                                        minimap: { enabled: false },
+                                                        fontSize: 14,
+                                                        lineNumbers: 'on',
+                                                        scrollBeyondLastLine: false,
+                                                        automaticLayout: true,
+                                                        padding: { top: 16, bottom: 16 },
+                                                        fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                                                        formatOnPaste: true,
+                                                        formatOnType: true,
+                                                    }}
+                                                />
+                                            </div>
+                                            {formData.templateCode && (
+                                                <div className="flex justify-end px-2">
+                                                    <p className="text-xs text-gray-500">
+                                                        {formData.templateCode.split('\n').length} lines • {formData.templateCode.length} characters
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Test Cases Section */}
+                                <TestCaseList
+                                    testCases={testCases}
+                                    pendingTestCases={pendingTestCases}
+                                    isLoading={isLoadingTestCases}
+                                    isEditMode={isEditMode}
+                                    assignmentId={assignmentId ? parseInt(assignmentId) : undefined}
+                                    onAdd={handleAddTestCase}
+                                    onAddPending={handleAddPendingTestCase}
+                                    onUpdate={handleUpdateTestCase}
+                                    onUpdatePending={handleUpdatePendingTestCase}
+                                    onDelete={handleDeleteTestCase}
+                                    onDeletePending={handleDeletePendingTestCase}
+                                />
                             </CardContent>
                         </Card>
                     </div>

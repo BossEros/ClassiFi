@@ -322,6 +322,7 @@ export class PlagiarismService {
      * Analyze all submissions for an assignment.
      * Fetches submissions, downloads file content from Supabase, and runs analysis.
      * Persists the report and results to the database.
+     * If the assignment has template code, it will be excluded from similarity detection.
      */
     async analyzeAssignmentSubmissions(assignmentId: number, teacherId?: number): Promise<AnalyzeResponse> {
         // Step 1: Validate and fetch assignment
@@ -330,11 +331,20 @@ export class PlagiarismService {
         // Step 2: Fetch and download submission files
         const files = await this.fetchSubmissionFiles(assignmentId);
 
-        // Step 3: Run plagiarism analysis
+        // Step 3: Create ignored file from template code if provided
         const language = this.getLanguage(assignment.programmingLanguage);
-        const { report, pairs } = await this.runPlagiarismAnalysis(files, language);
+        let ignoredFile: File | undefined;
+        if (assignment.templateCode) {
+            ignoredFile = new File(
+                `template.${this.getFileExtension(language)}`,
+                assignment.templateCode
+            );
+        }
 
-        // Step 4: Persist report to database
+        // Step 4: Run plagiarism analysis with optional ignored file
+        const { report, pairs } = await this.runPlagiarismAnalysis(files, language, ignoredFile);
+
+        // Step 5: Persist report to database
         const { dbReport, resultIdMap } = await this.persistReportToDatabase(
             assignmentId,
             teacherId,
@@ -342,7 +352,7 @@ export class PlagiarismService {
             pairs
         );
 
-        // Step 5: Build and return response
+        // Step 6: Build and return response
         return this.buildAssignmentAnalysisResponse(dbReport.id, report, pairs, resultIdMap);
     }
 
@@ -408,6 +418,16 @@ export class PlagiarismService {
             throw new UnsupportedLanguageError(programmingLanguage);
         }
         return language;
+    }
+
+    /** Get file extension for a programming language */
+    private getFileExtension(language: LanguageName): string {
+        const extensionMap: Record<string, string> = {
+            python: 'py',
+            java: 'java',
+            c: 'c',
+        };
+        return extensionMap[language] || 'txt';
     }
 
     /** Fetch and download all submission files for an assignment using StorageService */
@@ -477,7 +497,8 @@ export class PlagiarismService {
     /** Run plagiarism detection on files */
     private async runPlagiarismAnalysis(
         files: File[],
-        language: LanguageName
+        language: LanguageName,
+        ignoredFile?: File
     ): Promise<{ report: Report; pairs: Pair[] }> {
         const detector = new PlagiarismDetector({
             language,
@@ -485,7 +506,7 @@ export class PlagiarismService {
             kgramsInWindow: PLAGIARISM_CONFIG.DEFAULT_KGRAMS_IN_WINDOW,
         });
 
-        const report = await detector.analyze(files);
+        const report = await detector.analyze(files, ignoredFile);
         const pairs = report.getPairs();
 
         return { report, pairs };

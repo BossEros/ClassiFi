@@ -40,6 +40,8 @@ export interface Task {
   submissionCount?: number
   hasSubmitted?: boolean
   className?: string
+  templateCode?: string | null
+  hasTemplateCode?: boolean
 }
 
 /** Assignment alias for Task - both represent the same domain concept */

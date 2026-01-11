@@ -173,3 +173,9 @@ docs/**/node_modules/
 
 
 backend-ts/node_modules/
+
+# ============================================
+# JUDGE0 (Self-hosted Code Execution)
+# ============================================
+judge0/judge0.conf
+judge0/postgres-data/
