@@ -12,20 +12,20 @@ describe('TeacherDashboardService', () => {
         vi.clearAllMocks();
 
         mockClassRepo = {
-            getRecentClassesByTeacher: vi.fn(),
-            getRecentClassesWithStudentCounts: vi.fn(),
-            getClassesByTeacher: vi.fn(),
-            getClassesWithStudentCounts: vi.fn(),
+            getRecentClassesByTeacher: vi.fn().mockResolvedValue([]),
+            getRecentClassesWithStudentCounts: vi.fn().mockResolvedValue([]),
+            getClassesByTeacher: vi.fn().mockResolvedValue([]),
+            getClassesWithStudentCounts: vi.fn().mockResolvedValue([]),
             getStudentCount: vi.fn(),
         };
 
         mockAssignmentRepo = {
-            getAssignmentsByClassIds: vi.fn(),
-            getPendingTasksForTeacher: vi.fn(),
+            getAssignmentsByClassIds: vi.fn().mockResolvedValue([]),
+            getPendingTasksForTeacher: vi.fn().mockResolvedValue([]),
         };
 
         mockSubmissionRepo = {
-            getSubmissionsByAssignment: vi.fn(),
+            getSubmissionsByAssignment: vi.fn().mockResolvedValue([]),
         };
 
         dashboardService = new TeacherDashboardService(

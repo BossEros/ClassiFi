@@ -9,7 +9,7 @@ import { setupSwagger } from '@/api/plugins/swagger.js';
 import zodValidation from '@/api/plugins/zod-validation.js';// Initialize DI container
 import './shared/container.js';
 
-import '@/shared/container.js'; export async function buildApp(): Promise<FastifyInstance> {
+export async function buildApp(): Promise<FastifyInstance> {
     const app = Fastify({
         logger: settings.debug,
     });

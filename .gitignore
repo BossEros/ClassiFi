@@ -167,12 +167,9 @@ docs/**/node_modules/
 *.rar
 *.7z
 
-.agent
-.cursor
-.claude
 
-
-backend-ts/node_modules/
+174: 
+175: backend-ts/node_modules/
 
 # ============================================
 # JUDGE0 (Self-hosted Code Execution)

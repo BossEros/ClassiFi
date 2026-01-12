@@ -21,6 +21,8 @@ vi.mock('../../src/repositories/submission.repository.js');
 vi.mock('../../src/repositories/assignment.repository.js');
 vi.mock('../../src/repositories/enrollment.repository.js');
 vi.mock('../../src/repositories/class.repository.js');
+vi.mock('../../src/repositories/testResult.repository.js');
+vi.mock('../../src/services/codeTest.service.js');
 
 // Mock Supabase (for legacy tests that still use it)
 vi.mock('../../src/shared/supabase.js', () => ({
@@ -40,7 +42,9 @@ describe('SubmissionService', () => {
     let mockAssignmentRepo: any;
     let mockEnrollmentRepo: any;
     let mockClassRepo: any;
+    let mockTestResultRepo: any;
     let mockStorageService: any;
+    let mockCodeTestService: any;
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -52,6 +56,7 @@ describe('SubmissionService', () => {
             getSubmissionHistory: vi.fn(),
             getSubmissionsWithStudentInfo: vi.fn(),
             getSubmissionsByStudent: vi.fn(),
+            delete: vi.fn(),
         };
 
         mockAssignmentRepo = {
@@ -64,6 +69,10 @@ describe('SubmissionService', () => {
 
         mockClassRepo = {};
 
+        mockTestResultRepo = {
+            deleteBySubmissionId: vi.fn(),
+        };
+
         mockStorageService = {
             upload: vi.fn().mockResolvedValue('path/to/file'),
             download: vi.fn(),
@@ -73,12 +82,18 @@ describe('SubmissionService', () => {
             deleteAvatar: vi.fn(),
         };
 
+        mockCodeTestService = {
+            runTestsForSubmission: vi.fn(),
+        };
+
         submissionService = new SubmissionService(
             mockSubmissionRepo,
             mockAssignmentRepo,
             mockEnrollmentRepo,
             mockClassRepo,
-            mockStorageService
+            mockTestResultRepo,
+            mockStorageService,
+            mockCodeTestService
         );
     });
 
@@ -108,10 +123,8 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
-            mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, validFile);
 
@@ -119,6 +132,7 @@ describe('SubmissionService', () => {
             expect(result.id).toBe(mockSubmission.id);
             expect(mockSubmissionRepo.createSubmission).toHaveBeenCalled();
             expect(mockStorageService.upload).toHaveBeenCalled();
+            expect(mockCodeTestService.runTestsForSubmission).toHaveBeenCalledWith(mockSubmission.id);
         });
 
         it('should throw AssignmentNotFoundError when assignment does not exist', async () => {
@@ -161,10 +175,8 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
-            mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, validFile);
             expect(result).toBeDefined();
@@ -185,6 +197,7 @@ describe('SubmissionService', () => {
 
         it('should throw ResubmissionNotAllowedError when resubmission is disabled', async () => {
             const assignment = createMockAssignment({
+                id: 1,
                 isActive: true,
                 deadline: futureDeadline,
                 allowResubmission: false,
@@ -193,7 +206,7 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(existingSubmission);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([existingSubmission]);
 
             await expect(
                 submissionService.submitAssignment(1, 1, validFile)
@@ -201,24 +214,31 @@ describe('SubmissionService', () => {
         });
 
         it('should allow resubmission when allowResubmission is true', async () => {
+            // Note: Current logic deletes previous submission and creates a new one as "Submission 1".
+            // So we mock history, assert delete called, and verify success.
             const assignment = createMockAssignment({
+                id: 1,
                 isActive: true,
                 deadline: futureDeadline,
                 allowResubmission: true,
                 programmingLanguage: 'python',
             });
-            const existingSubmission = createMockSubmission({ submissionNumber: 1 });
-            const newSubmission = createMockSubmission({ submissionNumber: 2 });
+            const existingSubmission = createMockSubmission({ id: 99, submissionNumber: 1, filePath: 'old/file' });
+            const newSubmission = createMockSubmission({ id: 100, submissionNumber: 1 });
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(existingSubmission);
-            mockSubmissionRepo.getSubmissionCount.mockResolvedValue(1);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([existingSubmission]);
             mockSubmissionRepo.createSubmission.mockResolvedValue(newSubmission);
-            // StorageService.upload is already mocked in beforeEach
+            mockSubmissionRepo.delete.mockResolvedValue(true);
 
             const result = await submissionService.submitAssignment(1, 1, validFile);
+
             expect(result).toBeDefined();
+            expect(result.id).toBe(100);
+            expect(mockSubmissionRepo.delete).toHaveBeenCalledWith(99);
+            expect(mockTestResultRepo.deleteBySubmissionId).toHaveBeenCalledWith(99);
+            expect(mockStorageService.deleteFiles).toHaveBeenCalled();
         });
 
         it('should throw InvalidFileTypeError for wrong extension', async () => {
@@ -231,7 +251,7 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
 
             await expect(
                 submissionService.submitAssignment(1, 1, wrongFile)
@@ -248,7 +268,7 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
 
             await expect(
                 submissionService.submitAssignment(1, 1, noExtFile)
@@ -270,10 +290,8 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
-            mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
             mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-            // StorageService.upload is already mocked in beforeEach
 
             const result = await submissionService.submitAssignment(1, 1, javaFile);
             expect(result).toBeDefined();
@@ -292,7 +310,7 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
 
             await expect(
                 submissionService.submitAssignment(1, 1, largeFile)
@@ -308,8 +326,7 @@ describe('SubmissionService', () => {
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(null);
-            mockSubmissionRepo.getSubmissionCount.mockResolvedValue(0);
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([]);
             mockStorageService.upload.mockRejectedValue(new Error('Upload failed'));
 
             await expect(
@@ -317,31 +334,37 @@ describe('SubmissionService', () => {
             ).rejects.toThrow(UploadFailedError);
         });
 
-        it('should increment submission number correctly', async () => {
+        // "should increment submission number correctly" is invalid with current logic (it resets to 1) 
+        // so I will verify that behaviour or remove the test.
+        // Actually, logic is: `const submissionNumber = 1;` after cleanup.
+        // So checking if it increments is checking for behavior that no longer exists (single active submission policy).
+        // I will remove that specific test or replace it with "should reset submission number to 1".
+        it('should reset submission number to 1 on resubmission', async () => {
             const assignment = createMockAssignment({
                 isActive: true,
                 deadline: futureDeadline,
-                programmingLanguage: 'python',
                 allowResubmission: true,
+                programmingLanguage: 'python',
             });
-            const mockSubmission = createMockSubmission({ submissionNumber: 4 });
+            const existingSubmission = createMockSubmission({ submissionNumber: 5 });
+            const newSubmission = createMockSubmission({ submissionNumber: 1 });
 
             mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment);
             mockEnrollmentRepo.isEnrolled.mockResolvedValue(true);
-            mockSubmissionRepo.getLatestSubmission.mockResolvedValue(createMockSubmission());
-            mockSubmissionRepo.getSubmissionCount.mockResolvedValue(3);
-            mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission);
-            // StorageService.upload is already mocked in beforeEach
+            mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([existingSubmission]);
+            mockSubmissionRepo.createSubmission.mockResolvedValue(newSubmission);
+            mockSubmissionRepo.delete.mockResolvedValue(true);
 
             await submissionService.submitAssignment(1, 1, validFile);
 
             expect(mockSubmissionRepo.createSubmission).toHaveBeenCalledWith(
-                expect.objectContaining({ submissionNumber: 4 })
+                expect.objectContaining({ submissionNumber: 1 })
             );
         });
     });
 
     // ============ getSubmissionHistory Tests ============
+    // ... kept same as original file content ...
     describe('getSubmissionHistory', () => {
         it('should return submission history mapped to DTOs', async () => {
             const submissions = [

@@ -32,6 +32,11 @@ import { AdminAnalyticsService } from '../services/admin/admin-analytics.service
 import { AdminClassService } from '../services/admin/admin-class.service.js';
 import { AdminEnrollmentService } from '../services/admin/admin-enrollment.service.js';
 
+// Plagiarism Services
+import { PlagiarismDetectorFactory } from '../services/plagiarism/plagiarism-detector.factory.js';
+import { SubmissionFileService } from '../services/plagiarism/submission-file.service.js';
+import { PlagiarismPersistenceService } from '../services/plagiarism/plagiarism-persistence.service.js';
+
 // Register repositories as singletons
 container.registerSingleton('UserRepository', UserRepository);
 container.registerSingleton('ClassRepository', ClassRepository);
@@ -65,6 +70,11 @@ container.registerSingleton('AdminUserService', AdminUserService);
 container.registerSingleton('AdminAnalyticsService', AdminAnalyticsService);
 container.registerSingleton('AdminClassService', AdminClassService);
 container.registerSingleton('AdminEnrollmentService', AdminEnrollmentService);
+
+// Register Plagiarism component services
+container.registerSingleton('PlagiarismDetectorFactory', PlagiarismDetectorFactory);
+container.registerSingleton('SubmissionFileService', SubmissionFileService);
+container.registerSingleton('PlagiarismPersistenceService', PlagiarismPersistenceService);
 
 export { container };
 
