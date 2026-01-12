@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Plus, Trash2, Edit2, GripVertical, EyeOff, Clock, ChevronDown, FlaskConical } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/Button';
 import { TestCaseModal } from './TestCaseModal';
-import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/data/repositories/testCaseRepository';
+import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/shared/types/testCase';
 
 // Pending test case (before assignment is created)
 export interface PendingTestCase {

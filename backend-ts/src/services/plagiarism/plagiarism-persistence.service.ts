@@ -1,4 +1,5 @@
 import { inject, injectable } from 'tsyringe';
+import { db } from '../../shared/database.js';
 import { SimilarityRepository } from '../../repositories/similarity.repository.js';
 import { SubmissionRepository } from '../../repositories/submission.repository.js';
 import { Report, Pair } from '../../lib/plagiarism/index.js';
@@ -36,40 +37,45 @@ export class PlagiarismPersistenceService {
         report: Report,
         pairs: Pair[]
     ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
-        // Create report
-        const dbReport = await this.similarityRepo.createReport({
-            assignmentId,
-            teacherId: teacherId ?? null,
-            totalSubmissions: report.files.length,
-            totalComparisons: pairs.length,
-            flaggedPairs: pairs.filter(p => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD).length,
-            averageSimilarity: (pairs.reduce((sum, p) => sum + p.similarity, 0) / Math.max(1, pairs.length)).toFixed(4),
-            highestSimilarity: (Math.max(...pairs.map(p => p.similarity), 0)).toFixed(4),
+        return await db.transaction(async (tx) => {
+            // Use transaction-aware repository
+            const similarityRepoTx = this.similarityRepo.withContext(tx as any);
+
+            // Create report
+            const dbReport = await similarityRepoTx.createReport({
+                assignmentId,
+                teacherId: teacherId ?? null,
+                totalSubmissions: report.files.length,
+                totalComparisons: pairs.length,
+                flaggedPairs: pairs.filter(p => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD).length,
+                averageSimilarity: (pairs.reduce((sum, p) => sum + p.similarity, 0) / Math.max(1, pairs.length)).toFixed(4),
+                highestSimilarity: (Math.max(...pairs.map(p => p.similarity), 0)).toFixed(4),
+            });
+
+            // Prepare results for batch insert
+            const { resultsToInsert, pairMap, swappedMap } = this.prepareResultsForInsert(dbReport.id, pairs);
+
+            // Batch insert results and fragments
+            const resultIdMap = new Map<string, number>();
+
+            if (resultsToInsert.length > 0) {
+                const insertedResults = await similarityRepoTx.createResults(resultsToInsert);
+
+                // Build result ID map
+                for (const result of insertedResults) {
+                    const key = `${result.submission1Id}-${result.submission2Id}`;
+                    resultIdMap.set(key, result.id);
+                }
+
+                // Prepare and insert fragments
+                const fragmentsToInsert = this.prepareFragmentsForInsert(insertedResults, pairMap, swappedMap);
+                if (fragmentsToInsert.length > 0) {
+                    await similarityRepoTx.createFragments(fragmentsToInsert);
+                }
+            }
+
+            return { dbReport, resultIdMap };
         });
-
-        // Prepare results for batch insert
-        const { resultsToInsert, pairMap, swappedMap } = this.prepareResultsForInsert(dbReport.id, pairs);
-
-        // Batch insert results and fragments
-        const resultIdMap = new Map<string, number>();
-
-        if (resultsToInsert.length > 0) {
-            const insertedResults = await this.similarityRepo.createResults(resultsToInsert);
-
-            // Build result ID map
-            for (const result of insertedResults) {
-                const key = `${result.submission1Id}-${result.submission2Id}`;
-                resultIdMap.set(key, result.id);
-            }
-
-            // Prepare and insert fragments
-            const fragmentsToInsert = this.prepareFragmentsForInsert(insertedResults, pairMap, swappedMap);
-            if (fragmentsToInsert.length > 0) {
-                await this.similarityRepo.createFragments(fragmentsToInsert);
-            }
-        }
-
-        return { dbReport, resultIdMap };
     }
 
     /** Get report from database and reconstruct response */
@@ -81,38 +87,47 @@ export class PlagiarismPersistenceService {
 
         const results = await this.similarityRepo.getResultsByReport(reportId);
 
-        // Build pairs from database results
-        const pairs: PlagiarismPairDTO[] = await Promise.all(
-            results.map(async (result) => {
-                const submission1 = await this.submissionRepo.getSubmissionWithStudent(result.submission1Id);
-                const submission2 = await this.submissionRepo.getSubmissionWithStudent(result.submission2Id);
+        // Collect all unique submission IDs
+        const submissionIds = new Set<number>();
+        for (const result of results) {
+            submissionIds.add(result.submission1Id);
+            submissionIds.add(result.submission2Id);
+        }
 
-                return {
-                    id: result.id,
-                    leftFile: {
-                        id: result.submission1Id,
-                        path: submission1?.submission.filePath || '',
-                        filename: submission1?.submission.fileName || 'Unknown',
-                        lineCount: 0,
-                        studentId: submission1?.submission.studentId?.toString(),
-                        studentName: submission1?.studentName || 'Unknown',
-                    },
-                    rightFile: {
-                        id: result.submission2Id,
-                        path: submission2?.submission.filePath || '',
-                        filename: submission2?.submission.fileName || 'Unknown',
-                        lineCount: 0,
-                        studentId: submission2?.submission.studentId?.toString(),
-                        studentName: submission2?.studentName || 'Unknown',
-                    },
-                    structuralScore: parseFloat(result.structuralScore),
-                    semanticScore: parseFloat(result.semanticScore || '0'),
-                    hybridScore: parseFloat(result.hybridScore || '0'),
-                    overlap: result.overlap,
-                    longest: result.longestFragment,
-                };
-            })
-        );
+        // Batch fetch submissions
+        const submissions = await this.submissionRepo.getBatchSubmissionsWithStudents(Array.from(submissionIds));
+        const submissionMap = new Map(submissions.map(s => [s.submission.id, s]));
+
+        // Build pairs using memory map
+        const pairs: PlagiarismPairDTO[] = results.map((result) => {
+            const submission1 = submissionMap.get(result.submission1Id);
+            const submission2 = submissionMap.get(result.submission2Id);
+
+            return {
+                id: result.id,
+                leftFile: {
+                    id: result.submission1Id,
+                    path: submission1?.submission.filePath || '',
+                    filename: submission1?.submission.fileName || 'Unknown',
+                    lineCount: 0,
+                    studentId: submission1?.submission.studentId?.toString(),
+                    studentName: submission1?.studentName || 'Unknown',
+                },
+                rightFile: {
+                    id: result.submission2Id,
+                    path: submission2?.submission.filePath || '',
+                    filename: submission2?.submission.fileName || 'Unknown',
+                    lineCount: 0,
+                    studentId: submission2?.submission.studentId?.toString(),
+                    studentName: submission2?.studentName || 'Unknown',
+                },
+                structuralScore: parseFloat(result.structuralScore),
+                semanticScore: parseFloat(result.semanticScore || '0'),
+                hybridScore: parseFloat(result.hybridScore || '0'),
+                overlap: result.overlap,
+                longest: result.longestFragment,
+            };
+        });
 
         return {
             reportId: reportId.toString(),

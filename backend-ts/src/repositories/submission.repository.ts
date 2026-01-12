@@ -1,5 +1,5 @@
 import { db } from '@/shared/database.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, desc, sql, inArray } from 'drizzle-orm';
 import { submissions, users, type Submission, type NewSubmission } from '@/models/index.js';
 import { BaseRepository } from '@/repositories/base.repository.js';
 import { injectable } from 'tsyringe';
@@ -202,6 +202,23 @@ export class SubmissionRepository extends BaseRepository<typeof submissions, Sub
             .limit(1);
 
         return results[0] ?? null;
+    }
+
+    /** Get multiple submissions with student names by IDs */
+    async getBatchSubmissionsWithStudents(submissionIds: number[]): Promise<Array<{
+        submission: Submission;
+        studentName: string;
+    }>> {
+        if (submissionIds.length === 0) return [];
+
+        return await this.db
+            .select({
+                submission: submissions,
+                studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`,
+            })
+            .from(submissions)
+            .innerJoin(users, eq(submissions.studentId, users.id))
+            .where(inArray(submissions.id, submissionIds));
     }
 
     /**

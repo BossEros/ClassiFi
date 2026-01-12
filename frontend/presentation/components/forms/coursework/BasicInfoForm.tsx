@@ -6,7 +6,7 @@ import { Select } from '@/presentation/components/ui/Select'
 import { programmingLanguageOptions, type CourseworkFormData, type FormErrors } from '@/presentation/hooks/useCourseworkForm'
 import { formatTimeRemaining } from '@/shared/utils/dateUtils'
 import { TestCaseList, type PendingTestCase } from '@/presentation/components/forms/TestCaseList'
-import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/data/repositories/testCaseRepository'
+import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/shared/types/testCase'
 
 interface BasicInfoFormProps {
     formData: CourseworkFormData
@@ -137,7 +137,11 @@ export function BasicInfoForm({
                             id="totalScore"
                             type="number"
                             value={formData.totalScore}
-                            onChange={(e) => onInputChange('totalScore', parseInt(e.target.value) || 0)}
+                            onChange={(e) => {
+                                const parsed = parseInt(e.target.value, 10)
+                                const safe = Number.isNaN(parsed) ? 1 : Math.max(1, parsed)
+                                onInputChange('totalScore', safe)
+                            }}
                             placeholder="100"
                             min="1"
                             disabled={isLoading}
@@ -283,6 +287,7 @@ export function BasicInfoForm({
                                             onInputChange('scheduledDate', `${date}T${e.target.value}`)
                                         }
                                     }}
+                                    disabled={isLoading}
                                     className="h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-purple-500/40 rounded-xl hover:bg-black/30"
                                 />
                             </div>
@@ -378,7 +383,7 @@ export function BasicInfoForm({
                 pendingTestCases={pendingTestCases}
                 isLoading={isLoadingTestCases}
                 isEditMode={isEditMode}
-                assignmentId={assignmentId ? parseInt(assignmentId) : undefined}
+                assignmentId={assignmentId && !Number.isNaN(parseInt(assignmentId, 10)) ? parseInt(assignmentId, 10) : undefined}
                 onAdd={onAddTestCase}
                 onAddPending={onAddPendingTestCase}
                 onUpdate={onUpdateTestCase}

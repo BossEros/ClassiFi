@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getCurrentUser } from '@/business/services/authService'
 import { createAssignment, updateAssignment, getClassById } from '@/business/services/classService'
-import { getAssignmentById } from '@/data/repositories/assignmentRepository'
+import { getAssignmentById } from '@/business/services/assignmentService'
 import { useToast } from '@/shared/context/ToastContext'
 import {
     validateAssignmentTitle,
@@ -15,10 +15,12 @@ import {
     createTestCase,
     updateTestCase,
     deleteTestCase,
-    type TestCase,
-    type CreateTestCaseRequest,
-    type UpdateTestCaseRequest,
-} from '@/data/repositories/testCaseRepository'
+} from '@/business/services/testCaseService'
+import type {
+    TestCase,
+    CreateTestCaseRequest,
+    UpdateTestCaseRequest,
+} from '@/shared/types/testCase'
 import type { PendingTestCase } from '@/presentation/components/forms/TestCaseList'
 import type { SelectOption } from '@/presentation/components/ui/Select'
 
@@ -92,9 +94,8 @@ export function useCourseworkForm() {
 
                 // If editing, fetch assignment data
                 if (isEditMode && assignmentId) {
-                    const response = await getAssignmentById(parseInt(assignmentId), parseInt(user.id))
-                    if (response.data?.assignment) {
-                        const assignment = response.data.assignment
+                    const assignment = await getAssignmentById(parseInt(assignmentId), parseInt(user.id))
+                    if (assignment) {
                         const deadline = new Date(assignment.deadline)
                         deadline.setMinutes(deadline.getMinutes() - deadline.getTimezoneOffset())
 
@@ -127,9 +128,9 @@ export function useCourseworkForm() {
             if (!isEditMode || !assignmentId) return
             setIsLoadingTestCases(true)
             try {
-                const response = await getTestCases(parseInt(assignmentId))
-                if (response.data?.testCases) {
-                    setTestCases(response.data.testCases)
+                const fetchedTestCases = await getTestCases(parseInt(assignmentId))
+                if (fetchedTestCases) {
+                    setTestCases(fetchedTestCases)
                 }
             } catch (error) {
                 console.error('Failed to load test cases:', error)
@@ -246,25 +247,40 @@ export function useCourseworkForm() {
     // Test case handlers
     const handleAddTestCase = async (data: CreateTestCaseRequest) => {
         if (!assignmentId) return
-        const response = await createTestCase(parseInt(assignmentId), data)
-        if (response.data?.testCase) {
-            setTestCases(prev => [...prev, response.data!.testCase])
-            showToast('Test case added')
+        try {
+            const newTestCase = await createTestCase(parseInt(assignmentId), data)
+            if (newTestCase) {
+                setTestCases(prev => [...prev, newTestCase])
+                showToast('Test case added')
+            }
+        } catch (error) {
+            console.error('Failed to add test case:', error)
+            showToast('Failed to add test case', 'error')
         }
     }
 
     const handleUpdateTestCase = async (id: number, data: UpdateTestCaseRequest) => {
-        const response = await updateTestCase(id, data)
-        if (response.data?.testCase) {
-            setTestCases(prev => prev.map(tc => tc.id === id ? response.data!.testCase : tc))
-            showToast('Test case updated')
+        try {
+            const updatedTestCase = await updateTestCase(id, data)
+            if (updatedTestCase) {
+                setTestCases(prev => prev.map(tc => tc.id === id ? updatedTestCase : tc))
+                showToast('Test case updated')
+            }
+        } catch (error) {
+            console.error('Failed to update test case:', error)
+            showToast('Failed to update test case', 'error')
         }
     }
 
     const handleDeleteTestCase = async (id: number) => {
-        await deleteTestCase(id)
-        setTestCases(prev => prev.filter(tc => tc.id !== id))
-        showToast('Test case deleted')
+        try {
+            await deleteTestCase(id)
+            setTestCases(prev => prev.filter(tc => tc.id !== id))
+            showToast('Test case deleted')
+        } catch (error) {
+            console.error('Failed to delete test case:', error)
+            showToast('Failed to delete test case', 'error')
+        }
     }
 
     const handleAddPendingTestCase = (data: PendingTestCase) => {

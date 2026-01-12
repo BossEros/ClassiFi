@@ -66,18 +66,24 @@ export interface PairDetailsResponse {
  */
 @injectable()
 export class PlagiarismService {
+    private static readonly LEGACY_REPORT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
+    private static readonly MAX_LEGACY_REPORTS = 100;
+
     /** 
      * In-memory storage for ad-hoc reports (not tied to assignment submissions).
      * Kept for 'analyzeFiles' endpoint which might not persist to DB.
      */
-    private legacyReportsStore = new Map<string, any>();
+    private legacyReportsStore = new Map<string, { report: any; createdAt: Date }>();
 
     constructor(
         @inject('AssignmentRepository') private assignmentRepo: AssignmentRepository,
         @inject('PlagiarismDetectorFactory') private detectorFactory: PlagiarismDetectorFactory,
         @inject('SubmissionFileService') private fileService: SubmissionFileService,
         @inject('PlagiarismPersistenceService') private persistenceService: PlagiarismPersistenceService
-    ) { }
+    ) {
+        // Run cleanup every hour
+        setInterval(() => this.cleanupExpiredReports(), 60 * 60 * 1000);
+    }
 
     // ========================================================================
     // Public Methods
@@ -112,6 +118,7 @@ export class PlagiarismService {
         // For ad-hoc analysis, we might still use in-memory store if it doesn't map to DB schema
         // Or we could persist it if we want ad-hoc history. 
         // For now, preserving legacy behavior of generating a temporary ID.
+        this.cleanupExpiredReports();
         const reportId = this.generateReportId();
         this.legacyReportsStore.set(reportId, { report, createdAt: new Date() });
 
@@ -154,9 +161,50 @@ export class PlagiarismService {
             };
         }
 
-        // For DB reports, we use `getResultDetails` (called separately usually by frontend).
-        // If frontend calls this for a DB report, we'd need to map pairId to resultId or similar.
-        // Assuming explicit separation as per original logic structure or typical patterns.
+        // Try to handle as DB report
+        const numericReportId = parseInt(reportId, 10);
+        if (!isNaN(numericReportId)) {
+            try {
+                // Delegate to getResultDetails for DB-backed reports
+                // pairId corresponds to the resultId in the database
+                const details = await this.getResultDetails(pairId);
+
+                return {
+                    pair: {
+                        id: details.result.id,
+                        leftFile: {
+                            id: details.result.submission1Id,
+                            path: details.leftFile.filename,
+                            filename: details.leftFile.filename,
+                            lineCount: details.leftFile.lineCount,
+                            studentName: details.leftFile.studentName
+                        },
+                        rightFile: {
+                            id: details.result.submission2Id,
+                            path: details.rightFile.filename,
+                            filename: details.rightFile.filename,
+                            lineCount: details.rightFile.lineCount,
+                            studentName: details.rightFile.studentName
+                        },
+                        structuralScore: parseFloat(details.result.structuralScore),
+                        semanticScore: 0,
+                        hybridScore: 0,
+                        overlap: details.result.overlap,
+                        longest: details.result.longestFragment
+                    },
+                    fragments: details.fragments,
+                    leftCode: details.leftFile.content,
+                    rightCode: details.rightFile.content
+                };
+            } catch (error) {
+                // If result is not found, it might be an invalid pairId or reportId mismatch
+                if (error instanceof PlagiarismResultNotFoundError) {
+                    throw error;
+                }
+                throw error;
+            }
+        }
+
         throw new PlagiarismReportNotFoundError(reportId);
     }
 
@@ -315,6 +363,28 @@ export class PlagiarismService {
     // ========================================================================
     // Private Helper Methods
     // ========================================================================
+
+    private cleanupExpiredReports() {
+        const now = Date.now();
+
+        // Remove expired entries
+        for (const [id, data] of this.legacyReportsStore.entries()) {
+            if (now - data.createdAt.getTime() > PlagiarismService.LEGACY_REPORT_TTL_MS) {
+                this.legacyReportsStore.delete(id);
+            }
+        }
+
+        // Enforce max size (LRU-like: remove oldest if still too big)
+        if (this.legacyReportsStore.size > PlagiarismService.MAX_LEGACY_REPORTS) {
+            const sortedEntries = Array.from(this.legacyReportsStore.entries())
+                .sort((a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime());
+
+            const toRemove = this.legacyReportsStore.size - PlagiarismService.MAX_LEGACY_REPORTS;
+            for (let i = 0; i < toRemove; i++) {
+                this.legacyReportsStore.delete(sortedEntries[i][0]);
+            }
+        }
+    }
 
     private validateAnalyzeRequest(request: AnalyzeRequest): void {
         if (!request.files || request.files.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED) {

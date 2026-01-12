@@ -8,7 +8,14 @@ import { AdminEnrollmentService } from '../../../services/admin/admin-enrollment
 import { authMiddleware } from '../../middlewares/auth.middleware.js';
 import { adminMiddleware } from '../../middlewares/admin.middleware.js';
 import { toJsonSchema } from '../../utils/swagger.js';
-import { ClassParamsSchema, type ClassParams } from '../../schemas/admin.schema.js';
+import {
+    ClassParamsSchema,
+    EnrollStudentBodySchema,
+    StudentEnrollmentParamsSchema,
+    type ClassParams,
+    type EnrollStudentBody,
+    type StudentEnrollmentParams
+} from '../../schemas/admin.schema.js';
 
 export async function adminEnrollmentRoutes(app: FastifyInstance): Promise<void> {
     const adminEnrollmentService = container.resolve<AdminEnrollmentService>('AdminEnrollmentService');
@@ -41,7 +48,7 @@ export async function adminEnrollmentRoutes(app: FastifyInstance): Promise<void>
     });
 
     // POST /classes/:id/students
-    app.post<{ Params: ClassParams; Body: { studentId: number } }>('/classes/:id/students', {
+    app.post<{ Params: ClassParams; Body: EnrollStudentBody }>('/classes/:id/students', {
         preHandler,
         schema: {
             tags: ['Admin - Enrollment'],
@@ -49,6 +56,7 @@ export async function adminEnrollmentRoutes(app: FastifyInstance): Promise<void>
             description: 'Add a student to a class',
             security: [{ bearerAuth: [] }],
             params: toJsonSchema(ClassParamsSchema),
+            body: toJsonSchema(EnrollStudentBodySchema),
         },
         handler: async (request, reply) => {
             await adminEnrollmentService.addStudentToClass(request.params.id, request.body.studentId);
@@ -57,13 +65,14 @@ export async function adminEnrollmentRoutes(app: FastifyInstance): Promise<void>
     });
 
     // DELETE /classes/:id/students/:studentId
-    app.delete<{ Params: { id: number; studentId: number } }>('/classes/:id/students/:studentId', {
+    app.delete<{ Params: StudentEnrollmentParams }>('/classes/:id/students/:studentId', {
         preHandler,
         schema: {
             tags: ['Admin - Enrollment'],
             summary: 'Remove student from class',
             description: 'Remove a student from a class',
             security: [{ bearerAuth: [] }],
+            params: toJsonSchema(StudentEnrollmentParamsSchema),
         },
         handler: async (request, reply) => {
             await adminEnrollmentService.removeStudentFromClass(request.params.id, request.params.studentId);

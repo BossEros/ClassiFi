@@ -168,8 +168,7 @@ docs/**/node_modules/
 *.7z
 
 
-174: 
-175: backend-ts/node_modules/
+backend-ts/node_modules/
 
 # ============================================
 # JUDGE0 (Self-hosted Code Execution)

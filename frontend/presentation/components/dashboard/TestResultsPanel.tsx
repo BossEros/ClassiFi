@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FlaskConical, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, ChevronDown, EyeOff } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/Card';
-import { getTestResults, type TestExecutionSummary, type TestResultDetail } from '@/data/repositories/testCaseRepository';
+import { getTestResults } from '@/data/repositories/testCaseRepository';
+import type { TestExecutionSummary, TestResultDetail } from '@/shared/types/testCase';
 
 interface TestResultsPanelProps {
     submissionId: number;

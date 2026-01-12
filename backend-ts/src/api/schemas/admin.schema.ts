@@ -158,6 +158,15 @@ export const ReassignTeacherSchema = z.object({
     teacherId: z.number().int().positive(),
 });
 
+export const StudentEnrollmentParamsSchema = z.object({
+    id: z.coerce.number().int().positive(),
+    studentId: z.coerce.number().int().positive(),
+});
+
+export const EnrollStudentBodySchema = z.object({
+    studentId: z.number().int().positive(),
+});
+
 export const ClassDTOSchema = z.object({
     id: z.number(),
     className: z.string(),
@@ -209,4 +218,6 @@ export type ClassParams = z.infer<typeof ClassParamsSchema>;
 export type CreateClass = z.infer<typeof CreateClassSchema>;
 export type UpdateClass = z.infer<typeof UpdateClassSchema>;
 export type ReassignTeacher = z.infer<typeof ReassignTeacherSchema>;
+export type StudentEnrollmentParams = z.infer<typeof StudentEnrollmentParamsSchema>;
+export type EnrollStudentBody = z.infer<typeof EnrollStudentBodySchema>;
 export type ActivityQuery = z.infer<typeof ActivityQuerySchema>;

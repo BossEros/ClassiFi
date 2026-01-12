@@ -3,7 +3,7 @@ import { X, Save, AlertTriangle, Eye, EyeOff, Clock } from 'lucide-react';
 import { Button } from '@/presentation/components/ui/Button';
 import { Input } from '@/presentation/components/ui/Input';
 import { Textarea } from '@/presentation/components/ui/Textarea';
-import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/data/repositories/testCaseRepository';
+import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/shared/types/testCase';
 
 interface TestCaseModalProps {
     isOpen: boolean;

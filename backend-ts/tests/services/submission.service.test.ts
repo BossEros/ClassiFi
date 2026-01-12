@@ -364,7 +364,7 @@ describe('SubmissionService', () => {
     });
 
     // ============ getSubmissionHistory Tests ============
-    // ... kept same as original file content ...
+    // ============ getSubmissionHistory Tests ============
     describe('getSubmissionHistory', () => {
         it('should return submission history mapped to DTOs', async () => {
             const submissions = [
