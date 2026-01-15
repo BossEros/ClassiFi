@@ -1,352 +1,373 @@
-/**
- * Admin Repository
- * API calls for admin-only operations: users, analytics, and classes
- */
-import { apiClient } from '../api/apiClient'
+import { apiClient } from "../api/apiClient";
 import type {
-    AdminUser,
-    AdminClass,
-    AdminStats,
-    ActivityItem,
-    PaginatedResponse,
-    CreateUserData,
-    CreateClassData,
-    UpdateClassData,
-    EnrolledStudent,
-    ClassAssignment,
-} from '@/business/models/admin/types'
-
-// Re-export types for backward compatibility
-export type {
-    AdminUser,
-    AdminClass,
-    AdminStats,
-    ActivityItem,
-    PaginatedResponse,
-    CreateUserData,
-    CreateClassData,
-    UpdateClassData,
-    EnrolledStudent,
-    ClassAssignment,
-}
+  AdminUser,
+  AdminClass,
+  PaginatedResponse,
+  CreateUserData,
+  CreateClassData,
+  UpdateClassData,
+  AdminResponse,
+  AdminUserResponse,
+  AdminClassResponse,
+  AdminStatsResponse,
+  AdminActivityResponse,
+  AdminStudentsResponse,
+  AdminAssignmentsResponse,
+  AdminTeachersResponse,
+} from "@/data/api/types";
 
 // ============ User Management ============
 
 export async function getAllUsers(options: {
-    page?: number
-    limit?: number
-    search?: string
-    role?: string
-    status?: string
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  status?: string;
 }): Promise<PaginatedResponse<AdminUser>> {
-    const params = new URLSearchParams()
-    if (options.page) params.set('page', options.page.toString())
-    if (options.limit) params.set('limit', options.limit.toString())
-    if (options.search) params.set('search', options.search)
-    if (options.role) params.set('role', options.role)
-    if (options.status) params.set('status', options.status)
+  const params = new URLSearchParams();
+  if (options.page) params.set("page", options.page.toString());
+  if (options.limit) params.set("limit", options.limit.toString());
+  if (options.search) params.set("search", options.search);
+  if (options.role) params.set("role", options.role);
+  if (options.status) params.set("status", options.status);
 
-    const response = await apiClient.get<PaginatedResponse<AdminUser>>(
-        `/admin/users?${params.toString()}`
-    )
+  const response = await apiClient.get<PaginatedResponse<AdminUser>>(
+    `/admin/users?${params.toString()}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function getUserById(userId: number): Promise<{ success: boolean; user: AdminUser }> {
-    const response = await apiClient.get<{ success: boolean; user: AdminUser }>(
-        `/admin/users/${userId}`
-    )
+export async function getUserById(userId: number): Promise<AdminUserResponse> {
+  const response = await apiClient.get<AdminUserResponse>(
+    `/admin/users/${userId}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function createUser(data: CreateUserData): Promise<{ success: boolean; user: AdminUser }> {
-    const response = await apiClient.post<{ success: boolean; user: AdminUser }>(
-        '/admin/users',
-        data
-    )
+export async function createUser(
+  data: CreateUserData
+): Promise<AdminUserResponse> {
+  const response = await apiClient.post<AdminUserResponse>(
+    `/admin/users`,
+    data
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function updateUserRole(userId: number, role: string): Promise<{ success: boolean; user: AdminUser }> {
-    const response = await apiClient.patch<{ success: boolean; user: AdminUser }>(
-        `/admin/users/${userId}/role`,
-        { role }
-    )
+export async function updateUserRole(
+  userId: number,
+  role: string
+): Promise<AdminUserResponse> {
+  const response = await apiClient.patch<AdminUserResponse>(
+    `/admin/users/${userId}/role`,
+    { role }
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function updateUserDetails(userId: number, data: { firstName?: string; lastName?: string }): Promise<{ success: boolean; user: AdminUser }> {
-    const response = await apiClient.patch<{ success: boolean; user: AdminUser }>(
-        `/admin/users/${userId}/details`,
-        data
-    )
+export async function updateUserDetails(
+  userId: number,
+  data: { firstName?: string; lastName?: string }
+): Promise<AdminUserResponse> {
+  const response = await apiClient.patch<AdminUserResponse>(
+    `/admin/users/${userId}/details`,
+    data
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function updateUserEmail(userId: number, email: string): Promise<{ success: boolean; user: AdminUser }> {
-    const response = await apiClient.patch<{ success: boolean; user: AdminUser }>(
-        `/admin/users/${userId}/email`,
-        { email }
-    )
+export async function updateUserEmail(
+  userId: number,
+  email: string
+): Promise<AdminUserResponse> {
+  const response = await apiClient.patch<AdminUserResponse>(
+    `/admin/users/${userId}/email`,
+    { email }
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function toggleUserStatus(userId: number): Promise<{ success: boolean; user: AdminUser }> {
-    const response = await apiClient.patch<{ success: boolean; user: AdminUser }>(
-        `/admin/users/${userId}/status`,
-        {}
-    )
+export async function toggleUserStatus(
+  userId: number
+): Promise<AdminUserResponse> {
+  const response = await apiClient.patch<AdminUserResponse>(
+    `/admin/users/${userId}/status`,
+    {}
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function deleteUser(userId: number): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(
-        `/admin/users/${userId}`
-    )
+export async function deleteUser(userId: number): Promise<AdminResponse> {
+  const response = await apiClient.delete<AdminResponse>(
+    `/admin/users/${userId}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
 // ============ Analytics ============
 
-export async function getAdminStats(): Promise<{ success: boolean; stats: AdminStats }> {
-    const response = await apiClient.get<{ success: boolean; stats: AdminStats }>(
-        '/admin/stats'
-    )
+export async function getAdminStats(): Promise<AdminStatsResponse> {
+  const response = await apiClient.get<AdminStatsResponse>("/admin/stats");
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function getRecentActivity(limit: number = 10): Promise<{ success: boolean; activity: ActivityItem[] }> {
-    const response = await apiClient.get<{ success: boolean; activity: ActivityItem[] }>(
-        `/admin/activity?limit=${limit}`
-    )
+export async function getRecentActivity(
+  limit: number = 10
+): Promise<AdminActivityResponse> {
+  const response = await apiClient.get<AdminActivityResponse>(
+    `/admin/activity?limit=${limit}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
 // ============ Class Management ============
 
 export async function getAllClasses(options: {
-    page?: number
-    limit?: number
-    search?: string
-    teacherId?: number
-    status?: string
-    yearLevel?: number
-    semester?: number
-    academicYear?: string
+  page?: number;
+  limit?: number;
+  search?: string;
+  teacherId?: number;
+  status?: string;
+  yearLevel?: number;
+  semester?: number;
+  academicYear?: string;
 }): Promise<PaginatedResponse<AdminClass>> {
-    const params = new URLSearchParams()
-    if (options.page) params.set('page', options.page.toString())
-    if (options.limit) params.set('limit', options.limit.toString())
-    if (options.search) params.set('search', options.search)
-    if (options.teacherId) params.set('teacherId', options.teacherId.toString())
-    if (options.status) params.set('status', options.status)
-    if (options.yearLevel) params.set('yearLevel', options.yearLevel.toString())
-    if (options.semester) params.set('semester', options.semester.toString())
-    if (options.academicYear) params.set('academicYear', options.academicYear)
+  const params = new URLSearchParams();
+  if (options.page) params.set("page", options.page.toString());
+  if (options.limit) params.set("limit", options.limit.toString());
+  if (options.search) params.set("search", options.search);
+  if (options.teacherId) params.set("teacherId", options.teacherId.toString());
+  if (options.status) params.set("status", options.status);
+  if (options.yearLevel) params.set("yearLevel", options.yearLevel.toString());
+  if (options.semester) params.set("semester", options.semester.toString());
+  if (options.academicYear) params.set("academicYear", options.academicYear);
 
-    const response = await apiClient.get<PaginatedResponse<AdminClass>>(
-        `/admin/classes?${params.toString()}`
-    )
+  const response = await apiClient.get<PaginatedResponse<AdminClass>>(
+    `/admin/classes?${params.toString()}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function getClassById(classId: number): Promise<{ success: boolean; class: AdminClass }> {
-    const response = await apiClient.get<{ success: boolean; class: AdminClass }>(
-        `/admin/classes/${classId}`
-    )
+export async function getClassById(
+  classId: number
+): Promise<AdminClassResponse> {
+  const response = await apiClient.get<AdminClassResponse>(
+    `/admin/classes/${classId}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function createClass(data: CreateClassData): Promise<{ success: boolean; class: AdminClass }> {
-    const response = await apiClient.post<{ success: boolean; class: AdminClass }>(
-        '/admin/classes',
-        data
-    )
+export async function createClass(
+  data: CreateClassData
+): Promise<AdminClassResponse> {
+  const response = await apiClient.post<AdminClassResponse>(
+    "/admin/classes",
+    data
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function updateClass(classId: number, data: UpdateClassData): Promise<{ success: boolean; class: AdminClass }> {
-    const response = await apiClient.put<{ success: boolean; class: AdminClass }>(
-        `/admin/classes/${classId}`,
-        data
-    )
+export async function updateClass(
+  classId: number,
+  data: UpdateClassData
+): Promise<AdminClassResponse> {
+  const response = await apiClient.put<AdminClassResponse>(
+    `/admin/classes/${classId}`,
+    data
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function deleteClass(classId: number): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(
-        `/admin/classes/${classId}`
-    )
+export async function deleteClass(classId: number): Promise<AdminResponse> {
+  const response = await apiClient.delete<AdminResponse>(
+    `/admin/classes/${classId}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function reassignClassTeacher(classId: number, teacherId: number): Promise<{ success: boolean; class: AdminClass }> {
-    const response = await apiClient.patch<{ success: boolean; class: AdminClass }>(
-        `/admin/classes/${classId}/reassign`,
-        { teacherId }
-    )
+export async function reassignClassTeacher(
+  classId: number,
+  teacherId: number
+): Promise<AdminClassResponse> {
+  const response = await apiClient.patch<AdminClassResponse>(
+    `/admin/classes/${classId}/reassign`,
+    { teacherId }
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function archiveClass(classId: number): Promise<{ success: boolean; class: AdminClass }> {
-    const response = await apiClient.patch<{ success: boolean; class: AdminClass }>(
-        `/admin/classes/${classId}/archive`,
-        {}
-    )
+export async function archiveClass(
+  classId: number
+): Promise<AdminClassResponse> {
+  const response = await apiClient.patch<AdminClassResponse>(
+    `/admin/classes/${classId}/archive`,
+    {}
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function getAllTeachers(): Promise<{ success: boolean; teachers: AdminUser[] }> {
-    const response = await apiClient.get<{ success: boolean; teachers: AdminUser[] }>(
-        '/admin/teachers'
-    )
+export async function getAllTeachers(): Promise<AdminTeachersResponse> {
+  const response = await apiClient.get<AdminTeachersResponse>(
+    "/admin/teachers"
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
-
 
 // ============ Class Enrollment Management ============
 
-export async function getClassStudents(classId: number): Promise<{ success: boolean; students: EnrolledStudent[] }> {
-    const response = await apiClient.get<{ success: boolean; students: EnrolledStudent[] }>(
-        `/admin/classes/${classId}/students`
-    )
+export async function getClassStudents(
+  classId: number
+): Promise<AdminStudentsResponse> {
+  const response = await apiClient.get<AdminStudentsResponse>(
+    `/admin/classes/${classId}/students`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    // Transform to include fullName
-    const students = response.data!.students.map(student => ({
-        ...student,
-        fullName: `${student.firstName} ${student.lastName}`.trim()
-    }))
+  // Transform to include fullName
+  const rawStudents = response.data ? response.data.students || [] : [];
+  const students = rawStudents.map((student) => ({
+    ...student,
+    fullName: `${student.firstName} ${student.lastName}`.trim(),
+  }));
 
-    return { success: true, students }
+  return { success: true, students };
 }
 
-export async function getClassAssignments(classId: number): Promise<{ success: boolean; assignments: ClassAssignment[] }> {
-    const response = await apiClient.get<{ success: boolean; assignments: ClassAssignment[] }>(
-        `/admin/classes/${classId}/assignments`
-    )
+export async function getClassAssignments(
+  classId: number
+): Promise<AdminAssignmentsResponse> {
+  const response = await apiClient.get<AdminAssignmentsResponse>(
+    `/admin/classes/${classId}/assignments`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function addStudentToClass(classId: number, studentId: number): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.post<{ success: boolean; message: string }>(
-        `/admin/classes/${classId}/students`,
-        { studentId }
-    )
+export async function addStudentToClass(
+  classId: number,
+  studentId: number
+): Promise<AdminResponse> {
+  const response = await apiClient.post<AdminResponse>(
+    `/admin/classes/${classId}/students`,
+    { studentId }
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }
 
-export async function removeStudentFromClass(classId: number, studentId: number): Promise<{ success: boolean; message: string }> {
-    const response = await apiClient.delete<{ success: boolean; message: string }>(
-        `/admin/classes/${classId}/students/${studentId}`
-    )
+export async function removeStudentFromClass(
+  classId: number,
+  studentId: number
+): Promise<AdminResponse> {
+  const response = await apiClient.delete<AdminResponse>(
+    `/admin/classes/${classId}/students/${studentId}`
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (response.error) {
+    throw new Error(response.error);
+  }
 
-    return response.data!
+  return response.data!;
 }

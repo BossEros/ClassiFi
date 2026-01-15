@@ -1,6 +1,3 @@
-/**
- * Authentication related type definitions.
- */
 
 // ============================================================================
 // Core Types

@@ -1,25 +1,28 @@
-import * as assignmentRepository from '@/data/repositories/assignmentRepository'
-import { validateId } from '@/shared/utils/validators'
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
+import { validateId } from "@/shared/utils/validators";
 import type {
   Submission,
   SubmissionHistoryResponse,
   AssignmentDetail,
-  SubmitAssignmentRequest
-} from '../models/assignment/types'
+  SubmitAssignmentRequest,
+} from "@/data/api/types";
+
+// Re-export formatFileSize from shared utils for backward compatibility
+export { formatFileSize } from "@/shared/utils/formatUtils";
 
 /**
  * Maximum file size for submissions (10MB)
  */
-const MAX_FILE_SIZE = 10 * 1024 * 1024
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 /**
  * Allowed file extensions by programming language
  */
 const ALLOWED_EXTENSIONS: Record<string, string[]> = {
-  python: ['.py', '.ipynb'],
-  java: ['.java', '.jar'],
-  c: ['.c', '.h']
-}
+  python: [".py", ".ipynb"],
+  java: [".java", ".jar"],
+  c: [".c", ".h"],
+};
 
 /**
  * Validates a file before submission
@@ -28,38 +31,40 @@ const ALLOWED_EXTENSIONS: Record<string, string[]> = {
  * @param programmingLanguage - Expected programming language
  * @returns Validation error message or null if valid
  */
-export function validateFile(file: File, programmingLanguage: string): string | null {
+export function validateFile(
+  file: File,
+  programmingLanguage: string
+): string | null {
   // Check if file exists
   if (!file) {
-    return 'Please select a file to submit'
+    return "Please select a file to submit";
   }
 
   // Check file size
   if (file.size === 0) {
-    return 'File is empty'
+    return "File is empty";
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    const maxMB = MAX_FILE_SIZE / (1024 * 1024)
-    return `File size exceeds maximum allowed (${maxMB}MB)`
+    const maxMB = MAX_FILE_SIZE / (1024 * 1024);
+    return `File size exceeds maximum allowed (${maxMB}MB)`;
   }
 
   // Check file extension
-  const fileName = file.name.toLowerCase()
-  const fileExt = fileName.substring(fileName.lastIndexOf('.'))
+  const fileName = file.name.toLowerCase();
+  const fileExt = fileName.substring(fileName.lastIndexOf("."));
 
-  const allowedExts = ALLOWED_EXTENSIONS[programmingLanguage.toLowerCase()] || []
+  const allowedExts =
+    ALLOWED_EXTENSIONS[programmingLanguage.toLowerCase()] || [];
 
   if (!allowedExts.includes(fileExt)) {
-    return `Invalid file type. Expected ${allowedExts.join(', ')} for ${programmingLanguage}`
+    return `Invalid file type. Expected ${allowedExts.join(
+      ", "
+    )} for ${programmingLanguage}`;
   }
 
-  return null
+  return null;
 }
-
-// Re-export formatFileSize from shared utils for backward compatibility
-export { formatFileSize } from '@/shared/utils/formatUtils'
-
 
 /**
  * Submits an assignment with file upload
@@ -71,27 +76,30 @@ export async function submitAssignment(
   request: SubmitAssignmentRequest
 ): Promise<Submission> {
   // Validate inputs
-  validateId(request.assignmentId, 'assignment')
-  validateId(request.studentId, 'student')
+  validateId(request.assignmentId, "assignment");
+  validateId(request.studentId, "student");
 
   // Validate file
-  const validationError = validateFile(request.file, request.programmingLanguage)
+  const validationError = validateFile(
+    request.file,
+    request.programmingLanguage
+  );
   if (validationError) {
-    throw new Error(validationError)
+    throw new Error(validationError);
   }
 
   // Submit to repository
-  const response = await assignmentRepository.submitAssignment(request)
+  const response = await assignmentRepository.submitAssignment(request);
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data || !response.data.submission) {
-    throw new Error('Failed to submit assignment')
+    throw new Error("Failed to submit assignment");
   }
 
-  return response.data.submission
+  return response.data.submission;
 }
 
 /**
@@ -105,23 +113,23 @@ export async function getSubmissionHistory(
   assignmentId: number,
   studentId: number
 ): Promise<SubmissionHistoryResponse> {
-  validateId(assignmentId, 'assignment')
-  validateId(studentId, 'student')
+  validateId(assignmentId, "assignment");
+  validateId(studentId, "student");
 
   const response = await assignmentRepository.getSubmissionHistory(
     assignmentId,
     studentId
-  )
+  );
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data) {
-    throw new Error('Failed to fetch submission history')
+    throw new Error("Failed to fetch submission history");
   }
 
-  return response.data
+  return response.data;
 }
 
 /**
@@ -135,22 +143,22 @@ export async function getStudentSubmissions(
   studentId: number,
   latestOnly: boolean = true
 ): Promise<Submission[]> {
-  validateId(studentId, 'student')
+  validateId(studentId, "student");
 
   const response = await assignmentRepository.getStudentSubmissions(
     studentId,
     latestOnly
-  )
+  );
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data) {
-    throw new Error('Failed to fetch submissions')
+    throw new Error("Failed to fetch submissions");
   }
 
-  return response.data.submissions
+  return response.data.submissions;
 }
 
 /**
@@ -164,23 +172,24 @@ export async function getAssignmentSubmissions(
   assignmentId: number,
   latestOnly: boolean = true
 ): Promise<Submission[]> {
-  validateId(assignmentId, 'assignment')
+  validateId(assignmentId, "assignment");
 
   const response = await assignmentRepository.getAssignmentSubmissions(
     assignmentId,
     latestOnly
-  )
+  );
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data) {
-    throw new Error('Failed to fetch submissions')
+    throw new Error("Failed to fetch submissions");
   }
 
-  return response.data.submissions
+  return response.data.submissions;
 }
+
 /**
  * Gets assignment details by ID
  *
@@ -192,22 +201,22 @@ export async function getAssignmentById(
   assignmentId: number,
   userId: number
 ): Promise<AssignmentDetail> {
-  validateId(assignmentId, 'assignment')
+  validateId(assignmentId, "assignment");
 
   const response = await assignmentRepository.getAssignmentById(
     assignmentId,
     userId
-  )
+  );
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data || !response.data.assignment) {
-    throw new Error('Failed to fetch assignment details')
+    throw new Error("Failed to fetch assignment details");
   }
 
-  return response.data.assignment
+  return response.data.assignment;
 }
 
 /**
@@ -219,44 +228,48 @@ export async function getAssignmentById(
 export async function getSubmissionContent(
   submissionId: number
 ): Promise<{ content: string; language?: string }> {
-  validateId(submissionId, 'submission')
+  validateId(submissionId, "submission");
 
-  const response = await assignmentRepository.getSubmissionContent(submissionId)
+  const response = await assignmentRepository.getSubmissionContent(
+    submissionId
+  );
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data) {
-    throw new Error('Failed to fetch submission content')
+    throw new Error("Failed to fetch submission content");
   }
 
   return {
     content: response.data.content,
-    language: response.data.language
-  }
+    language: response.data.language,
+  };
 }
 
 /**
  * Gets submission download URL
- * 
+ *
  * @param submissionId - ID of the submission
  * @returns Download URL
  */
 export async function getSubmissionDownloadUrl(
   submissionId: number
 ): Promise<string> {
-  validateId(submissionId, 'submission')
+  validateId(submissionId, "submission");
 
-  const response = await assignmentRepository.getSubmissionDownloadUrl(submissionId)
+  const response = await assignmentRepository.getSubmissionDownloadUrl(
+    submissionId
+  );
 
   if (response.error) {
-    throw new Error(response.error)
+    throw new Error(response.error);
   }
 
   if (!response.data || !response.data.downloadUrl) {
-    throw new Error('Failed to generate download URL')
+    throw new Error("Failed to generate download URL");
   }
 
-  return response.data.downloadUrl
+  return response.data.downloadUrl;
 }

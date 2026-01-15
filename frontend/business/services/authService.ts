@@ -22,14 +22,9 @@ import type {
 } from '../models/auth/types'
 
 
-export async function loginUser(
-    credentials: LoginRequest
-): Promise<AuthResponse> {
+export async function loginUser(credentials: LoginRequest): Promise<AuthResponse> {
     // Validate credentials
-    const validationResult = validateLoginData({
-        email: credentials.email,
-        password: credentials.password
-    })
+    const validationResult = validateLoginData(credentials)
 
     if (!validationResult.isValid) {
         return {
@@ -57,14 +52,7 @@ export async function loginUser(
 }
 
 export async function registerUser(data: RegisterRequest): Promise<AuthResponse> {
-    const validationResult = validateRegistrationData({
-        role: data.role,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password,
-        confirmPassword: data.confirmPassword
-    })
+    const validationResult = validateRegistrationData(data)
 
     if (!validationResult.isValid) {
         return {
@@ -146,9 +134,7 @@ function clearAuthData(): void {
     localStorage.removeItem('user')
 }
 
-export async function requestPasswordReset(
-    data: ForgotPasswordRequest
-): Promise<ForgotPasswordResponse> {
+export async function requestPasswordReset(data: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
     const emailError = validateEmail(data.email)
 
     if (emailError) {
@@ -169,9 +155,7 @@ export async function requestPasswordReset(
     }
 }
 
-export async function resetPassword(
-    data: ResetPasswordRequest
-): Promise<ResetPasswordResponse> {
+export async function resetPassword(data: ResetPasswordRequest): Promise<ResetPasswordResponse> {
     const passwordError = validatePassword(data.newPassword)
 
     if (passwordError) {
@@ -201,13 +185,7 @@ export async function resetPassword(
     }
 }
 
-/**
- * Change password for authenticated user.
- * Validates passwords and calls repository.
- */
-export async function changePassword(
-    data: ChangePasswordRequest
-): Promise<ChangePasswordResponse> {
+export async function changePassword(data: ChangePasswordRequest): Promise<ChangePasswordResponse> {
     // Validate new password strength
     const passwordError = validatePassword(data.newPassword)
 
@@ -228,14 +206,6 @@ export async function changePassword(
         }
     }
 
-    // Validate new password is different from current
-    if (data.currentPassword === data.newPassword) {
-        return {
-            success: false,
-            message: 'New password must be different from current password'
-        }
-    }
-
     try {
         const response = await authRepository.changePassword(data)
         return response
@@ -247,13 +217,7 @@ export async function changePassword(
     }
 }
 
-/**
- * Delete user account.
- * Requires password confirmation and "DELETE" text confirmation.
- */
-export async function deleteAccount(
-    data: DeleteAccountRequest
-): Promise<DeleteAccountResponse> {
+export async function deleteAccount(data: DeleteAccountRequest): Promise<DeleteAccountResponse> {
     // Validate confirmation text
     if (data.confirmation !== 'DELETE') {
         return {
@@ -273,7 +237,6 @@ export async function deleteAccount(
     try {
         const response = await authRepository.deleteAccount(data)
 
-        // Clear local auth data on successful deletion
         if (response.success) {
             clearAuthData()
         }

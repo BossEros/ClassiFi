@@ -1,8 +1,10 @@
-import { FileCode, Calendar, Code, ChevronDown } from "lucide-react";
+import { FileCode, Calendar, Code, ChevronDown, Trophy } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { Input } from "@/presentation/components/ui/Input";
 import { Textarea } from "@/presentation/components/ui/Textarea";
 import { Select } from "@/presentation/components/ui/Select";
+import { DatePicker } from "@/presentation/components/ui/DatePicker";
+import { TimePicker } from "@/presentation/components/ui/TimePicker";
 import {
   programmingLanguageOptions,
   type CourseworkFormData,
@@ -65,7 +67,7 @@ export function BasicInfoForm({
   onDeletePendingTestCase,
 }: BasicInfoFormProps) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden p-6">
+    <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
           <FileCode className="w-5 h-5 text-blue-400" />
@@ -165,184 +167,169 @@ export function BasicInfoForm({
           <div className="space-y-2">
             <label
               htmlFor="totalScore"
-              className="text-sm font-medium text-gray-300"
+              className="text-sm font-medium text-gray-300 flex items-center gap-2"
             >
+              <Trophy className="w-4 h-4 text-yellow-500" />
               Total Score <span className="text-red-400">*</span>
             </label>
-            <Input
-              id="totalScore"
-              type="number"
-              value={formData.totalScore}
-              onChange={(e) => {
-                const parsed = parseInt(e.target.value, 10);
-                const safe = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
-                onInputChange("totalScore", safe);
-              }}
-              placeholder="100"
-              min="1"
-              disabled={isLoading}
-              className="h-11 bg-black/20 border-white/10 text-white focus:ring-blue-500/40 rounded-xl hover:bg-black/30 w-full"
-            />
+            <div className="relative group">
+              <Input
+                id="totalScore"
+                type="number"
+                value={formData.totalScore}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "") {
+                    onInputChange("totalScore", ""); // Allow clearing the input (will need casting in parent if strictly number)
+                    return;
+                  }
+                  const parsed = parseInt(val, 10);
+                  if (!Number.isNaN(parsed)) {
+                    onInputChange("totalScore", parsed);
+                  }
+                }}
+                placeholder="100"
+                min="1"
+                disabled={isLoading}
+                className="h-11 bg-black/20 border-white/10 text-white focus:ring-yellow-500/40 focus:border-yellow-500/40 rounded-xl hover:bg-black/30 w-full pr-16 transition-all"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium pointer-events-none group-focus-within:text-yellow-500/80 transition-colors">
+                Points
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Deadline - Full Width Section */}
-        <div className="space-y-3 pt-4">
-          <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-orange-400" />
-            Deadline <span className="text-red-400">*</span>
-          </label>
+        <div className="space-y-4 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DatePicker
+              label="Deadline Date"
+              value={formData.deadline}
+              onChange={(dateIso) => {
+                const time =
+                  formData.deadline.split("T")[1]?.slice(0, 5) || "23:59";
+                const date = dateIso ? dateIso.split("T")[0] : "";
+                if (date) {
+                  onInputChange("deadline", `${date}T${time}`);
+                }
+              }}
+              error={errors.deadline}
+              minDate={new Date()}
+              disabled={isLoading}
+            />
+            <TimePicker
+              label="Deadline Time"
+              value={formData.deadline.split("T")[1]?.slice(0, 5) || "23:59"}
+              onChange={(timeVal) => {
+                const date = formData.deadline.split("T")[0];
+                if (date && timeVal) {
+                  onInputChange("deadline", `${date}T${timeVal}`);
+                }
+              }}
+              disabled={isLoading}
+            />
+          </div>
 
           {/* Quick Preset Buttons */}
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: "Tomorrow", days: 1 },
-              { label: "In 3 days", days: 3 },
-              { label: "In 1 week", days: 7 },
-              { label: "In 2 weeks", days: 14 },
-              { label: "In 1 month", days: 30 },
-            ].map((preset) => {
-              const presetDate = new Date();
-              presetDate.setDate(presetDate.getDate() + preset.days);
-              presetDate.setHours(23, 59, 0, 0);
-              const presetValue = presetDate.toISOString().slice(0, 16);
-              const isSelected = formData.deadline === presetValue;
-
-              return (
-                <button
-                  key={preset.days}
-                  type="button"
-                  onClick={() => onInputChange("deadline", presetValue)}
-                  disabled={isLoading}
-                  className={`px-3 py-2 text-xs font-medium rounded-lg border transition-all duration-200 ${
-                    isSelected
-                      ? "bg-orange-500/10 border-orange-500/20 text-orange-400 shadow-[0_0_10px_rgba(249,115,22,0.1)]"
-                      : "bg-white/5 border-white/10 text-gray-400 hover:bg-white/10 hover:border-white/20 hover:text-white"
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Custom Date/Time Inputs */}
-          <div className="flex items-end gap-4 pt-1">
-            <div className="space-y-1">
-              <label htmlFor="deadline-date" className="text-xs text-gray-400">
-                📅 Date
-              </label>
-              <Input
-                id="deadline-date"
-                type="date"
-                aria-label="Deadline date"
-                value={formData.deadline.split("T")[0] || ""}
-                onChange={(e) => {
-                  const time = formData.deadline.split("T")[1] || "23:59";
-                  onInputChange("deadline", `${e.target.value}T${time}`);
-                }}
-                disabled={isLoading}
-                className={`h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-orange-500/40 rounded-xl ${
-                  errors.deadline ? "border-red-500/50" : "hover:bg-black/30"
-                }`}
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="deadline-time" className="text-xs text-gray-400">
-                ⏰ Time
-              </label>
-              <Input
-                id="deadline-time"
-                type="time"
-                aria-label="Deadline time"
-                value={formData.deadline.split("T")[1] || ""}
-                onChange={(e) => {
-                  const date = formData.deadline.split("T")[0] || "";
-                  if (date) {
-                    onInputChange("deadline", `${date}T${e.target.value}`);
-                  }
-                }}
-                disabled={isLoading || !formData.deadline.split("T")[0]}
-                className={`h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-orange-500/40 rounded-xl ${
-                  errors.deadline ? "border-red-500/50" : "hover:bg-black/30"
-                }`}
-              />
-            </div>
-          </div>
         </div>
 
         {/* Scheduled Release */}
-        <div className="space-y-3 pt-4 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-purple-400" />
-              Scheduled Release
-            </label>
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={!!formData.scheduledDate}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    const now = new Date();
-                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                    onInputChange(
-                      "scheduledDate",
-                      now.toISOString().slice(0, 16)
-                    );
-                  } else {
-                    onInputChange("scheduledDate", null);
-                  }
-                }}
-                className="rounded border-white/10 bg-black/20 text-purple-600 focus:ring-purple-500/40"
-              />
-              <span className="text-xs text-gray-400">Schedule for later</span>
-            </div>
-          </div>
-
-          {formData.scheduledDate && (
-            <div className="flex items-end gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="space-y-1">
-                <label
-                  htmlFor="scheduled-date"
-                  className="text-xs text-gray-400"
-                >
-                  📅 Date
-                </label>
-                <Input
-                  id="scheduled-date"
-                  type="date"
-                  value={formData.scheduledDate.split("T")[0] || ""}
-                  onChange={(e) => {
-                    const time =
-                      formData.scheduledDate?.split("T")[1] || "00:00";
-                    onInputChange("scheduledDate", `${e.target.value}T${time}`);
-                  }}
-                  className="h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-purple-500/40 rounded-xl hover:bg-black/30"
+        <div className="space-y-4 pt-6 border-t border-white/10">
+          <div
+            className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${
+              formData.scheduledDate
+                ? "bg-purple-500/10 border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.1)]"
+                : "bg-white/5 border-white/10 hover:border-white/20"
+            }`}
+          >
+            <div className="flex items-center gap-4">
+              <div
+                className={`p-3 rounded-xl transition-colors ${
+                  formData.scheduledDate ? "bg-purple-500/20" : "bg-white/5"
+                }`}
+              >
+                <Calendar
+                  className={`w-5 h-5 ${
+                    formData.scheduledDate ? "text-purple-400" : "text-gray-400"
+                  }`}
                 />
               </div>
               <div className="space-y-1">
-                <label
-                  htmlFor="scheduled-time"
-                  className="text-xs text-gray-400"
+                <h3
+                  className={`text-sm font-semibold transition-colors ${
+                    formData.scheduledDate ? "text-white" : "text-gray-300"
+                  }`}
                 >
-                  ⏰ Time
-                </label>
-                <Input
-                  id="scheduled-time"
-                  type="time"
-                  value={formData.scheduledDate.split("T")[1] || ""}
-                  onChange={(e) => {
-                    const date = formData.scheduledDate?.split("T")[0] || "";
+                  Scheduled Release
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Automatically publish this coursework at a future date and
+                  time
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={!!formData.scheduledDate}
+              onClick={() => {
+                if (formData.scheduledDate) {
+                  onInputChange("scheduledDate", null);
+                } else {
+                  const now = new Date();
+                  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                  onInputChange(
+                    "scheduledDate",
+                    now.toISOString().slice(0, 16)
+                  );
+                }
+              }}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 ${
+                formData.scheduledDate ? "bg-purple-600" : "bg-white/10"
+              }`}
+            >
+              <span
+                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-200 ${
+                  formData.scheduledDate ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
+          {formData.scheduledDate && (
+            <div className="animate-in slide-in-from-top-2 fade-in duration-300 pl-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DatePicker
+                  label="Release Date"
+                  value={formData.scheduledDate}
+                  onChange={(dateIso) => {
+                    const time =
+                      formData.scheduledDate?.split("T")[1]?.slice(0, 5) ||
+                      "00:00";
+                    const date = dateIso ? dateIso.split("T")[0] : "";
                     if (date) {
-                      onInputChange(
-                        "scheduledDate",
-                        `${date}T${e.target.value}`
-                      );
+                      onInputChange("scheduledDate", `${date}T${time}`);
+                    } else {
+                      onInputChange("scheduledDate", null);
+                    }
+                  }}
+                  minDate={new Date()}
+                  disabled={isLoading}
+                />
+                <TimePicker
+                  label="Release Time"
+                  value={
+                    formData.scheduledDate.split("T")[1]?.slice(0, 5) || "00:00"
+                  }
+                  onChange={(timeVal) => {
+                    const date = formData.scheduledDate?.split("T")[0];
+                    if (date && timeVal) {
+                      onInputChange("scheduledDate", `${date}T${timeVal}`);
                     }
                   }}
                   disabled={isLoading}
-                  className="h-11 w-auto bg-black/20 border-white/10 text-white focus:ring-purple-500/40 rounded-xl hover:bg-black/30"
                 />
               </div>
             </div>

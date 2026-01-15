@@ -126,12 +126,16 @@ export function useCourseworkForm() {
               deadline: deadline.toISOString().slice(0, 16),
               allowResubmission: assignment.allowResubmission,
               maxAttempts: (assignment as any).maxAttempts ?? null,
-              templateCode: (assignment as any).templateCode ?? "",
-              totalScore: (assignment as any).totalScore ?? 100,
-              scheduledDate: (assignment as any).scheduledDate
-                ? new Date((assignment as any).scheduledDate)
-                    .toISOString()
-                    .slice(0, 16)
+              templateCode: assignment.templateCode ?? "",
+              totalScore: assignment.totalScore ?? 100,
+              scheduledDate: assignment.scheduledDate
+                ? (() => {
+                    const scheduled = new Date(assignment.scheduledDate);
+                    scheduled.setMinutes(
+                      scheduled.getMinutes() - scheduled.getTimezoneOffset()
+                    );
+                    return scheduled.toISOString().slice(0, 16);
+                  })()
                 : null,
             });
             setShowTemplateCode(!!(assignment as any).templateCode);

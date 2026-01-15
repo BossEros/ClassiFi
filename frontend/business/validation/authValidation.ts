@@ -84,10 +84,7 @@ export const validatePassword = (password: string): string | null => {
 /**
  * Validates that passwords match
  */
-export const validatePasswordsMatch = (
-  password: string,
-  confirmPassword: string
-): string | null => {
+export const validatePasswordsMatch = (password: string, confirmPassword: string): string | null => {
   if (!confirmPassword) {
     return 'Please confirm your password';
   }

@@ -36,7 +36,6 @@ This document serves as the primary reference for AI agents working on the Class
 2.  **Code Quality & Standards**
 
     - **SOLID & DRY**: Always apply SOLID (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion) and DRY (Don't Repeat Yourself) principles.
-    - **TypeScript Strict Mode**: Always use strict mode. Avoid implicit `any` types to prevent production bugs.
     - **Descriptive Naming**: Use clear, verbose names for variables, functions, and classes.
     - **Systematic Approach**: Do everything systematically. Plan -> Implement -> Verify.
 

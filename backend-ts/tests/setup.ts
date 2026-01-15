@@ -1,7 +1,3 @@
-/**
- * Test Setup
- * Runs before each test file
- */
 import 'reflect-metadata';
 
 // Mock environment variables for tests

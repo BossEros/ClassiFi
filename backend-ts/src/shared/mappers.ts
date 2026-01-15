@@ -93,9 +93,12 @@ export interface AssignmentDTO {
   isActive: boolean;
   templateCode: string | null;
   hasTemplateCode: boolean;
+  totalScore: number;
+  scheduledDate: string | null;
   submissionCount?: number;
   hasSubmitted?: boolean;
   className?: string;
+  testCases?: { id: number; name: string; isHidden: boolean }[];
 }
 
 export function toAssignmentDTO(
@@ -104,6 +107,7 @@ export function toAssignmentDTO(
     submissionCount?: number;
     hasSubmitted?: boolean;
     className?: string;
+    testCases?: { id: number; name: string; isHidden: boolean }[];
   }
 ): AssignmentDTO {
   return {
@@ -119,6 +123,9 @@ export function toAssignmentDTO(
     isActive: assignment.isActive ?? true,
     templateCode: assignment.templateCode ?? null,
     hasTemplateCode: !!assignment.templateCode,
+    totalScore: assignment.totalScore ?? 100,
+    scheduledDate: assignment.scheduledDate?.toISOString() ?? null,
+    testCases: extras?.testCases,
     ...extras,
   };
 }
@@ -135,6 +142,7 @@ export interface SubmissionDTO {
   submissionNumber: number;
   submittedAt: string;
   isLatest: boolean;
+  grade: number | null;
   studentName?: string;
   assignmentName?: string;
   className?: string;
@@ -155,6 +163,7 @@ export function toSubmissionDTO(
     submittedAt:
       submission.submittedAt?.toISOString() ?? new Date().toISOString(),
     isLatest: submission.isLatest ?? false,
+    grade: submission.grade ?? null,
     ...extras,
   };
 }

@@ -13,6 +13,7 @@ export interface ApiSubmission {
   submissionNumber: number;
   submittedAt: string | Date;
   isLatest: boolean;
+  grade?: number | null;
   assignmentName?: string;
   studentName?: string;
 }
@@ -27,6 +28,7 @@ export function mapSubmission(sub: ApiSubmission): Submission {
     submissionNumber: sub.submissionNumber,
     submittedAt: new Date(sub.submittedAt),
     isLatest: sub.isLatest,
+    grade: sub.grade ?? undefined,
   };
 }
 

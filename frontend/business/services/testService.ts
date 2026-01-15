@@ -1,33 +1,11 @@
 import { apiClient } from "@/data/api/apiClient";
+import type {
+  TestPreviewResult,
+  TestResultDetail,
+  TestPreviewResponse,
+} from "@/data/api/types";
 
-/** Test result from preview */
-export interface TestPreviewResult {
-  passed: number;
-  total: number;
-  percentage: number;
-  results: TestResultDetail[];
-}
-
-/** Individual test result detail */
-export interface TestResultDetail {
-  testCaseId: number;
-  name: string;
-  status: string;
-  isHidden: boolean;
-  executionTimeMs: number;
-  memoryUsedKb: number;
-  input?: string;
-  expectedOutput?: string;
-  actualOutput?: string;
-  errorMessage?: string;
-}
-
-/** API response wrapper */
-interface TestPreviewResponse {
-  success: boolean;
-  message: string;
-  data: TestPreviewResult;
-}
+export type { TestPreviewResult, TestResultDetail, TestPreviewResponse };
 
 /**
  * Run tests in preview mode (without creating a submission)
