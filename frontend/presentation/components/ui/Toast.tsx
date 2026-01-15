@@ -30,28 +30,30 @@ const variantStyles: Record<ToastVariant, { bg: string; icon: React.ReactNode }>
 export function Toast({ id, message, variant = 'success', duration = 4000, onDismiss }: ToastProps) {
   const [isVisible, setIsVisible] = React.useState(false)
   const [isLeaving, setIsLeaving] = React.useState(false)
+  const [isPaused, setIsPaused] = React.useState(false)
 
-  React.useEffect(() => {
-    // Trigger enter animation
-    const enterTimer = setTimeout(() => setIsVisible(true), 10)
-
-    // Auto-dismiss after duration
-    const dismissTimer = setTimeout(() => {
-      handleDismiss()
-    }, duration)
-
-    return () => {
-      clearTimeout(enterTimer)
-      clearTimeout(dismissTimer)
-    }
-  }, [duration])
-
-  const handleDismiss = () => {
+  const handleDismiss = React.useCallback(() => {
     setIsLeaving(true)
     setTimeout(() => {
       onDismiss(id)
     }, 300) // Match animation duration
-  }
+  }, [id, onDismiss])
+
+  React.useEffect(() => {
+    // Trigger enter animation
+    const enterTimer = setTimeout(() => setIsVisible(true), 10)
+    return () => clearTimeout(enterTimer)
+  }, [])
+
+  React.useEffect(() => {
+    if (isPaused) return
+
+    const dismissTimer = setTimeout(() => {
+      handleDismiss()
+    }, duration)
+
+    return () => clearTimeout(dismissTimer)
+  }, [duration, isPaused, handleDismiss])
 
   const styles = variantStyles[variant]
 
@@ -65,7 +67,9 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
           ? 'translate-x-0 opacity-100'
           : 'translate-x-full opacity-0'
       )}
-      role="alert"
+      role={variant === 'error' ? 'alert' : 'status'}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
       {styles.icon}
       <p className="text-sm text-white font-medium flex-1">{message}</p>
