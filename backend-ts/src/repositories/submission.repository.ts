@@ -98,6 +98,9 @@ export class SubmissionRepository extends BaseRepository<
         submittedAt: submissions.submittedAt,
         isLatest: submissions.isLatest,
         grade: submissions.grade,
+        isGradeOverridden: submissions.isGradeOverridden,
+        overrideFeedback: submissions.overrideFeedback,
+        overriddenAt: submissions.overriddenAt,
       })
       .from(submissions)
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))

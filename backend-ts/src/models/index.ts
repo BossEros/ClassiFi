@@ -17,7 +17,11 @@ export {
   assignmentsRelations,
   programmingLanguageEnum,
 } from "./assignment.model.js";
-export type { Assignment, NewAssignment } from "./assignment.model.js";
+export type {
+  Assignment,
+  NewAssignment,
+  LatePenaltyConfig,
+} from "./assignment.model.js";
 
 // Enrollment model
 export { enrollments, enrollmentsRelations } from "./enrollment.model.js";

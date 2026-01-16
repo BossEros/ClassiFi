@@ -32,7 +32,12 @@ export const submissions = pgTable(
       .defaultNow()
       .notNull(),
     isLatest: boolean("is_latest").default(true).notNull(),
-    grade: integer("grade"), // Auto-calculated based on test results (nullable until tests run)
+    grade: integer("grade"), // The final grade (auto-calculated or manually overridden)
+
+    // Grade Override Tracking
+    isGradeOverridden: boolean("is_grade_overridden").default(false).notNull(),
+    overrideFeedback: text("override_feedback"), // Teacher's feedback (nullable)
+    overriddenAt: timestamp("overridden_at", { withTimezone: true }), // When override occurred
   },
   (table) => [
     unique("uq_assignment_student_submission").on(
