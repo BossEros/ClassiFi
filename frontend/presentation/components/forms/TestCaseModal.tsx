@@ -1,13 +1,18 @@
 import { useState, useEffect } from "react";
-import { X, Save, AlertTriangle, Eye, EyeOff, Clock } from "lucide-react";
+import { createPortal } from "react-dom";
+import { X, Save, Eye, EyeOff, Terminal } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";
 import { Input } from "@/presentation/components/ui/Input";
 import { Textarea } from "@/presentation/components/ui/Textarea";
+import { cn } from "@/shared/utils/cn";
 import type {
   TestCase,
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
 } from "@/shared/types/testCase";
+
+// Extended type for test cases that may be pending (not yet persisted)
+type EditableTestCase = TestCase & { tempId?: string };
 
 interface TestCaseModalProps {
   isOpen: boolean;
@@ -15,7 +20,7 @@ interface TestCaseModalProps {
   onSave: (
     data: CreateTestCaseRequest | UpdateTestCaseRequest
   ) => Promise<void>;
-  testCase?: TestCase | null;
+  testCase?: EditableTestCase | null;
   isLoading?: boolean;
 }
 
@@ -41,16 +46,17 @@ export function TestCaseModal({
     expectedOutput?: string;
   }>({});
 
-  // Reset form when modal opens/closes or testCase changes
+  // Reset form when modal opens or testCase changes
   useEffect(() => {
     if (isOpen && testCase) {
       setFormData({
-        name: testCase.name,
-        input: testCase.input,
-        expectedOutput: testCase.expectedOutput,
-        isHidden: testCase.isHidden,
-        timeLimit: testCase.timeLimit,
+        name: testCase.name || "",
+        input: testCase.input || "",
+        expectedOutput: testCase.expectedOutput || "",
+        isHidden: testCase.isHidden ?? false,
+        timeLimit: testCase.timeLimit ?? 5,
       });
+      setErrors({});
     } else if (isOpen && !testCase) {
       setFormData({
         name: "",
@@ -59,8 +65,8 @@ export function TestCaseModal({
         isHidden: false,
         timeLimit: 5,
       });
+      setErrors({});
     }
-    setErrors({});
   }, [isOpen, testCase]);
 
   const handleChange = (
@@ -90,6 +96,10 @@ export function TestCaseModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event from bubbling to parent forms
+
+    if (isLoading) return;
+
     if (!validate()) return;
 
     await onSave({
@@ -103,8 +113,12 @@ export function TestCaseModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  // Use portal to render modal outside parent form
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -112,170 +126,198 @@ export function TestCaseModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl mx-4 bg-[#1a1a2e] border border-white/10 rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-2xl bg-[#0f111a] border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
           <div>
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Terminal className="w-5 h-5 text-purple-400" />
               {isEditMode ? "Edit Test Case" : "Add Test Case"}
             </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Define input and expected output for automated testing
-            </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Test Case Name */}
-          <div className="space-y-2">
-            <label htmlFor="tcName" className="text-sm font-medium text-white">
-              Name <span className="text-red-400">*</span>
-            </label>
-            <Input
-              id="tcName"
-              placeholder="e.g., Basic Addition Test"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              disabled={isLoading}
-              maxLength={100}
-              className={errors.name ? "border-red-500/50" : ""}
-            />
-            {errors.name && (
-              <p className="text-xs text-red-400">{errors.name}</p>
-            )}
-          </div>
-
-          {/* Input (stdin) */}
-          <div className="space-y-2">
-            <label htmlFor="tcInput" className="text-sm font-medium text-white">
-              Input (stdin)
-            </label>
-            <Textarea
-              id="tcInput"
-              placeholder="Enter input that will be passed to the program..."
-              value={formData.input}
-              onChange={(e) => handleChange("input", e.target.value)}
-              disabled={isLoading}
-              rows={3}
-              className="font-mono text-sm"
-            />
-            <p className="text-xs text-gray-500">
-              Leave empty if no input is needed
-            </p>
-          </div>
-
-          {/* Expected Output */}
-          <div className="space-y-2">
-            <label
-              htmlFor="tcOutput"
-              className="text-sm font-medium text-white"
-            >
-              Expected Output <span className="text-red-400">*</span>
-            </label>
-            <Textarea
-              id="tcOutput"
-              placeholder="Enter the exact expected output..."
-              value={formData.expectedOutput}
-              onChange={(e) => handleChange("expectedOutput", e.target.value)}
-              disabled={isLoading}
-              rows={3}
-              className={`font-mono text-sm ${
-                errors.expectedOutput ? "border-red-500/50" : ""
-              }`}
-            />
-            {errors.expectedOutput && (
-              <p className="text-xs text-red-400">{errors.expectedOutput}</p>
-            )}
-          </div>
-
-          {/* Settings Row */}
-          <div className="flex flex-wrap gap-4 pt-2">
-            {/* Time Limit */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <label htmlFor="tcTimeLimit" className="text-sm text-gray-300">
-                Time Limit
-              </label>
-              <select
-                id="tcTimeLimit"
-                value={formData.timeLimit}
-                onChange={(e) =>
-                  handleChange("timeLimit", parseInt(e.target.value))
-                }
-                disabled={isLoading}
-                className="bg-white/10 border border-white/20 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-              >
-                {[1, 2, 3, 5, 10].map((sec) => (
-                  <option key={sec} value={sec}>
-                    {sec}s
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Hidden from Students */}
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-              {formData.isHidden ? (
-                <EyeOff className="w-4 h-4 text-amber-400" />
-              ) : (
-                <Eye className="w-4 h-4 text-gray-400" />
-              )}
+        {/* Scrollable Form Content */}
+        <div className="overflow-y-auto custom-scrollbar p-6">
+          <form
+            id="test-case-form"
+            onSubmit={handleSubmit}
+            className="space-y-6"
+          >
+            {/* Name Field */}
+            <div className="space-y-2">
               <label
-                htmlFor="tcHidden"
-                className="text-sm text-gray-300 cursor-pointer"
+                htmlFor="tcName"
+                className="text-sm font-medium text-gray-300"
               >
-                Hidden from students
+                Test Case Name <span className="text-red-400">*</span>
               </label>
-              <input
-                id="tcHidden"
-                type="checkbox"
-                checked={formData.isHidden}
-                onChange={(e) => handleChange("isHidden", e.target.checked)}
+              <Input
+                id="tcName"
+                placeholder="e.g., Basic Input Test"
+                value={formData.name}
+                onChange={(e) => handleChange("name", e.target.value)}
                 disabled={isLoading}
-                className="w-5 h-5 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-2 focus:ring-purple-500/50 cursor-pointer"
+                maxLength={100}
+                className={cn(
+                  "bg-white/5 border-white/10 focus:ring-purple-500/30",
+                  errors.name && "border-red-500/50"
+                )}
               />
+              {errors.name && (
+                <p className="text-xs text-red-400">{errors.name}</p>
+              )}
             </div>
-          </div>
 
-          {/* Hidden Warning */}
-          {formData.isHidden && (
-            <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
-              <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-amber-200">
-                Hidden test cases only show pass/fail status to students without
-                revealing the input or expected output.
-              </p>
+            {/* Input & Output */}
+            <div className="space-y-4">
+              {/* Input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="tcInput"
+                    className="text-sm font-medium text-gray-300"
+                  >
+                    Input
+                  </label>
+                  <span className="text-xs text-gray-500">Optional</span>
+                </div>
+                <Textarea
+                  id="tcInput"
+                  placeholder="Enter input..."
+                  value={formData.input}
+                  onChange={(e) => handleChange("input", e.target.value)}
+                  disabled={isLoading}
+                  className="min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-purple-500/30"
+                />
+              </div>
+
+              {/* Output */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="tcOutput"
+                    className="text-sm font-medium text-gray-300"
+                  >
+                    Expected Output <span className="text-red-400">*</span>
+                  </label>
+                </div>
+                <Textarea
+                  id="tcOutput"
+                  placeholder="Enter expected output..."
+                  value={formData.expectedOutput}
+                  onChange={(e) =>
+                    handleChange("expectedOutput", e.target.value)
+                  }
+                  disabled={isLoading}
+                  className={cn(
+                    "min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-purple-500/30",
+                    errors.expectedOutput && "border-red-500/50"
+                  )}
+                />
+                {errors.expectedOutput && (
+                  <p className="text-xs text-red-400">
+                    {errors.expectedOutput}
+                  </p>
+                )}
+              </div>
             </div>
-          )}
-        </form>
+
+            {/* Visibility Setting - Improved UI */}
+            <div className="pt-2">
+              <label className="text-sm font-medium text-gray-300 mb-2 block">
+                Configuration
+              </label>
+              <div
+                className={cn(
+                  "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer group",
+                  formData.isHidden
+                    ? "bg-amber-500/[0.08] border-amber-500/30"
+                    : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05]"
+                )}
+                onClick={() => handleChange("isHidden", !formData.isHidden)}
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    {formData.isHidden ? (
+                      <EyeOff className="w-4 h-4 text-amber-400" />
+                    ) : (
+                      <Eye className="w-4 h-4 text-purple-400" />
+                    )}
+                    <span
+                      className={cn(
+                        "text-sm font-medium transition-colors",
+                        formData.isHidden ? "text-amber-200" : "text-gray-200"
+                      )}
+                    >
+                      {formData.isHidden
+                        ? "Hidden Test Case"
+                        : "Visible Test Case"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">
+                    {formData.isHidden
+                      ? "Input and output are hidden from students."
+                      : "Students can see the input and expected output."}
+                  </p>
+                </div>
+
+                {/* Switch Toggle */}
+                <div
+                  className={cn(
+                    "relative h-6 w-11 rounded-full transition-colors duration-200",
+                    formData.isHidden ? "bg-amber-500" : "bg-gray-600"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200",
+                      formData.isHidden ? "left-6" : "left-1"
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 p-6 border-t border-white/10">
+        <div className="p-6 border-t border-white/10 bg-white/[0.02] flex justify-end gap-3 z-10">
           <Button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10"
           >
             Cancel
           </Button>
-          <Button type="submit" onClick={handleSubmit} disabled={isLoading}>
+          <Button
+            type="submit"
+            form="test-case-form"
+            disabled={isLoading}
+            className="bg-purple-600 hover:bg-purple-700 text-white min-w-[100px] shadow-lg shadow-purple-500/20"
+          >
             {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
-              <Save className="w-4 h-4 mr-2" />
+              <>
+                <Save className="w-4 h-4 mr-2" />
+                {isEditMode ? "Save" : "Add Case"}
+              </>
             )}
-            {isEditMode ? "Update" : "Add"} Test Case
           </Button>
         </div>
       </div>
     </div>
   );
+
+  // Render modal using portal to escape parent form context
+  return createPortal(modalContent, document.body);
 }
