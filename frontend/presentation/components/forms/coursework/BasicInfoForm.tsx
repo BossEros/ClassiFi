@@ -234,6 +234,38 @@ export function BasicInfoForm({
           {/* Quick Preset Buttons */}
         </div>
 
+        {/* Deadline Preview */}
+        {formData.deadline && (
+          <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-orange-400 font-medium uppercase tracking-wider mb-1">
+                  Selected Deadline
+                </p>
+                <p className="text-sm text-white font-medium">
+                  {new Date(formData.deadline).toLocaleString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-orange-400 font-medium uppercase tracking-wider mb-1">
+                  Time remaining
+                </p>
+                <p className="text-sm font-medium text-white font-mono">
+                  {formatTimeRemaining(formData.deadline)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Scheduled Release */}
         <div className="space-y-4 pt-6 border-t border-white/10">
           <div
@@ -336,38 +368,6 @@ export function BasicInfoForm({
           )}
         </div>
 
-        {/* Deadline Preview */}
-        {formData.deadline && (
-          <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-orange-400 font-medium uppercase tracking-wider mb-1">
-                  Selected Deadline
-                </p>
-                <p className="text-sm text-white font-medium">
-                  {new Date(formData.deadline).toLocaleString("en-US", {
-                    weekday: "long",
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-orange-400 font-medium uppercase tracking-wider mb-1">
-                  Time remaining
-                </p>
-                <p className="text-sm font-medium text-white font-mono">
-                  {formatTimeRemaining(formData.deadline)}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {errors.deadline && (
           <p className="text-xs text-red-400">{errors.deadline}</p>
         )}
@@ -436,8 +436,8 @@ export function BasicInfoForm({
         isLoading={isLoadingTestCases}
         isEditMode={isEditMode}
         assignmentId={
-          assignmentId && !Number.isNaN(parseInt(assignmentId, 10))
-            ? parseInt(assignmentId, 10)
+          assignmentId && !Number.isNaN(parseInt(assignmentId as string, 10))
+            ? parseInt(assignmentId as string, 10)
             : undefined
         }
         onAdd={onAddTestCase}

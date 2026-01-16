@@ -3,7 +3,6 @@ import {
   Plus,
   Trash2,
   Edit2,
-  GripVertical,
   EyeOff,
   Clock,
   ChevronDown,
@@ -219,11 +218,6 @@ export function TestCaseList({
                         : "bg-black/20 border-white/5 hover:border-white/10 hover:bg-black/30"
                     }`}
                   >
-                    {/* Drag Handle */}
-                    <div className="opacity-0 group-hover:opacity-50 cursor-grab">
-                      <GripVertical className="w-4 h-4 text-gray-500" />
-                    </div>
-
                     {/* Index */}
                     <span className="w-6 h-6 flex items-center justify-center rounded bg-white/10 text-xs text-gray-400">
                       {index + 1}
