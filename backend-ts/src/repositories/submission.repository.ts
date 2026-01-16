@@ -287,4 +287,39 @@ export class SubmissionRepository extends BaseRepository<
       .set({ grade })
       .where(eq(submissions.id, submissionId));
   }
+
+  /**
+   * Set a grade override for a submission.
+   * Updates the grade, marks it as overridden, and optionally adds feedback.
+   */
+  async setGradeOverride(
+    submissionId: number,
+    grade: number,
+    feedback: string | null
+  ): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({
+        grade,
+        isGradeOverridden: true,
+        overrideFeedback: feedback,
+        overriddenAt: new Date(),
+      })
+      .where(eq(submissions.id, submissionId));
+  }
+
+  /**
+   * Remove a grade override from a submission.
+   * Clears the override flag and feedback. The grade should be recalculated separately.
+   */
+  async removeGradeOverride(submissionId: number): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({
+        isGradeOverridden: false,
+        overrideFeedback: null,
+        overriddenAt: null,
+      })
+      .where(eq(submissions.id, submissionId));
+  }
 }

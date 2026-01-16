@@ -7,6 +7,7 @@ import {
   enrollments,
   type Assignment,
   type NewAssignment,
+  type LatePenaltyConfig,
 } from "@/models/index.js";
 import { BaseRepository } from "@/repositories/base.repository.js";
 import { injectable } from "tsyringe";
@@ -238,5 +239,46 @@ export class AssignmentRepository extends BaseRepository<
     assignmentId: number
   ): Promise<Assignment | undefined> {
     return await this.update(assignmentId, { isActive: false });
+  }
+
+  /**
+   * Set late penalty configuration for an assignment.
+   */
+  async setLatePenaltyConfig(
+    assignmentId: number,
+    enabled: boolean,
+    config: LatePenaltyConfig | null
+  ): Promise<void> {
+    await this.db
+      .update(assignments)
+      .set({
+        latePenaltyEnabled: enabled,
+        latePenaltyConfig: config,
+      })
+      .where(eq(assignments.id, assignmentId));
+  }
+
+  /**
+   * Get late penalty configuration for an assignment.
+   * Returns null if no config is set.
+   */
+  async getLatePenaltyConfig(
+    assignmentId: number
+  ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null } | null> {
+    const result = await this.db
+      .select({
+        latePenaltyEnabled: assignments.latePenaltyEnabled,
+        latePenaltyConfig: assignments.latePenaltyConfig,
+      })
+      .from(assignments)
+      .where(eq(assignments.id, assignmentId))
+      .limit(1);
+
+    if (!result[0]) return null;
+
+    return {
+      enabled: result[0].latePenaltyEnabled,
+      config: result[0].latePenaltyConfig,
+    };
   }
 }
