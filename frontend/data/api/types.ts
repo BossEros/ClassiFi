@@ -536,3 +536,138 @@ export interface AssignmentDetailResponse {
   message?: string;
   assignment?: AssignmentDetail;
 }
+
+// ============================================================================
+// Gradebook Types
+// ============================================================================
+
+/** Penalty tier for late submissions */
+export interface PenaltyTier {
+  hoursAfterGrace: number;
+  penaltyPercent: number;
+}
+
+/** Late penalty configuration */
+export interface LatePenaltyConfig {
+  gracePeriodHours: number;
+  tiers: PenaltyTier[];
+  rejectAfterHours: number | null;
+}
+
+/** Penalty calculation result */
+export interface PenaltyResult {
+  isLate: boolean;
+  hoursLate: number;
+  penaltyPercent: number;
+  gradeMultiplier: number;
+  tierLabel: string;
+}
+
+/** Single grade entry in gradebook */
+export interface GradeEntry {
+  assignmentId: number;
+  submissionId: number | null;
+  grade: number | null;
+  isOverridden: boolean;
+  submittedAt: string | null;
+}
+
+/** Assignment info in gradebook */
+export interface GradebookAssignment {
+  id: number;
+  name: string;
+  totalScore: number;
+  deadline: string;
+}
+
+/** Student row in gradebook */
+export interface GradebookStudent {
+  id: number;
+  name: string;
+  email: string;
+  grades: GradeEntry[];
+}
+
+/** Class gradebook data */
+export interface ClassGradebook {
+  assignments: GradebookAssignment[];
+  students: GradebookStudent[];
+}
+
+/** Student grade for an assignment */
+export interface StudentGradeEntry {
+  id: number;
+  name: string;
+  totalScore: number;
+  deadline: string;
+  grade: number | null;
+  isOverridden: boolean;
+  feedback: string | null;
+  submittedAt: string | null;
+}
+
+/** Student grades for a class */
+export interface StudentClassGrades {
+  classId: number;
+  className: string;
+  teacherName: string;
+  assignments: StudentGradeEntry[];
+}
+
+/** Class statistics */
+export interface ClassStatistics {
+  classAverage: number | null;
+  submissionRate: number;
+  totalStudents: number;
+  totalAssignments: number;
+}
+
+/** Student rank in class */
+export interface StudentRank {
+  rank: number | null;
+  totalStudents: number | null;
+  percentile: number | null;
+}
+
+// ============ Gradebook Response Types ============
+
+export interface ClassGradebookResponse {
+  success: boolean;
+  assignments: GradebookAssignment[];
+  students: GradebookStudent[];
+}
+
+export interface StudentGradesResponse {
+  success: boolean;
+  grades: StudentClassGrades[];
+}
+
+export interface ClassStatisticsResponse {
+  success: boolean;
+  statistics: ClassStatistics;
+}
+
+export interface StudentRankResponse {
+  success: boolean;
+  rank: number | null;
+  totalStudents: number | null;
+  percentile: number | null;
+}
+
+export interface LatePenaltyConfigResponse {
+  success: boolean;
+  enabled: boolean;
+  config: LatePenaltyConfig | null;
+}
+
+// ============ Gradebook Request Types ============
+
+export interface GradeOverrideRequest {
+  grade: number;
+  feedback?: string | null;
+}
+
+export interface LatePenaltyUpdateRequest {
+  enabled: boolean;
+  config?: LatePenaltyConfig;
+}
