@@ -199,8 +199,7 @@ export function GradebookPage() {
               <div className="flex items-center gap-3">
                 <Button
                   onClick={refetch}
-                  variant="secondary"
-                  className="w-auto px-4 h-10"
+                  className="w-auto px-4 h-10 bg-white/10 hover:bg-white/20"
                   disabled={gradebookLoading}
                 >
                   <RefreshCw

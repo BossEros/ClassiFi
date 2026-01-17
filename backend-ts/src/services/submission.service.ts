@@ -2,7 +2,6 @@ import { inject, injectable } from "tsyringe";
 import { SubmissionRepository } from "../repositories/submission.repository.js";
 import { AssignmentRepository } from "../repositories/assignment.repository.js";
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js";
-import { ClassRepository } from "../repositories/class.repository.js";
 import { TestResultRepository } from "../repositories/testResult.repository.js";
 import { StorageService } from "./storage.service.js";
 import { CodeTestService } from "./codeTest.service.js";
@@ -33,8 +32,6 @@ export class SubmissionService {
     private assignmentRepo: AssignmentRepository,
     @inject("EnrollmentRepository")
     private enrollmentRepo: EnrollmentRepository,
-    @inject("ClassRepository")
-    private classRepo: ClassRepository,
     @inject("TestResultRepository")
     private testResultRepo: TestResultRepository,
     @inject("StorageService")
@@ -66,23 +63,24 @@ export class SubmissionService {
     // Check deadline and late penalty
     const now = new Date();
     let isLate = false;
-    let penaltyPercent = 0;
+    let penaltyResult: import("./latePenalty.service.js").PenaltyResult | null =
+      null;
 
     if (assignment.deadline && now > assignment.deadline) {
       // Submission is late - check if late penalties are enabled
       if (assignment.latePenaltyEnabled && assignment.latePenaltyConfig) {
-        const penaltyResult = this.latePenaltyService.calculatePenalty(
-          assignment.deadline,
+        penaltyResult = this.latePenaltyService.calculatePenalty(
           now,
+          assignment.deadline,
           assignment.latePenaltyConfig,
         );
 
-        if (penaltyResult.isRejected) {
+        // If penalty is 100%, reject the submission
+        if (penaltyResult.penaltyPercent >= 100) {
           throw new DeadlinePassedError();
         }
 
         isLate = penaltyResult.isLate;
-        penaltyPercent = penaltyResult.penaltyPercent;
       } else {
         // No late penalty configured - reject late submission
         throw new DeadlinePassedError();
@@ -209,17 +207,17 @@ export class SubmissionService {
     }
 
     // Apply late penalty if applicable
-    if (isLate && penaltyPercent > 0) {
+    if (isLate && penaltyResult && penaltyResult.penaltyPercent > 0) {
       const updatedSub = await this.submissionRepo.getSubmissionById(
         submission.id,
       );
-      if (updatedSub && updatedSub.score !== null) {
-        const penalizedScore = this.latePenaltyService.applyPenalty(
-          updatedSub.score,
-          penaltyPercent,
+      if (updatedSub && updatedSub.grade !== null) {
+        const penalizedGrade = this.latePenaltyService.applyPenalty(
+          updatedSub.grade,
+          penaltyResult,
         );
-        // Update score with penalty applied
-        await this.submissionRepo.updateGrade(submission.id, penalizedScore);
+        // Update grade with penalty applied
+        await this.submissionRepo.updateGrade(submission.id, penalizedGrade);
       }
     }
 

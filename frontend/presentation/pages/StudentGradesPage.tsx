@@ -238,7 +238,7 @@ interface AssignmentGradeRowProps {
 function AssignmentGradeRow({ assignment }: AssignmentGradeRowProps) {
   const hasGrade = assignment.grade !== null && assignment.grade !== undefined;
   const percentage = hasGrade
-    ? (assignment.grade / assignment.totalScore) * 100
+    ? ((assignment.grade ?? 0) / assignment.totalScore) * 100
     : 0;
 
   return (
