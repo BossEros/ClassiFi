@@ -604,6 +604,8 @@ export interface StudentGradeEntry {
   isOverridden: boolean;
   feedback: string | null;
   submittedAt: string | null;
+  isLate?: boolean;
+  penaltyApplied?: number;
 }
 
 /** Student grades for a class */

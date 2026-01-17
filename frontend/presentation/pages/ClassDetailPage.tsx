@@ -1,193 +1,218 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { ClipboardList, Users, Plus, Trash2, Pencil, LogOut } from 'lucide-react'
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent, CardHeader } from '@/presentation/components/ui/Card'
-import { Button } from '@/presentation/components/ui/Button'
-import { BackButton } from '@/presentation/components/ui/BackButton'
-import { Tabs, TabPanel } from '@/presentation/components/ui/Tabs'
-import { DropdownMenu } from '@/presentation/components/ui/DropdownMenu'
-import { AssignmentCard } from '@/presentation/components/dashboard/AssignmentCard'
-import { StudentListItem } from '@/presentation/components/dashboard/StudentListItem'
-import { DeleteClassModal } from '@/presentation/components/forms/DeleteClassModal'
-import { LeaveClassModal } from '@/presentation/components/forms/LeaveClassModal'
-import { DeleteAssignmentModal } from '@/presentation/components/forms/DeleteAssignmentModal'
-import { RemoveStudentModal } from '@/presentation/components/forms/RemoveStudentModal'
-import { getCurrentUser } from '@/business/services/authService'
-import { getClassDetailData, deleteClass, deleteAssignment } from '@/business/services/classService'
-import { useToast } from '@/shared/context/ToastContext'
-import type { User } from '@/business/models/auth/types'
-import type { Class, Assignment, EnrolledStudent } from '@/business/models/dashboard/types'
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ClipboardList,
+  Users,
+  Plus,
+  Trash2,
+  Pencil,
+  LogOut,
+  BarChart3,
+} from "lucide-react";
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/presentation/components/ui/Card";
+import { Button } from "@/presentation/components/ui/Button";
+import { BackButton } from "@/presentation/components/ui/BackButton";
+import { Tabs, TabPanel } from "@/presentation/components/ui/Tabs";
+import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu";
+import { AssignmentCard } from "@/presentation/components/dashboard/AssignmentCard";
+import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem";
+import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal";
+import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal";
+import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal";
+import { RemoveStudentModal } from "@/presentation/components/forms/RemoveStudentModal";
+import { getCurrentUser } from "@/business/services/authService";
+import {
+  getClassDetailData,
+  deleteClass,
+  deleteAssignment,
+} from "@/business/services/classService";
+import { useToast } from "@/shared/context/ToastContext";
+import type { User } from "@/business/models/auth/types";
+import type {
+  Class,
+  Assignment,
+  EnrolledStudent,
+} from "@/business/models/dashboard/types";
 
-type TabType = 'assignments' | 'students'
+type TabType = "assignments" | "students";
 
 export function ClassDetailPage() {
-  const navigate = useNavigate()
-  const { classId } = useParams<{ classId: string }>()
-  const { showToast } = useToast()
+  const navigate = useNavigate();
+  const { classId } = useParams<{ classId: string }>();
+  const { showToast } = useToast();
 
-  const [user, setUser] = useState<User | null>(null)
-  const [classInfo, setClassInfo] = useState<Class | null>(null)
-  const [assignments, setAssignments] = useState<Assignment[]>([])
-  const [students, setStudents] = useState<EnrolledStudent[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<TabType>('assignments')
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
+  const [user, setUser] = useState<User | null>(null);
+  const [classInfo, setClassInfo] = useState<Class | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [students, setStudents] = useState<EnrolledStudent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabType>("assignments");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   // Assignment management state
-  const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] = useState(false)
-  const [assignmentToDelete, setAssignmentToDelete] = useState<Assignment | null>(null)
-  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
+  const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] =
+    useState(false);
+  const [assignmentToDelete, setAssignmentToDelete] =
+    useState<Assignment | null>(null);
+  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false);
 
   // Student management state
-  const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] = useState(false)
-  const [studentToRemove, setStudentToRemove] = useState<EnrolledStudent | null>(null)
+  const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] =
+    useState(false);
+  const [studentToRemove, setStudentToRemove] =
+    useState<EnrolledStudent | null>(null);
 
   // Check if user is a teacher or student
-  const isTeacher = user?.role === 'teacher' || user?.role === 'admin'
-  const isStudent = user?.role === 'student'
+  const isTeacher = user?.role === "teacher" || user?.role === "admin";
+  const isStudent = user?.role === "student";
 
   const tabs = [
-    { id: 'assignments', label: 'Coursework', icon: ClipboardList },
-    { id: 'students', label: 'Students', icon: Users }
-  ]
+    { id: "assignments", label: "Coursework", icon: ClipboardList },
+    { id: "students", label: "Students", icon: Users },
+  ];
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
+    const currentUser = getCurrentUser();
     if (!currentUser) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
 
-    setUser(currentUser)
+    setUser(currentUser);
 
     // Fetch class data
     const fetchClassData = async () => {
       if (!classId) {
-        setError('Class not found')
-        setIsLoading(false)
-        return
+        setError("Class not found");
+        setIsLoading(false);
+        return;
       }
 
       try {
-        setIsLoading(true)
-        setError(null)
+        setIsLoading(true);
+        setError(null);
 
         // Only pass teacherId if user is actually a teacher
-        const isTeacher = currentUser.role === 'teacher' || currentUser.role === 'admin'
+        const isTeacher =
+          currentUser.role === "teacher" || currentUser.role === "admin";
         const data = await getClassDetailData(
           parseInt(classId),
-          isTeacher ? parseInt(currentUser.id) : undefined
-        )
+          isTeacher ? parseInt(currentUser.id) : undefined,
+        );
 
-        setClassInfo(data.classInfo)
-        setAssignments(data.assignments)
-        setStudents(data.students)
+        setClassInfo(data.classInfo);
+        setAssignments(data.assignments);
+        setStudents(data.students);
       } catch (err) {
-        console.error('Failed to fetch class data:', err)
-        setError('Failed to load class. Please try refreshing the page.')
+        console.error("Failed to fetch class data:", err);
+        setError("Failed to load class. Please try refreshing the page.");
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchClassData()
-  }, [navigate, classId])
+    fetchClassData();
+  }, [navigate, classId]);
 
   const handleRemoveStudentClick = (student: EnrolledStudent) => {
-    setStudentToRemove(student)
-    setIsRemoveStudentModalOpen(true)
-  }
+    setStudentToRemove(student);
+    setIsRemoveStudentModalOpen(true);
+  };
 
   const handleRemoveStudentSuccess = () => {
     if (studentToRemove) {
-      setStudents(students.filter(s => s.id !== studentToRemove.id))
-      showToast('Student removed successfully')
-      setStudentToRemove(null)
+      setStudents(students.filter((s) => s.id !== studentToRemove.id));
+      showToast("Student removed successfully");
+      setStudentToRemove(null);
     }
-  }
+  };
 
   const handleDeleteClass = async () => {
-    if (!user || !classId) return
+    if (!user || !classId) return;
 
     try {
-      setIsDeleting(true)
-      await deleteClass(parseInt(classId), parseInt(user.id))
-      navigate('/dashboard/classes', { state: { deleted: true } })
+      setIsDeleting(true);
+      await deleteClass(parseInt(classId), parseInt(user.id));
+      navigate("/dashboard/classes", { state: { deleted: true } });
     } catch (err) {
-      console.error('Failed to delete class:', err)
-      setError('Failed to delete class. Please try again.')
-      setIsDeleting(false)
-      setIsDeleteModalOpen(false)
+      console.error("Failed to delete class:", err);
+      setError("Failed to delete class. Please try again.");
+      setIsDeleting(false);
+      setIsDeleteModalOpen(false);
     }
-  }
+  };
 
   const handleAssignmentClick = (assignmentId: number) => {
     // Teachers see submissions page, students see assignment detail page
     if (isTeacher) {
-      navigate(`/dashboard/assignments/${assignmentId}/submissions`)
+      navigate(`/dashboard/assignments/${assignmentId}/submissions`);
     } else {
-      navigate(`/dashboard/assignments/${assignmentId}`)
+      navigate(`/dashboard/assignments/${assignmentId}`);
     }
-  }
+  };
 
   const handleLeaveSuccess = () => {
-    showToast('You have left the class')
-    navigate('/dashboard')
-  }
+    showToast("You have left the class");
+    navigate("/dashboard");
+  };
 
   const handleEditAssignment = (assignment: Assignment) => {
-    navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`)
-  }
+    navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`);
+  };
 
   const handleDeleteAssignmentClick = (assignment: Assignment) => {
-    setAssignmentToDelete(assignment)
-    setIsDeleteAssignmentModalOpen(true)
-  }
+    setAssignmentToDelete(assignment);
+    setIsDeleteAssignmentModalOpen(true);
+  };
 
   const handleConfirmDeleteAssignment = async () => {
-    if (!user || !assignmentToDelete) return
+    if (!user || !assignmentToDelete) return;
 
     try {
-      setIsDeletingAssignment(true)
-      await deleteAssignment(assignmentToDelete.id, parseInt(user.id))
+      setIsDeletingAssignment(true);
+      await deleteAssignment(assignmentToDelete.id, parseInt(user.id));
 
       // Remove from list
-      setAssignments(assignments.filter(a => a.id !== assignmentToDelete.id))
-      showToast('Coursework deleted successfully')
-      setIsDeleteAssignmentModalOpen(false)
-      setAssignmentToDelete(null)
+      setAssignments(assignments.filter((a) => a.id !== assignmentToDelete.id));
+      showToast("Coursework deleted successfully");
+      setIsDeleteAssignmentModalOpen(false);
+      setAssignmentToDelete(null);
     } catch (err) {
-      console.error('Failed to delete assignment:', err)
-      showToast('Failed to delete coursework', 'error')
+      console.error("Failed to delete assignment:", err);
+      showToast("Failed to delete coursework", "error");
     } finally {
-      setIsDeletingAssignment(false)
+      setIsDeletingAssignment(false);
     }
-  }
+  };
 
   const handleEditClass = () => {
-    navigate(`/dashboard/classes/${classId}/edit`)
-  }
+    navigate(`/dashboard/classes/${classId}/edit`);
+  };
 
   const dropdownItems = [
     {
-      id: 'edit',
-      label: 'Edit Class',
+      id: "edit",
+      label: "Edit Class",
       icon: Pencil,
-      variant: 'default' as const,
-      onClick: handleEditClass
+      variant: "default" as const,
+      onClick: handleEditClass,
     },
     {
-      id: 'delete',
-      label: 'Delete Class',
+      id: "delete",
+      label: "Delete Class",
       icon: Trash2,
-      variant: 'danger' as const,
-      onClick: () => setIsDeleteModalOpen(true)
-    }
-  ]
+      variant: "danger" as const,
+      onClick: () => setIsDeleteModalOpen(true),
+    },
+  ];
 
   return (
     <DashboardLayout>
@@ -206,11 +231,13 @@ export function ClassDetailPage() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
               <ClipboardList className="w-8 h-8 text-red-400" />
             </div>
-            <p className="text-gray-300 font-medium mb-2">Error Loading Class</p>
+            <p className="text-gray-300 font-medium mb-2">
+              Error Loading Class
+            </p>
             <p className="text-sm text-gray-500 mb-4">{error}</p>
             <BackButton
-              to={isStudent ? '/dashboard' : '/dashboard/classes'}
-              label={`Back to ${isStudent ? 'Dashboard' : 'Classes'}`}
+              to={isStudent ? "/dashboard" : "/dashboard/classes"}
+              label={`Back to ${isStudent ? "Dashboard" : "Classes"}`}
               className="mx-auto"
             />
           </div>
@@ -220,7 +247,7 @@ export function ClassDetailPage() {
         <>
           {/* Page Header */}
           <div className="mb-6">
-            <BackButton to={isStudent ? '/dashboard' : '/dashboard/classes'} />
+            <BackButton to={isStudent ? "/dashboard" : "/dashboard/classes"} />
             {/* Back button and title row */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
@@ -230,18 +257,35 @@ export function ClassDetailPage() {
                   </h1>
                   <div className="flex items-center gap-3 mt-1">
                     <span className="text-sm text-gray-400">
-                      Class Code: <span className="text-purple-400 font-mono">{classInfo?.classCode}</span>
+                      Class Code:{" "}
+                      <span className="text-purple-400 font-mono">
+                        {classInfo?.classCode}
+                      </span>
                     </span>
                     <span className="text-gray-600">•</span>
                     <span className="text-sm text-gray-400">
-                      {classInfo?.studentCount} {classInfo?.studentCount === 1 ? 'Student' : 'Students'}
+                      {classInfo?.studentCount}{" "}
+                      {classInfo?.studentCount === 1 ? "Student" : "Students"}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Teacher controls: Edit and Delete */}
-              {isTeacher && <DropdownMenu items={dropdownItems} />}
+              {/* Teacher controls: Gradebook and Dropdown */}
+              {isTeacher && (
+                <div className="flex items-center gap-3">
+                  <Button
+                    onClick={() =>
+                      navigate(`/dashboard/classes/${classId}/gradebook`)
+                    }
+                    className="w-auto px-4 h-10 bg-white/10 hover:bg-white/20"
+                  >
+                    <BarChart3 className="w-4 h-4 mr-2" />
+                    Gradebook
+                  </Button>
+                  <DropdownMenu items={dropdownItems} />
+                </div>
+              )}
 
               {/* Student controls: Leave Class */}
               {isStudent && (
@@ -282,9 +326,11 @@ export function ClassDetailPage() {
                   onTabChange={(tabId) => setActiveTab(tabId as TabType)}
                 />
                 {/* Only teachers can add assignments */}
-                {isTeacher && activeTab === 'assignments' && (
+                {isTeacher && activeTab === "assignments" && (
                   <Button
-                    onClick={() => navigate(`/dashboard/classes/${classId}/coursework/new`)}
+                    onClick={() =>
+                      navigate(`/dashboard/classes/${classId}/coursework/new`)
+                    }
                     className="w-auto px-4 h-10"
                   >
                     <Plus className="w-4 h-4 mr-2" />
@@ -296,7 +342,7 @@ export function ClassDetailPage() {
 
             <CardContent className="pt-0">
               {/* Assignments Tab */}
-              {activeTab === 'assignments' && (
+              {activeTab === "assignments" && (
                 <TabPanel>
                   {assignments.length > 0 ? (
                     <div className="space-y-3">
@@ -305,8 +351,16 @@ export function ClassDetailPage() {
                           key={assignment.id}
                           assignment={assignment}
                           onClick={() => handleAssignmentClick(assignment.id)}
-                          onEdit={isTeacher ? () => handleEditAssignment(assignment) : undefined}
-                          onDelete={isTeacher ? () => handleDeleteAssignmentClick(assignment) : undefined}
+                          onEdit={
+                            isTeacher
+                              ? () => handleEditAssignment(assignment)
+                              : undefined
+                          }
+                          onDelete={
+                            isTeacher
+                              ? () => handleDeleteAssignmentClick(assignment)
+                              : undefined
+                          }
                         />
                       ))}
                     </div>
@@ -315,14 +369,20 @@ export function ClassDetailPage() {
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                         <ClipboardList className="w-8 h-8 text-gray-500" />
                       </div>
-                      <p className="text-gray-300 font-medium mb-1">No coursework yet</p>
+                      <p className="text-gray-300 font-medium mb-1">
+                        No coursework yet
+                      </p>
                       {isTeacher ? (
                         <>
                           <p className="text-sm text-gray-500 mb-4">
                             Create your first coursework to get started.
                           </p>
                           <Button
-                            onClick={() => navigate(`/dashboard/classes/${classId}/coursework/new`)}
+                            onClick={() =>
+                              navigate(
+                                `/dashboard/classes/${classId}/coursework/new`,
+                              )
+                            }
                             className="w-auto"
                           >
                             <Plus className="w-4 h-4 mr-2" />
@@ -340,7 +400,7 @@ export function ClassDetailPage() {
               )}
 
               {/* Students Tab */}
-              {activeTab === 'students' && (
+              {activeTab === "students" && (
                 <TabPanel>
                   {students.length > 0 ? (
                     <div className="space-y-3">
@@ -348,7 +408,11 @@ export function ClassDetailPage() {
                         <StudentListItem
                           key={student.id}
                           student={student}
-                          onRemove={isTeacher ? () => handleRemoveStudentClick(student) : undefined}
+                          onRemove={
+                            isTeacher
+                              ? () => handleRemoveStudentClick(student)
+                              : undefined
+                          }
                         />
                       ))}
                     </div>
@@ -357,9 +421,15 @@ export function ClassDetailPage() {
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                         <Users className="w-8 h-8 text-gray-500" />
                       </div>
-                      <p className="text-gray-300 font-medium mb-1">No students enrolled</p>
+                      <p className="text-gray-300 font-medium mb-1">
+                        No students enrolled
+                      </p>
                       <p className="text-sm text-gray-500">
-                        Share the class code <span className="text-purple-400 font-mono">{classInfo?.classCode}</span> with your students.
+                        Share the class code{" "}
+                        <span className="text-purple-400 font-mono">
+                          {classInfo?.classCode}
+                        </span>{" "}
+                        with your students.
                       </p>
                     </div>
                   )}
@@ -379,14 +449,12 @@ export function ClassDetailPage() {
                 isDeleting={isDeleting}
               />
 
-
-
               {/* Delete Assignment Modal */}
               <DeleteAssignmentModal
                 isOpen={isDeleteAssignmentModalOpen}
                 onClose={() => {
-                  setIsDeleteAssignmentModalOpen(false)
-                  setAssignmentToDelete(null)
+                  setIsDeleteAssignmentModalOpen(false);
+                  setAssignmentToDelete(null);
                 }}
                 onConfirm={handleConfirmDeleteAssignment}
                 isDeleting={isDeletingAssignment}
@@ -398,8 +466,8 @@ export function ClassDetailPage() {
                 <RemoveStudentModal
                   isOpen={isRemoveStudentModalOpen}
                   onClose={() => {
-                    setIsRemoveStudentModalOpen(false)
-                    setStudentToRemove(null)
+                    setIsRemoveStudentModalOpen(false);
+                    setStudentToRemove(null);
                   }}
                   onSuccess={handleRemoveStudentSuccess}
                   classId={parseInt(classId)}
@@ -410,7 +478,6 @@ export function ClassDetailPage() {
               )}
             </>
           )}
-
 
           {/* Student Modals */}
           {isStudent && classInfo && (
@@ -426,5 +493,5 @@ export function ClassDetailPage() {
         </>
       )}
     </DashboardLayout>
-  )
+  );
 }

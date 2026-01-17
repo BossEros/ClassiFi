@@ -27,6 +27,8 @@ import type {
 } from "@/shared/types/testCase";
 import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList";
 import type { SelectOption } from "@/presentation/components/ui/Select";
+import type { LatePenaltyConfig } from "@/data/api/types";
+import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig";
 
 export interface CourseworkFormData {
   assignmentName: string;
@@ -38,6 +40,8 @@ export interface CourseworkFormData {
   templateCode: string;
   totalScore: number;
   scheduledDate: string | null;
+  latePenaltyEnabled: boolean;
+  latePenaltyConfig: LatePenaltyConfig;
 }
 
 export interface FormErrors {
@@ -72,7 +76,7 @@ export function useCourseworkForm() {
   const [className, setClassName] = useState("");
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [pendingTestCases, setPendingTestCases] = useState<PendingTestCase[]>(
-    []
+    [],
   );
   const [isLoadingTestCases, setIsLoadingTestCases] = useState(false);
   const [showTemplateCode, setShowTemplateCode] = useState(false);
@@ -87,6 +91,8 @@ export function useCourseworkForm() {
     templateCode: "",
     totalScore: 100,
     scheduledDate: null,
+    latePenaltyEnabled: false,
+    latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
   });
 
   // Fetch class name and existing assignment data
@@ -100,7 +106,7 @@ export function useCourseworkForm() {
         // Fetch class name
         const classData = await getClassById(
           parseInt(classId),
-          parseInt(user.id)
+          parseInt(user.id),
         );
         setClassName(classData.className);
 
@@ -108,12 +114,12 @@ export function useCourseworkForm() {
         if (isEditMode && assignmentId) {
           const assignment = await getAssignmentById(
             parseInt(assignmentId),
-            parseInt(user.id)
+            parseInt(user.id),
           );
           if (assignment) {
             const deadline = new Date(assignment.deadline);
             deadline.setMinutes(
-              deadline.getMinutes() - deadline.getTimezoneOffset()
+              deadline.getMinutes() - deadline.getTimezoneOffset(),
             );
 
             setFormData({
@@ -132,11 +138,16 @@ export function useCourseworkForm() {
                 ? (() => {
                     const scheduled = new Date(assignment.scheduledDate);
                     scheduled.setMinutes(
-                      scheduled.getMinutes() - scheduled.getTimezoneOffset()
+                      scheduled.getMinutes() - scheduled.getTimezoneOffset(),
                     );
                     return scheduled.toISOString().slice(0, 16);
                   })()
                 : null,
+              latePenaltyEnabled:
+                (assignment as any).latePenaltyEnabled ?? false,
+              latePenaltyConfig:
+                (assignment as any).latePenaltyConfig ??
+                DEFAULT_LATE_PENALTY_CONFIG,
             });
             setShowTemplateCode(!!(assignment as any).templateCode);
           }
@@ -171,7 +182,7 @@ export function useCourseworkForm() {
 
   const handleInputChange = (
     field: keyof CourseworkFormData,
-    value: string | number | boolean | null
+    value: string | number | boolean | null,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }));
@@ -273,7 +284,7 @@ export function useCourseworkForm() {
             });
           }
           showToast(
-            `Coursework created with ${pendingTestCases.length} test case(s)`
+            `Coursework created with ${pendingTestCases.length} test case(s)`,
           );
         } else {
           showToast("Coursework created successfully");
@@ -308,13 +319,13 @@ export function useCourseworkForm() {
 
   const handleUpdateTestCase = async (
     id: number,
-    data: UpdateTestCaseRequest
+    data: UpdateTestCaseRequest,
   ) => {
     try {
       const updatedTestCase = await updateTestCase(id, data);
       if (updatedTestCase) {
         setTestCases((prev) =>
-          prev.map((tc) => (tc.id === id ? updatedTestCase : tc))
+          prev.map((tc) => (tc.id === id ? updatedTestCase : tc)),
         );
         showToast("Test case updated");
       }
@@ -341,10 +352,10 @@ export function useCourseworkForm() {
 
   const handleUpdatePendingTestCase = (
     tempId: string,
-    data: PendingTestCase
+    data: PendingTestCase,
   ) => {
     setPendingTestCases((prev) =>
-      prev.map((tc) => (tc.tempId === tempId ? data : tc))
+      prev.map((tc) => (tc.tempId === tempId ? data : tc)),
     );
   };
 
