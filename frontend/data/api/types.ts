@@ -495,6 +495,8 @@ export interface CreateAssignmentRequest {
   templateCode?: string | null;
   totalScore?: number;
   scheduledDate?: Date | string | null;
+  latePenaltyEnabled?: boolean;
+  latePenaltyConfig?: LatePenaltyConfig | null;
 }
 
 export interface UpdateAssignmentRequest {
@@ -508,6 +510,8 @@ export interface UpdateAssignmentRequest {
   templateCode?: string | null;
   totalScore?: number;
   scheduledDate?: Date | string | null;
+  latePenaltyEnabled?: boolean;
+  latePenaltyConfig?: LatePenaltyConfig | null;
 }
 
 // ============ Response Schemas ============

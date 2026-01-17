@@ -248,6 +248,10 @@ export function useCourseworkForm() {
           scheduledDate: formData.scheduledDate
             ? new Date(formData.scheduledDate)
             : null,
+          latePenaltyEnabled: formData.latePenaltyEnabled,
+          latePenaltyConfig: formData.latePenaltyEnabled
+            ? formData.latePenaltyConfig
+            : null,
         });
         showToast("Coursework updated successfully");
       } else {
@@ -268,6 +272,10 @@ export function useCourseworkForm() {
           totalScore: formData.totalScore,
           scheduledDate: formData.scheduledDate
             ? new Date(formData.scheduledDate)
+            : null,
+          latePenaltyEnabled: formData.latePenaltyEnabled,
+          latePenaltyConfig: formData.latePenaltyEnabled
+            ? formData.latePenaltyConfig
             : null,
         });
 

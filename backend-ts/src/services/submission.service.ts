@@ -6,6 +6,7 @@ import { ClassRepository } from "../repositories/class.repository.js";
 import { TestResultRepository } from "../repositories/testResult.repository.js";
 import { StorageService } from "./storage.service.js";
 import { CodeTestService } from "./codeTest.service.js";
+import { LatePenaltyService } from "./latePenalty.service.js";
 import { toSubmissionDTO, type SubmissionDTO } from "../shared/mappers.js";
 import {
   AssignmentNotFoundError,
@@ -32,23 +33,27 @@ export class SubmissionService {
     private assignmentRepo: AssignmentRepository,
     @inject("EnrollmentRepository")
     private enrollmentRepo: EnrollmentRepository,
-    @inject("ClassRepository") private classRepo: ClassRepository,
+    @inject("ClassRepository")
+    private classRepo: ClassRepository,
     @inject("TestResultRepository")
     private testResultRepo: TestResultRepository,
-    @inject("StorageService") private storageService: StorageService,
-    @inject("CodeTestService") private codeTestService: CodeTestService
+    @inject("StorageService")
+    private storageService: StorageService,
+    @inject("CodeTestService")
+    private codeTestService: CodeTestService,
+    @inject("LatePenaltyService")
+    private latePenaltyService: LatePenaltyService,
   ) {}
 
   /** Submit an assignment */
   async submitAssignment(
     assignmentId: number,
     studentId: number,
-    file: { filename: string; data: Buffer; mimetype: string }
+    file: { filename: string; data: Buffer; mimetype: string },
   ): Promise<SubmissionDTO> {
     // Validate assignment exists and is active
-    const assignment = await this.assignmentRepo.getAssignmentById(
-      assignmentId
-    );
+    const assignment =
+      await this.assignmentRepo.getAssignmentById(assignmentId);
 
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId);
@@ -58,16 +63,36 @@ export class SubmissionService {
       throw new AssignmentInactiveError();
     }
 
-    // Check deadline
+    // Check deadline and late penalty
     const now = new Date();
+    let isLate = false;
+    let penaltyPercent = 0;
+
     if (assignment.deadline && now > assignment.deadline) {
-      throw new DeadlinePassedError();
+      // Submission is late - check if late penalties are enabled
+      if (assignment.latePenaltyEnabled && assignment.latePenaltyConfig) {
+        const penaltyResult = this.latePenaltyService.calculatePenalty(
+          assignment.deadline,
+          now,
+          assignment.latePenaltyConfig,
+        );
+
+        if (penaltyResult.isRejected) {
+          throw new DeadlinePassedError();
+        }
+
+        isLate = penaltyResult.isLate;
+        penaltyPercent = penaltyResult.penaltyPercent;
+      } else {
+        // No late penalty configured - reject late submission
+        throw new DeadlinePassedError();
+      }
     }
 
     // Check if student is enrolled in the class
     const isEnrolled = await this.enrollmentRepo.isEnrolled(
       studentId,
-      assignment.classId
+      assignment.classId,
     );
     if (!isEnrolled) {
       throw new NotEnrolledError();
@@ -76,7 +101,7 @@ export class SubmissionService {
     // Check for existing submissions
     const existingSubmissions = await this.submissionRepo.getSubmissionHistory(
       assignmentId,
-      studentId
+      studentId,
     );
 
     if (existingSubmissions.length > 0) {
@@ -98,7 +123,7 @@ export class SubmissionService {
           } catch (err) {
             console.error(
               `Failed to delete old submission file: ${sub.filePath}`,
-              err
+              err,
             );
           }
         }
@@ -156,12 +181,12 @@ export class SubmissionService {
         filePath,
         file.data,
         file.mimetype,
-        true
+        true,
       );
     } catch (error) {
       console.error("Submission upload error:", error);
       throw new UploadFailedError(
-        error instanceof Error ? error.message : "Unknown upload error"
+        error instanceof Error ? error.message : "Unknown upload error",
       );
     }
 
@@ -183,9 +208,24 @@ export class SubmissionService {
       // We don't fail the submission itself if tests fail to run, just log it
     }
 
+    // Apply late penalty if applicable
+    if (isLate && penaltyPercent > 0) {
+      const updatedSub = await this.submissionRepo.getSubmissionById(
+        submission.id,
+      );
+      if (updatedSub && updatedSub.score !== null) {
+        const penalizedScore = this.latePenaltyService.applyPenalty(
+          updatedSub.score,
+          penaltyPercent,
+        );
+        // Update score with penalty applied
+        await this.submissionRepo.updateGrade(submission.id, penalizedScore);
+      }
+    }
+
     // Re-fetch submission to get the updated grade after tests
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
-      submission.id
+      submission.id,
     );
     return toSubmissionDTO(updatedSubmission ?? submission);
   }
@@ -193,11 +233,11 @@ export class SubmissionService {
   /** Get submission history for a student-assignment pair */
   async getSubmissionHistory(
     assignmentId: number,
-    studentId: number
+    studentId: number,
   ): Promise<SubmissionDTO[]> {
     const submissions = await this.submissionRepo.getSubmissionHistory(
       assignmentId,
-      studentId
+      studentId,
     );
     return submissions.map((s) => toSubmissionDTO(s));
   }
@@ -205,28 +245,28 @@ export class SubmissionService {
   /** Get all submissions for an assignment */
   async getAssignmentSubmissions(
     assignmentId: number,
-    latestOnly: boolean = true
+    latestOnly: boolean = true,
   ): Promise<SubmissionDTO[]> {
     const submissions = await this.submissionRepo.getSubmissionsWithStudentInfo(
       assignmentId,
-      latestOnly
+      latestOnly,
     );
 
     return submissions.map((s) =>
       toSubmissionDTO(s.submission, {
         studentName: s.studentName,
-      })
+      }),
     );
   }
 
   /** Get all submissions by a student */
   async getStudentSubmissions(
     studentId: number,
-    latestOnly: boolean = true
+    latestOnly: boolean = true,
   ): Promise<SubmissionDTO[]> {
     const submissions = await this.submissionRepo.getSubmissionsByStudent(
       studentId,
-      latestOnly
+      latestOnly,
     );
     return submissions.map((s) => toSubmissionDTO(s));
   }
@@ -234,29 +274,28 @@ export class SubmissionService {
   /** Get file download URL using StorageService */
   async getFileDownloadUrl(
     filePath: string,
-    expiresIn: number = 3600
+    expiresIn: number = 3600,
   ): Promise<string> {
     return await this.storageService.getSignedUrl(
       "submissions",
       filePath,
-      expiresIn
+      expiresIn,
     );
   }
 
   /** Get submission content for preview */
   async getSubmissionContent(
-    submissionId: number
+    submissionId: number,
   ): Promise<{ content: string; language: string }> {
-    const submission = await this.submissionRepo.getSubmissionById(
-      submissionId
-    );
+    const submission =
+      await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) {
       throw new Error("Submission not found");
     }
 
     // Get assignment to determine language
     const assignment = await this.assignmentRepo.getAssignmentById(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (!assignment) {
       throw new AssignmentNotFoundError(submission.assignmentId);
@@ -269,7 +308,7 @@ export class SubmissionService {
     // Download content
     const content = await this.storageService.download(
       "submissions",
-      submission.filePath
+      submission.filePath,
     );
     return {
       content,
@@ -278,9 +317,8 @@ export class SubmissionService {
   }
 
   async getSubmissionDownloadUrl(submissionId: number): Promise<string> {
-    const submission = await this.submissionRepo.getSubmissionById(
-      submissionId
-    );
+    const submission =
+      await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) {
       throw new SubmissionNotFoundError(submissionId);
     }
@@ -293,7 +331,7 @@ export class SubmissionService {
       "submissions",
       submission.filePath,
       3600,
-      { download: submission.fileName }
+      { download: submission.fileName },
     );
   }
 }
