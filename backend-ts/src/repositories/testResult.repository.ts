@@ -8,6 +8,12 @@ import {
 } from "@/models/index.js";
 import { eq } from "drizzle-orm";
 
+/** Database executor type that works with both db and transactions */
+type DbExecutor = {
+  insert: typeof db.insert;
+  delete: typeof db.delete;
+};
+
 /** Test result with test case details */
 export interface TestResultWithCase extends TestResult {
   testCase: {
@@ -87,18 +93,21 @@ export class TestResultRepository {
    */
   async createMany(
     data: Omit<NewTestResult, "id" | "createdAt">[],
-    tx?: typeof db,
+    tx?: DbExecutor,
   ): Promise<TestResult[]> {
     if (data.length === 0) return [];
-    const executor = tx || db;
+    const executor = tx ?? db;
     return executor.insert(testResults).values(data).returning();
   }
 
   /**
    * Delete all test results for a submission.
    */
-  async deleteBySubmissionId(submissionId: number, tx?: any): Promise<number> {
-    const executor = tx || db;
+  async deleteBySubmissionId(
+    submissionId: number,
+    tx?: DbExecutor,
+  ): Promise<number> {
+    const executor = tx ?? db;
     const result = await executor
       .delete(testResults)
       .where(eq(testResults.submissionId, submissionId))
