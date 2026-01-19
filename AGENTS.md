@@ -1,66 +1,80 @@
 # ClassiFi Agent Guidelines
 
-This document serves as the primary reference for AI agents working on the ClassiFi codebase. Follow these guidelines to ensure consistency, maintainability, and high-quality code.
+This document is the **primary operational playbook** for AI agents working on ClassiFi. Strict adherence to these guidelines ensures code quality, architectural integrity, and system stability.
 
-## 1. Project Context & Tech Stack
+## 1. 📚 Documentation First
 
-### Frontend (`/frontend`)
+Before making any changes, **YOU MUST** understand the architecture of the specific module you are working on.
 
-- **Framework**: React 19 + Vite
-- **Styling**: TailwindCSS v4
-- **Icons**: Lucide React
-- **Editor**: Monaco Editor (`@monaco-editor/react`)
-- **Testing**: Vitest, Playwright
-- **State/Data**: React Hooks, Supabase Client
+- **Frontend**: Read `frontend/documentation.md` (Clean Architecture: Presentation -> Business -> Data)
+- **Backend**: Read `backend-ts/documentation.md` (Controller-Service-Repository Pattern)
 
-### Backend (`/backend-ts`)
+> **Rule**: Do not invent new patterns. Follow the existing architecture documented in these files.
 
-- **Runtime**: Node.js
-- **Framework**: Fastify
-- **Language**: TypeScript
-- **Database**: PostgreSQL with Drizzle ORM
-- **Dependency Injection**: Tsyringe
-- **Validation**: Zod (`fastify-type-provider-zod`)
-- **Testing**: Vitest
+## 2. 🛠️ Tech Stack & Key Libraries
 
-## 2. Core Principles & User Rules
+| Context      | Core Tech                       | Key Libraries                                                                                 |
+| :----------- | :------------------------------ | :-------------------------------------------------------------------------------------------- |
+| **Frontend** | React 19, Vite, TypeScript      | `tailwindcss` (v4), `lucide-react`, `@monaco-editor/react`, `supabase-js`, `react-router-dom` |
+| **Backend**  | Node.js, Fastify, TypeScript    | `drizzle-orm`, `tsyringe` (DI), `zod` (Validation), `vitest`                                  |
+| **Testing**  | Vitest (Unit), Playwright (E2E) | -                                                                                             |
 
-> [!IMPORTANT]
-> These rules are mandatory and must be followed without exception.
+## 3. 🚨 Core Rules (Mandatory)
 
-1.  **Best Practices & Guidance**
-    - **ALWAYS** refer to or use the **Context7 MCP** or **Ref MCP** for guidance on coding best practices.
-    - **ALWAYS** use **Exa MCP** or **Perplexity MCP** for browser searches or any external research.
+1.  **Conform to Architecture**:
+    - **Frontend**: Components must utilize _Services_ for logic. Never import Repositories or API clients directly into UI components.
+    - **Backend**: Controllers handle HTTP -> Services handle Business Logic -> Repositories handle DB.
+2.  **Systematic Workflow**:
+    - **Plan**: Always create an `implementation_plan.md` for non-trivial tasks.
+    - **Implement**: Write code that is SOLID and DRY. Use descriptive variable names.
+    - **Verify**: Never assume code works. Verify with the specific commands below.
+3.  **Research & Guidance**:
+    - Use **Context7 MCP** for library-specific best practices.
+    - Use **Exa/Perplexity** to resolve error messages or finding modern implementation patterns.
 
-2.  **Code Quality & Standards**
-    - **SOLID & DRY**: Always apply SOLID (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion) and DRY (Don't Repeat Yourself) principles.
-    - **Descriptive Naming**: Use clear, verbose names for variables, functions, and classes.
-    - **Systematic Approach**: Do everything systematically. Plan -> Implement -> Verify.
+## 4. 🤖 Agent Workflow
 
-3.  **Implementation Strategy**
-    - **Reuse First**: Always check for similar or identical methods in the codebase before writing new ones. Reuse existing utilities and repositories whenever possible.
-    - **Architecture Awareness**: Always take into consideration the architectural pattern that the codebase is following (e.g., Repository pattern in backend, Component composition in frontend).
+### Phase 1: Exploration & Context
 
-## 3. Agent Workflow
+- [ ] Read `AGENTS.md` (this file).
+- [ ] Read the specific folder's `documentation.md`.
+- [ ] Explore relevant existing code using `view_file` to match the style.
 
-1.  **Exploration**:
-    - Start by exploring relevant files using `list_dir` and `view_file_outline`.
-    - Use `grep_search` to find usage patterns of existing components or functions.
+### Phase 2: Execution
 
-2.  **Planning**:
-    - Create an `implementation_plan.md` for complex tasks.
-    - Break down work into small, verifiable steps.
+- [ ] Create a checklist in `task.md` (or update the user's task tracker).
+- [ ] Implement changes systematically.
+- [ ] **Reuse Code**: Check `shared/` directories in both frontend and backend before writing new utilities.
 
-3.  **Verification**:
-    - **Frontend**: Run `npm run build` in `/frontend` to check for type errors.
-    - **Backend**: Run `npm test` in `/backend-ts` to ensure no regressions.
+### Phase 3: Verification (CRITICAL)
 
-If you are gonna use your integrated browser to simulate or test the system, you can use the following credentials to login.
+You must run these commands to verify your work.
 
-Teacher account
-Email: namisvilan@gmail.com
-Password: Qwerty123!
+**Frontend (`/frontend`)**
 
-Student account
-Email: marfiezeros@gmail.com
-Password: Qwerty123!
+```bash
+npm run build   # MUST PASS: Checks for TypeScript type errors
+npm run lint    # Optional: Checks for code style issues
+```
+
+**Backend (`/backend-ts`)**
+
+```bash
+npm test        # MUST PASS: Runs unit tests
+npm run typecheck # MUST PASS: Checks for TypeScript errors
+```
+
+> **Failure Protocol**: If verification fails, stop, analyze the error, fix it, and re-verify. Do not proceed until the build/test passes.
+
+### Phase 4: Documentation
+
+- [ ] If you added a new feature, API, or architectural component, **UPDATE** the relevant `documentation.md` file immediately.
+
+## 5. 🔑 Test Credentials
+
+Use these accounts for browser-based testing or login flows.
+
+| Role        | Email                   | Password     |
+| :---------- | :---------------------- | :----------- |
+| **Teacher** | `namisvilan@gmail.com`  | `Qwerty123!` |
+| **Student** | `marfiezeros@gmail.com` | `Qwerty123!` |
