@@ -1,62 +1,71 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Home, Grid3x3, FileText } from 'lucide-react'
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
-import { getCurrentUser } from '@/business/services/authService'
-import { getDashboardData } from '@/business/services/studentDashboardService'
-import type { User } from '@/business/models/auth/types'
-import type { Class, Task } from '@/business/models/dashboard/types'
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Home, Grid3x3, FileText } from "lucide-react";
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+import { ClassCard } from "@/presentation/components/dashboard/ClassCard";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card";
+import { getCurrentUser } from "@/business/services/authService";
+import { getDashboardData } from "@/business/services/studentDashboardService";
+import type { User } from "@/business/models/auth/types";
+import type { Class, Task } from "@/business/models/dashboard/types";
 
 export function StudentDashboardPage() {
-  const navigate = useNavigate()
-  const [user, setUser] = useState<User | null>(null)
-  const [enrolledClasses, setEnrolledClasses] = useState<Class[]>([])
-  const [pendingAssignments, setPendingAssignments] = useState<Task[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [enrolledClasses, setEnrolledClasses] = useState<Class[]>([]);
+  const [pendingAssignments, setPendingAssignments] = useState<Task[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchDashboardData = async (studentId: number) => {
     try {
-      setIsLoading(true)
-      setError(null)
+      setIsLoading(true);
+      setError(null);
 
-      const data = await getDashboardData(studentId)
-      setEnrolledClasses(data.enrolledClasses)
-      setPendingAssignments(data.pendingAssignments)
+      const data = await getDashboardData(studentId);
+      // Cast is safe: API returns ISO date strings compatible with ISODateString
+      setEnrolledClasses(data.enrolledClasses as Class[]);
+      setPendingAssignments(data.pendingAssignments as Task[]);
     } catch (err) {
-      console.error('Failed to fetch dashboard data:', err)
-      setError('Failed to load dashboard data. Please try refreshing the page.')
+      console.error("Failed to fetch dashboard data:", err);
+      setError(
+        "Failed to load dashboard data. Please try refreshing the page.",
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
+    const currentUser = getCurrentUser();
     if (!currentUser) {
-      navigate('/login')
-      return
+      navigate("/login");
+      return;
     }
 
-    setUser(currentUser)
-    fetchDashboardData(parseInt(currentUser.id))
-  }, [navigate])
+    setUser(currentUser);
+    fetchDashboardData(parseInt(currentUser.id));
+  }, [navigate]);
 
   /**
    * Calculates days remaining until the deadline.
    */
   const formatDeadline = (deadline: Date) => {
-    const now = new Date()
-    const diff = deadline.getTime() - now.getTime()
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
+    const now = new Date();
+    const diff = deadline.getTime() - now.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
 
-    if (days < 0) return 'Overdue'
-    if (days === 0) return 'Due today'
-    if (days === 1) return 'Due tomorrow'
-    return `Due in ${days} days`
-  }
+    if (days < 0) return "Overdue";
+    if (days === 0) return "Due today";
+    if (days === 1) return "Due tomorrow";
+    return `Due in ${days} days`;
+  };
 
   return (
     <DashboardLayout>
@@ -70,7 +79,9 @@ export function StudentDashboardPage() {
         </div>
         {user && (
           <p className="text-gray-300 ml-11 text-sm">
-            Welcome back, <span className="text-white font-semibold">{user.firstName}</span>! Here's what's happening today.
+            Welcome back,{" "}
+            <span className="text-white font-semibold">{user.firstName}</span>!
+            Here's what's happening today.
           </p>
         )}
       </div>
@@ -104,7 +115,9 @@ export function StudentDashboardPage() {
                   <ClassCard
                     key={classItem.id}
                     classItem={classItem}
-                    onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
+                    onClick={() =>
+                      navigate(`/dashboard/classes/${classItem.id}`)
+                    }
                   />
                 ))}
               </div>
@@ -113,7 +126,9 @@ export function StudentDashboardPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                   <Grid3x3 className="w-8 h-8 text-gray-500" />
                 </div>
-                <p className="text-gray-300 font-semibold text-sm mb-1.5">No classes yet</p>
+                <p className="text-gray-300 font-semibold text-sm mb-1.5">
+                  No classes yet
+                </p>
                 <p className="text-xs text-gray-500">
                   Join a class from the "My Classes" page.
                 </p>
@@ -141,7 +156,9 @@ export function StudentDashboardPage() {
                 {pendingAssignments.map((assignment) => (
                   <div
                     key={assignment.id}
-                    onClick={() => navigate(`/dashboard/assignments/${assignment.id}`)}
+                    onClick={() =>
+                      navigate(`/dashboard/assignments/${assignment.id}`)
+                    }
                     className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
                   >
                     <h4 className="text-sm font-medium text-white mb-1 truncate">
@@ -154,10 +171,13 @@ export function StudentDashboardPage() {
                       <span className="text-xs text-gray-400">
                         {assignment.programmingLanguage}
                       </span>
-                      <span className={`text-xs font-medium ${new Date(assignment.deadline) < new Date()
-                        ? 'text-red-400'
-                        : 'text-purple-400'
-                        }`}>
+                      <span
+                        className={`text-xs font-medium ${
+                          new Date(assignment.deadline) < new Date()
+                            ? "text-red-400"
+                            : "text-purple-400"
+                        }`}
+                      >
                         {formatDeadline(new Date(assignment.deadline))}
                       </span>
                     </div>
@@ -169,7 +189,9 @@ export function StudentDashboardPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                   <FileText className="w-8 h-8 text-gray-500" />
                 </div>
-                <p className="text-gray-300 font-semibold text-sm mb-1.5">All caught up!</p>
+                <p className="text-gray-300 font-semibold text-sm mb-1.5">
+                  All caught up!
+                </p>
                 <p className="text-xs text-gray-500">
                   New coursework will appear here when assigned.
                 </p>
@@ -179,5 +201,5 @@ export function StudentDashboardPage() {
         </Card>
       </div>
     </DashboardLayout>
-  )
+  );
 }

@@ -2,9 +2,12 @@
  * SubmissionService Unit Tests
  * Comprehensive tests for submission operations
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { SubmissionService } from '../../src/services/submission.service.js';
-import { createMockAssignment, createMockSubmission } from '../utils/factories.js';
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SubmissionService } from "../../src/services/submission.service.js";
+import {
+  createMockAssignment,
+  createMockSubmission,
+} from "../utils/factories.js";
 import {
   AssignmentNotFoundError,
   AssignmentInactiveError,
@@ -41,7 +44,6 @@ describe("SubmissionService", () => {
   let mockSubmissionRepo: any;
   let mockAssignmentRepo: any;
   let mockEnrollmentRepo: any;
-  let mockClassRepo: any;
   let mockTestResultRepo: any;
   let mockStorageService: any;
   let mockCodeTestService: any;
@@ -70,8 +72,6 @@ describe("SubmissionService", () => {
       isEnrolled: vi.fn(),
     };
 
-    mockClassRepo = {};
-
     mockTestResultRepo = {
       deleteBySubmissionId: vi.fn(),
     };
@@ -90,14 +90,12 @@ describe("SubmissionService", () => {
     };
 
     mockLatePenaltyService = {
-      calculatePenalty: vi
-        .fn()
-        .mockReturnValue({
-          isLate: false,
-          hoursLate: 0,
-          penaltyPercent: 0,
-          isRejected: false,
-        }),
+      calculatePenalty: vi.fn().mockReturnValue({
+        isLate: false,
+        hoursLate: 0,
+        penaltyPercent: 0,
+        isRejected: false,
+      }),
       applyPenalty: vi.fn(
         (score: number, penalty: number) => score * (1 - penalty / 100),
       ),
@@ -109,7 +107,6 @@ describe("SubmissionService", () => {
       mockSubmissionRepo,
       mockAssignmentRepo,
       mockEnrollmentRepo,
-      mockClassRepo,
       mockTestResultRepo,
       mockStorageService,
       mockCodeTestService,

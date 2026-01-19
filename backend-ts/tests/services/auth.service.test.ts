@@ -10,8 +10,17 @@ import {
   EmailNotVerifiedError,
 } from "../../src/shared/errors.js";
 
-// Mock the UserRepository
-vi.mock("../../src/repositories/user.repository.js");
+// Mock the UserRepository class but preserve USER_ROLES constant
+vi.mock("../../src/repositories/user.repository.js", async (importOriginal) => {
+  const original =
+    await importOriginal<
+      typeof import("../../src/repositories/user.repository.js")
+    >();
+  return {
+    ...original,
+    UserRepository: vi.fn(),
+  };
+});
 // Mock the SupabaseAuthAdapter
 vi.mock("../../src/services/supabase-auth.adapter.js");
 // Mock config
@@ -45,7 +54,7 @@ describe("AuthService", () => {
 
     authService = new AuthService(
       mockUserRepo as UserRepository,
-      mockAuthAdapter as SupabaseAuthAdapter
+      mockAuthAdapter as SupabaseAuthAdapter,
     );
   });
 
@@ -96,7 +105,7 @@ describe("AuthService", () => {
           first_name: validRegistration.firstName,
           last_name: validRegistration.lastName,
           role: validRegistration.role,
-        }
+        },
       );
     });
 
@@ -107,7 +116,7 @@ describe("AuthService", () => {
         authService.registerUser({
           ...validRegistration,
           email: "existing@example.com",
-        })
+        }),
       ).rejects.toThrow(UserAlreadyExistsError);
 
       expect(mockAuthAdapter.signUp).not.toHaveBeenCalled();
@@ -116,11 +125,11 @@ describe("AuthService", () => {
     it("should throw error when Supabase signup fails", async () => {
       mockUserRepo.checkEmailExists.mockResolvedValue(false);
       mockAuthAdapter.signUp.mockRejectedValue(
-        new Error("Supabase error occurred")
+        new Error("Supabase error occurred"),
       );
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
-        "Supabase error occurred"
+        "Supabase error occurred",
       );
     });
 
@@ -129,7 +138,7 @@ describe("AuthService", () => {
       mockAuthAdapter.signUp.mockResolvedValue({ user: null, token: null });
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
-        "Failed to create Supabase user"
+        "Failed to create Supabase user",
       );
     });
 
@@ -137,7 +146,7 @@ describe("AuthService", () => {
       const supabaseUserId = "temp-supabase-id";
       mockUserRepo.checkEmailExists.mockResolvedValue(false);
       mockUserRepo.createUser.mockRejectedValue(
-        new Error("Database insert failed")
+        new Error("Database insert failed"),
       );
 
       mockAuthAdapter.signUp.mockResolvedValue({
@@ -146,7 +155,7 @@ describe("AuthService", () => {
       });
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
-        "Database insert failed"
+        "Database insert failed",
       );
 
       expect(mockAuthAdapter.deleteUser).toHaveBeenCalledWith(supabaseUserId);
@@ -156,10 +165,10 @@ describe("AuthService", () => {
       const supabaseUserId = "temp-supabase-id";
       mockUserRepo.checkEmailExists.mockResolvedValue(false);
       mockUserRepo.createUser.mockRejectedValue(
-        new Error("Database insert failed")
+        new Error("Database insert failed"),
       );
       mockAuthAdapter.deleteUser.mockRejectedValue(
-        new Error("Rollback failed")
+        new Error("Rollback failed"),
       );
 
       mockAuthAdapter.signUp.mockResolvedValue({
@@ -168,7 +177,7 @@ describe("AuthService", () => {
       });
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
-        "Database insert failed"
+        "Database insert failed",
       );
     });
 
@@ -229,34 +238,37 @@ describe("AuthService", () => {
 
       const result = await authService.loginUser(
         validCredentials.email,
-        validCredentials.password
+        validCredentials.password,
       );
 
       expect(result.userData.email).toBe(mockUser.email);
       expect(result.token).toBe(accessToken);
       expect(mockAuthAdapter.signInWithPassword).toHaveBeenCalledWith(
         validCredentials.email,
-        validCredentials.password
+        validCredentials.password,
       );
     });
 
     it("should throw InvalidCredentialsError for wrong password", async () => {
       mockAuthAdapter.signInWithPassword.mockRejectedValue(
-        new InvalidCredentialsError()
+        new InvalidCredentialsError(),
       );
 
       await expect(
-        authService.loginUser(validCredentials.email, "wrongpassword")
+        authService.loginUser(validCredentials.email, "wrongpassword"),
       ).rejects.toThrow(InvalidCredentialsError);
     });
 
     it("should throw EmailNotVerifiedError when email is not confirmed", async () => {
       mockAuthAdapter.signInWithPassword.mockRejectedValue(
-        new EmailNotVerifiedError()
+        new EmailNotVerifiedError(),
       );
 
       await expect(
-        authService.loginUser(validCredentials.email, validCredentials.password)
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
       ).rejects.toThrow(EmailNotVerifiedError);
     });
 
@@ -267,7 +279,10 @@ describe("AuthService", () => {
       });
 
       await expect(
-        authService.loginUser(validCredentials.email, validCredentials.password)
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
       ).rejects.toThrow(InvalidCredentialsError);
     });
 
@@ -279,7 +294,10 @@ describe("AuthService", () => {
       mockUserRepo.getUserBySupabaseId.mockResolvedValue(undefined);
 
       await expect(
-        authService.loginUser(validCredentials.email, validCredentials.password)
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
       ).rejects.toThrow(UserNotFoundError);
     });
   });
@@ -303,7 +321,7 @@ describe("AuthService", () => {
       mockAuthAdapter.getUser.mockResolvedValue(null);
 
       await expect(authService.verifyToken("invalid-token")).rejects.toThrow(
-        InvalidCredentialsError
+        InvalidCredentialsError,
       );
     });
 
@@ -312,7 +330,7 @@ describe("AuthService", () => {
       mockUserRepo.getUserBySupabaseId.mockResolvedValue(undefined);
 
       await expect(
-        authService.verifyToken("valid-token-orphan-user")
+        authService.verifyToken("valid-token-orphan-user"),
       ).rejects.toThrow(UserNotFoundError);
     });
   });
@@ -327,7 +345,7 @@ describe("AuthService", () => {
 
       expect(mockAuthAdapter.resetPasswordForEmail).toHaveBeenCalledWith(
         email,
-        "http://localhost:3000/reset-password"
+        "http://localhost:3000/reset-password",
       );
     });
 
@@ -336,18 +354,18 @@ describe("AuthService", () => {
       mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined);
 
       await expect(
-        authService.requestPasswordReset(email)
+        authService.requestPasswordReset(email),
       ).resolves.not.toThrow();
     });
 
     it("should propagate Supabase errors", async () => {
       const email = "error@example.com";
       mockAuthAdapter.resetPasswordForEmail.mockRejectedValue(
-        new Error("Rate limit exceeded")
+        new Error("Rate limit exceeded"),
       );
 
       await expect(authService.requestPasswordReset(email)).rejects.toThrow(
-        "Rate limit exceeded"
+        "Rate limit exceeded",
       );
     });
   });
