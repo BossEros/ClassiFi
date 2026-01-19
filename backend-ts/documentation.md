@@ -77,15 +77,15 @@ npm start
 
 ### Available Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start dev server with hot reload |
-| `npm run build` | Compile TypeScript to JavaScript |
-| `npm start` | Run compiled production server |
-| `npm run test` | Run test suite |
-| `npm run test:watch` | Watch mode testing |
-| `npm run test:coverage` | Generate coverage report |
-| `npm run typecheck` | Type check without emitting |
+| Script                  | Description                      |
+| ----------------------- | -------------------------------- |
+| `npm run dev`           | Start dev server with hot reload |
+| `npm run build`         | Compile TypeScript to JavaScript |
+| `npm start`             | Run compiled production server   |
+| `npm run test`          | Run test suite                   |
+| `npm run test:watch`    | Watch mode testing               |
+| `npm run test:coverage` | Generate coverage report         |
+| `npm run typecheck`     | Type check without emitting      |
 
 ---
 
@@ -101,7 +101,12 @@ backend-ts/
 │   │   │   ├── assignment.controller.ts
 │   │   │   ├── submission.controller.ts
 │   │   │   ├── student-dashboard.controller.ts
-│   │   │   └── teacher-dashboard.controller.ts
+│   │   │   ├── teacher-dashboard.controller.ts
+│   │   │   ├── gradebook.controller.ts
+│   │   │   ├── plagiarism.controller.ts
+│   │   │   ├── testCase.controller.ts
+│   │   │   ├── user.controller.ts
+│   │   │   └── admin.controller.ts
 │   │   ├── middlewares/      # Error handling
 │   │   │   └── error-handler.ts
 │   │   ├── plugins/          # Fastify plugins
@@ -114,7 +119,14 @@ backend-ts/
 │   │       ├── class.schema.ts
 │   │       ├── assignment.schema.ts
 │   │       ├── submission.schema.ts
-│   │       └── dashboard.schema.ts
+│   │       ├── dashboard.schema.ts
+│   │       ├── gradebook.schema.ts
+│   │       ├── plagiarism.schema.ts
+│   │       ├── testCase.schema.ts
+│   │       ├── user.schema.ts
+│   │       └── admin.schema.ts
+│   ├── lib/                  # External library integrations
+│   │   └── plagiarism/       # Plagiarism detection engine
 │   ├── models/               # Drizzle ORM schemas
 │   │   ├── user.model.ts
 │   │   ├── class.model.ts
@@ -123,6 +135,9 @@ backend-ts/
 │   │   ├── submission.model.ts
 │   │   ├── similarity-report.model.ts
 │   │   ├── similarity-result.model.ts
+│   │   ├── match-fragment.model.ts
+│   │   ├── test-case.model.ts
+│   │   ├── test-result.model.ts
 │   │   └── index.ts
 │   ├── repositories/         # Data access layer
 │   │   ├── base.repository.ts
@@ -138,6 +153,10 @@ backend-ts/
 │   │   ├── submission.service.ts
 │   │   ├── student-dashboard.service.ts
 │   │   ├── teacher-dashboard.service.ts
+│   │   ├── gradebook.service.ts
+│   │   ├── plagiarism.service.ts
+│   │   ├── codeTest.service.ts
+│   │   ├── admin/            # Admin services
 │   │   └── index.ts
 │   ├── shared/               # Shared utilities
 │   │   ├── config.ts         # Environment configuration
@@ -186,16 +205,14 @@ Uses **tsyringe** for constructor injection:
 ```typescript
 @injectable()
 export class AuthService {
-  constructor(
-    @inject('UserRepository') private userRepo: UserRepository
-  ) {}
+  constructor(@inject("UserRepository") private userRepo: UserRepository) {}
 }
 ```
 
 Resolve from container in controllers:
 
 ```typescript
-const authService = container.resolve<AuthService>('AuthService');
+const authService = container.resolve<AuthService>("AuthService");
 ```
 
 ---
@@ -229,52 +246,114 @@ export const settings = { ... };  // Typed settings object
 
 ### Authentication
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/register` | Register new user |
-| POST | `/auth/login` | Login with email/password |
-| POST | `/auth/verify` | Verify access token |
-| POST | `/auth/forgot-password` | Request password reset |
-| POST | `/auth/logout` | Logout (client-side) |
+| Method | Endpoint                | Description               |
+| ------ | ----------------------- | ------------------------- |
+| POST   | `/auth/register`        | Register new user         |
+| POST   | `/auth/login`           | Login with email/password |
+| POST   | `/auth/verify`          | Verify access token       |
+| POST   | `/auth/forgot-password` | Request password reset    |
+| POST   | `/auth/logout`          | Logout (client-side)      |
+
+### User Management
+
+| Method | Endpoint          | Description                |
+| ------ | ----------------- | -------------------------- |
+| GET    | `/user/me`        | Get current user's profile |
+| PATCH  | `/user/me/avatar` | Update avatar URL          |
+| DELETE | `/user/me`        | Delete account             |
 
 ### Classes
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/classes` | Create a class |
-| GET | `/classes/:id` | Get class by ID |
-| GET | `/classes/teacher/:teacherId` | Get teacher's classes |
-| PUT | `/classes/:id` | Update class |
-| DELETE | `/classes/:id` | Delete class |
-| GET | `/classes/:id/students` | Get enrolled students |
-| GET | `/classes/:id/assignments` | Get class assignments |
-| POST | `/classes/:id/assignments` | Create assignment |
+| Method | Endpoint                      | Description           |
+| ------ | ----------------------------- | --------------------- |
+| POST   | `/classes`                    | Create a class        |
+| GET    | `/classes/:id`                | Get class by ID       |
+| GET    | `/classes/teacher/:teacherId` | Get teacher's classes |
+| PUT    | `/classes/:id`                | Update class          |
+| DELETE | `/classes/:id`                | Delete class          |
+| GET    | `/classes/:id/students`       | Get enrolled students |
+| GET    | `/classes/:id/assignments`    | Get class assignments |
+| POST   | `/classes/:id/assignments`    | Create assignment     |
 
-### Assignments
+### Assignments & Submissions
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/assignments/:id` | Get assignment details |
-| PUT | `/assignments/:id` | Update assignment |
-| DELETE | `/assignments/:id` | Delete assignment |
+| Method | Endpoint                                        | Description                   |
+| ------ | ----------------------------------------------- | ----------------------------- |
+| GET    | `/assignments/:id`                              | Get assignment details        |
+| PUT    | `/assignments/:id`                              | Update assignment             |
+| DELETE | `/assignments/:id`                              | Delete assignment             |
+| POST   | `/submissions`                                  | Submit assignment (multipart) |
+| GET    | `/submissions/history/:assignmentId/:studentId` | Get submission history        |
+| GET    | `/submissions/assignment/:assignmentId`         | Get all submissions           |
+| GET    | `/submissions/student/:studentId`               | Get student's submissions     |
 
-### Submissions
+### Gradebook
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/submissions` | Submit assignment (multipart) |
-| GET | `/submissions/history/:assignmentId/:studentId` | Get submission history |
-| GET | `/submissions/assignment/:assignmentId` | Get all submissions |
-| GET | `/submissions/student/:studentId` | Get student's submissions |
+| Method | Endpoint                                               | Description              |
+| ------ | ------------------------------------------------------ | ------------------------ |
+| GET    | `/gradebook/classes/:classId`                          | Get class gradebook      |
+| GET    | `/gradebook/classes/:classId/export`                   | Export CSV               |
+| GET    | `/gradebook/classes/:classId/statistics`               | Get class stats          |
+| GET    | `/gradebook/students/:studentId`                       | Get student grades       |
+| GET    | `/gradebook/students/:studentId/classes/:classId`      | Get student class grades |
+| GET    | `/gradebook/students/:studentId/classes/:classId/rank` | Get student rank         |
+| POST   | `/gradebook/submissions/:submissionId/override`        | Override grade           |
+| DELETE | `/gradebook/submissions/:submissionId/override`        | Remove override          |
+| GET    | `/gradebook/assignments/:id/late-penalty`              | Get late penalty config  |
+| PUT    | `/gradebook/assignments/:id/late-penalty`              | Set late penalty config  |
+
+### Test Cases & Code Testing
+
+| Method | Endpoint                                        | Description                    |
+| ------ | ----------------------------------------------- | ------------------------------ |
+| GET    | `/assignments/:assignmentId/test-cases`         | Get test cases                 |
+| POST   | `/assignments/:assignmentId/test-cases`         | Create test case               |
+| PUT    | `/test-cases/:testCaseId`                       | Update test case               |
+| DELETE | `/test-cases/:testCaseId`                       | Delete test case               |
+| PUT    | `/assignments/:assignmentId/test-cases/reorder` | Reorder test cases             |
+| POST   | `/code/run-tests`                               | Run tests preview              |
+| GET    | `/submissions/:submissionId/test-results`       | Get submission results         |
+| POST   | `/submissions/:submissionId/run-tests`          | Trigger manual test run        |
+| GET    | `/code/health`                                  | Check execution service status |
+
+### Plagiarism Detection
+
+| Method | Endpoint                                       | Description             |
+| ------ | ---------------------------------------------- | ----------------------- |
+| POST   | `/plagiarism/analyze`                          | Analyze files           |
+| POST   | `/plagiarism/analyze/assignment/:assignmentId` | Analyze full assignment |
+| GET    | `/plagiarism/reports/:reportId`                | Get report details      |
+| DELETE | `/plagiarism/reports/:reportId`                | Delete report           |
+| GET    | `/plagiarism/reports/:reportId/pairs/:pairId`  | Get match pair details  |
+| GET    | `/plagiarism/results/:resultId/details`        | Get result details      |
 
 ### Dashboard
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/student/dashboard/:studentId` | Student dashboard |
-| POST | `/student/dashboard/join` | Join class |
-| POST | `/student/dashboard/leave` | Leave class |
-| GET | `/teacher/dashboard/:teacherId` | Teacher dashboard |
+| Method | Endpoint                        | Description       |
+| ------ | ------------------------------- | ----------------- |
+| GET    | `/student/dashboard/:studentId` | Student dashboard |
+| POST   | `/student/dashboard/join`       | Join class        |
+| POST   | `/student/dashboard/leave`      | Leave class       |
+| GET    | `/teacher/dashboard/:teacherId` | Teacher dashboard |
+
+### Admin
+
+| Method | Endpoint                                 | Description        |
+| ------ | ---------------------------------------- | ------------------ |
+| GET    | `/admin/users`                           | List users         |
+| POST   | `/admin/users`                           | Create user        |
+| GET    | `/admin/users/:id`                       | Get user details   |
+| PATCH  | `/admin/users/:id/role`                  | Update user role   |
+| DELETE | `/admin/users/:id`                       | Delete user        |
+| GET    | `/admin/classes`                         | List classes       |
+| POST   | `/admin/classes`                         | Create class       |
+| PATCH  | `/admin/classes/:id/reassign`            | Reassign teacher   |
+| PATCH  | `/admin/classes/:id/archive`             | Archive class      |
+| GET    | `/admin/classes/:id/students`            | Get class students |
+| POST   | `/admin/classes/:id/students`            | Enroll student     |
+| DELETE | `/admin/classes/:id/students/:studentId` | Remove student     |
+| GET    | `/admin/stats`                           | System statistics  |
+| GET    | `/admin/activity`                        | Recent activity    |
 
 ---
 
@@ -283,39 +362,44 @@ export const settings = { ... };  // Typed settings object
 ### Entity Relationship Diagram
 
 ```
-┌─────────┐       ┌─────────┐       ┌──────────────┐
-│  User   │◄──────┤  Class  │◄──────┤  Assignment  │
-└────┬────┘       └────┬────┘       └──────┬───────┘
-     │                 │                   │
-     │            ┌────▼────┐         ┌────▼────┐
-     └───────────►│Enrollment│         │Submission│
-                  └──────────┘         └────┬────┘
+┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
+│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
+└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
+     │                 │                   │                     │
+     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
+     └───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
+                  └──────────┘         └────┬────┘         └────────────┘
                                             │
                                    ┌────────▼────────┐
                                    │SimilarityReport │
                                    └────────┬────────┘
                                             │
                                    ┌────────▼────────┐
-                                   │SimilarityResult │
-                                   └─────────────────┘
+                                   │SimilarityResult │◄───────┐
+                                   └────────┬────────┘        │
+                                            │           ┌─────┴────────┐
+                                            └──────────►│MatchFragment │
+                                                        └──────────────┘
 ```
 
 ### User Model
 
 ```typescript
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  supabaseUserId: varchar('supabase_user_id', { length: 255 }).unique(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  firstName: varchar('first_name', { length: 50 }).notNull(),
-  lastName: varchar('last_name', { length: 50 }).notNull(),
-  role: userRoleEnum('role').notNull().default('student'),
-  createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at'),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  supabaseUserId: varchar("supabase_user_id", { length: 255 }).unique(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  firstName: varchar("first_name", { length: 50 }).notNull(),
+  lastName: varchar("last_name", { length: 50 }).notNull(),
+  role: userRoleEnum("role").notNull().default("student"),
+  avatarUrl: varchar("avatar_url", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
 ```
 
 ### Roles
+
 - `student` - Can enroll in classes, submit assignments
 - `teacher` - Can create classes, assignments
 - `admin` - System administration
@@ -330,10 +414,10 @@ Handles authentication with Supabase coordination:
 
 ```typescript
 class AuthService {
-  registerUser(email, password, firstName, lastName, role)  // Create user
-  loginUser(email, password)                    // Authenticate
-  verifyToken(token)                            // Validate JWT
-  requestPasswordReset(email)                   // Send reset email
+  registerUser(email, password, firstName, lastName, role); // Create user
+  loginUser(email, password); // Authenticate
+  verifyToken(token); // Validate JWT
+  requestPasswordReset(email); // Send reset email
 }
 ```
 
@@ -343,12 +427,12 @@ Manages classes and assignments:
 
 ```typescript
 class ClassService {
-  createClass(teacherId, className, description)
-  getClassById(classId, teacherId?)
-  updateClass(classId, teacherId, data)
-  deleteClass(classId, teacherId)
-  createAssignment(classId, teacherId, data)
-  getAssignmentDetails(assignmentId, userId)
+  createClass(teacherId, className, description);
+  getClassById(classId, teacherId?);
+  updateClass(classId, teacherId, data);
+  deleteClass(classId, teacherId);
+  createAssignment(classId, teacherId, data);
+  getAssignmentDetails(assignmentId, userId);
 }
 ```
 
@@ -358,10 +442,46 @@ Handles file submissions:
 
 ```typescript
 class SubmissionService {
-  submitAssignment(assignmentId, studentId, file)
-  getSubmissionHistory(assignmentId, studentId)
-  getAssignmentSubmissions(assignmentId, latestOnly)
-  getFileDownloadUrl(filePath, expiresIn)
+  submitAssignment(assignmentId, studentId, file);
+  getSubmissionHistory(assignmentId, studentId);
+  getAssignmentSubmissions(assignmentId, latestOnly);
+  getFileDownloadUrl(filePath, expiresIn);
+}
+```
+
+### GradebookService
+
+Manages student grades and statistics:
+
+```typescript
+class GradebookService {
+  getClassGradebook(classId); // Get full gradebook
+  getStudentGradebook(studentId); // Get all grades for a student
+  overrideGrade(submissionId, grade, teacherId); // Manual override
+  getLatePenaltyConfig(assignmentId); // Get late penalty settings
+}
+```
+
+### PlagiarismService
+
+Handles file analysis and similarity detection:
+
+```typescript
+class PlagiarismService {
+  analyzeFiles(files); // Analyze raw files
+  analyzeAssignmentSubmissions(assignmentId, teacherId); // Batch analysis
+  getReport(reportId); // Get report details
+}
+```
+
+### CodeTestService
+
+Executes code against test cases:
+
+```typescript
+class CodeTestService {
+  runTestsPreview(sourceCode, language, assignmentId); // Dry run
+  runSubmissionTests(submissionId); // Run tests for submission
 }
 ```
 
@@ -375,13 +495,13 @@ Generic CRUD operations:
 
 ```typescript
 class BaseRepository<TTable, TSelect, TInsert> {
-  findAll(): Promise<TSelect[]>
-  findById(id: number): Promise<TSelect | undefined>
-  create(data: TInsert): Promise<TSelect>
-  update(id: number, data: Partial<TInsert>): Promise<TSelect>
-  delete(id: number): Promise<boolean>
-  count(): Promise<number>
-  withContext(tx: TransactionContext): this  // For transactions
+  findAll(): Promise<TSelect[]>;
+  findById(id: number): Promise<TSelect | undefined>;
+  create(data: TInsert): Promise<TSelect>;
+  update(id: number, data: Partial<TInsert>): Promise<TSelect>;
+  delete(id: number): Promise<boolean>;
+  count(): Promise<number>;
+  withContext(tx: TransactionContext): this; // For transactions
 }
 ```
 
@@ -393,10 +513,10 @@ import { withTransaction } from './shared/transaction.js';
 const result = await withTransaction(async (tx) => {
   const userRepo = new UserRepository().withContext(tx);
   const enrollmentRepo = new EnrollmentRepository().withContext(tx);
-  
+
   await userRepo.create({ ... });
   await enrollmentRepo.enrollStudent(studentId, classId);
-  
+
   return { success: true };
 });
 ```
@@ -410,12 +530,12 @@ const result = await withTransaction(async (tx) => {
 Declarative request validation:
 
 ```typescript
-app.post('/register', {
+app.post("/register", {
   preHandler: validateBody(RegisterRequestSchema),
   handler: async (request, reply) => {
     const body = request.validatedBody as RegisterRequest;
     // body is fully typed and validated
-  }
+  },
 });
 ```
 
@@ -444,19 +564,19 @@ app.post('/login', {
 ```typescript
 // Throwing errors
 if (!user) throw new UserNotFoundError(userId);
-if (exists) throw new UserAlreadyExistsError('email', email);
+if (exists) throw new UserAlreadyExistsError("email", email);
 if (deadline < now) throw new DeadlinePassedError();
 ```
 
 ### Error Classes
 
-| Error | Status | Description |
-|-------|--------|-------------|
-| `BadRequestError` | 400 | Invalid request data |
-| `UnauthorizedError` | 401 | Authentication required |
-| `ForbiddenError` | 403 | Permission denied |
-| `NotFoundError` | 404 | Resource not found |
-| `ApiError` | 500 | Generic server error |
+| Error               | Status | Description             |
+| ------------------- | ------ | ----------------------- |
+| `BadRequestError`   | 400    | Invalid request data    |
+| `UnauthorizedError` | 401    | Authentication required |
+| `ForbiddenError`    | 403    | Permission denied       |
+| `NotFoundError`     | 404    | Resource not found      |
+| `ApiError`          | 500    | Generic server error    |
 
 ### Domain-Specific Errors
 
@@ -481,9 +601,9 @@ npm run test:coverage     # With coverage report
 ### Test Factories
 
 ```typescript
-import { createMockUser, createMockClass } from '../utils/factories';
+import { createMockUser, createMockClass } from "../utils/factories";
 
-const user = createMockUser({ role: 'teacher' });
+const user = createMockUser({ role: "teacher" });
 const classData = createMockClass({ teacherId: user.id });
 ```
 
@@ -533,19 +653,21 @@ npm run typecheck
 
 ## Technology Stack
 
-| Component | Technology |
-|-----------|------------|
-| Runtime | Node.js 18+ |
-| Language | TypeScript 5.x |
-| Framework | Fastify 5.x |
-| ORM | Drizzle ORM |
-| Database | PostgreSQL |
-| Validation | Zod |
-| Auth | Supabase Auth |
-| Storage | Supabase Storage |
-| DI | tsyringe |
-| Testing | Vitest |
-| Docs | Swagger/OpenAPI |
+| Component  | Technology       |
+| ---------- | ---------------- |
+| Runtime    | Node.js 18+      |
+| Language   | TypeScript 5.x   |
+| Framework  | Fastify 5.x      |
+| ORM        | Drizzle ORM      |
+| Database   | PostgreSQL       |
+| Validation | Zod              |
+| Auth       | Supabase Auth    |
+| Storage    | Supabase Storage |
+| Code Exec  | Judge0           |
+| Analysis   | Tree-Sitter      |
+| DI         | tsyringe         |
+| Testing    | Vitest           |
+| Docs       | Swagger/OpenAPI  |
 
 ---
 
