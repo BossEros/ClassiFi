@@ -1,4 +1,4 @@
-import { apiClient } from "../api/apiClient";
+import { apiClient } from "@/data/api/apiClient";
 import type {
   AdminUser,
   AdminClass,
@@ -33,7 +33,7 @@ export async function getAllUsers(options: {
   if (options.status) params.set("status", options.status);
 
   const response = await apiClient.get<PaginatedResponse<AdminUser>>(
-    `/admin/users?${params.toString()}`
+    `/admin/users?${params.toString()}`,
   );
 
   if (response.error) {
@@ -45,7 +45,7 @@ export async function getAllUsers(options: {
 
 export async function getUserById(userId: number): Promise<AdminUserResponse> {
   const response = await apiClient.get<AdminUserResponse>(
-    `/admin/users/${userId}`
+    `/admin/users/${userId}`,
   );
 
   if (response.error) {
@@ -56,11 +56,11 @@ export async function getUserById(userId: number): Promise<AdminUserResponse> {
 }
 
 export async function createUser(
-  data: CreateUserData
+  data: CreateUserData,
 ): Promise<AdminUserResponse> {
   const response = await apiClient.post<AdminUserResponse>(
     `/admin/users`,
-    data
+    data,
   );
 
   if (response.error) {
@@ -72,11 +72,11 @@ export async function createUser(
 
 export async function updateUserRole(
   userId: number,
-  role: string
+  role: string,
 ): Promise<AdminUserResponse> {
   const response = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/role`,
-    { role }
+    { role },
   );
 
   if (response.error) {
@@ -88,11 +88,11 @@ export async function updateUserRole(
 
 export async function updateUserDetails(
   userId: number,
-  data: { firstName?: string; lastName?: string }
+  data: { firstName?: string; lastName?: string },
 ): Promise<AdminUserResponse> {
   const response = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/details`,
-    data
+    data,
   );
 
   if (response.error) {
@@ -104,11 +104,11 @@ export async function updateUserDetails(
 
 export async function updateUserEmail(
   userId: number,
-  email: string
+  email: string,
 ): Promise<AdminUserResponse> {
   const response = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/email`,
-    { email }
+    { email },
   );
 
   if (response.error) {
@@ -119,11 +119,11 @@ export async function updateUserEmail(
 }
 
 export async function toggleUserStatus(
-  userId: number
+  userId: number,
 ): Promise<AdminUserResponse> {
   const response = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/status`,
-    {}
+    {},
   );
 
   if (response.error) {
@@ -135,7 +135,7 @@ export async function toggleUserStatus(
 
 export async function deleteUser(userId: number): Promise<AdminResponse> {
   const response = await apiClient.delete<AdminResponse>(
-    `/admin/users/${userId}`
+    `/admin/users/${userId}`,
   );
 
   if (response.error) {
@@ -158,10 +158,10 @@ export async function getAdminStats(): Promise<AdminStatsResponse> {
 }
 
 export async function getRecentActivity(
-  limit: number = 10
+  limit: number = 10,
 ): Promise<AdminActivityResponse> {
   const response = await apiClient.get<AdminActivityResponse>(
-    `/admin/activity?limit=${limit}`
+    `/admin/activity?limit=${limit}`,
   );
 
   if (response.error) {
@@ -194,7 +194,7 @@ export async function getAllClasses(options: {
   if (options.academicYear) params.set("academicYear", options.academicYear);
 
   const response = await apiClient.get<PaginatedResponse<AdminClass>>(
-    `/admin/classes?${params.toString()}`
+    `/admin/classes?${params.toString()}`,
   );
 
   if (response.error) {
@@ -205,10 +205,10 @@ export async function getAllClasses(options: {
 }
 
 export async function getClassById(
-  classId: number
+  classId: number,
 ): Promise<AdminClassResponse> {
   const response = await apiClient.get<AdminClassResponse>(
-    `/admin/classes/${classId}`
+    `/admin/classes/${classId}`,
   );
 
   if (response.error) {
@@ -219,11 +219,11 @@ export async function getClassById(
 }
 
 export async function createClass(
-  data: CreateClassData
+  data: CreateClassData,
 ): Promise<AdminClassResponse> {
   const response = await apiClient.post<AdminClassResponse>(
     "/admin/classes",
-    data
+    data,
   );
 
   if (response.error) {
@@ -235,11 +235,11 @@ export async function createClass(
 
 export async function updateClass(
   classId: number,
-  data: UpdateClassData
+  data: UpdateClassData,
 ): Promise<AdminClassResponse> {
   const response = await apiClient.put<AdminClassResponse>(
     `/admin/classes/${classId}`,
-    data
+    data,
   );
 
   if (response.error) {
@@ -251,7 +251,7 @@ export async function updateClass(
 
 export async function deleteClass(classId: number): Promise<AdminResponse> {
   const response = await apiClient.delete<AdminResponse>(
-    `/admin/classes/${classId}`
+    `/admin/classes/${classId}`,
   );
 
   if (response.error) {
@@ -263,11 +263,11 @@ export async function deleteClass(classId: number): Promise<AdminResponse> {
 
 export async function reassignClassTeacher(
   classId: number,
-  teacherId: number
+  teacherId: number,
 ): Promise<AdminClassResponse> {
   const response = await apiClient.patch<AdminClassResponse>(
     `/admin/classes/${classId}/reassign`,
-    { teacherId }
+    { teacherId },
   );
 
   if (response.error) {
@@ -278,11 +278,11 @@ export async function reassignClassTeacher(
 }
 
 export async function archiveClass(
-  classId: number
+  classId: number,
 ): Promise<AdminClassResponse> {
   const response = await apiClient.patch<AdminClassResponse>(
     `/admin/classes/${classId}/archive`,
-    {}
+    {},
   );
 
   if (response.error) {
@@ -293,9 +293,8 @@ export async function archiveClass(
 }
 
 export async function getAllTeachers(): Promise<AdminTeachersResponse> {
-  const response = await apiClient.get<AdminTeachersResponse>(
-    "/admin/teachers"
-  );
+  const response =
+    await apiClient.get<AdminTeachersResponse>("/admin/teachers");
 
   if (response.error) {
     throw new Error(response.error);
@@ -307,31 +306,24 @@ export async function getAllTeachers(): Promise<AdminTeachersResponse> {
 // ============ Class Enrollment Management ============
 
 export async function getClassStudents(
-  classId: number
+  classId: number,
 ): Promise<AdminStudentsResponse> {
   const response = await apiClient.get<AdminStudentsResponse>(
-    `/admin/classes/${classId}/students`
+    `/admin/classes/${classId}/students`,
   );
 
   if (response.error) {
     throw new Error(response.error);
   }
 
-  // Transform to include fullName
-  const rawStudents = response.data ? response.data.students || [] : [];
-  const students = rawStudents.map((student) => ({
-    ...student,
-    fullName: `${student.firstName} ${student.lastName}`.trim(),
-  }));
-
-  return { success: true, students };
+  return response.data!;
 }
 
 export async function getClassAssignments(
-  classId: number
+  classId: number,
 ): Promise<AdminAssignmentsResponse> {
   const response = await apiClient.get<AdminAssignmentsResponse>(
-    `/admin/classes/${classId}/assignments`
+    `/admin/classes/${classId}/assignments`,
   );
 
   if (response.error) {
@@ -343,11 +335,11 @@ export async function getClassAssignments(
 
 export async function addStudentToClass(
   classId: number,
-  studentId: number
+  studentId: number,
 ): Promise<AdminResponse> {
   const response = await apiClient.post<AdminResponse>(
     `/admin/classes/${classId}/students`,
-    { studentId }
+    { studentId },
   );
 
   if (response.error) {
@@ -359,10 +351,10 @@ export async function addStudentToClass(
 
 export async function removeStudentFromClass(
   classId: number,
-  studentId: number
+  studentId: number,
 ): Promise<AdminResponse> {
   const response = await apiClient.delete<AdminResponse>(
-    `/admin/classes/${classId}/students/${studentId}`
+    `/admin/classes/${classId}/students/${studentId}`,
   );
 
   if (response.error) {

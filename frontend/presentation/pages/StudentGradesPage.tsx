@@ -14,7 +14,10 @@ import { LatePenaltyBadge } from "@/presentation/components/gradebook/LatePenalt
 import { useStudentGrades } from "@/presentation/hooks/useGradebook";
 import { getCurrentUser } from "@/business/services/authService";
 import type { User } from "@/business/models/auth/types";
-import type { StudentClassGrades, StudentGradeEntry } from "@/data/api/types";
+import type {
+  StudentClassGrades,
+  StudentGradeEntry,
+} from "@/shared/types/gradebook";
 
 export function StudentGradesPage() {
   const navigate = useNavigate();
@@ -44,9 +47,11 @@ export function StudentGradesPage() {
       classGrade.assignments.forEach((assignment) => {
         if (assignment.grade !== null && assignment.grade !== undefined) {
           // Calculate percentage for each assignment
-          const percentage = (assignment.grade / assignment.totalScore) * 100;
-          total += percentage;
-          count++;
+          if (assignment.totalScore > 0) {
+            const percentage = (assignment.grade / assignment.totalScore) * 100;
+            total += percentage;
+            count++;
+          }
         }
       });
     });
@@ -181,7 +186,8 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
     if (gradedAssignments.length === 0) return null;
 
     const total = gradedAssignments.reduce((sum, a) => {
-      const percentage = ((a.grade ?? 0) / a.totalScore) * 100;
+      const percentage =
+        a.totalScore > 0 ? ((a.grade ?? 0) / a.totalScore) * 100 : 0;
       return sum + percentage;
     }, 0);
 
@@ -195,8 +201,11 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
   const totalCount = classGrades.assignments.length;
 
   return (
-    <Card className="hover:border-white/20 transition-colors">
-      <CardHeader className="cursor-pointer" onClick={onNavigate}>
+    <Card
+      className="hover:border-white/20 transition-colors cursor-pointer"
+      onClick={onNavigate}
+    >
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-lg">{classGrades.className}</CardTitle>
@@ -218,7 +227,10 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
         {classGrades.assignments.length > 0 ? (
           <div className="space-y-2">
             {classGrades.assignments.map((assignment) => (
-              <AssignmentGradeRow key={assignment.id} assignment={assignment} />
+              <AssignmentGradeRow
+                key={assignment.assignmentId}
+                assignment={assignment}
+              />
             ))}
           </div>
         ) : (
@@ -237,15 +249,16 @@ interface AssignmentGradeRowProps {
 
 function AssignmentGradeRow({ assignment }: AssignmentGradeRowProps) {
   const hasGrade = assignment.grade !== null && assignment.grade !== undefined;
-  const percentage = hasGrade
-    ? ((assignment.grade ?? 0) / assignment.totalScore) * 100
-    : 0;
+  const percentage =
+    hasGrade && assignment.totalScore > 0
+      ? ((assignment.grade ?? 0) / assignment.totalScore) * 100
+      : 0;
 
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-white truncate">
-          {assignment.name}
+          {assignment.assignmentName}
         </p>
         <div className="flex items-center gap-2 mt-1">
           <span className="text-xs text-gray-400">

@@ -169,9 +169,23 @@ docs/**/node_modules/
 
 
 backend-ts/node_modules/
+backend-ts/dist/
+
+# Backend-ts environment and logs
+backend-ts/.env
+backend-ts/.env.*
+backend-ts/*.log
+backend-ts/coverage/
 
 # ============================================
 # JUDGE0 (Self-hosted Code Execution)
 # ============================================
 judge0/judge0.conf
 judge0/postgres-data/
+
+# ============================================
+# AI ASSISTANTS
+# ============================================
+.gemini/
+.Jules/
+

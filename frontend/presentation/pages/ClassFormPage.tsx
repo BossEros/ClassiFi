@@ -26,6 +26,12 @@ import {
   getClassById,
   updateClass,
 } from "@/business/services/classService";
+import {
+  validateClassName,
+  validateClassCode,
+  validateAcademicYear,
+  validateSchedule,
+} from "@/business/validation/classValidation";
 import { Input } from "@/presentation/components/ui/Input";
 import { Textarea } from "@/presentation/components/ui/Textarea";
 import { Button } from "@/presentation/components/ui/Button";
@@ -92,7 +98,7 @@ export function ClassFormPage() {
         try {
           const classData = await getClassById(
             parseInt(classId),
-            parseInt(user.id)
+            parseInt(user.id),
           );
           setFormData({
             className: classData.className,
@@ -104,6 +110,7 @@ export function ClassFormPage() {
             schedule: classData.schedule,
           });
         } catch (error) {
+          console.error("Error loading class data:", error);
           setErrors({
             general: "Failed to load class data. Please try again.",
           });
@@ -130,7 +137,7 @@ export function ClassFormPage() {
 
   const handleInputChange = (
     field: keyof FormData,
-    value: string | number | Schedule
+    value: string | number | Schedule,
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }));
@@ -146,32 +153,27 @@ export function ClassFormPage() {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    if (!formData.className.trim()) {
-      newErrors.className = "Class name is required";
+    // Use centralized validators
+    const classNameError = validateClassName(formData.className);
+    if (classNameError) {
+      newErrors.className = classNameError;
     }
 
-    if (!formData.classCode) {
-      newErrors.classCode = "Please generate a class code";
+    const classCodeError = validateClassCode(formData.classCode);
+    if (classCodeError) {
+      newErrors.classCode = classCodeError;
+    }
+    const academicYearError = validateAcademicYear(formData.academicYear);
+    if (academicYearError) {
+      newErrors.academicYear = academicYearError;
     }
 
-    // Validate academic year format (YYYY-YYYY)
-    const academicYearRegex = /^\d{4}-\d{4}$/;
-    if (!formData.academicYear) {
-      newErrors.academicYear = "Academic year is required";
-    } else if (!academicYearRegex.test(formData.academicYear)) {
-      newErrors.academicYear = "Format must be YYYY-YYYY (e.g., 2024-2025)";
-    } else {
-      const [startYear, endYear] = formData.academicYear.split("-").map(Number);
-      if (endYear !== startYear + 1) {
-        newErrors.academicYear =
-          "End year must be exactly 1 year after start year";
-      }
+    const scheduleError = validateSchedule(formData.schedule);
+    if (scheduleError) {
+      newErrors.schedule = scheduleError;
     }
 
-    if (formData.schedule.days.length === 0) {
-      newErrors.schedule = "Select at least one day";
-    }
-
+    // Additional time validation (not in centralized validators)
     if (formData.schedule.startTime >= formData.schedule.endTime) {
       newErrors.schedule = "End time must be after start time";
     }
@@ -526,7 +528,7 @@ export function ClassFormPage() {
                     onChange={(e) =>
                       handleInputChange(
                         "yearLevel",
-                        parseInt(e.target.value) as 1 | 2 | 3 | 4
+                        parseInt(e.target.value) as 1 | 2 | 3 | 4,
                       )
                     }
                     disabled={isLoading}
@@ -561,7 +563,7 @@ export function ClassFormPage() {
                     onChange={(e) =>
                       handleInputChange(
                         "semester",
-                        parseInt(e.target.value) as 1 | 2
+                        parseInt(e.target.value) as 1 | 2,
                       )
                     }
                     disabled={isLoading}

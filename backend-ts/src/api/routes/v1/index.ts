@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyPluginOptions } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { authRoutes } from "@/api/controllers/auth.controller.js";
 import { classRoutes } from "@/api/controllers/class.controller.js";
 import { assignmentRoutes } from "@/api/controllers/assignment.controller.js";

@@ -1,8 +1,8 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import type { FastifyInstance } from "fastify";
 import { container } from "tsyringe";
-import { AuthService } from "../../services/auth.service.js";
-import { toJsonSchema } from "../utils/swagger.js";
-import { SuccessMessageSchema } from "../schemas/common.schema.js";
+import { AuthService } from "@/services/auth.service.js";
+import { toJsonSchema } from "@/api/utils/swagger.js";
+import { SuccessMessageSchema } from "@/api/schemas/common.schema.js";
 import {
   RegisterRequestSchemaForDocs,
   LoginRequestSchema,
@@ -137,7 +137,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         200: toJsonSchema(SuccessMessageSchema),
       },
     },
-    handler: async (request, reply) => {
+    handler: async (_request, reply) => {
       return reply.send({
         success: true,
         message: "Logout successful. Clear session on client.",

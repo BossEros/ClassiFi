@@ -1,69 +1,25 @@
-/** Days of the week for class schedule */
-export type DayOfWeek =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
+// Re-export shared types for backward compatibility
+export type {
+  DayOfWeek,
+  Schedule,
+  Class,
+  Assignment,
+  Task,
+  EnrolledStudent,
+  ClassResponse,
+  ClassListResponse,
+  AssignmentListResponse,
+  StudentListResponse,
+  DeleteResponse,
+  GenerateCodeResponse,
+} from "@/shared/types/class";
 
-/** Schedule for class meetings */
-export interface Schedule {
-  days: DayOfWeek[];
-  startTime: string;
-  endTime: string;
-}
+// Import types locally for use in this file's interfaces
+import type { Class, Task, EnrolledStudent } from "@/shared/types/class";
 
-/** Class model - matches backend ClassDTO */
-export interface Class {
-  id: number;
-  className: string;
-  classCode: string;
-  description?: string | null;
-  yearLevel: number;
-  semester: number;
-  academicYear: string;
-  schedule: Schedule;
-  studentCount?: number;
-  createdAt?: Date | string;
-  isActive?: boolean;
-  teacherId?: number;
-  teacherName?: string;
-  assignmentCount?: number;
-}
-
-/** Task/Assignment model for dashboard - matches backend */
-export interface Task {
-  id: number;
-  assignmentName: string;
-  description: string | null;
-  programmingLanguage: string;
-  deadline: Date | string;
-  allowResubmission: boolean;
-  maxAttempts?: number | null;
-  isActive?: boolean;
-  createdAt?: Date | string;
-  submissionCount?: number;
-  hasSubmitted?: boolean;
-  className?: string;
-  templateCode?: string | null;
-  hasTemplateCode?: boolean;
-}
-
-/** Assignment alias for Task - both represent the same domain concept */
-export type Assignment = Task;
-
-/** Enrolled student model - matches backend */
-export interface EnrolledStudent {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  avatarUrl?: string | null;
-  enrolledAt?: Date | string;
-}
+// ============================================================================
+// Business Layer Specific Types
+// ============================================================================
 
 export interface ClassDetailData {
   classInfo: Class;
@@ -90,26 +46,6 @@ export interface DashboardData {
   pendingTasks: Task[];
 }
 
-// ============ Repository Response Types ============
-
-export interface ClassResponse {
-  success: boolean;
-  message?: string;
-  class?: Class;
-}
-
-export interface ClassListResponse {
-  success: boolean;
-  message?: string;
-  classes: Class[];
-}
-
-export interface AssignmentListResponse {
-  success: boolean;
-  message?: string;
-  assignments: Assignment[];
-}
-
 // Backend response type (does not include fullName - we compute it on the frontend)
 export interface StudentBackendResponse {
   id: number;
@@ -118,21 +54,4 @@ export interface StudentBackendResponse {
   lastName: string;
   avatarUrl?: string | null;
   enrolledAt?: string;
-}
-
-export interface StudentListResponse {
-  success: boolean;
-  message?: string;
-  students: StudentBackendResponse[];
-}
-
-export interface DeleteResponse {
-  success: boolean;
-  message?: string;
-}
-
-export interface GenerateCodeResponse {
-  success: boolean;
-  code: string;
-  message?: string;
 }

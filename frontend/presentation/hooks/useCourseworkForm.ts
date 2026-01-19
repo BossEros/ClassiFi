@@ -27,8 +27,20 @@ import type {
 } from "@/shared/types/testCase";
 import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList";
 import type { SelectOption } from "@/presentation/components/ui/Select";
-import type { LatePenaltyConfig } from "@/data/api/types";
+// Import LatePenaltyConfig from shared types to comply with architectural layering
+import type { LatePenaltyConfig } from "@/shared/types/gradebook";
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig";
+
+/**
+ * Converts a Date or ISO date string to a local datetime string
+ * suitable for HTML datetime-local inputs (format: YYYY-MM-DDTHH:mm).
+ * Adjusts for the local timezone offset.
+ */
+function toLocalDateTimeString(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
 
 export interface CourseworkFormData {
   assignmentName: string;
@@ -117,11 +129,6 @@ export function useCourseworkForm() {
             parseInt(user.id),
           );
           if (assignment) {
-            const deadline = new Date(assignment.deadline);
-            deadline.setMinutes(
-              deadline.getMinutes() - deadline.getTimezoneOffset(),
-            );
-
             setFormData({
               assignmentName: assignment.assignmentName,
               description: assignment.description,
@@ -129,27 +136,19 @@ export function useCourseworkForm() {
                 | "python"
                 | "java"
                 | "c",
-              deadline: deadline.toISOString().slice(0, 16),
+              deadline: toLocalDateTimeString(assignment.deadline),
               allowResubmission: assignment.allowResubmission,
-              maxAttempts: (assignment as any).maxAttempts ?? null,
+              maxAttempts: assignment.maxAttempts ?? null,
               templateCode: assignment.templateCode ?? "",
               totalScore: assignment.totalScore ?? 100,
               scheduledDate: assignment.scheduledDate
-                ? (() => {
-                    const scheduled = new Date(assignment.scheduledDate);
-                    scheduled.setMinutes(
-                      scheduled.getMinutes() - scheduled.getTimezoneOffset(),
-                    );
-                    return scheduled.toISOString().slice(0, 16);
-                  })()
+                ? toLocalDateTimeString(assignment.scheduledDate)
                 : null,
-              latePenaltyEnabled:
-                (assignment as any).latePenaltyEnabled ?? false,
+              latePenaltyEnabled: assignment.latePenaltyEnabled ?? false,
               latePenaltyConfig:
-                (assignment as any).latePenaltyConfig ??
-                DEFAULT_LATE_PENALTY_CONFIG,
+                assignment.latePenaltyConfig ?? DEFAULT_LATE_PENALTY_CONFIG,
             });
-            setShowTemplateCode(!!(assignment as any).templateCode);
+            setShowTemplateCode(!!assignment.templateCode);
           }
         }
       } catch (_error) {
@@ -180,9 +179,9 @@ export function useCourseworkForm() {
     fetchTestCases();
   }, [isEditMode, assignmentId]);
 
-  const handleInputChange = (
-    field: keyof CourseworkFormData,
-    value: string | number | boolean | null,
+  const handleInputChange = <K extends keyof CourseworkFormData>(
+    field: K,
+    value: CourseworkFormData[K],
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }));

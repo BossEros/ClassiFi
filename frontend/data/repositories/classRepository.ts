@@ -1,4 +1,4 @@
-import { apiClient } from "../api/apiClient";
+import { apiClient } from "@/data/api/apiClient";
 import type {
   Class,
   Assignment,
@@ -9,13 +9,13 @@ import type {
   StudentListResponse,
   DeleteResponse,
   GenerateCodeResponse,
-} from "../../business/models/dashboard/types";
+} from "@/shared/types/class";
 import type {
   CreateClassRequest,
   UpdateClassRequest,
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
-} from "../api/types";
+} from "@/data/api/types";
 
 /**
  * Creates a new class
@@ -25,7 +25,7 @@ export async function createClass(request: CreateClassRequest): Promise<Class> {
 
   if (response.error || !response.data?.success || !response.data.class) {
     throw new Error(
-      response.error || response.data?.message || "Failed to create class"
+      response.error || response.data?.message || "Failed to create class",
     );
   }
 
@@ -37,14 +37,14 @@ export async function createClass(request: CreateClassRequest): Promise<Class> {
  */
 export async function generateClassCode(): Promise<string> {
   const response = await apiClient.get<GenerateCodeResponse>(
-    "/classes/generate-code"
+    "/classes/generate-code",
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
       response.error ||
         response.data?.message ||
-        "Failed to generate class code"
+        "Failed to generate class code",
     );
   }
 
@@ -56,16 +56,16 @@ export async function generateClassCode(): Promise<string> {
  */
 export async function getAllClasses(
   teacherId: number,
-  activeOnly?: boolean
+  activeOnly?: boolean,
 ): Promise<Class[]> {
   const query = activeOnly !== undefined ? `?activeOnly=${activeOnly}` : "";
   const response = await apiClient.get<ClassListResponse>(
-    `/classes/teacher/${teacherId}${query}`
+    `/classes/teacher/${teacherId}${query}`,
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch classes"
+      response.error || response.data?.message || "Failed to fetch classes",
     );
   }
 
@@ -77,7 +77,7 @@ export async function getAllClasses(
  */
 export async function getClassById(
   classId: number,
-  teacherId?: number
+  teacherId?: number,
 ): Promise<Class> {
   const url = teacherId
     ? `/classes/${classId}?teacherId=${teacherId}`
@@ -86,7 +86,7 @@ export async function getClassById(
 
   if (response.error || !response.data?.success || !response.data.class) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch class"
+      response.error || response.data?.message || "Failed to fetch class",
     );
   }
 
@@ -97,15 +97,15 @@ export async function getClassById(
  * Fetches all assignments for a class
  */
 export async function getClassAssignments(
-  classId: number
+  classId: number,
 ): Promise<Assignment[]> {
   const response = await apiClient.get<AssignmentListResponse>(
-    `/classes/${classId}/assignments`
+    `/classes/${classId}/assignments`,
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch assignments"
+      response.error || response.data?.message || "Failed to fetch assignments",
     );
   }
 
@@ -113,27 +113,25 @@ export async function getClassAssignments(
 }
 
 /**
- * Fetches all students enrolled in a class
- * Transforms backend response to include computed fullName
+ * Fetches all students enrolled in a class.
+ * Returns raw API response without transformation.
+ * Business layer should handle fullName computation.
  */
 export async function getClassStudents(
-  classId: number
+  classId: number,
 ): Promise<EnrolledStudent[]> {
   const response = await apiClient.get<StudentListResponse>(
-    `/classes/${classId}/students`
+    `/classes/${classId}/students`,
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch students"
+      response.error || response.data?.message || "Failed to fetch students",
     );
   }
 
-  // Transform backend response to include computed fullName
-  return response.data.students.map((student) => ({
-    ...student,
-    fullName: `${student.firstName} ${student.lastName}`.trim(),
-  }));
+  // Return raw students without transformation
+  return response.data.students;
 }
 
 /**
@@ -141,16 +139,16 @@ export async function getClassStudents(
  */
 export async function deleteClass(
   classId: number,
-  teacherId: number
+  teacherId: number,
 ): Promise<void> {
   const response = await apiClient.delete<DeleteResponse>(
     `/classes/${classId}`,
-    { teacherId }
+    { teacherId },
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to delete class"
+      response.error || response.data?.message || "Failed to delete class",
     );
   }
 }
@@ -160,7 +158,7 @@ export async function deleteClass(
  */
 export async function updateClass(
   classId: number,
-  request: UpdateClassRequest
+  request: UpdateClassRequest,
 ): Promise<Class> {
   const response = await apiClient.put<{
     success: boolean;
@@ -170,7 +168,7 @@ export async function updateClass(
 
   if (response.error || !response.data?.success || !response.data.classInfo) {
     throw new Error(
-      response.error || response.data?.message || "Failed to update class"
+      response.error || response.data?.message || "Failed to update class",
     );
   }
 
@@ -182,7 +180,7 @@ export async function updateClass(
  */
 export async function createAssignment(
   classId: number,
-  request: Omit<CreateAssignmentRequest, "classId">
+  request: Omit<CreateAssignmentRequest, "classId">,
 ): Promise<Assignment> {
   const response = await apiClient.post<{
     success: boolean;
@@ -192,7 +190,7 @@ export async function createAssignment(
 
   if (response.error || !response.data?.success || !response.data.assignment) {
     throw new Error(
-      response.error || response.data?.message || "Failed to create assignment"
+      response.error || response.data?.message || "Failed to create assignment",
     );
   }
 
@@ -204,7 +202,7 @@ export async function createAssignment(
  */
 export async function updateAssignment(
   assignmentId: number,
-  request: UpdateAssignmentRequest
+  request: UpdateAssignmentRequest,
 ): Promise<Assignment> {
   const response = await apiClient.put<{
     success: boolean;
@@ -214,7 +212,7 @@ export async function updateAssignment(
 
   if (response.error || !response.data?.success || !response.data.assignment) {
     throw new Error(
-      response.error || response.data?.message || "Failed to update assignment"
+      response.error || response.data?.message || "Failed to update assignment",
     );
   }
 
@@ -226,15 +224,15 @@ export async function updateAssignment(
  */
 export async function deleteAssignment(
   assignmentId: number,
-  teacherId: number
+  teacherId: number,
 ): Promise<void> {
   const response = await apiClient.delete<DeleteResponse>(
-    `/assignments/${assignmentId}?teacherId=${teacherId}`
+    `/assignments/${assignmentId}?teacherId=${teacherId}`,
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to delete assignment"
+      response.error || response.data?.message || "Failed to delete assignment",
     );
   }
 }
@@ -245,15 +243,15 @@ export async function deleteAssignment(
 export async function removeStudent(
   classId: number,
   studentId: number,
-  teacherId: number
+  teacherId: number,
 ): Promise<void> {
   const response = await apiClient.delete<DeleteResponse>(
-    `/classes/${classId}/students/${studentId}?teacherId=${teacherId}`
+    `/classes/${classId}/students/${studentId}?teacherId=${teacherId}`,
   );
 
   if (response.error || !response.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to remove student"
+      response.error || response.data?.message || "Failed to remove student",
     );
   }
 }

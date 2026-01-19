@@ -2,8 +2,8 @@ import type {
   GradebookAssignment,
   GradebookStudent,
   GradeEntry,
-} from "@/data/api/types";
-import { GradeCell } from "./GradeCell";
+} from "@/shared/types/gradebook";
+import { GradeCell } from "@/presentation/components/gradebook/GradeCell";
 
 interface GradebookTableProps {
   assignments: GradebookAssignment[];
@@ -29,8 +29,17 @@ export function GradebookTable({
     // Find corresponding assignment for each grade to get totalScore
     const total = validGrades.reduce((sum, g) => {
       const assignment = assignments.find((a) => a.id === g.assignmentId);
-      if (!assignment || g.grade === null) return sum;
-      return sum + (g.grade / assignment.totalScore) * 100;
+      if (!assignment) return sum;
+
+      // Guard against division by zero - skip assignments with totalScore of 0
+      if (assignment.totalScore === 0) {
+        console.warn(
+          `[GradebookTable] Assignment "${assignment.name}" (id: ${assignment.id}) has totalScore of 0, skipping in average calculation`,
+        );
+        return sum;
+      }
+
+      return sum + ((g.grade as number) / assignment.totalScore) * 100;
     }, 0);
 
     return Math.round(total / validGrades.length);

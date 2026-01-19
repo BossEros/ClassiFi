@@ -19,8 +19,11 @@ import {
 } from "@/presentation/hooks/useGradebook";
 import { useToast } from "@/shared/context/ToastContext";
 import { getCurrentUser } from "@/business/services/authService";
-import { getClassById } from "@/data/repositories/classRepository";
-import type { GradeEntry, GradebookStudent } from "@/data/api/types";
+import {
+  getClassById,
+  type GradeEntry,
+  type GradebookStudent,
+} from "@/business/services/classService";
 import type { Class } from "@/business/models/dashboard/types";
 
 interface OverrideTarget {
@@ -43,15 +46,28 @@ export function GradebookPage() {
   );
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
 
+  // Compute parsedClassId early to guard the hook call
   const parsedClassId = classId ? parseInt(classId, 10) : 0;
+  const isValidClassId =
+    !isNaN(parsedClassId) && parsedClassId > 0 && classId !== undefined;
 
+  // Validate classId immediately
+  useEffect(() => {
+    if (!isValidClassId) {
+      showToast("Invalid class ID", "error");
+      navigate("/dashboard");
+    }
+  }, [isValidClassId, navigate, showToast]);
+
+  // Only call the hook with a valid classId to prevent unnecessary fetches
+  // The hook internally guards with classId > 0
   const {
     gradebook,
     statistics,
     isLoading: gradebookLoading,
     error: gradebookError,
     refetch,
-  } = useClassGradebook(parsedClassId);
+  } = useClassGradebook(isValidClassId ? parsedClassId : 0);
 
   const { override, removeOverride, isOverriding } = useGradeOverride(() => {
     refetch();
@@ -242,14 +258,13 @@ export function GradebookPage() {
                   </p>
                 </CardHeader>
                 <CardContent className="p-0">
-                  {gradebook && (
+                  {gradebook && gradebook.students.length > 0 ? (
                     <GradebookTable
                       assignments={gradebook.assignments}
                       students={gradebook.students}
                       onGradeClick={handleGradeClick}
                     />
-                  )}
-                  {!gradebook?.students.length && (
+                  ) : (
                     <div className="py-12 text-center">
                       <p className="text-gray-400">No students enrolled yet</p>
                     </div>

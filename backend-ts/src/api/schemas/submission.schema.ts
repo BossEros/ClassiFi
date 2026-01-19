@@ -97,6 +97,7 @@ export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;
 /** Submission content response schema */
 export const SubmissionContentResponseSchema = z.object({
   success: z.boolean(),
+  message: z.string(),
   content: z.string(),
   language: z.string().optional(),
 });

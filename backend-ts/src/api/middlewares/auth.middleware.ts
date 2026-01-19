@@ -2,29 +2,33 @@
  * Authentication Middleware
  * Verifies JWT tokens and attaches user info to requests
  */
-import type { FastifyRequest, FastifyReply, preHandlerHookHandler } from 'fastify';
-import { container } from 'tsyringe';
-import { AuthService } from '../../services/auth.service.js';
-import { UnauthorizedError } from './error-handler.js';
+import type {
+  FastifyRequest,
+  FastifyReply,
+  preHandlerHookHandler,
+} from "fastify";
+import { container } from "tsyringe";
+import { AuthService } from "@/services/auth.service.js";
+import { UnauthorizedError } from "@/api/middlewares/error-handler.js";
 
 /** Extended request type with user info */
-declare module 'fastify' {
-    interface FastifyRequest {
-        user?: {
-            id: number;
-            supabaseUserId: string | null;
-            email: string;
-            firstName: string;
-            lastName: string;
-            role: string;
-        };
-    }
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: {
+      id: number;
+      supabaseUserId: string | null;
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: string;
+    };
+  }
 }
 
 /**
  * Authentication hook that verifies the Authorization header
  * and attaches user info to the request.
- * 
+ *
  * Usage in routes:
  * ```typescript
  * app.get('/protected', { preHandler: [authMiddleware] }, async (request, reply) => {
@@ -33,32 +37,32 @@ declare module 'fastify' {
  * ```
  */
 export const authMiddleware: preHandlerHookHandler = async (
-    request: FastifyRequest,
-    reply: FastifyReply
+  request: FastifyRequest,
+  _reply: FastifyReply,
 ) => {
-    const authHeader = request.headers.authorization;
+  const authHeader = request.headers.authorization;
 
-    if (!authHeader) {
-        throw new UnauthorizedError('Authorization header is required');
-    }
+  if (!authHeader) {
+    throw new UnauthorizedError("Authorization header is required");
+  }
 
-    // Extract token from "Bearer <token>" format
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
-        throw new UnauthorizedError('Invalid authorization header format');
-    }
+  // Extract token from "Bearer <token>" format
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
+    throw new UnauthorizedError("Invalid authorization header format");
+  }
 
-    const token = parts[1];
+  const token = parts[1];
 
-    try {
-        const authService = container.resolve<AuthService>('AuthService');
-        const userData = await authService.verifyToken(token);
+  try {
+    const authService = container.resolve<AuthService>("AuthService");
+    const userData = await authService.verifyToken(token);
 
-        // Attach user to request
-        request.user = userData;
-    } catch (error) {
-        throw new UnauthorizedError('Invalid or expired token');
-    }
+    // Attach user to request
+    request.user = userData;
+  } catch (error) {
+    throw new UnauthorizedError("Invalid or expired token");
+  }
 };
 
 /**
@@ -66,27 +70,27 @@ export const authMiddleware: preHandlerHookHandler = async (
  * but still verifies if token is present.
  */
 export const optionalAuthMiddleware: preHandlerHookHandler = async (
-    request: FastifyRequest,
-    reply: FastifyReply
+  request: FastifyRequest,
+  _reply: FastifyReply,
 ) => {
-    const authHeader = request.headers.authorization;
+  const authHeader = request.headers.authorization;
 
-    if (!authHeader) {
-        return; // No token, continue without user
-    }
+  if (!authHeader) {
+    return; // No token, continue without user
+  }
 
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
-        return; // Invalid format, continue without user
-    }
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
+    return; // Invalid format, continue without user
+  }
 
-    const token = parts[1];
+  const token = parts[1];
 
-    try {
-        const authService = container.resolve<AuthService>('AuthService');
-        const userData = await authService.verifyToken(token);
-        request.user = userData;
-    } catch (error) {
-        // Token invalid, continue without user
-    }
+  try {
+    const authService = container.resolve<AuthService>("AuthService");
+    const userData = await authService.verifyToken(token);
+    request.user = userData;
+  } catch (error) {
+    // Token invalid, continue without user
+  }
 };

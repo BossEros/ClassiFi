@@ -473,7 +473,13 @@ export function ClassDetailPage() {
                   classId={parseInt(classId)}
                   teacherId={parseInt(user.id)}
                   studentId={studentToRemove.id}
-                  studentName={studentToRemove.fullName}
+                  studentName={
+                    [studentToRemove.firstName, studentToRemove.lastName]
+                      .filter(Boolean)
+                      .join(" ") ||
+                    studentToRemove.fullName ||
+                    ""
+                  }
                 />
               )}
             </>

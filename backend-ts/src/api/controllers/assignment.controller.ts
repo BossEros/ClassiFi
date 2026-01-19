@@ -11,7 +11,7 @@ import {
   UpdateAssignmentResponseSchema,
   type UpdateAssignmentRequest,
 } from "../schemas/assignment.schema.js";
-import { UserIdQuerySchema } from "../schemas/common.schema.js";
+
 import { BadRequestError } from "../middlewares/error-handler.js";
 
 /** Assignment routes - /api/v1/assignments/* */
@@ -25,13 +25,11 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    */
   app.get<{
     Params: { assignmentId: string };
-    Querystring: { userId: string };
   }>("/:assignmentId", {
     schema: {
       tags: ["Assignments"],
       summary: "Get assignment details",
       params: toJsonSchema(AssignmentIdParamSchema),
-      querystring: toJsonSchema(UserIdQuerySchema),
       response: {
         200: toJsonSchema(GetAssignmentResponseSchema),
       },
@@ -43,9 +41,8 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
         throw new BadRequestError("Invalid assignment ID");
       }
 
-      const assignment = await assignmentService.getAssignmentDetails(
-        assignmentId
-      );
+      const assignment =
+        await assignmentService.getAssignmentDetails(assignmentId);
 
       return reply.send({
         success: true,
@@ -80,18 +77,33 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
 
         const { teacherId, ...updateData } = request.body;
 
+        // Validate deadline if provided
+        let parsedDeadline: Date | undefined;
+        if (updateData.deadline) {
+          if (!isNaN(Date.parse(updateData.deadline))) {
+            parsedDeadline = new Date(updateData.deadline);
+          } else {
+            throw new BadRequestError("Invalid deadline date format");
+          }
+        }
+
+        // Validate scheduledDate if provided
+        let parsedScheduledDate: Date | undefined;
+        if (updateData.scheduledDate) {
+          parsedScheduledDate = new Date(updateData.scheduledDate);
+          if (isNaN(parsedScheduledDate.getTime())) {
+            throw new BadRequestError("Invalid scheduled date format");
+          }
+        }
+
         const assignment = await assignmentService.updateAssignment(
           assignmentId,
           teacherId,
           {
             ...updateData,
-            deadline: updateData.deadline
-              ? new Date(updateData.deadline)
-              : undefined,
-            scheduledDate: updateData.scheduledDate
-              ? new Date(updateData.scheduledDate)
-              : null,
-          }
+            deadline: parsedDeadline,
+            scheduledDate: parsedScheduledDate,
+          },
         );
 
         return reply.send({
@@ -100,7 +112,7 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
           assignment,
         });
       },
-    }
+    },
   );
 
   /**

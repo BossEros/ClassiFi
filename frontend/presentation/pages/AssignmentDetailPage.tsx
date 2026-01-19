@@ -67,7 +67,7 @@ export function AssignmentDetailPage() {
   const [previewResults, setPreviewResults] =
     useState<TestPreviewResult | null>(null);
   const [expandedPreviewTests, setExpandedPreviewTests] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const [submissionTestResults, setSubmissionTestResults] =
     useState<TestPreviewResult | null>(null);
@@ -75,7 +75,7 @@ export function AssignmentDetailPage() {
     Set<number>
   >(new Set());
   const [expandedInitialTests, setExpandedInitialTests] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
 
   // Preview Modal State
@@ -109,7 +109,7 @@ export function AssignmentDetailPage() {
         // Fetch assignment details
         const assignmentData = await getAssignmentById(
           parseInt(assignmentId),
-          parseInt(currentUser.id)
+          parseInt(currentUser.id),
         );
         setAssignment(assignmentData);
 
@@ -117,14 +117,14 @@ export function AssignmentDetailPage() {
         if (currentUser.role === "student") {
           const historyResponse = await getSubmissionHistory(
             parseInt(assignmentId),
-            parseInt(currentUser.id)
+            parseInt(currentUser.id),
           );
 
           // Sort submissions by submissionNumber descending (newest first)
           // This ensures consistent ordering with handleSubmit (which prepends)
           // and ensures submissions[0] is interpreted as the latest in the render logic
           const sortedSubmissions = [...historyResponse.submissions].sort(
-            (a, b) => b.submissionNumber - a.submissionNumber
+            (a, b) => b.submissionNumber - a.submissionNumber,
           );
           setSubmissions(sortedSubmissions);
 
@@ -135,13 +135,13 @@ export function AssignmentDetailPage() {
           if (latestSubmission) {
             try {
               const results = await getTestResultsForSubmission(
-                latestSubmission.id
+                latestSubmission.id,
               );
               setSubmissionTestResults(results);
             } catch (e) {
               console.error(
                 "Failed to load test results for latest submission",
-                e
+                e,
               );
             }
           }
@@ -152,7 +152,7 @@ export function AssignmentDetailPage() {
           // Fetch all submissions for teacher
           const allSubmissions = await getAssignmentSubmissions(
             parseInt(assignmentId),
-            true // latest only
+            true, // latest only
           );
           setSubmissions(allSubmissions);
         }
@@ -183,7 +183,7 @@ export function AssignmentDetailPage() {
     if (assignment) {
       const validationError = validateFile(
         file,
-        assignment.programmingLanguage
+        assignment.programmingLanguage,
       );
       if (validationError) {
         setFileError(validationError);
@@ -202,7 +202,7 @@ export function AssignmentDetailPage() {
     // Final validation
     const validationError = validateFile(
       selectedFile,
-      assignment.programmingLanguage
+      assignment.programmingLanguage,
     );
     if (validationError) {
       setFileError(validationError);
@@ -220,8 +220,8 @@ export function AssignmentDetailPage() {
         programmingLanguage: assignment.programmingLanguage,
       });
 
-      // Add new submission to history
-      setSubmissions([submission, ...submissions]);
+      // Add new submission to history using functional update to avoid stale closure
+      setSubmissions((prevSubmissions) => [submission, ...prevSubmissions]);
 
       // Clear preview results
       setPreviewResults(null);
@@ -245,7 +245,7 @@ export function AssignmentDetailPage() {
     } catch (err) {
       console.error("Failed to submit assignment:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to submit coursework"
+        err instanceof Error ? err.message : "Failed to submit coursework",
       );
     } finally {
       setIsSubmitting(false);
@@ -287,6 +287,18 @@ export function AssignmentDetailPage() {
     });
   };
 
+  const toggleInitialTestExpand = (index: number) => {
+    setExpandedInitialTests((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  };
+
   const handleRunPreviewTests = async () => {
     if (!selectedFile || !assignment || !assignmentId) return;
 
@@ -301,7 +313,7 @@ export function AssignmentDetailPage() {
       const results = await runTestsPreview(
         fileContent,
         assignment.programmingLanguage as "python" | "java" | "c",
-        parseInt(assignmentId)
+        parseInt(assignmentId),
       );
 
       setPreviewResults(results);
@@ -530,8 +542,8 @@ export function AssignmentDetailPage() {
                               tempAssignment.programmingLanguage === "python"
                                 ? ".py,.ipynb"
                                 : tempAssignment.programmingLanguage === "java"
-                                ? ".java,.jar"
-                                : ".c,.h"
+                                  ? ".java,.jar"
+                                  : ".c,.h"
                             }
                           />
                           <div className="text-center">
@@ -544,7 +556,9 @@ export function AssignmentDetailPage() {
                             <p className="text-sm text-gray-500">
                               {tempAssignment.programmingLanguage === "python"
                                 ? "Accepted: .py, .ipynb"
-                                : "Accepted: .java, .jar"}
+                                : tempAssignment.programmingLanguage === "java"
+                                  ? "Accepted: .java, .jar"
+                                  : "Accepted: .c, .h"}
                             </p>
                             <p className="text-xs text-gray-600 mt-2">
                               Maximum file size: 10MB
@@ -734,10 +748,10 @@ export function AssignmentDetailPage() {
                                 0.75
                                   ? "text-green-400"
                                   : latestSubmission.grade /
-                                      (assignment?.totalScore || 100) >=
-                                    0.5
-                                  ? "text-yellow-400"
-                                  : "text-red-400"
+                                        (assignment?.totalScore || 100) >=
+                                      0.5
+                                    ? "text-yellow-400"
+                                    : "text-red-400"
                               }`}
                             >
                               {latestSubmission.grade}
@@ -998,12 +1012,12 @@ export function AssignmentDetailPage() {
                                   <p className="text-sm font-medium text-gray-200">
                                     {
                                       activeResults.results.filter(
-                                        (r) => r.isHidden
+                                        (r) => r.isHidden,
                                       ).length
                                     }{" "}
                                     Hidden Case
                                     {activeResults.results.filter(
-                                      (r) => r.isHidden
+                                      (r) => r.isHidden,
                                     ).length !== 1
                                       ? "s"
                                       : ""}
@@ -1029,16 +1043,6 @@ export function AssignmentDetailPage() {
                   ) {
                     const testCases = assignment.testCases;
                     const resultCount = testCases.length;
-
-                    const toggleInitialTestExpand = (index: number) => {
-                      const newExpanded = new Set(expandedInitialTests);
-                      if (newExpanded.has(index)) {
-                        newExpanded.delete(index);
-                      } else {
-                        newExpanded.add(index);
-                      }
-                      setExpandedInitialTests(newExpanded);
-                    };
 
                     return (
                       <Card className="border-white/10 bg-white/5 backdrop-blur-sm">

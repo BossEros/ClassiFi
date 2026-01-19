@@ -1,66 +1,33 @@
-import type { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 
-/** Custom API error class */
-export class ApiError extends Error {
-    statusCode: number;
+import { ApiError } from "@/shared/errors.js";
 
-    constructor(message: string, statusCode: number = 500) {
-        super(message);
-        this.statusCode = statusCode;
-        this.name = 'ApiError';
-    }
-}
-
-/** 400 Bad Request */
-export class BadRequestError extends ApiError {
-    constructor(message: string = 'Bad Request') {
-        super(message, 400);
-        this.name = 'BadRequestError';
-    }
-}
-
-/** 401 Unauthorized */
-export class UnauthorizedError extends ApiError {
-    constructor(message: string = 'Unauthorized') {
-        super(message, 401);
-        this.name = 'UnauthorizedError';
-    }
-}
-
-/** 403 Forbidden */
-export class ForbiddenError extends ApiError {
-    constructor(message: string = 'Forbidden') {
-        super(message, 403);
-        this.name = 'ForbiddenError';
-    }
-}
-
-/** 404 Not Found */
-export class NotFoundError extends ApiError {
-    constructor(message: string = 'Not Found') {
-        super(message, 404);
-        this.name = 'NotFoundError';
-    }
-}
+export {
+  ApiError,
+  BadRequestError,
+  UnauthorizedError,
+  ForbiddenError,
+  NotFoundError,
+} from "@/shared/errors.js";
 
 /** Global error handler for Fastify */
 export function errorHandler(
-    error: FastifyError,
-    request: FastifyRequest,
-    reply: FastifyReply
+  error: FastifyError,
+  _request: FastifyRequest,
+  reply: FastifyReply,
 ): void {
-    const statusCode = error instanceof ApiError ? error.statusCode : 500;
-    const message = error.message || 'Internal Server Error';
+  const statusCode = error instanceof ApiError ? error.statusCode : 500;
+  const message = error.message || "Internal Server Error";
 
-    // Log error in development
-    if (process.env.ENVIRONMENT === 'development') {
-        console.error(`[ERROR] ${statusCode} - ${message}`);
-        console.error(error.stack);
-    }
+  // Log error in development
+  if (process.env.ENVIRONMENT === "development") {
+    console.error(`[ERROR] ${statusCode} - ${message}`);
+    console.error(error.stack);
+  }
 
-    reply.status(statusCode).send({
-        success: false,
-        message,
-        error: process.env.ENVIRONMENT === 'development' ? error.stack : undefined,
-    });
+  reply.status(statusCode).send({
+    success: false,
+    message,
+    error: process.env.ENVIRONMENT === "development" ? error.stack : undefined,
+  });
 }

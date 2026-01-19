@@ -33,7 +33,7 @@ const ALLOWED_EXTENSIONS: Record<string, string[]> = {
  */
 export function validateFile(
   file: File,
-  programmingLanguage: string
+  programmingLanguage: string,
 ): string | null {
   // Check if file exists
   if (!file) {
@@ -52,14 +52,15 @@ export function validateFile(
 
   // Check file extension
   const fileName = file.name.toLowerCase();
-  const fileExt = fileName.substring(fileName.lastIndexOf("."));
+  const lastDotIndex = fileName.lastIndexOf(".");
+  const fileExt = lastDotIndex === -1 ? "" : fileName.substring(lastDotIndex);
 
   const allowedExts =
     ALLOWED_EXTENSIONS[programmingLanguage.toLowerCase()] || [];
 
   if (!allowedExts.includes(fileExt)) {
     return `Invalid file type. Expected ${allowedExts.join(
-      ", "
+      ", ",
     )} for ${programmingLanguage}`;
   }
 
@@ -73,7 +74,7 @@ export function validateFile(
  * @returns Submission data
  */
 export async function submitAssignment(
-  request: SubmitAssignmentRequest
+  request: SubmitAssignmentRequest,
 ): Promise<Submission> {
   // Validate inputs
   validateId(request.assignmentId, "assignment");
@@ -82,7 +83,7 @@ export async function submitAssignment(
   // Validate file
   const validationError = validateFile(
     request.file,
-    request.programmingLanguage
+    request.programmingLanguage,
   );
   if (validationError) {
     throw new Error(validationError);
@@ -111,14 +112,14 @@ export async function submitAssignment(
  */
 export async function getSubmissionHistory(
   assignmentId: number,
-  studentId: number
+  studentId: number,
 ): Promise<SubmissionHistoryResponse> {
   validateId(assignmentId, "assignment");
   validateId(studentId, "student");
 
   const response = await assignmentRepository.getSubmissionHistory(
     assignmentId,
-    studentId
+    studentId,
   );
 
   if (response.error) {
@@ -141,13 +142,13 @@ export async function getSubmissionHistory(
  */
 export async function getStudentSubmissions(
   studentId: number,
-  latestOnly: boolean = true
+  latestOnly: boolean = true,
 ): Promise<Submission[]> {
   validateId(studentId, "student");
 
   const response = await assignmentRepository.getStudentSubmissions(
     studentId,
-    latestOnly
+    latestOnly,
   );
 
   if (response.error) {
@@ -170,13 +171,13 @@ export async function getStudentSubmissions(
  */
 export async function getAssignmentSubmissions(
   assignmentId: number,
-  latestOnly: boolean = true
+  latestOnly: boolean = true,
 ): Promise<Submission[]> {
   validateId(assignmentId, "assignment");
 
   const response = await assignmentRepository.getAssignmentSubmissions(
     assignmentId,
-    latestOnly
+    latestOnly,
   );
 
   if (response.error) {
@@ -199,13 +200,13 @@ export async function getAssignmentSubmissions(
  */
 export async function getAssignmentById(
   assignmentId: number,
-  userId: number
+  userId: number,
 ): Promise<AssignmentDetail> {
   validateId(assignmentId, "assignment");
 
   const response = await assignmentRepository.getAssignmentById(
     assignmentId,
-    userId
+    userId,
   );
 
   if (response.error) {
@@ -226,13 +227,12 @@ export async function getAssignmentById(
  * @returns Object containing content and language
  */
 export async function getSubmissionContent(
-  submissionId: number
+  submissionId: number,
 ): Promise<{ content: string; language?: string }> {
   validateId(submissionId, "submission");
 
-  const response = await assignmentRepository.getSubmissionContent(
-    submissionId
-  );
+  const response =
+    await assignmentRepository.getSubmissionContent(submissionId);
 
   if (response.error) {
     throw new Error(response.error);
@@ -255,13 +255,12 @@ export async function getSubmissionContent(
  * @returns Download URL
  */
 export async function getSubmissionDownloadUrl(
-  submissionId: number
+  submissionId: number,
 ): Promise<string> {
   validateId(submissionId, "submission");
 
-  const response = await assignmentRepository.getSubmissionDownloadUrl(
-    submissionId
-  );
+  const response =
+    await assignmentRepository.getSubmissionDownloadUrl(submissionId);
 
   if (response.error) {
     throw new Error(response.error);

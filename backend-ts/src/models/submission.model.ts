@@ -33,6 +33,8 @@ export const submissions = pgTable(
       .notNull(),
     isLatest: boolean("is_latest").default(true).notNull(),
     grade: integer("grade"), // The final grade (auto-calculated or manually overridden)
+    isLate: boolean("is_late").default(false).notNull(),
+    penaltyApplied: integer("penalty_applied").default(0),
 
     // Grade Override Tracking
     isGradeOverridden: boolean("is_grade_overridden").default(false).notNull(),
@@ -43,17 +45,21 @@ export const submissions = pgTable(
     unique("uq_assignment_student_submission").on(
       table.assignmentId,
       table.studentId,
-      table.submissionNumber
+      table.submissionNumber,
     ),
     check(
       "check_file_size",
-      sql`${table.fileSize} > 0 AND ${table.fileSize} <= 10485760`
+      sql`${table.fileSize} > 0 AND ${table.fileSize} <= 10485760`,
     ),
     check("check_submission_number", sql`${table.submissionNumber} > 0`),
+    check(
+      "check_override_consistency",
+      sql`NOT ${table.isGradeOverridden} OR ${table.overriddenAt} IS NOT NULL`,
+    ),
     index("idx_submissions_assignment").on(table.assignmentId),
     index("idx_submissions_student").on(table.studentId),
     index("idx_submissions_date").on(table.submittedAt),
-  ]
+  ],
 );
 
 /** Submission relations */

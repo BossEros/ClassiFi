@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # TypeScript Best Practices
 
 Always follow these TypeScript best practices when writing code:
@@ -16,6 +20,7 @@ Always follow these TypeScript best practices when writing code:
 - Use **string literal unions** instead of plain `string` for known values
 - Use **discriminated unions** for state management (e.g., `{ status: "loading" } | { status: "error"; error: string }`)
 - Use **`as const`** for immutable arrays/objects to get narrow literal types
+- Adhere to TypeScript best practices by avoiding any types
 
 ## Runtime Safety
 

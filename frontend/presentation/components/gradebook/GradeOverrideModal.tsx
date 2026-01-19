@@ -31,30 +31,98 @@ export function GradeOverrideModal({
   const [feedback, setFeedback] = React.useState<string>("");
   const [error, setError] = React.useState<string | null>(null);
 
+  const modalRef = React.useRef<HTMLDivElement>(null);
+  const previousFocusRef = React.useRef<HTMLElement | null>(null);
+  const previousIsOpenRef = React.useRef<boolean>(false);
+
   // Reset form when modal opens
   React.useEffect(() => {
     if (isOpen) {
       setGrade(currentGrade?.toString() ?? "");
       setFeedback("");
       setError(null);
+      previousFocusRef.current = document.activeElement as HTMLElement;
     }
   }, [isOpen, currentGrade]);
 
-  // Close on escape key
+  // Handle focus trap and escape key
   React.useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
+    function handleKeyDown(event: KeyboardEvent) {
+      // Handle Escape
       if (event.key === "Escape" && !isSubmitting) {
         onClose();
+        return;
+      }
+
+      // Handle Focus Trap (Tab key)
+      if (event.key === "Tab" && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        );
+
+        // Guard: bail out if no focusable elements
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[
+          focusableElements.length - 1
+        ] as HTMLElement;
+
+        // Additional safety check
+        if (!firstElement || !lastElement) return;
+
+        if (event.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            event.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            event.preventDefault();
+          }
+        }
       }
     }
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      document.body.style.overflow = "hidden";
+    // Track previous isOpen state for cleanup
+    const wasOpen = previousIsOpenRef.current;
+    previousIsOpenRef.current = isOpen;
+
+    // Only run cleanup when modal transitions from open to closed
+    if (!isOpen && wasOpen) {
+      // Modal just closed - restore focus
+      if (previousFocusRef.current) {
+        previousFocusRef.current.focus();
+      }
+      return;
     }
 
+    if (!isOpen) return;
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+
+    // Auto-focus the grade input or the first focusable element
+    // Using setTimeout to ensure render is complete
+    setTimeout(() => {
+      if (modalRef.current) {
+        const gradeInput = modalRef.current.querySelector(
+          "#grade",
+        ) as HTMLElement;
+        if (gradeInput) {
+          gradeInput.focus();
+        } else {
+          const firstElement = modalRef.current.querySelectorAll(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          )[0] as HTMLElement;
+          firstElement?.focus();
+        }
+      }
+    }, 0);
+
     return () => {
-      document.removeEventListener("keydown", handleEscape);
+      document.removeEventListener("keydown", handleKeyDown);
       document.body.style.overflow = "unset";
     };
   }, [isOpen, onClose, isSubmitting]);
@@ -63,7 +131,7 @@ export function GradeOverrideModal({
     e.preventDefault();
     setError(null);
 
-    const parsedGrade = parseInt(grade, 10);
+    const parsedGrade = parseFloat(grade);
     if (isNaN(parsedGrade)) {
       setError("Please enter a valid grade");
       return;
@@ -89,6 +157,7 @@ export function GradeOverrideModal({
 
       {/* Modal */}
       <div
+        ref={modalRef}
         className={cn(
           "relative w-full max-w-md mx-4 p-6",
           "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
@@ -150,6 +219,8 @@ export function GradeOverrideModal({
             <input
               type="number"
               id="grade"
+              step="0.01"
+              inputMode="decimal"
               value={grade}
               onChange={(e) => setGrade(e.target.value)}
               min={0}

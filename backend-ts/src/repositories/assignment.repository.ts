@@ -1,4 +1,3 @@
-import { db } from "@/shared/database.js";
 import { eq, and, desc, inArray, sql, or, gt, asc } from "drizzle-orm";
 import {
   assignments,
@@ -29,7 +28,7 @@ export class AssignmentRepository extends BaseRepository<
 
   /** Get an assignment by ID */
   async getAssignmentById(
-    assignmentId: number
+    assignmentId: number,
   ): Promise<Assignment | undefined> {
     return await this.findById(assignmentId);
   }
@@ -37,14 +36,14 @@ export class AssignmentRepository extends BaseRepository<
   /** Get all assignments for a class */
   async getAssignmentsByClassId(
     classId: number,
-    activeOnly: boolean = true
+    activeOnly: boolean = true,
   ): Promise<Assignment[]> {
     if (activeOnly) {
       return await this.db
         .select()
         .from(assignments)
         .where(
-          and(eq(assignments.classId, classId), eq(assignments.isActive, true))
+          and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
         )
         .orderBy(desc(assignments.deadline));
     }
@@ -59,7 +58,7 @@ export class AssignmentRepository extends BaseRepository<
   /** Get assignments for multiple classes */
   async getAssignmentsByClassIds(
     classIds: number[],
-    activeOnly: boolean = true
+    activeOnly: boolean = true,
   ): Promise<Assignment[]> {
     if (classIds.length === 0) {
       return [];
@@ -72,8 +71,8 @@ export class AssignmentRepository extends BaseRepository<
         .where(
           and(
             inArray(assignments.classId, classIds),
-            eq(assignments.isActive, true)
-          )
+            eq(assignments.isActive, true),
+          ),
         )
         .orderBy(desc(assignments.deadline));
     }
@@ -87,12 +86,12 @@ export class AssignmentRepository extends BaseRepository<
 
   /**
    * Get pending tasks for a teacher.
-   * Combines logic to check for upcoming deadlines or ungraded submissions.
+   * Combines logic to check for upcoming deadlines or active submissions.
    * Optimized to avoid N+1 query problem.
    */
   async getPendingTasksForTeacher(
     teacherId: number,
-    limit: number = 10
+    limit: number = 10,
   ): Promise<
     Array<{
       id: number;
@@ -142,7 +141,7 @@ export class AssignmentRepository extends BaseRepository<
       .leftJoin(classStudentCounts, eq(classes.id, classStudentCounts.classId))
       .leftJoin(
         assignmentSubmissionCounts,
-        eq(assignments.id, assignmentSubmissionCounts.assignmentId)
+        eq(assignments.id, assignmentSubmissionCounts.assignmentId),
       )
       .where(
         and(
@@ -151,9 +150,9 @@ export class AssignmentRepository extends BaseRepository<
           eq(assignments.isActive, true),
           or(
             gt(assignments.deadline, now),
-            gt(sql`COALESCE(${assignmentSubmissionCounts.count}, 0)`, 0)
-          )
-        )
+            gt(sql`COALESCE(${assignmentSubmissionCounts.count}, 0)`, 0),
+          ),
+        ),
       )
       .orderBy(asc(assignments.deadline))
       .limit(limit);
@@ -216,10 +215,10 @@ export class AssignmentRepository extends BaseRepository<
         | "totalScore"
         | "scheduledDate"
       >
-    >
+    >,
   ): Promise<Assignment | undefined> {
     const updateData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined)
+      Object.entries(data).filter(([_, v]) => v !== undefined),
     );
 
     if (Object.keys(updateData).length === 0) {
@@ -236,7 +235,7 @@ export class AssignmentRepository extends BaseRepository<
 
   /** Deactivate an assignment (soft delete) */
   async deactivateAssignment(
-    assignmentId: number
+    assignmentId: number,
   ): Promise<Assignment | undefined> {
     return await this.update(assignmentId, { isActive: false });
   }
@@ -247,15 +246,18 @@ export class AssignmentRepository extends BaseRepository<
   async setLatePenaltyConfig(
     assignmentId: number,
     enabled: boolean,
-    config: LatePenaltyConfig | null
-  ): Promise<void> {
-    await this.db
+    config: LatePenaltyConfig | null,
+  ): Promise<boolean> {
+    const result = await this.db
       .update(assignments)
       .set({
         latePenaltyEnabled: enabled,
         latePenaltyConfig: config,
       })
-      .where(eq(assignments.id, assignmentId));
+      .where(eq(assignments.id, assignmentId))
+      .returning();
+
+    return result.length > 0;
   }
 
   /**
@@ -263,7 +265,7 @@ export class AssignmentRepository extends BaseRepository<
    * Returns null if no config is set.
    */
   async getLatePenaltyConfig(
-    assignmentId: number
+    assignmentId: number,
   ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null } | null> {
     const result = await this.db
       .select({

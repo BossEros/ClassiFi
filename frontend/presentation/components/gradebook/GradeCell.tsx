@@ -1,4 +1,4 @@
-import type { GradeEntry } from "@/data/api/types";
+import type { GradeEntry } from "@/shared/types/gradebook";
 import { X, Edit2 } from "lucide-react";
 
 interface GradeCellProps {
@@ -31,9 +31,8 @@ export function GradeCell({ grade, totalScore, onClick }: GradeCellProps) {
   }
 
   // Calculate percentage for color coding
-  const percentage = (grade.grade / totalScore) * 100;
+  const percentage = totalScore > 0 ? (grade.grade / totalScore) * 100 : 0;
   const colorClass = getGradeColorClass(percentage);
-
   return (
     <button
       onClick={onClick}
