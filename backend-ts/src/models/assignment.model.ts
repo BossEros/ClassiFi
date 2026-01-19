@@ -39,7 +39,7 @@ export const assignments = pgTable("assignments", {
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
   description: text("description").notNull(),
   programmingLanguage: programmingLanguageEnum(
-    "programming_language"
+    "programming_language",
   ).notNull(),
   deadline: timestamp("deadline", { withTimezone: true }).notNull(),
   allowResubmission: boolean("allow_resubmission").default(true).notNull(),
@@ -72,5 +72,5 @@ export type Assignment = typeof assignments.$inferSelect;
 export type NewAssignment = typeof assignments.$inferInsert;
 
 // Import related tables
-import { submissions } from "./submission.model.js";
-import { similarityReports } from "./similarity-report.model.js";
+import { submissions } from "@/models/submission.model.js";
+import { similarityReports } from "@/models/similarity-report.model.js";

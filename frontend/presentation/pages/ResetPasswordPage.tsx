@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Input } from "../components/ui/Input";
-import { Button } from "../components/ui/Button";
+import { Input } from "@/presentation/components/ui/Input";
+import { Button } from "@/presentation/components/ui/Button";
 import { Eye, EyeOff, Lock, CheckCircle, XCircle } from "lucide-react";
 import {
   validatePassword,
@@ -9,7 +9,7 @@ import {
 import {
   resetPassword,
   initializeResetFlow,
-} from "@/data/repositories/authRepository";
+} from "@/business/services/authService";
 
 interface ResetPasswordPageProps {
   onSuccess?: () => void;
@@ -83,24 +83,32 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
 
     setIsLoading(true);
 
-    // Use authService for password reset (follows 3-tier architecture)
-    // The repository will check for Supabase session automatically
-    const result = await resetPassword({
-      newPassword: newPassword,
-      confirmPassword: confirmPassword,
-    });
+    try {
+      // Use authService for password reset (follows 3-tier architecture)
+      const result = await resetPassword({
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      });
 
-    setIsLoading(false);
+      if (result.success) {
+        setSuccess(true);
 
-    if (result.success) {
-      setSuccess(true);
-
-      // Redirect to login after 3 seconds
-      setTimeout(() => {
-        onSuccess?.();
-      }, 3000);
-    } else {
-      setError(result.message || "Failed to reset password");
+        // Redirect to login after 3 seconds
+        setTimeout(() => {
+          onSuccess?.();
+        }, 3000);
+      } else {
+        setError(result.message || "Failed to reset password");
+      }
+    } catch (err) {
+      console.error("Password reset error:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while resetting your password",
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 

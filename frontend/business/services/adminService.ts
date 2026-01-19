@@ -35,49 +35,66 @@ export async function getAllUsers(
     search?: string;
     role?: string;
     status?: string;
-  } = {}
+  } = {},
 ): Promise<PaginatedResponse<AdminUser>> {
   return await adminRepository.getAllUsers(options);
 }
 
 export async function getUserById(userId: number): Promise<AdminUser> {
   const response = await adminRepository.getUserById(userId);
-  return response.user!;
+  if (!response.user) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+  return response.user;
 }
 
 export async function createUser(data: CreateUserData): Promise<AdminUser> {
   const response = await adminRepository.createUser(data);
-  return response.user!;
+  if (!response.user) {
+    throw new Error("Failed to create user: no user returned");
+  }
+  return response.user;
 }
 
 export async function updateUserRole(
   userId: number,
-  role: string
+  role: string,
 ): Promise<AdminUser> {
   const response = await adminRepository.updateUserRole(userId, role);
-  return response.user!;
+  if (!response.user) {
+    throw new Error(`Failed to update role for user ${userId}`);
+  }
+  return response.user;
 }
 
 export async function updateUserDetails(
   userId: number,
-  data: { firstName?: string; lastName?: string }
+  data: { firstName?: string; lastName?: string },
 ): Promise<AdminUser> {
   const response = await adminRepository.updateUserDetails(userId, data);
-  return response.user!;
+  if (!response.user) {
+    throw new Error(`Failed to update details for user ${userId}`);
+  }
+  return response.user;
 }
 
 export async function updateUserEmail(
   userId: number,
-  email: string
+  email: string,
 ): Promise<AdminUser> {
   const response = await adminRepository.updateUserEmail(userId, email);
-  return response.user!;
+  if (!response.user) {
+    throw new Error(`Failed to update email for user ${userId}`);
+  }
+  return response.user;
 }
 
 export async function toggleUserStatus(userId: number): Promise<AdminUser> {
   const response = await adminRepository.toggleUserStatus(userId);
-
-  return response.user!;
+  if (!response.user) {
+    throw new Error(`Failed to toggle status for user ${userId}`);
+  }
+  return response.user;
 }
 
 export async function deleteUser(userId: number): Promise<void> {
@@ -89,15 +106,23 @@ export async function deleteUser(userId: number): Promise<void> {
 export async function getAdminStats(): Promise<AdminStats> {
   const response = await adminRepository.getAdminStats();
 
-  return response.stats!;
+  if (!response.stats) {
+    throw new Error("getAdminStats: missing stats in response");
+  }
+
+  return response.stats;
 }
 
 export async function getRecentActivity(
-  limit: number = 10
+  limit: number = 10,
 ): Promise<ActivityItem[]> {
   const response = await adminRepository.getRecentActivity(limit);
 
-  return response.activity!;
+  if (!response.activity || !Array.isArray(response.activity)) {
+    throw new Error("getRecentActivity: missing activity in response");
+  }
+
+  return response.activity;
 }
 
 // ============ Class Management ============
@@ -112,27 +137,36 @@ export async function getAllClasses(
     yearLevel?: number;
     semester?: number;
     academicYear?: string;
-  } = {}
+  } = {},
 ): Promise<PaginatedResponse<AdminClass>> {
   return await adminRepository.getAllClasses(options);
 }
 
 export async function getClassById(classId: number): Promise<AdminClass> {
   const response = await adminRepository.getClassById(classId);
-  return response.class!;
+  if (!response.class) {
+    throw new Error(`getClassById: class with ID ${classId} not found`);
+  }
+  return response.class;
 }
 
 export async function createClass(data: CreateClassData): Promise<AdminClass> {
   const response = await adminRepository.createClass(data);
-  return response.class!;
+  if (!response.class) {
+    throw new Error("createClass: failed to create class, no class returned");
+  }
+  return response.class;
 }
 
 export async function updateClass(
   classId: number,
-  data: UpdateClassData
+  data: UpdateClassData,
 ): Promise<AdminClass> {
   const response = await adminRepository.updateClass(classId, data);
-  return response.class!;
+  if (!response.class) {
+    throw new Error(`updateClass: failed to update class ${classId}`);
+  }
+  return response.class;
 }
 
 export async function deleteClass(classId: number): Promise<void> {
@@ -141,49 +175,70 @@ export async function deleteClass(classId: number): Promise<void> {
 
 export async function reassignClassTeacher(
   classId: number,
-  teacherId: number
+  teacherId: number,
 ): Promise<AdminClass> {
   const response = await adminRepository.reassignClassTeacher(
     classId,
-    teacherId
+    teacherId,
   );
-  return response.class!;
+  if (!response.class) {
+    throw new Error(
+      `reassignClassTeacher: failed to reassign teacher for class ${classId}`,
+    );
+  }
+  return response.class;
 }
 
 export async function archiveClass(classId: number): Promise<AdminClass> {
   const response = await adminRepository.archiveClass(classId);
-  return response.class!;
+  if (!response.class) {
+    throw new Error(`archiveClass: failed to archive class ${classId}`);
+  }
+  return response.class;
 }
 
 export async function getAllTeachers(): Promise<AdminUser[]> {
   const response = await adminRepository.getAllTeachers();
-  return response.teachers!;
+  if (!response.teachers) {
+    throw new Error("Failed to fetch teachers list");
+  }
+  return response.teachers;
 }
 
 export async function getClassStudents(
-  classId: number
+  classId: number,
 ): Promise<EnrolledStudent[]> {
   const response = await adminRepository.getClassStudents(classId);
-  return response.students!;
+  if (!response.students) {
+    return [];
+  }
+  // Add fullName transformation in service layer
+  return response.students.map((student) => ({
+    ...student,
+    fullName: `${student.firstName} ${student.lastName}`.trim(),
+  }));
 }
 
 export async function getClassAssignments(
-  classId: number
+  classId: number,
 ): Promise<ClassAssignment[]> {
   const response = await adminRepository.getClassAssignments(classId);
-  return response.assignments!;
+  if (!response.assignments) {
+    return [];
+  }
+  return response.assignments;
 }
 
 export async function addStudentToClass(
   classId: number,
-  studentId: number
+  studentId: number,
 ): Promise<void> {
   await adminRepository.addStudentToClass(classId, studentId);
 }
 
 export async function removeStudentFromClass(
   classId: number,
-  studentId: number
+  studentId: number,
 ): Promise<void> {
   await adminRepository.removeStudentFromClass(classId, studentId);
 }

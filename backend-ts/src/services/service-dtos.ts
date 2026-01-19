@@ -7,7 +7,7 @@ export interface RegisterUserServiceDTO {
   password: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: UserRole;
 }
 
 /** DTO for ClassService.createClass */

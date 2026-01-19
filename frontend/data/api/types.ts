@@ -1,4 +1,53 @@
-import type { Class, Task } from "@/business/models/dashboard/types";
+import type {
+  GradeEntry,
+  LatePenaltyConfig,
+  PenaltyTier,
+  PenaltyResult,
+  StudentClassGrades,
+  StudentGradeEntry,
+  GradebookAssignment,
+  GradebookStudent,
+  ClassStatistics,
+} from "@/shared/types/gradebook";
+
+// ============================================================================
+// Data Layer DTO Types (replacing business layer imports)
+// ============================================================================
+
+/** Base class fields shared across all class representations */
+interface ClassBase {
+  id: number;
+  teacherId: number;
+  className: string;
+  classCode: string;
+  description: string | null;
+  isActive: boolean;
+  createdAt: string;
+  teacherName?: string;
+  yearLevel: number;
+  semester: number;
+  academicYear: string;
+  schedule: Schedule;
+}
+
+/** Class DTO for API responses - includes optional aggregate counts */
+export interface ClassDTO extends ClassBase {
+  studentCount?: number;
+  assignmentCount?: number;
+}
+
+/** Task/Assignment DTO for API responses */
+export interface TaskDTO {
+  id: number;
+  classId: number;
+  assignmentName: string;
+  className?: string;
+  deadline: string | null;
+  programmingLanguage: string;
+  hasSubmitted?: boolean;
+  submissionCount?: number;
+  studentCount?: number;
+}
 
 // ============================================================================
 // Shared Types
@@ -18,6 +67,9 @@ export interface Schedule {
   startTime: string; // HH:MM format
   endTime: string; // HH:MM format
 }
+
+/** Supported programming languages for assignments */
+export type ProgrammingLanguage = "python" | "java" | "c";
 
 // ============================================================================
 // Class Request DTOs
@@ -52,13 +104,13 @@ export interface UpdateClassRequest {
 export interface CreateClassResponse {
   success: boolean;
   message?: string;
-  class?: Class;
+  class?: ClassDTO;
 }
 
 export interface CreateAssignmentResponse {
   success: boolean;
   message?: string;
-  assignment?: Task;
+  assignment?: TaskDTO;
 }
 
 // ============================================================================
@@ -68,45 +120,21 @@ export interface CreateAssignmentResponse {
 export interface DashboardResponse {
   success: boolean;
   message?: string;
-  recentClasses: Class[];
-  pendingTasks: Task[];
+  recentClasses: ClassDTO[];
+  pendingTasks: TaskDTO[];
 }
 
 export interface StudentDashboardData {
-  enrolledClasses: Class[];
-  pendingAssignments: Task[];
+  enrolledClasses: ClassDTO[];
+  pendingAssignments: TaskDTO[];
 }
 
 // ============================================================================
 // Student Dashboard Response DTOs
 // ============================================================================
 
-export interface ClassResponse {
-  id: number;
-  teacherId: number;
-  className: string;
-  classCode: string;
-  description: string | null;
-  isActive: boolean;
-  createdAt: string;
-  teacherName?: string;
-  yearLevel: number;
-  semester: number;
-  academicYear: string;
-  schedule: {
-    days: (
-      | "monday"
-      | "tuesday"
-      | "wednesday"
-      | "thursday"
-      | "friday"
-      | "saturday"
-      | "sunday"
-    )[];
-    startTime: string;
-    endTime: string;
-  };
-}
+/** Class response - alias for ClassBase since student responses don't include counts */
+export type ClassResponse = ClassBase;
 
 export interface AssignmentResponse {
   id: number;
@@ -288,7 +316,7 @@ export interface CreateUserData {
 // ============ Admin Class Types ============
 
 export interface AdminClassSchedule {
-  days: string[];
+  days: DayOfWeek[];
   startTime: string;
   endTime: string;
 }
@@ -452,7 +480,7 @@ export interface AssignmentDetail {
   className: string;
   assignmentName: string;
   description: string;
-  programmingLanguage: string;
+  programmingLanguage: ProgrammingLanguage;
   deadline: Date | string;
   allowResubmission: boolean;
   maxAttempts?: number | null;
@@ -465,6 +493,8 @@ export interface AssignmentDetail {
   hasTemplateCode?: boolean;
   totalScore?: number;
   scheduledDate?: Date | string | null;
+  latePenaltyEnabled?: boolean;
+  latePenaltyConfig?: LatePenaltyConfig | null;
   testCases?: {
     id: number;
     name: string;
@@ -480,7 +510,7 @@ export interface SubmitAssignmentRequest {
   assignmentId: number;
   studentId: number;
   file: File;
-  programmingLanguage: string;
+  programmingLanguage: ProgrammingLanguage;
 }
 
 export interface CreateAssignmentRequest {
@@ -546,51 +576,22 @@ export interface AssignmentDetailResponse {
 // ============================================================================
 
 /** Penalty tier for late submissions */
-export interface PenaltyTier {
-  hoursAfterGrace: number;
-  penaltyPercent: number;
-}
+export type { PenaltyTier };
 
 /** Late penalty configuration */
-export interface LatePenaltyConfig {
-  gracePeriodHours: number;
-  tiers: PenaltyTier[];
-  rejectAfterHours: number | null;
-}
+export type { LatePenaltyConfig };
 
 /** Penalty calculation result */
-export interface PenaltyResult {
-  isLate: boolean;
-  hoursLate: number;
-  penaltyPercent: number;
-  gradeMultiplier: number;
-  tierLabel: string;
-}
+export type { PenaltyResult };
 
 /** Single grade entry in gradebook */
-export interface GradeEntry {
-  assignmentId: number;
-  submissionId: number | null;
-  grade: number | null;
-  isOverridden: boolean;
-  submittedAt: string | null;
-}
+export type { GradeEntry };
 
 /** Assignment info in gradebook */
-export interface GradebookAssignment {
-  id: number;
-  name: string;
-  totalScore: number;
-  deadline: string;
-}
+export type { GradebookAssignment };
 
 /** Student row in gradebook */
-export interface GradebookStudent {
-  id: number;
-  name: string;
-  email: string;
-  grades: GradeEntry[];
-}
+export type { GradebookStudent };
 
 /** Class gradebook data */
 export interface ClassGradebook {
@@ -599,34 +600,13 @@ export interface ClassGradebook {
 }
 
 /** Student grade for an assignment */
-export interface StudentGradeEntry {
-  id: number;
-  name: string;
-  totalScore: number;
-  deadline: string;
-  grade: number | null;
-  isOverridden: boolean;
-  feedback: string | null;
-  submittedAt: string | null;
-  isLate?: boolean;
-  penaltyApplied?: number;
-}
+export type { StudentGradeEntry };
 
 /** Student grades for a class */
-export interface StudentClassGrades {
-  classId: number;
-  className: string;
-  teacherName: string;
-  assignments: StudentGradeEntry[];
-}
+export type { StudentClassGrades };
 
 /** Class statistics */
-export interface ClassStatistics {
-  classAverage: number | null;
-  submissionRate: number;
-  totalStudents: number;
-  totalAssignments: number;
-}
+export type { ClassStatistics };
 
 /** Student rank in class */
 export interface StudentRank {

@@ -1,12 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import { SubmissionRepository } from "../repositories/submission.repository.js";
-import { AssignmentRepository } from "../repositories/assignment.repository.js";
-import { EnrollmentRepository } from "../repositories/enrollment.repository.js";
-import { TestResultRepository } from "../repositories/testResult.repository.js";
-import { StorageService } from "./storage.service.js";
-import { CodeTestService } from "./codeTest.service.js";
-import { LatePenaltyService } from "./latePenalty.service.js";
-import { toSubmissionDTO, type SubmissionDTO } from "../shared/mappers.js";
+import { SubmissionRepository } from "@/repositories/submission.repository.js";
+import { AssignmentRepository } from "@/repositories/assignment.repository.js";
+import { EnrollmentRepository } from "@/repositories/enrollment.repository.js";
+import { TestResultRepository } from "@/repositories/testResult.repository.js";
+import { StorageService } from "@/services/storage.service.js";
+import { CodeTestService } from "@/services/codeTest.service.js";
+import { LatePenaltyService } from "@/services/latePenalty.service.js";
+import { toSubmissionDTO, type SubmissionDTO } from "@/shared/mappers.js";
 import {
   AssignmentNotFoundError,
   AssignmentInactiveError,
@@ -17,7 +17,8 @@ import {
   FileTooLargeError,
   UploadFailedError,
   SubmissionNotFoundError,
-} from "../shared/errors.js";
+  SubmissionFileNotFoundError,
+} from "@/shared/errors.js";
 
 /**
  * Business logic for submission-related operations.
@@ -102,49 +103,12 @@ export class SubmissionService {
       studentId,
     );
 
-    if (existingSubmissions.length > 0) {
-      if (!assignment.allowResubmission) {
-        throw new ResubmissionNotAllowedError();
-      }
+    // Store existing submissions to delete after successful new submission
+    const submissionsToDelete =
+      existingSubmissions.length > 0 ? existingSubmissions : [];
 
-      // Cleanup: Delete ALL previous submissions and their data (File + TestResults + DB Record)
-      for (const sub of existingSubmissions) {
-        // 1. Delete Test Results
-        await this.testResultRepo.deleteBySubmissionId(sub.id);
-
-        // 2. Delete File from Storage
-        if (sub.filePath) {
-          try {
-            await this.storageService.deleteFiles("submissions", [
-              sub.filePath,
-            ]);
-          } catch (err) {
-            console.error(
-              `Failed to delete old submission file: ${sub.filePath}`,
-              err,
-            );
-          }
-        }
-
-        // 3. Delete Submission Record
-        // Assuming base generic Delete exists or we need to add specific delete to repo.
-        // If BaseRepository has delete(id), we use it.
-        // Checking SubmissionRepository again... it inherits BaseRepository.
-        // Assuming BaseRepository has delete(id). If not, we'd need to add it.
-        // Given previous context, it likely has common CRUD operation.
-        // Using a safe manual delete call or assuming delete(id) works.
-        // Wait, I haven't seen BaseRepository delete method.
-        // But I can create a delete method in SubmissionRepository "deleteSubmission" just to be safe if generic delete isn't confirmed.
-        // Actually, I'll assume I can just use `submissionRepo.delete(sub.id)` if it's standard,
-        // If not, I'll add `deleteSubmission` to SubmissionRepository in a future step if this errors.
-        // For now, I'll check BaseRepository in next step if this fails or just add a direct delete call via existing repo methods if possible.
-        // Ah, I don't see a `delete` method in SubmissionRepository in the view.
-        // I will add `deleteSubmission` logic here assuming `submissionRepo.delete` exists on BaseRepository,
-        // if it fails I'll fix it.
-        // Actually, `StorageService` calls `deleteFiles`.
-        // Let's assume `submissionRepo.delete` is available from Base.
-        await this.submissionRepo.delete(sub.id);
-      }
+    if (existingSubmissions.length > 0 && !assignment.allowResubmission) {
+      throw new ResubmissionNotAllowedError();
     }
 
     // Validate file extension
@@ -167,7 +131,7 @@ export class SubmissionService {
       throw new FileTooLargeError(10);
     }
 
-    // Reset submission number to 1 since we deleted history
+    // Always use submission number 1 (old submissions will be cleaned up after successful creation)
     const submissionNumber = 1;
 
     // Upload file using StorageService
@@ -196,6 +160,8 @@ export class SubmissionService {
       filePath,
       fileSize: file.data.length,
       submissionNumber,
+      isLate,
+      penaltyApplied: penaltyResult?.penaltyPercent ?? 0,
     });
 
     // Run tests automatically
@@ -206,25 +172,59 @@ export class SubmissionService {
       // We don't fail the submission itself if tests fail to run, just log it
     }
 
-    // Apply late penalty if applicable
-    if (isLate && penaltyResult && penaltyResult.penaltyPercent > 0) {
-      const updatedSub = await this.submissionRepo.getSubmissionById(
-        submission.id,
-      );
-      if (updatedSub && updatedSub.grade !== null) {
-        const penalizedGrade = this.latePenaltyService.applyPenalty(
-          updatedSub.grade,
-          penaltyResult,
-        );
-        // Update grade with penalty applied
-        await this.submissionRepo.updateGrade(submission.id, penalizedGrade);
-      }
-    }
-
-    // Re-fetch submission to get the updated grade after tests
+    // Fetch updated submission to get grade from tests
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
       submission.id,
     );
+
+    // Apply late penalty if applicable and grade is available
+    if (
+      updatedSubmission &&
+      updatedSubmission.grade !== null &&
+      isLate &&
+      penaltyResult &&
+      penaltyResult.penaltyPercent > 0
+    ) {
+      const penalizedGrade = this.latePenaltyService.applyPenalty(
+        updatedSubmission.grade,
+        penaltyResult,
+      );
+      // Update grade with penalty applied
+      await this.submissionRepo.updateGrade(submission.id, penalizedGrade);
+      // Update in-memory object for DTO return
+      updatedSubmission.grade = penalizedGrade;
+    }
+
+    // Cleanup old submissions only after successful new submission creation
+    for (const sub of submissionsToDelete) {
+      try {
+        // Delete test results
+        await this.testResultRepo.deleteBySubmissionId(sub.id);
+
+        // Delete file from storage
+        if (sub.filePath) {
+          try {
+            await this.storageService.deleteFiles("submissions", [
+              sub.filePath,
+            ]);
+          } catch (err) {
+            console.error(
+              `Failed to delete old submission file: ${sub.filePath}`,
+              err,
+            );
+          }
+        }
+
+        // Delete submission record
+        await this.submissionRepo.delete(sub.id);
+      } catch (err) {
+        console.error(
+          `Failed to cleanup submission ${sub.id} (file: ${sub.filePath || "none"}):`,
+          err,
+        );
+      }
+    }
+
     return toSubmissionDTO(updatedSubmission ?? submission);
   }
 
@@ -288,7 +288,7 @@ export class SubmissionService {
     const submission =
       await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) {
-      throw new Error("Submission not found");
+      throw new SubmissionNotFoundError(submissionId);
     }
 
     // Get assignment to determine language
@@ -300,7 +300,7 @@ export class SubmissionService {
     }
 
     if (!submission.filePath) {
-      throw new Error("Submission has no file");
+      throw new SubmissionFileNotFoundError(submissionId);
     }
 
     // Download content
@@ -322,7 +322,7 @@ export class SubmissionService {
     }
 
     if (!submission.filePath) {
-      throw new Error("Submission has no file");
+      throw new SubmissionFileNotFoundError(submissionId);
     }
 
     return await this.storageService.getSignedUrl(

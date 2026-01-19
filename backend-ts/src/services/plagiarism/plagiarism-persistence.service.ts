@@ -5,33 +5,38 @@ import { SubmissionRepository } from "../../repositories/submission.repository.j
 import { Report, Pair } from "../../lib/plagiarism/index.js";
 import {
   PLAGIARISM_CONFIG,
-  toPlagiarismPairDTO,
-  toPlagiarismFragmentDTO,
   type PlagiarismPairDTO,
-  type PlagiarismFragmentDTO,
 } from "../../shared/mappers.js";
 import type {
   NewSimilarityResult,
   NewMatchFragment,
+  MatchFragment,
+  SimilarityResult,
 } from "../../models/index.js";
-import {
-  PlagiarismResultNotFoundError,
-  PlagiarismReportNotFoundError,
-  PlagiarismPairNotFoundError,
-} from "../../shared/errors.js";
-import { AnalyzeResponse, PairDetailsResponse } from "../plagiarism.service.js";
-import { SubmissionFileService } from "./submission-file.service.js";
+// Note: Error classes are preserved for future use but not imported to avoid TS6192
+// import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "../../shared/errors.js";
+import type { AnalyzeResponse } from "../plagiarism.service.js";
 
 @injectable()
 export class PlagiarismPersistenceService {
   constructor(
     @inject("SimilarityRepository")
     private similarityRepo: SimilarityRepository,
-    @inject("SubmissionRepository") private submissionRepo: SubmissionRepository
+    @inject("SubmissionRepository")
+    private submissionRepo: SubmissionRepository,
   ) {}
 
   /** Get result with fragments and related submission info */
-  async getResultData(resultId: number) {
+  async getResultData(resultId: number): Promise<{
+    result: SimilarityResult;
+    fragments: MatchFragment[];
+    submission1: Awaited<
+      ReturnType<SubmissionRepository["getSubmissionWithStudent"]>
+    >;
+    submission2: Awaited<
+      ReturnType<SubmissionRepository["getSubmissionWithStudent"]>
+    >;
+  } | null> {
     const data = await this.similarityRepo.getResultWithFragments(resultId);
     if (!data) return null;
 
@@ -50,7 +55,7 @@ export class PlagiarismPersistenceService {
     assignmentId: number,
     teacherId: number | undefined,
     report: Report,
-    pairs: Pair[]
+    pairs: Pair[],
   ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
     return await db.transaction(async (tx) => {
       // Use transaction-aware repository
@@ -63,7 +68,7 @@ export class PlagiarismPersistenceService {
         totalSubmissions: report.files.length,
         totalComparisons: pairs.length,
         flaggedPairs: pairs.filter(
-          (p) => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+          (p) => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
         ).length,
         averageSimilarity: (
           pairs.reduce((sum, p) => sum + p.similarity, 0) /
@@ -71,7 +76,7 @@ export class PlagiarismPersistenceService {
         ).toFixed(4),
         highestSimilarity: Math.max(
           ...pairs.map((p) => p.similarity),
-          0
+          0,
         ).toFixed(4),
       });
 
@@ -83,9 +88,8 @@ export class PlagiarismPersistenceService {
       const resultIdMap = new Map<string, number>();
 
       if (resultsToInsert.length > 0) {
-        const insertedResults = await similarityRepoTx.createResults(
-          resultsToInsert
-        );
+        const insertedResults =
+          await similarityRepoTx.createResults(resultsToInsert);
 
         // Build result ID map
         for (const result of insertedResults) {
@@ -97,7 +101,7 @@ export class PlagiarismPersistenceService {
         const fragmentsToInsert = this.prepareFragmentsForInsert(
           insertedResults,
           pairMap,
-          swappedMap
+          swappedMap,
         );
         if (fragmentsToInsert.length > 0) {
           await similarityRepoTx.createFragments(fragmentsToInsert);
@@ -127,7 +131,7 @@ export class PlagiarismPersistenceService {
     // Batch fetch submissions
     const submissions =
       await this.submissionRepo.getBatchSubmissionsWithStudents(
-        Array.from(submissionIds)
+        Array.from(submissionIds),
       );
     const submissionMap = new Map(submissions.map((s) => [s.submission.id, s]));
 
@@ -184,7 +188,7 @@ export class PlagiarismPersistenceService {
   /** Prepare results for database insertion */
   private prepareResultsForInsert(
     reportId: number,
-    pairs: Pair[]
+    pairs: Pair[],
   ): {
     resultsToInsert: NewSimilarityResult[];
     pairMap: Map<string, Pair>;
@@ -237,7 +241,7 @@ export class PlagiarismPersistenceService {
       submission2Id: number;
     }[],
     pairMap: Map<string, Pair>,
-    swappedMap: Map<string, boolean>
+    swappedMap: Map<string, boolean>,
   ): NewMatchFragment[] {
     const fragmentsToInsert: NewMatchFragment[] = [];
 

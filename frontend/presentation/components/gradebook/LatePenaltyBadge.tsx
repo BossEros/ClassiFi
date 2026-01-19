@@ -19,8 +19,8 @@ export function LatePenaltyBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium",
-        small ? "px-1.5 py-0.5 text-xs" : "px-2 py-1 text-xs",
+        "inline-flex items-center gap-1 rounded-full font-medium text-xs",
+        small ? "px-1.5 py-0.5" : "px-2 py-1",
         isRejected
           ? "bg-red-500/20 text-red-400"
           : "bg-orange-500/20 text-orange-400",

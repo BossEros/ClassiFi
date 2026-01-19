@@ -15,15 +15,47 @@ import {
   Layers,
   GitCompare,
 } from "lucide-react";
-import { SimilarityBadge } from "@/src/components/plagiarism/SimilarityBadge";
-import { PairComparison } from "@/src/components/plagiarism/PairComparison";
-import { PairCodeDiff } from "@/src/components/plagiarism/PairCodeDiff";
-import { getResultDetails } from "@/business/services/plagiarismService";
-import type { AnalyzeResponse, PairResponse } from "@/data/api/types";
-import type { FilePair } from "@/src/components/plagiarism/types";
+import {
+  SimilarityBadge,
+  PairComparison,
+  PairCodeDiff,
+  type FilePair,
+} from "@/src/components/plagiarism";
+import {
+  getResultDetails,
+  type AnalyzeResponse,
+  type PairResponse,
+} from "@/business/services/plagiarismService";
 
 interface LocationState {
   results: AnalyzeResponse;
+}
+
+/**
+ * Detect the syntax highlighting language from a filename extension.
+ */
+function detectLanguage(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  const extensionMap: Record<string, string> = {
+    java: "java",
+    py: "python",
+    js: "javascript",
+    ts: "typescript",
+    tsx: "typescript",
+    jsx: "javascript",
+    cpp: "cpp",
+    c: "c",
+    h: "c",
+    cs: "csharp",
+    rb: "ruby",
+    go: "go",
+    rs: "rust",
+    php: "php",
+    swift: "swift",
+    kt: "kotlin",
+    scala: "scala",
+  };
+  return extensionMap[ext] || "plaintext";
 }
 
 export function SimilarityResultsPage() {
@@ -34,7 +66,7 @@ export function SimilarityResultsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null);
   const [sortBy, setSortBy] = useState<"similarity" | "overlap" | "longest">(
-    "similarity"
+    "similarity",
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -66,7 +98,7 @@ export function SimilarityResultsPage() {
           pair.leftFile.studentName?.toLowerCase().includes(query) ||
           pair.rightFile.studentName?.toLowerCase().includes(query) ||
           pair.leftFile.filename.toLowerCase().includes(query) ||
-          pair.rightFile.filename.toLowerCase().includes(query)
+          pair.rightFile.filename.toLowerCase().includes(query),
       );
     }
 
@@ -152,7 +184,7 @@ export function SimilarityResultsPage() {
       setDetailsError(
         error instanceof Error
           ? error.message
-          : "Failed to load code comparison"
+          : "Failed to load code comparison",
       );
     } finally {
       setIsLoadingDetails(false);
@@ -164,6 +196,13 @@ export function SimilarityResultsPage() {
     setPairDetails(null);
     setDetailsError(null);
   };
+
+  // Compute language for code highlighting based on filenames
+  const detectedLanguage = useMemo(() => {
+    if (!pairDetails) return "plaintext";
+    // Use the left file's extension as the primary source
+    return detectLanguage(pairDetails.leftFile.filename);
+  }, [pairDetails]);
 
   // No results state
   if (!results) {
@@ -194,7 +233,6 @@ export function SimilarityResultsPage() {
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-[1600px]">
-        {/* Back Button */}
         {/* Back Button */}
         <BackButton
           to={`/dashboard/assignments/${assignmentId}/submissions`}
@@ -465,7 +503,7 @@ export function SimilarityResultsPage() {
               {pairDetails && viewMode === "match" && (
                 <PairComparison
                   pair={pairDetails}
-                  language="java"
+                  language={detectedLanguage}
                   editorHeight={500}
                   showFragmentsTable={false}
                 />
@@ -475,7 +513,7 @@ export function SimilarityResultsPage() {
                 <PairCodeDiff
                   leftFile={pairDetails.leftFile}
                   rightFile={pairDetails.rightFile}
-                  language="java"
+                  language={detectedLanguage}
                   height={500}
                 />
               )}

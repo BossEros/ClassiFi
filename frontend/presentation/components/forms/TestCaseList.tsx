@@ -9,8 +9,8 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";
-import { TestCaseModal } from "./TestCaseModal";
-import { DeleteTestCaseModal } from "./DeleteTestCaseModal";
+import { TestCaseModal } from "@/presentation/components/forms/TestCaseModal";
+import { DeleteTestCaseModal } from "@/presentation/components/forms/DeleteTestCaseModal";
 import type {
   TestCase,
   CreateTestCaseRequest,
@@ -109,7 +109,7 @@ export function TestCaseList({
   };
 
   const handleSave = async (
-    data: CreateTestCaseRequest | UpdateTestCaseRequest
+    data: CreateTestCaseRequest | UpdateTestCaseRequest,
   ) => {
     try {
       if (editingTestCase) {
@@ -264,7 +264,7 @@ export function TestCaseList({
                         type="button"
                         onClick={() =>
                           handleDeleteClick(
-                            tc as TestCase & { tempId?: string }
+                            tc as TestCase & { tempId?: string },
                           )
                         }
                         disabled={isLoading || deletingId === uniqueKey}

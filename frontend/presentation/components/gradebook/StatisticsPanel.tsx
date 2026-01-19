@@ -4,11 +4,19 @@ import {
   CardContent,
   CardHeader,
 } from "@/presentation/components/ui/Card";
-import type { ClassStatistics } from "@/data/api/types";
+import type { ClassStatistics } from "@/shared/types/gradebook";
 
 interface StatisticsPanelProps {
   statistics: ClassStatistics | null;
 }
+
+const GRADE_LEGEND = [
+  { color: "bg-green-500/20", label: "90-100% (Excellent)" },
+  { color: "bg-blue-500/20", label: "75-89% (Good)" },
+  { color: "bg-yellow-500/20", label: "60-74% (Average)" },
+  { color: "bg-orange-500/20", label: "40-59% (Below Average)" },
+  { color: "bg-red-500/20", label: "<40% (Needs Improvement)" },
+];
 
 export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
   if (!statistics) {
@@ -86,30 +94,12 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
             Grade Legend
           </p>
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded bg-green-500/20"></span>
-              <span className="text-xs text-gray-400">90-100% (Excellent)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded bg-blue-500/20"></span>
-              <span className="text-xs text-gray-400">75-89% (Good)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded bg-yellow-500/20"></span>
-              <span className="text-xs text-gray-400">60-74% (Average)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded bg-orange-500/20"></span>
-              <span className="text-xs text-gray-400">
-                40-59% (Below Average)
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded bg-red-500/20"></span>
-              <span className="text-xs text-gray-400">
-                &lt;40% (Needs Improvement)
-              </span>
-            </div>
+            {GRADE_LEGEND.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <span className={`w-4 h-4 rounded ${item.color}`}></span>
+                <span className="text-xs text-gray-400">{item.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </CardContent>

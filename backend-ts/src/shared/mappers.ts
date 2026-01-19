@@ -3,9 +3,11 @@ import type {
   Class,
   Assignment,
   Submission,
-  Enrollment,
   ClassSchedule,
 } from "../models/index.js";
+
+/** Default total score for assignments */
+const DEFAULT_TOTAL_SCORE = 100;
 
 // ============ User Mappers ============
 
@@ -60,7 +62,7 @@ export function toClassDTO(
     studentCount?: number;
     teacherName?: string;
     assignmentCount?: number;
-  }
+  },
 ): ClassDTO {
   return {
     id: classData.id,
@@ -108,7 +110,7 @@ export function toAssignmentDTO(
     hasSubmitted?: boolean;
     className?: string;
     testCases?: { id: number; name: string; isHidden: boolean }[];
-  }
+  },
 ): AssignmentDTO {
   return {
     id: assignment.id,
@@ -123,9 +125,8 @@ export function toAssignmentDTO(
     isActive: assignment.isActive ?? true,
     templateCode: assignment.templateCode ?? null,
     hasTemplateCode: !!assignment.templateCode,
-    totalScore: assignment.totalScore ?? 100,
+    totalScore: assignment.totalScore ?? DEFAULT_TOTAL_SCORE,
     scheduledDate: assignment.scheduledDate?.toISOString() ?? null,
-    testCases: extras?.testCases,
     ...extras,
   };
 }
@@ -150,7 +151,11 @@ export interface SubmissionDTO {
 
 export function toSubmissionDTO(
   submission: Submission,
-  extras?: { studentName?: string; assignmentName?: string; className?: string }
+  extras?: {
+    studentName?: string;
+    assignmentName?: string;
+    className?: string;
+  },
 ): SubmissionDTO {
   return {
     id: submission.id,
@@ -212,7 +217,7 @@ export function toDashboardClassDTO(
     studentCount?: number;
     assignmentCount?: number;
     teacherName?: string;
-  }
+  },
 ): DashboardClassDTO {
   return {
     id: classData.id,
@@ -253,9 +258,8 @@ export interface PendingTaskDTO {
 
 import type {
   Pair,
-  Fragment,
-  File as PlagiarismFile,
-} from "../lib/plagiarism/index.js";
+  Fragment
+} from "@/lib/plagiarism/index.js";
 
 /** Configuration for plagiarism detection */
 export const PLAGIARISM_CONFIG = {
@@ -329,7 +333,7 @@ export interface PlagiarismSummaryDTO {
 /** Convert a Pair to PlagiarismPairDTO */
 export function toPlagiarismPairDTO(
   pair: Pair,
-  resultId?: number
+  resultId?: number,
 ): PlagiarismPairDTO {
   return {
     id: resultId ?? pair.id,
@@ -360,7 +364,7 @@ export function toPlagiarismPairDTO(
 /** Convert a Fragment to PlagiarismFragmentDTO */
 export function toPlagiarismFragmentDTO(
   fragment: Fragment,
-  index: number
+  index: number,
 ): PlagiarismFragmentDTO {
   return {
     id: index,

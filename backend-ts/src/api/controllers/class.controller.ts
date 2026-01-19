@@ -1,8 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { container } from "tsyringe";
-import { ClassService } from "../../services/class.service.js";
-import { AssignmentService } from "../../services/assignment.service.js";
-import { toJsonSchema } from "../utils/swagger.js";
+import { ClassService } from "@/services/class.service.js";
+import { AssignmentService } from "@/services/assignment.service.js";
+import { toJsonSchema } from "@/api/utils/swagger.js";
 import {
   CreateClassRequestSchema,
   UpdateClassRequestSchema,
@@ -23,15 +23,14 @@ import {
   type CreateClassRequest,
   type UpdateClassRequest,
   type DeleteClassRequest,
-} from "../schemas/class.schema.js";
+} from "@/api/schemas/class.schema.js";
 import {
   CreateAssignmentRequestSchema,
-  AssignmentResponseSchema,
   AssignmentListResponseSchema,
   CreateAssignmentResponseSchema,
   type CreateAssignmentRequest,
-} from "../schemas/assignment.schema.js";
-import { BadRequestError } from "../middlewares/error-handler.js";
+} from "@/api/schemas/assignment.schema.js";
+import { BadRequestError } from "@/api/middlewares/error-handler.js";
 
 /** Class routes - /api/v1/classes/* */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
@@ -75,7 +74,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         200: toJsonSchema(GenerateCodeResponseSchema),
       },
     },
-    handler: async (request, reply) => {
+    handler: async (_request, reply) => {
       const code = await classService.generateClassCode();
 
       return reply.send({
@@ -113,7 +112,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
 
       const classes = await classService.getClassesByTeacher(
         teacherId,
-        activeOnly
+        activeOnly,
       );
 
       return reply.send({
@@ -150,6 +149,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           throw new BadRequestError("Invalid class ID");
         }
 
+        if (teacherId !== undefined && isNaN(teacherId)) {
+          throw new BadRequestError("Invalid teacher ID");
+        }
+
         const classData = await classService.getClassById(classId, teacherId);
 
         return reply.send({
@@ -158,7 +161,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           class: classData,
         });
       },
-    }
+    },
   );
 
   /**
@@ -211,7 +214,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           class: classData,
         });
       },
-    }
+    },
   );
 
   /**
@@ -245,7 +248,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           message: "Class deleted successfully",
         });
       },
-    }
+    },
   );
 
   /**
@@ -284,6 +287,20 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           scheduledDate,
         } = request.body;
 
+        const parsedDeadline = new Date(deadline);
+        if (isNaN(parsedDeadline.getTime())) {
+          throw new BadRequestError("Invalid deadline date");
+        }
+
+        let parsedScheduledDate: Date | null = null;
+        if (scheduledDate) {
+          const date = new Date(scheduledDate);
+          if (isNaN(date.getTime())) {
+            throw new BadRequestError("Invalid scheduled date");
+          }
+          parsedScheduledDate = date;
+        }
+
         const assignment = await assignmentService.createAssignment(
           classId,
           teacherId,
@@ -291,13 +308,13 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
             assignmentName,
             description,
             programmingLanguage,
-            deadline: new Date(deadline),
+            deadline: parsedDeadline,
             allowResubmission,
             maxAttempts,
             templateCode,
             totalScore,
-            scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
-          }
+            scheduledDate: parsedScheduledDate,
+          },
         );
 
         return reply.status(201).send({
@@ -306,7 +323,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           assignment,
         });
       },
-    }
+    },
   );
 
   /**

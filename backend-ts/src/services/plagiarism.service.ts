@@ -28,6 +28,7 @@ import {
   UnsupportedLanguageError,
   LanguageRequiredError,
 } from "../shared/errors.js";
+import type { MatchFragment } from "../models/index.js";
 
 /** Request body for analyzing files */
 export interface AnalyzeRequest {
@@ -81,6 +82,9 @@ export class PlagiarismService {
     { report: Report; createdAt: Date }
   >();
 
+  /** Interval ID for cleanup timer - stored to allow cleanup in dispose() */
+  private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+
   constructor(
     @inject("AssignmentRepository")
     private assignmentRepo: AssignmentRepository,
@@ -88,10 +92,25 @@ export class PlagiarismService {
     private detectorFactory: PlagiarismDetectorFactory,
     @inject("SubmissionFileService") private fileService: SubmissionFileService,
     @inject("PlagiarismPersistenceService")
-    private persistenceService: PlagiarismPersistenceService
+    private persistenceService: PlagiarismPersistenceService,
   ) {
-    // Run cleanup every hour
-    setInterval(() => this.cleanupExpiredReports(), 60 * 60 * 1000);
+    // Run cleanup every hour and store the interval ID for cleanup
+    this.cleanupIntervalId = setInterval(
+      () => this.cleanupExpiredReports(),
+      60 * 60 * 1000,
+    );
+  }
+
+  /**
+   * Dispose of the service and clean up resources.
+   * Should be called during application shutdown or test teardown.
+   */
+  public dispose(): void {
+    if (this.cleanupIntervalId !== null) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+    }
+    this.legacyReportsStore.clear();
   }
 
   // ========================================================================
@@ -115,7 +134,7 @@ export class PlagiarismService {
         new File(f.path, f.content, {
           studentId: f.studentId,
           studentName: f.studentName,
-        })
+        }),
     );
 
     // Optional template file
@@ -155,7 +174,7 @@ export class PlagiarismService {
   /** Get pair details with fragments */
   async getPairDetails(
     reportId: string,
-    pairId: number
+    pairId: number,
   ): Promise<PairDetailsResponse> {
     // Check for ad-hoc report first (legacy)
     const legacyStored = this.legacyReportsStore.get(reportId);
@@ -170,7 +189,7 @@ export class PlagiarismService {
       return {
         pair: toPlagiarismPairDTO(pair),
         fragments: fragments.map((f: Fragment, i: number) =>
-          toPlagiarismFragmentDTO(f, i)
+          toPlagiarismFragmentDTO(f, i),
         ),
         leftCode: pair.leftFile.content,
         rightCode: pair.rightFile.content,
@@ -180,45 +199,37 @@ export class PlagiarismService {
     // Try to handle as DB report
     const numericReportId = parseInt(reportId, 10);
     if (!isNaN(numericReportId)) {
-      try {
-        // Delegate to getResultDetails for DB-backed reports
-        // pairId corresponds to the resultId in the database
-        const details = await this.getResultDetails(pairId);
+      // Delegate to getResultDetails for DB-backed reports
+      // pairId corresponds to the resultId in the database
+      const details = await this.getResultDetails(pairId);
 
-        return {
-          pair: {
-            id: details.result.id,
-            leftFile: {
-              id: details.result.submission1Id,
-              path: details.leftFile.filename,
-              filename: details.leftFile.filename,
-              lineCount: details.leftFile.lineCount,
-              studentName: details.leftFile.studentName,
-            },
-            rightFile: {
-              id: details.result.submission2Id,
-              path: details.rightFile.filename,
-              filename: details.rightFile.filename,
-              lineCount: details.rightFile.lineCount,
-              studentName: details.rightFile.studentName,
-            },
-            structuralScore: parseFloat(details.result.structuralScore),
-            semanticScore: 0,
-            hybridScore: 0,
-            overlap: details.result.overlap,
-            longest: details.result.longestFragment,
+      return {
+        pair: {
+          id: details.result.id,
+          leftFile: {
+            id: details.result.submission1Id,
+            path: details.leftFile.filename,
+            filename: details.leftFile.filename,
+            lineCount: details.leftFile.lineCount,
+            studentName: details.leftFile.studentName,
           },
-          fragments: details.fragments,
-          leftCode: details.leftFile.content,
-          rightCode: details.rightFile.content,
-        };
-      } catch (error) {
-        // If result is not found, it might be an invalid pairId or reportId mismatch
-        if (error instanceof PlagiarismResultNotFoundError) {
-          throw error;
-        }
-        throw error;
-      }
+          rightFile: {
+            id: details.result.submission2Id,
+            path: details.rightFile.filename,
+            filename: details.rightFile.filename,
+            lineCount: details.rightFile.lineCount,
+            studentName: details.rightFile.studentName,
+          },
+          structuralScore: parseFloat(details.result.structuralScore),
+          semanticScore: 0,
+          hybridScore: 0,
+          overlap: details.result.overlap,
+          longest: details.result.longestFragment,
+        },
+        fragments: details.fragments,
+        leftCode: details.leftFile.content,
+        rightCode: details.rightFile.content,
+      };
     }
 
     throw new PlagiarismReportNotFoundError(reportId);
@@ -305,7 +316,7 @@ export class PlagiarismService {
     const [leftContent, rightContent] =
       await this.fileService.downloadSubmissionFiles(
         submission1.submission.filePath,
-        submission2.submission.filePath
+        submission2.submission.filePath,
       );
 
     return {
@@ -317,7 +328,7 @@ export class PlagiarismService {
         overlap: result.overlap,
         longestFragment: result.longestFragment,
       },
-      fragments: fragments.map((f: any, i: number) => ({
+      fragments: fragments.map((f: MatchFragment) => ({
         id: f.id,
         leftSelection: {
           startRow: f.leftStartRow,
@@ -353,12 +364,11 @@ export class PlagiarismService {
    */
   async analyzeAssignmentSubmissions(
     assignmentId: number,
-    teacherId?: number
+    teacherId?: number,
   ): Promise<AnalyzeResponse> {
     // Step 1: Validate and fetch assignment
-    const assignment = await this.assignmentRepo.getAssignmentById(
-      assignmentId
-    );
+    const assignment =
+      await this.assignmentRepo.getAssignmentById(assignmentId);
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId);
     }
@@ -372,7 +382,7 @@ export class PlagiarismService {
     if (assignment.templateCode) {
       ignoredFile = new File(
         `template.${this.getFileExtension(language)}`,
-        assignment.templateCode
+        assignment.templateCode,
       );
     }
 
@@ -387,7 +397,7 @@ export class PlagiarismService {
         assignmentId,
         teacherId,
         report,
-        pairs
+        pairs,
       );
 
     // Step 6: Build and return response
@@ -395,7 +405,7 @@ export class PlagiarismService {
       dbReport.id,
       report,
       pairs,
-      resultIdMap
+      resultIdMap,
     );
   }
 
@@ -419,7 +429,7 @@ export class PlagiarismService {
     // Enforce max size (LRU-like: remove oldest if still too big)
     if (this.legacyReportsStore.size > PlagiarismService.MAX_LEGACY_REPORTS) {
       const sortedEntries = Array.from(this.legacyReportsStore.entries()).sort(
-        (a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime()
+        (a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime(),
       );
 
       const toRemove =
@@ -437,7 +447,7 @@ export class PlagiarismService {
     ) {
       throw new InsufficientFilesError(
         PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED,
-        request.files?.length ?? 0
+        request.files?.length ?? 0,
       );
     }
 
@@ -447,7 +457,7 @@ export class PlagiarismService {
   }
 
   private generateReportId(): string {
-    return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `report_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
   private getLanguage(programmingLanguage: string): LanguageName {
@@ -471,7 +481,7 @@ export class PlagiarismService {
     reportId: number,
     report: Report,
     pairs: Pair[],
-    resultIdMap: Map<string, number>
+    resultIdMap: Map<string, number>,
   ): AnalyzeResponse {
     return {
       reportId: reportId.toString(),
@@ -479,16 +489,16 @@ export class PlagiarismService {
         totalFiles: report.files.length,
         totalPairs: pairs.length,
         suspiciousPairs: pairs.filter(
-          (p: Pair) => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+          (p: Pair) => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
         ).length,
         averageSimilarity: parseFloat(
           (
             pairs.reduce((sum: number, p: Pair) => sum + p.similarity, 0) /
             Math.max(1, pairs.length)
-          ).toFixed(4)
+          ).toFixed(4),
         ),
         maxSimilarity: parseFloat(
-          Math.max(...pairs.map((p: Pair) => p.similarity), 0).toFixed(4)
+          Math.max(...pairs.map((p: Pair) => p.similarity), 0).toFixed(4),
         ),
       },
       pairs: pairs.map((p: Pair) => {

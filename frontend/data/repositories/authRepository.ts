@@ -1,28 +1,59 @@
-import { apiClient } from "../api/apiClient";
-import { supabaseAuthAdapter } from "../api/supabaseAuthAdapter";
-import type { AuthResult } from "../api/supabaseAuthAdapter";
+import { apiClient } from "@/data/api/apiClient";
+import { supabaseAuthAdapter } from "@/data/api/supabaseAuthAdapter";
+import type { AuthResult } from "@/data/api/supabaseAuthAdapter";
 import type {
   LoginRequest,
   RegisterRequest,
   AuthResponse,
-  ForgotPasswordRequest,
   ForgotPasswordResponse,
-  ResetPasswordRequest,
   ResetPasswordResponse,
-  ChangePasswordRequest,
   ChangePasswordResponse,
-  DeleteAccountRequest,
   DeleteAccountResponse,
-} from "../../business/models/auth/types";
+} from "@/shared/types/auth";
+
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Safely parse JSON from a string, returning null on error.
+ */
+function safeJsonParse<T>(json: string | null): T | null {
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the current stored user from localStorage safely.
+ */
+function getStoredUser(): { email: string } | null {
+  const storedUser = localStorage.getItem("user");
+  return safeJsonParse<{ email: string }>(storedUser);
+}
+
+// ============================================================================
+// Auth Repository Functions
+// ============================================================================
 
 export async function login(credentials: LoginRequest): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>("/auth/login", credentials);
+  const response = await apiClient.post<AuthResponse>(
+    "/auth/login",
+    credentials,
+  );
 
   if (response.error) {
     return { success: false, message: response.error };
   }
 
-  return response.data!;
+  if (!response.data) {
+    return { success: false, message: "Missing response data from auth API" };
+  }
+
+  return response.data;
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
@@ -32,9 +63,17 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
     return { success: false, message: response.error };
   }
 
-  return response.data!;
+  if (!response.data) {
+    return { success: false, message: "Missing response data from auth API" };
+  }
+
+  return response.data;
 }
 
+/**
+ * Signs out the current user and clears local session data (localStorage).
+ * Calls the Supabase adapter to sign out remotely.
+ */
 export async function logout(): Promise<void> {
   await supabaseAuthAdapter.signOut();
   localStorage.removeItem("authToken");
@@ -42,7 +81,10 @@ export async function logout(): Promise<void> {
 }
 
 export async function verifyToken(token: string): Promise<boolean> {
-  const response = await apiClient.post<AuthResponse>(`/auth/verify?token=${token}`, {});
+  const response = await apiClient.post<AuthResponse>(
+    `/auth/verify?token=${token}`,
+    {},
+  );
 
   if (response.error) {
     return false;
@@ -52,26 +94,68 @@ export async function verifyToken(token: string): Promise<boolean> {
 }
 
 export async function forgotPassword(
-  data: ForgotPasswordRequest
+  email: string,
 ): Promise<ForgotPasswordResponse> {
-  const response = await apiClient.post<ForgotPasswordResponse>("/auth/forgot-password", data);
+  const response = await apiClient.post<ForgotPasswordResponse>(
+    "/auth/forgot-password",
+    { email },
+  );
 
   if (response.error) {
     return { success: false, message: response.error };
   }
 
-  return response.data!;
+  if (!response.data) {
+    return { success: false, message: "Missing response data from auth API" };
+  }
+
+  return response.data;
 }
 
 export async function initializeResetFlow(): Promise<AuthResult> {
   return await supabaseAuthAdapter.initializeResetSession();
 }
 
+/**
+ * Get current session from Supabase adapter.
+ * Returns raw adapter result for business layer processing.
+ */
+export async function getSession(): ReturnType<
+  typeof supabaseAuthAdapter.getSession
+> {
+  return await supabaseAuthAdapter.getSession();
+}
+
+/**
+ * Update user in Supabase (e.g., password).
+ * Returns raw adapter result for business layer processing.
+ */
+export async function updateUser(data: {
+  password: string;
+}): ReturnType<typeof supabaseAuthAdapter.updateUser> {
+  return await supabaseAuthAdapter.updateUser(data);
+}
+
+/**
+ * Sign in with password via Supabase adapter.
+ */
+export async function signInWithPassword(
+  email: string,
+  password: string,
+): ReturnType<typeof supabaseAuthAdapter.signInWithPassword> {
+  return await supabaseAuthAdapter.signInWithPassword({ email, password });
+}
+
+/**
+ * Legacy resetPassword - now delegates to business layer patterns.
+ * Repository returns raw adapter results for business layer to interpret.
+ */
 export async function resetPassword(
-  data: ResetPasswordRequest
+  newPassword: string,
 ): Promise<ResetPasswordResponse> {
   try {
-    const { session, error: sessionError } = await supabaseAuthAdapter.getSession();
+    const { session, error: sessionError } =
+      await supabaseAuthAdapter.getSession();
 
     if (sessionError || !session) {
       return {
@@ -89,7 +173,7 @@ export async function resetPassword(
     }
 
     const { error: updateError } = await supabaseAuthAdapter.updateUser({
-      password: data.newPassword,
+      password: newPassword,
     });
 
     if (updateError) {
@@ -144,26 +228,21 @@ export async function resetPassword(
 
 /**
  * Change password for authenticated user.
- * Re-authenticates with current password, then updates to new password.
+ * Accepts email as parameter instead of reading from localStorage.
  */
 export async function changePassword(
-  data: ChangePasswordRequest
+  email: string,
+  currentPassword: string,
+  newPassword: string,
 ): Promise<ChangePasswordResponse> {
   try {
-    // Get user email from localStorage (since auth is managed by backend)
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      return {
-        success: false,
-        message: "You must be logged in to change your password.",
-      };
-    }
-
-    const user = JSON.parse(storedUser);
-    const email = user.email;
-
     // Re-authenticate with current password to verify identity
-    const { error: signInError } = await supabaseAuthAdapter.signInWithPassword({email, password: data.currentPassword});
+    const { error: signInError } = await supabaseAuthAdapter.signInWithPassword(
+      {
+        email,
+        password: currentPassword,
+      },
+    );
 
     if (signInError) {
       return {
@@ -173,7 +252,9 @@ export async function changePassword(
     }
 
     // Update to new password
-    const { error: updateError } = await supabaseAuthAdapter.updateUser({password: data.newPassword});
+    const { error: updateError } = await supabaseAuthAdapter.updateUser({
+      password: newPassword,
+    });
 
     if (updateError) {
       const errorMsg = updateError.message.toLowerCase();
@@ -210,26 +291,19 @@ export async function changePassword(
 
 /**
  * Delete user account.
- * Requires password confirmation and calls backend to delete from all systems.
+ * Accepts email and password as parameters instead of reading from localStorage.
  */
 export async function deleteAccount(
-  data: DeleteAccountRequest
+  email: string,
+  password: string,
 ): Promise<DeleteAccountResponse> {
   try {
-    // Get user email from localStorage (since auth is managed by backend)
-    const storedUser = localStorage.getItem("user");
-    if (!storedUser) {
-      return {
-        success: false,
-        message: "You must be logged in to delete your account.",
-      };
-    }
-
-    const user = JSON.parse(storedUser);
-    const email = user.email;
-
     // Re-authenticate to verify identity and get fresh token
-    const { data: signInData, error: signInError } = await supabaseAuthAdapter.signInWithPassword({email, password: data.password});
+    const { data: signInData, error: signInError } =
+      await supabaseAuthAdapter.signInWithPassword({
+        email,
+        password,
+      });
 
     if (signInError) {
       return {
@@ -269,3 +343,6 @@ export async function deleteAccount(
     };
   }
 }
+
+// Export helper for external use
+export { getStoredUser };

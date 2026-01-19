@@ -43,7 +43,7 @@ export class GradebookService {
     @inject(LatePenaltyService)
     private latePenaltyService: LatePenaltyService,
     @inject(TestResultRepository)
-    private testResultRepo: TestResultRepository
+    private testResultRepo: TestResultRepository,
   ) {}
 
   /**
@@ -82,18 +82,17 @@ export class GradebookService {
   async overrideGrade(
     submissionId: number,
     grade: number,
-    feedback: string | null
+    feedback: string | null,
   ): Promise<void> {
     // Validate grade
-    const submission = await this.submissionRepo.getSubmissionById(
-      submissionId
-    );
+    const submission =
+      await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) {
       throw new Error("Submission not found");
     }
 
     const assignment = await this.assignmentRepo.getAssignmentById(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (!assignment) {
       throw new Error("Assignment not found");
@@ -111,9 +110,8 @@ export class GradebookService {
    * Remove a grade override and recalculate the grade from test results.
    */
   async removeOverride(submissionId: number): Promise<void> {
-    const submission = await this.submissionRepo.getSubmissionById(
-      submissionId
-    );
+    const submission =
+      await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) {
       throw new Error("Submission not found");
     }
@@ -123,7 +121,7 @@ export class GradebookService {
 
     // Get assignment for total score
     const assignment = await this.assignmentRepo.getAssignmentById(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (!assignment) {
       throw new Error("Assignment not found");
@@ -133,7 +131,7 @@ export class GradebookService {
     let recalculatedGrade = 0;
     if (testSummary && testSummary.total > 0) {
       recalculatedGrade = Math.floor(
-        (testSummary.passed / testSummary.total) * assignment.totalScore
+        (testSummary.passed / testSummary.total) * assignment.totalScore,
       );
     }
 
@@ -157,24 +155,33 @@ export class GradebookService {
       "Average",
     ];
 
+    // Helper to escape CSV cells
+    const escapeCsvCell = (cell: string | number | null) => {
+      if (cell === null || cell === undefined) return "";
+      return `"${cell.toString().replace(/"/g, '""')}"`;
+    };
+
     // Build CSV rows
     const rows = gradebook.students.map((student) => {
       const gradeValues = student.grades.map((g) =>
-        g.grade !== null ? g.grade.toString() : ""
+        g.grade !== null ? g.grade.toString() : "",
       );
 
       // Calculate average
-      const validGrades = student.grades
-        .filter((g) => g.grade !== null)
-        .map((g, i) => {
+      const validGrades: number[] = [];
+      student.grades.forEach((g, i) => {
+        if (g.grade !== null) {
           const assignment = gradebook.assignments[i];
-          return (g.grade! / assignment.totalScore) * 100;
-        });
+          if (assignment && assignment.totalScore > 0) {
+            validGrades.push((g.grade / assignment.totalScore) * 100);
+          }
+        }
+      });
 
       const average =
         validGrades.length > 0
           ? Math.round(
-              validGrades.reduce((a, b) => a + b, 0) / validGrades.length
+              validGrades.reduce((a, b) => a + b, 0) / validGrades.length,
             )
           : "";
 
@@ -183,10 +190,8 @@ export class GradebookService {
 
     // Convert to CSV string
     const csvContent = [
-      headers.join(","),
-      ...rows.map((row) =>
-        row.map((cell) => `"${cell.toString().replace(/"/g, '""')}"`).join(",")
-      ),
+      headers.map(escapeCsvCell).join(","),
+      ...rows.map((row) => row.map(escapeCsvCell).join(",")),
     ].join("\n");
 
     return csvContent;
@@ -204,13 +209,12 @@ export class GradebookService {
     testsTotal: number;
     latePenalty: PenaltyResult | null;
   } | null> {
-    const submission = await this.submissionRepo.getSubmissionById(
-      submissionId
-    );
+    const submission =
+      await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) return null;
 
     const assignment = await this.assignmentRepo.getAssignmentById(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (!assignment) return null;
 
@@ -220,13 +224,13 @@ export class GradebookService {
     // Calculate late penalty if applicable
     let latePenalty: PenaltyResult | null = null;
     const penaltyConfig = await this.latePenaltyService.getAssignmentConfig(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (penaltyConfig.enabled) {
       latePenalty = this.latePenaltyService.calculatePenalty(
         submission.submittedAt,
         assignment.deadline,
-        penaltyConfig.config
+        penaltyConfig.config,
       );
     }
 

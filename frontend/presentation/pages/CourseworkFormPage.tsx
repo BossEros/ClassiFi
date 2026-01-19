@@ -7,7 +7,7 @@ import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm";
 import { BasicInfoForm } from "@/presentation/components/forms/coursework/BasicInfoForm";
 import { SubmissionSettings } from "@/presentation/components/forms/coursework/SubmissionSettings";
 import { LatePenaltyConfig } from "@/presentation/components/forms/coursework/LatePenaltyConfig";
-import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/data/api/types";
+import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook";
 
 export function CourseworkFormPage() {
   const navigate = useNavigate();
@@ -127,10 +127,7 @@ export function CourseworkFormPage() {
                 handleInputChange("latePenaltyEnabled", enabled)
               }
               onConfigChange={(config: LatePenaltyConfigType) =>
-                handleInputChange(
-                  "latePenaltyConfig",
-                  config as unknown as string,
-                )
+                handleInputChange("latePenaltyConfig", config)
               }
               disabled={isLoading}
             />

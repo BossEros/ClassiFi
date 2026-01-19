@@ -1,9 +1,7 @@
 import { inject, injectable } from "tsyringe";
+import { db } from "@/shared/database.js";
 import { TestCaseRepository } from "@/repositories/testCase.repository.js";
-import {
-  TestResultRepository,
-  type TestResultWithCase,
-} from "@/repositories/testResult.repository.js";
+import { TestResultRepository } from "@/repositories/testResult.repository.js";
 import { SubmissionRepository } from "@/repositories/submission.repository.js";
 import { AssignmentRepository } from "@/repositories/assignment.repository.js";
 import { StorageService } from "./storage.service.js";
@@ -61,7 +59,7 @@ export class CodeTestService {
     private submissionRepo: SubmissionRepository,
     @inject("AssignmentRepository")
     private assignmentRepo: AssignmentRepository,
-    @inject("StorageService") private storageService: StorageService
+    @inject("StorageService") private storageService: StorageService,
   ) {}
 
   /**
@@ -69,19 +67,18 @@ export class CodeTestService {
    * Called automatically when a student submits code.
    */
   async runTestsForSubmission(
-    submissionId: number
+    submissionId: number,
   ): Promise<TestExecutionSummary> {
     // Get submission details
-    const submission = await this.submissionRepo.getSubmissionById(
-      submissionId
-    );
+    const submission =
+      await this.submissionRepo.getSubmissionById(submissionId);
     if (!submission) {
       throw new Error(`Submission ${submissionId} not found`);
     }
 
     // Get assignment to determine language
     const assignment = await this.assignmentRepo.getAssignmentById(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (!assignment) {
       throw new Error(`Assignment ${submission.assignmentId} not found`);
@@ -89,7 +86,7 @@ export class CodeTestService {
 
     // Get test cases for this assignment
     const testCases = await this.testCaseRepo.getByAssignmentId(
-      submission.assignmentId
+      submission.assignmentId,
     );
     if (testCases.length === 0) {
       // No tests = full score (no failures)
@@ -107,7 +104,7 @@ export class CodeTestService {
     // Download source code from storage
     let sourceCode = await this.storageService.download(
       "submissions",
-      submission.filePath
+      submission.filePath,
     );
 
     // Preprocess Java code to rename public class to Main (Judge0 requirement)
@@ -128,9 +125,6 @@ export class CodeTestService {
     // Execute all tests in batch
     const executionResults = await this.executor.executeBatch(requests);
 
-    // Delete any existing results for this submission
-    await this.testResultRepo.deleteBySubmissionId(submissionId);
-
     // Save results to database
     const newResults: Omit<NewTestResult, "id" | "createdAt">[] =
       executionResults.map((result, index) => ({
@@ -144,7 +138,11 @@ export class CodeTestService {
         errorMessage: result.stderr || result.compileOutput || null,
       }));
 
-    await this.testResultRepo.createMany(newResults);
+    await db.transaction(async (tx) => {
+      // Delete any existing results for this submission
+      await this.testResultRepo.deleteBySubmissionId(submissionId, tx);
+      await this.testResultRepo.createMany(newResults, tx);
+    });
 
     // Calculate score
     const { passed, total, percentage } =
@@ -176,7 +174,7 @@ export class CodeTestService {
   async runTestsPreview(
     sourceCode: string,
     language: "python" | "java" | "c",
-    assignmentId: number
+    assignmentId: number,
   ): Promise<TestPreviewResult> {
     // Get test cases for this assignment
     const testCases = await this.testCaseRepo.getByAssignmentId(assignmentId);
@@ -189,9 +187,15 @@ export class CodeTestService {
       };
     }
 
+    // Preprocess source code once
+    let codeToRun = sourceCode;
+    if (language === "java") {
+      codeToRun = this.preprocessJavaSourceCode(sourceCode);
+    }
+
     // Build execution requests
     const requests: ExecutionRequest[] = testCases.map((tc) => ({
-      sourceCode,
+      sourceCode: codeToRun,
       language,
       stdin: tc.input,
       expectedOutput: tc.expectedOutput,
@@ -203,7 +207,7 @@ export class CodeTestService {
 
     // Calculate score
     const passed = executionResults.filter(
-      (r) => r.status === "Accepted"
+      (r) => r.status === "Accepted",
     ).length;
     const total = executionResults.length;
     const percentage = total > 0 ? Math.round((passed / total) * 100) : 100;
@@ -223,7 +227,7 @@ export class CodeTestService {
    * Get test results for a submission (previously run).
    */
   async getTestResults(
-    submissionId: number
+    submissionId: number,
   ): Promise<TestExecutionSummary | null> {
     const resultsWithCases =
       await this.testResultRepo.getWithCasesBySubmissionId(submissionId);
@@ -280,7 +284,7 @@ export class CodeTestService {
       compileOutput: string | null;
       executionTimeMs: number;
       memoryUsedKb: number;
-    }>
+    }>,
   ): TestResultDetail[] {
     return testCases.map((tc, index) => {
       const result = executionResults[index];
@@ -325,6 +329,6 @@ export class CodeTestService {
   private preprocessJavaSourceCode(sourceCode: string): string {
     // Match "public class ClassName" and replace ClassName with "Main"
     // This regex handles various spacing and modifiers
-    return sourceCode.replace(/public\s+class\s+(\w+)/, "public class Main");
+    return sourceCode.replace(/public\s+class\s+\w+/, "public class Main");
   }
 }

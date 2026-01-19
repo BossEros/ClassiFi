@@ -29,7 +29,7 @@ interface BasicInfoFormProps {
   setShowTemplateCode: (show: boolean) => void;
   onInputChange: (
     field: keyof CourseworkFormData,
-    value: string | number | boolean | null
+    value: string | number | boolean | null,
   ) => void;
 
   // Test Case Props
@@ -66,6 +66,14 @@ export function BasicInfoForm({
   onDeleteTestCase,
   onDeletePendingTestCase,
 }: BasicInfoFormProps) {
+  // Parse deadline once to avoid errors and double-parsing
+  const deadlineDate = formData.deadline ? new Date(formData.deadline) : null;
+  const isValidDeadline = deadlineDate && !Number.isNaN(deadlineDate.getTime());
+
+  // Parse assignmentId once
+  const parsedId = assignmentId ? parseInt(assignmentId, 10) : Number.NaN;
+  const validAssignmentId = !Number.isNaN(parsedId) ? parsedId : undefined;
+
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md p-6">
       <div className="flex items-center gap-3 mb-6">
@@ -176,11 +184,11 @@ export function BasicInfoForm({
               <Input
                 id="totalScore"
                 type="number"
-                value={formData.totalScore}
+                value={formData.totalScore ?? ""}
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === "") {
-                    onInputChange("totalScore", ""); // Allow clearing the input (will need casting in parent if strictly number)
+                    onInputChange("totalScore", null);
                     return;
                   }
                   const parsed = parseInt(val, 10);
@@ -235,7 +243,7 @@ export function BasicInfoForm({
         </div>
 
         {/* Deadline Preview */}
-        {formData.deadline && (
+        {isValidDeadline && deadlineDate && (
           <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10">
             <div className="flex items-center justify-between">
               <div>
@@ -243,7 +251,7 @@ export function BasicInfoForm({
                   Selected Deadline
                 </p>
                 <p className="text-sm text-white font-medium">
-                  {new Date(formData.deadline).toLocaleString("en-US", {
+                  {deadlineDate.toLocaleString("en-US", {
                     weekday: "long",
                     month: "long",
                     day: "numeric",
@@ -259,7 +267,7 @@ export function BasicInfoForm({
                   Time remaining
                 </p>
                 <p className="text-sm font-medium text-white font-mono">
-                  {formatTimeRemaining(formData.deadline)}
+                  {formatTimeRemaining(deadlineDate)}
                 </p>
               </div>
             </div>
@@ -314,7 +322,7 @@ export function BasicInfoForm({
                   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
                   onInputChange(
                     "scheduledDate",
-                    now.toISOString().slice(0, 16)
+                    now.toISOString().slice(0, 16),
                   );
                 }
               }}
@@ -435,11 +443,7 @@ export function BasicInfoForm({
         pendingTestCases={pendingTestCases}
         isLoading={isLoadingTestCases}
         isEditMode={isEditMode}
-        assignmentId={
-          assignmentId && !Number.isNaN(parseInt(assignmentId as string, 10))
-            ? parseInt(assignmentId as string, 10)
-            : undefined
-        }
+        assignmentId={validAssignmentId}
         onAdd={onAddTestCase}
         onAddPending={onAddPendingTestCase}
         onUpdate={onUpdateTestCase}

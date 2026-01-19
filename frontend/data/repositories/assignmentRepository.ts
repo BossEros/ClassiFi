@@ -1,9 +1,9 @@
-import { apiClient, type ApiResponse } from "../api/apiClient";
+import { apiClient, type ApiResponse } from "@/data/api/apiClient";
 import {
   mapSubmission,
   mapSubmissionWithAssignment,
   mapSubmissionWithStudent,
-} from "../mappers";
+} from "@/data/mappers";
 import type {
   SubmitAssignmentRequest,
   SubmitAssignmentResponse,
@@ -27,7 +27,7 @@ function getAuthToken(): string | null {
  * Uses multipart/form-data instead of JSON
  */
 export async function submitAssignment(
-  request: SubmitAssignmentRequest
+  request: SubmitAssignmentRequest,
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
     // Create FormData for file upload - use snake_case keys to match backend
@@ -102,10 +102,10 @@ export async function submitAssignment(
  */
 export async function getSubmissionHistory(
   assignmentId: number,
-  studentId: number
+  studentId: number,
 ): Promise<ApiResponse<SubmissionHistoryResponse>> {
   const response = await apiClient.get<SubmissionHistoryResponse>(
-    `/submissions/history/${assignmentId}/${studentId}`
+    `/submissions/history/${assignmentId}/${studentId}`,
   );
 
   if (response.data) {
@@ -124,10 +124,10 @@ export async function getSubmissionHistory(
  */
 export async function getStudentSubmissions(
   studentId: number,
-  latestOnly: boolean = true
+  latestOnly: boolean = true,
 ): Promise<ApiResponse<SubmissionListResponse>> {
   const response = await apiClient.get<SubmissionListResponse>(
-    `/submissions/student/${studentId}?latestOnly=${latestOnly}`
+    `/submissions/student/${studentId}?latestOnly=${latestOnly}`,
   );
 
   if (response.data) {
@@ -146,10 +146,10 @@ export async function getStudentSubmissions(
  */
 export async function getAssignmentSubmissions(
   assignmentId: number,
-  latestOnly: boolean = true
+  latestOnly: boolean = true,
 ): Promise<ApiResponse<SubmissionListResponse>> {
   const response = await apiClient.get<SubmissionListResponse>(
-    `/submissions/assignment/${assignmentId}?latestOnly=${latestOnly}`
+    `/submissions/assignment/${assignmentId}?latestOnly=${latestOnly}`,
   );
 
   if (response.data) {
@@ -168,10 +168,10 @@ export async function getAssignmentSubmissions(
  */
 export async function getAssignmentById(
   assignmentId: number,
-  userId: number
+  userId: number,
 ): Promise<ApiResponse<AssignmentDetailResponse>> {
   const response = await apiClient.get<any>(
-    `/assignments/${assignmentId}?userId=${userId}`
+    `/assignments/${assignmentId}?userId=${userId}`,
   );
 
   if (response.data && response.data.assignment) {
@@ -199,7 +199,9 @@ export async function getAssignmentById(
         templateCode: assignmentData.templateCode ?? null,
         hasTemplateCode: assignmentData.hasTemplateCode ?? false,
         totalScore: assignmentData.totalScore,
-        scheduledDate: assignmentData.scheduledDate ?? null,
+        scheduledDate: assignmentData.scheduledDate
+          ? new Date(assignmentData.scheduledDate)
+          : null,
         testCases: assignmentData.testCases ?? [],
       },
     };
@@ -212,7 +214,7 @@ export async function getAssignmentById(
  * Get submission content for preview
  */
 export async function getSubmissionContent(
-  submissionId: number
+  submissionId: number,
 ): Promise<
   ApiResponse<{ success: boolean; content: string; language?: string }>
 > {
@@ -223,7 +225,7 @@ export async function getSubmissionContent(
  * Get submission download URL
  */
 export async function getSubmissionDownloadUrl(
-  submissionId: number
+  submissionId: number,
 ): Promise<
   ApiResponse<{ success: boolean; message: string; downloadUrl: string }>
 > {

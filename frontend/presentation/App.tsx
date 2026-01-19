@@ -6,35 +6,35 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { ToastProvider } from "@/shared/context/ToastContext";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "./pages/ResetPasswordPage";
-import { TeacherDashboardPage } from "./pages/TeacherDashboardPage";
-import { StudentDashboardPage } from "./pages/StudentDashboardPage";
-import { ClassesPage } from "./pages/ClassesPage";
-import { StudentClassesPage } from "./pages/StudentClassesPage";
-import { ClassDetailPage } from "./pages/ClassDetailPage";
-import { AssignmentsPage } from "./pages/AssignmentsPage";
-import { AssignmentDetailPage } from "./pages/AssignmentDetailPage";
-import { AssignmentSubmissionsPage } from "./pages/AssignmentSubmissionsPage";
-import { SimilarityResultsPage } from "./pages/SimilarityResultsPage";
-import { TasksPage } from "./pages/TasksPage";
-import { HistoryPage } from "./pages/HistoryPage";
-import { ClassFormPage } from "./pages/ClassFormPage";
-import { CourseworkFormPage } from "./pages/CourseworkFormPage";
-import { EmailConfirmationPage } from "./pages/EmailConfirmationPage";
-import { SettingsPage } from "./pages/SettingsPage";
-import { AdminDashboardPage } from "./pages/AdminDashboardPage";
-import { AdminUsersPage } from "./pages/AdminUsersPage";
-import { AdminClassesPage } from "./pages/AdminClassesPage";
-import { AdminClassDetailPage } from "./pages/AdminClassDetailPage";
-import { GradebookPage } from "./pages/GradebookPage";
-import { StudentGradesPage } from "./pages/StudentGradesPage";
-import AdminEnrollmentsPage from "./pages/AdminEnrollmentsPage";
-import { ProtectedRoute } from "./components/dashboard/ProtectedRoute";
+import { LoginPage } from "@/presentation/pages/LoginPage";
+import { RegisterPage } from "@/presentation/pages/RegisterPage";
+import { ForgotPasswordPage } from "@/presentation/pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "@/presentation/pages/ResetPasswordPage";
+import { TeacherDashboardPage } from "@/presentation/pages/TeacherDashboardPage";
+import { StudentDashboardPage } from "@/presentation/pages/StudentDashboardPage";
+import { ClassesPage } from "@/presentation/pages/ClassesPage";
+import { StudentClassesPage } from "@/presentation/pages/StudentClassesPage";
+import { ClassDetailPage } from "@/presentation/pages/ClassDetailPage";
+import { AssignmentsPage } from "@/presentation/pages/AssignmentsPage";
+import { AssignmentDetailPage } from "@/presentation/pages/AssignmentDetailPage";
+import { AssignmentSubmissionsPage } from "@/presentation/pages/AssignmentSubmissionsPage";
+import { SimilarityResultsPage } from "@/presentation/pages/SimilarityResultsPage";
+import { TasksPage } from "@/presentation/pages/TasksPage";
+import { HistoryPage } from "@/presentation/pages/HistoryPage";
+import { ClassFormPage } from "@/presentation/pages/ClassFormPage";
+import { CourseworkFormPage } from "@/presentation/pages/CourseworkFormPage";
+import { EmailConfirmationPage } from "@/presentation/pages/EmailConfirmationPage";
+import { SettingsPage } from "@/presentation/pages/SettingsPage";
+import { AdminDashboardPage } from "@/presentation/pages/AdminDashboardPage";
+import { AdminUsersPage } from "@/presentation/pages/AdminUsersPage";
+import { AdminClassesPage } from "@/presentation/pages/AdminClassesPage";
+import { AdminClassDetailPage } from "@/presentation/pages/AdminClassDetailPage";
+import { GradebookPage } from "@/presentation/pages/GradebookPage";
+import { StudentGradesPage } from "@/presentation/pages/StudentGradesPage";
+import AdminEnrollmentsPage from "@/presentation/pages/AdminEnrollmentsPage";
+import { ProtectedRoute } from "@/presentation/components/dashboard/ProtectedRoute";
 import { getCurrentUser } from "@/business/services/authService";
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 
 // Component to render dashboard based on user role
 function RoleBasedDashboard() {
@@ -52,7 +52,7 @@ function RoleBasedDashboard() {
     return <AdminDashboardPage />;
   }
 
-  // Default to teacher dashboard for teachers and admins
+  // Default to teacher dashboard
   return <TeacherDashboardPage />;
 }
 
@@ -131,6 +131,41 @@ function AuthRedirectHandler() {
   return null;
 }
 
+// Wrapper for ResetPasswordPage to handle navigation
+function ResetPasswordWrapper() {
+  const navigate = useNavigate();
+  return (
+    <ResetPasswordPage
+      onSuccess={() => navigate("/login", { replace: true })}
+    />
+  );
+}
+
+// Wrapper for EmailConfirmationPage to handle navigation
+function EmailConfirmationWrapper() {
+  const navigate = useNavigate();
+  return (
+    <EmailConfirmationPage
+      onRedirectToLogin={() => navigate("/login", { replace: true })}
+    />
+  );
+}
+
+// Component to ensure only teachers can access a route
+function TeacherOnlyRoute({ children }: { children: ReactNode }) {
+  const user = getCurrentUser();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== "teacher") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -144,22 +179,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route
-            path="/reset-password"
-            element={
-              <ResetPasswordPage
-                onSuccess={() => (window.location.href = "/login")}
-              />
-            }
-          />
-          <Route
-            path="/confirm-email"
-            element={
-              <EmailConfirmationPage
-                onRedirectToLogin={() => (window.location.href = "/login")}
-              />
-            }
-          />
+          <Route path="/reset-password" element={<ResetPasswordWrapper />} />
+          <Route path="/confirm-email" element={<EmailConfirmationWrapper />} />
 
           {/* Protected routes */}
           <Route
@@ -190,7 +211,9 @@ function App() {
             path="/dashboard/classes/new"
             element={
               <ProtectedRoute>
-                <ClassFormPage />
+                <TeacherOnlyRoute>
+                  <ClassFormPage />
+                </TeacherOnlyRoute>
               </ProtectedRoute>
             }
           />

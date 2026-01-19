@@ -11,7 +11,7 @@ import { Button } from "@/presentation/components/ui/Button";
 import type {
   LatePenaltyConfig as LatePenaltyConfigType,
   PenaltyTier,
-} from "@/data/api/types";
+} from "@/shared/types/gradebook";
 
 interface LatePenaltyConfigProps {
   enabled: boolean;
@@ -24,9 +24,9 @@ interface LatePenaltyConfigProps {
 const DEFAULT_CONFIG: LatePenaltyConfigType = {
   gracePeriodHours: 1,
   tiers: [
-    { hoursAfterGrace: 24, penaltyPercent: 10 },
-    { hoursAfterGrace: 48, penaltyPercent: 25 },
-    { hoursAfterGrace: 72, penaltyPercent: 50 },
+    { id: "default-1", hoursAfterGrace: 24, penaltyPercent: 10 },
+    { id: "default-2", hoursAfterGrace: 48, penaltyPercent: 25 },
+    { id: "default-3", hoursAfterGrace: 72, penaltyPercent: 50 },
   ],
   rejectAfterHours: 120,
 };
@@ -55,26 +55,28 @@ export function LatePenaltyConfig({
   };
 
   const handleTierChange = (
-    index: number,
-    field: keyof PenaltyTier,
+    id: string,
+    field: keyof Omit<PenaltyTier, "id">,
     value: number,
   ) => {
-    const newTiers = [...config.tiers];
-    newTiers[index] = { ...newTiers[index], [field]: value };
+    const newTiers = config.tiers.map((tier) =>
+      tier.id === id ? { ...tier, [field]: value } : tier,
+    );
     onConfigChange({ ...config, tiers: newTiers });
   };
 
   const handleAddTier = () => {
     const lastTier = config.tiers[config.tiers.length - 1];
     const newTier: PenaltyTier = {
+      id: crypto.randomUUID(),
       hoursAfterGrace: (lastTier?.hoursAfterGrace ?? 0) + 24,
       penaltyPercent: Math.min((lastTier?.penaltyPercent ?? 0) + 10, 100),
     };
     onConfigChange({ ...config, tiers: [...config.tiers, newTier] });
   };
 
-  const handleRemoveTier = (index: number) => {
-    const newTiers = config.tiers.filter((_, i) => i !== index);
+  const handleRemoveTier = (id: string) => {
+    const newTiers = config.tiers.filter((tier) => tier.id !== id);
     onConfigChange({ ...config, tiers: newTiers });
   };
 
@@ -193,9 +195,9 @@ export function LatePenaltyConfig({
             </div>
 
             <div className="space-y-2">
-              {config.tiers.map((tier, index) => (
+              {config.tiers.map((tier) => (
                 <div
-                  key={index}
+                  key={tier.id}
                   className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"
                 >
                   <div className="flex-1 grid grid-cols-2 gap-2">
@@ -208,7 +210,7 @@ export function LatePenaltyConfig({
                         value={tier.hoursAfterGrace}
                         onChange={(e) =>
                           handleTierChange(
-                            index,
+                            tier.id,
                             "hoursAfterGrace",
                             parseInt(e.target.value) || 0,
                           )
@@ -227,7 +229,7 @@ export function LatePenaltyConfig({
                         value={tier.penaltyPercent}
                         onChange={(e) =>
                           handleTierChange(
-                            index,
+                            tier.id,
                             "penaltyPercent",
                             parseInt(e.target.value) || 0,
                           )
@@ -241,7 +243,7 @@ export function LatePenaltyConfig({
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleRemoveTier(index)}
+                    onClick={() => handleRemoveTier(tier.id)}
                     disabled={disabled || config.tiers.length <= 1}
                     className={cn(
                       "p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors",
@@ -289,7 +291,7 @@ export function LatePenaltyConfig({
                       ? config.gracePeriodHours
                       : config.tiers[i - 1].hoursAfterGrace;
                   return (
-                    <li key={i}>
+                    <li key={tier.id}>
                       • {prevHours}-{tier.hoursAfterGrace}h late: -
                       {tier.penaltyPercent}%
                     </li>
