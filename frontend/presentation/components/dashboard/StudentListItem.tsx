@@ -11,6 +11,9 @@ interface StudentListItemProps {
 }
 
 export function StudentListItem({ student, onClick, onRemove, className }: StudentListItemProps) {
+  // Generate initials from first and last name
+  const initials = `${student.firstName?.[0] ?? ''}${student.lastName?.[0] ?? ''}`.toUpperCase() || '?'
+
   return (
     <div
       onClick={onClick}
@@ -25,6 +28,8 @@ export function StudentListItem({ student, onClick, onRemove, className }: Stude
       <div className="flex items-center gap-4">
         {/* Avatar */}
         <Avatar
+          src={student.avatarUrl ?? undefined}
+          fallback={initials}
           alt={student.fullName}
           size="md"
         />

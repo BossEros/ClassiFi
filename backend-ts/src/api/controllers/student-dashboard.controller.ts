@@ -1,179 +1,188 @@
-import type { FastifyInstance } from 'fastify';
-import { container } from 'tsyringe';
-import { StudentDashboardService } from '@/services/student-dashboard.service.js';
-import { toJsonSchema } from '@/api/utils/swagger.js';
-import { SuccessMessageSchema, LimitQuerySchema } from '@/api/schemas/common.schema.js';
-import { StudentIdParamSchema } from '@/api/schemas/class.schema.js';
+import type { FastifyInstance } from "fastify";
+import { container } from "tsyringe";
+import { StudentDashboardService } from "@/services/student-dashboard.service.js";
+import { toJsonSchema } from "@/api/utils/swagger.js";
 import {
-    JoinClassRequestSchema,
-    LeaveClassRequestSchema,
-    StudentDashboardResponseSchema,
-    StudentDashboardQuerySchema,
-    DashboardClassListResponseSchema,
-    DashboardAssignmentListResponseSchema,
-    JoinClassResponseSchema,
-    type JoinClassRequest,
-    type LeaveClassRequest
-} from '@/api/schemas/dashboard.schema.js';
-import { BadRequestError } from '@/api/middlewares/error-handler.js';
+  SuccessMessageSchema,
+  LimitQuerySchema,
+} from "@/api/schemas/common.schema.js";
+import { StudentIdParamSchema } from "@/api/schemas/class.schema.js";
+import {
+  JoinClassRequestSchema,
+  LeaveClassRequestSchema,
+  StudentDashboardResponseSchema,
+  StudentDashboardQuerySchema,
+  DashboardClassListResponseSchema,
+  DashboardAssignmentListResponseSchema,
+  JoinClassResponseSchema,
+  type JoinClassRequest,
+  type LeaveClassRequest,
+} from "@/api/schemas/dashboard.schema.js";
 
 /** Student dashboard routes - /api/v1/student/dashboard/* */
-export async function studentDashboardRoutes(app: FastifyInstance): Promise<void> {
-    const dashboardService = container.resolve<StudentDashboardService>('StudentDashboardService');
+export async function studentDashboardRoutes(
+  app: FastifyInstance,
+): Promise<void> {
+  const dashboardService = container.resolve<StudentDashboardService>(
+    "StudentDashboardService",
+  );
 
-    /**
-     * GET /:studentId
-     * Get complete dashboard data for a student
-     */
-    app.get<{
-        Params: { studentId: string };
-        Querystring: { enrolledClassesLimit?: string; pendingAssignmentsLimit?: string };
-    }>('/:studentId', {
-        schema: {
-            tags: ['Student Dashboard'],
-            summary: 'Get complete dashboard data for a student',
-            params: toJsonSchema(StudentIdParamSchema),
-            querystring: toJsonSchema(StudentDashboardQuerySchema),
-            response: {
-                200: toJsonSchema(StudentDashboardResponseSchema),
-            },
+  /**
+   * GET /:studentId
+   * Get complete dashboard data for a student
+   */
+  app.get<{
+    Params: { studentId: number };
+    Querystring: {
+      enrolledClassesLimit?: number;
+      pendingAssignmentsLimit?: number;
+    };
+  }>("/:studentId", {
+    schema: {
+      tags: ["Student Dashboard"],
+      summary: "Get complete dashboard data for a student",
+      params: toJsonSchema(StudentIdParamSchema),
+      querystring: toJsonSchema(StudentDashboardQuerySchema),
+      response: {
+        200: toJsonSchema(StudentDashboardResponseSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const { studentId } = request.params;
+      const { enrolledClassesLimit = 12, pendingAssignmentsLimit = 10 } =
+        request.query;
+
+      const data = await dashboardService.getDashboardData(
+        studentId,
+        enrolledClassesLimit,
+        pendingAssignmentsLimit,
+      );
+
+      return reply.send({
+        success: true,
+        message: "Dashboard data retrieved successfully",
+        enrolledClasses: data.enrolledClasses,
+        pendingAssignments: data.pendingAssignments,
+      });
+    },
+  });
+
+  /**
+   * GET /:studentId/classes
+   * Get enrolled classes for a student
+   */
+  app.get<{ Params: { studentId: number }; Querystring: { limit?: number } }>(
+    "/:studentId/classes",
+    {
+      schema: {
+        tags: ["Student Dashboard"],
+        summary: "Get enrolled classes for a student",
+        params: toJsonSchema(StudentIdParamSchema),
+        querystring: toJsonSchema(LimitQuerySchema),
+        response: {
+          200: toJsonSchema(DashboardClassListResponseSchema),
         },
-        handler: async (request, reply) => {
-            const studentId = parseInt(request.params.studentId, 10);
-            const enrolledClassesLimit = parseInt(request.query.enrolledClassesLimit ?? '12', 10);
-            const pendingAssignmentsLimit = parseInt(request.query.pendingAssignmentsLimit ?? '10', 10);
+      },
+      handler: async (request, reply) => {
+        const { studentId } = request.params;
+        const { limit = 12} = request.query;
 
-            if (isNaN(studentId)) {
-                throw new BadRequestError('Invalid student ID');
-            }
+        const classes = await dashboardService.getEnrolledClasses(
+          studentId,
+          limit,
+        );
 
-            const data = await dashboardService.getDashboardData(
-                studentId,
-                enrolledClassesLimit,
-                pendingAssignmentsLimit
-            );
+        return reply.send({
+          success: true,
+          message: "Enrolled classes retrieved successfully",
+          classes,
+        });
+      },
+    },
+  );
 
-            return reply.send({
-                success: true,
-                message: 'Dashboard data retrieved successfully',
-                enrolledClasses: data.enrolledClasses,
-                pendingAssignments: data.pendingAssignments,
-            });
+  /**
+   * GET /:studentId/assignments
+   * Get pending assignments for a student
+   */
+  app.get<{ Params: { studentId: number }; Querystring: { limit?: number } }>(
+    "/:studentId/assignments",
+    {
+      schema: {
+        tags: ["Student Dashboard"],
+        summary: "Get pending assignments for a student",
+        params: toJsonSchema(StudentIdParamSchema),
+        querystring: toJsonSchema(LimitQuerySchema),
+        response: {
+          200: toJsonSchema(DashboardAssignmentListResponseSchema),
         },
-    });
+      },
+      handler: async (request, reply) => {
+        const { studentId } = request.params;
+        const { limit = 10 } = request.query;
 
-    /**
-     * GET /:studentId/classes
-     * Get enrolled classes for a student
-     */
-    app.get<{ Params: { studentId: string }; Querystring: { limit?: string } }>('/:studentId/classes', {
-        schema: {
-            tags: ['Student Dashboard'],
-            summary: 'Get enrolled classes for a student',
-            params: toJsonSchema(StudentIdParamSchema),
-            querystring: toJsonSchema(LimitQuerySchema),
-            response: {
-                200: toJsonSchema(DashboardClassListResponseSchema),
-            },
-        },
-        handler: async (request, reply) => {
-            const studentId = parseInt(request.params.studentId, 10);
-            const limit = request.query.limit ? parseInt(request.query.limit, 10) : undefined;
+        const assignments = await dashboardService.getPendingAssignments(
+          studentId,
+          limit,
+        );
 
-            if (isNaN(studentId)) {
-                throw new BadRequestError('Invalid student ID');
-            }
+        return reply.send({
+          success: true,
+          message: "Pending assignments retrieved successfully",
+          assignments,
+        });
+      },
+    },
+  );
 
-            const classes = await dashboardService.getEnrolledClasses(studentId, limit);
+  /**
+   * POST /join
+   * Join a class using class code
+   */
+  app.post<{ Body: JoinClassRequest }>("/join", {
+    schema: {
+      tags: ["Student Dashboard"],
+      summary: "Join a class using class code",
+      body: toJsonSchema(JoinClassRequestSchema),
+      response: {
+        200: toJsonSchema(JoinClassResponseSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const { studentId, classCode } = request.body;
 
-            return reply.send({
-                success: true,
-                message: 'Enrolled classes retrieved successfully',
-                classes,
-            });
-        },
-    });
+      const classData = await dashboardService.joinClass(studentId, classCode);
 
-    /**
-     * GET /:studentId/assignments
-     * Get pending assignments for a student
-     */
-    app.get<{ Params: { studentId: string }; Querystring: { limit?: string } }>('/:studentId/assignments', {
-        schema: {
-            tags: ['Student Dashboard'],
-            summary: 'Get pending assignments for a student',
-            params: toJsonSchema(StudentIdParamSchema),
-            querystring: toJsonSchema(LimitQuerySchema),
-            response: {
-                200: toJsonSchema(DashboardAssignmentListResponseSchema),
-            },
-        },
-        handler: async (request, reply) => {
-            const studentId = parseInt(request.params.studentId, 10);
-            const limit = parseInt(request.query.limit ?? '10', 10);
+      return reply.send({
+        success: true,
+        message: "Successfully joined the class!",
+        classInfo: classData,
+      });
+    },
+  });
 
-            if (isNaN(studentId)) {
-                throw new BadRequestError('Invalid student ID');
-            }
+  /**
+   * POST /leave
+   * Leave a class
+   */
+  app.post<{ Body: LeaveClassRequest }>("/leave", {
+    schema: {
+      tags: ["Student Dashboard"],
+      summary: "Leave a class",
+      body: toJsonSchema(LeaveClassRequestSchema),
+      response: {
+        200: toJsonSchema(SuccessMessageSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const { studentId, classId } = request.body;
 
-            const assignments = await dashboardService.getPendingAssignments(studentId, limit);
+      await dashboardService.leaveClass(studentId, classId);
 
-            return reply.send({
-                success: true,
-                message: 'Pending assignments retrieved successfully',
-                assignments,
-            });
-        },
-    });
-
-    /**
-     * POST /join
-     * Join a class using class code
-     */
-    app.post<{ Body: JoinClassRequest }>('/join', {
-        schema: {
-            tags: ['Student Dashboard'],
-            summary: 'Join a class using class code',
-            body: toJsonSchema(JoinClassRequestSchema),
-            response: {
-                200: toJsonSchema(JoinClassResponseSchema),
-            },
-        },
-        handler: async (request, reply) => {
-            const { studentId, classCode } = request.body;
-
-            const classData = await dashboardService.joinClass(studentId, classCode);
-
-            return reply.send({
-                success: true,
-                message: 'Successfully joined the class!',
-                classInfo: classData,
-            });
-        },
-    });
-
-    /**
-     * POST /leave
-     * Leave a class
-     */
-    app.post<{ Body: LeaveClassRequest }>('/leave', {
-        schema: {
-            tags: ['Student Dashboard'],
-            summary: 'Leave a class',
-            body: toJsonSchema(LeaveClassRequestSchema),
-            response: {
-                200: toJsonSchema(SuccessMessageSchema),
-            },
-        },
-        handler: async (request, reply) => {
-            const { studentId, classId } = request.body;
-
-            await dashboardService.leaveClass(studentId, classId);
-
-            return reply.send({
-                success: true,
-                message: 'Successfully left the class.',
-            });
-        },
-    });
+      return reply.send({
+        success: true,
+        message: "Successfully left the class.",
+      });
+    },
+  });
 }

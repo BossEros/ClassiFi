@@ -1,0 +1,45 @@
+# Judge0 Self-Hosted Configuration for ClassiFi
+# Start with: docker-compose up -d db redis && sleep 5 && docker-compose up -d
+# API available at: http://localhost:2358
+
+services:
+  server:
+    image: judge0/judge0:latest
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    env_file: judge0.conf
+    ports:
+      - "2358:2358"
+    privileged: true
+    restart: always
+    depends_on:
+      - db
+      - redis
+
+  worker:
+    image: judge0/judge0:latest
+    command: [ "./scripts/workers" ]
+    volumes:
+      - ./judge0.conf:/judge0.conf:ro
+    env_file: judge0.conf
+    privileged: true
+    restart: always
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:16.2
+    env_file: judge0.conf
+    volumes:
+      - judge0-postgres-data:/var/lib/postgresql/data/
+    restart: always
+
+  redis:
+    image: redis:7.2.4
+    command: [ "bash", "-c", 'docker-entrypoint.sh --appendonly no --requirepass "$$REDIS_PASSWORD"' ]
+    env_file: judge0.conf
+    restart: always
+
+volumes:
+  judge0-postgres-data:

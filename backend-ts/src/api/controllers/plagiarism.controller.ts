@@ -1,7 +1,22 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { container } from 'tsyringe';
-import { PlagiarismService, AnalyzeRequest } from '../../services/plagiarism.service.js';
+import { PlagiarismService } from '../../services/plagiarism.service.js';
+import { toJsonSchema } from '../utils/swagger.js';
 import { BadRequestError } from '../middlewares/error-handler.js';
+import { authMiddleware } from '../middlewares/auth.middleware.js';
+import {
+    AnalyzeRequestSchema,
+    AnalyzeResponseSchema,
+    ReportIdParamSchema,
+    PlagiarismAssignmentIdParamSchema,
+    ReportPairParamsSchema,
+    ResultIdParamSchema,
+    GetReportResponseSchema,
+    PairDetailsResponseSchema,
+    ResultDetailsResponseSchema,
+    DeleteReportResponseSchema,
+    type AnalyzeRequest,
+} from '../schemas/plagiarism.schema.js';
 
 /** Plagiarism detection routes - /api/v1/plagiarism/* */
 export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
@@ -15,65 +30,19 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         schema: {
             tags: ['Plagiarism'],
             summary: 'Analyze files for plagiarism detection',
-            body: {
-                type: 'object',
-                required: ['files', 'language'],
-                properties: {
-                    files: {
-                        type: 'array',
-                        items: {
-                            type: 'object',
-                            required: ['path', 'content'],
-                            properties: {
-                                id: { type: 'string' },
-                                path: { type: 'string' },
-                                content: { type: 'string' },
-                                studentId: { type: 'string' },
-                                studentName: { type: 'string' },
-                            },
-                        },
-                        minItems: 2,
-                    },
-                    language: {
-                        type: 'string',
-                        enum: ['java', 'python', 'c'],
-                    },
-                    templateFile: {
-                        type: 'object',
-                        properties: {
-                            path: { type: 'string' },
-                            content: { type: 'string' },
-                        },
-                    },
-                    threshold: { type: 'number', minimum: 0, maximum: 1 },
-                    kgramLength: { type: 'integer', minimum: 1 },
-                },
-            },
+            body: toJsonSchema(AnalyzeRequestSchema),
             response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        reportId: { type: 'string' },
-                        summary: {
-                            type: 'object',
-                            properties: {
-                                totalFiles: { type: 'number' },
-                                totalPairs: { type: 'number' },
-                                suspiciousPairs: { type: 'number' },
-                                averageSimilarity: { type: 'number' },
-                                maxSimilarity: { type: 'number' },
-                            },
-                        },
-                        pairs: { type: 'array' },
-                        warnings: { type: 'array', items: { type: 'string' } },
-                    },
-                },
+                200: toJsonSchema(AnalyzeResponseSchema),
             },
         },
         handler: async (request, reply) => {
             try {
                 const result = await plagiarismService.analyzeFiles(request.body);
-                return reply.send(result);
+                return reply.send({
+                    success: true,
+                    message: 'Plagiarism analysis completed successfully',
+                    ...result,
+                });
             } catch (error) {
                 throw new BadRequestError((error as Error).message);
             }
@@ -89,42 +58,29 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
             tags: ['Plagiarism'],
             summary: 'Analyze all submissions for an assignment',
             description: 'Fetches all latest submissions for the specified assignment, downloads their content, and runs plagiarism detection.',
-            params: {
-                type: 'object',
-                required: ['assignmentId'],
-                properties: {
-                    assignmentId: { type: 'string', description: 'ID of the assignment to analyze' },
-                },
-            },
+            params: toJsonSchema(PlagiarismAssignmentIdParamSchema),
             response: {
-                200: {
-                    type: 'object',
-                    properties: {
-                        reportId: { type: 'string' },
-                        summary: {
-                            type: 'object',
-                            properties: {
-                                totalFiles: { type: 'number' },
-                                totalPairs: { type: 'number' },
-                                suspiciousPairs: { type: 'number' },
-                                averageSimilarity: { type: 'number' },
-                                maxSimilarity: { type: 'number' },
-                            },
-                        },
-                        pairs: { type: 'array' },
-                        warnings: { type: 'array', items: { type: 'string' } },
-                    },
-                },
+                200: toJsonSchema(AnalyzeResponseSchema),
             },
         },
+        preHandler: [authMiddleware],
         handler: async (request, reply) => {
+            const assignmentId = parseInt(request.params.assignmentId, 10);
+
+            if (isNaN(assignmentId)) {
+                throw new BadRequestError('Invalid assignment ID');
+            }
+
             try {
-                const assignmentId = parseInt(request.params.assignmentId, 10);
-                if (isNaN(assignmentId)) {
-                    throw new BadRequestError('Invalid assignment ID');
-                }
-                const result = await plagiarismService.analyzeAssignmentSubmissions(assignmentId);
-                return reply.send(result);
+                // Get teacher ID from authenticated user
+                const teacherId = request.user?.id;
+
+                const result = await plagiarismService.analyzeAssignmentSubmissions(assignmentId, teacherId);
+                return reply.send({
+                    success: true,
+                    message: 'Assignment submissions analyzed successfully',
+                    ...result,
+                });
             } catch (error) {
                 throw new BadRequestError((error as Error).message);
             }
@@ -139,12 +95,9 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         schema: {
             tags: ['Plagiarism'],
             summary: 'Get plagiarism report by ID',
-            params: {
-                type: 'object',
-                required: ['reportId'],
-                properties: {
-                    reportId: { type: 'string' },
-                },
+            params: toJsonSchema(ReportIdParamSchema),
+            response: {
+                200: toJsonSchema(GetReportResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -155,7 +108,11 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
                 return reply.status(404).send({ error: 'Report not found' });
             }
 
-            return reply.send(result);
+            return reply.send({
+                success: true,
+                message: 'Report retrieved successfully',
+                ...result,
+            });
         },
     });
 
@@ -167,13 +124,9 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         schema: {
             tags: ['Plagiarism'],
             summary: 'Get pair details with matching fragments',
-            params: {
-                type: 'object',
-                required: ['reportId', 'pairId'],
-                properties: {
-                    reportId: { type: 'string' },
-                    pairId: { type: 'string' },
-                },
+            params: toJsonSchema(ReportPairParamsSchema),
+            response: {
+                200: toJsonSchema(PairDetailsResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -186,7 +139,11 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
 
             try {
                 const result = await plagiarismService.getPairDetails(reportId, pairIdNum);
-                return reply.send(result);
+                return reply.send({
+                    success: true,
+                    message: 'Pair details retrieved successfully',
+                    ...result,
+                });
             } catch (error) {
                 return reply.status(404).send({ error: (error as Error).message });
             }
@@ -201,12 +158,9 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         schema: {
             tags: ['Plagiarism'],
             summary: 'Delete a plagiarism report',
-            params: {
-                type: 'object',
-                required: ['reportId'],
-                properties: {
-                    reportId: { type: 'string' },
-                },
+            params: toJsonSchema(ReportIdParamSchema),
+            response: {
+                200: toJsonSchema(DeleteReportResponseSchema),
             },
         },
         handler: async (request, reply) => {
@@ -217,7 +171,10 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
                 return reply.status(404).send({ error: 'Report not found' });
             }
 
-            return reply.send({ success: true });
+            return reply.send({
+                success: true,
+                message: 'Report deleted successfully',
+            });
         },
     });
 
@@ -229,23 +186,25 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         schema: {
             tags: ['Plagiarism'],
             summary: 'Get result details with fragments and file content',
-            params: {
-                type: 'object',
-                required: ['resultId'],
-                properties: {
-                    resultId: { type: 'string' },
-                },
+            params: toJsonSchema(ResultIdParamSchema),
+            response: {
+                200: toJsonSchema(ResultDetailsResponseSchema),
             },
         },
         handler: async (request, reply) => {
             const resultId = parseInt(request.params.resultId, 10);
+
             if (isNaN(resultId)) {
                 throw new BadRequestError('Invalid result ID');
             }
 
             try {
                 const details = await plagiarismService.getResultDetails(resultId);
-                return reply.send(details);
+                return reply.send({
+                    success: true,
+                    message: 'Result details retrieved successfully',
+                    ...details,
+                });
             } catch (error) {
                 return reply.status(404).send({ error: (error as Error).message });
             }

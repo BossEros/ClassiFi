@@ -133,10 +133,7 @@ export function TeacherDashboardPage() {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onClick={() => {
-                      // Placeholder: Navigate to task details
-                      console.log('Navigate to task:', task.id)
-                    }}
+                    onClick={() => navigate(`/dashboard/assignments/${task.id}/submissions`)}
                   />
                 ))}
               </div>

@@ -1,7 +1,3 @@
-/**
- * UserRepository Unit Tests
- * Tests for user database operations
- */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock database module before importing repository
@@ -24,7 +20,6 @@ vi.mock('../../src/models/index.js', () => ({
     users: {
         id: 'id',
         supabaseUserId: 'supabaseUserId',
-        username: 'username',
         email: 'email',
         firstName: 'firstName',
         lastName: 'lastName',
@@ -43,40 +38,6 @@ describe('UserRepository', () => {
         // Get the mocked db
         const { db } = await import('../../src/shared/database.js');
         mockDb = db;
-    });
-
-    describe('checkUsernameExists', () => {
-        it('should return true when username exists', async () => {
-            // Setup chain: db.select().from().where().limit()
-            const limitMock = vi.fn().mockResolvedValue([{ id: 1 }]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const fromMock = vi.fn().mockReturnValue({ where: whereMock });
-            const selectMock = vi.fn().mockReturnValue({ from: fromMock });
-            mockDb.select = selectMock;
-
-            // Import fresh instance to get mocked db
-            const { UserRepository } = await import('../../src/repositories/user.repository.js');
-            const userRepo = new UserRepository();
-
-            const result = await userRepo.checkUsernameExists('existinguser');
-
-            expect(result).toBe(true);
-        });
-
-        it('should return false when username does not exist', async () => {
-            const limitMock = vi.fn().mockResolvedValue([]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const fromMock = vi.fn().mockReturnValue({ where: whereMock });
-            const selectMock = vi.fn().mockReturnValue({ from: fromMock });
-            mockDb.select = selectMock;
-
-            const { UserRepository } = await import('../../src/repositories/user.repository.js');
-            const userRepo = new UserRepository();
-
-            const result = await userRepo.checkUsernameExists('newuser');
-
-            expect(result).toBe(false);
-        });
     });
 
     describe('checkEmailExists', () => {
@@ -177,39 +138,6 @@ describe('UserRepository', () => {
         });
     });
 
-    describe('getUserByUsername', () => {
-        it('should return user when username found', async () => {
-            const mockUser = createMockUser();
-            const limitMock = vi.fn().mockResolvedValue([mockUser]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const fromMock = vi.fn().mockReturnValue({ where: whereMock });
-            const selectMock = vi.fn().mockReturnValue({ from: fromMock });
-            mockDb.select = selectMock;
-
-            const { UserRepository } = await import('../../src/repositories/user.repository.js');
-            const userRepo = new UserRepository();
-
-            const result = await userRepo.getUserByUsername('testuser');
-
-            expect(result).toEqual(mockUser);
-        });
-
-        it('should return undefined when username not found', async () => {
-            const limitMock = vi.fn().mockResolvedValue([]);
-            const whereMock = vi.fn().mockReturnValue({ limit: limitMock });
-            const fromMock = vi.fn().mockReturnValue({ where: whereMock });
-            const selectMock = vi.fn().mockReturnValue({ from: fromMock });
-            mockDb.select = selectMock;
-
-            const { UserRepository } = await import('../../src/repositories/user.repository.js');
-            const userRepo = new UserRepository();
-
-            const result = await userRepo.getUserByUsername('nonexistentuser');
-
-            expect(result).toBeUndefined();
-        });
-    });
-
     describe('createUser', () => {
         it('should create and return a new user', async () => {
             const mockUser = createMockUser();
@@ -223,7 +151,6 @@ describe('UserRepository', () => {
 
             const result = await userRepo.createUser({
                 supabaseUserId: 'new-supabase-id',
-                username: 'newuser',
                 email: 'new@example.com',
                 firstName: 'New',
                 lastName: 'User',
@@ -245,7 +172,6 @@ describe('UserRepository', () => {
 
             const result = await userRepo.createUser({
                 supabaseUserId: 'teacher-supabase-id',
-                username: 'teacher1',
                 email: 'teacher@example.com',
                 firstName: 'Test',
                 lastName: 'Teacher',

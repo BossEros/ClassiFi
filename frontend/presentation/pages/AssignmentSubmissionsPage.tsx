@@ -4,8 +4,9 @@ import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from '@/presentation/components/ui/Card'
 import { Button } from '@/presentation/components/ui/Button'
 import { Input } from '@/presentation/components/ui/Input'
+import { BackButton } from '@/presentation/components/ui/BackButton'
 import { SubmissionCard } from '@/presentation/components/dashboard/SubmissionCard'
-import { ArrowLeft, Search, Shield, Calendar, Code, FileText, Inbox, Loader2 } from 'lucide-react'
+import { Search, Shield, Calendar, Code, FileText, Inbox, Loader2 } from 'lucide-react'
 import { getCurrentUser } from '@/business/services/authService'
 import { getAssignmentById, getAssignmentSubmissions } from '@/business/services/assignmentService'
 import { analyzeAssignmentSubmissions } from '@/business/services/plagiarismService'
@@ -120,16 +121,6 @@ export function AssignmentSubmissionsPage() {
     navigate(`/dashboard/assignments/${assignmentId}`)
   }
 
-  // Handle back navigation
-  const handleBack = () => {
-    if (assignment) {
-      navigate(`/dashboard/classes/${assignment.classId}`)
-    } else {
-      navigate(-1)
-    }
-  }
-
-
   // Loading state
   if (loading) {
     return (
@@ -154,9 +145,11 @@ export function AssignmentSubmissionsPage() {
               <Inbox className="w-5 h-5" />
               <p className="font-medium">{error || 'Coursework not found'}</p>
             </div>
-            <Button onClick={handleBack} className="mt-4">
-              Go Back
-            </Button>
+            <BackButton
+              to={-1}
+              label="Go Back"
+              className="mt-4"
+            />
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -168,13 +161,10 @@ export function AssignmentSubmissionsPage() {
       <div className="space-y-6 max-w-[1600px]">
         {/* Header Section */}
         {/* Back Button */}
-        <button
-          onClick={handleBack}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-medium">Back to Class</span>
-        </button>
+        <BackButton
+          to={assignment ? `/dashboard/classes/${assignment.classId}` : -1}
+          label="Back to Class"
+        />
 
         {/* Assignment Info */}
         <div className="space-y-4">

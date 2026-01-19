@@ -43,25 +43,18 @@ export class StudentDashboardService {
 
     /** Get enrolled classes for a student */
     async getEnrolledClasses(studentId: number, limit?: number): Promise<DashboardClassDTO[]> {
-        let classes = await this.classRepo.getClassesByStudent(studentId, true);
+        let classesWithDetails = await this.classRepo.getClassesByStudentWithDetails(studentId, true);
 
         if (limit) {
-            classes = classes.slice(0, limit);
+            classesWithDetails = classesWithDetails.slice(0, limit);
         }
 
-        const classesWithDetails = await Promise.all(
-            classes.map(async (c) => {
-                const studentCount = await this.classRepo.getStudentCount(c.id);
-                const teacher = await this.userRepo.getUserById(c.teacherId);
-
-                return toDashboardClassDTO(c, {
-                    studentCount,
-                    teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}` : undefined,
-                });
+        return classesWithDetails.map((c) =>
+            toDashboardClassDTO(c, {
+                studentCount: c.studentCount,
+                teacherName: c.teacherName,
             })
         );
-
-        return classesWithDetails;
     }
 
     /** Get pending assignments for a student */

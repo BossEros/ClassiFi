@@ -8,7 +8,6 @@ export interface RegisterRequest {
   firstName: string;
   lastName: string;
   email: string;
-  username: string;
   password: string;
   confirmPassword: string;
 }
@@ -18,17 +17,7 @@ export interface LoginValidationData {
   password: string;
 }
 
-/**
- * Email validation regex pattern
- * Validates standard email format: user@domain.tld
- */
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-/**
- * Username validation regex pattern
- * Allows only alphanumeric characters and underscores
- */
-const USERNAME_PATTERN = /^[a-zA-Z0-9_]+$/;
 
 /**
  * Password validation patterns
@@ -50,29 +39,6 @@ export const validateEmail = (email: string): string | null => {
 
   if (!EMAIL_PATTERN.test(email)) {
     return 'Please enter a valid email address';
-  }
-
-  return null;
-};
-
-/**
- * Validates username format and length
- */
-export const validateUsername = (username: string): string | null => {
-  if (!username) {
-    return 'Username is required';
-  }
-
-  if (username.length < 3) {
-    return 'Username must be at least 3 characters long';
-  }
-
-  if (username.length > 50) {
-    return 'Username must not exceed 50 characters';
-  }
-
-  if (!USERNAME_PATTERN.test(username)) {
-    return 'Username can only contain letters, numbers, and underscores';
   }
 
   return null;
@@ -118,10 +84,7 @@ export const validatePassword = (password: string): string | null => {
 /**
  * Validates that passwords match
  */
-export const validatePasswordsMatch = (
-  password: string,
-  confirmPassword: string
-): string | null => {
+export const validatePasswordsMatch = (password: string, confirmPassword: string): string | null => {
   if (!confirmPassword) {
     return 'Please confirm your password';
   }
@@ -209,9 +172,6 @@ export const validateRegistrationData = (
   const emailError = validateEmail(data.email);
   if (emailError) errors.email = emailError;
 
-  const usernameError = validateUsername(data.username);
-  if (usernameError) errors.username = usernameError;
-
   const passwordError = validatePassword(data.password);
   if (passwordError) errors.password = passwordError;
 
@@ -262,8 +222,6 @@ export const validateField = (
   switch (fieldName) {
     case 'email':
       return validateEmail(value);
-    case 'username':
-      return validateUsername(value);
     case 'password':
       return validatePassword(value);
     case 'confirmPassword':

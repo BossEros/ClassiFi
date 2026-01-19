@@ -23,7 +23,6 @@ describe('Mappers', () => {
             const dto = toUserDTO(user);
 
             expect(dto.id).toBe(user.id);
-            expect(dto.username).toBe(user.username);
             expect(dto.email).toBe(user.email);
             expect(dto.firstName).toBe(user.firstName);
             expect(dto.lastName).toBe(user.lastName);
@@ -77,11 +76,9 @@ describe('Mappers', () => {
             const submission = createMockSubmission();
             const dto = toSubmissionDTO(submission, {
                 studentName: 'John Doe',
-                studentUsername: 'johndoe',
             });
 
             expect(dto.studentName).toBe('John Doe');
-            expect(dto.studentUsername).toBe('johndoe');
         });
     });
 
