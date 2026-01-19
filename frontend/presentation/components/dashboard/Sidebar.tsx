@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText } from 'lucide-react'
+import { Home, Grid3x3, List, Clock, Menu, X, LogOut, FileText, Settings, Users, GraduationCap } from 'lucide-react'
 import { NavItem } from './NavItem'
 import { Avatar } from '@/presentation/components/ui/Avatar'
 import { cn } from '@/shared/utils/cn'
@@ -13,13 +13,23 @@ const teacherNavigationItems = [
   { id: 'home', label: 'Home', path: '/dashboard', icon: Home },
   { id: 'classes', label: 'Classes', path: '/dashboard/classes', icon: Grid3x3 },
   { id: 'tasks', label: 'All Tasks', path: '/dashboard/tasks', icon: List },
-  { id: 'history', label: 'Analysis History', path: '/dashboard/history', icon: Clock }
+  { id: 'history', label: 'Analysis History', path: '/dashboard/history', icon: Clock },
+  { id: 'settings', label: 'Settings', path: '/dashboard/settings', icon: Settings }
 ]
 
 const studentNavigationItems = [
   { id: 'home', label: 'Home', path: '/dashboard', icon: Home },
   { id: 'classes', label: 'My Classes', path: '/dashboard/classes', icon: Grid3x3 },
-  { id: 'assignments', label: 'Coursework', path: '/dashboard/assignments', icon: FileText }
+  { id: 'assignments', label: 'Coursework', path: '/dashboard/assignments', icon: FileText },
+  { id: 'settings', label: 'Settings', path: '/dashboard/settings', icon: Settings }
+]
+
+const adminNavigationItems = [
+  { id: 'home', label: 'Dashboard', path: '/dashboard', icon: Home },
+  { id: 'users', label: 'Users', path: '/dashboard/users', icon: Users },
+  { id: 'classes', label: 'Classes', path: '/dashboard/classes', icon: Grid3x3 },
+  { id: 'enrollments', label: 'Enrollments', path: '/dashboard/enrollments', icon: GraduationCap },
+  { id: 'settings', label: 'Settings', path: '/dashboard/settings', icon: Settings }
 ]
 
 export function Sidebar() {
@@ -27,10 +37,32 @@ export function Sidebar() {
   const [user, setUser] = useState<User | null>(null)
   const navigate = useNavigate()
 
-  // Get user on mount
+  // Get user on mount and listen for storage changes
   useEffect(() => {
     const currentUser = getCurrentUser()
     setUser(currentUser)
+
+    // Listen for storage changes (when avatar is updated)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'user') {
+        const updatedUser = getCurrentUser()
+        setUser(updatedUser)
+      }
+    }
+
+    // Listen for custom event dispatched within the same tab
+    const handleUserUpdate = () => {
+      const updatedUser = getCurrentUser()
+      setUser(updatedUser)
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('userUpdated', handleUserUpdate)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('userUpdated', handleUserUpdate)
+    }
   }, [])
 
   const handleLogout = async () => {
@@ -70,7 +102,12 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-          {(user?.role === 'student' ? studentNavigationItems : teacherNavigationItems).map((item) => (
+          {(user?.role === 'student'
+            ? studentNavigationItems
+            : user?.role === 'admin'
+              ? adminNavigationItems
+              : teacherNavigationItems
+          ).map((item) => (
             <NavItem
               key={item.id}
               item={item}
@@ -84,6 +121,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2 mb-2 px-1.5">
             <Avatar
               size="sm"
+              src={user?.avatarUrl}
               fallback={userInitials}
               alt={user ? `${user.firstName} ${user.lastName}` : 'User'}
             />

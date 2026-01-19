@@ -22,11 +22,6 @@ export const API_ENDPOINTS = {
 } as const
 
 export const VALIDATION_RULES = {
-  USERNAME: {
-    MIN_LENGTH: 3,
-    MAX_LENGTH: 20,
-    PATTERN: /^[a-zA-Z0-9_]+$/
-  },
   PASSWORD: {
     MIN_LENGTH: 8,
     MAX_LENGTH: 128,

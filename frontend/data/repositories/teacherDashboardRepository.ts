@@ -1,9 +1,5 @@
 import { apiClient } from '@/data/api/apiClient'
 
-// ============================================================================
-// Raw Backend Response Types (matching API shape exactly)
-// ============================================================================
-
 interface ClassResponse {
   id: number
   teacherId: number

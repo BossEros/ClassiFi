@@ -16,7 +16,6 @@ export interface Database {
       profiles: {
         Row: {
           id: string
-          username: string | null
           first_name: string | null
           last_name: string | null
           role: 'student' | 'instructor' | null
@@ -26,7 +25,6 @@ export interface Database {
         }
         Insert: {
           id: string
-          username?: string | null
           first_name?: string | null
           last_name?: string | null
           role?: 'student' | 'instructor' | null
@@ -36,7 +34,6 @@ export interface Database {
         }
         Update: {
           id?: string
-          username?: string | null
           first_name?: string | null
           last_name?: string | null
           role?: 'student' | 'instructor' | null

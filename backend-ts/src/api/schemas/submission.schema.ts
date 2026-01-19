@@ -1,58 +1,66 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 /** Submission response schema */
 export const SubmissionResponseSchema = z.object({
-    id: z.number(),
-    assignmentId: z.number(),
-    studentId: z.number(),
-    fileName: z.string(),
-    filePath: z.string(),
-    fileSize: z.number(),
-    submissionNumber: z.number(),
-    submittedAt: z.string(),
-    isLatest: z.boolean(),
-    studentName: z.string().optional(),
-    studentUsername: z.string().optional(),
-    assignmentName: z.string().optional(),
+  id: z.number(),
+  assignmentId: z.number(),
+  studentId: z.number(),
+  fileName: z.string(),
+  filePath: z.string(),
+  fileSize: z.number(),
+  submissionNumber: z.number(),
+  submittedAt: z.string(),
+  isLatest: z.boolean(),
+  grade: z.number().nullable(),
+  studentName: z.string().optional(),
+  assignmentName: z.string().optional(),
 });
 
 export type SubmissionResponse = z.infer<typeof SubmissionResponseSchema>;
 
 /** Submit assignment response schema */
 export const SubmitAssignmentResponseSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-    submission: SubmissionResponseSchema.optional(),
+  success: z.boolean(),
+  message: z.string(),
+  submission: SubmissionResponseSchema.optional(),
 });
 
-export type SubmitAssignmentResponse = z.infer<typeof SubmitAssignmentResponseSchema>;
+export type SubmitAssignmentResponse = z.infer<
+  typeof SubmitAssignmentResponseSchema
+>;
 
 /** Submission list response schema */
 export const SubmissionListResponseSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-    submissions: z.array(SubmissionResponseSchema),
+  success: z.boolean(),
+  message: z.string(),
+  submissions: z.array(SubmissionResponseSchema),
 });
 
-export type SubmissionListResponse = z.infer<typeof SubmissionListResponseSchema>;
+export type SubmissionListResponse = z.infer<
+  typeof SubmissionListResponseSchema
+>;
 
 /** Submission history response schema */
 export const SubmissionHistoryResponseSchema = z.object({
-    success: z.boolean(),
-    message: z.string(),
-    submissions: z.array(SubmissionResponseSchema),
-    totalSubmissions: z.number(),
+  success: z.boolean(),
+  message: z.string(),
+  submissions: z.array(SubmissionResponseSchema),
+  totalSubmissions: z.number(),
 });
 
-export type SubmissionHistoryResponse = z.infer<typeof SubmissionHistoryResponseSchema>;
+export type SubmissionHistoryResponse = z.infer<
+  typeof SubmissionHistoryResponseSchema
+>;
 
 /** Submission detail response schema */
 export const SubmissionDetailResponseSchema = SubmissionResponseSchema.extend({
-    assignmentName: z.string().optional(),
-    className: z.string().optional(),
+  assignmentName: z.string().optional(),
+  className: z.string().optional(),
 });
 
-export type SubmissionDetailResponse = z.infer<typeof SubmissionDetailResponseSchema>;
+export type SubmissionDetailResponse = z.infer<
+  typeof SubmissionDetailResponseSchema
+>;
 
 // ============================================================================
 // Param Schemas (from controller)
@@ -60,15 +68,15 @@ export type SubmissionDetailResponse = z.infer<typeof SubmissionDetailResponseSc
 
 /** Submission ID param schema */
 export const SubmissionIdParamSchema = z.object({
-    submissionId: z.string(),
+  submissionId: z.string(),
 });
 
 export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>;
 
 /** History params schema (assignmentId + studentId) */
 export const HistoryParamsSchema = z.object({
-    assignmentId: z.string(),
-    studentId: z.string(),
+  assignmentId: z.string(),
+  studentId: z.string(),
 });
 
 export type HistoryParams = z.infer<typeof HistoryParamsSchema>;
@@ -79,9 +87,21 @@ export type HistoryParams = z.infer<typeof HistoryParamsSchema>;
 
 /** Download response schema */
 export const DownloadResponseSchema = z.object({
-    success: z.literal(true),
-    message: z.string(),
-    downloadUrl: z.string(),
+  success: z.literal(true),
+  message: z.string(),
+  downloadUrl: z.string(),
 });
 
 export type DownloadResponse = z.infer<typeof DownloadResponseSchema>;
+
+/** Submission content response schema */
+export const SubmissionContentResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string(),
+  content: z.string(),
+  language: z.string().optional(),
+});
+
+export type SubmissionContentResponse = z.infer<
+  typeof SubmissionContentResponseSchema
+>;

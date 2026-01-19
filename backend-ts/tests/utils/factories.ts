@@ -1,15 +1,9 @@
-/**
- * Test Utilities and Factories
- * Helper functions for creating test data
- */
 import type { User, Class, Assignment, Submission } from '../../src/models/index.js';
 
-/** Create a mock user for testing */
 export function createMockUser(overrides: Partial<User> = {}): User {
     return {
         id: 1,
         supabaseUserId: 'test-supabase-id',
-        username: 'testuser',
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
@@ -20,11 +14,9 @@ export function createMockUser(overrides: Partial<User> = {}): User {
     };
 }
 
-/** Create a mock teacher for testing */
 export function createMockTeacher(overrides: Partial<User> = {}): User {
     return createMockUser({
         id: 2,
-        username: 'teacher1',
         email: 'teacher@example.com',
         firstName: 'Test',
         lastName: 'Teacher',
@@ -33,7 +25,6 @@ export function createMockTeacher(overrides: Partial<User> = {}): User {
     });
 }
 
-/** Create a mock class for testing */
 export function createMockClass(overrides: Partial<Class> = {}): Class {
     return {
         id: 1,
@@ -51,7 +42,6 @@ export function createMockClass(overrides: Partial<Class> = {}): Class {
     };
 }
 
-/** Create a mock assignment for testing */
 export function createMockAssignment(overrides: Partial<Assignment> = {}): Assignment {
     const deadline = new Date();
     deadline.setDate(deadline.getDate() + 7);
@@ -71,7 +61,6 @@ export function createMockAssignment(overrides: Partial<Assignment> = {}): Assig
     };
 }
 
-/** Create a mock submission for testing */
 export function createMockSubmission(overrides: Partial<Submission> = {}): Submission {
     return {
         id: 1,
@@ -87,12 +76,10 @@ export function createMockSubmission(overrides: Partial<Submission> = {}): Submi
     };
 }
 
-/** Create multiple mock users */
 export function createMockUsers(count: number, role: 'student' | 'teacher' = 'student'): User[] {
     return Array.from({ length: count }, (_, i) =>
         createMockUser({
             id: i + 1,
-            username: `${role}${i + 1}`,
             email: `${role}${i + 1}@example.com`,
             role,
         })

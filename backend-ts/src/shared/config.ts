@@ -28,6 +28,9 @@ const EnvSchema = z.object({
 
     // API
     API_PREFIX: z.string().default('/api'),
+
+    // Judge0 (Code Execution)
+    JUDGE0_URL: z.string().url().default('http://localhost:2358'),
 });
 
 /** Validated environment type */
@@ -74,4 +77,7 @@ export const settings = {
 
     // API
     apiPrefix: env.API_PREFIX,
+
+    // Judge0 (Code Execution)
+    judge0Url: env.JUDGE0_URL,
 };
