@@ -1,0 +1,13 @@
+
+> classifi@0.0.0 dev /app/frontend
+> vite --host 0.0.0.0 --port 3006
+
+1:10:05 PM [vite] (client) Re-optimizing dependencies because lockfile has changed
+
+  VITE v7.3.1  ready in 1014 ms
+
+  ➜  Local:   http://localhost:3006/
+  ➜  Network: http://192.168.0.2:3006/
+1:11:27 PM [vite] (client) hmr update /presentation/App.tsx, /index.css
+1:11:51 PM [vite] (client) hmr update /presentation/pages/VerificationPage.tsx, /index.css
+1:11:56 PM [vite] (client) hmr update /presentation/App.tsx, /index.css

@@ -1,0 +1,16 @@
+
+> classifi@0.0.0 dev /app/frontend
+> vite --host 0.0.0.0 --port 3005
+
+
+  VITE v7.3.1  ready in 455 ms
+
+  ➜  Local:   http://localhost:3005/
+  ➜  Network: http://192.168.0.2:3005/
+1:02:08 PM [vite] (client) hmr update /index.css, /presentation/components/ui/DropdownMenu.tsx
+1:03:32 PM [vite] (client) hmr update /presentation/pages/VerificationPage.tsx, /index.css
+1:03:37 PM [vite] (client) hmr update /presentation/App.tsx, /index.css
+1:05:48 PM [vite] (client) hmr update /index.css
+1:06:49 PM [vite] (client) hmr update /index.css
+1:08:30 PM [vite] (client) hmr update /index.css
+ ELIFECYCLE  Command failed.
