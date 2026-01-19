@@ -11,11 +11,30 @@ import {
 } from "lucide-react";
 import * as adminService from "@/business/services/adminService";
 import type { AdminUser } from "@/business/services/adminService";
+import type { DayOfWeek } from "@/data/api/types";
 import {
   validateClassName,
   validateAcademicYear,
   validateSchedule,
 } from "@/business/validation/classValidation";
+
+/** Maps abbreviated day names to full DayOfWeek values */
+const DAY_ABBREVIATION_MAP: Record<string, DayOfWeek> = {
+  Mon: "monday",
+  Tue: "tuesday",
+  Wed: "wednesday",
+  Thu: "thursday",
+  Fri: "friday",
+  Sat: "saturday",
+  Sun: "sunday",
+};
+
+/** Convert abbreviated day strings to DayOfWeek[] */
+function convertToDayOfWeek(abbreviatedDays: string[]): DayOfWeek[] {
+  return abbreviatedDays
+    .map((day) => DAY_ABBREVIATION_MAP[day])
+    .filter((day): day is DayOfWeek => day !== undefined);
+}
 
 export interface ClassToEdit {
   id: number;
@@ -168,7 +187,7 @@ export function AdminCreateClassModal({
         semester: Number(formData.semester),
         academicYear: formData.academicYear,
         schedule: {
-          days: formData.scheduleDays,
+          days: convertToDayOfWeek(formData.scheduleDays),
           startTime: formData.startTime,
           endTime: formData.endTime,
         },

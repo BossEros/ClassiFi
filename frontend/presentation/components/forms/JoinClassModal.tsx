@@ -1,74 +1,80 @@
-import { useState, useEffect } from 'react'
-import { X, Check, RefreshCw, Users } from 'lucide-react'
-import { Input } from '@/presentation/components/ui/Input'
-import { Button } from '@/presentation/components/ui/Button'
-import { joinClass } from '@/business/services/studentDashboardService'
-import type { Class } from '@/business/models/dashboard/types'
+import { useState, useEffect } from "react";
+import { X, Check, RefreshCw, Users } from "lucide-react";
+import { Input } from "@/presentation/components/ui/Input";
+import { Button } from "@/presentation/components/ui/Button";
+import { joinClass } from "@/business/services/studentDashboardService";
+import type { Class } from "@/business/models/dashboard/types";
 
 interface JoinClassModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSuccess: (classInfo: Class) => void
-  studentId: number
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: (classInfo: Class) => void;
+  studentId: number;
 }
 
-export function JoinClassModal({ isOpen, onClose, onSuccess, studentId }: JoinClassModalProps) {
-  const [classCode, setClassCode] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function JoinClassModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  studentId,
+}: JoinClassModalProps) {
+  const [classCode, setClassCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
-      setClassCode('')
-      setError(null)
+      setClassCode("");
+      setError(null);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Convert to uppercase and remove spaces
-    const value = e.target.value.toUpperCase().replace(/\s/g, '')
-    setClassCode(value)
-    if (error) setError(null)
-  }
+    const value = e.target.value.toUpperCase().replace(/\s/g, "");
+    setClassCode(value);
+    if (error) setError(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
     // Basic validation
-    const trimmedCode = classCode.trim()
+    const trimmedCode = classCode.trim();
     if (!trimmedCode) {
-      setError('Please enter a class code')
-      return
+      setError("Please enter a class code");
+      return;
     }
 
     if (trimmedCode.length < 6 || trimmedCode.length > 8) {
-      setError('Class code must be 6-8 characters')
-      return
+      setError("Class code must be 6-8 characters");
+      return;
     }
 
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     try {
-      const response = await joinClass(studentId, trimmedCode)
+      const response = await joinClass(studentId, trimmedCode);
 
       if (!response.success) {
-        setError(response.message)
-        return
+        setError(response.message);
+        return;
       }
 
       if (response.classInfo) {
-        onSuccess(response.classInfo)
+        // Cast is safe: API returns ISO date strings compatible with ISODateString
+        onSuccess(response.classInfo as Class);
       }
-      onClose()
+      onClose();
     } catch {
-      setError('Failed to join class. Please try again.')
+      setError("Failed to join class. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -113,7 +119,10 @@ export function JoinClassModal({ isOpen, onClose, onSuccess, studentId }: JoinCl
 
           {/* Class Code Input */}
           <div className="space-y-2">
-            <label htmlFor="classCode" className="text-sm font-medium text-white">
+            <label
+              htmlFor="classCode"
+              className="text-sm font-medium text-white"
+            >
               Class Code
             </label>
             <Input
@@ -124,7 +133,7 @@ export function JoinClassModal({ isOpen, onClose, onSuccess, studentId }: JoinCl
               onChange={handleClassCodeChange}
               disabled={isSubmitting}
               maxLength={8}
-              className={`text-center text-lg font-mono tracking-widest uppercase ${error ? 'border-red-500/50' : ''}`}
+              className={`text-center text-lg font-mono tracking-widest uppercase ${error ? "border-red-500/50" : ""}`}
               autoFocus
               required
             />
@@ -160,5 +169,5 @@ export function JoinClassModal({ isOpen, onClose, onSuccess, studentId }: JoinCl
         </form>
       </div>
     </div>
-  )
+  );
 }
