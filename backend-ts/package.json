@@ -27,7 +27,7 @@
     "postgres": "^3.4.5",
     "reflect-metadata": "^0.2.2",
     "tree-sitter": "^0.21.1",
-    "tree-sitter-c": "^0.21.0",
+    "tree-sitter-c": "^0.24.1",
     "tree-sitter-java": "^0.21.0",
     "tree-sitter-python": "^0.21.0",
     "tsyringe": "^4.10.0",
