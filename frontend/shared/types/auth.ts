@@ -84,12 +84,28 @@ export interface DeleteAccountRequest {
 /**
  * Response for authentication operations.
  */
-export interface AuthResponse {
-  success: boolean;
-  message?: string;
-  user?: User;
-  token?: string;
+/**
+ * Failure response for authentication operations.
+ */
+export interface AuthFailure {
+  success: false;
+  message: string;
 }
+
+/**
+ * Success response for authentication operations.
+ */
+export interface AuthSuccess {
+  success: true;
+  message?: string;
+  user: User;
+  token: string;
+}
+
+/**
+ * Response for authentication operations.
+ */
+export type AuthResponse = AuthSuccess | AuthFailure;
 
 /**
  * Base response for simple auth operations.

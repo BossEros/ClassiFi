@@ -15,51 +15,54 @@ export type {
 };
 
 /**
- * Analyze all submissions for an assignment for plagiarism detection.
+ * Initiates plagiarism detection analysis for all submissions of a specific assignment.
+ * Validates the assignment ID before triggering the repository call.
  *
- * @param assignmentId - ID of the assignment to analyze
- * @returns Analysis results including similarity pairs
+ * @param assignmentId - The unique identifier of the assignment to analyze.
+ * @returns The analysis results containing detected similarity pairs and metadata.
+ * @throws Error if the analysis fails or returns no data.
  */
 export async function analyzeAssignmentSubmissions(
-  assignmentId: number
+  assignmentId: number,
 ): Promise<AnalyzeResponse> {
   validateId(assignmentId, "assignment");
 
-  const response = await plagiarismRepository.analyzeAssignmentSubmissions(
-    assignmentId
-  );
+  const analysisResponse =
+    await plagiarismRepository.analyzeAssignmentSubmissions(assignmentId);
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (analysisResponse.error) {
+    throw new Error(analysisResponse.error);
   }
 
-  if (!response.data) {
+  if (!analysisResponse.data) {
     throw new Error("Failed to analyze submissions");
   }
 
-  return response.data;
+  return analysisResponse.data;
 }
 
 /**
- * Get detailed result with fragments and file content.
+ * Retrieves detailed comparison results for a specific pair of submissions.
+ * Includes code fragments, matched lines, and full file contents for side-by-side comparison.
  *
- * @param resultId - ID of the similarity result
- * @returns Result details with fragments and code content
+ * @param resultId - The unique identifier of the similarity result (pair).
+ * @returns detailed comparison data including code fragments and file content.
+ * @throws Error if the details cannot be fetched.
  */
 export async function getResultDetails(
-  resultId: number
+  resultId: number,
 ): Promise<ResultDetailsResponse> {
   validateId(resultId, "result");
 
-  const response = await plagiarismRepository.getResultDetails(resultId);
+  const detailsResponse = await plagiarismRepository.getResultDetails(resultId);
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (detailsResponse.error) {
+    throw new Error(detailsResponse.error);
   }
 
-  if (!response.data) {
+  if (!detailsResponse.data) {
     throw new Error("Failed to fetch result details");
   }
 
-  return response.data;
+  return detailsResponse.data;
 }

@@ -1,47 +1,54 @@
-import { apiClient, type ApiResponse } from '@/data/api/apiClient';
+import { apiClient, type ApiResponse } from "@/data/api/apiClient";
 
 // =============================================================================
 // Types
 // =============================================================================
 
 import type {
-    TestCase,
-    CreateTestCaseRequest,
-    UpdateTestCaseRequest,
-    TestResultDetail,
-    TestExecutionSummary
-} from '@/shared/types/testCase';
+  TestCase,
+  CreateTestCaseRequest,
+  UpdateTestCaseRequest,
+  TestResultDetail,
+  TestExecutionSummary,
+  RawTestResult,
+} from "@/shared/types/testCase";
 
 export type {
-    TestCase,
-    CreateTestCaseRequest,
-    UpdateTestCaseRequest,
-    TestResultDetail,
-    TestExecutionSummary
+  TestCase,
+  CreateTestCaseRequest,
+  UpdateTestCaseRequest,
+  TestResultDetail,
+  TestExecutionSummary,
+  RawTestResult,
 };
 
 // Response types matching backend
 interface TestCaseListResponse {
-    success: boolean;
-    message: string;
-    testCases: TestCase[];
+  success: boolean;
+  message: string;
+  testCases: TestCase[];
 }
 
 interface TestCaseResponse {
-    success: boolean;
-    message: string;
-    testCase: TestCase;
+  success: boolean;
+  message: string;
+  testCase: TestCase;
 }
 
 interface TestResultsResponse {
-    success: boolean;
-    message: string;
-    data: TestExecutionSummary;
+  success: boolean;
+  message: string;
+  data: {
+    results: RawTestResult[];
+    passedCount: number;
+    totalCount: number;
+    score: number;
+  };
 }
 
 interface SuccessResponse {
-    success: boolean;
-    message: string;
+  success: boolean;
+  message: string;
 }
 
 // =============================================================================
@@ -51,45 +58,57 @@ interface SuccessResponse {
 /**
  * Get all test cases for an assignment
  */
-export async function getTestCases(assignmentId: number): Promise<ApiResponse<TestCaseListResponse>> {
-    return apiClient.get<TestCaseListResponse>(`/assignments/${assignmentId}/test-cases`);
+export async function getTestCases(
+  assignmentId: number,
+): Promise<ApiResponse<TestCaseListResponse>> {
+  return apiClient.get<TestCaseListResponse>(
+    `/assignments/${assignmentId}/test-cases`,
+  );
 }
 
 /**
  * Create a new test case
  */
 export async function createTestCase(
-    assignmentId: number,
-    data: CreateTestCaseRequest
+  assignmentId: number,
+  data: CreateTestCaseRequest,
 ): Promise<ApiResponse<TestCaseResponse>> {
-    return apiClient.post<TestCaseResponse>(`/assignments/${assignmentId}/test-cases`, data);
+  return apiClient.post<TestCaseResponse>(
+    `/assignments/${assignmentId}/test-cases`,
+    data,
+  );
 }
 
 /**
  * Update a test case
  */
 export async function updateTestCase(
-    testCaseId: number,
-    data: UpdateTestCaseRequest
+  testCaseId: number,
+  data: UpdateTestCaseRequest,
 ): Promise<ApiResponse<TestCaseResponse>> {
-    return apiClient.put<TestCaseResponse>(`/test-cases/${testCaseId}`, data);
+  return apiClient.put<TestCaseResponse>(`/test-cases/${testCaseId}`, data);
 }
 
 /**
  * Delete a test case
  */
-export async function deleteTestCase(testCaseId: number): Promise<ApiResponse<SuccessResponse>> {
-    return apiClient.delete<SuccessResponse>(`/test-cases/${testCaseId}`);
+export async function deleteTestCase(
+  testCaseId: number,
+): Promise<ApiResponse<SuccessResponse>> {
+  return apiClient.delete<SuccessResponse>(`/test-cases/${testCaseId}`);
 }
 
 /**
  * Reorder test cases
  */
 export async function reorderTestCases(
-    assignmentId: number,
-    order: Array<{ id: number; sortOrder: number }>
+  assignmentId: number,
+  order: Array<{ id: number; sortOrder: number }>,
 ): Promise<ApiResponse<SuccessResponse>> {
-    return apiClient.put<SuccessResponse>(`/assignments/${assignmentId}/test-cases/reorder`, { order });
+  return apiClient.put<SuccessResponse>(
+    `/assignments/${assignmentId}/test-cases/reorder`,
+    { order },
+  );
 }
 
 // =============================================================================
@@ -100,31 +119,37 @@ export async function reorderTestCases(
  * Run tests in preview mode (without saving)
  */
 export async function runTestsPreview(
-    sourceCode: string,
-    language: 'python' | 'java' | 'c',
-    assignmentId: number
+  sourceCode: string,
+  language: "python" | "java" | "c",
+  assignmentId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
-    return apiClient.post<TestResultsResponse>('/code/run-tests', {
-        sourceCode,
-        language,
-        assignmentId,
-    });
+  return apiClient.post<TestResultsResponse>("/code/run-tests", {
+    sourceCode,
+    language,
+    assignmentId,
+  });
 }
 
 /**
  * Get test results for a submission
+ * Returns the raw backend response (normalization happens in a service/utility)
  */
 export async function getTestResults(
-    submissionId: number
+  submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
-    return apiClient.get<TestResultsResponse>(`/submissions/${submissionId}/test-results`);
+  return apiClient.get<TestResultsResponse>(
+    `/submissions/${submissionId}/test-results`,
+  );
 }
 
 /**
  * Run tests for a submission
  */
 export async function runTestsForSubmission(
-    submissionId: number
+  submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
-    return apiClient.post<TestResultsResponse>(`/submissions/${submissionId}/run-tests`, {});
+  return apiClient.post<TestResultsResponse>(
+    `/submissions/${submissionId}/run-tests`,
+    {},
+  );
 }
