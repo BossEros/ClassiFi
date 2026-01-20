@@ -43,8 +43,12 @@ export function validateFile(
   const lastDotIndex = fileName.lastIndexOf(".");
   const fileExt = lastDotIndex === -1 ? "" : fileName.substring(lastDotIndex);
 
-  const allowedExts =
-    ALLOWED_EXTENSIONS[programmingLanguage.toLowerCase()] || [];
+  const languageKey = programmingLanguage.toLowerCase();
+  const allowedExts = ALLOWED_EXTENSIONS[languageKey];
+
+  if (!allowedExts) {
+    return `Unsupported programming language: ${programmingLanguage}`;
+  }
 
   if (!allowedExts.includes(fileExt)) {
     return `Invalid file type. Expected ${allowedExts.join(

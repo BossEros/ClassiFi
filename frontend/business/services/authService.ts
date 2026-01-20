@@ -76,7 +76,7 @@ export async function registerUser(
   if (!validationResult.isValid) {
     return {
       success: false,
-      message: Object.values(validationResult.errors).join(", "),
+      message: validationResult.errors.map((e) => e.message).join(", "),
     };
   }
 
@@ -108,7 +108,6 @@ export async function logoutUser(): Promise<void> {
     clearLocalAuthenticationSession();
   }
 }
-
 
 /**
  * Retrieves the currently logged-in user from local storage.
@@ -355,7 +354,7 @@ export async function deleteAccount(
   try {
     // Get current user email
     const currentUser = getCurrentUser();
-    
+
     if (!currentUser?.email) {
       return {
         success: false,

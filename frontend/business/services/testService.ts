@@ -1,10 +1,12 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import { validateId } from "@/shared/utils/validators";
 import type { ProgrammingLanguage } from "@/business/models/assignment/types";
 import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
 } from "@/data/api/types";
+import { normalizeTestResult } from "@/shared/utils/testNormalization";
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse };
 
@@ -23,6 +25,8 @@ export async function runTestsPreview(
   language: ProgrammingLanguage,
   assignmentId: number,
 ): Promise<TestPreviewResult> {
+  validateId(assignmentId, "assignment");
+
   const executionResponse = await testCaseRepository.runTestsPreview(
     sourceCode,
     language,
@@ -37,7 +41,17 @@ export async function runTestsPreview(
     );
   }
 
-  return executionResponse.data.data;
+  if (!executionResponse.data.data) {
+    throw new Error("Test execution data is missing from the response");
+  }
+
+  const data = executionResponse.data.data;
+  return {
+    passed: data.passedCount,
+    total: data.totalCount,
+    percentage: data.score,
+    results: data.results.map(normalizeTestResult),
+  };
 }
 
 /**
@@ -51,6 +65,7 @@ export async function runTestsPreview(
 export async function getTestResultsForSubmission(
   submissionId: number,
 ): Promise<TestPreviewResult> {
+  validateId(submissionId, "submission");
   const resultsResponse = await testCaseRepository.getTestResults(submissionId);
 
   if (!resultsResponse.data || !resultsResponse.data.success) {
@@ -67,5 +82,10 @@ export async function getTestResultsForSubmission(
     throw new Error("Test results data is missing from the response");
   }
 
-  return summary;
+  return {
+    passed: summary.passedCount,
+    total: summary.totalCount,
+    percentage: summary.score,
+    results: summary.results.map(normalizeTestResult),
+  };
 }

@@ -26,7 +26,7 @@ Before making any changes, **YOU MUST** understand the architecture of the speci
     - **Backend**: Controllers handle HTTP -> Services handle Business Logic -> Repositories handle DB.
 2.  **Systematic Workflow**:
     - **Plan**: Always create an `implementation_plan.md` for non-trivial tasks.
-    - **Implement**: Write code that is SOLID and DRY. Use descriptive variable names and method names. Make it informative and self-documenting that you won't need documentation to explain it since the name of the variable, class, method, etc. is self-explanatory.
+    - **Implement**: Write SOLID, DRY code with descriptive variable, method, and class names so the implementation is self-explanatory.
     - **Verify**: Never assume code works. Verify with the specific commands below.
 3.  **Research & Guidance**:
     - Use **Context7 MCP** for library-specific best practices.

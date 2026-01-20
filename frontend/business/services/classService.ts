@@ -234,8 +234,8 @@ export async function createAssignment(
   const validation = validateCreateAssignmentData(createAssignmentData);
 
   if (!validation.isValid) {
-    const firstError = Object.values(validation.errors)[0];
-    throw new Error(firstError);
+    const firstError = validation.errors[0];
+    throw new Error(firstError.message);
   }
 
   // Validate IDs

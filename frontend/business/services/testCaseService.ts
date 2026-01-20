@@ -6,6 +6,7 @@ import type {
   UpdateTestCaseRequest,
   TestExecutionSummary,
 } from "@/shared/types/testCase";
+import { normalizeTestResult } from "@/shared/utils/testNormalization";
 
 /**
  * Retrieves all test cases associated with a specific assignment.
@@ -45,13 +46,18 @@ export async function createTestCase(
 ): Promise<TestCase> {
   validateId(assignmentId, "assignment");
 
-  if (!createTestCaseData.name) 
-    throw new Error("Test case name is required");
+  if (!createTestCaseData.name) throw new Error("Test case name is required");
 
-  if (createTestCaseData.input === undefined || createTestCaseData.input === null)
+  if (
+    createTestCaseData.input === undefined ||
+    createTestCaseData.input === null
+  )
     throw new Error("Input is required");
 
-  if (createTestCaseData.expectedOutput === undefined || createTestCaseData.expectedOutput === null)
+  if (
+    createTestCaseData.expectedOutput === undefined ||
+    createTestCaseData.expectedOutput === null
+  )
     throw new Error("Expected output is required");
 
   const creationResponse = await testCaseRepository.createTestCase(
@@ -89,7 +95,8 @@ export async function updateTestCase(
 
   if (updateResponse.error) throw new Error(updateResponse.error);
 
-  if (!updateResponse.data || !updateResponse.data.testCase) throw new Error("Failed to update test case");
+  if (!updateResponse.data || !updateResponse.data.testCase)
+    throw new Error("Failed to update test case");
 
   return updateResponse.data.testCase;
 }
@@ -108,7 +115,8 @@ export async function deleteTestCase(testCaseId: number): Promise<void> {
 
   if (deletionResponse.error) throw new Error(deletionResponse.error);
 
-  if (!deletionResponse.data || !deletionResponse.data.success) throw new Error("Failed to delete test case");
+  if (!deletionResponse.data || !deletionResponse.data.success)
+    throw new Error("Failed to delete test case");
 }
 
 /**
@@ -129,5 +137,13 @@ export async function getTestResults(
 
   if (!resultsResponse.data) throw new Error("Failed to fetch test results");
 
-  return resultsResponse.data.data || null;
+  const rawData = resultsResponse.data.data;
+
+  return {
+    submissionId: submissionId,
+    passed: rawData.passedCount,
+    total: rawData.totalCount,
+    percentage: rawData.score,
+    results: rawData.results.map(normalizeTestResult),
+  };
 }

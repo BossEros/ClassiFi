@@ -1,17 +1,3 @@
-// Export types for consumers
-export type {
-  AdminUser,
-  AdminStats,
-  ActivityItem,
-  AdminClass,
-  PaginatedResponse,
-  CreateUserData,
-  CreateClassData,
-  UpdateClassData,
-  EnrolledStudent,
-  ClassAssignment,
-} from "@/data/api/types";
-
 import * as adminRepository from "@/data/repositories/adminRepository";
 import type {
   AdminUser,
@@ -25,6 +11,26 @@ import type {
   EnrolledStudent,
   ClassAssignment,
 } from "@/data/api/types";
+
+// Re-export common types for consumers
+export type {
+  AdminUser,
+  AdminStats,
+  ActivityItem,
+  AdminClass,
+  PaginatedResponse,
+  CreateUserData,
+  CreateClassData,
+  UpdateClassData,
+  EnrolledStudent,
+  ClassAssignment,
+};
+
+import { validateId } from "@/shared/utils/validators";
+import {
+  validateEmail,
+  validateRole,
+} from "@/business/validation/authValidation";
 
 // ============ User Management ============
 
@@ -54,6 +60,8 @@ export async function getAllUsers(
  * @throws Error if the user is not found.
  */
 export async function getUserById(userId: number): Promise<AdminUser> {
+  validateId(userId, "user");
+
   const response = await adminRepository.getUserById(userId);
 
   if (!response.user) {
@@ -71,6 +79,12 @@ export async function getUserById(userId: number): Promise<AdminUser> {
  * @throws Error if creation fails.
  */
 export async function createUser(data: CreateUserData): Promise<AdminUser> {
+  const emailError = validateEmail(data.email);
+  if (emailError) throw new Error(emailError);
+
+  const roleError = validateRole(data.role);
+  if (roleError) throw new Error(roleError);
+
   const response = await adminRepository.createUser(data);
 
   if (!response.user) {
@@ -91,6 +105,10 @@ export async function updateUserRole(
   userId: number,
   role: string,
 ): Promise<AdminUser> {
+  validateId(userId, "user");
+  const roleError = validateRole(role);
+  if (roleError) throw new Error(roleError);
+
   const response = await adminRepository.updateUserRole(userId, role);
 
   if (!response.user) {
@@ -111,6 +129,8 @@ export async function updateUserDetails(
   userId: number,
   data: { firstName?: string; lastName?: string },
 ): Promise<AdminUser> {
+  validateId(userId, "user");
+
   const response = await adminRepository.updateUserDetails(userId, data);
 
   if (!response.user) {
@@ -131,6 +151,10 @@ export async function updateUserEmail(
   userId: number,
   email: string,
 ): Promise<AdminUser> {
+  validateId(userId, "user");
+  const emailError = validateEmail(email);
+  if (emailError) throw new Error(emailError);
+
   const response = await adminRepository.updateUserEmail(userId, email);
 
   if (!response.user) {
@@ -147,6 +171,8 @@ export async function updateUserEmail(
  * @returns The updated user object with the new status.
  */
 export async function toggleUserStatus(userId: number): Promise<AdminUser> {
+  validateId(userId, "user");
+
   const response = await adminRepository.toggleUserStatus(userId);
 
   if (!response.user) {
@@ -163,6 +189,8 @@ export async function toggleUserStatus(userId: number): Promise<AdminUser> {
  * @returns A promise that resolves when the deletion is complete.
  */
 export async function deleteUser(userId: number): Promise<void> {
+  validateId(userId, "user");
+
   await adminRepository.deleteUser(userId);
 }
 
@@ -232,6 +260,8 @@ export async function getAllClasses(
  * @throws Error if the class is not found.
  */
 export async function getClassById(classId: number): Promise<AdminClass> {
+  validateId(classId, "class");
+
   const response = await adminRepository.getClassById(classId);
 
   if (!response.class) {
@@ -268,6 +298,8 @@ export async function updateClass(
   classId: number,
   data: UpdateClassData,
 ): Promise<AdminClass> {
+  validateId(classId, "class");
+
   const response = await adminRepository.updateClass(classId, data);
 
   if (!response.class) {
@@ -284,6 +316,8 @@ export async function updateClass(
  * @returns A promise that resolves when the deletion is complete.
  */
 export async function deleteClass(classId: number): Promise<void> {
+  validateId(classId, "class");
+
   await adminRepository.deleteClass(classId);
 }
 
@@ -298,6 +332,9 @@ export async function reassignClassTeacher(
   classId: number,
   teacherId: number,
 ): Promise<AdminClass> {
+  validateId(classId, "class");
+  validateId(teacherId, "teacher");
+
   const response = await adminRepository.reassignClassTeacher(
     classId,
     teacherId,
@@ -319,6 +356,8 @@ export async function reassignClassTeacher(
  * @returns The archived class object.
  */
 export async function archiveClass(classId: number): Promise<AdminClass> {
+  validateId(classId, "class");
+
   const response = await adminRepository.archiveClass(classId);
 
   if (!response.class) {
@@ -352,6 +391,8 @@ export async function getAllTeachers(): Promise<AdminUser[]> {
 export async function getClassStudents(
   classId: number,
 ): Promise<EnrolledStudent[]> {
+  validateId(classId, "class");
+
   const response = await adminRepository.getClassStudents(classId);
 
   if (!response.students) {
@@ -374,6 +415,8 @@ export async function getClassStudents(
 export async function getClassAssignments(
   classId: number,
 ): Promise<ClassAssignment[]> {
+  validateId(classId, "class");
+
   const response = await adminRepository.getClassAssignments(classId);
 
   if (!response.assignments) {
@@ -394,6 +437,9 @@ export async function addStudentToClass(
   classId: number,
   studentId: number,
 ): Promise<void> {
+  validateId(classId, "class");
+  validateId(studentId, "student");
+
   await adminRepository.addStudentToClass(classId, studentId);
 }
 
@@ -408,6 +454,9 @@ export async function removeStudentFromClass(
   classId: number,
   studentId: number,
 ): Promise<void> {
+  validateId(classId, "class");
+  validateId(studentId, "student");
+
   await adminRepository.removeStudentFromClass(classId, studentId);
 }
 
@@ -423,6 +472,8 @@ export async function getAdminClassDetailData(classId: number): Promise<{
   assignments: ClassAssignment[];
   students: EnrolledStudent[];
 }> {
+  validateId(classId, "class");
+
   const [classInfo, assignments, students] = await Promise.all([
     getClassById(classId),
     getClassAssignments(classId),

@@ -36,7 +36,12 @@ interface TestCaseResponse {
 interface TestResultsResponse {
   success: boolean;
   message: string;
-  data: TestExecutionSummary;
+  data: {
+    results: RawTestResult[];
+    passedCount: number;
+    totalCount: number;
+    score: number;
+  };
 }
 
 interface SuccessResponse {
@@ -123,23 +128,24 @@ export async function runTestsPreview(
   });
 }
 
-// Helper to normalize test results
-function normalizeTestResult(result: any): TestResultDetail {
-  return {
-    testCaseId: result.testCaseId,
-    name:
-      result.name || result.testCase?.name || `Test Case ${result.testCaseId}`,
-    status: result.status,
-    isHidden: result.isHidden || result.testCase?.isHidden || false,
-    executionTimeMs:
-      result.executionTimeMs ||
-      (result.executionTime ? parseFloat(result.executionTime) * 1000 : 0),
-    memoryUsedKb: result.memoryUsedKb || result.memoryUsed || 0,
-    input: result.input,
-    expectedOutput: result.expectedOutput || result.testCase?.expectedOutput,
-    actualOutput: result.actualOutput,
-    errorMessage: result.errorMessage,
+export interface RawTestResult {
+  testCaseId: number;
+  name?: string;
+  testCase?: {
+    name: string;
+    isHidden: boolean;
+    expectedOutput: string;
   };
+  status: "Passed" | "Failed";
+  isHidden?: boolean;
+  executionTimeMs?: number;
+  executionTime?: string; // Legacy format
+  memoryUsedKb?: number;
+  memoryUsed?: number; // Legacy format
+  input: string;
+  expectedOutput?: string;
+  actualOutput: string;
+  errorMessage?: string;
 }
 
 /**
@@ -149,19 +155,9 @@ function normalizeTestResult(result: any): TestResultDetail {
 export async function getTestResults(
   submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
-  const response = await apiClient.get<TestResultsResponse>(
+  return apiClient.get<TestResultsResponse>(
     `/submissions/${submissionId}/test-results`,
   );
-
-  if (response.data && response.data.success && response.data.data) {
-    // Normalize results
-    const rawData = response.data.data;
-    if (rawData.results) {
-      rawData.results = rawData.results.map(normalizeTestResult);
-    }
-  }
-
-  return response;
 }
 
 /**

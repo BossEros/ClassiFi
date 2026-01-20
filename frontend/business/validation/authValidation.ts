@@ -1,9 +1,7 @@
-import type { ValidationError } from "@/shared/types/auth";
+import type { ValidationError, ValidationResult } from "@/shared/types/auth";
 
-export interface ValidationResult {
-  isValid: boolean;
-  errors: ValidationError[];
-}
+// Re-export shared types for consistency
+export type { ValidationResult };
 
 export interface RegisterRequest {
   role: string;
@@ -209,7 +207,7 @@ export const validateLoginData = (
 
   if (!data.password) {
     errors.push({ field: "password", message: "Password is required" });
-  } else if (data.password.length < 1) {
+  } else if (data.password.trim().length === 0) {
     errors.push({ field: "password", message: "Password cannot be empty" });
   }
 

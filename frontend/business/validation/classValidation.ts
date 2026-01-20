@@ -1,7 +1,4 @@
-export interface ValidationResult {
-  isValid: boolean;
-  errors: Record<string, string>;
-}
+import type { ValidationError, ValidationResult } from "@/shared/types/auth";
 
 export interface Schedule {
   days: string[];
@@ -79,12 +76,14 @@ export const validateClassCode = (classCode: string): string | null => {
  * - Must be between 6-8 characters
  */
 export const validateClassJoinCode = (classCode: string): string | null => {
-  if (!classCode) {
+  const trimmedCode = classCode ? classCode.trim() : "";
+
+  if (!trimmedCode) {
     return "Class code is required";
   }
 
   const codeRegex = /^[A-Za-z0-9]{6,8}$/;
-  if (!codeRegex.test(classCode)) {
+  if (!codeRegex.test(trimmedCode)) {
     return "Invalid class code format. Please enter a 6-8 character alphanumeric code.";
   }
   return null;
@@ -196,41 +195,48 @@ export const validateSchedule = (
 export const validateCreateClassData = (
   data: CreateClassData,
 ): ValidationResult => {
-  const errors: Record<string, string> = {};
+  const errors: ValidationError[] = [];
 
   const classNameError = validateClassName(data.className);
-  if (classNameError) errors.className = classNameError;
+  if (classNameError)
+    errors.push({ field: "className", message: classNameError });
 
   const descriptionError = validateClassDescription(data.description);
-  if (descriptionError) errors.description = descriptionError;
+  if (descriptionError)
+    errors.push({ field: "description", message: descriptionError });
 
   if (data.classCode !== undefined) {
     const classCodeError = validateClassCode(data.classCode);
-    if (classCodeError) errors.classCode = classCodeError;
+    if (classCodeError)
+      errors.push({ field: "classCode", message: classCodeError });
   }
 
   if (data.yearLevel !== undefined) {
     const yearLevelError = validateYearLevel(data.yearLevel);
-    if (yearLevelError) errors.yearLevel = yearLevelError;
+    if (yearLevelError)
+      errors.push({ field: "yearLevel", message: yearLevelError });
   }
 
   if (data.semester !== undefined) {
     const semesterError = validateSemester(data.semester);
-    if (semesterError) errors.semester = semesterError;
+    if (semesterError)
+      errors.push({ field: "semester", message: semesterError });
   }
 
   if (data.academicYear !== undefined) {
     const academicYearError = validateAcademicYear(data.academicYear);
-    if (academicYearError) errors.academicYear = academicYearError;
+    if (academicYearError)
+      errors.push({ field: "academicYear", message: academicYearError });
   }
 
   if (data.schedule !== undefined) {
     const scheduleError = validateSchedule(data.schedule);
-    if (scheduleError) errors.schedule = scheduleError;
+    if (scheduleError)
+      errors.push({ field: "schedule", message: scheduleError });
   }
 
   return {
-    isValid: Object.keys(errors).length === 0,
+    isValid: errors.length === 0,
     errors,
   };
 };
