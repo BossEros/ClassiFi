@@ -1,5 +1,4 @@
-import type { RawTestResult } from "@/data/repositories/testCaseRepository";
-import type { TestResultDetail } from "@/shared/types/testCase";
+import type { RawTestResult, TestResultDetail } from "@/shared/types/testCase";
 
 /**
  * Normalizes a raw test result from the repository into a standardized detail object.

@@ -10,6 +10,7 @@ import type {
   UpdateTestCaseRequest,
   TestResultDetail,
   TestExecutionSummary,
+  RawTestResult,
 } from "@/shared/types/testCase";
 
 export type {
@@ -18,6 +19,7 @@ export type {
   UpdateTestCaseRequest,
   TestResultDetail,
   TestExecutionSummary,
+  RawTestResult,
 };
 
 // Response types matching backend
@@ -126,26 +128,6 @@ export async function runTestsPreview(
     language,
     assignmentId,
   });
-}
-
-export interface RawTestResult {
-  testCaseId: number;
-  name?: string;
-  testCase?: {
-    name: string;
-    isHidden: boolean;
-    expectedOutput: string;
-  };
-  status: "Passed" | "Failed";
-  isHidden?: boolean;
-  executionTimeMs?: number;
-  executionTime?: string; // Legacy format
-  memoryUsedKb?: number;
-  memoryUsed?: number; // Legacy format
-  input: string;
-  expectedOutput?: string;
-  actualOutput: string;
-  errorMessage?: string;
 }
 
 /**

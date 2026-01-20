@@ -299,7 +299,7 @@ export async function updateAssignment(
       ? typeof updateAssignmentData.scheduledDate === "string"
         ? updateAssignmentData.scheduledDate
         : updateAssignmentData.scheduledDate.toISOString()
-      : null,
+      : undefined,
   });
 }
 
