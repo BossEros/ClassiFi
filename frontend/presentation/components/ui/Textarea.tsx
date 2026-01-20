@@ -1,10 +1,12 @@
 import * as React from 'react'
 import { cn } from '@/shared/utils/cn'
 
-export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
+export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  hasError?: boolean
+}
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, ...props }, ref) => {
+  ({ className, hasError, ...props }, ref) => {
     return (
       <textarea
         className={cn(
@@ -12,10 +14,12 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           'hover:bg-white/10 hover:border-white/20',
           'focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 focus:bg-white/10',
           'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/5',
-          'resize-none',
+          hasError && 'border-red-500/50 focus:border-red-500 focus:ring-red-500/50',
+          'resize-y',
           className
         )}
         ref={ref}
+        aria-invalid={hasError ? true : props['aria-invalid']}
         {...props}
       />
     )
@@ -24,4 +28,3 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 Textarea.displayName = 'Textarea'
 
 export { Textarea }
-
