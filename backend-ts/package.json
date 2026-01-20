@@ -26,7 +26,7 @@
     "fastify-type-provider-zod": "^6.1.0",
     "postgres": "^3.4.5",
     "reflect-metadata": "^0.2.2",
-    "tree-sitter": "^0.21.1",
+    "tree-sitter": "^0.25.0",
     "tree-sitter-c": "^0.21.0",
     "tree-sitter-java": "^0.21.0",
     "tree-sitter-python": "^0.21.0",
