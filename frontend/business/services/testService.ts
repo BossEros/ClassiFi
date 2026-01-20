@@ -1,119 +1,91 @@
-import { apiClient } from "@/data/api/apiClient";
+import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import { validateId } from "@/shared/utils/validators";
+import type { ProgrammingLanguage } from "@/business/models/assignment/types";
 import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
 } from "@/data/api/types";
+import { normalizeTestResult } from "@/shared/utils/testNormalization";
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse };
 
 /**
- * Run tests in preview mode (without creating a submission)
- * Allows students to verify their code works before committing a submission
+ * Executes a dry run of the provided source code against the assignment's test cases.
+ * This allows students to verify their solution without creating a formal submission.
+ *
+ * @param sourceCode - The raw source code to execute.
+ * @param language - The programming language of the source code.
+ * @param assignmentId - The unique identifier of the assignment.
+ * @returns The results of the test execution, including pass/fail status and output.
+ * @throws Error if the test execution fails or returns an error.
  */
 export async function runTestsPreview(
   sourceCode: string,
-  language: "python" | "java" | "c",
-  assignmentId: number
+  language: ProgrammingLanguage,
+  assignmentId: number,
 ): Promise<TestPreviewResult> {
-  const response = await apiClient.post<TestPreviewResponse>(
-    "/code/run-tests",
-    {
-      sourceCode,
-      language,
-      assignmentId,
-    }
+  validateId(assignmentId, "assignment");
+
+  const executionResponse = await testCaseRepository.runTestsPreview(
+    sourceCode,
+    language,
+    assignmentId,
   );
 
-  if (!response.data || !response.data.success) {
+  if (!executionResponse.data || !executionResponse.data.success) {
     throw new Error(
-      response.data?.message || response.error || "Failed to run tests"
+      executionResponse.data?.message ||
+        executionResponse.error ||
+        "Failed to run tests",
     );
   }
 
-  return response.data.data;
+  if (!executionResponse.data.data) {
+    throw new Error("Test execution data is missing from the response");
+  }
+
+  const data = executionResponse.data.data;
+  return {
+    passed: data.passedCount,
+    total: data.totalCount,
+    percentage: data.score,
+    results: data.results.map(normalizeTestResult),
+  };
 }
 
 /**
- * Get test results for a specific submission
- */
-interface ApiTestResult {
-  testCaseId: number;
-  name?: string;
-  testCase?: { name: string; isHidden: boolean; expectedOutput: string };
-  status: string;
-  isHidden?: boolean;
-  executionTimeMs?: number;
-  executionTime?: string;
-  memoryUsedKb?: number;
-  memoryUsed?: number;
-  input?: string;
-  expectedOutput?: string;
-  actualOutput?: string;
-  errorMessage?: string;
-}
-
-/**
- * Get test results for a specific submission
+ * Retrieves and formats the test results for a specific submission.
+ * Normalizes legacy array responses and new object responses into a unified structure.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @returns A standardized object containing test statistics and detailed results.
+ * @throws Error if the results cannot be fetched.
  */
 export async function getTestResultsForSubmission(
-  submissionId: number
+  submissionId: number,
 ): Promise<TestPreviewResult> {
-  const response = await apiClient.get<any>(
-    `/submissions/${submissionId}/test-results`
-  );
+  validateId(submissionId, "submission");
+  const resultsResponse = await testCaseRepository.getTestResults(submissionId);
 
-  if (!response.data || !response.data.success) {
+  if (!resultsResponse.data || !resultsResponse.data.success) {
     throw new Error(
-      response.data?.message || response.error || "Failed to fetch test results"
+      resultsResponse.data?.message ||
+        resultsResponse.error ||
+        "Failed to fetch test results",
     );
   }
 
-  const data = response.data.data;
+  const summary = resultsResponse.data.data;
 
-  // Handle both array (legacy) and object (new) response formats
-  let rawResults: ApiTestResult[] = [];
-  let passed = 0;
-  let total = 0;
-  let percentage = 0;
-
-  if (Array.isArray(data)) {
-    rawResults = data;
-    total = rawResults.length;
-    passed = rawResults.filter(
-      (r: ApiTestResult) => r.status === "Accepted"
-    ).length;
-    percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
-  } else {
-    // Backend returns TestExecutionSummary
-    rawResults = data.results || [];
-    passed = data.passed;
-    total = data.total;
-    percentage = data.percentage;
+  if (!summary) {
+    throw new Error("Test results data is missing from the response");
   }
 
-  // Map backend response to TestResultDetail
-  const mappedResults: TestResultDetail[] = rawResults.map(
-    (r: ApiTestResult) => ({
-      testCaseId: r.testCaseId,
-      name: r.name || r.testCase?.name || `Test Case ${r.testCaseId}`,
-      status: r.status,
-      isHidden: r.isHidden || r.testCase?.isHidden || false,
-      executionTimeMs:
-        r.executionTimeMs ||
-        (r.executionTime ? parseFloat(r.executionTime) * 1000 : 0),
-      memoryUsedKb: r.memoryUsedKb || r.memoryUsed || 0,
-      input: r.input,
-      expectedOutput: r.expectedOutput || r.testCase?.expectedOutput,
-      actualOutput: r.actualOutput,
-      errorMessage: r.errorMessage,
-    })
-  );
-
   return {
-    passed,
-    total,
-    percentage,
-    results: mappedResults,
+    passed: summary.passedCount,
+    total: summary.totalCount,
+    percentage: summary.score,
+    results: summary.results.map(normalizeTestResult),
   };
 }

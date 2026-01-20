@@ -1,134 +1,149 @@
-import * as testCaseRepository from '@/data/repositories/testCaseRepository'
-import { validateId } from '@/shared/utils/validators'
+import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import { validateId } from "@/shared/utils/validators";
 import type {
-    TestCase,
-    CreateTestCaseRequest,
-    UpdateTestCaseRequest,
-    TestExecutionSummary,
-} from '@/shared/types/testCase'
+  TestCase,
+  CreateTestCaseRequest,
+  UpdateTestCaseRequest,
+  TestExecutionSummary,
+} from "@/shared/types/testCase";
+import { normalizeTestResult } from "@/shared/utils/testNormalization";
 
 /**
- * Gets all test cases for an assignment
+ * Retrieves all test cases associated with a specific assignment.
  *
- * @param assignmentId - ID of the assignment
- * @returns List of test cases
+ * @param assignmentId - The unique identifier of the assignment.
+ * @returns A list of test case objects.
+ * @throws Error if the test cases cannot be fetched.
  */
 export async function getTestCases(assignmentId: number): Promise<TestCase[]> {
-    validateId(assignmentId, 'assignment')
+  validateId(assignmentId, "assignment");
 
-    const response = await testCaseRepository.getTestCases(assignmentId)
+  const testCasesResponse = await testCaseRepository.getTestCases(assignmentId);
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (testCasesResponse.error) {
+    throw new Error(testCasesResponse.error);
+  }
 
-    if (!response.data || !response.data.testCases) {
-        throw new Error('Failed to fetch test cases')
-    }
+  if (!testCasesResponse.data || !testCasesResponse.data.testCases) {
+    throw new Error("Failed to fetch test cases");
+  }
 
-    return response.data.testCases
+  return testCasesResponse.data.testCases;
 }
 
 /**
- * Creates a new test case
+ * Creates a new test case for an assignment.
+ * Validates required fields before submitting to the repository.
  *
- * @param assignmentId - ID of the assignment
- * @param data - Test case data
- * @returns Created test case
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param createTestCaseData - The data required to create the test case (name, input, expected output).
+ * @returns The newly created test case.
+ * @throws Error if validation fails or creation is unsuccessful.
  */
 export async function createTestCase(
-    assignmentId: number,
-    data: CreateTestCaseRequest
+  assignmentId: number,
+  createTestCaseData: CreateTestCaseRequest,
 ): Promise<TestCase> {
-    validateId(assignmentId, 'assignment')
+  validateId(assignmentId, "assignment");
 
-    if (!data.name) throw new Error('Test case name is required')
-    if (!data.input && data.input !== '') throw new Error('Input is required')
-    if (!data.expectedOutput && data.expectedOutput !== '') throw new Error('Expected output is required')
+  if (!createTestCaseData.name) throw new Error("Test case name is required");
 
-    const response = await testCaseRepository.createTestCase(assignmentId, data)
+  if (
+    createTestCaseData.input === undefined ||
+    createTestCaseData.input === null
+  )
+    throw new Error("Input is required");
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (
+    createTestCaseData.expectedOutput === undefined ||
+    createTestCaseData.expectedOutput === null
+  )
+    throw new Error("Expected output is required");
 
-    if (!response.data || !response.data.testCase) {
-        throw new Error('Failed to create test case')
-    }
+  const creationResponse = await testCaseRepository.createTestCase(
+    assignmentId,
+    createTestCaseData,
+  );
 
-    return response.data.testCase
+  if (creationResponse.error) throw new Error(creationResponse.error);
+
+  if (!creationResponse.data || !creationResponse.data.testCase) {
+    throw new Error("Failed to create test case");
+  }
+
+  return creationResponse.data.testCase;
 }
 
 /**
- * Updates an existing test case
+ * Updates an existing test case with new data.
  *
- * @param testCaseId - ID of the test case
- * @param data - Updated test case data
- * @returns Updated test case
+ * @param testCaseId - The unique identifier of the test case to update.
+ * @param updateTestCaseData - The partial data to update (e.g., modified input or expected output).
+ * @returns The updated test case object.
+ * @throws Error if the update fails.
  */
 export async function updateTestCase(
-    testCaseId: number,
-    data: UpdateTestCaseRequest
+  testCaseId: number,
+  updateTestCaseData: UpdateTestCaseRequest,
 ): Promise<TestCase> {
-    validateId(testCaseId, 'test case')
+  validateId(testCaseId, "test case");
 
-    const response = await testCaseRepository.updateTestCase(testCaseId, data)
+  const updateResponse = await testCaseRepository.updateTestCase(
+    testCaseId,
+    updateTestCaseData,
+  );
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (updateResponse.error) throw new Error(updateResponse.error);
 
-    if (!response.data || !response.data.testCase) {
-        throw new Error('Failed to update test case')
-    }
+  if (!updateResponse.data || !updateResponse.data.testCase)
+    throw new Error("Failed to update test case");
 
-    return response.data.testCase
+  return updateResponse.data.testCase;
 }
 
 /**
- * Deletes a test case
+ * Permanently deletes a test case.
  *
- * @param testCaseId - ID of the test case
+ * @param testCaseId - The unique identifier of the test case to delete.
+ * @returns A promise that resolves upon successful deletion.
+ * @throws Error if the deletion fails.
  */
 export async function deleteTestCase(testCaseId: number): Promise<void> {
-    validateId(testCaseId, 'test case')
+  validateId(testCaseId, "test case");
 
-    const response = await testCaseRepository.deleteTestCase(testCaseId)
+  const deletionResponse = await testCaseRepository.deleteTestCase(testCaseId);
 
-    if (response.error) {
-        throw new Error(response.error)
-    }
+  if (deletionResponse.error) throw new Error(deletionResponse.error);
 
-    if (!response.data || !response.data.success) {
-        throw new Error('Failed to delete test case')
-    }
+  if (!deletionResponse.data || !deletionResponse.data.success)
+    throw new Error("Failed to delete test case");
 }
 
 /**
- * Gets test results for a submission
+ * Retrieves the test execution summary for a specific submission.
  *
- * @param submissionId - ID of the submission
- * @returns Test execution summary or null
+ * @param submissionId - The unique identifier of the student's submission.
+ * @returns The summary of test results (passed/failed counts, details) or null if not found.
+ * @throws Error if the results cannot be fetched.
  */
-export async function getTestResults(submissionId: number): Promise<TestExecutionSummary | null> {
-    validateId(submissionId, 'submission')
+export async function getTestResults(
+  submissionId: number,
+): Promise<TestExecutionSummary | null> {
+  validateId(submissionId, "submission");
 
-    const response = await testCaseRepository.getTestResults(submissionId)
+  const resultsResponse = await testCaseRepository.getTestResults(submissionId);
 
-    if (response.error) {
-        // If error indicates not found (404), return null to match previous behavior
-        // But since we don't have status codes easily, we might throw.
-        // However, looking at the previous consumer (TestResultsPanel), it treated error as "no results".
-        // Let's rely on data presence.
-        // If it's a "Not found" error, we might want to return null.
-        // For now, let's throw to be standard, and handle in the hook or strict service pattern.
-        // Actually, if I throw, the consumer handles it.
-        throw new Error(response.error)
-    }
+  if (resultsResponse.error) throw new Error(resultsResponse.error);
 
-    if (!response.data) {
-        throw new Error('Failed to fetch test results')
-    }
+  if (!resultsResponse.data) throw new Error("Failed to fetch test results");
 
-    return response.data.data || null
+  const rawData = resultsResponse.data.data;
+
+  return {
+    submissionId: submissionId,
+    passed: rawData.passedCount,
+    total: rawData.totalCount,
+    percentage: rawData.score,
+    results: rawData.results.map(normalizeTestResult),
+  };
 }
