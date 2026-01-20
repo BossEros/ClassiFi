@@ -1,3 +1,17 @@
+// Export types for consumers
+export type {
+  AdminUser,
+  AdminStats,
+  ActivityItem,
+  AdminClass,
+  PaginatedResponse,
+  CreateUserData,
+  CreateClassData,
+  UpdateClassData,
+  EnrolledStudent,
+  ClassAssignment,
+} from "@/data/api/types";
+
 import * as adminRepository from "@/data/repositories/adminRepository";
 import type {
   AdminUser,
