@@ -132,7 +132,7 @@ export async function runTestsPreview(
 
 /**
  * Get test results for a submission
- * Normalizes the backend response to ensure consistent data structure
+ * Returns the raw backend response (normalization happens in a service/utility)
  */
 export async function getTestResults(
   submissionId: number,
