@@ -1,96 +1,122 @@
-import type { StudentDashboardBackendResponse, JoinClassResponse } from '@/data/repositories/studentDashboardRepository'
-import * as dashboardRepository from '@/data/repositories/studentDashboardRepository'
+import type {
+  StudentDashboardBackendResponse,
+  JoinClassResponse,
+} from "@/data/repositories/studentDashboardRepository";
+import * as dashboardRepository from "@/data/repositories/studentDashboardRepository";
+import { validateClassJoinCode } from "@/business/validation/classValidation";
 
 /**
- * Fetches complete dashboard data for a student
+ * Fetches the complete dashboard overview for a specific student.
+ * Aggregates data including enrolled classes and pending assignments.
  *
- * @param studentId - ID of the student
- * @returns Dashboard data with enrolled classes and pending assignments
+ * @param studentId - The unique identifier of the student.
+ * @returns The comprehensive student dashboard data.
+ * @throws Error if the dashboard data cannot be retrieved.
  */
-export async function getDashboardData(studentId: number): Promise<StudentDashboardBackendResponse> {
+export async function getDashboardData(
+  studentId: number,
+): Promise<StudentDashboardBackendResponse> {
   try {
-    return await dashboardRepository.getDashboardData(studentId)
+    return await dashboardRepository.getDashboardData(studentId);
   } catch (error) {
-    console.error('Error fetching student dashboard data:', error)
-    throw error
+    console.error("Error fetching student dashboard data:", error);
+    throw error;
   }
 }
 
 /**
- * Fetches enrolled classes for a student
+ * Retrieves a list of classes the student is currently enrolled in.
  *
- * @param studentId - ID of the student
- * @param limit - Maximum number of classes to return
- * @returns List of enrolled classes
+ * @param studentId - The unique identifier of the student.
+ * @param limit - Optional limit to the number of classes returned (e.g., for widget display).
+ * @returns A list of enrolled classes.
+ * @throws Error if the class list cannot be fetched.
  */
-export async function getEnrolledClasses(studentId: number, limit?: number): Promise<dashboardRepository.ClassListResponse> {
+export async function getEnrolledClasses(
+  studentId: number,
+  limit?: number,
+): Promise<dashboardRepository.ClassListResponse> {
   try {
-    return await dashboardRepository.getEnrolledClasses(studentId, limit)
+    return await dashboardRepository.getEnrolledClasses(studentId, limit);
   } catch (error) {
-    console.error('Error fetching enrolled classes:', error)
-    throw error
+    console.error("Error fetching enrolled classes:", error);
+    throw error;
   }
 }
 
 /**
- * Fetches pending assignments for a student
+ * Retrieves a list of pending assignments for the student.
  *
- * @param studentId - ID of the student
- * @param limit - Maximum number of assignments to return (default: 10)
- * @returns List of pending assignments
+ * @param studentId - The unique identifier of the student.
+ * @param limit - The maximum number of assignments to return (defaults to 10).
+ * @returns A list of pending assignments sorted by deadline.
+ * @throws Error if the assignments cannot be fetched.
  */
-export async function getPendingAssignments(studentId: number, limit: number = 10): Promise<dashboardRepository.AssignmentListResponse> {
+export async function getPendingAssignments(
+  studentId: number,
+  limit: number = 10,
+): Promise<dashboardRepository.AssignmentListResponse> {
   try {
-    return await dashboardRepository.getPendingAssignments(studentId, limit)
+    return await dashboardRepository.getPendingAssignments(studentId, limit);
   } catch (error) {
-    console.error('Error fetching pending assignments:', error)
-    throw error
+    console.error("Error fetching pending assignments:", error);
+    throw error;
   }
 }
 
 /**
- * Join a class using a class code
+ * Attempts to enroll a student in a class using a unique class code.
+ * Validates the class code format before attempting to join.
  *
- * @param studentId - ID of the student
- * @param classCode - Unique class code to join
- * @returns Join class response with success status and class info
+ * @param studentId - The unique identifier of the student.
+ * @param classCode - The unique 6-8 character alphanumeric code for the class.
+ * @returns The response indicating success or failure with a message.
  */
-export async function joinClass(studentId: number, classCode: string): Promise<JoinClassResponse> {
+export async function joinClass(
+  studentId: number,
+  classCode: string,
+): Promise<JoinClassResponse> {
   try {
     // Validate class code format (6-8 alphanumeric characters)
-    const codeRegex = /^[A-Za-z0-9]{6,8}$/
-    if (!codeRegex.test(classCode)) {
+    const codeError = validateClassJoinCode(classCode);
+
+    if (codeError) {
       return {
         success: false,
-        message: 'Invalid class code format. Please enter a 6-8 character alphanumeric code.'
-      }
+        message: codeError,
+      };
     }
 
-    return await dashboardRepository.joinClass(studentId, classCode)
+    return await dashboardRepository.joinClass(studentId, classCode);
   } catch (error) {
-    console.error('Error joining class:', error)
+    console.error("Error joining class:", error);
+
     return {
       success: false,
-      message: 'Failed to join class. Please try again.'
-    }
+      message: "Failed to join class. Please try again.",
+    };
   }
 }
 
 /**
- * Leave a class
+ * Unenrolls a student from a specific class.
  *
- * @param studentId - ID of the student
- * @param classId - ID of the class to leave
- * @returns Leave class response with success status
+ * @param studentId - The unique identifier of the student.
+ * @param classId - The unique identifier of the class to leave.
+ * @returns A promise resolving to a success boolean and message.
  */
-export async function leaveClass(studentId: number, classId: number): Promise<{ success: boolean; message: string }> {
+export async function leaveClass(
+  studentId: number,
+  classId: number,
+): Promise<{ success: boolean; message: string }> {
   try {
-    return await dashboardRepository.leaveClass(studentId, classId)
+    return await dashboardRepository.leaveClass(studentId, classId);
   } catch (error) {
-    console.error('Error leaving class:', error)
+    console.error("Error leaving class:", error);
+    
     return {
       success: false,
-      message: 'Failed to leave class. Please try again.'
-    }
+      message: "Failed to leave class. Please try again.",
+    };
   }
 }

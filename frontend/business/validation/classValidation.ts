@@ -59,7 +59,7 @@ export const validateClassDescription = (
 };
 
 /**
- * Validates class code
+ * Validates class code for creation (basic check).
  * Requirements:
  * - Required field
  * - Must not be empty after trimming
@@ -67,6 +67,25 @@ export const validateClassDescription = (
 export const validateClassCode = (classCode: string): string | null => {
   if (!classCode || !classCode.trim()) {
     return "Class code is required";
+  }
+  return null;
+};
+
+/**
+ * Validates class code used for joining a class.
+ * Requirements:
+ * - Required field
+ * - Must be alphanumeric (letters and numbers only)
+ * - Must be between 6-8 characters
+ */
+export const validateClassJoinCode = (classCode: string): string | null => {
+  if (!classCode) {
+    return "Class code is required";
+  }
+
+  const codeRegex = /^[A-Za-z0-9]{6,8}$/;
+  if (!codeRegex.test(classCode)) {
+    return "Invalid class code format. Please enter a 6-8 character alphanumeric code.";
   }
   return null;
 };

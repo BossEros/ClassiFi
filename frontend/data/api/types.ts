@@ -474,6 +474,11 @@ export interface SubmissionWithStudent extends Submission {
   studentName: string;
 }
 
+export interface SubmissionContent {
+  content: string;
+  language?: string;
+}
+
 export interface AssignmentDetail {
   id: number;
   classId: number;
