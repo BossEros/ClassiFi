@@ -1,63 +1,31 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
+import type { Database } from "./database.types";
 
 // Supabase configuration from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    'Missing Supabase environment variables. Please check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY'
-  )
+    "Missing Supabase environment variables. Please check your .env file for VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY",
+  );
 }
 
-export interface Database {
-  public: {
-    Tables: {
-      profiles: {
-        Row: {
-          id: string
-          first_name: string | null
-          last_name: string | null
-          role: 'student' | 'instructor' | null
-          avatar_url: string | null
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id: string
-          first_name?: string | null
-          last_name?: string | null
-          role?: 'student' | 'instructor' | null
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          first_name?: string | null
-          last_name?: string | null
-          role?: 'student' | 'instructor' | null
-          avatar_url?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-    }
-  }
-}
+/**
+ * Singleton instance of the Supabase client.
+ * Configured with auto-refresh, persistent sessions, and PKCE flow.
+ */
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+    flowType: "pkce",
+  },
+});
 
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  supabaseUrl,
-  supabaseAnonKey,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true,
-      storage: window.localStorage,
-      flowType: 'pkce'
-    }
-  }
-)
-
-export type SupabaseClientType = typeof supabase
+/**
+ * Type alias for the specific Supabase client used in this application.
+ */
+export type SupabaseClientType = typeof supabase;

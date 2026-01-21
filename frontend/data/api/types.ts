@@ -1,14 +1,56 @@
 import type {
+  ClassStatistics,
   GradeEntry,
-  LatePenaltyConfig,
-  PenaltyTier,
-  PenaltyResult,
-  StudentClassGrades,
-  StudentGradeEntry,
   GradebookAssignment,
   GradebookStudent,
-  ClassStatistics,
+  LatePenaltyConfig,
+  PenaltyResult,
+  PenaltyTier,
+  StudentClassGrades,
+  StudentGradeEntry,
 } from "@/shared/types/gradebook";
+import type {
+  Submission,
+  SubmissionWithAssignment,
+  SubmissionWithStudent,
+  SubmissionContent,
+} from "@/shared/types/submission";
+
+// ============================================================================
+// Core Shared Types
+// ============================================================================
+
+export type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
+
+export interface Schedule {
+  days: DayOfWeek[];
+  startTime: string; // HH:MM format
+  endTime: string; // HH:MM format
+}
+
+/**
+ * Array of valid programming languages.
+ */
+export const VALID_PROGRAMMING_LANGUAGES = ["python", "java", "c"] as const;
+
+/** Supported programming languages for assignments */
+export type ProgrammingLanguage = (typeof VALID_PROGRAMMING_LANGUAGES)[number];
+
+/** Test case structure for assignments */
+export interface AssignmentTestCase {
+  id: number;
+  name: string;
+  isHidden: boolean;
+  input?: string;
+  expectedOutput?: string;
+}
 
 // ============================================================================
 // Data Layer DTO Types (replacing business layer imports)
@@ -50,26 +92,41 @@ export interface TaskDTO {
 }
 
 // ============================================================================
-// Shared Types
+// Assignment & Submission Types
 // ============================================================================
 
-export type DayOfWeek =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
+// Re-exporting from shared for convenience if needed,
+// though direct imports from @/shared/types/submission are preferred.
+export type {
+  Submission,
+  SubmissionWithAssignment,
+  SubmissionWithStudent,
+  SubmissionContent,
+};
 
-export interface Schedule {
-  days: DayOfWeek[];
-  startTime: string; // HH:MM format
-  endTime: string; // HH:MM format
+export interface AssignmentDetail {
+  id: number;
+  classId: number;
+  className: string;
+  assignmentName: string;
+  description: string;
+  programmingLanguage: ProgrammingLanguage;
+  deadline: string;
+  allowResubmission: boolean;
+  maxAttempts?: number | null;
+  createdAt?: string;
+  isActive: boolean;
+  hasSubmitted?: boolean;
+  latestSubmission?: Submission;
+  submissionCount?: number;
+  templateCode?: string | null;
+  hasTemplateCode?: boolean;
+  totalScore?: number;
+  scheduledDate?: string | null;
+  latePenaltyEnabled?: boolean;
+  latePenaltyConfig?: LatePenaltyConfig | null;
+  testCases?: AssignmentTestCase[];
 }
-
-/** Supported programming languages for assignments */
-export type ProgrammingLanguage = "python" | "java" | "c";
 
 // ============================================================================
 // Class Request DTOs
@@ -98,7 +155,56 @@ export interface UpdateClassRequest {
 }
 
 // ============================================================================
-// Class Response DTOs
+// Assignment Request DTOs
+// ============================================================================
+
+export interface SubmitAssignmentRequest {
+  assignmentId: number;
+  studentId: number;
+  file: File;
+  programmingLanguage: ProgrammingLanguage;
+}
+
+export interface CreateAssignmentRequest {
+  classId: number;
+  teacherId: number;
+  assignmentName: string;
+  description: string;
+  programmingLanguage: ProgrammingLanguage;
+  deadline: Date | string;
+  allowResubmission?: boolean;
+  maxAttempts?: number | null;
+  templateCode?: string | null;
+  totalScore?: number;
+  scheduledDate?: Date | string | null;
+  latePenaltyEnabled?: boolean;
+  latePenaltyConfig?: LatePenaltyConfig | null;
+}
+
+export interface UpdateAssignmentRequest {
+  teacherId: number;
+  assignmentName?: string;
+  description?: string;
+  programmingLanguage?: ProgrammingLanguage;
+  deadline?: Date | string;
+  allowResubmission?: boolean;
+  maxAttempts?: number | null;
+  templateCode?: string | null;
+  totalScore?: number;
+  scheduledDate?: Date | string | null;
+  latePenaltyEnabled?: boolean;
+  latePenaltyConfig?: LatePenaltyConfig | null;
+}
+
+export interface UpdateAssignmentValidationData {
+  teacherId?: number;
+  assignmentName?: string;
+  description?: string;
+  deadline?: Date | string;
+}
+
+// ============================================================================
+// Response DTOs
 // ============================================================================
 
 export interface CreateClassResponse {
@@ -111,6 +217,54 @@ export interface CreateAssignmentResponse {
   success: boolean;
   message?: string;
   assignment?: TaskDTO;
+}
+
+export interface SubmitAssignmentResponse {
+  success: boolean;
+  message?: string;
+  submission?: Submission;
+}
+
+export interface SubmissionListResponse {
+  success: boolean;
+  message?: string;
+  submissions: Submission[];
+}
+
+export interface SubmissionHistoryResponse {
+  success: boolean;
+  message?: string;
+  submissions: Submission[];
+  totalSubmissions: number;
+}
+
+export interface AssignmentDetailResponse {
+  success: boolean;
+  message?: string;
+  assignment?: AssignmentDetail;
+}
+
+export interface ClassListResponse {
+  success: boolean;
+  message?: string;
+  classes: ClassResponse[];
+}
+
+export interface AssignmentListResponse {
+  success: boolean;
+  message?: string;
+  assignments: AssignmentResponse[];
+}
+
+export interface JoinClassResponse {
+  success: boolean;
+  message: string;
+  classInfo?: ClassResponse;
+}
+
+export interface LeaveClassResponse {
+  success: boolean;
+  message: string;
 }
 
 // ============================================================================
@@ -155,29 +309,6 @@ export interface StudentDashboardBackendResponse {
   message?: string;
   enrolledClasses: ClassResponse[];
   pendingAssignments: AssignmentResponse[];
-}
-
-export interface ClassListResponse {
-  success: boolean;
-  message?: string;
-  classes: ClassResponse[];
-}
-
-export interface AssignmentListResponse {
-  success: boolean;
-  message?: string;
-  assignments: AssignmentResponse[];
-}
-
-export interface JoinClassResponse {
-  success: boolean;
-  message: string;
-  classInfo?: ClassResponse;
-}
-
-export interface LeaveClassResponse {
-  success: boolean;
-  message: string;
 }
 
 // ============================================================================
@@ -368,6 +499,7 @@ export interface EnrolledStudent {
   avatarUrl: string | null;
   enrolledAt: string;
   fullName?: string;
+  // studentId might be useful if it differs from id (user id), but usually id here refers to User ID
 }
 
 export interface ClassAssignment {
@@ -446,134 +578,6 @@ export interface PaginatedResponse<T> extends AdminResponse {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-// ============================================================================
-// Assignment Types
-// ============================================================================
-
-export interface Submission {
-  id: number;
-  assignmentId: number;
-  studentId: number;
-  fileName: string;
-  fileSize: number;
-  submissionNumber: number;
-  submittedAt: Date;
-  isLatest: boolean;
-  assignmentName?: string;
-  studentName?: string;
-  grade?: number;
-}
-
-export interface SubmissionWithAssignment extends Submission {
-  assignmentName: string;
-}
-
-export interface SubmissionWithStudent extends Submission {
-  studentName: string;
-}
-
-export interface SubmissionContent {
-  content: string;
-  language?: string;
-}
-
-export interface AssignmentDetail {
-  id: number;
-  classId: number;
-  className: string;
-  assignmentName: string;
-  description: string;
-  programmingLanguage: ProgrammingLanguage;
-  deadline: Date | string;
-  allowResubmission: boolean;
-  maxAttempts?: number | null;
-  createdAt?: Date | string;
-  isActive: boolean;
-  hasSubmitted?: boolean;
-  latestSubmission?: Submission;
-  submissionCount?: number;
-  templateCode?: string | null;
-  hasTemplateCode?: boolean;
-  totalScore?: number;
-  scheduledDate?: Date | string | null;
-  latePenaltyEnabled?: boolean;
-  latePenaltyConfig?: LatePenaltyConfig | null;
-  testCases?: {
-    id: number;
-    name: string;
-    isHidden: boolean;
-    input?: string;
-    expectedOutput?: string;
-  }[];
-}
-
-// ============ Request Schemas ============
-
-export interface SubmitAssignmentRequest {
-  assignmentId: number;
-  studentId: number;
-  file: File;
-  programmingLanguage: ProgrammingLanguage;
-}
-
-export interface CreateAssignmentRequest {
-  classId: number;
-  teacherId: number;
-  assignmentName: string;
-  description: string;
-  programmingLanguage: "python" | "java" | "c";
-  deadline: Date | string;
-  allowResubmission?: boolean;
-  maxAttempts?: number | null;
-  templateCode?: string | null;
-  totalScore?: number;
-  scheduledDate?: Date | string | null;
-  latePenaltyEnabled?: boolean;
-  latePenaltyConfig?: LatePenaltyConfig | null;
-}
-
-export interface UpdateAssignmentRequest {
-  teacherId: number;
-  assignmentName?: string;
-  description?: string;
-  programmingLanguage?: "python" | "java" | "c";
-  deadline?: Date | string;
-  allowResubmission?: boolean;
-  maxAttempts?: number | null;
-  templateCode?: string | null;
-  totalScore?: number;
-  scheduledDate?: Date | string | null;
-  latePenaltyEnabled?: boolean;
-  latePenaltyConfig?: LatePenaltyConfig | null;
-}
-
-// ============ Response Schemas ============
-
-export interface SubmitAssignmentResponse {
-  success: boolean;
-  message?: string;
-  submission?: Submission;
-}
-
-export interface SubmissionListResponse {
-  success: boolean;
-  message?: string;
-  submissions: Submission[];
-}
-
-export interface SubmissionHistoryResponse {
-  success: boolean;
-  message?: string;
-  submissions: Submission[];
-  totalSubmissions: number;
-}
-
-export interface AssignmentDetailResponse {
-  success: boolean;
-  message?: string;
-  assignment?: AssignmentDetail;
 }
 
 // ============================================================================

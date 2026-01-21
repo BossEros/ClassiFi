@@ -248,11 +248,54 @@ export async function resetPassword(
   }
 
   try {
-    const response = await authRepository.resetPassword(
-      resetPasswordRequest.newPassword,
-    );
+    const { session, sessionError, updateError } =
+      await authRepository.resetPassword(resetPasswordRequest.newPassword);
 
-    return response;
+    if (sessionError || !session) {
+      return {
+        success: false,
+        message:
+          "Invalid or expired reset link. Please request a new password reset.",
+      };
+    }
+
+    if (updateError) {
+      const errorMsg = updateError.message.toLowerCase();
+
+      if (
+        errorMsg.includes("expired") ||
+        errorMsg.includes("invalid") ||
+        errorMsg.includes("token")
+      ) {
+        return {
+          success: false,
+          message:
+            "Invalid or expired reset link. Please request a new password reset.",
+        };
+      } else if (
+        errorMsg.includes("weak") ||
+        (errorMsg.includes("password") && errorMsg.includes("requirement"))
+      ) {
+        return {
+          success: false,
+          message:
+            "Password does not meet security requirements. Please use a stronger password.",
+        };
+      } else {
+        return {
+          success: false,
+          message:
+            updateError.message ||
+            "Failed to reset password. Please try again.",
+        };
+      }
+    }
+
+    return {
+      success: true,
+      message:
+        "Password has been reset successfully. You can now log in with your new password.",
+    };
   } catch (error) {
     return {
       success: false,
@@ -306,13 +349,41 @@ export async function changePassword(
       };
     }
 
-    const response = await authRepository.changePassword(
+    const { signInError, updateError } = await authRepository.changePassword(
       currentUser.email,
       changePasswordRequest.currentPassword,
       changePasswordRequest.newPassword,
     );
 
-    return response;
+    if (signInError) {
+      return {
+        success: false,
+        message: "Current password is incorrect.",
+      };
+    }
+
+    if (updateError) {
+      const errorMsg = updateError.message.toLowerCase();
+
+      if (errorMsg.includes("weak") || errorMsg.includes("password")) {
+        return {
+          success: false,
+          message:
+            "New password does not meet security requirements. Please use a stronger password.",
+        };
+      }
+
+      return {
+        success: false,
+        message:
+          updateError.message || "Failed to change password. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Password changed successfully.",
+    };
   } catch (error) {
     return {
       success: false,
@@ -362,16 +433,30 @@ export async function deleteAccount(
       };
     }
 
-    const response = await authRepository.deleteAccount(
+    const { signInError, deleteError } = await authRepository.deleteAccount(
       currentUser.email,
       deleteAccountRequest.password,
     );
 
-    if (response.success) {
-      clearLocalAuthenticationSession();
+    if (signInError) {
+      return {
+        success: false,
+        message: "Password is incorrect.",
+      };
     }
 
-    return response;
+    if (deleteError) {
+      return {
+        success: false,
+        message: deleteError,
+      };
+    }
+
+    // Success - local session was already cleared by repository
+    return {
+      success: true,
+      message: "Your account has been permanently deleted.",
+    };
   } catch (error) {
     return {
       success: false,

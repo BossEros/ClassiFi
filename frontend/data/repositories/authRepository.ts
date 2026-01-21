@@ -6,10 +6,8 @@ import type {
   RegisterRequest,
   AuthResponse,
   ForgotPasswordResponse,
-  ResetPasswordResponse,
-  ChangePasswordResponse,
   DeleteAccountResponse,
-} from "@/shared/types/auth";
+} from "@/business/models/auth/types";
 
 // ============================================================================
 // Helpers
@@ -112,8 +110,16 @@ export async function forgotPassword(
   return response.data;
 }
 
-export async function initializeResetFlow(): Promise<AuthResult> {
-  return await supabaseAuthAdapter.initializeResetSession();
+/**
+ * Initializes the password reset flow by verifying tokens in the URL.
+ *
+ * @param options - Optional hash and search strings (useful for testing).
+ */
+export async function initializeResetFlow(options?: {
+  hash?: string;
+  search?: string;
+}): Promise<AuthResult> {
+  return await supabaseAuthAdapter.initializeResetSession(options);
 }
 
 /**
@@ -147,83 +153,24 @@ export async function signInWithPassword(
 }
 
 /**
- * Legacy resetPassword - now delegates to business layer patterns.
- * Repository returns raw adapter results for business layer to interpret.
+ * Resets the user's password using the active session.
+ *
+ * @param newPassword - The new password to set.
+ * @returns The raw results from the sequence of adapter calls.
  */
-export async function resetPassword(
-  newPassword: string,
-): Promise<ResetPasswordResponse> {
-  try {
-    const { session, error: sessionError } =
-      await supabaseAuthAdapter.getSession();
+export async function resetPassword(newPassword: string) {
+  const sessionResult = await supabaseAuthAdapter.getSession();
+  const updateResult = await supabaseAuthAdapter.updateUser({
+    password: newPassword,
+  });
+  const signOutResult = await supabaseAuthAdapter.signOut();
 
-    if (sessionError || !session) {
-      return {
-        success: false,
-        message:
-          "Invalid or expired reset link. Please request a new password reset.",
-      };
-    }
-
-    if (!session.access_token) {
-      return {
-        success: false,
-        message: "Invalid reset session. Please request a new password reset.",
-      };
-    }
-
-    const { error: updateError } = await supabaseAuthAdapter.updateUser({
-      password: newPassword,
-    });
-
-    if (updateError) {
-      const errorMsg = updateError.message.toLowerCase();
-
-      if (
-        errorMsg.includes("expired") ||
-        errorMsg.includes("invalid") ||
-        errorMsg.includes("token")
-      ) {
-        return {
-          success: false,
-          message:
-            "Invalid or expired reset link. Please request a new password reset.",
-        };
-      } else if (
-        errorMsg.includes("weak") ||
-        (errorMsg.includes("password") && errorMsg.includes("requirement"))
-      ) {
-        return {
-          success: false,
-          message:
-            "Password does not meet security requirements. Please use a stronger password.",
-        };
-      } else {
-        return {
-          success: false,
-          message:
-            updateError.message ||
-            "Failed to reset password. Please try again.",
-        };
-      }
-    }
-
-    await supabaseAuthAdapter.signOut();
-
-    return {
-      success: true,
-      message:
-        "Password has been reset successfully. You can now log in with your new password.",
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to reset password. Please try again.",
-    };
-  }
+  return {
+    session: sessionResult.session,
+    sessionError: sessionResult.error,
+    updateError: updateResult.error,
+    signOutError: signOutResult.error,
+  };
 }
 
 /**
@@ -234,114 +181,75 @@ export async function changePassword(
   email: string,
   currentPassword: string,
   newPassword: string,
-): Promise<ChangePasswordResponse> {
-  try {
-    // Re-authenticate with current password to verify identity
-    const { error: signInError } = await supabaseAuthAdapter.signInWithPassword(
-      {
-        email,
-        password: currentPassword,
-      },
-    );
+) {
+  // Re-authenticate with current password to verify identity
+  const signInResult = await supabaseAuthAdapter.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
 
-    if (signInError) {
-      return {
-        success: false,
-        message: "Current password is incorrect.",
-      };
-    }
-
-    // Update to new password
-    const { error: updateError } = await supabaseAuthAdapter.updateUser({
-      password: newPassword,
-    });
-
-    if (updateError) {
-      const errorMsg = updateError.message.toLowerCase();
-
-      if (errorMsg.includes("weak") || errorMsg.includes("password")) {
-        return {
-          success: false,
-          message:
-            "New password does not meet security requirements. Please use a stronger password.",
-        };
-      }
-
-      return {
-        success: false,
-        message:
-          updateError.message || "Failed to change password. Please try again.",
-      };
-    }
-
+  if (signInResult.error) {
     return {
-      success: true,
-      message: "Password changed successfully.",
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to change password. Please try again.",
+      signInError: signInResult.error,
     };
   }
+
+  // Update to new password
+  const updateResult = await supabaseAuthAdapter.updateUser({
+    password: newPassword,
+  });
+
+  return {
+    signInError: null,
+    updateError: updateResult.error,
+  };
 }
 
 /**
  * Delete user account.
  * Accepts email and password as parameters instead of reading from localStorage.
  */
-export async function deleteAccount(
-  email: string,
-  password: string,
-): Promise<DeleteAccountResponse> {
-  try {
-    // Re-authenticate to verify identity and get fresh token
-    const { data: signInData, error: signInError } =
-      await supabaseAuthAdapter.signInWithPassword({
-        email,
-        password,
-      });
+export async function deleteAccount(email: string, password: string) {
+  // Re-authenticate to verify identity and get fresh token
+  const signInResult = await supabaseAuthAdapter.signInWithPassword({
+    email,
+    password,
+  });
 
-    if (signInError) {
-      return {
-        success: false,
-        message: "Password is incorrect.",
-      };
-    }
-
-    // Update localStorage with fresh token for the API call
-    if (signInData.session?.access_token) {
-      localStorage.setItem("authToken", signInData.session.access_token);
-    }
-
-    // Call backend to delete account (handles database + Supabase Auth cleanup)
-    const response = await apiClient.delete<DeleteAccountResponse>("/user/me");
-
-    if (response.error) {
-      return { success: false, message: response.error };
-    }
-
-    // Sign out after successful deletion
-    await supabaseAuthAdapter.signOut();
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-
+  if (signInResult.error) {
     return {
-      success: true,
-      message: "Your account has been permanently deleted.",
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Failed to delete account. Please try again.",
+      signInError: signInResult.error,
     };
   }
+
+  // Update localStorage with fresh token for the API call
+  if (signInResult.data.session?.access_token) {
+    localStorage.setItem("authToken", signInResult.data.session.access_token);
+  }
+
+  // Call backend to delete account (handles database + Supabase Auth cleanup)
+  const deleteResult =
+    await apiClient.delete<DeleteAccountResponse>("/user/me");
+
+  if (deleteResult.error) {
+    return {
+      signInError: null,
+      deleteError: deleteResult.error,
+    };
+  }
+
+  // Sign out after successful deletion
+  const signOutResult = await supabaseAuthAdapter.signOut();
+
+  // Cleanup local state
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("user");
+
+  return {
+    signInError: null,
+    deleteError: null,
+    signOutError: signOutResult.error,
+  };
 }
 
 // Export helper for external use

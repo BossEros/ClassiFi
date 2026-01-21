@@ -153,7 +153,7 @@ export function AdminCreateClassModal({
 
     // Validate schedule using centralized validator
     const scheduleError = validateSchedule({
-      days: formData.scheduleDays,
+      days: convertToDayOfWeek(formData.scheduleDays),
       startTime: formData.startTime,
       endTime: formData.endTime,
     });
