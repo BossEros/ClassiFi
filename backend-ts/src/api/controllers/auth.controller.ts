@@ -8,11 +8,11 @@ import {
   LoginRequestSchema,
   ForgotPasswordRequestSchema,
   AuthResponseSchema,
-  VerifyQuerySchema,
+  VerifyRequestSchema,
   type RegisterRequest,
   type LoginRequest,
   type ForgotPasswordRequest,
-  type VerifyQuery,
+  type VerifyRequest,
 } from "../schemas/auth.schema.js";
 import { ApiError } from "../middlewares/error-handler.js";
 
@@ -78,14 +78,14 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
    * POST /verify
    * Verify a Supabase access token
    */
-  app.post<{ Querystring: VerifyQuery }>("/verify", {
+  app.post<{ Body: VerifyRequest }>("/verify", {
     schema: {
       tags: ["Auth"],
       summary: "Verify access token",
-      querystring: toJsonSchema(VerifyQuerySchema),
+      body: toJsonSchema(VerifyRequestSchema),
     },
     handler: async (request, reply) => {
-      const { token } = request.query;
+      const { token } = request.body;
 
       if (!token) {
         throw new ApiError("Token is required", 400);

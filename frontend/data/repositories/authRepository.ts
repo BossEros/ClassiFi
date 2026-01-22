@@ -61,11 +61,9 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
   const token = data.session.access_token;
 
   // Utilize the existing verifyToken logic to get the user profile
-  const userResponse = await apiClient.post<AuthResponse>(
-    "/auth/verify",
-    { token },
-  );
-  );
+  const userResponse = await apiClient.post<AuthResponse>("/auth/verify", {
+    token,
+  });
 
   if (
     userResponse.error ||
