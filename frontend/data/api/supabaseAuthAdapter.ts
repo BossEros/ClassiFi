@@ -52,7 +52,7 @@ class SupabaseAuthAdapter {
         }
       } else if (event === "SIGNED_OUT") {
         // Clear user data (token is managed by Supabase)
-        localStorage.removeItem("currentUser");
+        localStorage.removeItem("user");
         console.log("[Auth] User signed out, auth state cleared");
 
         // Only redirect if not already on login page

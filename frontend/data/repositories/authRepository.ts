@@ -7,7 +7,7 @@ import type {
   AuthResponse,
   ForgotPasswordResponse,
   DeleteAccountResponse,
-} from "@/business/models/auth/types";
+} from "@/shared/types/auth";
 
 // ============================================================================
 // Helpers

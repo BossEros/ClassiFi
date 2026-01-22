@@ -159,6 +159,7 @@ export async function verifySession(): Promise<boolean> {
   const token = await getAuthToken();
 
   if (!token) {
+    clearLocalAuthenticationSession();
     return false;
   }
 

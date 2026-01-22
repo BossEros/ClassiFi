@@ -84,13 +84,25 @@ class ApiClient {
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data = await response.json();
+      // Parse response defensively - handle empty or non-JSON responses
+      const rawText = await response.text();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: Record<string, any> | string | null = null;
+
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText) as Record<string, any>;
+        } catch {
+          // If JSON parsing fails, use raw text as the data
+          data = rawText;
+        }
+      }
 
       if (!response.ok) {
         // Handle 401 Unauthorized - token expired or invalid
         if (response.status === 401) {
           // Clear user data (token is managed by Supabase)
-          localStorage.removeItem("currentUser");
+          localStorage.removeItem("user");
 
           // Only redirect if we're not already on the login page
           if (!window.location.pathname.includes("/login")) {
@@ -109,15 +121,17 @@ class ApiClient {
         // Extract error message from different possible response formats
         let errorMessage = "An error occurred";
 
-        if (data.error && data.error.message) {
-          // Backend error format: { success: false, error: { message: "..." } }
-          errorMessage = data.error.message;
-        } else if (data.detail) {
-          // FastAPI HTTPException format
-          errorMessage = data.detail;
-        } else if (data.message) {
-          // Custom error format
-          errorMessage = data.message;
+        if (typeof data === "object" && data !== null) {
+          if (data.error?.message) {
+            // Backend error format: { success: false, error: { message: "..." } }
+            errorMessage = data.error.message;
+          } else if (data.detail) {
+            // FastAPI HTTPException format
+            errorMessage = data.detail;
+          } else if (data.message) {
+            // Custom error format
+            errorMessage = data.message;
+          }
         } else if (typeof data === "string") {
           errorMessage = data;
         }
@@ -129,7 +143,7 @@ class ApiClient {
       }
 
       return {
-        data,
+        data: data as T,
         status: response.status,
       };
     } catch (error) {
