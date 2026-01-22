@@ -15,25 +15,14 @@ import type {
   SubmissionWithStudent,
   SubmissionContent,
 } from "@/shared/types/submission";
+import type { DayOfWeek, Schedule } from "@/shared/types/class";
 
 // ============================================================================
-// Core Shared Types
+// Core Shared Types - Re-exported from canonical shared module
 // ============================================================================
 
-export type DayOfWeek =
-  | "monday"
-  | "tuesday"
-  | "wednesday"
-  | "thursday"
-  | "friday"
-  | "saturday"
-  | "sunday";
-
-export interface Schedule {
-  days: DayOfWeek[];
-  startTime: string; // HH:MM format
-  endTime: string; // HH:MM format
-}
+// Re-export DayOfWeek and Schedule from shared for convenience
+export type { DayOfWeek, Schedule };
 
 /**
  * Array of valid programming languages.
