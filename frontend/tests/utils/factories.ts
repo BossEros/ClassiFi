@@ -218,12 +218,11 @@ export function createMockSubmission(
     id: 1,
     assignmentId: 1,
     studentId: 1,
-    code: 'print("Hello World")',
-    language: "python",
+    fileName: "solution.py",
+    fileSize: 1024,
+    submissionNumber: 1,
     submittedAt: toISO(new Date()),
-    grade: null,
-    feedback: null,
-    isLate: false,
+    isLatest: true,
     ...overrides,
   };
 }
@@ -236,19 +235,19 @@ export function createMockGradedSubmission(
 ): Submission {
   return createMockSubmission({
     grade: 95,
-    feedback: "Excellent work!",
     ...overrides,
   });
 }
 
 /**
- * Creates a mock late submission.
+ * Creates a mock submission that is not the latest.
  */
-export function createMockLateSubmission(
+export function createMockOlderSubmission(
   overrides?: Partial<Submission>,
 ): Submission {
   return createMockSubmission({
-    isLate: true,
+    isLatest: false,
+    submissionNumber: 1,
     ...overrides,
   });
 }
@@ -263,7 +262,7 @@ export function createMockLateSubmission(
 export function createMockAuthResponse(userOverrides?: Partial<User>) {
   return {
     success: true as const,
-    token: "mock-jwt-token-" + Date.now(),
+    token: "mock-jwt-token",
     user: createMockUser(userOverrides),
   };
 }
@@ -289,7 +288,7 @@ export function createMockValidationError(
   errors: Array<{ field: string; message: string }>,
 ) {
   return {
-    isValid: false,
+    isValid: false as const,
     errors,
   };
 }
@@ -299,7 +298,7 @@ export function createMockValidationError(
  */
 export function createMockValidationSuccess() {
   return {
-    isValid: true,
+    isValid: true as const,
     errors: [],
   };
 }

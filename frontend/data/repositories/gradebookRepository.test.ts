@@ -103,6 +103,17 @@ describe("gradebookRepository", () => {
         "Class not found",
       );
     });
+
+    it("throws default error when response is unsuccessful", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: false },
+        status: 500,
+      });
+
+      await expect(gradebookRepository.getClassStatistics(1)).rejects.toThrow(
+        "Failed to fetch class statistics",
+      );
+    });
   });
 
   // ============================================================================
@@ -184,6 +195,17 @@ describe("gradebookRepository", () => {
       const result = await gradebookRepository.getStudentClassGrades(1, 999);
 
       expect(result).toBeNull();
+    });
+
+    it("throws error when API fails", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        error: "Class not found",
+        status: 404,
+      });
+
+      await expect(
+        gradebookRepository.getStudentClassGrades(1, 999),
+      ).rejects.toThrow("Class not found");
     });
   });
 
@@ -343,6 +365,28 @@ describe("gradebookRepository", () => {
       expect(result.enabled).toBe(false);
       expect(result.config).toBeNull();
     });
+
+    it("throws error when API fails", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        error: "Assignment not found",
+        status: 404,
+      });
+
+      await expect(
+        gradebookRepository.getLatePenaltyConfig(999),
+      ).rejects.toThrow("Assignment not found");
+    });
+
+    it("throws default error when response is unsuccessful", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: false },
+        status: 500,
+      });
+
+      await expect(gradebookRepository.getLatePenaltyConfig(1)).rejects.toThrow(
+        "Failed to fetch late penalty config",
+      );
+    });
   });
 
   // ============================================================================
@@ -352,9 +396,9 @@ describe("gradebookRepository", () => {
   describe("updateLatePenaltyConfig", () => {
     it("updates late penalty config with settings", async () => {
       const config = {
-        penaltyType: "percentage" as const,
-        penaltyValue: 5,
-        gracePeriodMinutes: 0,
+        gracePeriodHours: 1,
+        tiers: [{ id: "tier-1", hoursAfterGrace: 0, penaltyPercent: 10 }],
+        rejectAfterHours: null,
       };
 
       vi.mocked(apiClient.put).mockResolvedValue({

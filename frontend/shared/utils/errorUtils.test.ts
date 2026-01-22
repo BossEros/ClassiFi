@@ -5,7 +5,7 @@ import {
   successResponse,
   getErrorMessage,
   withErrorHandling,
-} from "./errorUtils";
+} from "@/shared/utils/errorUtils";
 
 describe("errorUtils", () => {
   // ============================================================================

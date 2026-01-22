@@ -8,7 +8,7 @@ import {
   isLateSubmission,
   formatTimeRemaining,
   formatDateTime,
-} from "./dateUtils";
+} from "@/shared/utils/dateUtils";
 
 describe("dateUtils", () => {
   // ============================================================================
@@ -93,33 +93,29 @@ describe("dateUtils", () => {
   // ============================================================================
 
   describe("getCurrentAcademicYear", () => {
-    afterEach(() => {
-      vi.useRealTimers();
+    beforeEach(() => {
+      vi.useFakeTimers();
     });
 
     it("returns current-next year after June", () => {
-      vi.useFakeTimers();
       vi.setSystemTime(new Date("2024-08-15")); // August (month 7, >= 5)
 
       expect(getCurrentAcademicYear()).toBe("2024-2025");
     });
 
     it("returns previous-current year before June", () => {
-      vi.useFakeTimers();
       vi.setSystemTime(new Date("2024-02-15")); // February (month 1, < 5)
 
       expect(getCurrentAcademicYear()).toBe("2023-2024");
     });
 
     it("returns current-next year in June", () => {
-      vi.useFakeTimers();
       vi.setSystemTime(new Date("2024-06-15")); // June (month 5, >= 5)
 
       expect(getCurrentAcademicYear()).toBe("2024-2025");
     });
 
     it("returns previous-current year in May", () => {
-      vi.useFakeTimers();
       vi.setSystemTime(new Date("2024-05-15")); // May (month 4, < 5)
 
       expect(getCurrentAcademicYear()).toBe("2023-2024");

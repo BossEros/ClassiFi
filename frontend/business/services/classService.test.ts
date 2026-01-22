@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import * as classService from "./classService";
+import * as classService from "@/business/services/classService";
 import * as classRepository from "@/data/repositories/classRepository";
 import type { ISODateString } from "@/shared/types/class";
 
@@ -65,8 +65,8 @@ describe("classService", () => {
       className: "New Class",
       classCode: "NEW123",
       description: "A new class",
-      yearLevel: 1,
-      semester: 1,
+      yearLevel: 1 as const,
+      semester: 1 as const,
       academicYear: "2024-2025",
       schedule: {
         days: ["monday" as const],
@@ -115,9 +115,14 @@ describe("classService", () => {
     });
 
     it("throws error for invalid year level", async () => {
-      const invalidRequest = { ...validCreateRequest, yearLevel: 0 };
+      const invalidRequest = {
+        ...validCreateRequest,
+        yearLevel: 0 as unknown as 1 | 2 | 3 | 4,
+      };
 
-      await expect(classService.createClass(invalidRequest)).rejects.toThrow();
+      await expect(classService.createClass(invalidRequest)).rejects.toThrow(
+        "Year level must be 1, 2, 3, or 4",
+      );
     });
   });
 

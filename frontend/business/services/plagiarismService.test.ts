@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import * as plagiarismService from "./plagiarismService";
+import * as plagiarismService from "@/business/services/plagiarismService";
 import * as plagiarismRepository from "@/data/repositories/plagiarismRepository";
+import type { AnalyzeResponse, ResultDetailsResponse } from "@/data/api/types";
 
 // Mock the repository
 vi.mock("@/data/repositories/plagiarismRepository");
@@ -16,18 +17,42 @@ describe("plagiarismService", () => {
   // ============================================================================
 
   describe("analyzeAssignmentSubmissions", () => {
-    const mockAnalysisResponse = {
-      success: true,
-      analysisId: 123,
-      totalPairs: 5,
+    const mockAnalysisResponse: AnalyzeResponse = {
+      reportId: "report-123",
+      summary: {
+        totalFiles: 10,
+        totalPairs: 5,
+        suspiciousPairs: 2,
+        averageSimilarity: 45.5,
+        maxSimilarity: 85.0,
+      },
       pairs: [
         {
           id: 1,
-          submission1Id: 1,
-          submission2Id: 2,
-          similarityScore: 85,
+          leftFile: {
+            id: 1,
+            path: "/submissions/1/solution.py",
+            filename: "solution.py",
+            lineCount: 50,
+            studentId: "student-1",
+            studentName: "John Doe",
+          },
+          rightFile: {
+            id: 2,
+            path: "/submissions/2/solution.py",
+            filename: "solution.py",
+            lineCount: 48,
+            studentId: "student-2",
+            studentName: "Jane Smith",
+          },
+          structuralScore: 85.0,
+          semanticScore: 78.0,
+          hybridScore: 82.0,
+          overlap: 35,
+          longest: 12,
         },
       ],
+      warnings: [],
     };
 
     it("returns analysis results for an assignment", async () => {
@@ -43,8 +68,9 @@ describe("plagiarismService", () => {
       expect(
         plagiarismRepository.analyzeAssignmentSubmissions,
       ).toHaveBeenCalledWith(1);
-      expect(result.success).toBe(true);
-      expect(result.totalPairs).toBe(5);
+      expect(result.reportId).toBe("report-123");
+      expect(result.summary.totalPairs).toBe(5);
+      expect(result.pairs).toHaveLength(1);
     });
 
     it("throws error for invalid assignment ID", async () => {
@@ -85,19 +111,45 @@ describe("plagiarismService", () => {
   // ============================================================================
 
   describe("getResultDetails", () => {
-    const mockDetailsResponse = {
-      success: true,
-      pair: {
+    const mockDetailsResponse: ResultDetailsResponse = {
+      result: {
         id: 1,
         submission1Id: 1,
         submission2Id: 2,
-        similarityScore: 85,
+        structuralScore: "85.00",
+        overlap: 35,
+        longestFragment: 12,
       },
-      files: [
-        { submissionId: 1, content: "code1", filename: "solution.py" },
-        { submissionId: 2, content: "code2", filename: "solution.py" },
+      fragments: [
+        {
+          id: 1,
+          leftSelection: {
+            startRow: 5,
+            startCol: 0,
+            endRow: 10,
+            endCol: 45,
+          },
+          rightSelection: {
+            startRow: 8,
+            startCol: 0,
+            endRow: 13,
+            endCol: 45,
+          },
+          length: 6,
+        },
       ],
-      matchedLines: [{ line1: 5, line2: 5, similarity: 100 }],
+      leftFile: {
+        filename: "solution.py",
+        content: "def solution():\n    pass",
+        lineCount: 50,
+        studentName: "John Doe",
+      },
+      rightFile: {
+        filename: "solution.py",
+        content: "def solution():\n    return None",
+        lineCount: 48,
+        studentName: "Jane Smith",
+      },
     };
 
     it("returns details for a similarity result", async () => {
@@ -109,8 +161,10 @@ describe("plagiarismService", () => {
       const result = await plagiarismService.getResultDetails(1);
 
       expect(plagiarismRepository.getResultDetails).toHaveBeenCalledWith(1);
-      expect(result.success).toBe(true);
-      expect(result.files).toHaveLength(2);
+      expect(result.result.id).toBe(1);
+      expect(result.fragments).toHaveLength(1);
+      expect(result.leftFile.studentName).toBe("John Doe");
+      expect(result.rightFile.studentName).toBe("Jane Smith");
     });
 
     it("throws error for invalid result ID", async () => {

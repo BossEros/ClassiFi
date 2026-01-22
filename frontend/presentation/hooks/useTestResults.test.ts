@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 
-import { useTestResults } from "./useTestResults";
+import { useTestResults } from "@/presentation/hooks/useTestResults";
 import * as testCaseService from "@/business/services/testCaseService";
 
 // Mock the service
@@ -152,7 +152,9 @@ describe("useTestResults", () => {
         passed: 4,
       });
 
-      await result.current.refetch();
+      await act(async () => {
+        await result.current.refetch();
+      });
 
       await waitFor(() => {
         expect(result.current.results?.passed).toBe(4);

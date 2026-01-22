@@ -1,16 +1,8 @@
-/**
- * Global test setup for Vitest
- *
- * This file runs before all tests and sets up:
- * - Jest-DOM matchers for DOM assertions
- * - MSW server for API mocking
- * - Cleanup between tests
- */
 import { afterEach, beforeAll, afterAll, vi } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
-import { server } from "./mocks/server";
+import { server } from "@/tests/mocks/server";
 
 // Start MSW server before all tests
 beforeAll(() => {
@@ -21,6 +13,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  vi.clearAllMocks();
 });
 
 // Close MSW server after all tests

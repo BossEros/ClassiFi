@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
-
-import { validateId, validateIds } from "./validators";
+import { validateId, validateIds } from "@/shared/utils/validators";
 
 describe("validators", () => {
   // ============================================================================
@@ -88,8 +87,7 @@ describe("validators", () => {
       expect(() => validateIds({})).not.toThrow();
     });
 
-    it("validates all entries", () => {
-      // First invalid entry should cause throw
+    it("throws when any entry is invalid", () => {
       expect(() =>
         validateIds({
           a: 0,

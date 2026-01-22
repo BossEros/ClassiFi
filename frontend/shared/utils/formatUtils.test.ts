@@ -1,11 +1,10 @@
 import { describe, it, expect } from "vitest";
-
 import {
   formatFileSize,
   formatFullName,
   withFullName,
   normalizeUserName,
-} from "./formatUtils";
+} from "@/shared/utils/formatUtils";
 
 describe("formatUtils", () => {
   // ============================================================================

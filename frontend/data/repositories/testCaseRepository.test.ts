@@ -31,7 +31,7 @@ describe("testCaseRepository", () => {
     isHidden: false,
     timeLimit: 5,
     sortOrder: 1,
-    createdAt: new Date().toISOString(),
+    createdAt: "2024-01-01T00:00:00.000Z",
   };
 
   // ============================================================================
@@ -125,6 +125,20 @@ describe("testCaseRepository", () => {
       );
       expect(result.data?.testCase.name).toBe("Updated Name");
     });
+
+    it("returns error on failure", async () => {
+      vi.mocked(apiClient.put).mockResolvedValue({
+        error: "Not found",
+        status: 404,
+      });
+
+      const result = await testCaseRepository.updateTestCase(
+        999,
+        updateRequest,
+      );
+
+      expect(result.error).toBe("Not found");
+    });
   });
 
   // ============================================================================
@@ -142,6 +156,17 @@ describe("testCaseRepository", () => {
 
       expect(apiClient.delete).toHaveBeenCalledWith("/test-cases/1");
       expect(result.data?.success).toBe(true);
+    });
+
+    it("returns error on failure", async () => {
+      vi.mocked(apiClient.delete).mockResolvedValue({
+        error: "Not found",
+        status: 404,
+      });
+
+      const result = await testCaseRepository.deleteTestCase(999);
+
+      expect(result.error).toBe("Not found");
     });
   });
 
@@ -168,6 +193,17 @@ describe("testCaseRepository", () => {
         { order },
       );
       expect(result.data?.success).toBe(true);
+    });
+
+    it("returns error on failure", async () => {
+      vi.mocked(apiClient.put).mockResolvedValue({
+        error: "Assignment not found",
+        status: 404,
+      });
+
+      const result = await testCaseRepository.reorderTestCases(999, order);
+
+      expect(result.error).toBe("Assignment not found");
     });
   });
 
@@ -198,6 +234,42 @@ describe("testCaseRepository", () => {
       });
       expect(result.data?.success).toBe(true);
     });
+
+    it("returns error on execution failure", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        error: "Execution timeout",
+        status: 500,
+      });
+
+      const result = await testCaseRepository.runTestsPreview(
+        "while True: pass",
+        "python",
+        1,
+      );
+
+      expect(result.error).toBe("Execution timeout");
+    });
+
+    it("returns error when API returns non-success response", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: {
+          success: false,
+          message: "Compilation error: syntax error on line 1",
+        },
+        status: 200,
+      });
+
+      const result = await testCaseRepository.runTestsPreview(
+        "invalid code",
+        "python",
+        1,
+      );
+
+      expect(result.data?.success).toBe(false);
+      expect(result.data?.message).toBe(
+        "Compilation error: syntax error on line 1",
+      );
+    });
   });
 
   // ============================================================================
@@ -224,6 +296,28 @@ describe("testCaseRepository", () => {
       expect(apiClient.get).toHaveBeenCalledWith("/submissions/1/test-results");
       expect(result.data?.data.passedCount).toBe(3);
     });
+
+    it("returns error when submission not found", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        error: "Submission not found",
+        status: 404,
+      });
+
+      const result = await testCaseRepository.getTestResults(999);
+
+      expect(result.error).toBe("Submission not found");
+    });
+
+    it("returns error on server failure", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        error: "Internal server error",
+        status: 500,
+      });
+
+      const result = await testCaseRepository.getTestResults(1);
+
+      expect(result.error).toBe("Internal server error");
+    });
   });
 
   // ============================================================================
@@ -247,6 +341,44 @@ describe("testCaseRepository", () => {
         {},
       );
       expect(result.data?.data.score).toBe(100);
+    });
+
+    it("returns error when submission not found", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        error: "Submission not found",
+        status: 404,
+      });
+
+      const result = await testCaseRepository.runTestsForSubmission(999);
+
+      expect(result.error).toBe("Submission not found");
+    });
+
+    it("returns error on execution failure", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        error: "Execution service unavailable",
+        status: 503,
+      });
+
+      const result = await testCaseRepository.runTestsForSubmission(1);
+
+      expect(result.error).toBe("Execution service unavailable");
+    });
+
+    it("returns error when tests fail due to runtime error", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: {
+          success: false,
+          message: "Runtime error: segmentation fault",
+          data: { results: [], passedCount: 0, totalCount: 5, score: 0 },
+        },
+        status: 200,
+      });
+
+      const result = await testCaseRepository.runTestsForSubmission(1);
+
+      expect(result.data?.success).toBe(false);
+      expect(result.data?.message).toBe("Runtime error: segmentation fault");
     });
   });
 });

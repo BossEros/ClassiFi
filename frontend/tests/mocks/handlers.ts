@@ -15,7 +15,7 @@ export const handlers = [
   // Auth Endpoints
   // ============================================================================
 
-  http.post(`${API_BASE}/auth/login`, async () => {
+  http.post(`${API_BASE}/auth/login`, () => {
     return HttpResponse.json({
       success: true,
       token: "mock-access-token",
@@ -145,7 +145,7 @@ export const handlers = [
       title: "Hello World",
       description: "Write your first program",
       classId: 1,
-      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      deadline: "2025-12-31T23:59:59.000Z",
       maxScore: 100,
     });
   }),

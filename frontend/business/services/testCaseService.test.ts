@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-import * as testCaseService from "./testCaseService";
+import * as testCaseService from "@/business/services/testCaseService";
 import * as testCaseRepository from "@/data/repositories/testCaseRepository";
 
 // Mock the repository

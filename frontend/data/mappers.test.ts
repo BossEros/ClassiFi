@@ -5,7 +5,7 @@ import {
   mapSubmissionWithAssignment,
   mapSubmissionWithStudent,
   type SubmissionDTO,
-} from "./mappers";
+} from "@/data/mappers";
 
 describe("mappers", () => {
   // ============================================================================
@@ -161,7 +161,7 @@ describe("mappers", () => {
 
       // Empty string is falsy, so it should throw
       expect(() => mapSubmissionWithAssignment(dto)).toThrow(
-        "Missing required property 'assignmentName'",
+        "[mapSubmissionWithAssignment] Missing required property 'assignmentName' for submission ID 1",
       );
     });
   });
@@ -215,7 +215,7 @@ describe("mappers", () => {
 
       // Empty string is falsy, so it should throw
       expect(() => mapSubmissionWithStudent(dto)).toThrow(
-        "Missing required property 'studentName'",
+        "[mapSubmissionWithStudent] Missing required property 'studentName' for submission ID 1",
       );
     });
   });

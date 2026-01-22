@@ -29,11 +29,12 @@ describe("classRepository", () => {
 
   describe("createClass", () => {
     const mockRequest = {
+      teacherId: 1,
       className: "Test Class",
       classCode: "TEST123",
       description: "A test class",
-      yearLevel: 1,
-      semester: 1,
+      yearLevel: 1 as const,
+      semester: 1 as const,
       academicYear: "2024-2025",
       schedule: {
         days: ["monday" as const],
@@ -131,6 +132,28 @@ describe("classRepository", () => {
 
       await expect(classRepository.generateClassCode()).rejects.toThrow(
         "Rate limited",
+      );
+    });
+
+    it("throws error when response is not successful", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: false, message: "Code generation failed" },
+        status: 500,
+      });
+
+      await expect(classRepository.generateClassCode()).rejects.toThrow(
+        "Code generation failed",
+      );
+    });
+
+    it("throws default error when no message provided", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: false },
+        status: 500,
+      });
+
+      await expect(classRepository.generateClassCode()).rejects.toThrow(
+        "Failed to generate class code",
       );
     });
   });
@@ -314,6 +337,28 @@ describe("classRepository", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("throws error when API fails", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        error: "Class not found",
+        status: 404,
+      });
+
+      await expect(classRepository.getClassStudents(999)).rejects.toThrow(
+        "Class not found",
+      );
+    });
+
+    it("throws default error when response is not successful", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: false },
+        status: 500,
+      });
+
+      await expect(classRepository.getClassStudents(1)).rejects.toThrow(
+        "Failed to fetch students",
+      );
+    });
   });
 
   // ============================================================================
@@ -351,7 +396,7 @@ describe("classRepository", () => {
   // ============================================================================
 
   describe("updateClass", () => {
-    const mockUpdateRequest = { className: "Updated Class Name" };
+    const mockUpdateRequest = { teacherId: 1, className: "Updated Class Name" };
     const mockUpdatedClass = { id: 1, className: "Updated Class Name" };
 
     it("updates a class successfully", async () => {
@@ -387,9 +432,11 @@ describe("classRepository", () => {
 
   describe("createAssignment", () => {
     const mockRequest = {
+      teacherId: 1,
       assignmentName: "New Assignment",
+      description: "Assignment description",
       deadline: "2024-12-31T23:59:59Z",
-      programmingLanguage: "python",
+      programmingLanguage: "python" as const,
     };
     const mockAssignment = { id: 1, ...mockRequest };
 
@@ -425,7 +472,7 @@ describe("classRepository", () => {
   // ============================================================================
 
   describe("updateAssignment", () => {
-    const mockRequest = { assignmentName: "Updated Assignment" };
+    const mockRequest = { teacherId: 1, assignmentName: "Updated Assignment" };
     const mockAssignment = { id: 1, assignmentName: "Updated Assignment" };
 
     it("updates an assignment successfully", async () => {
