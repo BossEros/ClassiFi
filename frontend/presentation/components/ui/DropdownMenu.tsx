@@ -13,9 +13,10 @@ interface DropdownMenuItem {
 interface DropdownMenuProps {
   items: DropdownMenuItem[]
   className?: string
+  triggerLabel?: string
 }
 
-export function DropdownMenu({ items, className }: DropdownMenuProps) {
+export function DropdownMenu({ items, className, triggerLabel = 'Actions' }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement>(null)
 
@@ -55,6 +56,7 @@ export function DropdownMenu({ items, className }: DropdownMenuProps) {
         )}
         aria-haspopup="menu"
         aria-expanded={isOpen}
+        aria-label={triggerLabel}
       >
         <MoreVertical className="w-5 h-5 text-gray-400" />
       </button>

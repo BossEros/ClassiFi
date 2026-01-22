@@ -2,9 +2,12 @@ import type {
   Submission,
   SubmissionWithAssignment,
   SubmissionWithStudent,
-} from "../business/models/assignment/types";
+} from "@/shared/types/submission";
 
-export interface ApiSubmission {
+/**
+ * Data Transfer Object for submission data received from the API.
+ */
+export interface SubmissionDTO {
   id: number;
   assignmentId: number;
   studentId: number;
@@ -18,7 +21,10 @@ export interface ApiSubmission {
   studentName?: string;
 }
 
-export function mapSubmission(sub: ApiSubmission): Submission {
+/**
+ * Maps a raw submission DTO to a domain Submission model.
+ */
+export function mapSubmission(sub: SubmissionDTO): Submission {
   return {
     id: sub.id,
     assignmentId: sub.assignmentId,
@@ -26,7 +32,10 @@ export function mapSubmission(sub: ApiSubmission): Submission {
     fileName: sub.fileName,
     fileSize: sub.fileSize,
     submissionNumber: sub.submissionNumber,
-    submittedAt: new Date(sub.submittedAt),
+    submittedAt:
+      typeof sub.submittedAt === "string"
+        ? sub.submittedAt
+        : sub.submittedAt.toISOString(),
     isLatest: sub.isLatest,
     grade: sub.grade ?? undefined,
   };
@@ -34,10 +43,17 @@ export function mapSubmission(sub: ApiSubmission): Submission {
 
 /**
  * Maps a raw submission with assignment name (used in student views).
+ * Throws an error if required assignmentName is missing.
  */
 export function mapSubmissionWithAssignment(
-  sub: ApiSubmission
+  sub: SubmissionDTO,
 ): SubmissionWithAssignment {
+  if (!sub.assignmentName) {
+    throw new Error(
+      `[mapSubmissionWithAssignment] Missing required property 'assignmentName' for submission ID ${sub.id}`,
+    );
+  }
+
   return {
     ...mapSubmission(sub),
     assignmentName: sub.assignmentName!,
@@ -46,12 +62,19 @@ export function mapSubmissionWithAssignment(
 
 /**
  * Maps a raw submission with student name (used in teacher views).
+ * Throws an error if required studentName is missing.
  */
 export function mapSubmissionWithStudent(
-  sub: ApiSubmission
+  sub: SubmissionDTO,
 ): SubmissionWithStudent {
+  if (!sub.studentName) {
+    throw new Error(
+      `[mapSubmissionWithStudent] Missing required property 'studentName' for submission ID ${sub.id}`,
+    );
+  }
+
   return {
     ...mapSubmission(sub),
-    studentName: sub.studentName!,
+    studentName: sub.studentName,
   };
 }

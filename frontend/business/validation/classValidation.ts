@@ -1,27 +1,15 @@
+import type { CreateClassRequest, Schedule } from "@/data/api/types";
 import type { ValidationError, ValidationResult } from "@/shared/types/auth";
 
-export interface Schedule {
-  days: string[];
-  startTime: string;
-  endTime: string;
-}
-
-export interface CreateClassData {
-  className: string;
-  description: string;
-  classCode?: string;
-  yearLevel?: number;
-  semester?: number;
-  academicYear?: string;
-  schedule?: Schedule;
-}
-
 /**
- * Validates class name
+ * Validates the class name.
  * Requirements:
  * - Required field
  * - Minimum 1 character
  * - Maximum 100 characters
+ *
+ * @param className - The class name to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassName = (className: string): string | null => {
   const trimmed = className.trim();
@@ -38,10 +26,13 @@ export const validateClassName = (className: string): string | null => {
 };
 
 /**
- * Validates class description
+ * Validates the class description.
  * Requirements:
  * - Optional field
  * - Maximum 1000 characters if provided
+ *
+ * @param description - The description to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassDescription = (
   description: string,
@@ -60,11 +51,15 @@ export const validateClassDescription = (
  * Requirements:
  * - Required field
  * - Must not be empty after trimming
+ *
+ * @param classCode - The class code to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassCode = (classCode: string): string | null => {
   if (!classCode || !classCode.trim()) {
     return "Class code is required";
   }
+
   return null;
 };
 
@@ -74,6 +69,9 @@ export const validateClassCode = (classCode: string): string | null => {
  * - Required field
  * - Must be alphanumeric (letters and numbers only)
  * - Must be between 6-8 characters
+ *
+ * @param classCode - The class code to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassJoinCode = (classCode: string): string | null => {
   const trimmedCode = classCode ? classCode.trim() : "";
@@ -83,42 +81,55 @@ export const validateClassJoinCode = (classCode: string): string | null => {
   }
 
   const codeRegex = /^[A-Za-z0-9]{6,8}$/;
+
   if (!codeRegex.test(trimmedCode)) {
     return "Invalid class code format. Please enter a 6-8 character alphanumeric code.";
   }
+
   return null;
 };
 
 /**
- * Validates year level
+ * Validates year level.
  * Requirements:
  * - Must be 1, 2, 3, or 4
+ *
+ * @param yearLevel - The year level to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateYearLevel = (yearLevel: number): string | null => {
   if (![1, 2, 3, 4].includes(yearLevel)) {
     return "Year level must be 1, 2, 3, or 4";
   }
+
   return null;
 };
 
 /**
- * Validates semester
+ * Validates semester.
  * Requirements:
  * - Must be 1 or 2
+ *
+ * @param semester - The semester to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateSemester = (semester: number): string | null => {
   if (![1, 2].includes(semester)) {
     return "Semester must be 1 or 2";
   }
+
   return null;
 };
 
 /**
- * Validates academic year
+ * Validates academic year.
  * Requirements:
  * - Required field
  * - Format must be YYYY-YYYY (e.g., 2024-2025)
  * - End year must be exactly start year + 1
+ *
+ * @param academicYear - The academic year string to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateAcademicYear = (academicYear: string): string | null => {
   if (!academicYear) {
@@ -126,11 +137,13 @@ export const validateAcademicYear = (academicYear: string): string | null => {
   }
 
   const pattern = /^\d{4}-\d{4}$/;
+
   if (!pattern.test(academicYear)) {
     return "Academic year must be in format YYYY-YYYY (e.g., 2024-2025)";
   }
 
   const [startYear, endYear] = academicYear.split("-").map(Number);
+
   if (endYear !== startYear + 1) {
     return "End year must be exactly one year after start year";
   }
@@ -139,10 +152,13 @@ export const validateAcademicYear = (academicYear: string): string | null => {
 };
 
 /**
- * Validates schedule
+ * Validates schedule.
  * Requirements:
  * - Days array must not be empty
  * - Start time and end time are required
+ *
+ * @param schedule - The schedule object to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateSchedule = (
   schedule: Schedule | undefined,
@@ -189,50 +205,60 @@ export const validateSchedule = (
 };
 
 /**
- * Validates complete create class form data
- * Returns validation result with all errors
+ * Validates complete create class form data.
+ * Returns validation result with all errors.
+ *
+ * @param data - The partial class request data to validate.
+ * @returns A ValidationResult object.
  */
 export const validateCreateClassData = (
-  data: CreateClassData,
+  data: Partial<CreateClassRequest>,
 ): ValidationResult => {
   const errors: ValidationError[] = [];
 
-  const classNameError = validateClassName(data.className);
-  if (classNameError)
+  const classNameError = validateClassName(data.className || "");
+  if (classNameError) {
     errors.push({ field: "className", message: classNameError });
+  }
 
-  const descriptionError = validateClassDescription(data.description);
-  if (descriptionError)
+  const descriptionError = validateClassDescription(data.description || "");
+  if (descriptionError) {
     errors.push({ field: "description", message: descriptionError });
+  }
 
   if (data.classCode !== undefined) {
     const classCodeError = validateClassCode(data.classCode);
-    if (classCodeError)
+    if (classCodeError) {
       errors.push({ field: "classCode", message: classCodeError });
+    }
   }
 
   if (data.yearLevel !== undefined) {
     const yearLevelError = validateYearLevel(data.yearLevel);
-    if (yearLevelError)
+    if (yearLevelError) {
       errors.push({ field: "yearLevel", message: yearLevelError });
+    }
   }
 
   if (data.semester !== undefined) {
     const semesterError = validateSemester(data.semester);
-    if (semesterError)
+    if (semesterError) {
       errors.push({ field: "semester", message: semesterError });
+    }
   }
 
   if (data.academicYear !== undefined) {
     const academicYearError = validateAcademicYear(data.academicYear);
-    if (academicYearError)
+    if (academicYearError) {
       errors.push({ field: "academicYear", message: academicYearError });
+    }
   }
 
   if (data.schedule !== undefined) {
     const scheduleError = validateSchedule(data.schedule);
-    if (scheduleError)
+    if (scheduleError) {
       errors.push({ field: "schedule", message: scheduleError });
+    }
   }
 
   return {
@@ -242,8 +268,12 @@ export const validateCreateClassData = (
 };
 
 /**
- * Validates individual field for real-time validation
- * Used for showing errors as the user types or on blur
+ * Validates individual field for real-time validation.
+ * Used for showing errors as the user types or on blur.
+ *
+ * @param fieldName - The name of the field to validate.
+ * @param value - The value to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassField = (
   fieldName: string,
@@ -252,18 +282,25 @@ export const validateClassField = (
   switch (fieldName) {
     case "className":
       return validateClassName(value as string);
+
     case "description":
       return validateClassDescription(value as string);
+
     case "classCode":
       return validateClassCode(value as string);
+
     case "yearLevel":
       return validateYearLevel(value as number);
+
     case "semester":
       return validateSemester(value as number);
+
     case "academicYear":
       return validateAcademicYear(value as string);
+
     case "schedule":
       return validateSchedule(value as Schedule);
+
     default:
       return null;
   }

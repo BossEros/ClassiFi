@@ -3,11 +3,13 @@ import type {
   ClassResponse,
   AssignmentResponse,
   StudentDashboardBackendResponse,
-  ClassListResponse,
-  AssignmentListResponse,
   JoinClassResponse,
   LeaveClassResponse,
 } from "@/data/api/types";
+import type {
+  ClassListResponse,
+  AssignmentListResponse,
+} from "@/shared/types/class";
 
 // Export response types for consumers
 export type {
@@ -27,10 +29,10 @@ export type {
 export async function getDashboardData(
   studentId: number,
   enrolledClassesLimit: number = 12,
-  pendingAssignmentsLimit: number = 10
+  pendingAssignmentsLimit: number = 10,
 ): Promise<StudentDashboardBackendResponse> {
   const response = await apiClient.get<StudentDashboardBackendResponse>(
-    `/student/dashboard/${studentId}?enrolledClassesLimit=${enrolledClassesLimit}&pendingAssignmentsLimit=${pendingAssignmentsLimit}`
+    `/student/dashboard/${studentId}?enrolledClassesLimit=${enrolledClassesLimit}&pendingAssignmentsLimit=${pendingAssignmentsLimit}`,
   );
 
   if (response.error || !response.data) {
@@ -46,7 +48,7 @@ export async function getDashboardData(
  */
 export async function getEnrolledClasses(
   studentId: number,
-  limit?: number
+  limit?: number,
 ): Promise<ClassListResponse> {
   let url = `/student/dashboard/${studentId}/classes`;
   if (limit) {
@@ -68,10 +70,10 @@ export async function getEnrolledClasses(
  */
 export async function getPendingAssignments(
   studentId: number,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<AssignmentListResponse> {
   const response = await apiClient.get<AssignmentListResponse>(
-    `/student/dashboard/${studentId}/assignments?limit=${limit}`
+    `/student/dashboard/${studentId}/assignments?limit=${limit}`,
   );
 
   if (response.error || !response.data) {
@@ -87,14 +89,14 @@ export async function getPendingAssignments(
  */
 export async function joinClass(
   studentId: number,
-  classCode: string
+  classCode: string,
 ): Promise<JoinClassResponse> {
   const response = await apiClient.post<JoinClassResponse>(
     "/student/dashboard/join",
     {
       studentId,
       classCode,
-    }
+    },
   );
 
   if (response.error || !response.data) {
@@ -110,14 +112,14 @@ export async function joinClass(
  */
 export async function leaveClass(
   studentId: number,
-  classId: number
+  classId: number,
 ): Promise<LeaveClassResponse> {
   const response = await apiClient.post<LeaveClassResponse>(
     "/student/dashboard/leave",
     {
       studentId,
       classId,
-    }
+    },
   );
 
   if (response.error || !response.data) {

@@ -283,7 +283,7 @@ export function ClassDetailPage() {
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Gradebook
                   </Button>
-                  <DropdownMenu items={dropdownItems} />
+                  <DropdownMenu items={dropdownItems} triggerLabel="Class Actions" />
                 </div>
               )}
 

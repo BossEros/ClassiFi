@@ -3,9 +3,14 @@
 // ============================================================================
 
 /**
+ * Array of valid user roles.
+ */
+export const VALID_ROLES = ["student", "teacher", "admin"] as const;
+
+/**
  * User role type.
  */
-export type UserRole = "student" | "teacher" | "admin";
+export type UserRole = (typeof VALID_ROLES)[number];
 
 /**
  * User model.
