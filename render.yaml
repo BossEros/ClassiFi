@@ -1,0 +1,47 @@
+# Render Blueprint - Infrastructure as Code
+# Deploy with: https://dashboard.render.com/blueprints/new
+
+services:
+  # ─────────────────────────────────────────────────────────────
+  # Backend API Service
+  # ─────────────────────────────────────────────────────────────
+  - type: web
+    name: classifi-api
+    runtime: node
+    region: singapore # Choose: oregon, ohio, frankfurt, singapore
+    plan: free
+    rootDir: backend-ts
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Application
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: false
+
+      # Supabase (sync these from your Supabase dashboard)
+      - key: SUPABASE_URL
+        sync: false # Set manually in Render dashboard
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
+      # CORS - Update with your Vercel frontend URL
+      - key: FRONTEND_URL
+        sync: false # e.g., https://classifi.vercel.app
+      - key: ALLOWED_ORIGINS
+        sync: false # e.g., https://classifi.vercel.app,http://localhost:5173
+
+      # API Configuration
+      - key: API_PREFIX
+        value: /api
