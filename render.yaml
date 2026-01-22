@@ -45,3 +45,7 @@ services:
       # API Configuration
       - key: API_PREFIX
         value: /api
+
+      # Judge0 (Code Execution)
+      - key: JUDGE0_URL
+        value: https://ce.judge0.com

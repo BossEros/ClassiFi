@@ -8,7 +8,7 @@ const connectionString = settings.databaseUrl;
 export const sql = postgres(connectionString, {
   max: 10, // Connection pool size
   idle_timeout: 20,
-  connect_timeout: 10,
+  connect_timeout: 60, // Increased to 60s to handle cold starts
   prepare: false, // Required for Supabase Transaction Pooler (port 6543)
 });
 
