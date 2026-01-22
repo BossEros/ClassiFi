@@ -49,14 +49,25 @@ npm run dev
 
 ## 📂 Project Structure
 
+## 🚀 Deployment
+
+ClassiFi is configured for automatic deployment:
+
+| Component | Platform                         | Status              |
+| --------- | -------------------------------- | ------------------- |
+| Frontend  | [Vercel](https://vercel.com)     | Auto-deploy on push |
+| Backend   | [Render](https://render.com)     | Auto-deploy on push |
+| Database  | [Supabase](https://supabase.com) | Managed             |
+
+See **[Deployment Guide](./docs/DEPLOYMENT.md)** for setup instructions.
 
 ## 📚 Documentation
 
 For more detailed information, please refer to:
 
+- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Deploy to Vercel & Render
 - **[Frontend Documentation](./frontend/README.md)**
-- **[Backend Documentation](./backend-ts/README.md)** (Create if missing)
-- **[Architecture Details](./docs/architecture/)**
+- **[Backend Documentation](./backend-ts/README.md)**
 
 ## 👥 Authors
 
