@@ -126,25 +126,27 @@ export function getCurrentUser(): User | null {
 }
 
 /**
- * Retrieves the authentication token from local storage.
+ * Retrieves the authentication token from Supabase session.
+ * Uses Supabase's secure session management.
  *
  * @returns The authentication token string or null if not found.
  */
-export function getAuthToken(): string | null {
-  return localStorage.getItem("authToken");
+export async function getAuthToken(): Promise<string | null> {
+  const result = await authRepository.getSession();
+
+  return result.session?.access_token ?? null;
 }
 
 /**
- * Checks if the user is currently authenticated by verifying the presence of token and user data.
- * Does not verify token validity with the server (use verifySession for that).
+ * Checks if the user is currently authenticated by verifying the presence of user data.
+ * For full session verification, use verifySession().
  *
- * @returns True if the user has a local session, false otherwise.
+ * @returns True if the user has local user data, false otherwise.
  */
 export function isAuthenticated(): boolean {
-  const token = getAuthToken();
   const user = getCurrentUser();
 
-  return !!(token && user);
+  return !!user;
 }
 
 /**
@@ -154,9 +156,10 @@ export function isAuthenticated(): boolean {
  * @returns True if the session is valid, false otherwise.
  */
 export async function verifySession(): Promise<boolean> {
-  const token = getAuthToken();
+  const token = await getAuthToken();
 
   if (!token) {
+    clearLocalAuthenticationSession();
     return false;
   }
 
@@ -174,13 +177,20 @@ export async function verifySession(): Promise<boolean> {
   }
 }
 
-function persistAuthenticationSession(token: string, user: User): void {
-  localStorage.setItem("authToken", token);
+/**
+ * Persists user data to local storage.
+ * Token is managed by Supabase's secure session storage.
+ */
+function persistAuthenticationSession(_token: string, user: User): void {
+  // Token is managed by Supabase session - we only store user data locally
   localStorage.setItem("user", JSON.stringify(user));
 }
 
+/**
+ * Clears local authentication session data.
+ * Token is managed by Supabase.
+ */
 function clearLocalAuthenticationSession(): void {
-  localStorage.removeItem("authToken");
   localStorage.removeItem("user");
 }
 
@@ -248,11 +258,54 @@ export async function resetPassword(
   }
 
   try {
-    const response = await authRepository.resetPassword(
-      resetPasswordRequest.newPassword,
-    );
+    const { session, sessionError, updateError } =
+      await authRepository.resetPassword(resetPasswordRequest.newPassword);
 
-    return response;
+    if (sessionError || !session) {
+      return {
+        success: false,
+        message:
+          "Invalid or expired reset link. Please request a new password reset.",
+      };
+    }
+
+    if (updateError) {
+      const errorMsg = updateError.message.toLowerCase();
+
+      if (
+        errorMsg.includes("expired") ||
+        errorMsg.includes("invalid") ||
+        errorMsg.includes("token")
+      ) {
+        return {
+          success: false,
+          message:
+            "Invalid or expired reset link. Please request a new password reset.",
+        };
+      } else if (
+        errorMsg.includes("weak") ||
+        (errorMsg.includes("password") && errorMsg.includes("requirement"))
+      ) {
+        return {
+          success: false,
+          message:
+            "Password does not meet security requirements. Please use a stronger password.",
+        };
+      } else {
+        return {
+          success: false,
+          message:
+            updateError.message ||
+            "Failed to reset password. Please try again.",
+        };
+      }
+    }
+
+    return {
+      success: true,
+      message:
+        "Password has been reset successfully. You can now log in with your new password.",
+    };
   } catch (error) {
     return {
       success: false,
@@ -306,13 +359,41 @@ export async function changePassword(
       };
     }
 
-    const response = await authRepository.changePassword(
+    const { signInError, updateError } = await authRepository.changePassword(
       currentUser.email,
       changePasswordRequest.currentPassword,
       changePasswordRequest.newPassword,
     );
 
-    return response;
+    if (signInError) {
+      return {
+        success: false,
+        message: "Current password is incorrect.",
+      };
+    }
+
+    if (updateError) {
+      const errorMsg = updateError.message.toLowerCase();
+
+      if (errorMsg.includes("weak") || errorMsg.includes("password")) {
+        return {
+          success: false,
+          message:
+            "New password does not meet security requirements. Please use a stronger password.",
+        };
+      }
+
+      return {
+        success: false,
+        message:
+          updateError.message || "Failed to change password. Please try again.",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Password changed successfully.",
+    };
   } catch (error) {
     return {
       success: false,
@@ -362,16 +443,30 @@ export async function deleteAccount(
       };
     }
 
-    const response = await authRepository.deleteAccount(
+    const { signInError, deleteError } = await authRepository.deleteAccount(
       currentUser.email,
       deleteAccountRequest.password,
     );
 
-    if (response.success) {
-      clearLocalAuthenticationSession();
+    if (signInError) {
+      return {
+        success: false,
+        message: "Password is incorrect.",
+      };
     }
 
-    return response;
+    if (deleteError) {
+      return {
+        success: false,
+        message: deleteError,
+      };
+    }
+
+    // Success - local session was already cleared by repository
+    return {
+      success: true,
+      message: "Your account has been permanently deleted.",
+    };
   } catch (error) {
     return {
       success: false,

@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { RegisterRequest } from "@/shared/types/auth";
 import {
   validateEmail,
   validatePassword,
@@ -135,7 +136,7 @@ describe("Auth Validation", () => {
   });
 
   describe("validateRegistrationData", () => {
-    const validData = {
+    const validData: RegisterRequest = {
       role: "student",
       firstName: "John",
       lastName: "Doe",

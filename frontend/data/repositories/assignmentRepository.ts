@@ -1,4 +1,5 @@
 import { apiClient, type ApiResponse } from "@/data/api/apiClient";
+import { supabase } from "@/data/api/supabaseClient";
 import {
   mapSubmission,
   mapSubmissionWithAssignment,
@@ -16,10 +17,13 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 
 /**
- * Gets the auth token from localStorage
+ * Gets the auth token from Supabase session.
+ * Uses Supabase's secure session management.
  */
-function getAuthToken(): string | null {
-  return localStorage.getItem("authToken");
+async function getAuthToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+
+  return data.session?.access_token ?? null;
 }
 
 /**
@@ -36,8 +40,8 @@ export async function submitAssignment(
     formData.append("student_id", request.studentId.toString());
     formData.append("file", request.file);
 
-    // Get auth token
-    const authToken = getAuthToken();
+    // Get auth token from Supabase session
+    const authToken = await getAuthToken();
 
     // Make request with fetch directly (apiClient doesn't support FormData)
     const response = await fetch(`${API_BASE_URL}/submissions`, {

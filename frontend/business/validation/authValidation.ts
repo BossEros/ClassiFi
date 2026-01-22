@@ -1,26 +1,18 @@
-import type { ValidationError, ValidationResult } from "@/shared/types/auth";
+import type {
+  LoginRequest,
+  RegisterRequest,
+  ValidationError,
+  ValidationResult,
+} from "@/shared/types/auth";
+import { VALID_ROLES } from "@/shared/types/auth";
 
 // Re-export shared types for consistency
 export type { ValidationResult };
 
-export interface RegisterRequest {
-  role: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}
-
-export interface LoginValidationData {
-  email: string;
-  password: string;
-}
-
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Password validation patterns
+ * Password validation patterns.
  */
 const PASSWORD_PATTERNS = {
   uppercase: /[A-Z]/,
@@ -30,7 +22,10 @@ const PASSWORD_PATTERNS = {
 };
 
 /**
- * Validates email format
+ * Validates email format.
+ *
+ * @param email - The email address to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateEmail = (email: string): string | null => {
   if (!email) {
@@ -45,13 +40,16 @@ export const validateEmail = (email: string): string | null => {
 };
 
 /**
- * Validates password complexity
+ * Validates password complexity.
  * Requirements:
  * - Minimum 8 characters
  * - At least 1 uppercase letter
  * - At least 1 lowercase letter
  * - At least 1 number
  * - At least 1 special character
+ *
+ * @param password - The password string to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validatePassword = (password: string): string | null => {
   if (!password) {
@@ -82,7 +80,11 @@ export const validatePassword = (password: string): string | null => {
 };
 
 /**
- * Validates that passwords match
+ * Validates that passwords match.
+ *
+ * @param password - The original password.
+ * @param confirmPassword - The confirmation password.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validatePasswordsMatch = (
   password: string,
@@ -100,7 +102,10 @@ export const validatePasswordsMatch = (
 };
 
 /**
- * Validates first name
+ * Validates first name.
+ *
+ * @param firstName - The first name to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateFirstName = (firstName: string): string | null => {
   if (!firstName) {
@@ -119,7 +124,10 @@ export const validateFirstName = (firstName: string): string | null => {
 };
 
 /**
- * Validates last name
+ * Validates last name.
+ *
+ * @param lastName - The last name to validate.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateLastName = (lastName: string): string | null => {
   if (!lastName) {
@@ -138,15 +146,17 @@ export const validateLastName = (lastName: string): string | null => {
 };
 
 /**
- * Validates role selection
+ * Validates role selection.
+ *
+ * @param role - The selected role string.
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateRole = (role: string): string | null => {
   if (!role) {
     return "Please select a role";
   }
 
-  const validRoles = ["student", "teacher", "admin"];
-  if (!validRoles.includes(role)) {
+  if (!(VALID_ROLES as readonly string[]).includes(role)) {
     return "Invalid role selected";
   }
 
@@ -154,8 +164,11 @@ export const validateRole = (role: string): string | null => {
 };
 
 /**
- * Validates complete registration form data
- * Returns validation result with all errors
+ * Validates complete registration form data.
+ * Returns validation result with all errors.
+ *
+ * @param data - The registration request data.
+ * @returns A ValidationResult object.
  */
 export const validateRegistrationData = (
   data: RegisterRequest,
@@ -164,27 +177,37 @@ export const validateRegistrationData = (
 
   // Validate each field
   const roleError = validateRole(data.role);
-  if (roleError) errors.push({ field: "role", message: roleError });
+  if (roleError) {
+    errors.push({ field: "role", message: roleError });
+  }
 
   const firstNameError = validateFirstName(data.firstName);
-  if (firstNameError)
+  if (firstNameError) {
     errors.push({ field: "firstName", message: firstNameError });
+  }
 
   const lastNameError = validateLastName(data.lastName);
-  if (lastNameError) errors.push({ field: "lastName", message: lastNameError });
+  if (lastNameError) {
+    errors.push({ field: "lastName", message: lastNameError });
+  }
 
   const emailError = validateEmail(data.email);
-  if (emailError) errors.push({ field: "email", message: emailError });
+  if (emailError) {
+    errors.push({ field: "email", message: emailError });
+  }
 
   const passwordError = validatePassword(data.password);
-  if (passwordError) errors.push({ field: "password", message: passwordError });
+  if (passwordError) {
+    errors.push({ field: "password", message: passwordError });
+  }
 
   const confirmPasswordError = validatePasswordsMatch(
     data.password,
     data.confirmPassword,
   );
-  if (confirmPasswordError)
+  if (confirmPasswordError) {
     errors.push({ field: "confirmPassword", message: confirmPasswordError });
+  }
 
   return {
     isValid: errors.length === 0,
@@ -193,18 +216,21 @@ export const validateRegistrationData = (
 };
 
 /**
- * Validates login form data
- * Returns validation result with all errors
- * Note: Only checks if fields are present, not complexity (that's for registration)
+ * Validates login form data.
+ * Returns validation result with all errors.
+ * Note: Only checks if fields are present, not complexity (that's for registration).
+ *
+ * @param data - The login request data.
+ * @returns A ValidationResult object.
  */
-export const validateLoginData = (
-  data: LoginValidationData,
-): ValidationResult => {
+export const validateLoginData = (data: LoginRequest): ValidationResult => {
   const errors: ValidationError[] = [];
 
   const emailError = validateEmail(data.email);
-  if (emailError) errors.push({ field: "email", message: emailError });
 
+  if (emailError) {
+    errors.push({ field: "email", message: emailError });
+  }
   if (!data.password) {
     errors.push({ field: "password", message: "Password is required" });
   } else if (data.password.trim().length === 0) {
@@ -218,8 +244,13 @@ export const validateLoginData = (
 };
 
 /**
- * Validates individual field for real-time validation
- * Used for showing errors as the user types
+ * Validates individual field for real-time validation.
+ * Used for showing errors as the user types.
+ *
+ * @param fieldName - The name of the field to validate.
+ * @param value - The value of the field.
+ * @param additionalData - Optional additional data needed for validation (e.g., password for confirmation).
+ * @returns An error message string if invalid, otherwise null.
  */
 export const validateField = (
   fieldName: string,
@@ -232,7 +263,8 @@ export const validateField = (
     case "password":
       return validatePassword(value);
     case "confirmPassword":
-      return validatePasswordsMatch(additionalData?.password || "", value);
+      if (!additionalData?.password) return null;
+      return validatePasswordsMatch(additionalData.password, value);
     case "firstName":
       return validateFirstName(value);
     case "lastName":
