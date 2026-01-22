@@ -62,8 +62,9 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
 
   // Utilize the existing verifyToken logic to get the user profile
   const userResponse = await apiClient.post<AuthResponse>(
-    `/auth/verify?token=${token}`,
-    {},
+    "/auth/verify",
+    { token },
+  );
   );
 
   if (
