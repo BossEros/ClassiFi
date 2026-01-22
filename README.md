@@ -49,14 +49,6 @@ npm run dev
 
 ## 📂 Project Structure
 
-```
-ClassiFi/
-├── frontend/        # React application (UI Layer)
-├── backend-ts/      # Fastify application (API Layer)
-├── judge0/          # Code execution engine configuration
-├── docs/            # Detailed documentation
-└── README.md        # This file
-```
 
 ## 📚 Documentation
 
