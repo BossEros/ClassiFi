@@ -1,7 +1,3 @@
-/**
- * Assignment Validation Unit Tests
- * Tests for assignment form validation rules
- */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   validateAssignmentTitle,

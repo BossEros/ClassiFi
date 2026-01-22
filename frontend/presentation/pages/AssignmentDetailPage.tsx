@@ -383,6 +383,7 @@ export function AssignmentDetailPage() {
     programmingLanguage: "python",
     deadline: new Date(),
     allowResubmission: true,
+    maxAttempts: null,
     isActive: true,
     classId: 0,
     className: "",

@@ -1,6 +1,19 @@
-import { supabase } from "./supabaseClient";
-import type { Session, AuthError, Subscription } from "@supabase/supabase-js";
+import { supabase } from "@/data/api/supabaseClient";
+import type {
+  Session,
+  AuthError,
+  Subscription,
+  UserAttributes,
+  SignInWithPasswordCredentials,
+  AuthResponse,
+  UserResponse,
+} from "@supabase/supabase-js";
 
+/**
+ * Standardized result for authentication operations.
+ *
+ * @template T - The type of the optional data payload.
+ */
 export interface AuthResult<T = void> {
   success: boolean;
   data?: T;
@@ -8,12 +21,16 @@ export interface AuthResult<T = void> {
   message?: string;
 }
 
+/**
+ * Adapter class for interacting with Supabase Authentication.
+ * Encapsulates auth logic, session management, and state listeners.
+ */
 class SupabaseAuthAdapter {
   private authSubscription: Subscription | null = null;
 
   /**
-   * Initialize the auth state change listener.
-   * This should be called once when the app starts.
+   * Initializes the auth state change listener.
+   * This should be called once when the application starts.
    * It automatically syncs the auth token in localStorage whenever Supabase refreshes it.
    */
   initializeAuthListener(): void {
@@ -28,15 +45,14 @@ class SupabaseAuthAdapter {
       console.log("[Auth] State change:", event);
 
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        // Token is managed by Supabase internally
+        // apiClient retrieves it via getSession() when needed
         if (session?.access_token) {
-          // Update the token in localStorage so apiClient uses the fresh token
-          localStorage.setItem("authToken", session.access_token);
-          console.log("[Auth] Token updated in localStorage");
+          console.log("[Auth] Session established/refreshed");
         }
       } else if (event === "SIGNED_OUT") {
-        // Clear auth state
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("currentUser");
+        // Clear user data (token is managed by Supabase)
+        localStorage.removeItem("user");
         console.log("[Auth] User signed out, auth state cleared");
 
         // Only redirect if not already on login page
@@ -50,7 +66,8 @@ class SupabaseAuthAdapter {
   }
 
   /**
-   * Cleanup the auth listener (call on app unmount if needed)
+   * Cleans up the auth listener.
+   * Should be called when the application unmounts or to prevent memory leaks.
    */
   cleanupAuthListener(): void {
     if (this.authSubscription) {
@@ -58,49 +75,72 @@ class SupabaseAuthAdapter {
       this.authSubscription = null;
     }
   }
+
   /**
-   * Get the current active session
+   * Retrieves the current active session from Supabase.
+   *
+   * @returns A promise resolving to an object containing the session and any error.
    */
   async getSession(): Promise<{
     session: Session | null;
     error: AuthError | null;
   }> {
     const { data, error } = await supabase.auth.getSession();
+
     return { session: data.session, error };
   }
 
   /**
-   * Sign out the current user
+   * Signs out the current user.
+   *
+   * @returns A promise resolving to an object containing any error that occurred during sign-out.
    */
   async signOut(): Promise<{ error: AuthError | null }> {
     const { error } = await supabase.auth.signOut();
+
     return { error };
   }
 
   /**
-   * Sign in with email and password
+   * Signs in a user with email and password.
+   *
+   * @param credentials - The email and password credentials.
+   * @returns A promise resolving to the authentication response.
    */
-  async signInWithPassword(credentials: { email: string; password: string }) {
+  async signInWithPassword(
+    credentials: SignInWithPasswordCredentials,
+  ): Promise<AuthResponse> {
     return await supabase.auth.signInWithPassword(credentials);
   }
 
   /**
-   * Update user attributes (like password)
+   * Updates user attributes (e.g., password, email, meta_data).
+   *
+   * @param attributes - The user attributes to update.
+   * @returns A promise resolving to the user update response.
    */
-  async updateUser(attributes: any) {
+  async updateUser(attributes: UserAttributes): Promise<UserResponse> {
     return await supabase.auth.updateUser(attributes);
   }
 
   /**
-   * Initialize a password reset session from URL parameters.
-   * Encapsulates the logic previously found in ResetPasswordPage.
+   * Initializes a password reset session from URL parameters.
+   * Encapsulates the logic for extracting tokens and verifying the reset link.
+   *
+   * @param options - Optional parameters for hash and search (useful for testing).
+   * @returns A promise resolving to an AuthResult indicating success or failure.
    */
-  async initializeResetSession(): Promise<AuthResult> {
+  async initializeResetSession(options?: {
+    hash?: string;
+    search?: string;
+  }): Promise<AuthResult> {
     try {
-      // Extract tokens from URL hash
-      const hash = window.location.hash;
+      // Extract tokens from URL hash or parameters
+      const hash = options?.hash ?? window.location.hash;
+      const search = options?.search ?? window.location.search;
+
       const hashParams = new URLSearchParams(hash.substring(1));
-      const searchParams = new URLSearchParams(window.location.search);
+      const searchParams = new URLSearchParams(search);
 
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
@@ -122,6 +162,7 @@ class SupabaseAuthAdapter {
       if (tokenType !== "recovery" && !accessToken) {
         // If we don't have a recovery token type OR an access token, check if we already have a session
         const { session } = await this.getSession();
+
         if (session) {
           return { success: true };
         }
@@ -138,6 +179,7 @@ class SupabaseAuthAdapter {
         // Maybe the user is already logged in or clicked a magic link that just works?
         // Let's double check session
         const { session } = await this.getSession();
+
         if (session) {
           return { success: true };
         }
@@ -174,8 +216,10 @@ class SupabaseAuthAdapter {
         };
       }
 
-      // Clear the hash from URL for security
-      window.history.replaceState(null, "", window.location.pathname);
+      // Clear the hash from URL for security (if we are using the real window)
+      if (!options?.hash) {
+        window.history.replaceState(null, "", window.location.pathname);
+      }
 
       return { success: true };
     } catch (error) {
