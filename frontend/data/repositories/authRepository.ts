@@ -72,7 +72,6 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
     !userResponse.data.user
   ) {
     // If we can't get the profile, we should probably sign out?
-    await supabaseAuthAdapter.signOut();
     return {
       success: false,
       message: userResponse.error || "Failed to retrieve user profile",
