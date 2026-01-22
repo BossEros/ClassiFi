@@ -38,20 +38,52 @@ function getStoredUser(): { email: string } | null {
 // ============================================================================
 
 export async function login(credentials: LoginRequest): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>(
-    "/auth/login",
-    credentials,
+  // 1. Sign in with Supabase (Client-Side)
+  // This automatically sets the session in the Supabase client
+  const { data, error } = await supabaseAuthAdapter.signInWithPassword({
+    email: credentials.email,
+    password: credentials.password,
+  });
+
+  if (error) {
+    return { success: false, message: error.message };
+  }
+
+  if (!data.session?.access_token) {
+    return { success: false, message: "No session created" };
+  }
+
+  // 2. Fetch User Profile from Backend using the new token
+  // The token is now in the Supabase session, so apiClient will pick it up automatically
+  // But we can also pass it explicitly if needed (verifyToken endpoint expects it in query or body?)
+  // Looking at authRepository.verifyToken below, it sends it in the query string.
+
+  const token = data.session.access_token;
+
+  // Utilize the existing verifyToken logic to get the user profile
+  const userResponse = await apiClient.post<AuthResponse>(
+    `/auth/verify?token=${token}`,
+    {},
   );
 
-  if (response.error) {
-    return { success: false, message: response.error };
+  if (
+    userResponse.error ||
+    !userResponse.data?.success ||
+    !userResponse.data.user
+  ) {
+    // If we can't get the profile, we should probably sign out?
+    await supabaseAuthAdapter.signOut();
+    return {
+      success: false,
+      message: userResponse.error || "Failed to retrieve user profile",
+    };
   }
 
-  if (!response.data) {
-    return { success: false, message: "Missing response data from auth API" };
-  }
-
-  return response.data;
+  return {
+    success: true,
+    token: token,
+    user: userResponse.data.user,
+  };
 }
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
