@@ -15,14 +15,19 @@ import type {
   SubmissionWithStudent,
   SubmissionContent,
 } from "@/shared/types/submission";
-import type { DayOfWeek, Schedule } from "@/shared/types/class";
+import type {
+  DayOfWeek,
+  Schedule,
+  ClassListResponse,
+  AssignmentListResponse,
+} from "@/shared/types/class";
 
 // ============================================================================
 // Core Shared Types - Re-exported from canonical shared module
 // ============================================================================
 
-// Re-export DayOfWeek and Schedule from shared for convenience
-export type { DayOfWeek, Schedule };
+// Re-export shared types for convenience
+export type { DayOfWeek, Schedule, ClassListResponse, AssignmentListResponse };
 
 /**
  * Array of valid programming languages.
@@ -231,18 +236,6 @@ export interface AssignmentDetailResponse {
   success: boolean;
   message?: string;
   assignment?: AssignmentDetail;
-}
-
-export interface ClassListResponse {
-  success: boolean;
-  message?: string;
-  classes: ClassResponse[];
-}
-
-export interface AssignmentListResponse {
-  success: boolean;
-  message?: string;
-  assignments: AssignmentResponse[];
 }
 
 export interface JoinClassResponse {
