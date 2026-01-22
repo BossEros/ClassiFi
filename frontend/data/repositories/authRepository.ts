@@ -69,12 +69,12 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
 }
 
 /**
- * Signs out the current user and clears local session data (localStorage).
+ * Signs out the current user and clears local session data.
  * Calls the Supabase adapter to sign out remotely.
+ * Token is managed by Supabase, only user data needs manual cleanup.
  */
 export async function logout(): Promise<void> {
   await supabaseAuthAdapter.signOut();
-  localStorage.removeItem("authToken");
   localStorage.removeItem("user");
 }
 
@@ -210,7 +210,8 @@ export async function changePassword(
  * Accepts email and password as parameters instead of reading from localStorage.
  */
 export async function deleteAccount(email: string, password: string) {
-  // Re-authenticate to verify identity and get fresh token
+  // Re-authenticate to verify identity and establish fresh session
+  // The apiClient will automatically retrieve the token from Supabase session
   const signInResult = await supabaseAuthAdapter.signInWithPassword({
     email,
     password,
@@ -220,11 +221,6 @@ export async function deleteAccount(email: string, password: string) {
     return {
       signInError: signInResult.error,
     };
-  }
-
-  // Update localStorage with fresh token for the API call
-  if (signInResult.data.session?.access_token) {
-    localStorage.setItem("authToken", signInResult.data.session.access_token);
   }
 
   // Call backend to delete account (handles database + Supabase Auth cleanup)
@@ -241,8 +237,7 @@ export async function deleteAccount(email: string, password: string) {
   // Sign out after successful deletion
   const signOutResult = await supabaseAuthAdapter.signOut();
 
-  // Cleanup local state
-  localStorage.removeItem("authToken");
+  // Cleanup local state (user data only - token is managed by Supabase)
   localStorage.removeItem("user");
 
   return {

@@ -1,3 +1,5 @@
+import { supabase } from "@/data/api/supabaseClient";
+
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 
@@ -28,13 +30,15 @@ export interface ApiResponse<T> {
 }
 
 /**
- * Gets the auth token from localStorage.
- * This is where the authService stores the token after login.
+ * Gets the auth token from Supabase session.
+ * Uses Supabase's secure session management instead of manual localStorage storage.
  *
  * @returns The authentication token if present, otherwise null.
  */
-function getAuthToken(): string | null {
-  return localStorage.getItem("authToken");
+async function getAuthToken(): Promise<string | null> {
+  const { data } = await supabase.auth.getSession();
+
+  return data.session?.access_token ?? null;
 }
 
 /**
@@ -66,7 +70,7 @@ class ApiClient {
 
     // Get auth token and build headers
     // Only include Content-Type for requests with a body
-    const authToken = getAuthToken();
+    const authToken = await getAuthToken();
     const requestHeaders: HeadersInit = {
       ...(body ? { "Content-Type": "application/json" } : {}),
       ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
@@ -85,8 +89,7 @@ class ApiClient {
       if (!response.ok) {
         // Handle 401 Unauthorized - token expired or invalid
         if (response.status === 401) {
-          // Clear auth state and redirect to login
-          localStorage.removeItem("authToken");
+          // Clear user data (token is managed by Supabase)
           localStorage.removeItem("currentUser");
 
           // Only redirect if we're not already on the login page

@@ -45,14 +45,13 @@ class SupabaseAuthAdapter {
       console.log("[Auth] State change:", event);
 
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        // Token is managed by Supabase internally
+        // apiClient retrieves it via getSession() when needed
         if (session?.access_token) {
-          // Update the token in localStorage so apiClient uses the fresh token
-          localStorage.setItem("authToken", session.access_token);
-          console.log("[Auth] Token updated in localStorage");
+          console.log("[Auth] Session established/refreshed");
         }
       } else if (event === "SIGNED_OUT") {
-        // Clear auth state
-        localStorage.removeItem("authToken");
+        // Clear user data (token is managed by Supabase)
         localStorage.removeItem("currentUser");
         console.log("[Auth] User signed out, auth state cleared");
 
