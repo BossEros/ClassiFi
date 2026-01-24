@@ -214,8 +214,8 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     await page.getByRole("button", { name: "Wed" }).click();
     await page.selectOption("#yearLevel", "1");
     await page.selectOption("#semester", "1");
-    await page.fill("#academicYear", "2024-2025");
-
+    const currentYear = new Date().getFullYear();
+    await page.fill("#academicYear", `${currentYear}-${currentYear + 1}`);
     // Click "Create Class" button
     await page.getByRole("button", { name: /create class/i }).click();
 
