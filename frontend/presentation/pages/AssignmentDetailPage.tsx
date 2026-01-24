@@ -77,6 +77,7 @@ export function AssignmentDetailPage() {
   const [expandedInitialTests, setExpandedInitialTests] = useState<Set<number>>(
     new Set(),
   );
+  const [resultsError, setResultsError] = useState<string | null>(null);
 
   // Preview Modal State
   const [showPreview, setShowPreview] = useState(false);
@@ -212,6 +213,7 @@ export function AssignmentDetailPage() {
     try {
       setIsSubmitting(true);
       setError(null);
+      setResultsError(null);
 
       const submission = await submitAssignment({
         assignmentId: parseInt(assignmentId),
@@ -227,21 +229,98 @@ export function AssignmentDetailPage() {
       setPreviewResults(null);
       setExpandedPreviewTests(new Set());
 
-      // Fetch and show new submission test results
+      // Fetch and show new submission test results with retry logic
+      // This handles cases where the runner results might not be immediately available
+      const abortController = new AbortController();
+      const timeoutIds: NodeJS.Timeout[] = [];
+
+      // Cleanup function to cancel pending operations
+      const cleanup = () => {
+        abortController.abort();
+        timeoutIds.forEach((id) => clearTimeout(id));
+      };
+
+      // Set up cleanup on component unmount
+      const cleanupOnUnmount = () => {
+        cleanup();
+      };
+      window.addEventListener("beforeunload", cleanupOnUnmount);
+
       try {
-        const results = await getTestResultsForSubmission(submission.id);
-        setSubmissionTestResults(results);
-      } catch (e) {
-        console.error("Failed to load test results for new submission", e);
+        let retries = 10;
+        let success = false;
+
+        while (retries > 0 && !abortController.signal.aborted) {
+          try {
+            const results = await getTestResultsForSubmission(submission.id);
+            if (!abortController.signal.aborted) {
+              setSubmissionTestResults(results);
+              success = true;
+            }
+            break; // Success
+          } catch (e) {
+            console.error(`Attempt ${11 - retries} failed to load results`, e);
+            retries--;
+            if (retries === 0) {
+              if (!abortController.signal.aborted) {
+                console.error(
+                  "Failed to load test results for new submission after retries",
+                  e,
+                );
+                setResultsError(
+                  "Failed to load test results. Please refresh the page to try again.",
+                );
+                showToast(
+                  "Submission successful, but test results failed to load",
+                  "error",
+                );
+              }
+            } else if (!abortController.signal.aborted) {
+              // Wait 1 second before retrying
+              await new Promise<void>((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                  if (!abortController.signal.aborted) {
+                    resolve();
+                  } else {
+                    reject(new Error("Aborted"));
+                  }
+                }, 1000);
+                timeoutIds.push(timeoutId);
+
+                // Listen for abort signal
+                abortController.signal.addEventListener("abort", () => {
+                  clearTimeout(timeoutId);
+                  reject(new Error("Aborted"));
+                });
+              });
+            }
+          }
+        }
+
+        if (!success && !abortController.signal.aborted && retries === 0) {
+          // Ensure error state is set if we exhausted retries
+          setResultsError(
+            "Failed to load test results after multiple attempts. Please refresh the page.",
+          );
+        }
+      } catch (abortError) {
+        // Silently handle abort errors (component unmounted)
+        if (abortError instanceof Error && abortError.message !== "Aborted") {
+          throw abortError;
+        }
+      } finally {
+        cleanup();
+        window.removeEventListener("beforeunload", cleanupOnUnmount);
       }
 
       // Clear selected file
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (!abortController.signal.aborted) {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        showToast("Coursework submitted successfully!");
       }
-
-      showToast("Coursework submitted successfully!");
     } catch (err) {
       console.error("Failed to submit assignment:", err);
       setError(
@@ -497,6 +576,14 @@ export function AssignmentDetailPage() {
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Test Results Error Message */}
+          {resultsError && (
+            <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-yellow-400 text-sm">{resultsError}</p>
             </div>
           )}
 

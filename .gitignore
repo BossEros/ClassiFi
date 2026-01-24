@@ -45,6 +45,10 @@ frontend/yarn-error.log*
 # Vite cache
 frontend/.cache/
 
+# Test results
+frontend/test-results/
+frontend/playwright-report/
+
 # ============================================
 # BACKEND (Python)
 # ============================================

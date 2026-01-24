@@ -97,6 +97,10 @@ describe("dateUtils", () => {
       vi.useFakeTimers();
     });
 
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("returns current-next year after June", () => {
       vi.setSystemTime(new Date("2024-08-15")); // August (month 7, >= 5)
 

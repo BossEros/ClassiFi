@@ -145,7 +145,7 @@ export const handlers = [
       title: "Hello World",
       description: "Write your first program",
       classId: 1,
-      deadline: "2025-12-31T23:59:59.000Z",
+      deadline: "2099-12-31T23:59:59.000Z",
       maxScore: 100,
     });
   }),

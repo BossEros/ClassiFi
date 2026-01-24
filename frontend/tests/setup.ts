@@ -21,18 +21,37 @@ afterAll(() => {
   server.close();
 });
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-  length: 0,
-  key: vi.fn(),
+// Mock localStorage with in-memory implementation
+const createLocalStorageMock = () => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: vi.fn((index: number) => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    }),
+  };
 };
+
+const localStorageMock = createLocalStorageMock();
 
 Object.defineProperty(window, "localStorage", {
   value: localStorageMock,
+  writable: true,
+  configurable: true,
 });
 
 // Mock window.matchMedia
