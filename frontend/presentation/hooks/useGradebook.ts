@@ -8,13 +8,11 @@ import {
   overrideGrade,
   removeGradeOverride,
   downloadGradebookCSV,
-} from "@/data/repositories/gradebookRepository";
-import type {
-  ClassGradebook,
-  ClassStatistics,
-  StudentClassGrades,
-  StudentRank,
-} from "@/data/api/types";
+  type ClassGradebook,
+  type ClassStatistics,
+  type StudentClassGrades,
+  type StudentRank,
+} from "@/business/services/gradebookService";
 
 // ============================================================================
 // useClassGradebook Hook
@@ -53,6 +51,8 @@ export function useClassGradebook(classId: number) {
   useEffect(() => {
     if (classId > 0) {
       fetchGradebook();
+    } else {
+      setIsLoading(false);
     }
   }, [fetchGradebook, classId]);
 
@@ -111,6 +111,8 @@ export function useStudentGrades(studentId: number, classId?: number) {
   useEffect(() => {
     if (studentId > 0) {
       fetchGrades();
+    } else {
+      setIsLoading(false);
     }
   }, [fetchGrades, studentId]);
 

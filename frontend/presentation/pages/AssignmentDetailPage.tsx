@@ -54,6 +54,8 @@ export function AssignmentDetailPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const submissionAbortRef = useRef<AbortController | null>(null);
+  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
 
   const [user, setUser] = useState<User | null>(null);
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
@@ -85,6 +87,20 @@ export function AssignmentDetailPage() {
   const [previewLanguage, setPreviewLanguage] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  // Cleanup effect for abort controller and timers
+  useEffect(() => {
+    return () => {
+      // Abort any ongoing submission result fetching
+      if (submissionAbortRef.current) {
+        submissionAbortRef.current.abort();
+        submissionAbortRef.current = null;
+      }
+      // Clear any pending timeouts
+      timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+      timeoutIdsRef.current = [];
+    };
+  }, []);
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -231,29 +247,23 @@ export function AssignmentDetailPage() {
 
       // Fetch and show new submission test results with retry logic
       // This handles cases where the runner results might not be immediately available
-      const abortController = new AbortController();
-      const timeoutIds: NodeJS.Timeout[] = [];
+      
+      // Create new abort controller for this submission
+      submissionAbortRef.current = new AbortController();
+      const signal = submissionAbortRef.current.signal;
 
-      // Cleanup function to cancel pending operations
-      const cleanup = () => {
-        abortController.abort();
-        timeoutIds.forEach((id) => clearTimeout(id));
-      };
-
-      // Set up cleanup on component unmount
-      const cleanupOnUnmount = () => {
-        cleanup();
-      };
-      window.addEventListener("beforeunload", cleanupOnUnmount);
+      // Clear any existing timeouts
+      timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+      timeoutIdsRef.current = [];
 
       try {
         let retries = 10;
         let success = false;
 
-        while (retries > 0 && !abortController.signal.aborted) {
+        while (retries > 0 && !signal.aborted) {
           try {
             const results = await getTestResultsForSubmission(submission.id);
-            if (!abortController.signal.aborted) {
+            if (!signal.aborted) {
               setSubmissionTestResults(results);
               success = true;
             }
@@ -262,45 +272,46 @@ export function AssignmentDetailPage() {
             console.error(`Attempt ${11 - retries} failed to load results`, e);
             retries--;
             if (retries === 0) {
-              if (!abortController.signal.aborted) {
+              if (!signal.aborted) {
                 console.error(
                   "Failed to load test results for new submission after retries",
                   e,
                 );
-                setResultsError(
-                  "Failed to load test results. Please refresh the page to try again.",
-                );
-                showToast(
-                  "Submission successful, but test results failed to load",
-                  "error",
-                );
               }
-            } else if (!abortController.signal.aborted) {
+            } else if (!signal.aborted) {
               // Wait 1 second before retrying
               await new Promise<void>((resolve, reject) => {
                 const timeoutId = setTimeout(() => {
-                  if (!abortController.signal.aborted) {
+                  if (!signal.aborted) {
                     resolve();
                   } else {
                     reject(new Error("Aborted"));
                   }
                 }, 1000);
-                timeoutIds.push(timeoutId);
+                timeoutIdsRef.current.push(timeoutId);
 
-                // Listen for abort signal
-                abortController.signal.addEventListener("abort", () => {
-                  clearTimeout(timeoutId);
-                  reject(new Error("Aborted"));
-                });
+                // Listen for abort signal once
+                signal.addEventListener(
+                  "abort",
+                  () => {
+                    clearTimeout(timeoutId);
+                    reject(new Error("Aborted"));
+                  },
+                  { once: true },
+                );
               });
             }
           }
         }
 
-        if (!success && !abortController.signal.aborted && retries === 0) {
+        if (!success && !signal.aborted && retries === 0) {
           // Ensure error state is set if we exhausted retries
           setResultsError(
             "Failed to load test results after multiple attempts. Please refresh the page.",
+          );
+          showToast(
+            "Submission successful, but test results failed to load",
+            "error",
           );
         }
       } catch (abortError) {
@@ -309,12 +320,13 @@ export function AssignmentDetailPage() {
           throw abortError;
         }
       } finally {
-        cleanup();
-        window.removeEventListener("beforeunload", cleanupOnUnmount);
+        // Clear timers
+        timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+        timeoutIdsRef.current = [];
       }
 
-      // Clear selected file
-      if (!abortController.signal.aborted) {
+      // Clear selected file only if not aborted
+      if (!signal.aborted) {
         setSelectedFile(null);
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
