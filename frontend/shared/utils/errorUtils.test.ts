@@ -37,8 +37,11 @@ describe("errorUtils", () => {
     it("creates a success response without data", () => {
       const result = successResponse();
 
-      expect(result.success).toBe(true);
-      expect(result.data).toBeUndefined();
+      expect(result).toEqual({
+        success: true,
+        message: undefined,
+        data: undefined,
+      });
     });
 
     it("creates a success response with data", () => {
@@ -47,6 +50,7 @@ describe("errorUtils", () => {
 
       expect(result).toEqual({
         success: true,
+        message: undefined,
         data: { id: 1, name: "Test" },
       });
     });
@@ -57,6 +61,7 @@ describe("errorUtils", () => {
       expect(result).toEqual({
         success: true,
         message: "Operation successful",
+        data: undefined,
       });
     });
 

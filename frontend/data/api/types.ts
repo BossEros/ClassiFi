@@ -8,6 +8,8 @@ import type {
   PenaltyTier,
   StudentClassGrades,
   StudentGradeEntry,
+  ClassGradebook,
+  StudentRank,
 } from "@/shared/types/gradebook";
 import type {
   Submission,
@@ -585,10 +587,7 @@ export type { GradebookAssignment };
 export type { GradebookStudent };
 
 /** Class gradebook data */
-export interface ClassGradebook {
-  assignments: GradebookAssignment[];
-  students: GradebookStudent[];
-}
+export type { ClassGradebook };
 
 /** Student grade for an assignment */
 export type { StudentGradeEntry };
@@ -600,11 +599,7 @@ export type { StudentClassGrades };
 export type { ClassStatistics };
 
 /** Student rank in class */
-export interface StudentRank {
-  rank: number | null;
-  totalStudents: number | null;
-  percentile: number | null;
-}
+export type { StudentRank };
 
 // ============ Gradebook Response Types ============
 

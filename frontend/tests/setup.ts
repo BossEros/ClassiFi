@@ -4,6 +4,9 @@ import "@testing-library/jest-dom/vitest";
 
 import { server } from "@/tests/mocks/server";
 
+// Set timezone to UTC for consistent date formatting in tests
+process.env.TZ = "UTC";
+
 // Start MSW server before all tests
 beforeAll(() => {
   server.listen({ onUnhandledRequest: "warn" });
@@ -14,6 +17,8 @@ afterEach(() => {
   cleanup();
   server.resetHandlers();
   vi.clearAllMocks();
+  // Clear localStorage to prevent state leakage between tests
+  window.localStorage.clear();
 });
 
 // Close MSW server after all tests
@@ -26,7 +31,7 @@ const createLocalStorageMock = () => {
   let store: Record<string, string> = {};
 
   return {
-    getItem: vi.fn((key: string) => store[key] || null),
+    getItem: vi.fn((key: string) => (key in store ? store[key] : null)),
     setItem: vi.fn((key: string, value: string) => {
       store[key] = value.toString();
     }),

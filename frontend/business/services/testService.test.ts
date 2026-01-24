@@ -136,7 +136,7 @@ describe("testService", () => {
       results: [
         { testCaseId: 1, status: "Passed" as const, input: "", actualOutput: "" },
         { testCaseId: 2, status: "Passed" as const, input: "", actualOutput: "" },
-        { testCaseId: 3, status: "Passed" as const, input: "", actualOutput: "" },
+        { testCaseId: 3, status: "Failed" as const, input: "", actualOutput: "" },
       ] as RawTestResult[],
     };
 

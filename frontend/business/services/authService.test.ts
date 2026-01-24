@@ -56,6 +56,7 @@ describe("authService", () => {
     Object.defineProperty(window, "localStorage", {
       value: mockStorage,
       writable: true,
+      configurable: true,
     });
 
     // Default validation mocks to return valid

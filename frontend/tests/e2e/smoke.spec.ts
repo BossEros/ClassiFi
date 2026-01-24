@@ -35,13 +35,13 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
   }
 
   // Comment 1: Use Playwright’s test fixture `browser` instead of manual launch
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser, baseURL }) => {
     // Comment 1 & 2: Create contexts per role to separate auth states
     teacherContext = await browser.newContext({
-      baseURL: "http://localhost:5173",
+      baseURL: baseURL,
     });
     studentContext = await browser.newContext({
-      baseURL: "http://localhost:5173",
+      baseURL: baseURL,
     });
 
     teacherPage = await teacherContext.newPage();
@@ -113,45 +113,55 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     console.log("Cleaning up test resources via API...");
 
     try {
-      const request = teacherPage.request;
+      // Guard: Only attempt API cleanup if teacherPage and request exist
+      if (teacherPage?.request) {
+        const request = teacherPage.request;
 
-      // Delete Assignment
-      if (assignmentId) {
-        console.log(`Deleting Assignment ID: ${assignmentId}`);
-        const response = await request.delete(
-          `/api/v1/assignments/${assignmentId}`,
-          {
-            params: { teacherId: teacherId.toString() }, // Pass as query param if needed
-            // Some APIs might expect body, trying both or relying on implementation
-            data: { teacherId: teacherId },
-          },
-        );
-        if (response.ok()) {
-          console.log("Assignment deleted successfully.");
-        } else {
-          console.error(
-            `Failed to delete assignment: ${await response.text()}`,
+        // Delete Assignment
+        if (assignmentId) {
+          console.log(`Deleting Assignment ID: ${assignmentId}`);
+          const response = await request.delete(
+            `/api/v1/assignments/${assignmentId}`,
+            {
+              params: { teacherId: teacherId.toString() }, // Pass as query param if needed
+              // Some APIs might expect body, trying both or relying on implementation
+              data: { teacherId: teacherId },
+            },
           );
+          if (response.ok()) {
+            console.log("Assignment deleted successfully.");
+          } else {
+            console.error(
+              `Failed to delete assignment: ${await response.text()}`,
+            );
+          }
         }
-      }
 
-      // Delete Class
-      if (classId) {
-        console.log(`Deleting Class ID: ${classId}`);
-        const response = await request.delete(`/api/v1/classes/${classId}`, {
-          data: { teacherId: teacherId },
-        });
-        if (response.ok()) {
-          console.log("Class deleted successfully.");
-        } else {
-          console.error(`Failed to delete class: ${await response.text()}`);
+        // Delete Class
+        if (classId) {
+          console.log(`Deleting Class ID: ${classId}`);
+          const response = await request.delete(`/api/v1/classes/${classId}`, {
+            data: { teacherId: teacherId },
+          });
+          if (response.ok()) {
+            console.log("Class deleted successfully.");
+          } else {
+            console.error(`Failed to delete class: ${await response.text()}`);
+          }
         }
+      } else {
+        console.log("Skipping API cleanup - teacherPage.request not available");
       }
     } catch (error) {
       console.error("Error during cleanup:", error);
     } finally {
-      await teacherContext.close();
-      await studentContext.close();
+      // Guard: Only close contexts if they were created
+      if (teacherContext) {
+        await teacherContext.close();
+      }
+      if (studentContext) {
+        await studentContext.close();
+      }
     }
   });
 
@@ -204,8 +214,8 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     await page.getByRole("button", { name: "Wed" }).click();
     await page.selectOption("#yearLevel", "1");
     await page.selectOption("#semester", "1");
-    await page.fill("#academicYear", "2024-2025");
-
+    const currentYear = new Date().getFullYear();
+    await page.fill("#academicYear", `${currentYear}-${currentYear + 1}`);
     // Click "Create Class" button
     await page.getByRole("button", { name: /create class/i }).click();
 

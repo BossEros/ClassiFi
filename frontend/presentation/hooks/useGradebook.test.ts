@@ -6,10 +6,10 @@ import {
   useGradeOverride,
   useGradebookExport,
 } from "./useGradebook";
-import * as gradebookRepository from "@/data/repositories/gradebookRepository";
+import * as gradebookService from "@/business/services/gradebookService";
 
-// Mock the repository
-vi.mock("@/data/repositories/gradebookRepository");
+// Mock the business service
+vi.mock("@/business/services/gradebookService");
 
 describe("useGradebook Hooks", () => {
   beforeEach(() => {
@@ -35,10 +35,10 @@ describe("useGradebook Hooks", () => {
     };
 
     it("should fetch gradebook and statistics", async () => {
-      vi.mocked(gradebookRepository.getClassGradebook).mockResolvedValue(
+      vi.mocked(gradebookService.getClassGradebook).mockResolvedValue(
         mockGradebook as any,
       );
-      vi.mocked(gradebookRepository.getClassStatistics).mockResolvedValue(
+      vi.mocked(gradebookService.getClassStatistics).mockResolvedValue(
         mockStats as any,
       );
 
@@ -58,10 +58,10 @@ describe("useGradebook Hooks", () => {
     });
 
     it("should handle error during fetch", async () => {
-      vi.mocked(gradebookRepository.getClassGradebook).mockRejectedValue(
+      vi.mocked(gradebookService.getClassGradebook).mockRejectedValue(
         new Error("Fetch failed"),
       );
-      vi.mocked(gradebookRepository.getClassStatistics).mockResolvedValue(
+      vi.mocked(gradebookService.getClassStatistics).mockResolvedValue(
         mockStats as any,
       );
 
@@ -82,7 +82,7 @@ describe("useGradebook Hooks", () => {
     const mockGrades = [{ classId: 1, className: "Math", grades: [] }];
 
     it("should fetch all grades when no classId provided", async () => {
-      vi.mocked(gradebookRepository.getStudentGrades).mockResolvedValue(
+      vi.mocked(gradebookService.getStudentGrades).mockResolvedValue(
         mockGrades as any,
       );
 
@@ -95,7 +95,7 @@ describe("useGradebook Hooks", () => {
       });
 
       expect(result.current.grades).toEqual(mockGrades);
-      expect(gradebookRepository.getStudentGrades).toHaveBeenCalledWith(
+      expect(gradebookService.getStudentGrades).toHaveBeenCalledWith(
         mockStudentId,
       );
     });
@@ -104,10 +104,10 @@ describe("useGradebook Hooks", () => {
       const mockClassGrades = { ...mockGrades[0] };
       const mockRank = { rank: 5, totalStudents: 30, percentile: 85 };
 
-      vi.mocked(gradebookRepository.getStudentClassGrades).mockResolvedValue(
+      vi.mocked(gradebookService.getStudentClassGrades).mockResolvedValue(
         mockClassGrades as any,
       );
-      vi.mocked(gradebookRepository.getStudentRank).mockResolvedValue(
+      vi.mocked(gradebookService.getStudentRank).mockResolvedValue(
         mockRank as any,
       );
 
@@ -121,7 +121,7 @@ describe("useGradebook Hooks", () => {
 
       expect(result.current.grades).toEqual([mockClassGrades]);
       expect(result.current.rank).toEqual(mockRank);
-      expect(gradebookRepository.getStudentClassGrades).toHaveBeenCalledWith(
+      expect(gradebookService.getStudentClassGrades).toHaveBeenCalledWith(
         mockStudentId,
         mockClassId,
       );
@@ -136,7 +136,7 @@ describe("useGradebook Hooks", () => {
     });
 
     it("should override grade successfully", async () => {
-      vi.mocked(gradebookRepository.overrideGrade).mockResolvedValue(undefined);
+      vi.mocked(gradebookService.overrideGrade).mockResolvedValue(undefined);
 
       const { result } = renderHook(() => useGradeOverride(mockOnSuccess));
 
@@ -146,7 +146,7 @@ describe("useGradebook Hooks", () => {
 
       expect(result.current.isOverriding).toBe(false);
       expect(result.current.error).toBeNull();
-      expect(gradebookRepository.overrideGrade).toHaveBeenCalledWith(
+      expect(gradebookService.overrideGrade).toHaveBeenCalledWith(
         1,
         95,
         "Good job",
@@ -155,7 +155,7 @@ describe("useGradebook Hooks", () => {
     });
 
     it("should remove override successfully", async () => {
-      vi.mocked(gradebookRepository.removeGradeOverride).mockResolvedValue(
+      vi.mocked(gradebookService.removeGradeOverride).mockResolvedValue(
         undefined,
       );
 
@@ -165,11 +165,11 @@ describe("useGradebook Hooks", () => {
         await result.current.removeOverride(1);
       });
 
-      expect(gradebookRepository.removeGradeOverride).toHaveBeenCalledWith(1);
+      expect(gradebookService.removeGradeOverride).toHaveBeenCalledWith(1);
       expect(mockOnSuccess).toHaveBeenCalled();
     });
     it("should handle error in override", async () => {
-      vi.mocked(gradebookRepository.overrideGrade).mockRejectedValue(
+      vi.mocked(gradebookService.overrideGrade).mockRejectedValue(
         new Error("Update failed"),
       );
 
@@ -189,7 +189,7 @@ describe("useGradebook Hooks", () => {
 
   describe("useGradebookExport", () => {
     it("should export CSV", async () => {
-      vi.mocked(gradebookRepository.downloadGradebookCSV).mockResolvedValue(
+      vi.mocked(gradebookService.downloadGradebookCSV).mockResolvedValue(
         undefined,
       );
 
@@ -200,7 +200,7 @@ describe("useGradebook Hooks", () => {
       });
 
       expect(result.current.isExporting).toBe(false);
-      expect(gradebookRepository.downloadGradebookCSV).toHaveBeenCalledWith(
+      expect(gradebookService.downloadGradebookCSV).toHaveBeenCalledWith(
         1,
         "grades.csv",
       );

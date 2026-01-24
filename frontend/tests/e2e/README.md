@@ -25,15 +25,17 @@ TEST_STUDENT_PASSWORD=your_student_test_password
 2. Add the test credentials to your `.env` file:
    ```bash
    # E2E Test Credentials
-   TEST_TEACHER_EMAIL=namisvilan@gmail.com
-   TEST_TEACHER_PASSWORD=Qwerty123!
-   TEST_STUDENT_EMAIL=marfiezeros@gmail.com
-   TEST_STUDENT_PASSWORD=Qwerty123!
+   TEST_TEACHER_EMAIL=teacher@your-domain.com
+   TEST_TEACHER_PASSWORD=YourTestPassword123!
+   TEST_STUDENT_EMAIL=student@your-domain.com
+   TEST_STUDENT_PASSWORD=YourTestPassword123!
    ```
+   
+   **Note:** Replace these placeholder values with your actual test account credentials.
 
 3. Run the E2E tests:
    ```bash
-   npm run test:e2e
+   npm playwright test
    ```
 
 ### CI/CD Setup

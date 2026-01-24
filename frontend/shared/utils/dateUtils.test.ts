@@ -20,26 +20,21 @@ describe("dateUtils", () => {
       const date = new Date("2024-12-25T15:30:00Z");
       const result = formatDeadline(date);
 
-      // Should contain date parts (locale-dependent, so we check for components)
-      expect(result).toContain("Dec");
-      expect(result).toContain("25");
-      expect(result).toContain("2024");
+      // With TZ=UTC, toLocaleString will format consistently
+      expect(result).toBe("Dec 25, 2024, 03:30 PM");
     });
 
     it("should format a date string correctly", () => {
       const result = formatDeadline("2024-12-25T15:30:00Z");
 
-      expect(result).toContain("Dec");
-      expect(result).toContain("25");
-      expect(result).toContain("2024");
+      expect(result).toBe("Dec 25, 2024, 03:30 PM");
     });
 
     it("should handle ISO date strings", () => {
       const isoString = "2024-06-15T09:00:00.000Z";
       const result = formatDeadline(isoString);
 
-      expect(result).toContain("Jun");
-      expect(result).toContain("15");
+      expect(result).toBe("Jun 15, 2024, 09:00 AM");
     });
   });
 
@@ -186,8 +181,8 @@ describe("dateUtils", () => {
       const twoMonthsAgo = new Date("2024-04-15T12:00:00Z");
       const result = formatTimeAgo(twoMonthsAgo);
 
-      expect(result).toContain("Apr");
-      expect(result).toContain("15");
+      // With TZ=UTC, formatting is consistent
+      expect(result).toBe("Apr 15, 2024");
     });
 
     it("handles string input", () => {
@@ -292,27 +287,22 @@ describe("dateUtils", () => {
       const date = new Date("2024-06-15T14:30:00Z");
       const result = formatDateTime(date);
 
-      // Check for expected components (locale-dependent)
-      expect(result).toContain("Jun");
-      expect(result).toContain("15");
-      expect(result).toContain("2024");
+      // With TZ=UTC, formatting is consistent
+      expect(result).toBe("Jun 15, 2024, 2:30 PM");
     });
 
     it("formats a date string correctly", () => {
       const result = formatDateTime("2024-12-25T09:15:00Z");
 
-      expect(result).toContain("Dec");
-      expect(result).toContain("25");
-      expect(result).toContain("2024");
+      expect(result).toBe("Dec 25, 2024, 9:15 AM");
     });
 
     it("includes time with AM/PM", () => {
-      // Use a time that's clearly AM or PM
       const morningDate = new Date("2024-06-15T09:30:00Z");
       const result = formatDateTime(morningDate);
 
-      // Should contain either AM or PM
-      expect(result).toMatch(/AM|PM/);
+      expect(result).toBe("Jun 15, 2024, 9:30 AM");
+      expect(result).toContain("AM");
     });
   });
 });
