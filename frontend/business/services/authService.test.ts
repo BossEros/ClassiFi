@@ -84,7 +84,7 @@ describe("authService", () => {
     };
 
     it("should validate credentials before attempting login", async () => {
-      vi.mocked(authRepository.login).mockResolvedValue({
+      vi.mocked(authRepository.authenticateUserWithEmailAndPassword).mockResolvedValue({
         success: true,
         token: mockToken,
         user: mockUser,
@@ -107,11 +107,11 @@ describe("authService", () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain("Invalid email");
-      expect(authRepository.login).not.toHaveBeenCalled();
+      expect(authRepository.authenticateUserWithEmailAndPassword).not.toHaveBeenCalled();
     });
 
     it("should call repository login and persist session on success", async () => {
-      vi.mocked(authRepository.login).mockResolvedValue({
+      vi.mocked(authRepository.authenticateUserWithEmailAndPassword).mockResolvedValue({
         success: true,
         token: mockToken,
         user: mockUser,
@@ -130,7 +130,7 @@ describe("authService", () => {
     });
 
     it("should handle repository login failure", async () => {
-      vi.mocked(authRepository.login).mockResolvedValue({
+      vi.mocked(authRepository.authenticateUserWithEmailAndPassword).mockResolvedValue({
         success: false,
         message: "Invalid credentials",
       });
@@ -142,7 +142,7 @@ describe("authService", () => {
     });
 
     it("should catch and handle unexpected errors", async () => {
-      vi.mocked(authRepository.login).mockRejectedValue(
+      vi.mocked(authRepository.authenticateUserWithEmailAndPassword).mockRejectedValue(
         new Error("Network error"),
       );
 
@@ -173,11 +173,11 @@ describe("authService", () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain("Password too short");
-      expect(authRepository.register).not.toHaveBeenCalled();
+      expect(authRepository.registerNewUserAccount).not.toHaveBeenCalled();
     });
 
     it("should call repository register and persist session on success", async () => {
-      vi.mocked(authRepository.register).mockResolvedValue({
+      vi.mocked(authRepository.registerNewUserAccount).mockResolvedValue({
         success: true,
         token: mockToken,
         user: mockUser,
@@ -193,7 +193,7 @@ describe("authService", () => {
     });
 
     it("should handle repository registration failure", async () => {
-      vi.mocked(authRepository.register).mockResolvedValue({
+      vi.mocked(authRepository.registerNewUserAccount).mockResolvedValue({
         success: false,
         message: "Email already exists",
       });
@@ -207,16 +207,16 @@ describe("authService", () => {
 
   describe("logoutUser", () => {
     it("should call repository logout and clear local storage", async () => {
-      vi.mocked(authRepository.logout).mockResolvedValue(undefined); // Fixed: logout returns void
+      vi.mocked(authRepository.signOutCurrentUserAndClearSession).mockResolvedValue(undefined); // Fixed: logout returns void
 
       await authService.logoutUser();
 
-      expect(authRepository.logout).toHaveBeenCalled();
+      expect(authRepository.signOutCurrentUserAndClearSession).toHaveBeenCalled();
       expect(mockStorage.removeItem).toHaveBeenCalledWith("user");
     });
 
     it("should clear local storage even if repository logout fails", async () => {
-      vi.mocked(authRepository.logout).mockRejectedValue(
+      vi.mocked(authRepository.signOutCurrentUserAndClearSession).mockRejectedValue(
         new Error("Network error"),
       );
 
@@ -256,7 +256,7 @@ describe("authService", () => {
   describe("getAuthToken", () => {
     it("should return token from repository session", async () => {
       // Fixed: match getSession return type { session, error }
-      vi.mocked(authRepository.getSession).mockResolvedValue({
+      vi.mocked(authRepository.getCurrentAuthenticationSession).mockResolvedValue({
         session: { access_token: "token" } as any,
         error: null,
       });
@@ -266,7 +266,7 @@ describe("authService", () => {
     });
 
     it("should return null if no session", async () => {
-      vi.mocked(authRepository.getSession).mockResolvedValue({
+      vi.mocked(authRepository.getCurrentAuthenticationSession).mockResolvedValue({
         session: null,
         error: { message: "no session" } as AuthError, // using AuthError type or casting
       });
@@ -278,18 +278,18 @@ describe("authService", () => {
 
   describe("verifySession", () => {
     it("should return true if token is valid locally and verified by repository", async () => {
-      vi.mocked(authRepository.getSession).mockResolvedValue({
+      vi.mocked(authRepository.getCurrentAuthenticationSession).mockResolvedValue({
         session: { access_token: "token" } as any,
         error: null,
       });
-      vi.mocked(authRepository.verifyToken).mockResolvedValue(true);
+      vi.mocked(authRepository.validateAuthenticationToken).mockResolvedValue(true);
 
       const isValid = await authService.verifySession();
       expect(isValid).toBe(true);
     });
 
     it("should return false and clear session if no token", async () => {
-      vi.mocked(authRepository.getSession).mockResolvedValue({
+      vi.mocked(authRepository.getCurrentAuthenticationSession).mockResolvedValue({
         session: null,
         error: { message: "no session" } as AuthError,
       });
@@ -311,13 +311,13 @@ describe("authService", () => {
     });
 
     it("should call repository forgotPassword", async () => {
-      vi.mocked(authRepository.forgotPassword).mockResolvedValue({
+      vi.mocked(authRepository.initiatePasswordResetForEmail).mockResolvedValue({
         success: true,
         message: "Email sent",
       });
       const result = await authService.requestPasswordReset(request);
       expect(result.success).toBe(true);
-      expect(authRepository.forgotPassword).toHaveBeenCalledWith(request.email);
+      expect(authRepository.initiatePasswordResetForEmail).toHaveBeenCalledWith(request.email);
     });
   });
 
@@ -338,7 +338,7 @@ describe("authService", () => {
 
     it("should handle invalid link/session error from repository", async () => {
       // Fixed: match resetPassword return type structure
-      vi.mocked(authRepository.resetPassword).mockResolvedValue({
+      vi.mocked(authRepository.resetUserPasswordWithNewValue).mockResolvedValue({
         session: null,
         sessionError: { message: "Invalid session" } as any,
         updateError: null,
@@ -351,7 +351,7 @@ describe("authService", () => {
     });
 
     it("should handle update error (weak password)", async () => {
-      vi.mocked(authRepository.resetPassword).mockResolvedValue({
+      vi.mocked(authRepository.resetUserPasswordWithNewValue).mockResolvedValue({
         session: { access_token: "token" } as any,
         sessionError: null,
         updateError: { message: "Weak password" } as any,
@@ -366,7 +366,7 @@ describe("authService", () => {
     });
 
     it("should succeed when all steps pass", async () => {
-      vi.mocked(authRepository.resetPassword).mockResolvedValue({
+      vi.mocked(authRepository.resetUserPasswordWithNewValue).mockResolvedValue({
         session: { access_token: "token" } as any,
         sessionError: null,
         updateError: null,
@@ -396,14 +396,14 @@ describe("authService", () => {
       // Pre-populate localStorage with user
       window.localStorage.setItem("user", JSON.stringify(mockUser));
       // Fixed: match changePassword return type structure
-      vi.mocked(authRepository.changePassword).mockResolvedValue({
+      vi.mocked(authRepository.changeAuthenticatedUserPassword).mockResolvedValue({
         signInError: null,
         updateError: null,
       });
 
       const result = await authService.changePassword(request);
       expect(result.success).toBe(true);
-      expect(authRepository.changePassword).toHaveBeenCalledWith(
+      expect(authRepository.changeAuthenticatedUserPassword).toHaveBeenCalledWith(
         mockUser.email,
         request.currentPassword,
         request.newPassword,
@@ -430,7 +430,7 @@ describe("authService", () => {
       // Pre-populate localStorage with user
       window.localStorage.setItem("user", JSON.stringify(mockUser));
       // Fixed: match deleteAccount return type structure
-      vi.mocked(authRepository.deleteAccount).mockResolvedValue({
+      vi.mocked(authRepository.deleteUserAccountWithVerification).mockResolvedValue({
         signInError: null,
         deleteError: null,
         signOutError: null,
@@ -438,7 +438,7 @@ describe("authService", () => {
 
       const result = await authService.deleteAccount(request);
       expect(result.success).toBe(true);
-      expect(authRepository.deleteAccount).toHaveBeenCalledWith(
+      expect(authRepository.deleteUserAccountWithVerification).toHaveBeenCalledWith(
         mockUser.email,
         request.password,
       );
