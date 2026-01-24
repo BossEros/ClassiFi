@@ -30,30 +30,42 @@ const variantStyles: Record<ToastVariant, { bg: string; icon: React.ReactNode }>
 export function Toast({ id, message, variant = 'success', duration = 4000, onDismiss }: ToastProps) {
   const [isVisible, setIsVisible] = React.useState(false)
   const [isLeaving, setIsLeaving] = React.useState(false)
+  const timerRef = React.useRef<NodeJS.Timeout | undefined>(undefined)
 
-  React.useEffect(() => {
-    // Trigger enter animation
-    const enterTimer = setTimeout(() => setIsVisible(true), 10)
-
-    // Auto-dismiss after duration
-    const dismissTimer = setTimeout(() => {
-      handleDismiss()
-    }, duration)
-
-    return () => {
-      clearTimeout(enterTimer)
-      clearTimeout(dismissTimer)
-    }
-  }, [duration])
-
-  const handleDismiss = () => {
+  const handleDismiss = React.useCallback(() => {
     setIsLeaving(true)
     setTimeout(() => {
       onDismiss(id)
     }, 300) // Match animation duration
+  }, [id, onDismiss])
+
+  const startTimer = React.useCallback(() => {
+    timerRef.current = setTimeout(() => {
+      handleDismiss()
+    }, duration)
+  }, [duration, handleDismiss])
+
+  React.useEffect(() => {
+    // Trigger enter animation
+    const enterTimer = setTimeout(() => setIsVisible(true), 10)
+    startTimer()
+
+    return () => {
+      clearTimeout(enterTimer)
+      clearTimeout(timerRef.current)
+    }
+  }, [startTimer])
+
+  const handleMouseEnter = () => {
+    clearTimeout(timerRef.current)
+  }
+
+  const handleMouseLeave = () => {
+    startTimer()
   }
 
   const styles = variantStyles[variant]
+  const isError = variant === 'error'
 
   return (
     <div
@@ -65,7 +77,10 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
           ? 'translate-x-0 opacity-100'
           : 'translate-x-full opacity-0'
       )}
-      role="alert"
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? 'assertive' : 'polite'}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {styles.icon}
       <p className="text-sm text-white font-medium flex-1">{message}</p>
