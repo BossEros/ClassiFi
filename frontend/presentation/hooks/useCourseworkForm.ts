@@ -38,8 +38,10 @@ import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/cou
  */
 function toLocalDateTimeString(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
+  // Clone the date to avoid mutating the original
+  const cloned = new Date(d.getTime());
+  cloned.setMinutes(cloned.getMinutes() - cloned.getTimezoneOffset());
+  return cloned.toISOString().slice(0, 16);
 }
 
 export interface CourseworkFormData {
@@ -291,10 +293,10 @@ export function useCourseworkForm() {
             });
           }
           showToast(
-            `Coursework created with ${pendingTestCases.length} test case(s)`,
+            `Coursework created successfully with ${pendingTestCases.length} test case(s)`,
           );
         } else {
-          showToast("Coursework created successfully");
+          showToast("Coursework created successfully (0 test cases)");
         }
       }
       navigate(`/dashboard/classes/${classId}`);
