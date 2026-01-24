@@ -24,10 +24,10 @@ describe("classRepository", () => {
   });
 
   // ============================================================================
-  // createClass Tests
+  // createNewClass Tests
   // ============================================================================
 
-  describe("createClass", () => {
+  describe("createNewClass", () => {
     const mockRequest = {
       teacherId: 1,
       className: "Test Class",
@@ -67,7 +67,7 @@ describe("classRepository", () => {
         status: 201,
       });
 
-      const result = await classRepository.createClass(mockRequest);
+      const result = await classRepository.createNewClass(mockRequest);
 
       expect(apiClient.post).toHaveBeenCalledWith("/classes", mockRequest);
       expect(result).toEqual(mockClass);
@@ -79,7 +79,7 @@ describe("classRepository", () => {
         status: 400,
       });
 
-      await expect(classRepository.createClass(mockRequest)).rejects.toThrow(
+      await expect(classRepository.createNewClass(mockRequest)).rejects.toThrow(
         "Validation failed",
       );
     });
@@ -90,7 +90,7 @@ describe("classRepository", () => {
         status: 409,
       });
 
-      await expect(classRepository.createClass(mockRequest)).rejects.toThrow(
+      await expect(classRepository.createNewClass(mockRequest)).rejects.toThrow(
         "Class code already exists",
       );
     });
@@ -101,24 +101,24 @@ describe("classRepository", () => {
         status: 500,
       });
 
-      await expect(classRepository.createClass(mockRequest)).rejects.toThrow(
+      await expect(classRepository.createNewClass(mockRequest)).rejects.toThrow(
         "Failed to create class",
       );
     });
   });
 
   // ============================================================================
-  // generateClassCode Tests
+  // generateUniqueClassCode Tests
   // ============================================================================
 
-  describe("generateClassCode", () => {
+  describe("generateUniqueClassCode", () => {
     it("returns the generated code on success", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: { success: true, code: "ABC123" },
         status: 200,
       });
 
-      const result = await classRepository.generateClassCode();
+      const result = await classRepository.generateUniqueClassCode();
 
       expect(apiClient.get).toHaveBeenCalledWith("/classes/generate-code");
       expect(result).toBe("ABC123");
@@ -130,7 +130,7 @@ describe("classRepository", () => {
         status: 429,
       });
 
-      await expect(classRepository.generateClassCode()).rejects.toThrow(
+      await expect(classRepository.generateUniqueClassCode()).rejects.toThrow(
         "Rate limited",
       );
     });
@@ -141,7 +141,7 @@ describe("classRepository", () => {
         status: 500,
       });
 
-      await expect(classRepository.generateClassCode()).rejects.toThrow(
+      await expect(classRepository.generateUniqueClassCode()).rejects.toThrow(
         "Code generation failed",
       );
     });
@@ -152,17 +152,17 @@ describe("classRepository", () => {
         status: 500,
       });
 
-      await expect(classRepository.generateClassCode()).rejects.toThrow(
+      await expect(classRepository.generateUniqueClassCode()).rejects.toThrow(
         "Failed to generate class code",
       );
     });
   });
 
   // ============================================================================
-  // getAllClasses Tests
+  // getAllClassesForTeacherId Tests
   // ============================================================================
 
-  describe("getAllClasses", () => {
+  describe("getAllClassesForTeacherId", () => {
     const mockClasses = [
       { id: 1, className: "Class 1" },
       { id: 2, className: "Class 2" },
@@ -174,7 +174,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.getAllClasses(1);
+      const result = await classRepository.getAllClassesForTeacherId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/classes/teacher/1");
       expect(result).toEqual(mockClasses);
@@ -186,7 +186,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      await classRepository.getAllClasses(1, true);
+      await classRepository.getAllClassesForTeacherId(1, true);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/classes/teacher/1?activeOnly=true",
@@ -199,7 +199,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      await classRepository.getAllClasses(1, false);
+      await classRepository.getAllClassesForTeacherId(1, false);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/classes/teacher/1?activeOnly=false",
@@ -212,17 +212,17 @@ describe("classRepository", () => {
         status: 401,
       });
 
-      await expect(classRepository.getAllClasses(1)).rejects.toThrow(
+      await expect(classRepository.getAllClassesForTeacherId(1)).rejects.toThrow(
         "Unauthorized",
       );
     });
   });
 
   // ============================================================================
-  // getClassById Tests
+  // getClassDetailsById Tests
   // ============================================================================
 
-  describe("getClassById", () => {
+  describe("getClassDetailsById", () => {
     const mockClass = { id: 1, className: "Test Class" };
 
     it("fetches a class by ID", async () => {
@@ -231,7 +231,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.getClassById(1);
+      const result = await classRepository.getClassDetailsById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/classes/1");
       expect(result).toEqual(mockClass);
@@ -243,7 +243,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      await classRepository.getClassById(1, 5);
+      await classRepository.getClassDetailsById(1, 5);
 
       expect(apiClient.get).toHaveBeenCalledWith("/classes/1?teacherId=5");
     });
@@ -254,17 +254,17 @@ describe("classRepository", () => {
         status: 404,
       });
 
-      await expect(classRepository.getClassById(999)).rejects.toThrow(
+      await expect(classRepository.getClassDetailsById(999)).rejects.toThrow(
         "Class not found",
       );
     });
   });
 
   // ============================================================================
-  // getClassAssignments Tests
+  // getAllAssignmentsForClassId Tests
   // ============================================================================
 
-  describe("getClassAssignments", () => {
+  describe("getAllAssignmentsForClassId", () => {
     const mockAssignments = [
       { id: 1, assignmentName: "Assignment 1" },
       { id: 2, assignmentName: "Assignment 2" },
@@ -276,7 +276,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.getClassAssignments(1);
+      const result = await classRepository.getAllAssignmentsForClassId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/classes/1/assignments");
       expect(result).toEqual(mockAssignments);
@@ -288,7 +288,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.getClassAssignments(1);
+      const result = await classRepository.getAllAssignmentsForClassId(1);
 
       expect(result).toEqual([]);
     });
@@ -299,17 +299,17 @@ describe("classRepository", () => {
         status: 500,
       });
 
-      await expect(classRepository.getClassAssignments(1)).rejects.toThrow(
+      await expect(classRepository.getAllAssignmentsForClassId(1)).rejects.toThrow(
         "Server error",
       );
     });
   });
 
   // ============================================================================
-  // getClassStudents Tests
+  // getAllEnrolledStudentsForClassId Tests
   // ============================================================================
 
-  describe("getClassStudents", () => {
+  describe("getAllEnrolledStudentsForClassId", () => {
     const mockStudents = [
       { id: 1, firstName: "John", lastName: "Doe" },
       { id: 2, firstName: "Jane", lastName: "Smith" },
@@ -321,7 +321,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.getClassStudents(1);
+      const result = await classRepository.getAllEnrolledStudentsForClassId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/classes/1/students");
       expect(result).toEqual(mockStudents);
@@ -333,7 +333,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.getClassStudents(1);
+      const result = await classRepository.getAllEnrolledStudentsForClassId(1);
 
       expect(result).toEqual([]);
     });
@@ -344,7 +344,7 @@ describe("classRepository", () => {
         status: 404,
       });
 
-      await expect(classRepository.getClassStudents(999)).rejects.toThrow(
+      await expect(classRepository.getAllEnrolledStudentsForClassId(999)).rejects.toThrow(
         "Class not found",
       );
     });
@@ -355,24 +355,24 @@ describe("classRepository", () => {
         status: 500,
       });
 
-      await expect(classRepository.getClassStudents(1)).rejects.toThrow(
+      await expect(classRepository.getAllEnrolledStudentsForClassId(1)).rejects.toThrow(
         "Failed to fetch students",
       );
     });
   });
 
   // ============================================================================
-  // deleteClass Tests
+  // deleteClassByIdForTeacher Tests
   // ============================================================================
 
-  describe("deleteClass", () => {
+  describe("deleteClassByIdForTeacher", () => {
     it("deletes a class successfully", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true },
         status: 200,
       });
 
-      await expect(classRepository.deleteClass(1, 5)).resolves.toBeUndefined();
+      await expect(classRepository.deleteClassByIdForTeacher(1, 5)).resolves.toBeUndefined();
 
       expect(apiClient.delete).toHaveBeenCalledWith("/classes/1", {
         teacherId: 5,
@@ -385,17 +385,17 @@ describe("classRepository", () => {
         status: 400,
       });
 
-      await expect(classRepository.deleteClass(1, 5)).rejects.toThrow(
+      await expect(classRepository.deleteClassByIdForTeacher(1, 5)).rejects.toThrow(
         "Cannot delete class with students",
       );
     });
   });
 
   // ============================================================================
-  // updateClass Tests
+  // updateClassDetailsById Tests
   // ============================================================================
 
-  describe("updateClass", () => {
+  describe("updateClassDetailsById", () => {
     const mockUpdateRequest = { teacherId: 1, className: "Updated Class Name" };
     const mockUpdatedClass = { id: 1, className: "Updated Class Name" };
 
@@ -405,7 +405,7 @@ describe("classRepository", () => {
         status: 200,
       });
 
-      const result = await classRepository.updateClass(1, mockUpdateRequest);
+      const result = await classRepository.updateClassDetailsById(1, mockUpdateRequest);
 
       expect(apiClient.put).toHaveBeenCalledWith(
         "/classes/1",
@@ -421,17 +421,17 @@ describe("classRepository", () => {
       });
 
       await expect(
-        classRepository.updateClass(1, mockUpdateRequest),
+        classRepository.updateClassDetailsById(1, mockUpdateRequest),
       ).rejects.toThrow("Validation error");
     });
   });
 
   // ============================================================================
   // ============================================================================
-  // removeStudent Tests
+  // unenrollStudentFromClassByTeacher Tests
   // ============================================================================
 
-  describe("removeStudent", () => {
+  describe("unenrollStudentFromClassByTeacher", () => {
     it("removes a student from a class successfully", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true },
@@ -439,7 +439,7 @@ describe("classRepository", () => {
       });
 
       await expect(
-        classRepository.removeStudent(1, 10, 5),
+        classRepository.unenrollStudentFromClassByTeacher(1, 10, 5),
       ).resolves.toBeUndefined();
 
       expect(apiClient.delete).toHaveBeenCalledWith(
@@ -453,7 +453,7 @@ describe("classRepository", () => {
         status: 404,
       });
 
-      await expect(classRepository.removeStudent(1, 999, 5)).rejects.toThrow(
+      await expect(classRepository.unenrollStudentFromClassByTeacher(1, 999, 5)).rejects.toThrow(
         "Student not found in class",
       );
     });

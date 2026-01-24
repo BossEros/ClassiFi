@@ -70,7 +70,7 @@ export async function createClass(
   if (scheduleError) throw new Error(scheduleError);
 
   // All validations passed, call repository
-  return await classRepository.createClass(createClassData);
+  return await classRepository.createNewClass(createClassData);
 }
 
 /**
@@ -79,7 +79,7 @@ export async function createClass(
  * @returns A unique 6-character class code string.
  */
 export async function generateClassCode(): Promise<string> {
-  return await classRepository.generateClassCode();
+  return await classRepository.generateUniqueClassCode();
 }
 
 /**
@@ -95,7 +95,7 @@ export async function getAllClasses(
 ): Promise<Class[]> {
   validateId(teacherId, "teacher");
 
-  return await classRepository.getAllClasses(teacherId, activeOnly);
+  return await classRepository.getAllClassesForTeacherId(teacherId, activeOnly);
 }
 
 /**
@@ -111,7 +111,7 @@ export async function getClassById(
 ): Promise<Class> {
   validateId(classId, "class");
 
-  return await classRepository.getClassById(classId, teacherId);
+  return await classRepository.getClassDetailsById(classId, teacherId);
 }
 
 /**
@@ -125,7 +125,7 @@ export async function getClassAssignments(
 ): Promise<Assignment[]> {
   validateId(classId, "class");
 
-  return await classRepository.getClassAssignments(classId);
+  return await classRepository.getAllAssignmentsForClassId(classId);
 }
 
 /**
@@ -152,7 +152,7 @@ export async function getClassStudents(
 ): Promise<EnrolledStudent[]> {
   validateId(classId, "class");
 
-  const students = await classRepository.getClassStudents(classId);
+  const students = await classRepository.getAllEnrolledStudentsForClassId(classId);
 
   return students.map(addFullNameToStudent);
 }
@@ -172,9 +172,9 @@ export async function getClassDetailData(
 
   // Fetch all data in parallel for better performance
   const [classInfo, assignments, students] = await Promise.all([
-    classRepository.getClassById(classId, teacherId),
-    classRepository.getClassAssignments(classId),
-    classRepository.getClassStudents(classId),
+    classRepository.getClassDetailsById(classId, teacherId),
+    classRepository.getAllAssignmentsForClassId(classId),
+    classRepository.getAllEnrolledStudentsForClassId(classId),
   ]);
 
   return {
@@ -198,7 +198,7 @@ export async function deleteClass(
   validateId(classId, "class");
   validateId(teacherId, "teacher");
 
-  await classRepository.deleteClass(classId, teacherId);
+  await classRepository.deleteClassByIdForTeacher(classId, teacherId);
 }
 
 /**
@@ -215,7 +215,7 @@ export async function updateClass(
   validateId(classId, "class");
   validateId(updateData.teacherId, "teacher");
 
-  return await classRepository.updateClass(classId, {
+  return await classRepository.updateClassDetailsById(classId, {
     ...updateData,
     className: updateData.className?.trim(),
     description: updateData.description?.trim(),
@@ -244,7 +244,7 @@ export async function createAssignment(
   validateId(createAssignmentData.teacherId, "teacher");
 
   // Pass directly to repository
-  return await assignmentRepository.createAssignment(createAssignmentData.classId, {
+  return await assignmentRepository.createNewAssignmentForClass(createAssignmentData.classId, {
     teacherId: createAssignmentData.teacherId,
     assignmentName: createAssignmentData.assignmentName.trim(),
     description: createAssignmentData.description.trim(),
@@ -282,7 +282,7 @@ export async function updateAssignment(
   validateUpdateAssignmentData(updateAssignmentData);
 
   // Pass directly to repository (backend uses camelCase)
-  return await assignmentRepository.updateAssignment(assignmentId, {
+  return await assignmentRepository.updateAssignmentDetailsById(assignmentId, {
     teacherId: updateAssignmentData.teacherId,
     assignmentName: updateAssignmentData.assignmentName?.trim(),
     description: updateAssignmentData.description?.trim(),
@@ -318,7 +318,7 @@ export async function deleteAssignment(
   validateId(assignmentId, "assignment");
   validateId(teacherId, "teacher");
 
-  await assignmentRepository.deleteAssignment(assignmentId, teacherId);
+  await assignmentRepository.deleteAssignmentByIdForTeacher(assignmentId, teacherId);
 }
 
 /**
@@ -338,5 +338,5 @@ export async function removeStudent(
   validateId(studentId, "student");
   validateId(teacherId, "teacher");
 
-  await classRepository.removeStudent(classId, studentId, teacherId);
+  await classRepository.unenrollStudentFromClassByTeacher(classId, studentId, teacherId);
 }

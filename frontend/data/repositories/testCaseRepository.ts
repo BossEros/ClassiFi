@@ -27,10 +27,7 @@ export type {
   SuccessResponse,
 };
 
-/**
- * Get all test cases for an assignment
- */
-export async function getTestCases(
+export async function getAllTestCasesForAssignmentId(
   assignmentId: number,
 ): Promise<ApiResponse<TestCaseListResponse>> {
   return apiClient.get<TestCaseListResponse>(
@@ -38,66 +35,47 @@ export async function getTestCases(
   );
 }
 
-/**
- * Create a new test case
- */
-export async function createTestCase(
+export async function createNewTestCaseForAssignment(
   assignmentId: number,
-  data: CreateTestCaseRequest,
+  newTestCaseData: CreateTestCaseRequest,
 ): Promise<ApiResponse<TestCaseResponse>> {
   return apiClient.post<TestCaseResponse>(
     `/assignments/${assignmentId}/test-cases`,
-    data,
+    newTestCaseData,
   );
 }
 
-/**
- * Update a test case
- */
-export async function updateTestCase(
+export async function updateTestCaseDetailsById(
   testCaseId: number,
-  data: UpdateTestCaseRequest,
+  updatedTestCaseData: UpdateTestCaseRequest,
 ): Promise<ApiResponse<TestCaseResponse>> {
-  return apiClient.put<TestCaseResponse>(`/test-cases/${testCaseId}`, data);
+  return apiClient.put<TestCaseResponse>(`/test-cases/${testCaseId}`, updatedTestCaseData);
 }
 
-/**
- * Delete a test case
- */
-export async function deleteTestCase(
+export async function deleteTestCaseById(
   testCaseId: number,
 ): Promise<ApiResponse<SuccessResponse>> {
   return apiClient.delete<SuccessResponse>(`/test-cases/${testCaseId}`);
 }
 
-/**
- * Reorder test cases
- */
-export async function reorderTestCases(
+export async function updateTestCasesSortOrderForAssignment(
   assignmentId: number,
-  order: Array<{ id: number; sortOrder: number }>,
+  newSortOrderList: Array<{ id: number; sortOrder: number }>,
 ): Promise<ApiResponse<SuccessResponse>> {
   return apiClient.put<SuccessResponse>(
     `/assignments/${assignmentId}/test-cases/reorder`,
-    { order },
+    { order: newSortOrderList },
   );
 }
 
-// =============================================================================
-// Code Testing API
-// =============================================================================
-
-/**
- * Run tests in preview mode (without saving)
- */
-export async function runTestsPreview(
-  sourceCode: string,
-  language: "python" | "java" | "c",
+export async function executeTestsInPreviewModeWithoutSaving(
+  sourceCodeContent: string,
+  programmingLanguage: "python" | "java" | "c",
   assignmentId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
   return apiClient.post<TestResultsResponse>("/code/run-tests", {
-    sourceCode,
-    language,
+    sourceCode: sourceCodeContent,
+    language: programmingLanguage,
     assignmentId,
   });
 }

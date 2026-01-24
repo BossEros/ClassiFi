@@ -21,189 +21,162 @@ import type { Assignment } from "@/shared/types/class";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 
-export async function submitAssignment(
-  request: SubmitAssignmentRequest,
+export async function submitAssignmentWithFile(
+  submissionRequest: SubmitAssignmentRequest,
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
-    const formData = createSubmissionFormData(request);
-    const authToken = await getAuthToken();
+    const submissionFormData = buildSubmissionFormDataFromRequest(submissionRequest);
+    const authenticationToken = await retrieveAuthenticationTokenFromSession();
 
-    const response = await fetch(`${API_BASE_URL}/submissions`, {
+    const httpResponse = await fetch(`${API_BASE_URL}/submissions`, {
       method: "POST",
-      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
-      body: formData,
+      headers: authenticationToken ? { Authorization: `Bearer ${authenticationToken}` } : {},
+      body: submissionFormData,
     });
 
-    const data = await response.json();
+    const responseData = await httpResponse.json();
 
-    if (!response.ok) {
-      return handleSubmissionError(response, data);
+    if (!httpResponse.ok) {
+      return buildErrorResponseForFailedSubmission(httpResponse, responseData);
     }
 
-    return mapSubmissionResponse(data, response.status);
-  } catch (error) {
-    console.error("Submission error (network or other):", error);
+    return buildSuccessResponseFromSubmissionData(responseData, httpResponse.status);
+  } catch (networkError) {
+    console.error("Submission error (network or other):", networkError);
 
     return {
       error:
-        error instanceof Error
-          ? `Network error: ${error.message}. Make sure the backend server is running.`
+        networkError instanceof Error
+          ? `Network error: ${networkError.message}. Make sure the backend server is running.`
           : "Failed to submit assignment",
       status: 0,
     };
   }
 }
 
-/**
- * Get submission history for a specific student and assignment
- */
-export async function getSubmissionHistory(
+export async function getSubmissionHistoryForStudentAndAssignment(
   assignmentId: number,
   studentId: number,
 ): Promise<ApiResponse<SubmissionHistoryResponse>> {
-  const response = await apiClient.get<SubmissionHistoryResponse>(
+  const apiResponse = await apiClient.get<SubmissionHistoryResponse>(
     `/submissions/history/${assignmentId}/${studentId}`,
   );
 
-  if (response.data) {
-    // Backend returns camelCase - use centralized mapper
-    response.data = {
-      ...response.data,
-      submissions: response.data.submissions.map(mapSubmission),
+  if (apiResponse.data) {
+    apiResponse.data = {
+      ...apiResponse.data,
+      submissions: apiResponse.data.submissions.map(mapSubmission),
     };
   }
 
-  return response;
+  return apiResponse;
 }
 
-/**
- * Get all submissions by a student
- */
-export async function getStudentSubmissions(
+export async function getAllSubmissionsByStudentId(
   studentId: number,
-  latestOnly: boolean = true,
+  shouldReturnLatestSubmissionsOnly: boolean = true,
 ): Promise<ApiResponse<SubmissionListResponse>> {
-  const response = await apiClient.get<SubmissionListResponse>(
-    `/submissions/student/${studentId}?latestOnly=${latestOnly}`,
+  const apiResponse = await apiClient.get<SubmissionListResponse>(
+    `/submissions/student/${studentId}?latestOnly=${shouldReturnLatestSubmissionsOnly}`,
   );
 
-  if (response.data) {
-    // Backend returns camelCase - use centralized mapper
-    response.data = {
-      ...response.data,
-      submissions: response.data.submissions.map(mapSubmissionWithAssignment),
+  if (apiResponse.data) {
+    apiResponse.data = {
+      ...apiResponse.data,
+      submissions: apiResponse.data.submissions.map(mapSubmissionWithAssignment),
     };
   }
 
-  return response;
+  return apiResponse;
 }
 
-/**
- * Get all submissions for an assignment (typically for teachers)
- */
-export async function getAssignmentSubmissions(
+export async function getAllSubmissionsForAssignmentId(
   assignmentId: number,
-  latestOnly: boolean = true,
+  shouldReturnLatestSubmissionsOnly: boolean = true,
 ): Promise<ApiResponse<SubmissionListResponse>> {
-  const response = await apiClient.get<SubmissionListResponse>(
-    `/submissions/assignment/${assignmentId}?latestOnly=${latestOnly}`,
+  const apiResponse = await apiClient.get<SubmissionListResponse>(
+    `/submissions/assignment/${assignmentId}?latestOnly=${shouldReturnLatestSubmissionsOnly}`,
   );
 
-  if (response.data) {
-    // Backend returns camelCase - use centralized mapper
-    response.data = {
-      ...response.data,
-      submissions: response.data.submissions.map(mapSubmissionWithStudent),
+  if (apiResponse.data) {
+    apiResponse.data = {
+      ...apiResponse.data,
+      submissions: apiResponse.data.submissions.map(mapSubmissionWithStudent),
     };
   }
 
-  return response;
+  return apiResponse;
 }
 
-/**
- * Get assignment details by ID
- */
-export async function getAssignmentById(
+export async function getAssignmentDetailsByIdForUser(
   assignmentId: number,
   userId: number,
 ): Promise<ApiResponse<AssignmentDetailResponse>> {
-  const response = await apiClient.get<AssignmentDetailResponse>(
+  const apiResponse = await apiClient.get<AssignmentDetailResponse>(
     `/assignments/${assignmentId}?userId=${userId}`,
   );
 
-  if (response.data?.assignment) {
-    response.data.assignment = mapAssignmentDetail(response.data.assignment as any);
+  if (apiResponse.data?.assignment) {
+    apiResponse.data.assignment = mapAssignmentDetail(apiResponse.data.assignment as any);
   }
 
-  return response;
+  return apiResponse;
 }
 
-/**
- * Creates a new assignment for a class
- */
-export async function createAssignment(
+export async function createNewAssignmentForClass(
   classId: number,
-  request: Omit<CreateAssignmentRequest, "classId">,
+  newAssignmentData: Omit<CreateAssignmentRequest, "classId">,
 ): Promise<Assignment> {
-  const response = await apiClient.post<{
+  const apiResponse = await apiClient.post<{
     success: boolean;
     message?: string;
     assignment?: Assignment;
-  }>(`/classes/${classId}/assignments`, request);
+  }>(`/classes/${classId}/assignments`, newAssignmentData);
 
-  if (response.error || !response.data?.success || !response.data.assignment) {
+  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.assignment) {
     throw new Error(
-      response.error || response.data?.message || "Failed to create assignment",
+      apiResponse.error || apiResponse.data?.message || "Failed to create assignment",
     );
   }
 
-  return response.data.assignment;
+  return apiResponse.data.assignment;
 }
 
-/**
- * Updates an assignment
- */
-export async function updateAssignment(
+export async function updateAssignmentDetailsById(
   assignmentId: number,
-  request: UpdateAssignmentRequest,
+  updatedAssignmentData: UpdateAssignmentRequest,
 ): Promise<Assignment> {
-  const response = await apiClient.put<{
+  const apiResponse = await apiClient.put<{
     success: boolean;
     message?: string;
     assignment?: Assignment;
-  }>(`/assignments/${assignmentId}`, request);
+  }>(`/assignments/${assignmentId}`, updatedAssignmentData);
 
-  if (response.error || !response.data?.success || !response.data.assignment) {
+  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.assignment) {
     throw new Error(
-      response.error || response.data?.message || "Failed to update assignment",
+      apiResponse.error || apiResponse.data?.message || "Failed to update assignment",
     );
   }
 
-  return response.data.assignment;
+  return apiResponse.data.assignment;
 }
 
-/**
- * Deletes an assignment
- */
-export async function deleteAssignment(
+export async function deleteAssignmentByIdForTeacher(
   assignmentId: number,
   teacherId: number,
 ): Promise<void> {
-  const response = await apiClient.delete<DeleteResponse>(
+  const apiResponse = await apiClient.delete<DeleteResponse>(
     `/assignments/${assignmentId}?teacherId=${teacherId}`,
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to delete assignment",
+      apiResponse.error || apiResponse.data?.message || "Failed to delete assignment",
     );
   }
 }
 
-/**
- * Get submission content for preview
- */
-export async function getSubmissionContent(
+export async function getSubmissionFileContentById(
   submissionId: number,
 ): Promise<
   ApiResponse<{ success: boolean; content: string; language?: string }>
@@ -211,10 +184,7 @@ export async function getSubmissionContent(
   return await apiClient.get(`/submissions/${submissionId}/content`);
 }
 
-/**
- * Get submission download URL
- */
-export async function getSubmissionDownloadUrl(
+export async function getSubmissionFileDownloadUrlById(
   submissionId: number,
 ): Promise<
   ApiResponse<{ success: boolean; message: string; downloadUrl: string }>
@@ -226,20 +196,13 @@ export async function getSubmissionDownloadUrl(
   }>(`/submissions/${submissionId}/download`);
 }
 
-/**
- * Get test results for a submission
- * Returns the raw backend response (normalization happens in a service/utility)
- */
-export async function getTestResults(
+export async function getTestResultsForSubmissionById(
   submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
   return await apiClient.get(`/submissions/${submissionId}/test-results`);
 }
 
-/**
- * Run tests for a submission
- */
-export async function runTestsForSubmission(
+export async function executeTestsForSubmissionById(
   submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
   return await apiClient.post(`/submissions/${submissionId}/run-tests`, {});
@@ -247,55 +210,55 @@ export async function runTestsForSubmission(
 
 // Helper functions
 
-async function getAuthToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token ?? null;
+async function retrieveAuthenticationTokenFromSession(): Promise<string | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  return sessionData.session?.access_token ?? null;
 }
 
-function createSubmissionFormData(request: SubmitAssignmentRequest): FormData {
+function buildSubmissionFormDataFromRequest(submissionRequest: SubmitAssignmentRequest): FormData {
   const formData = new FormData();
-  formData.append("assignment_id", request.assignmentId.toString());
-  formData.append("student_id", request.studentId.toString());
-  formData.append("file", request.file);
+  formData.append("assignment_id", submissionRequest.assignmentId.toString());
+  formData.append("student_id", submissionRequest.studentId.toString());
+  formData.append("file", submissionRequest.file);
   return formData;
 }
 
-function extractErrorMessage(data: any): string {
-  if (data.detail) return data.detail;
-  if (data.message) return data.message;
-  if (typeof data === "string") return data;
+function extractErrorMessageFromResponseData(responseData: any): string {
+  if (responseData.detail) return responseData.detail;
+  if (responseData.message) return responseData.message;
+  if (typeof responseData === "string") return responseData;
   return "Failed to submit assignment";
 }
 
-function handleSubmissionError(
-  response: Response,
-  data: any,
+function buildErrorResponseForFailedSubmission(
+  httpResponse: Response,
+  responseData: any,
 ): ApiResponse<SubmitAssignmentResponse> {
-  const errorMessage = extractErrorMessage(data);
+  const errorMessage = extractErrorMessageFromResponseData(responseData);
 
   console.error("Submission failed:", {
-    status: response.status,
-    statusText: response.statusText,
+    status: httpResponse.status,
+    statusText: httpResponse.statusText,
     error: errorMessage,
-    responseData: data,
+    responseData: responseData,
   });
 
   return {
-    error: `${errorMessage} (Status: ${response.status})`,
-    status: response.status,
+    error: `${errorMessage} (Status: ${httpResponse.status})`,
+    status: httpResponse.status,
   };
 }
 
-function mapSubmissionResponse(
-  data: any,
-  status: number,
+function buildSuccessResponseFromSubmissionData(
+  responseData: any,
+  httpStatusCode: number,
 ): ApiResponse<SubmitAssignmentResponse> {
   return {
     data: {
-      success: data.success,
-      message: data.message,
-      submission: data.submission ? mapSubmission(data.submission) : undefined,
+      success: responseData.success,
+      message: responseData.message,
+      submission: responseData.submission ? mapSubmission(responseData.submission) : undefined,
     },
-    status,
+    status: httpStatusCode,
   };
 }

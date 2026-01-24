@@ -19,7 +19,7 @@ import { normalizeTestResult } from "@/shared/utils/testNormalization";
 export async function getTestCases(assignmentId: number): Promise<TestCase[]> {
   validateId(assignmentId, "assignment");
 
-  const testCasesResponse = await testCaseRepository.getTestCases(assignmentId);
+  const testCasesResponse = await testCaseRepository.getAllTestCasesForAssignmentId(assignmentId);
 
   if (testCasesResponse.error) {
     throw new Error(testCasesResponse.error);
@@ -61,7 +61,7 @@ export async function createTestCase(
   )
     throw new Error("Expected output is required");
 
-  const creationResponse = await testCaseRepository.createTestCase(
+  const creationResponse = await testCaseRepository.createNewTestCaseForAssignment(
     assignmentId,
     createTestCaseData,
   );
@@ -89,7 +89,7 @@ export async function updateTestCase(
 ): Promise<TestCase> {
   validateId(testCaseId, "test case");
 
-  const updateResponse = await testCaseRepository.updateTestCase(
+  const updateResponse = await testCaseRepository.updateTestCaseDetailsById(
     testCaseId,
     updateTestCaseData,
   );
@@ -112,7 +112,7 @@ export async function updateTestCase(
 export async function deleteTestCase(testCaseId: number): Promise<void> {
   validateId(testCaseId, "test case");
 
-  const deletionResponse = await testCaseRepository.deleteTestCase(testCaseId);
+  const deletionResponse = await testCaseRepository.deleteTestCaseById(testCaseId);
 
   if (deletionResponse.error) throw new Error(deletionResponse.error);
 
@@ -132,7 +132,7 @@ export async function getTestResults(
 ): Promise<TestExecutionSummary | null> {
   validateId(submissionId, "submission");
 
-  const resultsResponse = await assignmentRepository.getTestResults(submissionId);
+  const resultsResponse = await assignmentRepository.getTestResultsForSubmissionById(submissionId);
 
   if (resultsResponse.error) throw new Error(resultsResponse.error);
 

@@ -39,7 +39,7 @@ describe("testService", () => {
     };
 
     it("executes preview successfully", async () => {
-      vi.mocked(testCaseRepository.runTestsPreview).mockResolvedValue({
+      vi.mocked(testCaseRepository.executeTestsInPreviewModeWithoutSaving).mockResolvedValue({
         data: {
           success: true,
           message: "",
@@ -58,7 +58,7 @@ describe("testService", () => {
         mockAssignmentId,
       );
 
-      expect(testCaseRepository.runTestsPreview).toHaveBeenCalledWith(
+      expect(testCaseRepository.executeTestsInPreviewModeWithoutSaving).toHaveBeenCalledWith(
         mockSourceCode,
         mockLanguage,
         mockAssignmentId,
@@ -73,7 +73,7 @@ describe("testService", () => {
     });
 
     it("throws error when execution fails", async () => {
-      vi.mocked(testCaseRepository.runTestsPreview).mockResolvedValue({
+      vi.mocked(testCaseRepository.executeTestsInPreviewModeWithoutSaving).mockResolvedValue({
         error: "Execution failed",
         status: 400,
       });
@@ -88,7 +88,7 @@ describe("testService", () => {
     });
 
     it("throws error when API returns unsuccessful status", async () => {
-      vi.mocked(testCaseRepository.runTestsPreview).mockResolvedValue({
+      vi.mocked(testCaseRepository.executeTestsInPreviewModeWithoutSaving).mockResolvedValue({
         data: {
           success: false,
           message: "Compilation error",
@@ -106,7 +106,7 @@ describe("testService", () => {
     });
 
     it("throws error when data is missing", async () => {
-      vi.mocked(testCaseRepository.runTestsPreview).mockResolvedValue({
+      vi.mocked(testCaseRepository.executeTestsInPreviewModeWithoutSaving).mockResolvedValue({
         data: {
           success: true,
           message: "",
@@ -143,7 +143,7 @@ describe("testService", () => {
     };
 
     it("fetches results successfully", async () => {
-      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResultsForSubmissionById).mockResolvedValue({
         data: {
           success: true,
           message: "",
@@ -155,7 +155,7 @@ describe("testService", () => {
       const result =
         await testService.getTestResultsForSubmission(mockSubmissionId);
 
-      expect(assignmentRepository.getTestResults).toHaveBeenCalledWith(
+      expect(assignmentRepository.getTestResultsForSubmissionById).toHaveBeenCalledWith(
         mockSubmissionId,
       );
       expect(result.passed).toBe(2);
@@ -164,7 +164,7 @@ describe("testService", () => {
     });
 
     it("throws error when fetch fails", async () => {
-      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResultsForSubmissionById).mockResolvedValue({
         error: "Network error",
         status: 400,
       });
@@ -175,7 +175,7 @@ describe("testService", () => {
     });
 
     it("throws error when API returns unsuccessful status", async () => {
-      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResultsForSubmissionById).mockResolvedValue({
         data: {
           success: false,
           message: "Results not found",
@@ -189,7 +189,7 @@ describe("testService", () => {
     });
 
     it("throws error when data is missing", async () => {
-      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResultsForSubmissionById).mockResolvedValue({
         data: {
           success: true,
           message: "",

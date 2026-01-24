@@ -57,7 +57,7 @@ describe("plagiarismService", () => {
 
     it("returns analysis results for an assignment", async () => {
       vi.mocked(
-        plagiarismRepository.analyzeAssignmentSubmissions,
+        plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment,
       ).mockResolvedValue({
         data: mockAnalysisResponse,
         status: 200,
@@ -66,7 +66,7 @@ describe("plagiarismService", () => {
       const result = await plagiarismService.analyzeAssignmentSubmissions(1);
 
       expect(
-        plagiarismRepository.analyzeAssignmentSubmissions,
+        plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment,
       ).toHaveBeenCalledWith(1);
       expect(result.reportId).toBe("report-123");
       expect(result.summary.totalPairs).toBe(5);
@@ -81,7 +81,7 @@ describe("plagiarismService", () => {
 
     it("throws error when API returns error", async () => {
       vi.mocked(
-        plagiarismRepository.analyzeAssignmentSubmissions,
+        plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment,
       ).mockResolvedValue({
         error: "Analysis failed",
         status: 500,
@@ -94,7 +94,7 @@ describe("plagiarismService", () => {
 
     it("throws error when data is missing", async () => {
       vi.mocked(
-        plagiarismRepository.analyzeAssignmentSubmissions,
+        plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment,
       ).mockResolvedValue({
         data: undefined,
         status: 200,
@@ -153,14 +153,14 @@ describe("plagiarismService", () => {
     };
 
     it("returns details for a similarity result", async () => {
-      vi.mocked(plagiarismRepository.getResultDetails).mockResolvedValue({
+      vi.mocked(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).mockResolvedValue({
         data: mockDetailsResponse,
         status: 200,
       });
 
       const result = await plagiarismService.getResultDetails(1);
 
-      expect(plagiarismRepository.getResultDetails).toHaveBeenCalledWith(1);
+      expect(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).toHaveBeenCalledWith(1);
       expect(result.result.id).toBe(1);
       expect(result.fragments).toHaveLength(1);
       expect(result.leftFile.studentName).toBe("John Doe");
@@ -174,7 +174,7 @@ describe("plagiarismService", () => {
     });
 
     it("throws error when API returns error", async () => {
-      vi.mocked(plagiarismRepository.getResultDetails).mockResolvedValue({
+      vi.mocked(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).mockResolvedValue({
         error: "Not found",
         status: 404,
       });
@@ -185,7 +185,7 @@ describe("plagiarismService", () => {
     });
 
     it("throws error when data is missing", async () => {
-      vi.mocked(plagiarismRepository.getResultDetails).mockResolvedValue({
+      vi.mocked(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).mockResolvedValue({
         data: undefined,
         status: 200,
       });

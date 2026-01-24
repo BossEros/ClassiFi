@@ -15,183 +15,150 @@ import type {
   GenerateCodeResponse,
 } from "@/data/api/types";
 
-/**
- * Creates a new class
- */
-export async function createClass(request: CreateClassRequest): Promise<Class> {
-  const response = await apiClient.post<ClassDetailResponse>("/classes", request);
+export async function createNewClass(newClassData: CreateClassRequest): Promise<Class> {
+  const apiResponse = await apiClient.post<ClassDetailResponse>("/classes", newClassData);
 
-  if (response.error || !response.data?.success || !response.data.class) {
+  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.class) {
     throw new Error(
-      response.error || response.data?.message || "Failed to create class",
+      apiResponse.error || apiResponse.data?.message || "Failed to create class",
     );
   }
 
-  return response.data.class;
+  return apiResponse.data.class;
 }
 
-/**
- * Generates a unique class code
- */
-export async function generateClassCode(): Promise<string> {
-  const response = await apiClient.get<GenerateCodeResponse>(
+export async function generateUniqueClassCode(): Promise<string> {
+  const apiResponse = await apiClient.get<GenerateCodeResponse>(
     "/classes/generate-code",
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error ||
-        response.data?.message ||
+      apiResponse.error ||
+        apiResponse.data?.message ||
         "Failed to generate class code",
     );
   }
 
-  return response.data.code;
+  return apiResponse.data.code;
 }
 
-/**
- * Fetches all classes for a teacher
- */
-export async function getAllClasses(
+export async function getAllClassesForTeacherId(
   teacherId: number,
-  activeOnly?: boolean,
+  shouldReturnActiveClassesOnly?: boolean,
 ): Promise<Class[]> {
-  // Build query parameter for filtering active classes only
-  // If activeOnly is defined (true or false), append it as a query parameter
-  // Otherwise, use an empty string for no filtering
-  const query = activeOnly !== undefined ? `?activeOnly=${activeOnly}` : "";
+  const urlQueryString = shouldReturnActiveClassesOnly !== undefined ? `?activeOnly=${shouldReturnActiveClassesOnly}` : "";
 
-  const response = await apiClient.get<ClassListResponse>(
-    `/classes/teacher/${teacherId}${query}`,
+  const apiResponse = await apiClient.get<ClassListResponse>(
+    `/classes/teacher/${teacherId}${urlQueryString}`,
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch classes",
+      apiResponse.error || apiResponse.data?.message || "Failed to fetch classes",
     );
   }
 
-  return response.data.classes;
+  return apiResponse.data.classes;
 }
 
-/**
- * Fetches a class by ID
- */
-export async function getClassById(
+export async function getClassDetailsById(
   classId: number,
   teacherId?: number,
 ): Promise<Class> {
-  const url = teacherId
+  const apiUrl = teacherId
     ? `/classes/${classId}?teacherId=${teacherId}`
     : `/classes/${classId}`;
-  const response = await apiClient.get<ClassDetailResponse>(url);
+  const apiResponse = await apiClient.get<ClassDetailResponse>(apiUrl);
 
-  if (response.error || !response.data?.success || !response.data.class) {
+  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.class) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch class",
+      apiResponse.error || apiResponse.data?.message || "Failed to fetch class",
     );
   }
 
-  return response.data.class;
+  return apiResponse.data.class;
 }
 
-/**
- * Fetches all assignments for a class
- */
-export async function getClassAssignments(
+export async function getAllAssignmentsForClassId(
   classId: number,
 ): Promise<Assignment[]> {
-  const response = await apiClient.get<AssignmentListResponse>(
+  const apiResponse = await apiClient.get<AssignmentListResponse>(
     `/classes/${classId}/assignments`,
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch assignments",
+      apiResponse.error || apiResponse.data?.message || "Failed to fetch assignments",
     );
   }
 
-  return response.data.assignments;
+  return apiResponse.data.assignments;
 }
 
-/**
- * Fetches all students enrolled in a class.
- * Returns raw API response without transformation.
- * Business layer should handle fullName computation.
- */
-export async function getClassStudents(
+export async function getAllEnrolledStudentsForClassId(
   classId: number,
 ): Promise<EnrolledStudent[]> {
-  const response = await apiClient.get<StudentListResponse>(
+  const apiResponse = await apiClient.get<StudentListResponse>(
     `/classes/${classId}/students`,
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to fetch students",
+      apiResponse.error || apiResponse.data?.message || "Failed to fetch students",
     );
   }
 
-  // Return raw students without transformation
-  return response.data.students;
+  return apiResponse.data.students;
 }
 
-/**
- * Deletes a class
- */
-export async function deleteClass(
+export async function deleteClassByIdForTeacher(
   classId: number,
   teacherId: number,
 ): Promise<void> {
-  const response = await apiClient.delete<DeleteResponse>(
+  const apiResponse = await apiClient.delete<DeleteResponse>(
     `/classes/${classId}`,
     { teacherId },
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to delete class",
+      apiResponse.error || apiResponse.data?.message || "Failed to delete class",
     );
   }
 }
 
-/**
- * Updates a class
- */
-export async function updateClass(
+export async function updateClassDetailsById(
   classId: number,
-  request: UpdateClassRequest,
+  updatedClassData: UpdateClassRequest,
 ): Promise<Class> {
-  const response = await apiClient.put<{
+  const apiResponse = await apiClient.put<{
     success: boolean;
     message?: string;
     classInfo?: Class;
-  }>(`/classes/${classId}`, request);
+  }>(`/classes/${classId}`, updatedClassData);
 
-  if (response.error || !response.data?.success || !response.data.classInfo) {
+  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.classInfo) {
     throw new Error(
-      response.error || response.data?.message || "Failed to update class",
+      apiResponse.error || apiResponse.data?.message || "Failed to update class",
     );
   }
 
-  return response.data.classInfo;
+  return apiResponse.data.classInfo;
 }
 
-/**
- * Removes a student from a class
- */
-export async function removeStudent(
+export async function unenrollStudentFromClassByTeacher(
   classId: number,
   studentId: number,
   teacherId: number,
 ): Promise<void> {
-  const response = await apiClient.delete<DeleteResponse>(
+  const apiResponse = await apiClient.delete<DeleteResponse>(
     `/classes/${classId}/students/${studentId}?teacherId=${teacherId}`,
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to remove student",
+      apiResponse.error || apiResponse.data?.message || "Failed to remove student",
     );
   }
 }

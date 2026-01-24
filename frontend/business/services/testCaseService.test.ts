@@ -35,14 +35,14 @@ describe("testCaseService", () => {
 
   describe("getTestCases", () => {
     it("returns test cases for an assignment", async () => {
-      vi.mocked(testCaseRepository.getTestCases).mockResolvedValue({
+      vi.mocked(testCaseRepository.getAllTestCasesForAssignmentId).mockResolvedValue({
         data: { success: true, message: "Success", testCases: [mockTestCase] },
         status: 200,
       });
 
       const result = await testCaseService.getTestCases(1);
 
-      expect(testCaseRepository.getTestCases).toHaveBeenCalledWith(1);
+      expect(testCaseRepository.getAllTestCasesForAssignmentId).toHaveBeenCalledWith(1);
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("Test Case 1");
     });
@@ -54,7 +54,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when API returns error", async () => {
-      vi.mocked(testCaseRepository.getTestCases).mockResolvedValue({
+      vi.mocked(testCaseRepository.getAllTestCasesForAssignmentId).mockResolvedValue({
         error: "Not found",
         status: 404,
       });
@@ -65,7 +65,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when data is missing", async () => {
-      vi.mocked(testCaseRepository.getTestCases).mockResolvedValue({
+      vi.mocked(testCaseRepository.getAllTestCasesForAssignmentId).mockResolvedValue({
         data: undefined,
         status: 200,
       });
@@ -88,14 +88,14 @@ describe("testCaseService", () => {
     };
 
     it("creates a test case with valid data", async () => {
-      vi.mocked(testCaseRepository.createTestCase).mockResolvedValue({
+      vi.mocked(testCaseRepository.createNewTestCaseForAssignment).mockResolvedValue({
         data: { success: true, message: "Created", testCase: mockTestCase },
         status: 201,
       });
 
       const result = await testCaseService.createTestCase(1, validRequest);
 
-      expect(testCaseRepository.createTestCase).toHaveBeenCalledWith(
+      expect(testCaseRepository.createNewTestCaseForAssignment).toHaveBeenCalledWith(
         1,
         validRequest,
       );
@@ -133,7 +133,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when API fails", async () => {
-      vi.mocked(testCaseRepository.createTestCase).mockResolvedValue({
+      vi.mocked(testCaseRepository.createNewTestCaseForAssignment).mockResolvedValue({
         error: "Duplicate name",
         status: 409,
       });
@@ -153,14 +153,14 @@ describe("testCaseService", () => {
 
     it("updates a test case successfully", async () => {
       const updatedTestCase = { ...mockTestCase, name: "Updated Name" };
-      vi.mocked(testCaseRepository.updateTestCase).mockResolvedValue({
+      vi.mocked(testCaseRepository.updateTestCaseDetailsById).mockResolvedValue({
         data: { success: true, message: "Updated", testCase: updatedTestCase },
         status: 200,
       });
 
       const result = await testCaseService.updateTestCase(1, updateRequest);
 
-      expect(testCaseRepository.updateTestCase).toHaveBeenCalledWith(
+      expect(testCaseRepository.updateTestCaseDetailsById).toHaveBeenCalledWith(
         1,
         updateRequest,
       );
@@ -174,7 +174,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when API fails", async () => {
-      vi.mocked(testCaseRepository.updateTestCase).mockResolvedValue({
+      vi.mocked(testCaseRepository.updateTestCaseDetailsById).mockResolvedValue({
         error: "Not found",
         status: 404,
       });
@@ -191,14 +191,14 @@ describe("testCaseService", () => {
 
   describe("deleteTestCase", () => {
     it("deletes a test case successfully", async () => {
-      vi.mocked(testCaseRepository.deleteTestCase).mockResolvedValue({
+      vi.mocked(testCaseRepository.deleteTestCaseById).mockResolvedValue({
         data: { success: true, message: "Deleted" },
         status: 200,
       });
 
       await expect(testCaseService.deleteTestCase(1)).resolves.toBeUndefined();
 
-      expect(testCaseRepository.deleteTestCase).toHaveBeenCalledWith(1);
+      expect(testCaseRepository.deleteTestCaseById).toHaveBeenCalledWith(1);
     });
 
     it("throws error for invalid test case ID", async () => {
@@ -208,7 +208,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when API fails", async () => {
-      vi.mocked(testCaseRepository.deleteTestCase).mockResolvedValue({
+      vi.mocked(testCaseRepository.deleteTestCaseById).mockResolvedValue({
         error: "Cannot delete",
         status: 400,
       });
@@ -243,14 +243,14 @@ describe("testCaseService", () => {
     };
 
     it("returns normalized test results", async () => {
-      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResultsForSubmissionById).mockResolvedValue({
         data: mockRawResults,
         status: 200,
       });
 
       const result = await testCaseService.getTestResults(1);
 
-      expect(assignmentRepository.getTestResults).toHaveBeenCalledWith(1);
+      expect(assignmentRepository.getTestResultsForSubmissionById).toHaveBeenCalledWith(1);
       expect(result).not.toBeNull();
       expect(result!.passed).toBe(3);
       expect(result!.total).toBe(5);
@@ -265,7 +265,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when API fails", async () => {
-      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResultsForSubmissionById).mockResolvedValue({
         error: "Not found",
         status: 404,
       });
