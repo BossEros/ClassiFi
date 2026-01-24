@@ -5,7 +5,9 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastProvider } from "@/shared/context/ToastContext";
 
 /**
- * All providers that wrap the app.
+ * Wraps given children with app-wide providers used in tests (routing and toast).
+ *
+ * @param children - React nodes to render within the providers
  */
 function AllProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -16,8 +18,11 @@ function AllProviders({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Custom render function that wraps components with all providers.
- * Use this instead of the default render for component tests.
+ * Render a React element wrapped with app-wide providers for testing.
+ *
+ * @param ui - The React element to render
+ * @param options - Additional render options; the `wrapper` option is omitted and will be set to `AllProviders`
+ * @returns The render result object returned by React Testing Library
  */
 function customRender(
   ui: ReactElement,

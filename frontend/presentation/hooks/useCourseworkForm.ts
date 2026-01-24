@@ -73,6 +73,21 @@ export const programmingLanguageOptions: SelectOption[] = [
   { value: "c", label: "C" },
 ];
 
+/**
+ * Manages coursework creation and editing: form state, validation, submission, and test-case management.
+ *
+ * When `assignmentId` is present (edit mode), the hook loads the existing assignment and its test cases and populates the form.
+ *
+ * @returns An object with form state, loading/fetch flags, class and test-case data, mode indicators, and action handlers:
+ * - formData: current coursework form values
+ * - errors: validation and general errors
+ * - isLoading, isFetching, isLoadingTestCases: operation/loading flags
+ * - className, testCases, pendingTestCases: loaded class and test-case data
+ * - isEditMode, assignmentId, showTemplateCode: mode and UI flags
+ * - setShowTemplateCode, handleInputChange, handleSubmit: form actions
+ * - handleAddTestCase, handleUpdateTestCase, handleDeleteTestCase: remote test-case CRUD actions
+ * - handleAddPendingTestCase, handleUpdatePendingTestCase, handleDeletePendingTestCase: local pending test-case actions
+ */
 export function useCourseworkForm() {
   const navigate = useNavigate();
   const { classId, assignmentId } = useParams<{

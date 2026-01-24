@@ -49,6 +49,15 @@ import type {
 } from "@/business/models/assignment/types";
 import { CodePreviewModal } from "@/presentation/components/modals/CodePreviewModal";
 
+/**
+ * Renders the assignment detail page for viewing assignment info, submitting coursework, and inspecting test results.
+ *
+ * Shows role-based UI: students can upload, preview, run tests, and submit files (with submission history and test/result polling),
+ * while teachers/admins can view student submissions and latest results. Handles loading, error and retry logic for test results,
+ * file validation, and preview modal state.
+ *
+ * @returns The page's React element containing the assignment details, upload UI, submission status, test results and code preview modal.
+ */
 export function AssignmentDetailPage() {
   const navigate = useNavigate();
   const { assignmentId } = useParams<{ assignmentId: string }>();
