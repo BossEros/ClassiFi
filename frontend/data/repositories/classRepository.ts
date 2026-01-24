@@ -3,25 +3,23 @@ import type {
   Class,
   Assignment,
   EnrolledStudent,
-  ClassResponse,
+} from "@/shared/types/class";
+import type {
+  CreateClassRequest,
+  UpdateClassRequest,
+  ClassDetailResponse,
   ClassListResponse,
   AssignmentListResponse,
   StudentListResponse,
   DeleteResponse,
   GenerateCodeResponse,
-} from "@/shared/types/class";
-import type {
-  CreateClassRequest,
-  UpdateClassRequest,
-  CreateAssignmentRequest,
-  UpdateAssignmentRequest,
 } from "@/data/api/types";
 
 /**
  * Creates a new class
  */
 export async function createClass(request: CreateClassRequest): Promise<Class> {
-  const response = await apiClient.post<ClassResponse>("/classes", request);
+  const response = await apiClient.post<ClassDetailResponse>("/classes", request);
 
   if (response.error || !response.data?.success || !response.data.class) {
     throw new Error(
@@ -58,7 +56,11 @@ export async function getAllClasses(
   teacherId: number,
   activeOnly?: boolean,
 ): Promise<Class[]> {
+  // Build query parameter for filtering active classes only
+  // If activeOnly is defined (true or false), append it as a query parameter
+  // Otherwise, use an empty string for no filtering
   const query = activeOnly !== undefined ? `?activeOnly=${activeOnly}` : "";
+
   const response = await apiClient.get<ClassListResponse>(
     `/classes/teacher/${teacherId}${query}`,
   );
@@ -82,7 +84,7 @@ export async function getClassById(
   const url = teacherId
     ? `/classes/${classId}?teacherId=${teacherId}`
     : `/classes/${classId}`;
-  const response = await apiClient.get<ClassResponse>(url);
+  const response = await apiClient.get<ClassDetailResponse>(url);
 
   if (response.error || !response.data?.success || !response.data.class) {
     throw new Error(
@@ -173,68 +175,6 @@ export async function updateClass(
   }
 
   return response.data.classInfo;
-}
-
-/**
- * Creates a new assignment for a class
- */
-export async function createAssignment(
-  classId: number,
-  request: Omit<CreateAssignmentRequest, "classId">,
-): Promise<Assignment> {
-  const response = await apiClient.post<{
-    success: boolean;
-    message?: string;
-    assignment?: Assignment;
-  }>(`/classes/${classId}/assignments`, request);
-
-  if (response.error || !response.data?.success || !response.data.assignment) {
-    throw new Error(
-      response.error || response.data?.message || "Failed to create assignment",
-    );
-  }
-
-  return response.data.assignment;
-}
-
-/**
- * Updates an assignment
- */
-export async function updateAssignment(
-  assignmentId: number,
-  request: UpdateAssignmentRequest,
-): Promise<Assignment> {
-  const response = await apiClient.put<{
-    success: boolean;
-    message?: string;
-    assignment?: Assignment;
-  }>(`/assignments/${assignmentId}`, request);
-
-  if (response.error || !response.data?.success || !response.data.assignment) {
-    throw new Error(
-      response.error || response.data?.message || "Failed to update assignment",
-    );
-  }
-
-  return response.data.assignment;
-}
-
-/**
- * Deletes an assignment
- */
-export async function deleteAssignment(
-  assignmentId: number,
-  teacherId: number,
-): Promise<void> {
-  const response = await apiClient.delete<DeleteResponse>(
-    `/assignments/${assignmentId}?teacherId=${teacherId}`,
-  );
-
-  if (response.error || !response.data?.success) {
-    throw new Error(
-      response.error || response.data?.message || "Failed to delete assignment",
-    );
-  }
 }
 
 /**

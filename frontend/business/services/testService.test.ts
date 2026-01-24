@@ -2,11 +2,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import * as testService from "./testService";
 import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 import * as testNormalization from "@/shared/utils/testNormalization";
 import type { RawTestResult } from "@/shared/types/testCase";
 
 // Mock dependencies
 vi.mock("@/data/repositories/testCaseRepository");
+vi.mock("@/data/repositories/assignmentRepository");
 vi.mock("@/shared/utils/testNormalization");
 
 describe("testService", () => {
@@ -141,7 +143,7 @@ describe("testService", () => {
     };
 
     it("fetches results successfully", async () => {
-      vi.mocked(testCaseRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
         data: {
           success: true,
           message: "",
@@ -153,7 +155,7 @@ describe("testService", () => {
       const result =
         await testService.getTestResultsForSubmission(mockSubmissionId);
 
-      expect(testCaseRepository.getTestResults).toHaveBeenCalledWith(
+      expect(assignmentRepository.getTestResults).toHaveBeenCalledWith(
         mockSubmissionId,
       );
       expect(result.passed).toBe(2);
@@ -162,7 +164,7 @@ describe("testService", () => {
     });
 
     it("throws error when fetch fails", async () => {
-      vi.mocked(testCaseRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
         error: "Network error",
         status: 400,
       });
@@ -173,7 +175,7 @@ describe("testService", () => {
     });
 
     it("throws error when API returns unsuccessful status", async () => {
-      vi.mocked(testCaseRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
         data: {
           success: false,
           message: "Results not found",
@@ -187,7 +189,7 @@ describe("testService", () => {
     });
 
     it("throws error when data is missing", async () => {
-      vi.mocked(testCaseRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
         data: {
           success: true,
           message: "",

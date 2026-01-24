@@ -1,4 +1,5 @@
 import * as classRepository from "@/data/repositories/classRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 import {
   validateCreateAssignmentData,
   validateUpdateAssignmentData,
@@ -243,7 +244,7 @@ export async function createAssignment(
   validateId(createAssignmentData.teacherId, "teacher");
 
   // Pass directly to repository
-  return await classRepository.createAssignment(createAssignmentData.classId, {
+  return await assignmentRepository.createAssignment(createAssignmentData.classId, {
     teacherId: createAssignmentData.teacherId,
     assignmentName: createAssignmentData.assignmentName.trim(),
     description: createAssignmentData.description.trim(),
@@ -281,7 +282,7 @@ export async function updateAssignment(
   validateUpdateAssignmentData(updateAssignmentData);
 
   // Pass directly to repository (backend uses camelCase)
-  return await classRepository.updateAssignment(assignmentId, {
+  return await assignmentRepository.updateAssignment(assignmentId, {
     teacherId: updateAssignmentData.teacherId,
     assignmentName: updateAssignmentData.assignmentName?.trim(),
     description: updateAssignmentData.description?.trim(),
@@ -317,7 +318,7 @@ export async function deleteAssignment(
   validateId(assignmentId, "assignment");
   validateId(teacherId, "teacher");
 
-  await classRepository.deleteAssignment(assignmentId, teacherId);
+  await assignmentRepository.deleteAssignment(assignmentId, teacherId);
 }
 
 /**

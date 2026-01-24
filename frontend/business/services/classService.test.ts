@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import * as classService from "@/business/services/classService";
 import * as classRepository from "@/data/repositories/classRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 import type { ISODateString } from "@/shared/types/class";
 
-// Mock the repository
+// Mock the repositories
 vi.mock("@/data/repositories/classRepository");
+vi.mock("@/data/repositories/assignmentRepository");
 
 // Helper to create ISO date string
 const toISO = (date: Date): ISODateString =>
@@ -356,13 +358,13 @@ describe("classService", () => {
 
   describe("deleteAssignment", () => {
     it("deletes an assignment successfully", async () => {
-      vi.mocked(classRepository.deleteAssignment).mockResolvedValue(undefined);
+      vi.mocked(assignmentRepository.deleteAssignment).mockResolvedValue(undefined);
 
       await expect(
         classService.deleteAssignment(1, 5),
       ).resolves.toBeUndefined();
 
-      expect(classRepository.deleteAssignment).toHaveBeenCalledWith(1, 5);
+      expect(assignmentRepository.deleteAssignment).toHaveBeenCalledWith(1, 5);
     });
 
     it("throws error for invalid assignment ID", async () => {

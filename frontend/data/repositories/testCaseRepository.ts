@@ -1,9 +1,4 @@
 import { apiClient, type ApiResponse } from "@/data/api/apiClient";
-
-// =============================================================================
-// Types
-// =============================================================================
-
 import type {
   TestCase,
   CreateTestCaseRequest,
@@ -12,6 +7,12 @@ import type {
   TestExecutionSummary,
   RawTestResult,
 } from "@/shared/types/testCase";
+import type {
+  TestCaseListResponse,
+  TestCaseResponse,
+  TestResultsResponse,
+  SuccessResponse,
+} from "@/data/api/types";
 
 export type {
   TestCase,
@@ -20,40 +21,11 @@ export type {
   TestResultDetail,
   TestExecutionSummary,
   RawTestResult,
+  TestCaseListResponse,
+  TestCaseResponse,
+  TestResultsResponse,
+  SuccessResponse,
 };
-
-// Response types matching backend
-interface TestCaseListResponse {
-  success: boolean;
-  message: string;
-  testCases: TestCase[];
-}
-
-interface TestCaseResponse {
-  success: boolean;
-  message: string;
-  testCase: TestCase;
-}
-
-interface TestResultsResponse {
-  success: boolean;
-  message: string;
-  data: {
-    results: RawTestResult[];
-    passedCount: number;
-    totalCount: number;
-    score: number;
-  };
-}
-
-interface SuccessResponse {
-  success: boolean;
-  message: string;
-}
-
-// =============================================================================
-// Test Case API
-// =============================================================================
 
 /**
  * Get all test cases for an assignment
@@ -128,28 +100,4 @@ export async function runTestsPreview(
     language,
     assignmentId,
   });
-}
-
-/**
- * Get test results for a submission
- * Returns the raw backend response (normalization happens in a service/utility)
- */
-export async function getTestResults(
-  submissionId: number,
-): Promise<ApiResponse<TestResultsResponse>> {
-  return apiClient.get<TestResultsResponse>(
-    `/submissions/${submissionId}/test-results`,
-  );
-}
-
-/**
- * Run tests for a submission
- */
-export async function runTestsForSubmission(
-  submissionId: number,
-): Promise<ApiResponse<TestResultsResponse>> {
-  return apiClient.post<TestResultsResponse>(
-    `/submissions/${submissionId}/run-tests`,
-    {},
-  );
 }

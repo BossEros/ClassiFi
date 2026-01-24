@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
+import * as assignmentRepository from "./assignmentRepository";
 import * as testCaseRepository from "./testCaseRepository";
 import { apiClient } from "@/data/api/apiClient";
 
@@ -291,7 +291,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.getTestResults(1);
+      const result = await assignmentRepository.getTestResults(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/submissions/1/test-results");
       expect(result.data?.data.passedCount).toBe(3);
@@ -303,7 +303,7 @@ describe("testCaseRepository", () => {
         status: 404,
       });
 
-      const result = await testCaseRepository.getTestResults(999);
+      const result = await assignmentRepository.getTestResults(999);
 
       expect(result.error).toBe("Submission not found");
     });
@@ -314,7 +314,7 @@ describe("testCaseRepository", () => {
         status: 500,
       });
 
-      const result = await testCaseRepository.getTestResults(1);
+      const result = await assignmentRepository.getTestResults(1);
 
       expect(result.error).toBe("Internal server error");
     });
@@ -334,7 +334,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.runTestsForSubmission(1);
+      const result = await assignmentRepository.runTestsForSubmission(1);
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/submissions/1/run-tests",
@@ -349,7 +349,7 @@ describe("testCaseRepository", () => {
         status: 404,
       });
 
-      const result = await testCaseRepository.runTestsForSubmission(999);
+      const result = await assignmentRepository.runTestsForSubmission(999);
 
       expect(result.error).toBe("Submission not found");
     });
@@ -360,7 +360,7 @@ describe("testCaseRepository", () => {
         status: 503,
       });
 
-      const result = await testCaseRepository.runTestsForSubmission(1);
+      const result = await assignmentRepository.runTestsForSubmission(1);
 
       expect(result.error).toBe("Execution service unavailable");
     });
@@ -375,7 +375,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.runTestsForSubmission(1);
+      const result = await assignmentRepository.runTestsForSubmission(1);
 
       expect(result.data?.success).toBe(false);
       expect(result.data?.message).toBe("Runtime error: segmentation fault");

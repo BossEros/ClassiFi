@@ -9,29 +9,9 @@ import type {
   DeleteAccountResponse,
 } from "@/shared/types/auth";
 
-// ============================================================================
-// Helpers
-// ============================================================================
+// Export helper for external use
+export { getStoredUser };
 
-/**
- * Safely parse JSON from a string, returning null on error.
- */
-function safeJsonParse<T>(json: string | null): T | null {
-  if (!json) return null;
-  try {
-    return JSON.parse(json) as T;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Get the current stored user from localStorage safely.
- */
-function getStoredUser(): { email: string } | null {
-  const storedUser = localStorage.getItem("user");
-  return safeJsonParse<{ email: string }>(storedUser);
-}
 
 // ============================================================================
 // Auth Repository Functions
@@ -53,10 +33,8 @@ export async function login(credentials: LoginRequest): Promise<AuthResponse> {
     return { success: false, message: "No session created" };
   }
 
-  // 2. Fetch User Profile from Backend using the new token
-  // The token is now in the Supabase session, so apiClient will pick it up automatically
-  // But we can also pass it explicitly if needed (verifyToken endpoint expects it in query or body?)
-  // Looking at authRepository.verifyToken below, it sends it in the query string.
+  // 2. Fetch User Profile from Backend
+  // The apiClient will automatically use the token from the Supabase session
 
   const token = data.session.access_token;
 
@@ -277,5 +255,26 @@ export async function deleteAccount(email: string, password: string) {
   };
 }
 
-// Export helper for external use
-export { getStoredUser };
+// ============================================================================
+// Helpers
+// ============================================================================
+
+/**
+ * Safely parse JSON from a string, returning null on error.
+ */
+function safeJsonParse<T>(json: string | null): T | null {
+  if (!json) return null;
+  try {
+    return JSON.parse(json) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get the current stored user from localStorage safely.
+ */
+function getStoredUser(): { email: string } | null {
+  const storedUser = localStorage.getItem("user");
+  return safeJsonParse<{ email: string }>(storedUser);
+}

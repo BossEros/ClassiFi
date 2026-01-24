@@ -26,6 +26,9 @@ export async function getAllUsers(options: {
   status?: string;
 }): Promise<PaginatedResponse<AdminUser>> {
   const params = new URLSearchParams();
+
+  // Build query parameters for user filtering and pagination
+  // Only add parameters to the URL if they have values to avoid empty query strings
   if (options.page) params.set("page", options.page.toString());
   if (options.limit) params.set("limit", options.limit.toString());
   if (options.search) params.set("search", options.search);
@@ -184,6 +187,9 @@ export async function getAllClasses(options: {
   academicYear?: string;
 }): Promise<PaginatedResponse<AdminClass>> {
   const params = new URLSearchParams();
+
+  // Build query parameters for class filtering and pagination
+  // Only add parameters to the URL if they have values to avoid empty query strings
   if (options.page) params.set("page", options.page.toString());
   if (options.limit) params.set("limit", options.limit.toString());
   if (options.search) params.set("search", options.search);
@@ -293,8 +299,7 @@ export async function archiveClass(
 }
 
 export async function getAllTeachers(): Promise<AdminTeachersResponse> {
-  const response =
-    await apiClient.get<AdminTeachersResponse>("/admin/teachers");
+  const response = await apiClient.get<AdminTeachersResponse>("/admin/teachers");
 
   if (response.error) {
     throw new Error(response.error);

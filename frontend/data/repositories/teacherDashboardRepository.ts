@@ -1,46 +1,15 @@
 import { apiClient } from '@/data/api/apiClient'
+import type {
+  TeacherDashboardResponse,
+  TeacherDashboardClassListResponse,
+  TeacherDashboardTaskListResponse,
+} from '@/data/api/types'
 
-interface ClassResponse {
-  id: number
-  teacherId: number
-  className: string
-  classCode: string
-  description: string | null
-  isActive: boolean
-  createdAt: string
-}
-
-interface TaskResponse {
-  id: number
-  classId: number
-  assignmentName: string
-  description: string | null
-  programmingLanguage: string
-  deadline: string
-  allowResubmission: boolean
-  isActive: boolean
-  createdAt: string
-  className?: string
-  submissionCount?: number
-}
-
-interface TeacherDashboardResponse {
-  success: boolean
-  message?: string
-  recentClasses: ClassResponse[]
-  pendingTasks: TaskResponse[]
-}
-
-interface ClassListResponse {
-  success: boolean
-  message?: string
-  classes: ClassResponse[]
-}
-
-interface TaskListResponse {
-  success: boolean
-  message?: string
-  tasks: TaskResponse[]
+// Export response types for consumers
+export type {
+  TeacherDashboardResponse,
+  TeacherDashboardClassListResponse,
+  TeacherDashboardTaskListResponse,
 }
 
 // ============================================================================
@@ -71,8 +40,8 @@ export async function getDashboardData(
  * Fetches recent classes for a teacher
  * @returns Raw backend response data
  */
-export async function getRecentClasses(teacherId: number, limit: number = 5): Promise<ClassListResponse> {
-  const response = await apiClient.get<ClassListResponse>(
+export async function getRecentClasses(teacherId: number, limit: number = 5): Promise<TeacherDashboardClassListResponse> {
+  const response = await apiClient.get<TeacherDashboardClassListResponse>(
     `/teacher/dashboard/${teacherId}/classes?limit=${limit}`
   )
 
@@ -87,8 +56,8 @@ export async function getRecentClasses(teacherId: number, limit: number = 5): Pr
  * Fetches pending tasks for a teacher
  * @returns Raw backend response data
  */
-export async function getPendingTasks(teacherId: number, limit: number = 10): Promise<TaskListResponse> {
-  const response = await apiClient.get<TaskListResponse>(
+export async function getPendingTasks(teacherId: number, limit: number = 10): Promise<TeacherDashboardTaskListResponse> {
+  const response = await apiClient.get<TeacherDashboardTaskListResponse>(
     `/teacher/dashboard/${teacherId}/tasks?limit=${limit}`
   )
 
@@ -99,5 +68,3 @@ export async function getPendingTasks(teacherId: number, limit: number = 10): Pr
   return response.data
 }
 
-// Export response types for consumers
-export type { TeacherDashboardResponse, ClassListResponse, TaskListResponse, ClassResponse, TaskResponse }

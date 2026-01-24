@@ -1,4 +1,5 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 import { validateId } from "@/shared/utils/validators";
 import type {
   TestCase,
@@ -131,7 +132,7 @@ export async function getTestResults(
 ): Promise<TestExecutionSummary | null> {
   validateId(submissionId, "submission");
 
-  const resultsResponse = await testCaseRepository.getTestResults(submissionId);
+  const resultsResponse = await assignmentRepository.getTestResults(submissionId);
 
   if (resultsResponse.error) throw new Error(resultsResponse.error);
 

@@ -1,11 +1,10 @@
 import { describe, it, expect } from "vitest";
-
 import {
   mapSubmission,
   mapSubmissionWithAssignment,
   mapSubmissionWithStudent,
-  type SubmissionDTO,
 } from "@/data/mappers";
+import type { SubmissionDTO } from "@/data/api/types";
 
 describe("mappers", () => {
   // ============================================================================

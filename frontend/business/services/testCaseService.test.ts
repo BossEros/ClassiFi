@@ -2,9 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import * as testCaseService from "@/business/services/testCaseService";
 import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 
-// Mock the repository
+// Mock the repositories
 vi.mock("@/data/repositories/testCaseRepository");
+vi.mock("@/data/repositories/assignmentRepository");
 
 describe("testCaseService", () => {
   beforeEach(() => {
@@ -241,14 +243,14 @@ describe("testCaseService", () => {
     };
 
     it("returns normalized test results", async () => {
-      vi.mocked(testCaseRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
         data: mockRawResults,
         status: 200,
       });
 
       const result = await testCaseService.getTestResults(1);
 
-      expect(testCaseRepository.getTestResults).toHaveBeenCalledWith(1);
+      expect(assignmentRepository.getTestResults).toHaveBeenCalledWith(1);
       expect(result).not.toBeNull();
       expect(result!.passed).toBe(3);
       expect(result!.total).toBe(5);
@@ -263,7 +265,7 @@ describe("testCaseService", () => {
     });
 
     it("throws error when API fails", async () => {
-      vi.mocked(testCaseRepository.getTestResults).mockResolvedValue({
+      vi.mocked(assignmentRepository.getTestResults).mockResolvedValue({
         error: "Not found",
         status: 404,
       });
