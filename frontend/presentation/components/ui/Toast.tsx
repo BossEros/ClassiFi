@@ -30,30 +30,45 @@ const variantStyles: Record<ToastVariant, { bg: string; icon: React.ReactNode }>
 export function Toast({ id, message, variant = 'success', duration = 4000, onDismiss }: ToastProps) {
   const [isVisible, setIsVisible] = React.useState(false)
   const [isLeaving, setIsLeaving] = React.useState(false)
+  const timerRef = React.useRef<ReturnType<typeof setTimeout>>(null)
+
+  const handleDismiss = React.useCallback(() => {
+    setIsLeaving(true)
+    setTimeout(() => {
+      onDismiss(id)
+    }, 300) // Match animation duration
+  }, [id, onDismiss])
+
+  const startTimer = React.useCallback(() => {
+    // Clear any existing timer first to be safe
+    if (timerRef.current) clearTimeout(timerRef.current)
+
+    timerRef.current = setTimeout(() => {
+      handleDismiss()
+    }, duration)
+  }, [duration, handleDismiss])
+
+  const clearTimer = React.useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+  }, [])
 
   React.useEffect(() => {
     // Trigger enter animation
     const enterTimer = setTimeout(() => setIsVisible(true), 10)
 
-    // Auto-dismiss after duration
-    const dismissTimer = setTimeout(() => {
-      handleDismiss()
-    }, duration)
+    // Start auto-dismiss timer
+    startTimer()
 
     return () => {
       clearTimeout(enterTimer)
-      clearTimeout(dismissTimer)
+      clearTimer()
     }
-  }, [duration])
-
-  const handleDismiss = () => {
-    setIsLeaving(true)
-    setTimeout(() => {
-      onDismiss(id)
-    }, 300) // Match animation duration
-  }
+  }, [startTimer, clearTimer])
 
   const styles = variantStyles[variant]
+  const isError = variant === 'error'
 
   return (
     <div
@@ -65,7 +80,10 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
           ? 'translate-x-0 opacity-100'
           : 'translate-x-full opacity-0'
       )}
-      role="alert"
+      role={isError ? 'alert' : 'status'}
+      aria-live={isError ? 'assertive' : 'polite'}
+      onMouseEnter={clearTimer}
+      onMouseLeave={startTimer}
     >
       {styles.icon}
       <p className="text-sm text-white font-medium flex-1">{message}</p>
