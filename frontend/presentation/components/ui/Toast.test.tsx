@@ -16,8 +16,15 @@ describe("Toast", () => {
       expect(screen.getByText("Test message")).toBeInTheDocument();
     });
 
-    it("renders with role alert", () => {
-      render(<Toast id="1" message="Alert" onDismiss={vi.fn()} />);
+    it("renders with role status for default variant", () => {
+      render(<Toast id="1" message="Status" onDismiss={vi.fn()} />);
+      expect(screen.getByRole("status")).toBeInTheDocument();
+    });
+
+    it("renders with role alert for error variant", () => {
+      render(
+        <Toast id="1" message="Alert" variant="error" onDismiss={vi.fn()} />,
+      );
       expect(screen.getByRole("alert")).toBeInTheDocument();
     });
 
@@ -32,8 +39,8 @@ describe("Toast", () => {
   describe("Variants", () => {
     it("renders success variant by default", () => {
       render(<Toast id="1" message="Success" onDismiss={vi.fn()} />);
-      const alert = screen.getByRole("alert");
-      expect(alert.className).toContain("bg-green");
+      const status = screen.getByRole("status");
+      expect(status.className).toContain("bg-green");
     });
 
     it("renders error variant", () => {
@@ -48,8 +55,8 @@ describe("Toast", () => {
       render(
         <Toast id="1" message="Info" variant="info" onDismiss={vi.fn()} />,
       );
-      const alert = screen.getByRole("alert");
-      expect(alert.className).toContain("bg-blue");
+      const status = screen.getByRole("status");
+      expect(status.className).toContain("bg-blue");
     });
   });
 
@@ -59,6 +66,36 @@ describe("Toast", () => {
       render(<Toast id="1" message="Test" onDismiss={onDismiss} />);
 
       // Fast-forward past default duration (4000ms) + animation time (300ms)
+      await act(async () => {
+        vi.advanceTimersByTime(4300);
+      });
+
+      expect(onDismiss).toHaveBeenCalledWith("1");
+    });
+
+    it("pauses auto-dismiss on hover", async () => {
+      const onDismiss = vi.fn();
+      render(<Toast id="1" message="Test" onDismiss={onDismiss} />);
+
+      // Advance halfway
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      // Hover
+      fireEvent.mouseEnter(screen.getByRole("status"));
+
+      // Advance past original end time
+      await act(async () => {
+        vi.advanceTimersByTime(3000);
+      });
+
+      expect(onDismiss).not.toHaveBeenCalled();
+
+      // Unhover
+      fireEvent.mouseLeave(screen.getByRole("status"));
+
+      // Advance full duration again (since logic resets timer)
       await act(async () => {
         vi.advanceTimersByTime(4300);
       });
@@ -140,9 +177,11 @@ describe("ToastContainer", () => {
     ];
     render(<ToastContainer toasts={toasts} onDismiss={vi.fn()} />);
 
-    const alerts = screen.getAllByRole("alert");
-    expect(alerts[0].className).toContain("bg-green");
-    expect(alerts[1].className).toContain("bg-red");
+    const statusToast = screen.getByRole("status");
+    const alertToast = screen.getByRole("alert");
+
+    expect(statusToast.className).toContain("bg-green");
+    expect(alertToast.className).toContain("bg-red");
   });
 
   beforeEach(() => {
