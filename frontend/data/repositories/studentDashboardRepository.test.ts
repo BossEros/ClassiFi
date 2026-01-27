@@ -39,10 +39,10 @@ describe("studentDashboardRepository", () => {
   };
 
   // ============================================================================
-  // getDashboardData Tests
+  // getCompleteDashboardDataForStudentId Tests
   // ============================================================================
 
-  describe("getDashboardData", () => {
+  describe("getCompleteDashboardDataForStudentId", () => {
     const mockDashboardResponse = {
       success: true,
       enrolledClasses: [mockClass],
@@ -57,7 +57,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await studentDashboardRepository.getDashboardData(1);
+      const result = await studentDashboardRepository.getCompleteDashboardDataForStudentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/student/dashboard/1?enrolledClassesLimit=12&pendingAssignmentsLimit=10",
@@ -71,7 +71,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      await studentDashboardRepository.getDashboardData(1, 20, 15);
+      await studentDashboardRepository.getCompleteDashboardDataForStudentId(1, 20, 15);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/student/dashboard/1?enrolledClassesLimit=20&pendingAssignmentsLimit=15",
@@ -85,7 +85,7 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.getDashboardData(999),
+        studentDashboardRepository.getCompleteDashboardDataForStudentId(999),
       ).rejects.toThrow("Student not found");
     });
 
@@ -96,16 +96,16 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.getDashboardData(1),
+        studentDashboardRepository.getCompleteDashboardDataForStudentId(1),
       ).rejects.toThrow("Failed to fetch dashboard data");
     });
   });
 
   // ============================================================================
-  // getEnrolledClasses Tests
+  // getAllEnrolledClassesForStudentId Tests
   // ============================================================================
 
-  describe("getEnrolledClasses", () => {
+  describe("getAllEnrolledClassesForStudentId", () => {
     const mockResponse = {
       success: true,
       classes: [mockClass],
@@ -117,7 +117,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await studentDashboardRepository.getEnrolledClasses(1);
+      const result = await studentDashboardRepository.getAllEnrolledClassesForStudentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/student/dashboard/1/classes",
@@ -131,7 +131,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      await studentDashboardRepository.getEnrolledClasses(1, 5);
+      await studentDashboardRepository.getAllEnrolledClassesForStudentId(1, 5);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/student/dashboard/1/classes?limit=5",
@@ -145,7 +145,7 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.getEnrolledClasses(1),
+        studentDashboardRepository.getAllEnrolledClassesForStudentId(1),
       ).rejects.toThrow("Unauthorized");
     });
 
@@ -156,16 +156,16 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.getEnrolledClasses(1),
+        studentDashboardRepository.getAllEnrolledClassesForStudentId(1),
       ).rejects.toThrow("Failed to fetch enrolled classes");
     });
   });
 
   // ============================================================================
-  // getPendingAssignments Tests
+  // getAllPendingAssignmentsForStudentId Tests
   // ============================================================================
 
-  describe("getPendingAssignments", () => {
+  describe("getAllPendingAssignmentsForStudentId", () => {
     const mockResponse = {
       success: true,
       assignments: [mockAssignment],
@@ -177,7 +177,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await studentDashboardRepository.getPendingAssignments(1);
+      const result = await studentDashboardRepository.getAllPendingAssignmentsForStudentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/student/dashboard/1/assignments?limit=10",
@@ -191,7 +191,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      await studentDashboardRepository.getPendingAssignments(1, 20);
+      await studentDashboardRepository.getAllPendingAssignmentsForStudentId(1, 20);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/student/dashboard/1/assignments?limit=20",
@@ -205,7 +205,7 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.getPendingAssignments(1),
+        studentDashboardRepository.getAllPendingAssignmentsForStudentId(1),
       ).rejects.toThrow("Server error");
     });
 
@@ -216,16 +216,16 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.getPendingAssignments(1),
+        studentDashboardRepository.getAllPendingAssignmentsForStudentId(1),
       ).rejects.toThrow("Failed to fetch pending assignments");
     });
   });
 
   // ============================================================================
-  // joinClass Tests
+  // enrollStudentInClassWithCode Tests
   // ============================================================================
 
-  describe("joinClass", () => {
+  describe("enrollStudentInClassWithCode", () => {
     const mockJoinResponse = {
       success: true,
       message: "Successfully joined class",
@@ -238,7 +238,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await studentDashboardRepository.joinClass(1, "CS101");
+      const result = await studentDashboardRepository.enrollStudentInClassWithCode(1, "CS101");
 
       expect(apiClient.post).toHaveBeenCalledWith("/student/dashboard/join", {
         studentId: 1,
@@ -254,7 +254,7 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.joinClass(1, "INVALID"),
+        studentDashboardRepository.enrollStudentInClassWithCode(1, "INVALID"),
       ).rejects.toThrow("Class not found");
     });
 
@@ -265,7 +265,7 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.joinClass(1, "CS101"),
+        studentDashboardRepository.enrollStudentInClassWithCode(1, "CS101"),
       ).rejects.toThrow("Already enrolled in this class");
     });
 
@@ -276,16 +276,16 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.joinClass(1, "CS101"),
+        studentDashboardRepository.enrollStudentInClassWithCode(1, "CS101"),
       ).rejects.toThrow("Failed to join class");
     });
   });
 
   // ============================================================================
-  // leaveClass Tests
+  // unenrollStudentFromClassById Tests
   // ============================================================================
 
-  describe("leaveClass", () => {
+  describe("unenrollStudentFromClassById", () => {
     const mockLeaveResponse = {
       success: true,
       message: "Successfully left the class",
@@ -297,7 +297,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await studentDashboardRepository.leaveClass(1, 1);
+      const result = await studentDashboardRepository.unenrollStudentFromClassById(1, 1);
 
       expect(apiClient.post).toHaveBeenCalledWith("/student/dashboard/leave", {
         studentId: 1,
@@ -313,7 +313,7 @@ describe("studentDashboardRepository", () => {
       });
 
       await expect(
-        studentDashboardRepository.leaveClass(1, 999),
+        studentDashboardRepository.unenrollStudentFromClassById(1, 999),
       ).rejects.toThrow("Not enrolled in this class");
     });
 
@@ -323,7 +323,7 @@ describe("studentDashboardRepository", () => {
         status: 500,
       });
 
-      await expect(studentDashboardRepository.leaveClass(1, 1)).rejects.toThrow(
+      await expect(studentDashboardRepository.unenrollStudentFromClassById(1, 1)).rejects.toThrow(
         "Internal server error",
       );
     });
@@ -334,7 +334,7 @@ describe("studentDashboardRepository", () => {
         status: 200,
       });
 
-      await expect(studentDashboardRepository.leaveClass(1, 1)).rejects.toThrow(
+      await expect(studentDashboardRepository.unenrollStudentFromClassById(1, 1)).rejects.toThrow(
         "Failed to leave class",
       );
     });

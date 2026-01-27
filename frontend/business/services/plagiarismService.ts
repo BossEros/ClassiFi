@@ -28,7 +28,7 @@ export async function analyzeAssignmentSubmissions(
   validateId(assignmentId, "assignment");
 
   const analysisResponse =
-    await plagiarismRepository.analyzeAssignmentSubmissions(assignmentId);
+    await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(assignmentId);
 
   if (analysisResponse.error) {
     throw new Error(analysisResponse.error);
@@ -54,7 +54,7 @@ export async function getResultDetails(
 ): Promise<ResultDetailsResponse> {
   validateId(resultId, "result");
 
-  const detailsResponse = await plagiarismRepository.getResultDetails(resultId);
+  const detailsResponse = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(resultId);
 
   if (detailsResponse.error) {
     throw new Error(detailsResponse.error);

@@ -44,10 +44,10 @@ describe("teacherDashboardRepository", () => {
   };
 
   // ============================================================================
-  // getDashboardData Tests
+  // getCompleteDashboardDataForTeacherId Tests
   // ============================================================================
 
-  describe("getDashboardData", () => {
+  describe("getCompleteDashboardDataForTeacherId", () => {
     const mockDashboardResponse = {
       success: true,
       recentClasses: [mockClass],
@@ -60,7 +60,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await teacherDashboardRepository.getDashboardData(1);
+      const result = await teacherDashboardRepository.getCompleteDashboardDataForTeacherId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/teacher/dashboard/1?recentClassesLimit=12&pendingTasksLimit=10",
@@ -74,7 +74,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      await teacherDashboardRepository.getDashboardData(1, 20, 15);
+      await teacherDashboardRepository.getCompleteDashboardDataForTeacherId(1, 20, 15);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/teacher/dashboard/1?recentClassesLimit=20&pendingTasksLimit=15",
@@ -88,7 +88,7 @@ describe("teacherDashboardRepository", () => {
       });
 
       await expect(
-        teacherDashboardRepository.getDashboardData(999),
+        teacherDashboardRepository.getCompleteDashboardDataForTeacherId(999),
       ).rejects.toThrow("Teacher not found");
     });
 
@@ -99,16 +99,16 @@ describe("teacherDashboardRepository", () => {
       });
 
       await expect(
-        teacherDashboardRepository.getDashboardData(1),
+        teacherDashboardRepository.getCompleteDashboardDataForTeacherId(1),
       ).rejects.toThrow("Failed to fetch dashboard data");
     });
   });
 
   // ============================================================================
-  // getRecentClasses Tests
+  // getRecentClassesForTeacherId Tests
   // ============================================================================
 
-  describe("getRecentClasses", () => {
+  describe("getRecentClassesForTeacherId", () => {
     const mockResponse = {
       success: true,
       classes: [mockClass],
@@ -120,7 +120,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await teacherDashboardRepository.getRecentClasses(1);
+      const result = await teacherDashboardRepository.getRecentClassesForTeacherId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/teacher/dashboard/1/classes?limit=5",
@@ -134,7 +134,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      await teacherDashboardRepository.getRecentClasses(1, 10);
+      await teacherDashboardRepository.getRecentClassesForTeacherId(1, 10);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/teacher/dashboard/1/classes?limit=10",
@@ -148,7 +148,7 @@ describe("teacherDashboardRepository", () => {
       });
 
       await expect(
-        teacherDashboardRepository.getRecentClasses(1),
+        teacherDashboardRepository.getRecentClassesForTeacherId(1),
       ).rejects.toThrow("Unauthorized");
     });
 
@@ -159,7 +159,7 @@ describe("teacherDashboardRepository", () => {
       });
 
       await expect(
-        teacherDashboardRepository.getRecentClasses(1),
+        teacherDashboardRepository.getRecentClassesForTeacherId(1),
       ).rejects.toThrow("Failed to fetch recent classes");
     });
 
@@ -169,17 +169,17 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await teacherDashboardRepository.getRecentClasses(1);
+      const result = await teacherDashboardRepository.getRecentClassesForTeacherId(1);
 
       expect(result.classes).toEqual([]);
     });
   });
 
   // ============================================================================
-  // getPendingTasks Tests
+  // getPendingTasksForTeacherId Tests
   // ============================================================================
 
-  describe("getPendingTasks", () => {
+  describe("getPendingTasksForTeacherId", () => {
     const mockResponse = {
       success: true,
       tasks: [mockTask],
@@ -191,7 +191,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await teacherDashboardRepository.getPendingTasks(1);
+      const result = await teacherDashboardRepository.getPendingTasksForTeacherId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/teacher/dashboard/1/tasks?limit=10",
@@ -205,7 +205,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      await teacherDashboardRepository.getPendingTasks(1, 20);
+      await teacherDashboardRepository.getPendingTasksForTeacherId(1, 20);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/teacher/dashboard/1/tasks?limit=20",
@@ -219,7 +219,7 @@ describe("teacherDashboardRepository", () => {
       });
 
       await expect(
-        teacherDashboardRepository.getPendingTasks(1),
+        teacherDashboardRepository.getPendingTasksForTeacherId(1),
       ).rejects.toThrow("Server error");
     });
 
@@ -230,7 +230,7 @@ describe("teacherDashboardRepository", () => {
       });
 
       await expect(
-        teacherDashboardRepository.getPendingTasks(1),
+        teacherDashboardRepository.getPendingTasksForTeacherId(1),
       ).rejects.toThrow("Failed to fetch pending tasks");
     });
 
@@ -240,7 +240,7 @@ describe("teacherDashboardRepository", () => {
         status: 200,
       });
 
-      const result = await teacherDashboardRepository.getPendingTasks(1);
+      const result = await teacherDashboardRepository.getPendingTasksForTeacherId(1);
 
       expect(result.tasks[0].submissionCount).toBe(15);
     });

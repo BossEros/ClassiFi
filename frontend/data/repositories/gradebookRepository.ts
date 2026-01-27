@@ -18,136 +18,114 @@ import type {
 // Class Gradebook Functions
 // ============================================================================
 
-/**
- * Fetches the complete gradebook for a class
- */
-export async function getClassGradebook(
+export async function getCompleteGradebookForClassId(
   classId: number
 ): Promise<ClassGradebook> {
-  const response = await apiClient.get<ClassGradebookResponse>(
+  const apiResponse = await apiClient.get<ClassGradebookResponse>(
     `/gradebook/classes/${classId}`
   );
 
-  if (response.error || !response.data?.success) {
-    throw new Error(response.error || "Failed to fetch gradebook");
+  if (apiResponse.error || !apiResponse.data?.success) {
+    throw new Error(apiResponse.error || "Failed to fetch gradebook");
   }
 
   return {
-    assignments: response.data.assignments,
-    students: response.data.students,
+    assignments: apiResponse.data.assignments,
+    students: apiResponse.data.students,
   };
 }
 
-/**
- * Exports the gradebook as CSV
- * Returns the CSV content as a blob
- */
-export async function exportGradebookCSV(classId: number): Promise<Blob> {
-  const response = await apiClient.get<string>(
+export async function exportGradebookAsCSVForClassId(classId: number): Promise<Blob> {
+  const apiResponse = await apiClient.get<string>(
     `/gradebook/classes/${classId}/export`,
     { responseType: "blob" }
   );
 
-  if (response.error) {
-    throw new Error(response.error || "Failed to export gradebook");
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error || "Failed to export gradebook");
   }
 
-  return new Blob([response.data as unknown as string], { type: "text/csv" });
+  return new Blob([apiResponse.data as unknown as string], { type: "text/csv" });
 }
 
-/**
- * Downloads the gradebook as a CSV file
- */
-export async function downloadGradebookCSV(
+export async function downloadGradebookCSVFileForClassId(
   classId: number,
-  filename?: string
+  customFilename?: string
 ): Promise<void> {
-  const blob = await exportGradebookCSV(classId);
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename || `gradebook-class-${classId}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  const csvBlobData = await exportGradebookAsCSVForClassId(classId);
+  const downloadUrl = window.URL.createObjectURL(csvBlobData);
+  const downloadLinkElement = document.createElement("a");
+  downloadLinkElement.href = downloadUrl;
+  downloadLinkElement.download = customFilename || `gradebook-class-${classId}.csv`;
+  document.body.appendChild(downloadLinkElement);
+  downloadLinkElement.click();
+  document.body.removeChild(downloadLinkElement);
+  window.URL.revokeObjectURL(downloadUrl);
 }
 
-/**
- * Fetches class statistics
- */
-export async function getClassStatistics(
+export async function getStatisticsForClassId(
   classId: number
 ): Promise<ClassStatistics> {
-  const response = await apiClient.get<ClassStatisticsResponse>(
+  const apiResponse = await apiClient.get<ClassStatisticsResponse>(
     `/gradebook/classes/${classId}/statistics`
   );
 
-  if (response.error || !response.data?.success) {
-    throw new Error(response.error || "Failed to fetch class statistics");
+  if (apiResponse.error || !apiResponse.data?.success) {
+    throw new Error(apiResponse.error || "Failed to fetch class statistics");
   }
 
-  return response.data.statistics;
+  return apiResponse.data.statistics;
 }
 
 // ============================================================================
 // Student Grades Functions
 // ============================================================================
 
-/**
- * Fetches all grades for a student across all classes
- */
-export async function getStudentGrades(
+export async function getAllGradesForStudentId(
   studentId: number
 ): Promise<StudentClassGrades[]> {
-  const response = await apiClient.get<StudentGradesResponse>(
+  const apiResponse = await apiClient.get<StudentGradesResponse>(
     `/gradebook/students/${studentId}`
   );
 
-  if (response.error || !response.data?.success) {
-    throw new Error(response.error || "Failed to fetch student grades");
+  if (apiResponse.error || !apiResponse.data?.success) {
+    throw new Error(apiResponse.error || "Failed to fetch student grades");
   }
 
-  return response.data.grades;
+  return apiResponse.data.grades;
 }
 
-/**
- * Fetches grades for a student in a specific class
- */
-export async function getStudentClassGrades(
+export async function getGradesForStudentInSpecificClass(
   studentId: number,
   classId: number
 ): Promise<StudentClassGrades | null> {
-  const response = await apiClient.get<StudentGradesResponse>(
+  const apiResponse = await apiClient.get<StudentGradesResponse>(
     `/gradebook/students/${studentId}/classes/${classId}`
   );
 
-  if (response.error || !response.data?.success) {
-    throw new Error(response.error || "Failed to fetch student class grades");
+  if (apiResponse.error || !apiResponse.data?.success) {
+    throw new Error(apiResponse.error || "Failed to fetch student class grades");
   }
 
-  return response.data.grades[0] ?? null;
+  return apiResponse.data.grades[0] ?? null;
 }
 
-/**
- * Fetches student's rank in a class
- */
-export async function getStudentRank(
+export async function getClassRankForStudentById(
   studentId: number,
   classId: number
 ): Promise<StudentRank> {
-  const response = await apiClient.get<StudentRankResponse>(
+  const apiResponse = await apiClient.get<StudentRankResponse>(
     `/gradebook/students/${studentId}/classes/${classId}/rank`
   );
 
-  if (response.error || !response.data?.success) {
-    throw new Error(response.error || "Failed to fetch student rank");
+  if (apiResponse.error || !apiResponse.data?.success) {
+    throw new Error(apiResponse.error || "Failed to fetch student rank");
   }
 
   return {
-    rank: response.data.rank,
-    totalStudents: response.data.totalStudents,
-    percentile: response.data.percentile,
+    rank: apiResponse.data.rank,
+    totalStudents: apiResponse.data.totalStudents,
+    percentile: apiResponse.data.percentile,
   };
 }
 
@@ -155,40 +133,34 @@ export async function getStudentRank(
 // Grade Override Functions
 // ============================================================================
 
-/**
- * Overrides a grade for a submission
- */
-export async function overrideGrade(
+export async function setGradeOverrideForSubmissionById(
   submissionId: number,
-  grade: number,
-  feedback?: string | null
+  overriddenGradeValue: number,
+  teacherFeedbackText?: string | null
 ): Promise<void> {
-  const body: GradeOverrideRequest = { grade, feedback };
-  const response = await apiClient.post<{ success: boolean; message?: string }>(
+  const requestBody: GradeOverrideRequest = { grade: overriddenGradeValue, feedback: teacherFeedbackText };
+  const apiResponse = await apiClient.post<{ success: boolean; message?: string }>(
     `/gradebook/submissions/${submissionId}/override`,
-    body
+    requestBody
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error || response.data?.message || "Failed to override grade"
+      apiResponse.error || apiResponse.data?.message || "Failed to override grade"
     );
   }
 }
 
-/**
- * Removes a grade override
- */
-export async function removeGradeOverride(submissionId: number): Promise<void> {
-  const response = await apiClient.delete<{
+export async function removeGradeOverrideForSubmissionById(submissionId: number): Promise<void> {
+  const apiResponse = await apiClient.delete<{
     success: boolean;
     message?: string;
   }>(`/gradebook/submissions/${submissionId}/override`);
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error ||
-        response.data?.message ||
+      apiResponse.error ||
+        apiResponse.data?.message ||
         "Failed to remove grade override"
     );
   }
@@ -198,44 +170,38 @@ export async function removeGradeOverride(submissionId: number): Promise<void> {
 // Late Penalty Configuration Functions
 // ============================================================================
 
-/**
- * Fetches late penalty configuration for an assignment
- */
-export async function getLatePenaltyConfig(
+export async function getLatePenaltyConfigurationForAssignmentId(
   assignmentId: number
 ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null }> {
-  const response = await apiClient.get<LatePenaltyConfigResponse>(
+  const apiResponse = await apiClient.get<LatePenaltyConfigResponse>(
     `/gradebook/assignments/${assignmentId}/late-penalty`
   );
 
-  if (response.error || !response.data?.success) {
-    throw new Error(response.error || "Failed to fetch late penalty config");
+  if (apiResponse.error || !apiResponse.data?.success) {
+    throw new Error(apiResponse.error || "Failed to fetch late penalty config");
   }
 
   return {
-    enabled: response.data.enabled,
-    config: response.data.config,
+    enabled: apiResponse.data.enabled,
+    config: apiResponse.data.config,
   };
 }
 
-/**
- * Updates late penalty configuration for an assignment
- */
-export async function updateLatePenaltyConfig(
+export async function updateLatePenaltyConfigurationForAssignmentId(
   assignmentId: number,
-  enabled: boolean,
-  config?: LatePenaltyConfig
+  isLatePenaltyEnabled: boolean,
+  latePenaltyConfiguration?: LatePenaltyConfig
 ): Promise<void> {
-  const body: LatePenaltyUpdateRequest = { enabled, config };
-  const response = await apiClient.put<{ success: boolean; message?: string }>(
+  const requestBody: LatePenaltyUpdateRequest = { enabled: isLatePenaltyEnabled, config: latePenaltyConfiguration };
+  const apiResponse = await apiClient.put<{ success: boolean; message?: string }>(
     `/gradebook/assignments/${assignmentId}/late-penalty`,
-    body
+    requestBody
   );
 
-  if (response.error || !response.data?.success) {
+  if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      response.error ||
-        response.data?.message ||
+      apiResponse.error ||
+        apiResponse.data?.message ||
         "Failed to update late penalty config"
     );
   }

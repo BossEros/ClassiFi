@@ -27,7 +27,7 @@ export async function getClassGradebook(
   classId: number,
 ): Promise<ClassGradebook> {
   validateId(classId, "class");
-  return gradebookRepository.getClassGradebook(classId);
+  return gradebookRepository.getCompleteGradebookForClassId(classId);
 }
 
 /**
@@ -37,7 +37,7 @@ export async function getClassStatistics(
   classId: number,
 ): Promise<ClassStatistics> {
   validateId(classId, "class");
-  return gradebookRepository.getClassStatistics(classId);
+  return gradebookRepository.getStatisticsForClassId(classId);
 }
 
 /**
@@ -48,7 +48,7 @@ export async function downloadGradebookCSV(
   filename?: string,
 ): Promise<void> {
   validateId(classId, "class");
-  return gradebookRepository.downloadGradebookCSV(classId, filename);
+  return gradebookRepository.downloadGradebookCSVFileForClassId(classId, filename);
 }
 
 // ============================================================================
@@ -62,7 +62,7 @@ export async function getStudentGrades(
   studentId: number,
 ): Promise<StudentClassGrades[]> {
   validateId(studentId, "student");
-  return gradebookRepository.getStudentGrades(studentId);
+  return gradebookRepository.getAllGradesForStudentId(studentId);
 }
 
 /**
@@ -74,7 +74,7 @@ export async function getStudentClassGrades(
 ): Promise<StudentClassGrades | null> {
   validateId(studentId, "student");
   validateId(classId, "class");
-  return gradebookRepository.getStudentClassGrades(studentId, classId);
+  return gradebookRepository.getGradesForStudentInSpecificClass(studentId, classId);
 }
 
 /**
@@ -86,7 +86,7 @@ export async function getStudentRank(
 ): Promise<StudentRank> {
   validateId(studentId, "student");
   validateId(classId, "class");
-  return gradebookRepository.getStudentRank(studentId, classId);
+  return gradebookRepository.getClassRankForStudentById(studentId, classId);
 }
 
 // ============================================================================
@@ -106,7 +106,7 @@ export async function overrideGrade(
   if (!Number.isFinite(grade) || grade < 0 || grade > 100) {
     throw new Error("Grade must be between 0 and 100");
   }
-  return gradebookRepository.overrideGrade(submissionId, grade, feedback);
+  return gradebookRepository.setGradeOverrideForSubmissionById(submissionId, grade, feedback);
 }
 
 /**
@@ -116,7 +116,7 @@ export async function removeGradeOverride(
   submissionId: number,
 ): Promise<void> {
   validateId(submissionId, "submission");
-  return gradebookRepository.removeGradeOverride(submissionId);
+  return gradebookRepository.removeGradeOverrideForSubmissionById(submissionId);
 }
 
 // ============================================================================
@@ -130,7 +130,7 @@ export async function getLatePenaltyConfig(
   assignmentId: number,
 ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null }> {
   validateId(assignmentId, "assignment");
-  return gradebookRepository.getLatePenaltyConfig(assignmentId);
+  return gradebookRepository.getLatePenaltyConfigurationForAssignmentId(assignmentId);
 }
 
 /**
@@ -166,7 +166,7 @@ export async function updateLatePenaltyConfig(
     }
   }
 
-  return gradebookRepository.updateLatePenaltyConfig(
+  return gradebookRepository.updateLatePenaltyConfigurationForAssignmentId(
     assignmentId,
     enabled,
     config,

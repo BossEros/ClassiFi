@@ -55,19 +55,19 @@ describe("adminService", () => {
   describe("getUserById", () => {
     it("fetches user successfully", async () => {
       const mockUser = createMockAdminUser();
-      vi.mocked(adminRepository.getUserById).mockResolvedValue({
+      vi.mocked(adminRepository.getAdminUserDetailsById).mockResolvedValue({
         success: true,
         user: mockUser as any,
       });
 
       const result = await adminService.getUserById(1);
 
-      expect(adminRepository.getUserById).toHaveBeenCalledWith(1);
+      expect(adminRepository.getAdminUserDetailsById).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockUser);
     });
 
     it("throws error when user not found", async () => {
-      vi.mocked(adminRepository.getUserById).mockResolvedValue({
+      vi.mocked(adminRepository.getAdminUserDetailsById).mockResolvedValue({
         success: false,
         user: null as any,
       });
@@ -91,7 +91,7 @@ describe("adminService", () => {
       vi.mocked(authValidation.validateEmail).mockReturnValue(null);
       vi.mocked(authValidation.validateRole).mockReturnValue(null);
       const newUser = createMockAdminUser(createData);
-      vi.mocked(adminRepository.createUser).mockResolvedValue({
+      vi.mocked(adminRepository.createNewUserAccount).mockResolvedValue({
         success: true,
         user: newUser as any,
       });
@@ -102,7 +102,7 @@ describe("adminService", () => {
         createData.email,
       );
       expect(authValidation.validateRole).toHaveBeenCalledWith(createData.role);
-      expect(adminRepository.createUser).toHaveBeenCalledWith(createData);
+      expect(adminRepository.createNewUserAccount).toHaveBeenCalledWith(createData);
       expect(result).toEqual(newUser);
     });
 
@@ -113,7 +113,7 @@ describe("adminService", () => {
         "Invalid email",
       );
 
-      expect(adminRepository.createUser).not.toHaveBeenCalled();
+      expect(adminRepository.createNewUserAccount).not.toHaveBeenCalled();
     });
 
     it("throws error when role validation fails", async () => {
@@ -124,7 +124,7 @@ describe("adminService", () => {
         "Invalid role",
       );
 
-      expect(adminRepository.createUser).not.toHaveBeenCalled();
+      expect(adminRepository.createNewUserAccount).not.toHaveBeenCalled();
     });
   });
 
@@ -132,20 +132,20 @@ describe("adminService", () => {
     it("updates role successfully", async () => {
       const updatedUser = createMockAdminUser({ role: "teacher" });
       vi.mocked(authValidation.validateRole).mockReturnValue(null);
-      vi.mocked(adminRepository.updateUserRole).mockResolvedValue({
+      vi.mocked(adminRepository.updateUserRoleById).mockResolvedValue({
         success: true,
         user: updatedUser as any,
       });
 
       const result = await adminService.updateUserRole(1, "teacher");
 
-      expect(adminRepository.updateUserRole).toHaveBeenCalledWith(1, "teacher");
+      expect(adminRepository.updateUserRoleById).toHaveBeenCalledWith(1, "teacher");
       expect(result).toEqual(updatedUser);
     });
 
     it("throws error when update fails", async () => {
       vi.mocked(authValidation.validateRole).mockReturnValue(null);
-      vi.mocked(adminRepository.updateUserRole).mockResolvedValue({
+      vi.mocked(adminRepository.updateUserRoleById).mockResolvedValue({
         success: false,
         user: null as any,
       });
@@ -159,14 +159,14 @@ describe("adminService", () => {
   describe("toggleUserStatus", () => {
     it("toggles status successfully", async () => {
       const updatedUser = createMockAdminUser({ isActive: false });
-      vi.mocked(adminRepository.toggleUserStatus).mockResolvedValue({
+      vi.mocked(adminRepository.toggleUserAccountStatusById).mockResolvedValue({
         success: true,
         user: updatedUser as any,
       });
 
       const result = await adminService.toggleUserStatus(1);
 
-      expect(adminRepository.toggleUserStatus).toHaveBeenCalledWith(1);
+      expect(adminRepository.toggleUserAccountStatusById).toHaveBeenCalledWith(1);
       expect(result).toEqual(updatedUser);
     });
   });
@@ -178,19 +178,19 @@ describe("adminService", () => {
   describe("getClassById", () => {
     it("fetches class successfully", async () => {
       const mockClass = createMockAdminClass();
-      vi.mocked(adminRepository.getClassById).mockResolvedValue({
+      vi.mocked(adminRepository.getAdminClassDetailsById).mockResolvedValue({
         success: true,
         class: mockClass as any,
       });
 
       const result = await adminService.getClassById(1);
 
-      expect(adminRepository.getClassById).toHaveBeenCalledWith(1);
+      expect(adminRepository.getAdminClassDetailsById).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockClass);
     });
 
     it("throws error when class not found", async () => {
-      vi.mocked(adminRepository.getClassById).mockResolvedValue({
+      vi.mocked(adminRepository.getAdminClassDetailsById).mockResolvedValue({
         success: false,
         class: null as any,
       });
@@ -214,19 +214,19 @@ describe("adminService", () => {
 
     it("creates class successfully", async () => {
       const newClass = createMockAdminClass();
-      vi.mocked(adminRepository.createClass).mockResolvedValue({
+      vi.mocked(adminRepository.createNewClass).mockResolvedValue({
         success: true,
         class: newClass as any,
       });
 
       const result = await adminService.createClass(classData as any);
 
-      expect(adminRepository.createClass).toHaveBeenCalledWith(classData);
+      expect(adminRepository.createNewClass).toHaveBeenCalledWith(classData);
       expect(result).toEqual(newClass);
     });
 
     it("throws error when creation fails", async () => {
-      vi.mocked(adminRepository.createClass).mockResolvedValue({
+      vi.mocked(adminRepository.createNewClass).mockResolvedValue({
         success: false,
         class: null as any,
       });
@@ -246,7 +246,7 @@ describe("adminService", () => {
       const mockStudents = [
         { id: 1, firstName: "John", lastName: "Doe", email: "john@test.com" },
       ];
-      vi.mocked(adminRepository.getClassStudents).mockResolvedValue({
+      vi.mocked(adminRepository.getEnrolledStudentsInClassById).mockResolvedValue({
         success: true,
         students: mockStudents as any,
       });
@@ -261,7 +261,7 @@ describe("adminService", () => {
     });
 
     it("returns empty array when no students found", async () => {
-      vi.mocked(adminRepository.getClassStudents).mockResolvedValue({
+      vi.mocked(adminRepository.getEnrolledStudentsInClassById).mockResolvedValue({
         success: true,
         students: null as any,
       });
@@ -282,15 +282,15 @@ describe("adminService", () => {
       const mockAssignments = [{ id: 1, title: "HW1" }];
       const mockStudents = [{ id: 1, firstName: "John", lastName: "Doe" }];
 
-      vi.mocked(adminRepository.getClassById).mockResolvedValue({
+      vi.mocked(adminRepository.getAdminClassDetailsById).mockResolvedValue({
         success: true,
         class: mockClass as any,
       });
-      vi.mocked(adminRepository.getClassAssignments).mockResolvedValue({
+      vi.mocked(adminRepository.getAllAssignmentsInClassById).mockResolvedValue({
         success: true,
         assignments: mockAssignments as any,
       });
-      vi.mocked(adminRepository.getClassStudents).mockResolvedValue({
+      vi.mocked(adminRepository.getEnrolledStudentsInClassById).mockResolvedValue({
         success: true,
         students: mockStudents as any,
       });

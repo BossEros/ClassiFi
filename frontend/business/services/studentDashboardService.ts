@@ -17,7 +17,7 @@ export async function getDashboardData(
   studentId: number,
 ): Promise<StudentDashboardBackendResponse> {
   try {
-    return await dashboardRepository.getDashboardData(studentId);
+    return await dashboardRepository.getCompleteDashboardDataForStudentId(studentId);
   } catch (error) {
     console.error("Error fetching student dashboard data:", error);
     throw error;
@@ -37,7 +37,7 @@ export async function getEnrolledClasses(
   limit?: number,
 ): Promise<dashboardRepository.ClassListResponse> {
   try {
-    return await dashboardRepository.getEnrolledClasses(studentId, limit);
+    return await dashboardRepository.getAllEnrolledClassesForStudentId(studentId, limit);
   } catch (error) {
     console.error("Error fetching enrolled classes:", error);
     throw error;
@@ -57,7 +57,7 @@ export async function getPendingAssignments(
   limit: number = 10,
 ): Promise<dashboardRepository.AssignmentListResponse> {
   try {
-    return await dashboardRepository.getPendingAssignments(studentId, limit);
+    return await dashboardRepository.getAllPendingAssignmentsForStudentId(studentId, limit);
   } catch (error) {
     console.error("Error fetching pending assignments:", error);
     throw error;
@@ -87,7 +87,7 @@ export async function joinClass(
       };
     }
 
-    return await dashboardRepository.joinClass(studentId, classCode);
+    return await dashboardRepository.enrollStudentInClassWithCode(studentId, classCode);
   } catch (error) {
     console.error("Error joining class:", error);
 
@@ -110,7 +110,7 @@ export async function leaveClass(
   classId: number,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    return await dashboardRepository.leaveClass(studentId, classId);
+    return await dashboardRepository.unenrollStudentFromClassById(studentId, classId);
   } catch (error) {
     console.error("Error leaving class:", error);
     
