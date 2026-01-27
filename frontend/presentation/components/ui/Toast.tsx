@@ -32,13 +32,6 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
   const [isLeaving, setIsLeaving] = React.useState(false)
   const [isPaused, setIsPaused] = React.useState(false)
 
-  const handleDismiss = React.useCallback(() => {
-    setIsLeaving(true)
-    setTimeout(() => {
-      onDismiss(id)
-    }, 300) // Match animation duration
-  }, [id, onDismiss])
-
   React.useEffect(() => {
     // Trigger enter animation
     const enterTimer = setTimeout(() => setIsVisible(true), 10)
@@ -48,18 +41,30 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
   React.useEffect(() => {
     if (isPaused) return
 
-    // Auto-dismiss after duration
     const dismissTimer = setTimeout(() => {
       handleDismiss()
     }, duration)
+  }, [duration, handleDismiss])
 
-    return () => {
-      clearTimeout(dismissTimer)
-    }
-  }, [duration, isPaused, handleDismiss])
+  React.useEffect(() => {
+    // Trigger enter animation
+    const enterTimer = setTimeout(() => setIsVisible(true), 10)
+    startTimer()
+
+    return () => clearTimeout(dismissTimer)
+  }, [duration, isPaused])
+
+  const handleMouseEnter = () => {
+    clearTimeout(timerRef.current)
+  }
+
+  const handleMouseLeave = () => {
+    startTimer()
+  }
 
   const styles = variantStyles[variant]
-  const isError = variant === 'error'
+  const role = variant === 'error' ? 'alert' : 'status'
+  const ariaLive = variant === 'error' ? 'assertive' : 'polite'
 
   return (
     <div
@@ -71,12 +76,10 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
           ? 'translate-x-0 opacity-100'
           : 'translate-x-full opacity-0'
       )}
-      role={isError ? 'alert' : 'status'}
-      aria-live={isError ? 'assertive' : 'polite'}
+      role={variant === 'error' ? 'alert' : 'status'}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
-      onFocus={() => setIsPaused(true)}
-      onBlur={() => setIsPaused(false)}
     >
       {styles.icon}
       <p className="text-sm text-white font-medium flex-1">{message}</p>

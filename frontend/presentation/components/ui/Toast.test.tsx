@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Toast, ToastContainer } from "@/presentation/components/ui/Toast";
+
 describe("Toast", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -16,16 +17,14 @@ describe("Toast", () => {
       expect(screen.getByText("Test message")).toBeInTheDocument();
     });
 
-    it("renders with role status for default variant", () => {
+    it("renders with role status by default", () => {
       render(<Toast id="1" message="Status" onDismiss={vi.fn()} />);
       expect(screen.getByRole("status")).toBeInTheDocument();
     });
 
-    it("renders with role alert for error variant", () => {
-      render(
-        <Toast id="1" message="Alert" variant="error" onDismiss={vi.fn()} />,
-      );
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+    it("renders with role alert for error", () => {
+        render(<Toast id="1" message="Error" variant="error" onDismiss={vi.fn()} />);
+        expect(screen.getByRole("alert")).toBeInTheDocument();
     });
 
     it("renders dismiss button", () => {
@@ -39,24 +38,24 @@ describe("Toast", () => {
   describe("Variants", () => {
     it("renders success variant by default", () => {
       render(<Toast id="1" message="Success" onDismiss={vi.fn()} />);
-      const status = screen.getByRole("status");
-      expect(status.className).toContain("bg-green");
+      const toast = screen.getByRole("status");
+      expect(toast.className).toContain("bg-green");
     });
 
     it("renders error variant", () => {
       render(
         <Toast id="1" message="Error" variant="error" onDismiss={vi.fn()} />,
       );
-      const alert = screen.getByRole("alert");
-      expect(alert.className).toContain("bg-red");
+      const toast = screen.getByRole("alert");
+      expect(toast.className).toContain("bg-red");
     });
 
     it("renders info variant", () => {
       render(
         <Toast id="1" message="Info" variant="info" onDismiss={vi.fn()} />,
       );
-      const status = screen.getByRole("status");
-      expect(status.className).toContain("bg-blue");
+      const toast = screen.getByRole("status");
+      expect(toast.className).toContain("bg-blue");
     });
   });
 
@@ -114,6 +113,38 @@ describe("Toast", () => {
       });
 
       expect(onDismiss).toHaveBeenCalledWith("1");
+    });
+
+    it("pauses timer on hover", async () => {
+        const onDismiss = vi.fn();
+        render(<Toast id="1" message="Test" duration={2000} onDismiss={onDismiss} />);
+
+        const toast = screen.getByRole("status");
+
+        // Advance 1000ms
+        await act(async () => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        // Hover
+        fireEvent.mouseEnter(toast);
+
+        // Advance another 2000ms (total 3000ms, should have dismissed if not paused)
+        await act(async () => {
+            vi.advanceTimersByTime(2000);
+        });
+
+        expect(onDismiss).not.toHaveBeenCalled();
+
+        // Leave
+        fireEvent.mouseLeave(toast);
+
+        // Advance full duration + animation
+        await act(async () => {
+            vi.advanceTimersByTime(2300);
+        });
+
+        expect(onDismiss).toHaveBeenCalledWith("1");
     });
   });
 
@@ -177,11 +208,11 @@ describe("ToastContainer", () => {
     ];
     render(<ToastContainer toasts={toasts} onDismiss={vi.fn()} />);
 
-    const statusToast = screen.getByRole("status");
-    const alertToast = screen.getByRole("alert");
+    const successToast = screen.getByText("Success").closest('div');
+    const errorToast = screen.getByText("Error").closest('div');
 
-    expect(statusToast.className).toContain("bg-green");
-    expect(alertToast.className).toContain("bg-red");
+    expect(successToast?.className).toContain("bg-green");
+    expect(errorToast?.className).toContain("bg-red");
   });
 
   beforeEach(() => {
