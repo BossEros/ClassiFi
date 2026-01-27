@@ -44,15 +44,22 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
     const dismissTimer = setTimeout(() => {
       handleDismiss()
     }, duration)
+  }, [duration, handleDismiss])
+
+  React.useEffect(() => {
+    // Trigger enter animation
+    const enterTimer = setTimeout(() => setIsVisible(true), 10)
+    startTimer()
 
     return () => clearTimeout(dismissTimer)
   }, [duration, isPaused])
 
-  const handleDismiss = () => {
-    setIsLeaving(true)
-    setTimeout(() => {
-      onDismiss(id)
-    }, 300) // Match animation duration
+  const handleMouseEnter = () => {
+    clearTimeout(timerRef.current)
+  }
+
+  const handleMouseLeave = () => {
+    startTimer()
   }
 
   const styles = variantStyles[variant]
