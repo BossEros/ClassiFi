@@ -32,13 +32,6 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
   const [isLeaving, setIsLeaving] = React.useState(false)
   const [isPaused, setIsPaused] = React.useState(false)
 
-  const handleDismiss = React.useCallback(() => {
-    setIsLeaving(true)
-    setTimeout(() => {
-      onDismiss(id)
-    }, 300) // Match animation duration
-  }, [id, onDismiss])
-
   React.useEffect(() => {
     // Trigger enter animation
     const enterTimer = setTimeout(() => setIsVisible(true), 10)
@@ -46,14 +39,21 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
   }, [])
 
   React.useEffect(() => {
-    if (isPaused || isLeaving) return
+    if (isPaused) return
 
     const dismissTimer = setTimeout(() => {
       handleDismiss()
     }, duration)
 
     return () => clearTimeout(dismissTimer)
-  }, [duration, isPaused, isLeaving, handleDismiss])
+  }, [duration, isPaused])
+
+  const handleDismiss = () => {
+    setIsLeaving(true)
+    setTimeout(() => {
+      onDismiss(id)
+    }, 300) // Match animation duration
+  }
 
   const styles = variantStyles[variant]
   const role = variant === 'error' ? 'alert' : 'status'
@@ -69,9 +69,8 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
           ? 'translate-x-0 opacity-100'
           : 'translate-x-full opacity-0'
       )}
-      role={role}
-      aria-live={ariaLive}
-      aria-atomic="true"
+      role={variant === 'error' ? 'alert' : 'status'}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >

@@ -54,6 +54,8 @@ export function AssignmentDetailPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const submissionAbortRef = useRef<AbortController | null>(null);
+  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([]);
 
   const [user, setUser] = useState<User | null>(null);
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null);
@@ -77,6 +79,7 @@ export function AssignmentDetailPage() {
   const [expandedInitialTests, setExpandedInitialTests] = useState<Set<number>>(
     new Set(),
   );
+  const [resultsError, setResultsError] = useState<string | null>(null);
 
   // Preview Modal State
   const [showPreview, setShowPreview] = useState(false);
@@ -84,6 +87,20 @@ export function AssignmentDetailPage() {
   const [previewLanguage, setPreviewLanguage] = useState("");
   const [previewFileName, setPreviewFileName] = useState("");
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  // Cleanup effect for abort controller and timers
+  useEffect(() => {
+    return () => {
+      // Abort any ongoing submission result fetching
+      if (submissionAbortRef.current) {
+        submissionAbortRef.current.abort();
+        submissionAbortRef.current = null;
+      }
+      // Clear any pending timeouts
+      timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+      timeoutIdsRef.current = [];
+    };
+  }, []);
 
   useEffect(() => {
     const currentUser = getCurrentUser();
@@ -212,6 +229,7 @@ export function AssignmentDetailPage() {
     try {
       setIsSubmitting(true);
       setError(null);
+      setResultsError(null);
 
       const submission = await submitAssignment({
         assignmentId: parseInt(assignmentId),
@@ -227,21 +245,94 @@ export function AssignmentDetailPage() {
       setPreviewResults(null);
       setExpandedPreviewTests(new Set());
 
-      // Fetch and show new submission test results
+      // Fetch and show new submission test results with retry logic
+      // This handles cases where the runner results might not be immediately available
+      
+      // Create new abort controller for this submission
+      submissionAbortRef.current = new AbortController();
+      const signal = submissionAbortRef.current.signal;
+
+      // Clear any existing timeouts
+      timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+      timeoutIdsRef.current = [];
+
       try {
-        const results = await getTestResultsForSubmission(submission.id);
-        setSubmissionTestResults(results);
-      } catch (e) {
-        console.error("Failed to load test results for new submission", e);
+        let retries = 10;
+        let success = false;
+
+        while (retries > 0 && !signal.aborted) {
+          try {
+            const results = await getTestResultsForSubmission(submission.id);
+            if (!signal.aborted) {
+              setSubmissionTestResults(results);
+              success = true;
+            }
+            break; // Success
+          } catch (e) {
+            console.error(`Attempt ${11 - retries} failed to load results`, e);
+            retries--;
+            if (retries === 0) {
+              if (!signal.aborted) {
+                console.error(
+                  "Failed to load test results for new submission after retries",
+                  e,
+                );
+              }
+            } else if (!signal.aborted) {
+              // Wait 1 second before retrying
+              await new Promise<void>((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                  if (!signal.aborted) {
+                    resolve();
+                  } else {
+                    reject(new Error("Aborted"));
+                  }
+                }, 1000);
+                timeoutIdsRef.current.push(timeoutId);
+
+                // Listen for abort signal once
+                signal.addEventListener(
+                  "abort",
+                  () => {
+                    clearTimeout(timeoutId);
+                    reject(new Error("Aborted"));
+                  },
+                  { once: true },
+                );
+              });
+            }
+          }
+        }
+
+        if (!success && !signal.aborted && retries === 0) {
+          // Ensure error state is set if we exhausted retries
+          setResultsError(
+            "Failed to load test results after multiple attempts. Please refresh the page.",
+          );
+          showToast(
+            "Submission successful, but test results failed to load",
+            "error",
+          );
+        }
+      } catch (abortError) {
+        // Silently handle abort errors (component unmounted)
+        if (abortError instanceof Error && abortError.message !== "Aborted") {
+          throw abortError;
+        }
+      } finally {
+        // Clear timers
+        timeoutIdsRef.current.forEach((id) => clearTimeout(id));
+        timeoutIdsRef.current = [];
       }
 
-      // Clear selected file
-      setSelectedFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      // Clear selected file only if not aborted
+      if (!signal.aborted) {
+        setSelectedFile(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        showToast("Coursework submitted successfully!");
       }
-
-      showToast("Coursework submitted successfully!");
     } catch (err) {
       console.error("Failed to submit assignment:", err);
       setError(
@@ -497,6 +588,14 @@ export function AssignmentDetailPage() {
             <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <p className="text-red-400 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Test Results Error Message */}
+          {resultsError && (
+            <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+              <p className="text-yellow-400 text-sm">{resultsError}</p>
             </div>
           )}
 

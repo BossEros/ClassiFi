@@ -67,10 +67,23 @@ export interface GradebookStudent {
   grades: GradeEntry[];
 }
 
+/** Class gradebook data */
+export interface ClassGradebook {
+  assignments: GradebookAssignment[];
+  students: GradebookStudent[];
+}
+
 /** Class statistics */
 export interface ClassStatistics {
   classAverage: number | null;
   submissionRate: number;
   totalStudents: number;
   totalAssignments: number;
+}
+
+/** Student rank in class */
+export interface StudentRank {
+  rank: number | null;
+  totalStudents: number | null;
+  percentile: number | null;
 }

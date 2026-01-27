@@ -3,23 +3,7 @@ import type {
   SubmissionWithAssignment,
   SubmissionWithStudent,
 } from "@/shared/types/submission";
-
-/**
- * Data Transfer Object for submission data received from the API.
- */
-export interface SubmissionDTO {
-  id: number;
-  assignmentId: number;
-  studentId: number;
-  fileName: string;
-  fileSize: number;
-  submissionNumber: number;
-  submittedAt: string | Date;
-  isLatest: boolean;
-  grade?: number | null;
-  assignmentName?: string;
-  studentName?: string;
-}
+import type { SubmissionDTO, AssignmentDetailDTO } from "@/data/api/types";
 
 /**
  * Maps a raw submission DTO to a domain Submission model.
@@ -76,5 +60,20 @@ export function mapSubmissionWithStudent(
   return {
     ...mapSubmission(sub),
     studentName: sub.studentName,
+  };
+}
+
+/**
+ * Maps assignment detail DTO to domain model with proper type casting and defaults.
+ */
+export function mapAssignmentDetail(dto: AssignmentDetailDTO) {
+  return {
+    ...dto,
+    programmingLanguage: dto.programmingLanguage as "java" | "python" | "c",
+    maxAttempts: dto.maxAttempts ?? null,
+    templateCode: dto.templateCode ?? null,
+    hasTemplateCode: dto.hasTemplateCode ?? false,
+    scheduledDate: dto.scheduledDate ?? null,
+    testCases: dto.testCases ?? [],
   };
 }

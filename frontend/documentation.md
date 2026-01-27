@@ -136,6 +136,34 @@ Routing is handled in `presentation/App.tsx`.
 
 ---
 
+## Business Services
+
+The Business Layer contains services that encapsulate business logic and orchestrate data operations. All services validate inputs and handle errors before delegating to repositories.
+
+### Available Services
+
+| Service                  | Location                                  | Purpose                                                    |
+| ------------------------ | ----------------------------------------- | ---------------------------------------------------------- |
+| **authService**          | `business/services/authService.ts`        | User authentication, registration, password management     |
+| **assignmentService**    | `business/services/assignmentService.ts`  | Assignment submission, file validation                     |
+| **classService**         | `business/services/classService.ts`       | Class management, enrollment operations                    |
+| **gradebookService**     | `business/services/gradebookService.ts`   | Grade management, statistics, late penalties, CSV export   |
+| **plagiarismService**    | `business/services/plagiarismService.ts`  | Plagiarism detection and similarity analysis               |
+| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                    |
+| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                    |
+| **testCaseService**      | `business/services/testCaseService.ts`    | Test case management for assignments                       |
+| **testService**          | `business/services/testService.ts`        | Code execution and testing                                 |
+| **adminService**         | `business/services/adminService.ts`       | Admin operations (user management, analytics)              |
+
+### Service Guidelines
+
+- **Input Validation**: All services validate inputs using utility functions (e.g., `validateId`) or Zod schemas before calling repositories.
+- **Error Handling**: Services throw descriptive errors that can be caught and displayed in the UI.
+- **Business Rules**: Services enforce business rules (e.g., grade must be 0-100, late penalty validation).
+- **Repository Delegation**: Services delegate data operations to repositories, never accessing APIs directly.
+
+---
+
 ## Data Flow & API Integration
 
 1.  **Request**: Component calls `Service` method (e.g., `ClassService.getClasses()`).
