@@ -24,7 +24,7 @@
     "fastify": "^5.7.1",
     "fastify-plugin": "^5.1.0",
     "fastify-type-provider-zod": "^6.1.0",
-    "postgres": "^3.4.5",
+    "postgres": "^3.4.8",
     "reflect-metadata": "^0.2.2",
     "tree-sitter": "^0.21.1",
     "tree-sitter-c": "^0.21.0",
