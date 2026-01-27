@@ -18,348 +18,349 @@ import type {
 
 // ============ User Management ============
 
-export async function getAllUsers(options: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: string;
-  status?: string;
+export async function getAllUsersWithPaginationAndFilters(filterOptions: {
+  pageNumber?: number;
+  itemsPerPage?: number;
+  searchQuery?: string;
+  userRole?: string;
+  accountStatus?: string;
 }): Promise<PaginatedResponse<AdminUser>> {
-  const params = new URLSearchParams();
-  if (options.page) params.set("page", options.page.toString());
-  if (options.limit) params.set("limit", options.limit.toString());
-  if (options.search) params.set("search", options.search);
-  if (options.role) params.set("role", options.role);
-  if (options.status) params.set("status", options.status);
+  const urlQueryParams = new URLSearchParams();
 
-  const response = await apiClient.get<PaginatedResponse<AdminUser>>(
-    `/admin/users?${params.toString()}`,
+  if (filterOptions.pageNumber) urlQueryParams.set("page", filterOptions.pageNumber.toString());
+  if (filterOptions.itemsPerPage) urlQueryParams.set("limit", filterOptions.itemsPerPage.toString());
+  if (filterOptions.searchQuery) urlQueryParams.set("search", filterOptions.searchQuery);
+  if (filterOptions.userRole) urlQueryParams.set("role", filterOptions.userRole);
+  if (filterOptions.accountStatus) urlQueryParams.set("status", filterOptions.accountStatus);
+
+  const apiResponse = await apiClient.get<PaginatedResponse<AdminUser>>(
+    `/admin/users?${urlQueryParams.toString()}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function getUserById(userId: number): Promise<AdminUserResponse> {
-  const response = await apiClient.get<AdminUserResponse>(
+export async function getAdminUserDetailsById(userId: number): Promise<AdminUserResponse> {
+  const apiResponse = await apiClient.get<AdminUserResponse>(
     `/admin/users/${userId}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function createUser(
-  data: CreateUserData,
+export async function createNewUserAccount(
+  newUserData: CreateUserData,
 ): Promise<AdminUserResponse> {
-  const response = await apiClient.post<AdminUserResponse>(
+  const apiResponse = await apiClient.post<AdminUserResponse>(
     `/admin/users`,
-    data,
+    newUserData,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function updateUserRole(
+export async function updateUserRoleById(
   userId: number,
-  role: string,
+  newUserRole: string,
 ): Promise<AdminUserResponse> {
-  const response = await apiClient.patch<AdminUserResponse>(
+  const apiResponse = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/role`,
-    { role },
+    { role: newUserRole },
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function updateUserDetails(
+export async function updateUserPersonalDetailsById(
   userId: number,
-  data: { firstName?: string; lastName?: string },
+  updatedPersonalDetails: { firstName?: string; lastName?: string },
 ): Promise<AdminUserResponse> {
-  const response = await apiClient.patch<AdminUserResponse>(
+  const apiResponse = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/details`,
-    data,
+    updatedPersonalDetails,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function updateUserEmail(
+export async function updateUserEmailAddressById(
   userId: number,
-  email: string,
+  newEmailAddress: string,
 ): Promise<AdminUserResponse> {
-  const response = await apiClient.patch<AdminUserResponse>(
+  const apiResponse = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/email`,
-    { email },
+    { email: newEmailAddress },
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function toggleUserStatus(
+export async function toggleUserAccountStatusById(
   userId: number,
 ): Promise<AdminUserResponse> {
-  const response = await apiClient.patch<AdminUserResponse>(
+  const apiResponse = await apiClient.patch<AdminUserResponse>(
     `/admin/users/${userId}/status`,
     {},
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function deleteUser(userId: number): Promise<AdminResponse> {
-  const response = await apiClient.delete<AdminResponse>(
+export async function deleteUserAccountById(userId: number): Promise<AdminResponse> {
+  const apiResponse = await apiClient.delete<AdminResponse>(
     `/admin/users/${userId}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
 // ============ Analytics ============
 
-export async function getAdminStats(): Promise<AdminStatsResponse> {
-  const response = await apiClient.get<AdminStatsResponse>("/admin/stats");
+export async function getAdminDashboardStatistics(): Promise<AdminStatsResponse> {
+  const apiResponse = await apiClient.get<AdminStatsResponse>("/admin/stats");
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function getRecentActivity(
-  limit: number = 10,
+export async function getRecentAdminActivityLog(
+  maximumActivityCount: number = 10,
 ): Promise<AdminActivityResponse> {
-  const response = await apiClient.get<AdminActivityResponse>(
-    `/admin/activity?limit=${limit}`,
+  const apiResponse = await apiClient.get<AdminActivityResponse>(
+    `/admin/activity?limit=${maximumActivityCount}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
 // ============ Class Management ============
 
-export async function getAllClasses(options: {
-  page?: number;
-  limit?: number;
-  search?: string;
+export async function getAllClassesWithPaginationAndFilters(filterOptions: {
+  pageNumber?: number;
+  itemsPerPage?: number;
+  searchQuery?: string;
   teacherId?: number;
-  status?: string;
+  classStatus?: string;
   yearLevel?: number;
-  semester?: number;
+  semesterNumber?: number;
   academicYear?: string;
 }): Promise<PaginatedResponse<AdminClass>> {
-  const params = new URLSearchParams();
-  if (options.page) params.set("page", options.page.toString());
-  if (options.limit) params.set("limit", options.limit.toString());
-  if (options.search) params.set("search", options.search);
-  if (options.teacherId) params.set("teacherId", options.teacherId.toString());
-  if (options.status) params.set("status", options.status);
-  if (options.yearLevel) params.set("yearLevel", options.yearLevel.toString());
-  if (options.semester) params.set("semester", options.semester.toString());
-  if (options.academicYear) params.set("academicYear", options.academicYear);
+  const urlQueryParams = new URLSearchParams();
 
-  const response = await apiClient.get<PaginatedResponse<AdminClass>>(
-    `/admin/classes?${params.toString()}`,
+  if (filterOptions.pageNumber) urlQueryParams.set("page", filterOptions.pageNumber.toString());
+  if (filterOptions.itemsPerPage) urlQueryParams.set("limit", filterOptions.itemsPerPage.toString());
+  if (filterOptions.searchQuery) urlQueryParams.set("search", filterOptions.searchQuery);
+  if (filterOptions.teacherId) urlQueryParams.set("teacherId", filterOptions.teacherId.toString());
+  if (filterOptions.classStatus) urlQueryParams.set("status", filterOptions.classStatus);
+  if (filterOptions.yearLevel) urlQueryParams.set("yearLevel", filterOptions.yearLevel.toString());
+  if (filterOptions.semesterNumber) urlQueryParams.set("semester", filterOptions.semesterNumber.toString());
+  if (filterOptions.academicYear) urlQueryParams.set("academicYear", filterOptions.academicYear);
+
+  const apiResponse = await apiClient.get<PaginatedResponse<AdminClass>>(
+    `/admin/classes?${urlQueryParams.toString()}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function getClassById(
+export async function getAdminClassDetailsById(
   classId: number,
 ): Promise<AdminClassResponse> {
-  const response = await apiClient.get<AdminClassResponse>(
+  const apiResponse = await apiClient.get<AdminClassResponse>(
     `/admin/classes/${classId}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function createClass(
-  data: CreateClassData,
+export async function createNewClass(
+  newClassData: CreateClassData,
 ): Promise<AdminClassResponse> {
-  const response = await apiClient.post<AdminClassResponse>(
+  const apiResponse = await apiClient.post<AdminClassResponse>(
     "/admin/classes",
-    data,
+    newClassData,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function updateClass(
+export async function updateClassDetailsById(
   classId: number,
-  data: UpdateClassData,
+  updatedClassData: UpdateClassData,
 ): Promise<AdminClassResponse> {
-  const response = await apiClient.put<AdminClassResponse>(
+  const apiResponse = await apiClient.put<AdminClassResponse>(
     `/admin/classes/${classId}`,
-    data,
+    updatedClassData,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function deleteClass(classId: number): Promise<AdminResponse> {
-  const response = await apiClient.delete<AdminResponse>(
+export async function deleteClassById(classId: number): Promise<AdminResponse> {
+  const apiResponse = await apiClient.delete<AdminResponse>(
     `/admin/classes/${classId}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function reassignClassTeacher(
+export async function reassignClassTeacherById(
   classId: number,
-  teacherId: number,
+  newTeacherId: number,
 ): Promise<AdminClassResponse> {
-  const response = await apiClient.patch<AdminClassResponse>(
+  const apiResponse = await apiClient.patch<AdminClassResponse>(
     `/admin/classes/${classId}/reassign`,
-    { teacherId },
+    { teacherId: newTeacherId },
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function archiveClass(
+export async function archiveClassById(
   classId: number,
 ): Promise<AdminClassResponse> {
-  const response = await apiClient.patch<AdminClassResponse>(
+  const apiResponse = await apiClient.patch<AdminClassResponse>(
     `/admin/classes/${classId}/archive`,
     {},
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function getAllTeachers(): Promise<AdminTeachersResponse> {
-  const response =
-    await apiClient.get<AdminTeachersResponse>("/admin/teachers");
+export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
+  const apiResponse = await apiClient.get<AdminTeachersResponse>("/admin/teachers");
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
 // ============ Class Enrollment Management ============
 
-export async function getClassStudents(
+export async function getEnrolledStudentsInClassById(
   classId: number,
 ): Promise<AdminStudentsResponse> {
-  const response = await apiClient.get<AdminStudentsResponse>(
+  const apiResponse = await apiClient.get<AdminStudentsResponse>(
     `/admin/classes/${classId}/students`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function getClassAssignments(
+export async function getAllAssignmentsInClassById(
   classId: number,
 ): Promise<AdminAssignmentsResponse> {
-  const response = await apiClient.get<AdminAssignmentsResponse>(
+  const apiResponse = await apiClient.get<AdminAssignmentsResponse>(
     `/admin/classes/${classId}/assignments`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function addStudentToClass(
+export async function enrollStudentInClassById(
   classId: number,
   studentId: number,
 ): Promise<AdminResponse> {
-  const response = await apiClient.post<AdminResponse>(
+  const apiResponse = await apiClient.post<AdminResponse>(
     `/admin/classes/${classId}/students`,
     { studentId },
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }
 
-export async function removeStudentFromClass(
+export async function unenrollStudentFromClassById(
   classId: number,
   studentId: number,
 ): Promise<AdminResponse> {
-  const response = await apiClient.delete<AdminResponse>(
+  const apiResponse = await apiClient.delete<AdminResponse>(
     `/admin/classes/${classId}/students/${studentId}`,
   );
 
-  if (response.error) {
-    throw new Error(response.error);
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error);
   }
 
-  return response.data!;
+  return apiResponse.data!;
 }

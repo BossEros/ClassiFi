@@ -8,6 +8,8 @@ import type {
   PenaltyTier,
   StudentClassGrades,
   StudentGradeEntry,
+  ClassGradebook,
+  StudentRank,
 } from "@/shared/types/gradebook";
 import type {
   Submission,
@@ -18,16 +20,19 @@ import type {
 import type {
   DayOfWeek,
   Schedule,
-  ClassListResponse,
-  AssignmentListResponse,
+  Class,
+  Assignment,
+  EnrolledStudent,
 } from "@/shared/types/class";
+
+import type { RawTestResult, TestCase } from "@/shared/types/testCase";
 
 // ============================================================================
 // Core Shared Types - Re-exported from canonical shared module
 // ============================================================================
 
 // Re-export shared types for convenience
-export type { DayOfWeek, Schedule, ClassListResponse, AssignmentListResponse };
+export type { DayOfWeek, Schedule, Class, Assignment, EnrolledStudent };
 
 /**
  * Array of valid programming languages.
@@ -241,12 +246,57 @@ export interface AssignmentDetailResponse {
 export interface JoinClassResponse {
   success: boolean;
   message: string;
-  classInfo?: ClassResponse;
+  classInfo?: ClassDTO;
 }
 
 export interface LeaveClassResponse {
   success: boolean;
   message: string;
+}
+
+// ============================================================================
+// Class CRUD Response DTOs
+// ============================================================================
+
+/** Response for a single class detail operation */
+export interface ClassDetailResponse {
+  success: boolean;
+  message?: string;
+  class?: Class;
+}
+
+/** Response for class list operations */
+export interface ClassListResponse {
+  success: boolean;
+  message?: string;
+  classes: Class[];
+}
+
+/** Response for assignment list operations */
+export interface AssignmentListResponse {
+  success: boolean;
+  message?: string;
+  assignments: Assignment[];
+}
+
+/** Response for student list operations */
+export interface StudentListResponse {
+  success: boolean;
+  message?: string;
+  students: EnrolledStudent[];
+}
+
+/** Generic delete operation response */
+export interface DeleteResponse {
+  success: boolean;
+  message?: string;
+}
+
+/** Response for class code generation */
+export interface GenerateCodeResponse {
+  success: boolean;
+  message?: string;
+  code: string;
 }
 
 // ============================================================================
@@ -263,6 +313,58 @@ export interface DashboardResponse {
 export interface StudentDashboardData {
   enrolledClasses: ClassDTO[];
   pendingAssignments: TaskDTO[];
+}
+
+// ============================================================================
+// Teacher Dashboard Response DTOs
+// ============================================================================
+
+/** Class response from teacher dashboard API */
+export interface TeacherDashboardClassResponse {
+  id: number;
+  teacherId: number;
+  className: string;
+  classCode: string;
+  description: string | null;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Task/Assignment response from teacher dashboard API */
+export interface TeacherDashboardTaskResponse {
+  id: number;
+  classId: number;
+  assignmentName: string;
+  description: string | null;
+  programmingLanguage: string;
+  deadline: string;
+  allowResubmission: boolean;
+  isActive: boolean;
+  createdAt: string;
+  className?: string;
+  submissionCount?: number;
+}
+
+/** Complete teacher dashboard response */
+export interface TeacherDashboardResponse {
+  success: boolean;
+  message?: string;
+  recentClasses: TeacherDashboardClassResponse[];
+  pendingTasks: TeacherDashboardTaskResponse[];
+}
+
+/** Teacher dashboard class list response */
+export interface TeacherDashboardClassListResponse {
+  success: boolean;
+  message?: string;
+  classes: TeacherDashboardClassResponse[];
+}
+
+/** Teacher dashboard task list response */
+export interface TeacherDashboardTaskListResponse {
+  success: boolean;
+  message?: string;
+  tasks: TeacherDashboardTaskResponse[];
 }
 
 // ============================================================================
@@ -472,17 +574,7 @@ export interface UpdateClassData {
 }
 
 // ============ Admin Enrollment Types ============
-
-export interface EnrolledStudent {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  avatarUrl: string | null;
-  enrolledAt: string;
-  fullName?: string;
-  // studentId might be useful if it differs from id (user id), but usually id here refers to User ID
-}
+// Note: EnrolledStudent is imported from @/shared/types/class
 
 export interface ClassAssignment {
   id: number;
@@ -585,10 +677,7 @@ export type { GradebookAssignment };
 export type { GradebookStudent };
 
 /** Class gradebook data */
-export interface ClassGradebook {
-  assignments: GradebookAssignment[];
-  students: GradebookStudent[];
-}
+export type { ClassGradebook };
 
 /** Student grade for an assignment */
 export type { StudentGradeEntry };
@@ -600,11 +689,7 @@ export type { StudentClassGrades };
 export type { ClassStatistics };
 
 /** Student rank in class */
-export interface StudentRank {
-  rank: number | null;
-  totalStudents: number | null;
-  percentile: number | null;
-}
+export type { StudentRank };
 
 // ============ Gradebook Response Types ============
 
@@ -648,3 +733,81 @@ export interface LatePenaltyUpdateRequest {
   enabled: boolean;
   config?: LatePenaltyConfig;
 }
+
+
+// Not yet sorted
+
+export interface AssignmentDetailDTO {
+  success: boolean;
+  message: string;
+  data: {
+    results: RawTestResult[];
+    passedCount: number;
+    totalCount: number;
+    score: number;
+  };
+}
+
+export interface AssignmentDetailDTO {
+  id: number;
+  classId: number;
+  className: string;
+  assignmentName: string;
+  description: string;
+  programmingLanguage: string;
+  deadline: string;
+  allowResubmission: boolean;
+  maxAttempts?: number | null;
+  isActive: boolean;
+  createdAt?: string;
+  templateCode?: string | null;
+  hasTemplateCode?: boolean;
+  totalScore?: number;
+  scheduledDate?: string | null;
+  testCases?: any[];
+}
+
+export interface SubmissionDTO {
+  id: number;
+  assignmentId: number;
+  studentId: number;
+  fileName: string;
+  fileSize: number;
+  submissionNumber: number;
+  submittedAt: string | Date;
+  isLatest: boolean;
+  grade?: number | null;
+  assignmentName?: string;
+  studentName?: string;
+}
+
+// Test Case Types
+
+export interface TestCaseListResponse {
+  success: boolean;
+  message: string;
+  testCases: TestCase[];
+}
+
+export interface TestCaseResponse {
+  success: boolean;
+  message: string;
+  testCase: TestCase;
+}
+
+export interface TestResultsResponse {
+  success: boolean;
+  message: string;
+  data: {
+    results: RawTestResult[];
+    passedCount: number;
+    totalCount: number;
+    score: number;
+  };
+}
+
+export interface SuccessResponse {
+  success: boolean;
+  message: string;
+}
+

@@ -21,7 +21,7 @@ export async function getDashboardData(
 
   try {
     const dashboardResponse =
-      await dashboardRepository.getDashboardData(teacherId);
+      await dashboardRepository.getCompleteDashboardDataForTeacherId(teacherId);
 
     return {
       recentClasses: dashboardResponse.recentClasses as unknown as Class[],
@@ -48,7 +48,7 @@ export async function getRecentClasses(
   validateId(teacherId, "teacher");
 
   try {
-    const classesResponse = await dashboardRepository.getRecentClasses(
+    const classesResponse = await dashboardRepository.getRecentClassesForTeacherId(
       teacherId,
       limit,
     );
@@ -76,7 +76,7 @@ export async function getPendingTasks(
   validateId(teacherId, "teacher");
 
   try {
-    const tasksResponse = await dashboardRepository.getPendingTasks(
+    const tasksResponse = await dashboardRepository.getPendingTasksForTeacherId(
       teacherId,
       limit,
     );

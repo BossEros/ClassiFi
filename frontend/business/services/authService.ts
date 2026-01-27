@@ -45,7 +45,7 @@ export async function loginUser(
 
   // Attempt login via repository
   try {
-    const response = await authRepository.login(loginCredentials);
+    const response = await authRepository.authenticateUserWithEmailAndPassword(loginCredentials);
 
     if (response.success) {
       persistAuthenticationSession(response.token, response.user);
@@ -81,7 +81,7 @@ export async function registerUser(
   }
 
   try {
-    const response = await authRepository.register(registrationRequest);
+    const response = await authRepository.registerNewUserAccount(registrationRequest);
 
     if (response.success && response.token && response.user) {
       persistAuthenticationSession(response.token, response.user);
@@ -102,7 +102,7 @@ export async function registerUser(
  */
 export async function logoutUser(): Promise<void> {
   try {
-    await authRepository.logout();
+    await authRepository.signOutCurrentUserAndClearSession();
   } finally {
     // Always clear local auth data, even if server logout fails
     clearLocalAuthenticationSession();
@@ -132,7 +132,7 @@ export function getCurrentUser(): User | null {
  * @returns The authentication token string or null if not found.
  */
 export async function getAuthToken(): Promise<string | null> {
-  const result = await authRepository.getSession();
+  const result = await authRepository.getCurrentAuthenticationSession();
 
   return result.session?.access_token ?? null;
 }
@@ -164,7 +164,7 @@ export async function verifySession(): Promise<boolean> {
   }
 
   try {
-    const isValid = await authRepository.verifyToken(token);
+    const isValid = await authRepository.validateAuthenticationToken(token);
 
     if (!isValid) {
       clearLocalAuthenticationSession();
@@ -213,7 +213,7 @@ export async function requestPasswordReset(
   }
 
   try {
-    const response = await authRepository.forgotPassword(
+    const response = await authRepository.initiatePasswordResetForEmail(
       forgotPasswordRequest.email,
     );
     return response;
@@ -259,7 +259,7 @@ export async function resetPassword(
 
   try {
     const { session, sessionError, updateError } =
-      await authRepository.resetPassword(resetPasswordRequest.newPassword);
+      await authRepository.resetUserPasswordWithNewValue(resetPasswordRequest.newPassword);
 
     if (sessionError || !session) {
       return {
@@ -359,7 +359,7 @@ export async function changePassword(
       };
     }
 
-    const { signInError, updateError } = await authRepository.changePassword(
+    const { signInError, updateError } = await authRepository.changeAuthenticatedUserPassword(
       currentUser.email,
       changePasswordRequest.currentPassword,
       changePasswordRequest.newPassword,
@@ -443,7 +443,7 @@ export async function deleteAccount(
       };
     }
 
-    const { signInError, deleteError } = await authRepository.deleteAccount(
+    const { signInError, deleteError } = await authRepository.deleteUserAccountWithVerification(
       currentUser.email,
       deleteAccountRequest.password,
     );
@@ -484,7 +484,7 @@ export async function deleteAccount(
  */
 export async function initializeResetFlow(): Promise<ResetFlowResponse> {
   try {
-    return await authRepository.initializeResetFlow();
+    return await authRepository.initializePasswordResetFlowFromUrl();
   } catch (error) {
     return {
       success: false,

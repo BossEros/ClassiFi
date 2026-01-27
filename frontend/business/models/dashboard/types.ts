@@ -6,13 +6,17 @@ export type {
   Assignment,
   Task,
   EnrolledStudent,
-  ClassResponse,
+} from "@/shared/types/class";
+
+// Re-export API response types
+export type {
+  ClassDetailResponse,
   ClassListResponse,
   AssignmentListResponse,
   StudentListResponse,
   DeleteResponse,
   GenerateCodeResponse,
-} from "@/shared/types/class";
+} from "@/data/api/types";
 
 // Import types locally for use in this file's interfaces
 import type { Class, Task, EnrolledStudent } from "@/shared/types/class";
