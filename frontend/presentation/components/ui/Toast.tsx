@@ -40,17 +40,20 @@ export function Toast({
   const [isVisible, setIsVisible] = React.useState(false)
   const [isLeaving, setIsLeaving] = React.useState(false)
   const [isPaused, setIsPaused] = React.useState(false)
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null)
 
-  React.useEffect(() => {
-    // Trigger enter animation
-    const enterTimer = setTimeout(() => setIsVisible(true), 10)
-    return () => clearTimeout(enterTimer)
-  }, [])
+  const handleDismiss = React.useCallback(() => {
+    setIsLeaving(true)
+    setTimeout(() => {
+      onDismiss(id)
+    }, 300) // Match animation duration
+  }, [id, onDismiss])
 
-  React.useEffect(() => {
-    if (isPaused) return
-
-    const dismissTimer = setTimeout(() => {
+  const startTimer = React.useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+    }
+    timerRef.current = setTimeout(() => {
       handleDismiss()
     }, duration)
   }, [duration, handleDismiss])
@@ -60,20 +63,25 @@ export function Toast({
     const enterTimer = setTimeout(() => setIsVisible(true), 10)
     startTimer()
 
-    return () => clearTimeout(dismissTimer)
-  }, [duration, isPaused])
+    return () => {
+      clearTimeout(enterTimer)
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    }
+  }, [startTimer])
 
-  const handleMouseEnter = () => {
-    clearTimeout(timerRef.current)
-  }
-
-  const handleMouseLeave = () => {
-    startTimer()
-  }
+  React.useEffect(() => {
+    if (isPaused) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+      }
+    } else {
+      startTimer()
+    }
+  }, [isPaused, startTimer])
 
   const styles = variantStyles[variant]
-  const role = variant === 'error' ? 'alert' : 'status'
-  const ariaLive = variant === 'error' ? 'assertive' : 'polite'
 
   return (
     <div

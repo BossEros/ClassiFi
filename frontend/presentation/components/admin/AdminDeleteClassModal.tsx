@@ -82,7 +82,7 @@ export function AdminDeleteClassModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-md mx-4 p-6",
+          "relative w-full max-w-md min-w-[500px] mx-4 p-6",
           "rounded-xl border border-red-500/20 bg-slate-900/95 backdrop-blur-sm",
           "shadow-xl shadow-red-500/10",
           "animate-in fade-in-0 zoom-in-95 duration-200",

@@ -223,7 +223,7 @@ export function AdminCreateClassModal({
       />
 
       {/* Modal Content */}
-      <div className="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-slate-900/95 p-6 text-left shadow-2xl transition-all border border-white/10 backdrop-blur-xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+      <div className="relative w-full max-w-2xl min-w-[600px] transform overflow-hidden rounded-2xl bg-slate-900/95 p-6 text-left shadow-2xl transition-all border border-white/10 backdrop-blur-xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-white tracking-tight">
