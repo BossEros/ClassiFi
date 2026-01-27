@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 // ============================================================================
 // Shared Schemas
@@ -13,9 +13,9 @@ export const DayOfWeekSchema = z.enum([
   "friday",
   "saturday",
   "sunday",
-]);
+])
 
-export type DayOfWeek = z.infer<typeof DayOfWeekSchema>;
+export type DayOfWeek = z.infer<typeof DayOfWeekSchema>
 
 /** Academic year validation schema */
 export const AcademicYearSchema = z
@@ -23,19 +23,19 @@ export const AcademicYearSchema = z
   .regex(/^\d{4}-\d{4}$/, "Format: YYYY-YYYY (e.g., 2024-2025)")
   .refine(
     (val) => {
-      const [start, end] = val.split("-").map(Number);
-      return end === start + 1;
+      const [start, end] = val.split("-").map(Number)
+      return end === start + 1
     },
     { message: "Second year must be the first year plus one" },
-  );
+  )
 
 /** Time format regex (HH:MM) */
-const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
 
 /** Helper to convert HH:MM time string to minutes since midnight */
 function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  return hours * 60 + minutes;
+  const [hours, minutes] = time.split(":").map(Number)
+  return hours * 60 + minutes
 }
 
 /** Schedule schema for class meetings */
@@ -47,17 +47,17 @@ export const ScheduleSchema = z
   })
   .refine(
     (data) => {
-      const startMinutes = timeToMinutes(data.startTime);
-      const endMinutes = timeToMinutes(data.endTime);
-      return endMinutes > startMinutes;
+      const startMinutes = timeToMinutes(data.startTime)
+      const endMinutes = timeToMinutes(data.endTime)
+      return endMinutes > startMinutes
     },
     {
       message: "endTime must be after startTime",
       path: ["endTime"],
     },
-  );
+  )
 
-export type Schedule = z.infer<typeof ScheduleSchema>;
+export type Schedule = z.infer<typeof ScheduleSchema>
 
 // ============================================================================
 // Request Schemas
@@ -73,9 +73,9 @@ export const CreateClassRequestSchema = z.object({
   semester: z.number().int().min(1).max(2),
   academicYear: AcademicYearSchema,
   schedule: ScheduleSchema,
-});
+})
 
-export type CreateClassRequest = z.infer<typeof CreateClassRequestSchema>;
+export type CreateClassRequest = z.infer<typeof CreateClassRequestSchema>
 
 /** Update class request schema */
 export const UpdateClassRequestSchema = z.object({
@@ -87,16 +87,16 @@ export const UpdateClassRequestSchema = z.object({
   semester: z.number().int().min(1).max(2).optional(),
   academicYear: AcademicYearSchema.optional(),
   schedule: ScheduleSchema.optional(),
-});
+})
 
-export type UpdateClassRequest = z.infer<typeof UpdateClassRequestSchema>;
+export type UpdateClassRequest = z.infer<typeof UpdateClassRequestSchema>
 
 /** Delete class request schema */
 export const DeleteClassRequestSchema = z.object({
   teacherId: z.number().int().min(1),
-});
+})
 
-export type DeleteClassRequest = z.infer<typeof DeleteClassRequestSchema>;
+export type DeleteClassRequest = z.infer<typeof DeleteClassRequestSchema>
 
 // ============================================================================
 // Param & Query Schemas (for OpenAPI docs)
@@ -105,44 +105,44 @@ export type DeleteClassRequest = z.infer<typeof DeleteClassRequestSchema>;
 /** Class ID param schema (auto-coerces string to number) */
 export const ClassIdParamSchema = z.object({
   classId: z.coerce.number().int().min(1),
-});
+})
 
-export type ClassIdParam = z.infer<typeof ClassIdParamSchema>;
+export type ClassIdParam = z.infer<typeof ClassIdParamSchema>
 
 /** Teacher ID param schema (auto-coerces string to number) */
 export const TeacherIdParamSchema = z.object({
   teacherId: z.coerce.number().int().min(1),
-});
+})
 
-export type TeacherIdParam = z.infer<typeof TeacherIdParamSchema>;
+export type TeacherIdParam = z.infer<typeof TeacherIdParamSchema>
 
 /** Student ID param schema (auto-coerces string to number) */
 export const StudentIdParamSchema = z.object({
   studentId: z.coerce.number().int().min(1),
-});
+})
 
-export type StudentIdParam = z.infer<typeof StudentIdParamSchema>;
+export type StudentIdParam = z.infer<typeof StudentIdParamSchema>
 
 /** Get classes query schema */
 export const GetClassesQuerySchema = z.object({
   activeOnly: z.string().optional(),
-});
+})
 
-export type GetClassesQuery = z.infer<typeof GetClassesQuerySchema>;
+export type GetClassesQuery = z.infer<typeof GetClassesQuerySchema>
 
 /** Get class by ID query schema */
 export const GetClassByIdQuerySchema = z.object({
   teacherId: z.string().optional(),
-});
+})
 
-export type GetClassByIdQuery = z.infer<typeof GetClassByIdQuerySchema>;
+export type GetClassByIdQuery = z.infer<typeof GetClassByIdQuerySchema>
 
 /** Teacher ID query schema */
 export const TeacherIdQuerySchema = z.object({
   teacherId: z.string(),
-});
+})
 
-export type TeacherIdQuery = z.infer<typeof TeacherIdQuerySchema>;
+export type TeacherIdQuery = z.infer<typeof TeacherIdQuerySchema>
 
 // ============================================================================
 // Response Schemas
@@ -162,9 +162,9 @@ export const ClassResponseSchema = z.object({
   createdAt: z.string(),
   isActive: z.boolean(),
   studentCount: z.number().optional(),
-});
+})
 
-export type ClassResponse = z.infer<typeof ClassResponseSchema>;
+export type ClassResponse = z.infer<typeof ClassResponseSchema>
 
 /** Student response schema */
 export const StudentResponseSchema = z.object({
@@ -172,76 +172,76 @@ export const StudentResponseSchema = z.object({
   email: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-});
+})
 
-export type StudentResponse = z.infer<typeof StudentResponseSchema>;
+export type StudentResponse = z.infer<typeof StudentResponseSchema>
 
 /** Success message response schema */
 export const SuccessMessageSchema = z.object({
   success: z.literal(true),
   message: z.string(),
-});
+})
 
-export type SuccessMessage = z.infer<typeof SuccessMessageSchema>;
+export type SuccessMessage = z.infer<typeof SuccessMessageSchema>
 
 /** Create class response schema */
 export const CreateClassResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   class: ClassResponseSchema,
-});
+})
 
-export type CreateClassResponse = z.infer<typeof CreateClassResponseSchema>;
+export type CreateClassResponse = z.infer<typeof CreateClassResponseSchema>
 
 /** Get class response schema */
 export const GetClassResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   class: ClassResponseSchema,
-});
+})
 
-export type GetClassResponse = z.infer<typeof GetClassResponseSchema>;
+export type GetClassResponse = z.infer<typeof GetClassResponseSchema>
 
 /** Update class response schema */
 export const UpdateClassResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   class: ClassResponseSchema,
-});
+})
 
-export type UpdateClassResponse = z.infer<typeof UpdateClassResponseSchema>;
+export type UpdateClassResponse = z.infer<typeof UpdateClassResponseSchema>
 
 /** Class list response schema */
 export const ClassListResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   classes: z.array(ClassResponseSchema),
-});
+})
 
-export type ClassListResponse = z.infer<typeof ClassListResponseSchema>;
+export type ClassListResponse = z.infer<typeof ClassListResponseSchema>
 
 /** Generate code response schema */
 export const GenerateCodeResponseSchema = z.object({
   success: z.literal(true),
   code: z.string(),
   message: z.string(),
-});
+})
 
-export type GenerateCodeResponse = z.infer<typeof GenerateCodeResponseSchema>;
+export type GenerateCodeResponse = z.infer<typeof GenerateCodeResponseSchema>
 
 /** Class students response schema */
 export const ClassStudentsResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   students: z.array(StudentResponseSchema),
-});
+})
 
-export type ClassStudentsResponse = z.infer<typeof ClassStudentsResponseSchema>;
+export type ClassStudentsResponse = z.infer<typeof ClassStudentsResponseSchema>
 
 /** Combined params for student removal (classId + studentId) */
 export const ClassStudentParamsSchema = z.object({
   classId: z.coerce.number().int().min(1),
   studentId: z.coerce.number().int().min(1),
-});
+})
 
-export type ClassStudentParams = z.infer<typeof ClassStudentParamsSchema>;
+export type ClassStudentParams = z.infer<typeof ClassStudentParamsSchema>

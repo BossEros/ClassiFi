@@ -1,21 +1,21 @@
-import * as React from "react";
+import * as React from "react"
 import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
   X,
   ChevronDown,
-} from "lucide-react";
-import { cn } from "@/shared/utils/cn";
-import { Popover } from "./Popover";
+} from "lucide-react"
+import { cn } from "@/shared/utils/cn"
+import { Popover } from "./Popover"
 
 interface DatePickerProps {
-  value: string; // ISO string date component
-  onChange: (value: string | null) => void;
-  label?: string;
-  error?: string;
-  minDate?: Date;
-  disabled?: boolean;
+  value: string // ISO string date component
+  onChange: (value: string | null) => void
+  label?: string
+  error?: string
+  minDate?: Date
+  disabled?: boolean
 }
 
 const MONTH_NAMES = [
@@ -31,117 +31,117 @@ const MONTH_NAMES = [
   "October",
   "November",
   "December",
-];
+]
 
-const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
 /**
  * Helper to validate a Date object
  */
 function isValidDate(date: Date | null): date is Date {
-  return date !== null && !isNaN(date.getTime());
+  return date !== null && !isNaN(date.getTime())
 }
 
 export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
   ({ value, onChange, label, error, minDate, disabled }, ref) => {
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isOpen, setIsOpen] = React.useState(false)
 
     // Parse initial state with validation
-    const dateObj = value ? new Date(value) : null;
-    const validatedDateObj = dateObj && isValidDate(dateObj) ? dateObj : null;
+    const dateObj = value ? new Date(value) : null
+    const validatedDateObj = dateObj && isValidDate(dateObj) ? dateObj : null
 
     // Calendar view state - use validated date or fallback to today
     const [viewDate, setViewDate] = React.useState(
       validatedDateObj || new Date(),
-    );
+    )
 
     React.useEffect(() => {
       if (value) {
-        const d = new Date(value);
+        const d = new Date(value)
         if (isValidDate(d)) {
-          setViewDate(d);
+          setViewDate(d)
         }
       } else {
         // Reset to current date when value is cleared
-        setViewDate(new Date());
+        setViewDate(new Date())
       }
-    }, [value]);
+    }, [value])
 
-    const viewMonth = viewDate.getMonth();
-    const viewYear = viewDate.getFullYear();
+    const viewMonth = viewDate.getMonth()
+    const viewYear = viewDate.getFullYear()
 
     const getDaysInMonth = (year: number, month: number) =>
-      new Date(year, month + 1, 0).getDate();
+      new Date(year, month + 1, 0).getDate()
     const getFirstDayOfMonth = (year: number, month: number) =>
-      new Date(year, month, 1).getDay();
+      new Date(year, month, 1).getDay()
 
     const handlePrevMonth = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setViewDate(new Date(viewYear, viewMonth - 1, 1));
-    };
+      e.stopPropagation()
+      setViewDate(new Date(viewYear, viewMonth - 1, 1))
+    }
 
     const handleNextMonth = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setViewDate(new Date(viewYear, viewMonth + 1, 1));
-    };
+      e.stopPropagation()
+      setViewDate(new Date(viewYear, viewMonth + 1, 1))
+    }
 
     const handleDateSelect = (day: number) => {
       // Construct local date at noon to avoid DST/midnight shifts
-      const newDate = new Date(viewYear, viewMonth, day, 12, 0, 0);
+      const newDate = new Date(viewYear, viewMonth, day, 12, 0, 0)
 
       // Manually format to YYYY-MM-DD to avoid UTC conversion shifts
-      const year = newDate.getFullYear();
-      const month = String(newDate.getMonth() + 1).padStart(2, "0");
-      const date = String(newDate.getDate()).padStart(2, "0");
+      const year = newDate.getFullYear()
+      const month = String(newDate.getMonth() + 1).padStart(2, "0")
+      const date = String(newDate.getDate()).padStart(2, "0")
 
       // Create a "UTC" date that matches the local Y-M-D
-      const utcDate = new Date(Date.UTC(year, Number(month) - 1, Number(date)));
-      onChange(utcDate.toISOString());
-      setIsOpen(false);
-    };
+      const utcDate = new Date(Date.UTC(year, Number(month) - 1, Number(date)))
+      onChange(utcDate.toISOString())
+      setIsOpen(false)
+    }
 
     const clearDate = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onChange(null);
-      setIsOpen(false);
-    };
+      e.stopPropagation()
+      onChange(null)
+      setIsOpen(false)
+    }
 
     const isSelected = (day: number) => {
-      if (!validatedDateObj) return false;
+      if (!validatedDateObj) return false
       return (
         validatedDateObj.getDate() === day &&
         validatedDateObj.getMonth() === viewMonth &&
         validatedDateObj.getFullYear() === viewYear
-      );
-    };
+      )
+    }
 
     const isToday = (day: number) => {
-      const today = new Date();
+      const today = new Date()
       return (
         today.getDate() === day &&
         today.getMonth() === viewMonth &&
         today.getFullYear() === viewYear
-      );
-    };
+      )
+    }
 
     const isDisabled = (day: number) => {
-      if (!minDate) return false;
-      const date = new Date(viewYear, viewMonth, day);
-      date.setHours(23, 59, 59, 999);
-      return date < minDate;
-    };
+      if (!minDate) return false
+      const date = new Date(viewYear, viewMonth, day)
+      date.setHours(23, 59, 59, 999)
+      return date < minDate
+    }
 
     // Generate grid
-    const daysInMonth = getDaysInMonth(viewYear, viewMonth);
-    const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-    const days: (number | null)[] = Array(firstDay).fill(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(i);
+    const daysInMonth = getDaysInMonth(viewYear, viewMonth)
+    const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
+    const days: (number | null)[] = Array(firstDay).fill(null)
+    for (let i = 1; i <= daysInMonth; i++) days.push(i)
 
     const handleOpenChange = (open: boolean) => {
       if (!disabled) {
-        setIsOpen(open);
+        setIsOpen(open)
       }
-    };
+    }
 
     return (
       <div ref={ref} className="w-full space-y-2">
@@ -246,11 +246,11 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                   </div>
                 ))}
                 {days.map((day, index) => {
-                  if (day === null) return <div key={`empty-${index}`} />;
+                  if (day === null) return <div key={`empty-${index}`} />
 
-                  const isSelectedDay = isSelected(day);
-                  const isTodayDay = isToday(day);
-                  const disabledDay = isDisabled(day);
+                  const isSelectedDay = isSelected(day)
+                  const isTodayDay = isToday(day)
+                  const disabledDay = isDisabled(day)
 
                   return (
                     <button
@@ -271,7 +271,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                     >
                       {day}
                     </button>
-                  );
+                  )
                 })}
               </div>
             </div>
@@ -279,8 +279,8 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
         />
         {error && <p className="text-xs text-red-400 mt-1.5">{error}</p>}
       </div>
-    );
+    )
   },
-);
+)
 
-DatePicker.displayName = "DatePicker";
+DatePicker.displayName = "DatePicker"

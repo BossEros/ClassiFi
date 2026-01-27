@@ -3,13 +3,13 @@ import type {
   RegisterRequest,
   ValidationError,
   ValidationResult,
-} from "@/shared/types/auth";
-import { VALID_ROLES } from "@/shared/types/auth";
+} from "@/shared/types/auth"
+import { VALID_ROLES } from "@/shared/types/auth"
 
 // Re-export shared types for consistency
-export type { ValidationResult };
+export type { ValidationResult }
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
  * Password validation patterns.
@@ -19,7 +19,7 @@ const PASSWORD_PATTERNS = {
   lowercase: /[a-z]/,
   number: /[0-9]/,
   specialChar: /[!@#$%^&*(),.?":{}|<>]/,
-};
+}
 
 /**
  * Validates email format.
@@ -29,15 +29,15 @@ const PASSWORD_PATTERNS = {
  */
 export const validateEmail = (email: string): string | null => {
   if (!email) {
-    return "Email is required";
+    return "Email is required"
   }
 
   if (!EMAIL_PATTERN.test(email)) {
-    return "Please enter a valid email address";
+    return "Please enter a valid email address"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates password complexity.
@@ -53,31 +53,31 @@ export const validateEmail = (email: string): string | null => {
  */
 export const validatePassword = (password: string): string | null => {
   if (!password) {
-    return "Password is required";
+    return "Password is required"
   }
 
   if (password.length < 8) {
-    return "Password must be at least 8 characters long";
+    return "Password must be at least 8 characters long"
   }
 
   if (!PASSWORD_PATTERNS.uppercase.test(password)) {
-    return "Password must contain at least one uppercase letter";
+    return "Password must contain at least one uppercase letter"
   }
 
   if (!PASSWORD_PATTERNS.lowercase.test(password)) {
-    return "Password must contain at least one lowercase letter";
+    return "Password must contain at least one lowercase letter"
   }
 
   if (!PASSWORD_PATTERNS.number.test(password)) {
-    return "Password must contain at least one number";
+    return "Password must contain at least one number"
   }
 
   if (!PASSWORD_PATTERNS.specialChar.test(password)) {
-    return 'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)';
+    return 'Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)'
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates that passwords match.
@@ -91,15 +91,15 @@ export const validatePasswordsMatch = (
   confirmPassword: string,
 ): string | null => {
   if (!confirmPassword) {
-    return "Please confirm your password";
+    return "Please confirm your password"
   }
 
   if (password !== confirmPassword) {
-    return "Passwords do not match";
+    return "Passwords do not match"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates first name.
@@ -109,19 +109,19 @@ export const validatePasswordsMatch = (
  */
 export const validateFirstName = (firstName: string): string | null => {
   if (!firstName) {
-    return "First name is required";
+    return "First name is required"
   }
 
   if (firstName.length < 2) {
-    return "First name must be at least 2 characters long";
+    return "First name must be at least 2 characters long"
   }
 
   if (firstName.length > 50) {
-    return "First name must not exceed 50 characters";
+    return "First name must not exceed 50 characters"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates last name.
@@ -131,19 +131,19 @@ export const validateFirstName = (firstName: string): string | null => {
  */
 export const validateLastName = (lastName: string): string | null => {
   if (!lastName) {
-    return "Last name is required";
+    return "Last name is required"
   }
 
   if (lastName.length < 2) {
-    return "Last name must be at least 2 characters long";
+    return "Last name must be at least 2 characters long"
   }
 
   if (lastName.length > 50) {
-    return "Last name must not exceed 50 characters";
+    return "Last name must not exceed 50 characters"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates role selection.
@@ -153,15 +153,15 @@ export const validateLastName = (lastName: string): string | null => {
  */
 export const validateRole = (role: string): string | null => {
   if (!role) {
-    return "Please select a role";
+    return "Please select a role"
   }
 
   if (!(VALID_ROLES as readonly string[]).includes(role)) {
-    return "Invalid role selected";
+    return "Invalid role selected"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates complete registration form data.
@@ -173,47 +173,47 @@ export const validateRole = (role: string): string | null => {
 export const validateRegistrationData = (
   data: RegisterRequest,
 ): ValidationResult => {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
   // Validate each field
-  const roleError = validateRole(data.role);
+  const roleError = validateRole(data.role)
   if (roleError) {
-    errors.push({ field: "role", message: roleError });
+    errors.push({ field: "role", message: roleError })
   }
 
-  const firstNameError = validateFirstName(data.firstName);
+  const firstNameError = validateFirstName(data.firstName)
   if (firstNameError) {
-    errors.push({ field: "firstName", message: firstNameError });
+    errors.push({ field: "firstName", message: firstNameError })
   }
 
-  const lastNameError = validateLastName(data.lastName);
+  const lastNameError = validateLastName(data.lastName)
   if (lastNameError) {
-    errors.push({ field: "lastName", message: lastNameError });
+    errors.push({ field: "lastName", message: lastNameError })
   }
 
-  const emailError = validateEmail(data.email);
+  const emailError = validateEmail(data.email)
   if (emailError) {
-    errors.push({ field: "email", message: emailError });
+    errors.push({ field: "email", message: emailError })
   }
 
-  const passwordError = validatePassword(data.password);
+  const passwordError = validatePassword(data.password)
   if (passwordError) {
-    errors.push({ field: "password", message: passwordError });
+    errors.push({ field: "password", message: passwordError })
   }
 
   const confirmPasswordError = validatePasswordsMatch(
     data.password,
     data.confirmPassword,
-  );
+  )
   if (confirmPasswordError) {
-    errors.push({ field: "confirmPassword", message: confirmPasswordError });
+    errors.push({ field: "confirmPassword", message: confirmPasswordError })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-  };
-};
+  }
+}
 
 /**
  * Validates login form data.
@@ -224,24 +224,24 @@ export const validateRegistrationData = (
  * @returns A ValidationResult object.
  */
 export const validateLoginData = (data: LoginRequest): ValidationResult => {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
-  const emailError = validateEmail(data.email);
+  const emailError = validateEmail(data.email)
 
   if (emailError) {
-    errors.push({ field: "email", message: emailError });
+    errors.push({ field: "email", message: emailError })
   }
   if (!data.password) {
-    errors.push({ field: "password", message: "Password is required" });
+    errors.push({ field: "password", message: "Password is required" })
   } else if (data.password.trim().length === 0) {
-    errors.push({ field: "password", message: "Password cannot be empty" });
+    errors.push({ field: "password", message: "Password cannot be empty" })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-  };
-};
+  }
+}
 
 /**
  * Validates individual field for real-time validation.
@@ -259,19 +259,19 @@ export const validateField = (
 ): string | null => {
   switch (fieldName) {
     case "email":
-      return validateEmail(value);
+      return validateEmail(value)
     case "password":
-      return validatePassword(value);
+      return validatePassword(value)
     case "confirmPassword":
-      if (!additionalData?.password) return null;
-      return validatePasswordsMatch(additionalData.password, value);
+      if (!additionalData?.password) return null
+      return validatePasswordsMatch(additionalData.password, value)
     case "firstName":
-      return validateFirstName(value);
+      return validateFirstName(value)
     case "lastName":
-      return validateLastName(value);
+      return validateLastName(value)
     case "role":
-      return validateRole(value);
+      return validateRole(value)
     default:
-      return null;
+      return null
   }
-};
+}

@@ -1,24 +1,24 @@
-export const APP_NAME = 'ClassiFi'
+export const APP_NAME = "ClassiFi"
 
 export const ROUTES = {
-  LOGIN: '/login',
-  REGISTER: '/register',
-  HOME: '/',
-  DASHBOARD: '/dashboard'
+  LOGIN: "/login",
+  REGISTER: "/register",
+  HOME: "/",
+  DASHBOARD: "/dashboard",
 } as const
 
 export const STORAGE_KEYS = {
-  AUTH_TOKEN: 'authToken',
-  USER: 'user'
+  AUTH_TOKEN: "authToken",
+  USER: "user",
 } as const
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    LOGOUT: '/auth/logout',
-    VERIFY: '/auth/verify'
-  }
+    LOGIN: "/auth/login",
+    REGISTER: "/auth/register",
+    LOGOUT: "/auth/logout",
+    VERIFY: "/auth/verify",
+  },
 } as const
 
 export const VALIDATION_RULES = {
@@ -27,13 +27,13 @@ export const VALIDATION_RULES = {
     MAX_LENGTH: 128,
     REQUIRE_UPPERCASE: true,
     REQUIRE_LOWERCASE: true,
-    REQUIRE_NUMBER: true
+    REQUIRE_NUMBER: true,
   },
   NAME: {
     MIN_LENGTH: 2,
-    MAX_LENGTH: 50
+    MAX_LENGTH: 50,
   },
   EMAIL: {
-    PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  }
+    PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  },
 } as const

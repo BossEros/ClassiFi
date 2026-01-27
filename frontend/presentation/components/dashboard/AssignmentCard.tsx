@@ -1,8 +1,8 @@
-import { Card, CardContent } from '@/presentation/components/ui/Card'
-import { cn } from '@/shared/utils/cn'
-import { Clock, Check, Circle, Pencil, Trash2 } from 'lucide-react'
-import type { Assignment } from '@/business/models/dashboard/types'
-import { formatDeadline, getDeadlineColor } from '@/shared/utils/dateUtils'
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { cn } from "@/shared/utils/cn"
+import { Clock, Check, Circle, Pencil, Trash2 } from "lucide-react"
+import type { Assignment } from "@/business/models/dashboard/types"
+import { formatDeadline, getDeadlineColor } from "@/shared/utils/dateUtils"
 
 interface AssignmentCardProps {
   assignment: Assignment
@@ -12,14 +12,23 @@ interface AssignmentCardProps {
   className?: string
 }
 
-export function AssignmentCard({ assignment, onClick, onEdit, onDelete, className }: AssignmentCardProps) {
+export function AssignmentCard({
+  assignment,
+  onClick,
+  onEdit,
+  onDelete,
+  className,
+}: AssignmentCardProps) {
   const deadlineColor = getDeadlineColor(assignment.deadline)
 
   return (
     <Card
       variant="interactive"
       onClick={onClick}
-      className={cn('w-full group transition-all duration-200 hover:border-purple-500/30', className)}
+      className={cn(
+        "w-full group transition-all duration-200 hover:border-teal-500/30",
+        className,
+      )}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
@@ -30,8 +39,8 @@ export function AssignmentCard({ assignment, onClick, onEdit, onDelete, classNam
                 <Check className="w-5 h-5 text-green-400" />
               </div>
             ) : (
-              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:border-purple-500/50">
-                <Circle className="w-5 h-5 text-gray-500 group-hover:text-purple-400 transition-colors" />
+              <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center transition-colors group-hover:border-teal-500/50">
+                <Circle className="w-5 h-5 text-gray-500 group-hover:text-teal-400 transition-colors" />
               </div>
             )}
           </div>
@@ -40,12 +49,12 @@ export function AssignmentCard({ assignment, onClick, onEdit, onDelete, classNam
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 space-y-1">
-                <h3 className="text-base font-medium text-white truncate group-hover:text-purple-100 transition-colors">
+                <h3 className="text-base font-medium text-white truncate group-hover:text-teal-100 transition-colors">
                   {assignment.assignmentName}
                 </h3>
                 <div className="flex items-center gap-2">
-                  <Clock className={cn('w-3.5 h-3.5', deadlineColor)} />
-                  <span className={cn('text-xs font-medium', deadlineColor)}>
+                  <Clock className={cn("w-3.5 h-3.5", deadlineColor)} />
+                  <span className={cn("text-xs font-medium", deadlineColor)}>
                     Due {formatDeadline(assignment.deadline)}
                   </span>
                 </div>

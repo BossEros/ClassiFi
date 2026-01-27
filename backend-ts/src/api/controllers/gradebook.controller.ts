@@ -1,8 +1,8 @@
-import type { FastifyInstance } from "fastify";
-import { container } from "tsyringe";
-import { GradebookService } from "../../services/gradebook.service.js";
-import { LatePenaltyService } from "../../services/latePenalty.service.js";
-import { toJsonSchema } from "../utils/swagger.js";
+import type { FastifyInstance } from "fastify"
+import { container } from "tsyringe"
+import { GradebookService } from "../../services/gradebook.service.js"
+import { LatePenaltyService } from "../../services/latePenalty.service.js"
+import { toJsonSchema } from "../utils/swagger.js"
 import {
   ClassIdParamSchema,
   StudentIdParamSchema,
@@ -19,15 +19,15 @@ import {
   SuccessResponseSchema,
   type GradeOverrideBody,
   type LatePenaltyUpdateBody,
-} from "../schemas/gradebook.schema.js";
-import { BadRequestError } from "../middlewares/error-handler.js";
+} from "../schemas/gradebook.schema.js"
+import { BadRequestError } from "../middlewares/error-handler.js"
 
 /** Gradebook routes - /api/v1/gradebook/* */
 export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
   const gradebookService =
-    container.resolve<GradebookService>("GradebookService");
+    container.resolve<GradebookService>("GradebookService")
   const latePenaltyService =
-    container.resolve<LatePenaltyService>("LatePenaltyService");
+    container.resolve<LatePenaltyService>("LatePenaltyService")
 
   // ==========================================================================
   // Class Gradebook Endpoints
@@ -49,13 +49,13 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10);
+      const classId = parseInt(request.params.classId, 10)
 
       if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID");
+        throw new BadRequestError("Invalid class ID")
       }
 
-      const gradebook = await gradebookService.getClassGradebook(classId);
+      const gradebook = await gradebookService.getClassGradebook(classId)
 
       // Transform dates to strings for response
       return reply.send({
@@ -71,9 +71,9 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
             submittedAt: g.submittedAt?.toISOString() ?? null,
           })),
         })),
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /classes/:classId/export
@@ -86,23 +86,23 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       params: toJsonSchema(ClassIdParamSchema),
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10);
+      const classId = parseInt(request.params.classId, 10)
 
       if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID");
+        throw new BadRequestError("Invalid class ID")
       }
 
-      const csvContent = await gradebookService.exportGradebookCSV(classId);
+      const csvContent = await gradebookService.exportGradebookCSV(classId)
 
       return reply
         .header("Content-Type", "text/csv")
         .header(
           "Content-Disposition",
-          `attachment; filename="gradebook-class-${classId}.csv"`
+          `attachment; filename="gradebook-class-${classId}.csv"`,
         )
-        .send(csvContent);
+        .send(csvContent)
     },
-  });
+  })
 
   /**
    * GET /classes/:classId/statistics
@@ -118,20 +118,20 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10);
+      const classId = parseInt(request.params.classId, 10)
 
       if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID");
+        throw new BadRequestError("Invalid class ID")
       }
 
-      const statistics = await gradebookService.getClassStatistics(classId);
+      const statistics = await gradebookService.getClassStatistics(classId)
 
       return reply.send({
         success: true,
         statistics,
-      });
+      })
     },
-  });
+  })
 
   // ==========================================================================
   // Student Grades Endpoints
@@ -153,13 +153,13 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const studentId = parseInt(request.params.studentId, 10);
+      const studentId = parseInt(request.params.studentId, 10)
 
       if (isNaN(studentId)) {
-        throw new BadRequestError("Invalid student ID");
+        throw new BadRequestError("Invalid student ID")
       }
 
-      const grades = await gradebookService.getStudentGrades(studentId);
+      const grades = await gradebookService.getStudentGrades(studentId)
 
       // Transform dates to strings
       return reply.send({
@@ -172,9 +172,9 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
             submittedAt: a.submittedAt?.toISOString() ?? null,
           })),
         })),
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /students/:studentId/classes/:classId
@@ -192,17 +192,17 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const studentId = parseInt(request.params.studentId, 10);
-        const classId = parseInt(request.params.classId, 10);
+        const studentId = parseInt(request.params.studentId, 10)
+        const classId = parseInt(request.params.classId, 10)
 
         if (isNaN(studentId) || isNaN(classId)) {
-          throw new BadRequestError("Invalid ID parameters");
+          throw new BadRequestError("Invalid ID parameters")
         }
 
         const grades = await gradebookService.getStudentGrades(
           studentId,
-          classId
-        );
+          classId,
+        )
 
         return reply.send({
           success: true,
@@ -214,10 +214,10 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
               submittedAt: a.submittedAt?.toISOString() ?? null,
             })),
           })),
-        });
+        })
       },
-    }
-  );
+    },
+  )
 
   /**
    * GET /students/:studentId/classes/:classId/rank
@@ -235,27 +235,27 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const studentId = parseInt(request.params.studentId, 10);
-        const classId = parseInt(request.params.classId, 10);
+        const studentId = parseInt(request.params.studentId, 10)
+        const classId = parseInt(request.params.classId, 10)
 
         if (isNaN(studentId) || isNaN(classId)) {
-          throw new BadRequestError("Invalid ID parameters");
+          throw new BadRequestError("Invalid ID parameters")
         }
 
         const rankData = await gradebookService.getStudentRank(
           studentId,
-          classId
-        );
+          classId,
+        )
 
         return reply.send({
           success: true,
           rank: rankData?.rank ?? null,
           totalStudents: rankData?.totalStudents ?? null,
           percentile: rankData?.percentile ?? null,
-        });
+        })
       },
-    }
-  );
+    },
+  )
 
   // ==========================================================================
   // Grade Override Endpoints
@@ -279,27 +279,27 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const submissionId = parseInt(request.params.submissionId, 10);
+        const submissionId = parseInt(request.params.submissionId, 10)
 
         if (isNaN(submissionId)) {
-          throw new BadRequestError("Invalid submission ID");
+          throw new BadRequestError("Invalid submission ID")
         }
 
-        const { grade, feedback } = request.body;
+        const { grade, feedback } = request.body
 
         await gradebookService.overrideGrade(
           submissionId,
           grade,
-          feedback ?? null
-        );
+          feedback ?? null,
+        )
 
         return reply.send({
           success: true,
           message: "Grade overridden successfully",
-        });
+        })
       },
-    }
-  );
+    },
+  )
 
   /**
    * DELETE /submissions/:submissionId/override
@@ -318,21 +318,21 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const submissionId = parseInt(request.params.submissionId, 10);
+        const submissionId = parseInt(request.params.submissionId, 10)
 
         if (isNaN(submissionId)) {
-          throw new BadRequestError("Invalid submission ID");
+          throw new BadRequestError("Invalid submission ID")
         }
 
-        await gradebookService.removeOverride(submissionId);
+        await gradebookService.removeOverride(submissionId)
 
         return reply.send({
           success: true,
           message: "Grade override removed successfully",
-        });
+        })
       },
-    }
-  );
+    },
+  )
 
   // ==========================================================================
   // Late Penalty Configuration Endpoints
@@ -352,21 +352,21 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const assignmentId = parseInt(request.params.id, 10);
+      const assignmentId = parseInt(request.params.id, 10)
 
       if (isNaN(assignmentId)) {
-        throw new BadRequestError("Invalid assignment ID");
+        throw new BadRequestError("Invalid assignment ID")
       }
 
-      const config = await latePenaltyService.getAssignmentConfig(assignmentId);
+      const config = await latePenaltyService.getAssignmentConfig(assignmentId)
 
       return reply.send({
         success: true,
         enabled: config.enabled,
         config: config.config,
-      });
+      })
     },
-  });
+  })
 
   /**
    * PUT /assignments/:id/late-penalty
@@ -385,28 +385,28 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const assignmentId = parseInt(request.params.id, 10);
+        const assignmentId = parseInt(request.params.id, 10)
 
         if (isNaN(assignmentId)) {
-          throw new BadRequestError("Invalid assignment ID");
+          throw new BadRequestError("Invalid assignment ID")
         }
 
-        const { enabled, config } = request.body;
+        const { enabled, config } = request.body
 
         // Use default config if enabling but no config provided
-        const penaltyConfig = config ?? latePenaltyService.getDefaultConfig();
+        const penaltyConfig = config ?? latePenaltyService.getDefaultConfig()
 
         await latePenaltyService.setAssignmentConfig(
           assignmentId,
           enabled,
-          penaltyConfig
-        );
+          penaltyConfig,
+        )
 
         return reply.send({
           success: true,
           message: "Late penalty configuration updated successfully",
-        });
+        })
       },
-    }
-  );
+    },
+  )
 }

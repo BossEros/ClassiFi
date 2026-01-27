@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test"
 
 /**
  * Playwright configuration for ClassiFi E2E tests.
@@ -34,7 +34,8 @@ export default defineConfig({
       "html",
       {
         open: "never",
-      },    ],
+      },
+    ],
     ["list"],
   ],
 
@@ -68,4 +69,4 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },
-});
+})

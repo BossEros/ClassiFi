@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from "react"
 import {
   FlaskConical,
   CheckCircle,
@@ -8,18 +8,18 @@ import {
   RefreshCw,
   ChevronDown,
   EyeOff,
-} from "lucide-react";
+} from "lucide-react"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/presentation/components/ui/Card";
-import { useTestResults } from "@/presentation/hooks/useTestResults";
-import type { TestResultDetail } from "@/shared/types/testCase";
+} from "@/presentation/components/ui/Card"
+import { useTestResults } from "@/presentation/hooks/useTestResults"
+import type { TestResultDetail } from "@/shared/types/testCase"
 
 interface TestResultsPanelProps {
-  submissionId: number;
+  submissionId: number
 }
 
 const STATUS_CONFIG: Record<
@@ -66,27 +66,27 @@ const STATUS_CONFIG: Record<
     color: "text-gray-400",
     bgColor: "bg-gray-500/20",
   },
-};
+}
 
 function getStatusConfig(status: string) {
-  return STATUS_CONFIG[status] || STATUS_CONFIG["Internal Error"];
+  return STATUS_CONFIG[status] || STATUS_CONFIG["Internal Error"]
 }
 
 export function TestResultsPanel({ submissionId }: TestResultsPanelProps) {
-  const { results, isLoading, error } = useTestResults(submissionId);
-  const [expandedTests, setExpandedTests] = useState<Set<number>>(new Set());
+  const { results, isLoading, error } = useTestResults(submissionId)
+  const [expandedTests, setExpandedTests] = useState<Set<number>>(new Set())
 
   const toggleExpand = (testCaseId: number) => {
     setExpandedTests((prev) => {
-      const next = new Set(prev);
+      const next = new Set(prev)
       if (next.has(testCaseId)) {
-        next.delete(testCaseId);
+        next.delete(testCaseId)
       } else {
-        next.add(testCaseId);
+        next.add(testCaseId)
       }
-      return next;
-    });
-  };
+      return next
+    })
+  }
 
   if (isLoading) {
     return (
@@ -98,15 +98,15 @@ export function TestResultsPanel({ submissionId }: TestResultsPanelProps) {
           </div>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-purple-500/20">
-            <FlaskConical className="w-5 h-5 text-purple-400" />
+          <div className="p-2 rounded-lg bg-teal-500/20">
+            <FlaskConical className="w-5 h-5 text-teal-400" />
           </div>
           <CardTitle>Test Results</CardTitle>
         </div>
@@ -163,14 +163,14 @@ export function TestResultsPanel({ submissionId }: TestResultsPanelProps) {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 interface TestResultItemProps {
-  result: TestResultDetail;
-  index: number;
-  isExpanded: boolean;
-  onToggle: () => void;
+  result: TestResultDetail
+  index: number
+  isExpanded: boolean
+  onToggle: () => void
 }
 
 function TestResultItem({
@@ -179,9 +179,9 @@ function TestResultItem({
   isExpanded,
   onToggle,
 }: TestResultItemProps) {
-  const config = getStatusConfig(result.status);
-  const StatusIcon = config.icon;
-  const isAccepted = result.status === "Accepted";
+  const config = getStatusConfig(result.status)
+  const StatusIcon = config.icon
+  const isAccepted = result.status === "Accepted"
 
   return (
     <div className="rounded-lg border border-white/10 overflow-hidden">
@@ -278,7 +278,7 @@ function TestResultItem({
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export default TestResultsPanel;
+export default TestResultsPanel

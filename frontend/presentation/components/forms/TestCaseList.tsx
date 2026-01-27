@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from "react"
 import {
   Plus,
   Trash2,
@@ -7,39 +7,39 @@ import {
   Clock,
   ChevronDown,
   FlaskConical,
-} from "lucide-react";
-import { Button } from "@/presentation/components/ui/Button";
-import { TestCaseModal } from "@/presentation/components/forms/TestCaseModal";
-import { DeleteTestCaseModal } from "@/presentation/components/forms/DeleteTestCaseModal";
+} from "lucide-react"
+import { Button } from "@/presentation/components/ui/Button"
+import { TestCaseModal } from "@/presentation/components/forms/TestCaseModal"
+import { DeleteTestCaseModal } from "@/presentation/components/forms/DeleteTestCaseModal"
 import type {
   TestCase,
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
-} from "@/shared/types/testCase";
+} from "@/shared/types/testCase"
 
 // Pending test case (before assignment is created)
 export interface PendingTestCase {
-  tempId: string; // Temporary ID for tracking
-  name: string;
-  input: string;
-  expectedOutput: string;
-  isHidden: boolean;
-  timeLimit: number;
-  sortOrder: number;
+  tempId: string // Temporary ID for tracking
+  name: string
+  input: string
+  expectedOutput: string
+  isHidden: boolean
+  timeLimit: number
+  sortOrder: number
 }
 
 interface TestCaseListProps {
-  testCases: TestCase[];
-  pendingTestCases?: PendingTestCase[];
-  isLoading?: boolean;
-  isEditMode: boolean;
-  assignmentId?: number;
-  onAdd: (data: CreateTestCaseRequest) => Promise<void>;
-  onAddPending?: (data: PendingTestCase) => void;
-  onUpdate: (id: number, data: UpdateTestCaseRequest) => Promise<void>;
-  onUpdatePending?: (tempId: string, data: PendingTestCase) => void;
-  onDelete: (id: number) => Promise<void>;
-  onDeletePending?: (tempId: string) => void;
+  testCases: TestCase[]
+  pendingTestCases?: PendingTestCase[]
+  isLoading?: boolean
+  isEditMode: boolean
+  assignmentId?: number
+  onAdd: (data: CreateTestCaseRequest) => Promise<void>
+  onAddPending?: (data: PendingTestCase) => void
+  onUpdate: (id: number, data: UpdateTestCaseRequest) => Promise<void>
+  onUpdatePending?: (tempId: string, data: PendingTestCase) => void
+  onDelete: (id: number) => Promise<void>
+  onDeletePending?: (tempId: string) => void
 }
 
 export function TestCaseList({
@@ -56,16 +56,16 @@ export function TestCaseList({
 }: TestCaseListProps) {
   // Create a unified type for display
   interface DisplayTestCase {
-    id: number;
-    tempId?: string;
-    assignmentId: number;
-    name: string;
-    input: string;
-    expectedOutput: string;
-    isHidden: boolean;
-    timeLimit: number;
-    sortOrder: number;
-    createdAt: string;
+    id: number
+    tempId?: string
+    assignmentId: number
+    name: string
+    input: string
+    expectedOutput: string
+    isHidden: boolean
+    timeLimit: number
+    sortOrder: number
+    createdAt: string
   }
 
   const allTestCases: DisplayTestCase[] = [
@@ -82,31 +82,31 @@ export function TestCaseList({
       sortOrder: p.sortOrder,
       createdAt: "",
     })),
-  ];
+  ]
 
-  const [showSection, setShowSection] = useState(allTestCases.length > 0);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [showSection, setShowSection] = useState(allTestCases.length > 0)
+  const [modalOpen, setModalOpen] = useState(false)
   const [editingTestCase, setEditingTestCase] = useState<
     (TestCase & { tempId?: string }) | null
-  >(null);
-  const [savingId, setSavingId] = useState<number | string | null>(null);
-  const [deletingId, setDeletingId] = useState<number | string | null>(null);
+  >(null)
+  const [savingId, setSavingId] = useState<number | string | null>(null)
+  const [deletingId, setDeletingId] = useState<number | string | null>(null)
 
   // Delete modal state
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [testCaseToDelete, setTestCaseToDelete] = useState<
     (TestCase & { tempId?: string }) | null
-  >(null);
+  >(null)
 
   const handleOpenAdd = () => {
-    setEditingTestCase(null);
-    setModalOpen(true);
-  };
+    setEditingTestCase(null)
+    setModalOpen(true)
+  }
 
   const handleOpenEdit = (tc: TestCase & { tempId?: string }) => {
-    setEditingTestCase(tc);
-    setModalOpen(true);
-  };
+    setEditingTestCase(tc)
+    setModalOpen(true)
+  }
 
   const handleSave = async (
     data: CreateTestCaseRequest | UpdateTestCaseRequest,
@@ -124,16 +124,16 @@ export function TestCaseList({
             isHidden: data.isHidden ?? false,
             timeLimit: data.timeLimit ?? 5,
             sortOrder: editingTestCase.sortOrder,
-          });
+          })
         } else {
           // Persisted test case
-          setSavingId(editingTestCase.id);
-          await onUpdate(editingTestCase.id, data as UpdateTestCaseRequest);
+          setSavingId(editingTestCase.id)
+          await onUpdate(editingTestCase.id, data as UpdateTestCaseRequest)
         }
       } else {
         // Adding new
         if (isEditMode) {
-          await onAdd(data as CreateTestCaseRequest);
+          await onAdd(data as CreateTestCaseRequest)
         } else {
           // Create pending test case
           onAddPending?.({
@@ -144,37 +144,37 @@ export function TestCaseList({
             isHidden: data.isHidden ?? false,
             timeLimit: data.timeLimit ?? 5,
             sortOrder: pendingTestCases.length,
-          });
+          })
         }
       }
-      setModalOpen(false);
+      setModalOpen(false)
     } finally {
-      setSavingId(null);
+      setSavingId(null)
     }
-  };
+  }
 
   const handleDeleteClick = (tc: TestCase & { tempId?: string }) => {
-    setTestCaseToDelete(tc);
-    setDeleteModalOpen(true);
-  };
+    setTestCaseToDelete(tc)
+    setDeleteModalOpen(true)
+  }
 
   const handleConfirmDelete = async () => {
-    if (!testCaseToDelete) return;
+    if (!testCaseToDelete) return
 
     try {
       if (testCaseToDelete.tempId) {
-        setDeletingId(testCaseToDelete.tempId);
-        onDeletePending?.(testCaseToDelete.tempId);
+        setDeletingId(testCaseToDelete.tempId)
+        onDeletePending?.(testCaseToDelete.tempId)
       } else {
-        setDeletingId(testCaseToDelete.id);
-        await onDelete(testCaseToDelete.id);
+        setDeletingId(testCaseToDelete.id)
+        await onDelete(testCaseToDelete.id)
       }
-      setDeleteModalOpen(false);
-      setTestCaseToDelete(null);
+      setDeleteModalOpen(false)
+      setTestCaseToDelete(null)
     } finally {
-      setDeletingId(null);
+      setDeletingId(null)
     }
-  };
+  }
 
   return (
     <div className="space-y-3 pt-4 border-t border-white/10">
@@ -206,15 +206,15 @@ export function TestCaseList({
           {allTestCases.length > 0 ? (
             <div className="space-y-2">
               {allTestCases.map((tc, index) => {
-                const isPending = !!tc.tempId;
-                const uniqueKey = tc.tempId ?? `tc-${tc.id}`;
+                const isPending = !!tc.tempId
+                const uniqueKey = tc.tempId ?? `tc-${tc.id}`
 
                 return (
                   <div
                     key={uniqueKey}
                     className={`flex items-center gap-3 p-3 rounded-xl border group transition-all duration-200 ${
                       isPending
-                        ? "bg-purple-500/5 border-purple-500/20 hover:bg-purple-500/10"
+                        ? "bg-teal-500/5 border-teal-500/20 hover:bg-teal-500/10"
                         : "bg-black/20 border-white/5 hover:border-white/10 hover:bg-black/30"
                     }`}
                   >
@@ -231,7 +231,7 @@ export function TestCaseList({
                     {/* Badges */}
                     <div className="flex items-center gap-2">
                       {isPending && (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-xs">
+                        <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-xs">
                           Pending
                         </span>
                       )}
@@ -279,7 +279,7 @@ export function TestCaseList({
                       </button>
                     </div>
                   </div>
-                );
+                )
               })}
             </div>
           ) : (
@@ -322,13 +322,13 @@ export function TestCaseList({
       <DeleteTestCaseModal
         isOpen={deleteModalOpen}
         onClose={() => {
-          setDeleteModalOpen(false);
-          setTestCaseToDelete(null);
+          setDeleteModalOpen(false)
+          setTestCaseToDelete(null)
         }}
         onConfirm={handleConfirmDelete}
         isDeleting={deletingId !== null}
         testCaseName={testCaseToDelete?.name}
       />
     </div>
-  );
+  )
 }

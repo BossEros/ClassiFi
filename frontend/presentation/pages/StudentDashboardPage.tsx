@@ -1,84 +1,82 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Home, Grid3x3, FileText } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
-import { ClassCard } from "@/presentation/components/dashboard/ClassCard";
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Home, Grid3x3, FileText } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/presentation/components/ui/Card";
-import { getCurrentUser } from "@/business/services/authService";
-import { getDashboardData } from "@/business/services/studentDashboardService";
-import type { User } from "@/business/models/auth/types";
-import type { Class, Task } from "@/business/models/dashboard/types";
+} from "@/presentation/components/ui/Card"
+import { getCurrentUser } from "@/business/services/authService"
+import { getDashboardData } from "@/business/services/studentDashboardService"
+import type { User } from "@/business/models/auth/types"
+import type { Class, Task } from "@/business/models/dashboard/types"
 
 export function StudentDashboardPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [enrolledClasses, setEnrolledClasses] = useState<Class[]>([]);
-  const [pendingAssignments, setPendingAssignments] = useState<Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate()
+  const [user, setUser] = useState<User | null>(null)
+  const [enrolledClasses, setEnrolledClasses] = useState<Class[]>([])
+  const [pendingAssignments, setPendingAssignments] = useState<Task[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchDashboardData = async (studentId: number) => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(true)
+      setError(null)
 
-      const data = await getDashboardData(studentId);
+      const data = await getDashboardData(studentId)
       // Cast is safe: API returns ISO date strings compatible with ISODateString
-      setEnrolledClasses(data.enrolledClasses as Class[]);
-      setPendingAssignments(data.pendingAssignments as Task[]);
+      setEnrolledClasses(data.enrolledClasses as Class[])
+      setPendingAssignments(data.pendingAssignments as Task[])
     } catch (err) {
-      console.error("Failed to fetch dashboard data:", err);
-      setError(
-        "Failed to load dashboard data. Please try refreshing the page.",
-      );
+      console.error("Failed to fetch dashboard data:", err)
+      setError("Failed to load dashboard data. Please try refreshing the page.")
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate("/login");
-      return;
+      navigate("/login")
+      return
     }
 
-    setUser(currentUser);
-    fetchDashboardData(parseInt(currentUser.id));
-  }, [navigate]);
+    setUser(currentUser)
+    fetchDashboardData(parseInt(currentUser.id))
+  }, [navigate])
 
   /**
    * Calculates days remaining until the deadline.
    */
   const formatDeadline = (deadline: Date) => {
-    const now = new Date();
-    const diff = deadline.getTime() - now.getTime();
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    const now = new Date()
+    const diff = deadline.getTime() - now.getTime()
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
 
-    if (days < 0) return "Overdue";
-    if (days === 0) return "Due today";
-    if (days === 1) return "Due tomorrow";
-    return `Due in ${days} days`;
-  };
+    if (days < 0) return "Overdue"
+    if (days === 0) return "Due today"
+    if (days === 1) return "Due tomorrow"
+    return `Due in ${days} days`
+  }
 
   return (
     <DashboardLayout>
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 rounded-lg bg-purple-500/20">
-            <Home className="w-5 h-5 text-purple-300" />
+          <div className="p-2 rounded-lg bg-teal-500/20">
+            <Home className="w-5 h-5 text-teal-300" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Home</h1>
         </div>
         {user && (
-          <p className="text-gray-300 ml-11 text-sm">
+          <p className="text-slate-300 ml-11 text-sm">
             Welcome back,{" "}
             <span className="text-white font-semibold">{user.firstName}</span>!
             Here's what's happening today.
@@ -107,7 +105,7 @@ export function StudentDashboardPage() {
             {isLoading ? (
               <div className="py-12 text-center">
                 <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-400">Loading dashboard...</p>
+                <p className="text-slate-400">Loading dashboard...</p>
               </div>
             ) : enrolledClasses.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -124,12 +122,12 @@ export function StudentDashboardPage() {
             ) : (
               <div className="py-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <Grid3x3 className="w-8 h-8 text-gray-500" />
+                  <Grid3x3 className="w-8 h-8 text-slate-500" />
                 </div>
-                <p className="text-gray-300 font-semibold text-sm mb-1.5">
+                <p className="text-slate-300 font-semibold text-sm mb-1.5">
                   No classes yet
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   Join a class from the "My Classes" page.
                 </p>
               </div>
@@ -149,7 +147,7 @@ export function StudentDashboardPage() {
             {isLoading ? (
               <div className="py-12 text-center">
                 <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-400">Loading...</p>
+                <p className="text-slate-400">Loading...</p>
               </div>
             ) : pendingAssignments.length > 0 ? (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -164,18 +162,18 @@ export function StudentDashboardPage() {
                     <h4 className="text-sm font-medium text-white mb-1 truncate">
                       {assignment.assignmentName}
                     </h4>
-                    <p className="text-xs text-gray-400 mb-2 truncate">
+                    <p className="text-xs text-slate-400 mb-2 truncate">
                       {assignment.className}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-slate-400">
                         {assignment.programmingLanguage}
                       </span>
                       <span
                         className={`text-xs font-medium ${
                           new Date(assignment.deadline) < new Date()
                             ? "text-red-400"
-                            : "text-purple-400"
+                            : "text-teal-400"
                         }`}
                       >
                         {formatDeadline(new Date(assignment.deadline))}
@@ -187,12 +185,12 @@ export function StudentDashboardPage() {
             ) : (
               <div className="py-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-gray-500" />
+                  <FileText className="w-8 h-8 text-slate-500" />
                 </div>
-                <p className="text-gray-300 font-semibold text-sm mb-1.5">
+                <p className="text-slate-300 font-semibold text-sm mb-1.5">
                   All caught up!
                 </p>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-slate-500">
                   New coursework will appear here when assigned.
                 </p>
               </div>
@@ -201,5 +199,5 @@ export function StudentDashboardPage() {
         </Card>
       </div>
     </DashboardLayout>
-  );
+  )
 }

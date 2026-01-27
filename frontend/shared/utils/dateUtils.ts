@@ -6,15 +6,15 @@
  * Format a date/string into a human-readable deadline format
  */
 export function formatDeadline(date: Date | string): string {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    }
-    return dateObj.toLocaleString('en-US', options)
+  const dateObj = typeof date === "string" ? new Date(date) : date
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }
+  return dateObj.toLocaleString("en-US", options)
 }
 
 /**
@@ -25,15 +25,15 @@ export function formatDeadline(date: Date | string): string {
  * - Otherwise: gray
  */
 export function getDeadlineColor(date: Date | string): string {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    const now = new Date()
-    const diffTime = dateObj.getTime() - now.getTime()
-    const diffDays = diffTime / (1000 * 60 * 60 * 24)
+  const dateObj = typeof date === "string" ? new Date(date) : date
+  const now = new Date()
+  const diffTime = dateObj.getTime() - now.getTime()
+  const diffDays = diffTime / (1000 * 60 * 60 * 24)
 
-    if (diffDays < 0) return 'text-red-400'
-    if (diffDays < 1) return 'text-orange-400'
-    if (diffDays < 3) return 'text-yellow-400'
-    return 'text-gray-400'
+  if (diffDays < 0) return "text-red-400"
+  if (diffDays < 1) return "text-orange-400"
+  if (diffDays < 3) return "text-yellow-400"
+  return "text-gray-400"
 }
 
 /**
@@ -42,56 +42,66 @@ export function getDeadlineColor(date: Date | string): string {
  * @example In August 2024: "2024-2025", In February 2024: "2023-2024"
  */
 export function getCurrentAcademicYear(): string {
-    const now = new Date()
-    const currentYear = now.getFullYear()
-    // If we're past June, use current-next year, otherwise use previous-current year
-    const startYear = now.getMonth() >= 5 ? currentYear : currentYear - 1
-    return `${startYear}-${startYear + 1}`
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  // If we're past June, use current-next year, otherwise use previous-current year
+  const startYear = now.getMonth() >= 5 ? currentYear : currentYear - 1
+  return `${startYear}-${startYear + 1}`
 }
 
 /**
  * Format a date as relative time (e.g., "5 minutes ago", "2 days ago")
  */
 export function formatTimeAgo(date: Date | string): string {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    const now = new Date()
-    const diffTime = now.getTime() - dateObj.getTime()
-    const diffMinutes = Math.floor(diffTime / (1000 * 60))
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+  const dateObj = typeof date === "string" ? new Date(date) : date
+  const now = new Date()
+  const diffTime = now.getTime() - dateObj.getTime()
+  const diffMinutes = Math.floor(diffTime / (1000 * 60))
+  const diffHours = Math.floor(diffTime / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
 
-    if (diffMinutes < 1) return 'Just now'
-    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`
-    if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`
+  if (diffMinutes < 1) return "Just now"
+  if (diffMinutes < 60)
+    return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`
+  if (diffHours < 24)
+    return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`
+  if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`
 
-    return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return dateObj.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  })
 }
 
 /**
  * Check if a submission date is past the deadline
  */
-export function isLateSubmission(submittedAt: Date | string, deadline: Date | string): boolean {
-    const submitted = typeof submittedAt === 'string' ? new Date(submittedAt) : submittedAt
-    const due = typeof deadline === 'string' ? new Date(deadline) : deadline
-    return submitted.getTime() > due.getTime()
+export function isLateSubmission(
+  submittedAt: Date | string,
+  deadline: Date | string,
+): boolean {
+  const submitted =
+    typeof submittedAt === "string" ? new Date(submittedAt) : submittedAt
+  const due = typeof deadline === "string" ? new Date(deadline) : deadline
+  return submitted.getTime() > due.getTime()
 }
 
 /**
  * Format time remaining until a deadline (e.g., "3d 5h", "2h 30m", "Past due")
  */
 export function formatTimeRemaining(deadline: Date | string): string {
-    const dateObj = typeof deadline === 'string' ? new Date(deadline) : deadline
-    const diff = dateObj.getTime() - new Date().getTime()
+  const dateObj = typeof deadline === "string" ? new Date(deadline) : deadline
+  const diff = dateObj.getTime() - new Date().getTime()
 
-    if (diff <= 0) return 'Past due'
+  if (diff <= 0) return "Past due"
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
 
-    if (days > 0) return `${days}d ${hours}h`
-    return `${hours}h ${minutes}m`
+  if (days > 0) return `${days}d ${hours}h`
+  return `${hours}h ${minutes}m`
 }
 
 /**
@@ -99,13 +109,13 @@ export function formatTimeRemaining(deadline: Date | string): string {
  * Used for displaying submission times, etc.
  */
 export function formatDateTime(date: Date | string): string {
-    const dateObj = typeof date === 'string' ? new Date(date) : date
-    return dateObj.toLocaleString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
-    })
+  const dateObj = typeof date === "string" ? new Date(date) : date
+  return dateObj.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
 }

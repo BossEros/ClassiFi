@@ -1,91 +1,91 @@
-import "reflect-metadata";
-import { container } from "tsyringe";
+import "reflect-metadata"
+import { container } from "tsyringe"
 
 // Repositories
-import { UserRepository } from "../repositories/user.repository.js";
-import { ClassRepository } from "../repositories/class.repository.js";
-import { AssignmentRepository } from "../repositories/assignment.repository.js";
-import { EnrollmentRepository } from "../repositories/enrollment.repository.js";
-import { SubmissionRepository } from "../repositories/submission.repository.js";
-import { SimilarityRepository } from "../repositories/similarity.repository.js";
-import { TestCaseRepository } from "../repositories/testCase.repository.js";
-import { TestResultRepository } from "../repositories/testResult.repository.js";
-import { GradebookRepository } from "../repositories/gradebook.repository.js";
+import { UserRepository } from "../repositories/user.repository.js"
+import { ClassRepository } from "../repositories/class.repository.js"
+import { AssignmentRepository } from "../repositories/assignment.repository.js"
+import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
+import { SubmissionRepository } from "../repositories/submission.repository.js"
+import { SimilarityRepository } from "../repositories/similarity.repository.js"
+import { TestCaseRepository } from "../repositories/testCase.repository.js"
+import { TestResultRepository } from "../repositories/testResult.repository.js"
+import { GradebookRepository } from "../repositories/gradebook.repository.js"
 
 // Services
-import { AuthService } from "../services/auth.service.js";
-import { ClassService } from "../services/class.service.js";
-import { SubmissionService } from "../services/submission.service.js";
-import { StudentDashboardService } from "../services/student-dashboard.service.js";
-import { TeacherDashboardService } from "../services/teacher-dashboard.service.js";
-import { PlagiarismService } from "../services/plagiarism.service.js";
-import { UserService } from "../services/user.service.js";
-import { StorageService } from "../services/storage.service.js";
-import { AssignmentService } from "../services/assignment.service.js";
-import { SupabaseAuthAdapter } from "../services/supabase-auth.adapter.js";
-import { Judge0Service } from "../services/judge0.service.js";
-import { CodeTestService } from "../services/codeTest.service.js";
-import { CODE_EXECUTOR_TOKEN } from "../services/interfaces/codeExecutor.interface.js";
-import { GradebookService } from "../services/gradebook.service.js";
-import { LatePenaltyService } from "../services/latePenalty.service.js";
+import { AuthService } from "../services/auth.service.js"
+import { ClassService } from "../services/class.service.js"
+import { SubmissionService } from "../services/submission.service.js"
+import { StudentDashboardService } from "../services/student-dashboard.service.js"
+import { TeacherDashboardService } from "../services/teacher-dashboard.service.js"
+import { PlagiarismService } from "../services/plagiarism.service.js"
+import { UserService } from "../services/user.service.js"
+import { StorageService } from "../services/storage.service.js"
+import { AssignmentService } from "../services/assignment.service.js"
+import { SupabaseAuthAdapter } from "../services/supabase-auth.adapter.js"
+import { Judge0Service } from "../services/judge0.service.js"
+import { CodeTestService } from "../services/codeTest.service.js"
+import { CODE_EXECUTOR_TOKEN } from "../services/interfaces/codeExecutor.interface.js"
+import { GradebookService } from "../services/gradebook.service.js"
+import { LatePenaltyService } from "../services/latePenalty.service.js"
 
 // Admin Services (focused, single-responsibility)
-import { AdminUserService } from "../services/admin/admin-user.service.js";
-import { AdminAnalyticsService } from "../services/admin/admin-analytics.service.js";
-import { AdminClassService } from "../services/admin/admin-class.service.js";
-import { AdminEnrollmentService } from "../services/admin/admin-enrollment.service.js";
+import { AdminUserService } from "../services/admin/admin-user.service.js"
+import { AdminAnalyticsService } from "../services/admin/admin-analytics.service.js"
+import { AdminClassService } from "../services/admin/admin-class.service.js"
+import { AdminEnrollmentService } from "../services/admin/admin-enrollment.service.js"
 
 // Plagiarism Services
-import { PlagiarismDetectorFactory } from "../services/plagiarism/plagiarism-detector.factory.js";
-import { SubmissionFileService } from "../services/plagiarism/submission-file.service.js";
-import { PlagiarismPersistenceService } from "../services/plagiarism/plagiarism-persistence.service.js";
+import { PlagiarismDetectorFactory } from "../services/plagiarism/plagiarism-detector.factory.js"
+import { SubmissionFileService } from "../services/plagiarism/submission-file.service.js"
+import { PlagiarismPersistenceService } from "../services/plagiarism/plagiarism-persistence.service.js"
 
 // Register repositories as singletons
-container.registerSingleton("UserRepository", UserRepository);
-container.registerSingleton("ClassRepository", ClassRepository);
-container.registerSingleton("AssignmentRepository", AssignmentRepository);
-container.registerSingleton("EnrollmentRepository", EnrollmentRepository);
-container.registerSingleton("SubmissionRepository", SubmissionRepository);
-container.registerSingleton("SimilarityRepository", SimilarityRepository);
-container.registerSingleton("TestCaseRepository", TestCaseRepository);
-container.registerSingleton("TestResultRepository", TestResultRepository);
-container.registerSingleton("GradebookRepository", GradebookRepository);
+container.registerSingleton("UserRepository", UserRepository)
+container.registerSingleton("ClassRepository", ClassRepository)
+container.registerSingleton("AssignmentRepository", AssignmentRepository)
+container.registerSingleton("EnrollmentRepository", EnrollmentRepository)
+container.registerSingleton("SubmissionRepository", SubmissionRepository)
+container.registerSingleton("SimilarityRepository", SimilarityRepository)
+container.registerSingleton("TestCaseRepository", TestCaseRepository)
+container.registerSingleton("TestResultRepository", TestResultRepository)
+container.registerSingleton("GradebookRepository", GradebookRepository)
 
 // Register infrastructure adapters as singletons
-container.registerSingleton("SupabaseAuthAdapter", SupabaseAuthAdapter);
+container.registerSingleton("SupabaseAuthAdapter", SupabaseAuthAdapter)
 
 // Register services as singletons
-container.registerSingleton("StorageService", StorageService);
-container.registerSingleton("AssignmentService", AssignmentService);
-container.registerSingleton("AuthService", AuthService);
-container.registerSingleton("ClassService", ClassService);
-container.registerSingleton("SubmissionService", SubmissionService);
-container.registerSingleton("StudentDashboardService", StudentDashboardService);
-container.registerSingleton("TeacherDashboardService", TeacherDashboardService);
-container.registerSingleton("PlagiarismService", PlagiarismService);
-container.registerSingleton("UserService", UserService);
-container.registerSingleton("GradebookService", GradebookService);
-container.registerSingleton("LatePenaltyService", LatePenaltyService);
+container.registerSingleton("StorageService", StorageService)
+container.registerSingleton("AssignmentService", AssignmentService)
+container.registerSingleton("AuthService", AuthService)
+container.registerSingleton("ClassService", ClassService)
+container.registerSingleton("SubmissionService", SubmissionService)
+container.registerSingleton("StudentDashboardService", StudentDashboardService)
+container.registerSingleton("TeacherDashboardService", TeacherDashboardService)
+container.registerSingleton("PlagiarismService", PlagiarismService)
+container.registerSingleton("UserService", UserService)
+container.registerSingleton("GradebookService", GradebookService)
+container.registerSingleton("LatePenaltyService", LatePenaltyService)
 
 // Register code execution services
-container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service);
-container.registerSingleton("CodeTestService", CodeTestService);
+container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)
+container.registerSingleton("CodeTestService", CodeTestService)
 
 // Register focused admin services as singletons
-container.registerSingleton("AdminUserService", AdminUserService);
-container.registerSingleton("AdminAnalyticsService", AdminAnalyticsService);
-container.registerSingleton("AdminClassService", AdminClassService);
-container.registerSingleton("AdminEnrollmentService", AdminEnrollmentService);
+container.registerSingleton("AdminUserService", AdminUserService)
+container.registerSingleton("AdminAnalyticsService", AdminAnalyticsService)
+container.registerSingleton("AdminClassService", AdminClassService)
+container.registerSingleton("AdminEnrollmentService", AdminEnrollmentService)
 
 // Register Plagiarism component services
 container.registerSingleton(
   "PlagiarismDetectorFactory",
-  PlagiarismDetectorFactory
-);
-container.registerSingleton("SubmissionFileService", SubmissionFileService);
+  PlagiarismDetectorFactory,
+)
+container.registerSingleton("SubmissionFileService", SubmissionFileService)
 container.registerSingleton(
   "PlagiarismPersistenceService",
-  PlagiarismPersistenceService
-);
+  PlagiarismPersistenceService,
+)
 
-export { container };
+export { container }

@@ -1,8 +1,8 @@
-import React, { type ReactElement } from "react";
-import { render, type RenderOptions } from "@testing-library/react";
-import { BrowserRouter } from "react-router-dom";
+import React, { type ReactElement } from "react"
+import { render, type RenderOptions } from "@testing-library/react"
+import { BrowserRouter } from "react-router-dom"
 
-import { ToastProvider } from "@/shared/context/ToastContext";
+import { ToastProvider } from "@/shared/context/ToastContext"
 
 /**
  * All providers that wrap the app.
@@ -12,7 +12,7 @@ function AllProviders({ children }: { children: React.ReactNode }) {
     <BrowserRouter>
       <ToastProvider>{children}</ToastProvider>
     </BrowserRouter>
-  );
+  )
 }
 
 /**
@@ -23,12 +23,12 @@ function customRender(
   ui: ReactElement,
   options?: Omit<RenderOptions, "wrapper">,
 ) {
-  return render(ui, { wrapper: AllProviders, ...options });
+  return render(ui, { wrapper: AllProviders, ...options })
 }
 
 // Re-export everything from testing-library
-export * from "@testing-library/react";
-export { default as userEvent } from "@testing-library/user-event";
+export * from "@testing-library/react"
+export { default as userEvent } from "@testing-library/user-event"
 
 // Override render with our custom render
-export { customRender as render };
+export { customRender as render }

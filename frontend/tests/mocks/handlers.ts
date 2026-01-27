@@ -6,9 +6,9 @@
  *
  * @see https://mswjs.io/docs/basics/mocking-responses
  */
-import { http, HttpResponse } from "msw";
+import { http, HttpResponse } from "msw"
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
 export const handlers = [
   // ============================================================================
@@ -26,7 +26,7 @@ export const handlers = [
         lastName: "User",
         role: "student",
       },
-    });
+    })
   }),
 
   http.post(`${API_BASE}/auth/register`, async () => {
@@ -40,7 +40,7 @@ export const handlers = [
         lastName: "User",
         role: "student",
       },
-    });
+    })
   }),
 
   http.post(`${API_BASE}/auth/verify`, async () => {
@@ -53,14 +53,14 @@ export const handlers = [
         lastName: "User",
         role: "student",
       },
-    });
+    })
   }),
 
   http.post(`${API_BASE}/auth/forgot-password`, async () => {
     return HttpResponse.json({
       success: true,
       message: "Password reset email sent",
-    });
+    })
   }),
 
   // ============================================================================
@@ -87,11 +87,11 @@ export const handlers = [
         academicYear: "2024-2025",
         semester: "1st",
       },
-    ]);
+    ])
   }),
 
   http.get(`${API_BASE}/classes/:classId`, async ({ params }) => {
-    const { classId } = params;
+    const { classId } = params
 
     return HttpResponse.json({
       id: Number(classId),
@@ -101,7 +101,7 @@ export const handlers = [
       teacherId: 1,
       academicYear: "2024-2025",
       semester: "1st",
-    });
+    })
   }),
 
   http.post(`${API_BASE}/classes`, async () => {
@@ -113,11 +113,11 @@ export const handlers = [
       teacherId: 1,
       academicYear: "2024-2025",
       semester: "1st",
-    });
+    })
   }),
 
   http.post(`${API_BASE}/classes/generate-code`, async () => {
-    return HttpResponse.json({ code: "ABC123" });
+    return HttpResponse.json({ code: "ABC123" })
   }),
 
   // ============================================================================
@@ -134,11 +134,11 @@ export const handlers = [
         deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         maxScore: 100,
       },
-    ]);
+    ])
   }),
 
   http.get(`${API_BASE}/assignments/:assignmentId`, async ({ params }) => {
-    const { assignmentId } = params;
+    const { assignmentId } = params
 
     return HttpResponse.json({
       id: Number(assignmentId),
@@ -147,7 +147,7 @@ export const handlers = [
       classId: 1,
       deadline: "2099-12-31T23:59:59.000Z",
       maxScore: 100,
-    });
+    })
   }),
 
   // ============================================================================
@@ -161,14 +161,14 @@ export const handlers = [
       firstName: "Test",
       lastName: "User",
       role: "student",
-    });
+    })
   }),
 
   http.delete(`${API_BASE}/user/me`, async () => {
     return HttpResponse.json({
       success: true,
       message: "Account deleted",
-    });
+    })
   }),
 
   // ============================================================================
@@ -181,7 +181,7 @@ export const handlers = [
       upcomingDeadlines: 2,
       recentSubmissions: 5,
       averageGrade: 85,
-    });
+    })
   }),
 
   http.get(`${API_BASE}/dashboard/teacher`, async () => {
@@ -190,6 +190,6 @@ export const handlers = [
       totalStudents: 120,
       pendingSubmissions: 15,
       averageClassGrade: 78,
-    });
+    })
   }),
-];
+]

@@ -14,7 +14,7 @@ export interface IStorageService {
     data: Buffer,
     contentType: string,
     upsert?: boolean,
-  ): Promise<string>;
+  ): Promise<string>
 
   /**
    * Download a file from storage.
@@ -22,7 +22,7 @@ export interface IStorageService {
    * @param path - The file path within the bucket
    * @returns The file content as a string
    */
-  download(bucket: string, path: string): Promise<string>;
+  download(bucket: string, path: string): Promise<string>
 
   /**
    * Delete files from storage.
@@ -30,7 +30,7 @@ export interface IStorageService {
    * @param paths - Array of file paths to delete
    * @returns Number of files successfully deleted
    */
-  deleteFiles(bucket: string, paths: string[]): Promise<number>;
+  deleteFiles(bucket: string, paths: string[]): Promise<number>
 
   /**
    * Get a signed URL for file download.
@@ -45,8 +45,8 @@ export interface IStorageService {
     path: string,
     expiresIn: number,
     options?: { download?: string | boolean },
-  ): Promise<string>;
+  ): Promise<string>
 }
 
 /** Dependency injection token for IStorageService */
-export const STORAGE_SERVICE_TOKEN = "IStorageService";
+export const STORAGE_SERVICE_TOKEN = "IStorageService"

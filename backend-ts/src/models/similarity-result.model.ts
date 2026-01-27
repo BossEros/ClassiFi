@@ -8,10 +8,10 @@ import {
   unique,
   index,
   check,
-} from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
-import { similarityReports } from "./similarity-report.model.js";
-import { submissions } from "./submission.model.js";
+} from "drizzle-orm/pg-core"
+import { relations, sql } from "drizzle-orm"
+import { similarityReports } from "./similarity-report.model.js"
+import { submissions } from "./submission.model.js"
 
 /** Similarity results table - stores pairwise similarity comparison results */
 export const similarityResults = pgTable(
@@ -80,9 +80,9 @@ export const similarityResults = pgTable(
     index("idx_similarity_results_submission2").on(table.submission2Id),
     index("idx_similarity_results_hybrid_score").on(table.hybridScore),
   ],
-);
+)
 
-import { matchFragments } from "./match-fragment.model.js";
+import { matchFragments } from "./match-fragment.model.js"
 
 /** Similarity result relations */
 export const similarityResultsRelations = relations(
@@ -102,8 +102,8 @@ export const similarityResultsRelations = relations(
     }),
     matchFragments: many(matchFragments),
   }),
-);
+)
 
 /** Type definitions for SimilarityResult */
-export type SimilarityResult = typeof similarityResults.$inferSelect;
-export type NewSimilarityResult = typeof similarityResults.$inferInsert;
+export type SimilarityResult = typeof similarityResults.$inferSelect
+export type NewSimilarityResult = typeof similarityResults.$inferInsert

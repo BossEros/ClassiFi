@@ -1,4 +1,4 @@
-import type { RawTestResult, TestResultDetail } from "@/shared/types/testCase";
+import type { RawTestResult, TestResultDetail } from "@/shared/types/testCase"
 
 /**
  * Normalizes a raw test result from the repository into a standardized detail object.
@@ -19,5 +19,5 @@ export function normalizeTestResult(result: RawTestResult): TestResultDetail {
     expectedOutput: result.expectedOutput || result.testCase?.expectedOutput,
     actualOutput: result.actualOutput,
     errorMessage: result.errorMessage,
-  };
+  }
 }

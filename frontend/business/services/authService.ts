@@ -1,11 +1,11 @@
-import * as authRepository from "@/data/repositories/authRepository";
+import * as authRepository from "@/data/repositories/authRepository"
 import {
   validateLoginData,
   validateRegistrationData,
   validateEmail,
   validatePassword,
   validatePasswordsMatch,
-} from "@/business/validation/authValidation";
+} from "@/business/validation/authValidation"
 import type {
   LoginRequest,
   RegisterRequest,
@@ -20,7 +20,7 @@ import type {
   ChangePasswordResponse,
   DeleteAccountRequest,
   DeleteAccountResponse,
-} from "@/business/models/auth/types";
+} from "@/business/models/auth/types"
 
 /**
  * Authenticates a user with email and password.
@@ -34,29 +34,32 @@ export async function loginUser(
   loginCredentials: LoginRequest,
 ): Promise<AuthResponse> {
   // Validate credentials
-  const validationResult = validateLoginData(loginCredentials);
+  const validationResult = validateLoginData(loginCredentials)
 
   if (!validationResult.isValid) {
     return {
       success: false,
       message: validationResult.errors.map((e) => e.message).join(", "),
-    };
+    }
   }
 
   // Attempt login via repository
   try {
-    const response = await authRepository.authenticateUserWithEmailAndPassword(loginCredentials);
+    const response =
+      await authRepository.authenticateUserWithEmailAndPassword(
+        loginCredentials,
+      )
 
     if (response.success) {
-      persistAuthenticationSession(response.token, response.user);
+      persistAuthenticationSession(response.token, response.user)
     }
 
-    return response;
+    return response
   } catch (error) {
     return {
       success: false,
       message: error instanceof Error ? error.message : "Login failed",
-    };
+    }
   }
 }
 
@@ -71,28 +74,29 @@ export async function loginUser(
 export async function registerUser(
   registrationRequest: RegisterRequest,
 ): Promise<AuthResponse> {
-  const validationResult = validateRegistrationData(registrationRequest);
+  const validationResult = validateRegistrationData(registrationRequest)
 
   if (!validationResult.isValid) {
     return {
       success: false,
       message: validationResult.errors.map((e) => e.message).join(", "),
-    };
+    }
   }
 
   try {
-    const response = await authRepository.registerNewUserAccount(registrationRequest);
+    const response =
+      await authRepository.registerNewUserAccount(registrationRequest)
 
     if (response.success && response.token && response.user) {
-      persistAuthenticationSession(response.token, response.user);
+      persistAuthenticationSession(response.token, response.user)
     }
 
-    return response;
+    return response
   } catch (error) {
     return {
       success: false,
       message: error instanceof Error ? error.message : "Registration failed",
-    };
+    }
   }
 }
 
@@ -102,10 +106,10 @@ export async function registerUser(
  */
 export async function logoutUser(): Promise<void> {
   try {
-    await authRepository.signOutCurrentUserAndClearSession();
+    await authRepository.signOutCurrentUserAndClearSession()
   } finally {
     // Always clear local auth data, even if server logout fails
-    clearLocalAuthenticationSession();
+    clearLocalAuthenticationSession()
   }
 }
 
@@ -115,13 +119,13 @@ export async function logoutUser(): Promise<void> {
  * @returns The user object if a user is logged in, or null otherwise.
  */
 export function getCurrentUser(): User | null {
-  const userJson = localStorage.getItem("user");
-  if (!userJson) return null;
+  const userJson = localStorage.getItem("user")
+  if (!userJson) return null
 
   try {
-    return JSON.parse(userJson);
+    return JSON.parse(userJson)
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -132,9 +136,9 @@ export function getCurrentUser(): User | null {
  * @returns The authentication token string or null if not found.
  */
 export async function getAuthToken(): Promise<string | null> {
-  const result = await authRepository.getCurrentAuthenticationSession();
+  const result = await authRepository.getCurrentAuthenticationSession()
 
-  return result.session?.access_token ?? null;
+  return result.session?.access_token ?? null
 }
 
 /**
@@ -144,9 +148,9 @@ export async function getAuthToken(): Promise<string | null> {
  * @returns True if the user has local user data, false otherwise.
  */
 export function isAuthenticated(): boolean {
-  const user = getCurrentUser();
+  const user = getCurrentUser()
 
-  return !!user;
+  return !!user
 }
 
 /**
@@ -156,24 +160,24 @@ export function isAuthenticated(): boolean {
  * @returns True if the session is valid, false otherwise.
  */
 export async function verifySession(): Promise<boolean> {
-  const token = await getAuthToken();
+  const token = await getAuthToken()
 
   if (!token) {
-    clearLocalAuthenticationSession();
-    return false;
+    clearLocalAuthenticationSession()
+    return false
   }
 
   try {
-    const isValid = await authRepository.validateAuthenticationToken(token);
+    const isValid = await authRepository.validateAuthenticationToken(token)
 
     if (!isValid) {
-      clearLocalAuthenticationSession();
+      clearLocalAuthenticationSession()
     }
 
-    return isValid;
+    return isValid
   } catch {
-    clearLocalAuthenticationSession();
-    return false;
+    clearLocalAuthenticationSession()
+    return false
   }
 }
 
@@ -183,7 +187,7 @@ export async function verifySession(): Promise<boolean> {
  */
 function persistAuthenticationSession(_token: string, user: User): void {
   // Token is managed by Supabase session - we only store user data locally
-  localStorage.setItem("user", JSON.stringify(user));
+  localStorage.setItem("user", JSON.stringify(user))
 }
 
 /**
@@ -191,7 +195,7 @@ function persistAuthenticationSession(_token: string, user: User): void {
  * Token is managed by Supabase.
  */
 function clearLocalAuthenticationSession(): void {
-  localStorage.removeItem("user");
+  localStorage.removeItem("user")
 }
 
 /**
@@ -203,26 +207,26 @@ function clearLocalAuthenticationSession(): void {
 export async function requestPasswordReset(
   forgotPasswordRequest: ForgotPasswordRequest,
 ): Promise<ForgotPasswordResponse> {
-  const emailError = validateEmail(forgotPasswordRequest.email);
+  const emailError = validateEmail(forgotPasswordRequest.email)
 
   if (emailError) {
     return {
       success: false,
       message: emailError,
-    };
+    }
   }
 
   try {
     const response = await authRepository.initiatePasswordResetForEmail(
       forgotPasswordRequest.email,
-    );
-    return response;
+    )
+    return response
   } catch (error) {
     return {
       success: false,
       message:
         error instanceof Error ? error.message : "Failed to process request",
-    };
+    }
   }
 }
 
@@ -236,41 +240,43 @@ export async function requestPasswordReset(
 export async function resetPassword(
   resetPasswordRequest: ResetPasswordRequest,
 ): Promise<ResetPasswordResponse> {
-  const passwordError = validatePassword(resetPasswordRequest.newPassword);
+  const passwordError = validatePassword(resetPasswordRequest.newPassword)
 
   if (passwordError) {
     return {
       success: false,
       message: passwordError,
-    };
+    }
   }
 
   const matchError = validatePasswordsMatch(
     resetPasswordRequest.newPassword,
     resetPasswordRequest.confirmPassword,
-  );
+  )
 
   if (matchError) {
     return {
       success: false,
       message: matchError,
-    };
+    }
   }
 
   try {
     const { session, sessionError, updateError } =
-      await authRepository.resetUserPasswordWithNewValue(resetPasswordRequest.newPassword);
+      await authRepository.resetUserPasswordWithNewValue(
+        resetPasswordRequest.newPassword,
+      )
 
     if (sessionError || !session) {
       return {
         success: false,
         message:
           "Invalid or expired reset link. Please request a new password reset.",
-      };
+      }
     }
 
     if (updateError) {
-      const errorMsg = updateError.message.toLowerCase();
+      const errorMsg = updateError.message.toLowerCase()
 
       if (
         errorMsg.includes("expired") ||
@@ -281,7 +287,7 @@ export async function resetPassword(
           success: false,
           message:
             "Invalid or expired reset link. Please request a new password reset.",
-        };
+        }
       } else if (
         errorMsg.includes("weak") ||
         (errorMsg.includes("password") && errorMsg.includes("requirement"))
@@ -290,14 +296,14 @@ export async function resetPassword(
           success: false,
           message:
             "Password does not meet security requirements. Please use a stronger password.",
-        };
+        }
       } else {
         return {
           success: false,
           message:
             updateError.message ||
             "Failed to reset password. Please try again.",
-        };
+        }
       }
     }
 
@@ -305,13 +311,13 @@ export async function resetPassword(
       success: true,
       message:
         "Password has been reset successfully. You can now log in with your new password.",
-    };
+    }
   } catch (error) {
     return {
       success: false,
       message:
         error instanceof Error ? error.message : "Failed to reset password",
-    };
+    }
   }
 }
 
@@ -326,80 +332,81 @@ export async function changePassword(
   changePasswordRequest: ChangePasswordRequest,
 ): Promise<ChangePasswordResponse> {
   // Validate new password strength
-  const passwordError = validatePassword(changePasswordRequest.newPassword);
+  const passwordError = validatePassword(changePasswordRequest.newPassword)
 
   if (passwordError) {
     return {
       success: false,
       message: passwordError,
-    };
+    }
   }
 
   // Validate passwords match
   const matchError = validatePasswordsMatch(
     changePasswordRequest.newPassword,
     changePasswordRequest.confirmPassword,
-  );
+  )
 
   if (matchError) {
     return {
       success: false,
       message: matchError,
-    };
+    }
   }
 
   try {
     // Get current user email
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
 
     if (!currentUser?.email) {
       return {
         success: false,
         message: "You must be logged in to change your password",
-      };
+      }
     }
 
-    const { signInError, updateError } = await authRepository.changeAuthenticatedUserPassword(
-      currentUser.email,
-      changePasswordRequest.currentPassword,
-      changePasswordRequest.newPassword,
-    );
+    const { signInError, updateError } =
+      await authRepository.changeAuthenticatedUserPassword(
+        currentUser.email,
+        changePasswordRequest.currentPassword,
+        changePasswordRequest.newPassword,
+      )
 
     if (signInError) {
       return {
         success: false,
         message: "Current password is incorrect.",
-      };
+      }
     }
 
     if (updateError) {
-      const errorMsg = updateError.message.toLowerCase();
+      const errorMsg = updateError.message.toLowerCase()
 
       if (errorMsg.includes("weak") || errorMsg.includes("password")) {
         return {
           success: false,
           message:
             "New password does not meet security requirements. Please use a stronger password.",
-        };
+        }
       }
 
       return {
         success: false,
         message:
           updateError.message || "Failed to change password. Please try again.",
-      };
+      }
     }
 
     return {
       success: true,
       message: "Password changed successfully.",
-    };
+    }
   } catch (error) {
     return {
       success: false,
       message:
         error instanceof Error ? error.message : "Failed to change password",
-    };
+    }
   }
 }
 
@@ -418,7 +425,7 @@ export async function deleteAccount(
     return {
       success: false,
       message: "Please type DELETE to confirm account deletion",
-    };
+    }
   }
 
   // Validate password is provided
@@ -429,50 +436,51 @@ export async function deleteAccount(
     return {
       success: false,
       message: "Password is required to delete your account",
-    };
+    }
   }
 
   try {
     // Get current user email
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
 
     if (!currentUser?.email) {
       return {
         success: false,
         message: "You must be logged in to delete your account",
-      };
+      }
     }
 
-    const { signInError, deleteError } = await authRepository.deleteUserAccountWithVerification(
-      currentUser.email,
-      deleteAccountRequest.password,
-    );
+    const { signInError, deleteError } =
+      await authRepository.deleteUserAccountWithVerification(
+        currentUser.email,
+        deleteAccountRequest.password,
+      )
 
     if (signInError) {
       return {
         success: false,
         message: "Password is incorrect.",
-      };
+      }
     }
 
     if (deleteError) {
       return {
         success: false,
         message: deleteError,
-      };
+      }
     }
 
     // Success - local session was already cleared by repository
     return {
       success: true,
       message: "Your account has been permanently deleted.",
-    };
+    }
   } catch (error) {
     return {
       success: false,
       message:
         error instanceof Error ? error.message : "Failed to delete account",
-    };
+    }
   }
 }
 
@@ -484,7 +492,7 @@ export async function deleteAccount(
  */
 export async function initializeResetFlow(): Promise<ResetFlowResponse> {
   try {
-    return await authRepository.initializePasswordResetFlowFromUrl();
+    return await authRepository.initializePasswordResetFlowFromUrl()
   } catch (error) {
     return {
       success: false,
@@ -492,6 +500,6 @@ export async function initializeResetFlow(): Promise<ResetFlowResponse> {
         error instanceof Error
           ? error.message
           : "Failed to initialize reset session",
-    };
+    }
   }
 }

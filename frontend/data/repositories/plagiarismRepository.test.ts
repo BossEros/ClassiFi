@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as plagiarismRepository from "./plagiarismRepository";
-import { apiClient } from "@/data/api/apiClient";
+import * as plagiarismRepository from "./plagiarismRepository"
+import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
 vi.mock("@/data/api/apiClient", () => ({
@@ -9,12 +9,12 @@ vi.mock("@/data/api/apiClient", () => ({
     get: vi.fn(),
     post: vi.fn(),
   },
-}));
+}))
 
 describe("plagiarismRepository", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   // ============================================================================
   // analyzePlagiarismForAllSubmissionsInAssignment Tests
@@ -53,45 +53,54 @@ describe("plagiarismRepository", () => {
         },
       ],
       warnings: [],
-    };
+    }
 
     it("triggers plagiarism analysis for an assignment", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: mockAnalyzeResponse,
         status: 200,
-      });
+      })
 
-      const result = await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(1);
+      const result =
+        await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(
+          1,
+        )
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/plagiarism/analyze/assignment/1",
         {},
-      );
-      expect(result.data).toEqual(mockAnalyzeResponse);
-    });
+      )
+      expect(result.data).toEqual(mockAnalyzeResponse)
+    })
 
     it("returns error when API fails", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         error: "Analysis failed",
         status: 500,
-      });
+      })
 
-      const result = await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(1);
+      const result =
+        await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(
+          1,
+        )
 
-      expect(result.error).toBe("Analysis failed");
-    });
+      expect(result.error).toBe("Analysis failed")
+    })
 
     it("returns error for insufficient submissions", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         error: "At least 2 submissions required for analysis",
         status: 400,
-      });
+      })
 
-      const result = await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(1);
+      const result =
+        await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(
+          1,
+        )
 
-      expect(result.error).toBe("At least 2 submissions required for analysis");
-    });
-  });
+      expect(result.error).toBe("At least 2 submissions required for analysis")
+    })
+  })
 
   // ============================================================================
   // getPlagiarismResultDetailsWithFragmentsById Tests
@@ -137,42 +146,51 @@ describe("plagiarismRepository", () => {
         lineCount: 48,
         studentName: "Jane Smith",
       },
-    };
+    }
 
     it("fetches detailed comparison results", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: mockResultDetails,
         status: 200,
-      });
+      })
 
-      const result = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(1);
+      const result =
+        await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(
+          1,
+        )
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/plagiarism/results/1/details",
-      );
-      expect(result.data).toEqual(mockResultDetails);
-    });
+      )
+      expect(result.data).toEqual(mockResultDetails)
+    })
 
     it("returns error when result not found", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         error: "Result not found",
         status: 404,
-      });
+      })
 
-      const result = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(999);
+      const result =
+        await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(
+          999,
+        )
 
-      expect(result.error).toBe("Result not found");
-    });
+      expect(result.error).toBe("Result not found")
+    })
 
     it("returns error on server failure", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         error: "Internal server error",
         status: 500,
-      });
+      })
 
-      const result = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(1);
+      const result =
+        await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(
+          1,
+        )
 
-      expect(result.error).toBe("Internal server error");
-    });
-  });
-});
+      expect(result.error).toBe("Internal server error")
+    })
+  })
+})

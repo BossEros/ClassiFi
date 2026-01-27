@@ -1,31 +1,31 @@
 // db is accessed via BaseRepository.db
-import { eq, or, ilike, and, desc, count } from "drizzle-orm";
-import { users, type User, type NewUser } from "../models/index.js";
-import { BaseRepository } from "./base.repository.js";
-import { injectable } from "tsyringe";
+import { eq, or, ilike, and, desc, count } from "drizzle-orm"
+import { users, type User, type NewUser } from "../models/index.js"
+import { BaseRepository } from "./base.repository.js"
+import { injectable } from "tsyringe"
 
 /** Valid user roles - single source of truth for both type and runtime validation */
-export const USER_ROLES = ["student", "teacher", "admin"] as const;
+export const USER_ROLES = ["student", "teacher", "admin"] as const
 
 /** User role type - derived from the USER_ROLES array */
-export type UserRole = (typeof USER_ROLES)[number];
+export type UserRole = (typeof USER_ROLES)[number]
 
 /** Filter options for user queries */
 export interface UserFilterOptions {
-  page: number;
-  limit: number;
-  search?: string;
-  role?: UserRole;
-  status?: "active" | "inactive";
+  page: number
+  limit: number
+  search?: string
+  role?: UserRole
+  status?: "active" | "inactive"
 }
 
 /** Paginated result structure */
 export interface PaginatedResult<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
+  data: T[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
 /**
@@ -39,16 +39,16 @@ export class UserRepository extends BaseRepository<
   NewUser
 > {
   constructor() {
-    super(users);
+    super(users)
   }
 
   /** Create a new user */
   async createUser(data: {
-    supabaseUserId: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: UserRole;
+    supabaseUserId: string
+    email: string
+    firstName: string
+    lastName: string
+    role: UserRole
   }): Promise<User> {
     const results = await this.db
       .insert(users)
@@ -59,14 +59,14 @@ export class UserRepository extends BaseRepository<
         lastName: data.lastName,
         role: data.role,
       })
-      .returning();
+      .returning()
 
-    return results[0];
+    return results[0]
   }
 
   /** Get user by internal database ID */
   async getUserById(userId: number): Promise<User | undefined> {
-    return await this.findById(userId);
+    return await this.findById(userId)
   }
 
   /** Get user by Supabase user ID */
@@ -75,9 +75,9 @@ export class UserRepository extends BaseRepository<
       .select()
       .from(users)
       .where(eq(users.supabaseUserId, supabaseUserId))
-      .limit(1);
+      .limit(1)
 
-    return results[0];
+    return results[0]
   }
 
   /** Get user by email address */
@@ -86,9 +86,9 @@ export class UserRepository extends BaseRepository<
       .select()
       .from(users)
       .where(eq(users.email, email))
-      .limit(1);
+      .limit(1)
 
-    return results[0];
+    return results[0]
   }
 
   /** Update user information */
@@ -101,18 +101,18 @@ export class UserRepository extends BaseRepository<
     // Filter out undefined values
     const updateData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined),
-    );
+    )
 
     if (Object.keys(updateData).length === 0) {
-      return await this.getUserById(userId);
+      return await this.getUserById(userId)
     }
 
-    return await this.update(userId, updateData);
+    return await this.update(userId, updateData)
   }
 
   /** Delete a user */
   async deleteUser(userId: number): Promise<boolean> {
-    return await this.delete(userId);
+    return await this.delete(userId)
   }
 
   /** Check if email already exists */
@@ -121,9 +121,9 @@ export class UserRepository extends BaseRepository<
       .select({ id: users.id })
       .from(users)
       .where(eq(users.email, email))
-      .limit(1);
+      .limit(1)
 
-    return results.length > 0;
+    return results.length > 0
   }
 
   /**
@@ -133,11 +133,11 @@ export class UserRepository extends BaseRepository<
   async getAllUsersFiltered(
     options: UserFilterOptions,
   ): Promise<PaginatedResult<User>> {
-    const { page, limit, search, role, status } = options;
-    const offset = (page - 1) * limit;
+    const { page, limit, search, role, status } = options
+    const offset = (page - 1) * limit
 
     // Build where conditions
-    const conditions: ReturnType<typeof eq>[] = [];
+    const conditions: ReturnType<typeof eq>[] = []
 
     if (search) {
       conditions.push(
@@ -146,28 +146,28 @@ export class UserRepository extends BaseRepository<
           ilike(users.firstName, `%${search}%`),
           ilike(users.lastName, `%${search}%`),
         )!,
-      );
+      )
     }
 
     if (role) {
-      conditions.push(eq(users.role, role));
+      conditions.push(eq(users.role, role))
     }
 
     if (status === "active") {
-      conditions.push(eq(users.isActive, true));
+      conditions.push(eq(users.isActive, true))
     } else if (status === "inactive") {
-      conditions.push(eq(users.isActive, false));
+      conditions.push(eq(users.isActive, false))
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
     // Get total count
     const countResult = await this.db
       .select({ count: count() })
       .from(users)
-      .where(whereClause);
+      .where(whereClause)
 
-    const total = Number(countResult[0]?.count ?? 0);
+    const total = Number(countResult[0]?.count ?? 0)
 
     // Get paginated data
     const data = await this.db
@@ -176,7 +176,7 @@ export class UserRepository extends BaseRepository<
       .where(whereClause)
       .orderBy(desc(users.createdAt))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
 
     return {
       data,
@@ -184,7 +184,7 @@ export class UserRepository extends BaseRepository<
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-    };
+    }
   }
 
   /**
@@ -192,17 +192,17 @@ export class UserRepository extends BaseRepository<
    * Moved from AdminService to follow DIP.
    */
   async toggleActiveStatus(userId: number): Promise<User | undefined> {
-    const user = await this.findById(userId);
-    if (!user) return undefined;
+    const user = await this.findById(userId)
+    if (!user) return undefined
 
-    const newStatus = !user.isActive;
+    const newStatus = !user.isActive
     const results = await this.db
       .update(users)
       .set({ isActive: newStatus })
       .where(eq(users.id, userId))
-      .returning();
+      .returning()
 
-    return results[0];
+    return results[0]
   }
 
   /** Get all users by role */
@@ -211,7 +211,7 @@ export class UserRepository extends BaseRepository<
       .select()
       .from(users)
       .where(eq(users.role, role))
-      .orderBy(desc(users.createdAt));
+      .orderBy(desc(users.createdAt))
   }
 
   /**
@@ -225,13 +225,13 @@ export class UserRepository extends BaseRepository<
         count: count(),
       })
       .from(users)
-      .groupBy(users.role);
+      .groupBy(users.role)
 
-    const roleMap: Record<string, number> = {};
+    const roleMap: Record<string, number> = {}
     results.forEach((row) => {
-      roleMap[row.role] = Number(row.count);
-    });
-    return roleMap;
+      roleMap[row.role] = Number(row.count)
+    })
+    return roleMap
   }
 
   /**
@@ -243,6 +243,6 @@ export class UserRepository extends BaseRepository<
       .select()
       .from(users)
       .orderBy(desc(users.createdAt))
-      .limit(limit);
+      .limit(limit)
   }
 }

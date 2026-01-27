@@ -1,14 +1,14 @@
 // db is accessed via BaseRepository.db
-import { eq, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm"
 import {
   enrollments,
   classes,
   type Enrollment,
   type NewEnrollment,
   type Class,
-} from "../models/index.js";
-import { BaseRepository } from "./base.repository.js";
-import { injectable } from "tsyringe";
+} from "../models/index.js"
+import { BaseRepository } from "./base.repository.js"
+import { injectable } from "tsyringe"
 
 /**
  * Repository for enrollment-related database operations.
@@ -20,7 +20,7 @@ export class EnrollmentRepository extends BaseRepository<
   NewEnrollment
 > {
   constructor() {
-    super(enrollments);
+    super(enrollments)
   }
 
   /** Enroll a student in a class */
@@ -31,14 +31,14 @@ export class EnrollmentRepository extends BaseRepository<
         studentId,
         classId,
       })
-      .returning();
+      .returning()
 
     if (!results[0]) {
       throw new Error(
         `Failed to enroll student ${studentId} in class ${classId}`,
-      );
+      )
     }
-    return results[0];
+    return results[0]
   }
   /** Unenroll a student from a class */
   async unenrollStudent(studentId: number, classId: number): Promise<boolean> {
@@ -50,9 +50,9 @@ export class EnrollmentRepository extends BaseRepository<
           eq(enrollments.classId, classId),
         ),
       )
-      .returning();
+      .returning()
 
-    return results.length > 0;
+    return results.length > 0
   }
 
   /** Check if a student is enrolled in a class */
@@ -66,9 +66,9 @@ export class EnrollmentRepository extends BaseRepository<
           eq(enrollments.classId, classId),
         ),
       )
-      .limit(1);
+      .limit(1)
 
-    return results.length > 0;
+    return results.length > 0
   }
 
   /** Get all enrollments for a student */
@@ -76,7 +76,7 @@ export class EnrollmentRepository extends BaseRepository<
     return await this.db
       .select()
       .from(enrollments)
-      .where(eq(enrollments.studentId, studentId));
+      .where(eq(enrollments.studentId, studentId))
   }
 
   /** Get all enrollments for a class */
@@ -84,14 +84,14 @@ export class EnrollmentRepository extends BaseRepository<
     return await this.db
       .select()
       .from(enrollments)
-      .where(eq(enrollments.classId, classId));
+      .where(eq(enrollments.classId, classId))
   }
 
   /** Get enrollment with class details */
   async getEnrollmentWithClass(enrollmentId: number): Promise<
     | {
-        enrollment: Enrollment;
-        class: Class;
+        enrollment: Enrollment
+        class: Class
       }
     | undefined
   > {
@@ -103,9 +103,9 @@ export class EnrollmentRepository extends BaseRepository<
       .from(enrollments)
       .innerJoin(classes, eq(enrollments.classId, classes.id))
       .where(eq(enrollments.id, enrollmentId))
-      .limit(1);
+      .limit(1)
 
-    return results[0];
+    return results[0]
   }
 
   /**
@@ -115,19 +115,19 @@ export class EnrollmentRepository extends BaseRepository<
   async getEnrolledStudentsWithInfo(classId: number): Promise<
     Array<{
       user: {
-        id: number;
-        email: string;
-        firstName: string;
-        lastName: string;
-        avatarUrl: string | null;
-        role: string;
-        isActive: boolean;
-        createdAt: Date | null;
-      };
-      enrolledAt: Date | null;
+        id: number
+        email: string
+        firstName: string
+        lastName: string
+        avatarUrl: string | null
+        role: string
+        isActive: boolean
+        createdAt: Date | null
+      }
+      enrolledAt: Date | null
     }>
   > {
-    const { users } = await import("../models/index.js");
+    const { users } = await import("../models/index.js")
 
     return await this.db
       .select({
@@ -137,6 +137,6 @@ export class EnrollmentRepository extends BaseRepository<
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
       .where(eq(enrollments.classId, classId))
-      .orderBy(users.firstName);
+      .orderBy(users.firstName)
   }
 }

@@ -1,144 +1,144 @@
-import { useState, useEffect } from "react";
-import { Input } from "@/presentation/components/ui/Input";
-import { Button } from "@/presentation/components/ui/Button";
-import { Eye, EyeOff, Lock, CheckCircle, XCircle } from "lucide-react";
+import { useState, useEffect } from "react"
+import { Input } from "@/presentation/components/ui/Input"
+import { Button } from "@/presentation/components/ui/Button"
+import { Eye, EyeOff, Lock, CheckCircle, XCircle } from "lucide-react"
 import {
   validatePassword,
   validatePasswordsMatch,
-} from "@/business/validation/authValidation";
+} from "@/business/validation/authValidation"
 import {
   resetPassword,
   initializeResetFlow,
-} from "@/business/services/authService";
+} from "@/business/services/authService"
 
 interface ResetPasswordPageProps {
-  onSuccess?: () => void;
+  onSuccess?: () => void
 }
 
 export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [tokenError, setTokenError] = useState(false);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [tokenError, setTokenError] = useState(false)
+  const [isCheckingSession, setIsCheckingSession] = useState(true)
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true
 
     const initializeSession = async () => {
       try {
-        const result = await initializeResetFlow();
+        const result = await initializeResetFlow()
 
-        if (!isMounted) return;
+        if (!isMounted) return
 
         if (result.success) {
-          setIsCheckingSession(false);
+          setIsCheckingSession(false)
         } else {
-          setTokenError(true);
-          setError(result.message || "Failed to verify reset link.");
-          setIsCheckingSession(false);
+          setTokenError(true)
+          setError(result.message || "Failed to verify reset link.")
+          setIsCheckingSession(false)
         }
       } catch (err) {
-        if (!isMounted) return;
-        setTokenError(true);
-        setError("An unexpected error occurred.");
-        setIsCheckingSession(false);
+        if (!isMounted) return
+        setTokenError(true)
+        setError("An unexpected error occurred.")
+        setIsCheckingSession(false)
       }
-    };
+    }
 
-    initializeSession();
+    initializeSession()
 
     return () => {
-      isMounted = false;
-    };
-  }, []);
+      isMounted = false
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setFieldErrors({});
+    e.preventDefault()
+    setError(null)
+    setFieldErrors({})
 
     if (tokenError) {
-      setError("Invalid reset link. Please request a new password reset.");
-      return;
+      setError("Invalid reset link. Please request a new password reset.")
+      return
     }
 
     // Validate passwords
-    const passwordError = validatePassword(newPassword);
-    const confirmError = validatePasswordsMatch(newPassword, confirmPassword);
+    const passwordError = validatePassword(newPassword)
+    const confirmError = validatePasswordsMatch(newPassword, confirmPassword)
 
-    const errors: Record<string, string> = {};
-    if (passwordError) errors.newPassword = passwordError;
-    if (confirmError) errors.confirmPassword = confirmError;
+    const errors: Record<string, string> = {}
+    if (passwordError) errors.newPassword = passwordError
+    if (confirmError) errors.confirmPassword = confirmError
 
     if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
+      setFieldErrors(errors)
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
       // Use authService for password reset (follows 3-tier architecture)
       const result = await resetPassword({
         newPassword: newPassword,
         confirmPassword: confirmPassword,
-      });
+      })
 
       if (result.success) {
-        setSuccess(true);
+        setSuccess(true)
 
         // Redirect to login after 3 seconds
         setTimeout(() => {
-          onSuccess?.();
-        }, 3000);
+          onSuccess?.()
+        }, 3000)
       } else {
-        setError(result.message || "Failed to reset password");
+        setError(result.message || "Failed to reset password")
       }
     } catch (err) {
-      console.error("Password reset error:", err);
+      console.error("Password reset error:", err)
       setError(
         err instanceof Error
           ? err.message
           : "An unexpected error occurred while resetting your password",
-      );
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleFieldBlur = (fieldName: string, value: string) => {
-    let error: string | null = null;
+    let error: string | null = null
 
     if (fieldName === "newPassword") {
-      error = validatePassword(value);
+      error = validatePassword(value)
     } else if (fieldName === "confirmPassword") {
-      error = validatePasswordsMatch(newPassword, value);
+      error = validatePasswordsMatch(newPassword, value)
     }
 
     if (error) {
-      setFieldErrors((prev) => ({ ...prev, [fieldName]: error! }));
+      setFieldErrors((prev) => ({ ...prev, [fieldName]: error! }))
     } else {
       setFieldErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[fieldName];
-        return newErrors;
-      });
+        const newErrors = { ...prev }
+        delete newErrors[fieldName]
+        return newErrors
+      })
     }
-  };
+  }
 
   if (success) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-4">
         {/* Background decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
         </div>
         <div className="w-full max-w-md relative">
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 text-center">
@@ -150,11 +150,11 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
             <h1 className="text-3xl font-bold text-white mb-4">
               Password Reset Complete!
             </h1>
-            <p className="text-gray-300 mb-6">
+            <p className="text-slate-300 mb-6">
               Your password has been successfully updated. You can now log in
               with your new password.
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-slate-400">
               Redirecting to login in 3 seconds...
             </p>
             <Button onClick={onSuccess} className="w-full mt-6">
@@ -163,16 +163,16 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (isCheckingSession) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-4">
         {/* Background decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
         </div>
         <div className="w-full max-w-md relative">
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 text-center">
@@ -182,22 +182,22 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
             <h1 className="text-2xl font-bold text-white mb-2">
               Verifying Reset Link...
             </h1>
-            <p className="text-gray-400">
+            <p className="text-slate-400">
               Please wait while we verify your password reset link.
             </p>
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   if (tokenError) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-4">
         {/* Background decorative elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-1/4 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
         </div>
         <div className="w-full max-w-md relative">
           <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-8 md:p-10 text-center">
@@ -209,7 +209,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
             <h1 className="text-3xl font-bold text-white mb-4">
               Invalid Reset Link
             </h1>
-            <p className="text-gray-300 mb-6">{error}</p>
+            <p className="text-slate-300 mb-6">{error}</p>
             <Button
               onClick={() => (window.location.href = "/forgot-password")}
               className="w-full"
@@ -219,15 +219,15 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-900 p-4">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-4">
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="w-full max-w-md relative">
@@ -238,7 +238,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
             <h1 className="text-3xl font-bold text-white mb-2">
               Reset Your Password
             </h1>
-            <p className="text-gray-400">Enter your new password below</p>
+            <p className="text-slate-400">Enter your new password below</p>
           </div>
 
           {/* Form */}
@@ -254,12 +254,12 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
             <div className="space-y-2">
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-gray-200"
+                className="block text-sm font-medium text-slate-200"
               >
                 New Password
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                   <Lock className="w-5 h-5" />
                 </div>
                 <Input
@@ -269,14 +269,14 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   onBlur={(e) => handleFieldBlur("newPassword", e.target.value)}
-                  className="pl-11 pr-11 placeholder:text-gray-400"
+                  className="pl-11 pr-11 placeholder:text-slate-400"
                   required
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                   aria-label={
                     showNewPassword ? "Hide password" : "Show password"
                   }
@@ -293,7 +293,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   {fieldErrors.newPassword}
                 </p>
               )}
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-slate-400">
                 Must be 8+ characters with uppercase, lowercase, number, and
                 special character
               </p>
@@ -303,12 +303,12 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
             <div className="space-y-2">
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-200"
+                className="block text-sm font-medium text-slate-200"
               >
                 Confirm New Password
               </label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
                   <Lock className="w-5 h-5" />
                 </div>
                 <Input
@@ -320,14 +320,14 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   onBlur={(e) =>
                     handleFieldBlur("confirmPassword", e.target.value)
                   }
-                  className="pl-11 pr-11 placeholder:text-gray-400"
+                  className="pl-11 pr-11 placeholder:text-slate-400"
                   required
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors"
                   aria-label={
                     showConfirmPassword ? "Hide password" : "Show password"
                   }
@@ -363,7 +363,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
               <button
                 type="button"
                 onClick={() => (window.location.href = "/login")}
-                className="text-sm text-gray-400 hover:text-white transition-colors"
+                className="text-sm text-slate-400 hover:text-white transition-colors"
               >
                 Back to Login
               </button>
@@ -372,5 +372,5 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

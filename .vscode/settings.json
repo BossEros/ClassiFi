@@ -1,3 +1,4 @@
 {
-    "coderabbit.autoReviewMode": "disabled"
+    "coderabbit.autoReviewMode": "disabled",
+    "typescript.autoClosingTags": false
 }

@@ -1,4 +1,4 @@
-import type { AdminClassSchedule } from "@/data/api/types";
+import type { AdminClassSchedule } from "@/data/api/types"
 
 export type {
   AdminUser,
@@ -21,7 +21,7 @@ export type {
   AdminStudentsResponse,
   AdminAssignmentsResponse,
   PaginatedResponse,
-} from "@/data/api/types";
+} from "@/data/api/types"
 
 // Maintain backward compatibility for ClassSchedule
-export type ClassSchedule = AdminClassSchedule;
+export type ClassSchedule = AdminClassSchedule

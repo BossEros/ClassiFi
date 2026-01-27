@@ -1,5 +1,5 @@
 // db is accessed via BaseRepository.db
-import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm";
+import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
 import {
   classes,
   enrollments,
@@ -7,21 +7,21 @@ import {
   type Class,
   type NewClass,
   type ClassSchedule,
-} from "@/models/index.js";
-import { BaseRepository } from "./base.repository.js";
-import { injectable } from "tsyringe";
-import type { PaginatedResult } from "./user.repository.js";
+} from "@/models/index.js"
+import { BaseRepository } from "./base.repository.js"
+import { injectable } from "tsyringe"
+import type { PaginatedResult } from "./user.repository.js"
 
 /** Filter options for admin class queries */
 export interface ClassFilterOptions {
-  page: number;
-  limit: number;
-  search?: string;
-  teacherId?: number;
-  status?: "active" | "archived";
-  yearLevel?: number;
-  semester?: number;
-  academicYear?: string;
+  page: number
+  limit: number
+  search?: string
+  teacherId?: number
+  status?: "active" | "archived"
+  yearLevel?: number
+  semester?: number
+  academicYear?: string
 }
 
 /**
@@ -34,12 +34,12 @@ export class ClassRepository extends BaseRepository<
   NewClass
 > {
   constructor() {
-    super(classes);
+    super(classes)
   }
 
   /** Get a class by ID */
   async getClassById(classId: number): Promise<Class | undefined> {
-    return await this.findById(classId);
+    return await this.findById(classId)
   }
 
   /** Get a class by class code */
@@ -48,9 +48,9 @@ export class ClassRepository extends BaseRepository<
       .select()
       .from(classes)
       .where(eq(classes.classCode, classCode))
-      .limit(1);
+      .limit(1)
 
-    return results[0];
+    return results[0]
   }
 
   /** Get all classes taught by a teacher */
@@ -65,14 +65,14 @@ export class ClassRepository extends BaseRepository<
         .where(
           and(eq(classes.teacherId, teacherId), eq(classes.isActive, true)),
         )
-        .orderBy(desc(classes.createdAt));
+        .orderBy(desc(classes.createdAt))
     }
 
     return await this.db
       .select()
       .from(classes)
       .where(eq(classes.teacherId, teacherId))
-      .orderBy(desc(classes.createdAt));
+      .orderBy(desc(classes.createdAt))
   }
 
   /** Get most recent classes taught by a teacher */
@@ -85,7 +85,7 @@ export class ClassRepository extends BaseRepository<
       .from(classes)
       .where(and(eq(classes.teacherId, teacherId), eq(classes.isActive, true)))
       .orderBy(desc(classes.createdAt))
-      .limit(limit);
+      .limit(limit)
   }
 
   /**
@@ -103,7 +103,7 @@ export class ClassRepository extends BaseRepository<
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
-      .as("student_counts");
+      .as("student_counts")
 
     const results = await this.db
       .select({
@@ -127,12 +127,12 @@ export class ClassRepository extends BaseRepository<
       )
       .where(and(eq(classes.teacherId, teacherId), eq(classes.isActive, true)))
       .orderBy(desc(classes.createdAt))
-      .limit(limit);
+      .limit(limit)
 
     return results.map((r) => ({
       ...r,
       studentCount: Number(r.studentCount),
-    }));
+    }))
   }
 
   /**
@@ -150,11 +150,11 @@ export class ClassRepository extends BaseRepository<
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
-      .as("student_counts");
+      .as("student_counts")
 
     const condition = activeOnly
       ? and(eq(classes.teacherId, teacherId), eq(classes.isActive, true))
-      : eq(classes.teacherId, teacherId);
+      : eq(classes.teacherId, teacherId)
 
     const results = await this.db
       .select({
@@ -177,24 +177,24 @@ export class ClassRepository extends BaseRepository<
         eq(classes.id, studentCountSubquery.classId),
       )
       .where(condition)
-      .orderBy(desc(classes.createdAt));
+      .orderBy(desc(classes.createdAt))
 
     return results.map((r) => ({
       ...r,
       studentCount: Number(r.studentCount),
-    }));
+    }))
   }
 
   /** Create a new class */
   async createClass(data: {
-    teacherId: number;
-    className: string;
-    classCode: string;
-    yearLevel: number;
-    semester: number;
-    academicYear: string;
-    schedule: ClassSchedule;
-    description?: string;
+    teacherId: number
+    className: string
+    classCode: string
+    yearLevel: number
+    semester: number
+    academicYear: string
+    schedule: ClassSchedule
+    description?: string
   }): Promise<Class> {
     const results = await this.db
       .insert(classes)
@@ -209,9 +209,9 @@ export class ClassRepository extends BaseRepository<
         description: data.description ?? null,
         isActive: true,
       })
-      .returning();
+      .returning()
 
-    return results[0];
+    return results[0]
   }
 
   /** Update a class */
@@ -233,18 +233,18 @@ export class ClassRepository extends BaseRepository<
   ): Promise<Class | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined),
-    );
+    )
 
     if (Object.keys(updateData).length === 0) {
-      return await this.getClassById(classId);
+      return await this.getClassById(classId)
     }
 
-    return await this.update(classId, updateData);
+    return await this.update(classId, updateData)
   }
 
   /** Delete a class (hard delete) */
   async deleteClass(classId: number): Promise<boolean> {
-    return await this.delete(classId);
+    return await this.delete(classId)
   }
 
   /** Get the number of students in a class */
@@ -252,9 +252,9 @@ export class ClassRepository extends BaseRepository<
     const result = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(enrollments)
-      .where(eq(enrollments.classId, classId));
+      .where(eq(enrollments.classId, classId))
 
-    return Number(result[0]?.count ?? 0);
+    return Number(result[0]?.count ?? 0)
   }
 
   /** Check if a class code already exists */
@@ -263,9 +263,9 @@ export class ClassRepository extends BaseRepository<
       .select({ id: classes.id })
       .from(classes)
       .where(eq(classes.classCode, classCode))
-      .limit(1);
+      .limit(1)
 
-    return results.length > 0;
+    return results.length > 0
   }
 
   /** Get all classes a student is enrolled in */
@@ -297,9 +297,9 @@ export class ClassRepository extends BaseRepository<
             )
           : eq(enrollments.studentId, studentId),
       )
-      .orderBy(desc(classes.createdAt));
+      .orderBy(desc(classes.createdAt))
 
-    return await query;
+    return await query
   }
 
   /**
@@ -317,11 +317,11 @@ export class ClassRepository extends BaseRepository<
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
-      .as("student_counts");
+      .as("student_counts")
 
     const condition = activeOnly
       ? and(eq(enrollments.studentId, studentId), eq(classes.isActive, true))
-      : eq(enrollments.studentId, studentId);
+      : eq(enrollments.studentId, studentId)
 
     const results = await this.db
       .select({
@@ -348,13 +348,13 @@ export class ClassRepository extends BaseRepository<
         eq(classes.id, studentCountSubquery.classId),
       )
       .where(condition)
-      .orderBy(desc(classes.createdAt));
+      .orderBy(desc(classes.createdAt))
 
     return results.map((r) => ({
       ...r,
       studentCount: Number(r.studentCount),
       teacherName: `${r.teacherFirstName} ${r.teacherLastName}`,
-    }));
+    }))
   }
 
   /**
@@ -375,11 +375,11 @@ export class ClassRepository extends BaseRepository<
       yearLevel,
       semester,
       academicYear,
-    } = options;
-    const offset = (page - 1) * limit;
+    } = options
+    const offset = (page - 1) * limit
 
     // Build where conditions
-    const conditions: ReturnType<typeof eq>[] = [];
+    const conditions: ReturnType<typeof eq>[] = []
 
     if (search) {
       conditions.push(
@@ -388,40 +388,40 @@ export class ClassRepository extends BaseRepository<
           ilike(classes.classCode, `%${search}%`),
           ilike(classes.description, `%${search}%`),
         )!,
-      );
+      )
     }
 
     if (teacherId) {
-      conditions.push(eq(classes.teacherId, teacherId));
+      conditions.push(eq(classes.teacherId, teacherId))
     }
 
     if (status === "active") {
-      conditions.push(eq(classes.isActive, true));
+      conditions.push(eq(classes.isActive, true))
     } else if (status === "archived") {
-      conditions.push(eq(classes.isActive, false));
+      conditions.push(eq(classes.isActive, false))
     }
 
     if (yearLevel) {
-      conditions.push(eq(classes.yearLevel, yearLevel));
+      conditions.push(eq(classes.yearLevel, yearLevel))
     }
 
     if (semester) {
-      conditions.push(eq(classes.semester, semester));
+      conditions.push(eq(classes.semester, semester))
     }
 
     if (academicYear) {
-      conditions.push(eq(classes.academicYear, academicYear));
+      conditions.push(eq(classes.academicYear, academicYear))
     }
 
-    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined
 
     // Get total count
     const countResult = await this.db
       .select({ count: count() })
       .from(classes)
-      .where(whereClause);
+      .where(whereClause)
 
-    const total = Number(countResult[0]?.count ?? 0);
+    const total = Number(countResult[0]?.count ?? 0)
 
     // Get paginated data with teacher info
     const studentCountSubquery = this.db
@@ -431,7 +431,7 @@ export class ClassRepository extends BaseRepository<
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
-      .as("student_counts");
+      .as("student_counts")
 
     const data = await this.db
       .select({
@@ -458,7 +458,7 @@ export class ClassRepository extends BaseRepository<
       .where(whereClause)
       .orderBy(desc(classes.createdAt))
       .limit(limit)
-      .offset(offset);
+      .offset(offset)
 
     return {
       data: data.map((r) => ({
@@ -469,7 +469,7 @@ export class ClassRepository extends BaseRepository<
       page,
       limit,
       totalPages: Math.ceil(total / limit),
-    };
+    }
   }
 
   /**
@@ -497,9 +497,9 @@ export class ClassRepository extends BaseRepository<
       .from(classes)
       .leftJoin(users, eq(classes.teacherId, users.id))
       .where(eq(classes.id, classId))
-      .limit(1);
+      .limit(1)
 
-    return results[0] as (Class & { teacherName: string }) | undefined;
+    return results[0] as (Class & { teacherName: string }) | undefined
   }
 
   /**
@@ -507,16 +507,16 @@ export class ClassRepository extends BaseRepository<
    * Used for admin analytics dashboard.
    */
   async getClassCounts(): Promise<{ total: number; active: number }> {
-    const totalResult = await this.db.select({ count: count() }).from(classes);
+    const totalResult = await this.db.select({ count: count() }).from(classes)
     const activeResult = await this.db
       .select({ count: count() })
       .from(classes)
-      .where(eq(classes.isActive, true));
+      .where(eq(classes.isActive, true))
 
     return {
       total: Number(totalResult[0]?.count ?? 0),
       active: Number(activeResult[0]?.count ?? 0),
-    };
+    }
   }
 
   /**
@@ -525,8 +525,8 @@ export class ClassRepository extends BaseRepository<
    */
   async getRecentClassesWithTeacher(limit: number = 10): Promise<
     Array<{
-      class: Class;
-      teacherName: string;
+      class: Class
+      teacherName: string
     }>
   > {
     const results = await this.db
@@ -537,13 +537,13 @@ export class ClassRepository extends BaseRepository<
       .from(classes)
       .leftJoin(users, eq(classes.teacherId, users.id))
       .orderBy(desc(classes.createdAt))
-      .limit(limit);
+      .limit(limit)
 
     return results.map((row) => ({
       class: row.class,
       teacherName: row.teacher
         ? `${row.teacher.firstName} ${row.teacher.lastName}`
         : "Unknown",
-    }));
+    }))
   }
 }

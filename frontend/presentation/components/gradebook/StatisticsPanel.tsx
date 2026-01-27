@@ -1,13 +1,13 @@
-import { Users, BookOpen, TrendingUp, CheckCircle } from "lucide-react";
+import { Users, BookOpen, TrendingUp, CheckCircle } from "lucide-react"
 import {
   Card,
   CardContent,
   CardHeader,
-} from "@/presentation/components/ui/Card";
-import type { ClassStatistics } from "@/shared/types/gradebook";
+} from "@/presentation/components/ui/Card"
+import type { ClassStatistics } from "@/shared/types/gradebook"
 
 interface StatisticsPanelProps {
-  statistics: ClassStatistics | null;
+  statistics: ClassStatistics | null
 }
 
 const GRADE_LEGEND = [
@@ -16,7 +16,7 @@ const GRADE_LEGEND = [
   { color: "bg-yellow-500/20", label: "60-74% (Average)" },
   { color: "bg-orange-500/20", label: "40-59% (Below Average)" },
   { color: "bg-red-500/20", label: "<40% (Needs Improvement)" },
-];
+]
 
 export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
   if (!statistics) {
@@ -26,7 +26,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           <p className="text-gray-400 text-sm">Loading statistics...</p>
         </CardContent>
       </Card>
-    );
+    )
   }
 
   const stats = [
@@ -37,8 +37,8 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
           ? `${Math.round(statistics.classAverage)}%`
           : "—",
       icon: TrendingUp,
-      color: "text-purple-400",
-      bgColor: "bg-purple-500/10",
+      color: "text-teal-400",
+      bgColor: "bg-teal-500/10",
     },
     {
       label: "Submission Rate",
@@ -61,7 +61,7 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
       color: "text-orange-400",
       bgColor: "bg-orange-500/10",
     },
-  ];
+  ]
 
   return (
     <Card>
@@ -104,5 +104,5 @@ export function StatisticsPanel({ statistics }: StatisticsPanelProps) {
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }

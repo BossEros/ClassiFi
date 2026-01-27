@@ -1,18 +1,18 @@
-import { RefreshCw, Check } from "lucide-react";
-import { Input } from "@/presentation/components/ui/Input";
+import { RefreshCw, Check } from "lucide-react"
+import { Input } from "@/presentation/components/ui/Input"
 import {
   type CourseworkFormData,
   type FormErrors,
-} from "@/presentation/hooks/useCourseworkForm";
+} from "@/presentation/hooks/useCourseworkForm"
 
 interface SubmissionSettingsProps {
-  formData: CourseworkFormData;
-  errors: FormErrors;
-  isLoading: boolean;
+  formData: CourseworkFormData
+  errors: FormErrors
+  isLoading: boolean
   onInputChange: (
     field: keyof CourseworkFormData,
-    value: string | number | boolean | null
-  ) => void;
+    value: string | number | boolean | null,
+  ) => void
 }
 
 export function SubmissionSettings({
@@ -45,8 +45,8 @@ export function SubmissionSettings({
           }
           onKeyDown={(e) => {
             if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              onInputChange("allowResubmission", !formData.allowResubmission);
+              e.preventDefault()
+              onInputChange("allowResubmission", !formData.allowResubmission)
             }
           }}
           role="checkbox"
@@ -85,11 +85,11 @@ export function SubmissionSettings({
               placeholder="Leave empty for unlimited"
               value={formData.maxAttempts ?? ""}
               onChange={(e) => {
-                const value = e.target.value;
+                const value = e.target.value
                 onInputChange(
                   "maxAttempts",
-                  value === "" ? null : parseInt(value, 10)
-                );
+                  value === "" ? null : parseInt(value, 10),
+                )
               }}
               disabled={isLoading}
               className={`bg-black/20 border-white/10 text-white placeholder-gray-500 focus:ring-emerald-500/40 focus:border-transparent rounded-xl h-11 ${
@@ -108,5 +108,5 @@ export function SubmissionSettings({
         )}
       </div>
     </div>
-  );
+  )
 }

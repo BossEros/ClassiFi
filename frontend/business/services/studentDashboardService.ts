@@ -1,9 +1,9 @@
 import type {
   StudentDashboardBackendResponse,
   JoinClassResponse,
-} from "@/data/repositories/studentDashboardRepository";
-import * as dashboardRepository from "@/data/repositories/studentDashboardRepository";
-import { validateClassJoinCode } from "@/business/validation/classValidation";
+} from "@/data/repositories/studentDashboardRepository"
+import * as dashboardRepository from "@/data/repositories/studentDashboardRepository"
+import { validateClassJoinCode } from "@/business/validation/classValidation"
 
 /**
  * Fetches the complete dashboard overview for a specific student.
@@ -17,10 +17,12 @@ export async function getDashboardData(
   studentId: number,
 ): Promise<StudentDashboardBackendResponse> {
   try {
-    return await dashboardRepository.getCompleteDashboardDataForStudentId(studentId);
+    return await dashboardRepository.getCompleteDashboardDataForStudentId(
+      studentId,
+    )
   } catch (error) {
-    console.error("Error fetching student dashboard data:", error);
-    throw error;
+    console.error("Error fetching student dashboard data:", error)
+    throw error
   }
 }
 
@@ -37,10 +39,13 @@ export async function getEnrolledClasses(
   limit?: number,
 ): Promise<dashboardRepository.ClassListResponse> {
   try {
-    return await dashboardRepository.getAllEnrolledClassesForStudentId(studentId, limit);
+    return await dashboardRepository.getAllEnrolledClassesForStudentId(
+      studentId,
+      limit,
+    )
   } catch (error) {
-    console.error("Error fetching enrolled classes:", error);
-    throw error;
+    console.error("Error fetching enrolled classes:", error)
+    throw error
   }
 }
 
@@ -57,10 +62,13 @@ export async function getPendingAssignments(
   limit: number = 10,
 ): Promise<dashboardRepository.AssignmentListResponse> {
   try {
-    return await dashboardRepository.getAllPendingAssignmentsForStudentId(studentId, limit);
+    return await dashboardRepository.getAllPendingAssignmentsForStudentId(
+      studentId,
+      limit,
+    )
   } catch (error) {
-    console.error("Error fetching pending assignments:", error);
-    throw error;
+    console.error("Error fetching pending assignments:", error)
+    throw error
   }
 }
 
@@ -78,23 +86,26 @@ export async function joinClass(
 ): Promise<JoinClassResponse> {
   try {
     // Validate class code format (6-8 alphanumeric characters)
-    const codeError = validateClassJoinCode(classCode);
+    const codeError = validateClassJoinCode(classCode)
 
     if (codeError) {
       return {
         success: false,
         message: codeError,
-      };
+      }
     }
 
-    return await dashboardRepository.enrollStudentInClassWithCode(studentId, classCode);
+    return await dashboardRepository.enrollStudentInClassWithCode(
+      studentId,
+      classCode,
+    )
   } catch (error) {
-    console.error("Error joining class:", error);
+    console.error("Error joining class:", error)
 
     return {
       success: false,
       message: "Failed to join class. Please try again.",
-    };
+    }
   }
 }
 
@@ -110,13 +121,16 @@ export async function leaveClass(
   classId: number,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    return await dashboardRepository.unenrollStudentFromClassById(studentId, classId);
+    return await dashboardRepository.unenrollStudentFromClassById(
+      studentId,
+      classId,
+    )
   } catch (error) {
-    console.error("Error leaving class:", error);
-    
+    console.error("Error leaving class:", error)
+
     return {
       success: false,
       message: "Failed to leave class. Please try again.",
-    };
+    }
   }
 }

@@ -1,14 +1,14 @@
-import * as assignmentRepository from "@/data/repositories/assignmentRepository";
-import { validateId } from "@/shared/utils/validators";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository"
+import { validateId } from "@/shared/utils/validators"
 import type {
   Submission,
   SubmissionHistoryResponse,
   AssignmentDetail,
   SubmitAssignmentRequest,
   SubmissionContent,
-} from "@/data/api/types";
-import { validateFile } from "@/shared/utils/assignmentValidation";
-export { validateFile };
+} from "@/data/api/types"
+import { validateFile } from "@/shared/utils/assignmentValidation"
+export { validateFile }
 
 /**
  * Submits an assignment with file upload
@@ -20,31 +20,31 @@ export async function submitAssignment(
   request: SubmitAssignmentRequest,
 ): Promise<Submission> {
   // Validate inputs
-  validateId(request.assignmentId, "assignment");
-  validateId(request.studentId, "student");
+  validateId(request.assignmentId, "assignment")
+  validateId(request.studentId, "student")
 
   // Validate file
   const validationError = validateFile(
     request.file,
     request.programmingLanguage,
-  );
+  )
 
   if (validationError) {
-    throw new Error(validationError);
+    throw new Error(validationError)
   }
 
   // Submit to repository
-  const response = await assignmentRepository.submitAssignmentWithFile(request);
+  const response = await assignmentRepository.submitAssignmentWithFile(request)
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data || !response.data.submission) {
-    throw new Error("Failed to submit assignment");
+    throw new Error("Failed to submit assignment")
   }
 
-  return response.data.submission;
+  return response.data.submission
 }
 
 /**
@@ -58,23 +58,24 @@ export async function getSubmissionHistory(
   assignmentId: number,
   studentId: number,
 ): Promise<SubmissionHistoryResponse> {
-  validateId(assignmentId, "assignment");
-  validateId(studentId, "student");
+  validateId(assignmentId, "assignment")
+  validateId(studentId, "student")
 
-  const response = await assignmentRepository.getSubmissionHistoryForStudentAndAssignment(
-    assignmentId,
-    studentId,
-  );
+  const response =
+    await assignmentRepository.getSubmissionHistoryForStudentAndAssignment(
+      assignmentId,
+      studentId,
+    )
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data) {
-    throw new Error("Failed to fetch submission history");
+    throw new Error("Failed to fetch submission history")
   }
 
-  return response.data;
+  return response.data
 }
 
 /**
@@ -88,22 +89,22 @@ export async function getStudentSubmissions(
   studentId: number,
   latestOnly: boolean = true,
 ): Promise<Submission[]> {
-  validateId(studentId, "student");
+  validateId(studentId, "student")
 
   const response = await assignmentRepository.getAllSubmissionsByStudentId(
     studentId,
     latestOnly,
-  );
+  )
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data) {
-    throw new Error("Failed to fetch submissions");
+    throw new Error("Failed to fetch submissions")
   }
 
-  return response.data.submissions;
+  return response.data.submissions
 }
 
 /**
@@ -117,22 +118,22 @@ export async function getAssignmentSubmissions(
   assignmentId: number,
   latestOnly: boolean = true,
 ): Promise<Submission[]> {
-  validateId(assignmentId, "assignment");
+  validateId(assignmentId, "assignment")
 
   const response = await assignmentRepository.getAllSubmissionsForAssignmentId(
     assignmentId,
     latestOnly,
-  );
+  )
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data) {
-    throw new Error("Failed to fetch submissions");
+    throw new Error("Failed to fetch submissions")
   }
 
-  return response.data.submissions;
+  return response.data.submissions
 }
 
 /**
@@ -146,22 +147,22 @@ export async function getAssignmentById(
   assignmentId: number,
   userId: number,
 ): Promise<AssignmentDetail> {
-  validateId(assignmentId, "assignment");
+  validateId(assignmentId, "assignment")
 
   const response = await assignmentRepository.getAssignmentDetailsByIdForUser(
     assignmentId,
     userId,
-  );
+  )
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data || !response.data.assignment) {
-    throw new Error("Failed to fetch assignment details");
+    throw new Error("Failed to fetch assignment details")
   }
 
-  return response.data.assignment;
+  return response.data.assignment
 }
 
 /**
@@ -173,19 +174,20 @@ export async function getAssignmentById(
 export async function getSubmissionContent(
   submissionId: number,
 ): Promise<SubmissionContent> {
-  validateId(submissionId, "submission");
+  validateId(submissionId, "submission")
 
-  const response = await assignmentRepository.getSubmissionFileContentById(submissionId);
+  const response =
+    await assignmentRepository.getSubmissionFileContentById(submissionId)
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data) {
-    throw new Error("Failed to fetch submission content");
+    throw new Error("Failed to fetch submission content")
   }
 
-  return response.data;
+  return response.data
 }
 
 /**
@@ -197,18 +199,18 @@ export async function getSubmissionContent(
 export async function getSubmissionDownloadUrl(
   submissionId: number,
 ): Promise<string> {
-  validateId(submissionId, "submission");
+  validateId(submissionId, "submission")
 
   const response =
-    await assignmentRepository.getSubmissionFileDownloadUrlById(submissionId);
+    await assignmentRepository.getSubmissionFileDownloadUrlById(submissionId)
 
   if (response.error) {
-    throw new Error(response.error);
+    throw new Error(response.error)
   }
 
   if (!response.data || !response.data.downloadUrl) {
-    throw new Error("Failed to generate download URL");
+    throw new Error("Failed to generate download URL")
   }
 
-  return response.data.downloadUrl;
+  return response.data.downloadUrl
 }

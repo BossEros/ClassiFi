@@ -8,13 +8,13 @@
  * @returns Formatted file size string (e.g., "1.5 MB")
  */
 export function formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 Bytes'
+  if (bytes === 0) return "0 Bytes"
 
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
+  const k = 1024
+  const sizes = ["Bytes", "KB", "MB", "GB"]
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
 
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
 }
 
 /**
@@ -24,7 +24,7 @@ export function formatFileSize(bytes: number): string {
  * @returns Formatted full name
  */
 export function formatFullName(firstName: string, lastName: string): string {
-    return `${firstName} ${lastName}`.trim()
+  return `${firstName} ${lastName}`.trim()
 }
 
 /**
@@ -33,12 +33,12 @@ export function formatFullName(firstName: string, lastName: string): string {
  * @returns Original object with fullName added
  */
 export function withFullName<T extends { firstName: string; lastName: string }>(
-    obj: T
+  obj: T,
 ): T & { fullName: string } {
-    return {
-        ...obj,
-        fullName: formatFullName(obj.firstName, obj.lastName),
-    }
+  return {
+    ...obj,
+    fullName: formatFullName(obj.firstName, obj.lastName),
+  }
 }
 
 /**
@@ -50,16 +50,15 @@ export function withFullName<T extends { firstName: string; lastName: string }>(
  * @returns Normalized full name or fallback
  */
 export function normalizeUserName(
-    firstName?: string | null,
-    lastName?: string | null,
-    fallback: string = 'Unknown User'
+  firstName?: string | null,
+  lastName?: string | null,
+  fallback: string = "Unknown User",
 ): string {
-    const first = firstName?.trim() || ''
-    const last = lastName?.trim() || ''
+  const first = firstName?.trim() || ""
+  const last = lastName?.trim() || ""
 
-    if (!first && !last) return fallback
-    if (!first) return last
-    if (!last) return first
-    return `${first} ${last}`
+  if (!first && !last) return fallback
+  if (!first) return last
+  if (!last) return first
+  return `${first} ${last}`
 }
-

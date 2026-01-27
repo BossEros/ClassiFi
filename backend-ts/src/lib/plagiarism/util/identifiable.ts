@@ -3,23 +3,23 @@
  * Used by files, pairs, and fingerprints to have unique identifiers.
  */
 export abstract class Identifiable {
-    private static nextId = 0;
+  private static nextId = 0
 
-    public readonly id: number;
+  public readonly id: number
 
-    protected constructor(id?: number) {
-        if (id !== undefined) {
-            this.id = id;
-            Identifiable.nextId = Math.max(Identifiable.nextId, id + 1);
-        } else {
-            this.id = Identifiable.nextId++;
-        }
+  protected constructor(id?: number) {
+    if (id !== undefined) {
+      this.id = id
+      Identifiable.nextId = Math.max(Identifiable.nextId, id + 1)
+    } else {
+      this.id = Identifiable.nextId++
     }
+  }
 
-    /**
-     * Reset the ID counter. Useful for testing.
-     */
-    public static resetIdCounter(): void {
-        Identifiable.nextId = 0;
-    }
+  /**
+   * Reset the ID counter. Useful for testing.
+   */
+  public static resetIdCounter(): void {
+    Identifiable.nextId = 0
+  }
 }

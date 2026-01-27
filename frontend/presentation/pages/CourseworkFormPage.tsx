@@ -1,16 +1,16 @@
-import { useNavigate } from "react-router-dom";
-import { RefreshCw, Check, X } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
-import { Button } from "@/presentation/components/ui/Button";
-import { BackButton } from "@/presentation/components/ui/BackButton";
-import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm";
-import { BasicInfoForm } from "@/presentation/components/forms/coursework/BasicInfoForm";
-import { SubmissionSettings } from "@/presentation/components/forms/coursework/SubmissionSettings";
-import { LatePenaltyConfig } from "@/presentation/components/forms/coursework/LatePenaltyConfig";
-import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook";
+import { useNavigate } from "react-router-dom"
+import { RefreshCw, Check, X } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Button } from "@/presentation/components/ui/Button"
+import { BackButton } from "@/presentation/components/ui/BackButton"
+import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm"
+import { BasicInfoForm } from "@/presentation/components/forms/coursework/BasicInfoForm"
+import { SubmissionSettings } from "@/presentation/components/forms/coursework/SubmissionSettings"
+import { LatePenaltyConfig } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
+import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
 
 export function CourseworkFormPage() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const {
     // State
     formData,
@@ -37,7 +37,7 @@ export function CourseworkFormPage() {
     handleAddPendingTestCase,
     handleUpdatePendingTestCase,
     handleDeletePendingTestCase,
-  } = useCourseworkForm();
+  } = useCourseworkForm()
 
   // Show loading state while fetching data
   if (isFetching) {
@@ -50,7 +50,7 @@ export function CourseworkFormPage() {
           </div>
         </div>
       </DashboardLayout>
-    );
+    )
   }
 
   return (
@@ -64,7 +64,7 @@ export function CourseworkFormPage() {
               <h1 className="text-3xl font-bold text-white tracking-tight">
                 {isEditMode ? "Edit Coursework" : "Create Coursework for"}
                 {className && (
-                  <span className="text-purple-400"> {className}</span>
+                  <span className="text-teal-400"> {className}</span>
                 )}
               </h1>
             </div>
@@ -138,7 +138,7 @@ export function CourseworkFormPage() {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-500/20 font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg shadow-teal-500/20 font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -162,7 +162,7 @@ export function CourseworkFormPage() {
         </div>
       </form>
     </DashboardLayout>
-  );
+  )
 }
 
-export default CourseworkFormPage;
+export default CourseworkFormPage

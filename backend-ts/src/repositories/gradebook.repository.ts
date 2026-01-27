@@ -1,13 +1,13 @@
-import { db } from "@/shared/database.js";
-import { eq, and, sql, isNotNull, inArray } from "drizzle-orm";
+import { db } from "@/shared/database.js"
+import { eq, and, sql, isNotNull, inArray } from "drizzle-orm"
 import {
   submissions,
   assignments,
   enrollments,
   users,
   classes,
-} from "@/models/index.js";
-import { injectable } from "tsyringe";
+} from "@/models/index.js"
+import { injectable } from "tsyringe"
 
 /**
  * Gradebook Repository
@@ -15,7 +15,7 @@ import { injectable } from "tsyringe";
  */
 @injectable()
 export class GradebookRepository {
-  protected db = db;
+  protected db = db
 
   /**
    * Get class gradebook: all students with their grades for all assignments.
@@ -23,23 +23,23 @@ export class GradebookRepository {
    */
   async getClassGradebook(classId: number): Promise<{
     assignments: Array<{
-      id: number;
-      name: string;
-      totalScore: number;
-      deadline: Date;
-    }>;
+      id: number
+      name: string
+      totalScore: number
+      deadline: Date
+    }>
     students: Array<{
-      id: number;
-      name: string;
-      email: string;
+      id: number
+      name: string
+      email: string
       grades: Array<{
-        assignmentId: number;
-        submissionId: number | null;
-        grade: number | null;
-        isOverridden: boolean;
-        submittedAt: Date | null;
-      }>;
-    }>;
+        assignmentId: number
+        submissionId: number | null
+        grade: number | null
+        isOverridden: boolean
+        submittedAt: Date | null
+      }>
+    }>
   }> {
     // Get all assignments for the class
     const classAssignments = await this.db
@@ -53,7 +53,7 @@ export class GradebookRepository {
       .where(
         and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
       )
-      .orderBy(assignments.deadline);
+      .orderBy(assignments.deadline)
 
     // Get all enrolled students
     const enrolledStudents = await this.db
@@ -66,10 +66,10 @@ export class GradebookRepository {
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
       .where(eq(enrollments.classId, classId))
-      .orderBy(users.lastName, users.firstName);
+      .orderBy(users.lastName, users.firstName)
 
     // Get all latest submissions for this class
-    const assignmentIds = classAssignments.map((a) => a.id);
+    const assignmentIds = classAssignments.map((a) => a.id)
     const latestSubmissions =
       assignmentIds.length > 0
         ? await this.db
@@ -88,12 +88,12 @@ export class GradebookRepository {
                 inArray(submissions.assignmentId, assignmentIds),
               ),
             )
-        : [];
+        : []
 
     // Build submission lookup map: `${studentId}-${assignmentId}` -> submission
-    const submissionMap = new Map<string, (typeof latestSubmissions)[number]>();
+    const submissionMap = new Map<string, (typeof latestSubmissions)[number]>()
     for (const sub of latestSubmissions) {
-      submissionMap.set(`${sub.studentId}-${sub.assignmentId}`, sub);
+      submissionMap.set(`${sub.studentId}-${sub.assignmentId}`, sub)
     }
 
     // Build student grades
@@ -102,21 +102,21 @@ export class GradebookRepository {
       name: `${student.firstName} ${student.lastName}`,
       email: student.email,
       grades: classAssignments.map((assignment) => {
-        const sub = submissionMap.get(`${student.id}-${assignment.id}`);
+        const sub = submissionMap.get(`${student.id}-${assignment.id}`)
         return {
           assignmentId: assignment.id,
           submissionId: sub?.id ?? null,
           grade: sub?.grade ?? null,
           isOverridden: sub?.isGradeOverridden ?? false,
           submittedAt: sub?.submittedAt ?? null,
-        };
+        }
       }),
-    }));
+    }))
 
     return {
       assignments: classAssignments,
       students,
-    };
+    }
   }
 
   /**
@@ -127,19 +127,19 @@ export class GradebookRepository {
     classId?: number,
   ): Promise<
     Array<{
-      classId: number;
-      className: string;
-      teacherName: string;
+      classId: number
+      className: string
+      teacherName: string
       assignments: Array<{
-        assignmentId: number;
-        assignmentName: string;
-        totalScore: number;
-        deadline: Date;
-        grade: number | null;
-        isOverridden: boolean;
-        feedback: string | null;
-        submittedAt: Date | null;
-      }>;
+        assignmentId: number
+        assignmentName: string
+        totalScore: number
+        deadline: Date
+        grade: number | null
+        isOverridden: boolean
+        feedback: string | null
+        submittedAt: Date | null
+      }>
     }>
   > {
     // Get student's enrolled classes
@@ -157,13 +157,13 @@ export class GradebookRepository {
         classId
           ? and(eq(enrollments.studentId, studentId), eq(classes.id, classId))
           : eq(enrollments.studentId, studentId),
-      );
+      )
 
     if (studentClasses.length === 0) {
-      return [];
+      return []
     }
 
-    const classIds = studentClasses.map((c) => c.classId);
+    const classIds = studentClasses.map((c) => c.classId)
 
     // Get all assignments for these classes
     const allAssignments = await this.db
@@ -181,9 +181,9 @@ export class GradebookRepository {
           eq(assignments.isActive, true),
         ),
       )
-      .orderBy(assignments.deadline);
+      .orderBy(assignments.deadline)
 
-    const assignmentIds = allAssignments.map((a) => a.id);
+    const assignmentIds = allAssignments.map((a) => a.id)
 
     // Get student's submissions for these assignments
     const studentSubmissions =
@@ -204,29 +204,29 @@ export class GradebookRepository {
                 inArray(submissions.assignmentId, assignmentIds),
               ),
             )
-        : [];
+        : []
 
     const submissionMap = new Map(
       studentSubmissions.map((s) => [s.assignmentId, s]),
-    );
+    )
 
     // Group assignments by classId for efficient lookup
-    const assignmentsByClass = new Map<number, typeof allAssignments>();
+    const assignmentsByClass = new Map<number, typeof allAssignments>()
     for (const assignment of allAssignments) {
       if (!assignmentsByClass.has(assignment.classId)) {
-        assignmentsByClass.set(assignment.classId, []);
+        assignmentsByClass.set(assignment.classId, [])
       }
-      assignmentsByClass.get(assignment.classId)!.push(assignment);
+      assignmentsByClass.get(assignment.classId)!.push(assignment)
     }
 
     return studentClasses.map((cls) => {
-      const classAssignments = assignmentsByClass.get(cls.classId) || [];
+      const classAssignments = assignmentsByClass.get(cls.classId) || []
       return {
         classId: cls.classId,
         className: cls.className,
         teacherName: `${cls.teacherFirstName} ${cls.teacherLastName}`,
         assignments: classAssignments.map((a) => {
-          const sub = submissionMap.get(a.id);
+          const sub = submissionMap.get(a.id)
           return {
             assignmentId: a.id,
             assignmentName: a.name,
@@ -236,27 +236,27 @@ export class GradebookRepository {
             isOverridden: sub?.isGradeOverridden ?? false,
             feedback: sub?.overrideFeedback ?? null,
             submittedAt: sub?.submittedAt ?? null,
-          };
+          }
         }),
-      };
-    });
+      }
+    })
   }
 
   /**
    * Get class statistics for gradebook.
    */
   async getClassStatistics(classId: number): Promise<{
-    classAverage: number | null;
-    submissionRate: number;
-    totalStudents: number;
-    totalAssignments: number;
+    classAverage: number | null
+    submissionRate: number
+    totalStudents: number
+    totalAssignments: number
   }> {
     // Count enrolled students
     const studentCountResult = await this.db
       .select({ count: sql<number>`count(*)` })
       .from(enrollments)
-      .where(eq(enrollments.classId, classId));
-    const totalStudents = Number(studentCountResult[0]?.count ?? 0);
+      .where(eq(enrollments.classId, classId))
+    const totalStudents = Number(studentCountResult[0]?.count ?? 0)
 
     // Count active assignments
     const assignmentCountResult = await this.db
@@ -264,8 +264,8 @@ export class GradebookRepository {
       .from(assignments)
       .where(
         and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
-      );
-    const totalAssignments = Number(assignmentCountResult[0]?.count ?? 0);
+      )
+    const totalAssignments = Number(assignmentCountResult[0]?.count ?? 0)
 
     if (totalStudents === 0 || totalAssignments === 0) {
       return {
@@ -273,7 +273,7 @@ export class GradebookRepository {
         submissionRate: 0,
         totalStudents,
         totalAssignments,
-      };
+      }
     }
 
     // Get assignment IDs for this class
@@ -282,9 +282,9 @@ export class GradebookRepository {
       .from(assignments)
       .where(
         and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
-      );
+      )
 
-    const assignmentIds = classAssignments.map((a) => a.id);
+    const assignmentIds = classAssignments.map((a) => a.id)
 
     // Count submissions and get average
     const statsResult = await this.db
@@ -299,21 +299,21 @@ export class GradebookRepository {
           isNotNull(submissions.grade),
           inArray(submissions.assignmentId, assignmentIds),
         ),
-      );
+      )
 
-    const submissionCount = Number(statsResult[0]?.submissionCount ?? 0);
-    const avgGrade = statsResult[0]?.avgGrade;
+    const submissionCount = Number(statsResult[0]?.submissionCount ?? 0)
+    const avgGrade = statsResult[0]?.avgGrade
 
-    const expectedSubmissions = totalStudents * totalAssignments;
+    const expectedSubmissions = totalStudents * totalAssignments
     const submissionRate =
-      expectedSubmissions > 0 ? submissionCount / expectedSubmissions : 0;
+      expectedSubmissions > 0 ? submissionCount / expectedSubmissions : 0
 
     return {
       classAverage: avgGrade !== null ? Math.round(avgGrade * 100) / 100 : null,
       submissionRate: Math.round(submissionRate * 100),
       totalStudents,
       totalAssignments,
-    };
+    }
   }
 
   /**
@@ -324,9 +324,9 @@ export class GradebookRepository {
     studentId: number,
     classId: number,
   ): Promise<{
-    rank: number;
-    totalStudents: number;
-    percentile: number;
+    rank: number
+    totalStudents: number
+    percentile: number
   } | null> {
     // Subquery to calculate average grade per student in this class
     const studentAverages = this.db
@@ -344,7 +344,7 @@ export class GradebookRepository {
         ),
       )
       .groupBy(submissions.studentId)
-      .as("student_avgs");
+      .as("student_avgs")
 
     // First compute ranks for ALL students, then filter for the target student
     const rankedStudents = this.db
@@ -357,7 +357,7 @@ export class GradebookRepository {
         totalStudents: sql<number>`COUNT(*) OVER ()`.as("total_students"),
       })
       .from(studentAverages)
-      .as("ranked_students");
+      .as("ranked_students")
 
     // Now filter for the specific student from the pre-computed rankings
     const rankResult = await this.db
@@ -367,16 +367,16 @@ export class GradebookRepository {
       })
       .from(rankedStudents)
       .where(eq(rankedStudents.studentId, studentId))
-      .limit(1);
+      .limit(1)
 
-    if (rankResult.length === 0) return null;
+    if (rankResult.length === 0) return null
 
-    const rank = Number(rankResult[0].rank);
-    const totalStudents = Number(rankResult[0].totalStudents);
+    const rank = Number(rankResult[0].rank)
+    const totalStudents = Number(rankResult[0].totalStudents)
 
     // Calculate percentile (Top X%)
-    const percentile = Math.round((rank / totalStudents) * 100);
+    const percentile = Math.round((rank / totalStudents) * 100)
 
-    return { rank, totalStudents, percentile };
+    return { rank, totalStudents, percentile }
   }
 }

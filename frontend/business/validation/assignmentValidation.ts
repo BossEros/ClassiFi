@@ -1,9 +1,9 @@
 import type {
   CreateAssignmentRequest,
   UpdateAssignmentValidationData,
-} from "@/data/api/types";
-import { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/types";
-import type { ValidationError, ValidationResult } from "@/shared/types/auth";
+} from "@/data/api/types"
+import { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/types"
+import type { ValidationError, ValidationResult } from "@/shared/types/auth"
 
 /**
  * Validates the assignment title.
@@ -12,18 +12,18 @@ import type { ValidationError, ValidationResult } from "@/shared/types/auth";
  * @returns An error message string if invalid, otherwise null.
  */
 export const validateAssignmentTitle = (title: string): string | null => {
-  const trimmed = title.trim();
+  const trimmed = title.trim()
 
   if (!trimmed) {
-    return "Assignment title is required";
+    return "Assignment title is required"
   }
 
   if (trimmed.length > 150) {
-    return "Assignment title must not exceed 150 characters";
+    return "Assignment title must not exceed 150 characters"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates the assignment description.
@@ -32,18 +32,18 @@ export const validateAssignmentTitle = (title: string): string | null => {
  * @returns An error message string if invalid, otherwise null.
  */
 export const validateDescription = (description: string): string | null => {
-  const trimmed = description.trim();
+  const trimmed = description.trim()
 
   if (!trimmed) {
-    return "Description is required";
+    return "Description is required"
   }
 
   if (trimmed.length < 10) {
-    return "Description must be at least 10 characters";
+    return "Description must be at least 10 characters"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates the programming language.
@@ -55,16 +55,20 @@ export const validateProgrammingLanguage = (
   language: string,
 ): string | null => {
   if (!language) {
-    return "Programming language is required";
+    return "Programming language is required"
   }
 
   // Cast to string to safely check includes against typed array
-  if (!(VALID_PROGRAMMING_LANGUAGES as readonly string[]).includes(language.toLowerCase())) {
-    return "Invalid programming language. Must be Python, Java, or C";
+  if (
+    !(VALID_PROGRAMMING_LANGUAGES as readonly string[]).includes(
+      language.toLowerCase(),
+    )
+  ) {
+    return "Invalid programming language. Must be Python, Java, or C"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates the assignment deadline.
@@ -74,24 +78,24 @@ export const validateProgrammingLanguage = (
  */
 export const validateDeadline = (deadline: Date | string): string | null => {
   if (!deadline) {
-    return "Deadline is required";
+    return "Deadline is required"
   }
 
   const deadlineDate =
-    typeof deadline === "string" ? new Date(deadline) : deadline;
+    typeof deadline === "string" ? new Date(deadline) : deadline
 
   if (isNaN(deadlineDate.getTime())) {
-    return "Invalid deadline date";
+    return "Invalid deadline date"
   }
 
-  const now = new Date();
+  const now = new Date()
 
   if (deadlineDate <= now) {
-    return "Deadline must be in the future";
+    return "Deadline must be in the future"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates complete assignment creation data.
@@ -102,63 +106,63 @@ export const validateDeadline = (deadline: Date | string): string | null => {
 export const validateCreateAssignmentData = (
   data: Partial<CreateAssignmentRequest>,
 ): ValidationResult => {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
   // Validate title
   if (data.assignmentName !== undefined) {
-    const titleError = validateAssignmentTitle(data.assignmentName);
+    const titleError = validateAssignmentTitle(data.assignmentName)
 
     if (titleError) {
-      errors.push({ field: "assignmentName", message: titleError });
+      errors.push({ field: "assignmentName", message: titleError })
     }
   } else {
     errors.push({
       field: "assignmentName",
       message: "Assignment title is required",
-    });
+    })
   }
 
   // Validate description
   if (data.description !== undefined) {
-    const descriptionError = validateDescription(data.description);
+    const descriptionError = validateDescription(data.description)
 
     if (descriptionError) {
-      errors.push({ field: "description", message: descriptionError });
+      errors.push({ field: "description", message: descriptionError })
     }
   } else {
-    errors.push({ field: "description", message: "Description is required" });
+    errors.push({ field: "description", message: "Description is required" })
   }
 
   // Validate programming language
   if (data.programmingLanguage !== undefined) {
-    const languageError = validateProgrammingLanguage(data.programmingLanguage);
+    const languageError = validateProgrammingLanguage(data.programmingLanguage)
 
     if (languageError) {
-      errors.push({ field: "programmingLanguage", message: languageError });
+      errors.push({ field: "programmingLanguage", message: languageError })
     }
   } else {
     errors.push({
       field: "programmingLanguage",
       message: "Programming language is required",
-    });
+    })
   }
 
   // Validate deadline
   if (data.deadline !== undefined) {
-    const deadlineError = validateDeadline(data.deadline);
+    const deadlineError = validateDeadline(data.deadline)
 
     if (deadlineError) {
-      errors.push({ field: "deadline", message: deadlineError });
+      errors.push({ field: "deadline", message: deadlineError })
     }
   } else {
-    errors.push({ field: "deadline", message: "Deadline is required" });
+    errors.push({ field: "deadline", message: "Deadline is required" })
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-  };
-};
+  }
+}
 
 /**
  * Validates update assignment data (partial - only validates provided fields).
@@ -172,33 +176,33 @@ export const validateUpdateAssignmentData = (
 ): void => {
   // Validate teacher ID (required for authorization)
   if (!data.teacherId || data.teacherId <= 0) {
-    throw new Error("Invalid teacher ID");
+    throw new Error("Invalid teacher ID")
   }
 
   // Validate title if provided
   if (data.assignmentName !== undefined) {
-    const titleError = validateAssignmentTitle(data.assignmentName);
+    const titleError = validateAssignmentTitle(data.assignmentName)
 
     if (titleError) {
-      throw new Error(titleError);
+      throw new Error(titleError)
     }
   }
 
   // Validate description if provided
   if (data.description !== undefined) {
-    const descError = validateDescription(data.description);
+    const descError = validateDescription(data.description)
 
     if (descError) {
-      throw new Error(descError);
+      throw new Error(descError)
     }
   }
 
   // Validate deadline if provided
   if (data.deadline !== undefined) {
-    const deadlineError = validateDeadline(data.deadline);
+    const deadlineError = validateDeadline(data.deadline)
 
     if (deadlineError) {
-      throw new Error(deadlineError);
+      throw new Error(deadlineError)
     }
   }
-};
+}

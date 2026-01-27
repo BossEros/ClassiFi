@@ -1,48 +1,56 @@
-import { apiClient, type ApiResponse } from "@/data/api/apiClient";
-import { supabase } from "@/data/api/supabaseClient";
+import { apiClient, type ApiResponse } from "@/data/api/apiClient"
+import { supabase } from "@/data/api/supabaseClient"
 import {
   mapSubmission,
   mapSubmissionWithAssignment,
   mapSubmissionWithStudent,
   mapAssignmentDetail,
-} from "@/data/mappers";
+} from "@/data/mappers"
 import type {
   SubmitAssignmentRequest,
   SubmitAssignmentResponse,
   SubmissionListResponse,
   SubmissionHistoryResponse,
   AssignmentDetailResponse,
+  MappedAssignmentDetailResponse,
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
   TestResultsResponse,
   DeleteResponse,
-} from "@/data/api/types";
-import type { Assignment } from "@/shared/types/class";
+} from "@/data/api/types"
+import type { Assignment } from "@/shared/types/class"
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
 
 export async function submitAssignmentWithFile(
   submissionRequest: SubmitAssignmentRequest,
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
-    const submissionFormData = buildSubmissionFormDataFromRequest(submissionRequest);
-    const authenticationToken = await retrieveAuthenticationTokenFromSession();
+    const submissionFormData =
+      buildSubmissionFormDataFromRequest(submissionRequest)
+    const authenticationToken = await retrieveAuthenticationTokenFromSession()
 
     const httpResponse = await fetch(`${API_BASE_URL}/submissions`, {
       method: "POST",
-      headers: authenticationToken ? { Authorization: `Bearer ${authenticationToken}` } : {},
+      headers: authenticationToken
+        ? { Authorization: `Bearer ${authenticationToken}` }
+        : {},
       body: submissionFormData,
-    });
+    })
 
-    const responseData = await httpResponse.json();
+    const responseData = await httpResponse.json()
 
     if (!httpResponse.ok) {
-      return buildErrorResponseForFailedSubmission(httpResponse, responseData);
+      return buildErrorResponseForFailedSubmission(httpResponse, responseData)
     }
 
-    return buildSuccessResponseFromSubmissionData(responseData, httpResponse.status);
+    return buildSuccessResponseFromSubmissionData(
+      responseData,
+      httpResponse.status,
+    )
   } catch (networkError) {
-    console.error("Submission error (network or other):", networkError);
+    console.error("Submission error (network or other):", networkError)
 
     return {
       error:
@@ -50,7 +58,7 @@ export async function submitAssignmentWithFile(
           ? `Network error: ${networkError.message}. Make sure the backend server is running.`
           : "Failed to submit assignment",
       status: 0,
-    };
+    }
   }
 }
 
@@ -60,16 +68,16 @@ export async function getSubmissionHistoryForStudentAndAssignment(
 ): Promise<ApiResponse<SubmissionHistoryResponse>> {
   const apiResponse = await apiClient.get<SubmissionHistoryResponse>(
     `/submissions/history/${assignmentId}/${studentId}`,
-  );
+  )
 
   if (apiResponse.data) {
     apiResponse.data = {
       ...apiResponse.data,
       submissions: apiResponse.data.submissions.map(mapSubmission),
-    };
+    }
   }
 
-  return apiResponse;
+  return apiResponse
 }
 
 export async function getAllSubmissionsByStudentId(
@@ -78,16 +86,18 @@ export async function getAllSubmissionsByStudentId(
 ): Promise<ApiResponse<SubmissionListResponse>> {
   const apiResponse = await apiClient.get<SubmissionListResponse>(
     `/submissions/student/${studentId}?latestOnly=${shouldReturnLatestSubmissionsOnly}`,
-  );
+  )
 
   if (apiResponse.data) {
     apiResponse.data = {
       ...apiResponse.data,
-      submissions: apiResponse.data.submissions.map(mapSubmissionWithAssignment),
-    };
+      submissions: apiResponse.data.submissions.map(
+        mapSubmissionWithAssignment,
+      ),
+    }
   }
 
-  return apiResponse;
+  return apiResponse
 }
 
 export async function getAllSubmissionsForAssignmentId(
@@ -96,31 +106,41 @@ export async function getAllSubmissionsForAssignmentId(
 ): Promise<ApiResponse<SubmissionListResponse>> {
   const apiResponse = await apiClient.get<SubmissionListResponse>(
     `/submissions/assignment/${assignmentId}?latestOnly=${shouldReturnLatestSubmissionsOnly}`,
-  );
+  )
 
   if (apiResponse.data) {
     apiResponse.data = {
       ...apiResponse.data,
       submissions: apiResponse.data.submissions.map(mapSubmissionWithStudent),
-    };
+    }
   }
 
-  return apiResponse;
+  return apiResponse
 }
 
 export async function getAssignmentDetailsByIdForUser(
   assignmentId: number,
   userId: number,
-): Promise<ApiResponse<AssignmentDetailResponse>> {
+): Promise<ApiResponse<MappedAssignmentDetailResponse>> {
   const apiResponse = await apiClient.get<AssignmentDetailResponse>(
     `/assignments/${assignmentId}?userId=${userId}`,
-  );
+  )
 
   if (apiResponse.data?.assignment) {
-    apiResponse.data.assignment = mapAssignmentDetail(apiResponse.data.assignment as any);
+    // Map DTO to domain model with proper type validation
+    const mappedAssignment = mapAssignmentDetail(apiResponse.data.assignment)
+
+    return {
+      ...apiResponse,
+      data: {
+        success: apiResponse.data.success,
+        message: apiResponse.data.message,
+        assignment: mappedAssignment,
+      },
+    }
   }
 
-  return apiResponse;
+  return apiResponse as ApiResponse<MappedAssignmentDetailResponse>
 }
 
 export async function createNewAssignmentForClass(
@@ -128,18 +148,24 @@ export async function createNewAssignmentForClass(
   newAssignmentData: Omit<CreateAssignmentRequest, "classId">,
 ): Promise<Assignment> {
   const apiResponse = await apiClient.post<{
-    success: boolean;
-    message?: string;
-    assignment?: Assignment;
-  }>(`/classes/${classId}/assignments`, newAssignmentData);
+    success: boolean
+    message?: string
+    assignment?: Assignment
+  }>(`/classes/${classId}/assignments`, newAssignmentData)
 
-  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.assignment) {
+  if (
+    apiResponse.error ||
+    !apiResponse.data?.success ||
+    !apiResponse.data.assignment
+  ) {
     throw new Error(
-      apiResponse.error || apiResponse.data?.message || "Failed to create assignment",
-    );
+      apiResponse.error ||
+        apiResponse.data?.message ||
+        "Failed to create assignment",
+    )
   }
 
-  return apiResponse.data.assignment;
+  return apiResponse.data.assignment
 }
 
 export async function updateAssignmentDetailsById(
@@ -147,18 +173,24 @@ export async function updateAssignmentDetailsById(
   updatedAssignmentData: UpdateAssignmentRequest,
 ): Promise<Assignment> {
   const apiResponse = await apiClient.put<{
-    success: boolean;
-    message?: string;
-    assignment?: Assignment;
-  }>(`/assignments/${assignmentId}`, updatedAssignmentData);
+    success: boolean
+    message?: string
+    assignment?: Assignment
+  }>(`/assignments/${assignmentId}`, updatedAssignmentData)
 
-  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.assignment) {
+  if (
+    apiResponse.error ||
+    !apiResponse.data?.success ||
+    !apiResponse.data.assignment
+  ) {
     throw new Error(
-      apiResponse.error || apiResponse.data?.message || "Failed to update assignment",
-    );
+      apiResponse.error ||
+        apiResponse.data?.message ||
+        "Failed to update assignment",
+    )
   }
 
-  return apiResponse.data.assignment;
+  return apiResponse.data.assignment
 }
 
 export async function deleteAssignmentByIdForTeacher(
@@ -167,12 +199,14 @@ export async function deleteAssignmentByIdForTeacher(
 ): Promise<void> {
   const apiResponse = await apiClient.delete<DeleteResponse>(
     `/assignments/${assignmentId}?teacherId=${teacherId}`,
-  );
+  )
 
   if (apiResponse.error || !apiResponse.data?.success) {
     throw new Error(
-      apiResponse.error || apiResponse.data?.message || "Failed to delete assignment",
-    );
+      apiResponse.error ||
+        apiResponse.data?.message ||
+        "Failed to delete assignment",
+    )
   }
 }
 
@@ -181,7 +215,7 @@ export async function getSubmissionFileContentById(
 ): Promise<
   ApiResponse<{ success: boolean; content: string; language?: string }>
 > {
-  return await apiClient.get(`/submissions/${submissionId}/content`);
+  return await apiClient.get(`/submissions/${submissionId}/content`)
 }
 
 export async function getSubmissionFileDownloadUrlById(
@@ -190,63 +224,67 @@ export async function getSubmissionFileDownloadUrlById(
   ApiResponse<{ success: boolean; message: string; downloadUrl: string }>
 > {
   return await apiClient.get<{
-    success: boolean;
-    message: string;
-    downloadUrl: string;
-  }>(`/submissions/${submissionId}/download`);
+    success: boolean
+    message: string
+    downloadUrl: string
+  }>(`/submissions/${submissionId}/download`)
 }
 
 export async function getTestResultsForSubmissionById(
   submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
-  return await apiClient.get(`/submissions/${submissionId}/test-results`);
+  return await apiClient.get(`/submissions/${submissionId}/test-results`)
 }
 
 export async function executeTestsForSubmissionById(
   submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
-  return await apiClient.post(`/submissions/${submissionId}/run-tests`, {});
+  return await apiClient.post(`/submissions/${submissionId}/run-tests`, {})
 }
 
 // Helper functions
 
-async function retrieveAuthenticationTokenFromSession(): Promise<string | null> {
-  const { data: sessionData } = await supabase.auth.getSession();
-  return sessionData.session?.access_token ?? null;
+async function retrieveAuthenticationTokenFromSession(): Promise<
+  string | null
+> {
+  const { data: sessionData } = await supabase.auth.getSession()
+  return sessionData.session?.access_token ?? null
 }
 
-function buildSubmissionFormDataFromRequest(submissionRequest: SubmitAssignmentRequest): FormData {
-  const formData = new FormData();
-  formData.append("assignment_id", submissionRequest.assignmentId.toString());
-  formData.append("student_id", submissionRequest.studentId.toString());
-  formData.append("file", submissionRequest.file);
-  return formData;
+function buildSubmissionFormDataFromRequest(
+  submissionRequest: SubmitAssignmentRequest,
+): FormData {
+  const formData = new FormData()
+  formData.append("assignment_id", submissionRequest.assignmentId.toString())
+  formData.append("student_id", submissionRequest.studentId.toString())
+  formData.append("file", submissionRequest.file)
+  return formData
 }
 
 function extractErrorMessageFromResponseData(responseData: any): string {
-  if (responseData.detail) return responseData.detail;
-  if (responseData.message) return responseData.message;
-  if (typeof responseData === "string") return responseData;
-  return "Failed to submit assignment";
+  if (responseData.detail) return responseData.detail
+  if (responseData.message) return responseData.message
+  if (typeof responseData === "string") return responseData
+  return "Failed to submit assignment"
 }
 
 function buildErrorResponseForFailedSubmission(
   httpResponse: Response,
   responseData: any,
 ): ApiResponse<SubmitAssignmentResponse> {
-  const errorMessage = extractErrorMessageFromResponseData(responseData);
+  const errorMessage = extractErrorMessageFromResponseData(responseData)
 
   console.error("Submission failed:", {
     status: httpResponse.status,
     statusText: httpResponse.statusText,
     error: errorMessage,
     responseData: responseData,
-  });
+  })
 
   return {
     error: `${errorMessage} (Status: ${httpResponse.status})`,
     status: httpResponse.status,
-  };
+  }
 }
 
 function buildSuccessResponseFromSubmissionData(
@@ -257,8 +295,10 @@ function buildSuccessResponseFromSubmissionData(
     data: {
       success: responseData.success,
       message: responseData.message,
-      submission: responseData.submission ? mapSubmission(responseData.submission) : undefined,
+      submission: responseData.submission
+        ? mapSubmission(responseData.submission)
+        : undefined,
     },
     status: httpStatusCode,
-  };
+  }
 }

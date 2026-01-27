@@ -1,9 +1,9 @@
-import * as classRepository from "@/data/repositories/classRepository";
-import * as assignmentRepository from "@/data/repositories/assignmentRepository";
+import * as classRepository from "@/data/repositories/classRepository"
+import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import {
   validateCreateAssignmentData,
   validateUpdateAssignmentData,
-} from "@/business/validation/assignmentValidation";
+} from "@/business/validation/assignmentValidation"
 import {
   validateClassName,
   validateClassDescription,
@@ -12,25 +12,25 @@ import {
   validateSemester,
   validateAcademicYear,
   validateSchedule,
-} from "@/business/validation/classValidation";
-import { validateId } from "@/shared/utils/validators";
+} from "@/business/validation/classValidation"
+import { validateId } from "@/shared/utils/validators"
 import type {
   Class,
   Assignment,
   EnrolledStudent,
   ClassDetailData,
-} from "@/business/models/dashboard/types";
-import type { UpdateAssignmentRequest } from "@/business/models/assignment/types";
+} from "@/business/models/dashboard/types"
+import type { UpdateAssignmentRequest } from "@/business/models/assignment/types"
 import type {
   CreateClassRequest,
   UpdateClassRequest,
   CreateAssignmentRequest,
   GradeEntry,
   GradebookStudent,
-} from "@/data/api/types";
+} from "@/data/api/types"
 
 // Re-export shared types for Gradebook
-export type { GradeEntry, GradebookStudent };
+export type { GradeEntry, GradebookStudent }
 
 /**
  * Creates a new class with comprehensive validation.
@@ -42,35 +42,35 @@ export async function createClass(
   createClassData: CreateClassRequest,
 ): Promise<Class> {
   // Validate required fields using centralized validators
-  validateId(createClassData.teacherId, "teacher");
+  validateId(createClassData.teacherId, "teacher")
 
-  const classNameError = validateClassName(createClassData.className);
-  if (classNameError) throw new Error(classNameError);
+  const classNameError = validateClassName(createClassData.className)
+  if (classNameError) throw new Error(classNameError)
 
   if (createClassData.description) {
     const descriptionError = validateClassDescription(
       createClassData.description,
-    );
-    if (descriptionError) throw new Error(descriptionError);
+    )
+    if (descriptionError) throw new Error(descriptionError)
   }
 
-  const classCodeError = validateClassCode(createClassData.classCode);
-  if (classCodeError) throw new Error(classCodeError);
+  const classCodeError = validateClassCode(createClassData.classCode)
+  if (classCodeError) throw new Error(classCodeError)
 
-  const yearLevelError = validateYearLevel(createClassData.yearLevel);
-  if (yearLevelError) throw new Error(yearLevelError);
+  const yearLevelError = validateYearLevel(createClassData.yearLevel)
+  if (yearLevelError) throw new Error(yearLevelError)
 
-  const semesterError = validateSemester(createClassData.semester);
-  if (semesterError) throw new Error(semesterError);
+  const semesterError = validateSemester(createClassData.semester)
+  if (semesterError) throw new Error(semesterError)
 
-  const academicYearError = validateAcademicYear(createClassData.academicYear);
-  if (academicYearError) throw new Error(academicYearError);
+  const academicYearError = validateAcademicYear(createClassData.academicYear)
+  if (academicYearError) throw new Error(academicYearError)
 
-  const scheduleError = validateSchedule(createClassData.schedule);
-  if (scheduleError) throw new Error(scheduleError);
+  const scheduleError = validateSchedule(createClassData.schedule)
+  if (scheduleError) throw new Error(scheduleError)
 
   // All validations passed, call repository
-  return await classRepository.createNewClass(createClassData);
+  return await classRepository.createNewClass(createClassData)
 }
 
 /**
@@ -79,7 +79,7 @@ export async function createClass(
  * @returns A unique 6-character class code string.
  */
 export async function generateClassCode(): Promise<string> {
-  return await classRepository.generateUniqueClassCode();
+  return await classRepository.generateUniqueClassCode()
 }
 
 /**
@@ -93,9 +93,9 @@ export async function getAllClasses(
   teacherId: number,
   activeOnly?: boolean,
 ): Promise<Class[]> {
-  validateId(teacherId, "teacher");
+  validateId(teacherId, "teacher")
 
-  return await classRepository.getAllClassesForTeacherId(teacherId, activeOnly);
+  return await classRepository.getAllClassesForTeacherId(teacherId, activeOnly)
 }
 
 /**
@@ -109,9 +109,9 @@ export async function getClassById(
   classId: number,
   teacherId?: number,
 ): Promise<Class> {
-  validateId(classId, "class");
+  validateId(classId, "class")
 
-  return await classRepository.getClassDetailsById(classId, teacherId);
+  return await classRepository.getClassDetailsById(classId, teacherId)
 }
 
 /**
@@ -123,9 +123,9 @@ export async function getClassById(
 export async function getClassAssignments(
   classId: number,
 ): Promise<Assignment[]> {
-  validateId(classId, "class");
+  validateId(classId, "class")
 
-  return await classRepository.getAllAssignmentsForClassId(classId);
+  return await classRepository.getAllAssignmentsForClassId(classId)
 }
 
 /**
@@ -138,7 +138,7 @@ function addFullNameToStudent<
   return {
     ...student,
     fullName: `${student.firstName} ${student.lastName}`.trim(),
-  };
+  }
 }
 
 /**
@@ -150,11 +150,12 @@ function addFullNameToStudent<
 export async function getClassStudents(
   classId: number,
 ): Promise<EnrolledStudent[]> {
-  validateId(classId, "class");
+  validateId(classId, "class")
 
-  const students = await classRepository.getAllEnrolledStudentsForClassId(classId);
+  const students =
+    await classRepository.getAllEnrolledStudentsForClassId(classId)
 
-  return students.map(addFullNameToStudent);
+  return students.map(addFullNameToStudent)
 }
 
 /**
@@ -168,20 +169,20 @@ export async function getClassDetailData(
   classId: number,
   teacherId?: number,
 ): Promise<ClassDetailData> {
-  validateId(classId, "class");
+  validateId(classId, "class")
 
   // Fetch all data in parallel for better performance
   const [classInfo, assignments, students] = await Promise.all([
     classRepository.getClassDetailsById(classId, teacherId),
     classRepository.getAllAssignmentsForClassId(classId),
     classRepository.getAllEnrolledStudentsForClassId(classId),
-  ]);
+  ])
 
   return {
     classInfo,
     assignments,
     students: students.map(addFullNameToStudent),
-  };
+  }
 }
 
 /**
@@ -195,10 +196,10 @@ export async function deleteClass(
   classId: number,
   teacherId: number,
 ): Promise<void> {
-  validateId(classId, "class");
-  validateId(teacherId, "teacher");
+  validateId(classId, "class")
+  validateId(teacherId, "teacher")
 
-  await classRepository.deleteClassByIdForTeacher(classId, teacherId);
+  await classRepository.deleteClassByIdForTeacher(classId, teacherId)
 }
 
 /**
@@ -212,14 +213,14 @@ export async function updateClass(
   classId: number,
   updateData: UpdateClassRequest,
 ): Promise<Class> {
-  validateId(classId, "class");
-  validateId(updateData.teacherId, "teacher");
+  validateId(classId, "class")
+  validateId(updateData.teacherId, "teacher")
 
   return await classRepository.updateClassDetailsById(classId, {
     ...updateData,
     className: updateData.className?.trim(),
     description: updateData.description?.trim(),
-  });
+  })
 }
 
 /**
@@ -232,37 +233,40 @@ export async function createAssignment(
   createAssignmentData: CreateAssignmentRequest,
 ): Promise<Assignment> {
   // Validate all fields
-  const validation = validateCreateAssignmentData(createAssignmentData);
+  const validation = validateCreateAssignmentData(createAssignmentData)
 
   if (!validation.isValid) {
-    const firstError = validation.errors[0];
-    throw new Error(firstError.message);
+    const firstError = validation.errors[0]
+    throw new Error(firstError.message)
   }
 
   // Validate IDs
-  validateId(createAssignmentData.classId, "class");
-  validateId(createAssignmentData.teacherId, "teacher");
+  validateId(createAssignmentData.classId, "class")
+  validateId(createAssignmentData.teacherId, "teacher")
 
   // Pass directly to repository
-  return await assignmentRepository.createNewAssignmentForClass(createAssignmentData.classId, {
-    teacherId: createAssignmentData.teacherId,
-    assignmentName: createAssignmentData.assignmentName.trim(),
-    description: createAssignmentData.description.trim(),
-    programmingLanguage: createAssignmentData.programmingLanguage,
-    deadline:
-      typeof createAssignmentData.deadline === "string"
-        ? createAssignmentData.deadline
-        : createAssignmentData.deadline.toISOString(),
-    allowResubmission: createAssignmentData.allowResubmission,
-    maxAttempts: createAssignmentData.maxAttempts,
-    templateCode: createAssignmentData.templateCode,
-    totalScore: createAssignmentData.totalScore,
-    scheduledDate: createAssignmentData.scheduledDate
-      ? typeof createAssignmentData.scheduledDate === "string"
-        ? createAssignmentData.scheduledDate
-        : createAssignmentData.scheduledDate.toISOString()
-      : null,
-  });
+  return await assignmentRepository.createNewAssignmentForClass(
+    createAssignmentData.classId,
+    {
+      teacherId: createAssignmentData.teacherId,
+      assignmentName: createAssignmentData.assignmentName.trim(),
+      description: createAssignmentData.description.trim(),
+      programmingLanguage: createAssignmentData.programmingLanguage,
+      deadline:
+        typeof createAssignmentData.deadline === "string"
+          ? createAssignmentData.deadline
+          : createAssignmentData.deadline.toISOString(),
+      allowResubmission: createAssignmentData.allowResubmission,
+      maxAttempts: createAssignmentData.maxAttempts,
+      templateCode: createAssignmentData.templateCode,
+      totalScore: createAssignmentData.totalScore,
+      scheduledDate: createAssignmentData.scheduledDate
+        ? typeof createAssignmentData.scheduledDate === "string"
+          ? createAssignmentData.scheduledDate
+          : createAssignmentData.scheduledDate.toISOString()
+        : null,
+    },
+  )
 }
 
 /**
@@ -276,10 +280,10 @@ export async function updateAssignment(
   assignmentId: number,
   updateAssignmentData: UpdateAssignmentRequest,
 ): Promise<Assignment> {
-  validateId(assignmentId, "assignment");
+  validateId(assignmentId, "assignment")
 
   // Validate all fields using centralized validation
-  validateUpdateAssignmentData(updateAssignmentData);
+  validateUpdateAssignmentData(updateAssignmentData)
 
   // Pass directly to repository (backend uses camelCase)
   return await assignmentRepository.updateAssignmentDetailsById(assignmentId, {
@@ -301,7 +305,7 @@ export async function updateAssignment(
         ? updateAssignmentData.scheduledDate
         : updateAssignmentData.scheduledDate.toISOString()
       : undefined,
-  });
+  })
 }
 
 /**
@@ -315,10 +319,13 @@ export async function deleteAssignment(
   assignmentId: number,
   teacherId: number,
 ): Promise<void> {
-  validateId(assignmentId, "assignment");
-  validateId(teacherId, "teacher");
+  validateId(assignmentId, "assignment")
+  validateId(teacherId, "teacher")
 
-  await assignmentRepository.deleteAssignmentByIdForTeacher(assignmentId, teacherId);
+  await assignmentRepository.deleteAssignmentByIdForTeacher(
+    assignmentId,
+    teacherId,
+  )
 }
 
 /**
@@ -334,9 +341,13 @@ export async function removeStudent(
   studentId: number,
   teacherId: number,
 ): Promise<void> {
-  validateId(classId, "class");
-  validateId(studentId, "student");
-  validateId(teacherId, "teacher");
+  validateId(classId, "class")
+  validateId(studentId, "student")
+  validateId(teacherId, "teacher")
 
-  await classRepository.unenrollStudentFromClassByTeacher(classId, studentId, teacherId);
+  await classRepository.unenrollStudentFromClassByTeacher(
+    classId,
+    studentId,
+    teacherId,
+  )
 }

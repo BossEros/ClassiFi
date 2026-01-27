@@ -7,15 +7,15 @@
  * Each factory creates a valid default object that can be customized
  * via the overrides parameter.
  */
-import type { User, UserRole } from "@/shared/types/auth";
+import type { User, UserRole } from "@/shared/types/auth"
 import type {
   Class,
   Assignment,
   EnrolledStudent,
   ISODateString,
   Schedule,
-} from "@/shared/types/class";
-import type { Submission } from "@/shared/types/submission";
+} from "@/shared/types/class"
+import type { Submission } from "@/shared/types/submission"
 
 // ============================================================================
 // Helper Functions
@@ -25,7 +25,7 @@ import type { Submission } from "@/shared/types/submission";
  * Creates an ISO date string (branded type).
  */
 function toISO(date: Date): ISODateString {
-  return date.toISOString() as ISODateString;
+  return date.toISOString() as ISODateString
 }
 
 // ============================================================================
@@ -44,7 +44,7 @@ export function createMockUser(overrides?: Partial<User>): User {
     role: "student" as UserRole,
     createdAt: new Date(),
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -59,7 +59,7 @@ export function createMockTeacher(overrides?: Partial<User>): User {
     role: "teacher" as UserRole,
     createdAt: new Date(),
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -74,7 +74,7 @@ export function createMockAdmin(overrides?: Partial<User>): User {
     role: "admin" as UserRole,
     createdAt: new Date(),
     ...overrides,
-  };
+  }
 }
 
 // ============================================================================
@@ -90,7 +90,7 @@ export function createMockSchedule(overrides?: Partial<Schedule>): Schedule {
     startTime: "09:00",
     endTime: "10:30",
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -110,7 +110,7 @@ export function createMockClass(overrides?: Partial<Class>): Class {
     academicYear: "2024-2025",
     schedule: createMockSchedule(),
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -123,7 +123,7 @@ export function createMockClasses(count: number): Class[] {
       className: `Class ${i + 1}`,
       classCode: `CLS${String(i + 1).padStart(3, "0")}`,
     }),
-  );
+  )
 }
 
 // ============================================================================
@@ -136,8 +136,8 @@ export function createMockClasses(count: number): Class[] {
 export function createMockAssignment(
   overrides?: Partial<Assignment>,
 ): Assignment {
-  const now = new Date();
-  const deadline = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+  const now = new Date()
+  const deadline = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
 
   return {
     id: 1,
@@ -151,7 +151,7 @@ export function createMockAssignment(
     createdAt: toISO(now),
     totalScore: 100,
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -160,12 +160,12 @@ export function createMockAssignment(
 export function createMockPastDueAssignment(
   overrides?: Partial<Assignment>,
 ): Assignment {
-  const pastDeadline = new Date(Date.now() - 24 * 60 * 60 * 1000); // 1 day ago
+  const pastDeadline = new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
 
   return createMockAssignment({
     deadline: toISO(pastDeadline),
     ...overrides,
-  });
+  })
 }
 
 /**
@@ -174,12 +174,12 @@ export function createMockPastDueAssignment(
 export function createMockUrgentAssignment(
   overrides?: Partial<Assignment>,
 ): Assignment {
-  const urgentDeadline = new Date(Date.now() + 6 * 60 * 60 * 1000); // 6 hours from now
+  const urgentDeadline = new Date(Date.now() + 6 * 60 * 60 * 1000) // 6 hours from now
 
   return createMockAssignment({
     deadline: toISO(urgentDeadline),
     ...overrides,
-  });
+  })
 }
 
 // ============================================================================
@@ -201,7 +201,7 @@ export function createMockEnrolledStudent(
     enrolledAt: toISO(new Date()),
     fullName: "Enrolled Student",
     ...overrides,
-  };
+  }
 }
 
 // ============================================================================
@@ -224,7 +224,7 @@ export function createMockSubmission(
     submittedAt: toISO(new Date()),
     isLatest: true,
     ...overrides,
-  };
+  }
 }
 
 /**
@@ -236,7 +236,7 @@ export function createMockGradedSubmission(
   return createMockSubmission({
     grade: 95,
     ...overrides,
-  });
+  })
 }
 
 /**
@@ -249,7 +249,7 @@ export function createMockOlderSubmission(
     isLatest: false,
     submissionNumber: 1,
     ...overrides,
-  });
+  })
 }
 
 // ============================================================================
@@ -264,7 +264,7 @@ export function createMockAuthResponse(userOverrides?: Partial<User>) {
     success: true as const,
     token: "mock-jwt-token",
     user: createMockUser(userOverrides),
-  };
+  }
 }
 
 /**
@@ -274,7 +274,7 @@ export function createMockAuthError(message = "Invalid credentials") {
   return {
     success: false as const,
     message,
-  };
+  }
 }
 
 // ============================================================================
@@ -290,7 +290,7 @@ export function createMockValidationError(
   return {
     isValid: false as const,
     errors,
-  };
+  }
 }
 
 /**
@@ -300,7 +300,7 @@ export function createMockValidationSuccess() {
   return {
     isValid: true as const,
     errors: [],
-  };
+  }
 }
 
 // ============================================================================
@@ -314,7 +314,7 @@ export function createMockApiSuccess<T>(data: T) {
   return {
     data,
     error: null,
-  };
+  }
 }
 
 /**
@@ -324,5 +324,5 @@ export function createMockApiError(error: string) {
   return {
     data: null,
     error,
-  };
+  }
 }

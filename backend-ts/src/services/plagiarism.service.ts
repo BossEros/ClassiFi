@@ -1,15 +1,15 @@
-import { inject, injectable } from "tsyringe";
+import { inject, injectable } from "tsyringe"
 import {
   File,
   LanguageName,
   Report,
   Pair,
   Fragment,
-} from "../lib/plagiarism/index.js";
-import { AssignmentRepository } from "../repositories/assignment.repository.js";
-import { PlagiarismDetectorFactory } from "./plagiarism/plagiarism-detector.factory.js";
-import { SubmissionFileService } from "./plagiarism/submission-file.service.js";
-import { PlagiarismPersistenceService } from "./plagiarism/plagiarism-persistence.service.js";
+} from "../lib/plagiarism/index.js"
+import { AssignmentRepository } from "../repositories/assignment.repository.js"
+import { PlagiarismDetectorFactory } from "./plagiarism/plagiarism-detector.factory.js"
+import { SubmissionFileService } from "./plagiarism/submission-file.service.js"
+import { PlagiarismPersistenceService } from "./plagiarism/plagiarism-persistence.service.js"
 import {
   PLAGIARISM_CONFIG,
   PLAGIARISM_LANGUAGE_MAP,
@@ -18,7 +18,7 @@ import {
   type PlagiarismPairDTO,
   type PlagiarismFragmentDTO,
   type PlagiarismSummaryDTO,
-} from "../shared/mappers.js";
+} from "../shared/mappers.js"
 import {
   AssignmentNotFoundError,
   PlagiarismReportNotFoundError,
@@ -27,41 +27,41 @@ import {
   InsufficientFilesError,
   UnsupportedLanguageError,
   LanguageRequiredError,
-} from "../shared/errors.js";
-import type { MatchFragment } from "../models/index.js";
+} from "../shared/errors.js"
+import type { MatchFragment } from "../models/index.js"
 
 /** Request body for analyzing files */
 export interface AnalyzeRequest {
   files: Array<{
-    id?: string;
-    path: string;
-    content: string;
-    studentId?: string;
-    studentName?: string;
-  }>;
-  language: LanguageName;
+    id?: string
+    path: string
+    content: string
+    studentId?: string
+    studentName?: string
+  }>
+  language: LanguageName
   templateFile?: {
-    path: string;
-    content: string;
-  };
-  threshold?: number;
-  kgramLength?: number;
+    path: string
+    content: string
+  }
+  threshold?: number
+  kgramLength?: number
 }
 
 /** Response for analyze endpoint */
 export interface AnalyzeResponse {
-  reportId: string;
-  summary: PlagiarismSummaryDTO;
-  pairs: PlagiarismPairDTO[];
-  warnings: string[];
+  reportId: string
+  summary: PlagiarismSummaryDTO
+  pairs: PlagiarismPairDTO[]
+  warnings: string[]
 }
 
 /** Response with pair details and fragments */
 export interface PairDetailsResponse {
-  pair: PlagiarismPairDTO;
-  fragments: PlagiarismFragmentDTO[];
-  leftCode: string;
-  rightCode: string;
+  pair: PlagiarismPairDTO
+  fragments: PlagiarismFragmentDTO[]
+  leftCode: string
+  rightCode: string
 }
 
 /**
@@ -70,8 +70,8 @@ export interface PairDetailsResponse {
  */
 @injectable()
 export class PlagiarismService {
-  private static readonly LEGACY_REPORT_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-  private static readonly MAX_LEGACY_REPORTS = 100;
+  private static readonly LEGACY_REPORT_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+  private static readonly MAX_LEGACY_REPORTS = 100
 
   /**
    * In-memory storage for ad-hoc reports (not tied to assignment submissions).
@@ -80,10 +80,10 @@ export class PlagiarismService {
   private legacyReportsStore = new Map<
     string,
     { report: Report; createdAt: Date }
-  >();
+  >()
 
   /** Interval ID for cleanup timer - stored to allow cleanup in dispose() */
-  private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
+  private cleanupIntervalId: ReturnType<typeof setInterval> | null = null
 
   constructor(
     @inject("AssignmentRepository")
@@ -98,7 +98,7 @@ export class PlagiarismService {
     this.cleanupIntervalId = setInterval(
       () => this.cleanupExpiredReports(),
       60 * 60 * 1000,
-    );
+    )
   }
 
   /**
@@ -107,10 +107,10 @@ export class PlagiarismService {
    */
   public dispose(): void {
     if (this.cleanupIntervalId !== null) {
-      clearInterval(this.cleanupIntervalId);
-      this.cleanupIntervalId = null;
+      clearInterval(this.cleanupIntervalId)
+      this.cleanupIntervalId = null
     }
-    this.legacyReportsStore.clear();
+    this.legacyReportsStore.clear()
   }
 
   // ========================================================================
@@ -120,13 +120,13 @@ export class PlagiarismService {
   /** Analyze files for plagiarism (Ad-hoc analysis) */
   async analyzeFiles(request: AnalyzeRequest): Promise<AnalyzeResponse> {
     // Validate request
-    this.validateAnalyzeRequest(request);
+    this.validateAnalyzeRequest(request)
 
     // Create detector using factory
     const detector = this.detectorFactory.create({
       language: request.language,
       kgramLength: request.kgramLength,
-    });
+    })
 
     // Convert to File objects
     const files = request.files.map(
@@ -135,27 +135,27 @@ export class PlagiarismService {
           studentId: f.studentId,
           studentName: f.studentName,
         }),
-    );
+    )
 
     // Optional template file
     const ignoredFile = request.templateFile
       ? new File(request.templateFile.path, request.templateFile.content)
-      : undefined;
+      : undefined
 
     // Run analysis
-    const report = await detector.analyze(files, ignoredFile);
+    const report = await detector.analyze(files, ignoredFile)
 
     // For ad-hoc analysis, we might still use in-memory store if it doesn't map to DB schema
     // Or we could persist it if we want ad-hoc history.
     // For now, preserving legacy behavior of generating a temporary ID.
-    this.cleanupExpiredReports();
-    const reportId = this.generateReportId();
-    this.legacyReportsStore.set(reportId, { report, createdAt: new Date() });
+    this.cleanupExpiredReports()
+    const reportId = this.generateReportId()
+    this.legacyReportsStore.set(reportId, { report, createdAt: new Date() })
 
     // Build response
-    const threshold = request.threshold ?? PLAGIARISM_CONFIG.DEFAULT_THRESHOLD;
-    const summary = report.getSummary();
-    const pairs = report.getPairs();
+    const threshold = request.threshold ?? PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+    const summary = report.getSummary()
+    const pairs = report.getPairs()
 
     return {
       reportId,
@@ -168,7 +168,7 @@ export class PlagiarismService {
       },
       pairs: pairs.map((pair) => toPlagiarismPairDTO(pair)),
       warnings: summary.warnings,
-    };
+    }
   }
 
   /** Get pair details with fragments */
@@ -177,15 +177,15 @@ export class PlagiarismService {
     pairId: number,
   ): Promise<PairDetailsResponse> {
     // Check for ad-hoc report first (legacy)
-    const legacyStored = this.legacyReportsStore.get(reportId);
+    const legacyStored = this.legacyReportsStore.get(reportId)
 
     if (legacyStored) {
-      const pairs = legacyStored.report.getPairs();
-      const pair = pairs.find((p: Pair) => p.id === pairId);
+      const pairs = legacyStored.report.getPairs()
+      const pair = pairs.find((p: Pair) => p.id === pairId)
       if (!pair) {
-        throw new PlagiarismPairNotFoundError(pairId);
+        throw new PlagiarismPairNotFoundError(pairId)
       }
-      const fragments = legacyStored.report.getFragments(pair);
+      const fragments = legacyStored.report.getFragments(pair)
       return {
         pair: toPlagiarismPairDTO(pair),
         fragments: fragments.map((f: Fragment, i: number) =>
@@ -193,15 +193,15 @@ export class PlagiarismService {
         ),
         leftCode: pair.leftFile.content,
         rightCode: pair.rightFile.content,
-      };
+      }
     }
 
     // Try to handle as DB report
-    const numericReportId = parseInt(reportId, 10);
+    const numericReportId = parseInt(reportId, 10)
     if (!isNaN(numericReportId)) {
       // Delegate to getResultDetails for DB-backed reports
       // pairId corresponds to the resultId in the database
-      const details = await this.getResultDetails(pairId);
+      const details = await this.getResultDetails(pairId)
 
       return {
         pair: {
@@ -229,29 +229,29 @@ export class PlagiarismService {
         fragments: details.fragments,
         leftCode: details.leftFile.content,
         rightCode: details.rightFile.content,
-      };
+      }
     }
 
-    throw new PlagiarismReportNotFoundError(reportId);
+    throw new PlagiarismReportNotFoundError(reportId)
   }
 
   /** Get report by ID */
   async getReport(reportId: string): Promise<AnalyzeResponse | null> {
     // Try to parse as numeric ID (database report)
-    const numericId = parseInt(reportId, 10);
+    const numericId = parseInt(reportId, 10)
     if (!isNaN(numericId)) {
-      return this.persistenceService.getReport(numericId);
+      return this.persistenceService.getReport(numericId)
     }
 
     // Fall back to in-memory for string-based ad-hoc reports
-    const stored = this.legacyReportsStore.get(reportId);
+    const stored = this.legacyReportsStore.get(reportId)
     if (!stored) {
-      return null;
+      return null
     }
 
-    const summary = stored.report.getSummary();
-    const pairs = stored.report.getPairs();
-    const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD;
+    const summary = stored.report.getSummary()
+    const pairs = stored.report.getPairs()
+    const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
 
     return {
       reportId,
@@ -265,59 +265,59 @@ export class PlagiarismService {
       },
       pairs: pairs.map((pair: Pair) => toPlagiarismPairDTO(pair)),
       warnings: summary.warnings,
-    };
+    }
   }
 
   /** Delete a report */
   async deleteReport(reportId: string): Promise<boolean> {
     // Try to parse as numeric ID (database report)
-    const numericId = parseInt(reportId, 10);
+    const numericId = parseInt(reportId, 10)
     if (!isNaN(numericId)) {
-      return this.persistenceService.deleteReport(numericId);
+      return this.persistenceService.deleteReport(numericId)
     }
 
     // Fall back to in-memory for string-based ad-hoc reports
-    return this.legacyReportsStore.delete(reportId);
+    return this.legacyReportsStore.delete(reportId)
   }
 
   /** Get result details from database with fragments and file content */
   async getResultDetails(resultId: number): Promise<{
     result: {
-      id: number;
-      submission1Id: number;
-      submission2Id: number;
-      structuralScore: string;
-      overlap: number;
-      longestFragment: number;
-    };
-    fragments: PlagiarismFragmentDTO[];
+      id: number
+      submission1Id: number
+      submission2Id: number
+      structuralScore: string
+      overlap: number
+      longestFragment: number
+    }
+    fragments: PlagiarismFragmentDTO[]
     leftFile: {
-      filename: string;
-      content: string;
-      lineCount: number;
-      studentName: string;
-    };
+      filename: string
+      content: string
+      lineCount: number
+      studentName: string
+    }
     rightFile: {
-      filename: string;
-      content: string;
-      lineCount: number;
-      studentName: string;
-    };
+      filename: string
+      content: string
+      lineCount: number
+      studentName: string
+    }
   }> {
-    const data = await this.persistenceService.getResultData(resultId);
+    const data = await this.persistenceService.getResultData(resultId)
 
     if (!data || !data.submission1 || !data.submission2) {
-      throw new PlagiarismResultNotFoundError(resultId);
+      throw new PlagiarismResultNotFoundError(resultId)
     }
 
-    const { result, fragments, submission1, submission2 } = data;
+    const { result, fragments, submission1, submission2 } = data
 
     // Download file content using File Service
     const [leftContent, rightContent] =
       await this.fileService.downloadSubmissionFiles(
         submission1.submission.filePath,
         submission2.submission.filePath,
-      );
+      )
 
     return {
       result: {
@@ -356,7 +356,7 @@ export class PlagiarismService {
         lineCount: rightContent.split("\n").length,
         studentName: submission2.studentName || "Unknown",
       },
-    };
+    }
   }
 
   /**
@@ -367,29 +367,28 @@ export class PlagiarismService {
     teacherId?: number,
   ): Promise<AnalyzeResponse> {
     // Step 1: Validate and fetch assignment
-    const assignment =
-      await this.assignmentRepo.getAssignmentById(assignmentId);
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment) {
-      throw new AssignmentNotFoundError(assignmentId);
+      throw new AssignmentNotFoundError(assignmentId)
     }
 
     // Step 2: Fetch and download submission files
-    const files = await this.fileService.fetchSubmissionFiles(assignmentId);
+    const files = await this.fileService.fetchSubmissionFiles(assignmentId)
 
     // Step 3: Create ignored file from template code
-    const language = this.getLanguage(assignment.programmingLanguage);
-    let ignoredFile: File | undefined;
+    const language = this.getLanguage(assignment.programmingLanguage)
+    let ignoredFile: File | undefined
     if (assignment.templateCode) {
       ignoredFile = new File(
         `template.${this.getFileExtension(language)}`,
         assignment.templateCode,
-      );
+      )
     }
 
     // Step 4: Run plagiarism analysis
-    const detector = this.detectorFactory.create({ language });
-    const report = await detector.analyze(files, ignoredFile);
-    const pairs = report.getPairs();
+    const detector = this.detectorFactory.create({ language })
+    const report = await detector.analyze(files, ignoredFile)
+    const pairs = report.getPairs()
 
     // Step 5: Persist report to database
     const { dbReport, resultIdMap } =
@@ -398,7 +397,7 @@ export class PlagiarismService {
         teacherId,
         report,
         pairs,
-      );
+      )
 
     // Step 6: Build and return response
     return this.buildAssignmentAnalysisResponse(
@@ -406,7 +405,7 @@ export class PlagiarismService {
       report,
       pairs,
       resultIdMap,
-    );
+    )
   }
 
   // ========================================================================
@@ -414,7 +413,7 @@ export class PlagiarismService {
   // ========================================================================
 
   private cleanupExpiredReports() {
-    const now = Date.now();
+    const now = Date.now()
 
     // Remove expired entries
     for (const [id, data] of this.legacyReportsStore.entries()) {
@@ -422,7 +421,7 @@ export class PlagiarismService {
         now - data.createdAt.getTime() >
         PlagiarismService.LEGACY_REPORT_TTL_MS
       ) {
-        this.legacyReportsStore.delete(id);
+        this.legacyReportsStore.delete(id)
       }
     }
 
@@ -430,12 +429,12 @@ export class PlagiarismService {
     if (this.legacyReportsStore.size > PlagiarismService.MAX_LEGACY_REPORTS) {
       const sortedEntries = Array.from(this.legacyReportsStore.entries()).sort(
         (a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime(),
-      );
+      )
 
       const toRemove =
-        this.legacyReportsStore.size - PlagiarismService.MAX_LEGACY_REPORTS;
+        this.legacyReportsStore.size - PlagiarismService.MAX_LEGACY_REPORTS
       for (let i = 0; i < toRemove; i++) {
-        this.legacyReportsStore.delete(sortedEntries[i][0]);
+        this.legacyReportsStore.delete(sortedEntries[i][0])
       }
     }
   }
@@ -448,24 +447,24 @@ export class PlagiarismService {
       throw new InsufficientFilesError(
         PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED,
         request.files?.length ?? 0,
-      );
+      )
     }
 
     if (!request.language) {
-      throw new LanguageRequiredError();
+      throw new LanguageRequiredError()
     }
   }
 
   private generateReportId(): string {
-    return `report_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    return `report_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   }
 
   private getLanguage(programmingLanguage: string): LanguageName {
-    const language = PLAGIARISM_LANGUAGE_MAP[programmingLanguage.toLowerCase()];
+    const language = PLAGIARISM_LANGUAGE_MAP[programmingLanguage.toLowerCase()]
     if (!language) {
-      throw new UnsupportedLanguageError(programmingLanguage);
+      throw new UnsupportedLanguageError(programmingLanguage)
     }
-    return language;
+    return language
   }
 
   private getFileExtension(language: LanguageName): string {
@@ -473,8 +472,8 @@ export class PlagiarismService {
       python: "py",
       java: "java",
       c: "c",
-    };
-    return extensionMap[language] || "txt";
+    }
+    return extensionMap[language] || "txt"
   }
 
   private buildAssignmentAnalysisResponse(
@@ -502,14 +501,14 @@ export class PlagiarismService {
         ),
       },
       pairs: pairs.map((p: Pair) => {
-        const leftSubId = parseInt(p.leftFile.info?.submissionId || "0");
-        const rightSubId = parseInt(p.rightFile.info?.submissionId || "0");
+        const leftSubId = parseInt(p.leftFile.info?.submissionId || "0")
+        const rightSubId = parseInt(p.rightFile.info?.submissionId || "0")
         const [sub1, sub2] =
           leftSubId < rightSubId
             ? [leftSubId, rightSubId]
-            : [rightSubId, leftSubId];
-        const key = `${sub1}-${sub2}`;
-        const resultId = resultIdMap.get(key) ?? 0;
+            : [rightSubId, leftSubId]
+        const key = `${sub1}-${sub2}`
+        const resultId = resultIdMap.get(key) ?? 0
 
         return {
           id: resultId,
@@ -534,9 +533,9 @@ export class PlagiarismService {
           hybridScore: 0,
           overlap: p.overlap,
           longest: p.longest,
-        };
+        }
       }),
       warnings: [],
-    };
+    }
   }
 }

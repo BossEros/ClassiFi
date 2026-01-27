@@ -1,15 +1,15 @@
-import * as testCaseRepository from "@/data/repositories/testCaseRepository";
-import * as assignmentRepository from "@/data/repositories/assignmentRepository";
-import { validateId } from "@/shared/utils/validators";
-import type { ProgrammingLanguage } from "@/business/models/assignment/types";
+import * as testCaseRepository from "@/data/repositories/testCaseRepository"
+import * as assignmentRepository from "@/data/repositories/assignmentRepository"
+import { validateId } from "@/shared/utils/validators"
+import type { ProgrammingLanguage } from "@/business/models/assignment/types"
 import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
-} from "@/data/api/types";
-import { normalizeTestResult } from "@/shared/utils/testNormalization";
+} from "@/data/api/types"
+import { normalizeTestResult } from "@/shared/utils/testNormalization"
 
-export type { TestPreviewResult, TestResultDetail, TestPreviewResponse };
+export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }
 
 /**
  * Executes a dry run of the provided source code against the assignment's test cases.
@@ -26,33 +26,34 @@ export async function runTestsPreview(
   language: ProgrammingLanguage,
   assignmentId: number,
 ): Promise<TestPreviewResult> {
-  validateId(assignmentId, "assignment");
+  validateId(assignmentId, "assignment")
 
-  const executionResponse = await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
-    sourceCode,
-    language,
-    assignmentId,
-  );
+  const executionResponse =
+    await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
+      sourceCode,
+      language,
+      assignmentId,
+    )
 
   if (!executionResponse.data || !executionResponse.data.success) {
     throw new Error(
       executionResponse.data?.message ||
         executionResponse.error ||
         "Failed to run tests",
-    );
+    )
   }
 
   if (!executionResponse.data.data) {
-    throw new Error("Test execution data is missing from the response");
+    throw new Error("Test execution data is missing from the response")
   }
 
-  const data = executionResponse.data.data;
+  const data = executionResponse.data.data
   return {
     passed: data.passedCount,
     total: data.totalCount,
     percentage: data.score,
     results: data.results.map(normalizeTestResult),
-  };
+  }
 }
 
 /**
@@ -66,21 +67,22 @@ export async function runTestsPreview(
 export async function getTestResultsForSubmission(
   submissionId: number,
 ): Promise<TestPreviewResult> {
-  validateId(submissionId, "submission");
-  const resultsResponse = await assignmentRepository.getTestResultsForSubmissionById(submissionId);
+  validateId(submissionId, "submission")
+  const resultsResponse =
+    await assignmentRepository.getTestResultsForSubmissionById(submissionId)
 
   if (!resultsResponse.data || !resultsResponse.data.success) {
     throw new Error(
       resultsResponse.data?.message ||
         resultsResponse.error ||
         "Failed to fetch test results",
-    );
+    )
   }
 
-  const summary = resultsResponse.data.data;
+  const summary = resultsResponse.data.data
 
   if (!summary) {
-    throw new Error("Test results data is missing from the response");
+    throw new Error("Test results data is missing from the response")
   }
 
   return {
@@ -88,5 +90,5 @@ export async function getTestResultsForSubmission(
     total: summary.totalCount,
     percentage: summary.score,
     results: summary.results.map(normalizeTestResult),
-  };
+  }
 }

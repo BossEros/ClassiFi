@@ -4,23 +4,23 @@ import type {
   Assignment,
   Submission,
   ClassSchedule,
-} from "../models/index.js";
+} from "../models/index.js"
 
 /** Default total score for assignments */
-const DEFAULT_TOTAL_SCORE = 100;
+const DEFAULT_TOTAL_SCORE = 100
 
 // ============ User Mappers ============
 
 export interface UserDTO {
-  id: number;
-  supabaseUserId: string | null;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  avatarUrl: string | null;
-  isActive: boolean;
-  createdAt: string;
+  id: number
+  supabaseUserId: string | null
+  email: string
+  firstName: string
+  lastName: string
+  role: string
+  avatarUrl: string | null
+  isActive: boolean
+  createdAt: string
 }
 
 export function toUserDTO(user: User): UserDTO {
@@ -34,34 +34,34 @@ export function toUserDTO(user: User): UserDTO {
     avatarUrl: user.avatarUrl ?? null,
     isActive: user.isActive ?? true,
     createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
-  };
+  }
 }
 
 // ============ Class Mappers ============
 
 export interface ClassDTO {
-  id: number;
-  teacherId: number;
-  className: string;
-  classCode: string;
-  description: string | null;
-  yearLevel: number;
-  semester: number;
-  academicYear: string;
-  schedule: ClassSchedule;
-  createdAt: string;
-  isActive: boolean;
-  studentCount?: number;
-  teacherName?: string;
-  assignmentCount?: number;
+  id: number
+  teacherId: number
+  className: string
+  classCode: string
+  description: string | null
+  yearLevel: number
+  semester: number
+  academicYear: string
+  schedule: ClassSchedule
+  createdAt: string
+  isActive: boolean
+  studentCount?: number
+  teacherName?: string
+  assignmentCount?: number
 }
 
 export function toClassDTO(
   classData: Class,
   extras?: {
-    studentCount?: number;
-    teacherName?: string;
-    assignmentCount?: number;
+    studentCount?: number
+    teacherName?: string
+    assignmentCount?: number
   },
 ): ClassDTO {
   return {
@@ -77,39 +77,39 @@ export function toClassDTO(
     createdAt: classData.createdAt?.toISOString() ?? new Date().toISOString(),
     isActive: classData.isActive ?? true,
     ...extras,
-  };
+  }
 }
 
 // ============ Assignment Mappers ============
 
 export interface AssignmentDTO {
-  id: number;
-  classId: number;
-  assignmentName: string;
-  description: string;
-  programmingLanguage: string;
-  deadline: string;
-  allowResubmission: boolean;
-  maxAttempts: number | null;
-  createdAt: string;
-  isActive: boolean;
-  templateCode: string | null;
-  hasTemplateCode: boolean;
-  totalScore: number;
-  scheduledDate: string | null;
-  submissionCount?: number;
-  hasSubmitted?: boolean;
-  className?: string;
-  testCases?: { id: number; name: string; isHidden: boolean }[];
+  id: number
+  classId: number
+  assignmentName: string
+  description: string
+  programmingLanguage: string
+  deadline: string
+  allowResubmission: boolean
+  maxAttempts: number | null
+  createdAt: string
+  isActive: boolean
+  templateCode: string | null
+  hasTemplateCode: boolean
+  totalScore: number
+  scheduledDate: string | null
+  submissionCount?: number
+  hasSubmitted?: boolean
+  className?: string
+  testCases?: { id: number; name: string; isHidden: boolean }[]
 }
 
 export function toAssignmentDTO(
   assignment: Assignment,
   extras?: {
-    submissionCount?: number;
-    hasSubmitted?: boolean;
-    className?: string;
-    testCases?: { id: number; name: string; isHidden: boolean }[];
+    submissionCount?: number
+    hasSubmitted?: boolean
+    className?: string
+    testCases?: { id: number; name: string; isHidden: boolean }[]
   },
 ): AssignmentDTO {
   return {
@@ -128,33 +128,33 @@ export function toAssignmentDTO(
     totalScore: assignment.totalScore ?? DEFAULT_TOTAL_SCORE,
     scheduledDate: assignment.scheduledDate?.toISOString() ?? null,
     ...extras,
-  };
+  }
 }
 
 // ============ Submission Mappers ============
 
 export interface SubmissionDTO {
-  id: number;
-  assignmentId: number;
-  studentId: number;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  submissionNumber: number;
-  submittedAt: string;
-  isLatest: boolean;
-  grade: number | null;
-  studentName?: string;
-  assignmentName?: string;
-  className?: string;
+  id: number
+  assignmentId: number
+  studentId: number
+  fileName: string
+  filePath: string
+  fileSize: number
+  submissionNumber: number
+  submittedAt: string
+  isLatest: boolean
+  grade: number | null
+  studentName?: string
+  assignmentName?: string
+  className?: string
 }
 
 export function toSubmissionDTO(
   submission: Submission,
   extras?: {
-    studentName?: string;
-    assignmentName?: string;
-    className?: string;
+    studentName?: string
+    assignmentName?: string
+    className?: string
   },
 ): SubmissionDTO {
   return {
@@ -170,17 +170,17 @@ export function toSubmissionDTO(
     isLatest: submission.isLatest ?? false,
     grade: submission.grade ?? null,
     ...extras,
-  };
+  }
 }
 
 // ============ Student Info Mapper ============
 
 export interface StudentDTO {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  fullName: string;
+  id: number
+  email: string
+  firstName: string
+  lastName: string
+  fullName: string
 }
 
 export function toStudentDTO(user: User): StudentDTO {
@@ -190,33 +190,33 @@ export function toStudentDTO(user: User): StudentDTO {
     firstName: user.firstName,
     lastName: user.lastName,
     fullName: `${user.firstName} ${user.lastName}`,
-  };
+  }
 }
 
 // ============ Dashboard Mappers ============
 
 export interface DashboardClassDTO {
-  id: number;
-  className: string;
-  classCode: string;
-  description: string | null;
-  studentCount?: number;
-  assignmentCount?: number;
-  teacherName?: string;
-  createdAt: string;
-  isActive: boolean;
-  yearLevel: number;
-  semester: number;
-  academicYear: string;
-  schedule: ClassSchedule;
+  id: number
+  className: string
+  classCode: string
+  description: string | null
+  studentCount?: number
+  assignmentCount?: number
+  teacherName?: string
+  createdAt: string
+  isActive: boolean
+  yearLevel: number
+  semester: number
+  academicYear: string
+  schedule: ClassSchedule
 }
 
 export function toDashboardClassDTO(
   classData: Class,
   extras?: {
-    studentCount?: number;
-    assignmentCount?: number;
-    teacherName?: string;
+    studentCount?: number
+    assignmentCount?: number
+    teacherName?: string
   },
 ): DashboardClassDTO {
   return {
@@ -231,35 +231,32 @@ export function toDashboardClassDTO(
     createdAt: classData.createdAt?.toISOString() ?? new Date().toISOString(),
     isActive: classData.isActive ?? true,
     ...extras,
-  };
+  }
 }
 
 export interface PendingAssignmentDTO {
-  id: number;
-  assignmentName: string;
-  className: string;
-  classId: number;
-  deadline: string;
-  hasSubmitted: boolean;
-  programmingLanguage: string;
+  id: number
+  assignmentName: string
+  className: string
+  classId: number
+  deadline: string
+  hasSubmitted: boolean
+  programmingLanguage: string
 }
 
 export interface PendingTaskDTO {
-  id: number;
-  assignmentName: string;
-  className: string;
-  classId: number;
-  deadline: string;
-  submissionCount: number;
-  totalStudents: number;
+  id: number
+  assignmentName: string
+  className: string
+  classId: number
+  deadline: string
+  submissionCount: number
+  totalStudents: number
 }
 
 // ============ Plagiarism Mappers ============
 
-import type {
-  Pair,
-  Fragment
-} from "@/lib/plagiarism/index.js";
+import type { Pair, Fragment } from "@/lib/plagiarism/index.js"
 
 /** Configuration for plagiarism detection */
 export const PLAGIARISM_CONFIG = {
@@ -271,7 +268,7 @@ export const PLAGIARISM_CONFIG = {
   DEFAULT_KGRAMS_IN_WINDOW: 17,
   /** Minimum number of files required for analysis */
   MINIMUM_FILES_REQUIRED: 2,
-} as const;
+} as const
 
 /** Supported languages for plagiarism detection */
 export const PLAGIARISM_LANGUAGE_MAP: Record<string, "python" | "java" | "c"> =
@@ -279,55 +276,55 @@ export const PLAGIARISM_LANGUAGE_MAP: Record<string, "python" | "java" | "c"> =
     python: "python",
     java: "java",
     c: "c",
-  };
+  }
 
 /** DTO for a file in plagiarism results */
 export interface PlagiarismFileDTO {
-  id: number;
-  path: string;
-  filename: string;
-  lineCount: number;
-  studentId?: string;
-  studentName?: string;
+  id: number
+  path: string
+  filename: string
+  lineCount: number
+  studentId?: string
+  studentName?: string
 }
 
 /** DTO for a plagiarism pair comparison */
 export interface PlagiarismPairDTO {
-  id: number;
-  leftFile: PlagiarismFileDTO;
-  rightFile: PlagiarismFileDTO;
-  structuralScore: number;
-  semanticScore: number;
-  hybridScore: number;
-  overlap: number;
-  longest: number;
+  id: number
+  leftFile: PlagiarismFileDTO
+  rightFile: PlagiarismFileDTO
+  structuralScore: number
+  semanticScore: number
+  hybridScore: number
+  overlap: number
+  longest: number
 }
 
 /** DTO for a code fragment match */
 export interface PlagiarismFragmentDTO {
-  id: number;
+  id: number
   leftSelection: {
-    startRow: number;
-    startCol: number;
-    endRow: number;
-    endCol: number;
-  };
+    startRow: number
+    startCol: number
+    endRow: number
+    endCol: number
+  }
   rightSelection: {
-    startRow: number;
-    startCol: number;
-    endRow: number;
-    endCol: number;
-  };
-  length: number;
+    startRow: number
+    startCol: number
+    endRow: number
+    endCol: number
+  }
+  length: number
 }
 
 /** DTO for plagiarism analysis summary */
 export interface PlagiarismSummaryDTO {
-  totalFiles: number;
-  totalPairs: number;
-  suspiciousPairs: number;
-  averageSimilarity: number;
-  maxSimilarity: number;
+  totalFiles: number
+  totalPairs: number
+  suspiciousPairs: number
+  averageSimilarity: number
+  maxSimilarity: number
 }
 
 /** Convert a Pair to PlagiarismPairDTO */
@@ -358,7 +355,7 @@ export function toPlagiarismPairDTO(
     hybridScore: 0,
     overlap: pair.overlap,
     longest: pair.longest,
-  };
+  }
 }
 
 /** Convert a Fragment to PlagiarismFragmentDTO */
@@ -381,5 +378,5 @@ export function toPlagiarismFragmentDTO(
       endCol: fragment.rightSelection.endCol,
     },
     length: fragment.length,
-  };
+  }
 }

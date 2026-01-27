@@ -8,26 +8,26 @@ import {
   timestamp,
   pgEnum,
   jsonb,
-} from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
-import { classes } from "@/models/class.model.js";
+} from "drizzle-orm/pg-core"
+import { relations } from "drizzle-orm"
+import { classes } from "@/models/class.model.js"
 
 /** Programming language enum for assignments */
 export const programmingLanguageEnum = pgEnum("programming_language", [
   "python",
   "java",
   "c",
-]);
+])
 
 /** Late penalty configuration type */
 export interface LatePenaltyConfig {
-  gracePeriodHours: number; // Hours after deadline with no penalty
+  gracePeriodHours: number // Hours after deadline with no penalty
   tiers: Array<{
     // Penalty tiers
-    hoursAfterGrace: number; // Hours after grace period ends
-    penaltyPercent: number; // Percentage to deduct (e.g., 10 = -10%)
-  }>;
-  rejectAfterHours: number | null; // Reject submissions after X hours (null = always accept)
+    hoursAfterGrace: number // Hours after grace period ends
+    penaltyPercent: number // Percentage to deduct (e.g., 10 = -10%)
+  }>
+  rejectAfterHours: number | null // Reject submissions after X hours (null = always accept)
 }
 
 /** Assignments table - represents assignments for classes */
@@ -55,7 +55,7 @@ export const assignments = pgTable("assignments", {
   // Late Penalty Configuration
   latePenaltyEnabled: boolean("late_penalty_enabled").default(false).notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
-});
+})
 
 /** Assignment relations */
 export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
@@ -65,12 +65,12 @@ export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
   }),
   submissions: many(submissions),
   similarityReports: many(similarityReports),
-}));
+}))
 
 /** Type definitions for Assignment */
-export type Assignment = typeof assignments.$inferSelect;
-export type NewAssignment = typeof assignments.$inferInsert;
+export type Assignment = typeof assignments.$inferSelect
+export type NewAssignment = typeof assignments.$inferInsert
 
 // Import related tables
-import { submissions } from "@/models/submission.model.js";
-import { similarityReports } from "@/models/similarity-report.model.js";
+import { submissions } from "@/models/submission.model.js"
+import { similarityReports } from "@/models/similarity-report.model.js"

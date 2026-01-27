@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray, sql, or, gt, asc } from "drizzle-orm";
+import { eq, and, desc, inArray, sql, or, gt, asc } from "drizzle-orm"
 import {
   assignments,
   classes,
@@ -7,11 +7,11 @@ import {
   type Assignment,
   type NewAssignment,
   type LatePenaltyConfig,
-} from "@/models/index.js";
-import { BaseRepository } from "@/repositories/base.repository.js";
-import { injectable } from "tsyringe";
+} from "@/models/index.js"
+import { BaseRepository } from "@/repositories/base.repository.js"
+import { injectable } from "tsyringe"
 /** Programming language type */
-export type ProgrammingLanguage = "python" | "java" | "c";
+export type ProgrammingLanguage = "python" | "java" | "c"
 
 /**
  * Repository for assignment-related database operations.
@@ -23,14 +23,14 @@ export class AssignmentRepository extends BaseRepository<
   NewAssignment
 > {
   constructor() {
-    super(assignments);
+    super(assignments)
   }
 
   /** Get an assignment by ID */
   async getAssignmentById(
     assignmentId: number,
   ): Promise<Assignment | undefined> {
-    return await this.findById(assignmentId);
+    return await this.findById(assignmentId)
   }
 
   /** Get all assignments for a class */
@@ -45,14 +45,14 @@ export class AssignmentRepository extends BaseRepository<
         .where(
           and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
         )
-        .orderBy(desc(assignments.deadline));
+        .orderBy(desc(assignments.deadline))
     }
 
     return await this.db
       .select()
       .from(assignments)
       .where(eq(assignments.classId, classId))
-      .orderBy(desc(assignments.deadline));
+      .orderBy(desc(assignments.deadline))
   }
 
   /** Get assignments for multiple classes */
@@ -61,7 +61,7 @@ export class AssignmentRepository extends BaseRepository<
     activeOnly: boolean = true,
   ): Promise<Assignment[]> {
     if (classIds.length === 0) {
-      return [];
+      return []
     }
 
     if (activeOnly) {
@@ -74,14 +74,14 @@ export class AssignmentRepository extends BaseRepository<
             eq(assignments.isActive, true),
           ),
         )
-        .orderBy(desc(assignments.deadline));
+        .orderBy(desc(assignments.deadline))
     }
 
     return await this.db
       .select()
       .from(assignments)
       .where(inArray(assignments.classId, classIds))
-      .orderBy(desc(assignments.deadline));
+      .orderBy(desc(assignments.deadline))
   }
 
   /**
@@ -94,16 +94,16 @@ export class AssignmentRepository extends BaseRepository<
     limit: number = 10,
   ): Promise<
     Array<{
-      id: number;
-      assignmentName: string;
-      deadline: Date | null;
-      classId: number;
-      className: string;
-      studentCount: number;
-      submissionCount: number;
+      id: number
+      assignmentName: string
+      deadline: Date | null
+      classId: number
+      className: string
+      studentCount: number
+      submissionCount: number
     }>
   > {
-    const now = new Date();
+    const now = new Date()
 
     // Subquery for student counts per class
     const classStudentCounts = this.db
@@ -113,7 +113,7 @@ export class AssignmentRepository extends BaseRepository<
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
-      .as("csc");
+      .as("csc")
 
     // Subquery for latest submission counts per assignment
     const assignmentSubmissionCounts = this.db
@@ -124,7 +124,7 @@ export class AssignmentRepository extends BaseRepository<
       .from(submissions)
       .where(eq(submissions.isLatest, true))
       .groupBy(submissions.assignmentId)
-      .as("asc");
+      .as("asc")
 
     const results = await this.db
       .select({
@@ -155,28 +155,28 @@ export class AssignmentRepository extends BaseRepository<
         ),
       )
       .orderBy(asc(assignments.deadline))
-      .limit(limit);
+      .limit(limit)
 
     return results.map((r) => ({
       ...r,
       studentCount: Number(r.studentCount),
       submissionCount: Number(r.submissionCount),
       deadline: r.deadline ? new Date(r.deadline) : null,
-    }));
+    }))
   }
 
   /** Create a new assignment */
   async createAssignment(data: {
-    classId: number;
-    assignmentName: string;
-    description: string;
-    programmingLanguage: ProgrammingLanguage;
-    deadline: Date;
-    allowResubmission?: boolean;
-    maxAttempts?: number | null;
-    templateCode?: string | null;
-    totalScore?: number;
-    scheduledDate?: Date | null;
+    classId: number
+    assignmentName: string
+    description: string
+    programmingLanguage: ProgrammingLanguage
+    deadline: Date
+    allowResubmission?: boolean
+    maxAttempts?: number | null
+    templateCode?: string | null
+    totalScore?: number
+    scheduledDate?: Date | null
   }): Promise<Assignment> {
     const results = await this.db
       .insert(assignments)
@@ -193,9 +193,9 @@ export class AssignmentRepository extends BaseRepository<
         scheduledDate: data.scheduledDate ?? null,
         isActive: true,
       })
-      .returning();
+      .returning()
 
-    return results[0];
+    return results[0]
   }
 
   /** Update an assignment */
@@ -219,25 +219,25 @@ export class AssignmentRepository extends BaseRepository<
   ): Promise<Assignment | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined),
-    );
+    )
 
     if (Object.keys(updateData).length === 0) {
-      return await this.getAssignmentById(assignmentId);
+      return await this.getAssignmentById(assignmentId)
     }
 
-    return await this.update(assignmentId, updateData);
+    return await this.update(assignmentId, updateData)
   }
 
   /** Delete an assignment (hard delete) */
   async deleteAssignment(assignmentId: number): Promise<boolean> {
-    return await this.delete(assignmentId);
+    return await this.delete(assignmentId)
   }
 
   /** Deactivate an assignment (soft delete) */
   async deactivateAssignment(
     assignmentId: number,
   ): Promise<Assignment | undefined> {
-    return await this.update(assignmentId, { isActive: false });
+    return await this.update(assignmentId, { isActive: false })
   }
 
   /**
@@ -255,9 +255,9 @@ export class AssignmentRepository extends BaseRepository<
         latePenaltyConfig: config,
       })
       .where(eq(assignments.id, assignmentId))
-      .returning();
+      .returning()
 
-    return result.length > 0;
+    return result.length > 0
   }
 
   /**
@@ -274,13 +274,13 @@ export class AssignmentRepository extends BaseRepository<
       })
       .from(assignments)
       .where(eq(assignments.id, assignmentId))
-      .limit(1);
+      .limit(1)
 
-    if (!result[0]) return null;
+    if (!result[0]) return null
 
     return {
       enabled: result[0].latePenaltyEnabled,
       config: result[0].latePenaltyConfig,
-    };
+    }
   }
 }

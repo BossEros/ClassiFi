@@ -1,10 +1,10 @@
-import * as dashboardRepository from "@/data/repositories/teacherDashboardRepository";
+import * as dashboardRepository from "@/data/repositories/teacherDashboardRepository"
 import type {
   DashboardData,
   Class,
   Task,
-} from "@/business/models/dashboard/types";
-import { validateId } from "@/shared/utils/validators";
+} from "@/business/models/dashboard/types"
+import { validateId } from "@/shared/utils/validators"
 
 /**
  * Fetches the complete dashboard overview for a specific teacher.
@@ -17,19 +17,19 @@ import { validateId } from "@/shared/utils/validators";
 export async function getDashboardData(
   teacherId: number,
 ): Promise<DashboardData> {
-  validateId(teacherId, "teacher");
+  validateId(teacherId, "teacher")
 
   try {
     const dashboardResponse =
-      await dashboardRepository.getCompleteDashboardDataForTeacherId(teacherId);
+      await dashboardRepository.getCompleteDashboardDataForTeacherId(teacherId)
 
     return {
       recentClasses: dashboardResponse.recentClasses as unknown as Class[],
       pendingTasks: dashboardResponse.pendingTasks as unknown as Task[],
-    };
+    }
   } catch (error) {
-    console.error("Error fetching dashboard data:", error);
-    throw error;
+    console.error("Error fetching dashboard data:", error)
+    throw error
   }
 }
 
@@ -45,18 +45,16 @@ export async function getRecentClasses(
   teacherId: number,
   limit: number = 5,
 ): Promise<Class[]> {
-  validateId(teacherId, "teacher");
+  validateId(teacherId, "teacher")
 
   try {
-    const classesResponse = await dashboardRepository.getRecentClassesForTeacherId(
-      teacherId,
-      limit,
-    );
+    const classesResponse =
+      await dashboardRepository.getRecentClassesForTeacherId(teacherId, limit)
 
-    return classesResponse.classes as unknown as Class[];
+    return classesResponse.classes as unknown as Class[]
   } catch (error) {
-    console.error("Error fetching recent classes:", error);
-    throw error;
+    console.error("Error fetching recent classes:", error)
+    throw error
   }
 }
 
@@ -73,17 +71,17 @@ export async function getPendingTasks(
   teacherId: number,
   limit: number = 10,
 ): Promise<Task[]> {
-  validateId(teacherId, "teacher");
+  validateId(teacherId, "teacher")
 
   try {
     const tasksResponse = await dashboardRepository.getPendingTasksForTeacherId(
       teacherId,
       limit,
-    );
-    
-    return tasksResponse.tasks as unknown as Task[];
+    )
+
+    return tasksResponse.tasks as unknown as Task[]
   } catch (error) {
-    console.error("Error fetching pending tasks:", error);
-    throw error;
+    console.error("Error fetching pending tasks:", error)
+    throw error
   }
 }

@@ -1,123 +1,123 @@
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Grid3x3, Plus } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
-import { Card, CardContent } from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
-import { ClassCard } from "@/presentation/components/dashboard/ClassCard";
-import { JoinClassModal } from "@/presentation/components/forms/JoinClassModal";
+import { useEffect, useState, useMemo } from "react"
+import { useNavigate } from "react-router-dom"
+import { Grid3x3, Plus } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
+import { JoinClassModal } from "@/presentation/components/forms/JoinClassModal"
 import {
   ClassFilters,
   type FilterStatus,
-} from "@/presentation/components/dashboard/ClassFilters";
-import { getCurrentUser } from "@/business/services/authService";
-import { getDashboardData } from "@/business/services/studentDashboardService";
-import { useToast } from "@/shared/context/ToastContext";
-import type { User } from "@/business/models/auth/types";
-import type { Class } from "@/business/models/dashboard/types";
+} from "@/presentation/components/dashboard/ClassFilters"
+import { getCurrentUser } from "@/business/services/authService"
+import { getDashboardData } from "@/business/services/studentDashboardService"
+import { useToast } from "@/shared/context/ToastContext"
+import type { User } from "@/business/models/auth/types"
+import type { Class } from "@/business/models/dashboard/types"
 
 export function StudentClassesPage() {
-  const navigate = useNavigate();
-  const { showToast } = useToast();
-  const [user, setUser] = useState<User | null>(null);
-  const [classes, setClasses] = useState<Class[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const navigate = useNavigate()
+  const { showToast } = useToast()
+  const [user, setUser] = useState<User | null>(null)
+  const [classes, setClasses] = useState<Class[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
 
   // Filter States
-  const [searchQuery, setSearchQuery] = useState("");
-  const [status, setStatus] = useState<FilterStatus>("active");
-  const [selectedTerm, setSelectedTerm] = useState("all");
-  const [selectedYearLevel, setSelectedYearLevel] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("")
+  const [status, setStatus] = useState<FilterStatus>("active")
+  const [selectedTerm, setSelectedTerm] = useState("all")
+  const [selectedYearLevel, setSelectedYearLevel] = useState("all")
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate("/login");
-      return;
+      navigate("/login")
+      return
     }
 
-    setUser(currentUser);
+    setUser(currentUser)
 
     // Fetch enrolled classes
     const fetchClasses = async () => {
       try {
-        setIsLoading(true);
-        setError(null);
-        const data = await getDashboardData(parseInt(currentUser.id));
+        setIsLoading(true)
+        setError(null)
+        const data = await getDashboardData(parseInt(currentUser.id))
         // Cast is safe: API returns ISO date strings compatible with ISODateString
-        setClasses(data.enrolledClasses as Class[]);
+        setClasses(data.enrolledClasses as Class[])
       } catch (err) {
-        console.error("Failed to fetch classes:", err);
-        setError("Failed to load classes. Please try refreshing the page.");
+        console.error("Failed to fetch classes:", err)
+        setError("Failed to load classes. Please try refreshing the page.")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchClasses();
-  }, [navigate]);
+    fetchClasses()
+  }, [navigate])
 
   const handleJoinSuccess = (classInfo: Class) => {
     // Add the new class to the list
-    setClasses((prev) => [classInfo, ...prev]);
-    showToast(`Successfully joined ${classInfo.className}!`, "success");
-  };
+    setClasses((prev) => [classInfo, ...prev])
+    showToast(`Successfully joined ${classInfo.className}!`, "success")
+  }
 
   // Extract unique terms from classes for the dropdown
   const terms = useMemo(() => {
-    const uniqueTerms = new Set<string>();
+    const uniqueTerms = new Set<string>()
     classes.forEach((c) => {
       if (c.academicYear && c.semester) {
-        uniqueTerms.add(`${c.academicYear} - Semester ${c.semester}`);
+        uniqueTerms.add(`${c.academicYear} - Semester ${c.semester}`)
       }
-    });
-    return Array.from(uniqueTerms).sort().reverse(); // Newest first
-  }, [classes]);
+    })
+    return Array.from(uniqueTerms).sort().reverse() // Newest first
+  }, [classes])
 
   // Extract unique year levels from classes
   const yearLevels = useMemo(() => {
-    const uniqueLevels = new Set<string>(["1", "2", "3", "4"]); // Default year levels
+    const uniqueLevels = new Set<string>(["1", "2", "3", "4"]) // Default year levels
     classes.forEach((c) => {
       if (c.yearLevel !== undefined && c.yearLevel !== null) {
-        uniqueLevels.add(c.yearLevel.toString());
+        uniqueLevels.add(c.yearLevel.toString())
       }
-    });
-    return Array.from(uniqueLevels).sort(); // Low to High
-  }, [classes]);
+    })
+    return Array.from(uniqueLevels).sort() // Low to High
+  }, [classes])
 
   // Client-side filtering logic
   const filteredClasses = useMemo(() => {
     return classes.filter((c) => {
       // 1. Status Filter
-      if (status === "archived" && c.isActive) return false;
-      if (status === "active" && !c.isActive) return false; // Students might have inactive classes if archived by teacher?
+      if (status === "archived" && c.isActive) return false
+      if (status === "active" && !c.isActive) return false // Students might have inactive classes if archived by teacher?
       // Assuming 'active' implies showing only active classes by default
 
       // 2. Term Filter
       if (selectedTerm !== "all") {
-        const termString = `${c.academicYear} - Semester ${c.semester}`;
-        if (termString !== selectedTerm) return false;
+        const termString = `${c.academicYear} - Semester ${c.semester}`
+        if (termString !== selectedTerm) return false
       }
 
       // 3. Year Level Filter
       if (selectedYearLevel !== "all") {
         if (!c.yearLevel || c.yearLevel.toString() !== selectedYearLevel)
-          return false;
+          return false
       }
 
       // 4. Search Filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const matchName = c.className.toLowerCase().includes(query);
-        const matchCode = c.classCode.toLowerCase().includes(query);
-        if (!matchName && !matchCode) return false;
+        const query = searchQuery.toLowerCase()
+        const matchName = c.className.toLowerCase().includes(query)
+        const matchCode = c.classCode.toLowerCase().includes(query)
+        if (!matchName && !matchCode) return false
       }
 
-      return true;
-    });
-  }, [classes, status, selectedTerm, selectedYearLevel, searchQuery]);
+      return true
+    })
+  }, [classes, status, selectedTerm, selectedYearLevel, searchQuery])
 
   return (
     <DashboardLayout>
@@ -125,21 +125,21 @@ export function StudentClassesPage() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <Grid3x3 className="w-6 h-6 text-purple-400" />
+            <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
+              <Grid3x3 className="w-6 h-6 text-teal-400" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
                 My Classes
               </h1>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-slate-300 text-sm mt-1">
                 View and manage your enrolled courses
               </p>
             </div>
           </div>
           <Button
             onClick={() => setIsJoinModalOpen(true)}
-            className="w-full md:w-auto px-6 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 transition-all hover:scale-105"
+            className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20 transition-all hover:scale-105"
             disabled={isLoading}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -181,8 +181,8 @@ export function StudentClassesPage() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-20 text-center">
-              <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-6"></div>
-              <p className="text-gray-400 animate-pulse">
+              <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto mb-6"></div>
+              <p className="text-slate-300 animate-pulse">
                 Loading your classes...
               </p>
             </div>
@@ -197,27 +197,18 @@ export function StudentClassesPage() {
               ))}
             </div>
           ) : (
-            <div className="py-20 text-center bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
+            <div className="w-full py-20 px-6 text-center bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                <Grid3x3 className="w-10 h-10 text-gray-600" />
+                <Grid3x3 className="w-10 h-10 text-slate-500" />
               </div>
               <h3 className="text-xl font-semibold text-white mb-2">
                 No classes found
               </h3>
-              <p className="text-gray-400 max-w-sm mx-auto mb-8">
+              <p className="text-slate-300 max-w-sm min-w-[200px] mx-auto mb-8 whitespace-normal break-words">
                 {searchQuery || status !== "active"
                   ? "We couldn't find any classes matching your current filters. Try adjusting them."
                   : "You haven't enrolled in any classes yet."}
               </p>
-              {!searchQuery && status === "active" && (
-                <Button
-                  onClick={() => setIsJoinModalOpen(true)}
-                  className="w-auto bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Join a Class
-                </Button>
-              )}
             </div>
           )}
         </CardContent>
@@ -233,5 +224,5 @@ export function StudentClassesPage() {
         />
       )}
     </DashboardLayout>
-  );
+  )
 }

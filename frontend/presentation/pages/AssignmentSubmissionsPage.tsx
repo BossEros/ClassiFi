@@ -1,19 +1,32 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent } from '@/presentation/components/ui/Card'
-import { Button } from '@/presentation/components/ui/Button'
-import { Input } from '@/presentation/components/ui/Input'
-import { BackButton } from '@/presentation/components/ui/BackButton'
-import { SubmissionCard } from '@/presentation/components/dashboard/SubmissionCard'
-import { Search, Shield, Calendar, Code, FileText, Inbox, Loader2 } from 'lucide-react'
-import { getCurrentUser } from '@/business/services/authService'
-import { getAssignmentById, getAssignmentSubmissions } from '@/business/services/assignmentService'
-import { analyzeAssignmentSubmissions } from '@/business/services/plagiarismService'
-import { formatDeadline } from '@/shared/utils/dateUtils'
-import { useToast } from '@/shared/context/ToastContext'
-import type { AssignmentDetail, Submission } from '@/business/models/assignment/types'
-
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { Input } from "@/presentation/components/ui/Input"
+import { BackButton } from "@/presentation/components/ui/BackButton"
+import { SubmissionCard } from "@/presentation/components/dashboard/SubmissionCard"
+import {
+  Search,
+  Shield,
+  Calendar,
+  Code,
+  FileText,
+  Inbox,
+  Loader2,
+} from "lucide-react"
+import { getCurrentUser } from "@/business/services/authService"
+import {
+  getAssignmentById,
+  getAssignmentSubmissions,
+} from "@/business/services/assignmentService"
+import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
+import { formatDeadline } from "@/shared/utils/dateUtils"
+import { useToast } from "@/shared/context/ToastContext"
+import type {
+  AssignmentDetail,
+  Submission,
+} from "@/business/models/assignment/types"
 
 export function AssignmentSubmissionsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
@@ -21,8 +34,10 @@ export function AssignmentSubmissionsPage() {
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
-  const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
+  const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>(
+    [],
+  )
+  const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -32,7 +47,7 @@ export function AssignmentSubmissionsPage() {
   useEffect(() => {
     const fetchData = async () => {
       if (!assignmentId) {
-        setError('Assignment ID is missing')
+        setError("Assignment ID is missing")
         setLoading(false)
         return
       }
@@ -44,22 +59,23 @@ export function AssignmentSubmissionsPage() {
         // Get current user
         const user = getCurrentUser()
         if (!user) {
-          navigate('/login')
+          navigate("/login")
           return
         }
 
         // Fetch assignment details and submissions in parallel
         const [assignmentData, submissionsData] = await Promise.all([
           getAssignmentById(parseInt(assignmentId), parseInt(user.id)),
-          getAssignmentSubmissions(parseInt(assignmentId))
+          getAssignmentSubmissions(parseInt(assignmentId)),
         ])
 
         setAssignment(assignmentData)
         setSubmissions(submissionsData)
         setFilteredSubmissions(submissionsData)
       } catch (err) {
-        console.error('Error fetching assignment data:', err)
-        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred'
+        console.error("Error fetching assignment data:", err)
+        const errorMessage =
+          err instanceof Error ? err.message : "An unexpected error occurred"
         setError(errorMessage)
       } finally {
         setLoading(false)
@@ -77,8 +93,8 @@ export function AssignmentSubmissionsPage() {
     }
 
     const query = searchQuery.toLowerCase()
-    const filtered = submissions.filter(submission =>
-      submission.studentName?.toLowerCase().includes(query)
+    const filtered = submissions.filter((submission) =>
+      submission.studentName?.toLowerCase().includes(query),
     )
     setFilteredSubmissions(filtered)
   }, [searchQuery, submissions])
@@ -86,7 +102,10 @@ export function AssignmentSubmissionsPage() {
   // Calculate statistics
   const totalSubmissions = submissions.length
   const onTimeCount = submissions.filter(
-    sub => assignment && new Date(sub.submittedAt).getTime() <= new Date(assignment.deadline).getTime()
+    (sub) =>
+      assignment &&
+      new Date(sub.submittedAt).getTime() <=
+        new Date(assignment.deadline).getTime(),
   ).length
   const lateCount = totalSubmissions - onTimeCount
 
@@ -99,16 +118,17 @@ export function AssignmentSubmissionsPage() {
       const results = await analyzeAssignmentSubmissions(parseInt(assignmentId))
       showToast(
         `Analysis complete! Found ${results.summary.suspiciousPairs} suspicious pairs.`,
-        results.summary.suspiciousPairs > 0 ? 'info' : 'success'
+        results.summary.suspiciousPairs > 0 ? "info" : "success",
       )
       // Navigate to results page with the analysis data
       navigate(`/dashboard/assignments/${assignmentId}/similarity`, {
-        state: { results }
+        state: { results },
       })
     } catch (err) {
-      console.error('Plagiarism analysis failed:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Analysis failed'
-      showToast(errorMessage, 'error')
+      console.error("Plagiarism analysis failed:", err)
+      const errorMessage =
+        err instanceof Error ? err.message : "Analysis failed"
+      showToast(errorMessage, "error")
     } finally {
       setIsAnalyzing(false)
     }
@@ -127,8 +147,8 @@ export function AssignmentSubmissionsPage() {
       <DashboardLayout>
         <div className="flex items-center justify-center h-96">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto"></div>
-            <p className="text-gray-400">Loading coursework submissions...</p>
+            <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto"></div>
+            <p className="text-slate-300">Loading coursework submissions...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -143,13 +163,9 @@ export function AssignmentSubmissionsPage() {
           <CardContent className="p-6">
             <div className="flex items-center gap-3 text-red-400">
               <Inbox className="w-5 h-5" />
-              <p className="font-medium">{error || 'Coursework not found'}</p>
+              <p className="font-medium">{error || "Coursework not found"}</p>
             </div>
-            <BackButton
-              to={-1}
-              label="Go Back"
-              className="mt-4"
-            />
+            <BackButton to={-1} label="Go Back" className="mt-4" />
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -168,7 +184,9 @@ export function AssignmentSubmissionsPage() {
 
         {/* Assignment Info */}
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold text-white">{assignment.assignmentName}</h1>
+          <h1 className="text-3xl font-bold text-white">
+            {assignment.assignmentName}
+          </h1>
 
           <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
             <div className="flex items-center gap-2">
@@ -177,7 +195,9 @@ export function AssignmentSubmissionsPage() {
             </div>
             <div className="flex items-center gap-2">
               <Code className="w-4 h-4" />
-              <span className="capitalize">{assignment.programmingLanguage}</span>
+              <span className="capitalize">
+                {assignment.programmingLanguage}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
@@ -198,15 +218,21 @@ export function AssignmentSubmissionsPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-400">Total Submissions</p>
-                <p className="text-2xl font-bold text-white">{totalSubmissions}</p>
+                <p className="text-2xl font-bold text-white">
+                  {totalSubmissions}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-400">On Time</p>
-                <p className="text-2xl font-bold text-green-400">{onTimeCount}</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {onTimeCount}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-400">Late</p>
-                <p className="text-2xl font-bold text-yellow-400">{lateCount}</p>
+                <p className="text-2xl font-bold text-yellow-400">
+                  {lateCount}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -256,7 +282,9 @@ export function AssignmentSubmissionsPage() {
                   </div>
                   <div className="space-y-2">
                     <h3 className="text-lg font-semibold text-white">
-                      {searchQuery ? 'No matching submissions' : 'No submissions yet'}
+                      {searchQuery
+                        ? "No matching submissions"
+                        : "No submissions yet"}
                     </h3>
                     <p className="text-sm text-gray-400 max-w-md mx-auto">
                       {searchQuery
@@ -265,7 +293,7 @@ export function AssignmentSubmissionsPage() {
                     </p>
                   </div>
                   {searchQuery && (
-                    <Button onClick={() => setSearchQuery('')} className="mt-4">
+                    <Button onClick={() => setSearchQuery("")} className="mt-4">
                       Clear Search
                     </Button>
                   )}

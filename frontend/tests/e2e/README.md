@@ -18,11 +18,13 @@ TEST_STUDENT_PASSWORD=your_student_test_password
 ### Local Development Setup
 
 1. Copy the `.env.example` file to `.env` in the frontend directory:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Add the test credentials to your `.env` file:
+
    ```bash
    # E2E Test Credentials
    TEST_TEACHER_EMAIL=teacher@your-domain.com
@@ -30,7 +32,7 @@ TEST_STUDENT_PASSWORD=your_student_test_password
    TEST_STUDENT_EMAIL=student@your-domain.com
    TEST_STUDENT_PASSWORD=YourTestPassword123!
    ```
-   
+
    **Note:** Replace these placeholder values with your actual test account credentials.
 
 3. Run the E2E tests:

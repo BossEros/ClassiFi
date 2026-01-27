@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { FileText, Calendar } from 'lucide-react'
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent } from '@/presentation/components/ui/Card'
-import { getCurrentUser } from '@/business/services/authService'
-import { getStudentSubmissions } from '@/business/services/assignmentService'
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { FileText, Calendar } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { getCurrentUser } from "@/business/services/authService"
+import { getStudentSubmissions } from "@/business/services/assignmentService"
 
-import type { Submission } from '@/business/models/assignment/types'
+import type { Submission } from "@/business/models/assignment/types"
 
 export function AssignmentsPage() {
   const navigate = useNavigate()
@@ -18,7 +18,7 @@ export function AssignmentsPage() {
   useEffect(() => {
     const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate('/login')
+      navigate("/login")
       return
     }
 
@@ -27,11 +27,14 @@ export function AssignmentsPage() {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getStudentSubmissions(parseInt(currentUser.id), false) // Get all submissions, not just latest
+        const data = await getStudentSubmissions(
+          parseInt(currentUser.id),
+          false,
+        ) // Get all submissions, not just latest
         setSubmissions(data)
       } catch (err) {
-        console.error('Failed to fetch submissions:', err)
-        setError('Failed to load coursework. Please try refreshing the page.')
+        console.error("Failed to fetch submissions:", err)
+        setError("Failed to load coursework. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
       }
@@ -74,17 +77,27 @@ export function AssignmentsPage() {
               {submissions.map((submission) => (
                 <div
                   key={submission.id}
-                  onClick={() => navigate(`/dashboard/assignments/${submission.assignmentId}`)}
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/assignments/${submission.assignmentId}`,
+                    )
+                  }
                   className="p-4 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
                       <h3 className="text-base font-medium text-white mb-1">
-                        {submission.assignmentName || `Coursework ${submission.assignmentId}`}
+                        {submission.assignmentName ||
+                          `Coursework ${submission.assignmentId}`}
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-400">
                         <Calendar className="w-3.5 h-3.5" />
-                        <span>Submitted {new Date(submission.submittedAt).toLocaleDateString()}</span>
+                        <span>
+                          Submitted{" "}
+                          {new Date(
+                            submission.submittedAt,
+                          ).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -92,7 +105,7 @@ export function AssignmentsPage() {
                         Submitted
                       </span>
                       {submission.isLatest && (
-                        <span className="text-xs text-purple-400">Latest</span>
+                        <span className="text-xs text-teal-400">Latest</span>
                       )}
                     </div>
                   </div>
@@ -109,7 +122,9 @@ export function AssignmentsPage() {
               <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                 <FileText className="w-8 h-8 text-gray-500" />
               </div>
-              <p className="text-gray-300 font-medium mb-1">No submissions yet</p>
+              <p className="text-gray-300 font-medium mb-1">
+                No submissions yet
+              </p>
               <p className="text-sm text-gray-500">
                 Your submitted coursework will appear here.
               </p>

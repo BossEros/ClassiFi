@@ -1,18 +1,18 @@
-import * as plagiarismRepository from "@/data/repositories/plagiarismRepository";
-import { validateId } from "@/shared/utils/validators";
+import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
+import { validateId } from "@/shared/utils/validators"
 import type {
   AnalyzeResponse,
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
-} from "@/data/api/types";
+} from "@/data/api/types"
 
 export type {
   AnalyzeResponse,
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
-};
+}
 
 /**
  * Initiates plagiarism detection analysis for all submissions of a specific assignment.
@@ -25,20 +25,22 @@ export type {
 export async function analyzeAssignmentSubmissions(
   assignmentId: number,
 ): Promise<AnalyzeResponse> {
-  validateId(assignmentId, "assignment");
+  validateId(assignmentId, "assignment")
 
   const analysisResponse =
-    await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(assignmentId);
+    await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(
+      assignmentId,
+    )
 
   if (analysisResponse.error) {
-    throw new Error(analysisResponse.error);
+    throw new Error(analysisResponse.error)
   }
 
   if (!analysisResponse.data) {
-    throw new Error("Failed to analyze submissions");
+    throw new Error("Failed to analyze submissions")
   }
 
-  return analysisResponse.data;
+  return analysisResponse.data
 }
 
 /**
@@ -52,17 +54,20 @@ export async function analyzeAssignmentSubmissions(
 export async function getResultDetails(
   resultId: number,
 ): Promise<ResultDetailsResponse> {
-  validateId(resultId, "result");
+  validateId(resultId, "result")
 
-  const detailsResponse = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(resultId);
+  const detailsResponse =
+    await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(
+      resultId,
+    )
 
   if (detailsResponse.error) {
-    throw new Error(detailsResponse.error);
+    throw new Error(detailsResponse.error)
   }
 
   if (!detailsResponse.data) {
-    throw new Error("Failed to fetch result details");
+    throw new Error("Failed to fetch result details")
   }
 
-  return detailsResponse.data;
+  return detailsResponse.data
 }
