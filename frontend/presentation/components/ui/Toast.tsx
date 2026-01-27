@@ -41,7 +41,6 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
   React.useEffect(() => {
     if (isPaused) return
 
-    // Auto-dismiss after duration
     const dismissTimer = setTimeout(() => {
       handleDismiss()
     }, duration)
@@ -57,6 +56,8 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
   }
 
   const styles = variantStyles[variant]
+  const role = variant === 'error' ? 'alert' : 'status'
+  const ariaLive = variant === 'error' ? 'assertive' : 'polite'
 
   return (
     <div
