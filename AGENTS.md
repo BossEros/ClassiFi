@@ -53,15 +53,15 @@ You must run these commands to verify your work.
 **Frontend (`/frontend`)**
 
 ```bash
-npm run build   # MUST PASS: Checks for TypeScript type errors
-npm run lint    # Optional: Checks for code style issues
+pnpm run build   # MUST PASS: Checks for TypeScript type errors
+pnpm run lint    # Optional: Checks for code style issues
 ```
 
 **Backend (`/backend-ts`)**
 
 ```bash
-npm test        # MUST PASS: Runs unit tests
-npm run typecheck # MUST PASS: Checks for TypeScript errors
+pnpm test        # MUST PASS: Runs unit tests
+pnpm run typecheck # MUST PASS: Checks for TypeScript errors
 ```
 
 > **Failure Protocol**: If verification fails, stop, analyze the error, fix it, and re-verify. Do not proceed until the build/test passes.

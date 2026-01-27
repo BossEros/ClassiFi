@@ -211,5 +211,5 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ## Testing
 
-- **Unit Tests**: `npm run test` (Vitest). Focus on `business/services` and utility logic.
+- **Unit Tests**: `pnpm run test` (Vitest). Focus on `business/services` and utility logic.
 - **E2E Tests**: Playwright (setup in `tests/e2e`).
