@@ -13,10 +13,11 @@ export interface SelectProps extends Omit<
   options: SelectOption[]
   onChange?: (value: string) => void
   placeholder?: string
+  hasError?: boolean
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, options, onChange, placeholder, ...props }, ref) => {
+  ({ className, options, onChange, placeholder, hasError, ...props }, ref) => {
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
       if (onChange) {
         onChange(e.target.value)
@@ -30,11 +31,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           "hover:bg-white/10 hover:border-white/20",
           "focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50 focus:bg-white/10",
           "disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/5",
+          hasError &&
+            "border-red-500/50 focus:border-red-500 focus:ring-red-500/50",
           "[&>option]:bg-slate-900 [&>option]:text-white",
           className,
         )}
         onChange={handleChange}
         ref={ref}
+        aria-invalid={hasError ? true : props["aria-invalid"]}
         {...props}
       >
         {placeholder && (
