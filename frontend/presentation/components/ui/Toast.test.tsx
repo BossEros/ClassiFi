@@ -17,14 +17,14 @@ describe("Toast", () => {
       expect(screen.getByText("Test message")).toBeInTheDocument();
     });
 
-    it("renders with role status by default (success)", () => {
-      render(<Toast id="1" message="Success" onDismiss={vi.fn()} />);
+    it("renders with role status by default", () => {
+      render(<Toast id="1" message="Status" onDismiss={vi.fn()} />);
       expect(screen.getByRole("status")).toBeInTheDocument();
     });
 
     it("renders with role alert for error", () => {
-      render(<Toast id="1" message="Error" variant="error" onDismiss={vi.fn()} />);
-      expect(screen.getByRole("alert")).toBeInTheDocument();
+        render(<Toast id="1" message="Error" variant="error" onDismiss={vi.fn()} />);
+        expect(screen.getByRole("alert")).toBeInTheDocument();
     });
 
     it("renders dismiss button", () => {
@@ -86,33 +86,35 @@ describe("Toast", () => {
     });
 
     it("pauses timer on hover", async () => {
-      const onDismiss = vi.fn();
-      render(<Toast id="1" message="Test" duration={2000} onDismiss={onDismiss} />);
+        const onDismiss = vi.fn();
+        render(<Toast id="1" message="Test" duration={2000} onDismiss={onDismiss} />);
 
-      // Advance halfway
-      await act(async () => {
-        vi.advanceTimersByTime(1000);
-      });
+        const toast = screen.getByRole("status");
 
-      // Hover
-      fireEvent.mouseEnter(screen.getByRole("status"));
+        // Advance 1000ms
+        await act(async () => {
+            vi.advanceTimersByTime(1000);
+        });
 
-      // Advance past original duration
-      await act(async () => {
-        vi.advanceTimersByTime(2000);
-      });
+        // Hover
+        fireEvent.mouseEnter(toast);
 
-      expect(onDismiss).not.toHaveBeenCalled();
+        // Advance another 2000ms (total 3000ms, should have dismissed if not paused)
+        await act(async () => {
+            vi.advanceTimersByTime(2000);
+        });
 
-      // Unhover
-      fireEvent.mouseLeave(screen.getByRole("status"));
+        expect(onDismiss).not.toHaveBeenCalled();
 
-      // Advance full duration (since we restart timer on leave)
-      await act(async () => {
-        vi.advanceTimersByTime(2300); // 2000 + 300 animation
-      });
+        // Leave
+        fireEvent.mouseLeave(toast);
 
-      expect(onDismiss).toHaveBeenCalledWith("1");
+        // Advance full duration + animation
+        await act(async () => {
+            vi.advanceTimersByTime(2300);
+        });
+
+        expect(onDismiss).toHaveBeenCalledWith("1");
     });
   });
 
@@ -176,12 +178,11 @@ describe("ToastContainer", () => {
     ];
     render(<ToastContainer toasts={toasts} onDismiss={vi.fn()} />);
 
-    expect(screen.getByText("Success")).toBeInTheDocument();
-    expect(screen.getByText("Error")).toBeInTheDocument();
+    const successToast = screen.getByText("Success").closest('div');
+    const errorToast = screen.getByText("Error").closest('div');
 
-    // Verify roles
-    expect(screen.getByRole("status")).toHaveTextContent("Success");
-    expect(screen.getByRole("alert")).toHaveTextContent("Error");
+    expect(successToast?.className).toContain("bg-green");
+    expect(errorToast?.className).toContain("bg-red");
   });
 
   beforeEach(() => {
