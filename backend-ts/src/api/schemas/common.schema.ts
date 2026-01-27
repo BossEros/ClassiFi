@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 // ============================================================================
 // Shared Domain Schemas
@@ -13,9 +13,9 @@ export const DayOfWeekEnum = z.enum([
   "friday",
   "saturday",
   "sunday",
-]);
+])
 
-export type DayOfWeek = z.infer<typeof DayOfWeekEnum>;
+export type DayOfWeek = z.infer<typeof DayOfWeekEnum>
 
 /**
  * Class schedule schema - validates the schedule structure for class meetings.
@@ -25,9 +25,9 @@ export const ClassScheduleSchema = z.object({
   days: z.array(DayOfWeekEnum),
   startTime: z.string(), // HH:MM format
   endTime: z.string(), // HH:MM format
-});
+})
 
-export type ClassSchedule = z.infer<typeof ClassScheduleSchema>;
+export type ClassSchedule = z.infer<typeof ClassScheduleSchema>
 
 // ============================================================================
 // Common Response Schemas
@@ -37,9 +37,9 @@ export type ClassSchedule = z.infer<typeof ClassScheduleSchema>;
 export const SuccessMessageSchema = z.object({
   success: z.literal(true),
   message: z.string(),
-});
+})
 
-export type SuccessMessage = z.infer<typeof SuccessMessageSchema>;
+export type SuccessMessage = z.infer<typeof SuccessMessageSchema>
 
 // ============================================================================
 // Common Query Schemas
@@ -48,16 +48,16 @@ export type SuccessMessage = z.infer<typeof SuccessMessageSchema>;
 /** Generic limit query schema - used by dashboard endpoints */
 export const LimitQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
-});
+})
 
-export type LimitQuery = z.infer<typeof LimitQuerySchema>;
+export type LimitQuery = z.infer<typeof LimitQuerySchema>
 
 /** Latest only query schema - used by submission endpoints */
 export const LatestOnlyQuerySchema = z.object({
   latestOnly: z.coerce.boolean().default(true),
-});
+})
 
-export type LatestOnlyQuery = z.infer<typeof LatestOnlyQuerySchema>;
+export type LatestOnlyQuery = z.infer<typeof LatestOnlyQuerySchema>
 
 // ============================================================================
 // Common Param Schemas
@@ -66,13 +66,13 @@ export type LatestOnlyQuery = z.infer<typeof LatestOnlyQuerySchema>;
 /** User ID query schema */
 export const UserIdQuerySchema = z.object({
   userId: z.string(),
-});
+})
 
-export type UserIdQuery = z.infer<typeof UserIdQuerySchema>;
+export type UserIdQuery = z.infer<typeof UserIdQuerySchema>
 
 /** Student ID query schema */
 export const StudentIdQuerySchema = z.object({
   studentId: z.string(),
-});
+})
 
-export type StudentIdQuery = z.infer<typeof StudentIdQuerySchema>;
+export type StudentIdQuery = z.infer<typeof StudentIdQuerySchema>

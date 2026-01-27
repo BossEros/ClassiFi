@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   ClipboardList,
   Users,
@@ -8,194 +8,194 @@ import {
   Pencil,
   LogOut,
   BarChart3,
-} from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+} from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
   CardHeader,
-} from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
-import { BackButton } from "@/presentation/components/ui/BackButton";
-import { Tabs, TabPanel } from "@/presentation/components/ui/Tabs";
-import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu";
-import { AssignmentCard } from "@/presentation/components/dashboard/AssignmentCard";
-import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem";
-import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal";
-import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal";
-import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal";
-import { RemoveStudentModal } from "@/presentation/components/forms/RemoveStudentModal";
-import { getCurrentUser } from "@/business/services/authService";
+} from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { BackButton } from "@/presentation/components/ui/BackButton"
+import { Tabs, TabPanel } from "@/presentation/components/ui/Tabs"
+import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
+import { AssignmentCard } from "@/presentation/components/dashboard/AssignmentCard"
+import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem"
+import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal"
+import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal"
+import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal"
+import { RemoveStudentModal } from "@/presentation/components/forms/RemoveStudentModal"
+import { getCurrentUser } from "@/business/services/authService"
 import {
   getClassDetailData,
   deleteClass,
   deleteAssignment,
-} from "@/business/services/classService";
-import { useToast } from "@/shared/context/ToastContext";
-import type { User } from "@/business/models/auth/types";
+} from "@/business/services/classService"
+import { useToast } from "@/shared/context/ToastContext"
+import type { User } from "@/business/models/auth/types"
 import type {
   Class,
   Assignment,
   EnrolledStudent,
-} from "@/business/models/dashboard/types";
+} from "@/business/models/dashboard/types"
 
-type TabType = "assignments" | "students";
+type TabType = "assignments" | "students"
 
 export function ClassDetailPage() {
-  const navigate = useNavigate();
-  const { classId } = useParams<{ classId: string }>();
-  const { showToast } = useToast();
+  const navigate = useNavigate()
+  const { classId } = useParams<{ classId: string }>()
+  const { showToast } = useToast()
 
-  const [user, setUser] = useState<User | null>(null);
-  const [classInfo, setClassInfo] = useState<Class | null>(null);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [students, setStudents] = useState<EnrolledStudent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("assignments");
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null)
+  const [classInfo, setClassInfo] = useState<Class | null>(null)
+  const [assignments, setAssignments] = useState<Assignment[]>([])
+  const [students, setStudents] = useState<EnrolledStudent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>("assignments")
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
 
   // Assignment management state
   const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] =
-    useState(false);
+    useState(false)
   const [assignmentToDelete, setAssignmentToDelete] =
-    useState<Assignment | null>(null);
-  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false);
+    useState<Assignment | null>(null)
+  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
 
   // Student management state
   const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] =
-    useState(false);
+    useState(false)
   const [studentToRemove, setStudentToRemove] =
-    useState<EnrolledStudent | null>(null);
+    useState<EnrolledStudent | null>(null)
 
   // Check if user is a teacher or student
-  const isTeacher = user?.role === "teacher" || user?.role === "admin";
-  const isStudent = user?.role === "student";
+  const isTeacher = user?.role === "teacher" || user?.role === "admin"
+  const isStudent = user?.role === "student"
 
   const tabs = [
     { id: "assignments", label: "Coursework", icon: ClipboardList },
     { id: "students", label: "Students", icon: Users },
-  ];
+  ]
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate("/login");
-      return;
+      navigate("/login")
+      return
     }
 
-    setUser(currentUser);
+    setUser(currentUser)
 
     // Fetch class data
     const fetchClassData = async () => {
       if (!classId) {
-        setError("Class not found");
-        setIsLoading(false);
-        return;
+        setError("Class not found")
+        setIsLoading(false)
+        return
       }
 
       try {
-        setIsLoading(true);
-        setError(null);
+        setIsLoading(true)
+        setError(null)
 
         // Only pass teacherId if user is actually a teacher
         const isTeacher =
-          currentUser.role === "teacher" || currentUser.role === "admin";
+          currentUser.role === "teacher" || currentUser.role === "admin"
         const data = await getClassDetailData(
           parseInt(classId),
           isTeacher ? parseInt(currentUser.id) : undefined,
-        );
+        )
 
-        setClassInfo(data.classInfo);
-        setAssignments(data.assignments);
-        setStudents(data.students);
+        setClassInfo(data.classInfo)
+        setAssignments(data.assignments)
+        setStudents(data.students)
       } catch (err) {
-        console.error("Failed to fetch class data:", err);
-        setError("Failed to load class. Please try refreshing the page.");
+        console.error("Failed to fetch class data:", err)
+        setError("Failed to load class. Please try refreshing the page.")
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    fetchClassData();
-  }, [navigate, classId]);
+    fetchClassData()
+  }, [navigate, classId])
 
   const handleRemoveStudentClick = (student: EnrolledStudent) => {
-    setStudentToRemove(student);
-    setIsRemoveStudentModalOpen(true);
-  };
+    setStudentToRemove(student)
+    setIsRemoveStudentModalOpen(true)
+  }
 
   const handleRemoveStudentSuccess = () => {
     if (studentToRemove) {
-      setStudents(students.filter((s) => s.id !== studentToRemove.id));
-      showToast("Student removed successfully");
-      setStudentToRemove(null);
+      setStudents(students.filter((s) => s.id !== studentToRemove.id))
+      showToast("Student removed successfully")
+      setStudentToRemove(null)
     }
-  };
+  }
 
   const handleDeleteClass = async () => {
-    if (!user || !classId) return;
+    if (!user || !classId) return
 
     try {
-      setIsDeleting(true);
-      await deleteClass(parseInt(classId), parseInt(user.id));
-      navigate("/dashboard/classes", { state: { deleted: true } });
+      setIsDeleting(true)
+      await deleteClass(parseInt(classId), parseInt(user.id))
+      navigate("/dashboard/classes", { state: { deleted: true } })
     } catch (err) {
-      console.error("Failed to delete class:", err);
-      setError("Failed to delete class. Please try again.");
-      setIsDeleting(false);
-      setIsDeleteModalOpen(false);
+      console.error("Failed to delete class:", err)
+      setError("Failed to delete class. Please try again.")
+      setIsDeleting(false)
+      setIsDeleteModalOpen(false)
     }
-  };
+  }
 
   const handleAssignmentClick = (assignmentId: number) => {
     // Teachers see submissions page, students see assignment detail page
     if (isTeacher) {
-      navigate(`/dashboard/assignments/${assignmentId}/submissions`);
+      navigate(`/dashboard/assignments/${assignmentId}/submissions`)
     } else {
-      navigate(`/dashboard/assignments/${assignmentId}`);
+      navigate(`/dashboard/assignments/${assignmentId}`)
     }
-  };
+  }
 
   const handleLeaveSuccess = () => {
-    showToast("You have left the class");
-    navigate("/dashboard");
-  };
+    showToast("You have left the class")
+    navigate("/dashboard")
+  }
 
   const handleEditAssignment = (assignment: Assignment) => {
-    navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`);
-  };
+    navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`)
+  }
 
   const handleDeleteAssignmentClick = (assignment: Assignment) => {
-    setAssignmentToDelete(assignment);
-    setIsDeleteAssignmentModalOpen(true);
-  };
+    setAssignmentToDelete(assignment)
+    setIsDeleteAssignmentModalOpen(true)
+  }
 
   const handleConfirmDeleteAssignment = async () => {
-    if (!user || !assignmentToDelete) return;
+    if (!user || !assignmentToDelete) return
 
     try {
-      setIsDeletingAssignment(true);
-      await deleteAssignment(assignmentToDelete.id, parseInt(user.id));
+      setIsDeletingAssignment(true)
+      await deleteAssignment(assignmentToDelete.id, parseInt(user.id))
 
       // Remove from list
-      setAssignments(assignments.filter((a) => a.id !== assignmentToDelete.id));
-      showToast("Coursework deleted successfully");
-      setIsDeleteAssignmentModalOpen(false);
-      setAssignmentToDelete(null);
+      setAssignments(assignments.filter((a) => a.id !== assignmentToDelete.id))
+      showToast("Coursework deleted successfully")
+      setIsDeleteAssignmentModalOpen(false)
+      setAssignmentToDelete(null)
     } catch (err) {
-      console.error("Failed to delete assignment:", err);
-      showToast("Failed to delete coursework", "error");
+      console.error("Failed to delete assignment:", err)
+      showToast("Failed to delete coursework", "error")
     } finally {
-      setIsDeletingAssignment(false);
+      setIsDeletingAssignment(false)
     }
-  };
+  }
 
   const handleEditClass = () => {
-    navigate(`/dashboard/classes/${classId}/edit`);
-  };
+    navigate(`/dashboard/classes/${classId}/edit`)
+  }
 
   const dropdownItems = [
     {
@@ -212,7 +212,7 @@ export function ClassDetailPage() {
       variant: "danger" as const,
       onClick: () => setIsDeleteModalOpen(true),
     },
-  ];
+  ]
 
   return (
     <DashboardLayout>
@@ -246,7 +246,7 @@ export function ClassDetailPage() {
         /* Main Content */
         <>
           {/* Page Header */}
-          <div className="mb-6">
+          <div className="mb-6 flex flex-col items-stretch">
             <BackButton to={isStudent ? "/dashboard" : "/dashboard/classes"} />
             {/* Back button and title row */}
             <div className="flex items-center justify-between mb-4">
@@ -256,14 +256,14 @@ export function ClassDetailPage() {
                     {classInfo?.className}
                   </h1>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-slate-300">
                       Class Code:{" "}
-                      <span className="text-purple-400 font-mono">
+                      <span className="text-teal-400 font-mono">
                         {classInfo?.classCode}
                       </span>
                     </span>
                     <span className="text-gray-600">•</span>
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-slate-300">
                       {classInfo?.studentCount}{" "}
                       {classInfo?.studentCount === 1 ? "Student" : "Students"}
                     </span>
@@ -283,7 +283,10 @@ export function ClassDetailPage() {
                     <BarChart3 className="w-4 h-4 mr-2" />
                     Gradebook
                   </Button>
-                  <DropdownMenu items={dropdownItems} triggerLabel="Class Actions" />
+                  <DropdownMenu
+                    items={dropdownItems}
+                    triggerLabel="Class Actions"
+                  />
                 </div>
               )}
 
@@ -301,9 +304,11 @@ export function ClassDetailPage() {
 
             {/* Description if exists */}
             {classInfo?.description && (
-              <p className="text-gray-400 text-sm mb-4 max-w-2xl">
-                {classInfo.description}
-              </p>
+              <div className="mb-6 w-full">
+                <p className="text-gray-400 text-sm whitespace-pre-wrap break-words leading-relaxed">
+                  {classInfo.description}
+                </p>
+              </div>
             )}
 
             <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
@@ -426,7 +431,7 @@ export function ClassDetailPage() {
                       </p>
                       <p className="text-sm text-gray-500">
                         Share the class code{" "}
-                        <span className="text-purple-400 font-mono">
+                        <span className="text-teal-400 font-mono">
                           {classInfo?.classCode}
                         </span>{" "}
                         with your students.
@@ -453,8 +458,8 @@ export function ClassDetailPage() {
               <DeleteAssignmentModal
                 isOpen={isDeleteAssignmentModalOpen}
                 onClose={() => {
-                  setIsDeleteAssignmentModalOpen(false);
-                  setAssignmentToDelete(null);
+                  setIsDeleteAssignmentModalOpen(false)
+                  setAssignmentToDelete(null)
                 }}
                 onConfirm={handleConfirmDeleteAssignment}
                 isDeleting={isDeletingAssignment}
@@ -466,8 +471,8 @@ export function ClassDetailPage() {
                 <RemoveStudentModal
                   isOpen={isRemoveStudentModalOpen}
                   onClose={() => {
-                    setIsRemoveStudentModalOpen(false);
-                    setStudentToRemove(null);
+                    setIsRemoveStudentModalOpen(false)
+                    setStudentToRemove(null)
                   }}
                   onSuccess={handleRemoveStudentSuccess}
                   classId={parseInt(classId)}
@@ -499,5 +504,5 @@ export function ClassDetailPage() {
         </>
       )}
     </DashboardLayout>
-  );
+  )
 }

@@ -1,6 +1,12 @@
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
-import { Clock } from 'lucide-react'
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
+import { Clock } from "lucide-react"
 
 export function HistoryPage() {
   return (
@@ -29,4 +35,3 @@ export function HistoryPage() {
     </DashboardLayout>
   )
 }
-

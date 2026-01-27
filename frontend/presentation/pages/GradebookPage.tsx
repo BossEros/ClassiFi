@@ -1,63 +1,63 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Download, BarChart3, RefreshCw, BookOpen } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { Download, BarChart3, RefreshCw, BookOpen } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
   CardHeader,
-} from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
-import { BackButton } from "@/presentation/components/ui/BackButton";
-import { GradebookTable } from "@/presentation/components/gradebook/GradebookTable";
-import { GradeOverrideModal } from "@/presentation/components/gradebook/GradeOverrideModal";
-import { StatisticsPanel } from "@/presentation/components/gradebook/StatisticsPanel";
+} from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { BackButton } from "@/presentation/components/ui/BackButton"
+import { GradebookTable } from "@/presentation/components/gradebook/GradebookTable"
+import { GradeOverrideModal } from "@/presentation/components/gradebook/GradeOverrideModal"
+import { StatisticsPanel } from "@/presentation/components/gradebook/StatisticsPanel"
 import {
   useClassGradebook,
   useGradeOverride,
   useGradebookExport,
-} from "@/presentation/hooks/useGradebook";
-import { useToast } from "@/shared/context/ToastContext";
-import { getCurrentUser } from "@/business/services/authService";
+} from "@/presentation/hooks/useGradebook"
+import { useToast } from "@/shared/context/ToastContext"
+import { getCurrentUser } from "@/business/services/authService"
 import {
   getClassById,
   type GradeEntry,
   type GradebookStudent,
-} from "@/business/services/classService";
-import type { Class } from "@/business/models/dashboard/types";
+} from "@/business/services/classService"
+import type { Class } from "@/business/models/dashboard/types"
 
 interface OverrideTarget {
-  submissionId: number;
-  studentName: string;
-  assignmentName: string;
-  currentGrade: number | null;
-  totalScore: number;
+  submissionId: number
+  studentName: string
+  assignmentName: string
+  currentGrade: number | null
+  totalScore: number
 }
 
 export function GradebookPage() {
-  const navigate = useNavigate();
-  const { classId } = useParams<{ classId: string }>();
-  const { showToast } = useToast();
+  const navigate = useNavigate()
+  const { classId } = useParams<{ classId: string }>()
+  const { showToast } = useToast()
 
-  const [classInfo, setClassInfo] = useState<Class | null>(null);
-  const [classLoading, setClassLoading] = useState(true);
+  const [classInfo, setClassInfo] = useState<Class | null>(null)
+  const [classLoading, setClassLoading] = useState(true)
   const [overrideTarget, setOverrideTarget] = useState<OverrideTarget | null>(
     null,
-  );
-  const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false);
+  )
+  const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false)
 
   // Compute parsedClassId early to guard the hook call
-  const parsedClassId = classId ? parseInt(classId, 10) : 0;
+  const parsedClassId = classId ? parseInt(classId, 10) : 0
   const isValidClassId =
-    !isNaN(parsedClassId) && parsedClassId > 0 && classId !== undefined;
+    !isNaN(parsedClassId) && parsedClassId > 0 && classId !== undefined
 
   // Validate classId immediately
   useEffect(() => {
     if (!isValidClassId) {
-      showToast("Invalid class ID", "error");
-      navigate("/dashboard");
+      showToast("Invalid class ID", "error")
+      navigate("/dashboard")
     }
-  }, [isValidClassId, navigate, showToast]);
+  }, [isValidClassId, navigate, showToast])
 
   // Only call the hook with a valid classId to prevent unnecessary fetches
   // The hook internally guards with classId > 0
@@ -67,49 +67,49 @@ export function GradebookPage() {
     isLoading: gradebookLoading,
     error: gradebookError,
     refetch,
-  } = useClassGradebook(isValidClassId ? parsedClassId : 0);
+  } = useClassGradebook(isValidClassId ? parsedClassId : 0)
 
   const { override, removeOverride, isOverriding } = useGradeOverride(() => {
-    refetch();
-    setIsOverrideModalOpen(false);
-    showToast("Grade updated successfully");
-  });
+    refetch()
+    setIsOverrideModalOpen(false)
+    showToast("Grade updated successfully")
+  })
 
-  const { exportCSV, isExporting } = useGradebookExport();
+  const { exportCSV, isExporting } = useGradebookExport()
 
   // Check authentication and load class info
   useEffect(() => {
-    const user = getCurrentUser();
+    const user = getCurrentUser()
     if (!user) {
-      navigate("/login");
-      return;
+      navigate("/login")
+      return
     }
 
     // Only teachers can access gradebook
     if (user.role !== "teacher" && user.role !== "admin") {
-      navigate("/dashboard");
-      showToast("Only teachers can access the gradebook", "error");
-      return;
+      navigate("/dashboard")
+      showToast("Only teachers can access the gradebook", "error")
+      return
     }
 
     // Load class info
     const loadClassInfo = async () => {
-      if (!parsedClassId) return;
+      if (!parsedClassId) return
 
       try {
-        setClassLoading(true);
-        const info = await getClassById(parsedClassId);
-        setClassInfo(info);
+        setClassLoading(true)
+        const info = await getClassById(parsedClassId)
+        setClassInfo(info)
       } catch (err) {
-        console.error("Failed to load class info:", err);
-        showToast("Failed to load class information", "error");
+        console.error("Failed to load class info:", err)
+        showToast("Failed to load class information", "error")
       } finally {
-        setClassLoading(false);
+        setClassLoading(false)
       }
-    };
+    }
 
-    loadClassInfo();
-  }, [navigate, parsedClassId, showToast]);
+    loadClassInfo()
+  }, [navigate, parsedClassId, showToast])
 
   const handleGradeClick = (
     student: GradebookStudent,
@@ -117,7 +117,7 @@ export function GradebookPage() {
     assignmentName: string,
     totalScore: number,
   ) => {
-    if (!grade.submissionId) return;
+    if (!grade.submissionId) return
 
     setOverrideTarget({
       submissionId: grade.submissionId,
@@ -125,46 +125,46 @@ export function GradebookPage() {
       assignmentName,
       currentGrade: grade.grade,
       totalScore,
-    });
-    setIsOverrideModalOpen(true);
-  };
+    })
+    setIsOverrideModalOpen(true)
+  }
 
   const handleOverrideSubmit = async (
     newGrade: number,
     feedback: string | null,
   ) => {
-    if (!overrideTarget) return;
+    if (!overrideTarget) return
 
     try {
-      await override(overrideTarget.submissionId, newGrade, feedback);
+      await override(overrideTarget.submissionId, newGrade, feedback)
     } catch {
-      showToast("Failed to update grade", "error");
+      showToast("Failed to update grade", "error")
     }
-  };
+  }
 
   const handleRemoveOverride = async () => {
-    if (!overrideTarget) return;
+    if (!overrideTarget) return
 
     try {
-      await removeOverride(overrideTarget.submissionId);
+      await removeOverride(overrideTarget.submissionId)
     } catch {
-      showToast("Failed to remove override", "error");
+      showToast("Failed to remove override", "error")
     }
-  };
+  }
 
   const handleExport = async () => {
     try {
       await exportCSV(
         parsedClassId,
         `gradebook-${classInfo?.classCode || parsedClassId}.csv`,
-      );
-      showToast("Gradebook exported successfully");
+      )
+      showToast("Gradebook exported successfully")
     } catch {
-      showToast("Failed to export gradebook", "error");
+      showToast("Failed to export gradebook", "error")
     }
-  };
+  }
 
-  const isLoading = classLoading || gradebookLoading;
+  const isLoading = classLoading || gradebookLoading
 
   return (
     <DashboardLayout>
@@ -201,7 +201,7 @@ export function GradebookPage() {
 
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-600 to-teal-500 flex items-center justify-center">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -279,8 +279,8 @@ export function GradebookPage() {
             <GradeOverrideModal
               isOpen={isOverrideModalOpen}
               onClose={() => {
-                setIsOverrideModalOpen(false);
-                setOverrideTarget(null);
+                setIsOverrideModalOpen(false)
+                setOverrideTarget(null)
               }}
               onSubmit={handleOverrideSubmit}
               onRemoveOverride={handleRemoveOverride}
@@ -294,5 +294,5 @@ export function GradebookPage() {
         </>
       )}
     </DashboardLayout>
-  );
+  )
 }

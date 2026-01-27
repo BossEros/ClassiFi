@@ -1,65 +1,65 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/presentation/components/ui/Card";
-import { BackButton } from "@/presentation/components/ui/BackButton";
-import { LatePenaltyBadge } from "@/presentation/components/gradebook/LatePenaltyBadge";
-import { useStudentGrades } from "@/presentation/hooks/useGradebook";
-import { getCurrentUser } from "@/business/services/authService";
-import type { User } from "@/business/models/auth/types";
+} from "@/presentation/components/ui/Card"
+import { BackButton } from "@/presentation/components/ui/BackButton"
+import { LatePenaltyBadge } from "@/presentation/components/gradebook/LatePenaltyBadge"
+import { useStudentGrades } from "@/presentation/hooks/useGradebook"
+import { getCurrentUser } from "@/business/services/authService"
+import type { User } from "@/business/models/auth/types"
 import type {
   StudentClassGrades,
   StudentGradeEntry,
-} from "@/shared/types/gradebook";
+} from "@/shared/types/gradebook"
 
 export function StudentGradesPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate()
+  const [user, setUser] = useState<User | null>(null)
 
   // Load user
   useEffect(() => {
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate("/login");
-      return;
+      navigate("/login")
+      return
     }
-    setUser(currentUser);
-  }, [navigate]);
+    setUser(currentUser)
+  }, [navigate])
 
-  const studentId = user ? parseInt(user.id, 10) : 0;
-  const { grades, isLoading, error } = useStudentGrades(studentId);
+  const studentId = user ? parseInt(user.id, 10) : 0
+  const { grades, isLoading, error } = useStudentGrades(studentId)
 
   // Calculate overall average across all classes
   const calculateOverallAverage = (): number | null => {
-    if (!grades.length) return null;
+    if (!grades.length) return null
 
-    let total = 0;
-    let count = 0;
+    let total = 0
+    let count = 0
 
     grades.forEach((classGrade) => {
       classGrade.assignments.forEach((assignment) => {
         if (assignment.grade !== null && assignment.grade !== undefined) {
           // Calculate percentage for each assignment
           if (assignment.totalScore > 0) {
-            const percentage = (assignment.grade / assignment.totalScore) * 100;
-            total += percentage;
-            count++;
+            const percentage = (assignment.grade / assignment.totalScore) * 100
+            total += percentage
+            count++
           }
         }
-      });
-    });
+      })
+    })
 
-    return count > 0 ? Math.round(total / count) : null;
-  };
+    return count > 0 ? Math.round(total / count) : null
+  }
 
-  const overallAverage = calculateOverallAverage();
+  const overallAverage = calculateOverallAverage()
 
   return (
     <DashboardLayout>
@@ -73,7 +73,7 @@ export function StudentGradesPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">My Grades</h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-slate-300 text-sm">
               View your grades across all classes
             </p>
           </div>
@@ -87,7 +87,7 @@ export function StudentGradesPage() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading grades...</p>
+            <p className="text-slate-300">Loading grades...</p>
           </div>
         </div>
       ) : error ? (
@@ -97,25 +97,25 @@ export function StudentGradesPage() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
               <AlertTriangle className="w-8 h-8 text-red-400" />
             </div>
-            <p className="text-gray-300 font-medium mb-2">
+            <p className="text-slate-200 font-medium mb-2">
               Error Loading Grades
             </p>
-            <p className="text-sm text-gray-500">{error}</p>
+            <p className="text-sm text-slate-400">{error}</p>
           </div>
         </div>
       ) : (
         <>
           {/* Overall Average Card */}
           <div className="mb-6">
-            <Card className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border-purple-500/20">
+            <Card className="bg-gradient-to-r from-teal-500/10 to-teal-500/10 border-teal-500/20">
               <CardContent className="py-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                      <Trophy className="w-7 h-7 text-purple-400" />
+                    <div className="w-14 h-14 rounded-xl bg-teal-500/20 flex items-center justify-center">
+                      <Trophy className="w-7 h-7 text-teal-400" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-400">Overall Average</p>
+                      <p className="text-sm text-slate-300">Overall Average</p>
                       {overallAverage !== null ? (
                         <p
                           className={`text-3xl font-bold ${getGradeColor(overallAverage)}`}
@@ -123,14 +123,14 @@ export function StudentGradesPage() {
                           {overallAverage}%
                         </p>
                       ) : (
-                        <p className="text-2xl font-bold text-gray-500">
+                        <p className="text-2xl font-bold text-slate-400">
                           No grades yet
                         </p>
                       )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-gray-400">Classes Enrolled</p>
+                    <p className="text-sm text-slate-300">Classes Enrolled</p>
                     <p className="text-2xl font-bold text-white">
                       {grades.length}
                     </p>
@@ -159,8 +159,8 @@ export function StudentGradesPage() {
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                   <BookOpen className="w-8 h-8 text-gray-500" />
                 </div>
-                <p className="text-gray-300 font-medium mb-1">No grades yet</p>
-                <p className="text-sm text-gray-500">
+                <p className="text-slate-200 font-medium mb-1">No grades yet</p>
+                <p className="text-sm text-slate-400">
                   Complete assignments to see your grades here.
                 </p>
               </CardContent>
@@ -169,12 +169,12 @@ export function StudentGradesPage() {
         </>
       )}
     </DashboardLayout>
-  );
+  )
 }
 
 interface ClassGradesCardProps {
-  classGrades: StudentClassGrades;
-  onNavigate: () => void;
+  classGrades: StudentClassGrades
+  onNavigate: () => void
 }
 
 function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
@@ -182,23 +182,23 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
   const calculateAverage = (): number | null => {
     const gradedAssignments = classGrades.assignments.filter(
       (a) => a.grade !== null && a.grade !== undefined,
-    );
-    if (gradedAssignments.length === 0) return null;
+    )
+    if (gradedAssignments.length === 0) return null
 
     const total = gradedAssignments.reduce((sum, a) => {
       const percentage =
-        a.totalScore > 0 ? ((a.grade ?? 0) / a.totalScore) * 100 : 0;
-      return sum + percentage;
-    }, 0);
+        a.totalScore > 0 ? ((a.grade ?? 0) / a.totalScore) * 100 : 0
+      return sum + percentage
+    }, 0)
 
-    return Math.round(total / gradedAssignments.length);
-  };
+    return Math.round(total / gradedAssignments.length)
+  }
 
-  const average = calculateAverage();
+  const average = calculateAverage()
   const gradedCount = classGrades.assignments.filter(
     (a) => a.grade !== null,
-  ).length;
-  const totalCount = classGrades.assignments.length;
+  ).length
+  const totalCount = classGrades.assignments.length
 
   return (
     <Card
@@ -215,7 +215,7 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
           </div>
           {average !== null && (
             <div className="text-right">
-              <p className="text-sm text-gray-400">Average</p>
+              <p className="text-sm text-slate-300">Average</p>
               <p className={`text-2xl font-bold ${getGradeColor(average)}`}>
                 {average}%
               </p>
@@ -234,25 +234,25 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-sm text-center py-4">
+          <p className="text-slate-400 text-sm text-center py-4">
             No assignments in this class yet.
           </p>
         )}
       </CardContent>
     </Card>
-  );
+  )
 }
 
 interface AssignmentGradeRowProps {
-  assignment: StudentGradeEntry;
+  assignment: StudentGradeEntry
 }
 
 function AssignmentGradeRow({ assignment }: AssignmentGradeRowProps) {
-  const hasGrade = assignment.grade !== null && assignment.grade !== undefined;
+  const hasGrade = assignment.grade !== null && assignment.grade !== undefined
   const percentage =
     hasGrade && assignment.totalScore > 0
       ? ((assignment.grade ?? 0) / assignment.totalScore) * 100
-      : 0;
+      : 0
 
   return (
     <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
@@ -261,7 +261,7 @@ function AssignmentGradeRow({ assignment }: AssignmentGradeRowProps) {
           {assignment.assignmentName}
         </p>
         <div className="flex items-center gap-2 mt-1">
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-slate-300">
             Max: {assignment.totalScore} points
           </span>
           {assignment.isLate && (
@@ -286,17 +286,17 @@ function AssignmentGradeRow({ assignment }: AssignmentGradeRowProps) {
             </p>
           </>
         ) : (
-          <p className="text-sm text-gray-500">Not graded</p>
+          <p className="text-sm text-slate-400">Not graded</p>
         )}
       </div>
     </div>
-  );
+  )
 }
 
 function getGradeColor(percentage: number): string {
-  if (percentage >= 90) return "text-green-400";
-  if (percentage >= 75) return "text-blue-400";
-  if (percentage >= 60) return "text-yellow-400";
-  if (percentage >= 40) return "text-orange-400";
-  return "text-red-400";
+  if (percentage >= 90) return "text-green-400"
+  if (percentage >= 75) return "text-blue-400"
+  if (percentage >= 60) return "text-yellow-400"
+  if (percentage >= 40) return "text-orange-400"
+  return "text-red-400"
 }

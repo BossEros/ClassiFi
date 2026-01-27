@@ -1,7 +1,7 @@
-import { useState } from 'react'
-import { X, LogOut, AlertTriangle, RefreshCw } from 'lucide-react'
-import { Button } from '@/presentation/components/ui/Button'
-import { leaveClass } from '@/business/services/studentDashboardService'
+import { useState } from "react"
+import { X, LogOut, AlertTriangle, RefreshCw } from "lucide-react"
+import { Button } from "@/presentation/components/ui/Button"
+import { leaveClass } from "@/business/services/studentDashboardService"
 
 interface LeaveClassModalProps {
   isOpen: boolean
@@ -18,7 +18,7 @@ export function LeaveClassModal({
   onSuccess,
   studentId,
   classId,
-  className
+  className,
 }: LeaveClassModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -31,14 +31,14 @@ export function LeaveClassModal({
       const response = await leaveClass(studentId, classId)
 
       if (!response.success) {
-        setError(response.message || 'Failed to leave class')
+        setError(response.message || "Failed to leave class")
         return
       }
 
       onSuccess()
       onClose()
     } catch (err) {
-      setError('Failed to leave class. Please try again.')
+      setError("Failed to leave class. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -55,7 +55,7 @@ export function LeaveClassModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10">
+      <div className="relative w-full max-w-[448px] min-w-[320px] flex-shrink-0 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -80,7 +80,7 @@ export function LeaveClassModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-4">
+        <div className="p-6 space-y-4 w-full">
           {/* Error Message */}
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
@@ -91,17 +91,21 @@ export function LeaveClassModal({
           {/* Warning Message */}
           <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
             <p className="text-sm text-yellow-200">
-              Are you sure you want to leave{' '}
+              Are you sure you want to leave{" "}
               <span className="font-semibold text-white">{className}</span>?
             </p>
             <ul className="mt-3 space-y-2 text-xs text-gray-400">
               <li className="flex items-start gap-2">
                 <span className="text-yellow-500 mt-0.5">•</span>
-                <span>You will lose access to all class assignments and materials</span>
+                <span>
+                  You will lose access to all class assignments and materials
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-500 mt-0.5">•</span>
-                <span>Your submissions will still be visible to your teacher</span>
+                <span>
+                  Your submissions will still be visible to your teacher
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-yellow-500 mt-0.5">•</span>

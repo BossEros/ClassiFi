@@ -1,8 +1,8 @@
-import type { FastifyInstance } from "fastify";
-import { container } from "tsyringe";
-import { AuthService } from "@/services/auth.service.js";
-import { toJsonSchema } from "@/api/utils/swagger.js";
-import { SuccessMessageSchema } from "@/api/schemas/common.schema.js";
+import type { FastifyInstance } from "fastify"
+import { container } from "tsyringe"
+import { AuthService } from "@/services/auth.service.js"
+import { toJsonSchema } from "@/api/utils/swagger.js"
+import { SuccessMessageSchema } from "@/api/schemas/common.schema.js"
 import {
   RegisterRequestSchemaForDocs,
   LoginRequestSchema,
@@ -13,12 +13,12 @@ import {
   type LoginRequest,
   type ForgotPasswordRequest,
   type VerifyRequest,
-} from "../schemas/auth.schema.js";
-import { ApiError } from "../middlewares/error-handler.js";
+} from "../schemas/auth.schema.js"
+import { ApiError } from "../middlewares/error-handler.js"
 
 /** Auth routes - /api/v1/auth/* */
 export async function authRoutes(app: FastifyInstance): Promise<void> {
-  const authService = container.resolve<AuthService>("AuthService");
+  const authService = container.resolve<AuthService>("AuthService")
 
   /**
    * POST /register
@@ -35,18 +35,18 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       // Destructure to exclude confirmPassword (only needed for validation)
-      const { confirmPassword, ...registerData } = request.body;
+      const { confirmPassword, ...registerData } = request.body
 
-      const result = await authService.registerUser(registerData);
+      const result = await authService.registerUser(registerData)
 
       return reply.status(201).send({
         success: true,
         message: "Registration successful",
         user: result.userData,
         token: result.token,
-      });
+      })
     },
-  });
+  })
 
   /**
    * POST /login
@@ -62,17 +62,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const { email, password } = request.body;
-      const result = await authService.loginUser(email, password);
+      const { email, password } = request.body
+      const result = await authService.loginUser(email, password)
 
       return reply.send({
         success: true,
         message: "Login successful",
         user: result.userData,
         token: result.token,
-      });
+      })
     },
-  });
+  })
 
   /**
    * POST /verify
@@ -85,21 +85,21 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       body: toJsonSchema(VerifyRequestSchema),
     },
     handler: async (request, reply) => {
-      const { token } = request.body;
+      const { token } = request.body
 
       if (!token) {
-        throw new ApiError("Token is required", 400);
+        throw new ApiError("Token is required", 400)
       }
 
-      const userData = await authService.verifyToken(token);
+      const userData = await authService.verifyToken(token)
 
       return reply.send({
         success: true,
         message: "Token is valid",
         user: userData,
-      });
+      })
     },
-  });
+  })
 
   /**
    * POST /forgot-password
@@ -115,15 +115,15 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const { email } = request.body;
-      await authService.requestPasswordReset(email);
+      const { email } = request.body
+      await authService.requestPasswordReset(email)
 
       return reply.send({
         success: true,
         message: "If the email exists, a password reset link has been sent",
-      });
+      })
     },
-  });
+  })
 
   /**
    * POST /logout
@@ -141,7 +141,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         message: "Logout successful. Clear session on client.",
-      });
+      })
     },
-  });
+  })
 }

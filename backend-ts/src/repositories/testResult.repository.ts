@@ -1,27 +1,27 @@
-import { injectable } from "tsyringe";
-import { db } from "@/shared/database.js";
+import { injectable } from "tsyringe"
+import { db } from "@/shared/database.js"
 import {
   testResults,
   testCases,
   type TestResult,
   type NewTestResult,
-} from "@/models/index.js";
-import { eq } from "drizzle-orm";
+} from "@/models/index.js"
+import { eq } from "drizzle-orm"
 
 /** Database executor type that works with both db and transactions */
 type DbExecutor = {
-  insert: typeof db.insert;
-  delete: typeof db.delete;
-};
+  insert: typeof db.insert
+  delete: typeof db.delete
+}
 
 /** Test result with test case details */
 export interface TestResultWithCase extends TestResult {
   testCase: {
-    name: string;
-    isHidden: boolean;
-    expectedOutput: string;
-    input: string;
-  };
+    name: string
+    isHidden: boolean
+    expectedOutput: string
+    input: string
+  }
 }
 
 /**
@@ -36,7 +36,7 @@ export class TestResultRepository {
     return db
       .select()
       .from(testResults)
-      .where(eq(testResults.submissionId, submissionId));
+      .where(eq(testResults.submissionId, submissionId))
   }
 
   /**
@@ -66,7 +66,7 @@ export class TestResultRepository {
       })
       .from(testResults)
       .innerJoin(testCases, eq(testResults.testCaseId, testCases.id))
-      .where(eq(testResults.submissionId, submissionId));
+      .where(eq(testResults.submissionId, submissionId))
 
     return results.map((r) => ({
       id: r.id,
@@ -85,7 +85,7 @@ export class TestResultRepository {
         expectedOutput: r.testCaseExpectedOutput,
         input: r.testCaseInput,
       },
-    }));
+    }))
   }
 
   /**
@@ -95,9 +95,9 @@ export class TestResultRepository {
     data: Omit<NewTestResult, "id" | "createdAt">[],
     tx?: DbExecutor,
   ): Promise<TestResult[]> {
-    if (data.length === 0) return [];
-    const executor = tx ?? db;
-    return executor.insert(testResults).values(data).returning();
+    if (data.length === 0) return []
+    const executor = tx ?? db
+    return executor.insert(testResults).values(data).returning()
   }
 
   /**
@@ -107,12 +107,12 @@ export class TestResultRepository {
     submissionId: number,
     tx?: DbExecutor,
   ): Promise<number> {
-    const executor = tx ?? db;
+    const executor = tx ?? db
     const result = await executor
       .delete(testResults)
       .where(eq(testResults.submissionId, submissionId))
-      .returning({ id: testResults.id });
-    return result.length;
+      .returning({ id: testResults.id })
+    return result.length
   }
 
   /**
@@ -121,10 +121,10 @@ export class TestResultRepository {
   async calculateScore(
     submissionId: number,
   ): Promise<{ passed: number; total: number; percentage: number }> {
-    const results = await this.getBySubmissionId(submissionId);
-    const total = results.length;
-    const passed = results.filter((r) => r.status === "Accepted").length;
-    const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
-    return { passed, total, percentage };
+    const results = await this.getBySubmissionId(submissionId)
+    const total = results.length
+    const passed = results.filter((r) => r.status === "Accepted").length
+    const percentage = total > 0 ? Math.round((passed / total) * 100) : 0
+    return { passed, total, percentage }
   }
 }

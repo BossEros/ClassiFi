@@ -1,4 +1,4 @@
-import { supabase } from "@/data/api/supabaseClient";
+import { supabase } from "@/data/api/supabaseClient"
 import type {
   Session,
   AuthError,
@@ -7,7 +7,7 @@ import type {
   SignInWithPasswordCredentials,
   AuthResponse,
   UserResponse,
-} from "@supabase/supabase-js";
+} from "@supabase/supabase-js"
 
 /**
  * Standardized result for authentication operations.
@@ -15,10 +15,10 @@ import type {
  * @template T - The type of the optional data payload.
  */
 export interface AuthResult<T = void> {
-  success: boolean;
-  data?: T;
-  error?: AuthError | null;
-  message?: string;
+  success: boolean
+  data?: T
+  error?: AuthError | null
+  message?: string
 }
 
 /**
@@ -26,7 +26,7 @@ export interface AuthResult<T = void> {
  * Encapsulates auth logic, session management, and state listeners.
  */
 class SupabaseAuthAdapter {
-  private authSubscription: Subscription | null = null;
+  private authSubscription: Subscription | null = null
 
   /**
    * Initializes the auth state change listener.
@@ -36,33 +36,33 @@ class SupabaseAuthAdapter {
   initializeAuthListener(): void {
     // Avoid setting up multiple listeners
     if (this.authSubscription) {
-      return;
+      return
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[Auth] State change:", event);
+      console.log("[Auth] State change:", event)
 
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         // Token is managed by Supabase internally
         // apiClient retrieves it via getSession() when needed
         if (session?.access_token) {
-          console.log("[Auth] Session established/refreshed");
+          console.log("[Auth] Session established/refreshed")
         }
       } else if (event === "SIGNED_OUT") {
         // Clear user data (token is managed by Supabase)
-        localStorage.removeItem("user");
-        console.log("[Auth] User signed out, auth state cleared");
+        localStorage.removeItem("user")
+        console.log("[Auth] User signed out, auth state cleared")
 
         // Only redirect if not already on login page
         if (!window.location.pathname.includes("/login")) {
-          window.location.href = "/login";
+          window.location.href = "/login"
         }
       }
-    });
+    })
 
-    this.authSubscription = subscription;
+    this.authSubscription = subscription
   }
 
   /**
@@ -71,8 +71,8 @@ class SupabaseAuthAdapter {
    */
   cleanupAuthListener(): void {
     if (this.authSubscription) {
-      this.authSubscription.unsubscribe();
-      this.authSubscription = null;
+      this.authSubscription.unsubscribe()
+      this.authSubscription = null
     }
   }
 
@@ -82,12 +82,12 @@ class SupabaseAuthAdapter {
    * @returns A promise resolving to an object containing the session and any error.
    */
   async getSession(): Promise<{
-    session: Session | null;
-    error: AuthError | null;
+    session: Session | null
+    error: AuthError | null
   }> {
-    const { data, error } = await supabase.auth.getSession();
+    const { data, error } = await supabase.auth.getSession()
 
-    return { session: data.session, error };
+    return { session: data.session, error }
   }
 
   /**
@@ -96,9 +96,9 @@ class SupabaseAuthAdapter {
    * @returns A promise resolving to an object containing any error that occurred during sign-out.
    */
   async signOut(): Promise<{ error: AuthError | null }> {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut()
 
-    return { error };
+    return { error }
   }
 
   /**
@@ -110,7 +110,7 @@ class SupabaseAuthAdapter {
   async signInWithPassword(
     credentials: SignInWithPasswordCredentials,
   ): Promise<AuthResponse> {
-    return await supabase.auth.signInWithPassword(credentials);
+    return await supabase.auth.signInWithPassword(credentials)
   }
 
   /**
@@ -120,7 +120,7 @@ class SupabaseAuthAdapter {
    * @returns A promise resolving to the user update response.
    */
   async updateUser(attributes: UserAttributes): Promise<UserResponse> {
-    return await supabase.auth.updateUser(attributes);
+    return await supabase.auth.updateUser(attributes)
   }
 
   /**
@@ -131,24 +131,24 @@ class SupabaseAuthAdapter {
    * @returns A promise resolving to an AuthResult indicating success or failure.
    */
   async initializeResetSession(options?: {
-    hash?: string;
-    search?: string;
+    hash?: string
+    search?: string
   }): Promise<AuthResult> {
     try {
       // Extract tokens from URL hash or parameters
-      const hash = options?.hash ?? window.location.hash;
-      const search = options?.search ?? window.location.search;
+      const hash = options?.hash ?? window.location.hash
+      const search = options?.search ?? window.location.search
 
-      const hashParams = new URLSearchParams(hash.substring(1));
-      const searchParams = new URLSearchParams(search);
+      const hashParams = new URLSearchParams(hash.substring(1))
+      const searchParams = new URLSearchParams(search)
 
-      const accessToken = hashParams.get("access_token");
-      const refreshToken = hashParams.get("refresh_token");
-      const tokenType = hashParams.get("type") || searchParams.get("type");
-      const urlError = hashParams.get("error") || searchParams.get("error");
+      const accessToken = hashParams.get("access_token")
+      const refreshToken = hashParams.get("refresh_token")
+      const tokenType = hashParams.get("type") || searchParams.get("type")
+      const urlError = hashParams.get("error") || searchParams.get("error")
       const urlErrorDescription =
         hashParams.get("error_description") ||
-        searchParams.get("error_description");
+        searchParams.get("error_description")
 
       if (urlError) {
         return {
@@ -156,15 +156,15 @@ class SupabaseAuthAdapter {
           message:
             urlErrorDescription ||
             "Invalid or expired reset link. Please request a new password reset.",
-        };
+        }
       }
 
       if (tokenType !== "recovery" && !accessToken) {
         // If we don't have a recovery token type OR an access token, check if we already have a session
-        const { session } = await this.getSession();
+        const { session } = await this.getSession()
 
         if (session) {
-          return { success: true };
+          return { success: true }
         }
 
         // No session and no tokens
@@ -172,56 +172,56 @@ class SupabaseAuthAdapter {
           success: false,
           message:
             "Invalid reset link type. Please request a new password reset.",
-        };
+        }
       }
 
       if (!accessToken || !refreshToken) {
         // Maybe the user is already logged in or clicked a magic link that just works?
         // Let's double check session
-        const { session } = await this.getSession();
+        const { session } = await this.getSession()
 
         if (session) {
-          return { success: true };
+          return { success: true }
         }
 
         return {
           success: false,
           message:
             "Missing required tokens. Please request a new password reset.",
-        };
+        }
       }
 
       // Manually set the session using the tokens from the URL
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: accessToken,
         refresh_token: refreshToken,
-      });
+      })
 
       if (sessionError) {
         return {
           success: false,
           message:
             "Unable to establish reset session. The link may have expired. Please request a new password reset.",
-        };
+        }
       }
 
       // Verify session was established
-      const { session } = await this.getSession();
+      const { session } = await this.getSession()
 
       if (!session) {
         return {
           success: false,
           message:
             "Unable to verify session. Please request a new password reset.",
-        };
+        }
       }
 
       // Clear the hash from URL for security (if we are using the real window)
       if (!options?.hash) {
-        window.history.replaceState(null, "", window.location.pathname);
+        window.history.replaceState(null, "", window.location.pathname)
       }
 
-      return { success: true };
+      return { success: true }
     } catch (error) {
       return {
         success: false,
@@ -229,9 +229,9 @@ class SupabaseAuthAdapter {
           error instanceof Error
             ? error.message
             : "Failed to verify reset link.",
-      };
+      }
     }
   }
 }
 
-export const supabaseAuthAdapter = new SupabaseAuthAdapter();
+export const supabaseAuthAdapter = new SupabaseAuthAdapter()

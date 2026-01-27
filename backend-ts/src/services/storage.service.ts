@@ -1,9 +1,9 @@
-import { injectable } from "tsyringe";
-import { supabase } from "../shared/supabase.js";
-import { type IStorageService } from "./interfaces/storage.interface.js";
+import { injectable } from "tsyringe"
+import { supabase } from "../shared/supabase.js"
+import { type IStorageService } from "./interfaces/storage.interface.js"
 
 // Re-export for backwards compatibility
-export type { IStorageService } from "./interfaces/storage.interface.js";
+export type { IStorageService } from "./interfaces/storage.interface.js"
 
 /**
  * Supabase Storage Service implementation.
@@ -24,28 +24,28 @@ export class StorageService implements IStorageService {
     const { error } = await supabase.storage.from(bucket).upload(path, data, {
       contentType,
       upsert,
-    });
+    })
 
     if (error) {
-      console.error(`Storage upload error for ${path}:`, error);
-      throw new Error(`File upload failed: ${error.message}`);
+      console.error(`Storage upload error for ${path}:`, error)
+      throw new Error(`File upload failed: ${error.message}`)
     }
 
-    return path;
+    return path
   }
 
   /**
    * Download a file from Supabase Storage.
    */
   async download(bucket: string, path: string): Promise<string> {
-    const { data, error } = await supabase.storage.from(bucket).download(path);
+    const { data, error } = await supabase.storage.from(bucket).download(path)
 
     if (error) {
-      console.error(`Storage download error for ${path}:`, error);
-      throw new Error(`File download failed: ${error.message}`);
+      console.error(`Storage download error for ${path}:`, error)
+      throw new Error(`File download failed: ${error.message}`)
     }
 
-    return await data.text();
+    return await data.text()
   }
 
   /**
@@ -54,19 +54,19 @@ export class StorageService implements IStorageService {
    */
   async deleteFiles(bucket: string, paths: string[]): Promise<number> {
     if (paths.length === 0) {
-      return 0;
+      return 0
     }
 
-    const { error, data } = await supabase.storage.from(bucket).remove(paths);
+    const { error, data } = await supabase.storage.from(bucket).remove(paths)
 
     if (error) {
-      console.error(`Storage delete error:`, error);
-      return 0;
+      console.error(`Storage delete error:`, error)
+      return 0
     }
 
-    const deletedCount = data?.length ?? 0;
-    console.log(`Deleted ${deletedCount} files from ${bucket}`);
-    return deletedCount;
+    const deletedCount = data?.length ?? 0
+    console.log(`Deleted ${deletedCount} files from ${bucket}`)
+    return deletedCount
   }
 
   /**
@@ -80,14 +80,14 @@ export class StorageService implements IStorageService {
   ): Promise<string> {
     const { data, error } = await supabase.storage
       .from(bucket)
-      .createSignedUrl(path, expiresIn, options);
+      .createSignedUrl(path, expiresIn, options)
 
     if (error) {
-      console.error(`Storage signed URL error for ${path}:`, error);
-      throw new Error(`Failed to create signed URL: ${error.message}`);
+      console.error(`Storage signed URL error for ${path}:`, error)
+      throw new Error(`Failed to create signed URL: ${error.message}`)
     }
 
-    return data?.signedUrl ?? "";
+    return data?.signedUrl ?? ""
   }
 
   // ============ Convenience Methods ============
@@ -98,7 +98,7 @@ export class StorageService implements IStorageService {
    * @returns Number of files deleted
    */
   async deleteSubmissionFiles(filePaths: string[]): Promise<number> {
-    return await this.deleteFiles("submissions", filePaths);
+    return await this.deleteFiles("submissions", filePaths)
   }
 
   /**
@@ -109,17 +109,17 @@ export class StorageService implements IStorageService {
   async deleteAvatar(avatarUrl: string): Promise<boolean> {
     try {
       // Extract path from URL if necessary
-      let path = avatarUrl;
+      let path = avatarUrl
       if (avatarUrl.includes("/avatars/")) {
-        const urlParts = avatarUrl.split("/avatars/");
-        path = urlParts[urlParts.length - 1];
+        const urlParts = avatarUrl.split("/avatars/")
+        path = urlParts[urlParts.length - 1]
       }
 
-      const result = await this.deleteFiles("avatars", [path]);
-      return result > 0;
+      const result = await this.deleteFiles("avatars", [path])
+      return result > 0
     } catch (error) {
-      console.error("Failed to delete avatar:", error);
-      return false;
+      console.error("Failed to delete avatar:", error)
+      return false
     }
   }
 
@@ -134,7 +134,7 @@ export class StorageService implements IStorageService {
     data: Buffer,
     contentType: string,
   ): Promise<string> {
-    const path = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${filename}`;
-    return await this.upload("submissions", path, data, contentType);
+    const path = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${filename}`
+    return await this.upload("submissions", path, data, contentType)
   }
 }

@@ -1,12 +1,12 @@
-import type { FastifyInstance } from "fastify";
-import { container } from "tsyringe";
-import { StudentDashboardService } from "@/services/student-dashboard.service.js";
-import { toJsonSchema } from "@/api/utils/swagger.js";
+import type { FastifyInstance } from "fastify"
+import { container } from "tsyringe"
+import { StudentDashboardService } from "@/services/student-dashboard.service.js"
+import { toJsonSchema } from "@/api/utils/swagger.js"
 import {
   SuccessMessageSchema,
   LimitQuerySchema,
-} from "@/api/schemas/common.schema.js";
-import { StudentIdParamSchema } from "@/api/schemas/class.schema.js";
+} from "@/api/schemas/common.schema.js"
+import { StudentIdParamSchema } from "@/api/schemas/class.schema.js"
 import {
   JoinClassRequestSchema,
   LeaveClassRequestSchema,
@@ -17,7 +17,7 @@ import {
   JoinClassResponseSchema,
   type JoinClassRequest,
   type LeaveClassRequest,
-} from "@/api/schemas/dashboard.schema.js";
+} from "@/api/schemas/dashboard.schema.js"
 
 /** Student dashboard routes - /api/v1/student/dashboard/* */
 export async function studentDashboardRoutes(
@@ -25,18 +25,18 @@ export async function studentDashboardRoutes(
 ): Promise<void> {
   const dashboardService = container.resolve<StudentDashboardService>(
     "StudentDashboardService",
-  );
+  )
 
   /**
    * GET /:studentId
    * Get complete dashboard data for a student
    */
   app.get<{
-    Params: { studentId: number };
+    Params: { studentId: number }
     Querystring: {
-      enrolledClassesLimit?: number;
-      pendingAssignmentsLimit?: number;
-    };
+      enrolledClassesLimit?: number
+      pendingAssignmentsLimit?: number
+    }
   }>("/:studentId", {
     schema: {
       tags: ["Student Dashboard"],
@@ -48,24 +48,24 @@ export async function studentDashboardRoutes(
       },
     },
     handler: async (request, reply) => {
-      const { studentId } = request.params;
+      const { studentId } = request.params
       const { enrolledClassesLimit = 12, pendingAssignmentsLimit = 10 } =
-        request.query;
+        request.query
 
       const data = await dashboardService.getDashboardData(
         studentId,
         enrolledClassesLimit,
         pendingAssignmentsLimit,
-      );
+      )
 
       return reply.send({
         success: true,
         message: "Dashboard data retrieved successfully",
         enrolledClasses: data.enrolledClasses,
         pendingAssignments: data.pendingAssignments,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /:studentId/classes
@@ -84,22 +84,22 @@ export async function studentDashboardRoutes(
         },
       },
       handler: async (request, reply) => {
-        const { studentId } = request.params;
-        const { limit = 12} = request.query;
+        const { studentId } = request.params
+        const { limit = 12 } = request.query
 
         const classes = await dashboardService.getEnrolledClasses(
           studentId,
           limit,
-        );
+        )
 
         return reply.send({
           success: true,
           message: "Enrolled classes retrieved successfully",
           classes,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * GET /:studentId/assignments
@@ -118,22 +118,22 @@ export async function studentDashboardRoutes(
         },
       },
       handler: async (request, reply) => {
-        const { studentId } = request.params;
-        const { limit = 10 } = request.query;
+        const { studentId } = request.params
+        const { limit = 10 } = request.query
 
         const assignments = await dashboardService.getPendingAssignments(
           studentId,
           limit,
-        );
+        )
 
         return reply.send({
           success: true,
           message: "Pending assignments retrieved successfully",
           assignments,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * POST /join
@@ -149,17 +149,17 @@ export async function studentDashboardRoutes(
       },
     },
     handler: async (request, reply) => {
-      const { studentId, classCode } = request.body;
+      const { studentId, classCode } = request.body
 
-      const classData = await dashboardService.joinClass(studentId, classCode);
+      const classData = await dashboardService.joinClass(studentId, classCode)
 
       return reply.send({
         success: true,
         message: "Successfully joined the class!",
         classInfo: classData,
-      });
+      })
     },
-  });
+  })
 
   /**
    * POST /leave
@@ -175,14 +175,14 @@ export async function studentDashboardRoutes(
       },
     },
     handler: async (request, reply) => {
-      const { studentId, classId } = request.body;
+      const { studentId, classId } = request.body
 
-      await dashboardService.leaveClass(studentId, classId);
+      await dashboardService.leaveClass(studentId, classId)
 
       return reply.send({
         success: true,
         message: "Successfully left the class.",
-      });
+      })
     },
-  });
+  })
 }

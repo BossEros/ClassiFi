@@ -1,8 +1,8 @@
-import type { FastifyInstance } from "fastify";
-import { container } from "tsyringe";
-import { ClassService } from "@/services/class.service.js";
-import { AssignmentService } from "@/services/assignment.service.js";
-import { toJsonSchema } from "@/api/utils/swagger.js";
+import type { FastifyInstance } from "fastify"
+import { container } from "tsyringe"
+import { ClassService } from "@/services/class.service.js"
+import { AssignmentService } from "@/services/assignment.service.js"
+import { toJsonSchema } from "@/api/utils/swagger.js"
 import {
   CreateClassRequestSchema,
   UpdateClassRequestSchema,
@@ -23,20 +23,20 @@ import {
   type CreateClassRequest,
   type UpdateClassRequest,
   type DeleteClassRequest,
-} from "@/api/schemas/class.schema.js";
+} from "@/api/schemas/class.schema.js"
 import {
   CreateAssignmentRequestSchema,
   AssignmentListResponseSchema,
   CreateAssignmentResponseSchema,
   type CreateAssignmentRequest,
-} from "@/api/schemas/assignment.schema.js";
-import { BadRequestError } from "@/api/middlewares/error-handler.js";
+} from "@/api/schemas/assignment.schema.js"
+import { BadRequestError } from "@/api/middlewares/error-handler.js"
 
 /** Class routes - /api/v1/classes/* */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
-  const classService = container.resolve<ClassService>("ClassService");
+  const classService = container.resolve<ClassService>("ClassService")
   const assignmentService =
-    container.resolve<AssignmentService>("AssignmentService");
+    container.resolve<AssignmentService>("AssignmentService")
 
   /**
    * POST /
@@ -52,15 +52,15 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const classData = await classService.createClass(request.body);
+      const classData = await classService.createClass(request.body)
 
       return reply.status(201).send({
         success: true,
         message: "Class created successfully",
         class: classData,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /generate-code
@@ -75,23 +75,23 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (_request, reply) => {
-      const code = await classService.generateClassCode();
+      const code = await classService.generateClassCode()
 
       return reply.send({
         success: true,
         code,
         message: "Class code generated successfully",
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /teacher/:teacherId
    * Get all classes for a teacher
    */
   app.get<{
-    Params: { teacherId: string };
-    Querystring: { activeOnly?: string };
+    Params: { teacherId: string }
+    Querystring: { activeOnly?: string }
   }>("/teacher/:teacherId", {
     schema: {
       tags: ["Classes"],
@@ -103,25 +103,25 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const teacherId = parseInt(request.params.teacherId, 10);
-      const activeOnly = request.query.activeOnly !== "false";
+      const teacherId = parseInt(request.params.teacherId, 10)
+      const activeOnly = request.query.activeOnly !== "false"
 
       if (isNaN(teacherId)) {
-        throw new BadRequestError("Invalid teacher ID");
+        throw new BadRequestError("Invalid teacher ID")
       }
 
       const classes = await classService.getClassesByTeacher(
         teacherId,
         activeOnly,
-      );
+      )
 
       return reply.send({
         success: true,
         message: "Classes retrieved successfully",
         classes,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /:classId
@@ -140,29 +140,29 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const classId = parseInt(request.params.classId, 10);
+        const classId = parseInt(request.params.classId, 10)
         const teacherId = request.query.teacherId
           ? parseInt(request.query.teacherId, 10)
-          : undefined;
+          : undefined
 
         if (isNaN(classId)) {
-          throw new BadRequestError("Invalid class ID");
+          throw new BadRequestError("Invalid class ID")
         }
 
         if (teacherId !== undefined && isNaN(teacherId)) {
-          throw new BadRequestError("Invalid teacher ID");
+          throw new BadRequestError("Invalid teacher ID")
         }
 
-        const classData = await classService.getClassById(classId, teacherId);
+        const classData = await classService.getClassById(classId, teacherId)
 
         return reply.send({
           success: true,
           message: "Class retrieved successfully",
           class: classData,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * PUT /:classId
@@ -181,10 +181,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const classId = parseInt(request.params.classId, 10);
+        const classId = parseInt(request.params.classId, 10)
 
         if (isNaN(classId)) {
-          throw new BadRequestError("Invalid class ID");
+          throw new BadRequestError("Invalid class ID")
         }
 
         const {
@@ -196,7 +196,7 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           semester,
           academicYear,
           schedule,
-        } = request.body;
+        } = request.body
 
         const classData = await classService.updateClass(classId, teacherId, {
           className,
@@ -206,16 +206,16 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           semester,
           academicYear,
           schedule,
-        });
+        })
 
         return reply.send({
           success: true,
           message: "Class updated successfully",
           class: classData,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * DELETE /:classId
@@ -234,22 +234,22 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const classId = parseInt(request.params.classId, 10);
+        const classId = parseInt(request.params.classId, 10)
 
         if (isNaN(classId)) {
-          throw new BadRequestError("Invalid class ID");
+          throw new BadRequestError("Invalid class ID")
         }
 
-        const { teacherId } = request.body;
-        await classService.deleteClass(classId, teacherId);
+        const { teacherId } = request.body
+        await classService.deleteClass(classId, teacherId)
 
         return reply.send({
           success: true,
           message: "Class deleted successfully",
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * POST /:classId/assignments
@@ -268,10 +268,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const classId = parseInt(request.params.classId, 10);
+        const classId = parseInt(request.params.classId, 10)
 
         if (isNaN(classId)) {
-          throw new BadRequestError("Invalid class ID");
+          throw new BadRequestError("Invalid class ID")
         }
 
         const {
@@ -285,20 +285,20 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
           templateCode,
           totalScore,
           scheduledDate,
-        } = request.body;
+        } = request.body
 
-        const parsedDeadline = new Date(deadline);
+        const parsedDeadline = new Date(deadline)
         if (isNaN(parsedDeadline.getTime())) {
-          throw new BadRequestError("Invalid deadline date");
+          throw new BadRequestError("Invalid deadline date")
         }
 
-        let parsedScheduledDate: Date | null = null;
+        let parsedScheduledDate: Date | null = null
         if (scheduledDate) {
-          const date = new Date(scheduledDate);
+          const date = new Date(scheduledDate)
           if (isNaN(date.getTime())) {
-            throw new BadRequestError("Invalid scheduled date");
+            throw new BadRequestError("Invalid scheduled date")
           }
-          parsedScheduledDate = date;
+          parsedScheduledDate = date
         }
 
         const assignment = await assignmentService.createAssignment(
@@ -315,16 +315,16 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
             totalScore,
             scheduledDate: parsedScheduledDate,
           },
-        );
+        )
 
         return reply.status(201).send({
           success: true,
           message: "Assignment created successfully",
           assignment,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * GET /:classId/assignments
@@ -340,21 +340,21 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10);
+      const classId = parseInt(request.params.classId, 10)
 
       if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID");
+        throw new BadRequestError("Invalid class ID")
       }
 
-      const assignments = await classService.getClassAssignments(classId);
+      const assignments = await classService.getClassAssignments(classId)
 
       return reply.send({
         success: true,
         message: "Assignments retrieved successfully",
         assignments,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /:classId/students
@@ -370,29 +370,29 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10);
+      const classId = parseInt(request.params.classId, 10)
 
       if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID");
+        throw new BadRequestError("Invalid class ID")
       }
 
-      const students = await classService.getClassStudents(classId);
+      const students = await classService.getClassStudents(classId)
 
       return reply.send({
         success: true,
         message: "Students retrieved successfully",
         students,
-      });
+      })
     },
-  });
+  })
 
   /**
    * DELETE /:classId/students/:studentId
    * Remove a student from a class
    */
   app.delete<{
-    Params: { classId: string; studentId: string };
-    Querystring: { teacherId: string };
+    Params: { classId: string; studentId: string }
+    Querystring: { teacherId: string }
   }>("/:classId/students/:studentId", {
     schema: {
       tags: ["Classes"],
@@ -404,20 +404,20 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10);
-      const studentId = parseInt(request.params.studentId, 10);
-      const teacherId = parseInt(request.query.teacherId, 10);
+      const classId = parseInt(request.params.classId, 10)
+      const studentId = parseInt(request.params.studentId, 10)
+      const teacherId = parseInt(request.query.teacherId, 10)
 
       if (isNaN(classId) || isNaN(studentId) || isNaN(teacherId)) {
-        throw new BadRequestError("Invalid ID parameters");
+        throw new BadRequestError("Invalid ID parameters")
       }
 
-      await classService.removeStudent({ classId, studentId, teacherId });
+      await classService.removeStudent({ classId, studentId, teacherId })
 
       return reply.send({
         success: true,
         message: "Student removed successfully",
-      });
+      })
     },
-  });
+  })
 }

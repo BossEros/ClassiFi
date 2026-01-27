@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as plagiarismService from "@/business/services/plagiarismService";
-import * as plagiarismRepository from "@/data/repositories/plagiarismRepository";
-import type { AnalyzeResponse, ResultDetailsResponse } from "@/data/api/types";
+import * as plagiarismService from "@/business/services/plagiarismService"
+import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
+import type { AnalyzeResponse, ResultDetailsResponse } from "@/data/api/types"
 
 // Mock the repository
-vi.mock("@/data/repositories/plagiarismRepository");
+vi.mock("@/data/repositories/plagiarismRepository")
 
 describe("plagiarismService", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   // ============================================================================
   // analyzeAssignmentSubmissions Tests
@@ -53,7 +53,7 @@ describe("plagiarismService", () => {
         },
       ],
       warnings: [],
-    };
+    }
 
     it("returns analysis results for an assignment", async () => {
       vi.mocked(
@@ -61,23 +61,23 @@ describe("plagiarismService", () => {
       ).mockResolvedValue({
         data: mockAnalysisResponse,
         status: 200,
-      });
+      })
 
-      const result = await plagiarismService.analyzeAssignmentSubmissions(1);
+      const result = await plagiarismService.analyzeAssignmentSubmissions(1)
 
       expect(
         plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment,
-      ).toHaveBeenCalledWith(1);
-      expect(result.reportId).toBe("report-123");
-      expect(result.summary.totalPairs).toBe(5);
-      expect(result.pairs).toHaveLength(1);
-    });
+      ).toHaveBeenCalledWith(1)
+      expect(result.reportId).toBe("report-123")
+      expect(result.summary.totalPairs).toBe(5)
+      expect(result.pairs).toHaveLength(1)
+    })
 
     it("throws error for invalid assignment ID", async () => {
       await expect(
         plagiarismService.analyzeAssignmentSubmissions(0),
-      ).rejects.toThrow("Invalid assignment ID");
-    });
+      ).rejects.toThrow("Invalid assignment ID")
+    })
 
     it("throws error when API returns error", async () => {
       vi.mocked(
@@ -85,12 +85,12 @@ describe("plagiarismService", () => {
       ).mockResolvedValue({
         error: "Analysis failed",
         status: 500,
-      });
+      })
 
       await expect(
         plagiarismService.analyzeAssignmentSubmissions(1),
-      ).rejects.toThrow("Analysis failed");
-    });
+      ).rejects.toThrow("Analysis failed")
+    })
 
     it("throws error when data is missing", async () => {
       vi.mocked(
@@ -98,13 +98,13 @@ describe("plagiarismService", () => {
       ).mockResolvedValue({
         data: undefined,
         status: 200,
-      });
+      })
 
       await expect(
         plagiarismService.analyzeAssignmentSubmissions(1),
-      ).rejects.toThrow("Failed to analyze submissions");
-    });
-  });
+      ).rejects.toThrow("Failed to analyze submissions")
+    })
+  })
 
   // ============================================================================
   // getResultDetails Tests
@@ -150,49 +150,57 @@ describe("plagiarismService", () => {
         lineCount: 48,
         studentName: "Jane Smith",
       },
-    };
+    }
 
     it("returns details for a similarity result", async () => {
-      vi.mocked(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).mockResolvedValue({
+      vi.mocked(
+        plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById,
+      ).mockResolvedValue({
         data: mockDetailsResponse,
         status: 200,
-      });
+      })
 
-      const result = await plagiarismService.getResultDetails(1);
+      const result = await plagiarismService.getResultDetails(1)
 
-      expect(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).toHaveBeenCalledWith(1);
-      expect(result.result.id).toBe(1);
-      expect(result.fragments).toHaveLength(1);
-      expect(result.leftFile.studentName).toBe("John Doe");
-      expect(result.rightFile.studentName).toBe("Jane Smith");
-    });
+      expect(
+        plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById,
+      ).toHaveBeenCalledWith(1)
+      expect(result.result.id).toBe(1)
+      expect(result.fragments).toHaveLength(1)
+      expect(result.leftFile.studentName).toBe("John Doe")
+      expect(result.rightFile.studentName).toBe("Jane Smith")
+    })
 
     it("throws error for invalid result ID", async () => {
       await expect(plagiarismService.getResultDetails(0)).rejects.toThrow(
         "Invalid result ID",
-      );
-    });
+      )
+    })
 
     it("throws error when API returns error", async () => {
-      vi.mocked(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).mockResolvedValue({
+      vi.mocked(
+        plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById,
+      ).mockResolvedValue({
         error: "Not found",
         status: 404,
-      });
+      })
 
       await expect(plagiarismService.getResultDetails(999)).rejects.toThrow(
         "Not found",
-      );
-    });
+      )
+    })
 
     it("throws error when data is missing", async () => {
-      vi.mocked(plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById).mockResolvedValue({
+      vi.mocked(
+        plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById,
+      ).mockResolvedValue({
         data: undefined,
         status: 200,
-      });
+      })
 
       await expect(plagiarismService.getResultDetails(1)).rejects.toThrow(
         "Failed to fetch result details",
-      );
-    });
-  });
-});
+      )
+    })
+  })
+})

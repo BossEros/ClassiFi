@@ -1,4 +1,4 @@
-import { apiClient, type ApiResponse } from "@/data/api/apiClient";
+import { apiClient, type ApiResponse } from "@/data/api/apiClient"
 import type {
   TestCase,
   CreateTestCaseRequest,
@@ -6,13 +6,13 @@ import type {
   TestResultDetail,
   TestExecutionSummary,
   RawTestResult,
-} from "@/shared/types/testCase";
+} from "@/shared/types/testCase"
 import type {
   TestCaseListResponse,
   TestCaseResponse,
   TestResultsResponse,
   SuccessResponse,
-} from "@/data/api/types";
+} from "@/data/api/types"
 
 export type {
   TestCase,
@@ -25,14 +25,14 @@ export type {
   TestCaseResponse,
   TestResultsResponse,
   SuccessResponse,
-};
+}
 
 export async function getAllTestCasesForAssignmentId(
   assignmentId: number,
 ): Promise<ApiResponse<TestCaseListResponse>> {
   return apiClient.get<TestCaseListResponse>(
     `/assignments/${assignmentId}/test-cases`,
-  );
+  )
 }
 
 export async function createNewTestCaseForAssignment(
@@ -42,20 +42,23 @@ export async function createNewTestCaseForAssignment(
   return apiClient.post<TestCaseResponse>(
     `/assignments/${assignmentId}/test-cases`,
     newTestCaseData,
-  );
+  )
 }
 
 export async function updateTestCaseDetailsById(
   testCaseId: number,
   updatedTestCaseData: UpdateTestCaseRequest,
 ): Promise<ApiResponse<TestCaseResponse>> {
-  return apiClient.put<TestCaseResponse>(`/test-cases/${testCaseId}`, updatedTestCaseData);
+  return apiClient.put<TestCaseResponse>(
+    `/test-cases/${testCaseId}`,
+    updatedTestCaseData,
+  )
 }
 
 export async function deleteTestCaseById(
   testCaseId: number,
 ): Promise<ApiResponse<SuccessResponse>> {
-  return apiClient.delete<SuccessResponse>(`/test-cases/${testCaseId}`);
+  return apiClient.delete<SuccessResponse>(`/test-cases/${testCaseId}`)
 }
 
 export async function updateTestCasesSortOrderForAssignment(
@@ -65,7 +68,7 @@ export async function updateTestCasesSortOrderForAssignment(
   return apiClient.put<SuccessResponse>(
     `/assignments/${assignmentId}/test-cases/reorder`,
     { order: newSortOrderList },
-  );
+  )
 }
 
 export async function executeTestsInPreviewModeWithoutSaving(
@@ -77,5 +80,5 @@ export async function executeTestsInPreviewModeWithoutSaving(
     sourceCode: sourceCodeContent,
     language: programmingLanguage,
     assignmentId,
-  });
+  })
 }

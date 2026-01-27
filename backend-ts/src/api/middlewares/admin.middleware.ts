@@ -2,8 +2,8 @@ import type {
   FastifyRequest,
   FastifyReply,
   preHandlerHookHandler,
-} from "fastify";
-import { ForbiddenError } from "@/api/middlewares/error-handler.js";
+} from "fastify"
+import { ForbiddenError } from "@/api/middlewares/error-handler.js"
 
 /**
  * Admin role verification middleware.
@@ -20,11 +20,11 @@ export const adminMiddleware: preHandlerHookHandler = async (
 ) => {
   // Ensure user is authenticated first
   if (!request.user) {
-    throw new ForbiddenError("Authentication required");
+    throw new ForbiddenError("Authentication required")
   }
 
   // Check for admin role
   if (request.user.role !== "admin") {
-    throw new ForbiddenError("Admin access required");
+    throw new ForbiddenError("Admin access required")
   }
-};
+}

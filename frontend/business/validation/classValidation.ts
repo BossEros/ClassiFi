@@ -1,5 +1,5 @@
-import type { CreateClassRequest, Schedule } from "@/data/api/types";
-import type { ValidationError, ValidationResult } from "@/shared/types/auth";
+import type { CreateClassRequest, Schedule } from "@/data/api/types"
+import type { ValidationError, ValidationResult } from "@/shared/types/auth"
 
 /**
  * Validates the class name.
@@ -12,18 +12,18 @@ import type { ValidationError, ValidationResult } from "@/shared/types/auth";
  * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassName = (className: string): string | null => {
-  const trimmed = className.trim();
+  const trimmed = className.trim()
 
   if (!trimmed) {
-    return "Class name is required";
+    return "Class name is required"
   }
 
   if (trimmed.length > 100) {
-    return "Class name must not exceed 100 characters";
+    return "Class name must not exceed 100 characters"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates the class description.
@@ -37,14 +37,14 @@ export const validateClassName = (className: string): string | null => {
 export const validateClassDescription = (
   description: string,
 ): string | null => {
-  const trimmed = description.trim();
+  const trimmed = description.trim()
 
   if (trimmed.length > 1000) {
-    return "Description must not exceed 1000 characters";
+    return "Description must not exceed 1000 characters"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates class code for creation (basic check).
@@ -57,11 +57,11 @@ export const validateClassDescription = (
  */
 export const validateClassCode = (classCode: string): string | null => {
   if (!classCode || !classCode.trim()) {
-    return "Class code is required";
+    return "Class code is required"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates class code used for joining a class.
@@ -74,20 +74,20 @@ export const validateClassCode = (classCode: string): string | null => {
  * @returns An error message string if invalid, otherwise null.
  */
 export const validateClassJoinCode = (classCode: string): string | null => {
-  const trimmedCode = classCode ? classCode.trim() : "";
+  const trimmedCode = classCode ? classCode.trim() : ""
 
   if (!trimmedCode) {
-    return "Class code is required";
+    return "Class code is required"
   }
 
-  const codeRegex = /^[A-Za-z0-9]{6,8}$/;
+  const codeRegex = /^[A-Za-z0-9]{6,8}$/
 
   if (!codeRegex.test(trimmedCode)) {
-    return "Invalid class code format. Please enter a 6-8 character alphanumeric code.";
+    return "Invalid class code format. Please enter a 6-8 character alphanumeric code."
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates year level.
@@ -99,11 +99,11 @@ export const validateClassJoinCode = (classCode: string): string | null => {
  */
 export const validateYearLevel = (yearLevel: number): string | null => {
   if (![1, 2, 3, 4].includes(yearLevel)) {
-    return "Year level must be 1, 2, 3, or 4";
+    return "Year level must be 1, 2, 3, or 4"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates semester.
@@ -115,11 +115,11 @@ export const validateYearLevel = (yearLevel: number): string | null => {
  */
 export const validateSemester = (semester: number): string | null => {
   if (![1, 2].includes(semester)) {
-    return "Semester must be 1 or 2";
+    return "Semester must be 1 or 2"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates academic year.
@@ -133,23 +133,23 @@ export const validateSemester = (semester: number): string | null => {
  */
 export const validateAcademicYear = (academicYear: string): string | null => {
   if (!academicYear) {
-    return "Academic year is required";
+    return "Academic year is required"
   }
 
-  const pattern = /^\d{4}-\d{4}$/;
+  const pattern = /^\d{4}-\d{4}$/
 
   if (!pattern.test(academicYear)) {
-    return "Academic year must be in format YYYY-YYYY (e.g., 2024-2025)";
+    return "Academic year must be in format YYYY-YYYY (e.g., 2024-2025)"
   }
 
-  const [startYear, endYear] = academicYear.split("-").map(Number);
+  const [startYear, endYear] = academicYear.split("-").map(Number)
 
   if (endYear !== startYear + 1) {
-    return "End year must be exactly one year after start year";
+    return "End year must be exactly one year after start year"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates schedule.
@@ -164,45 +164,45 @@ export const validateSchedule = (
   schedule: Schedule | undefined,
 ): string | null => {
   if (!schedule) {
-    return "Schedule is required";
+    return "Schedule is required"
   }
 
   if (!schedule.days || schedule.days.length === 0) {
-    return "At least one schedule day is required";
+    return "At least one schedule day is required"
   }
 
   if (!schedule.startTime) {
-    return "Schedule start time is required";
+    return "Schedule start time is required"
   }
 
   if (!schedule.endTime) {
-    return "Schedule end time is required";
+    return "Schedule end time is required"
   }
 
   // Time format validation (HH:mm)
-  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+  const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/
 
   if (!timeRegex.test(schedule.startTime)) {
-    return "Invalid time format for startTime";
+    return "Invalid time format for startTime"
   }
 
   if (!timeRegex.test(schedule.endTime)) {
-    return "Invalid time format for endTime";
+    return "Invalid time format for endTime"
   }
 
   // Parse times to ensure end is after start
-  const [startHour, startMinute] = schedule.startTime.split(":").map(Number);
-  const [endHour, endMinute] = schedule.endTime.split(":").map(Number);
+  const [startHour, startMinute] = schedule.startTime.split(":").map(Number)
+  const [endHour, endMinute] = schedule.endTime.split(":").map(Number)
 
-  const startMinutes = startHour * 60 + startMinute;
-  const endMinutes = endHour * 60 + endMinute;
+  const startMinutes = startHour * 60 + startMinute
+  const endMinutes = endHour * 60 + endMinute
 
   if (endMinutes <= startMinutes) {
-    return "Schedule end time must be after start time";
+    return "Schedule end time must be after start time"
   }
 
-  return null;
-};
+  return null
+}
 
 /**
  * Validates complete create class form data.
@@ -214,58 +214,58 @@ export const validateSchedule = (
 export const validateCreateClassData = (
   data: Partial<CreateClassRequest>,
 ): ValidationResult => {
-  const errors: ValidationError[] = [];
+  const errors: ValidationError[] = []
 
-  const classNameError = validateClassName(data.className || "");
+  const classNameError = validateClassName(data.className || "")
   if (classNameError) {
-    errors.push({ field: "className", message: classNameError });
+    errors.push({ field: "className", message: classNameError })
   }
 
-  const descriptionError = validateClassDescription(data.description || "");
+  const descriptionError = validateClassDescription(data.description || "")
   if (descriptionError) {
-    errors.push({ field: "description", message: descriptionError });
+    errors.push({ field: "description", message: descriptionError })
   }
 
   if (data.classCode !== undefined) {
-    const classCodeError = validateClassCode(data.classCode);
+    const classCodeError = validateClassCode(data.classCode)
     if (classCodeError) {
-      errors.push({ field: "classCode", message: classCodeError });
+      errors.push({ field: "classCode", message: classCodeError })
     }
   }
 
   if (data.yearLevel !== undefined) {
-    const yearLevelError = validateYearLevel(data.yearLevel);
+    const yearLevelError = validateYearLevel(data.yearLevel)
     if (yearLevelError) {
-      errors.push({ field: "yearLevel", message: yearLevelError });
+      errors.push({ field: "yearLevel", message: yearLevelError })
     }
   }
 
   if (data.semester !== undefined) {
-    const semesterError = validateSemester(data.semester);
+    const semesterError = validateSemester(data.semester)
     if (semesterError) {
-      errors.push({ field: "semester", message: semesterError });
+      errors.push({ field: "semester", message: semesterError })
     }
   }
 
   if (data.academicYear !== undefined) {
-    const academicYearError = validateAcademicYear(data.academicYear);
+    const academicYearError = validateAcademicYear(data.academicYear)
     if (academicYearError) {
-      errors.push({ field: "academicYear", message: academicYearError });
+      errors.push({ field: "academicYear", message: academicYearError })
     }
   }
 
   if (data.schedule !== undefined) {
-    const scheduleError = validateSchedule(data.schedule);
+    const scheduleError = validateSchedule(data.schedule)
     if (scheduleError) {
-      errors.push({ field: "schedule", message: scheduleError });
+      errors.push({ field: "schedule", message: scheduleError })
     }
   }
 
   return {
     isValid: errors.length === 0,
     errors,
-  };
-};
+  }
+}
 
 /**
  * Validates individual field for real-time validation.
@@ -281,27 +281,27 @@ export const validateClassField = (
 ): string | null => {
   switch (fieldName) {
     case "className":
-      return validateClassName(value as string);
+      return validateClassName(value as string)
 
     case "description":
-      return validateClassDescription(value as string);
+      return validateClassDescription(value as string)
 
     case "classCode":
-      return validateClassCode(value as string);
+      return validateClassCode(value as string)
 
     case "yearLevel":
-      return validateYearLevel(value as number);
+      return validateYearLevel(value as number)
 
     case "semester":
-      return validateSemester(value as number);
+      return validateSemester(value as number)
 
     case "academicYear":
-      return validateAcademicYear(value as string);
+      return validateAcademicYear(value as string)
 
     case "schedule":
-      return validateSchedule(value as Schedule);
+      return validateSchedule(value as Schedule)
 
     default:
-      return null;
+      return null
   }
-};
+}

@@ -1,22 +1,148 @@
+/**
+ * ClassiFi Design System
+ * A focused, accessible color system for educational platforms
+ */
+
 @import "tailwindcss";
 
-/* Custom Scrollbar Styles */
+@theme {
+  /* ============================================
+     BRAND COLORS - ClassiFi Identity
+     ============================================ */
+  
+  --color-brand-primary: #0d9488;        /* teal-600 - Main brand color */
+  --color-brand-primary-hover: #0f766e;  /* teal-700 - Hover state */
+  --color-brand-primary-light: #14b8a6;  /* teal-500 - Lighter variant */
+  --color-brand-secondary: #f59e0b;      /* amber-500 - Accent color */
+  
+  /* ============================================
+     SEMANTIC COLORS - Functional Meaning
+     ============================================ */
+  
+  /* Success - Positive actions, completed states */
+  --color-success: #10b981;              /* emerald-500 */
+  --color-success-bg: #10b98115;         /* emerald-500 at 8% */
+  --color-success-border: #10b98133;     /* emerald-500 at 20% */
+  
+  /* Warning - Attention needed, pending states */
+  --color-warning: #f59e0b;              /* amber-500 */
+  --color-warning-bg: #f59e0b15;         /* amber-500 at 8% */
+  --color-warning-border: #f59e0b33;     /* amber-500 at 20% */
+  
+  /* Error - Destructive actions, validation errors */
+  --color-error: #f43f5e;                /* rose-500 */
+  --color-error-bg: #f43f5e15;           /* rose-500 at 8% */
+  --color-error-border: #f43f5e33;       /* rose-500 at 20% */
+  
+  /* Info - Informational messages, neutral states */
+  --color-info: #0ea5e9;                 /* sky-500 */
+  --color-info-bg: #0ea5e915;            /* sky-500 at 8% */
+  --color-info-border: #0ea5e933;        /* sky-500 at 20% */
+  
+  /* ============================================
+     NEUTRAL SCALE - Backgrounds & Borders
+     ============================================ */
+  
+  /* Backgrounds - True neutral grays (no color tint) */
+  --color-bg-primary: #0f172a;           /* slate-950 - Main background */
+  --color-bg-secondary: #1e293b;         /* slate-900 - Elevated surfaces */
+  --color-bg-tertiary: #334155;          /* slate-700 - Highest elevation */
+  --color-bg-hover: #ffffff14;           /* white at 8% - Hover state */
+  --color-bg-active: #ffffff1f;          /* white at 12% - Active state */
+  
+  /* Borders - Subtle separation */
+  --color-border-subtle: #ffffff0d;      /* white at 5% - Barely visible */
+  --color-border-default: #ffffff1a;     /* white at 10% - Standard */
+  --color-border-strong: #ffffff33;      /* white at 20% - Emphasized */
+  
+  /* ============================================
+     TEXT COLORS - Hierarchy & Readability
+     ============================================ */
+  
+  --color-text-primary: #f1f5f9;         /* slate-100 - Main content (WCAG AAA) */
+  --color-text-secondary: #cbd5e1;       /* slate-300 - Supporting text (WCAG AA) */
+  --color-text-tertiary: #94a3b8;        /* slate-400 - De-emphasized text */
+  --color-text-disabled: #64748b;        /* slate-500 - Disabled state */
+  --color-text-inverse: #0f172a;         /* slate-950 - Text on light backgrounds */
+  
+  /* ============================================
+     SHADOWS - Depth & Elevation
+     ============================================ */
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+  --shadow-glow-teal: 0 0 20px -5px rgb(13 148 136 / 0.3);
+  --shadow-glow-amber: 0 0 20px -5px rgb(245 158 11 / 0.3);
+  
+  /* ============================================
+     SPACING SCALE - Consistent Rhythm
+     ============================================ */
+  
+  --spacing: 0.25rem;      /* Base spacing unit: 4px */
+  --spacing-xs: 0.25rem;   /* 4px */
+  --spacing-sm: 0.5rem;    /* 8px */
+  --spacing-md: 1rem;      /* 16px */
+  --spacing-lg: 1.5rem;    /* 24px */
+  --spacing-xl: 2rem;      /* 32px */
+  --spacing-2xl: 3rem;     /* 48px */
+  
+  /* ============================================
+     BORDER RADIUS - Consistent Roundness
+     ============================================ */
+  
+  --radius-sm: 0.5rem;     /* 8px - Small elements */
+  --radius-md: 0.75rem;    /* 12px - Standard */
+  --radius-lg: 1rem;       /* 16px - Cards, modals */
+  --radius-xl: 1.5rem;     /* 24px - Large surfaces */
+  --radius-full: 9999px;   /* Fully rounded */
+  
+  /* ============================================
+     TRANSITIONS - Smooth Interactions
+     ============================================ */
+  
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   UTILITY CLASSES - Common Patterns
+   ============================================ */
+
+/* Glass morphism effect for cards */
+.glass-card {
+  background: var(--color-bg-hover);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+}
+
+/* Focus visible styles - Accessibility */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-primary);
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar - Consistent across app */
 .custom-scrollbar::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-bg-secondary);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--color-border-strong);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--color-text-tertiary);
 }
 
 /* Smooth scrolling */
@@ -24,8 +150,126 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Focus visible improvements */
-*:focus-visible {
-  outline: 2px solid rgb(168, 85, 247);
-  outline-offset: 2px;
+/* Base typography - Improved readability */
+body {
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.2;
+}
+
+p {
+  line-height: 1.6;
+}
+
+label {
+  line-height: 1.5;
+}
+
+/* ============================================
+   COMPONENT PATTERNS - Reusable Styles
+   ============================================ */
+
+/* Primary button pattern */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-brand-primary) 0%, var(--color-brand-primary-light) 100%);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-glow-teal);
+}
+
+.btn-primary:hover {
+  background: var(--color-brand-primary-hover);
+  box-shadow: var(--shadow-glow-teal), var(--shadow-lg);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Secondary button pattern */
+.btn-secondary {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-base);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg-active);
+  border-color: var(--color-border-strong);
+}
+
+/* Badge pattern */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.badge-success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-color: var(--color-success-border);
+}
+
+.badge-warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-color: var(--color-warning-border);
+}
+
+.badge-error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border-color: var(--color-error-border);
+}
+
+.badge-info {
+  background: var(--color-info-bg);
+  color: var(--color-info);
+  border-color: var(--color-info-border);
+}
+
+/* ============================================
+   ACCESSIBILITY HELPERS
+   ============================================ */
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

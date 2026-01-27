@@ -1,12 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { supabaseAuthAdapter } from "@/data/api/supabaseAuthAdapter";
-import { supabase } from "@/data/api/supabaseClient";
+import { describe, it, expect, vi, beforeEach } from "vitest"
+import { supabaseAuthAdapter } from "@/data/api/supabaseAuthAdapter"
+import { supabase } from "@/data/api/supabaseClient"
 import type {
   Session,
   AuthResponse,
   AuthError,
   User,
-} from "@supabase/supabase-js";
+} from "@supabase/supabase-js"
 
 // ============================================================================
 // Typed Mock Helpers
@@ -21,7 +21,7 @@ const createMockUser = (overrides: Partial<User> = {}): User =>
     aud: "authenticated",
     created_at: new Date().toISOString(),
     ...overrides,
-  }) as User;
+  }) as User
 
 const createMockSession = (overrides: Partial<Session> = {}): Session =>
   ({
@@ -31,7 +31,7 @@ const createMockSession = (overrides: Partial<Session> = {}): Session =>
     token_type: "bearer",
     user: createMockUser(),
     ...overrides,
-  }) as Session;
+  }) as Session
 
 const createMockAuthResponse = (
   overrides: Partial<AuthResponse> = {},
@@ -40,7 +40,7 @@ const createMockAuthResponse = (
     data: { user: createMockUser(), session: createMockSession() },
     error: null,
     ...overrides,
-  }) as AuthResponse;
+  }) as AuthResponse
 
 const createMockAuthError = (overrides: Partial<AuthError> = {}): AuthError =>
   ({
@@ -48,7 +48,7 @@ const createMockAuthError = (overrides: Partial<AuthError> = {}): AuthError =>
     message: "Default error message",
     status: 400,
     ...overrides,
-  }) as AuthError;
+  }) as AuthError
 
 // Mock the supabase client
 vi.mock("@/data/api/supabaseClient", () => ({
@@ -61,107 +61,107 @@ vi.mock("@/data/api/supabaseClient", () => ({
       })),
     },
   },
-}));
+}))
 
 describe("SupabaseAuthAdapter", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe("initializeResetSession", () => {
     it("should return failure if URL contains an error", async () => {
       const result = await supabaseAuthAdapter.initializeResetSession({
         hash: "#error=access_denied&error_description=User+is+not+allowed",
         search: "",
-      });
+      })
 
-      expect(result.success).toBe(false);
-      expect(result.message).toBe("User is not allowed");
-    });
+      expect(result.success).toBe(false)
+      expect(result.message).toBe("User is not allowed")
+    })
 
     it("should return failure if token type is not recovery and no session exists", async () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: null },
         error: null,
-      });
+      })
 
       const result = await supabaseAuthAdapter.initializeResetSession({
         hash: "#type=signup", // Not recovery
         search: "",
-      });
+      })
 
-      expect(result.success).toBe(false);
-      expect(result.message).toContain("Invalid reset link type");
-    });
+      expect(result.success).toBe(false)
+      expect(result.message).toContain("Invalid reset link type")
+    })
 
     it("should return success if already has a session and type is not recovery", async () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: createMockSession() },
         error: null,
-      });
+      })
 
       const result = await supabaseAuthAdapter.initializeResetSession({
         hash: "#type=signup",
         search: "",
-      });
+      })
 
-      expect(result.success).toBe(true);
-    });
+      expect(result.success).toBe(true)
+    })
 
     it("should return success when valid recovery tokens are provided", async () => {
-      const mockSession = createMockSession();
+      const mockSession = createMockSession()
 
       vi.mocked(supabase.auth.setSession).mockResolvedValue(
         createMockAuthResponse({
           data: { session: mockSession, user: mockSession.user },
         }),
-      );
+      )
 
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: mockSession },
         error: null,
-      });
+      })
 
       const result = await supabaseAuthAdapter.initializeResetSession({
         hash: "#access_token=abc&refresh_token=def&type=recovery",
         search: "",
-      });
+      })
 
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(true)
       expect(supabase.auth.setSession).toHaveBeenCalledWith({
         access_token: "abc",
         refresh_token: "def",
-      });
-    });
+      })
+    })
 
     it("should return failure if tokens are missing in recovery mode", async () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: null },
         error: null,
-      });
+      })
 
       const result = await supabaseAuthAdapter.initializeResetSession({
         hash: "#type=recovery", // Missing tokens
         search: "",
-      });
+      })
 
-      expect(result.success).toBe(false);
-      expect(result.message).toContain("Missing required tokens");
-    });
+      expect(result.success).toBe(false)
+      expect(result.message).toContain("Missing required tokens")
+    })
 
     it("should return failure if setSession fails", async () => {
       vi.mocked(supabase.auth.setSession).mockResolvedValue({
         data: { session: null, user: null },
         error: createMockAuthError({ message: "Invalid token" }),
-      });
+      })
 
       const result = await supabaseAuthAdapter.initializeResetSession({
         hash: "#access_token=bad&refresh_token=bad&type=recovery",
         search: "",
-      });
+      })
 
-      expect(result.success).toBe(false);
-      expect(result.message).toContain("Unable to establish reset session");
-    });
-  });
-});
+      expect(result.success).toBe(false)
+      expect(result.message).toContain("Unable to establish reset session")
+    })
+  })
+})

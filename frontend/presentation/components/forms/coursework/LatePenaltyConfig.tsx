@@ -1,24 +1,24 @@
-import { useState } from "react";
-import { Clock, Plus, Trash2, AlertTriangle } from "lucide-react";
-import { cn } from "@/shared/utils/cn";
-import { Input } from "@/presentation/components/ui/Input";
+import { useState } from "react"
+import { Clock, Plus, Trash2, AlertTriangle } from "lucide-react"
+import { cn } from "@/shared/utils/cn"
+import { Input } from "@/presentation/components/ui/Input"
 import {
   Card,
   CardContent,
   CardHeader,
-} from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
+} from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
 import type {
   LatePenaltyConfig as LatePenaltyConfigType,
   PenaltyTier,
-} from "@/shared/types/gradebook";
+} from "@/shared/types/gradebook"
 
 interface LatePenaltyConfigProps {
-  enabled: boolean;
-  config: LatePenaltyConfigType;
-  onEnabledChange: (enabled: boolean) => void;
-  onConfigChange: (config: LatePenaltyConfigType) => void;
-  disabled?: boolean;
+  enabled: boolean
+  config: LatePenaltyConfigType
+  onEnabledChange: (enabled: boolean) => void
+  onConfigChange: (config: LatePenaltyConfigType) => void
+  disabled?: boolean
 }
 
 const DEFAULT_CONFIG: LatePenaltyConfigType = {
@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: LatePenaltyConfigType = {
     { id: "default-3", hoursAfterGrace: 72, penaltyPercent: 50 },
   ],
   rejectAfterHours: 120,
-};
+}
 
 export function LatePenaltyConfig({
   enabled,
@@ -38,21 +38,21 @@ export function LatePenaltyConfig({
   onConfigChange,
   disabled = false,
 }: LatePenaltyConfigProps) {
-  const [showPreview, setShowPreview] = useState(false);
+  const [showPreview, setShowPreview] = useState(false)
 
   const handleGracePeriodChange = (value: number) => {
     onConfigChange({
       ...config,
       gracePeriodHours: Math.max(0, value),
-    });
-  };
+    })
+  }
 
   const handleRejectAfterChange = (value: number | null) => {
     onConfigChange({
       ...config,
       rejectAfterHours: value,
-    });
-  };
+    })
+  }
 
   const handleTierChange = (
     id: string,
@@ -61,29 +61,29 @@ export function LatePenaltyConfig({
   ) => {
     const newTiers = config.tiers.map((tier) =>
       tier.id === id ? { ...tier, [field]: value } : tier,
-    );
-    onConfigChange({ ...config, tiers: newTiers });
-  };
+    )
+    onConfigChange({ ...config, tiers: newTiers })
+  }
 
   const handleAddTier = () => {
-    const lastTier = config.tiers[config.tiers.length - 1];
+    const lastTier = config.tiers[config.tiers.length - 1]
     const newTier: PenaltyTier = {
       id: crypto.randomUUID(),
       hoursAfterGrace: (lastTier?.hoursAfterGrace ?? 0) + 24,
       penaltyPercent: Math.min((lastTier?.penaltyPercent ?? 0) + 10, 100),
-    };
-    onConfigChange({ ...config, tiers: [...config.tiers, newTier] });
-  };
+    }
+    onConfigChange({ ...config, tiers: [...config.tiers, newTier] })
+  }
 
   const handleRemoveTier = (id: string) => {
-    const newTiers = config.tiers.filter((tier) => tier.id !== id);
-    onConfigChange({ ...config, tiers: newTiers });
-  };
+    const newTiers = config.tiers.filter((tier) => tier.id !== id)
+    onConfigChange({ ...config, tiers: newTiers })
+  }
 
   const handleEnableDefault = () => {
-    onEnabledChange(true);
-    onConfigChange(DEFAULT_CONFIG);
-  };
+    onEnabledChange(true)
+    onConfigChange(DEFAULT_CONFIG)
+  }
 
   return (
     <Card className="border-white/10">
@@ -110,9 +110,9 @@ export function LatePenaltyConfig({
               checked={enabled}
               onChange={(e) => {
                 if (e.target.checked && config.tiers.length === 0) {
-                  handleEnableDefault();
+                  handleEnableDefault()
                 } else {
-                  onEnabledChange(e.target.checked);
+                  onEnabledChange(e.target.checked)
                 }
               }}
               disabled={disabled}
@@ -165,8 +165,8 @@ export function LatePenaltyConfig({
                 type="number"
                 value={config.rejectAfterHours ?? ""}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  handleRejectAfterChange(val ? parseInt(val) : null);
+                  const val = e.target.value
+                  handleRejectAfterChange(val ? parseInt(val) : null)
                 }}
                 min={1}
                 placeholder="Never"
@@ -289,13 +289,13 @@ export function LatePenaltyConfig({
                   const prevHours =
                     i === 0
                       ? config.gracePeriodHours
-                      : config.tiers[i - 1].hoursAfterGrace;
+                      : config.tiers[i - 1].hoursAfterGrace
                   return (
                     <li key={tier.id}>
                       • {prevHours}-{tier.hoursAfterGrace}h late: -
                       {tier.penaltyPercent}%
                     </li>
-                  );
+                  )
                 })}
                 {config.rejectAfterHours && (
                   <li className="text-red-400">
@@ -308,7 +308,7 @@ export function LatePenaltyConfig({
         </CardContent>
       )}
     </Card>
-  );
+  )
 }
 
-export { DEFAULT_CONFIG as DEFAULT_LATE_PENALTY_CONFIG };
+export { DEFAULT_CONFIG as DEFAULT_LATE_PENALTY_CONFIG }

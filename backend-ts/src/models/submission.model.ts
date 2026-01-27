@@ -9,10 +9,10 @@ import {
   unique,
   index,
   check,
-} from "drizzle-orm/pg-core";
-import { relations, sql } from "drizzle-orm";
-import { assignments } from "@/models/assignment.model.js";
-import { users } from "@/models/user.model.js";
+} from "drizzle-orm/pg-core"
+import { relations, sql } from "drizzle-orm"
+import { assignments } from "@/models/assignment.model.js"
+import { users } from "@/models/user.model.js"
 /** Submissions table - stores student code submissions for assignments */
 export const submissions = pgTable(
   "submissions",
@@ -60,7 +60,7 @@ export const submissions = pgTable(
     index("idx_submissions_student").on(table.studentId),
     index("idx_submissions_date").on(table.submittedAt),
   ],
-);
+)
 
 /** Submission relations */
 export const submissionsRelations = relations(submissions, ({ one }) => ({
@@ -72,8 +72,8 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
     fields: [submissions.studentId],
     references: [users.id],
   }),
-}));
+}))
 
 /** Type definitions for Submission */
-export type Submission = typeof submissions.$inferSelect;
-export type NewSubmission = typeof submissions.$inferInsert;
+export type Submission = typeof submissions.$inferSelect
+export type NewSubmission = typeof submissions.$inferInsert

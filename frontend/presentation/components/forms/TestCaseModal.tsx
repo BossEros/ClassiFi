@@ -1,27 +1,25 @@
-import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
-import { X, Save, Eye, EyeOff, Terminal } from "lucide-react";
-import { Button } from "@/presentation/components/ui/Button";
-import { Input } from "@/presentation/components/ui/Input";
-import { Textarea } from "@/presentation/components/ui/Textarea";
-import { cn } from "@/shared/utils/cn";
+import { useState, useEffect } from "react"
+import { createPortal } from "react-dom"
+import { X, Save, Eye, EyeOff, Terminal } from "lucide-react"
+import { Button } from "@/presentation/components/ui/Button"
+import { Input } from "@/presentation/components/ui/Input"
+import { Textarea } from "@/presentation/components/ui/Textarea"
+import { cn } from "@/shared/utils/cn"
 import type {
   TestCase,
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
-} from "@/shared/types/testCase";
+} from "@/shared/types/testCase"
 
 // Extended type for test cases that may be pending (not yet persisted)
-type EditableTestCase = TestCase & { tempId?: string };
+type EditableTestCase = TestCase & { tempId?: string }
 
 interface TestCaseModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (
-    data: CreateTestCaseRequest | UpdateTestCaseRequest
-  ) => Promise<void>;
-  testCase?: EditableTestCase | null;
-  isLoading?: boolean;
+  isOpen: boolean
+  onClose: () => void
+  onSave: (data: CreateTestCaseRequest | UpdateTestCaseRequest) => Promise<void>
+  testCase?: EditableTestCase | null
+  isLoading?: boolean
 }
 
 export function TestCaseModal({
@@ -31,7 +29,7 @@ export function TestCaseModal({
   testCase,
   isLoading = false,
 }: TestCaseModalProps) {
-  const isEditMode = !!testCase;
+  const isEditMode = !!testCase
 
   const [formData, setFormData] = useState({
     name: "",
@@ -39,12 +37,12 @@ export function TestCaseModal({
     expectedOutput: "",
     isHidden: false,
     timeLimit: 5,
-  });
+  })
 
   const [errors, setErrors] = useState<{
-    name?: string;
-    expectedOutput?: string;
-  }>({});
+    name?: string
+    expectedOutput?: string
+  }>({})
 
   // Reset form when modal opens or testCase changes
   useEffect(() => {
@@ -55,8 +53,8 @@ export function TestCaseModal({
         expectedOutput: testCase.expectedOutput || "",
         isHidden: testCase.isHidden ?? false,
         timeLimit: testCase.timeLimit ?? 5,
-      });
-      setErrors({});
+      })
+      setErrors({})
     } else if (isOpen && !testCase) {
       setFormData({
         name: "",
@@ -64,43 +62,43 @@ export function TestCaseModal({
         expectedOutput: "",
         isHidden: false,
         timeLimit: 5,
-      });
-      setErrors({});
+      })
+      setErrors({})
     }
-  }, [isOpen, testCase]);
+  }, [isOpen, testCase])
 
   const handleChange = (
     field: keyof typeof formData,
-    value: string | number | boolean
+    value: string | number | boolean,
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: undefined }));
-  };
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    setErrors((prev) => ({ ...prev, [field]: undefined }))
+  }
 
   const validate = (): boolean => {
-    const newErrors: typeof errors = {};
+    const newErrors: typeof errors = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = "Test case name is required";
+      newErrors.name = "Test case name is required"
     } else if (formData.name.length > 100) {
-      newErrors.name = "Name must be 100 characters or less";
+      newErrors.name = "Name must be 100 characters or less"
     }
 
     if (!formData.expectedOutput.trim()) {
-      newErrors.expectedOutput = "Expected output is required";
+      newErrors.expectedOutput = "Expected output is required"
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation(); // Prevent event from bubbling to parent forms
+    e.preventDefault()
+    e.stopPropagation() // Prevent event from bubbling to parent forms
 
-    if (isLoading) return;
+    if (isLoading) return
 
-    if (!validate()) return;
+    if (!validate()) return
 
     await onSave({
       name: formData.name.trim(),
@@ -108,15 +106,15 @@ export function TestCaseModal({
       expectedOutput: formData.expectedOutput,
       isHidden: formData.isHidden,
       timeLimit: formData.timeLimit,
-    });
-  };
+    })
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   // Use portal to render modal outside parent form
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 grid place-items-center p-4"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Backdrop */}
@@ -126,12 +124,12 @@ export function TestCaseModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-[#0f111a] border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-2xl min-w-[320px] mx-auto bg-[#0f111a] border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh] flex-shrink-0">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Terminal className="w-5 h-5 text-purple-400" />
+              <Terminal className="w-5 h-5 text-teal-400" />
               {isEditMode ? "Edit Test Case" : "Add Test Case"}
             </h2>
           </div>
@@ -167,8 +165,8 @@ export function TestCaseModal({
                 disabled={isLoading}
                 maxLength={100}
                 className={cn(
-                  "bg-white/5 border-white/10 focus:ring-purple-500/30",
-                  errors.name && "border-red-500/50"
+                  "bg-white/5 border-white/10 focus:ring-teal-500/30",
+                  errors.name && "border-red-500/50",
                 )}
               />
               {errors.name && (
@@ -195,7 +193,7 @@ export function TestCaseModal({
                   value={formData.input}
                   onChange={(e) => handleChange("input", e.target.value)}
                   disabled={isLoading}
-                  className="min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-purple-500/30"
+                  className="min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-teal-500/30"
                 />
               </div>
 
@@ -218,8 +216,8 @@ export function TestCaseModal({
                   }
                   disabled={isLoading}
                   className={cn(
-                    "min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-purple-500/30",
-                    errors.expectedOutput && "border-red-500/50"
+                    "min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-teal-500/30",
+                    errors.expectedOutput && "border-red-500/50",
                   )}
                 />
                 {errors.expectedOutput && (
@@ -240,7 +238,7 @@ export function TestCaseModal({
                   "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer group",
                   formData.isHidden
                     ? "bg-amber-500/[0.08] border-amber-500/30"
-                    : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05]"
+                    : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05]",
                 )}
                 onClick={() => handleChange("isHidden", !formData.isHidden)}
               >
@@ -249,12 +247,12 @@ export function TestCaseModal({
                     {formData.isHidden ? (
                       <EyeOff className="w-4 h-4 text-amber-400" />
                     ) : (
-                      <Eye className="w-4 h-4 text-purple-400" />
+                      <Eye className="w-4 h-4 text-teal-400" />
                     )}
                     <span
                       className={cn(
                         "text-sm font-medium transition-colors",
-                        formData.isHidden ? "text-amber-200" : "text-gray-200"
+                        formData.isHidden ? "text-amber-200" : "text-gray-200",
                       )}
                     >
                       {formData.isHidden
@@ -273,13 +271,13 @@ export function TestCaseModal({
                 <div
                   className={cn(
                     "relative h-6 w-11 rounded-full transition-colors duration-200",
-                    formData.isHidden ? "bg-amber-500" : "bg-gray-600"
+                    formData.isHidden ? "bg-amber-500" : "bg-gray-600",
                   )}
                 >
                   <div
                     className={cn(
                       "absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200",
-                      formData.isHidden ? "left-6" : "left-1"
+                      formData.isHidden ? "left-6" : "left-1",
                     )}
                   />
                 </div>
@@ -302,7 +300,7 @@ export function TestCaseModal({
             type="submit"
             form="test-case-form"
             disabled={isLoading}
-            className="bg-purple-600 hover:bg-purple-700 text-white min-w-[100px] shadow-lg shadow-purple-500/20"
+            className="bg-teal-600 hover:bg-teal-700 text-white min-w-[100px] shadow-lg shadow-teal-500/20"
           >
             {isLoading ? (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -316,8 +314,8 @@ export function TestCaseModal({
         </div>
       </div>
     </div>
-  );
+  )
 
   // Render modal using portal to escape parent form context
-  return createPortal(modalContent, document.body);
+  return createPortal(modalContent, document.body)
 }

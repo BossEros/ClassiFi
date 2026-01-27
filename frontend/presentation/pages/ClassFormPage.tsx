@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useState, useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
 import {
   ArrowLeft,
   BookOpen,
@@ -10,68 +10,68 @@ import {
   X,
   Plus,
   Edit,
-} from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+} from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/presentation/components/ui/Card";
-import { getCurrentUser } from "@/business/services/authService";
+} from "@/presentation/components/ui/Card"
+import { getCurrentUser } from "@/business/services/authService"
 import {
   createClass,
   generateClassCode,
   getClassById,
   updateClass,
-} from "@/business/services/classService";
+} from "@/business/services/classService"
 import {
   validateClassName,
   validateClassCode,
   validateAcademicYear,
   validateSchedule,
-} from "@/business/validation/classValidation";
-import { Input } from "@/presentation/components/ui/Input";
-import { Textarea } from "@/presentation/components/ui/Textarea";
-import { Button } from "@/presentation/components/ui/Button";
-import { useToast } from "@/shared/context/ToastContext";
-import { DAYS, TIME_OPTIONS } from "@/shared/constants/schedule";
-import { formatTimeDisplay } from "@/shared/utils/timeUtils";
-import { getCurrentAcademicYear } from "@/shared/utils/dateUtils";
-import type { Schedule, DayOfWeek } from "@/business/models/dashboard/types";
+} from "@/business/validation/classValidation"
+import { Input } from "@/presentation/components/ui/Input"
+import { Textarea } from "@/presentation/components/ui/Textarea"
+import { Button } from "@/presentation/components/ui/Button"
+import { useToast } from "@/shared/context/ToastContext"
+import { DAYS, TIME_OPTIONS } from "@/shared/constants/schedule"
+import { formatTimeDisplay } from "@/shared/utils/timeUtils"
+import { getCurrentAcademicYear } from "@/shared/utils/dateUtils"
+import type { Schedule, DayOfWeek } from "@/business/models/dashboard/types"
 
 interface FormData {
-  className: string;
-  description: string;
-  classCode: string;
-  yearLevel: 1 | 2 | 3 | 4;
-  semester: 1 | 2;
-  academicYear: string;
-  schedule: Schedule;
+  className: string
+  description: string
+  classCode: string
+  yearLevel: 1 | 2 | 3 | 4
+  semester: 1 | 2
+  academicYear: string
+  schedule: Schedule
 }
 
 interface FormErrors {
-  className?: string;
-  classCode?: string;
-  academicYear?: string;
-  schedule?: string;
-  general?: string;
+  className?: string
+  classCode?: string
+  academicYear?: string
+  schedule?: string
+  general?: string
 }
 
 export function ClassFormPage() {
-  const navigate = useNavigate();
-  const { classId } = useParams<{ classId: string }>();
-  const { showToast } = useToast();
-  const currentUser = getCurrentUser();
+  const navigate = useNavigate()
+  const { classId } = useParams<{ classId: string }>()
+  const { showToast } = useToast()
+  const currentUser = getCurrentUser()
 
   // Determine if we're in edit mode
-  const isEditMode = !!classId;
+  const isEditMode = !!classId
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(isEditMode);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(isEditMode)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const [formData, setFormData] = useState<FormData>({
     className: "",
@@ -85,21 +85,21 @@ export function ClassFormPage() {
       startTime: "08:00",
       endTime: "09:30",
     },
-  });
+  })
 
   // Fetch existing class data when in edit mode
   useEffect(() => {
     if (isEditMode && classId) {
-      const user = getCurrentUser();
-      if (!user) return;
+      const user = getCurrentUser()
+      if (!user) return
 
       const fetchClassData = async () => {
-        setIsFetching(true);
+        setIsFetching(true)
         try {
           const classData = await getClassById(
             parseInt(classId),
             parseInt(user.id),
-          );
+          )
           setFormData({
             className: classData.className,
             description: classData.description || "",
@@ -108,91 +108,91 @@ export function ClassFormPage() {
             semester: classData.semester as 1 | 2,
             academicYear: classData.academicYear,
             schedule: classData.schedule,
-          });
+          })
         } catch (error) {
-          console.error("Error loading class data:", error);
+          console.error("Error loading class data:", error)
           setErrors({
             general: "Failed to load class data. Please try again.",
-          });
+          })
         } finally {
-          setIsFetching(false);
+          setIsFetching(false)
         }
-      };
-      fetchClassData();
+      }
+      fetchClassData()
     }
-  }, [isEditMode, classId]);
+  }, [isEditMode, classId])
 
   const handleGenerateCode = async () => {
-    setIsGenerating(true);
+    setIsGenerating(true)
     try {
-      const code = await generateClassCode();
-      setFormData((prev) => ({ ...prev, classCode: code }));
-      setErrors((prev) => ({ ...prev, classCode: undefined }));
+      const code = await generateClassCode()
+      setFormData((prev) => ({ ...prev, classCode: code }))
+      setErrors((prev) => ({ ...prev, classCode: undefined }))
     } catch {
-      setErrors((prev) => ({ ...prev, classCode: "Failed to generate code" }));
+      setErrors((prev) => ({ ...prev, classCode: "Failed to generate code" }))
     } finally {
-      setIsGenerating(false);
+      setIsGenerating(false)
     }
-  };
+  }
 
   const handleInputChange = (
     field: keyof FormData,
     value: string | number | Schedule,
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }));
-  };
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }))
+  }
 
   const toggleDay = (day: DayOfWeek) => {
     const newDays = formData.schedule.days.includes(day)
       ? formData.schedule.days.filter((d) => d !== day)
-      : [...formData.schedule.days, day];
-    handleInputChange("schedule", { ...formData.schedule, days: newDays });
-  };
+      : [...formData.schedule.days, day]
+    handleInputChange("schedule", { ...formData.schedule, days: newDays })
+  }
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    const newErrors: FormErrors = {}
 
     // Use centralized validators
-    const classNameError = validateClassName(formData.className);
+    const classNameError = validateClassName(formData.className)
     if (classNameError) {
-      newErrors.className = classNameError;
+      newErrors.className = classNameError
     }
 
-    const classCodeError = validateClassCode(formData.classCode);
+    const classCodeError = validateClassCode(formData.classCode)
     if (classCodeError) {
-      newErrors.classCode = classCodeError;
+      newErrors.classCode = classCodeError
     }
-    const academicYearError = validateAcademicYear(formData.academicYear);
+    const academicYearError = validateAcademicYear(formData.academicYear)
     if (academicYearError) {
-      newErrors.academicYear = academicYearError;
+      newErrors.academicYear = academicYearError
     }
 
-    const scheduleError = validateSchedule(formData.schedule);
+    const scheduleError = validateSchedule(formData.schedule)
     if (scheduleError) {
-      newErrors.schedule = scheduleError;
+      newErrors.schedule = scheduleError
     }
 
     // Additional time validation (not in centralized validators)
     if (formData.schedule.startTime >= formData.schedule.endTime) {
-      newErrors.schedule = "End time must be after start time";
+      newErrors.schedule = "End time must be after start time"
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!validateForm()) return;
+    if (!validateForm()) return
 
     if (!currentUser?.id) {
-      setErrors({ general: "You must be logged in" });
-      return;
+      setErrors({ general: "You must be logged in" })
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
       if (isEditMode && classId) {
@@ -205,9 +205,9 @@ export function ClassFormPage() {
           semester: formData.semester,
           academicYear: formData.academicYear,
           schedule: formData.schedule,
-        });
-        showToast("Class updated successfully");
-        navigate(`/dashboard/classes/${classId}`);
+        })
+        showToast("Class updated successfully")
+        navigate(`/dashboard/classes/${classId}`)
       } else {
         // Create new class
         await createClass({
@@ -219,20 +219,20 @@ export function ClassFormPage() {
           semester: formData.semester,
           academicYear: formData.academicYear,
           schedule: formData.schedule,
-        });
-        showToast("Class created successfully");
-        navigate("/dashboard/classes");
+        })
+        showToast("Class created successfully")
+        navigate("/dashboard/classes")
       }
     } catch {
       setErrors({
         general: `Failed to ${
           isEditMode ? "update" : "create"
         } class. Please try again.`,
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Show loading state while fetching class data in edit mode
   if (isFetching) {
@@ -245,7 +245,7 @@ export function ClassFormPage() {
           </div>
         </div>
       </DashboardLayout>
-    );
+    )
   }
 
   return (
@@ -254,11 +254,11 @@ export function ClassFormPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-purple-500/20">
+            <div className="p-2 rounded-lg bg-teal-500/20">
               {isEditMode ? (
-                <Edit className="w-5 h-5 text-purple-300" />
+                <Edit className="w-5 h-5 text-teal-300" />
               ) : (
-                <Plus className="w-5 h-5 text-purple-300" />
+                <Plus className="w-5 h-5 text-teal-300" />
               )}
             </div>
             <h1 className="text-2xl font-bold text-white tracking-tight">
@@ -274,7 +274,7 @@ export function ClassFormPage() {
             Back
           </Button>
         </div>
-        <p className="text-gray-400 ml-11 text-sm">
+        <p className="text-slate-300 ml-11 text-sm">
           {isEditMode
             ? "Update your class information"
             : "Set up a new class for your students"}
@@ -298,8 +298,8 @@ export function ClassFormPage() {
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-500/20">
-                    <BookOpen className="w-5 h-5 text-purple-300" />
+                  <div className="p-2 rounded-lg bg-teal-500/20">
+                    <BookOpen className="w-5 h-5 text-teal-300" />
                   </div>
                   <div>
                     <CardTitle>Basic Information</CardTitle>
@@ -430,7 +430,7 @@ export function ClassFormPage() {
                         title={day.label}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                           formData.schedule.days.includes(day.value)
-                            ? "bg-purple-500 text-white border-transparent"
+                            ? "bg-teal-500 text-white border-transparent"
                             : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                         }`}
                       >
@@ -456,7 +456,7 @@ export function ClassFormPage() {
                         })
                       }
                       disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                      className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                     >
                       {TIME_OPTIONS.map((time) => (
                         <option
@@ -478,7 +478,7 @@ export function ClassFormPage() {
                         })
                       }
                       disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                      className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                     >
                       {TIME_OPTIONS.map((time) => (
                         <option
@@ -532,7 +532,7 @@ export function ClassFormPage() {
                       )
                     }
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                   >
                     <option value={1} className="bg-slate-800 text-white">
                       1st Year
@@ -567,7 +567,7 @@ export function ClassFormPage() {
                       )
                     }
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50"
+                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                   >
                     <option value={1} className="bg-slate-800 text-white">
                       1st Semester
@@ -635,9 +635,9 @@ export function ClassFormPage() {
         </div>
       </form>
     </DashboardLayout>
-  );
+  )
 }
 
 // Export with both names for backwards compatibility
-export { ClassFormPage as CreateClassPage };
-export default ClassFormPage;
+export { ClassFormPage as CreateClassPage }
+export default ClassFormPage

@@ -1,20 +1,15 @@
-import * as gradebookRepository from "@/data/repositories/gradebookRepository";
-import { validateId } from "@/shared/utils/validators";
-import type { LatePenaltyConfig } from "@/data/api/types";
+import * as gradebookRepository from "@/data/repositories/gradebookRepository"
+import { validateId } from "@/shared/utils/validators"
+import type { LatePenaltyConfig } from "@/data/api/types"
 import type {
   ClassGradebook,
   ClassStatistics,
   StudentClassGrades,
   StudentRank,
-} from "@/shared/types/gradebook";
+} from "@/shared/types/gradebook"
 
 // Re-export types for presentation layer
-export type {
-  ClassGradebook,
-  ClassStatistics,
-  StudentClassGrades,
-  StudentRank,
-};
+export type { ClassGradebook, ClassStatistics, StudentClassGrades, StudentRank }
 
 // ============================================================================
 // Class Gradebook Functions
@@ -26,8 +21,8 @@ export type {
 export async function getClassGradebook(
   classId: number,
 ): Promise<ClassGradebook> {
-  validateId(classId, "class");
-  return gradebookRepository.getCompleteGradebookForClassId(classId);
+  validateId(classId, "class")
+  return gradebookRepository.getCompleteGradebookForClassId(classId)
 }
 
 /**
@@ -36,8 +31,8 @@ export async function getClassGradebook(
 export async function getClassStatistics(
   classId: number,
 ): Promise<ClassStatistics> {
-  validateId(classId, "class");
-  return gradebookRepository.getStatisticsForClassId(classId);
+  validateId(classId, "class")
+  return gradebookRepository.getStatisticsForClassId(classId)
 }
 
 /**
@@ -47,8 +42,11 @@ export async function downloadGradebookCSV(
   classId: number,
   filename?: string,
 ): Promise<void> {
-  validateId(classId, "class");
-  return gradebookRepository.downloadGradebookCSVFileForClassId(classId, filename);
+  validateId(classId, "class")
+  return gradebookRepository.downloadGradebookCSVFileForClassId(
+    classId,
+    filename,
+  )
 }
 
 // ============================================================================
@@ -61,8 +59,8 @@ export async function downloadGradebookCSV(
 export async function getStudentGrades(
   studentId: number,
 ): Promise<StudentClassGrades[]> {
-  validateId(studentId, "student");
-  return gradebookRepository.getAllGradesForStudentId(studentId);
+  validateId(studentId, "student")
+  return gradebookRepository.getAllGradesForStudentId(studentId)
 }
 
 /**
@@ -72,9 +70,12 @@ export async function getStudentClassGrades(
   studentId: number,
   classId: number,
 ): Promise<StudentClassGrades | null> {
-  validateId(studentId, "student");
-  validateId(classId, "class");
-  return gradebookRepository.getGradesForStudentInSpecificClass(studentId, classId);
+  validateId(studentId, "student")
+  validateId(classId, "class")
+  return gradebookRepository.getGradesForStudentInSpecificClass(
+    studentId,
+    classId,
+  )
 }
 
 /**
@@ -84,9 +85,9 @@ export async function getStudentRank(
   studentId: number,
   classId: number,
 ): Promise<StudentRank> {
-  validateId(studentId, "student");
-  validateId(classId, "class");
-  return gradebookRepository.getClassRankForStudentById(studentId, classId);
+  validateId(studentId, "student")
+  validateId(classId, "class")
+  return gradebookRepository.getClassRankForStudentById(studentId, classId)
 }
 
 // ============================================================================
@@ -101,22 +102,24 @@ export async function overrideGrade(
   grade: number,
   feedback?: string | null,
 ): Promise<void> {
-  validateId(submissionId, "submission");
+  validateId(submissionId, "submission")
 
   if (!Number.isFinite(grade) || grade < 0 || grade > 100) {
-    throw new Error("Grade must be between 0 and 100");
+    throw new Error("Grade must be between 0 and 100")
   }
-  return gradebookRepository.setGradeOverrideForSubmissionById(submissionId, grade, feedback);
+  return gradebookRepository.setGradeOverrideForSubmissionById(
+    submissionId,
+    grade,
+    feedback,
+  )
 }
 
 /**
  * Removes a grade override
  */
-export async function removeGradeOverride(
-  submissionId: number,
-): Promise<void> {
-  validateId(submissionId, "submission");
-  return gradebookRepository.removeGradeOverrideForSubmissionById(submissionId);
+export async function removeGradeOverride(submissionId: number): Promise<void> {
+  validateId(submissionId, "submission")
+  return gradebookRepository.removeGradeOverrideForSubmissionById(submissionId)
 }
 
 // ============================================================================
@@ -129,8 +132,10 @@ export async function removeGradeOverride(
 export async function getLatePenaltyConfig(
   assignmentId: number,
 ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null }> {
-  validateId(assignmentId, "assignment");
-  return gradebookRepository.getLatePenaltyConfigurationForAssignmentId(assignmentId);
+  validateId(assignmentId, "assignment")
+  return gradebookRepository.getLatePenaltyConfigurationForAssignmentId(
+    assignmentId,
+  )
 }
 
 /**
@@ -141,28 +146,28 @@ export async function updateLatePenaltyConfig(
   enabled: boolean,
   config?: LatePenaltyConfig,
 ): Promise<void> {
-  validateId(assignmentId, "assignment");
+  validateId(assignmentId, "assignment")
 
   if (enabled && !config) {
-    throw new Error("Late penalty config is required when enabled");
+    throw new Error("Late penalty config is required when enabled")
   }
 
   if (config) {
     if (config.gracePeriodHours < 0) {
-      throw new Error("Grace period must be non-negative");
+      throw new Error("Grace period must be non-negative")
     }
     if (config.tiers && config.tiers.length > 0) {
       for (const tier of config.tiers) {
         if (tier.penaltyPercent < 0 || tier.penaltyPercent > 100) {
-          throw new Error("Penalty percentage must be between 0 and 100");
+          throw new Error("Penalty percentage must be between 0 and 100")
         }
         if (tier.hoursAfterGrace < 0) {
-          throw new Error("Hours after grace must be non-negative");
+          throw new Error("Hours after grace must be non-negative")
         }
       }
     }
     if (config.rejectAfterHours !== null && config.rejectAfterHours < 0) {
-      throw new Error("Reject after hours must be non-negative");
+      throw new Error("Reject after hours must be non-negative")
     }
   }
 
@@ -170,5 +175,5 @@ export async function updateLatePenaltyConfig(
     assignmentId,
     enabled,
     config,
-  );
+  )
 }

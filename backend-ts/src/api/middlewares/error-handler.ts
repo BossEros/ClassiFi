@@ -1,6 +1,6 @@
-import type { FastifyError, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyError, FastifyReply, FastifyRequest } from "fastify"
 
-import { ApiError } from "@/shared/errors.js";
+import { ApiError } from "@/shared/errors.js"
 
 export {
   ApiError,
@@ -8,7 +8,7 @@ export {
   UnauthorizedError,
   ForbiddenError,
   NotFoundError,
-} from "@/shared/errors.js";
+} from "@/shared/errors.js"
 
 /** Global error handler for Fastify */
 export function errorHandler(
@@ -16,18 +16,18 @@ export function errorHandler(
   _request: FastifyRequest,
   reply: FastifyReply,
 ): void {
-  const statusCode = error instanceof ApiError ? error.statusCode : 500;
-  const message = error.message || "Internal Server Error";
+  const statusCode = error instanceof ApiError ? error.statusCode : 500
+  const message = error.message || "Internal Server Error"
 
   // Log error in development
   if (process.env.ENVIRONMENT === "development") {
-    console.error(`[ERROR] ${statusCode} - ${message}`);
-    console.error(error.stack);
+    console.error(`[ERROR] ${statusCode} - ${message}`)
+    console.error(error.stack)
   }
 
   reply.status(statusCode).send({
     success: false,
     message,
     error: process.env.ENVIRONMENT === "development" ? error.stack : undefined,
-  });
+  })
 }

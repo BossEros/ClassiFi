@@ -1,17 +1,17 @@
-import * as React from "react";
-import { cn } from "@/shared/utils/cn";
-import { Edit2, X, RotateCcw } from "lucide-react";
+import * as React from "react"
+import { cn } from "@/shared/utils/cn"
+import { Edit2, X, RotateCcw } from "lucide-react"
 
 interface GradeOverrideModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: (grade: number, feedback: string | null) => void;
-  onRemoveOverride?: () => void;
-  isSubmitting?: boolean;
-  studentName: string;
-  assignmentName: string;
-  currentGrade: number | null;
-  totalScore: number;
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: (grade: number, feedback: string | null) => void
+  onRemoveOverride?: () => void
+  isSubmitting?: boolean
+  studentName: string
+  assignmentName: string
+  currentGrade: number | null
+  totalScore: number
 }
 
 export function GradeOverrideModal({
@@ -27,81 +27,81 @@ export function GradeOverrideModal({
 }: GradeOverrideModalProps) {
   const [grade, setGrade] = React.useState<string>(
     currentGrade?.toString() ?? "",
-  );
-  const [feedback, setFeedback] = React.useState<string>("");
-  const [error, setError] = React.useState<string | null>(null);
+  )
+  const [feedback, setFeedback] = React.useState<string>("")
+  const [error, setError] = React.useState<string | null>(null)
 
-  const modalRef = React.useRef<HTMLDivElement>(null);
-  const previousFocusRef = React.useRef<HTMLElement | null>(null);
-  const previousIsOpenRef = React.useRef<boolean>(false);
+  const modalRef = React.useRef<HTMLDivElement>(null)
+  const previousFocusRef = React.useRef<HTMLElement | null>(null)
+  const previousIsOpenRef = React.useRef<boolean>(false)
 
   // Reset form when modal opens
   React.useEffect(() => {
     if (isOpen) {
-      setGrade(currentGrade?.toString() ?? "");
-      setFeedback("");
-      setError(null);
-      previousFocusRef.current = document.activeElement as HTMLElement;
+      setGrade(currentGrade?.toString() ?? "")
+      setFeedback("")
+      setError(null)
+      previousFocusRef.current = document.activeElement as HTMLElement
     }
-  }, [isOpen, currentGrade]);
+  }, [isOpen, currentGrade])
 
   // Handle focus trap and escape key
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       // Handle Escape
       if (event.key === "Escape" && !isSubmitting) {
-        onClose();
-        return;
+        onClose()
+        return
       }
 
       // Handle Focus Trap (Tab key)
       if (event.key === "Tab" && modalRef.current) {
         const focusableElements = modalRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-        );
+        )
 
         // Guard: bail out if no focusable elements
-        if (focusableElements.length === 0) return;
+        if (focusableElements.length === 0) return
 
-        const firstElement = focusableElements[0] as HTMLElement;
+        const firstElement = focusableElements[0] as HTMLElement
         const lastElement = focusableElements[
           focusableElements.length - 1
-        ] as HTMLElement;
+        ] as HTMLElement
 
         // Additional safety check
-        if (!firstElement || !lastElement) return;
+        if (!firstElement || !lastElement) return
 
         if (event.shiftKey) {
           if (document.activeElement === firstElement) {
-            lastElement.focus();
-            event.preventDefault();
+            lastElement.focus()
+            event.preventDefault()
           }
         } else {
           if (document.activeElement === lastElement) {
-            firstElement.focus();
-            event.preventDefault();
+            firstElement.focus()
+            event.preventDefault()
           }
         }
       }
     }
 
     // Track previous isOpen state for cleanup
-    const wasOpen = previousIsOpenRef.current;
-    previousIsOpenRef.current = isOpen;
+    const wasOpen = previousIsOpenRef.current
+    previousIsOpenRef.current = isOpen
 
     // Only run cleanup when modal transitions from open to closed
     if (!isOpen && wasOpen) {
       // Modal just closed - restore focus
       if (previousFocusRef.current) {
-        previousFocusRef.current.focus();
+        previousFocusRef.current.focus()
       }
-      return;
+      return
     }
 
-    if (!isOpen) return;
+    if (!isOpen) return
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", handleKeyDown)
+    document.body.style.overflow = "hidden"
 
     // Auto-focus the grade input or the first focusable element
     // Using setTimeout to ensure render is complete
@@ -109,43 +109,43 @@ export function GradeOverrideModal({
       if (modalRef.current) {
         const gradeInput = modalRef.current.querySelector(
           "#grade",
-        ) as HTMLElement;
+        ) as HTMLElement
         if (gradeInput) {
-          gradeInput.focus();
+          gradeInput.focus()
         } else {
           const firstElement = modalRef.current.querySelectorAll(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-          )[0] as HTMLElement;
-          firstElement?.focus();
+          )[0] as HTMLElement
+          firstElement?.focus()
         }
       }
-    }, 0);
+    }, 0)
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose, isSubmitting]);
+      document.removeEventListener("keydown", handleKeyDown)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, onClose, isSubmitting])
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
-    const parsedGrade = parseFloat(grade);
+    const parsedGrade = parseFloat(grade)
     if (isNaN(parsedGrade)) {
-      setError("Please enter a valid grade");
-      return;
+      setError("Please enter a valid grade")
+      return
     }
 
     if (parsedGrade < 0 || parsedGrade > totalScore) {
-      setError(`Grade must be between 0 and ${totalScore}`);
-      return;
+      setError(`Grade must be between 0 and ${totalScore}`)
+      return
     }
 
-    onSubmit(parsedGrade, feedback.trim() || null);
-  };
+    onSubmit(parsedGrade, feedback.trim() || null)
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -176,7 +176,7 @@ export function GradeOverrideModal({
             "absolute top-4 right-4 p-1 rounded-lg",
             "text-gray-400 hover:text-white hover:bg-white/10",
             "transition-colors duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
             "disabled:opacity-50 disabled:cursor-not-allowed",
           )}
         >
@@ -185,8 +185,8 @@ export function GradeOverrideModal({
 
         {/* Icon */}
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-purple-500/20 flex items-center justify-center">
-            <Edit2 className="w-8 h-8 text-purple-400" />
+          <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center">
+            <Edit2 className="w-8 h-8 text-teal-400" />
           </div>
         </div>
 
@@ -230,7 +230,7 @@ export function GradeOverrideModal({
                 "w-full px-4 py-3 rounded-xl",
                 "bg-white/5 border border-white/10",
                 "text-white placeholder-gray-500",
-                "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent",
+                "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
                 "transition-all duration-200",
               )}
@@ -256,7 +256,7 @@ export function GradeOverrideModal({
                 "w-full px-4 py-3 rounded-xl resize-none",
                 "bg-white/5 border border-white/10",
                 "text-white placeholder-gray-500",
-                "focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent",
+                "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
                 "transition-all duration-200",
               )}
@@ -277,7 +277,7 @@ export function GradeOverrideModal({
                 "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
                 "border border-white/20 text-white",
                 "hover:bg-white/10 transition-colors duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             >
@@ -288,9 +288,9 @@ export function GradeOverrideModal({
               disabled={isSubmitting}
               className={cn(
                 "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                "bg-purple-600 text-white",
-                "hover:bg-purple-700 transition-colors duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
+                "bg-teal-600 text-white",
+                "hover:bg-teal-700 transition-colors duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             >
@@ -318,5 +318,5 @@ export function GradeOverrideModal({
         </form>
       </div>
     </div>
-  );
+  )
 }

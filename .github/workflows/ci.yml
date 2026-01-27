@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check code formatting
+        run: npm run format:check
+
       - name: TypeScript type check
         run: npm run typecheck
 
@@ -65,6 +68,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Check code formatting
+        run: npm run format:check
 
       - name: Build (includes TypeScript check)
         run: npm run build

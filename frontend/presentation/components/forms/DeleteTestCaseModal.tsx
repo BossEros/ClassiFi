@@ -1,15 +1,15 @@
-import * as React from "react";
-import { createPortal } from "react-dom";
-import { cn } from "@/shared/utils/cn";
-import { AlertTriangle, X } from "lucide-react";
+import * as React from "react"
+import { createPortal } from "react-dom"
+import { cn } from "@/shared/utils/cn"
+import { AlertTriangle, X } from "lucide-react"
 
 interface DeleteTestCaseModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  className?: string;
-  isDeleting?: boolean;
-  testCaseName?: string;
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  className?: string
+  isDeleting?: boolean
+  testCaseName?: string
 }
 
 export function DeleteTestCaseModal({
@@ -24,27 +24,27 @@ export function DeleteTestCaseModal({
   React.useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && !isDeleting) {
-        onClose();
+        onClose()
       }
     }
 
     if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
+      document.addEventListener("keydown", handleEscape)
       // Prevent body scroll when modal is open
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = "hidden"
     }
 
     return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose, isDeleting]);
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, onClose, isDeleting])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 grid place-items-center p-4"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Backdrop */}
@@ -56,11 +56,11 @@ export function DeleteTestCaseModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-md mx-4 p-6",
+          "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
           "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
           "shadow-xl shadow-black/20",
           "animate-in fade-in-0 zoom-in-95 duration-200",
-          className
+          className,
         )}
         role="dialog"
         aria-modal="true"
@@ -75,8 +75,8 @@ export function DeleteTestCaseModal({
             "absolute top-4 right-4 p-1 rounded-lg",
             "text-gray-400 hover:text-white hover:bg-white/10",
             "transition-colors duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
           )}
         >
           <X className="w-5 h-5" />
@@ -114,8 +114,8 @@ export function DeleteTestCaseModal({
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
               "border border-white/20 text-white",
               "hover:bg-white/10 transition-colors duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >
             Cancel
@@ -129,7 +129,7 @@ export function DeleteTestCaseModal({
               "bg-red-500 text-white",
               "hover:bg-red-600 transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
-              "disabled:opacity-50 disabled:cursor-not-allowed"
+              "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >
             {isDeleting ? "Deleting..." : "Delete"}
@@ -137,8 +137,8 @@ export function DeleteTestCaseModal({
         </div>
       </div>
     </div>
-  );
+  )
 
   // Render modal using portal to escape parent form context
-  return createPortal(modalContent, document.body);
+  return createPortal(modalContent, document.body)
 }

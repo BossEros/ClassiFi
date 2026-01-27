@@ -1,10 +1,10 @@
-import { Clock } from "lucide-react";
-import { cn } from "@/shared/utils/cn";
+import { Clock } from "lucide-react"
+import { cn } from "@/shared/utils/cn"
 
 interface LatePenaltyBadgeProps {
-  penaltyPercent: number;
-  small?: boolean;
-  className?: string;
+  penaltyPercent: number
+  small?: boolean
+  className?: string
 }
 
 export function LatePenaltyBadge({
@@ -12,9 +12,9 @@ export function LatePenaltyBadge({
   small = false,
   className,
 }: LatePenaltyBadgeProps) {
-  if (penaltyPercent <= 0) return null;
+  if (penaltyPercent <= 0) return null
 
-  const isRejected = penaltyPercent >= 100;
+  const isRejected = penaltyPercent >= 100
 
   return (
     <span
@@ -35,5 +35,5 @@ export function LatePenaltyBadge({
       <Clock className={cn(small ? "w-2.5 h-2.5" : "w-3 h-3")} />
       {isRejected ? "Rejected" : `-${penaltyPercent}%`}
     </span>
-  );
+  )
 }

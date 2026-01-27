@@ -11,13 +11,14 @@ import type {
   SubmissionListResponse,
   SubmissionHistoryResponse,
   AssignmentDetailResponse,
-} from "@/data/api/types";
+  MappedAssignmentDetailResponse,
+} from "@/data/api/types"
 
 // ============================================================================
 // Shared Type Aliases (Re-exported from API types)
 // ============================================================================
 
-export type { ProgrammingLanguage, AssignmentTestCase };
+export type { ProgrammingLanguage, AssignmentTestCase }
 
 // ============================================================================
 // Domain Types - Business Layer (Re-exported from API types)
@@ -28,13 +29,13 @@ export type {
   SubmissionWithAssignment,
   SubmissionWithStudent,
   AssignmentDetail,
-};
+}
 
 // ============================================================================
 // Request DTOs (Re-exported from API types)
 // ============================================================================
 
-export type { SubmitAssignmentRequest, UpdateAssignmentRequest };
+export type { SubmitAssignmentRequest, UpdateAssignmentRequest }
 
 // ============================================================================
 // Response DTOs (Re-exported from API types)
@@ -45,4 +46,5 @@ export type {
   SubmissionListResponse,
   SubmissionHistoryResponse,
   AssignmentDetailResponse,
-};
+  MappedAssignmentDetailResponse,
+}

@@ -2,8 +2,14 @@ import type {
   Submission,
   SubmissionWithAssignment,
   SubmissionWithStudent,
-} from "@/shared/types/submission";
-import type { SubmissionDTO, AssignmentDetailDTO } from "@/data/api/types";
+} from "@/shared/types/submission"
+import type { 
+  SubmissionDTO, 
+  AssignmentDetailDTO,
+  AssignmentDetail,
+  ProgrammingLanguage,
+} from "@/data/api/types"
+import { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/types"
 
 /**
  * Maps a raw submission DTO to a domain Submission model.
@@ -22,7 +28,7 @@ export function mapSubmission(sub: SubmissionDTO): Submission {
         : sub.submittedAt.toISOString(),
     isLatest: sub.isLatest,
     grade: sub.grade ?? undefined,
-  };
+  }
 }
 
 /**
@@ -35,13 +41,13 @@ export function mapSubmissionWithAssignment(
   if (!sub.assignmentName) {
     throw new Error(
       `[mapSubmissionWithAssignment] Missing required property 'assignmentName' for submission ID ${sub.id}`,
-    );
+    )
   }
 
   return {
     ...mapSubmission(sub),
     assignmentName: sub.assignmentName!,
-  };
+  }
 }
 
 /**
@@ -54,26 +60,53 @@ export function mapSubmissionWithStudent(
   if (!sub.studentName) {
     throw new Error(
       `[mapSubmissionWithStudent] Missing required property 'studentName' for submission ID ${sub.id}`,
-    );
+    )
   }
 
   return {
     ...mapSubmission(sub),
     studentName: sub.studentName,
-  };
+  }
 }
 
 /**
- * Maps assignment detail DTO to domain model with proper type casting and defaults.
+ * Validates if a string is a valid programming language.
  */
-export function mapAssignmentDetail(dto: AssignmentDetailDTO) {
+function isValidProgrammingLanguage(lang: string): lang is ProgrammingLanguage {
+  return (VALID_PROGRAMMING_LANGUAGES as readonly string[]).includes(lang)
+}
+
+/**
+ * Maps assignment detail DTO to domain model with proper type validation and defaults.
+ */
+export function mapAssignmentDetail(dto: AssignmentDetailDTO): AssignmentDetail {
+  // Validate programming language with runtime check
+  const programmingLanguage = isValidProgrammingLanguage(dto.programmingLanguage)
+    ? dto.programmingLanguage
+    : "python" // Safe fallback to default language
+
+  if (!isValidProgrammingLanguage(dto.programmingLanguage)) {
+    console.warn(
+      `[mapAssignmentDetail] Invalid programming language "${dto.programmingLanguage}" for assignment ID ${dto.id}. Defaulting to "python".`
+    )
+  }
+
   return {
-    ...dto,
-    programmingLanguage: dto.programmingLanguage as "java" | "python" | "c",
+    id: dto.id,
+    classId: dto.classId,
+    className: dto.className,
+    assignmentName: dto.assignmentName,
+    description: dto.description,
+    programmingLanguage,
+    deadline: dto.deadline,
+    allowResubmission: dto.allowResubmission,
     maxAttempts: dto.maxAttempts ?? null,
+    isActive: dto.isActive,
+    createdAt: dto.createdAt,
     templateCode: dto.templateCode ?? null,
     hasTemplateCode: dto.hasTemplateCode ?? false,
+    totalScore: dto.totalScore,
     scheduledDate: dto.scheduledDate ?? null,
     testCases: dto.testCases ?? [],
-  };
+  }
 }

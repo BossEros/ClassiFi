@@ -1,12 +1,12 @@
-import { eq, and, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, desc, sql, inArray } from "drizzle-orm"
 import {
   submissions,
   users,
   type Submission,
   type NewSubmission,
-} from "@/models/index.js";
-import { BaseRepository } from "@/repositories/base.repository.js";
-import { injectable } from "tsyringe";
+} from "@/models/index.js"
+import { BaseRepository } from "@/repositories/base.repository.js"
+import { injectable } from "tsyringe"
 /**
  * Repository for submission-related database operations.
  */
@@ -17,14 +17,14 @@ export class SubmissionRepository extends BaseRepository<
   NewSubmission
 > {
   constructor() {
-    super(submissions);
+    super(submissions)
   }
 
   /** Get a submission by ID */
   async getSubmissionById(
     submissionId: number,
   ): Promise<Submission | undefined> {
-    return await this.findById(submissionId);
+    return await this.findById(submissionId)
   }
 
   /** Get all submissions for an assignment */
@@ -42,14 +42,14 @@ export class SubmissionRepository extends BaseRepository<
             eq(submissions.isLatest, true),
           ),
         )
-        .orderBy(desc(submissions.submittedAt));
+        .orderBy(desc(submissions.submittedAt))
     }
 
     return await this.db
       .select()
       .from(submissions)
       .where(eq(submissions.assignmentId, assignmentId))
-      .orderBy(desc(submissions.submittedAt));
+      .orderBy(desc(submissions.submittedAt))
   }
 
   /** Get all submissions by a student */
@@ -67,14 +67,14 @@ export class SubmissionRepository extends BaseRepository<
             eq(submissions.isLatest, true),
           ),
         )
-        .orderBy(desc(submissions.submittedAt));
+        .orderBy(desc(submissions.submittedAt))
     }
 
     return await this.db
       .select()
       .from(submissions)
       .where(eq(submissions.studentId, studentId))
-      .orderBy(desc(submissions.submittedAt));
+      .orderBy(desc(submissions.submittedAt))
   }
 
   /**
@@ -83,7 +83,7 @@ export class SubmissionRepository extends BaseRepository<
    */
   async getSubmissionsByClass(classId: number): Promise<Submission[]> {
     // We need to import assignments model to join
-    const { assignments } = await import("@/models/index.js");
+    const { assignments } = await import("@/models/index.js")
 
     return await this.db
       .select({
@@ -105,7 +105,7 @@ export class SubmissionRepository extends BaseRepository<
       })
       .from(submissions)
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
-      .where(eq(assignments.classId, classId));
+      .where(eq(assignments.classId, classId))
   }
 
   /** Get submission history for a student-assignment pair */
@@ -122,7 +122,7 @@ export class SubmissionRepository extends BaseRepository<
           eq(submissions.studentId, studentId),
         ),
       )
-      .orderBy(submissions.submissionNumber);
+      .orderBy(submissions.submissionNumber)
   }
 
   /** Get the latest submission for a student-assignment pair */
@@ -140,9 +140,9 @@ export class SubmissionRepository extends BaseRepository<
           eq(submissions.isLatest, true),
         ),
       )
-      .limit(1);
+      .limit(1)
 
-    return results[0];
+    return results[0]
   }
 
   /** Get submission count for a student-assignment pair */
@@ -158,21 +158,21 @@ export class SubmissionRepository extends BaseRepository<
           eq(submissions.assignmentId, assignmentId),
           eq(submissions.studentId, studentId),
         ),
-      );
+      )
 
-    return Number(result[0]?.count ?? 0);
+    return Number(result[0]?.count ?? 0)
   }
 
   /** Create a new submission */
   async createSubmission(data: {
-    assignmentId: number;
-    studentId: number;
-    fileName: string;
-    filePath: string;
-    fileSize: number;
-    submissionNumber: number;
-    isLate: boolean;
-    penaltyApplied: number;
+    assignmentId: number
+    studentId: number
+    fileName: string
+    filePath: string
+    fileSize: number
+    submissionNumber: number
+    isLate: boolean
+    penaltyApplied: number
   }): Promise<Submission> {
     return await this.db.transaction(async (tx) => {
       // Lock relevant rows to serialize concurrent submissions
@@ -185,7 +185,7 @@ export class SubmissionRepository extends BaseRepository<
             eq(submissions.studentId, data.studentId),
           ),
         )
-        .for("update");
+        .for("update")
 
       // Mark previous submission as not latest
       await tx
@@ -196,7 +196,7 @@ export class SubmissionRepository extends BaseRepository<
             eq(submissions.assignmentId, data.assignmentId),
             eq(submissions.studentId, data.studentId),
           ),
-        );
+        )
 
       // Create new submission
       const results = await tx
@@ -212,17 +212,17 @@ export class SubmissionRepository extends BaseRepository<
           isLate: data.isLate,
           penaltyApplied: data.penaltyApplied,
         })
-        .returning();
+        .returning()
 
       // Defensive check to ensure insert succeeded
       if (!results || results.length === 0) {
         throw new Error(
           "Failed to create submission: insert returned no results",
-        );
+        )
       }
 
-      return results[0];
-    });
+      return results[0]
+    })
   }
 
   /** Get submissions with student info for an assignment */
@@ -231,8 +231,8 @@ export class SubmissionRepository extends BaseRepository<
     latestOnly: boolean = true,
   ): Promise<
     Array<{
-      submission: Submission;
-      studentName: string;
+      submission: Submission
+      studentName: string
     }>
   > {
     const query = this.db
@@ -250,15 +250,15 @@ export class SubmissionRepository extends BaseRepository<
             )
           : eq(submissions.assignmentId, assignmentId),
       )
-      .orderBy(desc(submissions.submittedAt));
+      .orderBy(desc(submissions.submittedAt))
 
-    return await query;
+    return await query
   }
 
   /** Get a single submission with student name */
   async getSubmissionWithStudent(submissionId: number): Promise<{
-    submission: Submission;
-    studentName: string;
+    submission: Submission
+    studentName: string
   } | null> {
     const results = await this.db
       .select({
@@ -268,19 +268,19 @@ export class SubmissionRepository extends BaseRepository<
       .from(submissions)
       .innerJoin(users, eq(submissions.studentId, users.id))
       .where(eq(submissions.id, submissionId))
-      .limit(1);
+      .limit(1)
 
-    return results[0] ?? null;
+    return results[0] ?? null
   }
 
   /** Get multiple submissions with student names by IDs */
   async getBatchSubmissionsWithStudents(submissionIds: number[]): Promise<
     Array<{
-      submission: Submission;
-      studentName: string;
+      submission: Submission
+      studentName: string
     }>
   > {
-    if (submissionIds.length === 0) return [];
+    if (submissionIds.length === 0) return []
 
     return await this.db
       .select({
@@ -289,7 +289,7 @@ export class SubmissionRepository extends BaseRepository<
       })
       .from(submissions)
       .innerJoin(users, eq(submissions.studentId, users.id))
-      .where(inArray(submissions.id, submissionIds));
+      .where(inArray(submissions.id, submissionIds))
   }
 
   /**
@@ -299,8 +299,8 @@ export class SubmissionRepository extends BaseRepository<
   async getTotalCount(): Promise<number> {
     const result = await this.db
       .select({ count: sql<number>`count(*)` })
-      .from(submissions);
-    return Number(result[0]?.count ?? 0);
+      .from(submissions)
+    return Number(result[0]?.count ?? 0)
   }
 
   /**
@@ -311,7 +311,7 @@ export class SubmissionRepository extends BaseRepository<
     await this.db
       .update(submissions)
       .set({ grade })
-      .where(eq(submissions.id, submissionId));
+      .where(eq(submissions.id, submissionId))
   }
 
   /**
@@ -331,7 +331,7 @@ export class SubmissionRepository extends BaseRepository<
         overrideFeedback: feedback,
         overriddenAt: new Date(),
       })
-      .where(eq(submissions.id, submissionId));
+      .where(eq(submissions.id, submissionId))
   }
 
   /**
@@ -346,6 +346,6 @@ export class SubmissionRepository extends BaseRepository<
         overrideFeedback: null,
         overriddenAt: null,
       })
-      .where(eq(submissions.id, submissionId));
+      .where(eq(submissions.id, submissionId))
   }
 }

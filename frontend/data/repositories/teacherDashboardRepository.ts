@@ -1,9 +1,9 @@
-import { apiClient } from '@/data/api/apiClient'
+import { apiClient } from "@/data/api/apiClient"
 import type {
   TeacherDashboardResponse,
   TeacherDashboardClassListResponse,
   TeacherDashboardTaskListResponse,
-} from '@/data/api/types'
+} from "@/data/api/types"
 
 // Export response types for consumers
 export type {
@@ -19,40 +19,45 @@ export type {
 export async function getCompleteDashboardDataForTeacherId(
   teacherId: number,
   maximumRecentClassesCount: number = 12,
-  maximumPendingTasksCount: number = 10
+  maximumPendingTasksCount: number = 10,
 ): Promise<TeacherDashboardResponse> {
   const apiResponse = await apiClient.get<TeacherDashboardResponse>(
-    `/teacher/dashboard/${teacherId}?recentClassesLimit=${maximumRecentClassesCount}&pendingTasksLimit=${maximumPendingTasksCount}`
+    `/teacher/dashboard/${teacherId}?recentClassesLimit=${maximumRecentClassesCount}&pendingTasksLimit=${maximumPendingTasksCount}`,
   )
 
   if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || 'Failed to fetch dashboard data')
+    throw new Error(apiResponse.error || "Failed to fetch dashboard data")
   }
 
   return apiResponse.data
 }
 
-export async function getRecentClassesForTeacherId(teacherId: number, maximumClassesCount: number = 5): Promise<TeacherDashboardClassListResponse> {
+export async function getRecentClassesForTeacherId(
+  teacherId: number,
+  maximumClassesCount: number = 5,
+): Promise<TeacherDashboardClassListResponse> {
   const apiResponse = await apiClient.get<TeacherDashboardClassListResponse>(
-    `/teacher/dashboard/${teacherId}/classes?limit=${maximumClassesCount}`
+    `/teacher/dashboard/${teacherId}/classes?limit=${maximumClassesCount}`,
   )
 
   if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || 'Failed to fetch recent classes')
+    throw new Error(apiResponse.error || "Failed to fetch recent classes")
   }
 
   return apiResponse.data
 }
 
-export async function getPendingTasksForTeacherId(teacherId: number, maximumTasksCount: number = 10): Promise<TeacherDashboardTaskListResponse> {
+export async function getPendingTasksForTeacherId(
+  teacherId: number,
+  maximumTasksCount: number = 10,
+): Promise<TeacherDashboardTaskListResponse> {
   const apiResponse = await apiClient.get<TeacherDashboardTaskListResponse>(
-    `/teacher/dashboard/${teacherId}/tasks?limit=${maximumTasksCount}`
+    `/teacher/dashboard/${teacherId}/tasks?limit=${maximumTasksCount}`,
   )
 
   if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || 'Failed to fetch pending tasks')
+    throw new Error(apiResponse.error || "Failed to fetch pending tasks")
   }
 
   return apiResponse.data
 }
-

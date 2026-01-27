@@ -2,13 +2,13 @@
  * Admin Class Controller
  * Handles class management endpoints.
  */
-import type { FastifyInstance } from "fastify";
-import { container } from "tsyringe";
-import { AdminClassService } from "../../../services/admin/admin-class.service.js";
-import { AdminUserService } from "../../../services/admin/admin-user.service.js";
-import { authMiddleware } from "../../middlewares/auth.middleware.js";
-import { adminMiddleware } from "../../middlewares/admin.middleware.js";
-import { toJsonSchema } from "../../utils/swagger.js";
+import type { FastifyInstance } from "fastify"
+import { container } from "tsyringe"
+import { AdminClassService } from "../../../services/admin/admin-class.service.js"
+import { AdminUserService } from "../../../services/admin/admin-user.service.js"
+import { authMiddleware } from "../../middlewares/auth.middleware.js"
+import { adminMiddleware } from "../../middlewares/admin.middleware.js"
+import { toJsonSchema } from "../../utils/swagger.js"
 import {
   ClassFilterQuerySchema,
   ClassParamsSchema,
@@ -24,14 +24,14 @@ import {
   type CreateClass,
   type UpdateClass,
   type ReassignTeacher,
-} from "../../schemas/admin.schema.js";
+} from "../../schemas/admin.schema.js"
 
 export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
   const adminClassService =
-    container.resolve<AdminClassService>("AdminClassService");
+    container.resolve<AdminClassService>("AdminClassService")
   const adminUserService =
-    container.resolve<AdminUserService>("AdminUserService");
-  const preHandler = [authMiddleware, adminMiddleware];
+    container.resolve<AdminUserService>("AdminUserService")
+  const preHandler = [authMiddleware, adminMiddleware]
 
   // GET /classes
   app.get<{ Querystring: ClassFilterQuery }>("/classes", {
@@ -53,7 +53,7 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
         yearLevel,
         semester,
         academicYear,
-      } = request.query;
+      } = request.query
       const result = await adminClassService.getAllClasses({
         page,
         limit,
@@ -63,10 +63,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
         yearLevel,
         semester,
         academicYear,
-      });
-      return reply.send({ success: true, ...result });
+      })
+      return reply.send({ success: true, ...result })
     },
-  });
+  })
 
   // GET /classes/:id
   app.get<{ Params: ClassParams }>("/classes/:id", {
@@ -79,10 +79,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
       response: { 200: toJsonSchema(SingleClassResponseSchema) },
     },
     handler: async (request, reply) => {
-      const classData = await adminClassService.getClassById(request.params.id);
-      return reply.send({ success: true, class: classData });
+      const classData = await adminClassService.getClassById(request.params.id)
+      return reply.send({ success: true, class: classData })
     },
-  });
+  })
 
   // POST /classes
   app.post<{ Body: CreateClass }>("/classes", {
@@ -104,16 +104,16 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
         academicYear: request.body.academicYear,
         schedule: request.body.schedule,
         description: request.body.description,
-      });
+      })
       return reply.status(201).send({
         success: true,
         class: {
           ...classData,
           teacherName: "Unknown", // Will be populated on fetch if needed
         },
-      });
+      })
     },
-  });
+  })
 
   // PUT /classes/:id
   app.put<{ Params: ClassParams; Body: UpdateClass }>("/classes/:id", {
@@ -130,11 +130,11 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
       await adminClassService.updateClass(
         request.params.id,
         request.body as any,
-      );
-      const fullClass = await adminClassService.getClassById(request.params.id);
-      return reply.send({ success: true, class: fullClass });
+      )
+      const fullClass = await adminClassService.getClassById(request.params.id)
+      return reply.send({ success: true, class: fullClass })
     },
-  });
+  })
 
   // DELETE /classes/:id
   app.delete<{ Params: ClassParams }>("/classes/:id", {
@@ -147,13 +147,13 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
       response: { 200: toJsonSchema(SuccessResponseSchema) },
     },
     handler: async (request, reply) => {
-      await adminClassService.deleteClass(request.params.id);
+      await adminClassService.deleteClass(request.params.id)
       return reply.send({
         success: true,
         message: "Class deleted successfully",
-      });
+      })
     },
-  });
+  })
 
   // PATCH /classes/:id/reassign
   app.patch<{ Params: ClassParams; Body: ReassignTeacher }>(
@@ -172,14 +172,14 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
         await adminClassService.reassignClassTeacher(
           request.params.id,
           request.body.teacherId,
-        );
+        )
         const fullClass = await adminClassService.getClassById(
           request.params.id,
-        );
-        return reply.send({ success: true, class: fullClass });
+        )
+        return reply.send({ success: true, class: fullClass })
       },
     },
-  );
+  )
 
   // PATCH /classes/:id/archive
   app.patch<{ Params: ClassParams }>("/classes/:id/archive", {
@@ -192,11 +192,11 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
       response: { 200: toJsonSchema(SingleClassResponseSchema) },
     },
     handler: async (request, reply) => {
-      await adminClassService.archiveClass(request.params.id);
-      const fullClass = await adminClassService.getClassById(request.params.id);
-      return reply.send({ success: true, class: fullClass });
+      await adminClassService.archiveClass(request.params.id)
+      const fullClass = await adminClassService.getClassById(request.params.id)
+      return reply.send({ success: true, class: fullClass })
     },
-  });
+  })
 
   // GET /teachers
   app.get("/teachers", {
@@ -209,10 +209,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
       response: { 200: toJsonSchema(TeachersListResponseSchema) },
     },
     handler: async (_request, reply) => {
-      const teachers = await adminUserService.getAllTeachers();
-      return reply.send({ success: true, teachers });
+      const teachers = await adminUserService.getAllTeachers()
+      return reply.send({ success: true, teachers })
     },
-  });
+  })
 
   // GET /classes/:id/assignments
   app.get<{ Params: ClassParams }>("/classes/:id/assignments", {
@@ -227,8 +227,8 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const assignments = await adminClassService.getClassAssignments(
         request.params.id,
-      );
-      return reply.send({ success: true, assignments });
+      )
+      return reply.send({ success: true, assignments })
     },
-  });
+  })
 }

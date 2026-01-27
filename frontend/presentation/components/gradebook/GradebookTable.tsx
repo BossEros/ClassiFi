@@ -2,18 +2,18 @@ import type {
   GradebookAssignment,
   GradebookStudent,
   GradeEntry,
-} from "@/shared/types/gradebook";
-import { GradeCell } from "@/presentation/components/gradebook/GradeCell";
+} from "@/shared/types/gradebook"
+import { GradeCell } from "@/presentation/components/gradebook/GradeCell"
 
 interface GradebookTableProps {
-  assignments: GradebookAssignment[];
-  students: GradebookStudent[];
+  assignments: GradebookAssignment[]
+  students: GradebookStudent[]
   onGradeClick: (
     student: GradebookStudent,
     grade: GradeEntry,
     assignmentName: string,
     totalScore: number,
-  ) => void;
+  ) => void
 }
 
 export function GradebookTable({
@@ -23,34 +23,34 @@ export function GradebookTable({
 }: GradebookTableProps) {
   // Calculate averages for each student
   const calculateStudentAverage = (grades: GradeEntry[]) => {
-    const validGrades = grades.filter((g) => g.grade !== null);
-    if (validGrades.length === 0) return null;
+    const validGrades = grades.filter((g) => g.grade !== null)
+    if (validGrades.length === 0) return null
 
     // Find corresponding assignment for each grade to get totalScore
     const total = validGrades.reduce((sum, g) => {
-      const assignment = assignments.find((a) => a.id === g.assignmentId);
-      if (!assignment) return sum;
+      const assignment = assignments.find((a) => a.id === g.assignmentId)
+      if (!assignment) return sum
 
       // Guard against division by zero - skip assignments with totalScore of 0
       if (assignment.totalScore === 0) {
         console.warn(
           `[GradebookTable] Assignment "${assignment.name}" (id: ${assignment.id}) has totalScore of 0, skipping in average calculation`,
-        );
-        return sum;
+        )
+        return sum
       }
 
-      return sum + ((g.grade as number) / assignment.totalScore) * 100;
-    }, 0);
+      return sum + ((g.grade as number) / assignment.totalScore) * 100
+    }, 0)
 
-    return Math.round(total / validGrades.length);
-  };
+    return Math.round(total / validGrades.length)
+  }
 
   if (assignments.length === 0) {
     return (
       <div className="p-8 text-center text-gray-400">
         <p>No assignments created yet</p>
       </div>
-    );
+    )
   }
 
   return (
@@ -86,7 +86,7 @@ export function GradebookTable({
         </thead>
         <tbody className="divide-y divide-white/5">
           {students.map((student) => {
-            const average = calculateStudentAverage(student.grades);
+            const average = calculateStudentAverage(student.grades)
 
             return (
               <tr
@@ -104,7 +104,7 @@ export function GradebookTable({
                 {assignments.map((assignment) => {
                   const grade = student.grades.find(
                     (g) => g.assignmentId === assignment.id,
-                  );
+                  )
 
                   return (
                     <td key={assignment.id} className="px-3 py-3 text-center">
@@ -118,12 +118,12 @@ export function GradebookTable({
                               grade,
                               assignment.name,
                               assignment.totalScore,
-                            );
+                            )
                           }
                         }}
                       />
                     </td>
-                  );
+                  )
                 })}
                 <td className="px-4 py-3 text-center">
                   {average !== null ? (
@@ -137,17 +137,17 @@ export function GradebookTable({
                   )}
                 </td>
               </tr>
-            );
+            )
           })}
         </tbody>
       </table>
     </div>
-  );
+  )
 }
 
 function getAverageColorClass(average: number): string {
-  if (average >= 90) return "bg-green-500/20 text-green-400";
-  if (average >= 75) return "bg-blue-500/20 text-blue-400";
-  if (average >= 60) return "bg-yellow-500/20 text-yellow-400";
-  return "bg-red-500/20 text-red-400";
+  if (average >= 90) return "bg-green-500/20 text-green-400"
+  if (average >= 75) return "bg-blue-500/20 text-blue-400"
+  if (average >= 60) return "bg-yellow-500/20 text-yellow-400"
+  return "bg-red-500/20 text-red-400"
 }

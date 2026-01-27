@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
-import { useParams, useLocation } from "react-router-dom";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
-import { Card, CardContent } from "@/presentation/components/ui/Card";
-import { Input } from "@/presentation/components/ui/Input";
-import { BackButton } from "@/presentation/components/ui/BackButton";
+import { useState, useEffect, useMemo } from "react"
+import { useParams, useLocation } from "react-router-dom"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Input } from "@/presentation/components/ui/Input"
+import { BackButton } from "@/presentation/components/ui/BackButton"
 import {
   Search,
   AlertTriangle,
@@ -14,28 +14,28 @@ import {
   X,
   Layers,
   GitCompare,
-} from "lucide-react";
+} from "lucide-react"
 import {
   SimilarityBadge,
   PairComparison,
   PairCodeDiff,
   type FilePair,
-} from "@/src/components/plagiarism";
+} from "@/src/components/plagiarism"
 import {
   getResultDetails,
   type AnalyzeResponse,
   type PairResponse,
-} from "@/business/services/plagiarismService";
+} from "@/business/services/plagiarismService"
 
 interface LocationState {
-  results: AnalyzeResponse;
+  results: AnalyzeResponse
 }
 
 /**
  * Detect the syntax highlighting language from a filename extension.
  */
 function detectLanguage(filename: string): string {
-  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  const ext = filename.split(".").pop()?.toLowerCase() || ""
   const extensionMap: Record<string, string> = {
     java: "java",
     py: "python",
@@ -54,101 +54,101 @@ function detectLanguage(filename: string): string {
     swift: "swift",
     kt: "kotlin",
     scala: "scala",
-  };
-  return extensionMap[ext] || "plaintext";
+  }
+  return extensionMap[ext] || "plaintext"
 }
 
 export function SimilarityResultsPage() {
-  const { assignmentId } = useParams<{ assignmentId: string }>();
-  const location = useLocation();
+  const { assignmentId } = useParams<{ assignmentId: string }>()
+  const location = useLocation()
 
-  const [results, setResults] = useState<AnalyzeResponse | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null);
+  const [results, setResults] = useState<AnalyzeResponse | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null)
   const [sortBy, setSortBy] = useState<"similarity" | "overlap" | "longest">(
     "similarity",
-  );
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  )
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
   // State for code comparison
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const [pairDetails, setPairDetails] = useState<FilePair | null>(null);
-  const [viewMode, setViewMode] = useState<"match" | "diff">("match");
-  const [detailsError, setDetailsError] = useState<string | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
+  const [viewMode, setViewMode] = useState<"match" | "diff">("match")
+  const [detailsError, setDetailsError] = useState<string | null>(null)
 
   // Load results from location state
   useEffect(() => {
-    const state = location.state as LocationState | null;
+    const state = location.state as LocationState | null
     if (state?.results) {
-      setResults(state.results);
+      setResults(state.results)
     }
-  }, [location.state]);
+  }, [location.state])
 
   // Filter and sort pairs
   const filteredPairs = useMemo(() => {
-    if (!results) return [];
+    if (!results) return []
 
-    let pairs = [...results.pairs];
+    let pairs = [...results.pairs]
 
     // Filter by search query
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+      const query = searchQuery.toLowerCase()
       pairs = pairs.filter(
         (pair) =>
           pair.leftFile.studentName?.toLowerCase().includes(query) ||
           pair.rightFile.studentName?.toLowerCase().includes(query) ||
           pair.leftFile.filename.toLowerCase().includes(query) ||
           pair.rightFile.filename.toLowerCase().includes(query),
-      );
+      )
     }
 
     // Sort
     pairs.sort((a, b) => {
-      let valueA: number, valueB: number;
+      let valueA: number, valueB: number
       switch (sortBy) {
         case "similarity":
-          valueA = a.structuralScore;
-          valueB = b.structuralScore;
-          break;
+          valueA = a.structuralScore
+          valueB = b.structuralScore
+          break
         case "overlap":
-          valueA = a.overlap;
-          valueB = b.overlap;
-          break;
+          valueA = a.overlap
+          valueB = b.overlap
+          break
         case "longest":
-          valueA = a.longest;
-          valueB = b.longest;
-          break;
+          valueA = a.longest
+          valueB = b.longest
+          break
         default:
-          valueA = a.structuralScore;
-          valueB = b.structuralScore;
+          valueA = a.structuralScore
+          valueB = b.structuralScore
       }
-      return sortOrder === "desc" ? valueB - valueA : valueA - valueB;
-    });
+      return sortOrder === "desc" ? valueB - valueA : valueA - valueB
+    })
 
-    return pairs;
-  }, [results, searchQuery, sortBy, sortOrder]);
+    return pairs
+  }, [results, searchQuery, sortBy, sortOrder])
 
   const handleSort = (key: "similarity" | "overlap" | "longest") => {
     if (sortBy === key) {
-      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"));
+      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
     } else {
-      setSortBy(key);
-      setSortOrder("desc");
+      setSortBy(key)
+      setSortOrder("desc")
     }
-  };
+  }
 
   // Handle viewing pair details with code comparison
   const handleViewDetails = async (pair: PairResponse) => {
-    setSelectedPair(pair);
-    setIsLoadingDetails(true);
-    setDetailsError(null);
-    setPairDetails(null);
+    setSelectedPair(pair)
+    setIsLoadingDetails(true)
+    setDetailsError(null)
+    setPairDetails(null)
 
     try {
       // We need to get the result ID from the database
       // For now, we use the pair's leftFile and rightFile IDs as a workaround
       // In production, the API response should include the similarity_result ID
-      const details = await getResultDetails(pair.id);
+      const details = await getResultDetails(pair.id)
 
       // Convert to FilePair format for PairComparison component
       const filePair: FilePair = {
@@ -176,33 +176,33 @@ export function SimilarityResultsPage() {
           rightSelection: f.rightSelection,
           length: f.length,
         })),
-      };
+      }
 
-      setPairDetails(filePair);
+      setPairDetails(filePair)
     } catch (error) {
-      console.error("Failed to fetch pair details:", error);
+      console.error("Failed to fetch pair details:", error)
       setDetailsError(
         error instanceof Error
           ? error.message
           : "Failed to load code comparison",
-      );
+      )
     } finally {
-      setIsLoadingDetails(false);
+      setIsLoadingDetails(false)
     }
-  };
+  }
 
   const handleCloseDetails = () => {
-    setSelectedPair(null);
-    setPairDetails(null);
-    setDetailsError(null);
-  };
+    setSelectedPair(null)
+    setPairDetails(null)
+    setDetailsError(null)
+  }
 
   // Compute language for code highlighting based on filenames
   const detectedLanguage = useMemo(() => {
-    if (!pairDetails) return "plaintext";
+    if (!pairDetails) return "plaintext"
     // Use the left file's extension as the primary source
-    return detectLanguage(pairDetails.leftFile.filename);
-  }, [pairDetails]);
+    return detectLanguage(pairDetails.leftFile.filename)
+  }, [pairDetails])
 
   // No results state
   if (!results) {
@@ -227,7 +227,7 @@ export function SimilarityResultsPage() {
           </CardContent>
         </Card>
       </DashboardLayout>
-    );
+    )
   }
 
   return (
@@ -244,7 +244,7 @@ export function SimilarityResultsPage() {
           <h1 className="text-3xl font-bold text-white">
             Similarity Analysis Results
           </h1>
-          <p className="text-gray-400">Report ID: {results.reportId}</p>
+          <p className="text-slate-300">Report ID: {results.reportId}</p>
         </div>
 
         {/* Summary Cards */}
@@ -252,11 +252,11 @@ export function SimilarityResultsPage() {
           <Card className="bg-white/5 backdrop-blur-sm border-white/10">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-teal-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Total Pairs</p>
+                  <p className="text-sm text-slate-300">Total Pairs</p>
                   <p className="text-xl font-bold text-white">
                     {results.summary.totalPairs}
                   </p>
@@ -272,7 +272,7 @@ export function SimilarityResultsPage() {
                   <AlertTriangle className="w-5 h-5 text-red-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Suspicious</p>
+                  <p className="text-sm text-slate-300">Suspicious</p>
                   <p className="text-xl font-bold text-white">
                     {results.summary.suspiciousPairs}
                   </p>
@@ -288,7 +288,7 @@ export function SimilarityResultsPage() {
                   <BarChart3 className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Avg Similarity</p>
+                  <p className="text-sm text-slate-300">Avg Similarity</p>
                   <p className="text-xl font-bold text-white">
                     {(results.summary.averageSimilarity * 100).toFixed(1)}%
                   </p>
@@ -304,7 +304,7 @@ export function SimilarityResultsPage() {
                   <FileCode className="w-5 h-5 text-orange-400" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-400">Max Similarity</p>
+                  <p className="text-sm text-slate-300">Max Similarity</p>
                   <p className="text-xl font-bold text-white">
                     {(results.summary.maxSimilarity * 100).toFixed(1)}%
                   </p>
@@ -320,12 +320,12 @@ export function SimilarityResultsPage() {
             <Input
               type="text"
               placeholder="Search by student name or file..."
-              className="pl-14 h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 rounded-xl transition-all duration-300"
+              className="pl-14 h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-teal-500/50 focus:ring-teal-600/20 rounded-xl transition-all duration-300"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors">
-              <Search className="w-6 h-6 text-purple-400 group-focus-within:text-purple-300 transition-colors" />
+              <Search className="w-6 h-6 text-teal-400 group-focus-within:text-teal-300 transition-colors" />
             </div>
           </div>
         </div>
@@ -336,14 +336,14 @@ export function SimilarityResultsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">
                     Student 1
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">
                     Student 2
                   </th>
                   <th
-                    className="text-left p-4 text-sm font-medium text-gray-400 cursor-pointer hover:text-white"
+                    className="text-left p-4 text-sm font-medium text-slate-300 cursor-pointer hover:text-white"
                     onClick={() => handleSort("similarity")}
                   >
                     Similarity{" "}
@@ -351,20 +351,20 @@ export function SimilarityResultsPage() {
                       (sortOrder === "desc" ? "↓" : "↑")}
                   </th>
                   <th
-                    className="text-left p-4 text-sm font-medium text-gray-400 cursor-pointer hover:text-white"
+                    className="text-left p-4 text-sm font-medium text-slate-300 cursor-pointer hover:text-white"
                     onClick={() => handleSort("overlap")}
                   >
                     Overlap{" "}
                     {sortBy === "overlap" && (sortOrder === "desc" ? "↓" : "↑")}
                   </th>
                   <th
-                    className="text-left p-4 text-sm font-medium text-gray-400 cursor-pointer hover:text-white"
+                    className="text-left p-4 text-sm font-medium text-slate-300 cursor-pointer hover:text-white"
                     onClick={() => handleSort("longest")}
                   >
                     Longest{" "}
                     {sortBy === "longest" && (sortOrder === "desc" ? "↓" : "↑")}
                   </th>
-                  <th className="text-left p-4 text-sm font-medium text-gray-400">
+                  <th className="text-left p-4 text-sm font-medium text-slate-300">
                     Actions
                   </th>
                 </tr>
@@ -372,7 +372,7 @@ export function SimilarityResultsPage() {
               <tbody>
                 {filteredPairs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-gray-400">
+                    <td colSpan={6} className="p-8 text-center text-slate-300">
                       {searchQuery
                         ? "No pairs match your search"
                         : "No pairs to display"}
@@ -383,7 +383,7 @@ export function SimilarityResultsPage() {
                     <tr
                       key={`${pair.leftFile.id}-${pair.rightFile.id}`}
                       className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
-                        selectedPair === pair ? "bg-purple-500/10" : ""
+                        selectedPair === pair ? "bg-teal-500/10" : ""
                       }`}
                     >
                       <td className="p-4">
@@ -391,7 +391,7 @@ export function SimilarityResultsPage() {
                           <p className="text-white font-medium">
                             {pair.leftFile.studentName || "Unknown"}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-400">
                             {pair.leftFile.filename}
                           </p>
                         </div>
@@ -401,7 +401,7 @@ export function SimilarityResultsPage() {
                           <p className="text-white font-medium">
                             {pair.rightFile.studentName || "Unknown"}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-slate-400">
                             {pair.rightFile.filename}
                           </p>
                         </div>
@@ -409,13 +409,13 @@ export function SimilarityResultsPage() {
                       <td className="p-4">
                         <SimilarityBadge similarity={pair.structuralScore} />
                       </td>
-                      <td className="p-4 text-gray-300">{pair.overlap}</td>
-                      <td className="p-4 text-gray-300">{pair.longest}</td>
+                      <td className="p-4 text-slate-200">{pair.overlap}</td>
+                      <td className="p-4 text-slate-200">{pair.longest}</td>
                       <td className="p-4">
                         <button
                           onClick={() => handleViewDetails(pair)}
                           disabled={isLoadingDetails && selectedPair === pair}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transform hover:scale-105"
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transform hover:scale-105"
                         >
                           {isLoadingDetails && selectedPair === pair ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -447,10 +447,10 @@ export function SimilarityResultsPage() {
                 </h2>
                 <button
                   onClick={handleCloseDetails}
-                  className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300 backdrop-blur-sm"
+                  className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 hover:border-teal-500/40 transition-all duration-300 backdrop-blur-sm"
                 >
-                  <X className="w-4 h-4 text-purple-200 group-hover:text-white transition-colors" />
-                  <span className="text-sm font-medium text-purple-200 group-hover:text-white transition-colors">
+                  <X className="w-4 h-4 text-teal-200 group-hover:text-white transition-colors" />
+                  <span className="text-sm font-medium text-teal-200 group-hover:text-white transition-colors">
                     Close
                   </span>
                 </button>
@@ -463,8 +463,8 @@ export function SimilarityResultsPage() {
                     onClick={() => setViewMode("match")}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                       viewMode === "match"
-                        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/20"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        ? "bg-teal-500 text-white shadow-lg shadow-teal-500/20"
+                        : "text-slate-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     <Layers className="w-4 h-4" />
@@ -474,8 +474,8 @@ export function SimilarityResultsPage() {
                     onClick={() => setViewMode("diff")}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                       viewMode === "diff"
-                        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/20"
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                        ? "bg-teal-500 text-white shadow-lg shadow-teal-500/20"
+                        : "text-slate-300 hover:text-white hover:bg-white/5"
                     }`}
                   >
                     <GitCompare className="w-4 h-4" />
@@ -486,8 +486,8 @@ export function SimilarityResultsPage() {
 
               {isLoadingDetails && (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-400" />
-                  <span className="ml-3 text-gray-400">
+                  <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+                  <span className="ml-3 text-slate-300">
                     Loading code comparison...
                   </span>
                 </div>
@@ -536,5 +536,5 @@ export function SimilarityResultsPage() {
         )}
       </div>
     </DashboardLayout>
-  );
+  )
 }

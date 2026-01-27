@@ -1,10 +1,10 @@
-import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
-import { container } from "tsyringe";
-import { SubmissionService } from "@/services/submission.service.js";
-import { toJsonSchema } from "@/api/utils/swagger.js";
-import { LatestOnlyQuerySchema } from "@/api/schemas/common.schema.js";
-import { AssignmentIdParamSchema } from "@/api/schemas/assignment.schema.js";
-import { StudentIdParamSchema } from "@/api/schemas/class.schema.js";
+import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify"
+import { container } from "tsyringe"
+import { SubmissionService } from "@/services/submission.service.js"
+import { toJsonSchema } from "@/api/utils/swagger.js"
+import { LatestOnlyQuerySchema } from "@/api/schemas/common.schema.js"
+import { AssignmentIdParamSchema } from "@/api/schemas/assignment.schema.js"
+import { StudentIdParamSchema } from "@/api/schemas/class.schema.js"
 import {
   SubmitAssignmentResponseSchema,
   SubmissionListResponseSchema,
@@ -13,18 +13,18 @@ import {
   HistoryParamsSchema,
   DownloadResponseSchema,
   SubmissionContentResponseSchema,
-} from "@/api/schemas/submission.schema.js";
-import { BadRequestError } from "@/api/middlewares/error-handler.js";
+} from "@/api/schemas/submission.schema.js"
+import { BadRequestError } from "@/api/middlewares/error-handler.js"
 
 /** Type definition for multipart form field */
 interface MultipartField {
-  value: string;
+  value: string
 }
 
 /** Submission routes - /api/v1/submissions/* */
 export async function submissionRoutes(app: FastifyInstance): Promise<void> {
   const submissionService =
-    container.resolve<SubmissionService>("SubmissionService");
+    container.resolve<SubmissionService>("SubmissionService")
 
   /**
    * POST /
@@ -41,22 +41,22 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request: FastifyRequest, reply: FastifyReply) => {
-      const data = await request.file();
+      const data = await request.file()
 
       if (!data) {
-        throw new BadRequestError("No file uploaded");
+        throw new BadRequestError("No file uploaded")
       }
 
       // Extract and type multipart form fields
       const assignmentIdField = data.fields.assignment_id as
         | MultipartField
-        | undefined;
+        | undefined
       const studentIdField = data.fields.student_id as
         | MultipartField
-        | undefined;
+        | undefined
 
-      const assignmentId = parseInt(assignmentIdField?.value ?? "0", 10);
-      const studentId = parseInt(studentIdField?.value ?? "0", 10);
+      const assignmentId = parseInt(assignmentIdField?.value ?? "0", 10)
+      const studentId = parseInt(studentIdField?.value ?? "0", 10)
 
       if (
         isNaN(assignmentId) ||
@@ -68,10 +68,10 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       ) {
         throw new BadRequestError(
           "Assignment ID and Student ID must be positive integers",
-        );
+        )
       }
 
-      const buffer = await data.toBuffer();
+      const buffer = await data.toBuffer()
 
       const submission = await submissionService.submitAssignment(
         assignmentId,
@@ -81,15 +81,15 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
           data: buffer,
           mimetype: data.mimetype,
         },
-      );
+      )
 
       return reply.status(201).send({
         success: true,
         message: "Assignment submitted successfully",
         submission,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /history/:assignmentId/:studentId
@@ -107,8 +107,8 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const assignmentId = parseInt(request.params.assignmentId, 10);
-        const studentId = parseInt(request.params.studentId, 10);
+        const assignmentId = parseInt(request.params.assignmentId, 10)
+        const studentId = parseInt(request.params.studentId, 10)
 
         if (
           !Number.isInteger(assignmentId) ||
@@ -116,31 +116,31 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
           assignmentId <= 0 ||
           studentId <= 0
         ) {
-          throw new BadRequestError("Invalid parameters");
+          throw new BadRequestError("Invalid parameters")
         }
 
         const submissions = await submissionService.getSubmissionHistory(
           assignmentId,
           studentId,
-        );
+        )
 
         return reply.send({
           success: true,
           message: "Submission history retrieved successfully",
           submissions,
           totalSubmissions: submissions.length,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * GET /assignment/:assignmentId
    * Get all submissions for an assignment
    */
   app.get<{
-    Params: { assignmentId: string };
-    Querystring: { latestOnly: boolean };
+    Params: { assignmentId: string }
+    Querystring: { latestOnly: boolean }
   }>("/assignment/:assignmentId", {
     schema: {
       tags: ["Submissions"],
@@ -152,34 +152,34 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const assignmentId = parseInt(request.params.assignmentId, 10);
-      const { latestOnly } = request.query;
+      const assignmentId = parseInt(request.params.assignmentId, 10)
+      const { latestOnly } = request.query
 
       if (!Number.isInteger(assignmentId) || assignmentId <= 0) {
-        throw new BadRequestError("Invalid assignment ID");
+        throw new BadRequestError("Invalid assignment ID")
       }
 
       const submissions = await submissionService.getAssignmentSubmissions(
         assignmentId,
         latestOnly,
-      );
+      )
 
       return reply.send({
         success: true,
         message: "Submissions retrieved successfully",
         submissions,
         totalSubmissions: submissions.length,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /student/:studentId
    * Get all submissions by a student
    */
   app.get<{
-    Params: { studentId: string };
-    Querystring: { latestOnly: boolean };
+    Params: { studentId: string }
+    Querystring: { latestOnly: boolean }
   }>("/student/:studentId", {
     schema: {
       tags: ["Submissions"],
@@ -191,26 +191,26 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const studentId = parseInt(request.params.studentId, 10);
-      const { latestOnly } = request.query;
+      const studentId = parseInt(request.params.studentId, 10)
+      const { latestOnly } = request.query
 
       if (!Number.isInteger(studentId) || studentId <= 0) {
-        throw new BadRequestError("Invalid student ID");
+        throw new BadRequestError("Invalid student ID")
       }
 
       const submissions = await submissionService.getStudentSubmissions(
         studentId,
         latestOnly,
-      );
+      )
 
       return reply.send({
         success: true,
         message: "Submissions retrieved successfully",
         submissions,
         totalSubmissions: submissions.length,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /:submissionId/download
@@ -226,23 +226,23 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const submissionId = parseInt(request.params.submissionId, 10);
+      const submissionId = parseInt(request.params.submissionId, 10)
 
       if (!Number.isInteger(submissionId) || submissionId <= 0) {
-        throw new BadRequestError("Invalid parameters");
+        throw new BadRequestError("Invalid parameters")
       }
 
       // Verify authorization and generate signed URL
       const downloadUrl =
-        await submissionService.getSubmissionDownloadUrl(submissionId);
+        await submissionService.getSubmissionDownloadUrl(submissionId)
 
       return reply.send({
         success: true,
         message: "Download URL generated successfully",
         downloadUrl,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /:submissionId/content
@@ -258,20 +258,20 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const submissionId = parseInt(request.params.submissionId, 10);
+      const submissionId = parseInt(request.params.submissionId, 10)
 
       if (!Number.isInteger(submissionId) || submissionId <= 0) {
-        throw new BadRequestError("Invalid submission ID");
+        throw new BadRequestError("Invalid submission ID")
       }
 
-      const result = await submissionService.getSubmissionContent(submissionId);
+      const result = await submissionService.getSubmissionContent(submissionId)
 
       return reply.send({
         success: true,
         message: "Submission content retrieved successfully",
         content: result.content,
         language: result.language,
-      });
+      })
     },
-  });
+  })
 }

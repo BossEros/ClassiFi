@@ -1,277 +1,289 @@
-import * as React from 'react'
-import { cn } from '@/shared/utils/cn'
-import { AlertTriangle, X, Trash2, AlertCircle, Loader2 } from 'lucide-react'
-import type { AdminClass } from '@/business/services/adminService'
+import * as React from "react"
+import { cn } from "@/shared/utils/cn"
+import { AlertTriangle, X, Trash2, AlertCircle, Loader2 } from "lucide-react"
+import type { AdminClass } from "@/business/services/adminService"
 
 interface AdminDeleteClassModalProps {
-    isOpen: boolean
-    onClose: () => void
-    onConfirm: () => Promise<void>
-    classData: AdminClass | null
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => Promise<void>
+  classData: AdminClass | null
 }
 
 export function AdminDeleteClassModal({
-    isOpen,
-    onClose,
-    onConfirm,
-    classData
+  isOpen,
+  onClose,
+  onConfirm,
+  classData,
 }: AdminDeleteClassModalProps) {
-    const [confirmation, setConfirmation] = React.useState('')
-    const [isDeleting, setIsDeleting] = React.useState(false)
-    const [error, setError] = React.useState<string | null>(null)
-    const [step, setStep] = React.useState<'warning' | 'confirm'>('warning')
+  const [confirmation, setConfirmation] = React.useState("")
+  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [step, setStep] = React.useState<"warning" | "confirm">("warning")
 
-    // Reset form when modal opens/closes
-    React.useEffect(() => {
-        if (!isOpen) {
-            setConfirmation('')
-            setError(null)
-            setStep('warning')
-            setIsDeleting(false)
-        }
-    }, [isOpen])
+  // Reset form when modal opens/closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setConfirmation("")
+      setError(null)
+      setStep("warning")
+      setIsDeleting(false)
+    }
+  }, [isOpen])
 
-    // Close on escape key
-    React.useEffect(() => {
-        function handleEscape(event: KeyboardEvent) {
-            if (event.key === 'Escape' && !isDeleting) {
-                onClose()
-            }
-        }
-
-        if (isOpen) {
-            document.addEventListener('keydown', handleEscape)
-            document.body.style.overflow = 'hidden'
-        }
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape)
-            document.body.style.overflow = 'unset'
-        }
-    }, [isOpen, onClose, isDeleting])
-
-    const handleContinue = () => {
-        setStep('confirm')
+  // Close on escape key
+  React.useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isDeleting) {
+        onClose()
+      }
     }
 
-    const handleDelete = async () => {
-        setError(null)
-        setIsDeleting(true)
-
-        try {
-            await onConfirm()
-            onClose()
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to delete class')
-            setIsDeleting(false)
-        }
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape)
+      document.body.style.overflow = "hidden"
     }
 
-    const isConfirmDisabled = confirmation !== 'DELETE' || isDeleting
+    return () => {
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, onClose, isDeleting])
 
-    if (!isOpen || !classData) return null
+  const handleContinue = () => {
+    setStep("confirm")
+  }
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Backdrop */}
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={!isDeleting ? onClose : undefined}
-            />
+  const handleDelete = async () => {
+    setError(null)
+    setIsDeleting(true)
 
-            {/* Modal */}
-            <div
-                className={cn(
-                    'relative w-full max-w-md mx-4 p-6',
-                    'rounded-xl border border-red-500/20 bg-slate-900/95 backdrop-blur-sm',
-                    'shadow-xl shadow-red-500/10',
-                    'animate-in fade-in-0 zoom-in-95 duration-200'
-                )}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="delete-class-title"
-            >
-                {/* Close button */}
-                <button
-                    onClick={onClose}
-                    disabled={isDeleting}
-                    className={cn(
-                        'absolute top-4 right-4 p-1 rounded-lg',
-                        'text-gray-400 hover:text-white hover:bg-white/10',
-                        'transition-colors duration-200',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500',
-                        'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                >
-                    <X className="w-5 h-5" />
-                </button>
+    try {
+      await onConfirm()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete class")
+      setIsDeleting(false)
+    }
+  }
 
-                {/* Icon */}
-                <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center bg-red-500/20">
-                        {step === 'warning' ? (
-                            <AlertTriangle className="w-8 h-8 text-red-400" />
-                        ) : (
-                            <Trash2 className="w-8 h-8 text-red-400" />
-                        )}
-                    </div>
-                </div>
+  const isConfirmDisabled = confirmation !== "DELETE" || isDeleting
 
-                {/* Title */}
-                <h2
-                    id="delete-class-title"
-                    className="text-xl font-semibold text-center mb-2 text-white"
-                >
-                    {step === 'warning' ? 'Delete Class?' : 'Confirm Deletion'}
-                </h2>
+  if (!isOpen || !classData) return null
 
-                {step === 'warning' ? (
-                    <>
-                        {/* Class info */}
-                        <div className="text-center mb-4">
-                            <p className="text-gray-400 text-sm">
-                                You are about to delete <span className="text-white font-medium">{classData.className}</span>
-                            </p>
-                            <p className="text-gray-500 text-xs mt-1 font-mono">
-                                Code: {classData.classCode}
-                            </p>
-                        </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!isDeleting ? onClose : undefined}
+      />
 
-                        <div className="space-y-3 mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-                            <p className="text-sm text-gray-300">
-                                This action is <span className="text-red-400 font-semibold">permanent and irreversible</span>. Deleting this class will remove:
-                            </p>
-                            <ul className="text-sm text-gray-400 space-y-2">
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400 mt-0.5">•</span>
-                                    All class information and settings
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400 mt-0.5">•</span>
-                                    All assignments and their submissions
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400 mt-0.5">•</span>
-                                    All student enrollments ({classData.studentCount} students)
-                                </li>
-                                <li className="flex items-start gap-2">
-                                    <span className="text-red-400 mt-0.5">•</span>
-                                    All plagiarism reports and analysis data
-                                </li>
-                            </ul>
-                        </div>
+      {/* Modal */}
+      <div
+        className={cn(
+          "relative w-full max-w-md mx-4 p-6",
+          "rounded-xl border border-red-500/20 bg-slate-900/95 backdrop-blur-sm",
+          "shadow-xl shadow-red-500/10",
+          "animate-in fade-in-0 zoom-in-95 duration-200",
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-class-title"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          disabled={isDeleting}
+          className={cn(
+            "absolute top-4 right-4 p-1 rounded-lg",
+            "text-gray-400 hover:text-white hover:bg-white/10",
+            "transition-colors duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+          )}
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-                        {/* Actions */}
-                        <div className="flex gap-3">
-                            <button
-                                onClick={onClose}
-                                className={cn(
-                                    'flex-1 px-4 py-3 rounded-xl text-sm font-semibold',
-                                    'border border-white/20 text-white',
-                                    'hover:bg-white/10 transition-colors duration-200',
-                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500'
-                                )}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleContinue}
-                                className={cn(
-                                    'flex-1 px-4 py-3 rounded-xl text-sm font-semibold',
-                                    'bg-red-500/20 border border-red-500/30 text-red-400',
-                                    'hover:bg-red-500/30 transition-colors duration-200',
-                                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500'
-                                )}
-                            >
-                                Continue
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        {/* Confirmation form */}
-                        <p className="text-gray-400 text-center mb-6 text-sm">
-                            To confirm deletion, please type <span className="text-red-400 font-mono font-semibold">DELETE</span> below.
-                        </p>
-
-                        <div className="space-y-4">
-                            {/* Error message */}
-                            {error && (
-                                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                                    <p className="text-sm text-red-400">{error}</p>
-                                </div>
-                            )}
-
-                            {/* Type DELETE */}
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-300">
-                                    Type <span className="text-red-400 font-mono">DELETE</span> to confirm
-                                </label>
-                                <input
-                                    type="text"
-                                    value={confirmation}
-                                    onChange={(e) => {
-                                        setConfirmation(e.target.value.toUpperCase())
-                                        setError(null)
-                                    }}
-                                    className={cn(
-                                        'w-full px-4 py-3 rounded-lg font-mono',
-                                        'bg-black/20 border border-white/10',
-                                        'text-white placeholder-gray-500',
-                                        'focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent',
-                                        'transition-all duration-200',
-                                        confirmation === 'DELETE' && 'border-red-500/50'
-                                    )}
-                                    placeholder="DELETE"
-                                    disabled={isDeleting}
-                                    autoFocus
-                                />
-                            </div>
-
-                            {/* Actions */}
-                            <div className="flex gap-3 pt-2">
-                                <button
-                                    onClick={() => setStep('warning')}
-                                    disabled={isDeleting}
-                                    className={cn(
-                                        'flex-1 px-4 py-3 rounded-xl text-sm font-semibold',
-                                        'border border-white/20 text-white',
-                                        'hover:bg-white/10 transition-colors duration-200',
-                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
-                                        'disabled:opacity-50 disabled:cursor-not-allowed'
-                                    )}
-                                >
-                                    Back
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    disabled={isConfirmDisabled}
-                                    className={cn(
-                                        'flex-1 px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2',
-                                        'bg-red-600 text-white',
-                                        'hover:bg-red-700 transition-colors duration-200',
-                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500',
-                                        'disabled:opacity-50 disabled:cursor-not-allowed'
-                                    )}
-                                >
-                                    {isDeleting ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Deleting...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Trash2 className="w-4 h-4" />
-                                            Delete Class
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
+        {/* Icon */}
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-red-500/20">
+            {step === "warning" ? (
+              <AlertTriangle className="w-8 h-8 text-red-400" />
+            ) : (
+              <Trash2 className="w-8 h-8 text-red-400" />
+            )}
+          </div>
         </div>
-    )
+
+        {/* Title */}
+        <h2
+          id="delete-class-title"
+          className="text-xl font-semibold text-center mb-2 text-white"
+        >
+          {step === "warning" ? "Delete Class?" : "Confirm Deletion"}
+        </h2>
+
+        {step === "warning" ? (
+          <>
+            {/* Class info */}
+            <div className="text-center mb-4">
+              <p className="text-gray-400 text-sm">
+                You are about to delete{" "}
+                <span className="text-white font-medium">
+                  {classData.className}
+                </span>
+              </p>
+              <p className="text-gray-500 text-xs mt-1 font-mono">
+                Code: {classData.classCode}
+              </p>
+            </div>
+
+            <div className="space-y-3 mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-gray-300">
+                This action is{" "}
+                <span className="text-red-400 font-semibold">
+                  permanent and irreversible
+                </span>
+                . Deleting this class will remove:
+              </p>
+              <ul className="text-sm text-gray-400 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  All class information and settings
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  All assignments and their submissions
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  All student enrollments ({classData.studentCount} students)
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-0.5">•</span>
+                  All plagiarism reports and analysis data
+                </li>
+              </ul>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className={cn(
+                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+                  "border border-white/20 text-white",
+                  "hover:bg-white/10 transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                )}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleContinue}
+                className={cn(
+                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+                  "bg-red-500/20 border border-red-500/30 text-red-400",
+                  "hover:bg-red-500/30 transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                )}
+              >
+                Continue
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Confirmation form */}
+            <p className="text-gray-400 text-center mb-6 text-sm">
+              To confirm deletion, please type{" "}
+              <span className="text-red-400 font-mono font-semibold">
+                DELETE
+              </span>{" "}
+              below.
+            </p>
+
+            <div className="space-y-4">
+              {/* Error message */}
+              {error && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* Type DELETE */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-300">
+                  Type <span className="text-red-400 font-mono">DELETE</span> to
+                  confirm
+                </label>
+                <input
+                  type="text"
+                  value={confirmation}
+                  onChange={(e) => {
+                    setConfirmation(e.target.value.toUpperCase())
+                    setError(null)
+                  }}
+                  className={cn(
+                    "w-full px-4 py-3 rounded-lg font-mono",
+                    "bg-black/20 border border-white/10",
+                    "text-white placeholder-gray-500",
+                    "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
+                    "transition-all duration-200",
+                    confirmation === "DELETE" && "border-red-500/50",
+                  )}
+                  placeholder="DELETE"
+                  disabled={isDeleting}
+                  autoFocus
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setStep("warning")}
+                  disabled={isDeleting}
+                  className={cn(
+                    "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+                    "border border-white/20 text-white",
+                    "hover:bg-white/10 transition-colors duration-200",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                  )}
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isConfirmDisabled}
+                  className={cn(
+                    "flex-1 px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2",
+                    "bg-red-600 text-white",
+                    "hover:bg-red-700 transition-colors duration-200",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                  )}
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete Class
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
 }

@@ -1,12 +1,12 @@
-import { inject, injectable } from "tsyringe";
-import { ClassRepository } from "@/repositories/class.repository.js";
-import { AssignmentRepository } from "@/repositories/assignment.repository.js";
+import { inject, injectable } from "tsyringe"
+import { ClassRepository } from "@/repositories/class.repository.js"
+import { AssignmentRepository } from "@/repositories/assignment.repository.js"
 // Note: SubmissionRepository reserved for future use
 import {
   toDashboardClassDTO,
   type DashboardClassDTO,
   type PendingTaskDTO,
-} from "@/shared/mappers.js";
+} from "@/shared/mappers.js"
 
 /**
  * Business logic for teacher dashboard operations.
@@ -26,22 +26,22 @@ export class TeacherDashboardService {
     recentClassesLimit: number = 12,
     pendingTasksLimit: number = 10,
   ): Promise<{
-    recentClasses: DashboardClassDTO[];
-    pendingTasks: PendingTaskDTO[];
+    recentClasses: DashboardClassDTO[]
+    pendingTasks: PendingTaskDTO[]
   }> {
     const recentClasses = await this.getRecentClasses(
       teacherId,
       recentClassesLimit,
-    );
+    )
     const pendingTasks = await this.getPendingTasks(
       teacherId,
       pendingTasksLimit,
-    );
+    )
 
     return {
       recentClasses,
       pendingTasks,
-    };
+    }
   }
 
   /** Get recent classes for a teacher */
@@ -51,20 +51,20 @@ export class TeacherDashboardService {
   ): Promise<DashboardClassDTO[]> {
     // Use optimized query that fetches student counts in a single query
     const classesWithCounts =
-      await this.classRepo.getRecentClassesWithStudentCounts(teacherId, limit);
+      await this.classRepo.getRecentClassesWithStudentCounts(teacherId, limit)
 
     // Optimized: Batch fetch assignments for all classes
-    const classIds = classesWithCounts.map((c) => c.id);
+    const classIds = classesWithCounts.map((c) => c.id)
     const assignments = await this.assignmentRepo.getAssignmentsByClassIds(
       classIds,
       true,
-    );
+    )
 
     // Group assignments by classId
-    const assignmentCountMap = new Map<number, number>();
+    const assignmentCountMap = new Map<number, number>()
     for (const assignment of assignments) {
-      const count = assignmentCountMap.get(assignment.classId) || 0;
-      assignmentCountMap.set(assignment.classId, count + 1);
+      const count = assignmentCountMap.get(assignment.classId) || 0
+      assignmentCountMap.set(assignment.classId, count + 1)
     }
 
     return classesWithCounts.map((c) =>
@@ -72,7 +72,7 @@ export class TeacherDashboardService {
         studentCount: c.studentCount,
         assignmentCount: assignmentCountMap.get(c.id) || 0,
       }),
-    );
+    )
   }
 
   /** Get pending tasks for a teacher (assignments needing review) */
@@ -83,7 +83,7 @@ export class TeacherDashboardService {
     const tasks = await this.assignmentRepo.getPendingTasksForTeacher(
       teacherId,
       limit,
-    );
+    )
 
     return tasks.map((t) => ({
       id: t.id,
@@ -93,6 +93,6 @@ export class TeacherDashboardService {
       deadline: t.deadline?.toISOString() ?? "",
       submissionCount: t.submissionCount,
       totalStudents: t.studentCount,
-    }));
+    }))
   }
 }

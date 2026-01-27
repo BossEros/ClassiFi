@@ -18,4 +18,4 @@ export type {
   ValidationResult,
   RegistrationStep,
   RegistrationStepInfo,
-} from "@/shared/types/auth";
+} from "@/shared/types/auth"

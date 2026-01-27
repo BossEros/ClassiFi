@@ -1,6 +1,12 @@
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
-import { List } from 'lucide-react'
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
+import { List } from "lucide-react"
 
 export function TasksPage() {
   return (
@@ -29,4 +35,3 @@ export function TasksPage() {
     </DashboardLayout>
   )
 }
-

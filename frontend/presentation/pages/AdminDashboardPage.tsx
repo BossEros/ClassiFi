@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react"
+import { useNavigate } from "react-router-dom"
 import {
   Home,
   Users,
@@ -11,72 +11,69 @@ import {
   RefreshCw,
   Loader2,
   type LucideIcon,
-} from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout";
+} from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-} from "@/presentation/components/ui/Card";
-import { getCurrentUser } from "@/business/services/authService";
-import * as adminService from "@/business/services/adminService";
-import type {
-  AdminStats,
-  ActivityItem,
-} from "@/business/services/adminService";
-import type { User } from "@/business/models/auth/types";
+} from "@/presentation/components/ui/Card"
+import { getCurrentUser } from "@/business/services/authService"
+import * as adminService from "@/business/services/adminService"
+import type { AdminStats, ActivityItem } from "@/business/services/adminService"
+import type { User } from "@/business/models/auth/types"
 
 interface DashboardStat {
-  label: string;
-  value: string;
-  change: string;
-  trend: "up" | "down" | "neutral";
-  icon: LucideIcon;
-  color: string;
+  label: string
+  value: string
+  change: string
+  trend: "up" | "down" | "neutral"
+  icon: LucideIcon
+  color: string
 }
 
 export function AdminDashboardPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [activity, setActivity] = useState<ActivityItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate()
+  const [user, setUser] = useState<User | null>(null)
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [activity, setActivity] = useState<ActivityItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchData = useCallback(async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(true)
+      setError(null)
       const [statsData, activityData] = await Promise.all([
         adminService.getAdminStats(),
         adminService.getRecentActivity(10),
-      ]);
-      setStats(statsData);
-      setActivity(activityData);
+      ])
+      setStats(statsData)
+      setActivity(activityData)
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to load dashboard data"
-      );
+        err instanceof Error ? err.message : "Failed to load dashboard data",
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
+    const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate("/login");
-      return;
+      navigate("/login")
+      return
     }
     if (currentUser.role !== "admin") {
-      navigate("/dashboard");
-      return;
+      navigate("/dashboard")
+      return
     }
-    setUser(currentUser);
-    fetchData();
-  }, [navigate, fetchData]);
+    setUser(currentUser)
+    fetchData()
+  }, [navigate, fetchData])
 
   // Format stats for display
   const displayStats: DashboardStat[] = stats
@@ -95,7 +92,7 @@ export function AdminDashboardPage() {
           change: `${stats.totalClasses} total`,
           trend: "up",
           icon: Grid3x3,
-          color: "text-purple-400",
+          color: "text-teal-400",
         },
         {
           label: "Total Submissions",
@@ -114,22 +111,22 @@ export function AdminDashboardPage() {
           color: "text-orange-400",
         },
       ]
-    : [];
+    : []
 
   const formatRelativeTime = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
+    const date = new Date(timestamp)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
 
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+    if (diffMins < 1) return "Just now"
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`
     if (diffHours < 24)
-      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
-  };
+      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
+    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
+  }
 
   return (
     <DashboardLayout>
@@ -145,7 +142,7 @@ export function AdminDashboardPage() {
                 Admin Dashboard
               </h1>
               {user && (
-                <p className="text-gray-300 text-sm">
+                <p className="text-slate-300 text-sm">
                   Welcome back,{" "}
                   <span className="text-white font-semibold">
                     {user.firstName}
@@ -197,8 +194,8 @@ export function AdminDashboardPage() {
                         stat.trend === "up"
                           ? "bg-green-500/10 text-green-400"
                           : stat.trend === "down"
-                          ? "bg-red-500/10 text-red-400"
-                          : "bg-gray-500/10 text-gray-400"
+                            ? "bg-red-500/10 text-red-400"
+                            : "bg-slate-500/10 text-slate-400"
                       }`}
                     >
                       {stat.change}
@@ -208,7 +205,7 @@ export function AdminDashboardPage() {
                     <p className="text-2xl font-bold text-white tracking-tight">
                       {stat.value}
                     </p>
-                    <p className="text-sm text-gray-400">{stat.label}</p>
+                    <p className="text-sm text-slate-400">{stat.label}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -233,21 +230,21 @@ export function AdminDashboardPage() {
                           {item.user.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-300">
+                          <p className="text-sm text-slate-300">
                             <span className="font-semibold text-white">
                               {item.user}
                             </span>{" "}
                             {item.description}{" "}
                             <span className="text-blue-300">{item.target}</span>
                           </p>
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-slate-500 mt-1">
                             {formatRelativeTime(item.timestamp)}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center py-4">
+                    <p className="text-slate-500 text-center py-4">
                       No recent activity
                     </p>
                   )}
@@ -266,14 +263,14 @@ export function AdminDashboardPage() {
                   onClick={() => navigate("/dashboard/users")}
                   className="w-full flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/5 transition-all group"
                 >
-                  <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300 group-hover:text-purple-200 group-hover:bg-purple-500/30 transition-colors">
+                  <div className="p-2 rounded-lg bg-teal-500/20 text-teal-300 group-hover:text-teal-200 group-hover:bg-teal-500/30 transition-colors">
                     <UserPlus className="w-4 h-4" />
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-medium text-white">
                       Manage Users
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-slate-400">
                       View and manage all users
                     </p>
                   </div>
@@ -290,7 +287,7 @@ export function AdminDashboardPage() {
                     <p className="text-sm font-medium text-white">
                       System Settings
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-slate-400">
                       Configure global preferences
                     </p>
                   </div>
@@ -307,7 +304,7 @@ export function AdminDashboardPage() {
                     <p className="text-sm font-medium text-white">
                       Manage Classes
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-slate-400">
                       View and edit all classes
                     </p>
                   </div>
@@ -318,5 +315,5 @@ export function AdminDashboardPage() {
         </>
       )}
     </DashboardLayout>
-  );
+  )
 }

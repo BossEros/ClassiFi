@@ -1,7 +1,7 @@
-import { injectable } from "tsyringe";
-import { db } from "@/shared/database.js";
-import { testCases, type TestCase, type NewTestCase } from "@/models/index.js";
-import { eq, asc } from "drizzle-orm";
+import { injectable } from "tsyringe"
+import { db } from "@/shared/database.js"
+import { testCases, type TestCase, type NewTestCase } from "@/models/index.js"
+import { eq, asc } from "drizzle-orm"
 
 /**
  * Repository for test case database operations.
@@ -16,7 +16,7 @@ export class TestCaseRepository {
       .select()
       .from(testCases)
       .where(eq(testCases.assignmentId, assignmentId))
-      .orderBy(asc(testCases.sortOrder));
+      .orderBy(asc(testCases.sortOrder))
   }
 
   /**
@@ -26,16 +26,16 @@ export class TestCaseRepository {
     const results = await db
       .select()
       .from(testCases)
-      .where(eq(testCases.id, id));
-    return results[0];
+      .where(eq(testCases.id, id))
+    return results[0]
   }
 
   /**
    * Create a new test case.
    */
   async create(data: Omit<NewTestCase, "id" | "createdAt">): Promise<TestCase> {
-    const results = await db.insert(testCases).values(data).returning();
-    return results[0];
+    const results = await db.insert(testCases).values(data).returning()
+    return results[0]
   }
 
   /**
@@ -44,8 +44,8 @@ export class TestCaseRepository {
   async createMany(
     data: Omit<NewTestCase, "id" | "createdAt">[],
   ): Promise<TestCase[]> {
-    if (data.length === 0) return [];
-    return db.insert(testCases).values(data).returning();
+    if (data.length === 0) return []
+    return db.insert(testCases).values(data).returning()
   }
 
   /**
@@ -59,8 +59,8 @@ export class TestCaseRepository {
       .update(testCases)
       .set(data)
       .where(eq(testCases.id, id))
-      .returning();
-    return results[0];
+      .returning()
+    return results[0]
   }
 
   /**
@@ -70,8 +70,8 @@ export class TestCaseRepository {
     const result = await db
       .delete(testCases)
       .where(eq(testCases.id, id))
-      .returning({ id: testCases.id });
-    return result.length > 0;
+      .returning({ id: testCases.id })
+    return result.length > 0
   }
 
   /**
@@ -81,8 +81,8 @@ export class TestCaseRepository {
     const result = await db
       .delete(testCases)
       .where(eq(testCases.assignmentId, assignmentId))
-      .returning({ id: testCases.id });
-    return result.length;
+      .returning({ id: testCases.id })
+    return result.length
   }
 
   /**
@@ -92,7 +92,7 @@ export class TestCaseRepository {
     updates: Array<{ id: number; sortOrder: number }>,
   ): Promise<void> {
     for (const { id, sortOrder } of updates) {
-      await db.update(testCases).set({ sortOrder }).where(eq(testCases.id, id));
+      await db.update(testCases).set({ sortOrder }).where(eq(testCases.id, id))
     }
   }
 
@@ -100,8 +100,8 @@ export class TestCaseRepository {
    * Get the next sort order for a new test case.
    */
   async getNextSortOrder(assignmentId: number): Promise<number> {
-    const existing = await this.getByAssignmentId(assignmentId);
-    if (existing.length === 0) return 0;
-    return Math.max(...existing.map((tc) => tc.sortOrder)) + 1;
+    const existing = await this.getByAssignmentId(assignmentId)
+    if (existing.length === 0) return 0
+    return Math.max(...existing.map((tc) => tc.sortOrder)) + 1
   }
 }

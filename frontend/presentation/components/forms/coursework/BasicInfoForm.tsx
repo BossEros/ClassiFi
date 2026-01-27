@@ -1,49 +1,49 @@
-import { FileCode, Calendar, Code, ChevronDown, Trophy } from "lucide-react";
-import Editor from "@monaco-editor/react";
-import { Input } from "@/presentation/components/ui/Input";
-import { Textarea } from "@/presentation/components/ui/Textarea";
-import { Select } from "@/presentation/components/ui/Select";
-import { DatePicker } from "@/presentation/components/ui/DatePicker";
-import { TimePicker } from "@/presentation/components/ui/TimePicker";
+import { FileCode, Calendar, Code, ChevronDown, Trophy } from "lucide-react"
+import Editor from "@monaco-editor/react"
+import { Input } from "@/presentation/components/ui/Input"
+import { Textarea } from "@/presentation/components/ui/Textarea"
+import { Select } from "@/presentation/components/ui/Select"
+import { DatePicker } from "@/presentation/components/ui/DatePicker"
+import { TimePicker } from "@/presentation/components/ui/TimePicker"
 import {
   programmingLanguageOptions,
   type CourseworkFormData,
   type FormErrors,
-} from "@/presentation/hooks/useCourseworkForm";
-import { formatTimeRemaining } from "@/shared/utils/dateUtils";
+} from "@/presentation/hooks/useCourseworkForm"
+import { formatTimeRemaining } from "@/shared/utils/dateUtils"
 import {
   TestCaseList,
   type PendingTestCase,
-} from "@/presentation/components/forms/TestCaseList";
+} from "@/presentation/components/forms/TestCaseList"
 import type {
   TestCase,
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
-} from "@/shared/types/testCase";
+} from "@/shared/types/testCase"
 
 interface BasicInfoFormProps {
-  formData: CourseworkFormData;
-  errors: FormErrors;
-  isLoading: boolean;
-  showTemplateCode: boolean;
-  setShowTemplateCode: (show: boolean) => void;
+  formData: CourseworkFormData
+  errors: FormErrors
+  isLoading: boolean
+  showTemplateCode: boolean
+  setShowTemplateCode: (show: boolean) => void
   onInputChange: (
     field: keyof CourseworkFormData,
     value: string | number | boolean | null,
-  ) => void;
+  ) => void
 
   // Test Case Props
-  testCases: TestCase[];
-  pendingTestCases: PendingTestCase[];
-  isLoadingTestCases: boolean;
-  isEditMode: boolean;
-  assignmentId?: string;
-  onAddTestCase: (data: CreateTestCaseRequest) => Promise<void>;
-  onAddPendingTestCase: (data: PendingTestCase) => void;
-  onUpdateTestCase: (id: number, data: UpdateTestCaseRequest) => Promise<void>;
-  onUpdatePendingTestCase: (tempId: string, data: PendingTestCase) => void;
-  onDeleteTestCase: (id: number) => Promise<void>;
-  onDeletePendingTestCase: (tempId: string) => void;
+  testCases: TestCase[]
+  pendingTestCases: PendingTestCase[]
+  isLoadingTestCases: boolean
+  isEditMode: boolean
+  assignmentId?: string
+  onAddTestCase: (data: CreateTestCaseRequest) => Promise<void>
+  onAddPendingTestCase: (data: PendingTestCase) => void
+  onUpdateTestCase: (id: number, data: UpdateTestCaseRequest) => Promise<void>
+  onUpdatePendingTestCase: (tempId: string, data: PendingTestCase) => void
+  onDeleteTestCase: (id: number) => Promise<void>
+  onDeletePendingTestCase: (tempId: string) => void
 }
 
 export function BasicInfoForm({
@@ -67,12 +67,12 @@ export function BasicInfoForm({
   onDeletePendingTestCase,
 }: BasicInfoFormProps) {
   // Parse deadline once to avoid errors and double-parsing
-  const deadlineDate = formData.deadline ? new Date(formData.deadline) : null;
-  const isValidDeadline = deadlineDate && !Number.isNaN(deadlineDate.getTime());
+  const deadlineDate = formData.deadline ? new Date(formData.deadline) : null
+  const isValidDeadline = deadlineDate && !Number.isNaN(deadlineDate.getTime())
 
   // Parse assignmentId once
-  const parsedId = assignmentId ? parseInt(assignmentId, 10) : Number.NaN;
-  const validAssignmentId = !Number.isNaN(parsedId) ? parsedId : undefined;
+  const parsedId = assignmentId ? parseInt(assignmentId, 10) : Number.NaN
+  const validAssignmentId = !Number.isNaN(parsedId) ? parsedId : undefined
 
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md p-6">
@@ -186,14 +186,14 @@ export function BasicInfoForm({
                 type="number"
                 value={formData.totalScore ?? ""}
                 onChange={(e) => {
-                  const val = e.target.value;
+                  const val = e.target.value
                   if (val === "") {
-                    onInputChange("totalScore", null);
-                    return;
+                    onInputChange("totalScore", null)
+                    return
                   }
-                  const parsed = parseInt(val, 10);
+                  const parsed = parseInt(val, 10)
                   if (!Number.isNaN(parsed)) {
-                    onInputChange("totalScore", parsed);
+                    onInputChange("totalScore", parsed)
                   }
                 }}
                 placeholder="100"
@@ -216,10 +216,10 @@ export function BasicInfoForm({
               value={formData.deadline}
               onChange={(dateIso) => {
                 const time =
-                  formData.deadline.split("T")[1]?.slice(0, 5) || "23:59";
-                const date = dateIso ? dateIso.split("T")[0] : "";
+                  formData.deadline.split("T")[1]?.slice(0, 5) || "23:59"
+                const date = dateIso ? dateIso.split("T")[0] : ""
                 if (date) {
-                  onInputChange("deadline", `${date}T${time}`);
+                  onInputChange("deadline", `${date}T${time}`)
                 }
               }}
               error={errors.deadline}
@@ -230,9 +230,9 @@ export function BasicInfoForm({
               label="Deadline Time"
               value={formData.deadline.split("T")[1]?.slice(0, 5) || "23:59"}
               onChange={(timeVal) => {
-                const date = formData.deadline.split("T")[0];
+                const date = formData.deadline.split("T")[0]
                 if (date && timeVal) {
-                  onInputChange("deadline", `${date}T${timeVal}`);
+                  onInputChange("deadline", `${date}T${timeVal}`)
                 }
               }}
               disabled={isLoading}
@@ -316,14 +316,11 @@ export function BasicInfoForm({
               aria-checked={!!formData.scheduledDate}
               onClick={() => {
                 if (formData.scheduledDate) {
-                  onInputChange("scheduledDate", null);
+                  onInputChange("scheduledDate", null)
                 } else {
-                  const now = new Date();
-                  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                  onInputChange(
-                    "scheduledDate",
-                    now.toISOString().slice(0, 16),
-                  );
+                  const now = new Date()
+                  now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+                  onInputChange("scheduledDate", now.toISOString().slice(0, 16))
                 }
               }}
               className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 ${
@@ -347,12 +344,12 @@ export function BasicInfoForm({
                   onChange={(dateIso) => {
                     const time =
                       formData.scheduledDate?.split("T")[1]?.slice(0, 5) ||
-                      "00:00";
-                    const date = dateIso ? dateIso.split("T")[0] : "";
+                      "00:00"
+                    const date = dateIso ? dateIso.split("T")[0] : ""
                     if (date) {
-                      onInputChange("scheduledDate", `${date}T${time}`);
+                      onInputChange("scheduledDate", `${date}T${time}`)
                     } else {
-                      onInputChange("scheduledDate", null);
+                      onInputChange("scheduledDate", null)
                     }
                   }}
                   minDate={new Date()}
@@ -364,9 +361,9 @@ export function BasicInfoForm({
                     formData.scheduledDate.split("T")[1]?.slice(0, 5) || "00:00"
                   }
                   onChange={(timeVal) => {
-                    const date = formData.scheduledDate?.split("T")[0];
+                    const date = formData.scheduledDate?.split("T")[0]
                     if (date && timeVal) {
-                      onInputChange("scheduledDate", `${date}T${timeVal}`);
+                      onInputChange("scheduledDate", `${date}T${timeVal}`)
                     }
                   }}
                   disabled={isLoading}
@@ -452,5 +449,5 @@ export function BasicInfoForm({
         onDeletePending={onDeletePendingTestCase}
       />
     </div>
-  );
+  )
 }

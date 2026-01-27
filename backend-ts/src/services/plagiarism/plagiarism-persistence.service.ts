@@ -1,21 +1,21 @@
-import { inject, injectable } from "tsyringe";
-import { db } from "../../shared/database.js";
-import { SimilarityRepository } from "../../repositories/similarity.repository.js";
-import { SubmissionRepository } from "../../repositories/submission.repository.js";
-import { Report, Pair } from "../../lib/plagiarism/index.js";
+import { inject, injectable } from "tsyringe"
+import { db } from "../../shared/database.js"
+import { SimilarityRepository } from "../../repositories/similarity.repository.js"
+import { SubmissionRepository } from "../../repositories/submission.repository.js"
+import { Report, Pair } from "../../lib/plagiarism/index.js"
 import {
   PLAGIARISM_CONFIG,
   type PlagiarismPairDTO,
-} from "../../shared/mappers.js";
+} from "../../shared/mappers.js"
 import type {
   NewSimilarityResult,
   NewMatchFragment,
   MatchFragment,
   SimilarityResult,
-} from "../../models/index.js";
+} from "../../models/index.js"
 // Note: Error classes are preserved for future use but not imported to avoid TS6192
 // import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "../../shared/errors.js";
-import type { AnalyzeResponse } from "../plagiarism.service.js";
+import type { AnalyzeResponse } from "../plagiarism.service.js"
 
 @injectable()
 export class PlagiarismPersistenceService {
@@ -28,26 +28,26 @@ export class PlagiarismPersistenceService {
 
   /** Get result with fragments and related submission info */
   async getResultData(resultId: number): Promise<{
-    result: SimilarityResult;
-    fragments: MatchFragment[];
+    result: SimilarityResult
+    fragments: MatchFragment[]
     submission1: Awaited<
       ReturnType<SubmissionRepository["getSubmissionWithStudent"]>
-    >;
+    >
     submission2: Awaited<
       ReturnType<SubmissionRepository["getSubmissionWithStudent"]>
-    >;
+    >
   } | null> {
-    const data = await this.similarityRepo.getResultWithFragments(resultId);
-    if (!data) return null;
+    const data = await this.similarityRepo.getResultWithFragments(resultId)
+    if (!data) return null
 
-    const { result, fragments } = data;
+    const { result, fragments } = data
 
     const [submission1, submission2] = await Promise.all([
       this.submissionRepo.getSubmissionWithStudent(result.submission1Id),
       this.submissionRepo.getSubmissionWithStudent(result.submission2Id),
-    ]);
+    ])
 
-    return { result, fragments, submission1, submission2 };
+    return { result, fragments, submission1, submission2 }
   }
 
   /** Persist report, results, and fragments to database */
@@ -59,7 +59,7 @@ export class PlagiarismPersistenceService {
   ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
     return await db.transaction(async (tx) => {
       // Use transaction-aware repository
-      const similarityRepoTx = this.similarityRepo.withContext(tx as any);
+      const similarityRepoTx = this.similarityRepo.withContext(tx as any)
 
       // Create report
       const dbReport = await similarityRepoTx.createReport({
@@ -78,23 +78,23 @@ export class PlagiarismPersistenceService {
           ...pairs.map((p) => p.similarity),
           0,
         ).toFixed(4),
-      });
+      })
 
       // Prepare results for batch insert
       const { resultsToInsert, pairMap, swappedMap } =
-        this.prepareResultsForInsert(dbReport.id, pairs);
+        this.prepareResultsForInsert(dbReport.id, pairs)
 
       // Batch insert results and fragments
-      const resultIdMap = new Map<string, number>();
+      const resultIdMap = new Map<string, number>()
 
       if (resultsToInsert.length > 0) {
         const insertedResults =
-          await similarityRepoTx.createResults(resultsToInsert);
+          await similarityRepoTx.createResults(resultsToInsert)
 
         // Build result ID map
         for (const result of insertedResults) {
-          const key = `${result.submission1Id}-${result.submission2Id}`;
-          resultIdMap.set(key, result.id);
+          const key = `${result.submission1Id}-${result.submission2Id}`
+          resultIdMap.set(key, result.id)
         }
 
         // Prepare and insert fragments
@@ -102,43 +102,43 @@ export class PlagiarismPersistenceService {
           insertedResults,
           pairMap,
           swappedMap,
-        );
+        )
         if (fragmentsToInsert.length > 0) {
-          await similarityRepoTx.createFragments(fragmentsToInsert);
+          await similarityRepoTx.createFragments(fragmentsToInsert)
         }
       }
 
-      return { dbReport, resultIdMap };
-    });
+      return { dbReport, resultIdMap }
+    })
   }
 
   /** Get report from database and reconstruct response */
   async getReport(reportId: number): Promise<AnalyzeResponse | null> {
-    const report = await this.similarityRepo.getReportById(reportId);
+    const report = await this.similarityRepo.getReportById(reportId)
     if (!report) {
-      return null;
+      return null
     }
 
-    const results = await this.similarityRepo.getResultsByReport(reportId);
+    const results = await this.similarityRepo.getResultsByReport(reportId)
 
     // Collect all unique submission IDs
-    const submissionIds = new Set<number>();
+    const submissionIds = new Set<number>()
     for (const result of results) {
-      submissionIds.add(result.submission1Id);
-      submissionIds.add(result.submission2Id);
+      submissionIds.add(result.submission1Id)
+      submissionIds.add(result.submission2Id)
     }
 
     // Batch fetch submissions
     const submissions =
       await this.submissionRepo.getBatchSubmissionsWithStudents(
         Array.from(submissionIds),
-      );
-    const submissionMap = new Map(submissions.map((s) => [s.submission.id, s]));
+      )
+    const submissionMap = new Map(submissions.map((s) => [s.submission.id, s]))
 
     // Build pairs using memory map
     const pairs: PlagiarismPairDTO[] = results.map((result) => {
-      const submission1 = submissionMap.get(result.submission1Id);
-      const submission2 = submissionMap.get(result.submission2Id);
+      const submission1 = submissionMap.get(result.submission1Id)
+      const submission2 = submissionMap.get(result.submission2Id)
 
       return {
         id: result.id,
@@ -163,8 +163,8 @@ export class PlagiarismPersistenceService {
         hybridScore: parseFloat(result.hybridScore || "0"),
         overlap: result.overlap,
         longest: result.longestFragment,
-      };
-    });
+      }
+    })
 
     return {
       reportId: reportId.toString(),
@@ -177,12 +177,12 @@ export class PlagiarismPersistenceService {
       },
       pairs,
       warnings: [],
-    };
+    }
   }
 
   /** Delete a report */
   async deleteReport(reportId: number): Promise<boolean> {
-    return this.similarityRepo.deleteReport(reportId);
+    return this.similarityRepo.deleteReport(reportId)
   }
 
   /** Prepare results for database insertion */
@@ -190,28 +190,28 @@ export class PlagiarismPersistenceService {
     reportId: number,
     pairs: Pair[],
   ): {
-    resultsToInsert: NewSimilarityResult[];
-    pairMap: Map<string, Pair>;
-    swappedMap: Map<string, boolean>;
+    resultsToInsert: NewSimilarityResult[]
+    pairMap: Map<string, Pair>
+    swappedMap: Map<string, boolean>
   } {
-    const resultsToInsert: NewSimilarityResult[] = [];
-    const pairMap = new Map<string, Pair>();
-    const swappedMap = new Map<string, boolean>();
+    const resultsToInsert: NewSimilarityResult[] = []
+    const pairMap = new Map<string, Pair>()
+    const swappedMap = new Map<string, boolean>()
 
     for (const pair of pairs) {
-      const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0");
-      const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0");
+      const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0")
+      const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0")
 
-      if (!leftSubId || !rightSubId) continue;
+      if (!leftSubId || !rightSubId) continue
 
-      const needsSwap = leftSubId > rightSubId;
+      const needsSwap = leftSubId > rightSubId
       const [sub1, sub2] = needsSwap
         ? [rightSubId, leftSubId]
-        : [leftSubId, rightSubId];
+        : [leftSubId, rightSubId]
 
-      const key = `${sub1}-${sub2}`;
-      pairMap.set(key, pair);
-      swappedMap.set(key, needsSwap);
+      const key = `${sub1}-${sub2}`
+      pairMap.set(key, pair)
+      swappedMap.set(key, needsSwap)
 
       resultsToInsert.push({
         reportId,
@@ -227,31 +227,31 @@ export class PlagiarismPersistenceService {
         leftTotal: pair.leftTotal,
         rightTotal: pair.rightTotal,
         isFlagged: pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
-      });
+      })
     }
 
-    return { resultsToInsert, pairMap, swappedMap };
+    return { resultsToInsert, pairMap, swappedMap }
   }
 
   /** Prepare fragments for database insertion */
   private prepareFragmentsForInsert(
     insertedResults: {
-      id: number;
-      submission1Id: number;
-      submission2Id: number;
+      id: number
+      submission1Id: number
+      submission2Id: number
     }[],
     pairMap: Map<string, Pair>,
     swappedMap: Map<string, boolean>,
   ): NewMatchFragment[] {
-    const fragmentsToInsert: NewMatchFragment[] = [];
+    const fragmentsToInsert: NewMatchFragment[] = []
 
     for (const result of insertedResults) {
-      const key = `${result.submission1Id}-${result.submission2Id}`;
-      const pair = pairMap.get(key);
-      const swapped = swappedMap.get(key) || false;
+      const key = `${result.submission1Id}-${result.submission2Id}`
+      const pair = pairMap.get(key)
+      const swapped = swappedMap.get(key) || false
 
       if (pair) {
-        const fragments = pair.buildFragments();
+        const fragments = pair.buildFragments()
 
         for (const frag of fragments) {
           if (swapped) {
@@ -266,7 +266,7 @@ export class PlagiarismPersistenceService {
               rightEndRow: frag.leftSelection.endRow,
               rightEndCol: frag.leftSelection.endCol,
               length: frag.length,
-            });
+            })
           } else {
             fragmentsToInsert.push({
               similarityResultId: result.id,
@@ -279,12 +279,12 @@ export class PlagiarismPersistenceService {
               rightEndRow: frag.rightSelection.endRow,
               rightEndCol: frag.rightSelection.endCol,
               length: frag.length,
-            });
+            })
           }
         }
       }
     }
 
-    return fragmentsToInsert;
+    return fragmentsToInsert
   }
 }

@@ -1,15 +1,18 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { Grid3x3, Plus } from 'lucide-react'
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { Card, CardContent } from '@/presentation/components/ui/Card'
-import { Button } from '@/presentation/components/ui/Button'
-import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
-import { ClassFilters, type FilterStatus } from '@/presentation/components/dashboard/ClassFilters'
-import { getCurrentUser } from '@/business/services/authService'
-import { getAllClasses } from '@/business/services/classService'
-import { useToast } from '@/shared/context/ToastContext'
-import type { Class } from '@/business/models/dashboard/types'
+import { useEffect, useState, useRef, useMemo } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
+import { Grid3x3, Plus } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
+import {
+  ClassFilters,
+  type FilterStatus,
+} from "@/presentation/components/dashboard/ClassFilters"
+import { getCurrentUser } from "@/business/services/authService"
+import { getAllClasses } from "@/business/services/classService"
+import { useToast } from "@/shared/context/ToastContext"
+import type { Class } from "@/business/models/dashboard/types"
 
 export function ClassesPage() {
   const navigate = useNavigate()
@@ -21,16 +24,16 @@ export function ClassesPage() {
   const [error, setError] = useState<string | null>(null)
 
   // Filter States
-  const [searchQuery, setSearchQuery] = useState('')
-  const [status, setStatus] = useState<FilterStatus>('active')
-  const [selectedTerm, setSelectedTerm] = useState('all')
-  const [selectedYearLevel, setSelectedYearLevel] = useState('all')
+  const [searchQuery, setSearchQuery] = useState("")
+  const [status, setStatus] = useState<FilterStatus>("active")
+  const [selectedTerm, setSelectedTerm] = useState("all")
+  const [selectedYearLevel, setSelectedYearLevel] = useState("all")
 
   // Show toast if redirected from class deletion
   useEffect(() => {
     if (location.state?.deleted && !hasShownDeleteToast.current) {
       hasShownDeleteToast.current = true
-      showToast('Class deleted successfully')
+      showToast("Class deleted successfully")
       // Clear state to prevent showing again on refresh
       navigate(location.pathname, { replace: true })
     }
@@ -39,7 +42,7 @@ export function ClassesPage() {
   const fetchData = async () => {
     const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate('/login')
+      navigate("/login")
       return
     }
 
@@ -51,13 +54,16 @@ export function ClassesPage() {
       // If status is 'active', fetch activeOnly=true
       // If status is 'archived', fetch activeOnly=false (getAll) and filter locally to !isActive
       // If status is 'all', fetch activeOnly=false (getAll)
-      const activeOnlyParam = status === 'active' ? true : false
+      const activeOnlyParam = status === "active" ? true : false
 
-      const allClasses = await getAllClasses(parseInt(currentUser.id), activeOnlyParam)
+      const allClasses = await getAllClasses(
+        parseInt(currentUser.id),
+        activeOnlyParam,
+      )
       setClasses(allClasses)
     } catch (err) {
-      console.error('Failed to fetch classes:', err)
-      setError('Failed to load classes. Please try refreshing the page.')
+      console.error("Failed to fetch classes:", err)
+      setError("Failed to load classes. Please try refreshing the page.")
     } finally {
       setIsLoading(false)
     }
@@ -71,7 +77,7 @@ export function ClassesPage() {
   // Extract unique terms from classes for the dropdown
   const terms = useMemo(() => {
     const uniqueTerms = new Set<string>()
-    classes.forEach(c => {
+    classes.forEach((c) => {
       if (c.academicYear && c.semester) {
         uniqueTerms.add(`${c.academicYear} - Semester ${c.semester}`)
       }
@@ -81,8 +87,8 @@ export function ClassesPage() {
 
   // Extract unique year levels from classes
   const yearLevels = useMemo(() => {
-    const uniqueLevels = new Set<string>(['1', '2', '3', '4']) // Default year levels
-    classes.forEach(c => {
+    const uniqueLevels = new Set<string>(["1", "2", "3", "4"]) // Default year levels
+    classes.forEach((c) => {
       if (c.yearLevel) {
         uniqueLevels.add(c.yearLevel.toString())
       }
@@ -92,19 +98,19 @@ export function ClassesPage() {
 
   // Client-side filtering for Search, Term, and Year Level (and strictly archived status)
   const filteredClasses = useMemo(() => {
-    return classes.filter(c => {
+    return classes.filter((c) => {
       // 1. Status Filter (Refinement)
       // Since backend 'activeOnly=false' returns ALL, we need to manually filter if 'archived' is selected
-      if (status === 'archived' && c.isActive) return false
+      if (status === "archived" && c.isActive) return false
 
       // 2. Term Filter
-      if (selectedTerm !== 'all') {
+      if (selectedTerm !== "all") {
         const termString = `${c.academicYear} - Semester ${c.semester}`
         if (termString !== selectedTerm) return false
       }
 
       // 3. Year Level Filter
-      if (selectedYearLevel !== 'all') {
+      if (selectedYearLevel !== "all") {
         if (c.yearLevel.toString() !== selectedYearLevel) return false
       }
 
@@ -126,21 +132,21 @@ export function ClassesPage() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
-              <Grid3x3 className="w-6 h-6 text-purple-400" />
+            <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
+              <Grid3x3 className="w-6 h-6 text-teal-400" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
                 Classes
               </h1>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-slate-300 text-sm mt-1">
                 Manage your courses and students
               </p>
             </div>
           </div>
           <Button
-            onClick={() => navigate('/dashboard/classes/new')}
-            className="w-full md:w-auto px-6 bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20 transition-all hover:scale-105"
+            onClick={() => navigate("/dashboard/classes/new")}
+            className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20 transition-all hover:scale-105"
             disabled={isLoading}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -155,7 +161,12 @@ export function ClassesPage() {
             onStatusChange={setStatus}
             onTermChange={setSelectedTerm}
             onYearLevelChange={setSelectedYearLevel}
-            currentFilters={{ searchQuery, status, selectedTerm, selectedYearLevel }}
+            currentFilters={{
+              searchQuery,
+              status,
+              selectedTerm,
+              selectedYearLevel,
+            }}
             terms={terms}
             yearLevels={yearLevels}
           />
@@ -177,8 +188,10 @@ export function ClassesPage() {
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-20 text-center">
-              <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto mb-6"></div>
-              <p className="text-gray-400 animate-pulse">Loading your classes...</p>
+              <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto mb-6"></div>
+              <p className="text-slate-300 animate-pulse">
+                Loading your classes...
+              </p>
             </div>
           ) : filteredClasses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -191,20 +204,22 @@ export function ClassesPage() {
               ))}
             </div>
           ) : (
-            <div className="py-20 text-center bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
+            <div className="w-full py-20 px-6 text-center bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                <Grid3x3 className="w-10 h-10 text-gray-600" />
+                <Grid3x3 className="w-10 h-10 text-slate-500" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No classes found</h3>
-              <p className="text-gray-400 max-w-sm mx-auto mb-8">
-                {searchQuery || status !== 'active'
+              <h3 className="text-xl font-semibold text-white mb-2">
+                No classes found
+              </h3>
+              <p className="text-slate-300 max-w-sm min-w-[200px] mx-auto mb-8 whitespace-normal break-words">
+                {searchQuery || status !== "active"
                   ? "We couldn't find any classes matching your current filters. Try adjusting them."
                   : "Get started by creating your first class to manage students and assignments."}
               </p>
-              {!searchQuery && status === 'active' && (
+              {!searchQuery && status === "active" && (
                 <Button
-                  onClick={() => navigate('/dashboard/classes/new')}
-                  className="w-auto bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20"
+                  onClick={() => navigate("/dashboard/classes/new")}
+                  className="w-auto bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-500/20"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create a Class

@@ -1,8 +1,8 @@
-import { z } from "zod";
+import { z } from "zod"
 
 /** Programming language enum */
-export const ProgrammingLanguageSchema = z.enum(["python", "java", "c"]);
-export type ProgrammingLanguage = z.infer<typeof ProgrammingLanguageSchema>;
+export const ProgrammingLanguageSchema = z.enum(["python", "java", "c"])
+export type ProgrammingLanguage = z.infer<typeof ProgrammingLanguageSchema>
 
 /** Create assignment request schema */
 export const CreateAssignmentRequestSchema = z.object({
@@ -16,11 +16,11 @@ export const CreateAssignmentRequestSchema = z.object({
   templateCode: z.string().max(50000).nullable().optional(),
   totalScore: z.number().int().min(1).default(100),
   scheduledDate: z.string().datetime().nullable().optional(),
-});
+})
 
 export type CreateAssignmentRequest = z.infer<
   typeof CreateAssignmentRequestSchema
->;
+>
 
 /** Update assignment request schema */
 export const UpdateAssignmentRequestSchema = z.object({
@@ -34,11 +34,11 @@ export const UpdateAssignmentRequestSchema = z.object({
   templateCode: z.string().max(50000).nullable().optional(),
   totalScore: z.number().int().min(1).optional(),
   scheduledDate: z.string().datetime().nullable().optional(),
-});
+})
 
 export type UpdateAssignmentRequest = z.infer<
   typeof UpdateAssignmentRequestSchema
->;
+>
 
 /** Assignment response schema */
 export const AssignmentResponseSchema = z.object({
@@ -58,19 +58,19 @@ export const AssignmentResponseSchema = z.object({
   scheduledDate: z.string().nullable().optional(),
   submissionCount: z.number().optional(),
   hasSubmitted: z.boolean().optional(),
-});
+})
 
-export type AssignmentResponse = z.infer<typeof AssignmentResponseSchema>;
+export type AssignmentResponse = z.infer<typeof AssignmentResponseSchema>
 
 /** Assignment detail response schema */
 export const AssignmentDetailResponseSchema = AssignmentResponseSchema.extend({
   className: z.string().optional(),
   teacherName: z.string().optional(),
-});
+})
 
 export type AssignmentDetailResponse = z.infer<
   typeof AssignmentDetailResponseSchema
->;
+>
 
 // ============================================================================
 // Param & Query Schemas
@@ -79,9 +79,9 @@ export type AssignmentDetailResponse = z.infer<
 /** Assignment ID param schema */
 export const AssignmentIdParamSchema = z.object({
   assignmentId: z.string(),
-});
+})
 
-export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>;
+export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>
 
 // ============================================================================
 // Response Schemas (for controller routes)
@@ -92,39 +92,39 @@ export const GetAssignmentResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   assignment: AssignmentDetailResponseSchema,
-});
+})
 
-export type GetAssignmentResponse = z.infer<typeof GetAssignmentResponseSchema>;
+export type GetAssignmentResponse = z.infer<typeof GetAssignmentResponseSchema>
 
 /** Update assignment response schema */
 export const UpdateAssignmentResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   assignment: AssignmentResponseSchema,
-});
+})
 
 export type UpdateAssignmentResponse = z.infer<
   typeof UpdateAssignmentResponseSchema
->;
+>
 
 /** Assignment list response schema */
 export const AssignmentListResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   assignments: z.array(AssignmentResponseSchema),
-});
+})
 
 export type AssignmentListResponse = z.infer<
   typeof AssignmentListResponseSchema
->;
+>
 
 /** Create assignment response schema */
 export const CreateAssignmentResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   assignment: AssignmentResponseSchema,
-});
+})
 
 export type CreateAssignmentResponse = z.infer<
   typeof CreateAssignmentResponseSchema
->;
+>

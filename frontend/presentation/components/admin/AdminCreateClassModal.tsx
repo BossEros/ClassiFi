@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 import {
   X,
   BookOpen,
@@ -8,15 +8,15 @@ import {
   Plus,
   ChevronDown,
   AlertCircle,
-} from "lucide-react";
-import * as adminService from "@/business/services/adminService";
-import type { AdminUser } from "@/business/services/adminService";
-import type { DayOfWeek } from "@/data/api/types";
+} from "lucide-react"
+import * as adminService from "@/business/services/adminService"
+import type { AdminUser } from "@/business/services/adminService"
+import type { DayOfWeek } from "@/data/api/types"
 import {
   validateClassName,
   validateAcademicYear,
   validateSchedule,
-} from "@/business/validation/classValidation";
+} from "@/business/validation/classValidation"
 
 /** Maps abbreviated day names to full DayOfWeek values */
 const DAY_ABBREVIATION_MAP: Record<string, DayOfWeek> = {
@@ -27,39 +27,39 @@ const DAY_ABBREVIATION_MAP: Record<string, DayOfWeek> = {
   Fri: "friday",
   Sat: "saturday",
   Sun: "sunday",
-};
+}
 
 /** Convert abbreviated day strings to DayOfWeek[] */
 function convertToDayOfWeek(abbreviatedDays: string[]): DayOfWeek[] {
   return abbreviatedDays
     .map((day) => DAY_ABBREVIATION_MAP[day])
-    .filter((day): day is DayOfWeek => day !== undefined);
+    .filter((day): day is DayOfWeek => day !== undefined)
 }
 
 export interface ClassToEdit {
-  id: number;
-  className: string;
-  description?: string;
-  teacherId: number;
-  yearLevel: number;
-  semester: number;
-  academicYear: string;
+  id: number
+  className: string
+  description?: string
+  teacherId: number
+  yearLevel: number
+  semester: number
+  academicYear: string
   schedule: {
-    days: string[];
-    startTime: string;
-    endTime: string;
-  };
+    days: string[]
+    startTime: string
+    endTime: string
+  }
 }
 
 interface AdminCreateClassModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  teachers: AdminUser[];
-  classToEdit?: ClassToEdit | null;
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  teachers: AdminUser[]
+  classToEdit?: ClassToEdit | null
 }
 
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 export function AdminCreateClassModal({
   isOpen,
@@ -68,8 +68,8 @@ export function AdminCreateClassModal({
   teachers,
   classToEdit,
 }: AdminCreateClassModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const [formData, setFormData] = useState({
     className: "",
@@ -84,7 +84,7 @@ export function AdminCreateClassModal({
     scheduleDays: [] as string[],
     startTime: "08:00",
     endTime: "09:30",
-  });
+  })
 
   // Reset or Populate form when modal opens
   useEffect(() => {
@@ -100,7 +100,7 @@ export function AdminCreateClassModal({
           scheduleDays: classToEdit.schedule.days,
           startTime: classToEdit.schedule.startTime,
           endTime: classToEdit.schedule.endTime,
-        });
+        })
       } else {
         setFormData({
           className: "",
@@ -115,40 +115,40 @@ export function AdminCreateClassModal({
           scheduleDays: [],
           startTime: "08:00",
           endTime: "09:30",
-        });
+        })
       }
-      setError(null);
+      setError(null)
     }
-  }, [isOpen, classToEdit]);
+  }, [isOpen, classToEdit])
 
   const toggleDay = (day: string) => {
     setFormData((prev) => {
       const days = prev.scheduleDays.includes(day)
         ? prev.scheduleDays.filter((d) => d !== day)
-        : [...prev.scheduleDays, day];
+        : [...prev.scheduleDays, day]
 
       // Sort days based on standard week order
       return {
         ...prev,
         scheduleDays: days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)),
-      };
-    });
-  };
+      }
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
     // Validate teacher selection
     if (!formData.teacherId) {
-      setError("Please select a teacher");
-      return;
+      setError("Please select a teacher")
+      return
     }
 
     // Use centralized validators
-    const classNameError = validateClassName(formData.className);
+    const classNameError = validateClassName(formData.className)
     if (classNameError) {
-      setError(classNameError);
-      return;
+      setError(classNameError)
+      return
     }
 
     // Validate schedule using centralized validator
@@ -156,28 +156,28 @@ export function AdminCreateClassModal({
       days: convertToDayOfWeek(formData.scheduleDays),
       startTime: formData.startTime,
       endTime: formData.endTime,
-    });
+    })
     if (scheduleError) {
-      setError(scheduleError);
-      return;
+      setError(scheduleError)
+      return
     }
 
     // Validate time (end must be after start)
     if (formData.startTime >= formData.endTime) {
-      setError("End time must be after start time");
-      return;
+      setError("End time must be after start time")
+      return
     }
 
     // Use centralized academic year validation
-    const academicYearError = validateAcademicYear(formData.academicYear);
+    const academicYearError = validateAcademicYear(formData.academicYear)
     if (academicYearError) {
-      setError(academicYearError);
-      return;
+      setError(academicYearError)
+      return
     }
 
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(true)
+      setError(null)
 
       const commonData = {
         className: formData.className,
@@ -191,28 +191,28 @@ export function AdminCreateClassModal({
           startTime: formData.startTime,
           endTime: formData.endTime,
         },
-      };
-
-      if (classToEdit) {
-        await adminService.updateClass(classToEdit.id, commonData);
-      } else {
-        await adminService.createClass(commonData);
       }
 
-      onSuccess();
-      onClose();
+      if (classToEdit) {
+        await adminService.updateClass(classToEdit.id, commonData)
+      } else {
+        await adminService.createClass(commonData)
+      }
+
+      onSuccess()
+      onClose()
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
           : `Failed to ${classToEdit ? "update" : "create"} class`,
-      );
+      )
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -331,7 +331,7 @@ export function AdminCreateClassModal({
           {/* Academic Info */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-purple-400" />
+              <Calendar className="w-4 h-4 text-teal-400" />
               Academic Info
             </h4>
 
@@ -349,7 +349,7 @@ export function AdminCreateClassModal({
                         yearLevel: Number(e.target.value),
                       })
                     }
-                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
+                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
                   >
                     {[1, 2, 3, 4].map((y) => (
                       <option key={y} value={y} className="bg-slate-900">
@@ -374,7 +374,7 @@ export function AdminCreateClassModal({
                         semester: Number(e.target.value),
                       })
                     }
-                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
+                    className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
                   >
                     <option value={1} className="bg-slate-900">
                       1st Semester
@@ -397,7 +397,7 @@ export function AdminCreateClassModal({
                   onChange={(e) =>
                     setFormData({ ...formData, academicYear: e.target.value })
                   }
-                  className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                  className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent transition-all"
                   placeholder="e.g. 2023-2024"
                   required
                 />
@@ -479,7 +479,7 @@ export function AdminCreateClassModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold text-sm flex items-center justify-center gap-2 group active:scale-[0.98]"
+              className="flex-1 px-4 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 text-white hover:from-teal-700 hover:to-teal-600 shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold text-sm flex items-center justify-center gap-2 group active:scale-[0.98]"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -494,5 +494,5 @@ export function AdminCreateClassModal({
         </form>
       </div>
     </div>
-  );
+  )
 }

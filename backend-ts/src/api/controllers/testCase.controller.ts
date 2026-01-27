@@ -1,13 +1,10 @@
-import type { FastifyInstance } from "fastify";
-import { container } from "tsyringe";
-import { toJsonSchema } from "../utils/swagger.js";
-import { SuccessMessageSchema } from "../schemas/common.schema.js";
-import {
-  BadRequestError,
-  NotFoundError,
-} from "../middlewares/error-handler.js";
-import { TestCaseRepository } from "@/repositories/testCase.repository.js";
-import { CodeTestService } from "@/services/codeTest.service.js";
+import type { FastifyInstance } from "fastify"
+import { container } from "tsyringe"
+import { toJsonSchema } from "../utils/swagger.js"
+import { SuccessMessageSchema } from "../schemas/common.schema.js"
+import { BadRequestError, NotFoundError } from "../middlewares/error-handler.js"
+import { TestCaseRepository } from "@/repositories/testCase.repository.js"
+import { CodeTestService } from "@/services/codeTest.service.js"
 import {
   CreateTestCaseRequestSchema,
   UpdateTestCaseRequestSchema,
@@ -20,13 +17,13 @@ import {
   type UpdateTestCaseRequest,
   type ReorderTestCasesRequest,
   type RunTestsPreviewRequest,
-} from "../schemas/testCase.schema.js";
+} from "../schemas/testCase.schema.js"
 
 /** Test Case routes - /api/v1/test-cases/* */
 export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
   const testCaseRepo =
-    container.resolve<TestCaseRepository>("TestCaseRepository");
-  const codeTestService = container.resolve<CodeTestService>("CodeTestService");
+    container.resolve<TestCaseRepository>("TestCaseRepository")
+  const codeTestService = container.resolve<CodeTestService>("CodeTestService")
 
   // =========================================================================
   // Test Case CRUD
@@ -51,13 +48,13 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const assignmentId = parseInt(request.params.assignmentId, 10);
+        const assignmentId = parseInt(request.params.assignmentId, 10)
 
         if (isNaN(assignmentId)) {
-          throw new BadRequestError("Invalid assignment ID");
+          throw new BadRequestError("Invalid assignment ID")
         }
 
-        const testCases = await testCaseRepo.getByAssignmentId(assignmentId);
+        const testCases = await testCaseRepo.getByAssignmentId(assignmentId)
 
         return reply.send({
           success: true,
@@ -66,10 +63,10 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
             ...tc,
             createdAt: tc.createdAt.toISOString(),
           })),
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * POST /assignments/:assignmentId/test-cases
@@ -91,16 +88,16 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const assignmentId = parseInt(request.params.assignmentId, 10);
+        const assignmentId = parseInt(request.params.assignmentId, 10)
 
         if (isNaN(assignmentId)) {
-          throw new BadRequestError("Invalid assignment ID");
+          throw new BadRequestError("Invalid assignment ID")
         }
 
         // Get next sort order if not provided
         const sortOrder =
           request.body.sortOrder ??
-          (await testCaseRepo.getNextSortOrder(assignmentId));
+          (await testCaseRepo.getNextSortOrder(assignmentId))
 
         const testCase = await testCaseRepo.create({
           assignmentId,
@@ -110,7 +107,7 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
           isHidden: request.body.isHidden ?? false,
           timeLimit: request.body.timeLimit ?? 5,
           sortOrder,
-        });
+        })
 
         return reply.status(201).send({
           success: true,
@@ -119,10 +116,10 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
             ...testCase,
             createdAt: testCase.createdAt.toISOString(),
           },
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * PUT /test-cases/:testCaseId
@@ -144,16 +141,16 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const testCaseId = parseInt(request.params.testCaseId, 10);
+        const testCaseId = parseInt(request.params.testCaseId, 10)
 
         if (isNaN(testCaseId)) {
-          throw new BadRequestError("Invalid test case ID");
+          throw new BadRequestError("Invalid test case ID")
         }
 
-        const testCase = await testCaseRepo.update(testCaseId, request.body);
+        const testCase = await testCaseRepo.update(testCaseId, request.body)
 
         if (!testCase) {
-          throw new NotFoundError("Test case not found");
+          throw new NotFoundError("Test case not found")
         }
 
         return reply.send({
@@ -163,10 +160,10 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
             ...testCase,
             createdAt: testCase.createdAt.toISOString(),
           },
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * DELETE /test-cases/:testCaseId
@@ -185,24 +182,24 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const testCaseId = parseInt(request.params.testCaseId, 10);
+      const testCaseId = parseInt(request.params.testCaseId, 10)
 
       if (isNaN(testCaseId)) {
-        throw new BadRequestError("Invalid test case ID");
+        throw new BadRequestError("Invalid test case ID")
       }
 
-      const deleted = await testCaseRepo.delete(testCaseId);
+      const deleted = await testCaseRepo.delete(testCaseId)
 
       if (!deleted) {
-        throw new NotFoundError("Test case not found");
+        throw new NotFoundError("Test case not found")
       }
 
       return reply.send({
         success: true,
         message: "Test case deleted successfully",
-      });
+      })
     },
-  });
+  })
 
   /**
    * PUT /assignments/:assignmentId/test-cases/reorder
@@ -224,15 +221,15 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        await testCaseRepo.updateSortOrder(request.body.order);
+        await testCaseRepo.updateSortOrder(request.body.order)
 
         return reply.send({
           success: true,
           message: "Test cases reordered successfully",
-        });
+        })
       },
     },
-  );
+  )
 
   // =========================================================================
   // Code Testing
@@ -252,21 +249,21 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const { sourceCode, language, assignmentId } = request.body;
+      const { sourceCode, language, assignmentId } = request.body
 
       const result = await codeTestService.runTestsPreview(
         sourceCode,
         language,
         assignmentId,
-      );
+      )
 
       return reply.send({
         success: true,
         message: "Tests executed successfully",
         data: result,
-      });
+      })
     },
-  });
+  })
 
   /**
    * GET /submissions/:submissionId/test-results
@@ -287,26 +284,26 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const submissionId = parseInt(request.params.submissionId, 10);
+        const submissionId = parseInt(request.params.submissionId, 10)
 
         if (isNaN(submissionId)) {
-          throw new BadRequestError("Invalid submission ID");
+          throw new BadRequestError("Invalid submission ID")
         }
 
-        const result = await codeTestService.getTestResults(submissionId);
+        const result = await codeTestService.getTestResults(submissionId)
 
         if (!result) {
-          throw new NotFoundError("No test results found for this submission");
+          throw new NotFoundError("No test results found for this submission")
         }
 
         return reply.send({
           success: true,
           message: "Test results retrieved successfully",
           data: result,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * POST /submissions/:submissionId/run-tests
@@ -327,23 +324,22 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const submissionId = parseInt(request.params.submissionId, 10);
+        const submissionId = parseInt(request.params.submissionId, 10)
 
         if (isNaN(submissionId)) {
-          throw new BadRequestError("Invalid submission ID");
+          throw new BadRequestError("Invalid submission ID")
         }
 
-        const result =
-          await codeTestService.runTestsForSubmission(submissionId);
+        const result = await codeTestService.runTestsForSubmission(submissionId)
 
         return reply.send({
           success: true,
           message: "Tests executed successfully",
           data: result,
-        });
+        })
       },
     },
-  );
+  )
 
   /**
    * GET /code/health
@@ -358,8 +354,8 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (_request, reply) => {
-      const healthy = await codeTestService.healthCheck();
-      return reply.send({ healthy });
+      const healthy = await codeTestService.healthCheck()
+      return reply.send({ healthy })
     },
-  });
+  })
 }

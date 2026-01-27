@@ -1,13 +1,13 @@
-import * as React from "react";
-import { cn } from "@/shared/utils/cn";
+import * as React from "react"
+import { cn } from "@/shared/utils/cn"
 
 interface PopoverProps {
-  trigger: React.ReactNode;
-  content: React.ReactNode;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  align?: "start" | "end" | "center";
-  className?: string;
+  trigger: React.ReactNode
+  content: React.ReactNode
+  isOpen: boolean
+  onOpenChange: (open: boolean) => void
+  align?: "start" | "end" | "center"
+  className?: string
 }
 
 export const Popover = React.forwardRef<HTMLDivElement, PopoverProps>(
@@ -15,23 +15,23 @@ export const Popover = React.forwardRef<HTMLDivElement, PopoverProps>(
     { trigger, content, isOpen, onOpenChange, align = "start", className },
     forwardedRef,
   ) => {
-    const internalRef = React.useRef<HTMLDivElement>(null);
+    const internalRef = React.useRef<HTMLDivElement>(null)
 
     // Safer callback ref to merge internalRef and forwardedRef
     const setRefs = React.useCallback(
       (node: HTMLDivElement | null) => {
-        internalRef.current = node;
+        internalRef.current = node
 
         if (typeof forwardedRef === "function") {
-          forwardedRef(node);
+          forwardedRef(node)
         } else if (forwardedRef) {
-          (
+          ;(
             forwardedRef as React.MutableRefObject<HTMLDivElement | null>
-          ).current = node;
+          ).current = node
         }
       },
       [forwardedRef],
-    );
+    )
 
     React.useEffect(() => {
       function handleClickOutside(event: MouseEvent) {
@@ -39,15 +39,14 @@ export const Popover = React.forwardRef<HTMLDivElement, PopoverProps>(
           internalRef.current &&
           !internalRef.current.contains(event.target as Node)
         ) {
-          onOpenChange(false);
+          onOpenChange(false)
         }
       }
       if (isOpen) {
-        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside)
       }
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen, onOpenChange]);
+      return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [isOpen, onOpenChange])
 
     // Compute alignment classes
     const alignmentClasses =
@@ -55,7 +54,7 @@ export const Popover = React.forwardRef<HTMLDivElement, PopoverProps>(
         ? "right-0"
         : align === "center"
           ? "left-1/2 -translate-x-1/2"
-          : "left-0";
+          : "left-0"
 
     return (
       <div ref={setRefs} className="relative inline-block w-full text-left">
@@ -75,8 +74,8 @@ export const Popover = React.forwardRef<HTMLDivElement, PopoverProps>(
           </div>
         )}
       </div>
-    );
+    )
   },
-);
+)
 
-Popover.displayName = "Popover";
+Popover.displayName = "Popover"

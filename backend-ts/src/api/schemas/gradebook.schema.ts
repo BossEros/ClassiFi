@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod"
 
 // ============================================================================
 // Late Penalty Configuration Schemas
@@ -8,18 +8,18 @@ import { z } from "zod";
 export const PenaltyTierSchema = z.object({
   hoursAfterGrace: z.number().min(0),
   penaltyPercent: z.number().min(0).max(100),
-});
+})
 
-export type PenaltyTier = z.infer<typeof PenaltyTierSchema>;
+export type PenaltyTier = z.infer<typeof PenaltyTierSchema>
 
 /** Late penalty configuration schema */
 export const LatePenaltyConfigSchema = z.object({
   gracePeriodHours: z.number().min(0),
   tiers: z.array(PenaltyTierSchema),
   rejectAfterHours: z.number().nullable(),
-});
+})
 
-export type LatePenaltyConfigInput = z.infer<typeof LatePenaltyConfigSchema>;
+export type LatePenaltyConfigInput = z.infer<typeof LatePenaltyConfigSchema>
 
 /** Penalty result schema */
 export const PenaltyResultSchema = z.object({
@@ -28,9 +28,9 @@ export const PenaltyResultSchema = z.object({
   penaltyPercent: z.number(),
   gradeMultiplier: z.number(),
   tierLabel: z.string(),
-});
+})
 
-export type PenaltyResult = z.infer<typeof PenaltyResultSchema>;
+export type PenaltyResult = z.infer<typeof PenaltyResultSchema>
 
 // ============================================================================
 // Grade Entry Schemas
@@ -43,9 +43,9 @@ export const GradeEntrySchema = z.object({
   grade: z.number().nullable(),
   isOverridden: z.boolean(),
   submittedAt: z.string().nullable(),
-});
+})
 
-export type GradeEntry = z.infer<typeof GradeEntrySchema>;
+export type GradeEntry = z.infer<typeof GradeEntrySchema>
 
 /** Assignment info in gradebook */
 export const GradebookAssignmentSchema = z.object({
@@ -53,9 +53,9 @@ export const GradebookAssignmentSchema = z.object({
   name: z.string(),
   totalScore: z.number(),
   deadline: z.string(),
-});
+})
 
-export type GradebookAssignment = z.infer<typeof GradebookAssignmentSchema>;
+export type GradebookAssignment = z.infer<typeof GradebookAssignmentSchema>
 
 /** Student row in gradebook */
 export const GradebookStudentSchema = z.object({
@@ -63,9 +63,9 @@ export const GradebookStudentSchema = z.object({
   name: z.string(),
   email: z.string(),
   grades: z.array(GradeEntrySchema),
-});
+})
 
-export type GradebookStudent = z.infer<typeof GradebookStudentSchema>;
+export type GradebookStudent = z.infer<typeof GradebookStudentSchema>
 
 // ============================================================================
 // Response Schemas
@@ -76,11 +76,11 @@ export const ClassGradebookResponseSchema = z.object({
   success: z.boolean(),
   assignments: z.array(GradebookAssignmentSchema),
   students: z.array(GradebookStudentSchema),
-});
+})
 
 export type ClassGradebookResponse = z.infer<
   typeof ClassGradebookResponseSchema
->;
+>
 
 /** Student grades response */
 export const StudentGradesResponseSchema = z.object({
@@ -100,13 +100,13 @@ export const StudentGradesResponseSchema = z.object({
           isOverridden: z.boolean(),
           feedback: z.string().nullable(),
           submittedAt: z.string().nullable(),
-        })
+        }),
       ),
-    })
+    }),
   ),
-});
+})
 
-export type StudentGradesResponse = z.infer<typeof StudentGradesResponseSchema>;
+export type StudentGradesResponse = z.infer<typeof StudentGradesResponseSchema>
 
 /** Class statistics response */
 export const ClassStatisticsResponseSchema = z.object({
@@ -117,11 +117,11 @@ export const ClassStatisticsResponseSchema = z.object({
     totalStudents: z.number(),
     totalAssignments: z.number(),
   }),
-});
+})
 
 export type ClassStatisticsResponse = z.infer<
   typeof ClassStatisticsResponseSchema
->;
+>
 
 /** Student rank response */
 export const StudentRankResponseSchema = z.object({
@@ -129,20 +129,20 @@ export const StudentRankResponseSchema = z.object({
   rank: z.number().nullable(),
   totalStudents: z.number().nullable(),
   percentile: z.number().nullable(),
-});
+})
 
-export type StudentRankResponse = z.infer<typeof StudentRankResponseSchema>;
+export type StudentRankResponse = z.infer<typeof StudentRankResponseSchema>
 
 /** Late penalty config response */
 export const LatePenaltyConfigResponseSchema = z.object({
   success: z.boolean(),
   enabled: z.boolean(),
   config: LatePenaltyConfigSchema.nullable(),
-});
+})
 
 export type LatePenaltyConfigResponse = z.infer<
   typeof LatePenaltyConfigResponseSchema
->;
+>
 
 // ============================================================================
 // Request Body Schemas
@@ -152,17 +152,17 @@ export type LatePenaltyConfigResponse = z.infer<
 export const GradeOverrideBodySchema = z.object({
   grade: z.number().min(0),
   feedback: z.string().nullable().optional(),
-});
+})
 
-export type GradeOverrideBody = z.infer<typeof GradeOverrideBodySchema>;
+export type GradeOverrideBody = z.infer<typeof GradeOverrideBodySchema>
 
 /** Late penalty config update request body */
 export const LatePenaltyUpdateBodySchema = z.object({
   enabled: z.boolean(),
   config: LatePenaltyConfigSchema.optional(),
-});
+})
 
-export type LatePenaltyUpdateBody = z.infer<typeof LatePenaltyUpdateBodySchema>;
+export type LatePenaltyUpdateBody = z.infer<typeof LatePenaltyUpdateBodySchema>
 
 // ============================================================================
 // Param Schemas
@@ -171,38 +171,38 @@ export type LatePenaltyUpdateBody = z.infer<typeof LatePenaltyUpdateBodySchema>;
 /** Class ID param */
 export const ClassIdParamSchema = z.object({
   classId: z.string(),
-});
+})
 
-export type ClassIdParam = z.infer<typeof ClassIdParamSchema>;
+export type ClassIdParam = z.infer<typeof ClassIdParamSchema>
 
 /** Student ID param */
 export const StudentIdParamSchema = z.object({
   studentId: z.string(),
-});
+})
 
-export type StudentIdParam = z.infer<typeof StudentIdParamSchema>;
+export type StudentIdParam = z.infer<typeof StudentIdParamSchema>
 
 /** Student + Class ID params */
 export const StudentClassParamsSchema = z.object({
   studentId: z.string(),
   classId: z.string(),
-});
+})
 
-export type StudentClassParams = z.infer<typeof StudentClassParamsSchema>;
+export type StudentClassParams = z.infer<typeof StudentClassParamsSchema>
 
 /** Submission ID param */
 export const SubmissionIdParamSchema = z.object({
   submissionId: z.string(),
-});
+})
 
-export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>;
+export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>
 
 /** Assignment ID param */
 export const AssignmentIdParamSchema = z.object({
   id: z.string(),
-});
+})
 
-export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>;
+export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>
 
 // ============================================================================
 // Export CSV Response Schema
@@ -214,9 +214,9 @@ export const ExportCSVResponseSchema = z.object({
   filename: z.string(),
   contentType: z.string(),
   data: z.string(),
-});
+})
 
-export type ExportCSVResponse = z.infer<typeof ExportCSVResponseSchema>;
+export type ExportCSVResponse = z.infer<typeof ExportCSVResponseSchema>
 
 // ============================================================================
 // Success Response Schema
@@ -226,6 +226,6 @@ export type ExportCSVResponse = z.infer<typeof ExportCSVResponseSchema>;
 export const SuccessResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
-});
+})
 
-export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
+export type SuccessResponse = z.infer<typeof SuccessResponseSchema>

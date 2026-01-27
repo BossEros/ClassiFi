@@ -3,23 +3,23 @@
  * Reusable validation helpers for common authorization patterns.
  */
 
-import type { ClassRepository } from '../repositories/class.repository.js';
-import type { Class } from '../models/index.js';
-import { ClassNotFoundError, NotClassOwnerError } from './errors.js';
+import type { ClassRepository } from "../repositories/class.repository.js"
+import type { Class } from "../models/index.js"
+import { ClassNotFoundError, NotClassOwnerError } from "./errors.js"
 
 /**
  * Require a class to exist.
  * @throws {ClassNotFoundError} If class doesn't exist
  */
 export async function requireClass(
-    classRepo: ClassRepository,
-    classId: number
+  classRepo: ClassRepository,
+  classId: number,
 ): Promise<Class> {
-    const classData = await classRepo.getClassById(classId);
-    if (!classData) {
-        throw new ClassNotFoundError(classId);
-    }
-    return classData;
+  const classData = await classRepo.getClassById(classId)
+  if (!classData) {
+    throw new ClassNotFoundError(classId)
+  }
+  return classData
 }
 
 /**
@@ -28,15 +28,15 @@ export async function requireClass(
  * @throws {NotClassOwnerError} If teacher doesn't own the class
  */
 export async function requireClassOwnership(
-    classRepo: ClassRepository,
-    classId: number,
-    teacherId: number
+  classRepo: ClassRepository,
+  classId: number,
+  teacherId: number,
 ): Promise<Class> {
-    const classData = await requireClass(classRepo, classId);
+  const classData = await requireClass(classRepo, classId)
 
-    if (classData.teacherId !== teacherId) {
-        throw new NotClassOwnerError();
-    }
-    
-    return classData;
+  if (classData.teacherId !== teacherId) {
+    throw new NotClassOwnerError()
+  }
+
+  return classData
 }

@@ -1,14 +1,20 @@
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Home, Grid3x3, ClipboardList } from 'lucide-react'
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout'
-import { ClassCard } from '@/presentation/components/dashboard/ClassCard'
-import { TaskCard } from '@/presentation/components/dashboard/TaskCard'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/presentation/components/ui/Card'
-import { getCurrentUser } from '@/business/services/authService'
-import { getDashboardData } from '@/business/services/teacherDashboardService'
-import type { User } from '@/business/models/auth/types'
-import type { Class, Task } from '@/business/models/dashboard/types'
+import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Home, Grid3x3, ClipboardList } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
+import { TaskCard } from "@/presentation/components/dashboard/TaskCard"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
+import { getCurrentUser } from "@/business/services/authService"
+import { getDashboardData } from "@/business/services/teacherDashboardService"
+import type { User } from "@/business/models/auth/types"
+import type { Class, Task } from "@/business/models/dashboard/types"
 
 export function TeacherDashboardPage() {
   const navigate = useNavigate()
@@ -21,7 +27,7 @@ export function TeacherDashboardPage() {
   useEffect(() => {
     const currentUser = getCurrentUser()
     if (!currentUser) {
-      navigate('/login')
+      navigate("/login")
       return
     }
 
@@ -39,8 +45,10 @@ export function TeacherDashboardPage() {
         setClasses(dashboardData.recentClasses)
         setTasks(dashboardData.pendingTasks)
       } catch (err) {
-        console.error('Failed to fetch dashboard data:', err)
-        setError('Failed to load dashboard data. Please try refreshing the page.')
+        console.error("Failed to fetch dashboard data:", err)
+        setError(
+          "Failed to load dashboard data. Please try refreshing the page.",
+        )
       } finally {
         setIsLoading(false)
       }
@@ -54,14 +62,16 @@ export function TeacherDashboardPage() {
       {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 rounded-lg bg-purple-500/20">
-            <Home className="w-5 h-5 text-purple-300" />
+          <div className="p-2 rounded-lg bg-teal-500/20">
+            <Home className="w-5 h-5 text-teal-300" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Home</h1>
         </div>
         {user && (
-          <p className="text-gray-300 ml-11 text-sm">
-            Welcome back, <span className="text-white font-semibold">{user.firstName}</span>! Here's what's happening today.
+          <p className="text-slate-300 ml-11 text-sm">
+            Welcome back,{" "}
+            <span className="text-white font-semibold">{user.firstName}</span>!
+            Here's what's happening today.
           </p>
         )}
       </div>
@@ -87,7 +97,7 @@ export function TeacherDashboardPage() {
             {isLoading ? (
               <div className="py-12 text-center">
                 <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-400">Loading dashboard...</p>
+                <p className="text-slate-400">Loading dashboard...</p>
               </div>
             ) : classes.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -95,17 +105,21 @@ export function TeacherDashboardPage() {
                   <ClassCard
                     key={classItem.id}
                     classItem={classItem}
-                    onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
+                    onClick={() =>
+                      navigate(`/dashboard/classes/${classItem.id}`)
+                    }
                   />
                 ))}
               </div>
             ) : (
               <div className="py-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <Grid3x3 className="w-8 h-8 text-gray-500" />
+                  <Grid3x3 className="w-8 h-8 text-slate-500" />
                 </div>
-                <p className="text-gray-300 font-semibold text-sm mb-1.5">No recent classes found</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-slate-300 font-semibold text-sm mb-1.5">
+                  No recent classes found
+                </p>
+                <p className="text-xs text-slate-500">
                   Classes you've recently accessed will appear here.
                 </p>
               </div>
@@ -125,7 +139,7 @@ export function TeacherDashboardPage() {
             {isLoading ? (
               <div className="py-12 text-center">
                 <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-400">Loading...</p>
+                <p className="text-slate-400">Loading...</p>
               </div>
             ) : tasks.length > 0 ? (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
@@ -133,17 +147,21 @@ export function TeacherDashboardPage() {
                   <TaskCard
                     key={task.id}
                     task={task}
-                    onClick={() => navigate(`/dashboard/assignments/${task.id}/submissions`)}
+                    onClick={() =>
+                      navigate(`/dashboard/assignments/${task.id}/submissions`)
+                    }
                   />
                 ))}
               </div>
             ) : (
               <div className="py-12 text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <ClipboardList className="w-8 h-8 text-gray-500" />
+                  <ClipboardList className="w-8 h-8 text-slate-500" />
                 </div>
-                <p className="text-gray-300 font-semibold text-sm mb-1.5">All caught up!</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-slate-300 font-semibold text-sm mb-1.5">
+                  All caught up!
+                </p>
+                <p className="text-xs text-slate-500">
                   New tasks will appear here when they're assigned.
                 </p>
               </div>
@@ -154,4 +172,3 @@ export function TeacherDashboardPage() {
     </DashboardLayout>
   )
 }
-

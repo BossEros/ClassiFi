@@ -1,35 +1,35 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { getCurrentUser } from "@/business/services/authService";
+import { useState, useEffect } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { getCurrentUser } from "@/business/services/authService"
 import {
   createAssignment,
   updateAssignment,
   getClassById,
-} from "@/business/services/classService";
-import { getAssignmentById } from "@/business/services/assignmentService";
-import { useToast } from "@/shared/context/ToastContext";
+} from "@/business/services/classService"
+import { getAssignmentById } from "@/business/services/assignmentService"
+import { useToast } from "@/shared/context/ToastContext"
 import {
   validateAssignmentTitle,
   validateDescription,
   validateProgrammingLanguage,
   validateDeadline,
-} from "@/business/validation/assignmentValidation";
+} from "@/business/validation/assignmentValidation"
 import {
   getTestCases,
   createTestCase,
   updateTestCase,
   deleteTestCase,
-} from "@/business/services/testCaseService";
+} from "@/business/services/testCaseService"
 import type {
   TestCase,
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
-} from "@/shared/types/testCase";
-import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList";
-import type { SelectOption } from "@/presentation/components/ui/Select";
+} from "@/shared/types/testCase"
+import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList"
+import type { SelectOption } from "@/presentation/components/ui/Select"
 // Import LatePenaltyConfig from shared types to comply with architectural layering
-import type { LatePenaltyConfig } from "@/shared/types/gradebook";
-import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig";
+import type { LatePenaltyConfig } from "@/shared/types/gradebook"
+import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
 
 /**
  * Converts a Date or ISO date string to a local datetime string
@@ -37,63 +37,63 @@ import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/cou
  * Adjusts for the local timezone offset.
  */
 function toLocalDateTimeString(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+  const d = typeof date === "string" ? new Date(date) : date
   // Clone the date to avoid mutating the original
-  const cloned = new Date(d.getTime());
-  cloned.setMinutes(cloned.getMinutes() - cloned.getTimezoneOffset());
-  return cloned.toISOString().slice(0, 16);
+  const cloned = new Date(d.getTime())
+  cloned.setMinutes(cloned.getMinutes() - cloned.getTimezoneOffset())
+  return cloned.toISOString().slice(0, 16)
 }
 
 export interface CourseworkFormData {
-  assignmentName: string;
-  description: string;
-  programmingLanguage: "python" | "java" | "c" | "";
-  deadline: string;
-  allowResubmission: boolean;
-  maxAttempts: number | null;
-  templateCode: string;
-  totalScore: number;
-  scheduledDate: string | null;
-  latePenaltyEnabled: boolean;
-  latePenaltyConfig: LatePenaltyConfig;
+  assignmentName: string
+  description: string
+  programmingLanguage: "python" | "java" | "c" | ""
+  deadline: string
+  allowResubmission: boolean
+  maxAttempts: number | null
+  templateCode: string
+  totalScore: number
+  scheduledDate: string | null
+  latePenaltyEnabled: boolean
+  latePenaltyConfig: LatePenaltyConfig
 }
 
 export interface FormErrors {
-  assignmentName?: string;
-  description?: string;
-  programmingLanguage?: string;
-  deadline?: string;
-  maxAttempts?: string;
-  general?: string;
+  assignmentName?: string
+  description?: string
+  programmingLanguage?: string
+  deadline?: string
+  maxAttempts?: string
+  general?: string
 }
 
 export const programmingLanguageOptions: SelectOption[] = [
   { value: "python", label: "Python" },
   { value: "java", label: "Java" },
   { value: "c", label: "C" },
-];
+]
 
 export function useCourseworkForm() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const { classId, assignmentId } = useParams<{
-    classId: string;
-    assignmentId?: string;
-  }>();
-  const { showToast } = useToast();
-  const currentUser = getCurrentUser();
+    classId: string
+    assignmentId?: string
+  }>()
+  const { showToast } = useToast()
+  const currentUser = getCurrentUser()
 
-  const isEditMode = !!assignmentId;
+  const isEditMode = !!assignmentId
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(isEditMode);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [className, setClassName] = useState("");
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(isEditMode)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [className, setClassName] = useState("")
+  const [testCases, setTestCases] = useState<TestCase[]>([])
   const [pendingTestCases, setPendingTestCases] = useState<PendingTestCase[]>(
     [],
-  );
-  const [isLoadingTestCases, setIsLoadingTestCases] = useState(false);
-  const [showTemplateCode, setShowTemplateCode] = useState(false);
+  )
+  const [isLoadingTestCases, setIsLoadingTestCases] = useState(false)
+  const [showTemplateCode, setShowTemplateCode] = useState(false)
 
   const [formData, setFormData] = useState<CourseworkFormData>({
     assignmentName: "",
@@ -107,29 +107,29 @@ export function useCourseworkForm() {
     scheduledDate: null,
     latePenaltyEnabled: false,
     latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
-  });
+  })
 
   // Fetch class name and existing assignment data
   useEffect(() => {
     const fetchData = async () => {
-      const user = getCurrentUser();
-      if (!user || !classId) return;
+      const user = getCurrentUser()
+      if (!user || !classId) return
 
-      setIsFetching(true);
+      setIsFetching(true)
       try {
         // Fetch class name
         const classData = await getClassById(
           parseInt(classId),
           parseInt(user.id),
-        );
-        setClassName(classData.className);
+        )
+        setClassName(classData.className)
 
         // If editing, fetch assignment data
         if (isEditMode && assignmentId) {
           const assignment = await getAssignmentById(
             parseInt(assignmentId),
             parseInt(user.id),
-          );
+          )
           if (assignment) {
             setFormData({
               assignmentName: assignment.assignmentName,
@@ -149,86 +149,86 @@ export function useCourseworkForm() {
               latePenaltyEnabled: assignment.latePenaltyEnabled ?? false,
               latePenaltyConfig:
                 assignment.latePenaltyConfig ?? DEFAULT_LATE_PENALTY_CONFIG,
-            });
-            setShowTemplateCode(!!assignment.templateCode);
+            })
+            setShowTemplateCode(!!assignment.templateCode)
           }
         }
       } catch (_error) {
-        setErrors({ general: "Failed to load data. Please try again." });
+        setErrors({ general: "Failed to load data. Please try again." })
       } finally {
-        setIsFetching(false);
+        setIsFetching(false)
       }
-    };
-    fetchData();
-  }, [classId, isEditMode, assignmentId]);
+    }
+    fetchData()
+  }, [classId, isEditMode, assignmentId])
 
   // Fetch test cases
   useEffect(() => {
     const fetchTestCases = async () => {
-      if (!isEditMode || !assignmentId) return;
-      setIsLoadingTestCases(true);
+      if (!isEditMode || !assignmentId) return
+      setIsLoadingTestCases(true)
       try {
-        const fetchedTestCases = await getTestCases(parseInt(assignmentId));
+        const fetchedTestCases = await getTestCases(parseInt(assignmentId))
         if (fetchedTestCases) {
-          setTestCases(fetchedTestCases);
+          setTestCases(fetchedTestCases)
         }
       } catch (error) {
-        console.error("Failed to load test cases:", error);
+        console.error("Failed to load test cases:", error)
       } finally {
-        setIsLoadingTestCases(false);
+        setIsLoadingTestCases(false)
       }
-    };
-    fetchTestCases();
-  }, [isEditMode, assignmentId]);
+    }
+    fetchTestCases()
+  }, [isEditMode, assignmentId])
 
   const handleInputChange = <K extends keyof CourseworkFormData>(
     field: K,
     value: CourseworkFormData[K],
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }));
-  };
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }))
+  }
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {};
+    const newErrors: FormErrors = {}
 
-    const nameError = validateAssignmentTitle(formData.assignmentName);
-    if (nameError) newErrors.assignmentName = nameError;
+    const nameError = validateAssignmentTitle(formData.assignmentName)
+    if (nameError) newErrors.assignmentName = nameError
 
-    const descError = validateDescription(formData.description);
-    if (descError) newErrors.description = descError;
+    const descError = validateDescription(formData.description)
+    if (descError) newErrors.description = descError
 
-    const langError = validateProgrammingLanguage(formData.programmingLanguage);
-    if (langError) newErrors.programmingLanguage = langError;
+    const langError = validateProgrammingLanguage(formData.programmingLanguage)
+    if (langError) newErrors.programmingLanguage = langError
 
     if (!formData.deadline) {
-      newErrors.deadline = "Deadline is required";
+      newErrors.deadline = "Deadline is required"
     } else {
-      const deadlineError = validateDeadline(new Date(formData.deadline));
-      if (deadlineError) newErrors.deadline = deadlineError;
+      const deadlineError = validateDeadline(new Date(formData.deadline))
+      if (deadlineError) newErrors.deadline = deadlineError
     }
 
     if (formData.allowResubmission && formData.maxAttempts !== null) {
       if (formData.maxAttempts < 1 || formData.maxAttempts > 99) {
-        newErrors.maxAttempts = "Max attempts must be between 1 and 99";
+        newErrors.maxAttempts = "Max attempts must be between 1 and 99"
       }
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!validateForm()) return;
+    if (!validateForm()) return
 
     if (!currentUser?.id || !classId) {
-      setErrors({ general: "You must be logged in" });
-      return;
+      setErrors({ general: "You must be logged in" })
+      return
     }
 
-    setIsLoading(true);
+    setIsLoading(true)
 
     try {
       if (isEditMode && assignmentId) {
@@ -253,8 +253,8 @@ export function useCourseworkForm() {
           latePenaltyConfig: formData.latePenaltyEnabled
             ? formData.latePenaltyConfig
             : null,
-        });
-        showToast("Coursework updated successfully");
+        })
+        showToast("Coursework updated successfully")
       } else {
         // Create new assignment
         const newAssignment = await createAssignment({
@@ -278,7 +278,7 @@ export function useCourseworkForm() {
           latePenaltyConfig: formData.latePenaltyEnabled
             ? formData.latePenaltyConfig
             : null,
-        });
+        })
 
         // Create pending test cases
         if (pendingTestCases.length > 0 && newAssignment?.id) {
@@ -290,74 +290,74 @@ export function useCourseworkForm() {
               isHidden: pending.isHidden,
               timeLimit: pending.timeLimit,
               sortOrder: pending.sortOrder,
-            });
+            })
           }
           showToast(
             `Coursework created successfully with ${pendingTestCases.length} test case(s)`,
-          );
+          )
         } else {
-          showToast("Coursework created successfully (0 test cases)");
+          showToast("Coursework created successfully (0 test cases)")
         }
       }
-      navigate(`/dashboard/classes/${classId}`);
+      navigate(`/dashboard/classes/${classId}`)
     } catch {
       setErrors({
         general: `Failed to ${
           isEditMode ? "update" : "create"
         } coursework. Please try again.`,
-      });
+      })
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   // Test case handlers
   const handleAddTestCase = async (data: CreateTestCaseRequest) => {
-    if (!assignmentId) return;
+    if (!assignmentId) return
     try {
-      const newTestCase = await createTestCase(parseInt(assignmentId), data);
+      const newTestCase = await createTestCase(parseInt(assignmentId), data)
       if (newTestCase) {
-        setTestCases((prev) => [...prev, newTestCase]);
-        showToast("Test case added");
+        setTestCases((prev) => [...prev, newTestCase])
+        showToast("Test case added")
       }
     } catch (error) {
-      console.error("Failed to add test case:", error);
-      showToast("Failed to add test case", "error");
+      console.error("Failed to add test case:", error)
+      showToast("Failed to add test case", "error")
     }
-  };
+  }
 
   const handleUpdateTestCase = async (
     id: number,
     data: UpdateTestCaseRequest,
   ) => {
     try {
-      const updatedTestCase = await updateTestCase(id, data);
+      const updatedTestCase = await updateTestCase(id, data)
       if (updatedTestCase) {
         setTestCases((prev) =>
           prev.map((tc) => (tc.id === id ? updatedTestCase : tc)),
-        );
-        showToast("Test case updated");
+        )
+        showToast("Test case updated")
       }
     } catch (error) {
-      console.error("Failed to update test case:", error);
-      showToast("Failed to update test case", "error");
+      console.error("Failed to update test case:", error)
+      showToast("Failed to update test case", "error")
     }
-  };
+  }
 
   const handleDeleteTestCase = async (id: number) => {
     try {
-      await deleteTestCase(id);
-      setTestCases((prev) => prev.filter((tc) => tc.id !== id));
-      showToast("Test case deleted");
+      await deleteTestCase(id)
+      setTestCases((prev) => prev.filter((tc) => tc.id !== id))
+      showToast("Test case deleted")
     } catch (error) {
-      console.error("Failed to delete test case:", error);
-      showToast("Failed to delete test case", "error");
+      console.error("Failed to delete test case:", error)
+      showToast("Failed to delete test case", "error")
     }
-  };
+  }
 
   const handleAddPendingTestCase = (data: PendingTestCase) => {
-    setPendingTestCases((prev) => [...prev, data]);
-  };
+    setPendingTestCases((prev) => [...prev, data])
+  }
 
   const handleUpdatePendingTestCase = (
     tempId: string,
@@ -365,12 +365,12 @@ export function useCourseworkForm() {
   ) => {
     setPendingTestCases((prev) =>
       prev.map((tc) => (tc.tempId === tempId ? data : tc)),
-    );
-  };
+    )
+  }
 
   const handleDeletePendingTestCase = (tempId: string) => {
-    setPendingTestCases((prev) => prev.filter((tc) => tc.tempId !== tempId));
-  };
+    setPendingTestCases((prev) => prev.filter((tc) => tc.tempId !== tempId))
+  }
 
   return {
     // State
@@ -398,5 +398,5 @@ export function useCourseworkForm() {
     handleAddPendingTestCase,
     handleUpdatePendingTestCase,
     handleDeletePendingTestCase,
-  };
+  }
 }
