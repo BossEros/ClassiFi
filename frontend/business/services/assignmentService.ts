@@ -34,7 +34,7 @@ export async function submitAssignment(
   }
 
   // Submit to repository
-  const response = await assignmentRepository.submitAssignment(request);
+  const response = await assignmentRepository.submitAssignmentWithFile(request);
 
   if (response.error) {
     throw new Error(response.error);
@@ -61,7 +61,7 @@ export async function getSubmissionHistory(
   validateId(assignmentId, "assignment");
   validateId(studentId, "student");
 
-  const response = await assignmentRepository.getSubmissionHistory(
+  const response = await assignmentRepository.getSubmissionHistoryForStudentAndAssignment(
     assignmentId,
     studentId,
   );
@@ -90,7 +90,7 @@ export async function getStudentSubmissions(
 ): Promise<Submission[]> {
   validateId(studentId, "student");
 
-  const response = await assignmentRepository.getStudentSubmissions(
+  const response = await assignmentRepository.getAllSubmissionsByStudentId(
     studentId,
     latestOnly,
   );
@@ -119,7 +119,7 @@ export async function getAssignmentSubmissions(
 ): Promise<Submission[]> {
   validateId(assignmentId, "assignment");
 
-  const response = await assignmentRepository.getAssignmentSubmissions(
+  const response = await assignmentRepository.getAllSubmissionsForAssignmentId(
     assignmentId,
     latestOnly,
   );
@@ -148,7 +148,7 @@ export async function getAssignmentById(
 ): Promise<AssignmentDetail> {
   validateId(assignmentId, "assignment");
 
-  const response = await assignmentRepository.getAssignmentById(
+  const response = await assignmentRepository.getAssignmentDetailsByIdForUser(
     assignmentId,
     userId,
   );
@@ -175,7 +175,7 @@ export async function getSubmissionContent(
 ): Promise<SubmissionContent> {
   validateId(submissionId, "submission");
 
-  const response = await assignmentRepository.getSubmissionContent(submissionId);
+  const response = await assignmentRepository.getSubmissionFileContentById(submissionId);
 
   if (response.error) {
     throw new Error(response.error);
@@ -200,7 +200,7 @@ export async function getSubmissionDownloadUrl(
   validateId(submissionId, "submission");
 
   const response =
-    await assignmentRepository.getSubmissionDownloadUrl(submissionId);
+    await assignmentRepository.getSubmissionFileDownloadUrlById(submissionId);
 
   if (response.error) {
     throw new Error(response.error);

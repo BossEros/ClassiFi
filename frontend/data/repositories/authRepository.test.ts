@@ -101,10 +101,10 @@ describe("authRepository", () => {
     }) as unknown as AuthError;
 
   // ============================================================================
-  // login Tests
+  // authenticateUserWithEmailAndPassword Tests
   // ============================================================================
 
-  describe("login", () => {
+  describe("authenticateUserWithEmailAndPassword", () => {
     it("logs in successfully with valid credentials", async () => {
       vi.mocked(supabaseAuthAdapter.signInWithPassword).mockResolvedValue({
         data: {
@@ -119,7 +119,7 @@ describe("authRepository", () => {
         status: 200,
       });
 
-      const result = await authRepository.login({
+      const result = await authRepository.authenticateUserWithEmailAndPassword({
         email: "user@example.com",
         password: "password123",
       });
@@ -138,7 +138,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Invalid credentials"),
       });
 
-      const result = await authRepository.login({
+      const result = await authRepository.authenticateUserWithEmailAndPassword({
         email: "user@example.com",
         password: "wrongpassword",
       });
@@ -156,7 +156,7 @@ describe("authRepository", () => {
         error: null,
       });
 
-      const result = await authRepository.login({
+      const result = await authRepository.authenticateUserWithEmailAndPassword({
         email: "user@example.com",
         password: "password123",
       });
@@ -182,7 +182,7 @@ describe("authRepository", () => {
         status: 404,
       });
 
-      const result = await authRepository.login({
+      const result = await authRepository.authenticateUserWithEmailAndPassword({
         email: "user@example.com",
         password: "password123",
       });
@@ -196,10 +196,10 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // register Tests
+  // registerNewUserAccount Tests
   // ============================================================================
 
-  describe("register", () => {
+  describe("registerNewUserAccount", () => {
     const registerData = {
       email: "newuser@example.com",
       password: "securePassword123",
@@ -220,7 +220,7 @@ describe("authRepository", () => {
         status: 201,
       });
 
-      const result = await authRepository.register(registerData);
+      const result = await authRepository.registerNewUserAccount(registerData);
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/auth/register",
@@ -235,7 +235,7 @@ describe("authRepository", () => {
         status: 409,
       });
 
-      const result = await authRepository.register(registerData);
+      const result = await authRepository.registerNewUserAccount(registerData);
 
       expect(result.success).toBe(false);
 
@@ -250,7 +250,7 @@ describe("authRepository", () => {
         status: 200,
       });
 
-      const result = await authRepository.register(registerData);
+      const result = await authRepository.registerNewUserAccount(registerData);
 
       expect(result.success).toBe(false);
 
@@ -261,15 +261,15 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // logout Tests
+  // signOutCurrentUserAndClearSession Tests
   // ============================================================================
 
-  describe("logout", () => {
+  describe("signOutCurrentUserAndClearSession", () => {
     it("signs out and clears user from localStorage", async () => {
       localStorageMock.setItem("user", JSON.stringify(mockUser));
       vi.mocked(supabaseAuthAdapter.signOut).mockResolvedValue({ error: null });
 
-      await authRepository.logout();
+      await authRepository.signOutCurrentUserAndClearSession();
 
       expect(supabaseAuthAdapter.signOut).toHaveBeenCalled();
       expect(localStorageMock.removeItem).toHaveBeenCalledWith("user");
@@ -277,17 +277,17 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // verifyToken Tests
+  // validateAuthenticationToken Tests
   // ============================================================================
 
-  describe("verifyToken", () => {
+  describe("validateAuthenticationToken", () => {
     it("returns true for valid token", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: { success: true },
         status: 200,
       });
 
-      const result = await authRepository.verifyToken("valid-token");
+      const result = await authRepository.validateAuthenticationToken("valid-token");
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/auth/verify?token=valid-token",
@@ -302,7 +302,7 @@ describe("authRepository", () => {
         status: 401,
       });
 
-      const result = await authRepository.verifyToken("invalid-token");
+      const result = await authRepository.validateAuthenticationToken("invalid-token");
 
       expect(result).toBe(false);
     });
@@ -313,24 +313,24 @@ describe("authRepository", () => {
         status: 401,
       });
 
-      const result = await authRepository.verifyToken("expired-token");
+      const result = await authRepository.validateAuthenticationToken("expired-token");
 
       expect(result).toBe(false);
     });
   });
 
   // ============================================================================
-  // forgotPassword Tests
+  // initiatePasswordResetForEmail Tests
   // ============================================================================
 
-  describe("forgotPassword", () => {
+  describe("initiatePasswordResetForEmail", () => {
     it("sends password reset email successfully", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: { success: true, message: "Reset email sent" },
         status: 200,
       });
 
-      const result = await authRepository.forgotPassword("user@example.com");
+      const result = await authRepository.initiatePasswordResetForEmail("user@example.com");
 
       expect(apiClient.post).toHaveBeenCalledWith("/auth/forgot-password", {
         email: "user@example.com",
@@ -344,7 +344,7 @@ describe("authRepository", () => {
         status: 404,
       });
 
-      const result = await authRepository.forgotPassword(
+      const result = await authRepository.initiatePasswordResetForEmail(
         "notfound@example.com",
       );
 
@@ -358,7 +358,7 @@ describe("authRepository", () => {
         status: 200,
       });
 
-      const result = await authRepository.forgotPassword("user@example.com");
+      const result = await authRepository.initiatePasswordResetForEmail("user@example.com");
 
       expect(result.success).toBe(false);
       expect(result.message).toBe("Missing response data from auth API");
@@ -366,16 +366,16 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // initializeResetFlow Tests
+  // initializePasswordResetFlowFromUrl Tests
   // ============================================================================
 
-  describe("initializeResetFlow", () => {
+  describe("initializePasswordResetFlowFromUrl", () => {
     it("initializes reset flow successfully", async () => {
       vi.mocked(supabaseAuthAdapter.initializeResetSession).mockResolvedValue({
         success: true,
       });
 
-      const result = await authRepository.initializeResetFlow({
+      const result = await authRepository.initializePasswordResetFlowFromUrl({
         hash: "#access_token=abc",
         search: "?type=recovery",
       });
@@ -393,7 +393,7 @@ describe("authRepository", () => {
         message: "Invalid token",
       });
 
-      const result = await authRepository.initializeResetFlow();
+      const result = await authRepository.initializePasswordResetFlowFromUrl();
 
       expect(result.success).toBe(false);
       expect(result.message).toBe("Invalid token");
@@ -401,17 +401,17 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // getSession Tests
+  // getCurrentAuthenticationSession Tests
   // ============================================================================
 
-  describe("getSession", () => {
+  describe("getCurrentAuthenticationSession", () => {
     it("returns current session", async () => {
       vi.mocked(supabaseAuthAdapter.getSession).mockResolvedValue({
         session: mockSupabaseSession as Session,
         error: null,
       });
 
-      const result = await authRepository.getSession();
+      const result = await authRepository.getCurrentAuthenticationSession();
 
       expect(supabaseAuthAdapter.getSession).toHaveBeenCalled();
       expect(result.session).toBeDefined();
@@ -423,24 +423,24 @@ describe("authRepository", () => {
         error: null,
       });
 
-      const result = await authRepository.getSession();
+      const result = await authRepository.getCurrentAuthenticationSession();
 
       expect(result.session).toBeNull();
     });
   });
 
   // ============================================================================
-  // updateUser Tests
+  // updateAuthenticatedUserPassword Tests
   // ============================================================================
 
-  describe("updateUser", () => {
+  describe("updateAuthenticatedUserPassword", () => {
     it("updates user password successfully", async () => {
       vi.mocked(supabaseAuthAdapter.updateUser).mockResolvedValue({
         data: { user: mockSupabaseUser as SupabaseUser },
         error: null,
       });
 
-      const result = await authRepository.updateUser({
+      const result = await authRepository.updateAuthenticatedUserPassword({
         password: "newPassword123",
       });
 
@@ -456,7 +456,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Password too weak"),
       });
 
-      const result = await authRepository.updateUser({
+      const result = await authRepository.updateAuthenticatedUserPassword({
         password: "weak",
       });
 
@@ -465,10 +465,10 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // signInWithPassword Tests
+  // authenticateUserWithEmailPasswordCredentials Tests
   // ============================================================================
 
-  describe("signInWithPassword", () => {
+  describe("authenticateUserWithEmailPasswordCredentials", () => {
     it("signs in user with password", async () => {
       vi.mocked(supabaseAuthAdapter.signInWithPassword).mockResolvedValue({
         data: {
@@ -478,7 +478,7 @@ describe("authRepository", () => {
         error: null,
       });
 
-      const result = await authRepository.signInWithPassword(
+      const result = await authRepository.authenticateUserWithEmailPasswordCredentials(
         "user@example.com",
         "password123",
       );
@@ -496,7 +496,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Invalid credentials"),
       });
 
-      const result = await authRepository.signInWithPassword(
+      const result = await authRepository.authenticateUserWithEmailPasswordCredentials(
         "user@example.com",
         "wrong",
       );
@@ -506,10 +506,10 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // resetPassword Tests
+  // resetUserPasswordWithNewValue Tests
   // ============================================================================
 
-  describe("resetPassword", () => {
+  describe("resetUserPasswordWithNewValue", () => {
     it("resets password successfully", async () => {
       vi.mocked(supabaseAuthAdapter.getSession).mockResolvedValue({
         session: mockSupabaseSession as Session,
@@ -521,7 +521,7 @@ describe("authRepository", () => {
       });
       vi.mocked(supabaseAuthAdapter.signOut).mockResolvedValue({ error: null });
 
-      const result = await authRepository.resetPassword("newPassword123");
+      const result = await authRepository.resetUserPasswordWithNewValue("newPassword123");
 
       expect(supabaseAuthAdapter.getSession).toHaveBeenCalled();
       expect(supabaseAuthAdapter.updateUser).toHaveBeenCalledWith({
@@ -545,7 +545,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Sign out failed"),
       });
 
-      const result = await authRepository.resetPassword("newPassword123");
+      const result = await authRepository.resetUserPasswordWithNewValue("newPassword123");
 
       expect(result.sessionError).toBeDefined();
       expect(result.updateError).toBeDefined();
@@ -554,10 +554,10 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // changePassword Tests
+  // changeAuthenticatedUserPassword Tests
   // ============================================================================
 
-  describe("changePassword", () => {
+  describe("changeAuthenticatedUserPassword", () => {
     it("changes password successfully", async () => {
       vi.mocked(supabaseAuthAdapter.signInWithPassword).mockResolvedValue({
         data: {
@@ -571,7 +571,7 @@ describe("authRepository", () => {
         error: null,
       });
 
-      const result = await authRepository.changePassword(
+      const result = await authRepository.changeAuthenticatedUserPassword(
         "user@example.com",
         "oldPassword",
         "newPassword123",
@@ -594,7 +594,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Invalid password"),
       });
 
-      const result = await authRepository.changePassword(
+      const result = await authRepository.changeAuthenticatedUserPassword(
         "user@example.com",
         "wrongPassword",
         "newPassword123",
@@ -617,7 +617,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Password too weak"),
       });
 
-      const result = await authRepository.changePassword(
+      const result = await authRepository.changeAuthenticatedUserPassword(
         "user@example.com",
         "oldPassword",
         "weak",
@@ -629,10 +629,10 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // deleteAccount Tests
+  // deleteUserAccountWithVerification Tests
   // ============================================================================
 
-  describe("deleteAccount", () => {
+  describe("deleteUserAccountWithVerification", () => {
     it("deletes account successfully", async () => {
       localStorageMock.setItem("user", JSON.stringify(mockUser));
 
@@ -649,7 +649,7 @@ describe("authRepository", () => {
       });
       vi.mocked(supabaseAuthAdapter.signOut).mockResolvedValue({ error: null });
 
-      const result = await authRepository.deleteAccount(
+      const result = await authRepository.deleteUserAccountWithVerification(
         "user@example.com",
         "password123",
       );
@@ -671,7 +671,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Invalid password"),
       });
 
-      const result = await authRepository.deleteAccount(
+      const result = await authRepository.deleteUserAccountWithVerification(
         "user@example.com",
         "wrongPassword",
       );
@@ -693,7 +693,7 @@ describe("authRepository", () => {
         status: 400,
       });
 
-      const result = await authRepository.deleteAccount(
+      const result = await authRepository.deleteUserAccountWithVerification(
         "user@example.com",
         "password123",
       );
@@ -704,21 +704,21 @@ describe("authRepository", () => {
   });
 
   // ============================================================================
-  // getStoredUser Tests
+  // retrieveStoredUserFromLocalStorage Tests
   // ============================================================================
 
-  describe("getStoredUser", () => {
+  describe("retrieveStoredUserFromLocalStorage", () => {
     it("returns stored user from localStorage", () => {
       const storedUser = { email: "user@example.com" };
       localStorageMock.setItem("user", JSON.stringify(storedUser));
 
-      const result = authRepository.getStoredUser();
+      const result = authRepository.retrieveStoredUserFromLocalStorage();
 
       expect(result).toEqual(storedUser);
     });
 
     it("returns null when no user stored", () => {
-      const result = authRepository.getStoredUser();
+      const result = authRepository.retrieveStoredUserFromLocalStorage();
 
       expect(result).toBeNull();
     });
@@ -726,7 +726,7 @@ describe("authRepository", () => {
     it("returns null when stored user is invalid JSON", () => {
       localStorageMock.setItem("user", "invalid-json");
 
-      const result = authRepository.getStoredUser();
+      const result = authRepository.retrieveStoredUserFromLocalStorage();
 
       expect(result).toBeNull();
     });

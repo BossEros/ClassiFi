@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-
 import * as testCaseRepository from "./testCaseRepository";
 import { apiClient } from "@/data/api/apiClient";
 
@@ -35,17 +34,17 @@ describe("testCaseRepository", () => {
   };
 
   // ============================================================================
-  // getTestCases Tests
+  // getAllTestCasesForAssignmentId Tests
   // ============================================================================
 
-  describe("getTestCases", () => {
+  describe("getAllTestCasesForAssignmentId", () => {
     it("fetches test cases for an assignment", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: { success: true, testCases: [mockTestCase] },
         status: 200,
       });
 
-      const result = await testCaseRepository.getTestCases(1);
+      const result = await testCaseRepository.getAllTestCasesForAssignmentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/assignments/1/test-cases");
       expect(result.data?.testCases).toHaveLength(1);
@@ -57,17 +56,17 @@ describe("testCaseRepository", () => {
         status: 404,
       });
 
-      const result = await testCaseRepository.getTestCases(999);
+      const result = await testCaseRepository.getAllTestCasesForAssignmentId(999);
 
       expect(result.error).toBe("Not found");
     });
   });
 
   // ============================================================================
-  // createTestCase Tests
+  // createNewTestCaseForAssignment Tests
   // ============================================================================
 
-  describe("createTestCase", () => {
+  describe("createNewTestCaseForAssignment", () => {
     const createRequest = {
       name: "New Test",
       input: "input",
@@ -80,7 +79,7 @@ describe("testCaseRepository", () => {
         status: 201,
       });
 
-      const result = await testCaseRepository.createTestCase(1, createRequest);
+      const result = await testCaseRepository.createNewTestCaseForAssignment(1, createRequest);
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/assignments/1/test-cases",
@@ -95,17 +94,17 @@ describe("testCaseRepository", () => {
         status: 400,
       });
 
-      const result = await testCaseRepository.createTestCase(1, createRequest);
+      const result = await testCaseRepository.createNewTestCaseForAssignment(1, createRequest);
 
       expect(result.error).toBe("Validation failed");
     });
   });
 
   // ============================================================================
-  // updateTestCase Tests
+  // updateTestCaseDetailsById Tests
   // ============================================================================
 
-  describe("updateTestCase", () => {
+  describe("updateTestCaseDetailsById", () => {
     const updateRequest = { name: "Updated Name" };
 
     it("updates a test case successfully", async () => {
@@ -117,7 +116,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.updateTestCase(1, updateRequest);
+      const result = await testCaseRepository.updateTestCaseDetailsById(1, updateRequest);
 
       expect(apiClient.put).toHaveBeenCalledWith(
         "/test-cases/1",
@@ -132,7 +131,7 @@ describe("testCaseRepository", () => {
         status: 404,
       });
 
-      const result = await testCaseRepository.updateTestCase(
+      const result = await testCaseRepository.updateTestCaseDetailsById(
         999,
         updateRequest,
       );
@@ -142,17 +141,17 @@ describe("testCaseRepository", () => {
   });
 
   // ============================================================================
-  // deleteTestCase Tests
+  // deleteTestCaseById Tests
   // ============================================================================
 
-  describe("deleteTestCase", () => {
+  describe("deleteTestCaseById", () => {
     it("deletes a test case successfully", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true, message: "Deleted" },
         status: 200,
       });
 
-      const result = await testCaseRepository.deleteTestCase(1);
+      const result = await testCaseRepository.deleteTestCaseById(1);
 
       expect(apiClient.delete).toHaveBeenCalledWith("/test-cases/1");
       expect(result.data?.success).toBe(true);
@@ -164,17 +163,17 @@ describe("testCaseRepository", () => {
         status: 404,
       });
 
-      const result = await testCaseRepository.deleteTestCase(999);
+      const result = await testCaseRepository.deleteTestCaseById(999);
 
       expect(result.error).toBe("Not found");
     });
   });
 
   // ============================================================================
-  // reorderTestCases Tests
+  // updateTestCasesSortOrderForAssignment Tests
   // ============================================================================
 
-  describe("reorderTestCases", () => {
+  describe("updateTestCasesSortOrderForAssignment", () => {
     const order = [
       { id: 1, sortOrder: 2 },
       { id: 2, sortOrder: 1 },
@@ -186,7 +185,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.reorderTestCases(1, order);
+      const result = await testCaseRepository.updateTestCasesSortOrderForAssignment(1, order);
 
       expect(apiClient.put).toHaveBeenCalledWith(
         "/assignments/1/test-cases/reorder",
@@ -201,17 +200,17 @@ describe("testCaseRepository", () => {
         status: 404,
       });
 
-      const result = await testCaseRepository.reorderTestCases(999, order);
+      const result = await testCaseRepository.updateTestCasesSortOrderForAssignment(999, order);
 
       expect(result.error).toBe("Assignment not found");
     });
   });
 
   // ============================================================================
-  // runTestsPreview Tests
+  // executeTestsInPreviewModeWithoutSaving Tests
   // ============================================================================
 
-  describe("runTestsPreview", () => {
+  describe("executeTestsInPreviewModeWithoutSaving", () => {
     it("runs tests in preview mode", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: {
@@ -221,7 +220,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.runTestsPreview(
+      const result = await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
         "print('hello')",
         "python",
         1,
@@ -241,7 +240,7 @@ describe("testCaseRepository", () => {
         status: 500,
       });
 
-      const result = await testCaseRepository.runTestsPreview(
+      const result = await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
         "while True: pass",
         "python",
         1,
@@ -259,7 +258,7 @@ describe("testCaseRepository", () => {
         status: 200,
       });
 
-      const result = await testCaseRepository.runTestsPreview(
+      const result = await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
         "invalid code",
         "python",
         1,
@@ -269,116 +268,6 @@ describe("testCaseRepository", () => {
       expect(result.data?.message).toBe(
         "Compilation error: syntax error on line 1",
       );
-    });
-  });
-
-  // ============================================================================
-  // getTestResults Tests
-  // ============================================================================
-
-  describe("getTestResults", () => {
-    it("fetches test results for a submission", async () => {
-      vi.mocked(apiClient.get).mockResolvedValue({
-        data: {
-          success: true,
-          data: {
-            results: [],
-            passedCount: 3,
-            totalCount: 5,
-            score: 60,
-          },
-        },
-        status: 200,
-      });
-
-      const result = await testCaseRepository.getTestResults(1);
-
-      expect(apiClient.get).toHaveBeenCalledWith("/submissions/1/test-results");
-      expect(result.data?.data.passedCount).toBe(3);
-    });
-
-    it("returns error when submission not found", async () => {
-      vi.mocked(apiClient.get).mockResolvedValue({
-        error: "Submission not found",
-        status: 404,
-      });
-
-      const result = await testCaseRepository.getTestResults(999);
-
-      expect(result.error).toBe("Submission not found");
-    });
-
-    it("returns error on server failure", async () => {
-      vi.mocked(apiClient.get).mockResolvedValue({
-        error: "Internal server error",
-        status: 500,
-      });
-
-      const result = await testCaseRepository.getTestResults(1);
-
-      expect(result.error).toBe("Internal server error");
-    });
-  });
-
-  // ============================================================================
-  // runTestsForSubmission Tests
-  // ============================================================================
-
-  describe("runTestsForSubmission", () => {
-    it("runs tests for a submission", async () => {
-      vi.mocked(apiClient.post).mockResolvedValue({
-        data: {
-          success: true,
-          data: { results: [], passedCount: 5, totalCount: 5, score: 100 },
-        },
-        status: 200,
-      });
-
-      const result = await testCaseRepository.runTestsForSubmission(1);
-
-      expect(apiClient.post).toHaveBeenCalledWith(
-        "/submissions/1/run-tests",
-        {},
-      );
-      expect(result.data?.data.score).toBe(100);
-    });
-
-    it("returns error when submission not found", async () => {
-      vi.mocked(apiClient.post).mockResolvedValue({
-        error: "Submission not found",
-        status: 404,
-      });
-
-      const result = await testCaseRepository.runTestsForSubmission(999);
-
-      expect(result.error).toBe("Submission not found");
-    });
-
-    it("returns error on execution failure", async () => {
-      vi.mocked(apiClient.post).mockResolvedValue({
-        error: "Execution service unavailable",
-        status: 503,
-      });
-
-      const result = await testCaseRepository.runTestsForSubmission(1);
-
-      expect(result.error).toBe("Execution service unavailable");
-    });
-
-    it("returns error when tests fail due to runtime error", async () => {
-      vi.mocked(apiClient.post).mockResolvedValue({
-        data: {
-          success: false,
-          message: "Runtime error: segmentation fault",
-          data: { results: [], passedCount: 0, totalCount: 5, score: 0 },
-        },
-        status: 200,
-      });
-
-      const result = await testCaseRepository.runTestsForSubmission(1);
-
-      expect(result.data?.success).toBe(false);
-      expect(result.data?.message).toBe("Runtime error: segmentation fault");
     });
   });
 });

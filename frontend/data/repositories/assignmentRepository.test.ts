@@ -64,10 +64,10 @@ describe("assignmentRepository", () => {
   };
 
   // ============================================================================
-  // submitAssignment Tests
+  // submitAssignmentWithFile Tests
   // ============================================================================
 
-  describe("submitAssignment", () => {
+  describe("submitAssignmentWithFile", () => {
     const mockFile = new File(["print('hello')"], "solution.py", {
       type: "text/x-python",
     });
@@ -113,7 +113,7 @@ describe("assignmentRepository", () => {
         }),
       );
 
-      const result = await assignmentRepository.submitAssignment(mockRequest);
+      const result = await assignmentRepository.submitAssignmentWithFile(mockRequest);
 
       expect(mockFetch).toHaveBeenCalled();
       expect(result.data?.success).toBe(true);
@@ -127,7 +127,7 @@ describe("assignmentRepository", () => {
         }),
       );
 
-      const result = await assignmentRepository.submitAssignment(mockRequest);
+      const result = await assignmentRepository.submitAssignmentWithFile(mockRequest);
 
       expect(result.error).toContain("File type not allowed");
       expect(result.status).toBe(400);
@@ -140,7 +140,7 @@ describe("assignmentRepository", () => {
         }),
       );
 
-      const result = await assignmentRepository.submitAssignment(mockRequest);
+      const result = await assignmentRepository.submitAssignmentWithFile(mockRequest);
 
       expect(result.error).toContain("Submission deadline has passed");
     });
@@ -148,7 +148,7 @@ describe("assignmentRepository", () => {
     it("handles network errors gracefully", async () => {
       mockFetch.mockRejectedValue(new Error("Network failure"));
 
-      const result = await assignmentRepository.submitAssignment(mockRequest);
+      const result = await assignmentRepository.submitAssignmentWithFile(mockRequest);
 
       expect(result.error).toContain("Network error");
       expect(result.status).toBe(0);
@@ -156,10 +156,10 @@ describe("assignmentRepository", () => {
   });
 
   // ============================================================================
-  // getSubmissionHistory Tests
+  // getSubmissionHistoryForStudentAndAssignment Tests
   // ============================================================================
 
-  describe("getSubmissionHistory", () => {
+  describe("getSubmissionHistoryForStudentAndAssignment", () => {
     const mockHistoryResponse = {
       success: true,
       submissions: [mockSubmission],
@@ -172,7 +172,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getSubmissionHistory(1, 1);
+      const result = await assignmentRepository.getSubmissionHistoryForStudentAndAssignment(1, 1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/submissions/history/1/1");
       expect(result.data?.submissions).toHaveLength(1);
@@ -184,7 +184,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getSubmissionHistory(1, 1);
+      const result = await assignmentRepository.getSubmissionHistoryForStudentAndAssignment(1, 1);
 
       expect(result.data?.submissions).toHaveLength(0);
     });
@@ -195,17 +195,17 @@ describe("assignmentRepository", () => {
         status: 404,
       });
 
-      const result = await assignmentRepository.getSubmissionHistory(999, 1);
+      const result = await assignmentRepository.getSubmissionHistoryForStudentAndAssignment(999, 1);
 
       expect(result.error).toBe("Assignment not found");
     });
   });
 
   // ============================================================================
-  // getStudentSubmissions Tests
+  // getAllSubmissionsByStudentId Tests
   // ============================================================================
 
-  describe("getStudentSubmissions", () => {
+  describe("getAllSubmissionsByStudentId", () => {
     const mockListResponse = {
       success: true,
       submissions: [mockSubmissionWithAssignment],
@@ -217,7 +217,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getStudentSubmissions(1);
+      const result = await assignmentRepository.getAllSubmissionsByStudentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/submissions/student/1?latestOnly=true",
@@ -231,7 +231,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      await assignmentRepository.getStudentSubmissions(1, false);
+      await assignmentRepository.getAllSubmissionsByStudentId(1, false);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/submissions/student/1?latestOnly=false",
@@ -244,17 +244,17 @@ describe("assignmentRepository", () => {
         status: 404,
       });
 
-      const result = await assignmentRepository.getStudentSubmissions(999);
+      const result = await assignmentRepository.getAllSubmissionsByStudentId(999);
 
       expect(result.error).toBe("Student not found");
     });
   });
 
   // ============================================================================
-  // getAssignmentSubmissions Tests
+  // getAllSubmissionsForAssignmentId Tests
   // ============================================================================
 
-  describe("getAssignmentSubmissions", () => {
+  describe("getAllSubmissionsForAssignmentId", () => {
     const mockListResponse = {
       success: true,
       submissions: [mockSubmissionWithStudent],
@@ -266,7 +266,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getAssignmentSubmissions(1);
+      const result = await assignmentRepository.getAllSubmissionsForAssignmentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/submissions/assignment/1?latestOnly=true",
@@ -280,7 +280,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      await assignmentRepository.getAssignmentSubmissions(1, false);
+      await assignmentRepository.getAllSubmissionsForAssignmentId(1, false);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/submissions/assignment/1?latestOnly=false",
@@ -293,17 +293,17 @@ describe("assignmentRepository", () => {
         status: 404,
       });
 
-      const result = await assignmentRepository.getAssignmentSubmissions(999);
+      const result = await assignmentRepository.getAllSubmissionsForAssignmentId(999);
 
       expect(result.error).toBe("Assignment not found");
     });
   });
 
   // ============================================================================
-  // getAssignmentById Tests
+  // getAssignmentDetailsByIdForUser Tests
   // ============================================================================
 
-  describe("getAssignmentById", () => {
+  describe("getAssignmentDetailsByIdForUser", () => {
     const mockAssignmentResponse = {
       success: true,
       assignment: {
@@ -332,11 +332,11 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getAssignmentById(1, 1);
+      const result = await assignmentRepository.getAssignmentDetailsByIdForUser(1, 1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/assignments/1?userId=1");
       expect(result.data?.assignment).toBeDefined();
-      expect(result.data?.assignment!.deadline).toBeInstanceOf(Date);
+      expect(result.data?.assignment!.deadline).toBe("2024-12-31T23:59:59Z");
     });
 
     it("handles scheduledDate conversion", async () => {
@@ -351,9 +351,9 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getAssignmentById(1, 1);
+      const result = await assignmentRepository.getAssignmentDetailsByIdForUser(1, 1);
 
-      expect(result.data?.assignment!.scheduledDate).toBeInstanceOf(Date);
+      expect(result.data?.assignment!.scheduledDate).toBe("2024-01-10T00:00:00Z");
     });
 
     it("returns error when assignment not found", async () => {
@@ -362,17 +362,17 @@ describe("assignmentRepository", () => {
         status: 404,
       });
 
-      const result = await assignmentRepository.getAssignmentById(999, 1);
+      const result = await assignmentRepository.getAssignmentDetailsByIdForUser(999, 1);
 
       expect(result.error).toBe("Assignment not found");
     });
   });
 
   // ============================================================================
-  // getSubmissionContent Tests
+  // getSubmissionFileContentById Tests
   // ============================================================================
 
-  describe("getSubmissionContent", () => {
+  describe("getSubmissionFileContentById", () => {
     const mockContent = {
       success: true,
       content: 'print("Hello World")',
@@ -385,7 +385,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getSubmissionContent(1);
+      const result = await assignmentRepository.getSubmissionFileContentById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/submissions/1/content");
       expect(result.data?.content).toBe('print("Hello World")');
@@ -398,17 +398,17 @@ describe("assignmentRepository", () => {
         status: 404,
       });
 
-      const result = await assignmentRepository.getSubmissionContent(999);
+      const result = await assignmentRepository.getSubmissionFileContentById(999);
 
       expect(result.error).toBe("Submission not found");
     });
   });
 
   // ============================================================================
-  // getSubmissionDownloadUrl Tests
+  // getSubmissionFileDownloadUrlById Tests
   // ============================================================================
 
-  describe("getSubmissionDownloadUrl", () => {
+  describe("getSubmissionFileDownloadUrlById", () => {
     const mockDownloadResponse = {
       success: true,
       message: "Download URL generated",
@@ -421,7 +421,7 @@ describe("assignmentRepository", () => {
         status: 200,
       });
 
-      const result = await assignmentRepository.getSubmissionDownloadUrl(1);
+      const result = await assignmentRepository.getSubmissionFileDownloadUrlById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/submissions/1/download");
       expect(result.data?.downloadUrl).toBeDefined();
@@ -433,7 +433,7 @@ describe("assignmentRepository", () => {
         status: 404,
       });
 
-      const result = await assignmentRepository.getSubmissionDownloadUrl(999);
+      const result = await assignmentRepository.getSubmissionFileDownloadUrlById(999);
 
       expect(result.error).toBe("Submission not found");
     });
@@ -444,7 +444,7 @@ describe("assignmentRepository", () => {
         status: 501,
       });
 
-      const result = await assignmentRepository.getSubmissionDownloadUrl(1);
+      const result = await assignmentRepository.getSubmissionFileDownloadUrlById(1);
 
       expect(result.error).toBe("Download not available");
     });

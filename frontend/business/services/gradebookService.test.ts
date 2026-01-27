@@ -16,14 +16,14 @@ describe("gradebookService", () => {
         assignments: [],
         students: [],
       };
-      vi.mocked(gradebookRepository.getClassGradebook).mockResolvedValue(
+      vi.mocked(gradebookRepository.getCompleteGradebookForClassId).mockResolvedValue(
         mockGradebook as any,
       );
 
       const result = await gradebookService.getClassGradebook(1);
 
       expect(result).toEqual(mockGradebook);
-      expect(gradebookRepository.getClassGradebook).toHaveBeenCalledWith(1);
+      expect(gradebookRepository.getCompleteGradebookForClassId).toHaveBeenCalledWith(1);
     });
 
     it("should throw error for invalid classId", async () => {
@@ -43,28 +43,28 @@ describe("gradebookService", () => {
         standardDeviation: 5,
         passingRate: 90,
       };
-      vi.mocked(gradebookRepository.getClassStatistics).mockResolvedValue(
+      vi.mocked(gradebookRepository.getStatisticsForClassId).mockResolvedValue(
         mockStats as any,
       );
 
       const result = await gradebookService.getClassStatistics(1);
 
       expect(result).toEqual(mockStats);
-      expect(gradebookRepository.getClassStatistics).toHaveBeenCalledWith(1);
+      expect(gradebookRepository.getStatisticsForClassId).toHaveBeenCalledWith(1);
     });
   });
 
   describe("getStudentGrades", () => {
     it("should validate studentId and call repository", async () => {
       const mockGrades = [{ classId: 1, className: "Math", grades: [] }];
-      vi.mocked(gradebookRepository.getStudentGrades).mockResolvedValue(
+      vi.mocked(gradebookRepository.getAllGradesForStudentId).mockResolvedValue(
         mockGrades as any,
       );
 
       const result = await gradebookService.getStudentGrades(101);
 
       expect(result).toEqual(mockGrades);
-      expect(gradebookRepository.getStudentGrades).toHaveBeenCalledWith(101);
+      expect(gradebookRepository.getAllGradesForStudentId).toHaveBeenCalledWith(101);
     });
 
     it("should throw error for invalid studentId", async () => {
@@ -74,11 +74,11 @@ describe("gradebookService", () => {
 
   describe("overrideGrade", () => {
     it("should validate inputs and call repository", async () => {
-      vi.mocked(gradebookRepository.overrideGrade).mockResolvedValue(undefined);
+      vi.mocked(gradebookRepository.setGradeOverrideForSubmissionById).mockResolvedValue(undefined);
 
       await gradebookService.overrideGrade(1, 95, "Good work");
 
-      expect(gradebookRepository.overrideGrade).toHaveBeenCalledWith(
+      expect(gradebookRepository.setGradeOverrideForSubmissionById).toHaveBeenCalledWith(
         1,
         95,
         "Good work",
@@ -103,13 +103,13 @@ describe("gradebookService", () => {
 
   describe("removeGradeOverride", () => {
     it("should validate submissionId and call repository", async () => {
-      vi.mocked(gradebookRepository.removeGradeOverride).mockResolvedValue(
+      vi.mocked(gradebookRepository.removeGradeOverrideForSubmissionById).mockResolvedValue(
         undefined,
       );
 
       await gradebookService.removeGradeOverride(1);
 
-      expect(gradebookRepository.removeGradeOverride).toHaveBeenCalledWith(1);
+      expect(gradebookRepository.removeGradeOverrideForSubmissionById).toHaveBeenCalledWith(1);
     });
 
     it("should throw error for invalid submissionId", async () => {
@@ -128,13 +128,13 @@ describe("gradebookService", () => {
         rejectAfterHours: 72,
       };
       vi.mocked(
-        gradebookRepository.updateLatePenaltyConfig,
+        gradebookRepository.updateLatePenaltyConfigurationForAssignmentId,
       ).mockResolvedValue(undefined);
 
       await gradebookService.updateLatePenaltyConfig(1, true, config);
 
       expect(
-        gradebookRepository.updateLatePenaltyConfig,
+        gradebookRepository.updateLatePenaltyConfigurationForAssignmentId,
       ).toHaveBeenCalledWith(1, true, config);
     });
 

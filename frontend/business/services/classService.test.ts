@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 import * as classService from "@/business/services/classService";
 import * as classRepository from "@/data/repositories/classRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 import type { ISODateString } from "@/shared/types/class";
 
-// Mock the repository
+// Mock the repositories
 vi.mock("@/data/repositories/classRepository");
+vi.mock("@/data/repositories/assignmentRepository");
 
 // Helper to create ISO date string
 const toISO = (date: Date): ISODateString =>
@@ -76,11 +78,11 @@ describe("classService", () => {
     };
 
     it("creates a class with valid data", async () => {
-      vi.mocked(classRepository.createClass).mockResolvedValue(mockClass);
+      vi.mocked(classRepository.createNewClass).mockResolvedValue(mockClass);
 
       const result = await classService.createClass(validCreateRequest);
 
-      expect(classRepository.createClass).toHaveBeenCalledWith(
+      expect(classRepository.createNewClass).toHaveBeenCalledWith(
         validCreateRequest,
       );
       expect(result).toEqual(mockClass);
@@ -92,7 +94,7 @@ describe("classService", () => {
       await expect(classService.createClass(invalidRequest)).rejects.toThrow(
         "Invalid teacher ID",
       );
-      expect(classRepository.createClass).not.toHaveBeenCalled();
+      expect(classRepository.createNewClass).not.toHaveBeenCalled();
     });
 
     it("throws error for empty class name", async () => {
@@ -132,11 +134,11 @@ describe("classService", () => {
 
   describe("generateClassCode", () => {
     it("returns a generated class code", async () => {
-      vi.mocked(classRepository.generateClassCode).mockResolvedValue("ABC123");
+      vi.mocked(classRepository.generateUniqueClassCode).mockResolvedValue("ABC123");
 
       const result = await classService.generateClassCode();
 
-      expect(classRepository.generateClassCode).toHaveBeenCalled();
+      expect(classRepository.generateUniqueClassCode).toHaveBeenCalled();
       expect(result).toBe("ABC123");
     });
   });
@@ -147,20 +149,20 @@ describe("classService", () => {
 
   describe("getAllClasses", () => {
     it("fetches all classes for a teacher", async () => {
-      vi.mocked(classRepository.getAllClasses).mockResolvedValue([mockClass]);
+      vi.mocked(classRepository.getAllClassesForTeacherId).mockResolvedValue([mockClass]);
 
       const result = await classService.getAllClasses(1);
 
-      expect(classRepository.getAllClasses).toHaveBeenCalledWith(1, undefined);
+      expect(classRepository.getAllClassesForTeacherId).toHaveBeenCalledWith(1, undefined);
       expect(result).toHaveLength(1);
     });
 
     it("passes activeOnly filter to repository", async () => {
-      vi.mocked(classRepository.getAllClasses).mockResolvedValue([]);
+      vi.mocked(classRepository.getAllClassesForTeacherId).mockResolvedValue([]);
 
       await classService.getAllClasses(1, true);
 
-      expect(classRepository.getAllClasses).toHaveBeenCalledWith(1, true);
+      expect(classRepository.getAllClassesForTeacherId).toHaveBeenCalledWith(1, true);
     });
 
     it("throws error for invalid teacher ID", async () => {
@@ -176,20 +178,20 @@ describe("classService", () => {
 
   describe("getClassById", () => {
     it("fetches a class by ID", async () => {
-      vi.mocked(classRepository.getClassById).mockResolvedValue(mockClass);
+      vi.mocked(classRepository.getClassDetailsById).mockResolvedValue(mockClass);
 
       const result = await classService.getClassById(1);
 
-      expect(classRepository.getClassById).toHaveBeenCalledWith(1, undefined);
+      expect(classRepository.getClassDetailsById).toHaveBeenCalledWith(1, undefined);
       expect(result).toEqual(mockClass);
     });
 
     it("passes teacherId when provided", async () => {
-      vi.mocked(classRepository.getClassById).mockResolvedValue(mockClass);
+      vi.mocked(classRepository.getClassDetailsById).mockResolvedValue(mockClass);
 
       await classService.getClassById(1, 5);
 
-      expect(classRepository.getClassById).toHaveBeenCalledWith(1, 5);
+      expect(classRepository.getClassDetailsById).toHaveBeenCalledWith(1, 5);
     });
 
     it("throws error for invalid class ID", async () => {
@@ -205,13 +207,13 @@ describe("classService", () => {
 
   describe("getClassAssignments", () => {
     it("fetches assignments for a class", async () => {
-      vi.mocked(classRepository.getClassAssignments).mockResolvedValue([
+      vi.mocked(classRepository.getAllAssignmentsForClassId).mockResolvedValue([
         mockAssignment,
       ]);
 
       const result = await classService.getClassAssignments(1);
 
-      expect(classRepository.getClassAssignments).toHaveBeenCalledWith(1);
+      expect(classRepository.getAllAssignmentsForClassId).toHaveBeenCalledWith(1);
       expect(result).toHaveLength(1);
     });
 
@@ -228,7 +230,7 @@ describe("classService", () => {
 
   describe("getClassStudents", () => {
     it("fetches students with fullName added", async () => {
-      vi.mocked(classRepository.getClassStudents).mockResolvedValue([
+      vi.mocked(classRepository.getAllEnrolledStudentsForClassId).mockResolvedValue([
         mockStudent,
       ]);
 
@@ -239,7 +241,7 @@ describe("classService", () => {
     });
 
     it("handles empty student list", async () => {
-      vi.mocked(classRepository.getClassStudents).mockResolvedValue([]);
+      vi.mocked(classRepository.getAllEnrolledStudentsForClassId).mockResolvedValue([]);
 
       const result = await classService.getClassStudents(1);
 
@@ -259,11 +261,11 @@ describe("classService", () => {
 
   describe("getClassDetailData", () => {
     it("fetches all class details in parallel", async () => {
-      vi.mocked(classRepository.getClassById).mockResolvedValue(mockClass);
-      vi.mocked(classRepository.getClassAssignments).mockResolvedValue([
+      vi.mocked(classRepository.getClassDetailsById).mockResolvedValue(mockClass);
+      vi.mocked(classRepository.getAllAssignmentsForClassId).mockResolvedValue([
         mockAssignment,
       ]);
-      vi.mocked(classRepository.getClassStudents).mockResolvedValue([
+      vi.mocked(classRepository.getAllEnrolledStudentsForClassId).mockResolvedValue([
         mockStudent,
       ]);
 
@@ -288,11 +290,11 @@ describe("classService", () => {
 
   describe("deleteClass", () => {
     it("deletes a class successfully", async () => {
-      vi.mocked(classRepository.deleteClass).mockResolvedValue(undefined);
+      vi.mocked(classRepository.deleteClassByIdForTeacher).mockResolvedValue(undefined);
 
       await expect(classService.deleteClass(1, 5)).resolves.toBeUndefined();
 
-      expect(classRepository.deleteClass).toHaveBeenCalledWith(1, 5);
+      expect(classRepository.deleteClassByIdForTeacher).toHaveBeenCalledWith(1, 5);
     });
 
     it("throws error for invalid class ID", async () => {
@@ -320,7 +322,7 @@ describe("classService", () => {
 
     it("updates a class successfully", async () => {
       const updatedClass = { ...mockClass, className: "Updated Class" };
-      vi.mocked(classRepository.updateClass).mockResolvedValue(updatedClass);
+      vi.mocked(classRepository.updateClassDetailsById).mockResolvedValue(updatedClass);
 
       const result = await classService.updateClass(1, updateRequest);
 
@@ -328,7 +330,7 @@ describe("classService", () => {
     });
 
     it("trims className and description", async () => {
-      vi.mocked(classRepository.updateClass).mockResolvedValue(mockClass);
+      vi.mocked(classRepository.updateClassDetailsById).mockResolvedValue(mockClass);
 
       await classService.updateClass(1, {
         teacherId: 1,
@@ -336,7 +338,7 @@ describe("classService", () => {
         description: "  Trimmed Description  ",
       });
 
-      expect(classRepository.updateClass).toHaveBeenCalledWith(1, {
+      expect(classRepository.updateClassDetailsById).toHaveBeenCalledWith(1, {
         teacherId: 1,
         className: "Trimmed Name",
         description: "Trimmed Description",
@@ -356,13 +358,13 @@ describe("classService", () => {
 
   describe("deleteAssignment", () => {
     it("deletes an assignment successfully", async () => {
-      vi.mocked(classRepository.deleteAssignment).mockResolvedValue(undefined);
+      vi.mocked(assignmentRepository.deleteAssignmentByIdForTeacher).mockResolvedValue(undefined);
 
       await expect(
         classService.deleteAssignment(1, 5),
       ).resolves.toBeUndefined();
 
-      expect(classRepository.deleteAssignment).toHaveBeenCalledWith(1, 5);
+      expect(assignmentRepository.deleteAssignmentByIdForTeacher).toHaveBeenCalledWith(1, 5);
     });
 
     it("throws error for invalid assignment ID", async () => {
@@ -384,13 +386,13 @@ describe("classService", () => {
 
   describe("removeStudent", () => {
     it("removes a student successfully", async () => {
-      vi.mocked(classRepository.removeStudent).mockResolvedValue(undefined);
+      vi.mocked(classRepository.unenrollStudentFromClassByTeacher).mockResolvedValue(undefined);
 
       await expect(
         classService.removeStudent(1, 10, 5),
       ).resolves.toBeUndefined();
 
-      expect(classRepository.removeStudent).toHaveBeenCalledWith(1, 10, 5);
+      expect(classRepository.unenrollStudentFromClassByTeacher).toHaveBeenCalledWith(1, 10, 5);
     });
 
     it("throws error for invalid class ID", async () => {

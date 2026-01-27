@@ -34,7 +34,7 @@ describe("assignmentService", () => {
 
     it("submits assignment successfully when validation passes", async () => {
       vi.mocked(assignmentValidation.validateFile).mockReturnValue(null);
-      vi.mocked(assignmentRepository.submitAssignment).mockResolvedValue({
+      vi.mocked(assignmentRepository.submitAssignmentWithFile).mockResolvedValue({
         data: { success: true, submission: mockSubmission },
         status: 200,
       });
@@ -45,7 +45,7 @@ describe("assignmentService", () => {
         mockRequest.file,
         mockRequest.programmingLanguage,
       );
-      expect(assignmentRepository.submitAssignment).toHaveBeenCalledWith(
+      expect(assignmentRepository.submitAssignmentWithFile).toHaveBeenCalledWith(
         mockRequest,
       );
       expect(result).toEqual(mockSubmission);
@@ -60,12 +60,12 @@ describe("assignmentService", () => {
         assignmentService.submitAssignment(mockRequest),
       ).rejects.toThrow("Invalid file type");
 
-      expect(assignmentRepository.submitAssignment).not.toHaveBeenCalled();
+      expect(assignmentRepository.submitAssignmentWithFile).not.toHaveBeenCalled();
     });
 
     it("throws error when repository call fails", async () => {
       vi.mocked(assignmentValidation.validateFile).mockReturnValue(null);
-      vi.mocked(assignmentRepository.submitAssignment).mockResolvedValue({
+      vi.mocked(assignmentRepository.submitAssignmentWithFile).mockResolvedValue({
         error: "Submission failed",
         status: 400,
       });
@@ -96,14 +96,14 @@ describe("assignmentService", () => {
     };
 
     it("fetches submission history successfully", async () => {
-      vi.mocked(assignmentRepository.getSubmissionHistory).mockResolvedValue({
+      vi.mocked(assignmentRepository.getSubmissionHistoryForStudentAndAssignment).mockResolvedValue({
         data: mockHistory,
         status: 200,
       });
 
       const result = await assignmentService.getSubmissionHistory(1, 1);
 
-      expect(assignmentRepository.getSubmissionHistory).toHaveBeenCalledWith(
+      expect(assignmentRepository.getSubmissionHistoryForStudentAndAssignment).toHaveBeenCalledWith(
         1,
         1,
       );
@@ -111,7 +111,7 @@ describe("assignmentService", () => {
     });
 
     it("throws error when repository returns error", async () => {
-      vi.mocked(assignmentRepository.getSubmissionHistory).mockResolvedValue({
+      vi.mocked(assignmentRepository.getSubmissionHistoryForStudentAndAssignment).mockResolvedValue({
         error: "Fetch failed",
         status: 400,
       });
@@ -122,7 +122,7 @@ describe("assignmentService", () => {
     });
 
     it("throws error when data is missing", async () => {
-      vi.mocked(assignmentRepository.getSubmissionHistory).mockResolvedValue({
+      vi.mocked(assignmentRepository.getSubmissionHistoryForStudentAndAssignment).mockResolvedValue({
         data: undefined,
         status: 200,
       });
@@ -141,14 +141,14 @@ describe("assignmentService", () => {
     const mockSubmissions = [createMockSubmission()];
 
     it("fetches student submissions successfully", async () => {
-      vi.mocked(assignmentRepository.getStudentSubmissions).mockResolvedValue({
+      vi.mocked(assignmentRepository.getAllSubmissionsByStudentId).mockResolvedValue({
         data: { success: true, submissions: mockSubmissions },
         status: 200,
       });
 
       const result = await assignmentService.getStudentSubmissions(1, true);
 
-      expect(assignmentRepository.getStudentSubmissions).toHaveBeenCalledWith(
+      expect(assignmentRepository.getAllSubmissionsByStudentId).toHaveBeenCalledWith(
         1,
         true,
       );
@@ -156,7 +156,7 @@ describe("assignmentService", () => {
     });
 
     it("throws error when repository fails", async () => {
-      vi.mocked(assignmentRepository.getStudentSubmissions).mockResolvedValue({
+      vi.mocked(assignmentRepository.getAllSubmissionsByStudentId).mockResolvedValue({
         error: "API Error",
         status: 400,
       });
@@ -176,7 +176,7 @@ describe("assignmentService", () => {
 
     it("fetches assignment submissions successfully", async () => {
       vi.mocked(
-        assignmentRepository.getAssignmentSubmissions,
+        assignmentRepository.getAllSubmissionsForAssignmentId,
       ).mockResolvedValue({
         data: { success: true, submissions: mockSubmissions },
         status: 200,
@@ -185,14 +185,14 @@ describe("assignmentService", () => {
       const result = await assignmentService.getAssignmentSubmissions(100);
 
       expect(
-        assignmentRepository.getAssignmentSubmissions,
+        assignmentRepository.getAllSubmissionsForAssignmentId,
       ).toHaveBeenCalledWith(100, true);
       expect(result).toEqual(mockSubmissions);
     });
 
     it("throws error when repository fails", async () => {
       vi.mocked(
-        assignmentRepository.getAssignmentSubmissions,
+        assignmentRepository.getAllSubmissionsForAssignmentId,
       ).mockResolvedValue({
         error: "Not found",
         status: 404,
@@ -221,19 +221,19 @@ describe("assignmentService", () => {
     } as AssignmentDetail;
 
     it("fetches assignment details successfully", async () => {
-      vi.mocked(assignmentRepository.getAssignmentById).mockResolvedValue({
+      vi.mocked(assignmentRepository.getAssignmentDetailsByIdForUser).mockResolvedValue({
         data: { success: true, assignment: mockDetail },
         status: 200,
       });
 
       const result = await assignmentService.getAssignmentById(1, 1);
 
-      expect(assignmentRepository.getAssignmentById).toHaveBeenCalledWith(1, 1);
+      expect(assignmentRepository.getAssignmentDetailsByIdForUser).toHaveBeenCalledWith(1, 1);
       expect(result).toEqual(mockDetail);
     });
 
     it("throws error when assignment not found", async () => {
-      vi.mocked(assignmentRepository.getAssignmentById).mockResolvedValue({
+      vi.mocked(assignmentRepository.getAssignmentDetailsByIdForUser).mockResolvedValue({
         error: "Assignment not found",
         status: 404,
       });
@@ -244,7 +244,7 @@ describe("assignmentService", () => {
     });
 
     it("throws error when data is incomplete", async () => {
-      vi.mocked(assignmentRepository.getAssignmentById).mockResolvedValue({
+      vi.mocked(assignmentRepository.getAssignmentDetailsByIdForUser).mockResolvedValue({
         data: { success: true, assignment: undefined },
         status: 200,
       });
@@ -263,21 +263,21 @@ describe("assignmentService", () => {
     const mockContent = { success: true, content: "print('hello')", language: "python" };
 
     it("fetches submission content successfully", async () => {
-      vi.mocked(assignmentRepository.getSubmissionContent).mockResolvedValue({
+      vi.mocked(assignmentRepository.getSubmissionFileContentById).mockResolvedValue({
         data: mockContent,
         status: 200,
       });
 
       const result = await assignmentService.getSubmissionContent(123);
 
-      expect(assignmentRepository.getSubmissionContent).toHaveBeenCalledWith(
+      expect(assignmentRepository.getSubmissionFileContentById).toHaveBeenCalledWith(
         123,
       );
       expect(result).toEqual(mockContent);
     });
 
     it("throws error when fetch fails", async () => {
-      vi.mocked(assignmentRepository.getSubmissionContent).mockResolvedValue({
+      vi.mocked(assignmentRepository.getSubmissionFileContentById).mockResolvedValue({
         error: "Content unavailable",
         status: 404,
       });
@@ -295,7 +295,7 @@ describe("assignmentService", () => {
   describe("getSubmissionDownloadUrl", () => {
     it("fetches download URL successfully", async () => {
       vi.mocked(
-        assignmentRepository.getSubmissionDownloadUrl,
+        assignmentRepository.getSubmissionFileDownloadUrlById,
       ).mockResolvedValue({
         data: {
           success: true,
@@ -308,14 +308,14 @@ describe("assignmentService", () => {
       const result = await assignmentService.getSubmissionDownloadUrl(123);
 
       expect(
-        assignmentRepository.getSubmissionDownloadUrl,
+        assignmentRepository.getSubmissionFileDownloadUrlById,
       ).toHaveBeenCalledWith(123);
       expect(result).toBe("https://example.com/file.py");
     });
 
     it("throws error when URL generation fails", async () => {
       vi.mocked(
-        assignmentRepository.getSubmissionDownloadUrl,
+        assignmentRepository.getSubmissionFileDownloadUrlById,
       ).mockResolvedValue({
         error: "Generation failed",
         status: 400,

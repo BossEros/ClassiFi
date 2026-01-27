@@ -17,10 +17,10 @@ describe("plagiarismRepository", () => {
   });
 
   // ============================================================================
-  // analyzeAssignmentSubmissions Tests
+  // analyzePlagiarismForAllSubmissionsInAssignment Tests
   // ============================================================================
 
-  describe("analyzeAssignmentSubmissions", () => {
+  describe("analyzePlagiarismForAllSubmissionsInAssignment", () => {
     const mockAnalyzeResponse = {
       reportId: "report-123",
       summary: {
@@ -61,7 +61,7 @@ describe("plagiarismRepository", () => {
         status: 200,
       });
 
-      const result = await plagiarismRepository.analyzeAssignmentSubmissions(1);
+      const result = await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(1);
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/plagiarism/analyze/assignment/1",
@@ -76,7 +76,7 @@ describe("plagiarismRepository", () => {
         status: 500,
       });
 
-      const result = await plagiarismRepository.analyzeAssignmentSubmissions(1);
+      const result = await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(1);
 
       expect(result.error).toBe("Analysis failed");
     });
@@ -87,17 +87,17 @@ describe("plagiarismRepository", () => {
         status: 400,
       });
 
-      const result = await plagiarismRepository.analyzeAssignmentSubmissions(1);
+      const result = await plagiarismRepository.analyzePlagiarismForAllSubmissionsInAssignment(1);
 
       expect(result.error).toBe("At least 2 submissions required for analysis");
     });
   });
 
   // ============================================================================
-  // getResultDetails Tests
+  // getPlagiarismResultDetailsWithFragmentsById Tests
   // ============================================================================
 
-  describe("getResultDetails", () => {
+  describe("getPlagiarismResultDetailsWithFragmentsById", () => {
     const mockResultDetails = {
       result: {
         id: 1,
@@ -145,7 +145,7 @@ describe("plagiarismRepository", () => {
         status: 200,
       });
 
-      const result = await plagiarismRepository.getResultDetails(1);
+      const result = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/plagiarism/results/1/details",
@@ -159,7 +159,7 @@ describe("plagiarismRepository", () => {
         status: 404,
       });
 
-      const result = await plagiarismRepository.getResultDetails(999);
+      const result = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(999);
 
       expect(result.error).toBe("Result not found");
     });
@@ -170,7 +170,7 @@ describe("plagiarismRepository", () => {
         status: 500,
       });
 
-      const result = await plagiarismRepository.getResultDetails(1);
+      const result = await plagiarismRepository.getPlagiarismResultDetailsWithFragmentsById(1);
 
       expect(result.error).toBe("Internal server error");
     });

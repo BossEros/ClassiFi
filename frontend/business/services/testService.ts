@@ -1,4 +1,5 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository";
+import * as assignmentRepository from "@/data/repositories/assignmentRepository";
 import { validateId } from "@/shared/utils/validators";
 import type { ProgrammingLanguage } from "@/business/models/assignment/types";
 import type {
@@ -27,7 +28,7 @@ export async function runTestsPreview(
 ): Promise<TestPreviewResult> {
   validateId(assignmentId, "assignment");
 
-  const executionResponse = await testCaseRepository.runTestsPreview(
+  const executionResponse = await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
     sourceCode,
     language,
     assignmentId,
@@ -66,7 +67,7 @@ export async function getTestResultsForSubmission(
   submissionId: number,
 ): Promise<TestPreviewResult> {
   validateId(submissionId, "submission");
-  const resultsResponse = await testCaseRepository.getTestResults(submissionId);
+  const resultsResponse = await assignmentRepository.getTestResultsForSubmissionById(submissionId);
 
   if (!resultsResponse.data || !resultsResponse.data.success) {
     throw new Error(
