@@ -72,6 +72,36 @@ describe("Toast", () => {
       expect(onDismiss).toHaveBeenCalledWith("1");
     });
 
+    it("pauses auto-dismiss on hover", async () => {
+      const onDismiss = vi.fn();
+      render(<Toast id="1" message="Test" onDismiss={onDismiss} />);
+
+      // Advance halfway
+      await act(async () => {
+        vi.advanceTimersByTime(2000);
+      });
+
+      // Hover
+      fireEvent.mouseEnter(screen.getByRole("status"));
+
+      // Advance past original end time
+      await act(async () => {
+        vi.advanceTimersByTime(3000);
+      });
+
+      expect(onDismiss).not.toHaveBeenCalled();
+
+      // Unhover
+      fireEvent.mouseLeave(screen.getByRole("status"));
+
+      // Advance full duration again (since logic resets timer)
+      await act(async () => {
+        vi.advanceTimersByTime(4300);
+      });
+
+      expect(onDismiss).toHaveBeenCalledWith("1");
+    });
+
     it("calls onDismiss after custom duration", async () => {
       const onDismiss = vi.fn();
       render(
