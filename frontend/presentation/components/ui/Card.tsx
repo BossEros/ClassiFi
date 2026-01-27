@@ -17,8 +17,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
             "hover:bg-white/12 hover:border-white/20 hover:shadow-lg hover:shadow-teal-500/10",
           variant === "interactive" &&
             "hover:bg-white/12 hover:border-white/20 hover:shadow-lg hover:shadow-teal-500/10 cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
-          variant === "elevated" &&
-            "bg-white/12 border-white/20 shadow-lg",
+          variant === "elevated" && "bg-white/12 border-white/20 shadow-lg",
           className,
         )}
         {...props}

@@ -3,8 +3,8 @@ import type {
   SubmissionWithAssignment,
   SubmissionWithStudent,
 } from "@/shared/types/submission"
-import type { 
-  SubmissionDTO, 
+import type {
+  SubmissionDTO,
   AssignmentDetailDTO,
   AssignmentDetail,
   ProgrammingLanguage,
@@ -79,15 +79,19 @@ function isValidProgrammingLanguage(lang: string): lang is ProgrammingLanguage {
 /**
  * Maps assignment detail DTO to domain model with proper type validation and defaults.
  */
-export function mapAssignmentDetail(dto: AssignmentDetailDTO): AssignmentDetail {
+export function mapAssignmentDetail(
+  dto: AssignmentDetailDTO,
+): AssignmentDetail {
   // Validate programming language with runtime check
-  const programmingLanguage = isValidProgrammingLanguage(dto.programmingLanguage)
+  const programmingLanguage = isValidProgrammingLanguage(
+    dto.programmingLanguage,
+  )
     ? dto.programmingLanguage
     : "python" // Safe fallback to default language
 
   if (!isValidProgrammingLanguage(dto.programmingLanguage)) {
     console.warn(
-      `[mapAssignmentDetail] Invalid programming language "${dto.programmingLanguage}" for assignment ID ${dto.id}. Defaulting to "python".`
+      `[mapAssignmentDetail] Invalid programming language "${dto.programmingLanguage}" for assignment ID ${dto.id}. Defaulting to "python".`,
     )
   }
 

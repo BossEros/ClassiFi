@@ -129,14 +129,14 @@ export async function getAssignmentDetailsByIdForUser(
   if (apiResponse.data?.assignment) {
     // Map DTO to domain model with proper type validation
     const mappedAssignment = mapAssignmentDetail(apiResponse.data.assignment)
-    
+
     return {
       ...apiResponse,
       data: {
         success: apiResponse.data.success,
         message: apiResponse.data.message,
         assignment: mappedAssignment,
-      }
+      },
     }
   }
 

@@ -92,7 +92,7 @@ class ApiClient {
           // For blob errors, try to read as text for error message
           const errorText = await response.text()
           let errorMessage = "An error occurred"
-          
+
           try {
             const errorData = JSON.parse(errorText)
             if (errorData.error?.message) {

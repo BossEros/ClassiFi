@@ -86,7 +86,7 @@ export function AdminEditUserModal({
       />
 
       {/* Modal Content */}
-        <div className="relative w-full max-w-md min-w-[450px] transform overflow-hidden rounded-2xl bg-slate-900/95 p-6 text-left shadow-2xl transition-all border border-white/10 backdrop-blur-xl">
+      <div className="relative w-full max-w-md min-w-[450px] transform overflow-hidden rounded-2xl bg-slate-900/95 p-6 text-left shadow-2xl transition-all border border-white/10 backdrop-blur-xl">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-white tracking-tight">
