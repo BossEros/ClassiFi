@@ -1,0 +1,26 @@
+node_modules
+dist
+build
+coverage
+.git
+*.min.js
+*.min.css
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Backend specific
+backend-ts/dist
+backend-ts/node_modules
+backend-ts/coverage
+
+# Frontend specific
+frontend/dist
+frontend/node_modules
+frontend/coverage
+frontend/playwright-report
+frontend/test-results
+frontend/data/api/database.types.ts.tmp
+
+# Judge0
+judge0
