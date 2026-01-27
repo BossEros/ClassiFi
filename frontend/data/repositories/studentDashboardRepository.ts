@@ -5,11 +5,9 @@ import type {
   StudentDashboardBackendResponse,
   JoinClassResponse,
   LeaveClassResponse,
-} from "@/data/api/types";
-import type {
   ClassListResponse,
   AssignmentListResponse,
-} from "@/shared/types/class";
+} from "@/data/api/types";
 
 // Export response types for consumers
 export type {
@@ -22,99 +20,79 @@ export type {
   AssignmentResponse,
 };
 
-/**
- * Fetches complete dashboard data for a student
- * @returns Raw backend response data
- */
-export async function getDashboardData(
+export async function getCompleteDashboardDataForStudentId(
   studentId: number,
-  enrolledClassesLimit: number = 12,
-  pendingAssignmentsLimit: number = 10,
+  maximumEnrolledClassesCount: number = 12,
+  maximumPendingAssignmentsCount: number = 10,
 ): Promise<StudentDashboardBackendResponse> {
-  const response = await apiClient.get<StudentDashboardBackendResponse>(
-    `/student/dashboard/${studentId}?enrolledClassesLimit=${enrolledClassesLimit}&pendingAssignmentsLimit=${pendingAssignmentsLimit}`,
+  const apiResponse = await apiClient.get<StudentDashboardBackendResponse>(
+    `/student/dashboard/${studentId}?enrolledClassesLimit=${maximumEnrolledClassesCount}&pendingAssignmentsLimit=${maximumPendingAssignmentsCount}`,
   );
 
-  if (response.error || !response.data) {
-    throw new Error(response.error || "Failed to fetch dashboard data");
+  if (apiResponse.error || !apiResponse.data) {
+    throw new Error(apiResponse.error || "Failed to fetch dashboard data");
   }
 
-  return response.data;
+  return apiResponse.data;
 }
 
-/**
- * Fetches enrolled classes for a student
- * @returns Raw backend response data
- */
-export async function getEnrolledClasses(
+export async function getAllEnrolledClassesForStudentId(
   studentId: number,
-  limit?: number,
+  maximumClassesCount?: number,
 ): Promise<ClassListResponse> {
-  let url = `/student/dashboard/${studentId}/classes`;
-  if (limit) {
-    url += `?limit=${limit}`;
+  let apiUrl = `/student/dashboard/${studentId}/classes`;
+  if (maximumClassesCount) {
+    apiUrl += `?limit=${maximumClassesCount}`;
   }
 
-  const response = await apiClient.get<ClassListResponse>(url);
+  const apiResponse = await apiClient.get<ClassListResponse>(apiUrl);
 
-  if (response.error || !response.data) {
-    throw new Error(response.error || "Failed to fetch enrolled classes");
+  if (apiResponse.error || !apiResponse.data) {
+    throw new Error(apiResponse.error || "Failed to fetch enrolled classes");
   }
 
-  return response.data;
+  return apiResponse.data;
 }
 
-/**
- * Fetches pending assignments for a student
- * @returns Raw backend response data
- */
-export async function getPendingAssignments(
+export async function getAllPendingAssignmentsForStudentId(
   studentId: number,
-  limit: number = 10,
+  maximumAssignmentsCount: number = 10,
 ): Promise<AssignmentListResponse> {
-  const response = await apiClient.get<AssignmentListResponse>(
-    `/student/dashboard/${studentId}/assignments?limit=${limit}`,
+  const apiResponse = await apiClient.get<AssignmentListResponse>(
+    `/student/dashboard/${studentId}/assignments?limit=${maximumAssignmentsCount}`,
   );
 
-  if (response.error || !response.data) {
-    throw new Error(response.error || "Failed to fetch pending assignments");
+  if (apiResponse.error || !apiResponse.data) {
+    throw new Error(apiResponse.error || "Failed to fetch pending assignments");
   }
 
-  return response.data;
+  return apiResponse.data;
 }
 
-/**
- * Join a class using a class code
- * @returns Raw backend response data
- */
-export async function joinClass(
+export async function enrollStudentInClassWithCode(
   studentId: number,
-  classCode: string,
+  classEnrollmentCode: string,
 ): Promise<JoinClassResponse> {
-  const response = await apiClient.post<JoinClassResponse>(
+  const apiResponse = await apiClient.post<JoinClassResponse>(
     "/student/dashboard/join",
     {
       studentId,
-      classCode,
+      classCode: classEnrollmentCode,
     },
   );
 
-  if (response.error || !response.data) {
-    throw new Error(response.error || "Failed to join class");
+  if (apiResponse.error || !apiResponse.data) {
+    throw new Error(apiResponse.error || "Failed to join class");
   }
 
-  return response.data;
+  return apiResponse.data;
 }
 
-/**
- * Leave a class
- * @returns Raw backend response data
- */
-export async function leaveClass(
+export async function unenrollStudentFromClassById(
   studentId: number,
   classId: number,
 ): Promise<LeaveClassResponse> {
-  const response = await apiClient.post<LeaveClassResponse>(
+  const apiResponse = await apiClient.post<LeaveClassResponse>(
     "/student/dashboard/leave",
     {
       studentId,
@@ -122,9 +100,9 @@ export async function leaveClass(
     },
   );
 
-  if (response.error || !response.data) {
-    throw new Error(response.error || "Failed to leave class");
+  if (apiResponse.error || !apiResponse.data) {
+    throw new Error(apiResponse.error || "Failed to leave class");
   }
 
-  return response.data;
+  return apiResponse.data;
 }

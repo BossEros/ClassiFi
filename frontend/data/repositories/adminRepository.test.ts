@@ -51,7 +51,7 @@ describe("adminRepository", () => {
   // User Management Tests
   // ============================================================================
 
-  describe("getAllUsers", () => {
+  describe("getAllUsersWithPaginationAndFilters", () => {
     const mockPaginatedResponse = {
       data: [mockUser],
       totalCount: 1,
@@ -66,7 +66,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getAllUsers({});
+      const result = await adminRepository.getAllUsersWithPaginationAndFilters({});
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/users?");
       expect(result).toEqual(mockPaginatedResponse);
@@ -78,12 +78,12 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      await adminRepository.getAllUsers({
-        page: 2,
-        limit: 20,
-        search: "john",
-        role: "student",
-        status: "active",
+      await adminRepository.getAllUsersWithPaginationAndFilters({
+        pageNumber: 2,
+        itemsPerPage: 20,
+        searchQuery: "john",
+        userRole: "student",
+        accountStatus: "active",
       });
 
       expect(apiClient.get).toHaveBeenCalledWith(
@@ -97,20 +97,20 @@ describe("adminRepository", () => {
         status: 401,
       });
 
-      await expect(adminRepository.getAllUsers({})).rejects.toThrow(
+      await expect(adminRepository.getAllUsersWithPaginationAndFilters({})).rejects.toThrow(
         "Unauthorized",
       );
     });
   });
 
-  describe("getUserById", () => {
+  describe("getAdminUserDetailsById", () => {
     it("fetches a user by ID", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: { success: true, user: mockUser },
         status: 200,
       });
 
-      const result = await adminRepository.getUserById(1);
+      const result = await adminRepository.getAdminUserDetailsById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/users/1");
       expect(result.user).toEqual(mockUser);
@@ -122,13 +122,13 @@ describe("adminRepository", () => {
         status: 404,
       });
 
-      await expect(adminRepository.getUserById(999)).rejects.toThrow(
+      await expect(adminRepository.getAdminUserDetailsById(999)).rejects.toThrow(
         "User not found",
       );
     });
   });
 
-  describe("createUser", () => {
+  describe("createNewUserAccount", () => {
     const createData = {
       email: "newuser@example.com",
       firstName: "New",
@@ -143,7 +143,7 @@ describe("adminRepository", () => {
         status: 201,
       });
 
-      const result = await adminRepository.createUser(createData);
+      const result = await adminRepository.createNewUserAccount(createData);
 
       expect(apiClient.post).toHaveBeenCalledWith("/admin/users", createData);
       expect(result.success).toBe(true);
@@ -155,20 +155,20 @@ describe("adminRepository", () => {
         status: 409,
       });
 
-      await expect(adminRepository.createUser(createData)).rejects.toThrow(
+      await expect(adminRepository.createNewUserAccount(createData)).rejects.toThrow(
         "Email already exists",
       );
     });
   });
 
-  describe("updateUserRole", () => {
+  describe("updateUserRoleById", () => {
     it("updates user role", async () => {
       vi.mocked(apiClient.patch).mockResolvedValue({
         data: { success: true, user: { ...mockUser, role: "teacher" } },
         status: 200,
       });
 
-      const result = await adminRepository.updateUserRole(1, "teacher");
+      const result = await adminRepository.updateUserRoleById(1, "teacher");
 
       expect(apiClient.patch).toHaveBeenCalledWith("/admin/users/1/role", {
         role: "teacher",
@@ -183,12 +183,12 @@ describe("adminRepository", () => {
       });
 
       await expect(
-        adminRepository.updateUserRole(1, "invalid"),
+        adminRepository.updateUserRoleById(1, "invalid"),
       ).rejects.toThrow("Invalid role");
     });
   });
 
-  describe("updateUserDetails", () => {
+  describe("updateUserPersonalDetailsById", () => {
     it("updates user details", async () => {
       vi.mocked(apiClient.patch).mockResolvedValue({
         data: {
@@ -198,7 +198,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.updateUserDetails(1, {
+      const result = await adminRepository.updateUserPersonalDetailsById(1, {
         firstName: "Jane",
         lastName: "Smith",
       });
@@ -217,12 +217,12 @@ describe("adminRepository", () => {
       });
 
       await expect(
-        adminRepository.updateUserDetails(1, { firstName: "Jane" }),
+        adminRepository.updateUserPersonalDetailsById(1, { firstName: "Jane" }),
       ).rejects.toThrow("Update failed");
     });
   });
 
-  describe("updateUserEmail", () => {
+  describe("updateUserEmailAddressById", () => {
     it("updates user email", async () => {
       vi.mocked(apiClient.patch).mockResolvedValue({
         data: {
@@ -232,7 +232,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.updateUserEmail(
+      const result = await adminRepository.updateUserEmailAddressById(
         1,
         "new@example.com",
       );
@@ -250,19 +250,19 @@ describe("adminRepository", () => {
       });
 
       await expect(
-        adminRepository.updateUserEmail(1, "existing@example.com"),
+        adminRepository.updateUserEmailAddressById(1, "existing@example.com"),
       ).rejects.toThrow("Email already in use");
     });
   });
 
-  describe("toggleUserStatus", () => {
+  describe("toggleUserAccountStatusById", () => {
     it("toggles user active status", async () => {
       vi.mocked(apiClient.patch).mockResolvedValue({
         data: { success: true, user: { ...mockUser, isActive: false } },
         status: 200,
       });
 
-      const result = await adminRepository.toggleUserStatus(1);
+      const result = await adminRepository.toggleUserAccountStatusById(1);
 
       expect(apiClient.patch).toHaveBeenCalledWith("/admin/users/1/status", {});
       expect(result.user!.isActive).toBe(false);
@@ -274,20 +274,20 @@ describe("adminRepository", () => {
         status: 403,
       });
 
-      await expect(adminRepository.toggleUserStatus(1)).rejects.toThrow(
+      await expect(adminRepository.toggleUserAccountStatusById(1)).rejects.toThrow(
         "Cannot deactivate admin",
       );
     });
   });
 
-  describe("deleteUser", () => {
+  describe("deleteUserAccountById", () => {
     it("deletes a user", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true, message: "User deleted" },
         status: 200,
       });
 
-      const result = await adminRepository.deleteUser(1);
+      const result = await adminRepository.deleteUserAccountById(1);
 
       expect(apiClient.delete).toHaveBeenCalledWith("/admin/users/1");
       expect(result.success).toBe(true);
@@ -299,7 +299,7 @@ describe("adminRepository", () => {
         status: 400,
       });
 
-      await expect(adminRepository.deleteUser(1)).rejects.toThrow(
+      await expect(adminRepository.deleteUserAccountById(1)).rejects.toThrow(
         "Cannot delete user with active enrollments",
       );
     });
@@ -309,7 +309,7 @@ describe("adminRepository", () => {
   // Analytics Tests
   // ============================================================================
 
-  describe("getAdminStats", () => {
+  describe("getAdminDashboardStatistics", () => {
     const mockStats = {
       totalUsers: 100,
       totalStudents: 80,
@@ -326,7 +326,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getAdminStats();
+      const result = await adminRepository.getAdminDashboardStatistics();
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/stats");
       expect(result).toEqual(mockStats);
@@ -338,13 +338,13 @@ describe("adminRepository", () => {
         status: 500,
       });
 
-      await expect(adminRepository.getAdminStats()).rejects.toThrow(
+      await expect(adminRepository.getAdminDashboardStatistics()).rejects.toThrow(
         "Failed to fetch statistics",
       );
     });
   });
 
-  describe("getRecentActivity", () => {
+  describe("getRecentAdminActivityLog", () => {
     const mockActivity = {
       activities: [
         {
@@ -362,7 +362,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getRecentActivity();
+      const result = await adminRepository.getRecentAdminActivityLog();
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/activity?limit=10");
       expect(result).toEqual(mockActivity);
@@ -374,7 +374,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      await adminRepository.getRecentActivity(20);
+      await adminRepository.getRecentAdminActivityLog(20);
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/activity?limit=20");
     });
@@ -385,7 +385,7 @@ describe("adminRepository", () => {
         status: 503,
       });
 
-      await expect(adminRepository.getRecentActivity()).rejects.toThrow(
+      await expect(adminRepository.getRecentAdminActivityLog()).rejects.toThrow(
         "Activity log unavailable",
       );
     });
@@ -395,7 +395,7 @@ describe("adminRepository", () => {
   // Class Management Tests
   // ============================================================================
 
-  describe("getAllClasses", () => {
+  describe("getAllClassesWithPaginationAndFilters", () => {
     const mockPaginatedResponse = {
       data: [mockClass],
       totalCount: 1,
@@ -410,7 +410,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getAllClasses({});
+      const result = await adminRepository.getAllClassesWithPaginationAndFilters({});
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/classes?");
       expect(result).toEqual(mockPaginatedResponse);
@@ -422,14 +422,14 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      await adminRepository.getAllClasses({
-        page: 1,
-        limit: 10,
-        search: "intro",
+      await adminRepository.getAllClassesWithPaginationAndFilters({
+        pageNumber: 1,
+        itemsPerPage: 10,
+        searchQuery: "intro",
         teacherId: 1,
-        status: "active",
+        classStatus: "active",
         yearLevel: 1,
-        semester: 1,
+        semesterNumber: 1,
         academicYear: "2024-2025",
       });
 
@@ -444,20 +444,20 @@ describe("adminRepository", () => {
         status: 401,
       });
 
-      await expect(adminRepository.getAllClasses({})).rejects.toThrow(
+      await expect(adminRepository.getAllClassesWithPaginationAndFilters({})).rejects.toThrow(
         "Unauthorized",
       );
     });
   });
 
-  describe("getClassById", () => {
+  describe("getAdminClassDetailsById", () => {
     it("fetches a class by ID", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: { success: true, class: mockClass },
         status: 200,
       });
 
-      const result = await adminRepository.getClassById(1);
+      const result = await adminRepository.getAdminClassDetailsById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/classes/1");
       expect(result.class).toEqual(mockClass);
@@ -469,7 +469,7 @@ describe("adminRepository", () => {
         status: 404,
       });
 
-      await expect(adminRepository.getClassById(999)).rejects.toThrow(
+      await expect(adminRepository.getAdminClassDetailsById(999)).rejects.toThrow(
         "Class not found",
       );
     });
@@ -497,7 +497,7 @@ describe("adminRepository", () => {
         status: 201,
       });
 
-      const result = await adminRepository.createClass(createData);
+      const result = await adminRepository.createNewClass(createData);
 
       expect(apiClient.post).toHaveBeenCalledWith("/admin/classes", createData);
       expect(result.success).toBe(true);
@@ -509,20 +509,20 @@ describe("adminRepository", () => {
         status: 409,
       });
 
-      await expect(adminRepository.createClass(createData)).rejects.toThrow(
+      await expect(adminRepository.createNewClass(createData)).rejects.toThrow(
         "Class code already exists",
       );
     });
   });
 
-  describe("updateClass", () => {
+  describe("updateClassDetailsById", () => {
     it("updates a class", async () => {
       vi.mocked(apiClient.put).mockResolvedValue({
         data: { success: true, class: { ...mockClass, className: "Updated" } },
         status: 200,
       });
 
-      const result = await adminRepository.updateClass(1, {
+      const result = await adminRepository.updateClassDetailsById(1, {
         className: "Updated",
       });
 
@@ -539,19 +539,19 @@ describe("adminRepository", () => {
       });
 
       await expect(
-        adminRepository.updateClass(1, { className: "" }),
+        adminRepository.updateClassDetailsById(1, { className: "" }),
       ).rejects.toThrow("Validation error");
     });
   });
 
-  describe("deleteClass", () => {
+  describe("deleteClassById", () => {
     it("deletes a class", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true, message: "Class deleted" },
         status: 200,
       });
 
-      const result = await adminRepository.deleteClass(1);
+      const result = await adminRepository.deleteClassById(1);
 
       expect(apiClient.delete).toHaveBeenCalledWith("/admin/classes/1");
       expect(result.success).toBe(true);
@@ -563,20 +563,20 @@ describe("adminRepository", () => {
         status: 400,
       });
 
-      await expect(adminRepository.deleteClass(1)).rejects.toThrow(
+      await expect(adminRepository.deleteClassById(1)).rejects.toThrow(
         "Cannot delete class with enrolled students",
       );
     });
   });
 
-  describe("reassignClassTeacher", () => {
+  describe("reassignClassTeacherById", () => {
     it("reassigns a class to a different teacher", async () => {
       vi.mocked(apiClient.patch).mockResolvedValue({
         data: { success: true, class: { ...mockClass, teacherId: 2 } },
         status: 200,
       });
 
-      const result = await adminRepository.reassignClassTeacher(1, 2);
+      const result = await adminRepository.reassignClassTeacherById(1, 2);
 
       expect(apiClient.patch).toHaveBeenCalledWith(
         "/admin/classes/1/reassign",
@@ -594,19 +594,19 @@ describe("adminRepository", () => {
       });
 
       await expect(
-        adminRepository.reassignClassTeacher(1, 999),
+        adminRepository.reassignClassTeacherById(1, 999),
       ).rejects.toThrow("Teacher not found");
     });
   });
 
-  describe("archiveClass", () => {
+  describe("archiveClassById", () => {
     it("archives a class", async () => {
       vi.mocked(apiClient.patch).mockResolvedValue({
         data: { success: true, class: { ...mockClass, isActive: false } },
         status: 200,
       });
 
-      const result = await adminRepository.archiveClass(1);
+      const result = await adminRepository.archiveClassById(1);
 
       expect(apiClient.patch).toHaveBeenCalledWith(
         "/admin/classes/1/archive",
@@ -621,13 +621,13 @@ describe("adminRepository", () => {
         status: 500,
       });
 
-      await expect(adminRepository.archiveClass(1)).rejects.toThrow(
+      await expect(adminRepository.archiveClassById(1)).rejects.toThrow(
         "Archive failed",
       );
     });
   });
 
-  describe("getAllTeachers", () => {
+  describe("getAllTeacherAccounts", () => {
     const mockTeachers = {
       teachers: [
         {
@@ -645,7 +645,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getAllTeachers();
+      const result = await adminRepository.getAllTeacherAccounts();
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/teachers");
       expect(result.teachers).toHaveLength(1);
@@ -657,7 +657,7 @@ describe("adminRepository", () => {
         status: 500,
       });
 
-      await expect(adminRepository.getAllTeachers()).rejects.toThrow(
+      await expect(adminRepository.getAllTeacherAccounts()).rejects.toThrow(
         "Failed to fetch teachers",
       );
     });
@@ -667,7 +667,7 @@ describe("adminRepository", () => {
   // Class Enrollment Management Tests
   // ============================================================================
 
-  describe("getClassStudents", () => {
+  describe("getEnrolledStudentsInClassById", () => {
     const mockStudents = {
       students: [
         {
@@ -685,7 +685,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getClassStudents(1);
+      const result = await adminRepository.getEnrolledStudentsInClassById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/admin/classes/1/students");
       expect(result.students).toHaveLength(1);
@@ -697,13 +697,13 @@ describe("adminRepository", () => {
         status: 404,
       });
 
-      await expect(adminRepository.getClassStudents(999)).rejects.toThrow(
+      await expect(adminRepository.getEnrolledStudentsInClassById(999)).rejects.toThrow(
         "Class not found",
       );
     });
   });
 
-  describe("getClassAssignments", () => {
+  describe("getAllAssignmentsInClassById", () => {
     const mockAssignments = {
       assignments: [
         { id: 1, assignmentName: "Test", deadline: "2024-12-31T23:59:59Z" },
@@ -716,7 +716,7 @@ describe("adminRepository", () => {
         status: 200,
       });
 
-      const result = await adminRepository.getClassAssignments(1);
+      const result = await adminRepository.getAllAssignmentsInClassById(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/admin/classes/1/assignments",
@@ -730,20 +730,20 @@ describe("adminRepository", () => {
         status: 404,
       });
 
-      await expect(adminRepository.getClassAssignments(999)).rejects.toThrow(
+      await expect(adminRepository.getAllAssignmentsInClassById(999)).rejects.toThrow(
         "Class not found",
       );
     });
   });
 
-  describe("addStudentToClass", () => {
+  describe("enrollStudentInClassById", () => {
     it("adds a student to a class", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: { success: true, message: "Student added" },
         status: 200,
       });
 
-      const result = await adminRepository.addStudentToClass(1, 10);
+      const result = await adminRepository.enrollStudentInClassById(1, 10);
 
       expect(apiClient.post).toHaveBeenCalledWith("/admin/classes/1/students", {
         studentId: 10,
@@ -757,20 +757,20 @@ describe("adminRepository", () => {
         status: 409,
       });
 
-      await expect(adminRepository.addStudentToClass(1, 10)).rejects.toThrow(
+      await expect(adminRepository.enrollStudentInClassById(1, 10)).rejects.toThrow(
         "Student already enrolled",
       );
     });
   });
 
-  describe("removeStudentFromClass", () => {
+  describe("unenrollStudentFromClassById", () => {
     it("removes a student from a class", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true, message: "Student removed" },
         status: 200,
       });
 
-      const result = await adminRepository.removeStudentFromClass(1, 10);
+      const result = await adminRepository.unenrollStudentFromClassById(1, 10);
 
       expect(apiClient.delete).toHaveBeenCalledWith(
         "/admin/classes/1/students/10",
@@ -785,7 +785,7 @@ describe("adminRepository", () => {
       });
 
       await expect(
-        adminRepository.removeStudentFromClass(1, 999),
+        adminRepository.unenrollStudentFromClassById(1, 999),
       ).rejects.toThrow("Student not enrolled in class");
     });
   });

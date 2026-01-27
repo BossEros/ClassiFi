@@ -18,10 +18,10 @@ describe("gradebookRepository", () => {
   });
 
   // ============================================================================
-  // getClassGradebook Tests
+  // getCompleteGradebookForClassId Tests
   // ============================================================================
 
-  describe("getClassGradebook", () => {
+  describe("getCompleteGradebookForClassId", () => {
     const mockGradebook = {
       assignments: [
         { assignmentId: 1, assignmentName: "Assignment 1", maxScore: 100 },
@@ -37,7 +37,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getClassGradebook(1);
+      const result = await gradebookRepository.getCompleteGradebookForClassId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/gradebook/classes/1");
       expect(result.assignments).toEqual(mockGradebook.assignments);
@@ -50,7 +50,7 @@ describe("gradebookRepository", () => {
         status: 401,
       });
 
-      await expect(gradebookRepository.getClassGradebook(1)).rejects.toThrow(
+      await expect(gradebookRepository.getCompleteGradebookForClassId(1)).rejects.toThrow(
         "Unauthorized",
       );
     });
@@ -61,17 +61,17 @@ describe("gradebookRepository", () => {
         status: 500,
       });
 
-      await expect(gradebookRepository.getClassGradebook(1)).rejects.toThrow(
+      await expect(gradebookRepository.getCompleteGradebookForClassId(1)).rejects.toThrow(
         "Failed to fetch gradebook",
       );
     });
   });
 
   // ============================================================================
-  // getClassStatistics Tests
+  // getStatisticsForClassId Tests
   // ============================================================================
 
-  describe("getClassStatistics", () => {
+  describe("getStatisticsForClassId", () => {
     const mockStatistics = {
       averageGrade: 85.5,
       highestGrade: 100,
@@ -85,7 +85,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getClassStatistics(1);
+      const result = await gradebookRepository.getStatisticsForClassId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/gradebook/classes/1/statistics",
@@ -99,7 +99,7 @@ describe("gradebookRepository", () => {
         status: 404,
       });
 
-      await expect(gradebookRepository.getClassStatistics(999)).rejects.toThrow(
+      await expect(gradebookRepository.getStatisticsForClassId(999)).rejects.toThrow(
         "Class not found",
       );
     });
@@ -110,17 +110,17 @@ describe("gradebookRepository", () => {
         status: 500,
       });
 
-      await expect(gradebookRepository.getClassStatistics(1)).rejects.toThrow(
+      await expect(gradebookRepository.getStatisticsForClassId(1)).rejects.toThrow(
         "Failed to fetch class statistics",
       );
     });
   });
 
   // ============================================================================
-  // getStudentGrades Tests
+  // getAllGradesForStudentId Tests
   // ============================================================================
 
-  describe("getStudentGrades", () => {
+  describe("getAllGradesForStudentId", () => {
     const mockGrades = [
       { classId: 1, className: "Class 1", grades: [] },
       { classId: 2, className: "Class 2", grades: [] },
@@ -132,7 +132,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getStudentGrades(1);
+      const result = await gradebookRepository.getAllGradesForStudentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith("/gradebook/students/1");
       expect(result).toEqual(mockGrades);
@@ -144,7 +144,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getStudentGrades(1);
+      const result = await gradebookRepository.getAllGradesForStudentId(1);
 
       expect(result).toEqual([]);
     });
@@ -155,17 +155,17 @@ describe("gradebookRepository", () => {
         status: 404,
       });
 
-      await expect(gradebookRepository.getStudentGrades(999)).rejects.toThrow(
+      await expect(gradebookRepository.getAllGradesForStudentId(999)).rejects.toThrow(
         "Student not found",
       );
     });
   });
 
   // ============================================================================
-  // getStudentClassGrades Tests
+  // getGradesForStudentInSpecificClass Tests
   // ============================================================================
 
-  describe("getStudentClassGrades", () => {
+  describe("getGradesForStudentInSpecificClass", () => {
     const mockClassGrades = {
       classId: 1,
       className: "Test Class",
@@ -178,7 +178,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getStudentClassGrades(1, 1);
+      const result = await gradebookRepository.getGradesForStudentInSpecificClass(1, 1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/gradebook/students/1/classes/1",
@@ -192,7 +192,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getStudentClassGrades(1, 999);
+      const result = await gradebookRepository.getGradesForStudentInSpecificClass(1, 999);
 
       expect(result).toBeNull();
     });
@@ -204,16 +204,16 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.getStudentClassGrades(1, 999),
+        gradebookRepository.getGradesForStudentInSpecificClass(1, 999),
       ).rejects.toThrow("Class not found");
     });
   });
 
   // ============================================================================
-  // getStudentRank Tests
+  // getClassRankForStudentById Tests
   // ============================================================================
 
-  describe("getStudentRank", () => {
+  describe("getClassRankForStudentById", () => {
     it("fetches student rank in a class", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         data: {
@@ -225,7 +225,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getStudentRank(1, 1);
+      const result = await gradebookRepository.getClassRankForStudentById(1, 1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/gradebook/students/1/classes/1/rank",
@@ -243,17 +243,17 @@ describe("gradebookRepository", () => {
         status: 403,
       });
 
-      await expect(gradebookRepository.getStudentRank(1, 1)).rejects.toThrow(
+      await expect(gradebookRepository.getClassRankForStudentById(1, 1)).rejects.toThrow(
         "Not enrolled in class",
       );
     });
   });
 
   // ============================================================================
-  // overrideGrade Tests
+  // setGradeOverrideForSubmissionById Tests
   // ============================================================================
 
-  describe("overrideGrade", () => {
+  describe("setGradeOverrideForSubmissionById", () => {
     it("overrides a grade successfully", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: { success: true },
@@ -261,7 +261,7 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.overrideGrade(1, 95, "Great work!"),
+        gradebookRepository.setGradeOverrideForSubmissionById(1, 95, "Great work!"),
       ).resolves.toBeUndefined();
 
       expect(apiClient.post).toHaveBeenCalledWith(
@@ -276,7 +276,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      await gradebookRepository.overrideGrade(1, 80);
+      await gradebookRepository.setGradeOverrideForSubmissionById(1, 80);
 
       expect(apiClient.post).toHaveBeenCalledWith(
         "/gradebook/submissions/1/override",
@@ -290,17 +290,17 @@ describe("gradebookRepository", () => {
         status: 400,
       });
 
-      await expect(gradebookRepository.overrideGrade(1, 150)).rejects.toThrow(
+      await expect(gradebookRepository.setGradeOverrideForSubmissionById(1, 150)).rejects.toThrow(
         "Grade must be between 0 and 100",
       );
     });
   });
 
   // ============================================================================
-  // removeGradeOverride Tests
+  // removeGradeOverrideForSubmissionById Tests
   // ============================================================================
 
-  describe("removeGradeOverride", () => {
+  describe("removeGradeOverrideForSubmissionById", () => {
     it("removes a grade override successfully", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
         data: { success: true },
@@ -308,7 +308,7 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.removeGradeOverride(1),
+        gradebookRepository.removeGradeOverrideForSubmissionById(1),
       ).resolves.toBeUndefined();
 
       expect(apiClient.delete).toHaveBeenCalledWith(
@@ -323,16 +323,16 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.removeGradeOverride(999),
+        gradebookRepository.removeGradeOverrideForSubmissionById(999),
       ).rejects.toThrow("No override exists");
     });
   });
 
   // ============================================================================
-  // getLatePenaltyConfig Tests
+  // getLatePenaltyConfigurationForAssignmentId Tests
   // ============================================================================
 
-  describe("getLatePenaltyConfig", () => {
+  describe("getLatePenaltyConfigurationForAssignmentId", () => {
     it("fetches late penalty config when enabled", async () => {
       const mockConfig = {
         penaltyType: "percentage",
@@ -345,7 +345,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getLatePenaltyConfig(1);
+      const result = await gradebookRepository.getLatePenaltyConfigurationForAssignmentId(1);
 
       expect(apiClient.get).toHaveBeenCalledWith(
         "/gradebook/assignments/1/late-penalty",
@@ -360,7 +360,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      const result = await gradebookRepository.getLatePenaltyConfig(1);
+      const result = await gradebookRepository.getLatePenaltyConfigurationForAssignmentId(1);
 
       expect(result.enabled).toBe(false);
       expect(result.config).toBeNull();
@@ -373,7 +373,7 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.getLatePenaltyConfig(999),
+        gradebookRepository.getLatePenaltyConfigurationForAssignmentId(999),
       ).rejects.toThrow("Assignment not found");
     });
 
@@ -383,17 +383,17 @@ describe("gradebookRepository", () => {
         status: 500,
       });
 
-      await expect(gradebookRepository.getLatePenaltyConfig(1)).rejects.toThrow(
+      await expect(gradebookRepository.getLatePenaltyConfigurationForAssignmentId(1)).rejects.toThrow(
         "Failed to fetch late penalty config",
       );
     });
   });
 
   // ============================================================================
-  // updateLatePenaltyConfig Tests
+  // updateLatePenaltyConfigurationForAssignmentId Tests
   // ============================================================================
 
-  describe("updateLatePenaltyConfig", () => {
+  describe("updateLatePenaltyConfigurationForAssignmentId", () => {
     it("updates late penalty config with settings", async () => {
       const config = {
         gracePeriodHours: 1,
@@ -407,7 +407,7 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.updateLatePenaltyConfig(1, true, config),
+        gradebookRepository.updateLatePenaltyConfigurationForAssignmentId(1, true, config),
       ).resolves.toBeUndefined();
 
       expect(apiClient.put).toHaveBeenCalledWith(
@@ -422,7 +422,7 @@ describe("gradebookRepository", () => {
         status: 200,
       });
 
-      await gradebookRepository.updateLatePenaltyConfig(1, false);
+      await gradebookRepository.updateLatePenaltyConfigurationForAssignmentId(1, false);
 
       expect(apiClient.put).toHaveBeenCalledWith(
         "/gradebook/assignments/1/late-penalty",
@@ -437,7 +437,7 @@ describe("gradebookRepository", () => {
       });
 
       await expect(
-        gradebookRepository.updateLatePenaltyConfig(1, true),
+        gradebookRepository.updateLatePenaltyConfigurationForAssignmentId(1, true),
       ).rejects.toThrow("Invalid penalty configuration");
     });
   });

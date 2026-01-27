@@ -25,18 +25,18 @@ describe("studentDashboardService", () => {
         enrolledClasses: [],
         pendingAssignments: [],
       };
-      vi.mocked(dashboardRepository.getDashboardData).mockResolvedValue(
+      vi.mocked(dashboardRepository.getCompleteDashboardDataForStudentId).mockResolvedValue(
         mockData,
       );
 
       const result = await studentDashboardService.getDashboardData(1);
 
-      expect(dashboardRepository.getDashboardData).toHaveBeenCalledWith(1);
+      expect(dashboardRepository.getCompleteDashboardDataForStudentId).toHaveBeenCalledWith(1);
       expect(result).toEqual(mockData);
     });
 
     it("propagates error when fetch fails", async () => {
-      vi.mocked(dashboardRepository.getDashboardData).mockRejectedValue(
+      vi.mocked(dashboardRepository.getCompleteDashboardDataForStudentId).mockRejectedValue(
         new Error("Network error"),
       );
 
@@ -53,18 +53,18 @@ describe("studentDashboardService", () => {
   describe("getEnrolledClasses", () => {
     it("fetches enrolled classes successfully", async () => {
       const mockClasses = { success: true, classes: [], total: 0 };
-      vi.mocked(dashboardRepository.getEnrolledClasses).mockResolvedValue(
+      vi.mocked(dashboardRepository.getAllEnrolledClassesForStudentId).mockResolvedValue(
         mockClasses,
       );
 
       const result = await studentDashboardService.getEnrolledClasses(1, 5);
 
-      expect(dashboardRepository.getEnrolledClasses).toHaveBeenCalledWith(1, 5);
+      expect(dashboardRepository.getAllEnrolledClassesForStudentId).toHaveBeenCalledWith(1, 5);
       expect(result).toEqual(mockClasses);
     });
 
     it("propagates error when fetch fails", async () => {
-      vi.mocked(dashboardRepository.getEnrolledClasses).mockRejectedValue(
+      vi.mocked(dashboardRepository.getAllEnrolledClassesForStudentId).mockRejectedValue(
         new Error("Failed"),
       );
 
@@ -81,13 +81,13 @@ describe("studentDashboardService", () => {
   describe("getPendingAssignments", () => {
     it("fetches pending assignments successfully", async () => {
       const mockAssignments = { success: true, assignments: [], total: 0 };
-      vi.mocked(dashboardRepository.getPendingAssignments).mockResolvedValue(
+      vi.mocked(dashboardRepository.getAllPendingAssignmentsForStudentId).mockResolvedValue(
         mockAssignments,
       );
 
       const result = await studentDashboardService.getPendingAssignments(1);
 
-      expect(dashboardRepository.getPendingAssignments).toHaveBeenCalledWith(
+      expect(dashboardRepository.getAllPendingAssignmentsForStudentId).toHaveBeenCalledWith(
         1,
         10,
       );
@@ -95,7 +95,7 @@ describe("studentDashboardService", () => {
     });
 
     it("propagates error when fetch fails", async () => {
-      vi.mocked(dashboardRepository.getPendingAssignments).mockRejectedValue(
+      vi.mocked(dashboardRepository.getAllPendingAssignmentsForStudentId).mockRejectedValue(
         new Error("Failed"),
       );
 
@@ -115,7 +115,7 @@ describe("studentDashboardService", () => {
 
     it("joins class successfully when validation passes", async () => {
       vi.mocked(classValidation.validateClassJoinCode).mockReturnValue(null);
-      vi.mocked(dashboardRepository.joinClass).mockResolvedValue({
+      vi.mocked(dashboardRepository.enrollStudentInClassWithCode).mockResolvedValue({
         success: true,
         message: "Joined successfully",
       });
@@ -128,7 +128,7 @@ describe("studentDashboardService", () => {
       expect(classValidation.validateClassJoinCode).toHaveBeenCalledWith(
         mockClassCode,
       );
-      expect(dashboardRepository.joinClass).toHaveBeenCalledWith(
+      expect(dashboardRepository.enrollStudentInClassWithCode).toHaveBeenCalledWith(
         mockStudentId,
         mockClassCode,
       );
@@ -147,12 +147,12 @@ describe("studentDashboardService", () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toBe("Invalid code format");
-      expect(dashboardRepository.joinClass).not.toHaveBeenCalled();
+      expect(dashboardRepository.enrollStudentInClassWithCode).not.toHaveBeenCalled();
     });
 
     it("handles repository errors gracefully", async () => {
       vi.mocked(classValidation.validateClassJoinCode).mockReturnValue(null);
-      vi.mocked(dashboardRepository.joinClass).mockRejectedValue(
+      vi.mocked(dashboardRepository.enrollStudentInClassWithCode).mockRejectedValue(
         new Error("API Error"),
       );
 
@@ -172,19 +172,19 @@ describe("studentDashboardService", () => {
 
   describe("leaveClass", () => {
     it("leaves class successfully", async () => {
-      vi.mocked(dashboardRepository.leaveClass).mockResolvedValue({
+      vi.mocked(dashboardRepository.unenrollStudentFromClassById).mockResolvedValue({
         success: true,
         message: "Left class",
       });
 
       const result = await studentDashboardService.leaveClass(1, 100);
 
-      expect(dashboardRepository.leaveClass).toHaveBeenCalledWith(1, 100);
+      expect(dashboardRepository.unenrollStudentFromClassById).toHaveBeenCalledWith(1, 100);
       expect(result.success).toBe(true);
     });
 
     it("handles repository errors gracefully", async () => {
-      vi.mocked(dashboardRepository.leaveClass).mockRejectedValue(
+      vi.mocked(dashboardRepository.unenrollStudentFromClassById).mockRejectedValue(
         new Error("Failed"),
       );
 

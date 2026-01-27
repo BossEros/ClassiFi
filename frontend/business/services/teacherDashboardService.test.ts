@@ -21,19 +21,19 @@ describe("teacherDashboardService", () => {
         recentClasses: [{ id: 1, name: "Math" }],
         pendingTasks: [{ id: 1, title: "Grade HW1" }],
       };
-      vi.mocked(dashboardRepository.getDashboardData).mockResolvedValue(
+      vi.mocked(dashboardRepository.getCompleteDashboardDataForTeacherId).mockResolvedValue(
         mockData as any,
       );
 
       const result = await teacherDashboardService.getDashboardData(1);
 
-      expect(dashboardRepository.getDashboardData).toHaveBeenCalledWith(1);
+      expect(dashboardRepository.getCompleteDashboardDataForTeacherId).toHaveBeenCalledWith(1);
       expect(result.recentClasses).toHaveLength(1);
       expect(result.pendingTasks).toHaveLength(1);
     });
 
     it("propagates error when fetch fails", async () => {
-      vi.mocked(dashboardRepository.getDashboardData).mockRejectedValue(
+      vi.mocked(dashboardRepository.getCompleteDashboardDataForTeacherId).mockRejectedValue(
         new Error("Network fail"),
       );
 
@@ -50,18 +50,18 @@ describe("teacherDashboardService", () => {
   describe("getRecentClasses", () => {
     it("fetches recent classes successfully", async () => {
       const mockClasses = { classes: [{ id: 1 }] };
-      vi.mocked(dashboardRepository.getRecentClasses).mockResolvedValue(
+      vi.mocked(dashboardRepository.getRecentClassesForTeacherId).mockResolvedValue(
         mockClasses as any,
       );
 
       const result = await teacherDashboardService.getRecentClasses(1, 5);
 
-      expect(dashboardRepository.getRecentClasses).toHaveBeenCalledWith(1, 5);
+      expect(dashboardRepository.getRecentClassesForTeacherId).toHaveBeenCalledWith(1, 5);
       expect(result).toHaveLength(1);
     });
 
     it("propagates error when fetch fails", async () => {
-      vi.mocked(dashboardRepository.getRecentClasses).mockRejectedValue(
+      vi.mocked(dashboardRepository.getRecentClassesForTeacherId).mockRejectedValue(
         new Error("Failed"),
       );
 
@@ -78,18 +78,18 @@ describe("teacherDashboardService", () => {
   describe("getPendingTasks", () => {
     it("fetches pending tasks successfully", async () => {
       const mockTasks = { tasks: [{ id: 1 }] };
-      vi.mocked(dashboardRepository.getPendingTasks).mockResolvedValue(
+      vi.mocked(dashboardRepository.getPendingTasksForTeacherId).mockResolvedValue(
         mockTasks as any,
       );
 
       const result = await teacherDashboardService.getPendingTasks(1, 10);
 
-      expect(dashboardRepository.getPendingTasks).toHaveBeenCalledWith(1, 10);
+      expect(dashboardRepository.getPendingTasksForTeacherId).toHaveBeenCalledWith(1, 10);
       expect(result).toHaveLength(1);
     });
 
     it("propagates error when fetch fails", async () => {
-      vi.mocked(dashboardRepository.getPendingTasks).mockRejectedValue(
+      vi.mocked(dashboardRepository.getPendingTasksForTeacherId).mockRejectedValue(
         new Error("Failed"),
       );
 

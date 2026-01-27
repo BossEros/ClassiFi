@@ -30,30 +30,41 @@ const variantStyles: Record<ToastVariant, { bg: string; icon: React.ReactNode }>
 export function Toast({ id, message, variant = 'success', duration = 4000, onDismiss }: ToastProps) {
   const [isVisible, setIsVisible] = React.useState(false)
   const [isLeaving, setIsLeaving] = React.useState(false)
+  const [isPaused, setIsPaused] = React.useState(false)
 
   React.useEffect(() => {
     // Trigger enter animation
     const enterTimer = setTimeout(() => setIsVisible(true), 10)
+    return () => clearTimeout(enterTimer)
+  }, [])
 
-    // Auto-dismiss after duration
+  React.useEffect(() => {
+    if (isPaused) return
+
     const dismissTimer = setTimeout(() => {
       handleDismiss()
     }, duration)
+  }, [duration, handleDismiss])
 
-    return () => {
-      clearTimeout(enterTimer)
-      clearTimeout(dismissTimer)
-    }
-  }, [duration])
+  React.useEffect(() => {
+    // Trigger enter animation
+    const enterTimer = setTimeout(() => setIsVisible(true), 10)
+    startTimer()
 
-  const handleDismiss = () => {
-    setIsLeaving(true)
-    setTimeout(() => {
-      onDismiss(id)
-    }, 300) // Match animation duration
+    return () => clearTimeout(dismissTimer)
+  }, [duration, isPaused])
+
+  const handleMouseEnter = () => {
+    clearTimeout(timerRef.current)
+  }
+
+  const handleMouseLeave = () => {
+    startTimer()
   }
 
   const styles = variantStyles[variant]
+  const role = variant === 'error' ? 'alert' : 'status'
+  const ariaLive = variant === 'error' ? 'assertive' : 'polite'
 
   return (
     <div
@@ -65,7 +76,10 @@ export function Toast({ id, message, variant = 'success', duration = 4000, onDis
           ? 'translate-x-0 opacity-100'
           : 'translate-x-full opacity-0'
       )}
-      role="alert"
+      role={variant === 'error' ? 'alert' : 'status'}
+      aria-live={variant === 'error' ? 'assertive' : 'polite'}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
     >
       {styles.icon}
       <p className="text-sm text-white font-medium flex-1">{message}</p>
