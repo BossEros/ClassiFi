@@ -39,13 +39,6 @@ export const VALIDATION_RULES = {
 } as const
 
 /**
- * Supported programming languages for assignments
- */
-export const PROGRAMMING_LANGUAGES = ["python", "java", "c"] as const
-
-export type ProgrammingLanguage = (typeof PROGRAMMING_LANGUAGES)[number]
-
-/**
  * Programming language options for select dropdowns
  */
 export const PROGRAMMING_LANGUAGE_OPTIONS = [

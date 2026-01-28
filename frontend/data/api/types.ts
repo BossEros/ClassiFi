@@ -43,6 +43,9 @@ export const VALID_PROGRAMMING_LANGUAGES = ["python", "java", "c"] as const
 /** Supported programming languages for assignments */
 export type ProgrammingLanguage = (typeof VALID_PROGRAMMING_LANGUAGES)[number]
 
+// Re-export as PROGRAMMING_LANGUAGES for backward compatibility
+export const PROGRAMMING_LANGUAGES = VALID_PROGRAMMING_LANGUAGES
+
 /** Test case structure for assignments */
 export interface AssignmentTestCase {
   id: number

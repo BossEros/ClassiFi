@@ -70,7 +70,8 @@ export function AdminCreateClassModal({
           yearLevel: classToEdit.yearLevel,
           semester: classToEdit.semester,
           academicYear: classToEdit.academicYear,
-          scheduleDays: convertToAbbreviations(classToEdit.schedule.days),          startTime: classToEdit.schedule.startTime,
+          scheduleDays: convertToAbbreviations(classToEdit.schedule.days),
+          startTime: classToEdit.schedule.startTime,
           endTime: classToEdit.schedule.endTime,
         })
       } else {

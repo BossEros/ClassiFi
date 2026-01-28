@@ -97,7 +97,8 @@ export const SimilarityBadge: React.FC<SimilarityBadgeProps> = ({
           >
             {percentage}%
           </span>
-        </div>      </div>
+        </div>{" "}
+      </div>
     )
   }
 

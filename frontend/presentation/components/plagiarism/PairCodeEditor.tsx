@@ -88,8 +88,12 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         // Check column range
         let inColRange = true
         // For single-line fragments, both constraints must be satisfied
-        if (lineNumber === region.startRow + 1 && lineNumber === region.endRow + 1) {
-          inColRange = column >= region.startCol + 1 && column <= region.endCol + 1
+        if (
+          lineNumber === region.startRow + 1 &&
+          lineNumber === region.endRow + 1
+        ) {
+          inColRange =
+            column >= region.startCol + 1 && column <= region.endCol + 1
         } else {
           // For multi-line fragments, check start and end separately
           if (lineNumber === region.startRow + 1) {

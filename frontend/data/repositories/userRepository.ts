@@ -24,7 +24,7 @@ export async function uploadUserAvatar(
   // Generate consistent filename based on user ID
   // Safely extract extension from filename, MIME type, or use default
   let fileExt = file.name.split(".").pop()
-  
+
   // If no extension from filename (no dot in name), derive from MIME type
   if (!fileExt || fileExt === file.name) {
     const mimeToExt: Record<string, string> = {
@@ -37,7 +37,7 @@ export async function uploadUserAvatar(
     }
     fileExt = mimeToExt[file.type] || "jpg" // Default to jpg if MIME unknown
   }
-  
+
   const fileName = `${userId}.${fileExt}`
 
   // Upload to Supabase Storage
@@ -53,7 +53,9 @@ export async function uploadUserAvatar(
       uploadError.message.includes("not found") ||
       uploadError.message.includes("bucket")
     ) {
-      throw new Error("Avatar storage is not configured. Please contact support.")
+      throw new Error(
+        "Avatar storage is not configured. Please contact support.",
+      )
     }
     throw new Error(uploadError.message || "Failed to upload image")
   }

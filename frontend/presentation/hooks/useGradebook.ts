@@ -42,7 +42,7 @@ export function useClassGradebook(classId: number) {
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load gradebook"
-        
+
       setError(errorMessage)
       setGradebook(null)
       setStatistics(null)

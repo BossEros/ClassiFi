@@ -30,10 +30,8 @@ import type { SelectOption } from "@/presentation/components/ui/Select"
 import type { LatePenaltyConfig } from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
 import { toLocalDateTimeString } from "@/shared/utils/dateUtils"
-import {
-  PROGRAMMING_LANGUAGE_OPTIONS,
-  type ProgrammingLanguage,
-} from "@/shared/constants"
+import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
+import { type ProgrammingLanguage } from "@/data/api/types"
 
 export interface CourseworkFormData {
   assignmentName: string
@@ -122,7 +120,8 @@ export function useCourseworkForm() {
             setFormData({
               assignmentName: assignment.assignmentName,
               description: assignment.description,
-              programmingLanguage: assignment.programmingLanguage as ProgrammingLanguage,
+              programmingLanguage:
+                assignment.programmingLanguage as ProgrammingLanguage,
               deadline: toLocalDateTimeString(assignment.deadline),
               allowResubmission: assignment.allowResubmission,
               maxAttempts: assignment.maxAttempts ?? null,
@@ -222,7 +221,8 @@ export function useCourseworkForm() {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
           description: formData.description.trim(),
-          programmingLanguage: formData.programmingLanguage as ProgrammingLanguage,
+          programmingLanguage:
+            formData.programmingLanguage as ProgrammingLanguage,
           deadline: new Date(formData.deadline),
           allowResubmission: formData.allowResubmission,
           maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
@@ -244,7 +244,8 @@ export function useCourseworkForm() {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
           description: formData.description.trim(),
-          programmingLanguage: formData.programmingLanguage as ProgrammingLanguage,
+          programmingLanguage:
+            formData.programmingLanguage as ProgrammingLanguage,
           deadline: new Date(formData.deadline),
           allowResubmission: formData.allowResubmission,
           maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,

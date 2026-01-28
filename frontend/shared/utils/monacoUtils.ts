@@ -5,7 +5,7 @@
  */
 export function getMonacoLanguage(language: string): string {
   if (!language) return "plaintext"
-  
+
   const normalized = language.toLowerCase()
   if (normalized === "c") return "c"
   if (normalized === "cpp" || normalized === "c++") return "cpp"

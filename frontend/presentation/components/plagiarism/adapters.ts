@@ -28,7 +28,7 @@ interface ApiPairData {
 
 // Interface for raw fragment data from API
 interface ApiFragmentData {
-  id?: number
+  id: number
   leftSelection: {
     startRow: number
     startCol: number
@@ -70,9 +70,7 @@ export function pairToFilePair(
     similarity: pair.similarity,
     overlap: pair.overlap,
     longest: pair.longest,
-    fragments: fragments.map((frag, index) =>
-      fragmentToMatchFragment(frag, index),
-    ),
+    fragments: fragments.map(fragmentToMatchFragment),
   }
 }
 
@@ -81,10 +79,9 @@ export function pairToFilePair(
  */
 export function fragmentToMatchFragment(
   fragment: ApiFragmentData,
-  id: number,
 ): MatchFragment {
   return {
-    id: fragment.id ?? id,
+    id: fragment.id,
     leftSelection: fragment.leftSelection,
     rightSelection: fragment.rightSelection,
     length: fragment.length,

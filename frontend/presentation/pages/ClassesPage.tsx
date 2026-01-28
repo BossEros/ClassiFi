@@ -56,7 +56,7 @@ export function ClassesPage() {
         parseInt(currentUser.id),
         activeOnlyParam,
       )
-      
+
       setClasses(allClasses)
     } catch (err) {
       console.error("Failed to fetch classes:", err)

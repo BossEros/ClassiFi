@@ -49,8 +49,7 @@ export const FILE_VALIDATION = {
  * @returns Error message if invalid, null if valid
  */
 export function validateImageFile(file: File): string | null {
-  const acceptedTypes: readonly string[] =
-    FILE_VALIDATION.ACCEPTED_IMAGE_TYPES
+  const acceptedTypes: readonly string[] = FILE_VALIDATION.ACCEPTED_IMAGE_TYPES
 
   if (!acceptedTypes.includes(file.type)) {
     return "Please select a valid image file (JPEG, PNG, GIF, or WebP)"

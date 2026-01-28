@@ -46,6 +46,6 @@ export function useToast() {
   if (context === undefined) {
     throw new Error("useToast must be used within a ToastProvider")
   }
-  
+
   return context
 }

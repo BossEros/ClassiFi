@@ -64,7 +64,7 @@ export function AdminClassesPage() {
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState("")
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery)

@@ -110,11 +110,15 @@ export function formatTimeRemaining(deadline: Date | string): string {
 export function getDeadlineStatus(deadline: Date | string): string {
   const dateObj = typeof deadline === "string" ? new Date(deadline) : deadline
   const now = new Date()
-  
+
   // Normalize both dates to midnight (start of day) for calendar date comparison
-  const deadlineDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate())
+  const deadlineDate = new Date(
+    dateObj.getFullYear(),
+    dateObj.getMonth(),
+    dateObj.getDate(),
+  )
   const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  
+
   // Calculate day difference using normalized dates
   const diff = deadlineDate.getTime() - todayDate.getTime()
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
@@ -162,7 +166,15 @@ export const MONTH_NAMES = [
 /**
  * Short day names for calendar headers
  */
-export const DAY_NAMES_SHORT = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const
+export const DAY_NAMES_SHORT = [
+  "Su",
+  "Mo",
+  "Tu",
+  "We",
+  "Th",
+  "Fr",
+  "Sa",
+] as const
 
 /**
  * Validates if a Date object is valid

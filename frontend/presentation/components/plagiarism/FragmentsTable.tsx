@@ -83,7 +83,8 @@ export const FragmentsTable: React.FC<FragmentsTableProps> = ({
                   if (!isSelected) {
                     e.currentTarget.style.backgroundColor = "transparent"
                   }
-                }}              >
+                }}
+              >
                 <td style={{ padding: "10px", fontWeight: 500 }}>
                   {index + 1}
                 </td>

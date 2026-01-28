@@ -37,7 +37,7 @@ export function AdminAddStudentModal({
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery)
     }, 300)
-    
+
     return () => clearTimeout(timer)
   }, [searchQuery])
 

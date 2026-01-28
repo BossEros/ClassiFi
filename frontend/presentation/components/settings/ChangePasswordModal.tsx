@@ -21,9 +21,8 @@ export function ChangePasswordModal({
   onClose,
   onSuccess,
 }: ChangePasswordModalProps) {
-  const [formData, setFormData] = React.useState<ChangePasswordRequest>(
-    INITIAL_FORM_STATE,
-  )
+  const [formData, setFormData] =
+    React.useState<ChangePasswordRequest>(INITIAL_FORM_STATE)
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false)
   const [showNewPassword, setShowNewPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
