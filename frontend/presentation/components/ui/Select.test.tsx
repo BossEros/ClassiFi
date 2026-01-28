@@ -149,4 +149,25 @@ describe("Select", () => {
       expect(options[2]).toHaveValue("option3")
     })
   })
+
+  describe("Error State", () => {
+    it("sets aria-invalid when hasError is true", () => {
+      render(
+        <Select options={mockOptions} hasError data-testid="test-select" />,
+      )
+      expect(screen.getByTestId("test-select")).toHaveAttribute(
+        "aria-invalid",
+        "true",
+      )
+    })
+
+    it("applies error styling when hasError is true", () => {
+      render(
+        <Select options={mockOptions} hasError data-testid="test-select" />,
+      )
+      const select = screen.getByTestId("test-select")
+      expect(select).toHaveClass("border-red-500/50")
+      expect(select).toHaveClass("focus:border-red-500")
+    })
+  })
 })

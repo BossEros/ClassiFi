@@ -162,7 +162,7 @@ export function BasicInfoForm({
               value={formData.programmingLanguage}
               onChange={(value) => onInputChange("programmingLanguage", value)}
               disabled={isLoading}
-              className={errors.programmingLanguage ? "border-red-500/50" : ""}
+              hasError={!!errors.programmingLanguage}
               placeholder="Select language"
             />
             {errors.programmingLanguage && (

@@ -6,3 +6,6 @@
 **Learning:** Auto-dismissing toasts can create anxiety or frustration if they vanish while being read. Additionally, indiscriminately using `role="alert"` causes screen readers to aggressively interrupt users for minor updates.
 **Action:** Implement "pause-on-hover" for all auto-dismissing notifications. Use `role="status"`/`aria-live="polite"` for success/info messages, and reserve `role="alert"`/`aria-live="assertive"` only for errors.
 
+## 2025-05-20 - Standardizing Form Error States
+**Learning:** Inconsistent error handling across form components (e.g., manual `className` injection vs props) leads to missed accessibility attributes like `aria-invalid`.
+**Action:** Standardize all form inputs to accept a `hasError` boolean prop that handles both visual styles and `aria-invalid` automatically, removing the burden from the consumer.
