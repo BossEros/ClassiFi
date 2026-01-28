@@ -395,6 +395,8 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       disposables.forEach((d) => d.dispose())
     }
   }, [
+    file.content,
+    language,
     getFragmentAtPosition,
     scrollToFragment,
     onFragmentSelect,
