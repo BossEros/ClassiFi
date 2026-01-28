@@ -2,6 +2,8 @@ import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { Loader2 } from "lucide-react"
 
+export { Button }
+
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean
   variant?: "primary" | "secondary" | "success" | "danger" | "ghost"
@@ -56,5 +58,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   },
 )
 Button.displayName = "Button"
-
-export { Button }

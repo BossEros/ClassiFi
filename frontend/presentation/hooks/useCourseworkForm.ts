@@ -27,27 +27,16 @@ import type {
 } from "@/shared/types/testCase"
 import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList"
 import type { SelectOption } from "@/presentation/components/ui/Select"
-// Import LatePenaltyConfig from shared types to comply with architectural layering
 import type { LatePenaltyConfig } from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
-
-/**
- * Converts a Date or ISO date string to a local datetime string
- * suitable for HTML datetime-local inputs (format: YYYY-MM-DDTHH:mm).
- * Adjusts for the local timezone offset.
- */
-function toLocalDateTimeString(date: Date | string): string {
-  const d = typeof date === "string" ? new Date(date) : date
-  // Clone the date to avoid mutating the original
-  const cloned = new Date(d.getTime())
-  cloned.setMinutes(cloned.getMinutes() - cloned.getTimezoneOffset())
-  return cloned.toISOString().slice(0, 16)
-}
+import { toLocalDateTimeString } from "@/shared/utils/dateUtils"
+import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
+import { type ProgrammingLanguage } from "@/data/api/types"
 
 export interface CourseworkFormData {
   assignmentName: string
   description: string
-  programmingLanguage: "python" | "java" | "c" | ""
+  programmingLanguage: ProgrammingLanguage | ""
   deadline: string
   allowResubmission: boolean
   maxAttempts: number | null
@@ -67,11 +56,8 @@ export interface FormErrors {
   general?: string
 }
 
-export const programmingLanguageOptions: SelectOption[] = [
-  { value: "python", label: "Python" },
-  { value: "java", label: "Java" },
-  { value: "c", label: "C" },
-]
+export const programmingLanguageOptions: SelectOption[] =
+  PROGRAMMING_LANGUAGE_OPTIONS.map((opt) => ({ ...opt }))
 
 export function useCourseworkForm() {
   const navigate = useNavigate()
@@ -134,10 +120,8 @@ export function useCourseworkForm() {
             setFormData({
               assignmentName: assignment.assignmentName,
               description: assignment.description,
-              programmingLanguage: assignment.programmingLanguage as
-                | "python"
-                | "java"
-                | "c",
+              programmingLanguage:
+                assignment.programmingLanguage as ProgrammingLanguage,
               deadline: toLocalDateTimeString(assignment.deadline),
               allowResubmission: assignment.allowResubmission,
               maxAttempts: assignment.maxAttempts ?? null,
@@ -237,10 +221,8 @@ export function useCourseworkForm() {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
           description: formData.description.trim(),
-          programmingLanguage: formData.programmingLanguage as
-            | "python"
-            | "java"
-            | "c",
+          programmingLanguage:
+            formData.programmingLanguage as ProgrammingLanguage,
           deadline: new Date(formData.deadline),
           allowResubmission: formData.allowResubmission,
           maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
@@ -262,10 +244,8 @@ export function useCourseworkForm() {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
           description: formData.description.trim(),
-          programmingLanguage: formData.programmingLanguage as
-            | "python"
-            | "java"
-            | "c",
+          programmingLanguage:
+            formData.programmingLanguage as ProgrammingLanguage,
           deadline: new Date(formData.deadline),
           allowResubmission: formData.allowResubmission,
           maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,

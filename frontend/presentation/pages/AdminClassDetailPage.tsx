@@ -49,6 +49,7 @@ export function AdminClassDetailPage() {
 
   const fetchClassData = useCallback(async () => {
     if (!classId) return
+
     try {
       setIsLoading(true)
       setError(null)

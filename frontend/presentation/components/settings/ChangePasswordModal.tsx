@@ -10,16 +10,19 @@ interface ChangePasswordModalProps {
   onSuccess?: () => void
 }
 
+const INITIAL_FORM_STATE: ChangePasswordRequest = {
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+}
+
 export function ChangePasswordModal({
   isOpen,
   onClose,
   onSuccess,
 }: ChangePasswordModalProps) {
-  const [formData, setFormData] = React.useState<ChangePasswordRequest>({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  })
+  const [formData, setFormData] =
+    React.useState<ChangePasswordRequest>(INITIAL_FORM_STATE)
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false)
   const [showNewPassword, setShowNewPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
@@ -30,7 +33,7 @@ export function ChangePasswordModal({
   // Reset form when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
-      setFormData({ currentPassword: "", newPassword: "", confirmPassword: "" })
+      setFormData(INITIAL_FORM_STATE)
       setError(null)
       setSuccess(false)
       setShowCurrentPassword(false)

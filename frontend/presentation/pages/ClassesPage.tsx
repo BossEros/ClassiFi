@@ -50,16 +50,13 @@ export function ClassesPage() {
       setIsLoading(true)
       setError(null)
 
-      // Handle the 'all' status case appropriately
-      // If status is 'active', fetch activeOnly=true
-      // If status is 'archived', fetch activeOnly=false (getAll) and filter locally to !isActive
-      // If status is 'all', fetch activeOnly=false (getAll)
       const activeOnlyParam = status === "active" ? true : false
 
       const allClasses = await getAllClasses(
         parseInt(currentUser.id),
         activeOnlyParam,
       )
+
       setClasses(allClasses)
     } catch (err) {
       console.error("Failed to fetch classes:", err)

@@ -32,3 +32,38 @@ function generateTimeOptions(): string[] {
  * Pre-generated time options for schedule dropdowns
  */
 export const TIME_OPTIONS = generateTimeOptions()
+
+/**
+ * Array of day abbreviations for UI display (buttons, etc.)
+ */
+export const DAY_ABBREVIATIONS = DAYS.map((day) => day.short)
+
+/**
+ * Convert abbreviated day strings (e.g., "Mon", "Tue") to DayOfWeek values
+ * @param abbreviatedDays - Array of day abbreviations
+ * @returns Array of DayOfWeek values
+ * @example convertToDayOfWeek(["Mon", "Wed", "Fri"]) → ["monday", "wednesday", "friday"]
+ */
+export function convertToDayOfWeek(abbreviatedDays: string[]): DayOfWeek[] {
+  return abbreviatedDays
+    .map((abbr) => {
+      const day = DAYS.find((d) => d.short === abbr)
+      return day?.value
+    })
+    .filter((day): day is DayOfWeek => day !== undefined)
+}
+
+/**
+ * Convert DayOfWeek values to abbreviated day strings (e.g., "Mon", "Tue")
+ * @param daysOfWeek - Array of DayOfWeek values
+ * @returns Array of day abbreviations
+ * @example convertToAbbreviations(["monday", "wednesday", "friday"]) → ["Mon", "Wed", "Fri"]
+ */
+export function convertToAbbreviations(daysOfWeek: DayOfWeek[]): string[] {
+  return daysOfWeek
+    .map((dayOfWeek) => {
+      const day = DAYS.find((d) => d.value === dayOfWeek)
+      return day?.short
+    })
+    .filter((abbr): abbr is string => abbr !== undefined)
+}
