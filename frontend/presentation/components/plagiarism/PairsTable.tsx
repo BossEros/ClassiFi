@@ -75,7 +75,7 @@ export const PairsTable: React.FC<PairsTableProps> = ({
           comparison = a.leftFile.filename.localeCompare(b.leftFile.filename)
           break
         case "rightFile":
-          comparison = b.rightFile.filename.localeCompare(b.rightFile.filename)
+          comparison = a.rightFile.filename.localeCompare(b.rightFile.filename)
           break
         case "longest":
           comparison = a.longest - b.longest

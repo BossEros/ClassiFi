@@ -154,6 +154,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                     |
 | **testService**             | `business/services/testService.ts`             | Code execution and testing                               |
 | **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)            |
+| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload)                  |
 
 ### Service Guidelines
 

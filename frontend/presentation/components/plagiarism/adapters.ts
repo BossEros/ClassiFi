@@ -2,7 +2,6 @@ import type { FilePair, MatchFragment } from "./types"
 
 /**
  * These adapters convert backend API responses to frontend component types.
- * NOTE: The original Dolos library adapters have been replaced with API-based adapters.
  */
 
 // Interface for raw pair data from API
@@ -29,7 +28,7 @@ interface ApiPairData {
 
 // Interface for raw fragment data from API
 interface ApiFragmentData {
-  id: number
+  id?: number
   leftSelection: {
     startRow: number
     startCol: number

@@ -37,3 +37,19 @@ export const VALIDATION_RULES = {
     PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   },
 } as const
+
+/**
+ * Supported programming languages for assignments
+ */
+export const PROGRAMMING_LANGUAGES = ["python", "java", "c"] as const
+
+export type ProgrammingLanguage = (typeof PROGRAMMING_LANGUAGES)[number]
+
+/**
+ * Programming language options for select dropdowns
+ */
+export const PROGRAMMING_LANGUAGE_OPTIONS = [
+  { value: "python", label: "Python" },
+  { value: "java", label: "Java" },
+  { value: "c", label: "C" },
+] as const

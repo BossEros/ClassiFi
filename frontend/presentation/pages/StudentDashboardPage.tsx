@@ -12,6 +12,7 @@ import {
 } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import { getDashboardData } from "@/business/services/studentDashboardService"
+import { getDeadlineStatus } from "@/shared/utils/dateUtils"
 import type { User } from "@/business/models/auth/types"
 import type { Class, Task } from "@/business/models/dashboard/types"
 
@@ -50,20 +51,6 @@ export function StudentDashboardPage() {
     setUser(currentUser)
     fetchDashboardData(parseInt(currentUser.id))
   }, [navigate])
-
-  /**
-   * Calculates days remaining until the deadline.
-   */
-  const formatDeadline = (deadline: Date) => {
-    const now = new Date()
-    const diff = deadline.getTime() - now.getTime()
-    const days = Math.ceil(diff / (1000 * 60 * 60 * 24))
-
-    if (days < 0) return "Overdue"
-    if (days === 0) return "Due today"
-    if (days === 1) return "Due tomorrow"
-    return `Due in ${days} days`
-  }
 
   return (
     <DashboardLayout>
@@ -176,7 +163,7 @@ export function StudentDashboardPage() {
                             : "text-teal-400"
                         }`}
                       >
-                        {formatDeadline(new Date(assignment.deadline))}
+                        {getDeadlineStatus(new Date(assignment.deadline))}
                       </span>
                     </div>
                   </div>

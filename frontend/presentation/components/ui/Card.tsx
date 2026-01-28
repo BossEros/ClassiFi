@@ -1,6 +1,8 @@
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
+
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "hover" | "interactive" | "elevated"
 }
@@ -84,4 +86,3 @@ const CardFooter = React.forwardRef<
 ))
 CardFooter.displayName = "CardFooter"
 
-export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }

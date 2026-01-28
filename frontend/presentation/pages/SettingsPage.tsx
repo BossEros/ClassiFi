@@ -46,7 +46,7 @@ export function SettingsPage() {
   }
 
   const handlePasswordChangeSuccess = () => {
-    // Optionally show a toast or refresh user data
+    //TO-DO: Handle success (e.g., show notification)
   }
 
   if (!user) return null

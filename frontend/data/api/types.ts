@@ -26,6 +26,7 @@ import type {
 } from "@/shared/types/class"
 
 import type { RawTestResult, TestCase } from "@/shared/types/testCase"
+import type { UserRole } from "@/shared/types/auth"
 
 // ============================================================================
 // Core Shared Types - Re-exported from canonical shared module
@@ -521,7 +522,7 @@ export interface AdminUser {
   email: string
   firstName: string
   lastName: string
-  role: "student" | "teacher" | "admin"
+  role: UserRole
   avatarUrl: string | null
   isActive: boolean
   createdAt: string

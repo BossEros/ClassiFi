@@ -2,6 +2,7 @@ import Editor from "@monaco-editor/react"
 import { X, Copy, Check } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { useToast } from "@/shared/context/ToastContext"
+import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
 import { useState } from "react"
 
 interface CodePreviewModalProps {
@@ -33,18 +34,6 @@ export function CodePreviewModal({
     } catch (err) {
       showToast("Failed to copy code", "error")
     }
-  }
-
-  // Map backend language format to Monaco language
-  const getMonacoLanguage = (lang: string) => {
-    const l = lang.toLowerCase()
-    if (l === "c") return "c"
-    if (l === "cpp" || l === "c++") return "cpp"
-    if (l === "python" || l === "py") return "python"
-    if (l === "java") return "java"
-    if (l === "javascript" || l === "js") return "javascript"
-    if (l === "typescript" || l === "ts") return "typescript"
-    return "plaintext"
   }
 
   const monacoLanguage = getMonacoLanguage(language)

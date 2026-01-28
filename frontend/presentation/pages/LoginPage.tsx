@@ -14,17 +14,13 @@ export function LoginPage() {
       if (user.role === "teacher") {
         navigate("/dashboard")
       } else if (user.role === "student") {
-        // TODO: Redirect students to student dashboard when implemented
         navigate("/dashboard")
       } else if (user.role === "admin") {
-        // TODO: Redirect admins to admin dashboard when implemented
         navigate("/dashboard")
       } else {
-        // Fallback to dashboard
         navigate("/dashboard")
       }
     } else {
-      // Fallback if user data is not available
       navigate("/dashboard")
     }
   }

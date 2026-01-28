@@ -87,11 +87,17 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
         // Check column range
         let inColRange = true
-        if (lineNumber === region.startRow + 1) {
-          inColRange = column >= region.startCol + 1
-        }
-        if (lineNumber === region.endRow + 1) {
-          inColRange = column <= region.endCol + 1
+        // For single-line fragments, both constraints must be satisfied
+        if (lineNumber === region.startRow + 1 && lineNumber === region.endRow + 1) {
+          inColRange = column >= region.startCol + 1 && column <= region.endCol + 1
+        } else {
+          // For multi-line fragments, check start and end separately
+          if (lineNumber === region.startRow + 1) {
+            inColRange = column >= region.startCol + 1
+          }
+          if (lineNumber === region.endRow + 1) {
+            inColRange = column <= region.endCol + 1
+          }
         }
 
         if (!inColRange) continue
@@ -198,8 +204,12 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   ): boolean => {
     if (!a || !b) return false
     return (
+      a.leftSelection.startRow === b.leftSelection.startRow &&
+      a.leftSelection.endRow === b.leftSelection.endRow &&
       a.leftSelection.startCol === b.leftSelection.startCol &&
       a.leftSelection.endCol === b.leftSelection.endCol &&
+      a.rightSelection.startRow === b.rightSelection.startRow &&
+      a.rightSelection.endRow === b.rightSelection.endRow &&
       a.rightSelection.startCol === b.rightSelection.startCol &&
       a.rightSelection.endCol === b.rightSelection.endCol
     )
@@ -265,7 +275,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     [getRegion],
   )
 
-  // Initialize editor
+  // Initialize editor (only depends on file content and language)
   useEffect(() => {
     if (!containerRef.current) return
 
@@ -282,84 +292,112 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       scrollBeyondLastLine: false,
     })
 
-    // Handle click to select fragment
-    editorRef.current.onDidChangeCursorPosition((e) => {
-      if (!e.position?.lineNumber) return
-      const fragment = getFragmentAtPosition(
-        e.position.lineNumber,
-        e.position.column,
-      )
-      onFragmentSelect(fragment)
-    })
-
-    // Handle hover
-    editorRef.current.onMouseMove((e) => {
-      if (e.target?.position) {
-        const fragment = getFragmentAtPosition(
-          e.target.position.lineNumber,
-          e.target.position.column,
-        )
-        onFragmentHover(fragment)
-      }
-    })
-
-    // Handle mouse leave
-    editorRef.current.onMouseLeave(() => {
-      onFragmentHover(null)
-    })
-
-    // Tab to go to next match (same as Dolos)
-    editorRef.current.addAction({
-      id: "match-next",
-      label: "Go to next match",
-      keybindings: [monaco.KeyCode.Tab],
-      run: () => {
-        if (sortedFragments.length === 0) return
-
-        const currentIndex = selectedFragment
-          ? sortedFragments.findIndex((f) =>
-              areFragmentsEqual(f, selectedFragment),
-            )
-          : -1
-        const nextIndex =
-          currentIndex === -1 || currentIndex === sortedFragments.length - 1
-            ? 0
-            : currentIndex + 1
-        const nextFragment = sortedFragments[nextIndex]
-
-        scrollToFragment(nextFragment)
-        onFragmentSelect(nextFragment)
-      },
-    })
-
-    // Shift+Tab to go to previous match (same as Dolos)
-    editorRef.current.addAction({
-      id: "match-previous",
-      label: "Go to previous match",
-      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Tab],
-      run: () => {
-        if (sortedFragments.length === 0) return
-
-        const currentIndex = selectedFragment
-          ? sortedFragments.findIndex((f) =>
-              areFragmentsEqual(f, selectedFragment),
-            )
-          : 0
-        const prevIndex =
-          currentIndex === -1 || currentIndex === 0
-            ? sortedFragments.length - 1
-            : currentIndex - 1
-        const prevFragment = sortedFragments[prevIndex]
-
-        scrollToFragment(prevFragment)
-        onFragmentSelect(prevFragment)
-      },
-    })
-
     return () => {
       editorRef.current?.dispose()
     }
   }, [file.content, language])
+
+  // Register event handlers (runs when handlers or dependencies change)
+  useEffect(() => {
+    if (!editorRef.current) return
+
+    const disposables: monaco.IDisposable[] = []
+
+    // Handle click to select fragment
+    disposables.push(
+      editorRef.current.onDidChangeCursorPosition((e) => {
+        if (!e.position?.lineNumber) return
+        const fragment = getFragmentAtPosition(
+          e.position.lineNumber,
+          e.position.column,
+        )
+        onFragmentSelect(fragment)
+      }),
+    )
+
+    // Handle hover
+    disposables.push(
+      editorRef.current.onMouseMove((e) => {
+        if (e.target?.position) {
+          const fragment = getFragmentAtPosition(
+            e.target.position.lineNumber,
+            e.target.position.column,
+          )
+          onFragmentHover(fragment)
+        }
+      }),
+    )
+
+    // Handle mouse leave
+    disposables.push(
+      editorRef.current.onMouseLeave(() => {
+        onFragmentHover(null)
+      }),
+    )
+
+    // Tab to go to next match (same as Dolos)
+    disposables.push(
+      editorRef.current.addAction({
+        id: "match-next",
+        label: "Go to next match",
+        keybindings: [monaco.KeyCode.Tab],
+        run: () => {
+          if (sortedFragments.length === 0) return
+
+          const currentIndex = selectedFragment
+            ? sortedFragments.findIndex((f) =>
+                areFragmentsEqual(f, selectedFragment),
+              )
+            : -1
+          const nextIndex =
+            currentIndex === -1 || currentIndex === sortedFragments.length - 1
+              ? 0
+              : currentIndex + 1
+          const nextFragment = sortedFragments[nextIndex]
+
+          scrollToFragment(nextFragment)
+          onFragmentSelect(nextFragment)
+        },
+      }),
+    )
+
+    // Shift+Tab to go to previous match (same as Dolos)
+    disposables.push(
+      editorRef.current.addAction({
+        id: "match-previous",
+        label: "Go to previous match",
+        keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Tab],
+        run: () => {
+          if (sortedFragments.length === 0) return
+
+          const currentIndex = selectedFragment
+            ? sortedFragments.findIndex((f) =>
+                areFragmentsEqual(f, selectedFragment),
+              )
+            : 0
+          const prevIndex =
+            currentIndex === -1 || currentIndex === 0
+              ? sortedFragments.length - 1
+              : currentIndex - 1
+          const prevFragment = sortedFragments[prevIndex]
+
+          scrollToFragment(prevFragment)
+          onFragmentSelect(prevFragment)
+        },
+      }),
+    )
+
+    return () => {
+      disposables.forEach((d) => d.dispose())
+    }
+  }, [
+    getFragmentAtPosition,
+    scrollToFragment,
+    onFragmentSelect,
+    onFragmentHover,
+    sortedFragments,
+    selectedFragment,
+  ])
 
   // Update decorations when fragments/selection changes
   useEffect(() => {

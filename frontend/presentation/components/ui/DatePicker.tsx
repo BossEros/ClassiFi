@@ -8,6 +8,11 @@ import {
 } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { Popover } from "./Popover"
+import {
+  MONTH_NAMES,
+  DAY_NAMES_SHORT,
+  isValidDate,
+} from "@/shared/utils/dateUtils"
 
 interface DatePickerProps {
   value: string // ISO string date component
@@ -16,30 +21,6 @@ interface DatePickerProps {
   error?: string
   minDate?: Date
   disabled?: boolean
-}
-
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-]
-
-const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-
-/**
- * Helper to validate a Date object
- */
-function isValidDate(date: Date | null): date is Date {
-  return date !== null && !isNaN(date.getTime())
 }
 
 export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
@@ -237,7 +218,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
 
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                {DAYS.map((day) => (
+                {DAY_NAMES_SHORT.map((day) => (
                   <div
                     key={day}
                     className="text-xs font-medium text-gray-500 py-1"
