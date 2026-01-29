@@ -46,7 +46,8 @@ export async function studentDashboardRoutes(
     schema: {
       tags: ["Student Dashboard"],
       summary: "Get complete dashboard data for a student",
-      description: "Retrieves enrolled classes and pending assignments for the student dashboard",
+      description:
+        "Retrieves enrolled classes and pending assignments for the student dashboard",
       params: toJsonSchema(StudentIdParamSchema),
       querystring: toJsonSchema(StudentDashboardQuerySchema),
       response: {
@@ -55,10 +56,8 @@ export async function studentDashboardRoutes(
     },
     handler: async (request, reply) => {
       const { studentId } = request.params
-      const {
-        enrolledClassesLimit = 12,
-        pendingAssignmentsLimit = 10,
-      } = request.query
+      const { enrolledClassesLimit = 12, pendingAssignmentsLimit = 10 } =
+        request.query
 
       const dashboardData = await studentDashboardService.getDashboardData(
         studentId,
@@ -85,7 +84,8 @@ export async function studentDashboardRoutes(
       schema: {
         tags: ["Student Dashboard"],
         summary: "Get enrolled classes for a student",
-        description: "Retrieves a list of classes the student is currently enrolled in",
+        description:
+          "Retrieves a list of classes the student is currently enrolled in",
         params: toJsonSchema(StudentIdParamSchema),
         querystring: toJsonSchema(LimitQuerySchema),
         response: {
@@ -121,7 +121,8 @@ export async function studentDashboardRoutes(
       schema: {
         tags: ["Student Dashboard"],
         summary: "Get pending assignments for a student",
-        description: "Retrieves assignments that are due and not yet submitted by the student",
+        description:
+          "Retrieves assignments that are due and not yet submitted by the student",
         params: toJsonSchema(StudentIdParamSchema),
         querystring: toJsonSchema(LimitQuerySchema),
         response: {
@@ -155,7 +156,8 @@ export async function studentDashboardRoutes(
     schema: {
       tags: ["Student Dashboard"],
       summary: "Join a class using class code",
-      description: "Enrolls a student in a class by validating and using the provided class code",
+      description:
+        "Enrolls a student in a class by validating and using the provided class code",
       body: toJsonSchema(JoinClassRequestSchema),
       response: {
         200: toJsonSchema(JoinClassResponseSchema),

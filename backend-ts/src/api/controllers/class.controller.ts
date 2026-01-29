@@ -39,7 +39,8 @@ import { BadRequestError } from "@/api/middlewares/error-handler.js"
  */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
   const classService = container.resolve<ClassService>("ClassService")
-  const assignmentService = container.resolve<AssignmentService>("AssignmentService")
+  const assignmentService =
+    container.resolve<AssignmentService>("AssignmentService")
 
   /**
    * POST /
@@ -49,7 +50,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Classes"],
       summary: "Create a new class",
-      description: "Creates a new class with the provided details and returns the created class data",
+      description:
+        "Creates a new class with the provided details and returns the created class data",
       security: [{ bearerAuth: [] }],
       body: toJsonSchema(CreateClassRequestSchema),
       response: {
@@ -75,7 +77,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Classes"],
       summary: "Generate a unique class code",
-      description: "Generates a unique 6-character alphanumeric code for class enrollment",
+      description:
+        "Generates a unique 6-character alphanumeric code for class enrollment",
       security: [{ bearerAuth: [] }],
       response: {
         200: toJsonSchema(GenerateCodeResponseSchema),
@@ -103,7 +106,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Classes"],
       summary: "Get all classes for a teacher",
-      description: "Retrieves all classes taught by a specific teacher, optionally filtered to active classes only",
+      description:
+        "Retrieves all classes taught by a specific teacher, optionally filtered to active classes only",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(TeacherIdParamSchema),
       querystring: toJsonSchema(GetClassesQuerySchema),
@@ -142,7 +146,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Classes"],
         summary: "Get a class by ID",
-        description: "Retrieves detailed information about a specific class, optionally verifying teacher ownership",
+        description:
+          "Retrieves detailed information about a specific class, optionally verifying teacher ownership",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(ClassIdParamSchema),
         querystring: toJsonSchema(GetClassByIdQuerySchema),
@@ -188,7 +193,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Classes"],
         summary: "Update a class",
-        description: "Updates class details such as name, description, schedule, or active status",
+        description:
+          "Updates class details such as name, description, schedule, or active status",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(ClassIdParamSchema),
         body: toJsonSchema(UpdateClassRequestSchema),
@@ -221,37 +227,38 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * DELETE /:classId
    * Delete a class
    */
-  app.delete<{ Params: { classId: string }; Querystring: { teacherId: string } }>(
-    "/:classId",
-    {
-      schema: {
-        tags: ["Classes"],
-        summary: "Delete a class",
-        description: "Permanently deletes a class and all associated data after verifying teacher ownership",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(ClassIdParamSchema),
-        querystring: toJsonSchema(TeacherIdQuerySchema),
-        response: {
-          200: toJsonSchema(SuccessMessageSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const parsedClassId = parseInt(request.params.classId, 10)
-        const parsedTeacherId = parseInt(request.query.teacherId, 10)
-
-        if (isNaN(parsedClassId) || isNaN(parsedTeacherId)) {
-          throw new BadRequestError("Invalid ID parameters")
-        }
-
-        await classService.deleteClass(parsedClassId, parsedTeacherId)
-
-        return reply.send({
-          success: true,
-          message: "Class deleted successfully",
-        })
+  app.delete<{
+    Params: { classId: string }
+    Querystring: { teacherId: string }
+  }>("/:classId", {
+    schema: {
+      tags: ["Classes"],
+      summary: "Delete a class",
+      description:
+        "Permanently deletes a class and all associated data after verifying teacher ownership",
+      security: [{ bearerAuth: [] }],
+      params: toJsonSchema(ClassIdParamSchema),
+      querystring: toJsonSchema(TeacherIdQuerySchema),
+      response: {
+        200: toJsonSchema(SuccessMessageSchema),
       },
     },
-  )
+    handler: async (request, reply) => {
+      const parsedClassId = parseInt(request.params.classId, 10)
+      const parsedTeacherId = parseInt(request.query.teacherId, 10)
+
+      if (isNaN(parsedClassId) || isNaN(parsedTeacherId)) {
+        throw new BadRequestError("Invalid ID parameters")
+      }
+
+      await classService.deleteClass(parsedClassId, parsedTeacherId)
+
+      return reply.send({
+        success: true,
+        message: "Class deleted successfully",
+      })
+    },
+  })
 
   /**
    * POST /:classId/assignments
@@ -263,7 +270,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Classes"],
         summary: "Create an assignment for a class",
-        description: "Creates a new assignment with test cases, deadline, and optional scheduled release date",
+        description:
+          "Creates a new assignment with test cases, deadline, and optional scheduled release date",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(ClassIdParamSchema),
         body: toJsonSchema(CreateAssignmentRequestSchema),
@@ -282,7 +290,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         const { deadline, scheduledDate, ...assignmentData } = request.body
 
         const parsedDeadlineDate = parseDate(deadline, "deadline date")
-        const parsedScheduledDate = parseOptionalDate(scheduledDate, "scheduled date")
+        const parsedScheduledDate = parseOptionalDate(
+          scheduledDate,
+          "scheduled date",
+        )
 
         const createdAssignment = await assignmentService.createAssignment({
           classId: parsedClassId,
@@ -322,7 +333,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         throw new BadRequestError("Invalid class ID")
       }
 
-      const classAssignmentList = await classService.getClassAssignments(parsedClassId)
+      const classAssignmentList =
+        await classService.getClassAssignments(parsedClassId)
 
       return reply.send({
         success: true,
@@ -340,7 +352,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Classes"],
       summary: "Get all students in a class",
-      description: "Retrieves all enrolled students with their enrollment details for a specific class",
+      description:
+        "Retrieves all enrolled students with their enrollment details for a specific class",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
       response: {
@@ -354,7 +367,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         throw new BadRequestError("Invalid class ID")
       }
 
-      const enrolledStudentList = await classService.getClassStudents(parsedClassId)
+      const enrolledStudentList =
+        await classService.getClassStudents(parsedClassId)
 
       return reply.send({
         success: true,
@@ -375,7 +389,8 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Classes"],
       summary: "Remove a student from a class",
-      description: "Removes a student's enrollment from a class after verifying teacher ownership",
+      description:
+        "Removes a student's enrollment from a class after verifying teacher ownership",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassStudentParamsSchema),
       querystring: toJsonSchema(TeacherIdQuerySchema),
@@ -388,7 +403,11 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
       const parsedStudentId = parseInt(request.params.studentId, 10)
       const parsedTeacherId = parseInt(request.query.teacherId, 10)
 
-      if (isNaN(parsedClassId) || isNaN(parsedStudentId) || isNaN(parsedTeacherId)) {
+      if (
+        isNaN(parsedClassId) ||
+        isNaN(parsedStudentId) ||
+        isNaN(parsedTeacherId)
+      ) {
         throw new BadRequestError("Invalid ID parameters")
       }
 

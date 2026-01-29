@@ -28,7 +28,8 @@ import {
  * @returns A promise that resolves when all routes are registered.
  */
 export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
-  const gradebookService = container.resolve<GradebookService>("GradebookService")
+  const gradebookService =
+    container.resolve<GradebookService>("GradebookService")
 
   /**
    * GET /classes/:classId
@@ -38,7 +39,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Gradebook"],
       summary: "Get class gradebook",
-      description: "Returns all students with their grades for all assignments in the class",
+      description:
+        "Returns all students with their grades for all assignments in the class",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
       response: {
@@ -48,7 +50,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
 
-      const classGradebookData = await gradebookService.getClassGradebook(parsedClassId)
+      const classGradebookData =
+        await gradebookService.getClassGradebook(parsedClassId)
 
       return reply.send({
         success: true,
@@ -65,14 +68,16 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Gradebook"],
       summary: "Export class gradebook as CSV",
-      description: "Generates and downloads a CSV file containing all student grades for the class",
+      description:
+        "Generates and downloads a CSV file containing all student grades for the class",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
     },
     handler: async (request, reply) => {
       const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
 
-      const generatedCsvContent = await gradebookService.exportGradebookCSV(parsedClassId)
+      const generatedCsvContent =
+        await gradebookService.exportGradebookCSV(parsedClassId)
 
       return reply
         .header("Content-Type", "text/csv")
@@ -92,7 +97,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Gradebook"],
       summary: "Get class statistics",
-      description: "Returns statistical analysis including average grades, pass rates, and grade distribution",
+      description:
+        "Returns statistical analysis including average grades, pass rates, and grade distribution",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
       response: {
@@ -102,7 +108,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
 
-      const calculatedStatistics = await gradebookService.getClassStatistics(parsedClassId)
+      const calculatedStatistics =
+        await gradebookService.getClassStatistics(parsedClassId)
 
       return reply.send({
         success: true,
@@ -119,7 +126,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Gradebook"],
       summary: "Get student grades",
-      description: "Returns all grades for a student across all enrolled classes",
+      description:
+        "Returns all grades for a student across all enrolled classes",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(StudentIdParamSchema),
       response: {
@@ -127,9 +135,13 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const parsedStudentId = parsePositiveInt(request.params.studentId, "Student ID")
+      const parsedStudentId = parsePositiveInt(
+        request.params.studentId,
+        "Student ID",
+      )
 
-      const studentGradesList = await gradebookService.getStudentGrades(parsedStudentId)
+      const studentGradesList =
+        await gradebookService.getStudentGrades(parsedStudentId)
 
       return reply.send({
         success: true,
@@ -148,7 +160,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Get student grades for a class",
-        description: "Returns all grades for a specific student within a specific class",
+        description:
+          "Returns all grades for a specific student within a specific class",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(StudentClassParamsSchema),
         response: {
@@ -156,8 +169,14 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const parsedStudentId = parsePositiveInt(request.params.studentId, "Student ID")
-        const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
+        const parsedStudentId = parsePositiveInt(
+          request.params.studentId,
+          "Student ID",
+        )
+        const parsedClassId = parsePositiveInt(
+          request.params.classId,
+          "Class ID",
+        )
 
         const filteredStudentGrades = await gradebookService.getStudentGrades(
           parsedStudentId,
@@ -182,7 +201,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Get student rank in class",
-        description: "Returns the student's ranking position, total students, and percentile within the class",
+        description:
+          "Returns the student's ranking position, total students, and percentile within the class",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(StudentClassParamsSchema),
         response: {
@@ -190,8 +210,14 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const parsedStudentId = parsePositiveInt(request.params.studentId, "Student ID")
-        const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
+        const parsedStudentId = parsePositiveInt(
+          request.params.studentId,
+          "Student ID",
+        )
+        const parsedClassId = parsePositiveInt(
+          request.params.classId,
+          "Class ID",
+        )
 
         const calculatedRankData = await gradebookService.getStudentRank(
           parsedStudentId,
@@ -218,7 +244,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Override a grade",
-        description: "Manually set a grade for a submission, overriding the auto-calculated grade (teacher only)",
+        description:
+          "Manually set a grade for a submission, overriding the auto-calculated grade (teacher only)",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(SubmissionIdParamSchema),
         body: toJsonSchema(GradeOverrideBodySchema),
@@ -231,7 +258,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
           request.params.submissionId,
           "Submission ID",
         )
-        const { grade: manualGradeValue, feedback: optionalFeedbackText } = request.body
+        const { grade: manualGradeValue, feedback: optionalFeedbackText } =
+          request.body
 
         await gradebookService.overrideGrade(
           parsedSubmissionId,
@@ -257,7 +285,8 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Remove grade override",
-        description: "Removes manual grade override and reverts to auto-calculated grade based on test results",
+        description:
+          "Removes manual grade override and reverts to auto-calculated grade based on test results",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(SubmissionIdParamSchema),
         response: {

@@ -133,10 +133,7 @@ export async function adminEnrollmentRoutes(
         const classId = request.params.id
         const studentId = request.params.studentId
 
-        await adminEnrollmentService.removeStudentFromClass(
-          classId,
-          studentId,
-        )
+        await adminEnrollmentService.removeStudentFromClass(classId, studentId)
 
         return reply.send({
           success: true,

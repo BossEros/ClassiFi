@@ -6,7 +6,11 @@ type SortKey = "similarity" | "leftFile" | "rightFile" | "longest" | "overlap"
 type SortOrder = "asc" | "desc"
 
 // Sort indicator component - defined outside render to avoid recreation
-const SortIndicator: React.FC<{ column: SortKey; sortKey: SortKey; sortOrder: SortOrder }> = ({ column, sortKey, sortOrder }) => {
+const SortIndicator: React.FC<{
+  column: SortKey
+  sortKey: SortKey
+  sortOrder: SortOrder
+}> = ({ column, sortKey, sortOrder }) => {
   if (sortKey !== column) return null
   return (
     <span style={{ marginLeft: "4px" }}>
@@ -170,28 +174,53 @@ export const PairsTable: React.FC<PairsTableProps> = ({
           <thead>
             <tr>
               <th style={headerStyle} onClick={() => handleSort("leftFile")}>
-                Left File <SortIndicator column="leftFile" sortKey={sortKey} sortOrder={sortOrder} />
+                Left File{" "}
+                <SortIndicator
+                  column="leftFile"
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                />
               </th>
               <th style={headerStyle} onClick={() => handleSort("rightFile")}>
-                Right File <SortIndicator column="rightFile" sortKey={sortKey} sortOrder={sortOrder} />
+                Right File{" "}
+                <SortIndicator
+                  column="rightFile"
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                />
               </th>
               <th
                 style={{ ...headerStyle, textAlign: "center" }}
                 onClick={() => handleSort("similarity")}
               >
-                Similarity <SortIndicator column="similarity" sortKey={sortKey} sortOrder={sortOrder} />
+                Similarity{" "}
+                <SortIndicator
+                  column="similarity"
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                />
               </th>
               <th
                 style={{ ...headerStyle, textAlign: "right" }}
                 onClick={() => handleSort("longest")}
               >
-                Longest Fragment <SortIndicator column="longest" sortKey={sortKey} sortOrder={sortOrder} />
+                Longest Fragment{" "}
+                <SortIndicator
+                  column="longest"
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                />
               </th>
               <th
                 style={{ ...headerStyle, textAlign: "right" }}
                 onClick={() => handleSort("overlap")}
               >
-                Total Overlap <SortIndicator column="overlap" sortKey={sortKey} sortOrder={sortOrder} />
+                Total Overlap{" "}
+                <SortIndicator
+                  column="overlap"
+                  sortKey={sortKey}
+                  sortOrder={sortOrder}
+                />
               </th>
             </tr>
           </thead>

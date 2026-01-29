@@ -42,7 +42,9 @@ function parseDate(value: string | Date, fieldName: string): Date {
   const date = new Date(value)
 
   if (isNaN(date.getTime())) {
-    throw new BadRequestError(`Invalid ${fieldName}: "${value}" is not a valid date`)
+    throw new BadRequestError(
+      `Invalid ${fieldName}: "${value}" is not a valid date`,
+    )
   }
 
   return date
@@ -105,7 +107,8 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Assignments"],
         summary: "Update an assignment",
-        description: "Updates assignment details including title, description, and deadlines",
+        description:
+          "Updates assignment details including title, description, and deadlines",
         params: toJsonSchema(AssignmentIdParamSchema),
         body: toJsonSchema(UpdateAssignmentRequestSchema),
         response: {
@@ -183,35 +186,33 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * GET /:assignmentId/late-penalty
    * Get late penalty configuration for an assignment
    */
-  app.get<{ Params: { assignmentId: string } }>(
-    "/:assignmentId/late-penalty",
-    {
-      schema: {
-        tags: ["Assignments"],
-        summary: "Get late penalty config",
-        description: "Retrieves the late submission penalty configuration for an assignment",
-        params: toJsonSchema(AssignmentIdParamSchema),
-        response: {
-          200: toJsonSchema(LatePenaltyConfigResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const assignmentId = parsePositiveInt(
-          request.params.assignmentId,
-          "Assignment ID",
-        )
-
-        const latePenaltyConfig =
-          await latePenaltyService.getAssignmentConfig(assignmentId)
-
-        return reply.send({
-          success: true,
-          enabled: latePenaltyConfig.enabled,
-          config: latePenaltyConfig.config,
-        })
+  app.get<{ Params: { assignmentId: string } }>("/:assignmentId/late-penalty", {
+    schema: {
+      tags: ["Assignments"],
+      summary: "Get late penalty config",
+      description:
+        "Retrieves the late submission penalty configuration for an assignment",
+      params: toJsonSchema(AssignmentIdParamSchema),
+      response: {
+        200: toJsonSchema(LatePenaltyConfigResponseSchema),
       },
     },
-  )
+    handler: async (request, reply) => {
+      const assignmentId = parsePositiveInt(
+        request.params.assignmentId,
+        "Assignment ID",
+      )
+
+      const latePenaltyConfig =
+        await latePenaltyService.getAssignmentConfig(assignmentId)
+
+      return reply.send({
+        success: true,
+        enabled: latePenaltyConfig.enabled,
+        config: latePenaltyConfig.config,
+      })
+    },
+  })
 
   /**
    * PUT /:assignmentId/late-penalty
@@ -224,7 +225,8 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Assignments"],
       summary: "Update late penalty config",
-      description: "Updates the late submission penalty configuration for an assignment",
+      description:
+        "Updates the late submission penalty configuration for an assignment",
       params: toJsonSchema(AssignmentIdParamSchema),
       body: toJsonSchema(LatePenaltyUpdateBodySchema),
       response: {
@@ -237,9 +239,11 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
         "Assignment ID",
       )
 
-      const { enabled: isLatePenaltyEnabled, config: providedConfig } = request.body
+      const { enabled: isLatePenaltyEnabled, config: providedConfig } =
+        request.body
 
-      const latePenaltyConfigToApply = providedConfig ?? latePenaltyService.getDefaultConfig()
+      const latePenaltyConfigToApply =
+        providedConfig ?? latePenaltyService.getDefaultConfig()
 
       await latePenaltyService.setAssignmentConfig(
         assignmentId,
@@ -258,41 +262,38 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * GET /:assignmentId/test-cases
    * Get all test cases for an assignment
    */
-  app.get<{ Params: { assignmentId: string } }>(
-    "/:assignmentId/test-cases",
-    {
-      schema: {
-        tags: ["Assignments"],
-        summary: "Get test cases for an assignment",
-        description: "Retrieves all test cases associated with a specific assignment",
-        params: toJsonSchema(AssignmentIdParamSchema),
-        response: {
-          200: toJsonSchema(GetTestCasesResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const assignmentId = parsePositiveInt(
-          request.params.assignmentId,
-          "Assignment ID",
-        )
-
-        const testCasesList = await testCaseService.getTestCasesByAssignment(
-          assignmentId,
-        )
-
-        const testCasesWithFormattedDates = testCasesList.map((testCase) => ({
-          ...testCase,
-          createdAt: testCase.createdAt.toISOString(),
-        }))
-
-        return reply.send({
-          success: true,
-          message: "Test cases retrieved successfully",
-          testCases: testCasesWithFormattedDates,
-        })
+  app.get<{ Params: { assignmentId: string } }>("/:assignmentId/test-cases", {
+    schema: {
+      tags: ["Assignments"],
+      summary: "Get test cases for an assignment",
+      description:
+        "Retrieves all test cases associated with a specific assignment",
+      params: toJsonSchema(AssignmentIdParamSchema),
+      response: {
+        200: toJsonSchema(GetTestCasesResponseSchema),
       },
     },
-  )
+    handler: async (request, reply) => {
+      const assignmentId = parsePositiveInt(
+        request.params.assignmentId,
+        "Assignment ID",
+      )
+
+      const testCasesList =
+        await testCaseService.getTestCasesByAssignment(assignmentId)
+
+      const testCasesWithFormattedDates = testCasesList.map((testCase) => ({
+        ...testCase,
+        createdAt: testCase.createdAt.toISOString(),
+      }))
+
+      return reply.send({
+        success: true,
+        message: "Test cases retrieved successfully",
+        testCases: testCasesWithFormattedDates,
+      })
+    },
+  })
 
   /**
    * POST /:assignmentId/test-cases
@@ -346,7 +347,8 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Assignments"],
         summary: "Reorder test cases",
-        description: "Updates the display order of test cases for an assignment",
+        description:
+          "Updates the display order of test cases for an assignment",
         params: toJsonSchema(AssignmentIdParamSchema),
         body: toJsonSchema(ReorderTestCasesRequestSchema),
         response: {

@@ -88,7 +88,8 @@ export function AdminAddStudentModal({
       setStudents((prev) => prev.filter((s) => s.id !== student.id))
     } catch (error) {
       console.error("Failed to enroll student:", error)
-      showToast("Failed to enroll student", "error")    } finally {
+      showToast("Failed to enroll student", "error")
+    } finally {
       setIsSubmitting(null)
     }
   }

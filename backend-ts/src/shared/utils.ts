@@ -37,13 +37,16 @@ export async function generateUniqueClassCode(
  * @returns The parsed positive integer
  * @throws Error if the value is not a valid positive integer
  */
-export function parsePositiveInt(value: string | undefined, fieldName: string): number {
+export function parsePositiveInt(
+  value: string | undefined,
+  fieldName: string,
+): number {
   const parsed = parseInt(value ?? "", 10)
-  
+
   if (!Number.isInteger(parsed) || parsed <= 0) {
     throw new Error(`${fieldName} must be a positive integer`)
   }
-  
+
   return parsed
 }
 /**

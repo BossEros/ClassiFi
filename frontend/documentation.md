@@ -153,19 +153,19 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ### Available Services
 
-| Service                     | Location                                       | Purpose                                                  |
-| --------------------------- | ---------------------------------------------- | -------------------------------------------------------- |
-| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management   |
-| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                   |
-| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                  |
-| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export |
-| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection and similarity analysis             |
-| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                       |
-| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                       |
-| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                     |
-| **testService**             | `business/services/testService.ts`             | Code execution and testing                               |
-| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)            |
-| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion)|
+| Service                     | Location                                       | Purpose                                                   |
+| --------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
+| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management    |
+| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                    |
+| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                   |
+| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export  |
+| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection and similarity analysis              |
+| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                        |
+| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                        |
+| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                      |
+| **testService**             | `business/services/testService.ts`             | Code execution and testing                                |
+| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)             |
+| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion) |
 
 ### Service Guidelines
 
@@ -203,10 +203,11 @@ The Business Layer contains services that encapsulate business logic and orchest
 ClassiFi supports three programming languages for assignments:
 
 - **Python** (`.py` files)
-- **Java** (`.java` files)  
+- **Java** (`.java` files)
 - **C** (`.c` files)
 
 Language-specific features:
+
 - Syntax highlighting in Monaco Editor
 - File extension validation
 - Language-specific test execution
@@ -226,6 +227,7 @@ The plagiarism detection system provides:
 ### Toast Notifications
 
 Enhanced toast system with:
+
 - **Pause on hover**: Prevents auto-dismiss when user is reading
 - **Accessibility**: ARIA live regions and keyboard navigation
 - **Auto-dismiss**: Configurable timeout (default: 5 seconds)
@@ -235,6 +237,7 @@ Enhanced toast system with:
 ### User Settings
 
 Comprehensive settings page with:
+
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
 - **Account deletion**: Self-service account removal with confirmation
@@ -276,6 +279,7 @@ Comprehensive settings page with:
 ### Test Coverage
 
 The project maintains comprehensive test coverage for:
+
 - Business services (auth, class, assignment, gradebook)
 - Data repositories (API integration)
 - Utility functions (date formatting, validation)

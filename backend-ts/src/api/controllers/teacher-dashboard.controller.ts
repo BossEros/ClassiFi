@@ -45,10 +45,7 @@ export async function teacherDashboardRoutes(
     },
     handler: async (request, reply) => {
       const { teacherId } = request.params
-      const {
-        recentClassesLimit = 12,
-        pendingTasksLimit = 10,
-      } = request.query
+      const { recentClassesLimit = 12, pendingTasksLimit = 10 } = request.query
 
       const dashboardData = await teacherDashboardService.getDashboardData(
         teacherId,

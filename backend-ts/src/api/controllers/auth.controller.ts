@@ -34,18 +34,19 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Auth"],
       summary: "Register a new user",
-      description: "Creates a new user account with email and password authentication",
+      description:
+        "Creates a new user account with email and password authentication",
       body: toJsonSchema(RegisterRequestSchemaForDocs),
       response: {
         201: toJsonSchema(AuthResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const { confirmPassword: _confirmPassword, ...userRegistrationData } = request.body
+      const { confirmPassword: _confirmPassword, ...userRegistrationData } =
+        request.body
 
-      const registrationResult = await authService.registerUser(
-        userRegistrationData,
-      )
+      const registrationResult =
+        await authService.registerUser(userRegistrationData)
 
       return reply.status(201).send({
         success: true,
@@ -92,7 +93,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Auth"],
       summary: "Verify access token",
-      description: "Validates a Supabase access token and returns user information",
+      description:
+        "Validates a Supabase access token and returns user information",
       body: toJsonSchema(VerifyRequestSchema),
     },
     handler: async (request, reply) => {
@@ -146,7 +148,8 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Auth"],
       summary: "Logout user",
-      description: "Logout endpoint (actual session clearing happens client-side)",
+      description:
+        "Logout endpoint (actual session clearing happens client-side)",
       response: {
         200: toJsonSchema(SuccessMessageSchema),
       },

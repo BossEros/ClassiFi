@@ -221,9 +221,7 @@ describe("ClassService", () => {
 
       await expect(
         classService.updateClass({ classId: 1, teacherId: 1 }),
-      ).rejects.toThrow(
-        ClassNotFoundError,
-      )
+      ).rejects.toThrow(ClassNotFoundError)
     })
 
     it("should throw NotClassOwnerError if not owner", async () => {

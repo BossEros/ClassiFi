@@ -188,7 +188,9 @@ export class AdminClassService {
    * Archive a class (soft delete).
    * Returns the updated class with full details including teacher name.
    */
-  async archiveClass(classId: number): Promise<ClassDTO & { teacherName: string }> {
+  async archiveClass(
+    classId: number,
+  ): Promise<ClassDTO & { teacherName: string }> {
     await this.updateClass(classId, { isActive: false })
     return this.getClassById(classId)
   }

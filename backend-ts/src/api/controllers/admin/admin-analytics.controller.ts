@@ -71,12 +71,10 @@ export async function adminAnalyticsRoutes(
       const recentActivityList =
         await adminAnalyticsService.getRecentActivity(activityLimit)
 
-      const serializedActivityList = recentActivityList.map(
-        (activityItem) => ({
-          ...activityItem,
-          timestamp: activityItem.timestamp.toISOString(),
-        }),
-      )
+      const serializedActivityList = recentActivityList.map((activityItem) => ({
+        ...activityItem,
+        timestamp: activityItem.timestamp.toISOString(),
+      }))
 
       return reply.send({
         success: true,

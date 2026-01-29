@@ -108,7 +108,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Plagiarism"],
       summary: "Get plagiarism report by ID",
-      description: "Retrieves a complete plagiarism report with all similarity results",
+      description:
+        "Retrieves a complete plagiarism report with all similarity results",
       params: toJsonSchema(ReportIdParamSchema),
       response: {
         200: toJsonSchema(GetReportResponseSchema),
@@ -136,7 +137,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Plagiarism"],
         summary: "Get pair details with matching fragments",
-        description: "Retrieves detailed comparison between two submissions including matching code fragments",
+        description:
+          "Retrieves detailed comparison between two submissions including matching code fragments",
         params: toJsonSchema(ReportPairParamsSchema),
         response: {
           200: toJsonSchema(PairDetailsResponseSchema),
@@ -168,7 +170,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Plagiarism"],
       summary: "Delete a plagiarism report",
-      description: "Permanently removes a plagiarism report and all associated results",
+      description:
+        "Permanently removes a plagiarism report and all associated results",
       params: toJsonSchema(ReportIdParamSchema),
       response: {
         200: toJsonSchema(DeleteReportResponseSchema),
@@ -194,7 +197,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Plagiarism"],
       summary: "Get result details with fragments and file content",
-      description: "Retrieves detailed similarity result including matching fragments and full file content from database",
+      description:
+        "Retrieves detailed similarity result including matching fragments and full file content from database",
       params: toJsonSchema(ResultIdParamSchema),
       response: {
         200: toJsonSchema(ResultDetailsResponseSchema),
@@ -203,7 +207,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const resultId = parsePositiveInt(request.params.resultId, "Result ID")
 
-      const resultDetailsData = await plagiarismService.getResultDetails(resultId)
+      const resultDetailsData =
+        await plagiarismService.getResultDetails(resultId)
 
       return reply.send({
         success: true,

@@ -31,7 +31,9 @@ export class AssignmentService {
    * Create an assignment for a class.
    * Validates class ownership.
    */
-  async createAssignment(data: CreateAssignmentServiceDTO): Promise<AssignmentDTO> {
+  async createAssignment(
+    data: CreateAssignmentServiceDTO,
+  ): Promise<AssignmentDTO> {
     const {
       classId,
       teacherId,
@@ -111,21 +113,31 @@ export class AssignmentService {
   ): Promise<AssignmentDTO> {
     const { assignmentId, teacherId, ...updateData } = data
 
-    const existingAssignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+    const existingAssignment =
+      await this.assignmentRepo.getAssignmentById(assignmentId)
 
     if (!existingAssignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
     // Verify teacher owns the class
-    await requireClassOwnership(this.classRepo, existingAssignment.classId, teacherId)
+    await requireClassOwnership(
+      this.classRepo,
+      existingAssignment.classId,
+      teacherId,
+    )
 
     // Validate business rule: deadline must be after scheduled date
     // Handle partial updates by comparing against existing values
     const finalDeadline = updateData.deadline ?? existingAssignment.deadline
-    const finalScheduledDate = updateData.scheduledDate ?? existingAssignment.scheduledDate
+    const finalScheduledDate =
+      updateData.scheduledDate ?? existingAssignment.scheduledDate
 
-    if (finalDeadline && finalScheduledDate && finalDeadline < finalScheduledDate) {
+    if (
+      finalDeadline &&
+      finalScheduledDate &&
+      finalDeadline < finalScheduledDate
+    ) {
       throw new InvalidAssignmentDataError(
         "Deadline must be after scheduled date",
       )

@@ -52,9 +52,8 @@ function mapUpdateClassDtoToServiceData(dto: UpdateClass): UpdateClassData {
  * @returns A promise that resolves when all routes are registered.
  */
 export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
-  const adminClassService = container.resolve<AdminClassService>(
-    "AdminClassService",
-  )
+  const adminClassService =
+    container.resolve<AdminClassService>("AdminClassService")
   const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
 
   /**
@@ -145,7 +144,8 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Admin - Classes"],
       summary: "Update class information",
-      description: "Updates class details such as name, description, and schedule",
+      description:
+        "Updates class details such as name, description, and schedule",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassParamsSchema),
       body: toJsonSchema(UpdateClassSchema),

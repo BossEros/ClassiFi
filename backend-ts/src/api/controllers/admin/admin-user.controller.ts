@@ -261,8 +261,7 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Admin - Users"],
       summary: "Delete a user account",
-      description:
-        "Permanently deletes a user account and all associated data",
+      description: "Permanently deletes a user account and all associated data",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(UserParamsSchema),
       response: { 200: toJsonSchema(SuccessResponseSchema) },
