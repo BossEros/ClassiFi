@@ -164,8 +164,12 @@ class ApiClient {
             typeof errorField.message === "string"
               ? errorField.message
               : undefined) ??
-            (typeof errorData.detail === "string" ? errorData.detail : undefined) ??
-            (typeof errorData.message === "string" ? errorData.message : undefined)
+            (typeof errorData.detail === "string"
+              ? errorData.detail
+              : undefined) ??
+            (typeof errorData.message === "string"
+              ? errorData.message
+              : undefined)
 
           if (extractedMessage) {
             errorMessage = extractedMessage
