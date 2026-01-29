@@ -91,14 +91,11 @@ const adminNavigationItems = [
 
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(() => getCurrentUser())
   const navigate = useNavigate()
 
-  // Get user on mount and listen for storage changes
+  // Listen for storage changes (when avatar is updated)
   useEffect(() => {
-    setUser(getCurrentUser())
-
-    // Listen for storage changes (when avatar is updated)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "user") {
         const updatedUser = getCurrentUser()

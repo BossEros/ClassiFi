@@ -155,11 +155,21 @@ class ApiClient {
 
         if (typeof data === "object" && data !== null) {
           const errorData = data as Record<string, unknown>
-          errorMessage =
-            errorData.error?.message ??
-            errorData.detail ??
-            errorData.message ??
-            errorMessage
+          const errorField = errorData.error
+
+          const extractedMessage =
+            (typeof errorField === "object" &&
+            errorField !== null &&
+            "message" in errorField &&
+            typeof errorField.message === "string"
+              ? errorField.message
+              : undefined) ??
+            (typeof errorData.detail === "string" ? errorData.detail : undefined) ??
+            (typeof errorData.message === "string" ? errorData.message : undefined)
+
+          if (extractedMessage) {
+            errorMessage = extractedMessage
+          }
         } else if (typeof data === "string") {
           errorMessage = data
         }
