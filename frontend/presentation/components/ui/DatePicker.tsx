@@ -201,6 +201,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                   type="button"
                   onClick={handlePrevMonth}
                   className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  aria-label="Previous month"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -211,6 +212,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                   type="button"
                   onClick={handleNextMonth}
                   className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  aria-label="Next month"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
