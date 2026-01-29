@@ -193,10 +193,13 @@ export function AdminClassesPage() {
       await fetchClasses()
       showToast("Class deleted successfully", "success")
     } catch (err) {
-      throw err // Let the modal handle the error
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to delete class"
+      showToast(`Failed to delete class: ${errorMessage}`, "error")
     } finally {
       setActionLoading(null)
       setActiveDropdown(null)
+      setDeletingClass(null)
     }
   }
 

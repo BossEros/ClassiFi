@@ -650,7 +650,7 @@ describe("adminRepository", () => {
 
       const result = await adminRepository.getAllTeacherAccounts()
 
-      expect(apiClient.get).toHaveBeenCalledWith("/admin/teachers")
+      expect(apiClient.get).toHaveBeenCalledWith("/admin/users/teachers")
       expect(result.teachers).toHaveLength(1)
     })
 

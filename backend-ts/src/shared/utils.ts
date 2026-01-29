@@ -29,6 +29,24 @@ export async function generateUniqueClassCode(
 }
 
 /**
+ * Parse and validate a positive integer from a string.
+ * Throws an Error if the value is not a valid positive integer.
+ *
+ * @param value - The string value to parse
+ * @param fieldName - The name of the field (for error messages)
+ * @returns The parsed positive integer
+ * @throws Error if the value is not a valid positive integer
+ */
+export function parsePositiveInt(value: string | undefined, fieldName: string): number {
+  const parsed = parseInt(value ?? "", 10)
+  
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${fieldName} must be a positive integer`)
+  }
+  
+  return parsed
+}
+/**
  * Parse a numeric ID parameter.
  * Throws an error if the value is not a valid positive integer.
  *
@@ -69,4 +87,41 @@ export function addFullName<T extends { firstName: string; lastName: string }>(
     ...obj,
     fullName: formatFullName(obj.firstName, obj.lastName),
   }
+}
+
+/**
+ * Parse and validate a date string.
+ * Throws an error if the date is invalid.
+ *
+ * @param dateValue - The date string or Date object to parse
+ * @param fieldName - The name of the field (for error messages)
+ * @returns A valid Date object
+ * @throws Error if the date is invalid
+ */
+export function parseDate(dateValue: string | Date, fieldName: string): Date {
+  const date = new Date(dateValue)
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid ${fieldName}`)
+  }
+  return date
+}
+
+/**
+ * Parse and validate an optional date string.
+ * Returns null if the value is undefined or null.
+ * Throws an error if the date is invalid.
+ *
+ * @param dateValue - The optional date string or Date object to parse
+ * @param fieldName - The name of the field (for error messages)
+ * @returns A valid Date object or null
+ * @throws Error if the date is invalid
+ */
+export function parseOptionalDate(
+  dateValue: string | Date | null | undefined,
+  fieldName: string,
+): Date | null {
+  if (dateValue === null || dateValue === undefined) {
+    return null
+  }
+  return parseDate(dateValue, fieldName)
 }

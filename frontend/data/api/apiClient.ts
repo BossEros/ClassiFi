@@ -95,13 +95,11 @@ class ApiClient {
 
           try {
             const errorData = JSON.parse(errorText)
-            if (errorData.error?.message) {
-              errorMessage = errorData.error.message
-            } else if (errorData.detail) {
-              errorMessage = errorData.detail
-            } else if (errorData.message) {
-              errorMessage = errorData.message
-            }
+            errorMessage =
+              errorData.error?.message ??
+              errorData.detail ??
+              errorData.message ??
+              errorMessage
           } catch {
             errorMessage = errorText || errorMessage
           }
@@ -121,12 +119,11 @@ class ApiClient {
 
       // Parse response defensively - handle empty or non-JSON responses
       const rawText = await response.text()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let data: Record<string, any> | string | null = null
+      let data: Record<string, unknown> | string | null = null
 
       if (rawText) {
         try {
-          data = JSON.parse(rawText) as Record<string, any>
+          data = JSON.parse(rawText) as Record<string, unknown>
         } catch {
           // If JSON parsing fails, use raw text as the data
           data = rawText
@@ -157,16 +154,12 @@ class ApiClient {
         let errorMessage = "An error occurred"
 
         if (typeof data === "object" && data !== null) {
-          if (data.error?.message) {
-            // Backend error format: { success: false, error: { message: "..." } }
-            errorMessage = data.error.message
-          } else if (data.detail) {
-            // FastAPI HTTPException format
-            errorMessage = data.detail
-          } else if (data.message) {
-            // Custom error format
-            errorMessage = data.message
-          }
+          const errorData = data as Record<string, unknown>
+          errorMessage =
+            errorData.error?.message ??
+            errorData.detail ??
+            errorData.message ??
+            errorMessage
         } else if (typeof data === "string") {
           errorMessage = data
         }

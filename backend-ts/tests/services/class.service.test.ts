@@ -1,9 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
+import type { MockedObject } from "vitest"
 import { ClassService } from "../../src/services/class.service.js"
 import type { ClassRepository } from "../../src/repositories/class.repository.js"
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
 import type { UserRepository } from "../../src/repositories/user.repository.js"
+import type { SubmissionRepository } from "../../src/repositories/submission.repository.js"
+import type { StorageService } from "../../src/services/storage.service.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -17,10 +20,12 @@ import {
 
 describe("ClassService", () => {
   let classService: ClassService
-  let mockClassRepo: Partial<jest.Mocked<ClassRepository>>
-  let mockAssignmentRepo: Partial<jest.Mocked<AssignmentRepository>>
-  let mockEnrollmentRepo: Partial<jest.Mocked<EnrollmentRepository>>
-  let mockUserRepo: Partial<jest.Mocked<UserRepository>>
+  let mockClassRepo: Partial<MockedObject<ClassRepository>>
+  let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
+  let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
+  let mockUserRepo: Partial<MockedObject<UserRepository>>
+  let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
+  let mockStorageService: Partial<MockedObject<StorageService>>
 
   beforeEach(() => {
     mockClassRepo = {
@@ -40,11 +45,16 @@ describe("ClassService", () => {
       getUserById: vi.fn(),
     } as any
 
+    mockSubmissionRepo = {} as any
+    mockStorageService = {} as any
+
     classService = new ClassService(
-      mockClassRepo as ClassRepository,
-      mockAssignmentRepo as AssignmentRepository,
-      mockEnrollmentRepo as EnrollmentRepository,
-      mockUserRepo as UserRepository,
+      mockClassRepo as unknown as ClassRepository,
+      mockAssignmentRepo as unknown as AssignmentRepository,
+      mockEnrollmentRepo as unknown as EnrollmentRepository,
+      mockUserRepo as unknown as UserRepository,
+      mockSubmissionRepo as unknown as SubmissionRepository,
+      mockStorageService as unknown as StorageService,
     )
   })
 
@@ -58,15 +68,15 @@ describe("ClassService", () => {
       mockClassRepo.createClass!.mockResolvedValue(newClass)
       mockClassRepo.getStudentCount!.mockResolvedValue(0)
 
-      const result = await classService.createClass(
-        teacher.id,
-        newClass.className,
-        "ABC12345", // Passed directly, though service generates code if needed, but here code is passed
-        newClass.yearLevel,
-        newClass.semester,
-        newClass.academicYear,
-        newClass.schedule,
-      )
+      const result = await classService.createClass({
+        teacherId: teacher.id,
+        className: newClass.className,
+        classCode: "ABC12345",
+        yearLevel: newClass.yearLevel,
+        semester: newClass.semester,
+        academicYear: newClass.academicYear,
+        schedule: newClass.schedule,
+      })
 
       expect(result).toBeDefined()
       expect(result.id).toBe(newClass.id)
@@ -78,15 +88,15 @@ describe("ClassService", () => {
       mockUserRepo.getUserById!.mockResolvedValue(undefined)
 
       await expect(
-        classService.createClass(
-          999,
-          "Test Class",
-          "ABCDEFGH",
-          1,
-          1,
-          "2024-2025",
-          { days: ["monday"], startTime: "10:00", endTime: "11:00" },
-        ),
+        classService.createClass({
+          teacherId: 999,
+          className: "Test Class",
+          classCode: "ABCDEFGH",
+          yearLevel: 1,
+          semester: 1,
+          academicYear: "2024-2025",
+          schedule: { days: ["monday"], startTime: "10:00", endTime: "11:00" },
+        }),
       ).rejects.toThrow(InvalidRoleError)
     })
 
@@ -95,20 +105,20 @@ describe("ClassService", () => {
       mockUserRepo.getUserById!.mockResolvedValue(student)
 
       await expect(
-        classService.createClass(student.id, "Test", "ABCDEFGH", 1, 1, "2024", {
-          days: ["monday"],
-          startTime: "10:00",
-          endTime: "11:00",
+        classService.createClass({
+          teacherId: student.id,
+          className: "Test",
+          classCode: "ABCDEFGH",
+          yearLevel: 1,
+          semester: 1,
+          academicYear: "2024",
+          schedule: {
+            days: ["monday"],
+            startTime: "10:00",
+            endTime: "11:00",
+          },
         }),
       ).rejects.toThrow(InvalidRoleError)
-    })
-
-    it("should retry code generation if collision occurs", async () => {
-      // Note: generateClassCode is private-ish, but used internally.
-      // We test the side-effect via checkClassCodeExists mocks if we were using generateClassCode.
-      // However, createClass accepts a classCode string, so generation happens in the controller mostly?
-      // Checking service: createClass accepts classCode.
-      // The service has generateClassCode() public method. Let's test that separately.
     })
   })
 
@@ -197,7 +207,9 @@ describe("ClassService", () => {
       mockClassRepo.updateClass!.mockResolvedValue(updatedData)
       mockClassRepo.getStudentCount!.mockResolvedValue(0)
 
-      const result = await classService.updateClass(1, 1, {
+      const result = await classService.updateClass({
+        classId: 1,
+        teacherId: 1,
         className: "Updated",
       })
 
@@ -207,7 +219,9 @@ describe("ClassService", () => {
     it("should throw ClassNotFoundError if class missing", async () => {
       mockClassRepo.getClassById!.mockResolvedValue(undefined)
 
-      await expect(classService.updateClass(1, 1, {})).rejects.toThrow(
+      await expect(
+        classService.updateClass({ classId: 1, teacherId: 1 }),
+      ).rejects.toThrow(
         ClassNotFoundError,
       )
     })
@@ -216,9 +230,9 @@ describe("ClassService", () => {
       const existingClass = createMockClass({ teacherId: 1 })
       mockClassRepo.getClassById!.mockResolvedValue(existingClass)
 
-      await expect(classService.updateClass(1, 999, {})).rejects.toThrow(
-        NotClassOwnerError,
-      )
+      await expect(
+        classService.updateClass({ classId: 1, teacherId: 999 }),
+      ).rejects.toThrow(NotClassOwnerError)
     })
   })
 

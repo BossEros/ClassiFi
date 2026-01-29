@@ -10,14 +10,15 @@ The ClassiFi Frontend is a modern, responsive web application built with **React
 | --------------- | ---------------- | ------- | ------------------------------ |
 | **Core**        | React            | 19.x    | UI Library                     |
 | **Build Tool**  | Vite             | 7.x     | Fast bundler and dev server    |
-| **Language**    | TypeScript       | 5.x     | Static typing                  |
+| **Language**    | TypeScript       | 5.9.x   | Static typing                  |
 | **Styling**     | Tailwind CSS     | 4.x     | Utility-first CSS framework    |
 | **Routing**     | React Router DOM | 7.x     | Client-side routing            |
-| **Auth & Data** | Supabase JS      | 2.x     | Authentication and Storage SDK |
+| **Auth & Data** | Supabase JS      | 2.93.x  | Authentication and Storage SDK |
 | **Editor**      | Monaco Editor    | 0.55.x  | Code editor for IDE features   |
-| **Icons**       | Lucide React     | 0.55.x  | Icon set                       |
+| **Icons**       | Lucide React     | 0.563.x | Icon set                       |
 | **Testing**     | Vitest           | 4.x     | Unit and Integration testing   |
-| **E2E Testing** | Playwright       | 1.x     | End-to-End testing             |
+| **E2E Testing** | Playwright       | 1.58.x  | End-to-End testing             |
+| **Formatting**  | Prettier         | 3.8.x   | Code formatting                |
 
 ---
 
@@ -44,6 +45,8 @@ frontend/
 │   │   ├── forms/          # Complex form components
 │   │   ├── gradebook/      # Gradebook and assessment UI
 │   │   ├── modals/         # Dialogs and overlays
+│   │   ├── plagiarism/     # Plagiarism detection UI components
+│   │   ├── settings/       # User settings components
 │   │   └── ui/             # Generic/Shared UI atoms (Button, Input, etc.)
 │   ├── hooks/              # Custom React hooks
 │   ├── pages/              # Full page views corresponding to routes
@@ -54,9 +57,6 @@ frontend/
 │   ├── context/            # React Contexts (e.g., ToastContext)
 │   ├── types/              # Shared utility types
 │   └── utils/              # Helper functions (Date formatting, etc.)
-│
-├── src/                    # Feature-specific modules
-│   └── components/         # Additional components (e.g., Plagiarism engine)
 │
 └── main.tsx                # Application Entry Point
 ```
@@ -125,14 +125,25 @@ Routing is handled in `presentation/App.tsx`.
 
 ### Feature Components
 
-- **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks.
-- **`PlagiarismReport`**: Visualizes similarity analysis results.
+- **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks with syntax highlighting for Python, Java, and C.
+- **`PlagiarismReport`**: Visualizes similarity analysis results with side-by-side code comparison.
+  - **`PairsTable`**: Lists file pairs with similarity scores
+  - **`PairComparison`**: Side-by-side code editor with match highlighting
+  - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
+  - **`FragmentsTable`**: Detailed view of matching code fragments
+  - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Manages student grades and overrides.
+- **`TestResultsPanel`**: Displays test execution results with pass/fail status.
 
 ### Forms
 
-- **`ClassForm`**: Create/Edit classes.
-- **`CourseworkForm`**: Create/Edit assignments with file attachments and test cases.
+- **`ClassForm`**: Create/Edit classes with schedule configuration.
+- **`CourseworkForm`**: Create/Edit assignments with:
+  - Programming language selection (Python, Java, C)
+  - File attachments
+  - Test cases with input/output validation
+  - Late penalty configuration
+  - Deadline and resubmission settings
 
 ---
 
@@ -154,7 +165,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                     |
 | **testService**             | `business/services/testService.ts`             | Code execution and testing                               |
 | **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)            |
-| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload)                  |
+| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion)|
 
 ### Service Guidelines
 
@@ -185,6 +196,49 @@ The Business Layer contains services that encapsulate business logic and orchest
 5.  **Redirect**: On success, user is navigated to `/dashboard`.
 6.  **Persistence**: Session is persisted in LocalStorage/Cookies by Supabase client.
 
+## Key Features
+
+### Programming Language Support
+
+ClassiFi supports three programming languages for assignments:
+
+- **Python** (`.py` files)
+- **Java** (`.java` files)  
+- **C** (`.c` files)
+
+Language-specific features:
+- Syntax highlighting in Monaco Editor
+- File extension validation
+- Language-specific test execution
+- AST-based plagiarism detection
+
+### Plagiarism Detection
+
+The plagiarism detection system provides:
+
+- **Side-by-side comparison**: View matched code fragments in parallel editors
+- **Synchronized scrolling**: Navigate through matches seamlessly
+- **Fragment highlighting**: Visual indicators for matching code regions
+- **Similarity metrics**: Percentage similarity, overlap, and longest match
+- **Interactive navigation**: Click fragments to jump to specific matches
+- **Export capabilities**: Download reports for record-keeping
+
+### Toast Notifications
+
+Enhanced toast system with:
+- **Pause on hover**: Prevents auto-dismiss when user is reading
+- **Accessibility**: ARIA live regions and keyboard navigation
+- **Auto-dismiss**: Configurable timeout (default: 5 seconds)
+- **Multiple types**: Success, error, info, warning
+- **Queue management**: Handles multiple toasts gracefully
+
+### User Settings
+
+Comprehensive settings page with:
+- **Avatar upload**: Profile picture management via Supabase Storage
+- **Password change**: Secure password update flow
+- **Account deletion**: Self-service account removal with confirmation
+
 ---
 
 ## Development Guidelines
@@ -214,3 +268,16 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 - **Unit Tests**: `npm run test` (Vitest). Focus on `business/services` and utility logic.
 - **E2E Tests**: Playwright (setup in `tests/e2e`).
+  - Authentication flows
+  - Class and assignment creation
+  - Submission workflows
+  - Smoke tests for critical paths
+
+### Test Coverage
+
+The project maintains comprehensive test coverage for:
+- Business services (auth, class, assignment, gradebook)
+- Data repositories (API integration)
+- Utility functions (date formatting, validation)
+- UI components (Button, Card, Input, Toast)
+- E2E workflows (login, class creation, assignment submission)

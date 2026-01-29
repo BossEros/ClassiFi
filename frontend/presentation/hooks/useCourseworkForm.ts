@@ -137,7 +137,7 @@ export function useCourseworkForm() {
             setShowTemplateCode(!!assignment.templateCode)
           }
         }
-      } catch (_error) {
+      } catch {
         setErrors({ general: "Failed to load data. Please try again." })
       } finally {
         setIsFetching(false)

@@ -312,7 +312,7 @@ export async function archiveClassById(
 
 export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
   const apiResponse =
-    await apiClient.get<AdminTeachersResponse>("/admin/teachers")
+    await apiClient.get<AdminTeachersResponse>("/admin/users/teachers")
 
   if (apiResponse.error) {
     throw new Error(apiResponse.error)

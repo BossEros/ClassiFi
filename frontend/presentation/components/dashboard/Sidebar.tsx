@@ -96,8 +96,7 @@ export function Sidebar() {
 
   // Get user on mount and listen for storage changes
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
+    setUser(getCurrentUser())
 
     // Listen for storage changes (when avatar is updated)
     const handleStorageChange = (e: StorageEvent) => {

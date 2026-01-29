@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from "react"
+import { useEffect, useState, useRef, useMemo, useCallback } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Grid3x3, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
@@ -39,7 +39,7 @@ export function ClassesPage() {
     }
   }, [location.state, location.pathname, showToast, navigate])
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const currentUser = getCurrentUser()
     if (!currentUser) {
       navigate("/login")
@@ -50,7 +50,7 @@ export function ClassesPage() {
       setIsLoading(true)
       setError(null)
 
-      const activeOnlyParam = status === "active" ? true : false
+      const activeOnlyParam = status === "active"
 
       const allClasses = await getAllClasses(
         parseInt(currentUser.id),
@@ -64,12 +64,12 @@ export function ClassesPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [navigate, status])
 
   // Fetch classes when status changes (backend filter)
   useEffect(() => {
     fetchData()
-  }, [navigate, status])
+  }, [fetchData])
 
   // Extract unique terms from classes for the dropdown
   const terms = useMemo(() => {

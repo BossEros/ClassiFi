@@ -25,6 +25,7 @@ import { AssignmentService } from "../services/assignment.service.js"
 import { SupabaseAuthAdapter } from "../services/supabase-auth.adapter.js"
 import { Judge0Service } from "../services/judge0.service.js"
 import { CodeTestService } from "../services/codeTest.service.js"
+import { TestCaseService } from "../services/test-case.service.js"
 import { CODE_EXECUTOR_TOKEN } from "../services/interfaces/codeExecutor.interface.js"
 import { GradebookService } from "../services/gradebook.service.js"
 import { LatePenaltyService } from "../services/latePenalty.service.js"
@@ -70,6 +71,7 @@ container.registerSingleton("LatePenaltyService", LatePenaltyService)
 // Register code execution services
 container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)
 container.registerSingleton("CodeTestService", CodeTestService)
+container.registerSingleton("TestCaseService", TestCaseService)
 
 // Register focused admin services as singletons
 container.registerSingleton("AdminUserService", AdminUserService)
