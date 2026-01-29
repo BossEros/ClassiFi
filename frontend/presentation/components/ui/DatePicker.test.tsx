@@ -29,7 +29,11 @@ describe("DatePicker", () => {
     const trigger = screen.getByRole("button", { name: /May 15, 2024/i })
     fireEvent.click(trigger)
 
-    expect(screen.getByRole("button", { name: "Previous month" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Next month" })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Previous month" }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Next month" }),
+    ).toBeInTheDocument()
   })
 })
