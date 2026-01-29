@@ -34,8 +34,12 @@ export function SettingsPage() {
   const [isAvatarUploadOpen, setIsAvatarUploadOpen] = useState(false)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
+    const initializeUser = () => {
+      const currentUser = getCurrentUser()
+      setUser(currentUser)
+    }
+
+    initializeUser()
   }, [])
 
   const handleAvatarSuccess = (avatarUrl: string) => {

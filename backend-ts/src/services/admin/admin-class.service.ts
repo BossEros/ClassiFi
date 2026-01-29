@@ -174,19 +174,25 @@ export class AdminClassService {
 
   /**
    * Reassign a class to a new teacher.
+   * Returns the updated class with full details including teacher name.
    */
   async reassignClassTeacher(
     classId: number,
     newTeacherId: number,
-  ): Promise<ClassDTO> {
-    return this.updateClass(classId, { teacherId: newTeacherId })
+  ): Promise<ClassDTO & { teacherName: string }> {
+    await this.updateClass(classId, { teacherId: newTeacherId })
+    return this.getClassById(classId)
   }
 
   /**
    * Archive a class (soft delete).
+   * Returns the updated class with full details including teacher name.
    */
-  async archiveClass(classId: number): Promise<ClassDTO> {
-    return this.updateClass(classId, { isActive: false })
+  async archiveClass(
+    classId: number,
+  ): Promise<ClassDTO & { teacherName: string }> {
+    await this.updateClass(classId, { isActive: false })
+    return this.getClassById(classId)
   }
 
   /**

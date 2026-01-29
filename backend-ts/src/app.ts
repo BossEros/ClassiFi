@@ -12,6 +12,9 @@ import "@/shared/container.js"
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: settings.debug,
+    // Set request timeout slightly higher than test execution timeout
+    // to allow graceful 504 response instead of connection drop
+    requestTimeout: (settings.testExecutionTimeoutSeconds + 5) * 1000,
   })
 
   // Register CORS

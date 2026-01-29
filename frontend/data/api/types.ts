@@ -763,7 +763,7 @@ export interface AssignmentDetailDTO {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
-  testCases?: any[]
+  testCases?: AssignmentTestCase[]
 }
 
 export interface SubmissionDTO {

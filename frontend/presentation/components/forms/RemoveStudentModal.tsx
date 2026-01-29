@@ -33,7 +33,8 @@ export function RemoveStudentModal({
       await removeStudent(classId, studentId, teacherId)
       onSuccess()
       onClose()
-    } catch (err) {
+    } catch (error) {
+      console.error("Failed to remove student:", error)
       setError("Failed to remove student. Please try again.")
     } finally {
       setIsSubmitting(false)

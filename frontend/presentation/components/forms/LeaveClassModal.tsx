@@ -38,6 +38,7 @@ export function LeaveClassModal({
       onSuccess()
       onClose()
     } catch (err) {
+      console.error("Failed to leave class:", err)
       setError("Failed to leave class. Please try again.")
     } finally {
       setIsSubmitting(false)

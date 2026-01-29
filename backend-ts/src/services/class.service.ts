@@ -22,6 +22,7 @@ import {
 import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
+  UpdateClassServiceDTO,
 } from "./service-dtos.js"
 
 @injectable()
@@ -119,19 +120,19 @@ export class ClassService {
   }
 
   /** Update a class */
-  async updateClass(
-    classId: number,
-    teacherId: number,
-    data: {
-      className?: string
-      description?: string | null
-      isActive?: boolean
-      yearLevel?: number
-      semester?: number
-      academicYear?: string
-      schedule?: ClassSchedule
-    },
-  ): Promise<ClassDTO> {
+  async updateClass(data: UpdateClassServiceDTO): Promise<ClassDTO> {
+    const {
+      classId,
+      teacherId,
+      className,
+      description,
+      isActive,
+      yearLevel,
+      semester,
+      academicYear,
+      schedule,
+    } = data
+
     const existingClass = await this.classRepo.getClassById(classId)
 
     if (!existingClass) {
@@ -142,7 +143,26 @@ export class ClassService {
       throw new NotClassOwnerError()
     }
 
-    const updatedClass = await this.classRepo.updateClass(classId, data)
+    // Build updates object and filter out undefined values
+    const updates: Partial<{
+      className: string
+      description: string | null
+      isActive: boolean
+      yearLevel: number
+      semester: number
+      academicYear: string
+      schedule: ClassSchedule
+    }> = {}
+
+    if (className !== undefined) updates.className = className
+    if (description !== undefined) updates.description = description
+    if (isActive !== undefined) updates.isActive = isActive
+    if (yearLevel !== undefined) updates.yearLevel = yearLevel
+    if (semester !== undefined) updates.semester = semester
+    if (academicYear !== undefined) updates.academicYear = academicYear
+    if (schedule !== undefined) updates.schedule = schedule
+
+    const updatedClass = await this.classRepo.updateClass(classId, updates)
 
     if (!updatedClass) {
       throw new ClassNotFoundError(classId)

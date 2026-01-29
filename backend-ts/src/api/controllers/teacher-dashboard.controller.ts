@@ -11,11 +11,16 @@ import {
   TaskListResponseSchema,
 } from "@/api/schemas/dashboard.schema.js"
 
-/** Teacher dashboard routes - /api/v1/teacher/dashboard/* */
+/**
+ * Registers teacher dashboard routes for retrieving dashboard data, classes, and tasks.
+ *
+ * @param app - The Fastify application instance.
+ * @returns A promise that resolves when all routes are registered.
+ */
 export async function teacherDashboardRoutes(
   app: FastifyInstance,
 ): Promise<void> {
-  const dashboardService = container.resolve<TeacherDashboardService>(
+  const teacherDashboardService = container.resolve<TeacherDashboardService>(
     "TeacherDashboardService",
   )
 
@@ -30,6 +35,8 @@ export async function teacherDashboardRoutes(
     schema: {
       tags: ["Teacher Dashboard"],
       summary: "Get complete dashboard data for a teacher",
+      description:
+        "Returns recent classes and pending tasks for the teacher's dashboard overview",
       params: toJsonSchema(TeacherIdParamSchema),
       querystring: toJsonSchema(TeacherDashboardQuerySchema),
       response: {
@@ -40,7 +47,7 @@ export async function teacherDashboardRoutes(
       const { teacherId } = request.params
       const { recentClassesLimit = 12, pendingTasksLimit = 10 } = request.query
 
-      const data = await dashboardService.getDashboardData(
+      const dashboardData = await teacherDashboardService.getDashboardData(
         teacherId,
         recentClassesLimit,
         pendingTasksLimit,
@@ -49,8 +56,8 @@ export async function teacherDashboardRoutes(
       return reply.send({
         success: true,
         message: "Dashboard data retrieved successfully",
-        recentClasses: data.recentClasses,
-        pendingTasks: data.pendingTasks,
+        recentClasses: dashboardData.recentClasses,
+        pendingTasks: dashboardData.pendingTasks,
       })
     },
   })
@@ -65,6 +72,8 @@ export async function teacherDashboardRoutes(
       schema: {
         tags: ["Teacher Dashboard"],
         summary: "Get recent classes for a teacher",
+        description:
+          "Returns a list of the teacher's most recently updated classes",
         params: toJsonSchema(TeacherIdParamSchema),
         querystring: toJsonSchema(LimitQuerySchema),
         response: {
@@ -75,7 +84,7 @@ export async function teacherDashboardRoutes(
         const { teacherId } = request.params
         const { limit = 5 } = request.query
 
-        const classes = await dashboardService.getRecentClasses(
+        const recentClasses = await teacherDashboardService.getRecentClasses(
           teacherId,
           limit,
         )
@@ -83,7 +92,7 @@ export async function teacherDashboardRoutes(
         return reply.send({
           success: true,
           message: "Recent classes retrieved successfully",
-          classes,
+          classes: recentClasses,
         })
       },
     },
@@ -99,6 +108,8 @@ export async function teacherDashboardRoutes(
       schema: {
         tags: ["Teacher Dashboard"],
         summary: "Get pending tasks for a teacher",
+        description:
+          "Returns a list of pending grading tasks (ungraded submissions) for the teacher",
         params: toJsonSchema(TeacherIdParamSchema),
         querystring: toJsonSchema(LimitQuerySchema),
         response: {
@@ -109,12 +120,15 @@ export async function teacherDashboardRoutes(
         const { teacherId } = request.params
         const { limit = 10 } = request.query
 
-        const tasks = await dashboardService.getPendingTasks(teacherId, limit)
+        const pendingTasks = await teacherDashboardService.getPendingTasks(
+          teacherId,
+          limit,
+        )
 
         return reply.send({
           success: true,
           message: "Pending tasks retrieved successfully",
-          tasks,
+          tasks: pendingTasks,
         })
       },
     },

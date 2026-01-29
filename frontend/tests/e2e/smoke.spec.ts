@@ -69,7 +69,7 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
           document.body.innerText.substring(0, 500),
         )
         console.log("Page text snippet:", bodyText)
-      } catch (e) {
+      } catch {
         console.log("Could not get page text")
       }
       throw error
@@ -106,7 +106,7 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
         )
 
         console.log("Page text snippet:", bodyText)
-      } catch (e) {
+      } catch {
         console.log("Could not get page text")
       }
       throw error

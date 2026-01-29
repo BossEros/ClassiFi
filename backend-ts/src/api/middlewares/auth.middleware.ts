@@ -60,7 +60,7 @@ export const authMiddleware: preHandlerHookHandler = async (
 
     // Attach user to request
     request.user = userData
-  } catch (error) {
+  } catch {
     throw new UnauthorizedError("Invalid or expired token")
   }
 }
@@ -90,7 +90,7 @@ export const optionalAuthMiddleware: preHandlerHookHandler = async (
     const authService = container.resolve<AuthService>("AuthService")
     const userData = await authService.verifyToken(token)
     request.user = userData
-  } catch (error) {
+  } catch {
     // Token invalid, continue without user
   }
 }

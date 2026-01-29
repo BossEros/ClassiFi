@@ -14,6 +14,7 @@ export function useTestResults(submissionId: number) {
       const data = await getTestResults(submissionId)
       setResults(data)
     } catch (err) {
+      console.error(err, "Failed to load test results")
       setError("Failed to load test results")
       setResults(null)
     } finally {

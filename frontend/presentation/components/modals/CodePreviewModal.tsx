@@ -3,7 +3,7 @@ import { X, Copy, Check } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { useToast } from "@/shared/context/ToastContext"
 import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 interface CodePreviewModalProps {
   isOpen: boolean
@@ -23,6 +23,22 @@ export function CodePreviewModal({
   const { showToast } = useToast()
   const [isCopied, setIsCopied] = useState(false)
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose()
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [isOpen, onClose])
+
   if (!isOpen) return null
 
   const handleCopy = async () => {
@@ -31,7 +47,7 @@ export function CodePreviewModal({
       setIsCopied(true)
       showToast("Code copied to clipboard", "success")
       setTimeout(() => setIsCopied(false), 2000)
-    } catch (err) {
+    } catch {
       showToast("Failed to copy code", "error")
     }
   }

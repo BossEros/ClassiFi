@@ -117,10 +117,33 @@ export class AssignmentInactiveError extends BadRequestError {
   }
 }
 
+export class InvalidAssignmentDataError extends BadRequestError {
+  constructor(message: string) {
+    super(message)
+    this.name = "InvalidAssignmentDataError"
+  }
+}
+
 export class DeadlinePassedError extends BadRequestError {
   constructor() {
     super("The deadline for this assignment has passed")
     this.name = "DeadlinePassedError"
+  }
+}
+
+export class TestCaseNotFoundError extends NotFoundError {
+  constructor(testCaseId: number) {
+    super(`Test case not found: ${testCaseId}`)
+    this.name = "TestCaseNotFoundError"
+  }
+}
+
+export class TestCaseOwnershipError extends ForbiddenError {
+  constructor(testCaseId: number, assignmentId: number) {
+    super(
+      `Test case ${testCaseId} does not belong to assignment ${assignmentId}`,
+    )
+    this.name = "TestCaseOwnershipError"
   }
 }
 

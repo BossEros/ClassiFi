@@ -201,6 +201,20 @@ export const TeachersListResponseSchema = z.object({
   teachers: z.array(UserDTOSchema),
 })
 
+export const ClassAssignmentItemSchema = z.object({
+  id: z.number(),
+  title: z.string(),
+  description: z.string().nullable(),
+  deadline: z.string().nullable(),
+  createdAt: z.string(),
+  submissionCount: z.number(),
+})
+
+export const ClassAssignmentsResponseSchema = z.object({
+  success: z.boolean(),
+  assignments: z.array(ClassAssignmentItemSchema),
+})
+
 // ============ Type Exports ============
 
 export type UserFilterQuery = z.infer<typeof UserFilterQuerySchema>

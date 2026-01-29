@@ -137,8 +137,7 @@ export async function deleteClassByIdForTeacher(
   teacherId: number,
 ): Promise<void> {
   const apiResponse = await apiClient.delete<DeleteResponse>(
-    `/classes/${classId}`,
-    { teacherId },
+    `/classes/${classId}?teacherId=${teacherId}`,
   )
 
   if (apiResponse.error || !apiResponse.data?.success) {

@@ -39,6 +39,9 @@ jobs:
       - name: Check code formatting
         run: npm run format:check
 
+      - name: Lint code
+        run: npm run lint
+
       - name: TypeScript type check
         run: npm run typecheck
 
@@ -46,10 +49,10 @@ jobs:
         run: npm run test
 
   # ─────────────────────────────────────────────────────────────
-  # Frontend: Type Check & Build
+  # Frontend: Type Check, Lint, Tests & Build
   # ─────────────────────────────────────────────────────────────
   frontend:
-    name: Frontend Build
+    name: Frontend Build & Tests
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -71,6 +74,12 @@ jobs:
 
       - name: Check code formatting
         run: npm run format:check
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
 
       - name: Build (includes TypeScript check)
         run: npm run build
