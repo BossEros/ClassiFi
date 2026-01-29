@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { PlagiarismService } from "../../services/plagiarism.service.js"
 import { toJsonSchema } from "../utils/swagger.js"
-import { BadRequestError } from "../middlewares/error-handler.js"
+import { UnauthorizedError } from "../middlewares/error-handler.js"
 import { authMiddleware } from "../middlewares/auth.middleware.js"
 import { parsePositiveInt } from "../../shared/utils.js"
 import {
@@ -80,7 +80,7 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         )
 
         if (!request.user?.id) {
-          throw new BadRequestError("User authentication required")
+          throw new UnauthorizedError("User authentication required")
         }
 
         const authenticatedTeacherId = request.user.id

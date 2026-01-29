@@ -29,7 +29,7 @@ import {
   CreateAssignmentResponseSchema,
   type CreateAssignmentRequest,
 } from "@/api/schemas/assignment.schema.js"
-import { BadRequestError } from "@/api/middlewares/error-handler.js"
+import { BadRequestError, ApiError } from "@/shared/errors.js"
 
 /**
  * Registers all class-related API routes.
@@ -289,24 +289,34 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         // Destructure to separate date strings from other fields
         const { deadline, scheduledDate, ...assignmentData } = request.body
 
-        const parsedDeadlineDate = parseDate(deadline, "deadline date")
-        const parsedScheduledDate = parseOptionalDate(
-          scheduledDate,
-          "scheduled date",
-        )
+        try {
+          const parsedDeadlineDate = parseDate(deadline, "deadline date")
+          const parsedScheduledDate = parseOptionalDate(
+            scheduledDate,
+            "scheduled date",
+          )
 
-        const createdAssignment = await assignmentService.createAssignment({
-          classId: parsedClassId,
-          ...assignmentData,
-          deadline: parsedDeadlineDate,
-          scheduledDate: parsedScheduledDate,
-        })
+          const createdAssignment = await assignmentService.createAssignment({
+            classId: parsedClassId,
+            ...assignmentData,
+            deadline: parsedDeadlineDate,
+            scheduledDate: parsedScheduledDate,
+          })
 
-        return reply.status(201).send({
-          success: true,
-          message: "Assignment created successfully",
-          assignment: createdAssignment,
-        })
+          return reply.status(201).send({
+            success: true,
+            message: "Assignment created successfully",
+            assignment: createdAssignment,
+          })
+        } catch (error) {
+          // Re-throw BadRequestError and other ApiErrors to preserve status codes
+          if (error instanceof ApiError) {
+            throw error
+          }
+
+          // Wrap unknown errors as internal server errors
+          throw new ApiError("Failed to create assignment", 500)
+        }
       },
     },
   )

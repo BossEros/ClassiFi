@@ -42,8 +42,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const { confirmPassword: _confirmPassword, ...userRegistrationData } =
-        request.body
+      const { confirmPassword, ...userRegistrationData } = request.body
+
+      // Validate password confirmation
+      if (userRegistrationData.password !== confirmPassword) {
+        throw new ApiError("Passwords do not match", 400)
+      }
 
       const registrationResult =
         await authService.registerUser(userRegistrationData)

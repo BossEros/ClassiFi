@@ -88,7 +88,7 @@ docker-compose up -d
 
 ## 📂 Project Structure
 
-```
+```text
 ClassiFi/
 ├── frontend/              # React 19 + TypeScript frontend
 │   ├── business/          # Business logic layer

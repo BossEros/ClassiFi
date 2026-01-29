@@ -263,9 +263,11 @@ TEST_EXECUTION_TIMEOUT_SECONDS=90
 {
   "success": false,
   "message": "Test execution timeout",
-  "error": "Tests did not complete within 60 seconds. This may indicate an infinite loop, excessive computation, or system overload."
+  "error": "Tests did not complete within <TEST_EXECUTION_TIMEOUT_SECONDS> seconds. This may indicate an infinite loop, excessive computation, or system overload."
 }
 ```
+
+*Note: The timeout value in the error message reflects the configured `TEST_EXECUTION_TIMEOUT_SECONDS` environment variable (default: 60 seconds).*
 
 ### Programming Language Support
 
@@ -804,7 +806,7 @@ describe('AuthService', () => {
 Every API endpoint must include comprehensive Fastify schema documentation:
 
 **Required Elements:**
-- **Endpoint comment**: Single-line comment with HTTP method, path, and summary (e.g., `// GET /users - List all users`)
+- **Endpoint comment**: Multi-line comment block with HTTP method, path, and summary for better readability
 - **tags**: Array with category (e.g., `["Admin - Users"]`, `["Classes"]`)
 - **summary**: Brief description of what the endpoint does
 - **description**: (Optional) Additional context or usage notes
@@ -814,7 +816,10 @@ Every API endpoint must include comprehensive Fastify schema documentation:
 
 **Example:**
 ```typescript
-// GET /classes/:id/students - Get enrolled students in a class
+/**
+ * GET /classes/:id/students
+ * Get enrolled students in a class
+ */
 app.get<{ Params: ClassParams }>("/classes/:id/students", {
   preHandler: [authMiddleware],
   schema: {
@@ -833,7 +838,10 @@ app.get<{ Params: ClassParams }>("/classes/:id/students", {
   },
 });
 
-// POST /submissions - Submit an assignment
+/**
+ * POST /submissions
+ * Submit an assignment
+ */
 app.post<{ Body: CreateSubmission }>("/submissions", {
   preHandler: [authMiddleware, uploadMiddleware],
   schema: {
@@ -855,12 +863,31 @@ app.post<{ Body: CreateSubmission }>("/submissions", {
 
 **Endpoint Comment Format:**
 ```typescript
-// {METHOD} {PATH} - {Summary from schema}
+/**
+ * {METHOD} {PATH}
+ * {Summary description}
+ */
+
 // Examples:
-// GET /users/:id - Get user details by ID
-// POST /classes - Create a new class
-// PATCH /users/:id/role - Update user role
-// DELETE /assignments/:id - Delete an assignment
+/**
+ * GET /users/:id
+ * Get user details by ID
+ */
+
+/**
+ * POST /classes
+ * Create a new class
+ */
+
+/**
+ * PATCH /users/:id/role
+ * Update user role
+ */
+
+/**
+ * DELETE /assignments/:id
+ * Delete an assignment
+ */
 ```
 
 **Endpoint Documentation Checklist:**

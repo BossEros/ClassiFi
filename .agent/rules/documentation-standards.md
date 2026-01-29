@@ -49,13 +49,16 @@ export function calculateGrade(scores: number[], weights: number[]): number {
 
 Every API endpoint must include:
 
-1. **Endpoint Comment**: Single-line comment with HTTP method, path, and summary
+1. **Endpoint Comment**: Multi-line comment block with HTTP method, path, and summary
 2. **Fastify Schema**: Complete schema with tags, summary, description, security, and response types
 
 ### Endpoint Comment Format
 
 ```typescript
-// {METHOD} {PATH} - {Summary}
+/**
+ * {METHOD} {PATH}
+ * {Summary description}
+ */
 ```
 
 ### Examples
@@ -63,7 +66,10 @@ Every API endpoint must include:
 #### Complete Example with Error Responses
 
 ```typescript
-// GET /users/:id - Get user details by ID
+/**
+ * GET /users/:id
+ * Get user details by ID
+ */
 app.get<{ Params: UserParams }>("/users/:id", {
   preHandler: [authMiddleware],
   schema: {
@@ -125,7 +131,10 @@ app.get<{ Params: UserParams }>("/users/:id", {
 #### Simplified Examples
 
 ```typescript
-// POST /classes - Create a new class
+/**
+ * POST /classes
+ * Create a new class
+ */
 app.post<{ Body: CreateClass }>("/classes", {
   preHandler: [authMiddleware],
   schema: {
@@ -146,7 +155,10 @@ app.post<{ Body: CreateClass }>("/classes", {
   },
 });
 
-// PATCH /users/:id/role - Update user role
+/**
+ * PATCH /users/:id/role
+ * Update user role
+ */
 app.patch<{ Params: UserParams; Body: UpdateRole }>("/users/:id/role", {
   preHandler: [authMiddleware, adminMiddleware],
   schema: {
@@ -170,7 +182,10 @@ app.patch<{ Params: UserParams; Body: UpdateRole }>("/users/:id/role", {
   },
 });
 
-// DELETE /assignments/:id - Delete an assignment
+/**
+ * DELETE /assignments/:id
+ * Delete an assignment
+ */
 app.delete<{ Params: AssignmentParams }>("/assignments/:id", {
   preHandler: [authMiddleware],
   schema: {

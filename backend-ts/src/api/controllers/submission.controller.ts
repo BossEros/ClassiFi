@@ -344,10 +344,12 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
         "Submission ID",
       )
 
-      // Create timeout promise
+      // Create cancelable timeout promise
       const timeoutMs = settings.testExecutionTimeoutSeconds * 1000
+      let timeoutId: NodeJS.Timeout | undefined
+
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           reject(
             new Error(
               `Test execution exceeded timeout of ${settings.testExecutionTimeoutSeconds} seconds`,
@@ -383,6 +385,11 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
 
         // Re-throw other errors to be handled by global error handler
         throw error
+      } finally {
+        // Always clear the timeout to prevent unhandled rejection leaks
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId)
+        }
       }
     },
   })

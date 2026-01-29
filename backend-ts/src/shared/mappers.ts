@@ -453,7 +453,7 @@ export function toClassGradebookDTO(gradebook: {
       id: a.id,
       name: a.name,
       totalScore: a.totalScore,
-      deadline: a.deadline.toISOString() ?? "",
+      deadline: a.deadline.toISOString(),
     })),
     students: gradebook.students.map((s) => ({
       id: s.id,
@@ -495,7 +495,7 @@ export function toStudentGradesDTO(
       assignmentId: a.assignmentId,
       assignmentName: a.assignmentName,
       totalScore: a.totalScore,
-      deadline: a.deadline.toISOString() ?? "",
+      deadline: a.deadline?.toISOString() ?? "",
       grade: a.grade,
       isOverridden: a.isOverridden,
       feedback: a.feedback,

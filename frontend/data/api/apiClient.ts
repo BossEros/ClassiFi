@@ -90,18 +90,28 @@ class ApiClient {
       if (responseType === "blob") {
         if (!response.ok) {
           // For blob errors, try to read as text for error message
-          const errorText = await response.text()
+          const blobText = await response.text()
           let errorMessage = "An error occurred"
 
           try {
-            const errorData = JSON.parse(errorText)
-            errorMessage =
-              errorData.error?.message ??
-              errorData.detail ??
-              errorData.message ??
-              errorMessage
+            const errorData = JSON.parse(blobText)
+
+            // Check if errorData itself is a plain string
+            if (typeof errorData === "string") {
+              errorMessage = errorData
+            } else if (typeof errorData === "object" && errorData !== null) {
+              // Prefer errorData.error if it's a string
+              errorMessage =
+                (typeof errorData.error === "string"
+                  ? errorData.error
+                  : undefined) ??
+                errorData.error?.message ??
+                errorData.detail ??
+                errorData.message ??
+                errorMessage
+            }
           } catch {
-            errorMessage = errorText || errorMessage
+            errorMessage = blobText || errorMessage
           }
 
           return {
@@ -157,7 +167,9 @@ class ApiClient {
           const errorData = data as Record<string, unknown>
           const errorField = errorData.error
 
+          // Prefer errorData.error if it's a string before checking nested properties
           const extractedMessage =
+            (typeof errorField === "string" ? errorField : undefined) ??
             (typeof errorField === "object" &&
             errorField !== null &&
             "message" in errorField &&

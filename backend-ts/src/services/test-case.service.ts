@@ -56,7 +56,7 @@ export class TestCaseService {
     const testCase = await this.testCaseRepo.update(testCaseId, data)
 
     if (!testCase) {
-      throw new Error("Test case not found")
+      throw new TestCaseNotFoundError(testCaseId)
     }
 
     return testCase
@@ -69,7 +69,7 @@ export class TestCaseService {
     const deleted = await this.testCaseRepo.delete(testCaseId)
 
     if (!deleted) {
-      throw new Error("Test case not found")
+      throw new TestCaseNotFoundError(testCaseId)
     }
 
     return true

@@ -79,7 +79,14 @@ npm test        # MUST PASS: Runs unit tests
 - **DRY (Don't Repeat Yourself)**: Eliminate code duplication by extracting reusable functions and utilities.
 - **Check Shared Utilities**: Before writing new utility functions, check `shared/` directories in both frontend and backend.
 
-### 5.2 Self-Documenting Code
+### 5.2 API Security & Data Handling
+
+1. **Don't Expose Internal Errors**: Never return database errors, stack traces, or tool failures to users. Log them internally, show users a simple message like "Something went wrong".
+2. **Always Use DTOs (Data Transfer Objects)**: Map incoming request data to DTOs. This prevents unexpected fields, improves validation, and protects domain logic.
+3. **Validate All Incoming Data**: Never trust client input. Validate types, formats, lengths, and required fields - always.
+4. **Separate Business Logic from Controllers**: Controllers should handle requests. Services should handle logic. This makes your code easier to test and maintain.
+
+### 5.3 Self-Documenting Code
 
 Code should be self-explanatory through clear naming conventions:
 
@@ -118,7 +125,7 @@ function isUserAuthorizedForLevel(
 }
 ```
 
-### 5.3 TypeScript Best Practices
+### 5.4 TypeScript Best Practices
 
 **Type Safety:**
 - Enable `strict: true` in `tsconfig.json`
@@ -145,7 +152,7 @@ function isUserAuthorizedForLevel(
 - `Readonly<T>` for immutability
 - `Record<K, V>` for typed dictionaries
 
-### 5.4 Documentation Standards (JSDoc/TSDoc)
+### 5.5 Documentation Standards (JSDoc/TSDoc)
 
 #### Function Documentation
 
@@ -271,7 +278,7 @@ app.post<{ Body: CreateSubmission }>("/submissions", {
 - [ ] Response schemas include success and common error codes
 - [ ] Description added for complex or non-obvious endpoints
 
-### 5.5 Code Formatting & Spacing
+### 5.6 Code Formatting & Spacing
 
 **Vertical Spacing:**
 - Add blank lines between different logical blocks

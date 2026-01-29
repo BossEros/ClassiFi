@@ -5,6 +5,7 @@
 
 import { v4 as uuidv4 } from "uuid"
 import type { ClassRepository } from "../repositories/class.repository.js"
+import { BadRequestError } from "./errors.js"
 
 /**
  * Generate a unique class code.
@@ -30,38 +31,44 @@ export async function generateUniqueClassCode(
 
 /**
  * Parse and validate a positive integer from a string.
- * Throws an Error if the value is not a valid positive integer.
+ * Performs strict validation to ensure the entire string is numeric before parsing.
+ * Throws a BadRequestError if the value is not a valid positive integer.
  *
  * @param value - The string value to parse
  * @param fieldName - The name of the field (for error messages)
  * @returns The parsed positive integer
- * @throws Error if the value is not a valid positive integer
+ * @throws BadRequestError if the value is not a valid positive integer
  */
 export function parsePositiveInt(
   value: string | undefined,
   fieldName: string,
 ): number {
-  const parsed = parseInt(value ?? "", 10)
+  // Strict validation: ensure the entire string is numeric
+  if (!value || !/^\d+$/.test(value)) {
+    throw new BadRequestError(`${fieldName} must be a positive integer`)
+  }
+
+  const parsed = parseInt(value, 10)
 
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`${fieldName} must be a positive integer`)
+    throw new BadRequestError(`${fieldName} must be a positive integer`)
   }
 
   return parsed
 }
 /**
  * Parse a numeric ID parameter.
- * Throws an error if the value is not a valid positive integer.
+ * Throws a BadRequestError if the value is not a valid positive integer.
  *
  * @param value - The string value to parse
  * @param paramName - The name of the parameter (for error messages)
  * @returns The parsed number
- * @throws Error if the value is not a valid number
+ * @throws BadRequestError if the value is not a valid number
  */
 export function parseNumericParam(value: string, paramName: string): number {
   const parsed = parseInt(value, 10)
   if (isNaN(parsed) || parsed <= 0) {
-    throw new Error(`Invalid ${paramName} ID`)
+    throw new BadRequestError(`Invalid ${paramName} ID`)
   }
   return parsed
 }
@@ -94,17 +101,17 @@ export function addFullName<T extends { firstName: string; lastName: string }>(
 
 /**
  * Parse and validate a date string.
- * Throws an error if the date is invalid.
+ * Throws a BadRequestError if the date is invalid.
  *
  * @param dateValue - The date string or Date object to parse
  * @param fieldName - The name of the field (for error messages)
  * @returns A valid Date object
- * @throws Error if the date is invalid
+ * @throws BadRequestError if the date is invalid
  */
 export function parseDate(dateValue: string | Date, fieldName: string): Date {
   const date = new Date(dateValue)
   if (isNaN(date.getTime())) {
-    throw new Error(`Invalid ${fieldName}`)
+    throw new BadRequestError(`Invalid ${fieldName}`)
   }
   return date
 }
@@ -112,12 +119,12 @@ export function parseDate(dateValue: string | Date, fieldName: string): Date {
 /**
  * Parse and validate an optional date string.
  * Returns null if the value is undefined or null.
- * Throws an error if the date is invalid.
+ * Throws a BadRequestError if the date is invalid.
  *
  * @param dateValue - The optional date string or Date object to parse
  * @param fieldName - The name of the field (for error messages)
  * @returns A valid Date object or null
- * @throws Error if the date is invalid
+ * @throws BadRequestError if the date is invalid
  */
 export function parseOptionalDate(
   dateValue: string | Date | null | undefined,
