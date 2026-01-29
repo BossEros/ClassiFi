@@ -416,7 +416,7 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 | DELETE | `/admin/classes/:id`          | Delete class         |
 | PATCH  | `/admin/classes/:id/reassign` | Reassign teacher     |
 | PATCH  | `/admin/classes/:id/archive`  | Archive class        |
-| GET    | `/admin/classes/:id/assignments` | Get class assignments |
+| GET    | `/admin/classes/:id/assignments`    | Get class assignments    |
 
 #### Enrollment Management
 
