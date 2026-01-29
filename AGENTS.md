@@ -301,7 +301,7 @@ async function getUser(id: number): Promise<User> {
   }
 
   return user;
-}}
+}
 
 // ✅ Good (complex/long)
 function createUser(
