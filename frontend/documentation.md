@@ -158,19 +158,19 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ### Available Services
 
-| Service                     | Location                                       | Purpose                                                   |
-| --------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
-| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management    |
-| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                    |
-| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                   |
-| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export  |
-| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring              |
-| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                        |
-| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                        |
-| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                      |
-| **testService**             | `business/services/testService.ts`             | Code execution and testing                                |
-| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)             |
-| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion) |
+| Service                     | Location                                       | Purpose                                                                |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management                 |
+| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
+| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                                |
+| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
+| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
+| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
+| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
+| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                                   |
+| **testService**             | `business/services/testService.ts`             | Code execution and testing                                             |
+| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)                          |
+| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion)              |
 
 ### Service Guidelines
 

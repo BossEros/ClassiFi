@@ -377,9 +377,9 @@ describe("plagiarismService", () => {
     })
 
     it("throws error for empty report ID", async () => {
-      await expect(
-        plagiarismService.getStudentPairs("", 101),
-      ).rejects.toThrow("Report ID is required")
+      await expect(plagiarismService.getStudentPairs("", 101)).rejects.toThrow(
+        "Report ID is required",
+      )
     })
 
     it("throws error for whitespace-only report ID", async () => {
