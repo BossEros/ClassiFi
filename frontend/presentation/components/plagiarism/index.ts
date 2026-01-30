@@ -6,6 +6,11 @@ export { SimilarityBadge } from "./SimilarityBadge"
 export { FragmentsTable } from "./FragmentsTable"
 export { PairsTable } from "./PairsTable"
 
+// New student-centric components
+export { OriginalityBadge } from "./OriginalityBadge"
+export { StudentSummaryTable } from "./StudentSummaryTable"
+export { StudentPairsDetail } from "./StudentPairsDetail"
+
 // Types
 export type { FileData, CodeRegion, MatchFragment, FilePair } from "./types"
 

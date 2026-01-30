@@ -367,14 +367,16 @@ The programming language is specified at assignment creation and enforced during
 
 The plagiarism detection system uses a custom implementation based on Winnowing algorithm with Tree-Sitter for code parsing. It supports Python, Java, and C languages.
 
-| Method | Endpoint                                       | Description             |
-| ------ | ---------------------------------------------- | ----------------------- |
-| POST   | `/plagiarism/analyze`                          | Analyze files           |
-| POST   | `/plagiarism/analyze/assignment/:assignmentId` | Analyze full assignment |
-| GET    | `/plagiarism/reports/:reportId`                | Get report details      |
-| DELETE | `/plagiarism/reports/:reportId`                | Delete report           |
-| GET    | `/plagiarism/reports/:reportId/pairs/:pairId`  | Get match pair details  |
-| GET    | `/plagiarism/results/:resultId/details`        | Get result details      |
+| Method | Endpoint                                                      | Description                    |
+| ------ | ------------------------------------------------------------- | ------------------------------ |
+| POST   | `/plagiarism/analyze`                                         | Analyze files                  |
+| POST   | `/plagiarism/analyze/assignment/:assignmentId`                | Analyze full assignment        |
+| GET    | `/plagiarism/reports/:reportId`                               | Get report details             |
+| GET    | `/plagiarism/reports/:reportId/students`                      | Get student originality summary|
+| GET    | `/plagiarism/reports/:reportId/students/:submissionId/pairs`  | Get student's pairs            |
+| DELETE | `/plagiarism/reports/:reportId`                               | Delete report                  |
+| GET    | `/plagiarism/reports/:reportId/pairs/:pairId`                 | Get match pair details         |
+| GET    | `/plagiarism/results/:resultId/details`                       | Get result details             |
 
 **Supported Languages**: Python, Java, C
 
@@ -384,6 +386,73 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 - Configurable k-gram size and window size
 - Fragment-level match detection with line/column positions
 - Similarity scoring and overlap metrics
+
+**Student-Centric Analysis**:
+
+The plagiarism system provides a student-centric view that calculates originality scores:
+
+- **Originality Score**: Calculated as `1 - max_similarity` where max_similarity is the highest similarity score across all pairs involving the student
+- **Color Coding**: Red (<30%), Yellow (30-60%), Green (>60%)
+- **Use Case**: Quickly identify students with potential plagiarism concerns
+
+**Example Response** (`GET /plagiarism/reports/:reportId/students`):
+```json
+{
+  "success": true,
+  "message": "Student summary retrieved successfully",
+  "students": [
+    {
+      "studentId": 123,
+      "studentName": "John Doe",
+      "submissionId": 456,
+      "originalityScore": 0.25,
+      "highestSimilarity": 0.75,
+      "highestMatchWith": {
+        "studentId": 789,
+        "studentName": "Jane Smith",
+        "submissionId": 101
+      },
+      "totalPairs": 5,
+      "suspiciousPairs": 2
+    }
+  ]
+}
+```
+
+**Example Response** (`GET /plagiarism/reports/:reportId/students/:submissionId/pairs`):
+```json
+{
+  "success": true,
+  "message": "Student pairs retrieved successfully",
+  "pairs": [
+    {
+      "id": 1,
+      "leftFile": {
+        "id": 456,
+        "path": "submission.py",
+        "filename": "submission.py",
+        "lineCount": 50,
+        "studentId": "123",
+        "studentName": "John Doe"
+      },
+      "rightFile": {
+        "id": 101,
+        "path": "submission.py",
+        "filename": "submission.py",
+        "lineCount": 48,
+        "studentId": "789",
+        "studentName": "Jane Smith"
+      },
+      "structuralScore": 0.75,
+      "semanticScore": 0,
+      "hybridScore": 0,
+      "overlap": 35,
+      "longest": 12
+    }
+  ]
+}
+```
+
 
 ### Dashboard
 

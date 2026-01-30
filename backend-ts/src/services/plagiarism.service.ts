@@ -64,6 +64,22 @@ export interface PairDetailsResponse {
   rightCode: string
 }
 
+/** Student summary with originality metrics */
+export interface StudentSummary {
+  studentId: number
+  studentName: string
+  submissionId: number
+  originalityScore: number
+  highestSimilarity: number
+  highestMatchWith: {
+    studentId: number
+    studentName: string
+    submissionId: number
+  }
+  totalPairs: number
+  suspiciousPairs: number
+}
+
 /**
  * Business logic for plagiarism detection operations.
  * Refactored to use dedicated services for persistence and file operations.
@@ -406,6 +422,150 @@ export class PlagiarismService {
       pairs,
       resultIdMap,
     )
+  }
+
+  /**
+   * Calculates per-student originality scores from pairwise similarity results.
+   * Originality is computed as 1 - max_similarity, where max_similarity is the
+   * highest similarity score across all pairs involving the student.
+   *
+   * @param reportId - The unique identifier of the plagiarism report.
+   * @returns Array of student summaries sorted by originality (lowest first).
+   * @throws PlagiarismReportNotFoundError if report doesn't exist.
+   */
+  async getStudentSummary(reportId: number): Promise<StudentSummary[]> {
+    // Fetch report from database
+    const report = await this.persistenceService.getReport(reportId)
+    if (!report) {
+      throw new PlagiarismReportNotFoundError(reportId.toString())
+    }
+
+    // Extract unique students from pairs
+    const studentMap = new Map<
+      number,
+      {
+        studentId: number
+        studentName: string
+        submissionId: number
+        maxSimilarity: number
+        highestMatchWith: {
+          studentId: number
+          studentName: string
+          submissionId: number
+        } | null
+        pairs: PlagiarismPairDTO[]
+      }
+    >()
+
+    // Process each pair to build student data
+    for (const pair of report.pairs) {
+      // Process left student
+      const leftSubId = pair.leftFile.id
+      if (!studentMap.has(leftSubId)) {
+        studentMap.set(leftSubId, {
+          studentId: parseInt(pair.leftFile.studentId || "0"),
+          studentName: pair.leftFile.studentName || "Unknown",
+          submissionId: leftSubId,
+          maxSimilarity: 0,
+          highestMatchWith: null,
+          pairs: [],
+        })
+      }
+      const leftStudent = studentMap.get(leftSubId)!
+      leftStudent.pairs.push(pair)
+
+      // Update max similarity for left student
+      if (pair.structuralScore > leftStudent.maxSimilarity) {
+        leftStudent.maxSimilarity = pair.structuralScore
+        leftStudent.highestMatchWith = {
+          studentId: parseInt(pair.rightFile.studentId || "0"),
+          studentName: pair.rightFile.studentName || "Unknown",
+          submissionId: pair.rightFile.id,
+        }
+      }
+
+      // Process right student
+      const rightSubId = pair.rightFile.id
+      if (!studentMap.has(rightSubId)) {
+        studentMap.set(rightSubId, {
+          studentId: parseInt(pair.rightFile.studentId || "0"),
+          studentName: pair.rightFile.studentName || "Unknown",
+          submissionId: rightSubId,
+          maxSimilarity: 0,
+          highestMatchWith: null,
+          pairs: [],
+        })
+      }
+      const rightStudent = studentMap.get(rightSubId)!
+      rightStudent.pairs.push(pair)
+
+      // Update max similarity for right student
+      if (pair.structuralScore > rightStudent.maxSimilarity) {
+        rightStudent.maxSimilarity = pair.structuralScore
+        rightStudent.highestMatchWith = {
+          studentId: parseInt(pair.leftFile.studentId || "0"),
+          studentName: pair.leftFile.studentName || "Unknown",
+          submissionId: pair.leftFile.id,
+        }
+      }
+    }
+
+    // Build student summaries
+    const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+    const summaries: StudentSummary[] = Array.from(studentMap.values()).map(
+      (student) => ({
+        studentId: student.studentId,
+        studentName: student.studentName,
+        submissionId: student.submissionId,
+        originalityScore: 1 - student.maxSimilarity,
+        highestSimilarity: student.maxSimilarity,
+        highestMatchWith: student.highestMatchWith || {
+          studentId: 0,
+          studentName: "None",
+          submissionId: 0,
+        },
+        totalPairs: student.pairs.length,
+        suspiciousPairs: student.pairs.filter(
+          (p) => p.structuralScore >= threshold,
+        ).length,
+      }),
+    )
+
+    // Sort by originality (ascending) to show concerning students first
+    summaries.sort((a, b) => a.originalityScore - b.originalityScore)
+
+    return summaries
+  }
+
+  /**
+   * Retrieves all pairwise comparisons involving a specific student's submission.
+   * Results are sorted by similarity score in descending order.
+   *
+   * @param reportId - The unique identifier of the plagiarism report.
+   * @param submissionId - The unique identifier of the student's submission.
+   * @returns Array of pairs involving the specified submission.
+   * @throws PlagiarismReportNotFoundError if report doesn't exist.
+   */
+  async getStudentPairs(
+    reportId: number,
+    submissionId: number,
+  ): Promise<PlagiarismPairDTO[]> {
+    // Fetch report from database
+    const report = await this.persistenceService.getReport(reportId)
+    if (!report) {
+      throw new PlagiarismReportNotFoundError(reportId.toString())
+    }
+
+    // Filter pairs involving the specified submission
+    const studentPairs = report.pairs.filter(
+      (pair) =>
+        pair.leftFile.id === submissionId || pair.rightFile.id === submissionId,
+    )
+
+    // Sort by similarity (descending) to show highest matches first
+    studentPairs.sort((a, b) => b.structuralScore - a.structuralScore)
+
+    return studentPairs
   }
 
   // ========================================================================

@@ -2,10 +2,8 @@ import { useState, useEffect, useMemo } from "react"
 import { useParams, useLocation } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
-import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import {
-  Search,
   AlertTriangle,
   FileCode,
   BarChart3,
@@ -16,20 +14,27 @@ import {
   GitCompare,
 } from "lucide-react"
 import {
-  SimilarityBadge,
   PairComparison,
   PairCodeDiff,
+  StudentSummaryTable,
+  StudentPairsDetail,
   type FilePair,
 } from "@/presentation/components/plagiarism"
 import {
   getResultDetails,
+  getStudentSummary,
+  getStudentPairs,
   type AnalyzeResponse,
   type PairResponse,
+  type StudentSummary,
 } from "@/business/services/plagiarismService"
 
 interface LocationState {
   results: AnalyzeResponse
 }
+
+/** Code comparison view mode */
+type CodeViewMode = "match" | "diff"
 
 /**
  * Detect the syntax highlighting language from a filename extension.
@@ -55,6 +60,7 @@ function detectLanguage(filename: string): string {
     kt: "kotlin",
     scala: "scala",
   }
+
   return extensionMap[ext] || "plaintext"
 }
 
@@ -62,79 +68,105 @@ export function SimilarityResultsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const location = useLocation()
 
+  // Results from analysis
   const [results, setResults] = useState<AnalyzeResponse | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null)
-  const [sortBy, setSortBy] = useState<"similarity" | "overlap" | "longest">(
-    "similarity",
-  )
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
 
-  // State for code comparison
+  // Student-centric view state
+  const [studentSummaries, setStudentSummaries] = useState<StudentSummary[]>([])
+  const [isLoadingStudents, setIsLoadingStudents] = useState(false)
+  const [studentSummaryError, setStudentSummaryError] = useState<string | null>(
+    null,
+  )
+  const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(
+    null,
+  )
+  const [studentPairs, setStudentPairs] = useState<PairResponse[]>([])
+  const [isLoadingStudentPairs, setIsLoadingStudentPairs] = useState(false)
+
+  // Code comparison state
+  const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null)
+
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
   const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
-  const [viewMode, setViewMode] = useState<"match" | "diff">("match")
+  const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [detailsError, setDetailsError] = useState<string | null>(null)
 
   // Load results from location state
   useEffect(() => {
     const state = location.state as LocationState | null
+
     if (state?.results) {
       setResults(state.results)
     }
   }, [location.state])
 
-  // Filter and sort pairs
-  const filteredPairs = useMemo(() => {
-    if (!results) return []
+  // Load student summaries when results are available
+  useEffect(() => {
+    if (!results?.reportId) return
 
-    let pairs = [...results.pairs]
+    const loadStudentSummaries = async () => {
+      setIsLoadingStudents(true)
+      setStudentSummaryError(null)
 
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      pairs = pairs.filter(
-        (pair) =>
-          pair.leftFile.studentName?.toLowerCase().includes(query) ||
-          pair.rightFile.studentName?.toLowerCase().includes(query) ||
-          pair.leftFile.filename.toLowerCase().includes(query) ||
-          pair.rightFile.filename.toLowerCase().includes(query),
-      )
-    }
-
-    // Sort
-    pairs.sort((a, b) => {
-      let valueA: number, valueB: number
-      switch (sortBy) {
-        case "similarity":
-          valueA = a.structuralScore
-          valueB = b.structuralScore
-          break
-        case "overlap":
-          valueA = a.overlap
-          valueB = b.overlap
-          break
-        case "longest":
-          valueA = a.longest
-          valueB = b.longest
-          break
-        default:
-          valueA = a.structuralScore
-          valueB = b.structuralScore
+      try {
+        const summaries = await getStudentSummary(results.reportId)
+        setStudentSummaries(summaries)
+      } catch (error) {
+        console.error("Failed to load student summaries:", error)
+        setStudentSummaryError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load student summaries",
+        )
+      } finally {
+        setIsLoadingStudents(false)
       }
-      return sortOrder === "desc" ? valueB - valueA : valueA - valueB
-    })
-
-    return pairs
-  }, [results, searchQuery, sortBy, sortOrder])
-
-  const handleSort = (key: "similarity" | "overlap" | "longest") => {
-    if (sortBy === key) {
-      setSortOrder((prev) => (prev === "desc" ? "asc" : "desc"))
-    } else {
-      setSortBy(key)
-      setSortOrder("desc")
     }
+
+    loadStudentSummaries()
+  }, [results?.reportId])
+
+  // Load student pairs when a student is selected
+  useEffect(() => {
+    if (!results?.reportId || !selectedStudent) return
+
+    const loadStudentPairs = async () => {
+      setIsLoadingStudentPairs(true)
+
+      try {
+        const pairs = await getStudentPairs(
+          results.reportId,
+          selectedStudent.submissionId,
+        )
+        setStudentPairs(pairs)
+      } catch (error) {
+        console.error("Failed to load student pairs:", error)
+        setStudentPairs([])
+      } finally {
+        setIsLoadingStudentPairs(false)
+      }
+    }
+
+    loadStudentPairs()
+  }, [results?.reportId, selectedStudent])
+
+  // Handle selecting a student from the summary table
+  const handleStudentSelect = (student: StudentSummary) => {
+    setSelectedStudent(student)
+    setStudentPairs([])
+    // Clear any existing code comparison
+    setSelectedPair(null)
+    setPairDetails(null)
+    setDetailsError(null)
+  }
+
+  // Handle going back from student details to summary
+  const handleBackToStudents = () => {
+    setSelectedStudent(null)
+    setStudentPairs([])
+    setSelectedPair(null)
+    setPairDetails(null)
+    setDetailsError(null)
   }
 
   // Handle viewing pair details with code comparison
@@ -145,9 +177,6 @@ export function SimilarityResultsPage() {
     setPairDetails(null)
 
     try {
-      // We need to get the result ID from the database
-      // For now, we use the pair's leftFile and rightFile IDs as a workaround
-      // In production, the API response should include the similarity_result ID
       const details = await getResultDetails(pair.id)
 
       // Convert to FilePair format for PairComparison component
@@ -200,7 +229,7 @@ export function SimilarityResultsPage() {
   // Compute language for code highlighting based on filenames
   const detectedLanguage = useMemo(() => {
     if (!pairDetails) return "plaintext"
-    // Use the left file's extension as the primary source
+
     return detectLanguage(pairDetails.leftFile.filename)
   }, [pairDetails])
 
@@ -314,128 +343,52 @@ export function SimilarityResultsPage() {
           </Card>
         </div>
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
-          <div className="flex-1 max-w-md relative group">
-            <Input
-              type="text"
-              placeholder="Search by student name or file..."
-              className="pl-14 h-12 bg-white/5 border-white/10 text-white placeholder:text-slate-400 focus:border-teal-500/50 focus:ring-teal-600/20 rounded-xl transition-all duration-300"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none transition-colors">
-              <Search className="w-6 h-6 text-teal-400 group-focus-within:text-teal-300 transition-colors" />
-            </div>
-          </div>
-        </div>
+        {/* Student-Centric View */}
+        {/* Error State */}
+        {studentSummaryError && (
+          <Card className="bg-red-500/10 border-red-500/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+                <p className="text-red-400">{studentSummaryError}</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-        {/* Pairs Table */}
-        <Card className="bg-white/5 backdrop-blur-sm border-white/10 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-white/10">
-                  <th className="text-left p-4 text-sm font-medium text-slate-300">
-                    Student 1
-                  </th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-300">
-                    Student 2
-                  </th>
-                  <th
-                    className="text-left p-4 text-sm font-medium text-slate-300 cursor-pointer hover:text-white"
-                    onClick={() => handleSort("similarity")}
-                  >
-                    Similarity{" "}
-                    {sortBy === "similarity" &&
-                      (sortOrder === "desc" ? "↓" : "↑")}
-                  </th>
-                  <th
-                    className="text-left p-4 text-sm font-medium text-slate-300 cursor-pointer hover:text-white"
-                    onClick={() => handleSort("overlap")}
-                  >
-                    Overlap{" "}
-                    {sortBy === "overlap" && (sortOrder === "desc" ? "↓" : "↑")}
-                  </th>
-                  <th
-                    className="text-left p-4 text-sm font-medium text-slate-300 cursor-pointer hover:text-white"
-                    onClick={() => handleSort("longest")}
-                  >
-                    Longest{" "}
-                    {sortBy === "longest" && (sortOrder === "desc" ? "↓" : "↑")}
-                  </th>
-                  <th className="text-left p-4 text-sm font-medium text-slate-300">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredPairs.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-300">
-                      {searchQuery
-                        ? "No pairs match your search"
-                        : "No pairs to display"}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredPairs.map((pair) => (
-                    <tr
-                      key={`${pair.leftFile.id}-${pair.rightFile.id}`}
-                      className={`border-b border-white/5 hover:bg-white/5 transition-colors ${
-                        selectedPair === pair ? "bg-teal-500/10" : ""
-                      }`}
-                    >
-                      <td className="p-4">
-                        <div>
-                          <p className="text-white font-medium">
-                            {pair.leftFile.studentName || "Unknown"}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {pair.leftFile.filename}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div>
-                          <p className="text-white font-medium">
-                            {pair.rightFile.studentName || "Unknown"}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {pair.rightFile.filename}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <SimilarityBadge similarity={pair.structuralScore} />
-                      </td>
-                      <td className="p-4 text-slate-200">{pair.overlap}</td>
-                      <td className="p-4 text-slate-200">{pair.longest}</td>
-                      <td className="p-4">
-                        <button
-                          onClick={() => handleViewDetails(pair)}
-                          disabled={isLoadingDetails && selectedPair === pair}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transform hover:scale-105"
-                        >
-                          {isLoadingDetails && selectedPair === pair ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <>
-                              <GitCompare className="w-3.5 h-3.5" />
-                              Compare Code
-                            </>
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        {/* Student Summary Table or Detail View */}
+        {!selectedStudent ? (
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+            <CardContent className="p-6">
+              <div className="mb-4">
+                <h2 className="text-xl font-bold text-white mb-1">
+                  Student Originality Overview
+                </h2>
+                <p className="text-sm text-slate-400">
+                  Click on a student to view their similarity pairs and compare
+                  code
+                </p>
+              </div>
 
-        {/* Code Comparison Panel */}
+              <StudentSummaryTable
+                students={studentSummaries}
+                onStudentSelect={handleStudentSelect}
+                selectedStudent={selectedStudent}
+                isLoading={isLoadingStudents}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <StudentPairsDetail
+            student={selectedStudent}
+            pairs={studentPairs}
+            onPairSelect={handleViewDetails}
+            onBack={handleBackToStudents}
+            isLoading={isLoadingStudentPairs}
+          />
+        )}
+
+        {/* Code Comparison Panel (shared between both views) */}
         {selectedPair && (
           <Card className="bg-white/5 backdrop-blur-sm border-white/10">
             <CardContent className="p-6">
@@ -460,9 +413,9 @@ export function SimilarityResultsPage() {
               <div className="flex justify-center mb-6">
                 <div className="flex bg-black/20 backdrop-blur-md border border-white/5 rounded-xl p-1 gap-1">
                   <button
-                    onClick={() => setViewMode("match")}
+                    onClick={() => setCodeViewMode("match")}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                      viewMode === "match"
+                      codeViewMode === "match"
                         ? "bg-teal-500 text-white shadow-lg shadow-teal-500/20"
                         : "text-slate-300 hover:text-white hover:bg-white/5"
                     }`}
@@ -471,9 +424,9 @@ export function SimilarityResultsPage() {
                     Match View
                   </button>
                   <button
-                    onClick={() => setViewMode("diff")}
+                    onClick={() => setCodeViewMode("diff")}
                     className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
-                      viewMode === "diff"
+                      codeViewMode === "diff"
                         ? "bg-teal-500 text-white shadow-lg shadow-teal-500/20"
                         : "text-slate-300 hover:text-white hover:bg-white/5"
                     }`}
@@ -500,7 +453,7 @@ export function SimilarityResultsPage() {
                 </div>
               )}
 
-              {pairDetails && viewMode === "match" && (
+              {pairDetails && codeViewMode === "match" && (
                 <PairComparison
                   pair={pairDetails}
                   language={detectedLanguage}
@@ -508,7 +461,7 @@ export function SimilarityResultsPage() {
                 />
               )}
 
-              {pairDetails && viewMode === "diff" && (
+              {pairDetails && codeViewMode === "diff" && (
                 <PairCodeDiff
                   leftFile={pairDetails.leftFile}
                   rightFile={pairDetails.rightFile}
