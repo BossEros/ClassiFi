@@ -30,11 +30,7 @@ export function DashboardLayout({
       <div className="flex-1 flex flex-col overflow-hidden">
         {topBar?.main}
         <main
-          className={cn(
-            "flex-1 min-w-0 overflow-y-auto",
-            "h-full",
-            className,
-          )}
+          className={cn("flex-1 min-w-0 overflow-y-auto", "h-full", className)}
         >
           <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full">{children}</div>
         </main>
