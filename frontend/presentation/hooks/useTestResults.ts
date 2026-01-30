@@ -14,7 +14,12 @@ export function useTestResults(submissionId: number) {
       const data = await getTestResults(submissionId)
       setResults(data)
     } catch (err) {
-      console.error(err, "Failed to load test results")
+      // In the previous implementation, errors were treated as "no results yet"
+      // and simply resulted in an empty state.
+      // We set an error here, but the consuming component might want to ignore it
+      // if strict "no results" behavior is desired for 404s.
+      // For now, we report the error to help debugging, but we could revert to silent failure if needed.
+      // console.error(err)
       setError("Failed to load test results")
       setResults(null)
     } finally {

@@ -25,15 +25,4 @@ export default tseslint.config(
       ],
     },
   },
-  // Allow 'any' in test files
-  {
-    files: [
-      "**/*.test.{ts,tsx}",
-      "**/*.spec.{ts,tsx}",
-      "**/tests/**/*.{ts,tsx}",
-    ],
-    rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-    },
-  },
 )

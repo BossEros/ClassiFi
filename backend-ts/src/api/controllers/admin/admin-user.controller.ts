@@ -1,3 +1,7 @@
+/**
+ * Admin User Controller
+ * Handles user management endpoints.
+ */
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AdminUserService } from "../../../services/admin/admin-user.service.js"
@@ -13,7 +17,6 @@ import {
   CreateUserSchema,
   PaginatedUsersResponseSchema,
   SingleUserResponseSchema,
-  TeachersListResponseSchema,
   SuccessResponseSchema,
   type UserFilterQuery,
   type UserParams,
@@ -23,254 +26,159 @@ import {
   type CreateUser,
 } from "../../schemas/admin.schema.js"
 
-/**
- * Registers admin user management routes for user CRUD operations.
- *
- * Provides endpoints for administrators to create, read, update, and delete users,
- * as well as manage user roles, status, and retrieve teacher lists.
- * All routes require authentication and admin privileges.
- *
- * @param app - The Fastify application instance to register routes on.
- * @returns A promise that resolves when all routes are registered.
- */
 export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
   const adminUserService =
     container.resolve<AdminUserService>("AdminUserService")
-  const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
+  const preHandler = [authMiddleware, adminMiddleware]
 
-  /**
-   * GET /users
-   * List all users with filtering
-   */
+  // GET /users
   app.get<{ Querystring: UserFilterQuery }>("/users", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
-      summary: "List all users with filtering",
-      description:
-        "Retrieves a paginated list of users with optional search and filter options by role and status",
+      summary: "List all users",
+      description: "Get paginated list of users with search and filter options",
       security: [{ bearerAuth: [] }],
       querystring: toJsonSchema(UserFilterQuerySchema),
       response: { 200: toJsonSchema(PaginatedUsersResponseSchema) },
     },
     handler: async (request, reply) => {
       const { page, limit, search, role, status } = request.query
-
-      const normalizedRole = role === "all" ? undefined : role
-      const normalizedStatus = status === "all" ? undefined : status
-
-      const paginatedUsersResult = await adminUserService.getAllUsers({
+      const result = await adminUserService.getAllUsers({
         page,
         limit,
         search,
-        role: normalizedRole,
-        status: normalizedStatus,
+        role: role === "all" ? undefined : role,
+        status: status === "all" ? undefined : status,
       })
-
-      return reply.send({ success: true, ...paginatedUsersResult })
+      return reply.send({ success: true, ...result })
     },
   })
 
-  /**
-   * GET /users/teachers
-   * Get all teachers
-   */
-  app.get("/users/teachers", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Get all teachers",
-      description:
-        "Retrieves a list of all users with teacher role for use in selection dropdowns",
-      security: [{ bearerAuth: [] }],
-      response: { 200: toJsonSchema(TeachersListResponseSchema) },
-    },
-    handler: async (_request, reply) => {
-      const teachersList = await adminUserService.getAllTeachers()
-
-      return reply.send({ success: true, teachers: teachersList })
-    },
-  })
-
-  /**
-   * GET /users/:id
-   * Get user details by ID
-   */
+  // GET /users/:id
   app.get<{ Params: UserParams }>("/users/:id", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
-      summary: "Get user details by ID",
-      description: "Retrieves detailed information for a specific user",
+      summary: "Get user details",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(UserParamsSchema),
       response: { 200: toJsonSchema(SingleUserResponseSchema) },
     },
     handler: async (request, reply) => {
-      const userId = request.params.id
-
-      const userDetails = await adminUserService.getUserById(userId)
-
-      return reply.send({ success: true, user: userDetails })
+      const user = await adminUserService.getUserById(request.params.id)
+      return reply.send({ success: true, user })
     },
   })
 
-  /**
-   * POST /users
-   * Create a new user
-   */
+  // POST /users
   app.post<{ Body: CreateUser }>("/users", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
       summary: "Create a new user",
-      description: "Creates a new user account with specified role and details",
       security: [{ bearerAuth: [] }],
       body: toJsonSchema(CreateUserSchema),
       response: { 201: toJsonSchema(SingleUserResponseSchema) },
     },
     handler: async (request, reply) => {
-      const newUserData = request.body
-
-      const createdUser = await adminUserService.createUser(newUserData)
-
-      return reply.status(201).send({ success: true, user: createdUser })
+      const user = await adminUserService.createUser(request.body)
+      return reply.status(201).send({ success: true, user })
     },
   })
 
-  /**
-   * PATCH /users/:id/details
-   * Update user profile details
-   */
+  // PATCH /users/:id/details
   app.patch<{ Params: UserParams; Body: UpdateUserDetails }>(
     "/users/:id/details",
     {
-      preHandler: preHandlerMiddlewares,
+      preHandler,
       schema: {
         tags: ["Admin - Users"],
-        summary: "Update user profile details",
-        description:
-          "Updates user profile information such as first name, last name, and avatar URL",
+        summary: "Update user details",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(UserParamsSchema),
         body: toJsonSchema(UpdateUserDetailsSchema),
         response: { 200: toJsonSchema(SingleUserResponseSchema) },
       },
       handler: async (request, reply) => {
-        const userId = request.params.id
-        const updatedDetailsData = request.body
-
-        const updatedUser = await adminUserService.updateUserDetails(
-          userId,
-          updatedDetailsData,
+        const user = await adminUserService.updateUserDetails(
+          request.params.id,
+          request.body,
         )
-
-        return reply.send({ success: true, user: updatedUser })
+        return reply.send({ success: true, user })
       },
     },
   )
 
-  /**
-   * PATCH /users/:id/email
-   * Update user email address
-   */
+  // PATCH /users/:id/email
   app.patch<{ Params: UserParams; Body: UpdateUserEmail }>("/users/:id/email", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
-      summary: "Update user email address",
-      description:
-        "Updates a user's email address for account recovery purposes",
+      summary: "Update user email (account recovery)",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(UserParamsSchema),
       body: toJsonSchema(UpdateUserEmailSchema),
       response: { 200: toJsonSchema(SingleUserResponseSchema) },
     },
     handler: async (request, reply) => {
-      const userId = request.params.id
-      const newEmailAddress = request.body.email
-
-      const updatedUser = await adminUserService.updateUserEmail(
-        userId,
-        newEmailAddress,
+      const user = await adminUserService.updateUserEmail(
+        request.params.id,
+        request.body.email,
       )
-
-      return reply.send({ success: true, user: updatedUser })
+      return reply.send({ success: true, user })
     },
   })
 
-  /**
-   * PATCH /users/:id/role
-   * Update user role
-   */
+  // PATCH /users/:id/role
   app.patch<{ Params: UserParams; Body: UpdateUserRole }>("/users/:id/role", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
       summary: "Update user role",
-      description:
-        "Changes a user's role (e.g., student, teacher, admin) in the system",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(UserParamsSchema),
       body: toJsonSchema(UpdateUserRoleSchema),
       response: { 200: toJsonSchema(SingleUserResponseSchema) },
     },
     handler: async (request, reply) => {
-      const userId = request.params.id
-      const newUserRole = request.body.role
-
-      const updatedUser = await adminUserService.updateUserRole(
-        userId,
-        newUserRole,
+      const user = await adminUserService.updateUserRole(
+        request.params.id,
+        request.body.role,
       )
-
-      return reply.send({ success: true, user: updatedUser })
+      return reply.send({ success: true, user })
     },
   })
 
-  /**
-   * PATCH /users/:id/status
-   * Toggle user account status
-   */
+  // PATCH /users/:id/status
   app.patch<{ Params: UserParams }>("/users/:id/status", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
-      summary: "Toggle user account status",
-      description:
-        "Toggles a user's account status between active and inactive",
+      summary: "Toggle user status",
+      description: "Toggle between active and inactive status",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(UserParamsSchema),
       response: { 200: toJsonSchema(SingleUserResponseSchema) },
     },
     handler: async (request, reply) => {
-      const userId = request.params.id
-
-      const updatedUser = await adminUserService.toggleUserStatus(userId)
-
-      return reply.send({ success: true, user: updatedUser })
+      const user = await adminUserService.toggleUserStatus(request.params.id)
+      return reply.send({ success: true, user })
     },
   })
 
-  /**
-   * DELETE /users/:id
-   * Delete a user account
-   */
+  // DELETE /users/:id
   app.delete<{ Params: UserParams }>("/users/:id", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Users"],
-      summary: "Delete a user account",
-      description: "Permanently deletes a user account and all associated data",
+      summary: "Delete a user",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(UserParamsSchema),
       response: { 200: toJsonSchema(SuccessResponseSchema) },
     },
     handler: async (request, reply) => {
-      const userId = request.params.id
-
-      await adminUserService.deleteUser(userId)
-
+      await adminUserService.deleteUser(request.params.id)
       return reply.send({ success: true, message: "User deleted successfully" })
     },
   })

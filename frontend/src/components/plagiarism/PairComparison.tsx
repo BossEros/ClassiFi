@@ -9,7 +9,10 @@ interface PairComparisonProps {
   language?: string
   /** Height of each code editor */
   editorHeight?: string | number
+  /** Show fragments table below editors */
+  showFragmentsTable?: boolean
 }
+
 /**
  * Side-by-side code comparison view with highlighted matching fragments.
  *

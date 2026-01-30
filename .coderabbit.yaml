@@ -1,6 +1,3 @@
 reviews:
   auto_title_placeholder: "@coderabbitai"
   auto_title_instructions: "Write a short, imperative PR title."
-  finishing_touches:
-    unit_tests:
-      enabled: true

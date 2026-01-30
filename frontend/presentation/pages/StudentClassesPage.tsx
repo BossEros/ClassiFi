@@ -15,7 +15,6 @@ import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useToast } from "@/shared/context/ToastContext"
 import type { User } from "@/business/models/auth/types"
 import type { Class } from "@/business/models/dashboard/types"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function StudentClassesPage() {
   const navigate = useNavigate()
@@ -120,22 +119,23 @@ export function StudentClassesPage() {
     })
   }, [classes, status, selectedTerm, selectedYearLevel, searchQuery])
 
-  const userInitials = user
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : "?"
-
-  const topBar = useTopBar({ user, userInitials })
-
   return (
-    <DashboardLayout topBar={topBar}>
+    <DashboardLayout>
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">My Classes</h1>
-            <p className="text-slate-400 text-base">
-              View and manage your enrolled courses
-            </p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
+              <Grid3x3 className="w-6 h-6 text-teal-400" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
+                My Classes
+              </h1>
+              <p className="text-slate-300 text-sm mt-1">
+                View and manage your enrolled courses
+              </p>
+            </div>
           </div>
           <Button
             onClick={() => setIsJoinModalOpen(true)}
@@ -148,20 +148,24 @@ export function StudentClassesPage() {
         </div>
 
         {/* Filters */}
-        <ClassFilters
-          onSearchChange={setSearchQuery}
-          onStatusChange={setStatus}
-          onTermChange={setSelectedTerm}
-          onYearLevelChange={setSelectedYearLevel}
-          currentFilters={{
-            searchQuery,
-            status,
-            selectedTerm,
-            selectedYearLevel,
-          }}
-          terms={terms}
-          yearLevels={yearLevels}
-        />
+        <div className="p-1">
+          <ClassFilters
+            onSearchChange={setSearchQuery}
+            onStatusChange={setStatus}
+            onTermChange={setSelectedTerm}
+            onYearLevelChange={setSelectedYearLevel}
+            currentFilters={{
+              searchQuery,
+              status,
+              selectedTerm,
+              selectedYearLevel,
+            }}
+            terms={terms}
+            yearLevels={yearLevels}
+          />
+        </div>
+
+        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8"></div>
       </div>
 
       {/* Error Message */}

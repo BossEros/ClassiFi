@@ -1,6 +1,11 @@
+/**
+ * Admin Class Controller
+ * Handles class management endpoints.
+ */
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AdminClassService } from "../../../services/admin/admin-class.service.js"
+import { AdminUserService } from "../../../services/admin/admin-user.service.js"
 import { authMiddleware } from "../../middlewares/auth.middleware.js"
 import { adminMiddleware } from "../../middlewares/admin.middleware.js"
 import { toJsonSchema } from "../../utils/swagger.js"
@@ -12,177 +17,137 @@ import {
   ReassignTeacherSchema,
   PaginatedClassesResponseSchema,
   SingleClassResponseSchema,
+  TeachersListResponseSchema,
   SuccessResponseSchema,
-  ClassAssignmentsResponseSchema,
   type ClassFilterQuery,
   type ClassParams,
   type CreateClass,
   type UpdateClass,
   type ReassignTeacher,
 } from "../../schemas/admin.schema.js"
-import type { UpdateClassData } from "../../../services/admin/admin.types.js"
 
-/**
- * Maps UpdateClass DTO from the API schema to UpdateClassData expected by the service.
- *
- * @param dto - The UpdateClass data from the request body.
- * @returns The mapped UpdateClassData for the service layer.
- */
-function mapUpdateClassDtoToServiceData(dto: UpdateClass): UpdateClassData {
-  return {
-    className: dto.className,
-    description: dto.description,
-    isActive: dto.isActive,
-    yearLevel: dto.yearLevel,
-    semester: dto.semester,
-    academicYear: dto.academicYear,
-    schedule: dto.schedule,
-    teacherId: dto.teacherId,
-  }
-}
-
-/**
- * Registers admin class management routes for class CRUD operations.
- *
- * Provides endpoints for administrators to create, read, update, and delete classes,
- * as well as manage teacher assignments, archive classes, and retrieve class assignments.
- * All routes require authentication and admin privileges.
- *
- * @param app - The Fastify application instance to register routes on.
- * @returns A promise that resolves when all routes are registered.
- */
 export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
   const adminClassService =
     container.resolve<AdminClassService>("AdminClassService")
-  const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
+  const adminUserService =
+    container.resolve<AdminUserService>("AdminUserService")
+  const preHandler = [authMiddleware, adminMiddleware]
 
-  /**
-   * GET /classes
-   * List all classes with filtering
-   */
+  // GET /classes
   app.get<{ Querystring: ClassFilterQuery }>("/classes", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
-      summary: "List all classes with filtering",
-      description:
-        "Retrieves a paginated list of classes with optional search and filter options",
+      summary: "List all classes",
       security: [{ bearerAuth: [] }],
       querystring: toJsonSchema(ClassFilterQuerySchema),
       response: { 200: toJsonSchema(PaginatedClassesResponseSchema) },
     },
     handler: async (request, reply) => {
-      const filterQuery = request.query
-
-      const paginatedClassesResult =
-        await adminClassService.getAllClasses(filterQuery)
-
-      return reply.send({ success: true, ...paginatedClassesResult })
+      const {
+        page,
+        limit,
+        search,
+        teacherId,
+        status,
+        yearLevel,
+        semester,
+        academicYear,
+      } = request.query
+      const result = await adminClassService.getAllClasses({
+        page,
+        limit,
+        search,
+        teacherId,
+        status: status === "all" ? undefined : status,
+        yearLevel,
+        semester,
+        academicYear,
+      })
+      return reply.send({ success: true, ...result })
     },
   })
 
-  /**
-   * GET /classes/:id
-   * Get class details by ID
-   */
+  // GET /classes/:id
   app.get<{ Params: ClassParams }>("/classes/:id", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
-      summary: "Get class details by ID",
-      description: "Retrieves detailed information for a specific class",
+      summary: "Get class details",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassParamsSchema),
       response: { 200: toJsonSchema(SingleClassResponseSchema) },
     },
     handler: async (request, reply) => {
-      const classId = request.params.id
-
-      const classDetails = await adminClassService.getClassById(classId)
-
-      return reply.send({ success: true, class: classDetails })
+      const classData = await adminClassService.getClassById(request.params.id)
+      return reply.send({ success: true, class: classData })
     },
   })
 
-  /**
-   * POST /classes
-   * Create a new class
-   */
+  // POST /classes
   app.post<{ Body: CreateClass }>("/classes", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
       summary: "Create a new class",
-      description:
-        "Creates a new class with specified details and assigns a teacher",
+      description: "Admin can create a class and assign any teacher",
       security: [{ bearerAuth: [] }],
       body: toJsonSchema(CreateClassSchema),
       response: { 201: toJsonSchema(SingleClassResponseSchema) },
     },
     handler: async (request, reply) => {
-      const newClassData = request.body
-
-      const createdClass = await adminClassService.createClass(newClassData)
-
-      const createdClassDetails = await adminClassService.getClassById(
-        createdClass.id,
-      )
-
+      const classData = await adminClassService.createClass({
+        teacherId: request.body.teacherId,
+        className: request.body.className,
+        yearLevel: request.body.yearLevel,
+        semester: request.body.semester,
+        academicYear: request.body.academicYear,
+        schedule: request.body.schedule,
+        description: request.body.description,
+      })
       return reply.status(201).send({
         success: true,
-        class: createdClassDetails,
+        class: {
+          ...classData,
+          teacherName: "Unknown", // Will be populated on fetch if needed
+        },
       })
     },
   })
 
-  /**
-   * PUT /classes/:id
-   * Update class information
-   */
+  // PUT /classes/:id
   app.put<{ Params: ClassParams; Body: UpdateClass }>("/classes/:id", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
-      summary: "Update class information",
-      description:
-        "Updates class details such as name, description, and schedule",
+      summary: "Update a class",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassParamsSchema),
       body: toJsonSchema(UpdateClassSchema),
       response: { 200: toJsonSchema(SingleClassResponseSchema) },
     },
     handler: async (request, reply) => {
-      const classId = request.params.id
-      const updatedClassDto = request.body
-      const serviceData = mapUpdateClassDtoToServiceData(updatedClassDto)
-
-      await adminClassService.updateClass(classId, serviceData)
-
-      const updatedClassDetails = await adminClassService.getClassById(classId)
-
-      return reply.send({ success: true, class: updatedClassDetails })
+      await adminClassService.updateClass(
+        request.params.id,
+        request.body as any,
+      )
+      const fullClass = await adminClassService.getClassById(request.params.id)
+      return reply.send({ success: true, class: fullClass })
     },
   })
 
-  /**
-   * DELETE /classes/:id
-   * Delete a class
-   */
+  // DELETE /classes/:id
   app.delete<{ Params: ClassParams }>("/classes/:id", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
       summary: "Delete a class",
-      description: "Permanently deletes a class and all associated data",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassParamsSchema),
       response: { 200: toJsonSchema(SuccessResponseSchema) },
     },
     handler: async (request, reply) => {
-      const classId = request.params.id
-
-      await adminClassService.deleteClass(classId)
-
+      await adminClassService.deleteClass(request.params.id)
       return reply.send({
         success: true,
         message: "Class deleted successfully",
@@ -190,79 +155,80 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
     },
   })
 
-  /**
-   * PATCH /classes/:id/reassign
-   * Reassign class teacher
-   */
+  // PATCH /classes/:id/reassign
   app.patch<{ Params: ClassParams; Body: ReassignTeacher }>(
     "/classes/:id/reassign",
     {
-      preHandler: preHandlerMiddlewares,
+      preHandler,
       schema: {
         tags: ["Admin - Classes"],
         summary: "Reassign class teacher",
-        description: "Assigns a different teacher to the class",
         security: [{ bearerAuth: [] }],
         params: toJsonSchema(ClassParamsSchema),
         body: toJsonSchema(ReassignTeacherSchema),
         response: { 200: toJsonSchema(SingleClassResponseSchema) },
       },
       handler: async (request, reply) => {
-        const classId = request.params.id
-        const newTeacherId = request.body.teacherId
-
-        const reassignedClassDetails =
-          await adminClassService.reassignClassTeacher(classId, newTeacherId)
-
-        return reply.send({ success: true, class: reassignedClassDetails })
+        await adminClassService.reassignClassTeacher(
+          request.params.id,
+          request.body.teacherId,
+        )
+        const fullClass = await adminClassService.getClassById(
+          request.params.id,
+        )
+        return reply.send({ success: true, class: fullClass })
       },
     },
   )
 
-  /**
-   * PATCH /classes/:id/archive
-   * Archive a class
-   */
+  // PATCH /classes/:id/archive
   app.patch<{ Params: ClassParams }>("/classes/:id/archive", {
-    preHandler: preHandlerMiddlewares,
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
       summary: "Archive a class",
-      description: "Marks a class as archived (soft delete)",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassParamsSchema),
       response: { 200: toJsonSchema(SingleClassResponseSchema) },
     },
     handler: async (request, reply) => {
-      const classId = request.params.id
-
-      const archivedClassDetails = await adminClassService.archiveClass(classId)
-
-      return reply.send({ success: true, class: archivedClassDetails })
+      await adminClassService.archiveClass(request.params.id)
+      const fullClass = await adminClassService.getClassById(request.params.id)
+      return reply.send({ success: true, class: fullClass })
     },
   })
 
-  /**
-   * GET /classes/:id/assignments
-   * Get class assignments
-   */
-  app.get<{ Params: ClassParams }>("/classes/:id/assignments", {
-    preHandler: preHandlerMiddlewares,
+  // GET /teachers
+  app.get("/teachers", {
+    preHandler,
     schema: {
       tags: ["Admin - Classes"],
+      summary: "Get all teachers",
+      description: "For use in teacher selection dropdowns",
+      security: [{ bearerAuth: [] }],
+      response: { 200: toJsonSchema(TeachersListResponseSchema) },
+    },
+    handler: async (_request, reply) => {
+      const teachers = await adminUserService.getAllTeachers()
+      return reply.send({ success: true, teachers })
+    },
+  })
+
+  // GET /classes/:id/assignments
+  app.get<{ Params: ClassParams }>("/classes/:id/assignments", {
+    preHandler,
+    schema: {
+      tags: ["Admin - Enrollment"], // Tag kept as Enrollment/Class related
       summary: "Get class assignments",
-      description: "Retrieves all assignments for a specific class",
+      description: "Get all assignments for a specific class",
       security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassParamsSchema),
-      response: { 200: toJsonSchema(ClassAssignmentsResponseSchema) },
     },
     handler: async (request, reply) => {
-      const classId = request.params.id
-
-      const classAssignmentsList =
-        await adminClassService.getClassAssignments(classId)
-
-      return reply.send({ success: true, assignments: classAssignmentsList })
+      const assignments = await adminClassService.getClassAssignments(
+        request.params.id,
+      )
+      return reply.send({ success: true, assignments })
     },
   })
 }

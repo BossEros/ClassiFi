@@ -48,16 +48,12 @@ function RoleBasedDashboard() {
     return <StudentDashboardPage />
   }
 
-  if (user.role === "teacher") {
-    return <TeacherDashboardPage />
-  }
-
   if (user.role === "admin") {
     return <AdminDashboardPage />
   }
 
-  // Default to student dashboard
-  return <StudentDashboardPage />
+  // Default to teacher dashboard
+  return <TeacherDashboardPage />
 }
 
 // Component to handle classes page - show different pages based on role

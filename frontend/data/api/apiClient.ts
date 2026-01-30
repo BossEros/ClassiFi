@@ -90,28 +90,20 @@ class ApiClient {
       if (responseType === "blob") {
         if (!response.ok) {
           // For blob errors, try to read as text for error message
-          const blobText = await response.text()
+          const errorText = await response.text()
           let errorMessage = "An error occurred"
 
           try {
-            const errorData = JSON.parse(blobText)
-
-            // Check if errorData itself is a plain string
-            if (typeof errorData === "string") {
-              errorMessage = errorData
-            } else if (typeof errorData === "object" && errorData !== null) {
-              // Prefer errorData.error if it's a string
-              errorMessage =
-                (typeof errorData.error === "string"
-                  ? errorData.error
-                  : undefined) ??
-                errorData.error?.message ??
-                errorData.detail ??
-                errorData.message ??
-                errorMessage
+            const errorData = JSON.parse(errorText)
+            if (errorData.error?.message) {
+              errorMessage = errorData.error.message
+            } else if (errorData.detail) {
+              errorMessage = errorData.detail
+            } else if (errorData.message) {
+              errorMessage = errorData.message
             }
           } catch {
-            errorMessage = blobText || errorMessage
+            errorMessage = errorText || errorMessage
           }
 
           return {
@@ -129,11 +121,12 @@ class ApiClient {
 
       // Parse response defensively - handle empty or non-JSON responses
       const rawText = await response.text()
-      let data: Record<string, unknown> | string | null = null
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let data: Record<string, any> | string | null = null
 
       if (rawText) {
         try {
-          data = JSON.parse(rawText) as Record<string, unknown>
+          data = JSON.parse(rawText) as Record<string, any>
         } catch {
           // If JSON parsing fails, use raw text as the data
           data = rawText
@@ -164,27 +157,15 @@ class ApiClient {
         let errorMessage = "An error occurred"
 
         if (typeof data === "object" && data !== null) {
-          const errorData = data as Record<string, unknown>
-          const errorField = errorData.error
-
-          // Prefer errorData.error if it's a string before checking nested properties
-          const extractedMessage =
-            (typeof errorField === "string" ? errorField : undefined) ??
-            (typeof errorField === "object" &&
-            errorField !== null &&
-            "message" in errorField &&
-            typeof errorField.message === "string"
-              ? errorField.message
-              : undefined) ??
-            (typeof errorData.detail === "string"
-              ? errorData.detail
-              : undefined) ??
-            (typeof errorData.message === "string"
-              ? errorData.message
-              : undefined)
-
-          if (extractedMessage) {
-            errorMessage = extractedMessage
+          if (data.error?.message) {
+            // Backend error format: { success: false, error: { message: "..." } }
+            errorMessage = data.error.message
+          } else if (data.detail) {
+            // FastAPI HTTPException format
+            errorMessage = data.detail
+          } else if (data.message) {
+            // Custom error format
+            errorMessage = data.message
           }
         } else if (typeof data === "string") {
           errorMessage = data

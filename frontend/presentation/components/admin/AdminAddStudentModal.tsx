@@ -37,7 +37,6 @@ export function AdminAddStudentModal({
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery)
     }, 300)
-
     return () => clearTimeout(timer)
   }, [searchQuery])
 
@@ -87,7 +86,6 @@ export function AdminAddStudentModal({
       // Remove from local list
       setStudents((prev) => prev.filter((s) => s.id !== student.id))
     } catch (error) {
-      console.error("Failed to enroll student:", error)
       showToast("Failed to enroll student", "error")
     } finally {
       setIsSubmitting(null)

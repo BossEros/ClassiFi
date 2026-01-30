@@ -31,18 +31,15 @@ export function useClassGradebook(classId: number) {
     try {
       setIsLoading(true)
       setError(null)
-
       const [gradebookData, statsData] = await Promise.all([
         getClassGradebook(classId),
         getClassStatistics(classId),
       ])
-
       setGradebook(gradebookData)
       setStatistics(statsData)
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load gradebook"
-
       setError(errorMessage)
       setGradebook(null)
       setStatistics(null)

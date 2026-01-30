@@ -11,7 +11,6 @@ import {
   type FormErrors,
 } from "@/presentation/hooks/useCourseworkForm"
 import { formatTimeRemaining } from "@/shared/utils/dateUtils"
-import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
 import {
   TestCaseList,
   type PendingTestCase,
@@ -406,9 +405,7 @@ export function BasicInfoForm({
               <Editor
                 height="300px"
                 theme="vs-dark"
-                language={getMonacoLanguage(
-                  formData.programmingLanguage || "plaintext",
-                )}
+                language={formData.programmingLanguage || "plaintext"}
                 value={formData.templateCode}
                 onChange={(value) => onInputChange("templateCode", value || "")}
                 options={{

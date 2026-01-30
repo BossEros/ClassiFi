@@ -2,8 +2,7 @@ import Editor from "@monaco-editor/react"
 import { X, Copy, Check } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { useToast } from "@/shared/context/ToastContext"
-import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 interface CodePreviewModalProps {
   isOpen: boolean
@@ -23,22 +22,6 @@ export function CodePreviewModal({
   const { showToast } = useToast()
   const [isCopied, setIsCopied] = useState(false)
 
-  useEffect(() => {
-    if (!isOpen) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose()
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [isOpen, onClose])
-
   if (!isOpen) return null
 
   const handleCopy = async () => {
@@ -47,9 +30,21 @@ export function CodePreviewModal({
       setIsCopied(true)
       showToast("Code copied to clipboard", "success")
       setTimeout(() => setIsCopied(false), 2000)
-    } catch {
+    } catch (err) {
       showToast("Failed to copy code", "error")
     }
+  }
+
+  // Map backend language format to Monaco language
+  const getMonacoLanguage = (lang: string) => {
+    const l = lang.toLowerCase()
+    if (l === "c") return "c"
+    if (l === "cpp" || l === "c++") return "cpp"
+    if (l === "python" || l === "py") return "python"
+    if (l === "java") return "java"
+    if (l === "javascript" || l === "js") return "javascript"
+    if (l === "typescript" || l === "ts") return "typescript"
+    return "plaintext"
   }
 
   const monacoLanguage = getMonacoLanguage(language)

@@ -1,8 +1,6 @@
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 
-export { Avatar }
-
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   src?: string
   alt?: string
@@ -53,3 +51,5 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   },
 )
 Avatar.displayName = "Avatar"
+
+export { Avatar }

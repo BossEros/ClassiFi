@@ -16,13 +16,7 @@ import {
 } from "../schemas/auth.schema.js"
 import { ApiError } from "../middlewares/error-handler.js"
 
-/**
- * Registers all authentication-related routes under /api/v1/auth/*.
- * Handles user registration, login, token verification, password reset,
- * and logout operations.
- *
- * @param app - Fastify application instance to register routes on.
- */
+/** Auth routes - /api/v1/auth/* */
 export async function authRoutes(app: FastifyInstance): Promise<void> {
   const authService = container.resolve<AuthService>("AuthService")
 
@@ -34,108 +28,95 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Auth"],
       summary: "Register a new user",
-      description:
-        "Creates a new user account with email and password authentication",
       body: toJsonSchema(RegisterRequestSchemaForDocs),
       response: {
         201: toJsonSchema(AuthResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const { confirmPassword, ...userRegistrationData } = request.body
+      // Destructure to exclude confirmPassword (only needed for validation)
+      const { confirmPassword, ...registerData } = request.body
 
-      // Validate password confirmation
-      if (userRegistrationData.password !== confirmPassword) {
-        throw new ApiError("Passwords do not match", 400)
-      }
-
-      const registrationResult =
-        await authService.registerUser(userRegistrationData)
+      const result = await authService.registerUser(registerData)
 
       return reply.status(201).send({
         success: true,
         message: "Registration successful",
-        user: registrationResult.userData,
-        token: registrationResult.token,
+        user: result.userData,
+        token: result.token,
       })
     },
   })
 
   /**
    * POST /login
-   * Login with email and password
+   * Login a user
    */
   app.post<{ Body: LoginRequest }>("/login", {
     schema: {
       tags: ["Auth"],
       summary: "Login with email and password",
-      description: "Authenticates a user and returns an access token",
       body: toJsonSchema(LoginRequestSchema),
       response: {
         200: toJsonSchema(AuthResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const { email: userEmail, password: userPassword } = request.body
-
-      const loginResult = await authService.loginUser(userEmail, userPassword)
+      const { email, password } = request.body
+      const result = await authService.loginUser(email, password)
 
       return reply.send({
         success: true,
         message: "Login successful",
-        user: loginResult.userData,
-        token: loginResult.token,
+        user: result.userData,
+        token: result.token,
       })
     },
   })
 
   /**
    * POST /verify
-   * Verify access token
+   * Verify a Supabase access token
    */
   app.post<{ Body: VerifyRequest }>("/verify", {
     schema: {
       tags: ["Auth"],
       summary: "Verify access token",
-      description:
-        "Validates a Supabase access token and returns user information",
       body: toJsonSchema(VerifyRequestSchema),
     },
     handler: async (request, reply) => {
-      const { token: accessToken } = request.body
+      const { token } = request.body
 
-      if (!accessToken) {
+      if (!token) {
         throw new ApiError("Token is required", 400)
       }
 
-      const verifiedUserData = await authService.verifyToken(accessToken)
+      const userData = await authService.verifyToken(token)
 
       return reply.send({
         success: true,
         message: "Token is valid",
-        user: verifiedUserData,
+        user: userData,
       })
     },
   })
 
   /**
    * POST /forgot-password
-   * Request password reset email
+   * Request a password reset email
    */
   app.post<{ Body: ForgotPasswordRequest }>("/forgot-password", {
     schema: {
       tags: ["Auth"],
       summary: "Request password reset email",
-      description: "Sends a password reset link to the user's email address",
       body: toJsonSchema(ForgotPasswordRequestSchema),
       response: {
         200: toJsonSchema(SuccessMessageSchema),
       },
     },
     handler: async (request, reply) => {
-      const { email: userEmail } = request.body
-
-      await authService.requestPasswordReset(userEmail)
+      const { email } = request.body
+      await authService.requestPasswordReset(email)
 
       return reply.send({
         success: true,
@@ -146,14 +127,12 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * POST /logout
-   * Logout user
+   * Logout endpoint (placeholder - actual logout is client-side)
    */
   app.post("/logout", {
     schema: {
       tags: ["Auth"],
       summary: "Logout user",
-      description:
-        "Logout endpoint (actual session clearing happens client-side)",
       response: {
         200: toJsonSchema(SuccessMessageSchema),
       },

@@ -26,7 +26,6 @@ import type {
 } from "@/shared/types/class"
 
 import type { RawTestResult, TestCase } from "@/shared/types/testCase"
-import type { UserRole } from "@/shared/types/auth"
 
 // ============================================================================
 // Core Shared Types - Re-exported from canonical shared module
@@ -42,9 +41,6 @@ export const VALID_PROGRAMMING_LANGUAGES = ["python", "java", "c"] as const
 
 /** Supported programming languages for assignments */
 export type ProgrammingLanguage = (typeof VALID_PROGRAMMING_LANGUAGES)[number]
-
-// Re-export as PROGRAMMING_LANGUAGES for backward compatibility
-export const PROGRAMMING_LANGUAGES = VALID_PROGRAMMING_LANGUAGES
 
 /** Test case structure for assignments */
 export interface AssignmentTestCase {
@@ -525,7 +521,7 @@ export interface AdminUser {
   email: string
   firstName: string
   lastName: string
-  role: UserRole
+  role: "student" | "teacher" | "admin"
   avatarUrl: string | null
   isActive: boolean
   createdAt: string
@@ -763,7 +759,7 @@ export interface AssignmentDetailDTO {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
-  testCases?: AssignmentTestCase[]
+  testCases?: any[]
 }
 
 export interface SubmissionDTO {

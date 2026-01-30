@@ -1,8 +1,6 @@
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 
-export { Input }
-
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   hasError?: boolean
 }
@@ -36,3 +34,5 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
   },
 )
 Input.displayName = "Input"
+
+export { Input }

@@ -19,16 +19,11 @@ import {
   type LeaveClassRequest,
 } from "@/api/schemas/dashboard.schema.js"
 
-/**
- * Registers student dashboard routes for managing student class enrollments and assignments.
- *
- * @param app - The Fastify application instance.
- * @returns A promise that resolves when all routes are registered.
- */
+/** Student dashboard routes - /api/v1/student/dashboard/* */
 export async function studentDashboardRoutes(
   app: FastifyInstance,
 ): Promise<void> {
-  const studentDashboardService = container.resolve<StudentDashboardService>(
+  const dashboardService = container.resolve<StudentDashboardService>(
     "StudentDashboardService",
   )
 
@@ -46,8 +41,6 @@ export async function studentDashboardRoutes(
     schema: {
       tags: ["Student Dashboard"],
       summary: "Get complete dashboard data for a student",
-      description:
-        "Retrieves enrolled classes and pending assignments for the student dashboard",
       params: toJsonSchema(StudentIdParamSchema),
       querystring: toJsonSchema(StudentDashboardQuerySchema),
       response: {
@@ -59,7 +52,7 @@ export async function studentDashboardRoutes(
       const { enrolledClassesLimit = 12, pendingAssignmentsLimit = 10 } =
         request.query
 
-      const dashboardData = await studentDashboardService.getDashboardData(
+      const data = await dashboardService.getDashboardData(
         studentId,
         enrolledClassesLimit,
         pendingAssignmentsLimit,
@@ -68,8 +61,8 @@ export async function studentDashboardRoutes(
       return reply.send({
         success: true,
         message: "Dashboard data retrieved successfully",
-        enrolledClasses: dashboardData.enrolledClasses,
-        pendingAssignments: dashboardData.pendingAssignments,
+        enrolledClasses: data.enrolledClasses,
+        pendingAssignments: data.pendingAssignments,
       })
     },
   })
@@ -84,8 +77,6 @@ export async function studentDashboardRoutes(
       schema: {
         tags: ["Student Dashboard"],
         summary: "Get enrolled classes for a student",
-        description:
-          "Retrieves a list of classes the student is currently enrolled in",
         params: toJsonSchema(StudentIdParamSchema),
         querystring: toJsonSchema(LimitQuerySchema),
         response: {
@@ -94,18 +85,17 @@ export async function studentDashboardRoutes(
       },
       handler: async (request, reply) => {
         const { studentId } = request.params
-        const { limit: classesLimit = 12 } = request.query
+        const { limit = 12 } = request.query
 
-        const enrolledClassesList =
-          await studentDashboardService.getEnrolledClasses(
-            studentId,
-            classesLimit,
-          )
+        const classes = await dashboardService.getEnrolledClasses(
+          studentId,
+          limit,
+        )
 
         return reply.send({
           success: true,
           message: "Enrolled classes retrieved successfully",
-          classes: enrolledClassesList,
+          classes,
         })
       },
     },
@@ -121,8 +111,6 @@ export async function studentDashboardRoutes(
       schema: {
         tags: ["Student Dashboard"],
         summary: "Get pending assignments for a student",
-        description:
-          "Retrieves assignments that are due and not yet submitted by the student",
         params: toJsonSchema(StudentIdParamSchema),
         querystring: toJsonSchema(LimitQuerySchema),
         response: {
@@ -131,18 +119,17 @@ export async function studentDashboardRoutes(
       },
       handler: async (request, reply) => {
         const { studentId } = request.params
-        const { limit: assignmentsLimit = 10 } = request.query
+        const { limit = 10 } = request.query
 
-        const pendingAssignmentsList =
-          await studentDashboardService.getPendingAssignments(
-            studentId,
-            assignmentsLimit,
-          )
+        const assignments = await dashboardService.getPendingAssignments(
+          studentId,
+          limit,
+        )
 
         return reply.send({
           success: true,
           message: "Pending assignments retrieved successfully",
-          assignments: pendingAssignmentsList,
+          assignments,
         })
       },
     },
@@ -156,8 +143,6 @@ export async function studentDashboardRoutes(
     schema: {
       tags: ["Student Dashboard"],
       summary: "Join a class using class code",
-      description:
-        "Enrolls a student in a class by validating and using the provided class code",
       body: toJsonSchema(JoinClassRequestSchema),
       response: {
         200: toJsonSchema(JoinClassResponseSchema),
@@ -166,15 +151,12 @@ export async function studentDashboardRoutes(
     handler: async (request, reply) => {
       const { studentId, classCode } = request.body
 
-      const enrolledClassInfo = await studentDashboardService.joinClass(
-        studentId,
-        classCode,
-      )
+      const classData = await dashboardService.joinClass(studentId, classCode)
 
       return reply.send({
         success: true,
         message: "Successfully joined the class!",
-        classInfo: enrolledClassInfo,
+        classInfo: classData,
       })
     },
   })
@@ -187,7 +169,6 @@ export async function studentDashboardRoutes(
     schema: {
       tags: ["Student Dashboard"],
       summary: "Leave a class",
-      description: "Removes a student's enrollment from a class",
       body: toJsonSchema(LeaveClassRequestSchema),
       response: {
         200: toJsonSchema(SuccessMessageSchema),
@@ -196,7 +177,7 @@ export async function studentDashboardRoutes(
     handler: async (request, reply) => {
       const { studentId, classId } = request.body
 
-      await studentDashboardService.leaveClass(studentId, classId)
+      await dashboardService.leaveClass(studentId, classId)
 
       return reply.send({
         success: true,

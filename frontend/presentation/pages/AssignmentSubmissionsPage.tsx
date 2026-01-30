@@ -83,7 +83,7 @@ export function AssignmentSubmissionsPage() {
     }
 
     fetchData()
-  }, [assignmentId, navigate])
+  }, [assignmentId])
 
   // Filter submissions by search query
   useEffect(() => {

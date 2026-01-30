@@ -19,6 +19,7 @@ import {
   BookOpen,
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+
 import { AdminCreateClassModal } from "@/presentation/components/admin/AdminCreateClassModal"
 import { AdminDeleteClassModal } from "@/presentation/components/admin/AdminDeleteClassModal"
 import { getCurrentUser } from "@/business/services/authService"
@@ -64,7 +65,6 @@ export function AdminClassesPage() {
 
   // Debounced search
   const [debouncedSearch, setDebouncedSearch] = useState("")
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery)
@@ -193,13 +193,10 @@ export function AdminClassesPage() {
       await fetchClasses()
       showToast("Class deleted successfully", "success")
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to delete class"
-      showToast(`Failed to delete class: ${errorMessage}`, "error")
+      throw err // Let the modal handle the error
     } finally {
       setActionLoading(null)
       setActiveDropdown(null)
-      setDeletingClass(null)
     }
   }
 
@@ -784,7 +781,23 @@ export function AdminClassesPage() {
             )
           }}
           teachers={teachers}
-          classToEdit={classToEdit}
+          classToEdit={
+            classToEdit
+              ? {
+                  id: classToEdit.id,
+                  className: classToEdit.className,
+                  description: classToEdit.description || undefined,
+                  teacherId:
+                    typeof classToEdit.teacherId === "string"
+                      ? parseInt(classToEdit.teacherId)
+                      : classToEdit.teacherId,
+                  yearLevel: classToEdit.yearLevel,
+                  semester: classToEdit.semester,
+                  academicYear: classToEdit.academicYear,
+                  schedule: classToEdit.schedule,
+                }
+              : null
+          }
         />
 
         <AdminDeleteClassModal

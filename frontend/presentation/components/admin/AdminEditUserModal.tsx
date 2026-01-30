@@ -3,8 +3,6 @@ import { X, Mail, Shield, Loader2, Power, CheckCircle } from "lucide-react"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
 
-type UserRole = "student" | "teacher" | "admin"
-
 interface AdminEditUserModalProps {
   isOpen: boolean
   onClose: () => void
@@ -20,7 +18,7 @@ export function AdminEditUserModal({
 }: AdminEditUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [role, setRole] = useState<UserRole>("student")
+  const [role, setRole] = useState<"student" | "teacher" | "admin">("student")
   const [isActive, setIsActive] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -28,7 +26,7 @@ export function AdminEditUserModal({
 
   useEffect(() => {
     if (user) {
-      setRole(user.role as UserRole)
+      setRole(user.role as "student" | "teacher" | "admin")
       setIsActive(user.isActive)
       setFirstName(user.firstName)
       setLastName(user.lastName)
@@ -44,54 +42,29 @@ export function AdminEditUserModal({
       setIsLoading(true)
       setError(null)
 
-      let hasChanges = false
+      // Perform updates if changed
+      const promises = []
 
-      // Perform updates sequentially with early exit on error
       if (role !== user.role) {
-        try {
-          await adminService.updateUserRole(user.id, role)
-          hasChanges = true
-        } catch (err) {
-          throw new Error(
-            `Failed to update user role: ${err instanceof Error ? err.message : "Unknown error"}`,
-          )
-        }
+        promises.push(adminService.updateUserRole(user.id, role))
       }
 
       if (isActive !== user.isActive) {
-        try {
-          await adminService.toggleUserStatus(user.id)
-          hasChanges = true
-        } catch (err) {
-          throw new Error(
-            `Failed to toggle user status: ${err instanceof Error ? err.message : "Unknown error"}`,
-          )
-        }
+        promises.push(adminService.toggleUserStatus(user.id))
       }
 
       if (firstName !== user.firstName || lastName !== user.lastName) {
-        try {
-          await adminService.updateUserDetails(user.id, { firstName, lastName })
-          hasChanges = true
-        } catch (err) {
-          throw new Error(
-            `Failed to update user details: ${err instanceof Error ? err.message : "Unknown error"}`,
-          )
-        }
+        promises.push(
+          adminService.updateUserDetails(user.id, { firstName, lastName }),
+        )
       }
 
       if (email !== user.email) {
-        try {
-          await adminService.updateUserEmail(user.id, email)
-          hasChanges = true
-        } catch (err) {
-          throw new Error(
-            `Failed to update user email: ${err instanceof Error ? err.message : "Unknown error"}`,
-          )
-        }
+        promises.push(adminService.updateUserEmail(user.id, email))
       }
 
-      if (hasChanges) {
+      if (promises.length > 0) {
+        await Promise.all(promises)
         onSuccess()
         onClose()
       } else {
@@ -214,7 +187,7 @@ export function AdminEditUserModal({
                   <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <select
                     value={role}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
+                    onChange={(e) => setRole(e.target.value as any)}
                     className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all appearance-none cursor-pointer hover:bg-white/5"
                   >
                     <option value="student" className="bg-slate-900 text-white">

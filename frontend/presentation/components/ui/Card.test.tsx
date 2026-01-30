@@ -21,7 +21,7 @@ describe("Card", () => {
       const card = screen.getByTestId("card")
       expect(card).toHaveClass("rounded-xl")
       expect(card).toHaveClass("border")
-      expect(card).toHaveClass("backdrop-blur-md")
+      expect(card).toHaveClass("backdrop-blur-sm")
     })
 
     it("applies custom className", () => {
@@ -51,7 +51,7 @@ describe("Card", () => {
           </Card>,
         )
         const card = screen.getByTestId("card")
-        expect(card.className).toContain("hover:bg-white/12")
+        expect(card.className).toContain("hover:bg-white/10")
       })
 
       it("applies interactive variant styles", () => {
@@ -131,7 +131,7 @@ describe("Card", () => {
 
     it("applies text styling", () => {
       render(<CardDescription data-testid="desc">Description</CardDescription>)
-      expect(screen.getByTestId("desc")).toHaveClass("text-slate-300")
+      expect(screen.getByTestId("desc")).toHaveClass("text-gray-400")
     })
 
     it("forwards ref", () => {

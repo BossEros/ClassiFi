@@ -2,6 +2,7 @@ import type { FilePair, MatchFragment } from "./types"
 
 /**
  * These adapters convert backend API responses to frontend component types.
+ * NOTE: The original Dolos library adapters have been replaced with API-based adapters.
  */
 
 // Interface for raw pair data from API
@@ -70,7 +71,9 @@ export function pairToFilePair(
     similarity: pair.similarity,
     overlap: pair.overlap,
     longest: pair.longest,
-    fragments: fragments.map(fragmentToMatchFragment),
+    fragments: fragments.map((frag, index) =>
+      fragmentToMatchFragment(frag, index),
+    ),
   }
 }
 
@@ -79,9 +82,10 @@ export function pairToFilePair(
  */
 export function fragmentToMatchFragment(
   fragment: ApiFragmentData,
+  id: number,
 ): MatchFragment {
   return {
-    id: fragment.id,
+    id: fragment.id ?? id,
     leftSelection: fragment.leftSelection,
     rightSelection: fragment.rightSelection,
     length: fragment.length,

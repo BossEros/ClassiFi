@@ -41,13 +41,6 @@ const EnvSchema = z.object({
 
   // Judge0 (Code Execution)
   JUDGE0_URL: z.string().url().default("http://localhost:2358"),
-
-  // Test Execution Timeout (in seconds)
-  TEST_EXECUTION_TIMEOUT_SECONDS: z
-    .string()
-    .default("60")
-    .transform(Number)
-    .refine((v) => v > 0, "TEST_EXECUTION_TIMEOUT_SECONDS must be positive"),
 })
 
 /** Validated environment type */
@@ -97,7 +90,4 @@ export const settings = {
 
   // Judge0 (Code Execution)
   judge0Url: env.JUDGE0_URL,
-
-  // Test Execution
-  testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,
 }

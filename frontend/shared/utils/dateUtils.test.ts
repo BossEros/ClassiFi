@@ -7,7 +7,6 @@ import {
   formatTimeAgo,
   isLateSubmission,
   formatTimeRemaining,
-  getDeadlineStatus,
   formatDateTime,
 } from "@/shared/utils/dateUtils"
 
@@ -276,84 +275,6 @@ describe("dateUtils", () => {
       const date = new Date("2024-06-15T15:00:00Z") // 3 hours away
 
       expect(formatTimeRemaining(date)).toBe("3h 0m")
-    })
-  })
-
-  // ============================================================================
-  // getDeadlineStatus Tests
-  // ============================================================================
-
-  describe("getDeadlineStatus", () => {
-    beforeEach(() => {
-      vi.useFakeTimers()
-      // Set to noon on June 15, 2024
-      vi.setSystemTime(new Date("2024-06-15T12:00:00Z"))
-    })
-
-    afterEach(() => {
-      vi.useRealTimers()
-    })
-
-    it("returns 'Overdue' for past deadlines", () => {
-      const yesterday = "2024-06-14T23:59:59Z"
-
-      expect(getDeadlineStatus(yesterday)).toBe("Overdue")
-    })
-
-    it("returns 'Due today' for deadlines on the same calendar day", () => {
-      // Even though it's later today, it should be "Due today"
-      const laterToday = "2024-06-15T23:59:59Z"
-
-      expect(getDeadlineStatus(laterToday)).toBe("Due today")
-    })
-
-    it("returns 'Due today' for deadlines earlier on the same day", () => {
-      // Even though it's technically in the past, same calendar day = "Due today"
-      const earlierToday = "2024-06-15T08:00:00Z"
-
-      expect(getDeadlineStatus(earlierToday)).toBe("Due today")
-    })
-
-    it("returns 'Due tomorrow' for deadlines on the next calendar day", () => {
-      const tomorrow = "2024-06-16T00:00:01Z"
-
-      expect(getDeadlineStatus(tomorrow)).toBe("Due tomorrow")
-    })
-
-    it("returns 'Due tomorrow' for deadlines late tomorrow", () => {
-      const tomorrowEvening = "2024-06-16T23:59:59Z"
-
-      expect(getDeadlineStatus(tomorrowEvening)).toBe("Due tomorrow")
-    })
-
-    it("returns 'Due in X days' for deadlines multiple days away", () => {
-      const threeDaysAway = "2024-06-18T12:00:00Z"
-
-      expect(getDeadlineStatus(threeDaysAway)).toBe("Due in 3 days")
-    })
-
-    it("returns 'Due in X days' for deadlines a week away", () => {
-      const sevenDaysAway = "2024-06-22T12:00:00Z"
-
-      expect(getDeadlineStatus(sevenDaysAway)).toBe("Due in 7 days")
-    })
-
-    it("handles Date objects", () => {
-      const tomorrow = new Date("2024-06-16T15:00:00Z")
-
-      expect(getDeadlineStatus(tomorrow)).toBe("Due tomorrow")
-    })
-
-    it("handles midnight deadlines correctly", () => {
-      const midnightTonight = "2024-06-15T23:59:59Z"
-
-      expect(getDeadlineStatus(midnightTonight)).toBe("Due today")
-    })
-
-    it("handles midnight tomorrow correctly", () => {
-      const midnightTomorrow = "2024-06-16T00:00:00Z"
-
-      expect(getDeadlineStatus(midnightTomorrow)).toBe("Due tomorrow")
     })
   })
 

@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import type { MockedObject } from "vitest"
 import { AssignmentService } from "../../src/services/assignment.service.js"
 import type { ClassRepository } from "../../src/repositories/class.repository.js"
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
@@ -13,14 +12,14 @@ import { createMockClass, createMockAssignment } from "../utils/factories.js"
 
 describe("AssignmentService", () => {
   let assignmentService: AssignmentService
-  let mockClassRepo: Partial<MockedObject<ClassRepository>>
-  let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
-  let mockTestCaseRepo: Partial<MockedObject<TestCaseRepository>>
+  let mockClassRepo: any
+  let mockAssignmentRepo: any
+  let mockTestCaseRepo: any
 
   beforeEach(() => {
     mockClassRepo = {
       getClassById: vi.fn(),
-    }
+    } as any
 
     mockAssignmentRepo = {
       createAssignment: vi.fn(),
@@ -28,16 +27,16 @@ describe("AssignmentService", () => {
       getAssignmentsByClassId: vi.fn(),
       updateAssignment: vi.fn(),
       deleteAssignment: vi.fn(),
-    }
+    } as any
 
     mockTestCaseRepo = {
       getByAssignmentId: vi.fn(),
-    }
+    } as any
 
     assignmentService = new AssignmentService(
-      mockAssignmentRepo as unknown as AssignmentRepository,
-      mockClassRepo as unknown as ClassRepository,
-      mockTestCaseRepo as unknown as TestCaseRepository,
+      mockAssignmentRepo as AssignmentRepository,
+      mockClassRepo as ClassRepository,
+      mockTestCaseRepo as TestCaseRepository,
     )
   })
 
@@ -61,11 +60,11 @@ describe("AssignmentService", () => {
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
 
-      const result = await assignmentService.createAssignment({
-        classId: 1,
-        teacherId: 1,
-        ...validAssignmentData,
-      })
+      const result = await assignmentService.createAssignment(
+        1,
+        1,
+        validAssignmentData,
+      )
 
       expect(result).toBeDefined()
       expect(result.id).toBe(mockAssignment.id)
@@ -80,11 +79,7 @@ describe("AssignmentService", () => {
       mockClassRepo.getClassById!.mockResolvedValue(undefined)
 
       await expect(
-        assignmentService.createAssignment({
-          classId: 999,
-          teacherId: 1,
-          ...validAssignmentData,
-        }),
+        assignmentService.createAssignment(999, 1, validAssignmentData),
       ).rejects.toThrow(ClassNotFoundError)
     })
 
@@ -94,11 +89,7 @@ describe("AssignmentService", () => {
 
       // Teacher ID 999 is different from class owner (1)
       await expect(
-        assignmentService.createAssignment({
-          classId: 1,
-          teacherId: 999,
-          ...validAssignmentData,
-        }),
+        assignmentService.createAssignment(1, 999, validAssignmentData),
       ).rejects.toThrow(NotClassOwnerError)
     })
 
@@ -116,11 +107,7 @@ describe("AssignmentService", () => {
         deadline: new Date(Date.now() + 86400000),
       }
 
-      await assignmentService.createAssignment({
-        classId: 1,
-        teacherId: 1,
-        ...dataWithoutResubmission,
-      })
+      await assignmentService.createAssignment(1, 1, dataWithoutResubmission)
 
       expect(mockAssignmentRepo.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -175,7 +162,7 @@ describe("AssignmentService", () => {
       mockAssignmentRepo.getAssignmentById!.mockResolvedValue(mockAssignment)
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       const mockTestCases = [{ id: 1, name: "Test 1", isHidden: false }]
-      mockTestCaseRepo.getByAssignmentId!.mockResolvedValue(mockTestCases)
+      mockTestCaseRepo.getByAssignmentId.mockResolvedValue(mockTestCases)
 
       const result = await assignmentService.getAssignmentDetails(1)
 
@@ -198,7 +185,7 @@ describe("AssignmentService", () => {
 
       mockAssignmentRepo.getAssignmentById!.mockResolvedValue(mockAssignment)
       mockClassRepo.getClassById!.mockResolvedValue(undefined)
-      mockTestCaseRepo.getByAssignmentId!.mockResolvedValue([])
+      mockTestCaseRepo.getByAssignmentId.mockResolvedValue([])
 
       const result = await assignmentService.getAssignmentDetails(1)
 
@@ -223,9 +210,7 @@ describe("AssignmentService", () => {
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.updateAssignment!.mockResolvedValue(updatedAssignment)
 
-      const result = await assignmentService.updateAssignment({
-        assignmentId: 1,
-        teacherId: 1,
+      const result = await assignmentService.updateAssignment(1, 1, {
         assignmentName: "Updated Name",
       })
 
@@ -239,11 +224,7 @@ describe("AssignmentService", () => {
       mockAssignmentRepo.getAssignmentById!.mockResolvedValue(undefined)
 
       await expect(
-        assignmentService.updateAssignment({
-          assignmentId: 999,
-          teacherId: 1,
-          assignmentName: "New",
-        }),
+        assignmentService.updateAssignment(999, 1, { assignmentName: "New" }),
       ).rejects.toThrow(AssignmentNotFoundError)
     })
 
@@ -256,11 +237,7 @@ describe("AssignmentService", () => {
 
       // Teacher ID 999 is different from class owner (1)
       await expect(
-        assignmentService.updateAssignment({
-          assignmentId: 1,
-          teacherId: 999,
-          assignmentName: "New",
-        }),
+        assignmentService.updateAssignment(1, 999, { assignmentName: "New" }),
       ).rejects.toThrow(NotClassOwnerError)
     })
 
@@ -271,11 +248,7 @@ describe("AssignmentService", () => {
       mockClassRepo.getClassById!.mockResolvedValue(undefined)
 
       await expect(
-        assignmentService.updateAssignment({
-          assignmentId: 1,
-          teacherId: 1,
-          assignmentName: "New",
-        }),
+        assignmentService.updateAssignment(1, 1, { assignmentName: "New" }),
       ).rejects.toThrow(ClassNotFoundError)
     })
 
@@ -288,11 +261,7 @@ describe("AssignmentService", () => {
       mockAssignmentRepo.updateAssignment!.mockResolvedValue(undefined)
 
       await expect(
-        assignmentService.updateAssignment({
-          assignmentId: 1,
-          teacherId: 1,
-          assignmentName: "New",
-        }),
+        assignmentService.updateAssignment(1, 1, { assignmentName: "New" }),
       ).rejects.toThrow(AssignmentNotFoundError)
     })
 
@@ -301,8 +270,6 @@ describe("AssignmentService", () => {
       const mockClass = createMockClass({ id: 1, teacherId: 1 })
       const newDeadline = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
       const updatedData = {
-        assignmentId: 1,
-        teacherId: 1,
         assignmentName: "Updated",
         description: "New description",
         programmingLanguage: "java" as const,
@@ -316,18 +283,14 @@ describe("AssignmentService", () => {
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.updateAssignment!.mockResolvedValue(updatedAssignment)
 
-      const result = await assignmentService.updateAssignment(updatedData)
+      const result = await assignmentService.updateAssignment(1, 1, updatedData)
 
       expect(result.assignmentName).toBe("Updated")
       expect(result.description).toBe("New description")
-      expect(mockAssignmentRepo.updateAssignment).toHaveBeenCalledWith(1, {
-        assignmentName: "Updated",
-        description: "New description",
-        programmingLanguage: "java",
-        deadline: newDeadline,
-        allowResubmission: false,
-        maxAttempts: 5,
-      })
+      expect(mockAssignmentRepo.updateAssignment).toHaveBeenCalledWith(
+        1,
+        updatedData,
+      )
     })
   })
 

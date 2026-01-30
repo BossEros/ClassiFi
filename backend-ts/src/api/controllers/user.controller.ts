@@ -7,54 +7,14 @@ import { SuccessMessageSchema } from "../schemas/common.schema.js"
 import { toUserDTO } from "../../shared/mappers.js"
 import { z } from "zod"
 
+/** Schema for avatar update request */
 const UpdateAvatarSchema = z.object({
-  avatarUrl: z
-    .string()
-    .max(2048, "Avatar URL must not exceed 2048 characters")
-    .url("Invalid URL format")
-    .refine(
-      (url) => {
-        try {
-          const parsedUrl = new URL(url)
-          return parsedUrl.protocol === "https:"
-        } catch {
-          return false
-        }
-      },
-      { message: "Avatar URL must use HTTPS protocol" },
-    ),
+  avatarUrl: z.string().url("Invalid URL format"),
 })
 
 type UpdateAvatarRequest = z.infer<typeof UpdateAvatarSchema>
 
-const UserDTOSchema = z.object({
-  id: z.number(),
-  supabaseUserId: z.string().nullable(),
-  email: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  role: z.string(),
-  avatarUrl: z.string().nullable(),
-  isActive: z.boolean(),
-  createdAt: z.string(),
-})
-
-const GetMeResponseSchema = z.object({
-  success: z.boolean(),
-  user: UserDTOSchema,
-})
-
-const ErrorResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-})
-
-/**
- * Registers user routes for profile management, avatar updates, and account deletion.
- *
- * @param app - The Fastify application instance.
- * @returns A promise that resolves when all routes are registered.
- */
+/** User routes - /api/v1/user/* */
 export async function userRoutes(app: FastifyInstance): Promise<void> {
   const userService = container.resolve<UserService>("UserService")
 
@@ -67,20 +27,13 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["User"],
       summary: "Get current user profile",
-      description:
-        "Returns the authenticated user's profile information including name, email, and role",
       security: [{ bearerAuth: [] }],
-      response: {
-        200: toJsonSchema(GetMeResponseSchema),
-        404: toJsonSchema(ErrorResponseSchema),
-      },
     },
     handler: async (request, reply) => {
-      const authenticatedUserId = request.user!.id
+      const userId = request.user!.id
+      const user = await userService.getUserById(userId)
 
-      const currentUser = await userService.getUserById(authenticatedUserId)
-
-      if (!currentUser) {
+      if (!user) {
         return reply.status(404).send({
           success: false,
           message: "User not found",
@@ -89,7 +42,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
       return reply.send({
         success: true,
-        user: toUserDTO(currentUser),
+        user: toUserDTO(user),
       })
     },
   })
@@ -103,8 +56,6 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["User"],
       summary: "Update user avatar URL",
-      description:
-        "Updates the authenticated user's profile picture by providing a new avatar URL",
       security: [{ bearerAuth: [] }],
       body: toJsonSchema(UpdateAvatarSchema),
       response: {
@@ -112,10 +63,10 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     handler: async (request, reply) => {
-      const authenticatedUserId = request.user!.id
-      const { avatarUrl: newAvatarUrl } = request.body
+      const userId = request.user!.id
+      const { avatarUrl } = request.body
 
-      await userService.updateAvatarUrl(authenticatedUserId, newAvatarUrl)
+      await userService.updateAvatarUrl(userId, avatarUrl)
 
       return reply.send({
         success: true,
@@ -134,16 +85,16 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       tags: ["User"],
       summary: "Delete current user account",
       description:
-        "Permanently deletes the authenticated user's account and all associated data. This action cannot be undone.",
+        "Permanently deletes the authenticated user's account and all associated data.",
       security: [{ bearerAuth: [] }],
       response: {
         200: toJsonSchema(SuccessMessageSchema),
       },
     },
     handler: async (request, reply) => {
-      const authenticatedUserId = request.user!.id
+      const userId = request.user!.id
 
-      await userService.deleteAccount(authenticatedUserId)
+      await userService.deleteAccount(userId)
 
       return reply.send({
         success: true,

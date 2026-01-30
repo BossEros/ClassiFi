@@ -19,14 +19,6 @@ interface AdminUserModalProps {
   onSuccess: () => void
 }
 
-const INITIAL_FORM_DATA = {
-  email: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  role: "student" as "student" | "teacher" | "admin",
-}
-
 export function AdminUserModal({
   isOpen,
   onClose,
@@ -36,7 +28,13 @@ export function AdminUserModal({
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA)
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    role: "student" as "student" | "teacher" | "admin",
+  })
 
   if (!isOpen) return null
 
@@ -61,7 +59,13 @@ export function AdminUserModal({
       onSuccess()
       onClose()
       // Reset form
-      setFormData(INITIAL_FORM_DATA)
+      setFormData({
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        role: "student",
+      })
       setPasswordError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create user")

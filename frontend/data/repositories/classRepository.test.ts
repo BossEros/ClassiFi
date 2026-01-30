@@ -375,7 +375,9 @@ describe("classRepository", () => {
         classRepository.deleteClassByIdForTeacher(1, 5),
       ).resolves.toBeUndefined()
 
-      expect(apiClient.delete).toHaveBeenCalledWith("/classes/1?teacherId=5")
+      expect(apiClient.delete).toHaveBeenCalledWith("/classes/1", {
+        teacherId: 5,
+      })
     })
 
     it("throws error when deletion fails", async () => {
