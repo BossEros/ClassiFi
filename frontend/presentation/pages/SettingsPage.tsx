@@ -53,14 +53,16 @@ export function SettingsPage() {
     //TO-DO: Handle success (e.g., show notification)
   }
 
-  if (!user) return null
-
-  const userInitials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
   const topBar = useTopBar({
     user,
     userInitials,
     onProfileClick: () => {}, // No-op since we're already on settings page
   })
+
+  if (!user) return null
 
   return (
     <DashboardLayout topBar={topBar}>
