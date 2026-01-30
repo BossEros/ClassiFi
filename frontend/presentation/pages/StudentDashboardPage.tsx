@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Home, Grid3x3, FileText } from "lucide-react"
+import { Grid3x3, FileText, Bell, BookOpen } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
 import {
@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
+import { Avatar } from "@/presentation/components/ui/Avatar"
 import { getCurrentUser } from "@/business/services/authService"
 import { getDashboardData } from "@/business/services/studentDashboardService"
 import { getDeadlineStatus } from "@/shared/utils/dateUtils"
@@ -52,23 +53,78 @@ export function StudentDashboardPage() {
     fetchDashboardData(parseInt(currentUser.id))
   }, [navigate])
 
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = {
+    sidebar: (
+      <div className="h-16 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 flex items-center px-6 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <BookOpen className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </div>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            ClassiFi
+          </h1>
+        </div>
+      </div>
+    ),
+    main: (
+      <div className="h-16 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 flex items-center px-6 lg:px-8 shrink-0">
+        <div className="flex items-center justify-end w-full">
+          {/* Right Section: Notifications, Separator, User */}
+          <div className="flex items-center gap-4">
+            {/* Notifications */}
+            <button
+              className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5 text-slate-300" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+
+            {/* Separator */}
+            <div className="h-8 w-px bg-white/20"></div>
+
+            {/* User Profile */}
+            <button
+              onClick={() => navigate("/dashboard/settings")}
+              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-white">
+                  {user ? `${user.firstName} ${user.lastName}` : "User"}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {user
+                    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                    : "Student"}
+                </p>
+              </div>
+              <Avatar
+                size="sm"
+                src={user?.avatarUrl}
+                fallback={userInitials}
+                alt={user ? `${user.firstName} ${user.lastName}` : "User"}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    ),
+  }
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 rounded-lg bg-teal-500/20">
-            <Home className="w-5 h-5 text-teal-300" />
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Home</h1>
-        </div>
-        {user && (
-          <p className="text-slate-300 ml-11 text-sm">
-            Welcome back,{" "}
-            <span className="text-white font-semibold">{user.firstName}</span>!
-            Here's what's happening today.
-          </p>
-        )}
+        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+          Welcome back, {user?.firstName}!
+        </h1>
+        <p className="text-slate-400 text-base">
+          Here's what's happening with your courses today.
+        </p>
       </div>
 
       {/* Error Message */}
@@ -79,11 +135,24 @@ export function StudentDashboardPage() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* My Classes Panel */}
-        <Card className="lg:col-span-7 h-fit">
+        <Card className="lg:col-span-2 h-fit">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">My Classes</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <Grid3x3 className="w-5 h-5 text-white" strokeWidth={2.5} />
+                </div>
+                <CardTitle className="text-xl">My Classes</CardTitle>
+              </div>
+              <button
+                onClick={() => navigate("/dashboard/classes")}
+                className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+              >
+                View All
+              </button>
+            </div>
             <CardDescription className="text-sm mt-1.5">
               Classes you're enrolled in
             </CardDescription>
@@ -95,7 +164,7 @@ export function StudentDashboardPage() {
                 <p className="text-slate-400">Loading dashboard...</p>
               </div>
             ) : enrolledClasses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {enrolledClasses.map((classItem) => (
                   <ClassCard
                     key={classItem.id}
@@ -123,11 +192,17 @@ export function StudentDashboardPage() {
         </Card>
 
         {/* Pending Assignments Panel */}
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Pending</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <FileText className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </div>
+              <CardTitle className="text-xl">Pending</CardTitle>
+            </div>
             <CardDescription className="text-sm mt-1.5">
-              Coursework that needs your attention
+              {pendingAssignments.length}{" "}
+              {pendingAssignments.length === 1 ? "task" : "tasks"}
             </CardDescription>
           </CardHeader>
           <CardContent>

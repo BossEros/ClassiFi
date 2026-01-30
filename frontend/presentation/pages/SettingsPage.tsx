@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
@@ -12,7 +13,6 @@ import { Avatar } from "@/presentation/components/ui/Avatar"
 import { getCurrentUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
 import {
-  Settings,
   User as UserIcon,
   Lock,
   Mail,
@@ -20,6 +20,7 @@ import {
   Camera,
   Trash2,
   AlertTriangle,
+  BookOpen,
 } from "lucide-react"
 import {
   ChangePasswordModal,
@@ -28,6 +29,7 @@ import {
 } from "@/presentation/components/settings"
 
 export function SettingsPage() {
+  const navigate = useNavigate()
   const [user, setUser] = useState<User | null>(null)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
@@ -57,22 +59,70 @@ export function SettingsPage() {
 
   const userInitials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
 
+  const topBar = {
+    sidebar: (
+      <div className="h-16 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 flex items-center px-6 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <BookOpen className="w-5 h-5 text-white" strokeWidth={2.5} />
+          </div>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            ClassiFi
+          </h1>
+        </div>
+      </div>
+    ),
+    main: (
+      <div className="h-16 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 flex items-center px-6 lg:px-8 shrink-0">
+        <div className="flex items-center justify-end w-full gap-4">
+          {/* Notifications */}
+          <button
+            className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="w-5 h-5 text-slate-300" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+          </button>
+
+          {/* Separator */}
+          <div className="h-8 w-px bg-white/20"></div>
+
+          {/* User Profile */}
+          <button
+            onClick={() => navigate("/dashboard/settings")}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-medium text-white">
+                {user ? `${user.firstName} ${user.lastName}` : "User"}
+              </p>
+              <p className="text-xs text-slate-400">
+                {user
+                  ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                  : "Student"}
+              </p>
+            </div>
+            <Avatar
+              size="sm"
+              src={user?.avatarUrl}
+              fallback={userInitials}
+              alt={user ? `${user.firstName} ${user.lastName}` : "User"}
+            />
+          </button>
+        </div>
+      </div>
+    ),
+  }
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
-            <Settings className="w-6 h-6 text-teal-400" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-              Settings
-            </h1>
-            <p className="text-slate-300 text-sm mt-1">
-              Manage your account preferences and security
-            </p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+          <p className="text-slate-400 text-base">
+            Manage your account preferences and security
+          </p>
         </div>
 
         {/* Profile Card */}
