@@ -38,8 +38,10 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         )}
         onChange={handleChange}
         ref={ref}
-        aria-invalid={hasError ? true : props["aria-invalid"]}
+        ref={ref}
         {...props}
+        aria-invalid={hasError || props["aria-invalid"]}
+       >
       >
         {placeholder && (
           <option value="" disabled>
