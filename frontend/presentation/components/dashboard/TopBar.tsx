@@ -20,7 +20,8 @@ interface TopBarProps {
 export function useTopBar({ user, userInitials, onProfileClick }: TopBarProps) {
   const navigate = useNavigate()
 
-  const handleProfileClick = onProfileClick || (() => navigate("/dashboard/settings"))
+  const handleProfileClick =
+    onProfileClick || (() => navigate("/dashboard/settings"))
 
   return {
     sidebar: (

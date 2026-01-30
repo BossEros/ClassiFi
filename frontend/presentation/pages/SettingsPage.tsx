@@ -56,10 +56,10 @@ export function SettingsPage() {
   if (!user) return null
 
   const userInitials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-  const topBar = useTopBar({ 
-    user, 
+  const topBar = useTopBar({
+    user,
     userInitials,
-    onProfileClick: () => {} // No-op since we're already on settings page
+    onProfileClick: () => {}, // No-op since we're already on settings page
   })
 
   return (
