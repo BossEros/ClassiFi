@@ -271,10 +271,7 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       },
       preHandler: [authMiddleware],
       handler: async (request, reply) => {
-        const reportId = parsePositiveInt(
-          request.params.reportId,
-          "Report ID",
-        )
+        const reportId = parsePositiveInt(request.params.reportId, "Report ID")
         const submissionId = parsePositiveInt(
           request.params.submissionId,
           "Submission ID",

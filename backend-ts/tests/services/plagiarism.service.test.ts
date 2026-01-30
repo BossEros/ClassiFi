@@ -104,8 +104,8 @@ describe("PlagiarismService", () => {
       create: vi.fn().mockReturnValue(mockDetector),
     }
 
-      // Reset legacy store
-      ; (PlagiarismService as any).prototype.legacyReportsStore = new Map()
+    // Reset legacy store
+    ;(PlagiarismService as any).prototype.legacyReportsStore = new Map()
 
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
