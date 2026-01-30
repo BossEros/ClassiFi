@@ -24,6 +24,7 @@ import { getCurrentUser } from "@/business/services/authService"
 import * as adminService from "@/business/services/adminService"
 import type { AdminStats, ActivityItem } from "@/business/services/adminService"
 import type { User } from "@/business/models/auth/types"
+import { formatTimeAgo } from "@/shared/utils/dateUtils"
 
 interface DashboardStat {
   label: string
@@ -112,21 +113,6 @@ export function AdminDashboardPage() {
         },
       ]
     : []
-
-  const formatRelativeTime = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return "Just now"
-    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`
-    if (diffHours < 24)
-      return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`
-    return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`
-  }
 
   return (
     <DashboardLayout>
@@ -238,7 +224,7 @@ export function AdminDashboardPage() {
                             <span className="text-blue-300">{item.target}</span>
                           </p>
                           <p className="text-xs text-slate-500 mt-1">
-                            {formatRelativeTime(item.timestamp)}
+                            {formatTimeAgo(item.timestamp)}
                           </p>
                         </div>
                       </div>

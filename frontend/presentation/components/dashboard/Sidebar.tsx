@@ -14,12 +14,10 @@ import {
   GraduationCap,
 } from "lucide-react"
 import { NavItem } from "./NavItem"
-import { Avatar } from "@/presentation/components/ui/Avatar"
 import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
 import { getCurrentUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
-import { APP_NAME } from "@/shared/constants"
 
 const teacherNavigationItems = [
   { id: "home", label: "Home", path: "/dashboard", icon: Home },
@@ -91,15 +89,11 @@ const adminNavigationItems = [
 
 export function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(() => getCurrentUser())
   const navigate = useNavigate()
 
-  // Get user on mount and listen for storage changes
+  // Listen for storage changes (when avatar is updated)
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
-
-    // Listen for storage changes (when avatar is updated)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "user") {
         const updatedUser = getCurrentUser()
@@ -127,10 +121,6 @@ export function Sidebar() {
     navigate("/login")
   }
 
-  const userInitials = user
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : "?"
-
   return (
     <>
       {/* Mobile menu button */}
@@ -150,19 +140,12 @@ export function Sidebar() {
       <aside
         className={cn(
           "fixed lg:static inset-y-0 left-0 z-40",
-          "w-56 bg-slate-900/95 backdrop-blur-xl border-r border-white/10",
+          "w-56 h-full bg-slate-900/95 backdrop-blur-xl",
           "flex flex-col",
           "transform transition-transform duration-300 ease-in-out lg:transform-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
-        {/* Logo/Brand */}
-        <div className="h-16 flex items-center px-4 border-b border-white/10">
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            {APP_NAME}
-          </h1>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
           {(user?.role === "student"
@@ -179,32 +162,14 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* User Profile Section */}
+        {/* Logout Section */}
         <div className="p-3 border-t border-white/10">
-          <div className="flex items-center gap-2 mb-2 px-1.5">
-            <Avatar
-              size="sm"
-              src={user?.avatarUrl}
-              fallback={userInitials}
-              alt={user ? `${user.firstName} ${user.lastName}` : "User"}
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-white truncate">
-                {user ? `${user.firstName} ${user.lastName}` : "User"}
-              </p>
-              {user && (
-                <p className="text-[10px] text-slate-300 truncate leading-tight">
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </p>
-              )}
-            </div>
-          </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Logout</span>
+            <LogOut className="w-4 h-4" />
+            <span>Sign Out</span>
           </button>
         </div>
       </aside>

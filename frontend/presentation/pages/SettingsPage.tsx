@@ -12,7 +12,6 @@ import { Avatar } from "@/presentation/components/ui/Avatar"
 import { getCurrentUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
 import {
-  Settings,
   User as UserIcon,
   Lock,
   Mail,
@@ -26,6 +25,7 @@ import {
   DeleteAccountModal,
   AvatarUploadModal,
 } from "@/presentation/components/settings"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function SettingsPage() {
   const [user, setUser] = useState<User | null>(null)
@@ -34,8 +34,12 @@ export function SettingsPage() {
   const [isAvatarUploadOpen, setIsAvatarUploadOpen] = useState(false)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    setUser(currentUser)
+    const initializeUser = () => {
+      const currentUser = getCurrentUser()
+      setUser(currentUser)
+    }
+
+    initializeUser()
   }, [])
 
   const handleAvatarSuccess = (avatarUrl: string) => {
@@ -46,29 +50,29 @@ export function SettingsPage() {
   }
 
   const handlePasswordChangeSuccess = () => {
-    // Optionally show a toast or refresh user data
+    //TO-DO: Handle success (e.g., show notification)
   }
+
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+  const topBar = useTopBar({
+    user,
+    userInitials,
+    onProfileClick: () => {}, // No-op since we're already on settings page
+  })
 
   if (!user) return null
 
-  const userInitials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
-            <Settings className="w-6 h-6 text-teal-400" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400">
-              Settings
-            </h1>
-            <p className="text-slate-300 text-sm mt-1">
-              Manage your account preferences and security
-            </p>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+          <p className="text-slate-400 text-base">
+            Manage your account preferences and security
+          </p>
         </div>
 
         {/* Profile Card */}

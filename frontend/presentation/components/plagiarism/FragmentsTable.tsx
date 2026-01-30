@@ -56,6 +56,15 @@ export const FragmentsTable: React.FC<FragmentsTableProps> = ({
               <tr
                 key={fragment.id}
                 onClick={() => onFragmentSelect(fragment)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault()
+                    onFragmentSelect(fragment)
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-pressed={isSelected}
                 style={{
                   cursor: "pointer",
                   backgroundColor: isSelected

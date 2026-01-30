@@ -20,7 +20,7 @@ import {
   PairComparison,
   PairCodeDiff,
   type FilePair,
-} from "@/src/components/plagiarism"
+} from "@/presentation/components/plagiarism"
 import {
   getResultDetails,
   type AnalyzeResponse,
@@ -505,7 +505,6 @@ export function SimilarityResultsPage() {
                   pair={pairDetails}
                   language={detectedLanguage}
                   editorHeight={500}
-                  showFragmentsTable={false}
                 />
               )}
 

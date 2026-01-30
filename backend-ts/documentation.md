@@ -96,6 +96,11 @@ backend-ts/
 ├── src/
 │   ├── api/
 │   │   ├── controllers/      # Route handlers
+│   │   │   ├── admin/        # Admin-specific controllers
+│   │   │   │   ├── admin-analytics.controller.ts
+│   │   │   │   ├── admin-class.controller.ts
+│   │   │   │   ├── admin-enrollment.controller.ts
+│   │   │   │   └── admin-user.controller.ts
 │   │   │   ├── auth.controller.ts
 │   │   │   ├── class.controller.ts
 │   │   │   ├── assignment.controller.ts
@@ -236,6 +241,48 @@ export const env = validateEnv(); // Fails fast if invalid
 export const settings = { ... };  // Typed settings object
 ```
 
+### Test Execution Timeout
+
+The backend includes configurable timeout protection for test execution to prevent long-running or infinite loop code from blocking the server:
+
+- **Environment Variable**: `TEST_EXECUTION_TIMEOUT_SECONDS` (default: 60 seconds)
+- **Endpoint**: `POST /api/v1/submissions/:submissionId/run-tests`
+- **Behavior**: 
+  - If tests complete within the timeout, returns 200 with results
+  - If tests exceed the timeout, returns 504 Gateway Timeout with error message
+  - Fastify request timeout is automatically set to `TEST_EXECUTION_TIMEOUT_SECONDS + 5` to allow graceful timeout responses
+
+**Configuration Example**:
+```env
+# Set timeout to 90 seconds for complex test suites
+TEST_EXECUTION_TIMEOUT_SECONDS=90
+```
+
+**Response on Timeout (504)**:
+```json
+{
+  "success": false,
+  "message": "Test execution timeout",
+  "error": "Tests did not complete within <TEST_EXECUTION_TIMEOUT_SECONDS> seconds. This may indicate an infinite loop, excessive computation, or system overload."
+}
+```
+
+*Note: The timeout value in the error message reflects the configured `TEST_EXECUTION_TIMEOUT_SECONDS` environment variable (default: 60 seconds).*
+
+### Programming Language Support
+
+ClassiFi supports three programming languages for assignments and code execution:
+
+- **Python** (`.py` files)
+- **Java** (`.java` files)
+- **C** (`.c` files)
+
+The programming language is specified at assignment creation and enforced during:
+- File upload validation
+- Code execution via Judge0
+- Plagiarism detection with Tree-Sitter
+- Syntax highlighting in the IDE
+
 ---
 
 ## API Reference
@@ -318,6 +365,8 @@ export const settings = { ... };  // Typed settings object
 
 ### Plagiarism Detection
 
+The plagiarism detection system uses a custom implementation based on Winnowing algorithm with Tree-Sitter for code parsing. It supports Python, Java, and C languages.
+
 | Method | Endpoint                                       | Description             |
 | ------ | ---------------------------------------------- | ----------------------- |
 | POST   | `/plagiarism/analyze`                          | Analyze files           |
@@ -326,6 +375,15 @@ export const settings = { ... };  // Typed settings object
 | DELETE | `/plagiarism/reports/:reportId`                | Delete report           |
 | GET    | `/plagiarism/reports/:reportId/pairs/:pairId`  | Get match pair details  |
 | GET    | `/plagiarism/results/:resultId/details`        | Get result details      |
+
+**Supported Languages**: Python, Java, C
+
+**Detection Features**:
+- AST-based tokenization using Tree-Sitter
+- Winnowing fingerprinting algorithm
+- Configurable k-gram size and window size
+- Fragment-level match detection with line/column positions
+- Similarity scoring and overlap metrics
 
 ### Dashboard
 
@@ -338,22 +396,45 @@ export const settings = { ... };  // Typed settings object
 
 ### Admin
 
+#### User Management
+
+| Method | Endpoint                  | Description       |
+| ------ | ------------------------- | ----------------- |
+| GET    | `/admin/users`            | List users        |
+| POST   | `/admin/users`            | Create user       |
+| GET    | `/admin/users/:id`        | Get user details  |
+| PUT    | `/admin/users/:id`        | Update user       |
+| PATCH  | `/admin/users/:id/role`   | Update user role  |
+| DELETE | `/admin/users/:id`        | Delete user       |
+
+#### Class Management
+
+| Method | Endpoint                      | Description          |
+| ------ | ----------------------------- | -------------------- |
+| GET    | `/admin/classes`              | List classes         |
+| POST   | `/admin/classes`              | Create class         |
+| GET    | `/admin/classes/:id`          | Get class details    |
+| PUT    | `/admin/classes/:id`          | Update class         |
+| DELETE | `/admin/classes/:id`          | Delete class         |
+| PATCH  | `/admin/classes/:id/reassign` | Reassign teacher     |
+| PATCH  | `/admin/classes/:id/archive`  | Archive class        |
+| GET    | `/admin/classes/:id/assignments`    | Get class assignments    |
+
+#### Enrollment Management
+
 | Method | Endpoint                                 | Description        |
 | ------ | ---------------------------------------- | ------------------ |
-| GET    | `/admin/users`                           | List users         |
-| POST   | `/admin/users`                           | Create user        |
-| GET    | `/admin/users/:id`                       | Get user details   |
-| PATCH  | `/admin/users/:id/role`                  | Update user role   |
-| DELETE | `/admin/users/:id`                       | Delete user        |
-| GET    | `/admin/classes`                         | List classes       |
-| POST   | `/admin/classes`                         | Create class       |
-| PATCH  | `/admin/classes/:id/reassign`            | Reassign teacher   |
-| PATCH  | `/admin/classes/:id/archive`             | Archive class      |
 | GET    | `/admin/classes/:id/students`            | Get class students |
 | POST   | `/admin/classes/:id/students`            | Enroll student     |
 | DELETE | `/admin/classes/:id/students/:studentId` | Remove student     |
-| GET    | `/admin/stats`                           | System statistics  |
-| GET    | `/admin/activity`                        | Recent activity    |
+| GET    | `/admin/enrollments`                     | List enrollments   |
+
+#### Analytics
+
+| Method | Endpoint           | Description       |
+| ------ | ------------------ | ----------------- |
+| GET    | `/admin/stats`     | System statistics |
+| GET    | `/admin/activity`  | Recent activity   |
 
 ---
 
@@ -408,6 +489,54 @@ export const users = pgTable("users", {
 
 ## Services
 
+### Admin Services
+
+The admin module is organized into specialized services for different administrative functions:
+
+#### AdminUserService
+```typescript
+class AdminUserService {
+  getAllUsers(filters); // List users with pagination and filters
+  getUserById(userId); // Get user details
+  createUser(userData); // Create new user
+  updateUser(userId, userData); // Update user information
+  updateUserRole(userId, role); // Change user role
+  deleteUser(userId); // Delete user account
+}
+```
+
+#### AdminClassService
+```typescript
+class AdminClassService {
+  getAllClasses(filters); // List classes with pagination
+  getClassById(classId); // Get class details
+  createClass(classData); // Create new class
+  updateClass(classId, classData); // Update class
+  deleteClass(classId); // Delete class
+  reassignClassTeacher(classId, newTeacherId); // Change teacher
+  archiveClass(classId); // Soft delete class
+  getClassAssignments(classId); // Get class assignments
+}
+```
+
+#### AdminEnrollmentService
+```typescript
+class AdminEnrollmentService {
+  getClassStudents(classId); // Get enrolled students
+  enrollStudent(classId, studentId); // Add student to class
+  removeStudent(classId, studentId); // Remove student from class
+  getAllEnrollments(filters); // List all enrollments
+}
+```
+
+#### AdminAnalyticsService
+```typescript
+class AdminAnalyticsService {
+  getSystemStatistics(); // Overall system metrics
+  getRecentActivity(); // Recent user activity
+}
+```
+
 ### AuthService
 
 Handles authentication with Supabase coordination:
@@ -431,14 +560,19 @@ class ClassService {
   getClassById(classId, teacherId?);
   updateClass(classId, teacherId, data);
   deleteClass(classId, teacherId);
+  getEnrolledStudents(classId);
   createAssignment(classId, teacherId, data);
   getAssignmentDetails(assignmentId, userId);
+  updateAssignment(assignmentId, teacherId, data);
+  deleteAssignment(assignmentId, teacherId);
 }
 ```
 
+**Supported Programming Languages**: Python, Java, C
+
 ### SubmissionService
 
-Handles file submissions:
+Handles file submissions with validation:
 
 ```typescript
 class SubmissionService {
@@ -449,6 +583,14 @@ class SubmissionService {
 }
 ```
 
+**File Validation**:
+- Validates file extensions against programming language
+- Python: `.py`
+- Java: `.java`
+- C: `.c`
+- Maximum file size enforcement
+- Content type validation
+
 ### GradebookService
 
 Manages student grades and statistics:
@@ -458,32 +600,59 @@ class GradebookService {
   getClassGradebook(classId); // Get full gradebook
   getStudentGradebook(studentId); // Get all grades for a student
   overrideGrade(submissionId, grade, teacherId); // Manual override
+  removeGradeOverride(submissionId, teacherId); // Remove override
   getLatePenaltyConfig(assignmentId); // Get late penalty settings
+  setLatePenaltyConfig(assignmentId, config); // Update late penalty
+  exportGradebookCSV(classId); // Export to CSV
+  getClassStatistics(classId); // Get class-wide statistics
 }
 ```
 
+**Features**:
+- Automatic grade calculation based on test results
+- Late penalty application with configurable rates
+- Manual grade overrides with audit trail
+- CSV export for external processing
+- Class-wide statistics (average, median, distribution)
+
 ### PlagiarismService
 
-Handles file analysis and similarity detection:
+Handles file analysis and similarity detection using a custom Winnowing-based algorithm:
 
 ```typescript
 class PlagiarismService {
   analyzeFiles(files); // Analyze raw files
   analyzeAssignmentSubmissions(assignmentId, teacherId); // Batch analysis
   getReport(reportId); // Get report details
+  getReportPair(reportId, pairId); // Get specific pair comparison
+  deleteReport(reportId); // Delete report
 }
 ```
 
+**Implementation Details**:
+- Uses Tree-Sitter for language-specific AST parsing
+- Implements Winnowing algorithm for fingerprint generation
+- Stores match fragments with precise line/column positions
+- Calculates similarity, overlap, and longest match metrics
+- Supports Python, Java, and C programming languages
+
 ### CodeTestService
 
-Executes code against test cases:
+Executes code against test cases using Judge0:
 
 ```typescript
 class CodeTestService {
   runTestsPreview(sourceCode, language, assignmentId); // Dry run
   runSubmissionTests(submissionId); // Run tests for submission
+  checkExecutionServiceHealth(); // Check Judge0 availability
 }
 ```
+
+**Features**:
+- Timeout protection (configurable via `TEST_EXECUTION_TIMEOUT_SECONDS`)
+- Support for Python, Java, and C
+- Test case execution with input/output validation
+- Detailed error reporting and execution statistics
 
 ---
 
@@ -630,6 +799,131 @@ describe('AuthService', () => {
 3. **Service** - Implement business logic
 4. **Controller** - Add route handler with validation
 5. **Test** - Add unit tests
+6. **Documentation** - Add comprehensive endpoint documentation
+
+### Endpoint Documentation Standards
+
+Every API endpoint must include comprehensive Fastify schema documentation:
+
+**Required Elements:**
+- **Endpoint comment**: Multi-line comment block with HTTP method, path, and summary for better readability
+- **tags**: Array with category (e.g., `["Admin - Users"]`, `["Classes"]`)
+- **summary**: Brief description of what the endpoint does
+- **description**: (Optional) Additional context or usage notes
+- **security**: Authentication requirements (e.g., `[{ bearerAuth: [] }]`)
+- **params/querystring/body**: Zod schema converted via `toJsonSchema()`
+- **response**: Expected response schemas by status code
+
+**Example:**
+```typescript
+/**
+ * GET /classes/:id/students
+ * Get enrolled students in a class
+ */
+app.get<{ Params: ClassParams }>("/classes/:id/students", {
+  preHandler: [authMiddleware],
+  schema: {
+    tags: ["Classes"],
+    summary: "Get enrolled students in a class",
+    description: "Returns list of students with enrollment details",
+    security: [{ bearerAuth: [] }],
+    params: toJsonSchema(ClassParamsSchema),
+    response: {
+      200: toJsonSchema(EnrolledStudentsResponseSchema),
+    },
+  },
+  handler: async (request, reply) => {
+    const students = await classService.getEnrolledStudents(request.params.id);
+    return reply.send({ success: true, students });
+  },
+});
+
+/**
+ * POST /submissions
+ * Submit an assignment
+ */
+app.post<{ Body: CreateSubmission }>("/submissions", {
+  preHandler: [authMiddleware, uploadMiddleware],
+  schema: {
+    tags: ["Submissions"],
+    summary: "Submit an assignment",
+    description: "Upload code file for assignment submission",
+    security: [{ bearerAuth: [] }],
+    body: toJsonSchema(CreateSubmissionSchema),
+    response: {
+      201: toJsonSchema(SubmissionResponseSchema),
+    },
+  },
+  handler: async (request, reply) => {
+    const submission = await submissionService.submitAssignment(request.body);
+    return reply.status(201).send({ success: true, submission });
+  },
+});
+```
+
+**Endpoint Comment Format:**
+```typescript
+/**
+ * {METHOD} {PATH}
+ * {Summary description}
+ */
+
+// Examples:
+/**
+ * GET /users/:id
+ * Get user details by ID
+ */
+
+/**
+ * POST /classes
+ * Create a new class
+ */
+
+/**
+ * PATCH /users/:id/role
+ * Update user role
+ */
+
+/**
+ * DELETE /assignments/:id
+ * Delete an assignment
+ */
+```
+
+**Endpoint Documentation Checklist:**
+- [ ] Endpoint comment includes method, path, and summary
+- [ ] Tags match the feature domain
+- [ ] Summary is action-oriented and clear
+- [ ] Security requirements are specified
+- [ ] All input schemas (params, query, body) are documented
+- [ ] Response schemas include success and common error codes
+- [ ] Description added for complex or non-obvious endpoints
+
+### Function Documentation Standards
+
+Every exported function must include a full JSDoc block:
+
+**Required Elements:**
+- **Summary**: Clear, concise sentence describing the function's action
+- **@param**: Must be present for every parameter with descriptive text
+- **@returns**: Must be present for non-void functions
+
+**Example:**
+```typescript
+/**
+ * Retrieves the submission history for a specific student and assignment.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param studentId - The unique identifier of the student.
+ * @returns An object containing the list of past submissions.
+ */
+export async function getSubmissionHistory(
+  assignmentId: number,
+  studentId: number
+): Promise<SubmissionHistoryResponse> {
+  // Implementation
+}
+```
 
 ### Code Style
 
@@ -637,6 +931,8 @@ describe('AuthService', () => {
 - Throw domain errors instead of returning error objects
 - Use DTOs for API responses via mappers
 - Add OpenAPI schema to all routes
+- Document all endpoints with comprehensive Fastify schemas
+- Document all exported functions with JSDoc
 
 ### TypeScript
 
@@ -653,21 +949,22 @@ npm run typecheck
 
 ## Technology Stack
 
-| Component  | Technology       |
-| ---------- | ---------------- |
-| Runtime    | Node.js 18+      |
-| Language   | TypeScript 5.x   |
-| Framework  | Fastify 5.x      |
-| ORM        | Drizzle ORM      |
-| Database   | PostgreSQL       |
-| Validation | Zod              |
-| Auth       | Supabase Auth    |
-| Storage    | Supabase Storage |
-| Code Exec  | Judge0           |
-| Analysis   | Tree-Sitter      |
-| DI         | tsyringe         |
-| Testing    | Vitest           |
-| Docs       | Swagger/OpenAPI  |
+| Component           | Technology       | Version |
+| ------------------- | ---------------- | ------- |
+| Runtime             | Node.js          | 18+     |
+| Language            | TypeScript       | 5.x     |
+| Framework           | Fastify          | 5.x     |
+| ORM                 | Drizzle ORM      | 0.36.x  |
+| Database            | PostgreSQL       | Latest  |
+| Validation          | Zod              | 4.x     |
+| Auth                | Supabase Auth    | 2.x     |
+| Storage             | Supabase Storage | 2.x     |
+| Code Execution      | Judge0           | Latest  |
+| Code Analysis       | Tree-Sitter      | 0.25.x  |
+| Dependency Injection| tsyringe         | 4.x     |
+| Testing             | Vitest           | 4.x     |
+| API Documentation   | Swagger/OpenAPI  | 3.x     |
+| Formatting          | Prettier         | 3.8.x   |
 
 ---
 

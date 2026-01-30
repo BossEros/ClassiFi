@@ -69,6 +69,11 @@ export const SimilarityBadge: React.FC<SimilarityBadgeProps> = ({
             overflow: "hidden",
             position: "relative",
           }}
+          role="progressbar"
+          aria-valuenow={percentage}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`${percentage}% similarity`}
         >
           <div
             style={{
@@ -92,7 +97,7 @@ export const SimilarityBadge: React.FC<SimilarityBadgeProps> = ({
           >
             {percentage}%
           </span>
-        </div>
+        </div>{" "}
       </div>
     )
   }

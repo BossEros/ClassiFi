@@ -45,6 +45,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
         }
       } catch (err) {
         if (!isMounted) return
+        console.error("Reset flow initialization error:", err)
         setTokenError(true)
         setError("An unexpected error occurred.")
         setIsCheckingSession(false)

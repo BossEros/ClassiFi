@@ -49,6 +49,7 @@ export function AdminClassDetailPage() {
 
   const fetchClassData = useCallback(async () => {
     if (!classId) return
+
     try {
       setIsLoading(true)
       setError(null)
@@ -77,6 +78,7 @@ export function AdminClassDetailPage() {
       showToast("Student removed from class", "success")
       setStudentToRemove(null)
     } catch (err) {
+      console.error("Failed to remove student:", err)
       showToast("Failed to remove student", "error")
     } finally {
       setActionLoading(null)

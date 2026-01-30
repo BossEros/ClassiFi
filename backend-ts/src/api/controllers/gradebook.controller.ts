@@ -1,41 +1,39 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { GradebookService } from "../../services/gradebook.service.js"
-import { LatePenaltyService } from "../../services/latePenalty.service.js"
+import { parsePositiveInt } from "../../shared/utils.js"
+import {
+  toClassGradebookDTO,
+  toStudentGradesDTO,
+} from "../../shared/mappers.js"
 import { toJsonSchema } from "../utils/swagger.js"
 import {
   ClassIdParamSchema,
   StudentIdParamSchema,
   StudentClassParamsSchema,
-  SubmissionIdParamSchema,
-  AssignmentIdParamSchema,
-  GradeOverrideBodySchema,
-  LatePenaltyUpdateBodySchema,
   ClassGradebookResponseSchema,
   StudentGradesResponseSchema,
   ClassStatisticsResponseSchema,
   StudentRankResponseSchema,
-  LatePenaltyConfigResponseSchema,
+  GradeOverrideBodySchema,
   SuccessResponseSchema,
+  SubmissionIdParamSchema,
   type GradeOverrideBody,
-  type LatePenaltyUpdateBody,
 } from "../schemas/gradebook.schema.js"
-import { BadRequestError } from "../middlewares/error-handler.js"
 
-/** Gradebook routes - /api/v1/gradebook/* */
+/**
+ * Registers all gradebook-related API routes.
+ *
+ * @param app - The Fastify application instance.
+ * @returns A promise that resolves when all routes are registered.
+ */
 export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
   const gradebookService =
     container.resolve<GradebookService>("GradebookService")
-  const latePenaltyService =
-    container.resolve<LatePenaltyService>("LatePenaltyService")
-
-  // ==========================================================================
-  // Class Gradebook Endpoints
-  // ==========================================================================
 
   /**
    * GET /classes/:classId
-   * Get the complete gradebook for a class
+   * Get class gradebook
    */
   app.get<{ Params: { classId: string } }>("/classes/:classId", {
     schema: {
@@ -43,34 +41,21 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       summary: "Get class gradebook",
       description:
         "Returns all students with their grades for all assignments in the class",
+      security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
       response: {
         200: toJsonSchema(ClassGradebookResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10)
+      const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
 
-      if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID")
-      }
+      const classGradebookData =
+        await gradebookService.getClassGradebook(parsedClassId)
 
-      const gradebook = await gradebookService.getClassGradebook(classId)
-
-      // Transform dates to strings for response
       return reply.send({
         success: true,
-        assignments: gradebook.assignments.map((a) => ({
-          ...a,
-          deadline: a.deadline.toISOString(),
-        })),
-        students: gradebook.students.map((s) => ({
-          ...s,
-          grades: s.grades.map((g) => ({
-            ...g,
-            submittedAt: g.submittedAt?.toISOString() ?? null,
-          })),
-        })),
+        ...toClassGradebookDTO(classGradebookData),
       })
     },
   })
@@ -83,24 +68,24 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Gradebook"],
       summary: "Export class gradebook as CSV",
+      description:
+        "Generates and downloads a CSV file containing all student grades for the class",
+      security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10)
+      const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
 
-      if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID")
-      }
-
-      const csvContent = await gradebookService.exportGradebookCSV(classId)
+      const generatedCsvContent =
+        await gradebookService.exportGradebookCSV(parsedClassId)
 
       return reply
         .header("Content-Type", "text/csv")
         .header(
           "Content-Disposition",
-          `attachment; filename="gradebook-class-${classId}.csv"`,
+          `attachment; filename="gradebook-class-${parsedClassId}.csv"`,
         )
-        .send(csvContent)
+        .send(generatedCsvContent)
     },
   })
 
@@ -112,34 +97,30 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
     schema: {
       tags: ["Gradebook"],
       summary: "Get class statistics",
+      description:
+        "Returns statistical analysis including average grades, pass rates, and grade distribution",
+      security: [{ bearerAuth: [] }],
       params: toJsonSchema(ClassIdParamSchema),
       response: {
         200: toJsonSchema(ClassStatisticsResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const classId = parseInt(request.params.classId, 10)
+      const parsedClassId = parsePositiveInt(request.params.classId, "Class ID")
 
-      if (isNaN(classId)) {
-        throw new BadRequestError("Invalid class ID")
-      }
-
-      const statistics = await gradebookService.getClassStatistics(classId)
+      const calculatedStatistics =
+        await gradebookService.getClassStatistics(parsedClassId)
 
       return reply.send({
         success: true,
-        statistics,
+        statistics: calculatedStatistics,
       })
     },
   })
 
-  // ==========================================================================
-  // Student Grades Endpoints
-  // ==========================================================================
-
   /**
    * GET /students/:studentId
-   * Get all grades for a student across all classes
+   * Get student grades
    */
   app.get<{ Params: { studentId: string } }>("/students/:studentId", {
     schema: {
@@ -147,38 +128,31 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       summary: "Get student grades",
       description:
         "Returns all grades for a student across all enrolled classes",
+      security: [{ bearerAuth: [] }],
       params: toJsonSchema(StudentIdParamSchema),
       response: {
         200: toJsonSchema(StudentGradesResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const studentId = parseInt(request.params.studentId, 10)
+      const parsedStudentId = parsePositiveInt(
+        request.params.studentId,
+        "Student ID",
+      )
 
-      if (isNaN(studentId)) {
-        throw new BadRequestError("Invalid student ID")
-      }
+      const studentGradesList =
+        await gradebookService.getStudentGrades(parsedStudentId)
 
-      const grades = await gradebookService.getStudentGrades(studentId)
-
-      // Transform dates to strings
       return reply.send({
         success: true,
-        grades: grades.map((c) => ({
-          ...c,
-          assignments: c.assignments.map((a) => ({
-            ...a,
-            deadline: a.deadline.toISOString(),
-            submittedAt: a.submittedAt?.toISOString() ?? null,
-          })),
-        })),
+        grades: toStudentGradesDTO(studentGradesList),
       })
     },
   })
 
   /**
    * GET /students/:studentId/classes/:classId
-   * Get student grades for a specific class
+   * Get student grades for a class
    */
   app.get<{ Params: { studentId: string; classId: string } }>(
     "/students/:studentId/classes/:classId",
@@ -186,34 +160,32 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Get student grades for a class",
+        description:
+          "Returns all grades for a specific student within a specific class",
+        security: [{ bearerAuth: [] }],
         params: toJsonSchema(StudentClassParamsSchema),
         response: {
           200: toJsonSchema(StudentGradesResponseSchema),
         },
       },
       handler: async (request, reply) => {
-        const studentId = parseInt(request.params.studentId, 10)
-        const classId = parseInt(request.params.classId, 10)
+        const parsedStudentId = parsePositiveInt(
+          request.params.studentId,
+          "Student ID",
+        )
+        const parsedClassId = parsePositiveInt(
+          request.params.classId,
+          "Class ID",
+        )
 
-        if (isNaN(studentId) || isNaN(classId)) {
-          throw new BadRequestError("Invalid ID parameters")
-        }
-
-        const grades = await gradebookService.getStudentGrades(
-          studentId,
-          classId,
+        const filteredStudentGrades = await gradebookService.getStudentGrades(
+          parsedStudentId,
+          parsedClassId,
         )
 
         return reply.send({
           success: true,
-          grades: grades.map((c) => ({
-            ...c,
-            assignments: c.assignments.map((a) => ({
-              ...a,
-              deadline: a.deadline.toISOString(),
-              submittedAt: a.submittedAt?.toISOString() ?? null,
-            })),
-          })),
+          grades: toStudentGradesDTO(filteredStudentGrades),
         })
       },
     },
@@ -221,7 +193,7 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * GET /students/:studentId/classes/:classId/rank
-   * Get student's rank in a class
+   * Get student rank in class
    */
   app.get<{ Params: { studentId: string; classId: string } }>(
     "/students/:studentId/classes/:classId/rank",
@@ -229,41 +201,42 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Get student rank in class",
+        description:
+          "Returns the student's ranking position, total students, and percentile within the class",
+        security: [{ bearerAuth: [] }],
         params: toJsonSchema(StudentClassParamsSchema),
         response: {
           200: toJsonSchema(StudentRankResponseSchema),
         },
       },
       handler: async (request, reply) => {
-        const studentId = parseInt(request.params.studentId, 10)
-        const classId = parseInt(request.params.classId, 10)
+        const parsedStudentId = parsePositiveInt(
+          request.params.studentId,
+          "Student ID",
+        )
+        const parsedClassId = parsePositiveInt(
+          request.params.classId,
+          "Class ID",
+        )
 
-        if (isNaN(studentId) || isNaN(classId)) {
-          throw new BadRequestError("Invalid ID parameters")
-        }
-
-        const rankData = await gradebookService.getStudentRank(
-          studentId,
-          classId,
+        const calculatedRankData = await gradebookService.getStudentRank(
+          parsedStudentId,
+          parsedClassId,
         )
 
         return reply.send({
           success: true,
-          rank: rankData?.rank ?? null,
-          totalStudents: rankData?.totalStudents ?? null,
-          percentile: rankData?.percentile ?? null,
+          rank: calculatedRankData?.rank ?? null,
+          totalStudents: calculatedRankData?.totalStudents ?? null,
+          percentile: calculatedRankData?.percentile ?? null,
         })
       },
     },
   )
 
-  // ==========================================================================
-  // Grade Override Endpoints
-  // ==========================================================================
-
   /**
    * POST /submissions/:submissionId/override
-   * Override a grade for a submission
+   * Override a grade
    */
   app.post<{ Params: { submissionId: string }; Body: GradeOverrideBody }>(
     "/submissions/:submissionId/override",
@@ -271,7 +244,9 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Override a grade",
-        description: "Manually set a grade for a submission (teacher only)",
+        description:
+          "Manually set a grade for a submission, overriding the auto-calculated grade (teacher only)",
+        security: [{ bearerAuth: [] }],
         params: toJsonSchema(SubmissionIdParamSchema),
         body: toJsonSchema(GradeOverrideBodySchema),
         response: {
@@ -279,18 +254,17 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         },
       },
       handler: async (request, reply) => {
-        const submissionId = parseInt(request.params.submissionId, 10)
-
-        if (isNaN(submissionId)) {
-          throw new BadRequestError("Invalid submission ID")
-        }
-
-        const { grade, feedback } = request.body
+        const parsedSubmissionId = parsePositiveInt(
+          request.params.submissionId,
+          "Submission ID",
+        )
+        const { grade: manualGradeValue, feedback: optionalFeedbackText } =
+          request.body
 
         await gradebookService.overrideGrade(
-          submissionId,
-          grade,
-          feedback ?? null,
+          parsedSubmissionId,
+          manualGradeValue,
+          optionalFeedbackText ?? null,
         )
 
         return reply.send({
@@ -303,7 +277,7 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * DELETE /submissions/:submissionId/override
-   * Remove a grade override
+   * Remove grade override
    */
   app.delete<{ Params: { submissionId: string } }>(
     "/submissions/:submissionId/override",
@@ -311,100 +285,25 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Gradebook"],
         summary: "Remove grade override",
-        description: "Revert to auto-calculated grade based on test results",
+        description:
+          "Removes manual grade override and reverts to auto-calculated grade based on test results",
+        security: [{ bearerAuth: [] }],
         params: toJsonSchema(SubmissionIdParamSchema),
         response: {
           200: toJsonSchema(SuccessResponseSchema),
         },
       },
       handler: async (request, reply) => {
-        const submissionId = parseInt(request.params.submissionId, 10)
+        const parsedSubmissionId = parsePositiveInt(
+          request.params.submissionId,
+          "Submission ID",
+        )
 
-        if (isNaN(submissionId)) {
-          throw new BadRequestError("Invalid submission ID")
-        }
-
-        await gradebookService.removeOverride(submissionId)
+        await gradebookService.removeOverride(parsedSubmissionId)
 
         return reply.send({
           success: true,
           message: "Grade override removed successfully",
-        })
-      },
-    },
-  )
-
-  // ==========================================================================
-  // Late Penalty Configuration Endpoints
-  // ==========================================================================
-
-  /**
-   * GET /assignments/:id/late-penalty
-   * Get late penalty configuration for an assignment
-   */
-  app.get<{ Params: { id: string } }>("/assignments/:id/late-penalty", {
-    schema: {
-      tags: ["Gradebook"],
-      summary: "Get late penalty config",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      response: {
-        200: toJsonSchema(LatePenaltyConfigResponseSchema),
-      },
-    },
-    handler: async (request, reply) => {
-      const assignmentId = parseInt(request.params.id, 10)
-
-      if (isNaN(assignmentId)) {
-        throw new BadRequestError("Invalid assignment ID")
-      }
-
-      const config = await latePenaltyService.getAssignmentConfig(assignmentId)
-
-      return reply.send({
-        success: true,
-        enabled: config.enabled,
-        config: config.config,
-      })
-    },
-  })
-
-  /**
-   * PUT /assignments/:id/late-penalty
-   * Update late penalty configuration for an assignment
-   */
-  app.put<{ Params: { id: string }; Body: LatePenaltyUpdateBody }>(
-    "/assignments/:id/late-penalty",
-    {
-      schema: {
-        tags: ["Gradebook"],
-        summary: "Update late penalty config",
-        params: toJsonSchema(AssignmentIdParamSchema),
-        body: toJsonSchema(LatePenaltyUpdateBodySchema),
-        response: {
-          200: toJsonSchema(SuccessResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const assignmentId = parseInt(request.params.id, 10)
-
-        if (isNaN(assignmentId)) {
-          throw new BadRequestError("Invalid assignment ID")
-        }
-
-        const { enabled, config } = request.body
-
-        // Use default config if enabling but no config provided
-        const penaltyConfig = config ?? latePenaltyService.getDefaultConfig()
-
-        await latePenaltyService.setAssignmentConfig(
-          assignmentId,
-          enabled,
-          penaltyConfig,
-        )
-
-        return reply.send({
-          success: true,
-          message: "Late penalty configuration updated successfully",
         })
       },
     },

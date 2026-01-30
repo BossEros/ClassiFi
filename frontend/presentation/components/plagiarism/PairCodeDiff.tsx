@@ -38,8 +38,8 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
     const originalModel = monaco.editor.createModel(leftFile.content, language)
     const modifiedModel = monaco.editor.createModel(rightFile.content, language)
 
-    // Create diff editor
-    diffEditorRef.current = monaco.editor.createDiffEditor(editorRef.current, {
+    // Create diff editor and capture it locally for cleanup
+    const editor = monaco.editor.createDiffEditor(editorRef.current, {
       enableSplitViewResizing: true,
       readOnly: true,
       automaticLayout: true,
@@ -52,16 +52,19 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       originalEditable: false,
     })
 
-    diffEditorRef.current.setModel({
+    // Assign to ref for external access
+    diffEditorRef.current = editor
+
+    editor.setModel({
       original: originalModel,
       modified: modifiedModel,
     })
 
-    // Cleanup
+    // Cleanup - dispose the exact editor created by this effect
     return () => {
       originalModel.dispose()
       modifiedModel.dispose()
-      diffEditorRef.current?.dispose()
+      editor.dispose()
     }
   }, [leftFile.content, rightFile.content, language])
 

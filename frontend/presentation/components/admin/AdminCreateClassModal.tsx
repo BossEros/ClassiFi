@@ -10,56 +10,25 @@ import {
   AlertCircle,
 } from "lucide-react"
 import * as adminService from "@/business/services/adminService"
-import type { AdminUser } from "@/business/services/adminService"
-import type { DayOfWeek } from "@/data/api/types"
+import type { AdminUser, AdminClass } from "@/business/services/adminService"
 import {
   validateClassName,
   validateAcademicYear,
   validateSchedule,
 } from "@/business/validation/classValidation"
-
-/** Maps abbreviated day names to full DayOfWeek values */
-const DAY_ABBREVIATION_MAP: Record<string, DayOfWeek> = {
-  Mon: "monday",
-  Tue: "tuesday",
-  Wed: "wednesday",
-  Thu: "thursday",
-  Fri: "friday",
-  Sat: "saturday",
-  Sun: "sunday",
-}
-
-/** Convert abbreviated day strings to DayOfWeek[] */
-function convertToDayOfWeek(abbreviatedDays: string[]): DayOfWeek[] {
-  return abbreviatedDays
-    .map((day) => DAY_ABBREVIATION_MAP[day])
-    .filter((day): day is DayOfWeek => day !== undefined)
-}
-
-export interface ClassToEdit {
-  id: number
-  className: string
-  description?: string
-  teacherId: number
-  yearLevel: number
-  semester: number
-  academicYear: string
-  schedule: {
-    days: string[]
-    startTime: string
-    endTime: string
-  }
-}
+import {
+  DAY_ABBREVIATIONS,
+  convertToDayOfWeek,
+  convertToAbbreviations,
+} from "@/shared/constants/schedule"
 
 interface AdminCreateClassModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
   teachers: AdminUser[]
-  classToEdit?: ClassToEdit | null
+  classToEdit?: AdminClass | null
 }
-
-const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 export function AdminCreateClassModal({
   isOpen,
@@ -71,7 +40,8 @@ export function AdminCreateClassModal({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState({
+  // Default form values for creating a new class
+  const getDefaultFormData = () => ({
     className: "",
     description: "",
     teacherId: "",
@@ -86,10 +56,13 @@ export function AdminCreateClassModal({
     endTime: "09:30",
   })
 
+  const [formData, setFormData] = useState(getDefaultFormData())
+
   // Reset or Populate form when modal opens
   useEffect(() => {
     if (isOpen) {
       if (classToEdit) {
+        // Populate form with class data for editing
         setFormData({
           className: classToEdit.className,
           description: classToEdit.description || "",
@@ -97,25 +70,12 @@ export function AdminCreateClassModal({
           yearLevel: classToEdit.yearLevel,
           semester: classToEdit.semester,
           academicYear: classToEdit.academicYear,
-          scheduleDays: classToEdit.schedule.days,
+          scheduleDays: convertToAbbreviations(classToEdit.schedule.days),
           startTime: classToEdit.schedule.startTime,
           endTime: classToEdit.schedule.endTime,
         })
       } else {
-        setFormData({
-          className: "",
-          description: "",
-          teacherId: "",
-          yearLevel: 1,
-          semester: 1,
-          academicYear:
-            new Date().getFullYear().toString() +
-            "-" +
-            (new Date().getFullYear() + 1).toString(),
-          scheduleDays: [],
-          startTime: "08:00",
-          endTime: "09:30",
-        })
+        setFormData(getDefaultFormData())
       }
       setError(null)
     }
@@ -130,7 +90,9 @@ export function AdminCreateClassModal({
       // Sort days based on standard week order
       return {
         ...prev,
-        scheduleDays: days.sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)),
+        scheduleDays: days.sort(
+          (a, b) => DAY_ABBREVIATIONS.indexOf(a) - DAY_ABBREVIATIONS.indexOf(b),
+        ),
       }
     })
   }
@@ -419,7 +381,7 @@ export function AdminCreateClassModal({
                 Class Days
               </label>
               <div className="flex flex-wrap gap-2">
-                {DAYS.map((day) => (
+                {DAY_ABBREVIATIONS.map((day) => (
                   <button
                     key={day}
                     type="button"

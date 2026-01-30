@@ -4,7 +4,14 @@ import { TestCaseRepository } from "../repositories/testCase.repository.js"
 import { ClassRepository } from "../repositories/class.repository.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
-import { AssignmentNotFoundError } from "../shared/errors.js"
+import {
+  AssignmentNotFoundError,
+  InvalidAssignmentDataError,
+} from "../shared/errors.js"
+import type {
+  UpdateAssignmentServiceDTO,
+  CreateAssignmentServiceDTO,
+} from "./service-dtos.js"
 
 /**
  * Business logic for assignment-related operations.
@@ -25,34 +32,36 @@ export class AssignmentService {
    * Validates class ownership.
    */
   async createAssignment(
-    classId: number,
-    teacherId: number,
-    data: {
-      assignmentName: string
-      description: string
-      programmingLanguage: "python" | "java" | "c"
-      deadline: Date
-      allowResubmission?: boolean
-      maxAttempts?: number | null
-      templateCode?: string | null
-      totalScore?: number
-      scheduledDate?: Date | null
-    },
+    data: CreateAssignmentServiceDTO,
   ): Promise<AssignmentDTO> {
+    const {
+      classId,
+      teacherId,
+      assignmentName,
+      description,
+      programmingLanguage,
+      deadline,
+      allowResubmission,
+      maxAttempts,
+      templateCode,
+      totalScore,
+      scheduledDate,
+    } = data
+
     // Verify class exists and teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
-      assignmentName: data.assignmentName,
-      description: data.description,
-      programmingLanguage: data.programmingLanguage,
-      deadline: data.deadline,
-      allowResubmission: data.allowResubmission,
-      maxAttempts: data.maxAttempts,
-      templateCode: data.templateCode,
-      totalScore: data.totalScore,
-      scheduledDate: data.scheduledDate,
+      assignmentName,
+      description,
+      programmingLanguage,
+      deadline,
+      allowResubmission,
+      maxAttempts,
+      templateCode,
+      totalScore,
+      scheduledDate,
     })
 
     return toAssignmentDTO(assignment)
@@ -97,35 +106,46 @@ export class AssignmentService {
 
   /**
    * Update an assignment.
-   * Validates class ownership.
+   * Validates class ownership and business rules.
    */
   async updateAssignment(
-    assignmentId: number,
-    teacherId: number,
-    data: {
-      assignmentName?: string
-      description?: string
-      programmingLanguage?: "python" | "java" | "c"
-      deadline?: Date
-      allowResubmission?: boolean
-      maxAttempts?: number | null
-      templateCode?: string | null
-      totalScore?: number
-      scheduledDate?: Date | null
-    },
+    data: UpdateAssignmentServiceDTO,
   ): Promise<AssignmentDTO> {
-    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+    const { assignmentId, teacherId, ...updateData } = data
 
-    if (!assignment) {
+    const existingAssignment =
+      await this.assignmentRepo.getAssignmentById(assignmentId)
+
+    if (!existingAssignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
     // Verify teacher owns the class
-    await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
+    await requireClassOwnership(
+      this.classRepo,
+      existingAssignment.classId,
+      teacherId,
+    )
+
+    // Validate business rule: deadline must be after scheduled date
+    // Handle partial updates by comparing against existing values
+    const finalDeadline = updateData.deadline ?? existingAssignment.deadline
+    const finalScheduledDate =
+      updateData.scheduledDate ?? existingAssignment.scheduledDate
+
+    if (
+      finalDeadline &&
+      finalScheduledDate &&
+      finalDeadline < finalScheduledDate
+    ) {
+      throw new InvalidAssignmentDataError(
+        "Deadline must be after scheduled date",
+      )
+    }
 
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
       assignmentId,
-      data,
+      updateData,
     )
 
     if (!updatedAssignment) {

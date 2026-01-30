@@ -88,6 +88,25 @@ export function AssignmentDetailPage() {
   const [previewFileName, setPreviewFileName] = useState("")
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
+  // Fallback data if assignment is not yet loaded or found
+  const tempAssignment = assignment || {
+    id: parseInt(assignmentId || "0"),
+    assignmentName: "Assignment Title",
+    description: "Assignment description will be loaded from the API",
+    programmingLanguage: "python",
+    deadline: new Date(),
+    allowResubmission: true,
+    maxAttempts: null,
+    isActive: true,
+    classId: 0,
+    className: "",
+  }
+
+  const isTeacher = user?.role === "teacher" || user?.role === "admin"
+  const latestSubmission = submissions[0]
+  const hasSubmitted = submissions.length > 0
+  const canResubmit = tempAssignment.allowResubmission || !hasSubmitted
+
   // Cleanup effect for abort controller and timers
   useEffect(() => {
     return () => {
@@ -210,10 +229,72 @@ export function AssignmentDetailPage() {
     setSelectedFile(file)
   }
 
+  const fetchTestResultsWithRetry = async (
+    submissionId: number,
+    signal: AbortSignal,
+  ): Promise<boolean> => {
+    const MAX_RETRIES = 10
+    const RETRY_DELAY_MS = 1000
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      if (signal.aborted) return false
+
+      try {
+        const results = await getTestResultsForSubmission(submissionId)
+        if (!signal.aborted) {
+          setSubmissionTestResults(results)
+          return true
+        }
+        return false
+      } catch (e) {
+        console.error(`Attempt ${attempt} failed to load results`, e)
+
+        if (attempt === MAX_RETRIES) {
+          if (!signal.aborted) {
+            console.error("Failed to load test results after all retries", e)
+          }
+          return false
+        }
+
+        if (!signal.aborted) {
+          await new Promise<void>((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+              if (!signal.aborted) {
+                resolve()
+              } else {
+                reject(new Error("Aborted"))
+              }
+            }, RETRY_DELAY_MS)
+
+            timeoutIdsRef.current.push(timeoutId)
+            signal.addEventListener(
+              "abort",
+              () => {
+                clearTimeout(timeoutId)
+                reject(new Error("Aborted"))
+              },
+              { once: true },
+            )
+          })
+        }
+      }
+    }
+
+    return false
+  }
+
+  const clearSubmissionForm = () => {
+    setSelectedFile(null)
+    setPreviewResults(null)
+    setExpandedPreviewTests(new Set())
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
+  }
+
   const handleSubmit = async () => {
     if (!selectedFile || !user || !assignmentId || !assignment) return
 
-    // Final validation
     const validationError = validateFile(
       selectedFile,
       assignment.programmingLanguage,
@@ -235,74 +316,19 @@ export function AssignmentDetailPage() {
         programmingLanguage: assignment.programmingLanguage,
       })
 
-      // Add new submission to history using functional update to avoid stale closure
-      setSubmissions((prevSubmissions) => [submission, ...prevSubmissions])
+      setSubmissions((prev) => [submission, ...prev])
+      clearSubmissionForm()
 
-      // Clear preview results
-      setPreviewResults(null)
-      setExpandedPreviewTests(new Set())
-
-      // Fetch and show new submission test results with retry logic
-      // This handles cases where the runner results might not be immediately available
-
-      // Create new abort controller for this submission
       submissionAbortRef.current = new AbortController()
       const signal = submissionAbortRef.current.signal
 
-      // Clear any existing timeouts
       timeoutIdsRef.current.forEach((id) => clearTimeout(id))
       timeoutIdsRef.current = []
 
       try {
-        let retries = 10
-        let success = false
+        const success = await fetchTestResultsWithRetry(submission.id, signal)
 
-        while (retries > 0 && !signal.aborted) {
-          try {
-            const results = await getTestResultsForSubmission(submission.id)
-            if (!signal.aborted) {
-              setSubmissionTestResults(results)
-              success = true
-            }
-            break // Success
-          } catch (e) {
-            console.error(`Attempt ${11 - retries} failed to load results`, e)
-            retries--
-            if (retries === 0) {
-              if (!signal.aborted) {
-                console.error(
-                  "Failed to load test results for new submission after retries",
-                  e,
-                )
-              }
-            } else if (!signal.aborted) {
-              // Wait 1 second before retrying
-              await new Promise<void>((resolve, reject) => {
-                const timeoutId = setTimeout(() => {
-                  if (!signal.aborted) {
-                    resolve()
-                  } else {
-                    reject(new Error("Aborted"))
-                  }
-                }, 1000)
-                timeoutIdsRef.current.push(timeoutId)
-
-                // Listen for abort signal once
-                signal.addEventListener(
-                  "abort",
-                  () => {
-                    clearTimeout(timeoutId)
-                    reject(new Error("Aborted"))
-                  },
-                  { once: true },
-                )
-              })
-            }
-          }
-        }
-
-        if (!success && !signal.aborted && retries === 0) {
-          // Ensure error state is set if we exhausted retries
+        if (!success && !signal.aborted) {
           setResultsError(
             "Failed to load test results after multiple attempts. Please refresh the page.",
           )
@@ -310,25 +336,16 @@ export function AssignmentDetailPage() {
             "Submission successful, but test results failed to load",
             "error",
           )
+        } else if (success) {
+          showToast("Coursework submitted successfully!")
         }
       } catch (abortError) {
-        // Silently handle abort errors (component unmounted)
         if (abortError instanceof Error && abortError.message !== "Aborted") {
           throw abortError
         }
       } finally {
-        // Clear timers
         timeoutIdsRef.current.forEach((id) => clearTimeout(id))
         timeoutIdsRef.current = []
-      }
-
-      // Clear selected file only if not aborted
-      if (!signal.aborted) {
-        setSelectedFile(null)
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ""
-        }
-        showToast("Coursework submitted successfully!")
       }
     } catch (err) {
       console.error("Failed to submit assignment:", err)
@@ -462,25 +479,6 @@ export function AssignmentDetailPage() {
       showToast("Failed to download submission", "error")
     }
   }
-
-  // Fallback data if assignment is not yet loaded or found
-  const tempAssignment = assignment || {
-    id: parseInt(assignmentId || "0"),
-    assignmentName: "Assignment Title",
-    description: "Assignment description will be loaded from the API",
-    programmingLanguage: "python",
-    deadline: new Date(),
-    allowResubmission: true,
-    maxAttempts: null,
-    isActive: true,
-    classId: 0,
-    className: "",
-  }
-
-  const isTeacher = user?.role === "teacher" || user?.role === "admin"
-  const latestSubmission = submissions[0]
-  const hasSubmitted = submissions.length > 0
-  const canResubmit = tempAssignment.allowResubmission || !hasSubmitted
 
   return (
     <DashboardLayout>

@@ -17,8 +17,10 @@ import type {
   UpdateAssignmentRequest,
   TestResultsResponse,
   DeleteResponse,
+  SubmissionDTO,
 } from "@/data/api/types"
 import type { Assignment } from "@/shared/types/class"
+import type { Submission } from "@/shared/types/submission"
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
@@ -261,16 +263,19 @@ function buildSubmissionFormDataFromRequest(
   return formData
 }
 
-function extractErrorMessageFromResponseData(responseData: any): string {
-  if (responseData.detail) return responseData.detail
-  if (responseData.message) return responseData.message
+function extractErrorMessageFromResponseData(responseData: unknown): string {
+  if (typeof responseData === "object" && responseData !== null) {
+    const data = responseData as Record<string, unknown>
+    if (data.detail && typeof data.detail === "string") return data.detail
+    if (data.message && typeof data.message === "string") return data.message
+  }
   if (typeof responseData === "string") return responseData
   return "Failed to submit assignment"
 }
 
 function buildErrorResponseForFailedSubmission(
   httpResponse: Response,
-  responseData: any,
+  responseData: unknown,
 ): ApiResponse<SubmitAssignmentResponse> {
   const errorMessage = extractErrorMessageFromResponseData(responseData)
 
@@ -288,16 +293,42 @@ function buildErrorResponseForFailedSubmission(
 }
 
 function buildSuccessResponseFromSubmissionData(
-  responseData: any,
+  responseData: unknown,
   httpStatusCode: number,
 ): ApiResponse<SubmitAssignmentResponse> {
+  // Validate responseData is an object
+  if (typeof responseData !== "object" || responseData === null) {
+    throw new Error("Invalid response data: expected object")
+  }
+
+  const data = responseData as Record<string, unknown>
+
+  // Validate success field
+  const success = typeof data.success === "boolean" ? data.success : false
+
+  // Validate message field
+  const message = typeof data.message === "string" ? data.message : undefined
+
+  // Validate submission field
+  let submission: Submission | undefined = undefined
+
+  if (
+    typeof data.submission === "object" &&
+    data.submission !== null &&
+    "id" in data.submission &&
+    "assignmentId" in data.submission &&
+    "studentId" in data.submission &&
+    "fileName" in data.submission
+  ) {
+    // Only map if submission has the expected structure
+    submission = mapSubmission(data.submission as SubmissionDTO)
+  }
+
   return {
     data: {
-      success: responseData.success,
-      message: responseData.message,
-      submission: responseData.submission
-        ? mapSubmission(responseData.submission)
-        : undefined,
+      success,
+      message,
+      submission,
     },
     status: httpStatusCode,
   }

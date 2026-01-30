@@ -82,6 +82,7 @@ export class SubmissionFileService {
 
       return [leftContent, rightContent]
     } catch (error) {
+      console.error("Failed to download submission files:", error)
       throw new FileDownloadError(0, "Failed to download file content")
     }
   }

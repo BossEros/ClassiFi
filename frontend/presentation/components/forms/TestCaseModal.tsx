@@ -46,24 +46,29 @@ export function TestCaseModal({
 
   // Reset form when modal opens or testCase changes
   useEffect(() => {
-    if (isOpen && testCase) {
-      setFormData({
-        name: testCase.name || "",
-        input: testCase.input || "",
-        expectedOutput: testCase.expectedOutput || "",
-        isHidden: testCase.isHidden ?? false,
-        timeLimit: testCase.timeLimit ?? 5,
-      })
+    const initializeForm = () => {
+      if (testCase) {
+        setFormData({
+          name: testCase.name || "",
+          input: testCase.input || "",
+          expectedOutput: testCase.expectedOutput || "",
+          isHidden: testCase.isHidden ?? false,
+          timeLimit: testCase.timeLimit ?? 5,
+        })
+      } else {
+        setFormData({
+          name: "",
+          input: "",
+          expectedOutput: "",
+          isHidden: false,
+          timeLimit: 5,
+        })
+      }
       setErrors({})
-    } else if (isOpen && !testCase) {
-      setFormData({
-        name: "",
-        input: "",
-        expectedOutput: "",
-        isHidden: false,
-        timeLimit: 5,
-      })
-      setErrors({})
+    }
+
+    if (isOpen) {
+      initializeForm()
     }
   }, [isOpen, testCase])
 

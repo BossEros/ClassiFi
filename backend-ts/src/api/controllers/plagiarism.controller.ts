@@ -2,8 +2,9 @@ import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { PlagiarismService } from "../../services/plagiarism.service.js"
 import { toJsonSchema } from "../utils/swagger.js"
-import { BadRequestError } from "../middlewares/error-handler.js"
+import { UnauthorizedError } from "../middlewares/error-handler.js"
 import { authMiddleware } from "../middlewares/auth.middleware.js"
+import { parsePositiveInt } from "../../shared/utils.js"
 import {
   AnalyzeRequestSchema,
   AnalyzeResponseSchema,
@@ -18,35 +19,38 @@ import {
   type AnalyzeRequest,
 } from "../schemas/plagiarism.schema.js"
 
-/** Plagiarism detection routes - /api/v1/plagiarism/* */
+/**
+ * Registers plagiarism detection routes for analyzing code submissions.
+ *
+ * @param app - The Fastify application instance.
+ * @returns A promise that resolves when all routes are registered.
+ */
 export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
   const plagiarismService =
     container.resolve<PlagiarismService>("PlagiarismService")
 
   /**
    * POST /analyze
-   * Analyze files for plagiarism
+   * Analyze files for plagiarism detection
    */
   app.post<{ Body: AnalyzeRequest }>("/analyze", {
     schema: {
       tags: ["Plagiarism"],
       summary: "Analyze files for plagiarism detection",
+      description: "Performs plagiarism detection on provided code files",
       body: toJsonSchema(AnalyzeRequestSchema),
       response: {
         200: toJsonSchema(AnalyzeResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      try {
-        const result = await plagiarismService.analyzeFiles(request.body)
-        return reply.send({
-          success: true,
-          message: "Plagiarism analysis completed successfully",
-          ...result,
-        })
-      } catch (error) {
-        throw new BadRequestError((error as Error).message)
-      }
+      const analysisResult = await plagiarismService.analyzeFiles(request.body)
+
+      return reply.send({
+        success: true,
+        message: "Plagiarism analysis completed successfully",
+        ...analysisResult,
+      })
     },
   })
 
@@ -61,7 +65,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
         tags: ["Plagiarism"],
         summary: "Analyze all submissions for an assignment",
         description:
-          "Fetches all latest submissions for the specified assignment, downloads their content, and runs plagiarism detection.",
+          "Fetches all latest submissions for the specified assignment, downloads their content, and runs plagiarism detection",
+        security: [{ bearerAuth: [] }],
         params: toJsonSchema(PlagiarismAssignmentIdParamSchema),
         response: {
           200: toJsonSchema(AnalyzeResponseSchema),
@@ -69,40 +74,42 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       },
       preHandler: [authMiddleware],
       handler: async (request, reply) => {
-        const assignmentId = parseInt(request.params.assignmentId, 10)
+        const assignmentId = parsePositiveInt(
+          request.params.assignmentId,
+          "Assignment ID",
+        )
 
-        if (isNaN(assignmentId)) {
-          throw new BadRequestError("Invalid assignment ID")
+        if (!request.user?.id) {
+          throw new UnauthorizedError("User authentication required")
         }
 
-        try {
-          // Get teacher ID from authenticated user
-          const teacherId = request.user?.id
+        const authenticatedTeacherId = request.user.id
 
-          const result = await plagiarismService.analyzeAssignmentSubmissions(
+        const analysisResult =
+          await plagiarismService.analyzeAssignmentSubmissions(
             assignmentId,
-            teacherId,
+            authenticatedTeacherId,
           )
-          return reply.send({
-            success: true,
-            message: "Assignment submissions analyzed successfully",
-            ...result,
-          })
-        } catch (error) {
-          throw new BadRequestError((error as Error).message)
-        }
+
+        return reply.send({
+          success: true,
+          message: "Assignment submissions analyzed successfully",
+          ...analysisResult,
+        })
       },
     },
   )
 
   /**
    * GET /reports/:reportId
-   * Get a report by ID
+   * Get plagiarism report by ID
    */
   app.get<{ Params: { reportId: string } }>("/reports/:reportId", {
     schema: {
       tags: ["Plagiarism"],
       summary: "Get plagiarism report by ID",
+      description:
+        "Retrieves a complete plagiarism report with all similarity results",
       params: toJsonSchema(ReportIdParamSchema),
       response: {
         200: toJsonSchema(GetReportResponseSchema),
@@ -110,23 +117,19 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { reportId } = request.params
-      const result = await plagiarismService.getReport(reportId)
-
-      if (!result) {
-        return reply.status(404).send({ error: "Report not found" })
-      }
+      const reportData = await plagiarismService.getReport(reportId)
 
       return reply.send({
         success: true,
         message: "Report retrieved successfully",
-        ...result,
+        ...reportData,
       })
     },
   })
 
   /**
    * GET /reports/:reportId/pairs/:pairId
-   * Get pair details with fragments
+   * Get pair details with matching fragments
    */
   app.get<{ Params: { reportId: string; pairId: string } }>(
     "/reports/:reportId/pairs/:pairId",
@@ -134,6 +137,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Plagiarism"],
         summary: "Get pair details with matching fragments",
+        description:
+          "Retrieves detailed comparison between two submissions including matching code fragments",
         params: toJsonSchema(ReportPairParamsSchema),
         response: {
           200: toJsonSchema(PairDetailsResponseSchema),
@@ -141,37 +146,32 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       },
       handler: async (request, reply) => {
         const { reportId, pairId } = request.params
-        const pairIdNum = parseInt(pairId, 10)
+        const pairIdAsNumber = parsePositiveInt(pairId, "Pair ID")
 
-        if (isNaN(pairIdNum)) {
-          throw new BadRequestError("Invalid pair ID")
-        }
+        const pairDetailsData = await plagiarismService.getPairDetails(
+          reportId,
+          pairIdAsNumber,
+        )
 
-        try {
-          const result = await plagiarismService.getPairDetails(
-            reportId,
-            pairIdNum,
-          )
-          return reply.send({
-            success: true,
-            message: "Pair details retrieved successfully",
-            ...result,
-          })
-        } catch (error) {
-          return reply.status(404).send({ error: (error as Error).message })
-        }
+        return reply.send({
+          success: true,
+          message: "Pair details retrieved successfully",
+          ...pairDetailsData,
+        })
       },
     },
   )
 
   /**
    * DELETE /reports/:reportId
-   * Delete a report
+   * Delete a plagiarism report
    */
   app.delete<{ Params: { reportId: string } }>("/reports/:reportId", {
     schema: {
       tags: ["Plagiarism"],
       summary: "Delete a plagiarism report",
+      description:
+        "Permanently removes a plagiarism report and all associated results",
       params: toJsonSchema(ReportIdParamSchema),
       response: {
         200: toJsonSchema(DeleteReportResponseSchema),
@@ -179,11 +179,8 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     },
     handler: async (request, reply) => {
       const { reportId } = request.params
-      const deleted = await plagiarismService.deleteReport(reportId)
 
-      if (!deleted) {
-        return reply.status(404).send({ error: "Report not found" })
-      }
+      await plagiarismService.deleteReport(reportId)
 
       return reply.send({
         success: true,
@@ -194,34 +191,30 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * GET /results/:resultId/details
-   * Get result details with fragments and file content (from database)
+   * Get result details with fragments and file content
    */
   app.get<{ Params: { resultId: string } }>("/results/:resultId/details", {
     schema: {
       tags: ["Plagiarism"],
       summary: "Get result details with fragments and file content",
+      description:
+        "Retrieves detailed similarity result including matching fragments and full file content from database",
       params: toJsonSchema(ResultIdParamSchema),
       response: {
         200: toJsonSchema(ResultDetailsResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const resultId = parseInt(request.params.resultId, 10)
+      const resultId = parsePositiveInt(request.params.resultId, "Result ID")
 
-      if (isNaN(resultId)) {
-        throw new BadRequestError("Invalid result ID")
-      }
+      const resultDetailsData =
+        await plagiarismService.getResultDetails(resultId)
 
-      try {
-        const details = await plagiarismService.getResultDetails(resultId)
-        return reply.send({
-          success: true,
-          message: "Result details retrieved successfully",
-          ...details,
-        })
-      } catch (error) {
-        return reply.status(404).send({ error: (error as Error).message })
-      }
+      return reply.send({
+        success: true,
+        message: "Result details retrieved successfully",
+        ...resultDetailsData,
+      })
     },
   })
 }

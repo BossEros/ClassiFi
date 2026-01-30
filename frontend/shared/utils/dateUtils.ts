@@ -105,6 +105,31 @@ export function formatTimeRemaining(deadline: Date | string): string {
 }
 
 /**
+ * Get human-readable deadline status (e.g., "Due today", "Due in 3 days", "Overdue")
+ */
+export function getDeadlineStatus(deadline: Date | string): string {
+  const dateObj = typeof deadline === "string" ? new Date(deadline) : deadline
+  const now = new Date()
+
+  // Normalize both dates to midnight (start of day) for calendar date comparison
+  const deadlineDate = new Date(
+    dateObj.getFullYear(),
+    dateObj.getMonth(),
+    dateObj.getDate(),
+  )
+  const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+  // Calculate day difference using normalized dates
+  const diff = deadlineDate.getTime() - todayDate.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+  if (days < 0) return "Overdue"
+  if (days === 0) return "Due today"
+  if (days === 1) return "Due tomorrow"
+  return `Due in ${days} days`
+}
+
+/**
  * Format a date/string into a consistent datetime format
  * Used for displaying submission times, etc.
  */
@@ -118,4 +143,55 @@ export function formatDateTime(date: Date | string): string {
     minute: "2-digit",
     hour12: true,
   })
+}
+
+/**
+ * Month names for date pickers and calendars
+ */
+export const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const
+
+/**
+ * Short day names for calendar headers
+ */
+export const DAY_NAMES_SHORT = [
+  "Su",
+  "Mo",
+  "Tu",
+  "We",
+  "Th",
+  "Fr",
+  "Sa",
+] as const
+
+/**
+ * Validates if a Date object is valid
+ */
+export function isValidDate(date: Date | null): date is Date {
+  return date !== null && !isNaN(date.getTime())
+}
+
+/**
+ * Converts a Date or ISO date string to a local datetime string
+ * suitable for HTML datetime-local inputs (format: YYYY-MM-DDTHH:mm).
+ * Adjusts for the local timezone offset.
+ */
+export function toLocalDateTimeString(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date
+  // Clone the date to avoid mutating the original
+  const cloned = new Date(d.getTime())
+  cloned.setMinutes(cloned.getMinutes() - cloned.getTimezoneOffset())
+  return cloned.toISOString().slice(0, 16)
 }

@@ -8,9 +8,8 @@ import {
   CheckCircle,
   Image as ImageIcon,
 } from "lucide-react"
-import { supabase } from "@/data/api/supabaseClient"
-import { getCurrentUser } from "@/business/services/authService"
-import { apiClient } from "@/data/api/apiClient"
+import { uploadAvatar } from "@/business/services/userService"
+import { validateImageFile, FILE_VALIDATION } from "@/shared/utils/validators"
 
 interface AvatarUploadModalProps {
   isOpen: boolean
@@ -18,14 +17,6 @@ interface AvatarUploadModalProps {
   onSuccess?: (avatarUrl: string) => void
   currentAvatarUrl?: string
 }
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ACCEPTED_FILE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/gif",
-  "image/webp",
-]
 
 export function AvatarUploadModal({
   isOpen,
@@ -80,18 +71,8 @@ export function AvatarUploadModal({
     }
   }, [isOpen, onClose, isUploading])
 
-  const validateFile = (file: File): string | null => {
-    if (!ACCEPTED_FILE_TYPES.includes(file.type)) {
-      return "Please select a valid image file (JPEG, PNG, GIF, or WebP)"
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return "File size must be less than 5MB"
-    }
-    return null
-  }
-
   const handleFileSelect = (file: File) => {
-    const validationError = validateFile(file)
+    const validationError = validateImageFile(file)
     if (validationError) {
       setError(validationError)
       return
@@ -138,87 +119,21 @@ export function AvatarUploadModal({
     setIsUploading(true)
     setError(null)
 
-    try {
-      const user = getCurrentUser()
-      if (!user) {
-        setError("You must be logged in to upload an avatar")
-        return
-      }
+    const response = await uploadAvatar({
+      file: selectedFile,
+      currentAvatarUrl,
+    })
 
-      // Delete old avatar if exists
-      if (currentAvatarUrl && currentAvatarUrl.includes("/avatars/")) {
-        try {
-          // Extract the file path from the URL
-          const urlParts = currentAvatarUrl.split("/avatars/")
-          if (urlParts.length > 1) {
-            const oldFilePath = `avatars/${urlParts[1].split("?")[0]}` // Remove query params
-            await supabase.storage
-              .from("avatars")
-              .remove([oldFilePath.replace("avatars/", "")])
-          }
-        } catch (deleteError) {
-          console.error("Failed to delete old avatar:", deleteError)
-          // Continue with upload anyway
-        }
-      }
+    setIsUploading(false)
 
-      // Use consistent filename based on user ID (will overwrite existing)
-      const fileExt = selectedFile.name.split(".").pop()
-      const fileName = `${user.id}.${fileExt}`
-      const filePath = `${fileName}`
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, selectedFile, {
-          cacheControl: "3600",
-          upsert: true,
-        })
-
-      if (uploadError) {
-        // Handle bucket not existing
-        if (
-          uploadError.message.includes("not found") ||
-          uploadError.message.includes("bucket")
-        ) {
-          setError("Avatar storage is not configured. Please contact support.")
-        } else {
-          setError(uploadError.message || "Failed to upload image")
-        }
-        return
-      }
-
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("avatars").getPublicUrl(filePath)
-
-      // Persist avatar URL to backend database
-      try {
-        await apiClient.patch("/user/me/avatar", { avatarUrl: publicUrl })
-      } catch (apiError) {
-        console.error("Failed to persist avatar URL to backend:", apiError)
-        // Continue anyway - file is uploaded, localStorage will still work
-      }
-
-      // Update user profile in localStorage
-      const currentUser = getCurrentUser()
-      if (currentUser) {
-        const updatedUser = { ...currentUser, avatarUrl: publicUrl }
-        localStorage.setItem("user", JSON.stringify(updatedUser))
-        // Dispatch custom event to notify other components of the update
-        window.dispatchEvent(new Event("userUpdated"))
-      }
-
+    if (response.success && response.avatarUrl) {
       setSuccess(true)
       setTimeout(() => {
-        onSuccess?.(publicUrl)
+        onSuccess?.(response.avatarUrl!)
         onClose()
       }, 1500)
-    } catch {
-      setError("An unexpected error occurred. Please try again.")
-    } finally {
-      setIsUploading(false)
+    } else {
+      setError(response.message || "Failed to upload avatar")
     }
   }
 
@@ -348,7 +263,7 @@ export function AvatarUploadModal({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept={ACCEPTED_FILE_TYPES.join(",")}
+                  accept={FILE_VALIDATION.ACCEPTED_IMAGE_TYPES.join(",")}
                   onChange={handleInputChange}
                   className="hidden"
                 />

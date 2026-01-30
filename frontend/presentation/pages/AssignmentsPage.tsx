@@ -5,12 +5,13 @@ import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import { getStudentSubmissions } from "@/business/services/assignmentService"
-
+import type { User } from "@/business/models/auth/types"
 import type { Submission } from "@/business/models/assignment/types"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function AssignmentsPage() {
   const navigate = useNavigate()
-
+  const [user, setUser] = useState<User | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -21,6 +22,8 @@ export function AssignmentsPage() {
       navigate("/login")
       return
     }
+
+    setUser(currentUser)
 
     // Fetch all student submissions
     const fetchSubmissions = async () => {
@@ -43,18 +46,20 @@ export function AssignmentsPage() {
     fetchSubmissions()
   }, [navigate])
 
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <FileText className="w-6 h-6 text-white" />
-          <h1 className="text-3xl font-bold text-white">My Coursework</h1>
-        </div>
-        <p className="text-gray-400 ml-9">
+        <h1 className="text-3xl font-bold text-white mb-2">My Coursework</h1>
+        <p className="text-slate-400 text-base">
           View all your coursework and submissions
         </p>
-        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-4"></div>
       </div>
 
       {/* Error Message */}
