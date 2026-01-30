@@ -6,3 +6,7 @@
 **Learning:** Auto-dismissing toasts can create anxiety or frustration if they vanish while being read. Additionally, indiscriminately using `role="alert"` causes screen readers to aggressively interrupt users for minor updates.
 **Action:** Implement "pause-on-hover" for all auto-dismissing notifications. Use `role="status"`/`aria-live="polite"` for success/info messages, and reserve `role="alert"`/`aria-live="assertive"` only for errors.
 
+
+## 2025-02-24 - Interactive Card Accessibility
+**Learning:** Primitive components like Cards are often used as clickable containers (`variant="interactive"`) but frequently lack semantic roles and keyboard support, making them inaccessible to keyboard and screen reader users.
+**Action:** When creating "interactive" variants of container components, always enforce `role="button"`, `tabIndex={0}`, and proper `onKeyDown` handlers for Enter/Space keys to ensure full accessibility.

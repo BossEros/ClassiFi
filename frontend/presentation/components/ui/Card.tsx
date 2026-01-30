@@ -8,16 +8,29 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = "default", children, ...props }, ref) => {
+  ({ className, variant = "default", children, onKeyDown, ...props }, ref) => {
+    const isInteractive = variant === "interactive"
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (isInteractive && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault()
+        props.onClick?.(e as unknown as React.MouseEvent<HTMLDivElement>)
+      }
+      onKeyDown?.(e)
+    }
+
     return (
       <div
         ref={ref}
+        role={isInteractive ? "button" : undefined}
+        tabIndex={isInteractive ? 0 : undefined}
+        onKeyDown={handleKeyDown}
         className={cn(
           "rounded-xl border border-white/10 bg-white/8 backdrop-blur-md",
           "transition-all duration-200 shadow-sm",
           variant === "hover" &&
             "hover:bg-white/12 hover:border-white/20 hover:shadow-lg hover:shadow-teal-500/10",
-          variant === "interactive" &&
+          isInteractive &&
             "hover:bg-white/12 hover:border-white/20 hover:shadow-lg hover:shadow-teal-500/10 cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950",
           variant === "elevated" && "bg-white/12 border-white/20 shadow-lg",
           className,

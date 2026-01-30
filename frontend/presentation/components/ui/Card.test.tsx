@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, fireEvent } from "@testing-library/react"
 import {
   Card,
   CardHeader,
@@ -62,6 +62,33 @@ describe("Card", () => {
         )
         const card = screen.getByTestId("card")
         expect(card).toHaveClass("cursor-pointer")
+      })
+
+      it("applies accessibility attributes when interactive", () => {
+        render(
+          <Card variant="interactive" data-testid="card">
+            Content
+          </Card>,
+        )
+        const card = screen.getByTestId("card")
+        expect(card).toHaveAttribute("role", "button")
+        expect(card).toHaveAttribute("tabIndex", "0")
+      })
+
+      it("triggers onClick with keyboard events when interactive", () => {
+        const onClick = vi.fn()
+        render(
+          <Card variant="interactive" onClick={onClick} data-testid="card">
+            Content
+          </Card>,
+        )
+        const card = screen.getByTestId("card")
+
+        fireEvent.keyDown(card, { key: "Enter" })
+        expect(onClick).toHaveBeenCalled()
+
+        fireEvent.keyDown(card, { key: " " })
+        expect(onClick).toHaveBeenCalledTimes(2)
       })
     })
 
