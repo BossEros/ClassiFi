@@ -109,11 +109,14 @@ export function ClassCard({ classItem, onClick, className }: ClassCardProps) {
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-teal-400 to-blue-500 flex items-center justify-center text-white text-xs font-semibold">
               {classItem.teacherName
                 ? classItem.teacherName
-                    .split(" ")
+                    .trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
                     .map((n) => n[0])
+                    .filter(Boolean)
                     .join("")
                     .toUpperCase()
-                    .slice(0, 2)
+                    .slice(0, 2) || "T"
                 : "T"}
             </div>
             <span className="text-xs text-slate-300 font-medium">
