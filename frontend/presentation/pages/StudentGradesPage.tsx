@@ -18,6 +18,7 @@ import type {
   StudentClassGrades,
   StudentGradeEntry,
 } from "@/shared/types/gradebook"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function StudentGradesPage() {
   const navigate = useNavigate()
@@ -35,6 +36,12 @@ export function StudentGradesPage() {
 
   const studentId = user ? parseInt(user.id, 10) : 0
   const { grades, isLoading, error } = useStudentGrades(studentId)
+
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
 
   // Calculate overall average across all classes
   const calculateOverallAverage = (): number | null => {
@@ -62,7 +69,7 @@ export function StudentGradesPage() {
   const overallAverage = calculateOverallAverage()
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-6">
         <BackButton to="/dashboard" />

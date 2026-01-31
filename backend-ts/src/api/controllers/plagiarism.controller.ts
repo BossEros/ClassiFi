@@ -239,9 +239,14 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     },
     preHandler: [authMiddleware],
     handler: async (request, reply) => {
-      const reportId = parsePositiveInt(request.params.reportId, "Report ID")
+      const params = ReportIdParamSchema.parse(request.params)
+      const reportId = parsePositiveInt(params.reportId, "Report ID")
+      const userId = request.user!.id
 
-      const students = await plagiarismService.getStudentSummary(reportId)
+      const students = await plagiarismService.getStudentSummary(
+        reportId,
+        userId,
+      )
 
       return reply.send({
         success: true,
@@ -271,15 +276,18 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       },
       preHandler: [authMiddleware],
       handler: async (request, reply) => {
-        const reportId = parsePositiveInt(request.params.reportId, "Report ID")
+        const params = StudentPairsParamsSchema.parse(request.params)
+        const reportId = parsePositiveInt(params.reportId, "Report ID")
         const submissionId = parsePositiveInt(
-          request.params.submissionId,
+          params.submissionId,
           "Submission ID",
         )
+        const userId = request.user!.id
 
         const pairs = await plagiarismService.getStudentPairs(
           reportId,
           submissionId,
+          userId,
         )
 
         return reply.send({

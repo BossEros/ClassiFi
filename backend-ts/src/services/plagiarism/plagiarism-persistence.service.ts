@@ -12,6 +12,7 @@ import type {
   NewMatchFragment,
   MatchFragment,
   SimilarityResult,
+  Submission,
 } from "../../models/index.js"
 // Note: Error classes are preserved for future use but not imported to avoid TS6192
 // import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "../../shared/errors.js";
@@ -168,6 +169,7 @@ export class PlagiarismPersistenceService {
 
     return {
       reportId: reportId.toString(),
+      assignmentId: report.assignmentId,
       summary: {
         totalFiles: report.totalSubmissions,
         totalPairs: report.totalComparisons,
@@ -183,6 +185,24 @@ export class PlagiarismPersistenceService {
   /** Delete a report */
   async deleteReport(reportId: number): Promise<boolean> {
     return this.similarityRepo.deleteReport(reportId)
+  }
+
+  /** Get all submissions for a report's assignment */
+  async getReportSubmissions(reportId: number): Promise<
+    Array<{
+      submission: Submission
+      studentName: string
+    }>
+  > {
+    const report = await this.similarityRepo.getReportById(reportId)
+    if (!report) {
+      return []
+    }
+
+    return this.submissionRepo.getSubmissionsWithStudentInfo(
+      report.assignmentId,
+      true,
+    )
   }
 
   /** Prepare results for database insertion */

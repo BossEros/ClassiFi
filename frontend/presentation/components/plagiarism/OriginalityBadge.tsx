@@ -10,13 +10,17 @@ interface OriginalityBadgeProps {
 }
 
 /**
- * Badge displaying originality percentage with color coding.
- * Originality is the inverse of similarity - higher scores indicate more original work.
+ * Displays an originality score badge with color-coded visual feedback.
  *
- * Color scheme:
- * - Red (< 30%): High plagiarism risk
- * - Yellow (30-60%): Moderate concern
- * - Green (> 60%): Likely original
+ * Renders a styled badge showing the originality percentage (inverse of similarity score)
+ * with color coding to indicate plagiarism risk levels. The badge uses a traffic light
+ * color scheme: red for high risk, yellow for moderate concern, and green for likely
+ * original work.
+ *
+ * @param originalityScore - The originality score as a decimal between 0 and 1, where 1 represents 100% original work and 0 represents no originality. This is the inverse of the similarity score.
+ * @param size - The size variant of the badge. Accepts "sm" (small), "md" (medium), or "lg" (large). Defaults to "md".
+ * @param showTooltip - Whether to display an explanatory tooltip on hover. When true, shows a help cursor and tooltip text explaining originality scoring. Defaults to true.
+ * @returns A React element rendering the originality badge with appropriate styling and optional tooltip.
  */
 export const OriginalityBadge: React.FC<OriginalityBadgeProps> = ({
   originalityScore,

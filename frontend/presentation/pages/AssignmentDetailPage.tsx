@@ -48,6 +48,7 @@ import type {
   Submission,
 } from "@/business/models/assignment/types"
 import { CodePreviewModal } from "@/presentation/components/modals/CodePreviewModal"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
@@ -106,6 +107,12 @@ export function AssignmentDetailPage() {
   const latestSubmission = submissions[0]
   const hasSubmitted = submissions.length > 0
   const canResubmit = tempAssignment.allowResubmission || !hasSubmitted
+
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
 
   // Cleanup effect for abort controller and timers
   useEffect(() => {
@@ -481,7 +488,7 @@ export function AssignmentDetailPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Loading State */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

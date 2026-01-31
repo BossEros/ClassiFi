@@ -28,6 +28,9 @@ import {
   type PairResponse,
   type StudentSummary,
 } from "@/business/services/plagiarismService"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { getCurrentUser } from "@/business/services/authService"
+import type { User } from "@/business/models/auth/types"
 
 interface LocationState {
   results: AnalyzeResponse
@@ -64,9 +67,22 @@ function detectLanguage(filename: string): string {
   return extensionMap[ext] || "plaintext"
 }
 
+/**
+ * Displays plagiarism detection results for an assignment with detailed similarity analysis.
+ *
+ * Renders a comprehensive view of similarity detection results including student summary tables,
+ * pair comparisons, and detailed code diff views. Supports filtering, sorting, and navigation
+ * between different views of the plagiarism analysis data.
+ *
+ * @param assignmentId - The assignment ID extracted from the URL route parameter (string), used to identify which assignment's similarity results to display.
+ * @returns A JSX.Element rendering the similarity results page with student summaries, pair comparisons, and code diff views.
+ */
 export function SimilarityResultsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const location = useLocation()
+
+  // User state for topBar
+  const [user, setUser] = useState<User | null>(null)
 
   // Results from analysis
   const [results, setResults] = useState<AnalyzeResponse | null>(null)
@@ -82,6 +98,9 @@ export function SimilarityResultsPage() {
   )
   const [studentPairs, setStudentPairs] = useState<PairResponse[]>([])
   const [isLoadingStudentPairs, setIsLoadingStudentPairs] = useState(false)
+  const [studentPairsError, setStudentPairsError] = useState<string | null>(
+    null,
+  )
 
   // Code comparison state
   const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null)
@@ -90,6 +109,17 @@ export function SimilarityResultsPage() {
   const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
   const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [detailsError, setDetailsError] = useState<string | null>(null)
+
+  // Load user for topBar
+  useEffect(() => {
+    setUser(getCurrentUser())
+  }, [])
+
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
 
   // Load results from location state
   useEffect(() => {
@@ -132,6 +162,7 @@ export function SimilarityResultsPage() {
 
     const loadStudentPairs = async () => {
       setIsLoadingStudentPairs(true)
+      setStudentPairsError(null)
 
       try {
         const pairs = await getStudentPairs(
@@ -141,6 +172,11 @@ export function SimilarityResultsPage() {
         setStudentPairs(pairs)
       } catch (error) {
         console.error("Failed to load student pairs:", error)
+        setStudentPairsError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load student pairs",
+        )
         setStudentPairs([])
       } finally {
         setIsLoadingStudentPairs(false)
@@ -154,6 +190,7 @@ export function SimilarityResultsPage() {
   const handleStudentSelect = (student: StudentSummary) => {
     setSelectedStudent(student)
     setStudentPairs([])
+    setStudentPairsError(null)
     // Clear any existing code comparison
     setSelectedPair(null)
     setPairDetails(null)
@@ -164,6 +201,7 @@ export function SimilarityResultsPage() {
   const handleBackToStudents = () => {
     setSelectedStudent(null)
     setStudentPairs([])
+    setStudentPairsError(null)
     setSelectedPair(null)
     setPairDetails(null)
     setDetailsError(null)
@@ -215,6 +253,7 @@ export function SimilarityResultsPage() {
           ? error.message
           : "Failed to load code comparison",
       )
+      setPairDetails(null)
     } finally {
       setIsLoadingDetails(false)
     }
@@ -236,7 +275,7 @@ export function SimilarityResultsPage() {
   // No results state
   if (!results) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <Card className="bg-white/5 backdrop-blur-sm border-white/10">
           <CardContent className="p-12">
             <div className="text-center space-y-4">
@@ -260,7 +299,7 @@ export function SimilarityResultsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="space-y-6 max-w-[1600px]">
         {/* Back Button */}
         <BackButton
@@ -379,13 +418,27 @@ export function SimilarityResultsPage() {
             </CardContent>
           </Card>
         ) : (
-          <StudentPairsDetail
-            student={selectedStudent}
-            pairs={studentPairs}
-            onPairSelect={handleViewDetails}
-            onBack={handleBackToStudents}
-            isLoading={isLoadingStudentPairs}
-          />
+          <>
+            {/* Student Pairs Error State */}
+            {studentPairsError && (
+              <Card className="bg-red-500/10 border-red-500/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                    <p className="text-red-400">{studentPairsError}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <StudentPairsDetail
+              student={selectedStudent}
+              pairs={studentPairs}
+              onPairSelect={handleViewDetails}
+              onBack={handleBackToStudents}
+              isLoading={isLoadingStudentPairs}
+            />
+          </>
         )}
 
         {/* Code Comparison Panel (shared between both views) */}

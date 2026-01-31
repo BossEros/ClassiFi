@@ -39,7 +39,13 @@ const SortIndicator: React.FC<{
 
 /**
  * Component showing all pairwise comparisons for a selected student.
- * Displays student info, originality score, and a table of all their pairs.
+ *
+ * @param student - The selected student summary object containing ID, name, originality score, and match statistics.
+ * @param pairs - Array of PairResponse objects representing all similarity pairs involving this student.
+ * @param onPairSelect - Callback function invoked when a pair is selected for detailed code comparison.
+ * @param onBack - Callback function invoked when the back button is clicked to return to the student list.
+ * @param isLoading - Optional boolean indicating whether pairs data is currently being loaded (defaults to false).
+ * @returns A React element displaying the student's details, originality metrics, and a sortable table of all their pairwise comparisons.
  */
 export const StudentPairsDetail: React.FC<StudentPairsDetailProps> = ({
   student,

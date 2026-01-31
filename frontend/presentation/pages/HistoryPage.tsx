@@ -1,3 +1,5 @@
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
   Card,
@@ -7,10 +9,27 @@ import {
   CardTitle,
 } from "@/presentation/components/ui/Card"
 import { Clock } from "lucide-react"
+import { getCurrentUser } from "@/business/services/authService"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function HistoryPage() {
+  const navigate = useNavigate()
+  const currentUser = getCurrentUser()
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/login")
+    }
+  }, [navigate, currentUser])
+
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <Clock className="w-6 h-6 text-white" />

@@ -12,6 +12,7 @@ import {
   Settings,
   Users,
   GraduationCap,
+  Calendar,
 } from "lucide-react"
 import { NavItem } from "./NavItem"
 import { cn } from "@/shared/utils/cn"
@@ -34,19 +35,13 @@ const teacherNavigationItems = [
     path: "/dashboard/history",
     icon: Clock,
   },
-  {
-    id: "settings",
-    label: "Settings",
-    path: "/dashboard/settings",
-    icon: Settings,
-  },
 ]
 
 const studentNavigationItems = [
   { id: "home", label: "Home", path: "/dashboard", icon: Home },
   {
     id: "classes",
-    label: "My Classes",
+    label: "Classes",
     path: "/dashboard/classes",
     icon: Grid3x3,
   },
@@ -57,10 +52,10 @@ const studentNavigationItems = [
     icon: FileText,
   },
   {
-    id: "settings",
-    label: "Settings",
-    path: "/dashboard/settings",
-    icon: Settings,
+    id: "calendar",
+    label: "Calendar",
+    path: "/dashboard/calendar",
+    icon: Calendar,
   },
 ]
 
@@ -78,12 +73,6 @@ const adminNavigationItems = [
     label: "Enrollments",
     path: "/dashboard/enrollments",
     icon: GraduationCap,
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    path: "/dashboard/settings",
-    icon: Settings,
   },
 ]
 
@@ -162,8 +151,17 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Logout Section */}
-        <div className="p-3 border-t border-white/10">
+        {/* Bottom Section - Settings & Logout */}
+        <div className="p-3 border-t border-white/10 space-y-1">
+          <NavItem
+            item={{
+              id: "settings",
+              label: "Settings",
+              path: "/dashboard/settings",
+              icon: Settings,
+            }}
+            onClick={() => setIsMobileOpen(false)}
+          />
           <button
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"

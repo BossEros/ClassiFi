@@ -76,6 +76,8 @@ const mockDetector = {
 describe("PlagiarismService", () => {
   let plagiarismService: PlagiarismService
   let mockAssignmentRepo: any
+  let mockClassRepo: any
+  let mockEnrollmentRepo: any
   let mockPersistenceService: any
   let mockFileService: any
   let mockDetectorFactory: any
@@ -83,6 +85,14 @@ describe("PlagiarismService", () => {
   beforeEach(() => {
     mockAssignmentRepo = {
       getAssignmentById: vi.fn(),
+    }
+
+    mockClassRepo = {
+      getClassById: vi.fn(),
+    }
+
+    mockEnrollmentRepo = {
+      isEnrolled: vi.fn(),
     }
 
     mockPersistenceService = {
@@ -93,6 +103,7 @@ describe("PlagiarismService", () => {
       getReport: vi.fn(),
       getResultData: vi.fn(),
       deleteReport: vi.fn(),
+      getReportSubmissions: vi.fn().mockResolvedValue([]),
     }
 
     mockFileService = {
@@ -109,6 +120,8 @@ describe("PlagiarismService", () => {
 
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
+      mockClassRepo,
+      mockEnrollmentRepo,
       mockDetectorFactory,
       mockFileService,
       mockPersistenceService,
@@ -228,6 +241,7 @@ describe("PlagiarismService", () => {
     it("should calculate originality scores correctly", async () => {
       const mockReportData = {
         reportId: "1",
+        assignmentId: 1,
         summary: {
           totalFiles: 3,
           totalPairs: 3,
@@ -313,8 +327,13 @@ describe("PlagiarismService", () => {
       }
 
       mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
 
-      const result = await plagiarismService.getStudentSummary(1)
+      const result = await plagiarismService.getStudentSummary(1, 1)
 
       expect(result).toHaveLength(3)
 
@@ -345,6 +364,7 @@ describe("PlagiarismService", () => {
     it("should sort by originality ascending (lowest first)", async () => {
       const mockReportData = {
         reportId: "1",
+        assignmentId: 1,
         summary: {
           totalFiles: 2,
           totalPairs: 1,
@@ -382,8 +402,13 @@ describe("PlagiarismService", () => {
       }
 
       mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
 
-      const result = await plagiarismService.getStudentSummary(1)
+      const result = await plagiarismService.getStudentSummary(1, 1)
 
       expect(result).toHaveLength(2)
       // Both have same originality (0.7), so order may vary, but should be sorted
@@ -395,6 +420,7 @@ describe("PlagiarismService", () => {
     it("should handle student with no pairs (edge case)", async () => {
       const mockReportData = {
         reportId: "1",
+        assignmentId: 1,
         summary: {
           totalFiles: 1,
           totalPairs: 0,
@@ -407,8 +433,13 @@ describe("PlagiarismService", () => {
       }
 
       mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
 
-      const result = await plagiarismService.getStudentSummary(1)
+      const result = await plagiarismService.getStudentSummary(1, 1)
 
       expect(result).toHaveLength(0)
     })
@@ -416,7 +447,7 @@ describe("PlagiarismService", () => {
     it("should throw PlagiarismReportNotFoundError when report not found", async () => {
       mockPersistenceService.getReport.mockResolvedValue(null)
 
-      await expect(plagiarismService.getStudentSummary(1)).rejects.toThrow(
+      await expect(plagiarismService.getStudentSummary(1, 1)).rejects.toThrow(
         "Plagiarism report not found",
       )
     })
@@ -426,6 +457,7 @@ describe("PlagiarismService", () => {
     it("should return all pairs for a student", async () => {
       const mockReportData = {
         reportId: "1",
+        assignmentId: 1,
         summary: {
           totalFiles: 3,
           totalPairs: 3,
@@ -511,8 +543,13 @@ describe("PlagiarismService", () => {
       }
 
       mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
 
-      const result = await plagiarismService.getStudentPairs(1, 101)
+      const result = await plagiarismService.getStudentPairs(1, 101, 1)
 
       expect(result).toHaveLength(2)
       expect(result[0].id).toBe(1) // Highest similarity first (0.8)
@@ -522,6 +559,7 @@ describe("PlagiarismService", () => {
     it("should sort pairs by similarity descending", async () => {
       const mockReportData = {
         reportId: "1",
+        assignmentId: 1,
         summary: {
           totalFiles: 2,
           totalPairs: 2,
@@ -583,8 +621,13 @@ describe("PlagiarismService", () => {
       }
 
       mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
 
-      const result = await plagiarismService.getStudentPairs(1, 101)
+      const result = await plagiarismService.getStudentPairs(1, 101, 1)
 
       expect(result).toHaveLength(2)
       expect(result[0].structuralScore).toBeGreaterThan(
@@ -595,6 +638,7 @@ describe("PlagiarismService", () => {
     it("should return empty array for student with no pairs", async () => {
       const mockReportData = {
         reportId: "1",
+        assignmentId: 1,
         summary: {
           totalFiles: 2,
           totalPairs: 1,
@@ -632,8 +676,13 @@ describe("PlagiarismService", () => {
       }
 
       mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
 
-      const result = await plagiarismService.getStudentPairs(1, 101)
+      const result = await plagiarismService.getStudentPairs(1, 101, 1)
 
       expect(result).toHaveLength(0)
     })
@@ -641,9 +690,9 @@ describe("PlagiarismService", () => {
     it("should throw PlagiarismReportNotFoundError when report not found", async () => {
       mockPersistenceService.getReport.mockResolvedValue(null)
 
-      await expect(plagiarismService.getStudentPairs(1, 101)).rejects.toThrow(
-        "Plagiarism report not found",
-      )
+      await expect(
+        plagiarismService.getStudentPairs(1, 101, 1),
+      ).rejects.toThrow("Plagiarism report not found")
     })
   })
 })

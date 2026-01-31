@@ -191,4 +191,5 @@ judge0/postgres-data/
 # ============================================
 .gemini/
 .Jules/
+.kiro/
 

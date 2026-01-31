@@ -32,6 +32,7 @@ import {
   deleteAssignment,
 } from "@/business/services/classService"
 import { useToast } from "@/shared/context/ToastContext"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import type { User } from "@/business/models/auth/types"
 import type {
   Class,
@@ -214,8 +215,14 @@ export function ClassDetailPage() {
     },
   ]
 
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Loading State */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

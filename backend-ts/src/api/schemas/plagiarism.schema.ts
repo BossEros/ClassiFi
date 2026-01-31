@@ -228,7 +228,7 @@ export type DeleteReportResponse = z.infer<typeof DeleteReportResponseSchema>
 
 /** Student match information schema */
 export const StudentMatchSchema = z.object({
-  studentId: z.number(),
+  studentId: z.string(),
   studentName: z.string(),
   submissionId: z.number(),
 })
@@ -237,7 +237,7 @@ export type StudentMatch = z.infer<typeof StudentMatchSchema>
 
 /** Student summary schema */
 export const StudentSummarySchema = z.object({
-  studentId: z.number(),
+  studentId: z.string(),
   studentName: z.string(),
   submissionId: z.number(),
   originalityScore: z.number().min(0).max(1),
