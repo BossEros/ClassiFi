@@ -50,7 +50,7 @@ ClassiFi is a modern platform designed to facilitate interaction between instruc
 ### Prerequisites
 
 - Node.js 18+ (LTS recommended)
-- npm or yarn
+- pnpm
 - PostgreSQL database (or Supabase account)
 - Judge0 instance (optional, for code execution)
 
@@ -58,10 +58,10 @@ ClassiFi is a modern platform designed to facilitate interaction between instruc
 
 ```bash
 cd frontend
-npm install
+pnpm install
 cp .env.example .env
 # Configure environment variables in .env
-npm run dev
+pnpm dev
 # App runs at http://localhost:5173
 ```
 
@@ -69,10 +69,10 @@ npm run dev
 
 ```bash
 cd backend-ts
-npm install
+pnpm install
 cp .env.example .env
 # Configure environment variables in .env
-npm run dev
+pnpm dev
 # Server runs at http://localhost:8001
 ```
 
@@ -150,16 +150,16 @@ For more detailed information, please refer to:
 ### Frontend
 ```bash
 cd frontend
-npm run test              # Unit tests (Vitest)
-npm run test:e2e          # E2E tests (Playwright)
+pnpm test              # Unit tests (Vitest)
+pnpm test:e2e          # E2E tests (Playwright)
 ```
 
 ### Backend
 ```bash
 cd backend-ts
-npm run test              # Unit tests (Vitest)
-npm run test:coverage     # With coverage report
-npm run typecheck         # TypeScript validation
+pnpm test              # Unit tests (Vitest)
+pnpm test:coverage     # With coverage report
+pnpm typecheck         # TypeScript validation
 ```
 
 ## 🎨 Code Quality
@@ -171,9 +171,9 @@ Both frontend and backend use:
 - **Vitest 4** for testing
 
 ```bash
-npm run format            # Format code
-npm run format:check      # Check formatting
-npm run lint              # Run linter
+pnpm format            # Format code
+pnpm format:check      # Check formatting
+pnpm lint              # Run linter
 ```
 
 ## 👥 Authors
