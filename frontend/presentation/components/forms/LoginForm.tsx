@@ -118,7 +118,6 @@ export function LoginForm({
             type="button"
             onClick={onForgotPasswordClick}
             className="text-xs text-teal-400 hover:text-teal-300 transition-colors font-medium cursor-pointer"
-            tabIndex={-1}
           >
             Forgot password?
           </button>
@@ -149,7 +148,6 @@ export function LoginForm({
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors focus:outline-none focus:text-slate-300"
             aria-label={showPassword ? "Hide password" : "Show password"}
-            tabIndex={-1}
             disabled={isLoading}
           >
             {showPassword ? (

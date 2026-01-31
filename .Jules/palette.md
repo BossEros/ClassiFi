@@ -6,3 +6,6 @@
 **Learning:** Auto-dismissing toasts can create anxiety or frustration if they vanish while being read. Additionally, indiscriminately using `role="alert"` causes screen readers to aggressively interrupt users for minor updates.
 **Action:** Implement "pause-on-hover" for all auto-dismissing notifications. Use `role="status"`/`aria-live="polite"` for success/info messages, and reserve `role="alert"`/`aria-live="assertive"` only for errors.
 
+## 2026-03-05 - Keyboard Traps in Forms
+**Learning:** Using `tabIndex={-1}` on interactive elements like "Show Password" toggles or helper links (e.g., "Forgot Password?") creates keyboard traps where only mouse users can interact. This completely blocks keyboard-only users from essential functionality.
+**Action:** Never use `tabIndex={-1}` on interactive elements unless they are visually hidden or actively disabled. Ensure all form helpers are in the natural tab order.
