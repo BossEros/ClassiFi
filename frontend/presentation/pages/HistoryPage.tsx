@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
@@ -14,13 +14,13 @@ import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function HistoryPage() {
   const navigate = useNavigate()
-  const currentUser = getCurrentUser()
+  const [currentUser] = useState(() => getCurrentUser())
 
   useEffect(() => {
     if (!currentUser) {
       navigate("/login")
     }
-  }, [navigate, currentUser])
+  }, [currentUser, navigate])
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
