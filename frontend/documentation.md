@@ -126,12 +126,17 @@ Routing is handled in `presentation/App.tsx`.
 ### Feature Components
 
 - **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks with syntax highlighting for Python, Java, and C.
-- **`PlagiarismReport`**: Visualizes similarity analysis results with side-by-side code comparison.
-  - **`PairsTable`**: Lists file pairs with similarity scores
-  - **`PairComparison`**: Side-by-side code editor with match highlighting
-  - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
-  - **`FragmentsTable`**: Detailed view of matching code fragments
-  - **`SimilarityBadge`**: Visual indicator for similarity percentage
+- **`PlagiarismReport`**: Visualizes similarity analysis results with two complementary views:
+  - **Student-Centric View Components**:
+    - **`OriginalityBadge`**: Color-coded badge (red/yellow/green) displaying originality percentage with tooltip
+    - **`StudentSummaryTable`**: Sortable, searchable table of all students with originality scores, highest matches, and suspicious pair counts
+    - **`StudentPairsDetail`**: Detailed view of all similarity pairs for a selected student with summary statistics
+  - **Pairwise View Components**:
+    - **`PairsTable`**: Lists file pairs with similarity scores
+    - **`PairComparison`**: Side-by-side code editor with match highlighting
+    - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
+    - **`FragmentsTable`**: Detailed view of matching code fragments
+    - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Manages student grades and overrides.
 - **`TestResultsPanel`**: Displays test execution results with pass/fail status.
 
@@ -153,19 +158,19 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ### Available Services
 
-| Service                     | Location                                       | Purpose                                                   |
-| --------------------------- | ---------------------------------------------- | --------------------------------------------------------- |
-| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management    |
-| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                    |
-| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                   |
-| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export  |
-| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection and similarity analysis              |
-| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                        |
-| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                        |
-| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                      |
-| **testService**             | `business/services/testService.ts`             | Code execution and testing                                |
-| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)             |
-| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion) |
+| Service                     | Location                                       | Purpose                                                                |
+| --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management                 |
+| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
+| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                                |
+| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
+| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
+| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
+| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
+| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                                   |
+| **testService**             | `business/services/testService.ts`             | Code execution and testing                                             |
+| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)                          |
+| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion)              |
 
 ### Service Guidelines
 
@@ -215,7 +220,25 @@ Language-specific features:
 
 ### Plagiarism Detection
 
-The plagiarism detection system provides:
+The plagiarism detection system provides two complementary views for analyzing code similarity:
+
+#### Student-Centric View (Default)
+
+The student-centric view focuses on individual student originality scores, making it easy to identify students who may need attention:
+
+- **Originality Scores**: Each student receives an originality score calculated as `1 - max_similarity`, where max_similarity is the highest similarity score across all pairs involving that student
+- **Color-Coded Badges**: Visual indicators for quick assessment
+  - Red (<30%): Low originality, requires immediate attention
+  - Yellow (30-60%): Moderate originality, may warrant review
+  - Green (>60%): High originality, likely original work
+- **Student Summary Table**: Sortable table showing all students with their originality scores, highest matches, and suspicious pair counts
+- **Drill-Down Details**: Click any student to view all their similarity pairs and detailed comparisons
+- **Search and Filter**: Quickly find specific students by name
+- **Pagination**: Handles large classes efficiently (25 students per page)
+
+#### Pairwise Comparison View
+
+The traditional pairwise view provides detailed code comparison capabilities:
 
 - **Side-by-side comparison**: View matched code fragments in parallel editors
 - **Synchronized scrolling**: Navigate through matches seamlessly
@@ -223,6 +246,10 @@ The plagiarism detection system provides:
 - **Similarity metrics**: Percentage similarity, overlap, and longest match
 - **Interactive navigation**: Click fragments to jump to specific matches
 - **Export capabilities**: Download reports for record-keeping
+
+#### View Toggle
+
+Teachers can seamlessly switch between the student-centric view and pairwise view using the toggle at the top of the plagiarism results page. Both views share the same code comparison panel, ensuring a consistent experience when examining specific matches.
 
 ### Toast Notifications
 
@@ -241,6 +268,36 @@ Comprehensive settings page with:
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
 - **Account deletion**: Self-service account removal with confirmation
+
+---
+
+## Common Workflows
+
+### Teacher: Reviewing Plagiarism Results
+
+1. **Navigate to Results**: From the assignment submissions page, click "View Plagiarism Report"
+2. **Review Student Originality** (Default View):
+   - View the student summary table showing all students with originality scores
+   - Identify students with low originality (red badges) for immediate attention
+   - Use search to find specific students
+   - Sort by originality score, similarity, or student name
+3. **Investigate Specific Students**:
+   - Click on a student row to view all their similarity pairs
+   - Review summary statistics (total pairs, suspicious pairs, highest match)
+   - Click on any pair to view side-by-side code comparison
+4. **Compare Code**:
+   - View matched code fragments highlighted in both files
+   - Use synchronized scrolling to navigate through matches
+   - Click on fragments in the table to jump to specific matches
+   - Toggle between "Match" and "Diff" views for different perspectives
+5. **Switch to Pairwise View** (Optional):
+   - Click the "Pairs" toggle to view traditional pairwise comparison
+   - Search and sort pairs by similarity score
+   - All code comparison features remain available
+6. **Take Action**:
+   - Document findings for academic integrity review
+   - Contact students as needed
+   - Export report for record-keeping
 
 ---
 

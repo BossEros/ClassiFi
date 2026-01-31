@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Grid3x3, FileText } from "lucide-react"
+import { Grid3x3, FileText, ArrowRight } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
@@ -92,14 +91,12 @@ export function StudentDashboardPage() {
               </div>
               <button
                 onClick={() => navigate("/dashboard/classes")}
-                className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors group"
               >
                 View All
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
-            <CardDescription className="text-sm mt-1.5">
-              Classes you're enrolled in
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -142,12 +139,8 @@ export function StudentDashboardPage() {
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
                 <FileText className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
-              <CardTitle className="text-xl">Pending</CardTitle>
+              <CardTitle className="text-xl">Upcoming Deadlines</CardTitle>
             </div>
-            <CardDescription className="text-sm mt-1.5">
-              {pendingAssignments.length}{" "}
-              {pendingAssignments.length === 1 ? "task" : "tasks"}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (

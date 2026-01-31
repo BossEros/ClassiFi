@@ -16,6 +16,9 @@ import {
   PairDetailsResponseSchema,
   ResultDetailsResponseSchema,
   DeleteReportResponseSchema,
+  StudentSummaryResponseSchema,
+  StudentPairsParamsSchema,
+  StudentPairsResponseSchema,
   type AnalyzeRequest,
 } from "../schemas/plagiarism.schema.js"
 
@@ -217,4 +220,82 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
       })
     },
   })
+
+  /**
+   * GET /reports/:reportId/students
+   * Get student-centric summary for a plagiarism report
+   */
+  app.get<{ Params: { reportId: string } }>("/reports/:reportId/students", {
+    schema: {
+      tags: ["Plagiarism"],
+      summary: "Get student-centric summary for a plagiarism report",
+      description:
+        "Returns originality scores and statistics for all students in the report",
+      security: [{ bearerAuth: [] }],
+      params: toJsonSchema(ReportIdParamSchema),
+      response: {
+        200: toJsonSchema(StudentSummaryResponseSchema),
+      },
+    },
+    preHandler: [authMiddleware],
+    handler: async (request, reply) => {
+      const params = ReportIdParamSchema.parse(request.params)
+      const reportId = parsePositiveInt(params.reportId, "Report ID")
+      const userId = request.user!.id
+
+      const students = await plagiarismService.getStudentSummary(
+        reportId,
+        userId,
+      )
+
+      return reply.send({
+        success: true,
+        message: "Student summary retrieved successfully",
+        students,
+      })
+    },
+  })
+
+  /**
+   * GET /reports/:reportId/students/:submissionId/pairs
+   * Get all pairwise comparisons for a specific student
+   */
+  app.get<{ Params: { reportId: string; submissionId: string } }>(
+    "/reports/:reportId/students/:submissionId/pairs",
+    {
+      schema: {
+        tags: ["Plagiarism"],
+        summary: "Get all pairwise comparisons for a specific student",
+        description:
+          "Returns all similarity pairs involving the specified student's submission",
+        security: [{ bearerAuth: [] }],
+        params: toJsonSchema(StudentPairsParamsSchema),
+        response: {
+          200: toJsonSchema(StudentPairsResponseSchema),
+        },
+      },
+      preHandler: [authMiddleware],
+      handler: async (request, reply) => {
+        const params = StudentPairsParamsSchema.parse(request.params)
+        const reportId = parsePositiveInt(params.reportId, "Report ID")
+        const submissionId = parsePositiveInt(
+          params.submissionId,
+          "Submission ID",
+        )
+        const userId = request.user!.id
+
+        const pairs = await plagiarismService.getStudentPairs(
+          reportId,
+          submissionId,
+          userId,
+        )
+
+        return reply.send({
+          success: true,
+          message: "Student pairs retrieved successfully",
+          pairs,
+        })
+      },
+    },
+  )
 }

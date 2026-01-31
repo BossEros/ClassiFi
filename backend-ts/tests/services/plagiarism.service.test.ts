@@ -3,16 +3,11 @@ import {
   PlagiarismService,
   type AnalyzeRequest,
 } from "../../src/services/plagiarism.service.js"
-import { PlagiarismPersistenceService } from "../../src/services/plagiarism/plagiarism-persistence.service.js"
-import { SubmissionFileService } from "../../src/services/plagiarism/submission-file.service.js"
-import { PlagiarismDetectorFactory } from "../../src/services/plagiarism/plagiarism-detector.factory.js"
 import { createMockAssignment } from "../utils/factories.js"
 import {
   AssignmentNotFoundError,
   InsufficientFilesError,
   LanguageRequiredError,
-  InsufficientDownloadedFilesError,
-  UnsupportedLanguageError,
 } from "../../src/shared/errors.js"
 
 // Mock repositories
@@ -76,6 +71,8 @@ const mockDetector = {
 describe("PlagiarismService", () => {
   let plagiarismService: PlagiarismService
   let mockAssignmentRepo: any
+  let mockClassRepo: any
+  let mockEnrollmentRepo: any
   let mockPersistenceService: any
   let mockFileService: any
   let mockDetectorFactory: any
@@ -83,6 +80,14 @@ describe("PlagiarismService", () => {
   beforeEach(() => {
     mockAssignmentRepo = {
       getAssignmentById: vi.fn(),
+    }
+
+    mockClassRepo = {
+      getClassById: vi.fn(),
+    }
+
+    mockEnrollmentRepo = {
+      isEnrolled: vi.fn(),
     }
 
     mockPersistenceService = {
@@ -93,6 +98,7 @@ describe("PlagiarismService", () => {
       getReport: vi.fn(),
       getResultData: vi.fn(),
       deleteReport: vi.fn(),
+      getReportSubmissions: vi.fn().mockResolvedValue([]),
     }
 
     mockFileService = {
@@ -109,6 +115,8 @@ describe("PlagiarismService", () => {
 
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
+      mockClassRepo,
+      mockEnrollmentRepo,
       mockDetectorFactory,
       mockFileService,
       mockPersistenceService,
@@ -222,5 +230,464 @@ describe("PlagiarismService", () => {
     // It fetches files, creates ignoredFile, then calls `detector.analyze`.
     // `PlagiarismDetector` typically throws if not enough files.
     // So we can assume `detector.analyze` throws if files < 2.
+  })
+
+  describe("getStudentSummary", () => {
+    it("should calculate originality scores correctly", async () => {
+      const mockReportData = {
+        reportId: "1",
+        assignmentId: 1,
+        summary: {
+          totalFiles: 3,
+          totalPairs: 3,
+          suspiciousPairs: 1,
+          averageSimilarity: 0.5,
+          maxSimilarity: 0.8,
+        },
+        pairs: [
+          {
+            id: 1,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.8,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 50,
+            longest: 10,
+          },
+          {
+            id: 2,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 103,
+              studentId: "3",
+              studentName: "Charlie",
+              path: "file3.py",
+              filename: "file3.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.3,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 20,
+            longest: 5,
+          },
+          {
+            id: 3,
+            leftFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 103,
+              studentId: "3",
+              studentName: "Charlie",
+              path: "file3.py",
+              filename: "file3.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.4,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 30,
+            longest: 7,
+          },
+        ],
+        warnings: [],
+      }
+
+      mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
+
+      const result = await plagiarismService.getStudentSummary(1, 1)
+
+      expect(result).toHaveLength(3)
+
+      // Alice has max similarity 0.8, so originality = 0.2
+      const alice = result.find((s) => s.studentName === "Alice")
+      expect(alice).toBeDefined()
+      expect(alice!.originalityScore).toBeCloseTo(0.2, 10)
+      expect(alice!.highestSimilarity).toBe(0.8)
+      expect(alice!.highestMatchWith.studentName).toBe("Bob")
+      expect(alice!.totalPairs).toBe(2)
+      expect(alice!.suspiciousPairs).toBe(1) // Only pair with Bob is above 0.7
+
+      // Bob has max similarity 0.8, so originality = 0.2
+      const bob = result.find((s) => s.studentName === "Bob")
+      expect(bob).toBeDefined()
+      expect(bob!.originalityScore).toBeCloseTo(0.2, 10)
+      expect(bob!.highestSimilarity).toBe(0.8)
+
+      // Charlie has max similarity 0.4, so originality = 0.6
+      const charlie = result.find((s) => s.studentName === "Charlie")
+      expect(charlie).toBeDefined()
+      expect(charlie!.originalityScore).toBeCloseTo(0.6, 10)
+      expect(charlie!.highestSimilarity).toBe(0.4)
+      expect(charlie!.totalPairs).toBe(2)
+      expect(charlie!.suspiciousPairs).toBe(0) // No pairs above 0.7
+    })
+
+    it("should sort by originality ascending (lowest first)", async () => {
+      const mockReportData = {
+        reportId: "1",
+        assignmentId: 1,
+        summary: {
+          totalFiles: 2,
+          totalPairs: 1,
+          suspiciousPairs: 0,
+          averageSimilarity: 0.3,
+          maxSimilarity: 0.3,
+        },
+        pairs: [
+          {
+            id: 1,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.3,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 20,
+            longest: 5,
+          },
+        ],
+        warnings: [],
+      }
+
+      mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
+
+      const result = await plagiarismService.getStudentSummary(1, 1)
+
+      expect(result).toHaveLength(2)
+      // Both have same originality (0.7), so order may vary, but should be sorted
+      expect(result[0].originalityScore).toBeLessThanOrEqual(
+        result[1].originalityScore,
+      )
+    })
+
+    it("should handle student with no pairs (edge case)", async () => {
+      const mockReportData = {
+        reportId: "1",
+        assignmentId: 1,
+        summary: {
+          totalFiles: 1,
+          totalPairs: 0,
+          suspiciousPairs: 0,
+          averageSimilarity: 0,
+          maxSimilarity: 0,
+        },
+        pairs: [],
+        warnings: [],
+      }
+
+      mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
+
+      const result = await plagiarismService.getStudentSummary(1, 1)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it("should throw PlagiarismReportNotFoundError when report not found", async () => {
+      mockPersistenceService.getReport.mockResolvedValue(null)
+
+      await expect(plagiarismService.getStudentSummary(1, 1)).rejects.toThrow(
+        "Plagiarism report not found",
+      )
+    })
+  })
+
+  describe("getStudentPairs", () => {
+    it("should return all pairs for a student", async () => {
+      const mockReportData = {
+        reportId: "1",
+        assignmentId: 1,
+        summary: {
+          totalFiles: 3,
+          totalPairs: 3,
+          suspiciousPairs: 1,
+          averageSimilarity: 0.5,
+          maxSimilarity: 0.8,
+        },
+        pairs: [
+          {
+            id: 1,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.8,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 50,
+            longest: 10,
+          },
+          {
+            id: 2,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 103,
+              studentId: "3",
+              studentName: "Charlie",
+              path: "file3.py",
+              filename: "file3.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.3,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 20,
+            longest: 5,
+          },
+          {
+            id: 3,
+            leftFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 103,
+              studentId: "3",
+              studentName: "Charlie",
+              path: "file3.py",
+              filename: "file3.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.4,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 30,
+            longest: 7,
+          },
+        ],
+        warnings: [],
+      }
+
+      mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
+
+      const result = await plagiarismService.getStudentPairs(1, 101, 1)
+
+      expect(result).toHaveLength(2)
+      expect(result[0].id).toBe(1) // Highest similarity first (0.8)
+      expect(result[1].id).toBe(2) // Lower similarity (0.3)
+    })
+
+    it("should sort pairs by similarity descending", async () => {
+      const mockReportData = {
+        reportId: "1",
+        assignmentId: 1,
+        summary: {
+          totalFiles: 2,
+          totalPairs: 2,
+          suspiciousPairs: 0,
+          averageSimilarity: 0.4,
+          maxSimilarity: 0.5,
+        },
+        pairs: [
+          {
+            id: 1,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.3,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 20,
+            longest: 5,
+          },
+          {
+            id: 2,
+            leftFile: {
+              id: 101,
+              studentId: "1",
+              studentName: "Alice",
+              path: "file1.py",
+              filename: "file1.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 103,
+              studentId: "3",
+              studentName: "Charlie",
+              path: "file3.py",
+              filename: "file3.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.5,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 30,
+            longest: 7,
+          },
+        ],
+        warnings: [],
+      }
+
+      mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
+
+      const result = await plagiarismService.getStudentPairs(1, 101, 1)
+
+      expect(result).toHaveLength(2)
+      expect(result[0].structuralScore).toBeGreaterThan(
+        result[1].structuralScore,
+      )
+    })
+
+    it("should return empty array for student with no pairs", async () => {
+      const mockReportData = {
+        reportId: "1",
+        assignmentId: 1,
+        summary: {
+          totalFiles: 2,
+          totalPairs: 1,
+          suspiciousPairs: 0,
+          averageSimilarity: 0.3,
+          maxSimilarity: 0.3,
+        },
+        pairs: [
+          {
+            id: 1,
+            leftFile: {
+              id: 102,
+              studentId: "2",
+              studentName: "Bob",
+              path: "file2.py",
+              filename: "file2.py",
+              lineCount: 10,
+            },
+            rightFile: {
+              id: 103,
+              studentId: "3",
+              studentName: "Charlie",
+              path: "file3.py",
+              filename: "file3.py",
+              lineCount: 10,
+            },
+            structuralScore: 0.3,
+            semanticScore: 0,
+            hybridScore: 0,
+            overlap: 20,
+            longest: 5,
+          },
+        ],
+        warnings: [],
+      }
+
+      mockPersistenceService.getReport.mockResolvedValue(mockReportData)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+        id: 1,
+        classId: 1,
+      })
+      mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1 })
+
+      const result = await plagiarismService.getStudentPairs(1, 101, 1)
+
+      expect(result).toHaveLength(0)
+    })
+
+    it("should throw PlagiarismReportNotFoundError when report not found", async () => {
+      mockPersistenceService.getReport.mockResolvedValue(null)
+
+      await expect(
+        plagiarismService.getStudentPairs(1, 101, 1),
+      ).rejects.toThrow("Plagiarism report not found")
+    })
   })
 })

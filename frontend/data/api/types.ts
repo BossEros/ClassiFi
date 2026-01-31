@@ -516,6 +516,22 @@ export interface ResultDetailsResponse {
   }
 }
 
+/** Student-centric plagiarism summary */
+export interface StudentSummary {
+  studentId: number
+  studentName: string
+  submissionId: number
+  originalityScore: number
+  highestSimilarity: number
+  highestMatchWith: {
+    studentId: number
+    studentName: string
+    submissionId: number
+  }
+  totalPairs: number
+  suspiciousPairs: number
+}
+
 // ============================================================================
 // Admin Types
 // ============================================================================

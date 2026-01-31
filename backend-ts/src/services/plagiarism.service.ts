@@ -7,6 +7,8 @@ import {
   Fragment,
 } from "../lib/plagiarism/index.js"
 import { AssignmentRepository } from "../repositories/assignment.repository.js"
+import { ClassRepository } from "../repositories/class.repository.js"
+import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
 import { PlagiarismDetectorFactory } from "./plagiarism/plagiarism-detector.factory.js"
 import { SubmissionFileService } from "./plagiarism/submission-file.service.js"
 import { PlagiarismPersistenceService } from "./plagiarism/plagiarism-persistence.service.js"
@@ -27,6 +29,7 @@ import {
   InsufficientFilesError,
   UnsupportedLanguageError,
   LanguageRequiredError,
+  UnauthorizedAccessError,
 } from "../shared/errors.js"
 import type { MatchFragment } from "../models/index.js"
 
@@ -51,6 +54,7 @@ export interface AnalyzeRequest {
 /** Response for analyze endpoint */
 export interface AnalyzeResponse {
   reportId: string
+  assignmentId?: number
   summary: PlagiarismSummaryDTO
   pairs: PlagiarismPairDTO[]
   warnings: string[]
@@ -62,6 +66,22 @@ export interface PairDetailsResponse {
   fragments: PlagiarismFragmentDTO[]
   leftCode: string
   rightCode: string
+}
+
+/** Student summary with originality metrics */
+export interface StudentSummary {
+  studentId: string
+  studentName: string
+  submissionId: number
+  originalityScore: number
+  highestSimilarity: number
+  highestMatchWith: {
+    studentId: string
+    studentName: string
+    submissionId: number
+  }
+  totalPairs: number
+  suspiciousPairs: number
 }
 
 /**
@@ -88,6 +108,10 @@ export class PlagiarismService {
   constructor(
     @inject("AssignmentRepository")
     private assignmentRepo: AssignmentRepository,
+    @inject("ClassRepository")
+    private classRepo: ClassRepository,
+    @inject("EnrollmentRepository")
+    private enrollmentRepo: EnrollmentRepository,
     @inject("PlagiarismDetectorFactory")
     private detectorFactory: PlagiarismDetectorFactory,
     @inject("SubmissionFileService") private fileService: SubmissionFileService,
@@ -408,9 +432,244 @@ export class PlagiarismService {
     )
   }
 
+  /**
+   * Calculates per-student originality scores from pairwise similarity results.
+   * Originality is computed as 1 - max_similarity, where max_similarity is the
+   * highest similarity score across all pairs involving the student.
+   *
+   * @param reportId - The unique identifier of the plagiarism report.
+   * @param userId - The ID of the authenticated user requesting access.
+   * @returns Array of student summaries sorted by originality (lowest first).
+   * @throws PlagiarismReportNotFoundError if report doesn't exist.
+   * @throws UnauthorizedAccessError if user doesn't have access to the report.
+   */
+  async getStudentSummary(
+    reportId: number,
+    userId: number,
+  ): Promise<StudentSummary[]> {
+    // Fetch report from database
+    const report = await this.persistenceService.getReport(reportId)
+    if (!report) {
+      throw new PlagiarismReportNotFoundError(reportId.toString())
+    }
+
+    // Verify user has access to this report
+    if (report.assignmentId) {
+      await this.verifyReportAccess(report.assignmentId, userId)
+    }
+
+    // Extract unique students from pairs
+    const studentMap = new Map<
+      number,
+      {
+        studentId: string
+        studentName: string
+        submissionId: number
+        maxSimilarity: number
+        highestMatchWith: {
+          studentId: string
+          studentName: string
+          submissionId: number
+        } | null
+        pairs: PlagiarismPairDTO[]
+      }
+    >()
+
+    // If no pairs exist, seed studentMap with all submissions (100% originality)
+    if (report.pairs.length === 0) {
+      const submissions =
+        await this.persistenceService.getReportSubmissions(reportId)
+
+      for (const { submission, studentName } of submissions) {
+        const studentId =
+          submission.studentId != null
+            ? submission.studentId.toString()
+            : "unknown"
+
+        studentMap.set(submission.id, {
+          studentId,
+          studentName,
+          submissionId: submission.id,
+          maxSimilarity: 0,
+          highestMatchWith: null,
+          pairs: [],
+        })
+      }
+    } else {
+      // Process each pair to build student data
+      for (const pair of report.pairs) {
+        // Validate that studentId is present
+        if (!pair.leftFile.studentId || !pair.rightFile.studentId) {
+          throw new Error(
+            `Missing studentId in pair ${pair.id}. Left: ${pair.leftFile.studentId}, Right: ${pair.rightFile.studentId}`,
+          )
+        }
+
+        // Process left student
+        const leftSubId = pair.leftFile.id
+        if (!studentMap.has(leftSubId)) {
+          studentMap.set(leftSubId, {
+            studentId: pair.leftFile.studentId,
+            studentName: pair.leftFile.studentName || "Unknown",
+            submissionId: leftSubId,
+            maxSimilarity: 0,
+            highestMatchWith: null,
+            pairs: [],
+          })
+        }
+        const leftStudent = studentMap.get(leftSubId)!
+        leftStudent.pairs.push(pair)
+
+        // Update max similarity for left student
+        if (pair.structuralScore > leftStudent.maxSimilarity) {
+          leftStudent.maxSimilarity = pair.structuralScore
+          leftStudent.highestMatchWith = {
+            studentId: pair.rightFile.studentId,
+            studentName: pair.rightFile.studentName || "Unknown",
+            submissionId: pair.rightFile.id,
+          }
+        }
+
+        // Process right student
+        const rightSubId = pair.rightFile.id
+        if (!studentMap.has(rightSubId)) {
+          studentMap.set(rightSubId, {
+            studentId: pair.rightFile.studentId,
+            studentName: pair.rightFile.studentName || "Unknown",
+            submissionId: rightSubId,
+            maxSimilarity: 0,
+            highestMatchWith: null,
+            pairs: [],
+          })
+        }
+        const rightStudent = studentMap.get(rightSubId)!
+        rightStudent.pairs.push(pair)
+
+        // Update max similarity for right student
+        if (pair.structuralScore > rightStudent.maxSimilarity) {
+          rightStudent.maxSimilarity = pair.structuralScore
+          rightStudent.highestMatchWith = {
+            studentId: pair.leftFile.studentId,
+            studentName: pair.leftFile.studentName || "Unknown",
+            submissionId: pair.leftFile.id,
+          }
+        }
+      }
+    }
+
+    // Build student summaries
+    const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+    const summaries: StudentSummary[] = Array.from(studentMap.values()).map(
+      (student) => ({
+        studentId: student.studentId,
+        studentName: student.studentName,
+        submissionId: student.submissionId,
+        originalityScore: 1 - student.maxSimilarity,
+        highestSimilarity: student.maxSimilarity,
+        highestMatchWith: student.highestMatchWith || {
+          studentId: "0",
+          studentName: "None",
+          submissionId: 0,
+        },
+        totalPairs: student.pairs.length,
+        suspiciousPairs: student.pairs.filter(
+          (p) => p.structuralScore >= threshold,
+        ).length,
+      }),
+    )
+
+    // Sort by originality (ascending) to show concerning students first
+    summaries.sort((a, b) => a.originalityScore - b.originalityScore)
+
+    return summaries
+  }
+
+  /**
+   * Retrieves all pairwise comparisons involving a specific student's submission.
+   * Results are sorted by similarity score in descending order.
+   *
+   * @param reportId - The unique identifier of the plagiarism report.
+   * @param submissionId - The unique identifier of the student's submission.
+   * @param userId - The ID of the authenticated user requesting access.
+   * @returns Array of pairs involving the specified submission.
+   * @throws PlagiarismReportNotFoundError if report doesn't exist.
+   * @throws UnauthorizedAccessError if user doesn't have access to the report.
+   */
+  async getStudentPairs(
+    reportId: number,
+    submissionId: number,
+    userId: number,
+  ): Promise<PlagiarismPairDTO[]> {
+    // Fetch report from database
+    const report = await this.persistenceService.getReport(reportId)
+    if (!report) {
+      throw new PlagiarismReportNotFoundError(reportId.toString())
+    }
+
+    // Verify user has access to this report
+    if (report.assignmentId) {
+      await this.verifyReportAccess(report.assignmentId, userId)
+    }
+
+    // Filter pairs involving the specified submission
+    const studentPairs = report.pairs.filter(
+      (pair) =>
+        pair.leftFile.id === submissionId || pair.rightFile.id === submissionId,
+    )
+
+    // Sort by similarity (descending) to show highest matches first
+    studentPairs.sort((a, b) => b.structuralScore - a.structuralScore)
+
+    return studentPairs
+  }
+
   // ========================================================================
   // Private Helper Methods
   // ========================================================================
+
+  /**
+   * Verifies that a user has access to a plagiarism report.
+   * Teachers can access reports for assignments in their classes.
+   * Students can access reports for assignments in classes they're enrolled in.
+   *
+   * @param assignmentId - The assignment ID associated with the report.
+   * @param userId - The ID of the user requesting access.
+   * @throws AssignmentNotFoundError if assignment doesn't exist.
+   * @throws UnauthorizedAccessError if user doesn't have access.
+   */
+  private async verifyReportAccess(
+    assignmentId: number,
+    userId: number,
+  ): Promise<void> {
+    // Get assignment to find the class
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+    if (!assignment) {
+      throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    // Get class to check teacher
+    const classData = await this.classRepo.getClassById(assignment.classId)
+    if (!classData) {
+      throw new UnauthorizedAccessError("plagiarism report")
+    }
+
+    // Check if user is the teacher
+    if (classData.teacherId === userId) {
+      return // Teacher has access
+    }
+
+    // Check if user is enrolled as a student
+    const isEnrolled = await this.enrollmentRepo.isEnrolled(
+      userId,
+      assignment.classId,
+    )
+    if (isEnrolled) {
+      return // Enrolled student has access
+    }
+
+    // User is neither teacher nor enrolled student
+    throw new UnauthorizedAccessError("plagiarism report")
+  }
 
   private cleanupExpiredReports() {
     const now = Date.now()
