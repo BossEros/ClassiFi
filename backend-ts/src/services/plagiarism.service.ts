@@ -481,8 +481,13 @@ export class PlagiarismService {
         await this.persistenceService.getReportSubmissions(reportId)
 
       for (const { submission, studentName } of submissions) {
+        const studentId =
+          submission.studentId != null
+            ? submission.studentId.toString()
+            : "unknown"
+
         studentMap.set(submission.id, {
-          studentId: submission.studentId.toString(),
+          studentId,
           studentName,
           submissionId: submission.id,
           maxSimilarity: 0,
