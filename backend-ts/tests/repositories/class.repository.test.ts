@@ -3,7 +3,7 @@
  * Tests for class-related database operations
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { createMockClass, createMockUser } from "../utils/factories.js"
+import { createMockClass } from "../utils/factories.js"
 
 // Mock database module
 vi.mock("../../src/shared/database.js", () => ({

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
@@ -11,20 +11,16 @@ import {
 import { Clock } from "lucide-react"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
-import type { User } from "@/shared/types/auth"
 
 export function HistoryPage() {
   const navigate = useNavigate()
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const currentUser = getCurrentUser()
 
   useEffect(() => {
-    const user = getCurrentUser()
-    setCurrentUser(user)
-
-    if (!user) {
+    if (!currentUser) {
       navigate("/login")
     }
-  }, [navigate])
+  }, [navigate, currentUser])
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()

@@ -3,7 +3,7 @@
  * Tests for submission-related database operations
  */
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { createMockSubmission, createMockUser } from "../utils/factories.js"
+import { createMockSubmission } from "../utils/factories.js"
 
 // Mock database module
 vi.mock("../../src/shared/database.js", () => {

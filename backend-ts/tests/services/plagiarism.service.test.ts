@@ -3,16 +3,11 @@ import {
   PlagiarismService,
   type AnalyzeRequest,
 } from "../../src/services/plagiarism.service.js"
-import { PlagiarismPersistenceService } from "../../src/services/plagiarism/plagiarism-persistence.service.js"
-import { SubmissionFileService } from "../../src/services/plagiarism/submission-file.service.js"
-import { PlagiarismDetectorFactory } from "../../src/services/plagiarism/plagiarism-detector.factory.js"
 import { createMockAssignment } from "../utils/factories.js"
 import {
   AssignmentNotFoundError,
   InsufficientFilesError,
   LanguageRequiredError,
-  InsufficientDownloadedFilesError,
-  UnsupportedLanguageError,
 } from "../../src/shared/errors.js"
 
 // Mock repositories
@@ -115,8 +110,8 @@ describe("PlagiarismService", () => {
       create: vi.fn().mockReturnValue(mockDetector),
     }
 
-    // Reset legacy store
-    ;(PlagiarismService as any).prototype.legacyReportsStore = new Map()
+      // Reset legacy store
+      ; (PlagiarismService as any).prototype.legacyReportsStore = new Map()
 
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
