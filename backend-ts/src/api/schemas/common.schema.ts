@@ -41,9 +41,31 @@ export const SuccessMessageSchema = z.object({
 
 export type SuccessMessage = z.infer<typeof SuccessMessageSchema>
 
+/** Generic success response with optional message - used across multiple modules */
+export const SuccessResponseSchema = z.object({
+  success: z.boolean(),
+  message: z.string().optional(),
+})
+
+export type SuccessResponse = z.infer<typeof SuccessResponseSchema>
+
 // ============================================================================
 // Common Query Schemas
 // ============================================================================
+
+/**
+ * Standard pagination query parameters.
+ * Used across admin and other paginated endpoints.
+ *
+ * @property page - Page number (minimum: 1, default: 1)
+ * @property limit - Items per page (minimum: 1, maximum: 100, default: 20)
+ */
+export const PaginationQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+})
+
+export type PaginationQuery = z.infer<typeof PaginationQuerySchema>
 
 /** Generic limit query schema - used by dashboard endpoints */
 export const LimitQuerySchema = z.object({

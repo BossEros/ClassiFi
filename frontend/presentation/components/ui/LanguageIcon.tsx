@@ -30,8 +30,20 @@ export const LanguageIcon: React.FC<LanguageIconProps> = ({
   const colorClass = getLanguageColor(language)
 
   if (language.toLowerCase() === "pdf") {
-    return <FileText className={`w-4 h-4 ${colorClass} ${className}`} />
+    return (
+      <FileText
+        className={`w-4 h-4 ${colorClass} ${className}`}
+        data-testid="language-icon"
+        aria-label={language}
+      />
+    )
   }
 
-  return <Code2 className={`w-4 h-4 ${colorClass} ${className}`} />
+  return (
+    <Code2
+      className={`w-4 h-4 ${colorClass} ${className}`}
+      data-testid="language-icon"
+      aria-label={language}
+    />
+  )
 }

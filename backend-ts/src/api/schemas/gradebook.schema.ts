@@ -1,4 +1,8 @@
 import { z } from "zod"
+import { SuccessResponseSchema } from "./common.schema.js"
+
+// Re-export for backwards compatibility
+export { SuccessResponseSchema }
 
 // ============================================================================
 // Late Penalty Configuration Schemas
@@ -218,14 +222,5 @@ export const ExportCSVResponseSchema = z.object({
 
 export type ExportCSVResponse = z.infer<typeof ExportCSVResponseSchema>
 
-// ============================================================================
-// Success Response Schema
-// ============================================================================
-
-/** Generic success response */
-export const SuccessResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-})
-
+// Note: SuccessResponseSchema is imported from common.schema.ts
 export type SuccessResponse = z.infer<typeof SuccessResponseSchema>

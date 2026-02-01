@@ -18,6 +18,7 @@ import {
   NotClassOwnerError,
   InvalidRoleError,
   StudentNotInClassError,
+  BadRequestError,
 } from "../shared/errors.js"
 import type {
   CreateClassServiceDTO,
@@ -264,11 +265,33 @@ export class ClassService {
   /**
    * Get all assignments for a class with student-specific data.
    * Includes submission status, grade, and submission timestamp.
+   *
+   * @param classId - The unique identifier of the class.
+   * @param studentId - The unique identifier of the student.
+   * @returns An array of assignments with student-specific submission data.
+   * @throws {BadRequestError} If classId or studentId is invalid.
+   * @throws {StudentNotInClassError} If the student is not enrolled in the class.
    */
   async getClassAssignmentsForStudent(
     classId: number,
     studentId: number,
   ): Promise<AssignmentDTO[]> {
+    // Validate required inputs
+    if (!classId || !Number.isInteger(classId) || classId <= 0) {
+      throw new BadRequestError("Invalid class ID")
+    }
+
+    if (!studentId || !Number.isInteger(studentId) || studentId <= 0) {
+      throw new BadRequestError("Invalid student ID")
+    }
+
+    // Check if student is enrolled in the class
+    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
+
+    if (!isEnrolled) {
+      throw new StudentNotInClassError()
+    }
+
     const assignments =
       await this.assignmentRepo.getAssignmentsByClassId(classId)
 

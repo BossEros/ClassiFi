@@ -94,7 +94,7 @@ export interface Assignment {
   scheduledDate?: ISODateString | null
   submittedAt?: ISODateString
   grade?: number
-  maxGrade: number
+  maxGrade?: number
 }
 
 /** Alias for Assignment */

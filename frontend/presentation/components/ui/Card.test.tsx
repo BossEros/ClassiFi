@@ -19,7 +19,7 @@ describe("Card", () => {
     it("applies default styling", () => {
       render(<Card data-testid="card">Content</Card>)
       const card = screen.getByTestId("card")
-      expect(card).toHaveClass("rounded-xl")
+      expect(card).toHaveClass("rounded-lg")
       expect(card).toHaveClass("border")
       expect(card).toHaveClass("backdrop-blur-md")
     })

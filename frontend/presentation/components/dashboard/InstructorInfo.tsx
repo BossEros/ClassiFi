@@ -6,6 +6,14 @@ interface InstructorInfoProps {
   className?: string
 }
 
+/**
+ * Displays instructor information with an icon and name.
+ * Used in class headers and detail views to show the instructor assigned to a class.
+ *
+ * @param instructorName - The full name of the instructor to display.
+ * @param className - Optional CSS classes to apply to the container element.
+ * @returns A JSX.Element containing the instructor icon and name.
+ */
 export const InstructorInfo: React.FC<InstructorInfoProps> = ({
   instructorName,
   className = "",

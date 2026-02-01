@@ -52,6 +52,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
           return (
             <button
               key={tab.id}
+              id={`${tab.id}-tab`}
               role="tab"
               aria-selected={isActive}
               aria-controls={`${tab.id}-panel`}
@@ -75,7 +76,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
       <div
         role="tabpanel"
         id={`${activeTab}-panel`}
-        aria-labelledby={activeTab}
+        aria-labelledby={`${activeTab}-tab`}
       >
         {children}
       </div>
