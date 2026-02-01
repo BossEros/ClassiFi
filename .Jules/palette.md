@@ -6,3 +6,6 @@
 **Learning:** Auto-dismissing toasts can create anxiety or frustration if they vanish while being read. Additionally, indiscriminately using `role="alert"` causes screen readers to aggressively interrupt users for minor updates.
 **Action:** Implement "pause-on-hover" for all auto-dismissing notifications. Use `role="status"`/`aria-live="polite"` for success/info messages, and reserve `role="alert"`/`aria-live="assertive"` only for errors.
 
+## 2025-02-24 - Keyboard Accessibility in Forms
+**Learning:** Interactive elements in forms (like "Forgot password?" links and password visibility toggles) must not be removed from the tab order with `tabIndex={-1}`, as this completely blocks keyboard-only users from accessing them.
+**Action:** Always ensure helper buttons are focusable and have clear focus indicators (e.g., `focus-visible:ring-2`).
