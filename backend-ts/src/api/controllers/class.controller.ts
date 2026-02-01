@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
+import { z } from "zod"
 import { ClassService } from "@/services/class.service.js"
 import { AssignmentService } from "@/services/assignment.service.js"
 import { toJsonSchema } from "@/api/utils/swagger.js"
@@ -30,6 +31,7 @@ import {
   type CreateAssignmentRequest,
 } from "@/api/schemas/assignment.schema.js"
 import { BadRequestError, ApiError } from "@/shared/errors.js"
+import type { AssignmentDTO } from "@/shared/mappers.js"
 
 /**
  * Registers all class-related API routes.
@@ -325,34 +327,62 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * GET /:classId/assignments
    * Get all assignments for a class
    */
-  app.get<{ Params: { classId: string } }>("/:classId/assignments", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Get all assignments for a class",
-      description: "Retrieves all assignments associated with a specific class",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassIdParamSchema),
-      response: {
-        200: toJsonSchema(AssignmentListResponseSchema),
+  app.get<{ Params: { classId: string }; Querystring: { studentId?: string } }>(
+    "/:classId/assignments",
+    {
+      schema: {
+        tags: ["Classes"],
+        summary: "Get all assignments for a class",
+        description:
+          "Retrieves all assignments associated with a specific class. If studentId is provided, includes submission status, grade, and submission timestamp for that student.",
+        security: [{ bearerAuth: [] }],
+        params: toJsonSchema(ClassIdParamSchema),
+        querystring: toJsonSchema(
+          z.object({
+            studentId: z.string().optional(),
+          }),
+        ),
+        response: {
+          200: toJsonSchema(AssignmentListResponseSchema),
+        },
+      },
+      handler: async (request, reply) => {
+        const parsedClassId = parseInt(request.params.classId, 10)
+        const parsedStudentId = request.query.studentId
+          ? parseInt(request.query.studentId, 10)
+          : undefined
+
+        if (isNaN(parsedClassId)) {
+          throw new BadRequestError("Invalid class ID")
+        }
+
+        if (parsedStudentId !== undefined && isNaN(parsedStudentId)) {
+          throw new BadRequestError("Invalid student ID")
+        }
+
+        let classAssignmentList: AssignmentDTO[]
+
+        if (parsedStudentId !== undefined) {
+          // Fetch assignments with student-specific data
+          classAssignmentList =
+            await classService.getClassAssignmentsForStudent(
+              parsedClassId,
+              parsedStudentId,
+            )
+        } else {
+          // Fetch assignments without student data
+          classAssignmentList =
+            await classService.getClassAssignments(parsedClassId)
+        }
+
+        return reply.send({
+          success: true,
+          message: "Assignments retrieved successfully",
+          assignments: classAssignmentList,
+        })
       },
     },
-    handler: async (request, reply) => {
-      const parsedClassId = parseInt(request.params.classId, 10)
-
-      if (isNaN(parsedClassId)) {
-        throw new BadRequestError("Invalid class ID")
-      }
-
-      const classAssignmentList =
-        await classService.getClassAssignments(parsedClassId)
-
-      return reply.send({
-        success: true,
-        message: "Assignments retrieved successfully",
-        assignments: classAssignmentList,
-      })
-    },
-  })
+  )
 
   /**
    * GET /:classId/students

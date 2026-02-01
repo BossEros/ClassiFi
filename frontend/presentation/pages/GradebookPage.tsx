@@ -207,7 +207,7 @@ export function GradebookPage() {
                 <div>
                   <h1 className="text-2xl font-bold text-white">Gradebook</h1>
                   <p className="text-gray-400 text-sm">
-                    {classInfo?.className} • {classInfo?.classCode}
+                    {classInfo?.className}
                   </p>
                 </div>
               </div>

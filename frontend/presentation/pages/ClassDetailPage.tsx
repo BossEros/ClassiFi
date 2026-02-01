@@ -1,25 +1,16 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import {
-  ClipboardList,
-  Users,
-  Plus,
-  Trash2,
-  Pencil,
-  LogOut,
-  BarChart3,
-} from "lucide-react"
+import { ClipboardList, Users, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { Tabs, TabPanel } from "@/presentation/components/ui/Tabs"
-import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
-import { AssignmentCard } from "@/presentation/components/dashboard/AssignmentCard"
+import { ClassHeader } from "@/presentation/components/dashboard/ClassHeader"
+import {
+  ClassTabs,
+  type ClassTab,
+} from "@/presentation/components/dashboard/ClassTabs"
+import { AssignmentFilterBar } from "@/presentation/components/dashboard/AssignmentFilterBar"
+import { AssignmentSection } from "@/presentation/components/dashboard/AssignmentSection"
 import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem"
 import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal"
 import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal"
@@ -39,8 +30,12 @@ import type {
   Assignment,
   EnrolledStudent,
 } from "@/business/models/dashboard/types"
-
-type TabType = "assignments" | "students"
+import type { AssignmentFilter } from "@/shared/utils/assignmentFilters"
+import {
+  filterAssignments,
+  groupAssignments,
+  calculateFilterCounts,
+} from "@/shared/utils/assignmentFilters"
 
 export function ClassDetailPage() {
   const navigate = useNavigate()
@@ -53,7 +48,9 @@ export function ClassDetailPage() {
   const [students, setStudents] = useState<EnrolledStudent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<TabType>("assignments")
+  const [activeTab, setActiveTab] = useState<ClassTab>("coursework")
+  const [assignmentFilter, setAssignmentFilter] =
+    useState<AssignmentFilter>("all")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
@@ -75,10 +72,21 @@ export function ClassDetailPage() {
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
   const isStudent = user?.role === "student"
 
-  const tabs = [
-    { id: "assignments", label: "Coursework", icon: ClipboardList },
-    { id: "students", label: "Students", icon: Users },
-  ]
+  // Derived state for filtered and grouped assignments
+  const filteredAssignments = useMemo(
+    () => filterAssignments(assignments, assignmentFilter),
+    [assignments, assignmentFilter],
+  )
+
+  const groupedAssignments = useMemo(
+    () => groupAssignments(filteredAssignments),
+    [filteredAssignments],
+  )
+
+  const filterCounts = useMemo(
+    () => calculateFilterCounts(assignments),
+    [assignments],
+  )
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -198,22 +206,9 @@ export function ClassDetailPage() {
     navigate(`/dashboard/classes/${classId}/edit`)
   }
 
-  const dropdownItems = [
-    {
-      id: "edit",
-      label: "Edit Class",
-      icon: Pencil,
-      variant: "default" as const,
-      onClick: handleEditClass,
-    },
-    {
-      id: "delete",
-      label: "Delete Class",
-      icon: Trash2,
-      variant: "danger" as const,
-      onClick: () => setIsDeleteModalOpen(true),
-    },
-  ]
+  const handleViewGradebook = () => {
+    navigate(`/dashboard/classes/${classId}/gradebook`)
+  }
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -252,74 +247,29 @@ export function ClassDetailPage() {
       ) : (
         /* Main Content */
         <>
-          {/* Page Header */}
-          <div className="mb-6 flex flex-col items-stretch">
+          {/* Back Button */}
+          <div className="mb-6">
             <BackButton to={isStudent ? "/dashboard" : "/dashboard/classes"} />
-            {/* Back button and title row */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-white">
-                    {classInfo?.className}
-                  </h1>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-sm text-slate-300">
-                      Class Code:{" "}
-                      <span className="text-teal-400 font-mono">
-                        {classInfo?.classCode}
-                      </span>
-                    </span>
-                    <span className="text-gray-600">•</span>
-                    <span className="text-sm text-slate-300">
-                      {classInfo?.studentCount}{" "}
-                      {classInfo?.studentCount === 1 ? "Student" : "Students"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Teacher controls: Gradebook and Dropdown */}
-              {isTeacher && (
-                <div className="flex items-center gap-3">
-                  <Button
-                    onClick={() =>
-                      navigate(`/dashboard/classes/${classId}/gradebook`)
-                    }
-                    className="w-auto px-4 h-10 bg-white/10 hover:bg-white/20"
-                  >
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                    Gradebook
-                  </Button>
-                  <DropdownMenu
-                    items={dropdownItems}
-                    triggerLabel="Class Actions"
-                  />
-                </div>
-              )}
-
-              {/* Student controls: Leave Class */}
-              {isStudent && (
-                <Button
-                  onClick={() => setIsLeaveModalOpen(true)}
-                  className="w-auto px-4 h-10 bg-red-600 hover:bg-red-700 text-white"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Leave Class
-                </Button>
-              )}
-            </div>
-
-            {/* Description if exists */}
-            {classInfo?.description && (
-              <div className="mb-6 w-full">
-                <p className="text-gray-400 text-sm whitespace-pre-wrap break-words leading-relaxed">
-                  {classInfo.description}
-                </p>
-              </div>
-            )}
-
-            <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           </div>
+
+          {/* Class Header */}
+          <ClassHeader
+            className="mb-6"
+            classNameTitle={classInfo?.className || ""}
+            instructorName={classInfo?.teacherName || "Unknown"}
+            description={classInfo?.description || undefined}
+            schedule={{
+              days: classInfo?.schedule?.days || [],
+              startTime: classInfo?.schedule?.startTime || "",
+              endTime: classInfo?.schedule?.endTime || "",
+            }}
+            studentCount={classInfo?.studentCount || 0}
+            isTeacher={isTeacher}
+            onEditClass={handleEditClass}
+            onDeleteClass={() => setIsDeleteModalOpen(true)}
+            onLeaveClass={() => setIsLeaveModalOpen(true)}
+            onViewGradebook={handleViewGradebook}
+          />
 
           {/* Error Message */}
           {error && (
@@ -329,52 +279,68 @@ export function ClassDetailPage() {
           )}
 
           {/* Tabs and Content */}
-          <Card>
-            <CardHeader className="pb-0">
-              <div className="flex items-center justify-between">
-                <Tabs
-                  tabs={tabs}
-                  activeTab={activeTab}
-                  onTabChange={(tabId) => setActiveTab(tabId as TabType)}
-                />
-                {/* Only teachers can add assignments */}
-                {isTeacher && activeTab === "assignments" && (
-                  <Button
-                    onClick={() =>
-                      navigate(`/dashboard/classes/${classId}/coursework/new`)
-                    }
-                    className="w-auto px-4 h-10"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Coursework
-                  </Button>
-                )}
-              </div>
-            </CardHeader>
+          <div className="bg-slate-900 border border-white/10 rounded-lg p-6">
+            <ClassTabs activeTab={activeTab} onTabChange={setActiveTab}>
+              {/* Coursework Tab */}
+              {activeTab === "coursework" && (
+                <div className="space-y-6">
+                  {/* Filter Bar and Add Button */}
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <AssignmentFilterBar
+                      activeFilter={assignmentFilter}
+                      onFilterChange={setAssignmentFilter}
+                      counts={filterCounts}
+                    />
+                    {isTeacher && (
+                      <Button
+                        onClick={() =>
+                          navigate(
+                            `/dashboard/classes/${classId}/coursework/new`,
+                          )
+                        }
+                        className="w-full sm:w-auto"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Coursework
+                      </Button>
+                    )}
+                  </div>
 
-            <CardContent className="pt-0">
-              {/* Assignments Tab */}
-              {activeTab === "assignments" && (
-                <TabPanel>
+                  {/* Assignment Sections */}
                   {assignments.length > 0 ? (
-                    <div className="space-y-3">
-                      {assignments.map((assignment) => (
-                        <AssignmentCard
-                          key={assignment.id}
-                          assignment={assignment}
-                          onClick={() => handleAssignmentClick(assignment.id)}
-                          onEdit={
-                            isTeacher
-                              ? () => handleEditAssignment(assignment)
-                              : undefined
-                          }
-                          onDelete={
-                            isTeacher
-                              ? () => handleDeleteAssignmentClick(assignment)
-                              : undefined
-                          }
-                        />
-                      ))}
+                    <div className="space-y-6">
+                      <AssignmentSection
+                        title="CURRENT & UPCOMING"
+                        assignments={groupedAssignments.current}
+                        onAssignmentClick={handleAssignmentClick}
+                        onEditAssignment={handleEditAssignment}
+                        onDeleteAssignment={handleDeleteAssignmentClick}
+                        isTeacher={isTeacher}
+                      />
+                      <AssignmentSection
+                        title="PAST ASSIGNMENTS"
+                        assignments={groupedAssignments.past}
+                        onAssignmentClick={handleAssignmentClick}
+                        onEditAssignment={handleEditAssignment}
+                        onDeleteAssignment={handleDeleteAssignmentClick}
+                        isTeacher={isTeacher}
+                      />
+
+                      {/* Empty state for filtered results */}
+                      {filteredAssignments.length === 0 && (
+                        <div className="py-12 text-center">
+                          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                            <ClipboardList className="w-8 h-8 text-gray-500" />
+                          </div>
+                          <p className="text-gray-300 font-medium mb-1">
+                            No assignments match this filter
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Try selecting a different filter to see more
+                            assignments.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="py-12 text-center">
@@ -408,12 +374,12 @@ export function ClassDetailPage() {
                       )}
                     </div>
                   )}
-                </TabPanel>
+                </div>
               )}
 
               {/* Students Tab */}
               {activeTab === "students" && (
-                <TabPanel>
+                <div>
                   {students.length > 0 ? (
                     <div className="space-y-3">
                       {students.map((student) => (
@@ -445,10 +411,25 @@ export function ClassDetailPage() {
                       </p>
                     </div>
                   )}
-                </TabPanel>
+                </div>
               )}
-            </CardContent>
-          </Card>
+
+              {/* Calendar Tab (Placeholder) */}
+              {activeTab === "calendar" && (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                    <ClipboardList className="w-8 h-8 text-gray-500" />
+                  </div>
+                  <p className="text-gray-300 font-medium mb-1">
+                    Calendar Coming Soon
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    This feature is under development.
+                  </p>
+                </div>
+              )}
+            </ClassTabs>
+          </div>
 
           {/* Teacher Modals */}
           {isTeacher && (

@@ -63,13 +63,6 @@ export function ClassCard({ classItem, onClick, className }: ClassCardProps) {
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-800/90 to-transparent" />
 
-        {/* Class Code Badge */}
-        <div className="absolute top-3 left-3">
-          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-teal-500/20 text-teal-300 border border-teal-500/30 font-mono backdrop-blur-sm">
-            {classItem.classCode}
-          </span>
-        </div>
-
         {isArchived && (
           <div className="absolute top-3 right-3">
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/30 text-slate-300 border border-slate-500/30 backdrop-blur-sm">

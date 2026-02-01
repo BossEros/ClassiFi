@@ -585,9 +585,6 @@ export function AdminClassesPage() {
                             <p className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
                               {cls.className}
                             </p>
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-white/5 text-gray-500 border border-white/5">
-                              {cls.classCode}
-                            </span>
                           </div>
                         </div>
                       </td>

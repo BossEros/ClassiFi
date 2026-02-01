@@ -122,6 +122,15 @@ Routing is handled in `presentation/App.tsx`.
 
 - **`Sidebar`**: Main navigation, responsive.
 - **`Header`**: User profile, notifications, breadcrumbs.
+- **`ClassCard`**: Displays class information in list view with code pattern background, instructor avatar, student count, term info, and archived status. Used in classes list pages.
+- **`ClassHeader`**: Displays class information including name, instructor, schedule, and optional description with action buttons (teachers: Gradebook button and Edit/Delete dropdown; students: Leave Class dropdown).
+- **`ClassTabs`**: Tab navigation for Coursework, Students, and Calendar views with keyboard accessibility.
+- **`InstructorInfo`**: Displays instructor name with user icon for class detail views.
+- **`ScheduleInfo`**: Displays class schedule with days and time range.
+- **`ClassCodeBadge`**: Styled badge displaying the class join code.
+- **`AssignmentFilterBar`**: Filter buttons for viewing all, pending, or submitted assignments with counts.
+- **`AssignmentSection`**: Groups assignments by time period (current/upcoming vs past) with section headers.
+- **`AssignmentCard`**: Displays assignment information with date block, submission status indicators (CheckCircle/Clock icons), status badge, and grade display. Supports both teacher and student views with appropriate actions.
 
 ### Feature Components
 
@@ -271,7 +280,73 @@ Comprehensive settings page with:
 
 ---
 
+## Type System
+
+### Core Types
+
+The application uses a strongly-typed system with branded types for enhanced type safety:
+
+- **`ISODateString`**: Branded type for ISO 8601 date strings from APIs
+- **`DayOfWeek`**: Union type for days of the week
+- **`Schedule`**: Interface for class schedule with days and time range
+- **`Class`**: Core class entity with instructor, schedule, and metadata
+- **`Assignment`**: Assignment entity with deadline, grades, submission status, and programming language
+- **`EnrolledStudent`**: Student enrollment information
+
+### Class Detail View Types
+
+Specialized types for the class detail page redesign:
+
+- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for assignment cards and filtering
+- **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Filter options for assignment list
+- **`ClassTab`**: `'coursework' | 'students' | 'calendar'` - Tab navigation options
+
+### Type Utilities
+
+- **`parseISODate()`**: Safely parse ISO date strings to Date objects
+- **`toISODateString()`**: Convert Date objects to ISO date strings for API calls
+
 ## Common Workflows
+
+### Student: Viewing Class Assignments
+
+1. **Navigate to Class**: From the dashboard, click on a class card to view class details
+2. **View Assignment Organization**:
+   - Assignments are automatically grouped into "Current & Upcoming" and "Past Assignments"
+   - Each assignment card shows the deadline date, title, programming language, and status
+   - Status badges indicate: pending (yellow), not-started (gray), submitted (teal), or late (red)
+3. **Filter Assignments**:
+   - Click "All Assignments" to view all assignments
+   - Click "Pending" to view ungraded submissions and not-yet-started assignments
+   - Click "Submitted" to view graded assignments and late submissions
+   - Filter counts update dynamically based on assignment status
+4. **View Assignment Details**:
+   - Click on any assignment card to navigate to the assignment detail page
+   - View grades directly on assignment cards for graded work (displayed as "95/100" format)
+5. **Switch Tabs**:
+   - Use the tab navigation to switch between Coursework, Students, and Calendar views
+   - Filter selections persist when switching between tabs
+   - Keyboard navigation supported (arrow keys + Enter)
+
+### Teacher: Managing Class Assignments
+
+1. **Navigate to Class**: From the dashboard, click on a class card
+2. **View Class Information**:
+   - Class header displays instructor name, schedule (days and time), and class code
+   - Access quick actions: View Gradebook, Edit Class, Delete Class
+   - Class code badge is styled with teal colors for easy visibility
+3. **Manage Assignments**:
+   - View all assignments organized by current/upcoming and past
+   - Use filters to focus on pending or submitted assignments
+   - Assignment cards show status badges and grades for quick assessment
+   - Click assignment cards to view submissions and grade student work
+   - Use edit/delete actions on assignment cards for quick management
+4. **View Students**:
+   - Switch to Students tab to view enrolled students
+   - Manage student enrollments
+5. **Create New Coursework**:
+   - Click "Create Coursework" button in the Coursework tab
+   - Configure assignment details, test cases, and deadlines
 
 ### Teacher: Reviewing Plagiarism Results
 

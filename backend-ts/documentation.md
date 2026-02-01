@@ -322,6 +322,16 @@ The programming language is specified at assignment creation and enforced during
 | GET    | `/classes/:id/assignments`    | Get class assignments |
 | POST   | `/classes/:id/assignments`    | Create assignment     |
 
+**Class Detail Response** (`GET /classes/:id`):
+- Includes `instructorName` (teacher's full name)
+- Includes `schedule` object with `days`, `startTime`, `endTime`
+- Includes `studentCount` (number of enrolled students)
+
+**Class Assignments Response** (`GET /classes/:id/assignments`):
+- For students: Includes `submittedAt`, `grade`, and `maxGrade` fields
+- `grade` is null if not yet graded
+- `maxGrade` defaults to 100 if not specified
+
 ### Assignments & Submissions
 
 | Method | Endpoint                                        | Description                   |
@@ -630,14 +640,28 @@ class ClassService {
   updateClass(classId, teacherId, data);
   deleteClass(classId, teacherId);
   getEnrolledStudents(classId);
+  getClassStudents(classId); // Get enrolled students with full info
+  removeStudent(classId, studentId, teacherId); // Remove student from class
   createAssignment(classId, teacherId, data);
   getAssignmentDetails(assignmentId, userId);
   updateAssignment(assignmentId, teacherId, data);
   deleteAssignment(assignmentId, teacherId);
+  getClassAssignmentsForStudent(classId, studentId); // Get assignments with student-specific data
 }
 ```
 
 **Supported Programming Languages**: Python, Java, C
+
+**Enhanced Class Detail Response**:
+- `getClassById()` now includes `instructorName` (teacher's full name)
+- Class data includes `schedule` object with days, start time, and end time
+- Includes `studentCount` for enrollment tracking
+
+**Student-Specific Assignment Data**:
+- `getClassAssignmentsForStudent()` fetches assignments with student-specific fields:
+  - `submittedAt`: Timestamp of submission (null if not submitted)
+  - `grade`: Student's grade (null if not yet graded)
+  - `maxGrade`: Maximum possible grade (defaults to 100)
 
 ### SubmissionService
 

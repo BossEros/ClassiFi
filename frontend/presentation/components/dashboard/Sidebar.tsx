@@ -152,7 +152,7 @@ export function Sidebar() {
         </nav>
 
         {/* Bottom Section - Settings & Logout */}
-        <div className="p-3 border-t border-white/10 space-y-1">
+        <div className="p-3 border-t border-white/10 space-y-1.5">
           <NavItem
             item={{
               id: "settings",
@@ -164,10 +164,10 @@ export function Sidebar() {
           />
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-sm font-medium text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           >
-            <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            <span className="font-medium">Sign Out</span>
           </button>
         </div>
       </aside>

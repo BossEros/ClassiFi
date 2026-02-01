@@ -1,13 +1,13 @@
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { cn } from "@/shared/utils/cn"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, CheckCircle, Clock } from "lucide-react"
 import type { Assignment } from "@/business/models/dashboard/types"
 import { DateBlock } from "@/presentation/components/ui/DateBlock"
 import { StatusBadge } from "@/presentation/components/ui/StatusBadge"
 import { GradeDisplay } from "@/presentation/components/ui/GradeDisplay"
-import { LanguageIcon } from "@/presentation/components/ui/LanguageIcon"
 import { parseISODate } from "@/shared/types/class"
 import { getAssignmentStatus } from "@/shared/utils/assignmentStatus"
+import { formatDateTime } from "@/shared/utils/dateUtils"
 
 interface AssignmentCardProps {
   assignment: Assignment
@@ -31,6 +31,11 @@ export function AssignmentCard({
   // Derive status using shared utility
   const status = getAssignmentStatus(assignment)
 
+  // Only show grade if it actually exists (student submitted and was graded)
+  const shouldShowGrade =
+    assignment.grade !== null && assignment.grade !== undefined
+  const displayGrade = assignment.grade
+
   return (
     <Card
       variant="interactive"
@@ -49,26 +54,46 @@ export function AssignmentCard({
         {/* Main Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1 min-w-0">
               <h3 className="text-base font-semibold text-white truncate group-hover:text-teal-400 transition-colors">
                 {assignment.assignmentName}
               </h3>
 
-              <div className="flex items-center gap-3">
-                <StatusBadge status={status} />
-                <LanguageIcon language={assignment.programmingLanguage} />
-              </div>
+              {assignment.hasSubmitted && assignment.submittedAt ? (
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5 text-teal-400 flex-shrink-0" />
+                  <p className="text-xs text-gray-400">
+                    Submitted {formatDateTime(assignment.submittedAt)}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
+                  <p className="text-xs text-gray-400">
+                    Due {formatDateTime(assignment.deadline)}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Right Side: Grade & Actions */}
-            <div className="flex items-center gap-4">
-              <GradeDisplay
-                grade={assignment.grade}
-                maxGrade={assignment.maxGrade || assignment.totalScore || 100}
-              />
+            {/* Right Side: Grade, Status & Actions */}
+            <div className="flex items-center gap-3">
+              {shouldShowGrade ? (
+                <div className="flex items-center gap-3">
+                  <GradeDisplay
+                    grade={displayGrade}
+                    maxGrade={
+                      assignment.maxGrade || assignment.totalScore || 100
+                    }
+                  />
+                  <StatusBadge status={status} />
+                </div>
+              ) : (
+                <StatusBadge status={status} />
+              )}
 
               {isTeacher && (onEdit || onDelete) && (
-                <div className="flex items-center gap-1 pl-3 border-l border-white/10 ml-2">
+                <div className="flex items-center gap-1 pl-3 border-l border-white/10">
                   {onEdit && (
                     <button
                       onClick={(e) => {

@@ -204,8 +204,8 @@ export const TeachersListResponseSchema = z.object({
 export const ClassAssignmentItemSchema = z.object({
   id: z.number(),
   title: z.string(),
-  description: z.string().nullable(),
-  deadline: z.string().nullable(),
+  description: z.string().nullish(),
+  deadline: z.string().nullish(),
   createdAt: z.string(),
   submissionCount: z.number(),
 })

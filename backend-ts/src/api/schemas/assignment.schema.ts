@@ -58,6 +58,9 @@ export const AssignmentResponseSchema = z.object({
   scheduledDate: z.string().nullable().optional(),
   submissionCount: z.number().optional(),
   hasSubmitted: z.boolean().optional(),
+  submittedAt: z.string().nullable().optional(),
+  grade: z.number().nullable().optional(),
+  maxGrade: z.number().optional(),
 })
 
 export type AssignmentResponse = z.infer<typeof AssignmentResponseSchema>

@@ -6,6 +6,9 @@ export type {
   Assignment,
   Task,
   EnrolledStudent,
+  AssignmentStatus,
+  AssignmentFilter,
+  ClassTab,
 } from "@/shared/types/class"
 
 // Re-export API response types

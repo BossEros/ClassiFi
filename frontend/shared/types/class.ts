@@ -92,6 +92,9 @@ export interface Assignment {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: ISODateString | null
+  submittedAt?: ISODateString
+  grade?: number
+  maxGrade: number
 }
 
 /** Alias for Assignment */
@@ -109,3 +112,22 @@ export interface EnrolledStudent {
   enrolledAt: ISODateString
   fullName?: string
 }
+
+// ============================================================================
+// Class Detail View Types
+// ============================================================================
+
+/**
+ * Assignment status for filtering and display
+ */
+export type AssignmentStatus = "pending" | "not-started" | "submitted" | "late"
+
+/**
+ * Assignment filter options
+ */
+export type AssignmentFilter = "all" | "pending" | "submitted"
+
+/**
+ * Class detail page tab options
+ */
+export type ClassTab = "coursework" | "students" | "calendar"

@@ -1,58 +1,84 @@
 import React from "react"
 import { ClipboardList, Users, Calendar } from "lucide-react"
 
-type ClassTab = "coursework" | "students" | "calendar"
+export type ClassTab = "coursework" | "students" | "calendar"
 
 interface ClassTabsProps {
-    activeTab: ClassTab
-    onTabChange: (tab: ClassTab) => void
-    children: React.ReactNode
+  activeTab: ClassTab
+  onTabChange: (tab: ClassTab) => void
+  children: React.ReactNode
+  className?: string
 }
 
 export const ClassTabs: React.FC<ClassTabsProps> = ({
-    activeTab,
-    onTabChange,
-    children,
+  activeTab,
+  onTabChange,
+  children,
+  className = "",
 }) => {
-    const tabs: { id: ClassTab; label: string; icon: React.ElementType }[] = [
-        { id: "coursework", label: "Coursework", icon: ClipboardList },
-        { id: "students", label: "Students", icon: Users },
-        { id: "calendar", label: "Calendar", icon: Calendar },
+  const tabs: Array<{ id: ClassTab; label: string; icon: React.ElementType }> =
+    [
+      { id: "coursework", label: "Coursework", icon: ClipboardList },
+      { id: "students", label: "Students", icon: Users },
+      { id: "calendar", label: "Calendar", icon: Calendar },
     ]
 
-    return (
-        <div className="flex flex-col h-full">
-            <div className="border-b border-white/10 px-6">
-                <div className="flex gap-6 overflow-x-auto scrollbar-hide">
-                    {tabs.map((tab) => {
-                        const Icon = tab.icon
-                        const isActive = activeTab === tab.id
+  const handleKeyDown = (e: React.KeyboardEvent, tabId: ClassTab) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault()
+      onTabChange(tabId)
+    }
 
-                        return (
-                            <button
-                                key={tab.id}
-                                role="tab"
-                                aria-selected={isActive}
-                                aria-controls={`${tab.id}-panel`}
-                                onClick={() => onTabChange(tab.id)}
-                                className={`
-                  flex items-center gap-2 py-4 border-b-2 text-sm font-medium transition-colors whitespace-nowrap
-                  ${isActive
-                                        ? "border-teal-500 text-teal-400"
-                                        : "border-transparent text-slate-400 hover:text-slate-300 hover:border-slate-700"
-                                    }
-                `}
-                            >
-                                <Icon
-                                    className={`w-4 h-4 ${isActive ? "text-teal-400" : "text-slate-500"}`}
-                                />
-                                {tab.label}
-                            </button>
-                        )
-                    })}
-                </div>
-            </div>
-            <div className="flex-1 overflow-y-auto">{children}</div>
-        </div>
-    )
+    // Arrow key navigation
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault()
+      const currentIndex = tabs.findIndex((t) => t.id === activeTab)
+      const nextIndex =
+        e.key === "ArrowLeft"
+          ? (currentIndex - 1 + tabs.length) % tabs.length
+          : (currentIndex + 1) % tabs.length
+      onTabChange(tabs[nextIndex].id)
+    }
+  }
+
+  return (
+    <div className={className}>
+      {/* Tab Bar */}
+      <div role="tablist" className="flex gap-2 border-b border-white/10 mb-6">
+        {tabs.map((tab) => {
+          const Icon = tab.icon
+          const isActive = activeTab === tab.id
+
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              aria-controls={`${tab.id}-panel`}
+              tabIndex={isActive ? 0 : -1}
+              onClick={() => onTabChange(tab.id)}
+              onKeyDown={(e) => handleKeyDown(e, tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+                isActive
+                  ? "text-teal-400 border-teal-500"
+                  : "text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600"
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Tab Content */}
+      <div
+        role="tabpanel"
+        id={`${activeTab}-panel`}
+        aria-labelledby={activeTab}
+      >
+        {children}
+      </div>
+    </div>
+  )
 }

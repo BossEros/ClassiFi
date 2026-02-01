@@ -150,6 +150,7 @@ export function createMockAssignment(
     isActive: true,
     createdAt: toISO(now),
     totalScore: 100,
+    maxGrade: 100,
     ...overrides,
   }
 }
