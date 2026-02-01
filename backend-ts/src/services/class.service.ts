@@ -37,7 +37,7 @@ export class ClassService {
     @inject("SubmissionRepository")
     private submissionRepo: SubmissionRepository,
     @inject("StorageService") private storageService: StorageService,
-  ) { }
+  ) {}
 
   /** Generate a unique class code using shared utility */
   async generateClassCode(): Promise<string> {

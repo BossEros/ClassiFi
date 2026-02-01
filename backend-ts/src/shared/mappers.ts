@@ -278,11 +278,11 @@ export const PLAGIARISM_CONFIG = {
 
 /** Supported languages for plagiarism detection */
 export const PLAGIARISM_LANGUAGE_MAP: Record<string, "python" | "java" | "c"> =
-{
-  python: "python",
-  java: "java",
-  c: "c",
-}
+  {
+    python: "python",
+    java: "java",
+    c: "c",
+  }
 
 /** DTO for a file in plagiarism results */
 export interface PlagiarismFileDTO {
