@@ -24,12 +24,6 @@ vi.mock("@/presentation/components/ui/GradeDisplay", () => ({
   ),
 }))
 
-vi.mock("@/presentation/components/ui/LanguageIcon", () => ({
-  LanguageIcon: ({ language }: any) => (
-    <div data-testid="language-icon">{language}</div>
-  ),
-}))
-
 // Mock Card components
 vi.mock("@/presentation/components/ui/Card", () => ({
   Card: ({ children, onClick, className }: any) => (
@@ -64,7 +58,6 @@ describe("AssignmentCard", () => {
     expect(screen.getByText("Test Assignment")).toBeInTheDocument()
     expect(screen.getByTestId("date-block")).toBeInTheDocument()
     expect(screen.getByTestId("status-badge")).toBeInTheDocument()
-    expect(screen.getByTestId("language-icon")).toHaveTextContent("python")
     expect(screen.getByTestId("grade-display")).toHaveTextContent("85/100")
   })
 

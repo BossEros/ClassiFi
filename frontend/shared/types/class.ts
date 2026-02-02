@@ -130,4 +130,4 @@ export type AssignmentFilter = "all" | "pending" | "submitted"
 /**
  * Class detail page tab options
  */
-export type ClassTab = "coursework" | "students" | "calendar"
+export type ClassTab = "coursework" | "students" | "calendar" | "grades"
