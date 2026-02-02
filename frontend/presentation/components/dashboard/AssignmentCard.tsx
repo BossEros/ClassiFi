@@ -5,7 +5,6 @@ import type { Assignment } from "@/business/models/dashboard/types"
 import { DateBlock } from "@/presentation/components/ui/DateBlock"
 import { StatusBadge } from "@/presentation/components/ui/StatusBadge"
 import { GradeDisplay } from "@/presentation/components/ui/GradeDisplay"
-import { LanguageIcon } from "@/presentation/components/ui/LanguageIcon"
 import { parseISODate } from "@/shared/types/class"
 import { getAssignmentStatus } from "@/shared/utils/assignmentStatus"
 import { formatDateTime } from "@/shared/utils/dateUtils"
@@ -77,12 +76,8 @@ export function AssignmentCard({
               )}
             </div>
 
-            {/* Right Side: Language, Grade, Status & Actions */}
+            {/* Right Side: Grade, Status & Actions */}
             <div className="flex items-center gap-3">
-              <LanguageIcon
-                language={assignment.programmingLanguage}
-                className="flex-shrink-0"
-              />
               {shouldShowGrade ? (
                 <div className="flex items-center gap-3">
                   <GradeDisplay
