@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ClipboardList, Users, Plus } from "lucide-react"
+import { ClipboardList, Users, Plus, BarChart3 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
@@ -544,7 +544,7 @@ export function ClassDetailPage() {
                 </div>
               )}
 
-              {/* Calendar Tab (Placeholder) */}
+              {/* TO-DO: Calendar Tab (Placeholder) */}
               {activeTab === "calendar" && (
                 <div className="py-12 text-center">
                   <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
@@ -555,6 +555,23 @@ export function ClassDetailPage() {
                   </p>
                   <p className="text-sm text-gray-500">
                     This feature is under development.
+                  </p>
+                </div>
+              )}
+
+              {/* TO-DO: Grades Tab (Placeholder) */}
+              {activeTab === "grades" && (
+                <div className="py-12 text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounder-full bf-white/5 flex items-center justify-center">
+                    <BarChart3 className="w-8 h-8 text-gray-500" />
+                  </div>
+                  <p className="text-gray-300 font-medium mb-1">
+                    Grades Coming Soon
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {isStudent
+                      ? "Your grades will be displayed here."
+                      : "Student grades will be displayed here"}
                   </p>
                 </div>
               )}

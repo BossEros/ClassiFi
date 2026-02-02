@@ -1,5 +1,5 @@
 import React, { useRef } from "react"
-import { ClipboardList, Users, Calendar } from "lucide-react"
+import { ClipboardList, Users, Calendar, BarChart3 } from "lucide-react"
 import type { ClassTab } from "@/shared/types/class"
 
 interface ClassTabsProps {
@@ -22,6 +22,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
       { id: "coursework", label: "Coursework", icon: ClipboardList },
       { id: "students", label: "Students", icon: Users },
       { id: "calendar", label: "Calendar", icon: Calendar },
+      { id: "grades", label: "Grades", icon: BarChart3 }, 
     ]
 
   const handleKeyDown = (e: React.KeyboardEvent, tabId: ClassTab) => {
