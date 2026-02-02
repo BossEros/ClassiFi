@@ -11,6 +11,16 @@ interface StudentListItemProps {
   className?: string
 }
 
+/**
+ * Renders a single student list item with avatar, name, email, role badge, and optional remove button.
+ *
+ * @param student - The enrolled student object containing profile information (firstName, lastName, email, avatarUrl).
+ * @param onClick - Optional callback function triggered when the list item is clicked.
+ * @param onRemove - Optional callback function triggered when the remove button is clicked.
+ * @param isLast - Optional boolean indicating if this is the last item in the list (removes bottom border). Defaults to false.
+ * @param className - Optional additional CSS classes to apply to the root element.
+ * @returns A React element representing the student list item.
+ */
 export function StudentListItem({
   student,
   onClick,
@@ -50,9 +60,7 @@ export function StudentListItem({
 
       {/* Email Address */}
       <div className="min-w-0">
-        <p className="text-sm text-gray-400 truncate">
-          {student.email}
-        </p>
+        <p className="text-sm text-gray-400 truncate">{student.email}</p>
       </div>
 
       {/* Role Badge */}

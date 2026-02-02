@@ -103,7 +103,7 @@ export function ClassDetailPage() {
         student.fullName?.toLowerCase().includes(query) ||
         student.email.toLowerCase().includes(query) ||
         student.firstName.toLowerCase().includes(query) ||
-        student.lastName.toLowerCase().includes(query)
+        student.lastName.toLowerCase().includes(query),
     )
   }, [students, studentSearchQuery])
 
@@ -168,11 +168,34 @@ export function ClassDetailPage() {
 
   const handleRemoveStudentSuccess = () => {
     if (studentToRemove) {
-      const updatedStudents = students.filter((s) => s.id !== studentToRemove.id)
+      const updatedStudents = students.filter(
+        (s) => s.id !== studentToRemove.id,
+      )
       setStudents(updatedStudents)
 
+      // Apply the same filtering logic to updatedStudents to get the filtered count
+      const filteredUpdatedStudents = !studentSearchQuery.trim()
+        ? updatedStudents
+        : updatedStudents.filter(
+            (student) =>
+              student.fullName
+                ?.toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()) ||
+              student.email
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()) ||
+              student.firstName
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()) ||
+              student.lastName
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()),
+          )
+
       // If current page becomes empty, go to previous page
-      const newTotalPages = Math.ceil(updatedStudents.length / STUDENTS_PER_PAGE)
+      const newTotalPages = Math.ceil(
+        filteredUpdatedStudents.length / STUDENTS_PER_PAGE,
+      )
       if (currentStudentPage > newTotalPages && newTotalPages > 0) {
         setCurrentStudentPage(newTotalPages)
       }
@@ -485,7 +508,8 @@ export function ClassDetailPage() {
                           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             Role
                           </div>
-                          <div className="w-10"></div> {/* Space for remove button */}
+                          <div className="w-10"></div>{" "}
+                          {/* Space for remove button */}
                         </div>
 
                         {/* Student List */}
@@ -562,7 +586,7 @@ export function ClassDetailPage() {
               {/* TO-DO: Grades Tab (Placeholder) */}
               {activeTab === "grades" && (
                 <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounder-full bf-white/5 flex items-center justify-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                     <BarChart3 className="w-8 h-8 text-gray-500" />
                   </div>
                   <p className="text-gray-300 font-medium mb-1">
@@ -571,7 +595,7 @@ export function ClassDetailPage() {
                   <p className="text-sm text-gray-500">
                     {isStudent
                       ? "Your grades will be displayed here."
-                      : "Student grades will be displayed here"}
+                      : "Student grades will be displayed here."}
                   </p>
                 </div>
               )}

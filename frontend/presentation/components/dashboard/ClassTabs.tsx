@@ -22,7 +22,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
       { id: "coursework", label: "Coursework", icon: ClipboardList },
       { id: "students", label: "Students", icon: Users },
       { id: "calendar", label: "Calendar", icon: Calendar },
-      { id: "grades", label: "Grades", icon: BarChart3 }, 
+      { id: "grades", label: "Grades", icon: BarChart3 },
     ]
 
   const handleKeyDown = (e: React.KeyboardEvent, tabId: ClassTab) => {
