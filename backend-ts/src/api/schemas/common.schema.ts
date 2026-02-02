@@ -41,10 +41,10 @@ export const SuccessMessageSchema = z.object({
 
 export type SuccessMessage = z.infer<typeof SuccessMessageSchema>
 
-/** Generic success response with optional message - used across multiple modules */
+/** Generic success response with message - used across multiple modules */
 export const SuccessResponseSchema = z.object({
   success: z.boolean(),
-  message: z.string().optional(),
+  message: z.string(),
 })
 
 export type SuccessResponse = z.infer<typeof SuccessResponseSchema>

@@ -1,7 +1,6 @@
-import React from "react"
+import React, { useRef } from "react"
 import { ClipboardList, Users, Calendar } from "lucide-react"
-
-export type ClassTab = "coursework" | "students" | "calendar"
+import type { ClassTab } from "@/shared/types/class"
 
 interface ClassTabsProps {
   activeTab: ClassTab
@@ -16,6 +15,8 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
   children,
   className = "",
 }) => {
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+
   const tabs: Array<{ id: ClassTab; label: string; icon: React.ElementType }> =
     [
       { id: "coursework", label: "Coursework", icon: ClipboardList },
@@ -37,7 +38,9 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
         e.key === "ArrowLeft"
           ? (currentIndex - 1 + tabs.length) % tabs.length
           : (currentIndex + 1) % tabs.length
+
       onTabChange(tabs[nextIndex].id)
+      tabRefs.current[nextIndex]?.focus()
     }
   }
 
@@ -45,13 +48,16 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
     <div className={className}>
       {/* Tab Bar */}
       <div role="tablist" className="flex gap-2 border-b border-white/10 mb-6">
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
 
           return (
             <button
               key={tab.id}
+              ref={(el) => {
+                tabRefs.current[index] = el
+              }}
               id={`${tab.id}-tab`}
               role="tab"
               aria-selected={isActive}

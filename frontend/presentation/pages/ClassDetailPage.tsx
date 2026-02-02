@@ -5,10 +5,7 @@ import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLa
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { ClassHeader } from "@/presentation/components/dashboard/ClassHeader"
-import {
-  ClassTabs,
-  type ClassTab,
-} from "@/presentation/components/dashboard/ClassTabs"
+import { ClassTabs } from "@/presentation/components/dashboard/ClassTabs"
 import { AssignmentFilterBar } from "@/presentation/components/dashboard/AssignmentFilterBar"
 import { AssignmentSection } from "@/presentation/components/dashboard/AssignmentSection"
 import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem"
@@ -17,6 +14,7 @@ import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal
 import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal"
 import { RemoveStudentModal } from "@/presentation/components/forms/RemoveStudentModal"
 import { getCurrentUser } from "@/business/services/authService"
+import type { ClassTab } from "@/shared/types/class"
 import {
   getClassDetailData,
   deleteClass,
