@@ -183,20 +183,20 @@ export function ClassDetailPage() {
       const filteredUpdatedStudents = !studentSearchQuery.trim()
         ? updatedStudents
         : updatedStudents.filter(
-          (student) =>
-            (student.fullName ?? "")
-              .toLowerCase()
-              .includes(studentSearchQuery.toLowerCase()) ||
-            (student.email ?? "")
-              .toLowerCase()
-              .includes(studentSearchQuery.toLowerCase()) ||
-            (student.firstName ?? "")
-              .toLowerCase()
-              .includes(studentSearchQuery.toLowerCase()) ||
-            (student.lastName ?? "")
-              .toLowerCase()
-              .includes(studentSearchQuery.toLowerCase()),
-        )
+            (student) =>
+              (student.fullName ?? "")
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()) ||
+              (student.email ?? "")
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()) ||
+              (student.firstName ?? "")
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()) ||
+              (student.lastName ?? "")
+                .toLowerCase()
+                .includes(studentSearchQuery.toLowerCase()),
+          )
 
       // If current page becomes empty, go to previous page
       const newTotalPages = Math.ceil(
