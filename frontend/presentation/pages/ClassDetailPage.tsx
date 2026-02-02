@@ -53,6 +53,7 @@ export function ClassDetailPage() {
   const [assignmentFilter, setAssignmentFilter] =
     useState<AssignmentFilter>("all")
   const [currentStudentPage, setCurrentStudentPage] = useState(1)
+  const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
@@ -91,16 +92,31 @@ export function ClassDetailPage() {
   )
 
   // Pagination calculations for students
+  const filteredStudents = useMemo(() => {
+    if (!studentSearchQuery.trim()) {
+      return students
+    }
+
+    const query = studentSearchQuery.toLowerCase()
+    return students.filter(
+      (student) =>
+        student.fullName?.toLowerCase().includes(query) ||
+        student.email.toLowerCase().includes(query) ||
+        student.firstName.toLowerCase().includes(query) ||
+        student.lastName.toLowerCase().includes(query)
+    )
+  }, [students, studentSearchQuery])
+
   const totalStudentPages = useMemo(
-    () => Math.ceil(students.length / STUDENTS_PER_PAGE),
-    [students.length],
+    () => Math.ceil(filteredStudents.length / STUDENTS_PER_PAGE),
+    [filteredStudents.length],
   )
 
   const paginatedStudents = useMemo(() => {
     const startIndex = (currentStudentPage - 1) * STUDENTS_PER_PAGE
     const endIndex = startIndex + STUDENTS_PER_PAGE
-    return students.slice(startIndex, endIndex)
-  }, [students, currentStudentPage])
+    return filteredStudents.slice(startIndex, endIndex)
+  }, [filteredStudents, currentStudentPage])
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -416,27 +432,93 @@ export function ClassDetailPage() {
                 <div className="space-y-6">
                   {students.length > 0 ? (
                     <>
-                      {/* Student List */}
-                      <div className="space-y-3">
-                        {paginatedStudents.map((student) => (
-                          <StudentListItem
-                            key={student.id}
-                            student={student}
-                            onRemove={
-                              isTeacher
-                                ? () => handleRemoveStudentClick(student)
-                                : undefined
-                            }
+                      {/* Header with Search */}
+                      <div className="flex items-center justify-between gap-4">
+                        {/* Title with Count */}
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-xl font-bold text-white">
+                            Enrolled Students
+                          </h2>
+                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/10 text-gray-300">
+                            {students.length}
+                          </span>
+                        </div>
+
+                        {/* Search */}
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder="Search students..."
+                            value={studentSearchQuery}
+                            onChange={(e) => {
+                              setStudentSearchQuery(e.target.value)
+                              setCurrentStudentPage(1) // Reset to first page on search
+                            }}
+                            className="w-64 h-10 pl-10 pr-4 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
                           />
-                        ))}
+                          <svg
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Table Container */}
+                      <div className="border border-white/10 rounded-lg overflow-hidden bg-slate-900/50">
+                        {/* Table Header */}
+                        <div className="grid grid-cols-[400px_470px_150px_60px] gap-4 px-6 py-3 bg-slate-800/50 border-b border-white/10">
+                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Student
+                          </div>
+                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Email Address
+                          </div>
+                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                            Role
+                          </div>
+                          <div className="w-10"></div> {/* Space for remove button */}
+                        </div>
+
+                        {/* Student List */}
+                        {filteredStudents.length > 0 ? (
+                          <div>
+                            {paginatedStudents.map((student, index) => (
+                              <StudentListItem
+                                key={student.id}
+                                student={student}
+                                isLast={index === paginatedStudents.length - 1}
+                                onRemove={
+                                  isTeacher
+                                    ? () => handleRemoveStudentClick(student)
+                                    : undefined
+                                }
+                              />
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-12 text-center">
+                            <p className="text-gray-400">
+                              No students match your search.
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Pagination Controls */}
-                      {totalStudentPages > 1 && (
+                      {totalStudentPages > 1 && filteredStudents.length > 0 && (
                         <Pagination
                           currentPage={currentStudentPage}
                           totalPages={totalStudentPages}
-                          totalItems={students.length}
+                          totalItems={filteredStudents.length}
                           itemsPerPage={STUDENTS_PER_PAGE}
                           onPageChange={handleStudentPageChange}
                         />

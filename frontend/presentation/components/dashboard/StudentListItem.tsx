@@ -7,6 +7,7 @@ interface StudentListItemProps {
   student: EnrolledStudent
   onClick?: () => void
   onRemove?: () => void
+  isLast?: boolean
   className?: string
 }
 
@@ -14,6 +15,7 @@ export function StudentListItem({
   student,
   onClick,
   onRemove,
+  isLast = false,
   className,
 }: StudentListItemProps) {
   // Generate initials from first and last name
@@ -25,43 +27,56 @@ export function StudentListItem({
     <div
       onClick={onClick}
       className={cn(
-        "flex items-center justify-between p-4 rounded-xl",
-        "border border-white/10 bg-white/5",
+        "grid grid-cols-[400px_1fr_150px_60px] gap-4 items-center px-6 py-4",
         "transition-all duration-200",
-        onClick && "cursor-pointer hover:bg-white/10 hover:border-white/20",
+        "hover:bg-white/5",
+        !isLast && "border-b border-white/5",
+        onClick && "cursor-pointer",
         className,
       )}
     >
-      <div className="flex items-center gap-4">
-        {/* Avatar */}
+      {/* Avatar and Name */}
+      <div className="flex items-center gap-3">
         <Avatar
           src={student.avatarUrl ?? undefined}
           fallback={initials}
           alt={student.fullName}
           size="md"
         />
+        <h4 className="text-sm font-semibold text-white whitespace-nowrap">
+          {student.fullName}
+        </h4>
+      </div>
 
-        {/* Student info */}
-        <div className="min-w-0">
-          <h4 className="text-sm font-semibold text-white truncate">
-            {student.fullName}
-          </h4>
-        </div>
+      {/* Email Address */}
+      <div className="min-w-0">
+        <p className="text-sm text-gray-400 truncate">
+          {student.email}
+        </p>
+      </div>
+
+      {/* Role Badge */}
+      <div>
+        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
+          Student
+        </span>
       </div>
 
       {/* Remove Button */}
-      {onRemove && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onRemove()
-          }}
-          className="p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
-          title="Remove student"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      )}
+      <div className="flex justify-end">
+        {onRemove && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onRemove()
+            }}
+            className="p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+            title="Remove student"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
