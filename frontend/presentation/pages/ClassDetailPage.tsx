@@ -37,7 +37,13 @@ import {
 } from "@/shared/utils/assignmentFilters"
 
 const STUDENTS_PER_PAGE = 10
+const STUDENT_GRID_TEMPLATE = "400px 1fr 150px 60px"
 
+/**
+ * Displays detailed information about a class including coursework, students, and management options.
+ *
+ * @returns JSX.Element - The class detail page component with tabs for coursework and students
+ */
 export function ClassDetailPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
@@ -100,10 +106,10 @@ export function ClassDetailPage() {
     const query = studentSearchQuery.toLowerCase()
     return students.filter(
       (student) =>
-        student.fullName?.toLowerCase().includes(query) ||
-        student.email.toLowerCase().includes(query) ||
-        student.firstName.toLowerCase().includes(query) ||
-        student.lastName.toLowerCase().includes(query),
+        (student.fullName ?? "").toLowerCase().includes(query) ||
+        (student.email ?? "").toLowerCase().includes(query) ||
+        (student.firstName ?? "").toLowerCase().includes(query) ||
+        (student.lastName ?? "").toLowerCase().includes(query),
     )
   }, [students, studentSearchQuery])
 
@@ -177,20 +183,20 @@ export function ClassDetailPage() {
       const filteredUpdatedStudents = !studentSearchQuery.trim()
         ? updatedStudents
         : updatedStudents.filter(
-            (student) =>
-              student.fullName
-                ?.toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()) ||
-              student.email
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()) ||
-              student.firstName
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()) ||
-              student.lastName
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()),
-          )
+          (student) =>
+            (student.fullName ?? "")
+              .toLowerCase()
+              .includes(studentSearchQuery.toLowerCase()) ||
+            (student.email ?? "")
+              .toLowerCase()
+              .includes(studentSearchQuery.toLowerCase()) ||
+            (student.firstName ?? "")
+              .toLowerCase()
+              .includes(studentSearchQuery.toLowerCase()) ||
+            (student.lastName ?? "")
+              .toLowerCase()
+              .includes(studentSearchQuery.toLowerCase()),
+        )
 
       // If current page becomes empty, go to previous page
       const newTotalPages = Math.ceil(
@@ -469,7 +475,11 @@ export function ClassDetailPage() {
 
                         {/* Search */}
                         <div className="relative">
+                          <label htmlFor="student-search" className="sr-only">
+                            Search students by name or email
+                          </label>
                           <input
+                            id="student-search"
                             type="text"
                             placeholder="Search students..."
                             value={studentSearchQuery}
@@ -498,7 +508,10 @@ export function ClassDetailPage() {
                       {/* Table Container */}
                       <div className="border border-white/10 rounded-lg overflow-hidden bg-slate-900/50">
                         {/* Table Header */}
-                        <div className="grid grid-cols-[400px_470px_150px_60px] gap-4 px-6 py-3 bg-slate-800/50 border-b border-white/10">
+                        <div
+                          className="grid gap-4 px-6 py-3 bg-slate-800/50 border-b border-white/10"
+                          style={{ gridTemplateColumns: STUDENT_GRID_TEMPLATE }}
+                        >
                           <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                             Student
                           </div>
@@ -520,6 +533,7 @@ export function ClassDetailPage() {
                                 key={student.id}
                                 student={student}
                                 isLast={index === paginatedStudents.length - 1}
+                                gridTemplate={STUDENT_GRID_TEMPLATE}
                                 onRemove={
                                   isTeacher
                                     ? () => handleRemoveStudentClick(student)

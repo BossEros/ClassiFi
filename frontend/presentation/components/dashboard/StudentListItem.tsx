@@ -9,6 +9,7 @@ interface StudentListItemProps {
   onRemove?: () => void
   isLast?: boolean
   className?: string
+  gridTemplate?: string
 }
 
 /**
@@ -19,6 +20,7 @@ interface StudentListItemProps {
  * @param onRemove - Optional callback function triggered when the remove button is clicked.
  * @param isLast - Optional boolean indicating if this is the last item in the list (removes bottom border). Defaults to false.
  * @param className - Optional additional CSS classes to apply to the root element.
+ * @param gridTemplate - Optional grid template columns string to control layout alignment.
  * @returns A React element representing the student list item.
  */
 export function StudentListItem({
@@ -27,6 +29,7 @@ export function StudentListItem({
   onRemove,
   isLast = false,
   className,
+  gridTemplate = "400px 1fr 150px 60px",
 }: StudentListItemProps) {
   // Generate initials from first and last name
   const initials =
@@ -37,13 +40,14 @@ export function StudentListItem({
     <div
       onClick={onClick}
       className={cn(
-        "grid grid-cols-[400px_1fr_150px_60px] gap-4 items-center px-6 py-4",
+        "grid gap-4 items-center px-6 py-4",
         "transition-all duration-200",
         "hover:bg-white/5",
         !isLast && "border-b border-white/5",
         onClick && "cursor-pointer",
         className,
       )}
+      style={{ gridTemplateColumns: gridTemplate }}
     >
       {/* Avatar and Name */}
       <div className="flex items-center gap-3">
