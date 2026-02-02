@@ -9,6 +9,7 @@ import { ClassTabs } from "@/presentation/components/dashboard/ClassTabs"
 import { AssignmentFilterBar } from "@/presentation/components/dashboard/AssignmentFilterBar"
 import { AssignmentSection } from "@/presentation/components/dashboard/AssignmentSection"
 import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem"
+import { Pagination } from "@/presentation/components/ui/Pagination"
 import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal"
 import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal"
 import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal"
@@ -35,6 +36,8 @@ import {
   calculateFilterCounts,
 } from "@/shared/utils/assignmentFilters"
 
+const STUDENTS_PER_PAGE = 10
+
 export function ClassDetailPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
@@ -49,6 +52,7 @@ export function ClassDetailPage() {
   const [activeTab, setActiveTab] = useState<ClassTab>("coursework")
   const [assignmentFilter, setAssignmentFilter] =
     useState<AssignmentFilter>("all")
+  const [currentStudentPage, setCurrentStudentPage] = useState(1)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
@@ -85,6 +89,18 @@ export function ClassDetailPage() {
     () => calculateFilterCounts(assignments),
     [assignments],
   )
+
+  // Pagination calculations for students
+  const totalStudentPages = useMemo(
+    () => Math.ceil(students.length / STUDENTS_PER_PAGE),
+    [students.length],
+  )
+
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentStudentPage - 1) * STUDENTS_PER_PAGE
+    const endIndex = startIndex + STUDENTS_PER_PAGE
+    return students.slice(startIndex, endIndex)
+  }, [students, currentStudentPage])
 
   useEffect(() => {
     const currentUser = getCurrentUser()
@@ -136,9 +152,29 @@ export function ClassDetailPage() {
 
   const handleRemoveStudentSuccess = () => {
     if (studentToRemove) {
-      setStudents(students.filter((s) => s.id !== studentToRemove.id))
+      const updatedStudents = students.filter((s) => s.id !== studentToRemove.id)
+      setStudents(updatedStudents)
+
+      // If current page becomes empty, go to previous page
+      const newTotalPages = Math.ceil(updatedStudents.length / STUDENTS_PER_PAGE)
+      if (currentStudentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentStudentPage(newTotalPages)
+      }
+
       showToast("Student removed successfully")
       setStudentToRemove(null)
+    }
+  }
+
+  const handleStudentPageChange = (page: number) => {
+    setCurrentStudentPage(page)
+  }
+
+  const handleTabChange = (tab: ClassTab) => {
+    setActiveTab(tab)
+    // Reset to page 1 when switching to students tab
+    if (tab === "students") {
+      setCurrentStudentPage(1)
     }
   }
 
@@ -278,7 +314,7 @@ export function ClassDetailPage() {
 
           {/* Tabs and Content */}
           <div className="bg-slate-900 border border-white/10 rounded-lg p-6">
-            <ClassTabs activeTab={activeTab} onTabChange={setActiveTab}>
+            <ClassTabs activeTab={activeTab} onTabChange={handleTabChange}>
               {/* Coursework Tab */}
               {activeTab === "coursework" && (
                 <div className="space-y-6">
@@ -377,21 +413,35 @@ export function ClassDetailPage() {
 
               {/* Students Tab */}
               {activeTab === "students" && (
-                <div>
+                <div className="space-y-6">
                   {students.length > 0 ? (
-                    <div className="space-y-3">
-                      {students.map((student) => (
-                        <StudentListItem
-                          key={student.id}
-                          student={student}
-                          onRemove={
-                            isTeacher
-                              ? () => handleRemoveStudentClick(student)
-                              : undefined
-                          }
+                    <>
+                      {/* Student List */}
+                      <div className="space-y-3">
+                        {paginatedStudents.map((student) => (
+                          <StudentListItem
+                            key={student.id}
+                            student={student}
+                            onRemove={
+                              isTeacher
+                                ? () => handleRemoveStudentClick(student)
+                                : undefined
+                            }
+                          />
+                        ))}
+                      </div>
+
+                      {/* Pagination Controls */}
+                      {totalStudentPages > 1 && (
+                        <Pagination
+                          currentPage={currentStudentPage}
+                          totalPages={totalStudentPages}
+                          totalItems={students.length}
+                          itemsPerPage={STUDENTS_PER_PAGE}
+                          onPageChange={handleStudentPageChange}
                         />
-                      ))}
-                    </div>
+                      )}
+                    </>
                   ) : (
                     <div className="py-12 text-center">
                       <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
