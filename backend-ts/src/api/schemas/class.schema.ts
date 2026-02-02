@@ -162,6 +162,7 @@ export const ClassResponseSchema = z.object({
   createdAt: z.string(),
   isActive: z.boolean(),
   studentCount: z.number().optional(),
+  teacherName: z.string().optional(),
 })
 
 export type ClassResponse = z.infer<typeof ClassResponseSchema>

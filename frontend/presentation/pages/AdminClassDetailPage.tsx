@@ -150,9 +150,6 @@ export function AdminClassDetailPage() {
               <div className="space-y-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-medium uppercase tracking-wider">
-                      {classInfo.classCode}
-                    </span>
                     {classInfo.isActive ? (
                       <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium uppercase tracking-wider flex items-center gap-1.5">
                         <CheckCircle className="w-3 h-3" />

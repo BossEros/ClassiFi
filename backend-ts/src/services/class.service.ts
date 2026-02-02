@@ -18,6 +18,7 @@ import {
   NotClassOwnerError,
   InvalidRoleError,
   StudentNotInClassError,
+  BadRequestError,
 } from "../shared/errors.js"
 import type {
   CreateClassServiceDTO,
@@ -99,7 +100,14 @@ export class ClassService {
     }
 
     const studentCount = await this.classRepo.getStudentCount(classId)
-    return toClassDTO(classData, { studentCount })
+
+    // Fetch instructor name
+    const instructor = await this.userRepo.getUserById(classData.teacherId)
+    const instructorName = instructor
+      ? `${instructor.firstName} ${instructor.lastName}`
+      : undefined
+
+    return toClassDTO(classData, { studentCount, teacherName: instructorName })
   }
 
   /**
@@ -252,6 +260,65 @@ export class ClassService {
       await this.assignmentRepo.getAssignmentsByClassId(classId)
 
     return assignments.map((a) => toAssignmentDTO(a))
+  }
+
+  /**
+   * Get all assignments for a class with student-specific data.
+   * Includes submission status, grade, and submission timestamp.
+   *
+   * @param classId - The unique identifier of the class.
+   * @param studentId - The unique identifier of the student.
+   * @returns An array of assignments with student-specific submission data.
+   * @throws {BadRequestError} If classId or studentId is invalid.
+   * @throws {StudentNotInClassError} If the student is not enrolled in the class.
+   */
+  async getClassAssignmentsForStudent(
+    classId: number,
+    studentId: number,
+  ): Promise<AssignmentDTO[]> {
+    // Validate required inputs
+    if (!classId || !Number.isInteger(classId) || classId <= 0) {
+      throw new BadRequestError("Invalid class ID")
+    }
+
+    if (!studentId || !Number.isInteger(studentId) || studentId <= 0) {
+      throw new BadRequestError("Invalid student ID")
+    }
+
+    // Check if student is enrolled in the class
+    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
+
+    if (!isEnrolled) {
+      throw new StudentNotInClassError()
+    }
+
+    const assignments =
+      await this.assignmentRepo.getAssignmentsByClassId(classId)
+
+    // Fetch submission and grade data for each assignment
+    const assignmentsWithData = await Promise.all(
+      assignments.map(async (assignment) => {
+        // Get latest submission
+        const submission = await this.submissionRepo.getLatestSubmission(
+          assignment.id,
+          studentId,
+        )
+
+        // Get grade from submission
+        const grade = submission?.grade ?? null
+        const submittedAt = submission?.submittedAt?.toISOString() ?? null
+        const hasSubmitted = !!submission
+
+        return toAssignmentDTO(assignment, {
+          hasSubmitted,
+          submittedAt,
+          grade,
+          maxGrade: assignment.totalScore ?? 100,
+        })
+      }),
+    )
+
+    return assignmentsWithData
   }
 
   /** Get all students enrolled in a class */

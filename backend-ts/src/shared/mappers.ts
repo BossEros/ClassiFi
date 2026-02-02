@@ -99,6 +99,9 @@ export interface AssignmentDTO {
   scheduledDate: string | null
   submissionCount?: number
   hasSubmitted?: boolean
+  submittedAt?: string | null
+  grade?: number | null
+  maxGrade?: number
   className?: string
   testCases?: { id: number; name: string; isHidden: boolean }[]
 }
@@ -108,6 +111,9 @@ export function toAssignmentDTO(
   extras?: {
     submissionCount?: number
     hasSubmitted?: boolean
+    submittedAt?: string | null
+    grade?: number | null
+    maxGrade?: number
     className?: string
     testCases?: { id: number; name: string; isHidden: boolean }[]
   },
