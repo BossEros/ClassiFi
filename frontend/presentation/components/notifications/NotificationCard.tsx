@@ -11,7 +11,12 @@ interface NotificationCardProps {
 
 /**
  * Full notification card component for the notifications page.
- * Displays complete notification details with delete and mark as read actions.
+ *
+ * @param props - The component props of type NotificationCardProps.
+ * @param props.notification - The Notification object to display.
+ * @param props.onMarkAsRead - Callback invoked to mark the notification as read.
+ * @param props.onDelete - Callback invoked to delete the notification.
+ * @returns The rendered notification card as a JSX.Element.
  */
 export function NotificationCard({
   notification,
