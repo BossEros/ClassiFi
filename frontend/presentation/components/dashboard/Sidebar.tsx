@@ -102,7 +102,10 @@ interface SidebarProps {
   onToggleCollapse?: () => void
 }
 
-export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps) {
+export function Sidebar({
+  isCollapsed = false,
+  onToggleCollapse,
+}: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [user, setUser] = useState<User | null>(() => getCurrentUser())
   const navigate = useNavigate()
@@ -163,24 +166,26 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
         )}
       >
         {/* Desktop Toggle Button */}
-        <button
-          onClick={onToggleCollapse}
-          className={cn(
-            "hidden lg:flex absolute -right-3 top-6 z-50",
-            "w-6 h-6 items-center justify-center",
-            "rounded-full bg-slate-800 border border-white/20",
-            "text-gray-400 hover:text-white hover:bg-slate-700",
-            "transition-all duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-          )}
-          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
-        </button>
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className={cn(
+              "hidden lg:flex absolute -right-3 top-6 z-50",
+              "w-6 h-6 items-center justify-center",
+              "rounded-full bg-slate-800 border border-white/20",
+              "text-gray-400 hover:text-white hover:bg-slate-700",
+              "transition-all duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+            )}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? (
+              <ChevronRight className="w-4 h-4" />
+            ) : (
+              <ChevronLeft className="w-4 h-4" />
+            )}
+          </button>
+        )}
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
