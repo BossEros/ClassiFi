@@ -26,6 +26,7 @@ import { CourseworkFormPage } from "@/presentation/pages/CourseworkFormPage"
 import { EmailConfirmationPage } from "@/presentation/pages/EmailConfirmationPage"
 import { SettingsPage } from "@/presentation/pages/SettingsPage"
 import { NotificationsPage } from "@/presentation/pages/NotificationsPage"
+import { CalendarPage } from "@/presentation/pages/CalendarPage"
 import { AdminDashboardPage } from "@/presentation/pages/AdminDashboardPage"
 import { AdminUsersPage } from "@/presentation/pages/AdminUsersPage"
 import { AdminClassesPage } from "@/presentation/pages/AdminClassesPage"
@@ -323,6 +324,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/calendar"
+            element={
+              <ProtectedRoute>
+                <CalendarPage />
               </ProtectedRoute>
             }
           />
