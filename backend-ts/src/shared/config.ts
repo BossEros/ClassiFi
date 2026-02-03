@@ -45,9 +45,16 @@ const EnvSchema = z.object({
     .transform(Number)
     .refine((v) => v > 0, "TEST_EXECUTION_TIMEOUT_SECONDS must be positive"),
 
-  // Email Configuration
+  // Email Configuration (SendGrid - Primary)
+  SENDGRID_API_KEY: z.string().min(1, "SENDGRID_API_KEY is required"),
   EMAIL_FROM: z.string().email().default("noreply@classifi.app"),
   EMAIL_FROM_NAME: z.string().default("ClassiFi"),
+
+  // Email Configuration (Gmail SMTP - Backup)
+  SMTP_HOST: z.string().default("smtp.gmail.com"),
+  SMTP_PORT: z.string().default("587").transform(Number),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
 })
 
 /** Validated environment type */
@@ -101,7 +108,14 @@ export const settings = {
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,
 
-  // Email
+  // Email (SendGrid - Primary)
+  sendgridApiKey: env.SENDGRID_API_KEY,
   emailFrom: env.EMAIL_FROM,
   emailFromName: env.EMAIL_FROM_NAME,
+
+  // Email (Gmail SMTP - Backup)
+  smtpHost: env.SMTP_HOST,
+  smtpPort: env.SMTP_PORT,
+  smtpUser: env.SMTP_USER,
+  smtpPassword: env.SMTP_PASSWORD,
 }

@@ -1,27 +1,36 @@
-import type { IEmailService } from "./interfaces/email.interface.js";
-import { SupabaseEmailService } from "./email-supabase.service.js";
+import type { IEmailService, EmailOptions } from "./interfaces/email.interface.js";
+import { FallbackEmailService } from "./email-fallback.service.js";
+import { settings } from "../shared/config.js";
 
 /**
  * Factory function to create the appropriate email service based on configuration.
- * This allows easy switching between providers.
- * 
- * To add a new provider:
- * 1. Create a new file like email-sendgrid.service.ts
- * 2. Implement IEmailService interface
- * 3. Add a case here to return your new implementation
+ * Returns a fallback service that tries SendGrid first, then SMTP as backup.
  */
 export function createEmailService(): IEmailService {
-    // For now, always return Supabase implementation
-    // In the future, you could check an EMAIL_PROVIDER env variable:
-    // const provider = settings.emailProvider;
-    // switch (provider) {
-    //   case "sendgrid": return new SendGridEmailService();
-    //   case "aws-ses": return new AWSEmailService();
-    //   default: return new SupabaseEmailService();
-    // }
+    // In development without any API keys, use mock service
+    const hasEmailConfig = settings.sendgridApiKey || (settings.smtpUser && settings.smtpPassword);
 
-    return new SupabaseEmailService();
+    if (settings.environment === "development" && !hasEmailConfig) {
+        console.warn("⚠️  No email service configured. Emails will be logged to console.");
+        return new MockEmailService();
+    }
+
+    return new FallbackEmailService();
 }
 
-// Export the default implementation class for dependency injection
-export const EmailService = SupabaseEmailService;
+// Export the fallback implementation class for dependency injection
+export const EmailService = FallbackEmailService;
+
+/**
+ * Mock email service for development when no API key is configured.
+ * Logs emails to console instead of sending them.
+ */
+class MockEmailService implements IEmailService {
+    async sendEmail(options: EmailOptions): Promise<void> {
+        console.log("📧 [MOCK] Email would be sent:", {
+            to: options.to,
+            subject: options.subject,
+            preview: options.html.substring(0, 100) + "...",
+        });
+    }
+}
