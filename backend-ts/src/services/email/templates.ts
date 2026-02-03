@@ -113,7 +113,14 @@ function baseEmailTemplate(content: string): string {
 }
 
 /**
- * Email template for assignment creation notification.
+ * Generates an HTML email template for assignment creation notifications.
+ *
+ * @param data - Assignment notification data
+ * @param data.assignmentTitle - The title of the newly created assignment
+ * @param data.className - The name of the class the assignment belongs to
+ * @param data.dueDate - The due date for the assignment (formatted string)
+ * @param data.assignmentUrl - The URL to view the assignment details
+ * @returns The generated HTML email string
  */
 export function assignmentCreatedEmailTemplate(data: {
   assignmentTitle: string
@@ -141,7 +148,14 @@ export function assignmentCreatedEmailTemplate(data: {
 }
 
 /**
- * Email template for submission graded notification.
+ * Generates an HTML email template for submission graded notifications.
+ *
+ * @param data - Submission grading data
+ * @param data.assignmentTitle - The title of the graded assignment
+ * @param data.grade - The score received by the student
+ * @param data.maxGrade - The maximum possible score for the assignment
+ * @param data.submissionUrl - The URL to view the graded submission
+ * @returns The generated HTML email string
  */
 export function submissionGradedEmailTemplate(data: {
   assignmentTitle: string
@@ -149,7 +163,8 @@ export function submissionGradedEmailTemplate(data: {
   maxGrade: number
   submissionUrl: string
 }): string {
-  const percentage = Math.round((data.grade / data.maxGrade) * 100)
+  const percentage =
+    data.maxGrade > 0 ? Math.round((data.grade / data.maxGrade) * 100) : 0
 
   const content = `
     <h2>Your Assignment Has Been Graded</h2>

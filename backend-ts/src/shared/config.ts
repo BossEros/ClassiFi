@@ -59,7 +59,8 @@ const EnvSchema = z
       .min(1, "SMTP_HOST is required for backup email service"),
     SMTP_PORT: z
       .string()
-      .min(1, "SMTP_PORT is required for backup email service"),
+      .min(1, "SMTP_PORT is required for backup email service")
+      .transform(Number),
     SMTP_USER: z
       .string()
       .min(1, "SMTP_USER is required for backup email service"),
@@ -68,13 +69,13 @@ const EnvSchema = z
       .min(1, "SMTP_PASSWORD is required for backup email service"),
   })
   .superRefine((data, ctx) => {
-    // Validate SMTP_PORT is a positive number
-    const port = Number(data.SMTP_PORT)
-    if (isNaN(port) || port <= 0) {
+    // Validate SMTP_PORT is an integer within valid TCP port range (1-65535)
+    const port = data.SMTP_PORT
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["SMTP_PORT"],
-        message: "SMTP_PORT must be a positive number",
+        message: "SMTP_PORT must be an integer between 1 and 65535",
       })
     }
   })
@@ -137,7 +138,7 @@ export const settings = {
 
   // Email (SMTP - Backup/Fallback)
   smtpHost: env.SMTP_HOST,
-  smtpPort: Number(env.SMTP_PORT),
+  smtpPort: env.SMTP_PORT,
   smtpUser: env.SMTP_USER,
   smtpPassword: env.SMTP_PASSWORD,
 }

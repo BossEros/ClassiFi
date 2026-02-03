@@ -5,7 +5,7 @@ import type { ClassRepository } from "../../src/repositories/class.repository.js
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
 import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
-import type { NotificationService } from "../../src/services/notification.service.js"
+import type { NotificationService } from "../../src/services/notification/notification.service.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -278,17 +278,18 @@ describe("AssignmentService", () => {
       )
     })
 
-    it("should handle assignment without deadline in notification", async () => {
+    it("should format deadline correctly in notification for future date", async () => {
       const mockClass = createMockClass({
         id: 1,
         teacherId: 1,
         className: "Test Class",
       })
+      const deadline = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days from now
       const mockAssignment = createMockAssignment({
         id: 1,
         classId: 1,
-        assignmentName: "No Deadline Assignment",
-        deadline: null,
+        assignmentName: "Future Assignment",
+        deadline,
       })
 
       const mockEnrolledStudents = [
@@ -317,9 +318,10 @@ describe("AssignmentService", () => {
       await assignmentService.createAssignment({
         classId: 1,
         teacherId: 1,
-        assignmentName: "No Deadline Assignment",
+        assignmentName: "Future Assignment",
         description: "Test",
         programmingLanguage: "python",
+        deadline,
       })
 
       // Wait for async notification promises
@@ -329,7 +331,7 @@ describe("AssignmentService", () => {
         10,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({
-          dueDate: "No deadline",
+          dueDate: deadline.toLocaleDateString(),
         }),
       )
     })

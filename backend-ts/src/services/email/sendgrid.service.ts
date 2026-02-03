@@ -24,6 +24,7 @@ export class SendGridEmailService implements IEmailService {
    * Sends an email using SendGrid.
    *
    * @param options - Email options including recipient, subject, and content
+   * @returns Promise that resolves when the email is sent successfully or rejects on error
    * @throws Error if email sending fails
    */
   async sendEmail(options: EmailOptions): Promise<void> {

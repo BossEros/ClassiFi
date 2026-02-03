@@ -2,7 +2,6 @@ import {
   pgTable,
   serial,
   integer,
-  varchar,
   text,
   timestamp,
   pgEnum,
@@ -13,6 +12,7 @@ import { notifications, notificationChannelEnum } from "./notification.model.js"
 
 export const deliveryStatusEnum = pgEnum("delivery_status", [
   "PENDING",
+  "PROCESSING",
   "SENT",
   "FAILED",
   "RETRYING",
@@ -25,7 +25,6 @@ export const notificationDeliveries = pgTable("notification_deliveries", {
     .references(() => notifications.id, { onDelete: "cascade" }),
   channel: notificationChannelEnum("channel").notNull(),
   status: deliveryStatusEnum("status").notNull().default("PENDING"),
-  recipientEmail: varchar("recipient_email", { length: 255 }),
   templateData: jsonb("template_data"),
   sentAt: timestamp("sent_at"),
   failedAt: timestamp("failed_at"),

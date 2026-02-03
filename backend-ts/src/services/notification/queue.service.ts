@@ -80,7 +80,8 @@ export class NotificationQueueService {
   }
 
   /**
-   * Processes a pending or retrying delivery.
+   * Processes a pending or retrying delivery with atomic claiming.
+   * Uses repository-level atomic claim to ensure only one worker processes the delivery.
    *
    * @param deliveryId - The ID of the delivery
    * @param data - Template data for rendering (optional, will use persisted data if not provided)
@@ -95,9 +96,21 @@ export class NotificationQueueService {
       return
     }
 
+    // Atomically claim the delivery for processing
+    const claimed = await this.deliveryRepo.claimDelivery(deliveryId)
+
+    if (!claimed) {
+      // Another worker already claimed this delivery
+      return
+    }
+
     const templateData = data ?? (delivery.templateData as PayloadFor<T>)
 
     if (!templateData) {
+      // Revert status back to original state on error
+      await this.deliveryRepo.update(deliveryId, {
+        status: delivery.status,
+      })
       throw new Error("No template data available for delivery processing")
     }
 

@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm"
+import { eq, inArray, and } from "drizzle-orm"
 import {
   notificationDeliveries,
   notifications,
@@ -36,6 +36,32 @@ export class NotificationDeliveryRepository extends BaseRepository<
       .from(notificationDeliveries)
       .where(eq(notificationDeliveries.status, "PENDING"))
       .limit(limit)
+  }
+
+  /**
+   * Atomically claims a delivery for processing by updating its status to PROCESSING.
+   * Only succeeds if the delivery is in PENDING or RETRYING status.
+   *
+   * @param deliveryId - The ID of the delivery to claim
+   * @returns True if the claim was successful (delivery was claimed), false otherwise
+   */
+  async claimDelivery(deliveryId: number): Promise<boolean> {
+    const result = await this.db
+      .update(notificationDeliveries)
+      .set({
+        status: "PROCESSING",
+        updatedAt: new Date(),
+      })
+      .where(
+        and(
+          eq(notificationDeliveries.id, deliveryId),
+          inArray(notificationDeliveries.status, ["PENDING", "RETRYING"]),
+        ),
+      )
+      .returning()
+
+    // If a row was updated, the claim was successful
+    return result.length > 0
   }
 
   /**

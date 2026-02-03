@@ -22,7 +22,6 @@ vi.mock("../../src/models/index.js", () => ({
     notificationId: "notificationId",
     channel: "channel",
     status: "status",
-    recipientEmail: "recipientEmail",
     sentAt: "sentAt",
     failedAt: "failedAt",
     errorMessage: "errorMessage",

@@ -22,6 +22,7 @@ describe("NotificationQueueService", () => {
       findById: vi.fn(),
       update: vi.fn(),
       getNotification: vi.fn(),
+      claimDelivery: vi.fn().mockResolvedValue(true), // Default to successful claim
     } as any
 
     mockEmailService = {
@@ -54,7 +55,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -92,7 +92,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "IN_APP",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -104,6 +103,7 @@ describe("NotificationQueueService", () => {
 
       vi.mocked(mockDeliveryRepo.create).mockResolvedValue(mockDelivery)
       vi.mocked(mockDeliveryRepo.findById).mockResolvedValue(mockDelivery)
+      vi.mocked(mockDeliveryRepo.claimDelivery).mockResolvedValue(true)
       vi.mocked(mockDeliveryRepo.update).mockResolvedValue(undefined)
 
       await service.enqueueDelivery(1, "IN_APP", testData)
@@ -130,7 +130,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "IN_APP",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -166,7 +165,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -229,7 +227,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "SENT",
-        recipientEmail: null,
         templateData: null,
         sentAt: new Date(),
         failedAt: null,
@@ -240,6 +237,7 @@ describe("NotificationQueueService", () => {
       }
 
       vi.mocked(mockDeliveryRepo.findById).mockResolvedValue(mockDelivery)
+      vi.mocked(mockDeliveryRepo.claimDelivery).mockResolvedValue(true)
 
       await service.processDelivery(1)
 
@@ -261,7 +259,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "IN_APP",
         status: "RETRYING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -296,7 +293,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -366,7 +362,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -433,7 +428,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -503,7 +497,6 @@ describe("NotificationQueueService", () => {
         notificationId: 999,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -514,7 +507,8 @@ describe("NotificationQueueService", () => {
       }
 
       vi.mocked(mockDeliveryRepo.findById).mockResolvedValue(mockDelivery)
-      vi.mocked(mockDeliveryRepo.getNotification).mockResolvedValue(undefined)
+      vi.mocked(mockDeliveryRepo.claimDelivery).mockResolvedValue(true)
+      vi.mocked(mockDeliveryRepo.getNotification).mockResolvedValue(null as any)
 
       await service.processDelivery(1, testData)
 
@@ -541,7 +535,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
@@ -593,7 +586,6 @@ describe("NotificationQueueService", () => {
         notificationId: 1,
         channel: "EMAIL",
         status: "PENDING",
-        recipientEmail: null,
         templateData: testData,
         sentAt: null,
         failedAt: null,
