@@ -1,7 +1,3 @@
-/**
- * Environment Configuration with Zod Validation
- * Validates environment variables at startup
- */
 import { z } from "zod"
 import "dotenv/config"
 
@@ -48,6 +44,10 @@ const EnvSchema = z.object({
     .default("60")
     .transform(Number)
     .refine((v) => v > 0, "TEST_EXECUTION_TIMEOUT_SECONDS must be positive"),
+
+  // Email Configuration
+  EMAIL_FROM: z.string().email().default("noreply@classifi.app"),
+  EMAIL_FROM_NAME: z.string().default("ClassiFi"),
 })
 
 /** Validated environment type */
@@ -100,4 +100,8 @@ export const settings = {
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,
+
+  // Email
+  emailFrom: env.EMAIL_FROM,
+  emailFromName: env.EMAIL_FROM_NAME,
 }
