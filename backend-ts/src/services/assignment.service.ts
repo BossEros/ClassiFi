@@ -2,6 +2,8 @@ import { inject, injectable } from "tsyringe"
 import { AssignmentRepository } from "../repositories/assignment.repository.js"
 import { TestCaseRepository } from "../repositories/testCase.repository.js"
 import { ClassRepository } from "../repositories/class.repository.js"
+import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
+import { NotificationService } from "./notification.service.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
 import {
@@ -12,6 +14,7 @@ import type {
   UpdateAssignmentServiceDTO,
   CreateAssignmentServiceDTO,
 } from "./service-dtos.js"
+import { settings } from "../shared/config.js"
 
 /**
  * Business logic for assignment-related operations.
@@ -25,7 +28,11 @@ export class AssignmentService {
     private assignmentRepo: AssignmentRepository,
     @inject("ClassRepository") private classRepo: ClassRepository,
     @inject("TestCaseRepository") private testCaseRepo: TestCaseRepository,
-  ) {}
+    @inject("EnrollmentRepository")
+    private enrollmentRepo: EnrollmentRepository,
+    @inject("NotificationService")
+    private notificationService: NotificationService,
+  ) { }
 
   /**
    * Create an assignment for a class.
@@ -62,6 +69,35 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+    })
+
+    // Get class details for notification
+    const classData = await this.classRepo.getClassById(classId)
+
+    // Get enrolled students
+    const enrolledStudents =
+      await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
+
+    // Create notifications for each enrolled student
+    const notificationPromises = enrolledStudents.map((enrollment) =>
+      this.notificationService.createNotification(
+        enrollment.user.id,
+        "ASSIGNMENT_CREATED",
+        {
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          className: classData?.className || "Unknown Class",
+          dueDate: assignment.deadline
+            ? new Date(assignment.deadline).toLocaleDateString()
+            : "No deadline",
+          assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        },
+      ),
+    )
+
+    // Send notifications asynchronously (don't block assignment creation)
+    Promise.all(notificationPromises).catch((error) => {
+      console.error("Failed to send assignment notifications:", error)
     })
 
     return toAssignmentDTO(assignment)
