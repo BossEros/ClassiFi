@@ -2,11 +2,13 @@ import { injectable, inject } from "tsyringe"
 import { GradebookRepository } from "@/repositories/gradebook.repository.js"
 import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
+import { NotificationService } from "@/services/notification.service.js"
 import {
   LatePenaltyService,
   type PenaltyResult,
 } from "@/services/latePenalty.service.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
+import { settings } from "@/shared/config.js"
 
 /**
  * Grade entry for a single assignment in the gradebook.
@@ -44,7 +46,9 @@ export class GradebookService {
     private latePenaltyService: LatePenaltyService,
     @inject(TestResultRepository)
     private testResultRepo: TestResultRepository,
-  ) {}
+    @inject("NotificationService")
+    private notificationService: NotificationService,
+  ) { }
 
   /**
    * Get the complete gradebook for a class.
@@ -103,6 +107,20 @@ export class GradebookService {
     }
 
     await this.submissionRepo.setGradeOverride(submissionId, grade, feedback)
+
+    // Create notification for student
+    this.notificationService
+      .createNotification(submission.studentId, "SUBMISSION_GRADED", {
+        submissionId: submission.id,
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        grade,
+        maxGrade: assignment.totalScore,
+        submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      })
+      .catch((error) => {
+        console.error("Failed to send grade notification:", error)
+      })
   }
 
   /**
@@ -179,8 +197,8 @@ export class GradebookService {
       const average =
         validGrades.length > 0
           ? Math.round(
-              validGrades.reduce((a, b) => a + b, 0) / validGrades.length,
-            )
+            validGrades.reduce((a, b) => a + b, 0) / validGrades.length,
+          )
           : ""
 
       return [student.name, student.email, ...gradeValues, average.toString()]

@@ -5,6 +5,7 @@ import type { SubmissionRepository } from "../../src/repositories/submission.rep
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { LatePenaltyService } from "../../src/services/latePenalty.service.js"
 import type { TestResultRepository } from "../../src/repositories/testResult.repository.js"
+import type { NotificationService } from "../../src/services/notification.service.js"
 
 describe("GradebookService", () => {
   let gradebookService: GradebookService
@@ -13,6 +14,7 @@ describe("GradebookService", () => {
   let mockAssignmentRepo: any
   let mockLatePenaltyService: any
   let mockTestResultRepo: any
+  let mockNotificationService: any
 
   beforeEach(() => {
     mockGradebookRepo = {
@@ -42,12 +44,17 @@ describe("GradebookService", () => {
       calculateScore: vi.fn(),
     }
 
+    mockNotificationService = {
+      createNotification: vi.fn(),
+    }
+
     gradebookService = new GradebookService(
       mockGradebookRepo as GradebookRepository,
       mockSubmissionRepo as SubmissionRepository,
       mockAssignmentRepo as AssignmentRepository,
       mockLatePenaltyService as LatePenaltyService,
       mockTestResultRepo as TestResultRepository,
+      mockNotificationService as NotificationService,
     )
   })
 
@@ -162,20 +169,66 @@ describe("GradebookService", () => {
     const mockSubmission = {
       id: 1,
       assignmentId: 1,
+      studentId: 10,
       grade: 85,
       isGradeOverridden: false,
     }
 
     const mockAssignment = {
       id: 1,
+      assignmentName: "Test Assignment",
       totalScore: 100,
     }
 
     it("should override grade successfully", async () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockResolvedValue({})
 
       await gradebookService.overrideGrade(1, 95, "Excellent work!")
+
+      expect(mockSubmissionRepo.setGradeOverride).toHaveBeenCalledWith(
+        1,
+        95,
+        "Excellent work!",
+      )
+    })
+
+    it("should create notification for student when grade is overridden", async () => {
+      mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockResolvedValue({})
+
+      await gradebookService.overrideGrade(1, 95, "Excellent work!")
+
+      // Wait for async notification promise
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        10,
+        "SUBMISSION_GRADED",
+        expect.objectContaining({
+          submissionId: 1,
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          grade: 95,
+          maxGrade: 100,
+          submissionUrl: expect.stringContaining("/dashboard/assignments/1"),
+        })
+      )
+    })
+
+    it("should handle notification failure gracefully", async () => {
+      mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockRejectedValue(
+        new Error("Notification service error")
+      )
+
+      // Should not throw even if notification fails
+      await expect(
+        gradebookService.overrideGrade(1, 95, "Excellent work!")
+      ).resolves.not.toThrow()
 
       expect(mockSubmissionRepo.setGradeOverride).toHaveBeenCalledWith(
         1,
@@ -222,6 +275,7 @@ describe("GradebookService", () => {
     it("should allow grade at boundary (0)", async () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockResolvedValue({})
 
       await gradebookService.overrideGrade(1, 0, "Incomplete")
 
@@ -235,6 +289,7 @@ describe("GradebookService", () => {
     it("should allow grade at boundary (totalScore)", async () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockResolvedValue({})
 
       await gradebookService.overrideGrade(1, 100, "Perfect!")
 

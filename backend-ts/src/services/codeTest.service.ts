@@ -4,6 +4,7 @@ import { TestCaseRepository } from "@/repositories/testCase.repository.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
+import { NotificationService } from "@/services/notification.service.js"
 import { StorageService } from "./storage.service.js"
 import {
   CODE_EXECUTOR_TOKEN,
@@ -11,6 +12,7 @@ import {
   type ExecutionRequest,
 } from "./interfaces/codeExecutor.interface.js"
 import type { TestCase, NewTestResult } from "@/models/index.js"
+import { settings } from "@/shared/config.js"
 
 /** Test execution summary */
 export interface TestExecutionSummary {
@@ -60,7 +62,9 @@ export class CodeTestService {
     @inject("AssignmentRepository")
     private assignmentRepo: AssignmentRepository,
     @inject("StorageService") private storageService: StorageService,
-  ) {}
+    @inject("NotificationService")
+    private notificationService: NotificationService,
+  ) { }
 
   /**
    * Run all test cases for a submission and save results.
@@ -153,6 +157,20 @@ export class CodeTestService {
     const grade =
       total > 0 ? Math.floor((passed / total) * totalScore) : totalScore
     await this.submissionRepo.updateGrade(submissionId, grade)
+
+    // Create notification for student about graded submission
+    this.notificationService
+      .createNotification(submission.studentId, "SUBMISSION_GRADED", {
+        submissionId: submission.id,
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        grade,
+        maxGrade: totalScore,
+        submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      })
+      .catch((error) => {
+        console.error("Failed to send grade notification:", error)
+      })
 
     // Build response
     const results = this.buildResultDetails(testCases, executionResults)
@@ -248,11 +266,11 @@ export class CodeTestService {
       ...(r.testCase.isHidden
         ? {}
         : {
-            input: r.testCase.input,
-            expectedOutput: r.testCase.expectedOutput,
-            actualOutput: r.actualOutput ?? undefined,
-            errorMessage: r.errorMessage ?? undefined,
-          }),
+          input: r.testCase.input,
+          expectedOutput: r.testCase.expectedOutput,
+          actualOutput: r.actualOutput ?? undefined,
+          errorMessage: r.errorMessage ?? undefined,
+        }),
     }))
 
     return {
@@ -298,11 +316,11 @@ export class CodeTestService {
         ...(tc.isHidden
           ? {}
           : {
-              input: tc.input,
-              expectedOutput: tc.expectedOutput,
-              actualOutput: result.stdout ?? undefined,
-              errorMessage: result.stderr || result.compileOutput || undefined,
-            }),
+            input: tc.input,
+            expectedOutput: tc.expectedOutput,
+            actualOutput: result.stdout ?? undefined,
+            errorMessage: result.stderr || result.compileOutput || undefined,
+          }),
       }
     })
   }

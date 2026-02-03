@@ -4,6 +4,8 @@ import { AssignmentService } from "../../src/services/assignment.service.js"
 import type { ClassRepository } from "../../src/repositories/class.repository.js"
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
+import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
+import type { NotificationService } from "../../src/services/notification.service.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -16,6 +18,8 @@ describe("AssignmentService", () => {
   let mockClassRepo: Partial<MockedObject<ClassRepository>>
   let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
   let mockTestCaseRepo: Partial<MockedObject<TestCaseRepository>>
+  let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
+  let mockNotificationService: Partial<MockedObject<NotificationService>>
 
   beforeEach(() => {
     mockClassRepo = {
@@ -34,10 +38,20 @@ describe("AssignmentService", () => {
       getByAssignmentId: vi.fn(),
     }
 
+    mockEnrollmentRepo = {
+      getEnrolledStudentsWithInfo: vi.fn(),
+    }
+
+    mockNotificationService = {
+      createNotification: vi.fn(),
+    }
+
     assignmentService = new AssignmentService(
       mockAssignmentRepo as unknown as AssignmentRepository,
       mockClassRepo as unknown as ClassRepository,
       mockTestCaseRepo as unknown as TestCaseRepository,
+      mockEnrollmentRepo as unknown as EnrollmentRepository,
+      mockNotificationService as unknown as NotificationService,
     )
   })
 
@@ -60,6 +74,7 @@ describe("AssignmentService", () => {
 
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue([])
 
       const result = await assignmentService.createAssignment({
         classId: 1,
@@ -74,6 +89,243 @@ describe("AssignmentService", () => {
         classId: 1,
         ...validAssignmentData,
       })
+    })
+
+    it("should create notifications for all enrolled students", async () => {
+      const mockClass = createMockClass({ id: 1, teacherId: 1, className: "Test Class" })
+      const mockAssignment = createMockAssignment({
+        id: 1,
+        classId: 1,
+        assignmentName: "Test Assignment",
+        deadline: new Date("2024-12-31"),
+      })
+
+      const mockEnrolledStudents = [
+        {
+          user: {
+            id: 10,
+            email: "student1@test.com",
+            firstName: "Student",
+            lastName: "One",
+            avatarUrl: null,
+            role: "student",
+            isActive: true,
+            createdAt: new Date(),
+          },
+          enrolledAt: new Date(),
+        },
+        {
+          user: {
+            id: 11,
+            email: "student2@test.com",
+            firstName: "Student",
+            lastName: "Two",
+            avatarUrl: null,
+            role: "student",
+            isActive: true,
+            createdAt: new Date(),
+          },
+          enrolledAt: new Date(),
+        },
+      ]
+
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockNotificationService.createNotification!.mockResolvedValue({} as any)
+
+      await assignmentService.createAssignment({
+        classId: 1,
+        teacherId: 1,
+        ...validAssignmentData,
+      })
+
+      // Wait for async notification promises to resolve
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      expect(mockEnrollmentRepo.getEnrolledStudentsWithInfo).toHaveBeenCalledWith(1)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(2)
+
+      // Verify first student notification
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        10,
+        "ASSIGNMENT_CREATED",
+        expect.objectContaining({
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "Test Class",
+          dueDate: expect.any(String),
+          assignmentUrl: expect.stringContaining("/dashboard/assignments/1"),
+        })
+      )
+
+      // Verify second student notification
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        11,
+        "ASSIGNMENT_CREATED",
+        expect.objectContaining({
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "Test Class",
+        })
+      )
+    })
+
+    it("should handle notification failures gracefully without blocking assignment creation", async () => {
+      const mockClass = createMockClass({ teacherId: 1 })
+      const mockAssignment = createMockAssignment({ classId: 1 })
+      const mockEnrolledStudents = [
+        {
+          user: {
+            id: 10,
+            email: "student@test.com",
+            firstName: "Student",
+            lastName: "One",
+            avatarUrl: null,
+            role: "student",
+            isActive: true,
+            createdAt: new Date(),
+          },
+          enrolledAt: new Date(),
+        },
+      ]
+
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockNotificationService.createNotification!.mockRejectedValue(new Error("Notification service error"))
+
+      // Should not throw even if notifications fail
+      const result = await assignmentService.createAssignment({
+        classId: 1,
+        teacherId: 1,
+        ...validAssignmentData,
+      })
+
+      expect(result).toBeDefined()
+      expect(result.id).toBe(mockAssignment.id)
+    })
+
+    it("should format deadline correctly in notification", async () => {
+      const mockClass = createMockClass({ id: 1, teacherId: 1, className: "Test Class" })
+      const deadline = new Date("2024-12-25T10:00:00Z")
+      const mockAssignment = createMockAssignment({
+        id: 1,
+        classId: 1,
+        assignmentName: "Holiday Assignment",
+        deadline,
+      })
+
+      const mockEnrolledStudents = [
+        {
+          user: {
+            id: 10,
+            email: "student@test.com",
+            firstName: "Student",
+            lastName: "One",
+            avatarUrl: null,
+            role: "student",
+            isActive: true,
+            createdAt: new Date(),
+          },
+          enrolledAt: new Date(),
+        },
+      ]
+
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockNotificationService.createNotification!.mockResolvedValue({} as any)
+
+      await assignmentService.createAssignment({
+        classId: 1,
+        teacherId: 1,
+        assignmentName: "Holiday Assignment",
+        description: "Test",
+        programmingLanguage: "python",
+        deadline,
+      })
+
+      // Wait for async notification promises
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        10,
+        "ASSIGNMENT_CREATED",
+        expect.objectContaining({
+          dueDate: deadline.toLocaleDateString(),
+        })
+      )
+    })
+
+    it("should handle assignment without deadline in notification", async () => {
+      const mockClass = createMockClass({ id: 1, teacherId: 1, className: "Test Class" })
+      const mockAssignment = createMockAssignment({
+        id: 1,
+        classId: 1,
+        assignmentName: "No Deadline Assignment",
+        deadline: null,
+      })
+
+      const mockEnrolledStudents = [
+        {
+          user: {
+            id: 10,
+            email: "student@test.com",
+            firstName: "Student",
+            lastName: "One",
+            avatarUrl: null,
+            role: "student",
+            isActive: true,
+            createdAt: new Date(),
+          },
+          enrolledAt: new Date(),
+        },
+      ]
+
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockNotificationService.createNotification!.mockResolvedValue({} as any)
+
+      await assignmentService.createAssignment({
+        classId: 1,
+        teacherId: 1,
+        assignmentName: "No Deadline Assignment",
+        description: "Test",
+        programmingLanguage: "python",
+      })
+
+      // Wait for async notification promises
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        10,
+        "ASSIGNMENT_CREATED",
+        expect.objectContaining({
+          dueDate: "No deadline",
+        })
+      )
+    })
+
+    it("should not create notifications when no students are enrolled", async () => {
+      const mockClass = createMockClass({ teacherId: 1 })
+      const mockAssignment = createMockAssignment({ classId: 1 })
+
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue([])
+
+      await assignmentService.createAssignment({
+        classId: 1,
+        teacherId: 1,
+        ...validAssignmentData,
+      })
+
+      // Wait for async notification promises
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
     })
 
     it("should throw ClassNotFoundError if class does not exist", async () => {
@@ -108,6 +360,7 @@ describe("AssignmentService", () => {
 
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue([])
 
       const dataWithoutResubmission = {
         assignmentName: "Test",
