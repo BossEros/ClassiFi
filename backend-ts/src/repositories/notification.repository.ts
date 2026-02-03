@@ -34,13 +34,15 @@ export class NotificationRepository extends BaseRepository<
     limit: number,
     offset: number,
   ): Promise<Notification[]> {
-    return await this.db
+    const results = await this.db
       .select()
       .from(notifications)
       .where(eq(notifications.userId, userId))
       .orderBy(desc(notifications.createdAt))
       .limit(limit)
       .offset(offset)
+
+    return results as Notification[]
   }
 
   /**
@@ -114,7 +116,7 @@ export class NotificationRepository extends BaseRepository<
     limit: number = 5,
     offset: number = 0,
   ): Promise<Notification[]> {
-    return await this.db
+    const results = await this.db
       .select()
       .from(notifications)
       .where(
@@ -123,5 +125,7 @@ export class NotificationRepository extends BaseRepository<
       .orderBy(desc(notifications.createdAt))
       .limit(limit)
       .offset(offset)
+
+    return results as Notification[]
   }
 }

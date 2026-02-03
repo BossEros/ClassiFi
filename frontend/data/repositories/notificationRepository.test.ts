@@ -37,8 +37,11 @@ describe("NotificationRepository", () => {
       'Your teacher has created a new assignment "Hello World" due on 2024-12-31.',
     metadata: {
       assignmentId: 1,
+      assignmentTitle: "Hello World",
+      className: "CS101",
       classId: 1,
       dueDate: "2024-12-31",
+      assignmentUrl: "/assignments/1",
     },
     isRead: false,
     readAt: null,

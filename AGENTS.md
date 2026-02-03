@@ -129,9 +129,17 @@ function isUserAuthorizedForLevel(
 
 **Type Safety:**
 - Enable `strict: true` in `tsconfig.json`
-- Never use `any` — use `unknown` with type guards instead
+- **Never use `any` — always use specific types instead**
 - Use explicit types at module boundaries, infer internally
 - Use lowercase primitives (`string`, `number`, `boolean`)
+
+**Type Hierarchy (from best to worst):**
+1. **Specific types/interfaces** - Define exact structure (preferred)
+2. **Generics** - For reusable type-safe code
+3. **Union types** - When multiple specific types are possible
+4. **Discriminated unions** - For state management with type narrowing
+5. **`unknown` with type guards** - Only for truly unknown external data (must validate immediately)
+6. **`any`** - ❌ Never use (disables type checking)
 
 **Type Definitions:**
 - Prefer **interfaces** for object shapes (extensible, better tooling)
@@ -139,6 +147,52 @@ function isUserAuthorizedForLevel(
 - Use **string literal unions** instead of plain `string` for known values
 - Use **discriminated unions** for state management
 - Use **`as const`** for immutable arrays/objects
+
+**Example:**
+```typescript
+// ❌ Bad - using any
+function process(data: any) {
+  return data.value.toUpperCase();
+}
+
+// ✅ Good - using specific type
+interface Data {
+  value: string;
+}
+
+function process(data: Data) {
+  return data.value.toUpperCase();
+}
+
+// ✅ Best - using discriminated union for multiple types
+type Result = 
+  | { status: 'success'; data: Data }
+  | { status: 'error'; error: string };
+
+function handleResult(result: Result) {
+  if (result.status === 'success') {
+    return result.data.value; // TypeScript knows data exists
+  }
+  return result.error; // TypeScript knows error exists
+}
+
+// ⚠️ Acceptable - unknown for external data (validate immediately)
+function parseExternal(input: unknown): Data {
+  if (isValidData(input)) {
+    return input; // Now typed as Data
+  }
+  throw new Error('Invalid data');
+}
+
+function isValidData(data: unknown): data is Data {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'value' in data &&
+    typeof (data as Data).value === 'string'
+  );
+}
+```
 
 **Runtime Safety:**
 - Use **type guards** (`x is T`) for runtime type checking

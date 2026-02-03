@@ -71,14 +71,19 @@ export function NotificationDropdown({
   }
 
   const handleMarkAllReadClick = async () => {
-    await onMarkAllRead()
-    setNotifications((prev) =>
-      prev.map((n) => ({
-        ...n,
-        isRead: true,
-        readAt: new Date().toISOString(),
-      })),
-    )
+    try {
+      await onMarkAllRead()
+
+      setNotifications((prev) =>
+        prev.map((n) => ({
+          ...n,
+          isRead: true,
+          readAt: new Date().toISOString(),
+        })),
+      )
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error)
+    }
   }
 
   return (

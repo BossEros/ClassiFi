@@ -34,9 +34,10 @@ export function NotificationCard({
 
   return (
     <div
+      onClick={handleClick}
       className={`p-4 rounded-lg border transition-colors ${
         !notification.isRead
-          ? "bg-blue-500/10 border-blue-500/30"
+          ? "bg-blue-500/10 border-blue-500/30 cursor-pointer hover:bg-blue-500/15"
           : "bg-slate-800 border-white/10"
       }`}
     >
@@ -61,7 +62,10 @@ export function NotificationCard({
               {notification.title}
             </h3>
             <button
-              onClick={() => onDelete(notification.id)}
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete(notification.id)
+              }}
               className="text-slate-400 hover:text-red-400 transition-colors shrink-0"
               aria-label="Delete notification"
             >
@@ -75,7 +79,10 @@ export function NotificationCard({
             <span className="text-xs text-slate-500">{timeAgo}</span>
             {!notification.isRead && (
               <button
-                onClick={handleClick}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleClick()
+                }}
                 className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors"
               >
                 Mark as read

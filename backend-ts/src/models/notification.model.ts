@@ -46,5 +46,125 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
   }),
 }))
 
-export type Notification = typeof notifications.$inferSelect
-export type NewNotification = typeof notifications.$inferInsert
+/**
+ * Metadata type definitions for each notification type
+ */
+export interface AssignmentCreatedMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  className: string
+  classId: number
+  dueDate: string
+  assignmentUrl: string
+}
+
+export interface SubmissionGradedMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  submissionId: number
+  grade: number
+  totalScore: number
+  feedback?: string
+  submissionUrl: string
+}
+
+export interface ClassAnnouncementMetadata {
+  classId: number
+  className: string
+  announcementText: string
+}
+
+export interface DeadlineReminderMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  dueDate: string
+  hoursRemaining: number
+  assignmentUrl: string
+}
+
+export interface EnrollmentConfirmedMetadata {
+  classId: number
+  className: string
+  teacherName: string
+  classUrl: string
+}
+
+/**
+ * Base notification type from database
+ */
+type BaseNotification = typeof notifications.$inferSelect
+
+/**
+ * Discriminated union of all notification types with specific metadata
+ */
+export type Notification =
+  | (Omit<BaseNotification, "metadata"> & {
+      type: "ASSIGNMENT_CREATED"
+      metadata: AssignmentCreatedMetadata
+    })
+  | (Omit<BaseNotification, "metadata"> & {
+      type: "SUBMISSION_GRADED"
+      metadata: SubmissionGradedMetadata
+    })
+  | (Omit<BaseNotification, "metadata"> & {
+      type: "CLASS_ANNOUNCEMENT"
+      metadata: ClassAnnouncementMetadata
+    })
+  | (Omit<BaseNotification, "metadata"> & {
+      type: "DEADLINE_REMINDER"
+      metadata: DeadlineReminderMetadata
+    })
+  | (Omit<BaseNotification, "metadata"> & {
+      type: "ENROLLMENT_CONFIRMED"
+      metadata: EnrollmentConfirmedMetadata
+    })
+
+/**
+ * Type for creating new notifications with specific metadata
+ */
+export type NewNotification =
+  | {
+      userId: number
+      type: "ASSIGNMENT_CREATED"
+      title: string
+      message: string
+      metadata: AssignmentCreatedMetadata
+    }
+  | {
+      userId: number
+      type: "SUBMISSION_GRADED"
+      title: string
+      message: string
+      metadata: SubmissionGradedMetadata
+    }
+  | {
+      userId: number
+      type: "CLASS_ANNOUNCEMENT"
+      title: string
+      message: string
+      metadata: ClassAnnouncementMetadata
+    }
+  | {
+      userId: number
+      type: "DEADLINE_REMINDER"
+      title: string
+      message: string
+      metadata: DeadlineReminderMetadata
+    }
+  | {
+      userId: number
+      type: "ENROLLMENT_CONFIRMED"
+      title: string
+      message: string
+      metadata: EnrollmentConfirmedMetadata
+    }
+
+/**
+ * Type guard to check notification type
+ */
+export function isNotificationType<T extends Notification["type"]>(
+  notification: Notification,
+  type: T,
+): notification is Extract<Notification, { type: T }> {
+  return notification.type === type
+}

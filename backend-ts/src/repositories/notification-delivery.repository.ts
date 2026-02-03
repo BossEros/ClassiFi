@@ -81,6 +81,6 @@ export class NotificationDeliveryRepository extends BaseRepository<
       throw new NotFoundError("Notification not found")
     }
 
-    return result[0]
+    return result[0] as Notification
   }
 }

@@ -1,29 +1,111 @@
 /**
- * Notification type enumeration
- * Represents all possible notification types in the system
+ * Metadata for assignment created notification
  */
-export type NotificationType =
-  | "ASSIGNMENT_CREATED"
-  | "SUBMISSION_GRADED"
-  | "CLASS_ANNOUNCEMENT"
-  | "DEADLINE_REMINDER"
-  | "ENROLLMENT_CONFIRMED"
+export interface AssignmentCreatedMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  className: string
+  classId: number
+  dueDate: string
+  assignmentUrl: string
+}
 
 /**
- * Notification interface
- * Represents a single notification in the system
+ * Metadata for submission graded notification
  */
-export interface Notification {
+export interface SubmissionGradedMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  submissionId: number
+  grade: number
+  totalScore: number
+  feedback?: string
+  submissionUrl: string
+}
+
+/**
+ * Metadata for class announcement notification
+ */
+export interface ClassAnnouncementMetadata {
+  classId: number
+  className: string
+  announcementText: string
+}
+
+/**
+ * Metadata for deadline reminder notification
+ */
+export interface DeadlineReminderMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  dueDate: string
+  hoursRemaining: number
+  assignmentUrl: string
+}
+
+/**
+ * Metadata for enrollment confirmed notification
+ */
+export interface EnrollmentConfirmedMetadata {
+  classId: number
+  className: string
+  teacherName: string
+  classUrl: string
+}
+
+/**
+ * Base notification interface with common properties
+ */
+interface BaseNotification {
   id: number
   userId: number
-  type: NotificationType
   title: string
   message: string
-  metadata: Record<string, unknown> | null
   isRead: boolean
   readAt: string | null
   createdAt: string
 }
+
+/**
+ * Discriminated union of all notification types
+ * Each notification type has its own specific metadata structure
+ */
+export type Notification =
+  | (BaseNotification & {
+      type: "ASSIGNMENT_CREATED"
+      metadata: AssignmentCreatedMetadata
+    })
+  | (BaseNotification & {
+      type: "SUBMISSION_GRADED"
+      metadata: SubmissionGradedMetadata
+    })
+  | (BaseNotification & {
+      type: "CLASS_ANNOUNCEMENT"
+      metadata: ClassAnnouncementMetadata
+    })
+  | (BaseNotification & {
+      type: "DEADLINE_REMINDER"
+      metadata: DeadlineReminderMetadata
+    })
+  | (BaseNotification & {
+      type: "ENROLLMENT_CONFIRMED"
+      metadata: EnrollmentConfirmedMetadata
+    })
+
+/**
+ * Type guard to check notification type
+ */
+export function isNotificationType(
+  notification: Notification,
+  type: Notification["type"],
+): notification is Extract<Notification, { type: typeof type }> {
+  return notification.type === type
+}
+
+/**
+ * Extract notification type from discriminated union
+ */
+export type NotificationType = Notification["type"]
 
 /**
  * Response interface for paginated notification list
