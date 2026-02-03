@@ -2,6 +2,7 @@ import { injectable } from "tsyringe";
 import sgMail from "@sendgrid/mail";
 import { settings } from "../../shared/config.js";
 import type { IEmailService, EmailOptions } from "../interfaces/email.interface.js";
+import striptags from "striptags";
 
 /**
  * SendGrid email service implementation.
@@ -60,6 +61,6 @@ export class SendGridEmailService implements IEmailService {
      * @returns Plain text content
      */
     private stripHtml(html: string): string {
-        return html.replace(/<[^>]*>/g, "").trim();
+        return striptags(html).trim();
     }
 }
