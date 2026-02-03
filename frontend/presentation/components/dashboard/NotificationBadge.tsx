@@ -27,6 +27,8 @@ export function NotificationBadge() {
       setUnreadCount(count)
     } catch (error) {
       console.error("Failed to load unread count:", error)
+      // Set to 0 on error to prevent UI issues
+      setUnreadCount(0)
     } finally {
       setIsLoading(false)
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Bell } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
@@ -7,19 +8,39 @@ import * as notificationService from "@/business/services/notificationService"
 import type { Notification } from "@/business/models/notification/types"
 import { NotificationCard } from "@/presentation/components/notifications/NotificationCard"
 import { useToast } from "@/shared/context/ToastContext"
+import { getCurrentUser } from "@/business/services/authService"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import type { User } from "@/business/models/auth/types"
 
 /**
  * Notifications page component.
  * Displays all notifications with pagination and mark all as read functionality.
  */
 export function NotificationsPage() {
+  const navigate = useNavigate()
   const { showToast } = useToast()
+  const [user, setUser] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
   const [total, setTotal] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
+
+  useEffect(() => {
+    const currentUser = getCurrentUser()
+    if (!currentUser) {
+      navigate("/login")
+      return
+    }
+    setUser(currentUser)
+  }, [navigate])
+
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
 
   useEffect(() => {
     loadNotifications()
@@ -103,14 +124,11 @@ export function NotificationsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-500/10 rounded-lg border border-blue-500/20">
-              <Bell className="w-6 h-6 text-blue-400" />
-            </div>
             <div>
               <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
                 Notifications
@@ -152,7 +170,7 @@ export function NotificationsPage() {
               <h3 className="text-xl font-semibold text-white mb-2">
                 No notifications yet
               </h3>
-              <p className="text-slate-300 max-w-sm mx-auto">
+              <p className="text-slate-300 max-w-l mx-auto leading-relaxed">
                 When you receive notifications, they'll appear here.
               </p>
             </div>

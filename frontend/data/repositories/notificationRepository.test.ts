@@ -57,7 +57,7 @@ describe("NotificationRepository", () => {
 
   const mockUnreadCountResponse: UnreadCountResponse = {
     success: true,
-    count: 5,
+    unreadCount: 5,
   }
 
   const mockSuccessResponse = {
@@ -173,7 +173,7 @@ describe("NotificationRepository", () => {
       const result = await repository.getUnreadCount()
 
       expect(apiClient.get).toHaveBeenCalledWith("/notifications/unread-count")
-      expect(result.data?.count).toBe(5)
+      expect(result.data?.unreadCount).toBe(5)
       expect(result.data?.success).toBe(true)
     })
 
