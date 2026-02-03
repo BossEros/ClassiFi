@@ -4,7 +4,7 @@ import { TestCaseRepository } from "@/repositories/testCase.repository.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
-import { NotificationService } from "@/services/notification.service.js"
+import { NotificationService } from "@/services/notification/notification.service.js"
 import { StorageService } from "./storage.service.js"
 import {
   CODE_EXECUTOR_TOKEN,

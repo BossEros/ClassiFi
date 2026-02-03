@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
-import { NotificationService } from "../../services/notification.service.js"
+import { NotificationService } from "../../services/notification/notification.service.js"
 import { toJsonSchema } from "../utils/swagger.js"
 import { parsePositiveInt } from "../../shared/utils.js"
 import {

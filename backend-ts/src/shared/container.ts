@@ -32,8 +32,8 @@ import { CODE_EXECUTOR_TOKEN } from "../services/interfaces/codeExecutor.interfa
 import { GradebookService } from "../services/gradebook.service.js"
 import { LatePenaltyService } from "../services/latePenalty.service.js"
 import { EmailService } from "../services/email/index.js"
-import { NotificationService } from "../services/notification.service.js"
-import { NotificationQueueService } from "../services/notification-queue.service.js"
+import { NotificationService } from "../services/notification/notification.service.js"
+import { NotificationQueueService } from "../services/notification/queue.service.js"
 
 // Admin Services (focused, single-responsibility)
 import { AdminUserService } from "../services/admin/admin-user.service.js"

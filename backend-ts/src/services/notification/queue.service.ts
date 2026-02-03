@@ -1,9 +1,9 @@
 import { injectable, inject } from "tsyringe";
-import type { NotificationDeliveryRepository } from "../repositories/notification-delivery.repository.js";
-import type { UserRepository } from "../repositories/user.repository.js";
-import type { IEmailService } from "./interfaces/email.interface.js";
-import type { NotificationDelivery } from "../models/index.js";
-import { NOTIFICATION_TYPES } from "./notification-types.js";
+import type { NotificationDeliveryRepository } from "../../repositories/notification-delivery.repository.js";
+import type { UserRepository } from "../../repositories/user.repository.js";
+import type { IEmailService } from "../interfaces/email.interface.js";
+import type { NotificationDelivery } from "../../models/index.js";
+import { NOTIFICATION_TYPES } from "./types.js";
 
 /**
  * Service for managing notification delivery queue and processing.

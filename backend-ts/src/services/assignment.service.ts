@@ -3,7 +3,7 @@ import { AssignmentRepository } from "../repositories/assignment.repository.js"
 import { TestCaseRepository } from "../repositories/testCase.repository.js"
 import { ClassRepository } from "../repositories/class.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
-import { NotificationService } from "./notification.service.js"
+import { NotificationService } from "./notification/notification.service.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
 import {

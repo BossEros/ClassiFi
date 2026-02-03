@@ -2,7 +2,7 @@ import { injectable, inject } from "tsyringe"
 import { GradebookRepository } from "@/repositories/gradebook.repository.js"
 import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
-import { NotificationService } from "@/services/notification.service.js"
+import { NotificationService } from "@/services/notification/notification.service.js"
 import {
   LatePenaltyService,
   type PenaltyResult,

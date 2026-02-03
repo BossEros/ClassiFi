@@ -1,9 +1,9 @@
 import { injectable, inject } from "tsyringe";
-import type { NotificationRepository } from "../repositories/notification.repository.js";
-import type { NotificationQueueService } from "./notification-queue.service.js";
-import type { Notification } from "../models/index.js";
-import { NOTIFICATION_TYPES } from "./notification-types.js";
-import { NotFoundError, ForbiddenError } from "../shared/errors.js";
+import type { NotificationRepository } from "../../repositories/notification.repository.js";
+import type { NotificationQueueService } from "./queue.service.js";
+import type { Notification } from "../../models/index.js";
+import { NOTIFICATION_TYPES } from "./types.js";
+import { NotFoundError, ForbiddenError } from "../../shared/errors.js";
 
 /**
  * Service for managing notifications.
