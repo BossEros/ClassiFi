@@ -39,6 +39,7 @@
     "uuid": "^13.0.0",
     "zod": "^4.3.6",
     "zod-to-json-schema": "^3.25.1",
+    "html-to-text": "^9.0.5"
     "striptags": "^3.2.0"
   },
   "devDependencies": {

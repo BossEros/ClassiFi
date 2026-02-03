@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import { settings } from "../../shared/config.js";
 import type { IEmailService, EmailOptions } from "../interfaces/email.interface.js";
+import { htmlToText } from "html-to-text";
 
 /**
  * SMTP email service implementation using nodemailer.
@@ -60,6 +61,6 @@ export class SMTPEmailService implements IEmailService {
      * @returns Plain text content
      */
     private stripHtml(html: string): string {
-        return html.replace(/<[^>]*>/g, "").trim();
+        return htmlToText(html, { wordwrap: false }).trim();
     }
 }
