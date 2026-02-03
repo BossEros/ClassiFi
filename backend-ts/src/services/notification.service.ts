@@ -58,16 +58,27 @@ export class NotificationService {
      * @param userId - The ID of the user
      * @param page - Page number (1-indexed)
      * @param limit - Number of notifications per page
+     * @param unreadOnly - If true, only return unread notifications
      * @returns Paginated notifications
      */
     async getUserNotifications(
         userId: number,
         page: number = 1,
-        limit: number = 20
+        limit: number = 20,
+        unreadOnly?: boolean
     ): Promise<{ notifications: Notification[]; total: number; hasMore: boolean }> {
         const offset = (page - 1) * limit;
-        const notifications = await this.notificationRepo.findByUserId(userId, limit, offset);
-        const total = await this.notificationRepo.countByUserId(userId);
+
+        let notifications: Notification[];
+        let total: number;
+
+        if (unreadOnly) {
+            notifications = await this.notificationRepo.findRecentUnread(userId, limit);
+            total = await this.notificationRepo.countUnreadByUserId(userId);
+        } else {
+            notifications = await this.notificationRepo.findByUserId(userId, limit, offset);
+            total = await this.notificationRepo.countByUserId(userId);
+        }
 
         return {
             notifications,
