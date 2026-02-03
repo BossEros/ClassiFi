@@ -11,6 +11,8 @@ import { SimilarityRepository } from "../repositories/similarity.repository.js"
 import { TestCaseRepository } from "../repositories/testCase.repository.js"
 import { TestResultRepository } from "../repositories/testResult.repository.js"
 import { GradebookRepository } from "../repositories/gradebook.repository.js"
+import { NotificationRepository } from "../repositories/notification.repository.js"
+import { NotificationDeliveryRepository } from "../repositories/notification-delivery.repository.js"
 
 // Services
 import { AuthService } from "../services/auth.service.js"
@@ -29,6 +31,9 @@ import { TestCaseService } from "../services/test-case.service.js"
 import { CODE_EXECUTOR_TOKEN } from "../services/interfaces/codeExecutor.interface.js"
 import { GradebookService } from "../services/gradebook.service.js"
 import { LatePenaltyService } from "../services/latePenalty.service.js"
+import { EmailService } from "../services/email.service.js"
+import { NotificationService } from "../services/notification.service.js"
+import { NotificationQueueService } from "../services/notification-queue.service.js"
 
 // Admin Services (focused, single-responsibility)
 import { AdminUserService } from "../services/admin/admin-user.service.js"
@@ -51,6 +56,11 @@ container.registerSingleton("SimilarityRepository", SimilarityRepository)
 container.registerSingleton("TestCaseRepository", TestCaseRepository)
 container.registerSingleton("TestResultRepository", TestResultRepository)
 container.registerSingleton("GradebookRepository", GradebookRepository)
+container.registerSingleton("NotificationRepository", NotificationRepository)
+container.registerSingleton(
+  "NotificationDeliveryRepository",
+  NotificationDeliveryRepository,
+)
 
 // Register infrastructure adapters as singletons
 container.registerSingleton("SupabaseAuthAdapter", SupabaseAuthAdapter)
@@ -67,6 +77,9 @@ container.registerSingleton("PlagiarismService", PlagiarismService)
 container.registerSingleton("UserService", UserService)
 container.registerSingleton("GradebookService", GradebookService)
 container.registerSingleton("LatePenaltyService", LatePenaltyService)
+container.registerSingleton("EmailService", EmailService)
+container.registerSingleton("NotificationQueueService", NotificationQueueService)
+container.registerSingleton("NotificationService", NotificationService)
 
 // Register code execution services
 container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)

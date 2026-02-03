@@ -10,6 +10,7 @@ import { userRoutes } from "@/api/controllers/user.controller.js"
 import { adminRoutes } from "@/api/controllers/admin.controller.js"
 import { testCaseRoutes } from "@/api/controllers/testCase.controller.js"
 import { gradebookRoutes } from "@/api/controllers/gradebook.controller.js"
+import { notificationRoutes } from "@/api/controllers/notification.controller.js"
 import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 
 /**
@@ -48,6 +49,9 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
   // Gradebook routes - /api/v1/gradebook/*
   await app.register(gradebookRoutes, { prefix: "/gradebook" })
+
+  // Notification routes - /api/v1/notifications/*
+  await app.register(notificationRoutes, { prefix: "/notifications" })
 }
 
 /** API v1 routes aggregator */
