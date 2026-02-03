@@ -27,7 +27,7 @@ describe("SupabaseEmailService", () => {
             const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => { });
 
             const { SupabaseEmailService } = await import(
-                "../../src/services/email.service.js"
+                "../../src/services/email-supabase.service.js"
             );
             const emailService = new SupabaseEmailService();
 
@@ -51,8 +51,11 @@ describe("SupabaseEmailService", () => {
 
     describe("createEmailService", () => {
         it("should return SupabaseEmailService instance", async () => {
-            const { createEmailService, SupabaseEmailService } = await import(
+            const { createEmailService } = await import(
                 "../../src/services/email.service.js"
+            );
+            const { SupabaseEmailService } = await import(
+                "../../src/services/email-supabase.service.js"
             );
 
             const service = createEmailService();

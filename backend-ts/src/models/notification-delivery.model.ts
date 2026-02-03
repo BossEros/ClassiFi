@@ -1,6 +1,6 @@
 import { pgTable, serial, integer, varchar, text, timestamp, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { notifications, notificationChannelEnum } from "./notification.model";
+import { notifications, notificationChannelEnum } from "./notification.model.js";
 
 export const deliveryStatusEnum = pgEnum("delivery_status", [
     "PENDING",
@@ -11,9 +11,9 @@ export const deliveryStatusEnum = pgEnum("delivery_status", [
 
 export const notificationDeliveries = pgTable("notification_deliveries", {
     id: serial("id").primaryKey(),
-    notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade"}),
+    notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade" }),
     channel: notificationChannelEnum("channel").notNull(),
-    status: deliveryStatusEnum("status").notNull().default("PENDING"),  
+    status: deliveryStatusEnum("status").notNull().default("PENDING"),
     recipientEmail: varchar("recipient_email", { length: 255 }),
     sentAt: timestamp("sent_at"),
     failedAt: timestamp("failed_at"),

@@ -1,6 +1,6 @@
 import { pgTable, serial, integer, varchar, text, boolean, timestamp, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { users } from "./user.model";
+import { users } from "./user.model.js";
 
 export const notificationTypeEnum = pgEnum("notification_type", [
     "ASSIGNMENT_CREATED",

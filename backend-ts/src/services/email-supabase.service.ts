@@ -1,5 +1,5 @@
 import { injectable } from "tsyringe";
-import { createClient } from "@supabase/supabase-js";
+// import { createClient } from "@supabase/supabase-js";
 import { settings } from "../shared/config.js";
 import type { IEmailService, EmailOptions } from "./interfaces/email.interface.js";
 
@@ -9,13 +9,13 @@ import type { IEmailService, EmailOptions } from "./interfaces/email.interface.j
  */
 @injectable()
 export class SupabaseEmailService implements IEmailService {
-    private supabase;
+    // private supabase;
 
     constructor() {
-        this.supabase = createClient(
-            settings.supabaseUrl,
-            settings.supabaseServiceRoleKey
-        );
+        // this.supabase = createClient(
+        //     settings.supabaseUrl,
+        //     settings.supabaseServiceRoleKey
+        // );
     }
 
     /**
