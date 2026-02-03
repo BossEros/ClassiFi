@@ -4,3 +4,8 @@ export { SubmissionService } from "./submission.service.js"
 export { StudentDashboardService } from "./student-dashboard.service.js"
 export { TeacherDashboardService } from "./teacher-dashboard.service.js"
 export { TestCaseService } from "./test-case.service.js"
+export {
+  NotificationService,
+  NotificationQueueService,
+} from "./notification/index.js"
+export { EmailService, createEmailService } from "./email/index.js"
