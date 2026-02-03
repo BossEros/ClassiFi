@@ -64,7 +64,7 @@ export class CodeTestService {
     @inject("StorageService") private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Run all test cases for a submission and save results.
@@ -266,11 +266,11 @@ export class CodeTestService {
       ...(r.testCase.isHidden
         ? {}
         : {
-          input: r.testCase.input,
-          expectedOutput: r.testCase.expectedOutput,
-          actualOutput: r.actualOutput ?? undefined,
-          errorMessage: r.errorMessage ?? undefined,
-        }),
+            input: r.testCase.input,
+            expectedOutput: r.testCase.expectedOutput,
+            actualOutput: r.actualOutput ?? undefined,
+            errorMessage: r.errorMessage ?? undefined,
+          }),
     }))
 
     return {
@@ -316,11 +316,11 @@ export class CodeTestService {
         ...(tc.isHidden
           ? {}
           : {
-            input: tc.input,
-            expectedOutput: tc.expectedOutput,
-            actualOutput: result.stdout ?? undefined,
-            errorMessage: result.stderr || result.compileOutput || undefined,
-          }),
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              actualOutput: result.stdout ?? undefined,
+              errorMessage: result.stderr || result.compileOutput || undefined,
+            }),
       }
     })
   }

@@ -2,60 +2,82 @@ import { z } from "zod"
 import "dotenv/config"
 
 /** Environment variable schema */
-const EnvSchema = z.object({
-  // Supabase
-  SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid URL"),
-  SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY is required"),
-  SUPABASE_SERVICE_ROLE_KEY: z
-    .string()
-    .min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
+const EnvSchema = z
+  .object({
+    // Supabase
+    SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid URL"),
+    SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY is required"),
+    SUPABASE_SERVICE_ROLE_KEY: z
+      .string()
+      .min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
 
-  // Database
-  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+    // Database
+    DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
-  // Application
-  APP_NAME: z.string().default("ClassiFi API"),
-  APP_VERSION: z.string().default("1.0.0"),
-  DEBUG: z
-    .string()
-    .default("false")
-    .transform((v) => v === "true" || v === "True"),
-  ENVIRONMENT: z
-    .enum(["development", "staging", "production"])
-    .default("development"),
-  PORT: z.string().default("8001").transform(Number),
+    // Application
+    APP_NAME: z.string().default("ClassiFi API"),
+    APP_VERSION: z.string().default("1.0.0"),
+    DEBUG: z
+      .string()
+      .default("false")
+      .transform((v) => v === "true" || v === "True"),
+    ENVIRONMENT: z
+      .enum(["development", "staging", "production"])
+      .default("development"),
+    PORT: z.string().default("8001").transform(Number),
 
-  // CORS
-  FRONTEND_URL: z.string().url().default("http://localhost:5173"),
-  ALLOWED_ORIGINS: z
-    .string()
-    .default("http://localhost:5173")
-    .transform((v) => v.split(",")),
+    // CORS
+    FRONTEND_URL: z.string().url().default("http://localhost:5173"),
+    ALLOWED_ORIGINS: z
+      .string()
+      .default("http://localhost:5173")
+      .transform((v) => v.split(",")),
 
-  // API
-  API_PREFIX: z.string().default("/api"),
+    // API
+    API_PREFIX: z.string().default("/api"),
 
-  // Judge0 (Code Execution)
-  JUDGE0_URL: z.string().url().default("http://localhost:2358"),
+    // Judge0 (Code Execution)
+    JUDGE0_URL: z.string().url().default("http://localhost:2358"),
 
-  // Test Execution Timeout (in seconds)
-  TEST_EXECUTION_TIMEOUT_SECONDS: z
-    .string()
-    .default("60")
-    .transform(Number)
-    .refine((v) => v > 0, "TEST_EXECUTION_TIMEOUT_SECONDS must be positive"),
+    // Test Execution Timeout (in seconds)
+    TEST_EXECUTION_TIMEOUT_SECONDS: z
+      .string()
+      .default("60")
+      .transform(Number)
+      .refine((v) => v > 0, "TEST_EXECUTION_TIMEOUT_SECONDS must be positive"),
 
-  // Email Configuration (SendGrid - Primary)
-  SENDGRID_API_KEY: z.string().min(1, "SENDGRID_API_KEY is required"),
-  EMAIL_FROM: z.string().email().default("noreply@classifi.app"),
-  EMAIL_FROM_NAME: z.string().default("ClassiFi"),
+    // Email Configuration (SendGrid - Primary)
+    SENDGRID_API_KEY: z
+      .string()
+      .min(1, "SENDGRID_API_KEY is required for primary email service"),
+    EMAIL_FROM: z.string().email().default("noreply@classifi.app"),
+    EMAIL_FROM_NAME: z.string().default("ClassiFi"),
 
-  // Email Configuration (Gmail SMTP - Backup)
-  SMTP_HOST: z.string().default("smtp.gmail.com"),
-  SMTP_PORT: z.string().default("587").transform(Number),
-  SMTP_USER: z.string().optional(),
-  SMTP_PASSWORD: z.string().optional(),
-})
+    // Email Configuration (SMTP - Backup/Fallback)
+    SMTP_HOST: z
+      .string()
+      .min(1, "SMTP_HOST is required for backup email service"),
+    SMTP_PORT: z
+      .string()
+      .min(1, "SMTP_PORT is required for backup email service"),
+    SMTP_USER: z
+      .string()
+      .min(1, "SMTP_USER is required for backup email service"),
+    SMTP_PASSWORD: z
+      .string()
+      .min(1, "SMTP_PASSWORD is required for backup email service"),
+  })
+  .superRefine((data, ctx) => {
+    // Validate SMTP_PORT is a positive number
+    const port = Number(data.SMTP_PORT)
+    if (isNaN(port) || port <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["SMTP_PORT"],
+        message: "SMTP_PORT must be a positive number",
+      })
+    }
+  })
 
 /** Validated environment type */
 export type Env = z.infer<typeof EnvSchema>
@@ -113,9 +135,9 @@ export const settings = {
   emailFrom: env.EMAIL_FROM,
   emailFromName: env.EMAIL_FROM_NAME,
 
-  // Email (Gmail SMTP - Backup)
+  // Email (SMTP - Backup/Fallback)
   smtpHost: env.SMTP_HOST,
-  smtpPort: env.SMTP_PORT,
+  smtpPort: Number(env.SMTP_PORT),
   smtpUser: env.SMTP_USER,
   smtpPassword: env.SMTP_PASSWORD,
 }

@@ -5,7 +5,7 @@ import type { SubmissionRepository } from "../../src/repositories/submission.rep
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { LatePenaltyService } from "../../src/services/latePenalty.service.js"
 import type { TestResultRepository } from "../../src/repositories/testResult.repository.js"
-import type { NotificationService } from "../../src/services/notification.service.js"
+import type { NotificationService } from "../../src/services/notification/notification.service.js"
 
 describe("GradebookService", () => {
   let gradebookService: GradebookService
@@ -202,7 +202,7 @@ describe("GradebookService", () => {
       await gradebookService.overrideGrade(1, 95, "Excellent work!")
 
       // Wait for async notification promise
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
         10,
@@ -214,7 +214,7 @@ describe("GradebookService", () => {
           grade: 95,
           maxGrade: 100,
           submissionUrl: expect.stringContaining("/dashboard/assignments/1"),
-        })
+        }),
       )
     })
 
@@ -222,12 +222,12 @@ describe("GradebookService", () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
       mockNotificationService.createNotification.mockRejectedValue(
-        new Error("Notification service error")
+        new Error("Notification service error"),
       )
 
       // Should not throw even if notification fails
       await expect(
-        gradebookService.overrideGrade(1, 95, "Excellent work!")
+        gradebookService.overrideGrade(1, 95, "Excellent work!"),
       ).resolves.not.toThrow()
 
       expect(mockSubmissionRepo.setGradeOverride).toHaveBeenCalledWith(

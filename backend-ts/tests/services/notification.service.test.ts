@@ -1,317 +1,396 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { NotificationService } from "../../src/services/notification.service.js";
-import type { NotificationRepository } from "../../src/repositories/notification.repository.js";
-import type { NotificationQueueService } from "../../src/services/notification-queue.service.js";
-import type { Notification } from "../../src/models/index.js";
-import { NotFoundError, ForbiddenError } from "../../src/shared/errors.js";
+import { describe, it, expect, beforeEach, vi } from "vitest"
+import { NotificationService } from "../../src/services/notification/notification.service.js"
+import type { NotificationRepository } from "../../src/repositories/notification.repository.js"
+import type { NotificationQueueService } from "../../src/services/notification/queue.service.js"
+import type { Notification } from "../../src/models/index.js"
+import { NotFoundError, ForbiddenError } from "../../src/shared/errors.js"
 
 describe("NotificationService", () => {
-    let service: NotificationService;
-    let mockNotificationRepo: NotificationRepository;
-    let mockQueueService: NotificationQueueService;
+  let service: NotificationService
+  let mockNotificationRepo: NotificationRepository
+  let mockQueueService: NotificationQueueService
 
-    beforeEach(() => {
-        // Create mock repositories and services
-        mockNotificationRepo = {
-            create: vi.fn(),
-            findById: vi.fn(),
-            findByUserId: vi.fn(),
-            countByUserId: vi.fn(),
-            countUnreadByUserId: vi.fn(),
-            markAsRead: vi.fn(),
-            markAllAsReadByUserId: vi.fn(),
-            delete: vi.fn(),
-        } as any;
+  beforeEach(() => {
+    // Create mock repositories and services
+    mockNotificationRepo = {
+      create: vi.fn(),
+      findById: vi.fn(),
+      findByUserId: vi.fn(),
+      findRecentUnread: vi.fn(),
+      countByUserId: vi.fn(),
+      countUnreadByUserId: vi.fn(),
+      markAsRead: vi.fn(),
+      markAllAsReadByUserId: vi.fn(),
+      delete: vi.fn(),
+    } as any
 
-        mockQueueService = {
-            enqueueDelivery: vi.fn(),
-        } as any;
+    mockQueueService = {
+      enqueueDelivery: vi.fn(),
+    } as any
 
-        service = new NotificationService(mockNotificationRepo, mockQueueService);
-    });
+    service = new NotificationService(mockNotificationRepo, mockQueueService)
+  })
 
-    describe("createNotification", () => {
-        it("should create notification with correct data", async () => {
-            const mockNotification: Notification = {
-                id: 1,
-                userId: 1,
-                type: "ASSIGNMENT_CREATED",
-                title: "New Assignment: Test Assignment",
-                message: 'Your teacher has created a new assignment "Test Assignment" due on 2024-12-31.',
-                metadata: {
-                    assignmentId: 1,
-                    classId: 1,
-                    dueDate: "2024-12-31",
-                },
-                isRead: false,
-                readAt: null,
-                createdAt: new Date(),
-            };
+  describe("createNotification", () => {
+    it("should create notification with correct data", async () => {
+      const mockNotification: Notification = {
+        id: 1,
+        userId: 1,
+        type: "ASSIGNMENT_CREATED",
+        title: "New Assignment: Test Assignment",
+        message:
+          'Your teacher has created a new assignment "Test Assignment" due on 2024-12-31.',
+        metadata: {
+          assignmentId: 1,
+          classId: 1,
+          dueDate: "2024-12-31",
+        },
+        isRead: false,
+        readAt: null,
+        createdAt: new Date(),
+      }
 
-            vi.mocked(mockNotificationRepo.create).mockResolvedValue(mockNotification);
-            vi.mocked(mockQueueService.enqueueDelivery).mockResolvedValue(undefined);
+      vi.mocked(mockNotificationRepo.create).mockResolvedValue(mockNotification)
+      vi.mocked(mockQueueService.enqueueDelivery).mockResolvedValue(undefined)
 
-            const result = await service.createNotification(1, "ASSIGNMENT_CREATED", {
-                assignmentTitle: "Test Assignment",
-                className: "CS101",
-                dueDate: "2024-12-31",
-                assignmentUrl: "http://example.com",
-                assignmentId: 1,
-                classId: 1,
-            });
+      const result = await service.createNotification(1, "ASSIGNMENT_CREATED", {
+        assignmentTitle: "Test Assignment",
+        className: "CS101",
+        dueDate: "2024-12-31",
+        assignmentUrl: "http://example.com",
+        assignmentId: 1,
+        classId: 1,
+      })
 
-            expect(result).toEqual(mockNotification);
-            expect(mockNotificationRepo.create).toHaveBeenCalledWith({
-                userId: 1,
-                type: "ASSIGNMENT_CREATED",
-                title: "New Assignment: Test Assignment",
-                message: expect.stringContaining("Test Assignment"),
-                metadata: {
-                    assignmentId: 1,
-                    classId: 1,
-                    dueDate: "2024-12-31",
-                },
-            });
-        });
+      expect(result).toEqual(mockNotification)
+      expect(mockNotificationRepo.create).toHaveBeenCalledWith({
+        userId: 1,
+        type: "ASSIGNMENT_CREATED",
+        title: "New Assignment: Test Assignment",
+        message: expect.stringContaining("Test Assignment"),
+        metadata: {
+          assignmentId: 1,
+          classId: 1,
+          dueDate: "2024-12-31",
+        },
+      })
+    })
 
-        it("should queue delivery for all channels", async () => {
-            const mockNotification: Notification = {
-                id: 1,
-                userId: 1,
-                type: "ASSIGNMENT_CREATED",
-                title: "Test",
-                message: "Test",
-                metadata: null,
-                isRead: false,
-                readAt: null,
-                createdAt: new Date(),
-            };
+    it("should queue delivery for all channels", async () => {
+      const mockNotification: Notification = {
+        id: 1,
+        userId: 1,
+        type: "ASSIGNMENT_CREATED",
+        title: "Test",
+        message: "Test",
+        metadata: null,
+        isRead: false,
+        readAt: null,
+        createdAt: new Date(),
+      }
 
-            vi.mocked(mockNotificationRepo.create).mockResolvedValue(mockNotification);
-            vi.mocked(mockQueueService.enqueueDelivery).mockResolvedValue(undefined);
+      vi.mocked(mockNotificationRepo.create).mockResolvedValue(mockNotification)
+      vi.mocked(mockQueueService.enqueueDelivery).mockResolvedValue(undefined)
 
-            await service.createNotification(1, "ASSIGNMENT_CREATED", {
-                assignmentTitle: "Test",
-                className: "CS101",
-                dueDate: "2024-12-31",
-                assignmentUrl: "http://example.com",
-            });
+      await service.createNotification(1, "ASSIGNMENT_CREATED", {
+        assignmentTitle: "Test",
+        className: "CS101",
+        dueDate: "2024-12-31",
+        assignmentUrl: "http://example.com",
+      })
 
-            // ASSIGNMENT_CREATED has both EMAIL and IN_APP channels
-            expect(mockQueueService.enqueueDelivery).toHaveBeenCalledTimes(2);
-            expect(mockQueueService.enqueueDelivery).toHaveBeenCalledWith(1, "EMAIL", expect.any(Object));
-            expect(mockQueueService.enqueueDelivery).toHaveBeenCalledWith(1, "IN_APP", expect.any(Object));
-        });
+      // ASSIGNMENT_CREATED has both EMAIL and IN_APP channels
+      expect(mockQueueService.enqueueDelivery).toHaveBeenCalledTimes(2)
+      expect(mockQueueService.enqueueDelivery).toHaveBeenCalledWith(
+        1,
+        "EMAIL",
+        expect.any(Object),
+      )
+      expect(mockQueueService.enqueueDelivery).toHaveBeenCalledWith(
+        1,
+        "IN_APP",
+        expect.any(Object),
+      )
+    })
 
-        it("should throw error for unknown notification type", async () => {
-            await expect(
-                service.createNotification(1, "UNKNOWN_TYPE", {})
-            ).rejects.toThrow("Unknown notification type: UNKNOWN_TYPE");
-        });
-    });
+    it("should throw error for unknown notification type", async () => {
+      await expect(
+        service.createNotification(1, "UNKNOWN_TYPE", {}),
+      ).rejects.toThrow("Unknown notification type: UNKNOWN_TYPE")
+    })
+  })
 
-    describe("getUserNotifications", () => {
-        it("should return paginated notifications", async () => {
-            const mockNotifications: Notification[] = [
-                {
-                    id: 1,
-                    userId: 1,
-                    type: "ASSIGNMENT_CREATED",
-                    title: "Test 1",
-                    message: "Message 1",
-                    metadata: null,
-                    isRead: false,
-                    readAt: null,
-                    createdAt: new Date(),
-                },
-                {
-                    id: 2,
-                    userId: 1,
-                    type: "SUBMISSION_GRADED",
-                    title: "Test 2",
-                    message: "Message 2",
-                    metadata: null,
-                    isRead: true,
-                    readAt: new Date(),
-                    createdAt: new Date(),
-                },
-            ];
+  describe("getUserNotifications", () => {
+    it("should return paginated notifications", async () => {
+      const mockNotifications: Notification[] = [
+        {
+          id: 1,
+          userId: 1,
+          type: "ASSIGNMENT_CREATED",
+          title: "Test 1",
+          message: "Message 1",
+          metadata: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date(),
+        },
+        {
+          id: 2,
+          userId: 1,
+          type: "SUBMISSION_GRADED",
+          title: "Test 2",
+          message: "Message 2",
+          metadata: null,
+          isRead: true,
+          readAt: new Date(),
+          createdAt: new Date(),
+        },
+      ]
 
-            vi.mocked(mockNotificationRepo.findByUserId).mockResolvedValue(mockNotifications);
-            vi.mocked(mockNotificationRepo.countByUserId).mockResolvedValue(25);
+      vi.mocked(mockNotificationRepo.findByUserId).mockResolvedValue(
+        mockNotifications,
+      )
+      vi.mocked(mockNotificationRepo.countByUserId).mockResolvedValue(25)
 
-            const result = await service.getUserNotifications(1, 1, 10);
+      const result = await service.getUserNotifications(1, 1, 10)
 
-            expect(result).toEqual({
-                notifications: mockNotifications,
-                total: 25,
-                hasMore: true,
-            });
+      expect(result).toEqual({
+        notifications: mockNotifications,
+        total: 25,
+        hasMore: true,
+      })
 
-            expect(mockNotificationRepo.findByUserId).toHaveBeenCalledWith(1, 10, 0);
-        });
+      expect(mockNotificationRepo.findByUserId).toHaveBeenCalledWith(1, 10, 0)
+    })
 
-        it("should calculate correct offset for pagination", async () => {
-            vi.mocked(mockNotificationRepo.findByUserId).mockResolvedValue([]);
-            vi.mocked(mockNotificationRepo.countByUserId).mockResolvedValue(0);
+    it("should calculate correct offset for pagination", async () => {
+      vi.mocked(mockNotificationRepo.findByUserId).mockResolvedValue([])
+      vi.mocked(mockNotificationRepo.countByUserId).mockResolvedValue(0)
 
-            await service.getUserNotifications(1, 3, 20);
+      await service.getUserNotifications(1, 3, 20)
 
-            expect(mockNotificationRepo.findByUserId).toHaveBeenCalledWith(1, 20, 40);
-        });
+      expect(mockNotificationRepo.findByUserId).toHaveBeenCalledWith(1, 20, 40)
+    })
 
-        it("should set hasMore to false when on last page", async () => {
-            const mockNotifications: Notification[] = [
-                {
-                    id: 1,
-                    userId: 1,
-                    type: "ASSIGNMENT_CREATED",
-                    title: "Test",
-                    message: "Message",
-                    metadata: null,
-                    isRead: false,
-                    readAt: null,
-                    createdAt: new Date(),
-                },
-            ];
+    it("should set hasMore to false when on last page", async () => {
+      const mockNotifications: Notification[] = [
+        {
+          id: 1,
+          userId: 1,
+          type: "ASSIGNMENT_CREATED",
+          title: "Test",
+          message: "Message",
+          metadata: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date(),
+        },
+      ]
 
-            vi.mocked(mockNotificationRepo.findByUserId).mockResolvedValue(mockNotifications);
-            vi.mocked(mockNotificationRepo.countByUserId).mockResolvedValue(1);
+      vi.mocked(mockNotificationRepo.findByUserId).mockResolvedValue(
+        mockNotifications,
+      )
+      vi.mocked(mockNotificationRepo.countByUserId).mockResolvedValue(1)
 
-            const result = await service.getUserNotifications(1, 1, 10);
+      const result = await service.getUserNotifications(1, 1, 10)
 
-            expect(result.hasMore).toBe(false);
-        });
-    });
+      expect(result.hasMore).toBe(false)
+    })
 
-    describe("getUnreadCount", () => {
-        it("should return unread count for user", async () => {
-            vi.mocked(mockNotificationRepo.countUnreadByUserId).mockResolvedValue(5);
+    it("should return only unread notifications when unreadOnly is true", async () => {
+      const mockUnreadNotifications: Notification[] = [
+        {
+          id: 1,
+          userId: 1,
+          type: "ASSIGNMENT_CREATED",
+          title: "Unread 1",
+          message: "Message 1",
+          metadata: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date(),
+        },
+        {
+          id: 2,
+          userId: 1,
+          type: "SUBMISSION_GRADED",
+          title: "Unread 2",
+          message: "Message 2",
+          metadata: null,
+          isRead: false,
+          readAt: null,
+          createdAt: new Date(),
+        },
+      ]
 
-            const result = await service.getUnreadCount(1);
+      vi.mocked(mockNotificationRepo.findRecentUnread).mockResolvedValue(
+        mockUnreadNotifications,
+      )
+      vi.mocked(mockNotificationRepo.countUnreadByUserId).mockResolvedValue(15)
 
-            expect(result).toBe(5);
-            expect(mockNotificationRepo.countUnreadByUserId).toHaveBeenCalledWith(1);
-        });
+      const result = await service.getUserNotifications(1, 2, 10, true)
 
-        it("should return 0 when user has no unread notifications", async () => {
-            vi.mocked(mockNotificationRepo.countUnreadByUserId).mockResolvedValue(0);
+      expect(result).toEqual({
+        notifications: mockUnreadNotifications,
+        total: 15,
+        hasMore: true,
+      })
 
-            const result = await service.getUnreadCount(1);
+      expect(mockNotificationRepo.findRecentUnread).toHaveBeenCalledWith(
+        1,
+        10,
+        10,
+      )
+      expect(mockNotificationRepo.countUnreadByUserId).toHaveBeenCalledWith(1)
+    })
+  })
 
-            expect(result).toBe(0);
-        });
-    });
+  describe("getUnreadCount", () => {
+    it("should return unread count for user", async () => {
+      vi.mocked(mockNotificationRepo.countUnreadByUserId).mockResolvedValue(5)
 
-    describe("markAsRead", () => {
-        it("should mark notification as read", async () => {
-            const mockNotification: Notification = {
-                id: 1,
-                userId: 1,
-                type: "ASSIGNMENT_CREATED",
-                title: "Test",
-                message: "Message",
-                metadata: null,
-                isRead: false,
-                readAt: null,
-                createdAt: new Date(),
-            };
+      const result = await service.getUnreadCount(1)
 
-            vi.mocked(mockNotificationRepo.findById).mockResolvedValue(mockNotification);
-            vi.mocked(mockNotificationRepo.markAsRead).mockResolvedValue(undefined);
+      expect(result).toBe(5)
+      expect(mockNotificationRepo.countUnreadByUserId).toHaveBeenCalledWith(1)
+    })
 
-            await service.markAsRead(1, 1);
+    it("should return 0 when user has no unread notifications", async () => {
+      vi.mocked(mockNotificationRepo.countUnreadByUserId).mockResolvedValue(0)
 
-            expect(mockNotificationRepo.markAsRead).toHaveBeenCalledWith(1);
-        });
+      const result = await service.getUnreadCount(1)
 
-        it("should throw NotFoundError if notification does not exist", async () => {
-            vi.mocked(mockNotificationRepo.findById).mockResolvedValue(undefined);
+      expect(result).toBe(0)
+    })
+  })
 
-            await expect(service.markAsRead(1, 1)).rejects.toThrow(NotFoundError);
-            await expect(service.markAsRead(1, 1)).rejects.toThrow("Notification not found");
-        });
+  describe("markAsRead", () => {
+    it("should mark notification as read", async () => {
+      const mockNotification: Notification = {
+        id: 1,
+        userId: 1,
+        type: "ASSIGNMENT_CREATED",
+        title: "Test",
+        message: "Message",
+        metadata: null,
+        isRead: false,
+        readAt: null,
+        createdAt: new Date(),
+      }
 
-        it("should throw ForbiddenError if user is not authorized", async () => {
-            const mockNotification: Notification = {
-                id: 1,
-                userId: 2, // Different user
-                type: "ASSIGNMENT_CREATED",
-                title: "Test",
-                message: "Message",
-                metadata: null,
-                isRead: false,
-                readAt: null,
-                createdAt: new Date(),
-            };
+      vi.mocked(mockNotificationRepo.findById).mockResolvedValue(
+        mockNotification,
+      )
+      vi.mocked(mockNotificationRepo.markAsRead).mockResolvedValue(undefined)
 
-            vi.mocked(mockNotificationRepo.findById).mockResolvedValue(mockNotification);
+      await service.markAsRead(1, 1)
 
-            await expect(service.markAsRead(1, 1)).rejects.toThrow(ForbiddenError);
-            await expect(service.markAsRead(1, 1)).rejects.toThrow(
-                "Not authorized to access this notification"
-            );
-        });
-    });
+      expect(mockNotificationRepo.markAsRead).toHaveBeenCalledWith(1)
+    })
 
-    describe("markAllAsRead", () => {
-        it("should mark all notifications as read for user", async () => {
-            vi.mocked(mockNotificationRepo.markAllAsReadByUserId).mockResolvedValue(undefined);
+    it("should throw NotFoundError if notification does not exist", async () => {
+      vi.mocked(mockNotificationRepo.findById).mockResolvedValue(undefined)
 
-            await service.markAllAsRead(1);
+      await expect(service.markAsRead(1, 1)).rejects.toThrow(NotFoundError)
+      await expect(service.markAsRead(1, 1)).rejects.toThrow(
+        "Notification not found",
+      )
+    })
 
-            expect(mockNotificationRepo.markAllAsReadByUserId).toHaveBeenCalledWith(1);
-        });
-    });
+    it("should throw ForbiddenError if user is not authorized", async () => {
+      const mockNotification: Notification = {
+        id: 1,
+        userId: 2, // Different user
+        type: "ASSIGNMENT_CREATED",
+        title: "Test",
+        message: "Message",
+        metadata: null,
+        isRead: false,
+        readAt: null,
+        createdAt: new Date(),
+      }
 
-    describe("deleteNotification", () => {
-        it("should delete notification", async () => {
-            const mockNotification: Notification = {
-                id: 1,
-                userId: 1,
-                type: "ASSIGNMENT_CREATED",
-                title: "Test",
-                message: "Message",
-                metadata: null,
-                isRead: false,
-                readAt: null,
-                createdAt: new Date(),
-            };
+      vi.mocked(mockNotificationRepo.findById).mockResolvedValue(
+        mockNotification,
+      )
 
-            vi.mocked(mockNotificationRepo.findById).mockResolvedValue(mockNotification);
-            vi.mocked(mockNotificationRepo.delete).mockResolvedValue(true);
+      await expect(service.markAsRead(1, 1)).rejects.toThrow(ForbiddenError)
+      await expect(service.markAsRead(1, 1)).rejects.toThrow(
+        "Not authorized to access this notification",
+      )
+    })
+  })
 
-            await service.deleteNotification(1, 1);
+  describe("markAllAsRead", () => {
+    it("should mark all notifications as read for user", async () => {
+      vi.mocked(mockNotificationRepo.markAllAsReadByUserId).mockResolvedValue(
+        undefined,
+      )
 
-            expect(mockNotificationRepo.delete).toHaveBeenCalledWith(1);
-        });
+      await service.markAllAsRead(1)
 
-        it("should throw NotFoundError if notification does not exist", async () => {
-            vi.mocked(mockNotificationRepo.findById).mockResolvedValue(undefined);
+      expect(mockNotificationRepo.markAllAsReadByUserId).toHaveBeenCalledWith(1)
+    })
+  })
 
-            await expect(service.deleteNotification(1, 1)).rejects.toThrow(NotFoundError);
-            await expect(service.deleteNotification(1, 1)).rejects.toThrow("Notification not found");
-        });
+  describe("deleteNotification", () => {
+    it("should delete notification", async () => {
+      const mockNotification: Notification = {
+        id: 1,
+        userId: 1,
+        type: "ASSIGNMENT_CREATED",
+        title: "Test",
+        message: "Message",
+        metadata: null,
+        isRead: false,
+        readAt: null,
+        createdAt: new Date(),
+      }
 
-        it("should throw ForbiddenError if user is not authorized", async () => {
-            const mockNotification: Notification = {
-                id: 1,
-                userId: 2, // Different user
-                type: "ASSIGNMENT_CREATED",
-                title: "Test",
-                message: "Message",
-                metadata: null,
-                isRead: false,
-                readAt: null,
-                createdAt: new Date(),
-            };
+      vi.mocked(mockNotificationRepo.findById).mockResolvedValue(
+        mockNotification,
+      )
+      vi.mocked(mockNotificationRepo.delete).mockResolvedValue(true)
 
-            vi.mocked(mockNotificationRepo.findById).mockResolvedValue(mockNotification);
+      await service.deleteNotification(1, 1)
 
-            await expect(service.deleteNotification(1, 1)).rejects.toThrow(ForbiddenError);
-            await expect(service.deleteNotification(1, 1)).rejects.toThrow(
-                "Not authorized to delete this notification"
-            );
-        });
-    });
-});
+      expect(mockNotificationRepo.delete).toHaveBeenCalledWith(1)
+    })
+
+    it("should throw NotFoundError if notification does not exist", async () => {
+      vi.mocked(mockNotificationRepo.findById).mockResolvedValue(undefined)
+
+      await expect(service.deleteNotification(1, 1)).rejects.toThrow(
+        NotFoundError,
+      )
+      await expect(service.deleteNotification(1, 1)).rejects.toThrow(
+        "Notification not found",
+      )
+    })
+
+    it("should throw ForbiddenError if user is not authorized", async () => {
+      const mockNotification: Notification = {
+        id: 1,
+        userId: 2, // Different user
+        type: "ASSIGNMENT_CREATED",
+        title: "Test",
+        message: "Message",
+        metadata: null,
+        isRead: false,
+        readAt: null,
+        createdAt: new Date(),
+      }
+
+      vi.mocked(mockNotificationRepo.findById).mockResolvedValue(
+        mockNotification,
+      )
+
+      await expect(service.deleteNotification(1, 1)).rejects.toThrow(
+        ForbiddenError,
+      )
+      await expect(service.deleteNotification(1, 1)).rejects.toThrow(
+        "Not authorized to delete this notification",
+      )
+    })
+  })
+})

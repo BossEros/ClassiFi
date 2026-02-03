@@ -1,4 +1,23 @@
-import { settings } from "../../shared/config.js";
+import { settings } from "../../shared/config.js"
+
+/**
+ * Escapes HTML special characters to prevent HTML injection attacks.
+ * Converts characters like <, >, &, ", and ' to their HTML entity equivalents.
+ *
+ * @param text - The text to escape.
+ * @returns The escaped text safe for HTML insertion.
+ */
+function escapeHtml(text: string): string {
+  const htmlEscapeMap: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }
+
+  return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char] || char)
+}
 
 /**
  * Base HTML email template wrapper.
@@ -78,79 +97,79 @@ function baseEmailTemplate(content: string): string {
 <body>
   <div class="email-container">
     <div class="header">
-      <h1>${settings.appName}</h1>
+      <h1>${escapeHtml(settings.appName)}</h1>
     </div>
     <div class="content">
       ${content}
     </div>
     <div class="footer">
-      <p>This is an automated notification from ${settings.appName}.</p>
+      <p>This is an automated notification from ${escapeHtml(settings.appName)}.</p>
       <p>If you have questions, please contact your instructor.</p>
     </div>
   </div>
 </body>
 </html>
-  `.trim();
+  `.trim()
 }
 
 /**
  * Email template for assignment creation notification.
  */
 export function assignmentCreatedEmailTemplate(data: {
-  assignmentTitle: string;
-  className: string;
-  dueDate: string;
-  assignmentUrl: string;
+  assignmentTitle: string
+  className: string
+  dueDate: string
+  assignmentUrl: string
 }): string {
   const content = `
     <h2>New Assignment Posted</h2>
-    <p>Your teacher has created a new assignment in <strong>${data.className}</strong>.</p>
+    <p>Your teacher has created a new assignment in <strong>${escapeHtml(data.className)}</strong>.</p>
     
     <div class="info-box">
-      <p><strong>Assignment:</strong> ${data.assignmentTitle}</p>
-      <p><strong>Due Date:</strong> ${data.dueDate}</p>
+      <p><strong>Assignment:</strong> ${escapeHtml(data.assignmentTitle)}</p>
+      <p><strong>Due Date:</strong> ${escapeHtml(data.dueDate)}</p>
     </div>
     
-    <a href="${data.assignmentUrl}" class="button">View Assignment</a>
+    <a href="${escapeHtml(data.assignmentUrl)}" class="button">View Assignment</a>
     
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
       Make sure to submit your work before the deadline to avoid late penalties.
     </p>
-  `;
+  `
 
-  return baseEmailTemplate(content);
+  return baseEmailTemplate(content)
 }
 
 /**
  * Email template for submission graded notification.
  */
 export function submissionGradedEmailTemplate(data: {
-  assignmentTitle: string;
-  grade: number;
-  maxGrade: number;
-  submissionUrl: string;
+  assignmentTitle: string
+  grade: number
+  maxGrade: number
+  submissionUrl: string
 }): string {
-  const percentage = Math.round((data.grade / data.maxGrade) * 100);
+  const percentage = Math.round((data.grade / data.maxGrade) * 100)
 
   const content = `
     <h2>Your Assignment Has Been Graded</h2>
-    <p>Your submission for <strong>${data.assignmentTitle}</strong> has been graded.</p>
+    <p>Your submission for <strong>${escapeHtml(data.assignmentTitle)}</strong> has been graded.</p>
     
     <div class="info-box" style="text-align: center;">
       <p style="font-size: 36px; font-weight: bold; margin: 0; color: #0d9488;">
-        ${data.grade}/${data.maxGrade}
+        ${String(data.grade)}/${String(data.maxGrade)}
       </p>
       <p style="font-size: 18px; color: #6b7280; margin: 10px 0 0 0;">
-        ${percentage}%
+        ${String(percentage)}%
       </p>
     </div>
     
-    <a href="${data.submissionUrl}" class="button">View Submission</a>
+    <a href="${escapeHtml(data.submissionUrl)}" class="button">View Submission</a>
     
     <p style="color: #6b7280; font-size: 14px; margin-top: 20px;">
       Review your submission to see detailed feedback and test results.
     </p>
-  `;
+  `
 
-  return baseEmailTemplate(content);
+  return baseEmailTemplate(content)
 }

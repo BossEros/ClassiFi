@@ -92,7 +92,11 @@ describe("AssignmentService", () => {
     })
 
     it("should create notifications for all enrolled students", async () => {
-      const mockClass = createMockClass({ id: 1, teacherId: 1, className: "Test Class" })
+      const mockClass = createMockClass({
+        id: 1,
+        teacherId: 1,
+        className: "Test Class",
+      })
       const mockAssignment = createMockAssignment({
         id: 1,
         classId: 1,
@@ -131,7 +135,9 @@ describe("AssignmentService", () => {
 
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
-      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(
+        mockEnrolledStudents,
+      )
       mockNotificationService.createNotification!.mockResolvedValue({} as any)
 
       await assignmentService.createAssignment({
@@ -141,10 +147,14 @@ describe("AssignmentService", () => {
       })
 
       // Wait for async notification promises to resolve
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
-      expect(mockEnrollmentRepo.getEnrolledStudentsWithInfo).toHaveBeenCalledWith(1)
-      expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(2)
+      expect(
+        mockEnrollmentRepo.getEnrolledStudentsWithInfo,
+      ).toHaveBeenCalledWith(1)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(
+        2,
+      )
 
       // Verify first student notification
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
@@ -156,7 +166,7 @@ describe("AssignmentService", () => {
           className: "Test Class",
           dueDate: expect.any(String),
           assignmentUrl: expect.stringContaining("/dashboard/assignments/1"),
-        })
+        }),
       )
 
       // Verify second student notification
@@ -167,7 +177,7 @@ describe("AssignmentService", () => {
           assignmentId: 1,
           assignmentTitle: "Test Assignment",
           className: "Test Class",
-        })
+        }),
       )
     })
 
@@ -192,8 +202,12 @@ describe("AssignmentService", () => {
 
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
-      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
-      mockNotificationService.createNotification!.mockRejectedValue(new Error("Notification service error"))
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(
+        mockEnrolledStudents,
+      )
+      mockNotificationService.createNotification!.mockRejectedValue(
+        new Error("Notification service error"),
+      )
 
       // Should not throw even if notifications fail
       const result = await assignmentService.createAssignment({
@@ -207,7 +221,11 @@ describe("AssignmentService", () => {
     })
 
     it("should format deadline correctly in notification", async () => {
-      const mockClass = createMockClass({ id: 1, teacherId: 1, className: "Test Class" })
+      const mockClass = createMockClass({
+        id: 1,
+        teacherId: 1,
+        className: "Test Class",
+      })
       const deadline = new Date("2024-12-25T10:00:00Z")
       const mockAssignment = createMockAssignment({
         id: 1,
@@ -234,7 +252,9 @@ describe("AssignmentService", () => {
 
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
-      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(
+        mockEnrolledStudents,
+      )
       mockNotificationService.createNotification!.mockResolvedValue({} as any)
 
       await assignmentService.createAssignment({
@@ -247,19 +267,23 @@ describe("AssignmentService", () => {
       })
 
       // Wait for async notification promises
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
         10,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({
           dueDate: deadline.toLocaleDateString(),
-        })
+        }),
       )
     })
 
     it("should handle assignment without deadline in notification", async () => {
-      const mockClass = createMockClass({ id: 1, teacherId: 1, className: "Test Class" })
+      const mockClass = createMockClass({
+        id: 1,
+        teacherId: 1,
+        className: "Test Class",
+      })
       const mockAssignment = createMockAssignment({
         id: 1,
         classId: 1,
@@ -285,7 +309,9 @@ describe("AssignmentService", () => {
 
       mockClassRepo.getClassById!.mockResolvedValue(mockClass)
       mockAssignmentRepo.createAssignment!.mockResolvedValue(mockAssignment)
-      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(mockEnrolledStudents)
+      mockEnrollmentRepo.getEnrolledStudentsWithInfo!.mockResolvedValue(
+        mockEnrolledStudents,
+      )
       mockNotificationService.createNotification!.mockResolvedValue({} as any)
 
       await assignmentService.createAssignment({
@@ -297,14 +323,14 @@ describe("AssignmentService", () => {
       })
 
       // Wait for async notification promises
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
         10,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({
           dueDate: "No deadline",
-        })
+        }),
       )
     })
 
@@ -323,7 +349,7 @@ describe("AssignmentService", () => {
       })
 
       // Wait for async notification promises
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
     })

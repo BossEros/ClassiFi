@@ -1,14 +1,14 @@
-import { eq } from "drizzle-orm";
+import { eq } from "drizzle-orm"
 import {
-    notificationDeliveries,
-    notifications,
-    type NotificationDelivery,
-    type NewNotificationDelivery,
-    type Notification
-} from "../models/index.js";
-import { BaseRepository } from "./base.repository.js";
-import { injectable } from "tsyringe";
-import { NotFoundError } from "../shared/errors.js";
+  notificationDeliveries,
+  notifications,
+  type NotificationDelivery,
+  type NewNotificationDelivery,
+  type Notification,
+} from "../models/index.js"
+import { BaseRepository } from "./base.repository.js"
+import { injectable } from "tsyringe"
+import { NotFoundError } from "../shared/errors.js"
 
 /**
  * Repository for notification delivery-related database operations.
@@ -16,46 +16,45 @@ import { NotFoundError } from "../shared/errors.js";
  */
 @injectable()
 export class NotificationDeliveryRepository extends BaseRepository<
-    typeof notificationDeliveries,
-    NotificationDelivery,
-    NewNotificationDelivery
+  typeof notificationDeliveries,
+  NotificationDelivery,
+  NewNotificationDelivery
 > {
-    
-    constructor() {
-        super(notificationDeliveries);
+  constructor() {
+    super(notificationDeliveries)
+  }
+
+  /**
+   * Finds pending deliveries for processing.
+   *
+   * @param limit - Maximum number of deliveries to return
+   * @returns Array of pending deliveries
+   */
+  async findPending(limit: number = 100): Promise<NotificationDelivery[]> {
+    return await this.db
+      .select()
+      .from(notificationDeliveries)
+      .where(eq(notificationDeliveries.status, "PENDING"))
+      .limit(limit)
+  }
+
+  /**
+   * Gets the notification associated with a delivery.
+   *
+   * @param notificationId - The ID of the notification
+   * @returns The notification
+   */
+  async getNotification(notificationId: number): Promise<Notification> {
+    const result = await this.db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, notificationId))
+      .limit(1)
+
+    if (!result[0]) {
+      throw new NotFoundError("Notification not found")
     }
 
-    /**
-     * Finds pending deliveries for processing.
-     *
-     * @param limit - Maximum number of deliveries to return
-     * @returns Array of pending deliveries
-     */
-    async findPending(limit: number = 100): Promise<NotificationDelivery[]> {
-        return await this.db
-            .select()
-            .from(notificationDeliveries)
-            .where(eq(notificationDeliveries.status, "PENDING"))
-            .limit(limit);
-    }
-
-    /**
-     * Gets the notification associated with a delivery.
-     *
-     * @param notificationId - The ID of the notification
-     * @returns The notification
-     */
-    async getNotification(notificationId: number): Promise<Notification> {
-        const result = await this.db
-            .select()
-            .from(notifications)
-            .where(eq(notifications.id, notificationId))
-            .limit(1);
-
-        if (!result[0]) {
-            throw new NotFoundError("Notification not found");
-        }
-
-        return result[0];
-    }
+    return result[0]
+  }
 }

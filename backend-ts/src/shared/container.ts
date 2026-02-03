@@ -78,7 +78,10 @@ container.registerSingleton("UserService", UserService)
 container.registerSingleton("GradebookService", GradebookService)
 container.registerSingleton("LatePenaltyService", LatePenaltyService)
 container.registerSingleton("EmailService", EmailService)
-container.registerSingleton("NotificationQueueService", NotificationQueueService)
+container.registerSingleton(
+  "NotificationQueueService",
+  NotificationQueueService,
+)
 container.registerSingleton("NotificationService", NotificationService)
 
 // Register code execution services
