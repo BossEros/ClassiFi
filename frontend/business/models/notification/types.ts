@@ -126,5 +126,5 @@ export interface NotificationListResponse {
  */
 export interface UnreadCountResponse {
   success: boolean
-  count: number
+  unreadCount: number
 }

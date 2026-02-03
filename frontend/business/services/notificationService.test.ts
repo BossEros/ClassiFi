@@ -117,7 +117,7 @@ describe("notificationService", () => {
   describe("getUnreadCount", () => {
     it("fetches unread count successfully", async () => {
       vi.mocked(notificationRepository.getUnreadCount).mockResolvedValue({
-        data: { success: true, count: 5 },
+        data: { success: true, unreadCount: 5 },
         status: 200,
       })
 
@@ -129,7 +129,7 @@ describe("notificationService", () => {
 
     it("returns zero when no unread notifications", async () => {
       vi.mocked(notificationRepository.getUnreadCount).mockResolvedValue({
-        data: { success: true, count: 0 },
+        data: { success: true, unreadCount: 0 },
         status: 200,
       })
 

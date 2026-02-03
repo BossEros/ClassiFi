@@ -44,7 +44,7 @@ export async function getUnreadCount(): Promise<number> {
     throw new Error("Failed to fetch unread count")
   }
 
-  return response.data.count
+  return response.data.unreadCount
 }
 
 /**

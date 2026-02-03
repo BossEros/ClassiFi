@@ -57,7 +57,7 @@ describe("NotificationRepository", () => {
 
   const mockUnreadCountResponse: UnreadCountResponse = {
     success: true,
-    count: 5,
+    unreadCount: 5,
   }
 
   const mockSuccessResponse = {
@@ -173,19 +173,19 @@ describe("NotificationRepository", () => {
       const result = await repository.getUnreadCount()
 
       expect(apiClient.get).toHaveBeenCalledWith("/notifications/unread-count")
-      expect(result.data?.count).toBe(5)
+      expect(result.data?.unreadCount).toBe(5)
       expect(result.data?.success).toBe(true)
     })
 
     it("returns zero count when no unread notifications", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
-        data: { success: true, count: 0 },
+        data: { success: true, unreadCount: 0 },
         status: 200,
       })
 
       const result = await repository.getUnreadCount()
 
-      expect(result.data?.count).toBe(0)
+      expect(result.data?.unreadCount).toBe(0)
     })
 
     it("returns error when API fails", async () => {
