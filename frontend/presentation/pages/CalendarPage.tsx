@@ -1,32 +1,17 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
-import type { User } from "@/business/models/auth/types"
 
 /**
  * Temporary Calendar page component.
  * Placeholder page for future calendar functionality.
  */
 export function CalendarPage() {
-    const navigate = useNavigate()
-    const [user, setUser] = useState<User | null>(null)
+    const user = getCurrentUser()!
 
-    useEffect(() => {
-        const currentUser = getCurrentUser()
-        if (!currentUser) {
-            navigate("/login")
-            return
-        }
-        setUser(currentUser)
-    }, [navigate])
-
-    const userInitials = user
-        ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-        : "?"
+    const userInitials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
 
     const topBar = useTopBar({ user, userInitials })
 

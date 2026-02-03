@@ -170,7 +170,7 @@ export function NotificationsPage() {
               <h3 className="text-xl font-semibold text-white mb-2">
                 No notifications yet
               </h3>
-              <p className="text-slate-300 max-w-l mx-auto leading-relaxed">
+              <p className="text-slate-300 max-w-lg mx-auto leading-relaxed">
                 When you receive notifications, they'll appear here.
               </p>
             </div>
