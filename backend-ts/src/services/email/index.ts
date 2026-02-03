@@ -1,6 +1,6 @@
-import type { IEmailService, EmailOptions } from "./interfaces/email.interface.js";
-import { FallbackEmailService } from "./email-fallback.service.js";
-import { settings } from "../shared/config.js";
+import type { IEmailService, EmailOptions } from "../interfaces/email.interface.js";
+import { FallbackEmailService } from "./fallback.service.js";
+import { settings } from "../../shared/config.js";
 
 /**
  * Factory function to create the appropriate email service based on configuration.

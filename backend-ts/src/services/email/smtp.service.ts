@@ -1,8 +1,8 @@
 import { injectable } from "tsyringe";
 import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
-import { settings } from "../shared/config.js";
-import type { IEmailService, EmailOptions } from "./interfaces/email.interface.js";
+import { settings } from "../../shared/config.js";
+import type { IEmailService, EmailOptions } from "../interfaces/email.interface.js";
 
 /**
  * SMTP email service implementation using nodemailer.

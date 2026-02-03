@@ -1,7 +1,7 @@
 import { injectable } from "tsyringe";
 import sgMail from "@sendgrid/mail";
-import { settings } from "../shared/config.js";
-import type { IEmailService, EmailOptions } from "./interfaces/email.interface.js";
+import { settings } from "../../shared/config.js";
+import type { IEmailService, EmailOptions } from "../interfaces/email.interface.js";
 
 /**
  * SendGrid email service implementation.

@@ -1,8 +1,8 @@
 import { injectable } from "tsyringe";
-import type { IEmailService, EmailOptions } from "./interfaces/email.interface.js";
-import { SendGridEmailService } from "./email-sendgrid.service.js";
-import { SMTPEmailService } from "./email-smtp.service.js";
-import { settings } from "../shared/config.js";
+import type { IEmailService, EmailOptions } from "../interfaces/email.interface.js";
+import { SendGridEmailService } from "./sendgrid.service.js";
+import { SMTPEmailService } from "./smtp.service.js";
+import { settings } from "../../shared/config.js";
 
 /**
  * Fallback email service that tries multiple providers.

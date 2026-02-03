@@ -1,11 +1,11 @@
-import { settings } from "../shared/config.js";
+import { settings } from "../../shared/config.js";
 
 /**
  * Base HTML email template wrapper.
  * Provides consistent styling across all emails.
  */
 function baseEmailTemplate(content: string): string {
-    return `
+  return `
 <!DOCTYPE html>
 <html>
 <head>
@@ -97,12 +97,12 @@ function baseEmailTemplate(content: string): string {
  * Email template for assignment creation notification.
  */
 export function assignmentCreatedEmailTemplate(data: {
-    assignmentTitle: string;
-    className: string;
-    dueDate: string;
-    assignmentUrl: string;
+  assignmentTitle: string;
+  className: string;
+  dueDate: string;
+  assignmentUrl: string;
 }): string {
-    const content = `
+  const content = `
     <h2>New Assignment Posted</h2>
     <p>Your teacher has created a new assignment in <strong>${data.className}</strong>.</p>
     
@@ -118,21 +118,21 @@ export function assignmentCreatedEmailTemplate(data: {
     </p>
   `;
 
-    return baseEmailTemplate(content);
+  return baseEmailTemplate(content);
 }
 
 /**
  * Email template for submission graded notification.
  */
 export function submissionGradedEmailTemplate(data: {
-    assignmentTitle: string;
-    grade: number;
-    maxGrade: number;
-    submissionUrl: string;
+  assignmentTitle: string;
+  grade: number;
+  maxGrade: number;
+  submissionUrl: string;
 }): string {
-    const percentage = Math.round((data.grade / data.maxGrade) * 100);
+  const percentage = Math.round((data.grade / data.maxGrade) * 100);
 
-    const content = `
+  const content = `
     <h2>Your Assignment Has Been Graded</h2>
     <p>Your submission for <strong>${data.assignmentTitle}</strong> has been graded.</p>
     
@@ -152,5 +152,5 @@ export function submissionGradedEmailTemplate(data: {
     </p>
   `;
 
-    return baseEmailTemplate(content);
+  return baseEmailTemplate(content);
 }

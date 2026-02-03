@@ -31,7 +31,7 @@ import { TestCaseService } from "../services/test-case.service.js"
 import { CODE_EXECUTOR_TOKEN } from "../services/interfaces/codeExecutor.interface.js"
 import { GradebookService } from "../services/gradebook.service.js"
 import { LatePenaltyService } from "../services/latePenalty.service.js"
-import { EmailService } from "../services/email.service.js"
+import { EmailService } from "../services/email/index.js"
 import { NotificationService } from "../services/notification.service.js"
 import { NotificationQueueService } from "../services/notification-queue.service.js"
 

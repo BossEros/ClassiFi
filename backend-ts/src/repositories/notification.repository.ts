@@ -13,6 +13,7 @@ export class NotificationRepository extends BaseRepository<
     Notification,
     NewNotification
 > {
+    
     constructor() {
         super(notifications);
     }
