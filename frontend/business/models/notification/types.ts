@@ -97,12 +97,12 @@ export type Notification =
  *
  * @param notification - The Notification to check.
  * @param type - The Notification["type"] value to match.
- * @returns True when notification is of the narrowed type Extract<Notification, { type: typeof type }>, enabling TypeScript to narrow the Notification type to the specific variant.
+ * @returns True when notification is of the narrowed type Extract<Notification, { type: T }>, enabling TypeScript to narrow the Notification type to the specific variant.
  */
-export function isNotificationType(
+export function isNotificationType<T extends Notification["type"]>(
   notification: Notification,
-  type: Notification["type"],
-): notification is Extract<Notification, { type: typeof type }> {
+  type: T,
+): notification is Extract<Notification, { type: T }> {
   return notification.type === type
 }
 
