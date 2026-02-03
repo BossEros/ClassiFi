@@ -8,6 +8,7 @@ interface TopBarProps {
   user: User | null
   userInitials: string
   onProfileClick?: () => void
+  isCollapsed?: boolean
 }
 
 /**
@@ -16,9 +17,15 @@ interface TopBarProps {
  * @param user - The current user object containing profile information.
  * @param userInitials - The user's initials for avatar fallback.
  * @param onProfileClick - Optional custom handler for profile button click. Defaults to navigating to settings.
+ * @param isCollapsed - Whether the sidebar is collapsed (affects logo text display).
  * @returns An object containing sidebar and main top bar JSX elements.
  */
-export function useTopBar({ user, userInitials, onProfileClick }: TopBarProps) {
+export function useTopBar({
+  user,
+  userInitials,
+  onProfileClick,
+  isCollapsed = false,
+}: TopBarProps) {
   const navigate = useNavigate()
 
   const handleProfileClick =

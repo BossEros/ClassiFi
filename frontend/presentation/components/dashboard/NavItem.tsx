@@ -5,9 +5,10 @@ import type { NavigationItem } from "@/business/models/dashboard/types"
 interface NavItemProps {
   item: NavigationItem
   onClick?: () => void
+  isCollapsed?: boolean
 }
 
-export function NavItem({ item, onClick }: NavItemProps) {
+export function NavItem({ item, onClick, isCollapsed = false }: NavItemProps) {
   const Icon = item.icon
 
   // Use 'end' prop for the Home route to only match exact path
@@ -24,12 +25,16 @@ export function NavItem({ item, onClick }: NavItemProps) {
           "text-gray-300 hover:text-white hover:bg-white/10 text-sm font-medium",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
           isActive &&
-            "bg-gradient-to-r from-teal-600/20 to-teal-500/20 text-white border-l-4 border-teal-500 shadow-lg shadow-teal-500/10",
+          "bg-gradient-to-r from-teal-600/20 to-teal-500/20 text-white border-l-4 border-teal-500 shadow-lg shadow-teal-500/10",
+          isCollapsed && "lg:justify-center lg:px-2",
         )
       }
+      title={isCollapsed ? item.label : undefined}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
-      <span className="font-medium">{item.label}</span>
+      <span className={cn("font-medium", isCollapsed && "lg:hidden")}>
+        {item.label}
+      </span>
     </NavLink>
   )
 }

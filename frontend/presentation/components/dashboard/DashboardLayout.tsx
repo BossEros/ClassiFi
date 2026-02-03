@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react"
 import { Sidebar } from "./Sidebar"
 import { cn } from "@/shared/utils/cn"
 
@@ -5,7 +6,7 @@ interface DashboardLayoutProps {
   children: React.ReactNode
   className?: string
   topBar?: {
-    sidebar: React.ReactNode
+    sidebar: React.ReactNode | ((isCollapsed: boolean) => React.ReactNode)
     main: React.ReactNode
   }
 }
@@ -15,12 +16,39 @@ export function DashboardLayout({
   className,
   topBar,
 }: DashboardLayoutProps) {
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem("sidebarCollapsed")
+    return saved === "true"
+  })
+
+  useEffect(() => {
+    localStorage.setItem("sidebarCollapsed", String(isCollapsed))
+  }, [isCollapsed])
+
+  const handleToggleCollapse = () => {
+    setIsCollapsed((prev) => !prev)
+  }
+
+  // Render sidebar topBar - if it's a function, call it with isCollapsed
+  const sidebarTopBar =
+    typeof topBar?.sidebar === "function"
+      ? topBar.sidebar(isCollapsed)
+      : topBar?.sidebar
+
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 flex">
       {/* Left side: Sidebar with logo - full height */}
-      <div className="flex flex-col w-56">
-        {topBar?.sidebar}
-        <Sidebar />
+      <div
+        className={cn(
+          "flex flex-col transition-all duration-300",
+          isCollapsed ? "lg:w-16" : "w-56",
+        )}
+      >
+        {sidebarTopBar}
+        <Sidebar
+          isCollapsed={isCollapsed}
+          onToggleCollapse={handleToggleCollapse}
+        />
       </div>
 
       {/* Vertical Separator - full height */}
