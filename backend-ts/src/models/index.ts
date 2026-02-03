@@ -65,3 +65,33 @@ export type { TestCase, NewTestCase } from "./test-case.model.js"
 // Test Result model
 export { testResults, testResultsRelations } from "./test-result.model.js"
 export type { TestResult, NewTestResult } from "./test-result.model.js"
+
+// Notification model
+export {
+  notifications,
+  notificationsRelations,
+  notificationTypeEnum,
+  notificationChannelEnum,
+} from "./notification.model.js"
+export type { Notification, NewNotification } from "./notification.model.js"
+
+// Notification Delivery model
+export {
+  notificationDeliveries,
+  notificationDeliveriesRelations,
+  deliveryStatusEnum,
+} from "./notification-delivery.model.js"
+export type {
+  NotificationDelivery,
+  NewNotificationDelivery,
+} from "./notification-delivery.model.js"
+
+// Notification Preference model
+export {
+  notificationPreferences,
+  notificationPreferencesRelations,
+} from "./notification-preference.model.js"
+export type {
+  NotificationPreference,
+  NewNotificationPreference,
+} from "./notification-preference.model.js"
