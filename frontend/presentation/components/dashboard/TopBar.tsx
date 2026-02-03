@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom"
 import { Avatar } from "@/presentation/components/ui/Avatar"
-import { Bell, BookOpen } from "lucide-react"
+import { BookOpen } from "lucide-react"
 import type { User } from "@/business/models/auth/types"
+import { NotificationBadge } from "./NotificationBadge"
 
 interface TopBarProps {
   user: User | null
@@ -40,13 +41,7 @@ export function useTopBar({ user, userInitials, onProfileClick }: TopBarProps) {
       <div className="h-16 bg-slate-900/95 backdrop-blur-xl border-b border-white/10 flex items-center px-6 lg:px-8 shrink-0">
         <div className="flex items-center justify-end w-full gap-4">
           {/* Notifications */}
-          <button
-            className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5 text-slate-300" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
+          <NotificationBadge />
 
           {/* Separator */}
           <div className="h-8 w-px bg-white/20"></div>

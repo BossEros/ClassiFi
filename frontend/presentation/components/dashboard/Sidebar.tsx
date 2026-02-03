@@ -13,6 +13,7 @@ import {
   Users,
   GraduationCap,
   Calendar,
+  Bell,
 } from "lucide-react"
 import { NavItem } from "./NavItem"
 import { cn } from "@/shared/utils/cn"
@@ -34,6 +35,12 @@ const teacherNavigationItems = [
     label: "Analysis History",
     path: "/dashboard/history",
     icon: Clock,
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    path: "/dashboard/notifications",
+    icon: Bell,
   },
 ]
 
@@ -57,6 +64,12 @@ const studentNavigationItems = [
     path: "/dashboard/calendar",
     icon: Calendar,
   },
+  {
+    id: "notifications",
+    label: "Notifications",
+    path: "/dashboard/notifications",
+    icon: Bell,
+  },
 ]
 
 const adminNavigationItems = [
@@ -73,6 +86,12 @@ const adminNavigationItems = [
     label: "Enrollments",
     path: "/dashboard/enrollments",
     icon: GraduationCap,
+  },
+  {
+    id: "notifications",
+    label: "Notifications",
+    path: "/dashboard/notifications",
+    icon: Bell,
   },
 ]
 
