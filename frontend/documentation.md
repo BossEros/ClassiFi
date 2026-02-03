@@ -173,6 +173,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
 | **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                                |
 | **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
+| **notificationService**     | `business/services/notificationService.ts`     | Notification management, unread counts, mark as read                   |
 | **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
 | **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
 | **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
@@ -277,6 +278,110 @@ Comprehensive settings page with:
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
 - **Account deletion**: Self-service account removal with confirmation
+
+### Notification System
+
+Real-time notification system that keeps users informed about important events:
+
+#### Components
+
+- **`NotificationBadge`**: Displays unread notification count in the top bar
+  - Shows count badge (red circle) when unread notifications exist
+  - Displays "99+" for counts over 99
+  - Polls for updates every 30 seconds
+  - Toggles notification dropdown on click
+- **`NotificationDropdown`**: Quick access to recent notifications
+  - Shows last 5 notifications
+  - "Mark all read" button for bulk actions
+  - "View all" link to full notifications page
+  - Click outside to close
+  - Loading and empty states
+- **`NotificationItem`**: Individual notification display
+  - Type-specific icons (Bell, CheckCircle, etc.)
+  - Title and message text
+  - Relative time display ("5m ago", "2h ago")
+  - Unread indicator (blue dot)
+  - Different styling for read vs unread
+  - Click to mark as read
+- **`NotificationCard`**: Full notification card for notifications page
+  - Complete notification details
+  - Delete button
+  - Mark as read button (if unread)
+  - Metadata display (assignment links, grades, etc.)
+- **`NotificationsPage`**: Full notification management page
+  - Paginated list (20 per page)
+  - "Load more" button for infinite scroll
+  - "Mark all as read" action
+  - Empty state when no notifications
+  - Total count display
+  - Individual delete actions
+
+#### Notification Types
+
+| Type                 | Trigger                    | Content                                |
+| -------------------- | -------------------------- | -------------------------------------- |
+| `ASSIGNMENT_CREATED` | Teacher creates assignment | Assignment title, class name, due date |
+| `SUBMISSION_GRADED`  | Submission receives grade  | Assignment title, grade, feedback      |
+
+#### Features
+
+- **Real-time Updates**: Unread count polls every 30 seconds
+- **Pagination**: Efficient loading of notification history
+- **Bulk Actions**: Mark all as read with single click
+- **Individual Actions**: Mark as read or delete specific notifications
+- **Responsive Design**: Works on mobile and desktop
+- **Accessibility**: Keyboard navigation and screen reader support
+- **Time Formatting**: Human-readable relative timestamps
+- **Icon Mapping**: Type-specific icons for visual clarity
+
+#### Usage Example
+
+```typescript
+// In a component
+import { notificationService } from "@/business/services/notificationService"
+
+// Get notifications
+const { notifications, total, hasMore } =
+  await notificationService.getNotifications(1, 20)
+
+// Get unread count
+const count = await notificationService.getUnreadCount()
+
+// Mark as read
+await notificationService.markAsRead(notificationId)
+
+// Mark all as read
+await notificationService.markAllAsRead()
+
+// Delete notification
+await notificationService.deleteNotification(notificationId)
+
+// Format time
+const timeAgo = notificationService.formatNotificationTime(
+  notification.createdAt,
+)
+
+// Get icon
+const Icon = notificationService.getNotificationIcon(notification.type)
+```
+
+#### Integration
+
+The notification system is integrated into the main dashboard layout:
+
+- **TopBar**: NotificationBadge component displays unread count and toggles dropdown
+- **Sidebar**: "Notifications" navigation item for all roles (student, teacher, admin)
+- **Routing**: `/dashboard/notifications` route for full notifications page
+
+#### Styling
+
+Notifications follow ClassiFi's dark theme design system:
+
+- Background: `slate-800` and `slate-900`
+- Accent: `blue-500` for unread indicators
+- Text: `white` for primary, `slate-300` for secondary
+- Hover states: `slate-700` backgrounds
+- Borders: `white/10` for subtle separation
 
 ---
 

@@ -463,6 +463,138 @@ The plagiarism system provides a student-centric view that calculates originalit
 }
 ```
 
+### Notifications
+
+The notification system provides real-time updates to users about important events in the platform. It supports in-app notifications with optional email delivery.
+
+| Method | Endpoint                      | Description                    |
+| ------ | ----------------------------- | ------------------------------ |
+| GET    | `/notifications`              | Get user notifications         |
+| GET    | `/notifications/unread-count` | Get unread notification count  |
+| PATCH  | `/notifications/:id/read`     | Mark notification as read      |
+| PATCH  | `/notifications/read-all`     | Mark all notifications as read |
+| DELETE | `/notifications/:id`          | Delete notification            |
+
+**Notification Types**:
+
+| Type                  | Trigger Event                | Recipients        |
+| --------------------- | ---------------------------- | ----------------- |
+| `ASSIGNMENT_CREATED`  | Teacher creates assignment   | Enrolled students |
+| `SUBMISSION_GRADED`   | Submission receives grade    | Student           |
+
+**Features**:
+- In-app notifications with real-time unread count
+- Email delivery queue with retry logic
+- Configurable notification channels (IN_APP, EMAIL)
+- Pagination support for notification history
+- User-specific notification filtering
+- Authorization checks (users can only access their own notifications)
+
+**Email Configuration**:
+
+The notification system supports multiple email providers:
+
+**Environment Variables**:
+```env
+# Email Provider (sendgrid, smtp, or supabase)
+EMAIL_PROVIDER=sendgrid
+
+# SendGrid Configuration
+SENDGRID_API_KEY=your-sendgrid-api-key
+
+# SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+
+# Sender Information
+EMAIL_FROM=noreply@classifi.com
+EMAIL_FROM_NAME=ClassiFi
+
+# Frontend URL (for links in emails)
+FRONTEND_URL=http://localhost:5173
+```
+
+**Supported Email Providers**:
+1. **SendGrid** - Recommended for production
+   - Set `EMAIL_PROVIDER=sendgrid`
+   - Requires `SENDGRID_API_KEY`
+   
+2. **SMTP** - For custom email servers
+   - Set `EMAIL_PROVIDER=smtp`
+   - Requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`
+   
+3. **Supabase** - Uses Supabase's built-in email service
+   - Set `EMAIL_PROVIDER=supabase`
+   - Uses existing Supabase configuration
+
+**Email Templates**:
+
+The system includes pre-built HTML email templates for:
+- Assignment creation notifications
+- Submission grading notifications
+
+Templates include:
+- Responsive HTML design
+- Action buttons linking to relevant pages
+- Assignment/submission details
+- Branding and styling
+
+**Delivery Queue**:
+
+Notifications are queued for email delivery with:
+- Automatic retry on failure (max 3 attempts)
+- Exponential backoff between retries
+- Status tracking (PENDING, SENT, FAILED, RETRYING)
+- Error logging for debugging
+
+**Example Response** (`GET /notifications`):
+```json
+{
+  "success": true,
+  "notifications": [
+    {
+      "id": 1,
+      "userId": 123,
+      "type": "ASSIGNMENT_CREATED",
+      "title": "New Assignment: Homework 1",
+      "message": "A new assignment has been posted in CS101",
+      "metadata": {
+        "assignmentId": 456,
+        "assignmentTitle": "Homework 1",
+        "className": "CS101",
+        "classId": 10,
+        "dueDate": "12/31/2024",
+        "assignmentUrl": "http://localhost:5173/dashboard/assignments/456"
+      },
+      "isRead": false,
+      "readAt": null,
+      "createdAt": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 45,
+    "hasMore": true
+  }
+}
+```
+
+**Example Response** (`GET /notifications/unread-count`):
+```json
+{
+  "success": true,
+  "unreadCount": 5
+}
+```
+
+**Query Parameters** (`GET /notifications`):
+- `page` (number, default: 1) - Page number for pagination
+- `limit` (number, default: 20, max: 100) - Items per page
+- `unreadOnly` (boolean, default: false) - Filter to show only unread notifications
+
 
 ### Dashboard
 
@@ -527,19 +659,27 @@ The plagiarism system provides a student-centric view that calculates originalit
 └────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
      │                 │                   │                     │
      │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
-     └───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
-                  └──────────┘         └────┬────┘         └────────────┘
-                                            │
-                                   ┌────────▼────────┐
-                                   │SimilarityReport │
-                                   └────────┬────────┘
-                                            │
-                                   ┌────────▼────────┐
-                                   │SimilarityResult │◄───────┐
-                                   └────────┬────────┘        │
-                                            │           ┌─────┴────────┐
-                                            └──────────►│MatchFragment │
-                                                        └──────────────┘
+     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
+     │            └──────────┘         └────┬────┘         └────────────┘
+     │                                      │
+     │                             ┌────────▼────────┐
+     │                             │SimilarityReport │
+     │                             └────────┬────────┘
+     │                                      │
+     │                             ┌────────▼────────┐
+     │                             │SimilarityResult │◄───────┐
+     │                             └────────┬────────┘        │
+     │                                      │           ┌─────┴────────┐
+     │                                      └──────────►│MatchFragment │
+     │                                                  └──────────────┘
+     │
+     │            ┌──────────────┐
+     └───────────►│ Notification │
+                  └──────┬───────┘
+                         │
+                  ┌──────▼──────────────────┐
+                  │ NotificationDelivery    │
+                  └─────────────────────────┘
 ```
 
 ### User Model
@@ -557,6 +697,55 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at"),
 });
 ```
+
+### Notification Models
+
+```typescript
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "ASSIGNMENT_CREATED",
+  "SUBMISSION_GRADED",
+]);
+
+export const notificationChannelEnum = pgEnum("notification_channel", [
+  "EMAIL",
+  "IN_APP",
+]);
+
+export const deliveryStatusEnum = pgEnum("delivery_status", [
+  "PENDING",
+  "SENT",
+  "FAILED",
+  "RETRYING",
+]);
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: notificationTypeEnum("type").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  message: text("message").notNull(),
+  metadata: jsonb("metadata"),
+  isRead: boolean("is_read").notNull().default(false),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: serial("id").primaryKey(),
+  notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade" }),
+  channel: notificationChannelEnum("channel").notNull(),
+  status: deliveryStatusEnum("status").notNull().default("PENDING"),
+  retryCount: integer("retry_count").notNull().default(0),
+  sentAt: timestamp("sent_at"),
+  failedAt: timestamp("failed_at"),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+```
+
+**Indexes**:
+- `notifications`: `user_id`, `created_at`, `is_read`, composite `(user_id, is_read)`
+- `notification_deliveries`: `notification_id`, `status`, composite `(status, created_at)`
 
 ### Roles
 
@@ -746,6 +935,42 @@ class CodeTestService {
 - Support for Python, Java, and C
 - Test case execution with input/output validation
 - Detailed error reporting and execution statistics
+
+### NotificationService
+
+Manages user notifications and email delivery:
+
+```typescript
+class NotificationService {
+  createNotification(userId, type, data); // Create notification with email queue
+  getUserNotifications(userId, page, limit, unreadOnly); // Get paginated notifications
+  getUnreadCount(userId); // Get unread notification count
+  markAsRead(notificationId, userId); // Mark single notification as read
+  markAllAsRead(userId); // Mark all user notifications as read
+  deleteNotification(notificationId, userId); // Delete notification
+}
+```
+
+**Features**:
+- Automatic notification creation on key events (assignment creation, grading)
+- Email delivery queue with retry logic
+- Template-based email generation
+- User authorization checks
+- Pagination support
+
+**Notification Types**:
+- `ASSIGNMENT_CREATED` - Sent to all enrolled students when teacher creates assignment
+- `SUBMISSION_GRADED` - Sent to student when their submission is graded
+
+**Email Providers**:
+- SendGrid (recommended for production)
+- SMTP (for custom email servers)
+- Supabase (uses built-in email service)
+
+**Delivery Queue**:
+- Automatic retry on failure (max 3 attempts)
+- Exponential backoff between retries
+- Status tracking (PENDING, SENT, FAILED, RETRYING)
 
 ---
 

@@ -1,7 +1,7 @@
 import { injectable, inject } from "tsyringe"
 import type { NotificationRepository } from "../../repositories/notification.repository.js"
 import type { NotificationQueueService } from "./queue.service.js"
-import type { Notification } from "../../models/index.js"
+import type { Notification, NewNotification } from "../../models/index.js"
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
 import { NOTIFICATION_TYPES, type PayloadFor } from "./types.js"
 import { NotFoundError, ForbiddenError } from "../../shared/errors.js"
@@ -38,19 +38,25 @@ export class NotificationService {
       throw new Error(`Unknown notification type: ${type}`)
     }
 
+    const metadata = config.metadata ? config.metadata(data) : null
+
+    if (!metadata) {
+      throw new Error(`Metadata is required for notification type: ${type}`)
+    }
+
     const notification = await this.notificationRepo.create({
       userId,
       type,
       title: config.titleTemplate(data),
       message: config.messageTemplate(data),
-      metadata: config.metadata ? config.metadata(data) : null,
-    })
+      metadata,
+    } as unknown as NewNotification)
 
     for (const channel of config.channels) {
       await this.queueService.enqueueDelivery(notification.id, channel, data)
     }
 
-    return notification
+    return notification as Notification
   }
 
   /**
