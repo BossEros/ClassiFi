@@ -1,0 +1,214 @@
+/**
+ * Calendar Page Custom Styles
+ * 
+ * Custom styling for React Big Calendar to match ClassiFi's dark theme.
+ * Overrides default RBC styles with dark mode colors and improved contrast.
+ */
+
+/* Calendar Container */
+.calendar-container .rbc-calendar {
+    font-family: inherit;
+    color: #fff;
+}
+
+/* Toolbar (handled by CustomToolbar component) */
+.calendar-container .rbc-toolbar {
+    display: none; /* We use CustomToolbar instead */
+}
+
+/* Month View */
+.calendar-container .rbc-month-view {
+    border: none;
+    background-color: transparent;
+}
+
+/* Header (Day Names) */
+.calendar-container .rbc-header {
+    padding: 12px 8px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #94a3b8; /* slate-400 */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.calendar-container .rbc-header + .rbc-header {
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Month Rows */
+.calendar-container .rbc-month-row {
+    border: none;
+    overflow: visible;
+}
+
+/* Day Cells */
+.calendar-container .rbc-day-bg {
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+}
+
+.calendar-container .rbc-day-bg:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Off-range days (adjacent months) */
+.calendar-container .rbc-off-range-bg {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.calendar-container .rbc-off-range {
+    color: #475569; /* slate-600 */
+}
+
+/* Today highlight */
+.calendar-container .rbc-today {
+    background-color: rgba(59, 130, 246, 0.1); /* blue-500 with opacity */
+}
+
+.calendar-container .rbc-today-highlight {
+    background-color: rgba(59, 130, 246, 0.15);
+}
+
+/* Date cell content */
+.calendar-container .rbc-date-cell {
+    padding: 8px;
+    text-align: right;
+}
+
+.calendar-container .rbc-date-cell > a {
+    color: #e2e8f0; /* slate-200 */
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.calendar-container .rbc-off-range .rbc-date-cell > a {
+    color: #64748b; /* slate-500 */
+}
+
+.calendar-container .rbc-today .rbc-date-cell > a {
+    color: #60a5fa; /* blue-400 */
+    font-weight: 600;
+}
+
+/* Event Container */
+.calendar-container .rbc-row-content {
+    z-index: 4;
+}
+
+.calendar-container .rbc-event {
+    padding: 2px 4px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.calendar-container .rbc-event:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.calendar-container .rbc-event:focus {
+    outline: 2px solid #60a5fa; /* blue-400 */
+    outline-offset: 2px;
+}
+
+/* Event content (handled by CustomEventComponent) */
+.calendar-container .rbc-event-content {
+    white-space: normal;
+}
+
+/* Event label */
+.calendar-container .rbc-event-label {
+    display: none; /* We handle this in CustomEventComponent */
+}
+
+/* Show more link */
+.calendar-container .rbc-show-more {
+    color: #60a5fa; /* blue-400 */
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    margin: 2px 4px;
+    background-color: rgba(59, 130, 246, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.calendar-container .rbc-show-more:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Overlay (for show more popup) */
+.calendar-container .rbc-overlay {
+    background-color: #1e293b; /* slate-800 */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    padding: 8px;
+    z-index: 50;
+}
+
+.calendar-container .rbc-overlay-header {
+    padding: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+    color: #e2e8f0; /* slate-200 */
+}
+
+/* Selected event */
+.calendar-container .rbc-selected {
+    background-color: inherit;
+}
+
+/* Accessibility - Focus visible */
+.calendar-container .rbc-calendar *:focus-visible {
+    outline: 2px solid #60a5fa; /* blue-400 */
+    outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .calendar-container .rbc-header {
+        padding: 8px 4px;
+        font-size: 0.625rem;
+    }
+
+    .calendar-container .rbc-date-cell {
+        padding: 4px;
+    }
+
+    .calendar-container .rbc-date-cell > a {
+        font-size: 0.75rem;
+    }
+
+    .calendar-container .rbc-event {
+        font-size: 0.625rem;
+        padding: 1px 2px;
+    }
+}
+
+/* Animation for calendar load */
+.calendar-container {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
