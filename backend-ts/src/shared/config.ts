@@ -15,7 +15,7 @@ const EnvSchema = z
     DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
 
     // Application
-    APP_NAME: z.string().default("ClassiFi API"),
+    APP_NAME: z.string().default("ClassiFi"),
     APP_VERSION: z.string().default("1.0.0"),
     DEBUG: z
       .string()

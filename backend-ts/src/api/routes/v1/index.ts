@@ -11,6 +11,7 @@ import { adminRoutes } from "@/api/controllers/admin.controller.js"
 import { testCaseRoutes } from "@/api/controllers/testCase.controller.js"
 import { gradebookRoutes } from "@/api/controllers/gradebook.controller.js"
 import { notificationRoutes } from "@/api/controllers/notification.controller.js"
+import { notificationPreferenceRoutes } from "@/api/controllers/notification-preference.controller.js"
 import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 
 /**
@@ -52,6 +53,11 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
   // Notification routes - /api/v1/notifications/*
   await app.register(notificationRoutes, { prefix: "/notifications" })
+
+  // Notification preference routes - /api/v1/notification-preferences/*
+  await app.register(notificationPreferenceRoutes, {
+    prefix: "/notification-preferences",
+  })
 }
 
 /** API v1 routes aggregator */

@@ -59,7 +59,19 @@ export async function getCalendarEvents(
         }
     } catch (error) {
         console.error("Error fetching calendar events:", error)
-        throw new Error("Failed to fetch calendar events")
+
+        // Provide user-friendly error message
+        if (error instanceof Error) {
+            // Don't expose internal error details to users
+            if (error.message.includes('network') || error.message.includes('fetch')) {
+                throw new Error("Network error. Please check your connection and try again.")
+            }
+            if (error.message.includes('unauthorized') || error.message.includes('permission')) {
+                throw new Error("You don't have permission to view these events.")
+            }
+        }
+
+        throw new Error("Unable to load calendar events. Please try again later.")
     }
 }
 
@@ -104,7 +116,9 @@ async function getStudentCalendarEvents(
         transformToStudentEvent(assignment, classes, submissionMap),
     )
 
-    return sortEventsByDeadline(events)
+    // Filter out invalid events before returning
+    const validEvents = filterValidEvents(events)
+    return sortEventsByDeadline(validEvents)
 }
 
 /**
@@ -135,21 +149,33 @@ async function getTeacherCalendarEvents(
     )
 
     const eventPromises = filteredAssignments.map(async (assignment) => {
-        const { submittedCount, totalStudents } = await fetchAssignmentCounts(
-            assignment.id,
-            assignment.classId,
-        )
+        try {
+            const { submittedCount, totalStudents } = await fetchAssignmentCounts(
+                assignment.id,
+                assignment.classId,
+            )
 
-        return transformToTeacherEvent(
-            assignment,
-            classes,
-            submittedCount,
-            totalStudents,
-        )
+            return transformToTeacherEvent(
+                assignment,
+                classes,
+                submittedCount,
+                totalStudents,
+            )
+        } catch (error) {
+            // Log error but continue processing other assignments
+            console.error(`Error fetching counts for assignment ${assignment.id}:`, error)
+            return null
+        }
     })
 
     const events = await Promise.all(eventPromises)
-    return sortEventsByDeadline(events)
+
+    // Filter out null events (failed fetches) and invalid events
+    const validEvents = events
+        .filter((event): event is CalendarEvent => event !== null)
+        .filter(isValidCalendarEvent)
+
+    return sortEventsByDeadline(validEvents)
 }
 
 // ============================================================================
@@ -255,6 +281,7 @@ export async function getClassesForFilter(
         }))
     } catch (error) {
         console.error("Error fetching classes for filter:", error)
+        // Return empty array instead of throwing - allows calendar to still function
         return []
     }
 }
@@ -282,6 +309,7 @@ async function fetchEnrolledClasses(studentId: number): Promise<Class[]> {
 
 /**
  * Fetches all assignments for multiple classes.
+ * Silently filters out classes the user doesn't have access to.
  *
  * @param classes - Array of classes
  * @returns Array of all assignments across classes
@@ -289,9 +317,24 @@ async function fetchEnrolledClasses(studentId: number): Promise<Class[]> {
 async function fetchAssignmentsForClasses(
     classes: Class[],
 ): Promise<Assignment[]> {
-    const assignmentPromises = classes.map((cls) =>
-        classService.getClassAssignments(cls.id),
-    )
+    const assignmentPromises = classes.map(async (cls) => {
+        try {
+            return await classService.getClassAssignments(cls.id)
+        } catch (error) {
+            // Silently filter out unauthorized classes
+            if (error instanceof Error &&
+                (error.message.includes('unauthorized') ||
+                    error.message.includes('permission') ||
+                    error.message.includes('403'))) {
+                console.warn(`No access to assignments for class ${cls.id}`)
+                return []
+            }
+
+            // Log other errors but continue
+            console.error(`Error fetching assignments for class ${cls.id}:`, error)
+            return []
+        }
+    })
 
     const assignmentArrays = await Promise.all(assignmentPromises)
     return assignmentArrays.flat()
@@ -299,6 +342,7 @@ async function fetchAssignmentsForClasses(
 
 /**
  * Fetches submission and student counts for an assignment.
+ * Returns zero counts if data cannot be fetched.
  *
  * @param assignmentId - Assignment ID
  * @param classId - Class ID
@@ -308,15 +352,93 @@ async function fetchAssignmentCounts(
     assignmentId: number,
     classId: number,
 ): Promise<{ submittedCount: number; totalStudents: number }> {
-    const [submissions, students] = await Promise.all([
-        assignmentService.getAssignmentSubmissions(assignmentId, true),
-        classService.getClassStudents(classId),
-    ])
+    try {
+        const [submissions, students] = await Promise.all([
+            assignmentService.getAssignmentSubmissions(assignmentId, true).catch(err => {
+                console.warn(`Error fetching submissions for assignment ${assignmentId}:`, err)
+                return []
+            }),
+            classService.getClassStudents(classId).catch(err => {
+                console.warn(`Error fetching students for class ${classId}:`, err)
+                return []
+            }),
+        ])
 
-    return {
-        submittedCount: submissions.length,
-        totalStudents: students.length,
+        return {
+            submittedCount: submissions.length,
+            totalStudents: students.length,
+        }
+    } catch (error) {
+        console.error(`Error fetching counts for assignment ${assignmentId}:`, error)
+        return {
+            submittedCount: 0,
+            totalStudents: 0,
+        }
     }
+}
+
+/**
+ * Validates that a calendar event has all required fields.
+ * 
+ * @param event - Calendar event to validate
+ * @returns True if event is valid, false otherwise
+ */
+function isValidCalendarEvent(event: CalendarEvent): boolean {
+    try {
+        // Check required fields
+        if (!event.id || typeof event.id !== 'number') {
+            console.warn('Invalid event: missing or invalid id', event);
+            return false;
+        }
+
+        if (!event.title || typeof event.title !== 'string') {
+            console.warn('Invalid event: missing or invalid title', event);
+            return false;
+        }
+
+        if (!event.deadline || !(event.deadline instanceof Date) || isNaN(event.deadline.getTime())) {
+            console.warn('Invalid event: missing or invalid deadline', event);
+            return false;
+        }
+
+        if (!event.classId || typeof event.classId !== 'number') {
+            console.warn('Invalid event: missing or invalid classId', event);
+            return false;
+        }
+
+        if (!event.className || typeof event.className !== 'string') {
+            console.warn('Invalid event: missing or invalid className', event);
+            return false;
+        }
+
+        if (!event.classColor || typeof event.classColor !== 'string') {
+            console.warn('Invalid event: missing or invalid classColor', event);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error validating calendar event:', error, event);
+        return false;
+    }
+}
+
+/**
+ * Filters out invalid calendar events.
+ * Logs warnings for invalid events but continues processing valid ones.
+ * 
+ * @param events - Array of calendar events to validate
+ * @returns Array of valid calendar events
+ */
+function filterValidEvents(events: CalendarEvent[]): CalendarEvent[] {
+    const validEvents = events.filter(isValidCalendarEvent);
+
+    const invalidCount = events.length - validEvents.length;
+    if (invalidCount > 0) {
+        console.warn(`Filtered out ${invalidCount} invalid calendar event(s)`);
+    }
+
+    return validEvents;
 }
 
 // ============================================================================

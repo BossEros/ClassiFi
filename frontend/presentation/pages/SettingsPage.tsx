@@ -25,6 +25,7 @@ import {
   DeleteAccountModal,
   AvatarUploadModal,
 } from "@/presentation/components/settings"
+import { NotificationPreferences } from "@/presentation/components/settings/NotificationPreferences"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function SettingsPage() {
@@ -59,7 +60,7 @@ export function SettingsPage() {
   const topBar = useTopBar({
     user,
     userInitials,
-    onProfileClick: () => {}, // No-op since we're already on settings page
+    onProfileClick: () => { }, // No-op since we're already on settings page
   })
 
   if (!user) return null
@@ -180,33 +181,12 @@ export function SettingsPage() {
                 <Bell className="w-5 h-5 text-yellow-400" />
                 Notifications
               </CardTitle>
-              <CardDescription>Manage your alerts</CardDescription>
+              <CardDescription>
+                Manage how you receive notifications
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white">
-                      Email Notifications
-                    </p>
-                    <p className="text-xs text-slate-300 truncate">
-                      Receive updates via email
-                    </p>
-                  </div>
-                  {/* Placeholder Toggle */}
-                  <div className="w-10 h-6 bg-teal-600 rounded-full relative cursor-pointer shrink-0">
-                    <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full"></div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                  <div className="opacity-50">
-                    <p className="text-sm font-medium text-white">
-                      Push Notifications
-                    </p>
-                    <p className="text-xs text-slate-300">Coming soon</p>
-                  </div>
-                </div>
-              </div>
+              <NotificationPreferences />
             </CardContent>
           </Card>
         </div>

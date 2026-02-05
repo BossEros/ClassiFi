@@ -32,7 +32,7 @@ export class AssignmentService {
     private enrollmentRepo: EnrollmentRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
   /**
    * Create an assignment for a class.
@@ -89,7 +89,14 @@ export class AssignmentService {
           className: classData?.className || "Unknown Class",
           classId: assignment.classId,
           dueDate: assignment.deadline
-            ? new Date(assignment.deadline).toLocaleDateString()
+            ? new Date(assignment.deadline).toLocaleString("en-US", {
+              month: "numeric",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })
             : "No deadline",
           assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
         },

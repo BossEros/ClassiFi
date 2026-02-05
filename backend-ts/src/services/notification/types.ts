@@ -1,4 +1,11 @@
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
+import {
+  assignmentCreatedEmailTemplate,
+  submissionGradedEmailTemplate,
+  classAnnouncementEmailTemplate,
+  deadlineReminderEmailTemplate,
+  enrollmentConfirmedEmailTemplate,
+} from "../email/templates.js"
 
 // ============================================================================
 // Notification Payload Types (Discriminated Union)
@@ -109,16 +116,10 @@ export const NOTIFICATION_TYPES: {
 } = {
   ASSIGNMENT_CREATED: {
     type: "ASSIGNMENT_CREATED",
-    titleTemplate: (data) => `New Assignment: ${data.assignmentTitle}`,
+    titleTemplate: (data) => `${data.className}: New Assignment Posted`,
     messageTemplate: (data) =>
-      `Your teacher has created a new assignment "${data.assignmentTitle}" due on ${data.dueDate}.`,
-    emailTemplate: (data) => `
-      <h2>New Assignment Posted</h2>
-      <p>Your teacher has created a new assignment in ${data.className}.</p>
-      <p><strong>Assignment:</strong> ${data.assignmentTitle}</p>
-      <p><strong>Due Date:</strong> ${data.dueDate}</p>
-      <p><a href="${data.assignmentUrl}">View Assignment</a></p>
-    `,
+      `Your teacher has posted a new assignment "${data.assignmentTitle}" in ${data.className}, due on ${data.dueDate}.`,
+    emailTemplate: (data) => assignmentCreatedEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       assignmentId: data.assignmentId,
@@ -129,15 +130,10 @@ export const NOTIFICATION_TYPES: {
 
   SUBMISSION_GRADED: {
     type: "SUBMISSION_GRADED",
-    titleTemplate: (data) => `Assignment Graded: ${data.assignmentTitle}`,
+    titleTemplate: () => "Assignment Graded",
     messageTemplate: (data) =>
       `Your submission for "${data.assignmentTitle}" has been graded. Score: ${data.grade}/${data.maxGrade}`,
-    emailTemplate: (data) => `
-      <h2>Your Assignment Has Been Graded</h2>
-      <p>Your submission for "${data.assignmentTitle}" has been graded.</p>
-      <p><strong>Score:</strong> ${data.grade}/${data.maxGrade}</p>
-      <p><a href="${data.submissionUrl}">View Submission</a></p>
-    `,
+    emailTemplate: (data) => submissionGradedEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       submissionId: data.submissionId,
@@ -151,11 +147,7 @@ export const NOTIFICATION_TYPES: {
     type: "CLASS_ANNOUNCEMENT",
     titleTemplate: (data) => `Announcement: ${data.className}`,
     messageTemplate: (data) => data.message,
-    emailTemplate: (data) => `
-      <h2>Class Announcement</h2>
-      <p><strong>Class:</strong> ${data.className}</p>
-      <p>${data.message}</p>
-    `,
+    emailTemplate: (data) => classAnnouncementEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       classId: data.classId,
@@ -164,16 +156,10 @@ export const NOTIFICATION_TYPES: {
 
   DEADLINE_REMINDER: {
     type: "DEADLINE_REMINDER",
-    titleTemplate: (data) => `Reminder: ${data.assignmentTitle} Due Soon`,
+    titleTemplate: () => "Assignment Deadline Reminder",
     messageTemplate: (data) =>
       `Don't forget! "${data.assignmentTitle}" is due on ${data.dueDate}.`,
-    emailTemplate: (data) => `
-      <h2>Assignment Deadline Reminder</h2>
-      <p>This is a reminder that your assignment is due soon.</p>
-      <p><strong>Assignment:</strong> ${data.assignmentTitle}</p>
-      <p><strong>Due Date:</strong> ${data.dueDate}</p>
-      <p><a href="${data.assignmentUrl}">View Assignment</a></p>
-    `,
+    emailTemplate: (data) => deadlineReminderEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       assignmentId: data.assignmentId,
@@ -186,12 +172,7 @@ export const NOTIFICATION_TYPES: {
     titleTemplate: (data) => `Enrolled in ${data.className}`,
     messageTemplate: (data) =>
       `You have been successfully enrolled in ${data.className}.`,
-    emailTemplate: (data) => `
-      <h2>Enrollment Confirmed</h2>
-      <p>You have been successfully enrolled in <strong>${data.className}</strong>.</p>
-      <p><strong>Instructor:</strong> ${data.instructorName}</p>
-      <p><a href="${data.classUrl}">View Class</a></p>
-    `,
+    emailTemplate: (data) => enrollmentConfirmedEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       classId: data.classId,

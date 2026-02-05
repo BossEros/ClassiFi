@@ -51,7 +51,7 @@ export function NotificationBadge() {
   const displayCount = unreadCount > 99 ? "99+" : unreadCount.toString()
 
   return (
-    <div className="relative">
+    <div className="relative z-[9999]">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"

@@ -109,6 +109,108 @@ describe("Email Services", () => {
 
       expect(sgMail.send).toHaveBeenCalled()
     })
+
+    it("should fallback to SMTP when SendGrid fails", async () => {
+      const sgMail = (await import("@sendgrid/mail")).default
+      const nodemailer = (await import("nodemailer")).default
+
+      // Mock SendGrid to fail
+      vi.mocked(sgMail.send).mockRejectedValueOnce(
+        new Error("SendGrid API error"),
+      )
+
+      // Mock SMTP to succeed
+      const mockSendMail = vi.fn(() =>
+        Promise.resolve({ messageId: "backup-message-id" }),
+      )
+      vi.mocked(nodemailer.createTransport).mockReturnValue({
+        sendMail: mockSendMail,
+      } as any)
+
+      const emailService = new FallbackEmailService()
+
+      await emailService.sendEmail({
+        to: "test@example.com",
+        subject: "Test Email",
+        html: "<p>Test content</p>",
+      })
+
+      // Verify SendGrid was attempted first
+      expect(sgMail.send).toHaveBeenCalledTimes(1)
+
+      // Verify SMTP was used as fallback
+      expect(mockSendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "test@example.com",
+          subject: "Test Email",
+          html: "<p>Test content</p>",
+        }),
+      )
+    })
+
+    it("should throw error when both services fail", async () => {
+      const sgMail = (await import("@sendgrid/mail")).default
+      const nodemailer = (await import("nodemailer")).default
+
+      // Mock both services to fail
+      vi.mocked(sgMail.send).mockRejectedValueOnce(
+        new Error("SendGrid API error"),
+      )
+
+      const mockSendMail = vi.fn(() =>
+        Promise.reject(new Error("SMTP connection failed")),
+      )
+      vi.mocked(nodemailer.createTransport).mockReturnValue({
+        sendMail: mockSendMail,
+      } as any)
+
+      const emailService = new FallbackEmailService()
+
+      await expect(
+        emailService.sendEmail({
+          to: "test@example.com",
+          subject: "Test Email",
+          html: "<p>Test content</p>",
+        }),
+      ).rejects.toThrow("All email services failed")
+
+      // Verify both services were attempted
+      expect(sgMail.send).toHaveBeenCalledTimes(1)
+      expect(mockSendMail).toHaveBeenCalledTimes(1)
+    })
+
+    it("should handle retry logic in notification queue", async () => {
+      const sgMail = (await import("@sendgrid/mail")).default
+      const nodemailer = (await import("nodemailer")).default
+
+      // Mock SendGrid to fail initially
+      vi.mocked(sgMail.send).mockRejectedValueOnce(
+        new Error("Temporary SendGrid error"),
+      )
+
+      // Mock SMTP to succeed as fallback
+      const mockSendMail = vi.fn(() =>
+        Promise.resolve({ messageId: "fallback-message-id" }),
+      )
+      vi.mocked(nodemailer.createTransport).mockReturnValue({
+        sendMail: mockSendMail,
+      } as any)
+
+      const emailService = new FallbackEmailService()
+
+      // Should succeed via SMTP fallback
+      await emailService.sendEmail({
+        to: "test@example.com",
+        subject: "Test Email",
+        html: "<p>Test content</p>",
+      })
+
+      // Verify SendGrid was attempted first
+      expect(sgMail.send).toHaveBeenCalled()
+
+      // Verify SMTP was used as fallback
+      expect(mockSendMail).toHaveBeenCalled()
+    })
   })
 
   describe("createEmailService", () => {
