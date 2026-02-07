@@ -1,49 +1,56 @@
 /**
  * Calendar Page
- * 
+ *
  * Main page component for the calendar feature.
- * Displays a month-view calendar with assignment deadlines and class information.
+ * Displays a calendar with assignment deadlines and class information.
  * Integrates React Big Calendar with custom components and styling.
+ * Supports Month, Week, and Day view modes.
  */
 
-import { Calendar, type View } from 'react-big-calendar';
-import { useCalendar } from '@/presentation/hooks/useCalendar';
-import { CustomEventComponent } from '@/presentation/components/calendar/CustomEventComponent';
-import { CustomToolbar } from '@/presentation/components/calendar/CustomToolbar';
-import { CalendarFilters } from '@/presentation/components/calendar/CalendarFilters';
-import { EventDetailsModal } from '@/presentation/components/calendar/EventDetailsModal';
-import { DashboardLayout } from '@/presentation/components/dashboard/DashboardLayout';
-import { useTopBar } from '@/presentation/components/dashboard/TopBar';
-import { calendarLocalizer } from '@/shared/utils/calendarConfig';
-import { useToast } from '@/shared/context/ToastContext';
-import { getCurrentUser } from '@/business/services/authService';
-import type { CalendarEvent } from '@/business/models/calendar/types';
-import 'react-big-calendar/lib/css/react-big-calendar.css';
-import './CalendarPage.css';
-import { useEffect } from 'react';
+import { useEffect } from "react"
+import { Calendar, type View } from "react-big-calendar"
+import { useCalendar } from "@/presentation/hooks/useCalendar"
+import {
+  CustomEventComponent,
+  CustomToolbar,
+  CalendarFilters,
+  CalendarHeader,
+  CalendarViewToggle,
+  CalendarNavigation,
+} from "@/presentation/components/calendar"
+import { EventDetailsModal } from "@/presentation/components/calendar/EventDetailsModal"
+import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { calendarLocalizer } from "@/shared/utils/calendarConfig"
+import { useToast } from "@/shared/context/ToastContext"
+import { getCurrentUser } from "@/business/services/authService"
+import type { CalendarEvent } from "@/business/models/calendar/types"
+import "react-big-calendar/lib/css/react-big-calendar.css"
+import "./CalendarPage.css"
 
 /**
  * Calendar page component.
- * 
+ *
  * Displays a month-view calendar with:
  * - Assignment deadlines from enrolled/teaching classes
  * - Class-based filtering
  * - Color-coded events by class
  * - Event details modal
  * - Month navigation
- * 
+ *
  * @returns The calendar page UI
  */
 export default function CalendarPage() {
-  const user = getCurrentUser();
+  const user = getCurrentUser()
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-    : '?';
+    : "?"
 
-  const topBar = useTopBar({ user, userInitials });
+  const topBar = useTopBar({ user, userInitials })
 
   const {
     currentDate,
+    currentView,
     events,
     filteredEvents,
     selectedClasses,
@@ -51,55 +58,60 @@ export default function CalendarPage() {
     selectedEvent,
     isLoading,
     error,
-    navigateMonth,
+    navigatePeriod,
+    changeView,
     toggleClassFilter,
     selectAllClasses,
     deselectAllClasses,
     openEventDetails,
     closeEventDetails,
     refetchEvents,
-  } = useCalendar();
+  } = useCalendar()
 
-  const { showToast } = useToast();
+  const { showToast } = useToast()
 
   /**
    * Show error toast when error state changes.
    */
   useEffect(() => {
     if (error) {
-      showToast(error, 'error');
+      showToast(error, "error")
     }
-  }, [error, showToast]);
+  }, [error, showToast])
 
   /**
    * Handles navigation events from React Big Calendar.
-   * 
+   *
    * @param _newDate - The new date to navigate to (unused, we use action instead)
    * @param _view - The calendar view (always 'month' for MVP)
    * @param action - The navigation action performed
    */
-  const handleNavigate = (_newDate: Date, _view: View, action: 'PREV' | 'NEXT' | 'TODAY' | 'DATE') => {
-    if (action === 'PREV') {
-      navigateMonth('prev');
-    } else if (action === 'NEXT') {
-      navigateMonth('next');
-    } else if (action === 'TODAY') {
-      navigateMonth('today');
+  const handleNavigate = (
+    _newDate: Date,
+    _view: View,
+    action: "PREV" | "NEXT" | "TODAY" | "DATE",
+  ) => {
+    if (action === "PREV") {
+      navigatePeriod("prev")
+    } else if (action === "NEXT") {
+      navigatePeriod("next")
+    } else if (action === "TODAY") {
+      navigatePeriod("today")
     }
-  };
+  }
 
   /**
    * Handles event selection (click) from React Big Calendar.
-   * 
+   *
    * @param event - The selected calendar event
    */
   const handleSelectEvent = (event: CalendarEvent) => {
-    openEventDetails(event);
-  };
+    openEventDetails(event)
+  }
 
   /**
    * Provides custom styling for events based on class color.
-   * 
+   *
    * @param event - The calendar event to style
    * @returns Style object for the event
    */
@@ -108,54 +120,77 @@ export default function CalendarPage() {
       style: {
         backgroundColor: event.classColor,
         borderLeft: `3px solid ${event.classColor}`,
-        color: 'white',
+        color: "white",
       },
-    };
-  };
+    }
+  }
 
   /**
    * Provides custom styling for day cells.
    * Highlights the current day.
-   * 
+   *
    * @param date - The date of the day cell
    * @returns Style object for the day cell
    */
   const dayStyleGetter = (date: Date) => {
-    const today = new Date();
+    const today = new Date()
     const isToday =
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
-      date.getFullYear() === today.getFullYear();
+      date.getFullYear() === today.getFullYear()
 
     if (isToday) {
       return {
-        className: 'rbc-today-highlight',
-      };
+        className: "rbc-today-highlight",
+      }
     }
 
-    return {};
-  };
+    return {}
+  }
 
   /**
    * Handles class filter changes.
-   * 
+   *
    * @param classId - The class ID to toggle
    */
   const handleFilterChange = (classId: number) => {
-    toggleClassFilter(classId);
-  };
+    toggleClassFilter(classId)
+  }
 
   return (
     <DashboardLayout className="p-0" topBar={topBar}>
       <div className="h-full flex flex-col -m-6 lg:-m-8">
         {/* Page Header */}
         <div className="px-6 lg:px-8 pt-6 pb-4 border-b border-white/10">
-          <h1 className="text-3xl font-bold text-white tracking-tight mb-1">
-            Academic Calendar
-          </h1>
-          <p className="text-slate-400 text-sm">
-            Manage your schedules, deadlines and exams across all courses
-          </p>
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            {/* Title and Subtitle */}
+            <CalendarHeader />
+
+            {/* View Toggle (Desktop) */}
+            <div className="hidden lg:block">
+              <CalendarViewToggle
+                currentView={currentView}
+                onViewChange={changeView}
+              />
+            </div>
+          </div>
+
+          {/* Navigation Controls */}
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <CalendarNavigation
+              currentDate={currentDate}
+              currentView={currentView}
+              onNavigate={navigatePeriod}
+            />
+
+            {/* View Toggle (Mobile) */}
+            <div className="lg:hidden">
+              <CalendarViewToggle
+                currentView={currentView}
+                onViewChange={changeView}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Main Content */}
@@ -192,9 +227,7 @@ export default function CalendarPage() {
                     <p className="text-red-400 text-sm font-medium mb-1">
                       Failed to load calendar events
                     </p>
-                    <p className="text-red-400/70 text-xs">
-                      {error}
-                    </p>
+                    <p className="text-red-400/70 text-xs">{error}</p>
                   </div>
                   <button
                     onClick={refetchEvents}
@@ -226,9 +259,10 @@ export default function CalendarPage() {
                     startAccessor="deadline"
                     endAccessor="deadline"
                     date={currentDate}
-                    view="month"
-                    views={['month']}
+                    view={currentView as View}
+                    views={["month", "week", "day"]}
                     onNavigate={handleNavigate}
+                    onView={(view) => changeView(view as typeof currentView)}
                     onSelectEvent={handleSelectEvent}
                     components={{
                       event: CustomEventComponent,
@@ -236,7 +270,7 @@ export default function CalendarPage() {
                     }}
                     eventPropGetter={eventStyleGetter}
                     dayPropGetter={dayStyleGetter}
-                    style={{ height: '100%' }}
+                    style={{ height: "100%" }}
                     popup={false}
                     selectable={false}
                   />
@@ -266,7 +300,9 @@ export default function CalendarPage() {
                               No Classes Yet
                             </h3>
                             <p className="text-slate-400 text-sm mb-4">
-                              You're not enrolled in or teaching any classes yet. Join or create a class to see assignment deadlines here.
+                              You're not enrolled in or teaching any classes
+                              yet. Join or create a class to see assignment
+                              deadlines here.
                             </p>
                           </>
                         ) : events.length === 0 ? (
@@ -290,7 +326,13 @@ export default function CalendarPage() {
                               No Assignments This Month
                             </h3>
                             <p className="text-slate-400 text-sm">
-                              There are no assignment deadlines in {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}. Check other months or wait for new assignments to be created.
+                              There are no assignment deadlines in{" "}
+                              {currentDate.toLocaleString("en-US", {
+                                month: "long",
+                                year: "numeric",
+                              })}
+                              . Check other months or wait for new assignments
+                              to be created.
                             </p>
                           </>
                         ) : (
@@ -314,7 +356,14 @@ export default function CalendarPage() {
                               No Assignments for Selected Classes
                             </h3>
                             <p className="text-slate-400 text-sm">
-                              The selected classes have no assignment deadlines in {currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' })}. Try selecting different classes or check other months.
+                              The selected classes have no assignment deadlines
+                              in{" "}
+                              {currentDate.toLocaleString("en-US", {
+                                month: "long",
+                                year: "numeric",
+                              })}
+                              . Try selecting different classes or check other
+                              months.
                             </p>
                           </>
                         )}
@@ -335,5 +384,5 @@ export default function CalendarPage() {
         event={selectedEvent}
       />
     </DashboardLayout>
-  );
+  )
 }
