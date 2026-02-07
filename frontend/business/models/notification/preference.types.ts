@@ -2,12 +2,9 @@
  * Notification preference model types
  */
 
-export type NotificationType =
-    | "ASSIGNMENT_CREATED"
-    | "SUBMISSION_GRADED"
-    | "CLASS_ANNOUNCEMENT"
-    | "DEADLINE_REMINDER"
-    | "ENROLLMENT_CONFIRMED"
+import type { NotificationType } from "./types"
+
+export type { NotificationType }
 
 export interface NotificationPreference {
     id: number

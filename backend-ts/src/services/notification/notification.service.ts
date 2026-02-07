@@ -6,6 +6,8 @@ import type { Notification, NewNotification } from "../../models/index.js"
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
 import {
   NOTIFICATION_TYPES,
+  type NotificationChannel,
+  type NotificationMetadataByType,
   type PayloadFor,
   type NotificationTypeConfig,
 } from "./types.js"
@@ -42,9 +44,13 @@ export class NotificationService {
   ): Promise<Notification> {
     const config = this.getNotificationConfig(type)
     const metadata = this.extractMetadata(config, data, type)
-    const enabledChannels = await this.preferenceService.getEnabledChannels(
+    const preferredChannels = await this.preferenceService.getEnabledChannels(
       userId,
       type,
+    )
+    const enabledChannels = this.getEffectiveChannels(
+      preferredChannels,
+      config.channels,
     )
 
     if (enabledChannels.length === 0) {
@@ -94,14 +100,30 @@ export class NotificationService {
     config: NotificationTypeConfig<T>,
     data: PayloadFor<T>,
     type: T,
-  ): Record<string, unknown> {
-    const metadata = config.metadata ? config.metadata(data) : null
+  ): NotificationMetadataByType[T] {
+    const metadata = config.metadata(data)
 
     if (!metadata) {
       throw new Error(`Metadata is required for notification type: ${type}`)
     }
 
     return metadata
+  }
+
+  /**
+   * Intersects user-enabled channels with type-specific allowed channels.
+   *
+   * @param preferredChannels - Channels enabled by user preference
+   * @param allowedChannels - Channels allowed by notification type
+   * @returns Filtered list of effective channels
+   */
+  private getEffectiveChannels(
+    preferredChannels: NotificationChannel[],
+    allowedChannels: NotificationChannel[],
+  ): NotificationChannel[] {
+    const allowedSet = new Set<NotificationChannel>(allowedChannels)
+
+    return preferredChannels.filter((channel) => allowedSet.has(channel))
   }
 
   /**
@@ -120,15 +142,16 @@ export class NotificationService {
     type: T,
     config: NotificationTypeConfig<T>,
     data: PayloadFor<T>,
-    metadata: Record<string, unknown>,
+    metadata: NotificationMetadataByType[T],
   ): Notification {
+    // Safe: metadata and type come from the same notification config.
     return {
       id: 0,
       userId,
       type,
       title: config.titleTemplate(data),
       message: config.messageTemplate(data),
-      metadata: metadata as any,
+      metadata,
       isRead: false,
       readAt: null,
       createdAt: new Date(),
@@ -137,7 +160,7 @@ export class NotificationService {
 
   /**
    * Creates a notification record in the database.
-   * The notification record is always created for tracking purposes.
+   * The notification record is created when at least one delivery channel is enabled.
    *
    * @param userId - The user ID
    * @param type - The notification type
@@ -151,15 +174,18 @@ export class NotificationService {
     type: T,
     config: NotificationTypeConfig<T>,
     data: PayloadFor<T>,
-    metadata: Record<string, unknown>,
+    metadata: NotificationMetadataByType[T],
   ): Promise<Notification> {
-    return (await this.notificationRepo.create({
+    // Safe: metadata and type come from the same notification config.
+    const newNotification = {
       userId,
       type,
       title: config.titleTemplate(data),
       message: config.messageTemplate(data),
       metadata,
-    } as unknown as NewNotification)) as Notification
+    } as NewNotification
+
+    return this.notificationRepo.create(newNotification)
   }
 
   /**
@@ -173,7 +199,7 @@ export class NotificationService {
    */
   private async queueDeliveries<T extends NotificationType>(
     notificationId: number,
-    enabledChannels: ("EMAIL" | "IN_APP")[],
+    enabledChannels: NotificationChannel[],
     data: PayloadFor<T>,
   ): Promise<void> {
     for (const channel of enabledChannels) {

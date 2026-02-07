@@ -68,6 +68,15 @@ export type NotificationDataByType = {
 }
 
 /**
+ * Metadata stored with each notification.
+ * For rich metadata, we persist the full payload for the notification type.
+ */
+export type NotificationMetadataByType = NotificationDataByType
+
+/** Supported notification delivery channels */
+export type NotificationChannel = "EMAIL" | "IN_APP"
+
+/**
  * Helper type to get the payload for a specific notification type.
  * This ensures that when you use a notification type, you get the correct payload type.
  *
@@ -100,10 +109,10 @@ export interface NotificationTypeConfig<T extends NotificationType> {
   emailTemplate?: (data: NotificationDataByType[T]) => string
 
   /** Delivery channels for this notification type */
-  channels: ("EMAIL" | "IN_APP")[]
+  channels: NotificationChannel[]
 
-  /** Optional function to extract metadata from the data */
-  metadata?: (data: NotificationDataByType[T]) => Record<string, unknown>
+  /** Function to extract metadata from the data */
+  metadata: (data: NotificationDataByType[T]) => NotificationMetadataByType[T]
 }
 
 /**
@@ -123,8 +132,11 @@ export const NOTIFICATION_TYPES: {
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
+      className: data.className,
       classId: data.classId,
       dueDate: data.dueDate,
+      assignmentUrl: data.assignmentUrl,
     }),
   },
 
@@ -138,8 +150,10 @@ export const NOTIFICATION_TYPES: {
     metadata: (data) => ({
       submissionId: data.submissionId,
       assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
       grade: data.grade,
       maxGrade: data.maxGrade,
+      submissionUrl: data.submissionUrl,
     }),
   },
 
@@ -151,6 +165,8 @@ export const NOTIFICATION_TYPES: {
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       classId: data.classId,
+      className: data.className,
+      message: data.message,
     }),
   },
 
@@ -163,7 +179,9 @@ export const NOTIFICATION_TYPES: {
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
       dueDate: data.dueDate,
+      assignmentUrl: data.assignmentUrl,
     }),
   },
 
@@ -176,7 +194,10 @@ export const NOTIFICATION_TYPES: {
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
       classId: data.classId,
+      className: data.className,
       enrollmentId: data.enrollmentId,
+      instructorName: data.instructorName,
+      classUrl: data.classUrl,
     }),
   },
 }

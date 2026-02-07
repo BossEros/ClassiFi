@@ -63,8 +63,8 @@ export function NotificationsPage() {
         setNotifications((prev) => [...prev, ...response.notifications])
       }
 
-      setHasMore(response.pagination.hasMore)
-      setTotal(response.pagination.total)
+      setHasMore(response.hasMore)
+      setTotal(response.total)
     } catch (error) {
       console.error("Failed to load notifications:", error)
       showToast("Failed to load notifications", "error")

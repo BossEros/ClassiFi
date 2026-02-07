@@ -104,6 +104,14 @@ describe("Notification Flow Integration Tests", () => {
       processDelivery: vi.fn().mockResolvedValue(undefined),
     } as any
 
+    // Create mock preference service
+    const mockPreferenceService = {
+      getEnabledChannels: vi.fn().mockResolvedValue(["EMAIL", "IN_APP"]),
+      getPreference: vi.fn(),
+      getAllPreferences: vi.fn(),
+      updatePreference: vi.fn(),
+    } as any
+
     // Register mocks in container
     container.registerInstance("NotificationRepository", mockNotificationRepo)
     container.registerInstance(
@@ -111,6 +119,10 @@ describe("Notification Flow Integration Tests", () => {
       mockDeliveryRepo,
     )
     container.registerInstance("NotificationQueueService", mockQueueService)
+    container.registerInstance(
+      "NotificationPreferenceService",
+      mockPreferenceService,
+    )
     container.registerInstance("AssignmentRepository", mockAssignmentRepo)
     container.registerInstance("ClassRepository", mockClassRepo)
     container.registerInstance("EnrollmentRepository", mockEnrollmentRepo)
@@ -119,11 +131,11 @@ describe("Notification Flow Integration Tests", () => {
     container.registerInstance("TestResultRepository", mockTestResultRepo)
     container.registerInstance("LatePenaltyService", mockLatePenaltyService)
 
-    // Create and register NotificationService with the mocked queue service
+    // Create and register NotificationService with the mocked services
     notificationService = new NotificationService(
       mockNotificationRepo,
-      mockDeliveryRepo,
       mockQueueService,
+      mockPreferenceService,
     )
     container.registerInstance("NotificationService", notificationService)
 

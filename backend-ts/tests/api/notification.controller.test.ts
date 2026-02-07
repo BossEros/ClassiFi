@@ -10,8 +10,8 @@ vi.mock("tsyringe", () => ({
   container: {
     resolve: vi.fn(),
   },
-  injectable: () => () => {},
-  inject: () => () => {},
+  injectable: () => () => { },
+  inject: () => () => { },
 }))
 
 // Mock utils
@@ -109,12 +109,8 @@ describe("Notification Controller", () => {
       expect(mockReply.send).toHaveBeenCalledWith({
         success: true,
         notifications: [mockNotification],
-        pagination: {
-          page: 1,
-          limit: 20,
-          total: 1,
-          hasMore: false,
-        },
+        total: 1,
+        hasMore: false,
       })
     })
 

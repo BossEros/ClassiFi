@@ -82,12 +82,8 @@ export class ListNotificationsDto {
 export const NotificationsResponseSchema = z.object({
   success: z.literal(true),
   notifications: z.array(NotificationSchema),
-  pagination: z.object({
-    page: z.number(),
-    limit: z.number(),
-    total: z.number(),
-    hasMore: z.boolean(),
-  }),
+  total: z.number(),
+  hasMore: z.boolean(),
 })
 
 export type NotificationsResponse = z.infer<typeof NotificationsResponseSchema>

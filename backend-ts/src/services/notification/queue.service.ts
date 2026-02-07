@@ -7,12 +7,6 @@ import type { NotificationType } from "../../api/schemas/notification.schema.js"
 import { NOTIFICATION_TYPES, type PayloadFor } from "./types.js"
 
 /**
- * Type alias for generic notification payload data.
- * Note: This service uses the more specific PayloadFor<T> type for type safety.
- */
-export type NotificationPayload = Record<string, unknown>
-
-/**
  * Type guard to check if a value is an Error instance.
  *
  * @param e - The value to check
@@ -38,7 +32,7 @@ export class NotificationQueueService {
     private emailService: IEmailService,
     @inject("UserRepository")
     private userRepo: UserRepository,
-  ) {}
+  ) { }
 
   /**
    * Enqueues a notification delivery.

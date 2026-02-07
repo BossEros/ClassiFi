@@ -56,12 +56,8 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         notifications: result.notifications,
-        pagination: {
-          page: dto.page,
-          limit: dto.limit,
-          total: result.total,
-          hasMore: result.hasMore,
-        },
+        total: result.total,
+        hasMore: result.hasMore,
       })
     },
   })

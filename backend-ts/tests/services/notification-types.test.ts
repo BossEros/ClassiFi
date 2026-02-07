@@ -15,7 +15,7 @@ describe("Notification Types Registry", () => {
 
     it("should generate correct title", () => {
       const title = config.titleTemplate(testData)
-      expect(title).toBe("New Assignment: Homework 1")
+      expect(title).toBe("CS 101: New Assignment Posted")
     })
 
     it("should generate correct message", () => {
@@ -39,8 +39,11 @@ describe("Notification Types Registry", () => {
       const metadata = config.metadata!(testData)
       expect(metadata).toEqual({
         assignmentId: 1,
+        assignmentTitle: "Homework 1",
+        className: "CS 101",
         classId: 1,
         dueDate: "2024-12-31",
+        assignmentUrl: "https://app.com/assignments/1",
       })
     })
   })
@@ -58,7 +61,7 @@ describe("Notification Types Registry", () => {
 
     it("should generate correct title", () => {
       const title = config.titleTemplate(testData)
-      expect(title).toBe("Assignment Graded: Homework 1")
+      expect(title).toBe("Assignment Graded")
     })
 
     it("should generate correct message with grade", () => {
@@ -78,8 +81,10 @@ describe("Notification Types Registry", () => {
       expect(metadata).toEqual({
         submissionId: 1,
         assignmentId: 1,
+        assignmentTitle: "Homework 1",
         grade: 85,
         maxGrade: 100,
+        submissionUrl: "https://app.com/submissions/1",
       })
     })
   })
@@ -114,7 +119,7 @@ describe("Notification Types Registry", () => {
 
     it("should generate correct title", () => {
       const title = config.titleTemplate(testData)
-      expect(title).toBe("Reminder: Final Project Due Soon")
+      expect(title).toBe("Assignment Deadline Reminder")
     })
 
     it("should generate reminder message", () => {
@@ -148,7 +153,7 @@ describe("Notification Types Registry", () => {
 
     it("should generate email with instructor info", () => {
       const email = config.emailTemplate!(testData)
-      expect(email).toContain("Enrollment Confirmed")
+      expect(email).toContain("Welcome to CS 101")
       expect(email).toContain("Dr. Smith")
     })
   })
