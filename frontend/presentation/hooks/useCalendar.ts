@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import {
   addMonths,
   subMonths,
@@ -30,6 +30,7 @@ export interface UseCalendarReturn {
 
   // Methods
   navigatePeriod: (direction: "prev" | "next" | "today") => void
+  navigateToDate: (date: Date) => void
   changeView: (view: CalendarView) => void
   toggleClassFilter: (classId: number) => void
   selectAllClasses: () => void
@@ -65,6 +66,9 @@ export function useCalendar(): UseCalendarReturn {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Track if this is the initial load to auto-select all classes
+  const isInitialLoad = useRef<boolean>(true)
 
   // ============================================================================
   // Data Fetching
@@ -112,9 +116,11 @@ export function useCalendar(): UseCalendarReturn {
       setEvents(fetchedEvents)
       setAvailableClasses(fetchedClasses)
 
-      // Initialize selected classes with all classes if not already set
-      if (selectedClasses.size === 0 && fetchedClasses.length > 0) {
+      // Initialize selected classes with all classes ONLY on first load
+      // After that, respect user's selection (even if they deselect all)
+      if (isInitialLoad.current && selectedClasses.size === 0 && fetchedClasses.length > 0) {
         setSelectedClasses(new Set(fetchedClasses.map((cls) => cls.id)))
+        isInitialLoad.current = false
       }
     } catch (err) {
       console.error("Error fetching calendar events:", err)
@@ -136,13 +142,15 @@ export function useCalendar(): UseCalendarReturn {
    * Memoized to avoid unnecessary recalculations.
    */
   const filteredEvents = useMemo(() => {
-    // If no classes are selected, show all events
+    // If no classes are selected, show no events (empty calendar)
     if (selectedClasses.size === 0) {
-      return events
+      return []
     }
 
     // Filter events by selected classes
-    return events.filter((event) => selectedClasses.has(event.classId))
+    return events.filter((event) =>
+      selectedClasses.has(event.classInfo.id),
+    )
   }, [events, selectedClasses])
 
   // ============================================================================
@@ -201,6 +209,16 @@ export function useCalendar(): UseCalendarReturn {
    */
   const changeView = useCallback((view: CalendarView) => {
     setCurrentView(view)
+  }, [])
+
+  /**
+   * Navigates to a specific date.
+   * Useful for jumping to a particular day from the month view.
+   *
+   * @param date - The date to navigate to
+   */
+  const navigateToDate = useCallback((date: Date) => {
+    setCurrentDate(date)
   }, [])
 
   // ============================================================================
@@ -290,6 +308,20 @@ export function useCalendar(): UseCalendarReturn {
     fetchEvents()
   }, [fetchEvents])
 
+  /**
+   * Debug: Log filtered events to verify uniqueness
+   */
+  useEffect(() => {
+    if (filteredEvents.length > 0) {
+      console.log("Calendar Events:", filteredEvents.map(e => ({
+        id: e.id,
+        title: e.title,
+        start: e.timing.start,
+        classId: e.classInfo.id
+      })))
+    }
+  }, [filteredEvents])
+
   // ============================================================================
   // Return Hook Value
   // ============================================================================
@@ -308,6 +340,7 @@ export function useCalendar(): UseCalendarReturn {
 
     // Methods
     navigatePeriod,
+    navigateToDate,
     changeView,
     toggleClassFilter,
     selectAllClasses,

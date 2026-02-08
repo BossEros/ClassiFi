@@ -23,3 +23,4 @@ export { CalendarFilters, type CalendarFiltersProps } from "./CalendarFilters"
 // React Big Calendar Customizations
 export { CustomEventComponent } from "./CustomEventComponent"
 export { CustomToolbar } from "./CustomToolbar"
+export { CustomDayView } from "./CustomDayView"

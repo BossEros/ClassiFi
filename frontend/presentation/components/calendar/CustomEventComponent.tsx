@@ -40,9 +40,9 @@ export function CustomEventComponent({
    * Returns the appropriate status icon based on the event status.
    */
   const getStatusIcon = () => {
-    if (!event.status) return null
+    if (!event.assignment.status) return null
 
-    switch (event.status) {
+    switch (event.assignment.status) {
       case "submitted":
         return (
           <CheckCircle
@@ -85,10 +85,10 @@ export function CustomEventComponent({
    */
   const getSubmissionText = () => {
     if (
-      event.submittedCount !== undefined &&
-      event.totalStudents !== undefined
+      event.assignment.submittedCount !== undefined &&
+      event.assignment.totalStudents !== undefined
     ) {
-      return `${event.submittedCount}/${event.totalStudents}`
+      return `${event.assignment.submittedCount}/${event.assignment.totalStudents}`
     }
 
     return null
@@ -99,17 +99,17 @@ export function CustomEventComponent({
    * Attempts to find a pattern like "CS101", "MATH201", etc.
    */
   const getCourseCode = (): string | null => {
-    if (!event.className) return null
+    if (!event.classInfo.name) return null
 
     // Match patterns like "CS101", "MATH 201", "EE-100"
-    const match = event.className.match(/^([A-Z]+[-\s]?\d+)/i)
+    const match = event.classInfo.name.match(/^([A-Z]+[-\s]?\d+)/i)
 
     if (match) {
       return match[1].toUpperCase().replace(/\s+/g, "")
     }
 
     // Fallback: Use first word if it looks like a code (all caps or alphanumeric)
-    const firstWord = event.className.split(" ")[0]
+    const firstWord = event.classInfo.name.split(" ")[0]
 
     if (firstWord && firstWord.length <= 8 && /^[A-Z0-9]+$/i.test(firstWord)) {
       return firstWord.toUpperCase()
@@ -120,41 +120,36 @@ export function CustomEventComponent({
 
   const courseCode = getCourseCode()
   const submissionText = getSubmissionText()
-  const borderColor = getDarkerShade(event.classColor)
+  const borderColor = getDarkerShade(event.classInfo.color)
 
   return (
     <div
-      className="h-full px-1.5 py-1 rounded-sm text-xs overflow-hidden transition-opacity hover:opacity-90"
+      className="h-full px-2 py-1.5 rounded-md text-xs overflow-hidden transition-all hover:opacity-95 hover:shadow-lg"
       style={{
-        backgroundColor: `${event.classColor}E6`, // 90% opacity
+        backgroundColor: event.classInfo.color,
         borderLeft: `3px solid ${borderColor}`,
       }}
       role="button"
       tabIndex={0}
-      aria-label={`${event.className || ""} - ${title}`}
+      aria-label={`${event.classInfo.name || ""} - ${title}`}
     >
-      {/* Main Content Row */}
-      <div className="flex items-center gap-1 min-w-0">
-        {/* Status Icon */}
+      {/* Main Content - Course Code + Assignment Name */}
+      <div className="flex items-center gap-1.5 min-w-0">
+        {/* Status Icon (for students) */}
         {getStatusIcon()}
 
-        {/* Course Code Badge */}
-        {courseCode && (
-          <span className="flex-shrink-0 text-[10px] font-bold text-white/90 bg-black/20 px-1 rounded">
-            {courseCode}
-          </span>
-        )}
-
-        {/* Assignment Title */}
-        <span className="truncate font-medium text-white text-[11px]">
+        {/* Course Code + Assignment Name */}
+        <span className="truncate font-semibold text-white text-[11px] leading-tight">
+          {courseCode && <span className="font-bold">{courseCode}</span>}
+          {courseCode && " "}
           {title}
         </span>
       </div>
 
       {/* Secondary Info Row (Submission Count for Teachers) */}
       {submissionText && (
-        <div className="flex items-center gap-1 mt-0.5">
-          <span className="text-[10px] text-white/70 font-medium">
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-[10px] text-white/80 font-medium">
             📝 {submissionText}
           </span>
         </div>

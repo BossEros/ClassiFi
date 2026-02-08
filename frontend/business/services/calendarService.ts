@@ -26,57 +26,26 @@ import type { CalendarView } from "@/shared/utils/calendarConfig"
 // ============================================================================
 
 /**
- * Course-specific color schemes based on subject patterns.
- * Blue/cyan for CS courses, orange for MATH courses, pink for other courses.
+ * All available colors for class color assignment.
+ * Uses a diverse palette to ensure different classes get different colors.
  */
-const CS_COLORS = [
+const ALL_COLORS = [
   "#3B82F6", // Blue
-  "#06B6D4", // Cyan
-  "#0EA5E9", // Sky
-  "#6366F1", // Indigo
-]
-
-const MATH_COLORS = [
-  "#F97316", // Orange
-  "#F59E0B", // Amber
-  "#EAB308", // Yellow
-  "#FB923C", // Light Orange
-]
-
-const OTHER_COLORS = [
   "#EC4899", // Pink
-  "#F472B6", // Light Pink
-  "#A855F7", // Violet
-  "#8B5CF6", // Purple
   "#10B981", // Green
-  "#14B8A6", // Teal
-  "#84CC16", // Lime
+  "#F97316", // Orange
+  "#8B5CF6", // Purple
+  "#06B6D4", // Cyan
+  "#EAB308", // Yellow
   "#EF4444", // Red
-]
-
-/**
- * Patterns to detect course types from class names.
- */
-const CS_PATTERNS = [
-  /\bCS\b/i,
-  /\bCSC\b/i,
-  /\bCOMP\b/i,
-  /\bCPSC\b/i,
-  /computer\s*science/i,
-  /programming/i,
-  /software/i,
-  /\bIT\b/i,
-  /\bICT\b/i,
-]
-
-const MATH_PATTERNS = [
-  /\bMATH\b/i,
-  /\bMTH\b/i,
-  /mathematics/i,
-  /calculus/i,
-  /algebra/i,
-  /statistics/i,
-  /\bSTAT\b/i,
+  "#14B8A6", // Teal
+  "#A855F7", // Violet
+  "#84CC16", // Lime
+  "#F59E0B", // Amber
+  "#6366F1", // Indigo
+  "#0EA5E9", // Sky
+  "#F472B6", // Light Pink
+  "#FB923C", // Light Orange
 ]
 
 /**
@@ -164,10 +133,19 @@ async function getStudentCalendarEvents(
     endDate,
   )
 
-  const submissions = await assignmentService.getStudentSubmissions(
-    studentId,
-    true,
-  )
+  // Fetch submissions - use basic getStudentSubmissions which doesn't include assignment names
+  // We'll match them with assignments ourselves
+  let submissions: Submission[] = []
+  try {
+    submissions = await assignmentService.getStudentSubmissions(
+      studentId,
+      true,
+    )
+  } catch (error) {
+    console.warn("Error fetching student submissions:", error)
+    // Continue without submissions - assignments will show as not-started
+  }
+
   const submissionMap = createSubmissionMap(submissions)
 
   const events = filteredAssignments.map((assignment) =>
@@ -290,66 +268,23 @@ export function getDateRangeForView(date: Date, view: CalendarView): DateRange {
 }
 
 /**
- * Detects the course type from a class name.
- *
- * @param className - Name of the class
- * @returns 'cs' | 'math' | 'other' based on detected patterns
- */
-function detectCourseType(className?: string): "cs" | "math" | "other" {
-  if (!className) {
-    return "other"
-  }
-
-  // Check for CS course patterns
-  for (const pattern of CS_PATTERNS) {
-    if (pattern.test(className)) {
-      return "cs"
-    }
-  }
-
-  // Check for Math course patterns
-  for (const pattern of MATH_PATTERNS) {
-    if (pattern.test(className)) {
-      return "math"
-    }
-  }
-
-  return "other"
-}
-
-/**
- * Generates a deterministic color for a class based on its ID and name.
- * Uses course-specific color schemes:
- * - Blue/cyan for CS courses
- * - Orange for MATH courses
- * - Pink/other colors for other courses
+ * Generates a deterministic color for a class based on its ID.
+ * Uses a hash-based approach to ensure better color distribution.
  *
  * @param classId - Class identifier
- * @param className - Class name (optional, for determining color scheme)
- * @returns Hex color string from the appropriate palette
+ * @returns Hex color string from the color palette
  *
  * Requirements: 4.3, 5.4, 7.5
  */
-export function getClassColor(classId: number, className?: string): string {
-  const courseType = detectCourseType(className)
+export function getClassColor(classId: number): string {
+  // Use ALL_COLORS palette for better distribution
+  // This ensures different classes get different colors
+  const palette = ALL_COLORS
 
-  let palette: string[]
-
-  switch (courseType) {
-    case "cs":
-      palette = CS_COLORS
-      break
-
-    case "math":
-      palette = MATH_COLORS
-      break
-
-    default:
-      palette = OTHER_COLORS
-  }
-
-  // Deterministic selection within the palette
-  const index = classId % palette.length
+  // Use a simple hash function to distribute colors more evenly
+  // This prevents adjacent class IDs from getting similar colors
+  const hash = (classId * 2654435761) % palette.length
+  const index = Math.abs(hash)
 
   return palette[index]
 }
@@ -475,7 +410,7 @@ export async function getClassesForFilter(
     return classes.map((cls) => ({
       id: cls.id,
       name: cls.className,
-      color: getClassColor(cls.id, cls.className),
+      color: getClassColor(cls.id),
       isEnrolled: userRole === "student",
       isTeaching: userRole === "teacher",
     }))
@@ -607,26 +542,43 @@ function isValidCalendarEvent(event: CalendarEvent): boolean {
     }
 
     if (
-      !event.deadline ||
-      !(event.deadline instanceof Date) ||
-      isNaN(event.deadline.getTime())
+      !event.timing?.start ||
+      !(event.timing.start instanceof Date) ||
+      isNaN(event.timing.start.getTime())
     ) {
-      console.warn("Invalid event: missing or invalid deadline", event)
+      console.warn("Invalid event: missing or invalid timing.start", event)
       return false
     }
 
-    if (!event.classId || typeof event.classId !== "number") {
-      console.warn("Invalid event: missing or invalid classId", event)
+    if (!event.classInfo?.id || typeof event.classInfo.id !== "number") {
+      console.warn("Invalid event: missing or invalid classInfo.id", event)
       return false
     }
 
-    if (!event.className || typeof event.className !== "string") {
-      console.warn("Invalid event: missing or invalid className", event)
+    if (
+      !event.classInfo?.name ||
+      typeof event.classInfo.name !== "string"
+    ) {
+      console.warn("Invalid event: missing or invalid classInfo.name", event)
       return false
     }
 
-    if (!event.classColor || typeof event.classColor !== "string") {
-      console.warn("Invalid event: missing or invalid classColor", event)
+    if (
+      !event.classInfo?.color ||
+      typeof event.classInfo.color !== "string"
+    ) {
+      console.warn("Invalid event: missing or invalid classInfo.color", event)
+      return false
+    }
+
+    if (
+      !event.assignment?.assignmentId ||
+      typeof event.assignment.assignmentId !== "number"
+    ) {
+      console.warn(
+        "Invalid event: missing or invalid assignment.assignmentId",
+        event,
+      )
       return false
     }
 
@@ -715,19 +667,31 @@ function transformToStudentEvent(
 ): CalendarEvent {
   const cls = classes.find((c) => c.id === assignment.classId)
   const submission = submissionMap.get(assignment.id)
+  const deadlineDate = new Date(assignment.deadline!)
+  const isAllDay = isDateOnlyDeadline(deadlineDate)
 
   return {
     id: assignment.id,
+    type: "assignment",
     title: assignment.assignmentName,
-    description: assignment.description || "",
-    deadline: new Date(assignment.deadline!),
-    classId: assignment.classId,
-    className: cls?.className || "Unknown Class",
-    classColor: getClassColor(assignment.classId, cls?.className),
-    type: "assignment" as const,
-    status: calculateSubmissionStatus(assignment, submission),
-    grade: submission?.grade ?? undefined,
-    submissionId: submission?.id,
+    description: assignment.description || undefined,
+    timing: {
+      start: deadlineDate,
+      end: deadlineDate,
+      allDay: isAllDay,
+    },
+    classInfo: {
+      id: assignment.classId,
+      name: cls?.className || "Unknown Class",
+      color: getClassColor(assignment.classId),
+    },
+    assignment: {
+      assignmentId: assignment.id,
+      status: calculateSubmissionStatus(assignment, submission),
+      grade: submission?.grade ?? undefined,
+      submissionId: submission?.id,
+    },
+    resourceId: assignment.classId,
   }
 }
 
@@ -747,18 +711,30 @@ function transformToTeacherEvent(
   totalStudents: number,
 ): CalendarEvent {
   const cls = classes.find((c) => c.id === assignment.classId)
+  const deadlineDate = new Date(assignment.deadline!)
+  const isAllDay = isDateOnlyDeadline(deadlineDate)
 
   return {
     id: assignment.id,
+    type: "assignment",
     title: assignment.assignmentName,
-    description: assignment.description || "",
-    deadline: new Date(assignment.deadline!),
-    classId: assignment.classId,
-    className: cls?.className || "Unknown Class",
-    classColor: getClassColor(assignment.classId, cls?.className),
-    type: "assignment" as const,
-    submittedCount,
-    totalStudents,
+    description: assignment.description || undefined,
+    timing: {
+      start: deadlineDate,
+      end: deadlineDate,
+      allDay: isAllDay,
+    },
+    classInfo: {
+      id: assignment.classId,
+      name: cls?.className || "Unknown Class",
+      color: getClassColor(assignment.classId),
+    },
+    assignment: {
+      assignmentId: assignment.id,
+      submittedCount,
+      totalStudents,
+    },
+    resourceId: assignment.classId,
   }
 }
 
@@ -769,5 +745,22 @@ function transformToTeacherEvent(
  * @returns Sorted array of events
  */
 function sortEventsByDeadline(events: CalendarEvent[]): CalendarEvent[] {
-  return events.sort((a, b) => a.deadline.getTime() - b.deadline.getTime())
+  return events.sort(
+    (a, b) => a.timing.start.getTime() - b.timing.start.getTime(),
+  )
+}
+
+/**
+ * Determines whether a deadline is date-only (midnight) and should be all-day.
+ *
+ * @param deadline - Assignment deadline date
+ * @returns True when the deadline has no explicit time component
+ */
+function isDateOnlyDeadline(deadline: Date): boolean {
+  return (
+    deadline.getHours() === 0 &&
+    deadline.getMinutes() === 0 &&
+    deadline.getSeconds() === 0 &&
+    deadline.getMilliseconds() === 0
+  )
 }

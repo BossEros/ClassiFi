@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Calendar, Clock, BookOpen, CheckCircle, Users, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { CalendarEvent } from "@/business/models/calendar/types";
@@ -56,13 +57,13 @@ export function EventDetailsModal({
     /**
      * Formats the deadline date and time for display.
      */
-    const formattedDeadline = formatCalendarDate(event.deadline);
+    const formattedDeadline = formatCalendarDate(event.timing.start);
 
     /**
      * Gets the status badge for student view.
      */
     const getStatusBadge = () => {
-        if (!event.status) return null;
+        if (!event.assignment.status) return null;
 
         const statusConfig = {
             "not-started": {
@@ -91,7 +92,7 @@ export function EventDetailsModal({
             },
         };
 
-        const config = statusConfig[event.status];
+        const config = statusConfig[event.assignment.status];
         const Icon = config.icon;
 
         return (
@@ -111,15 +112,17 @@ export function EventDetailsModal({
      */
     const handleNavigateToAssignment = () => {
         if (isStudent) {
-            navigate(`/assignments/${event.id}`);
+            navigate(`/dashboard/assignments/${event.assignment.assignmentId}`);
         } else if (isTeacher) {
-            navigate(`/assignments/${event.id}/submissions`);
+            navigate(
+                `/dashboard/assignments/${event.assignment.assignmentId}/submissions`,
+            );
         }
         onClose();
     };
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    const modalContent = (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -127,7 +130,7 @@ export function EventDetailsModal({
             />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-2xl transform overflow-hidden rounded-2xl bg-slate-900/95 backdrop-blur-xl shadow-2xl transition-all border border-white/10 ring-1 ring-white/5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-2xl min-w-[320px] mx-auto flex-shrink-0 transform overflow-hidden rounded-2xl bg-slate-900/95 backdrop-blur-xl shadow-2xl transition-all border border-white/10 ring-1 ring-white/5 animate-in fade-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="flex items-start justify-between px-6 py-5 border-b border-white/5">
                     <div className="flex-1 pr-4">
@@ -137,10 +140,10 @@ export function EventDetailsModal({
                         <div className="flex items-center gap-2">
                             <div
                                 className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: event.classColor }}
+                                style={{ backgroundColor: event.classInfo.color }}
                             />
                             <span className="text-sm text-gray-400">
-                                {event.className}
+                                {event.classInfo.name}
                             </span>
                         </div>
                     </div>
@@ -203,7 +206,8 @@ export function EventDetailsModal({
                             </div>
 
                             {/* Grade */}
-                            {event.grade !== undefined && event.grade !== null && (
+                            {event.assignment.grade !== undefined &&
+                                event.assignment.grade !== null && (
                                 <div className="flex items-start gap-3">
                                     <div className="p-2 rounded-lg bg-white/5">
                                         <CheckCircle className="w-5 h-5 text-gray-400" />
@@ -213,7 +217,7 @@ export function EventDetailsModal({
                                             Grade
                                         </p>
                                         <p className="text-2xl font-bold text-white">
-                                            {event.grade}
+                                            {event.assignment.grade}
                                             <span className="text-sm text-gray-400 font-normal ml-1">
                                                 / 100
                                             </span>
@@ -235,18 +239,19 @@ export function EventDetailsModal({
                                     Submissions
                                 </p>
                                 <p className="text-2xl font-bold text-white">
-                                    {event.submittedCount ?? 0}
+                                    {event.assignment.submittedCount ?? 0}
                                     <span className="text-sm text-gray-400 font-normal mx-1">
                                         /
                                     </span>
                                     <span className="text-lg text-gray-400 font-semibold">
-                                        {event.totalStudents ?? 0}
+                                        {event.assignment.totalStudents ?? 0}
                                     </span>
                                 </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                    {event.submittedCount === event.totalStudents
+                                    {event.assignment.submittedCount ===
+                                    event.assignment.totalStudents
                                         ? "All students have submitted"
-                                        : `${(event.totalStudents ?? 0) - (event.submittedCount ?? 0)} student${(event.totalStudents ?? 0) - (event.submittedCount ?? 0) === 1 ? "" : "s"} pending`}
+                                        : `${(event.assignment.totalStudents ?? 0) - (event.assignment.submittedCount ?? 0)} student${(event.assignment.totalStudents ?? 0) - (event.assignment.submittedCount ?? 0) === 1 ? "" : "s"} pending`}
                                 </p>
                             </div>
                         </div>
@@ -268,4 +273,6 @@ export function EventDetailsModal({
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }

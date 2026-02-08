@@ -11,35 +11,45 @@
 export type AssignmentStatus = 'not-started' | 'pending' | 'submitted' | 'late';
 
 /**
- * Represents a displayable event on the calendar.
- * This is the primary data structure for calendar events, typically representing assignment deadlines.
+ * Supported calendar event types.
  */
-export interface CalendarEvent {
-    /** Unique identifier for the event (typically assignment ID) */
+export type CalendarEventType = 'assignment';
+
+/**
+ * Class metadata attached to a calendar event.
+ */
+export interface CalendarEventClassInfo {
+    /** Unique class identifier */
     id: number;
 
-    /** Display title for the event (typically assignment name) */
-    title: string;
+    /** Class name for display */
+    name: string;
 
-    /** Detailed description of the event/assignment */
-    description: string;
+    /** Hex color code for visual identification */
+    color: string;
+}
 
-    /** Deadline date and time for the event */
-    deadline: Date;
+/**
+ * Timing information for a calendar event.
+ */
+export interface CalendarEventTiming {
+    /** Event start date/time */
+    start: Date;
 
-    /** ID of the associated class */
-    classId: number;
+    /** Event end date/time */
+    end: Date;
 
-    /** Name of the associated class for display */
-    className: string;
+    /** Whether the event should render as an all-day event */
+    allDay?: boolean;
+}
 
-    /** Hex color code for visual identification of the class */
-    classColor: string;
+/**
+ * Assignment-specific metadata for calendar events.
+ */
+export interface CalendarEventAssignmentInfo {
+    /** Assignment identifier */
+    assignmentId: number;
 
-    /** Type of event (extensible for future event types) */
-    type: 'assignment';
-
-    // Student-specific fields
     /** Submission status for students */
     status?: AssignmentStatus;
 
@@ -49,12 +59,41 @@ export interface CalendarEvent {
     /** ID of the latest submission */
     submissionId?: number;
 
-    // Teacher-specific fields
-    /** Number of students who have submitted */
+    /** Number of students who have submitted (teacher view) */
     submittedCount?: number;
 
-    /** Total number of enrolled students */
+    /** Total number of enrolled students (teacher view) */
     totalStudents?: number;
+}
+
+/**
+ * Represents a displayable event on the calendar.
+ * Primary data structure for calendar UI rendering.
+ */
+export interface CalendarEvent {
+    /** Unique identifier for the event (typically assignment ID) */
+    id: number;
+
+    /** Type of event (extensible for future event types) */
+    type: CalendarEventType;
+
+    /** Display title for the event (typically assignment name) */
+    title: string;
+
+    /** Detailed description of the event/assignment */
+    description?: string;
+
+    /** Timing information for rendering and sorting */
+    timing: CalendarEventTiming;
+
+    /** Class metadata for filtering and styling */
+    classInfo: CalendarEventClassInfo;
+
+    /** Assignment-specific metadata */
+    assignment: CalendarEventAssignmentInfo;
+
+    /** Resource ID for better overlap handling (uses class ID) */
+    resourceId?: number;
 }
 
 /**
