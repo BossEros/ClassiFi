@@ -81,19 +81,20 @@ export async function getCalendarEvents(
 
     // Provide user-friendly error message
     if (error instanceof Error) {
+      // Normalize error message to lowercase for case-insensitive matching
+      const msg = error.message.toLowerCase()
+
       // Don't expose internal error details to users
       if (
-        error.message.includes("network") ||
-        error.message.includes("fetch")
+        msg.includes("network") ||
+        msg.includes("failed to fetch") ||
+        msg.includes("fetch")
       ) {
         throw new Error(
           "Network error. Please check your connection and try again.",
         )
       }
-      if (
-        error.message.includes("unauthorized") ||
-        error.message.includes("permission")
-      ) {
+      if (msg.includes("unauthorized") || msg.includes("permission")) {
         throw new Error("You don't have permission to view these events.")
       }
     }
