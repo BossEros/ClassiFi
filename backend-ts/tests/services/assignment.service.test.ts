@@ -273,11 +273,17 @@ describe("AssignmentService", () => {
         10,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({
-          dueDate: deadline.toLocaleDateString(),
+          dueDate: deadline.toLocaleString("en-US", {
+            month: "numeric",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }),
         }),
       )
     })
-
     it("should format deadline correctly in notification for future date", async () => {
       const mockClass = createMockClass({
         id: 1,
@@ -331,7 +337,14 @@ describe("AssignmentService", () => {
         10,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({
-          dueDate: deadline.toLocaleDateString(),
+          dueDate: deadline.toLocaleString("en-US", {
+            month: "numeric",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }),
         }),
       )
     })

@@ -13,6 +13,7 @@ import { TestResultRepository } from "../repositories/testResult.repository.js"
 import { GradebookRepository } from "../repositories/gradebook.repository.js"
 import { NotificationRepository } from "../repositories/notification.repository.js"
 import { NotificationDeliveryRepository } from "../repositories/notification-delivery.repository.js"
+import { NotificationPreferenceRepository } from "../repositories/notification-preference.repository.js"
 
 // Services
 import { AuthService } from "../services/auth.service.js"
@@ -34,6 +35,7 @@ import { LatePenaltyService } from "../services/latePenalty.service.js"
 import { EmailService } from "../services/email/index.js"
 import { NotificationService } from "../services/notification/notification.service.js"
 import { NotificationQueueService } from "../services/notification/queue.service.js"
+import { NotificationPreferenceService } from "../services/notification/preference.service.js"
 
 // Admin Services (focused, single-responsibility)
 import { AdminUserService } from "../services/admin/admin-user.service.js"
@@ -61,6 +63,10 @@ container.registerSingleton(
   "NotificationDeliveryRepository",
   NotificationDeliveryRepository,
 )
+container.registerSingleton(
+  "NotificationPreferenceRepository",
+  NotificationPreferenceRepository,
+)
 
 // Register infrastructure adapters as singletons
 container.registerSingleton("SupabaseAuthAdapter", SupabaseAuthAdapter)
@@ -81,6 +87,10 @@ container.registerSingleton("EmailService", EmailService)
 container.registerSingleton(
   "NotificationQueueService",
   NotificationQueueService,
+)
+container.registerSingleton(
+  "NotificationPreferenceService",
+  NotificationPreferenceService,
 )
 container.registerSingleton("NotificationService", NotificationService)
 

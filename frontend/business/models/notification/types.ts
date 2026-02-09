@@ -18,8 +18,7 @@ export interface SubmissionGradedMetadata {
   assignmentTitle: string
   submissionId: number
   grade: number
-  totalScore: number
-  feedback?: string
+  maxGrade: number
   submissionUrl: string
 }
 
@@ -29,7 +28,7 @@ export interface SubmissionGradedMetadata {
 export interface ClassAnnouncementMetadata {
   classId: number
   className: string
-  announcementText: string
+  message: string
 }
 
 /**
@@ -39,7 +38,6 @@ export interface DeadlineReminderMetadata {
   assignmentId: number
   assignmentTitle: string
   dueDate: string
-  hoursRemaining: number
   assignmentUrl: string
 }
 
@@ -49,7 +47,8 @@ export interface DeadlineReminderMetadata {
 export interface EnrollmentConfirmedMetadata {
   classId: number
   className: string
-  teacherName: string
+  enrollmentId: number
+  instructorName: string
   classUrl: string
 }
 

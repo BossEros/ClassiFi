@@ -1,9 +1,16 @@
 import { injectable, inject } from "tsyringe"
 import type { NotificationRepository } from "../../repositories/notification.repository.js"
 import type { NotificationQueueService } from "./queue.service.js"
+import type { NotificationPreferenceService } from "./preference.service.js"
 import type { Notification, NewNotification } from "../../models/index.js"
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
-import { NOTIFICATION_TYPES, type PayloadFor } from "./types.js"
+import {
+  NOTIFICATION_TYPES,
+  type NotificationChannel,
+  type NotificationMetadataByType,
+  type PayloadFor,
+  type NotificationTypeConfig,
+} from "./types.js"
 import { NotFoundError, ForbiddenError } from "../../shared/errors.js"
 
 /**
@@ -17,10 +24,13 @@ export class NotificationService {
     private notificationRepo: NotificationRepository,
     @inject("NotificationQueueService")
     private queueService: NotificationQueueService,
+    @inject("NotificationPreferenceService")
+    private preferenceService: NotificationPreferenceService,
   ) {}
 
   /**
    * Creates and queues a notification for delivery.
+   * Respects user preferences for notification channels.
    *
    * @param userId - The ID of the user to notify
    * @param type - The notification type
@@ -32,31 +42,169 @@ export class NotificationService {
     type: T,
     data: PayloadFor<T>,
   ): Promise<Notification> {
+    const config = this.getNotificationConfig(type)
+    const metadata = this.extractMetadata(config, data, type)
+    const preferredChannels = await this.preferenceService.getEnabledChannels(
+      userId,
+      type,
+    )
+    const enabledChannels = this.getEffectiveChannels(
+      preferredChannels,
+      config.channels,
+    )
+
+    if (enabledChannels.length === 0) {
+      return this.createMockNotification(userId, type, config, data, metadata)
+    }
+
+    const notification = await this.createNotificationRecord(
+      userId,
+      type,
+      config,
+      data,
+      metadata,
+    )
+
+    await this.queueDeliveries(notification.id, enabledChannels, data)
+
+    return notification
+  }
+
+  /**
+   * Gets and validates the notification type configuration.
+   *
+   * @param type - The notification type
+   * @returns The notification configuration
+   */
+  private getNotificationConfig<T extends NotificationType>(
+    type: T,
+  ): NotificationTypeConfig<T> {
     const config = NOTIFICATION_TYPES[type]
 
     if (!config) {
       throw new Error(`Unknown notification type: ${type}`)
     }
 
-    const metadata = config.metadata ? config.metadata(data) : null
+    return config
+  }
+
+  /**
+   * Extracts and validates metadata from notification data.
+   *
+   * @param config - The notification configuration
+   * @param data - The notification data
+   * @param type - The notification type
+   * @returns The extracted metadata
+   */
+  private extractMetadata<T extends NotificationType>(
+    config: NotificationTypeConfig<T>,
+    data: PayloadFor<T>,
+    type: T,
+  ): NotificationMetadataByType[T] {
+    const metadata = config.metadata(data)
 
     if (!metadata) {
       throw new Error(`Metadata is required for notification type: ${type}`)
     }
 
-    const notification = await this.notificationRepo.create({
+    return metadata
+  }
+
+  /**
+   * Intersects user-enabled channels with type-specific allowed channels.
+   *
+   * @param preferredChannels - Channels enabled by user preference
+   * @param allowedChannels - Channels allowed by notification type
+   * @returns Filtered list of effective channels
+   */
+  private getEffectiveChannels(
+    preferredChannels: NotificationChannel[],
+    allowedChannels: NotificationChannel[],
+  ): NotificationChannel[] {
+    const allowedSet = new Set<NotificationChannel>(allowedChannels)
+
+    return preferredChannels.filter((channel) => allowedSet.has(channel))
+  }
+
+  /**
+   * Creates a mock notification object when no channels are enabled.
+   * This notification is not persisted to the database.
+   *
+   * @param userId - The user ID
+   * @param type - The notification type
+   * @param config - The notification configuration
+   * @param data - The notification data
+   * @param metadata - The notification metadata
+   * @returns A mock notification object
+   */
+  private createMockNotification<T extends NotificationType>(
+    userId: number,
+    type: T,
+    config: NotificationTypeConfig<T>,
+    data: PayloadFor<T>,
+    metadata: NotificationMetadataByType[T],
+  ): Notification {
+    // Safe: metadata and type come from the same notification config.
+    return {
+      id: 0,
       userId,
       type,
       title: config.titleTemplate(data),
       message: config.messageTemplate(data),
       metadata,
-    } as unknown as NewNotification)
+      isRead: false,
+      readAt: null,
+      createdAt: new Date(),
+    } as Notification
+  }
 
-    for (const channel of config.channels) {
-      await this.queueService.enqueueDelivery(notification.id, channel, data)
+  /**
+   * Creates a notification record in the database.
+   * The notification record is created when at least one delivery channel is enabled.
+   *
+   * @param userId - The user ID
+   * @param type - The notification type
+   * @param config - The notification configuration
+   * @param data - The notification data
+   * @param metadata - The notification metadata
+   * @returns The created notification
+   */
+  private async createNotificationRecord<T extends NotificationType>(
+    userId: number,
+    type: T,
+    config: NotificationTypeConfig<T>,
+    data: PayloadFor<T>,
+    metadata: NotificationMetadataByType[T],
+  ): Promise<Notification> {
+    // Safe: metadata and type come from the same notification config.
+    const newNotification = {
+      userId,
+      type,
+      title: config.titleTemplate(data),
+      message: config.messageTemplate(data),
+      metadata,
+    } as NewNotification
+
+    return this.notificationRepo.create(newNotification)
+  }
+
+  /**
+   * Queues deliveries for enabled channels.
+   * Only queues IN_APP delivery if that channel is enabled.
+   * Only queues EMAIL delivery if that channel is enabled.
+   *
+   * @param notificationId - The notification ID
+   * @param enabledChannels - The enabled delivery channels
+   * @param data - The notification data
+   */
+  private async queueDeliveries<T extends NotificationType>(
+    notificationId: number,
+    enabledChannels: NotificationChannel[],
+    data: PayloadFor<T>,
+  ): Promise<void> {
+    for (const channel of enabledChannels) {
+      await this.queueService.enqueueDelivery(notificationId, channel, data)
     }
-
-    return notification as Notification
   }
 
   /**

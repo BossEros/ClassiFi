@@ -55,7 +55,7 @@ export function NotificationsPage() {
         setLoadingMore(true)
       }
 
-      const response = await notificationService.getNotifications(page, 20)
+      const response = await notificationService.getNotifications(page, 10)
 
       if (page === 1) {
         setNotifications(response.notifications)
@@ -170,7 +170,7 @@ export function NotificationsPage() {
               <h3 className="text-xl font-semibold text-white mb-2">
                 No notifications yet
               </h3>
-              <p className="text-slate-300 max-w-lg mx-auto leading-relaxed">
+              <p className="text-slate-300 mx-auto leading-relaxed">
                 When you receive notifications, they'll appear here.
               </p>
             </div>
@@ -199,9 +199,12 @@ export function NotificationsPage() {
                 </div>
               )}
 
-              <div className="mt-4 text-center text-sm text-slate-400">
-                Showing {notifications.length} of {total} notifications
-              </div>
+              {notifications.length > 0 && total > 0 && (
+                <div className="mt-4 text-center text-sm text-slate-400">
+                  Showing {notifications.length} of {total} notification
+                  {total !== 1 ? "s" : ""}
+                </div>
+              )}
             </>
           )}
         </CardContent>

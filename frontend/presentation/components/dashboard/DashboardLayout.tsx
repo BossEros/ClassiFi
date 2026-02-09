@@ -56,7 +56,7 @@ export function DashboardLayout({
 
       {/* Right side: Top bar + main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {topBar?.main}
+        <div className="relative z-[9999]">{topBar?.main}</div>
         <main
           className={cn("flex-1 min-w-0 overflow-y-auto", "h-full", className)}
         >

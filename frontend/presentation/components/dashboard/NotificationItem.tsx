@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
 import type { Notification } from "@/business/models/notification/types"
 import * as Icons from "lucide-react"
@@ -11,12 +12,14 @@ interface NotificationItemProps {
 /**
  * Individual notification item component for the dropdown.
  * Displays notification icon, title, message, and time.
+ * Clicking navigates to the relevant content based on notification type.
  */
 export function NotificationItem({
   notification,
   onMarkAsRead,
   onClick,
 }: NotificationItemProps) {
+  const navigate = useNavigate()
   const iconName = notificationService.getNotificationIcon(notification.type)
   const Icon =
     (Icons as unknown as Record<string, typeof Icons.Bell>)[iconName] ||
@@ -25,10 +28,33 @@ export function NotificationItem({
     notification.createdAt,
   )
 
+  const getNavigationUrl = (): string | null => {
+    switch (notification.type) {
+      case "ASSIGNMENT_CREATED":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "SUBMISSION_GRADED":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "CLASS_ANNOUNCEMENT":
+        return `/dashboard/classes/${notification.metadata.classId}`
+      case "DEADLINE_REMINDER":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "ENROLLMENT_CONFIRMED":
+        return `/dashboard/classes/${notification.metadata.classId}`
+      default:
+        return null
+    }
+  }
+
   const handleClick = () => {
     if (!notification.isRead) {
       onMarkAsRead(notification.id)
     }
+
+    const url = getNavigationUrl()
+    if (url) {
+      navigate(url)
+    }
+
     onClick()
   }
 

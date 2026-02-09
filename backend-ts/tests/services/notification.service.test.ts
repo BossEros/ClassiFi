@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import { NotificationService } from "../../src/services/notification/notification.service.js"
 import type { NotificationRepository } from "../../src/repositories/notification.repository.js"
 import type { NotificationQueueService } from "../../src/services/notification/queue.service.js"
+import type { NotificationPreferenceService } from "../../src/services/notification/preference.service.js"
 import type { Notification } from "../../src/models/index.js"
 import { NotFoundError, ForbiddenError } from "../../src/shared/errors.js"
 
@@ -9,6 +10,7 @@ describe("NotificationService", () => {
   let service: NotificationService
   let mockNotificationRepo: NotificationRepository
   let mockQueueService: NotificationQueueService
+  let mockPreferenceService: NotificationPreferenceService
 
   beforeEach(() => {
     // Create mock repositories and services
@@ -28,7 +30,18 @@ describe("NotificationService", () => {
       enqueueDelivery: vi.fn(),
     } as any
 
-    service = new NotificationService(mockNotificationRepo, mockQueueService)
+    mockPreferenceService = {
+      getEnabledChannels: vi.fn().mockResolvedValue(["EMAIL", "IN_APP"]),
+      getPreference: vi.fn(),
+      getAllPreferences: vi.fn(),
+      updatePreference: vi.fn(),
+    } as any
+
+    service = new NotificationService(
+      mockNotificationRepo,
+      mockQueueService,
+      mockPreferenceService,
+    )
   })
 
   describe("createNotification", () => {
@@ -42,8 +55,11 @@ describe("NotificationService", () => {
           'Your teacher has created a new assignment "Test Assignment" due on 2024-12-31.',
         metadata: {
           assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "CS101",
           classId: 1,
           dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
         },
         isRead: false,
         readAt: null,
@@ -66,12 +82,15 @@ describe("NotificationService", () => {
       expect(mockNotificationRepo.create).toHaveBeenCalledWith({
         userId: 1,
         type: "ASSIGNMENT_CREATED",
-        title: "New Assignment: Test Assignment",
+        title: "CS101: New Assignment Posted",
         message: expect.stringContaining("Test Assignment"),
         metadata: {
           assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "CS101",
           classId: 1,
           dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
         },
       })
     })
@@ -83,7 +102,14 @@ describe("NotificationService", () => {
         type: "ASSIGNMENT_CREATED",
         title: "Test",
         message: "Test",
-        metadata: null,
+        metadata: {
+          assignmentId: 1,
+          assignmentTitle: "Test",
+          className: "CS101",
+          classId: 1,
+          dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
+        },
         isRead: false,
         readAt: null,
         createdAt: new Date(),
@@ -97,6 +123,8 @@ describe("NotificationService", () => {
         className: "CS101",
         dueDate: "2024-12-31",
         assignmentUrl: "http://example.com",
+        assignmentId: 1,
+        classId: 1,
       })
 
       // ASSIGNMENT_CREATED has both EMAIL and IN_APP channels
@@ -115,7 +143,7 @@ describe("NotificationService", () => {
 
     it("should throw error for unknown notification type", async () => {
       await expect(
-        service.createNotification(1, "UNKNOWN_TYPE", {}),
+        service.createNotification(1, "UNKNOWN_TYPE" as any, {}),
       ).rejects.toThrow("Unknown notification type: UNKNOWN_TYPE")
     })
   })
@@ -129,7 +157,14 @@ describe("NotificationService", () => {
           type: "ASSIGNMENT_CREATED",
           title: "Test 1",
           message: "Message 1",
-          metadata: null,
+          metadata: {
+            assignmentId: 1,
+            assignmentTitle: "Test Assignment",
+            className: "CS101",
+            classId: 1,
+            dueDate: "2024-12-31",
+            assignmentUrl: "http://example.com",
+          },
           isRead: false,
           readAt: null,
           createdAt: new Date(),
@@ -140,7 +175,14 @@ describe("NotificationService", () => {
           type: "SUBMISSION_GRADED",
           title: "Test 2",
           message: "Message 2",
-          metadata: null,
+          metadata: {
+            assignmentId: 1,
+            assignmentTitle: "Test Assignment",
+            submissionId: 1,
+            grade: 85,
+            maxGrade: 100,
+            submissionUrl: "http://example.com",
+          },
           isRead: true,
           readAt: new Date(),
           createdAt: new Date(),
@@ -180,7 +222,14 @@ describe("NotificationService", () => {
           type: "ASSIGNMENT_CREATED",
           title: "Test",
           message: "Message",
-          metadata: null,
+          metadata: {
+            assignmentId: 1,
+            assignmentTitle: "Test Assignment",
+            className: "CS101",
+            classId: 1,
+            dueDate: "2024-12-31",
+            assignmentUrl: "http://example.com",
+          },
           isRead: false,
           readAt: null,
           createdAt: new Date(),
@@ -205,7 +254,14 @@ describe("NotificationService", () => {
           type: "ASSIGNMENT_CREATED",
           title: "Unread 1",
           message: "Message 1",
-          metadata: null,
+          metadata: {
+            assignmentId: 1,
+            assignmentTitle: "Test Assignment",
+            className: "CS101",
+            classId: 1,
+            dueDate: "2024-12-31",
+            assignmentUrl: "http://example.com",
+          },
           isRead: false,
           readAt: null,
           createdAt: new Date(),
@@ -216,7 +272,14 @@ describe("NotificationService", () => {
           type: "SUBMISSION_GRADED",
           title: "Unread 2",
           message: "Message 2",
-          metadata: null,
+          metadata: {
+            assignmentId: 1,
+            assignmentTitle: "Test Assignment",
+            submissionId: 1,
+            grade: 85,
+            maxGrade: 100,
+            submissionUrl: "http://example.com",
+          },
           isRead: false,
           readAt: null,
           createdAt: new Date(),
@@ -272,7 +335,14 @@ describe("NotificationService", () => {
         type: "ASSIGNMENT_CREATED",
         title: "Test",
         message: "Message",
-        metadata: null,
+        metadata: {
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "CS101",
+          classId: 1,
+          dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
+        },
         isRead: false,
         readAt: null,
         createdAt: new Date(),
@@ -304,7 +374,14 @@ describe("NotificationService", () => {
         type: "ASSIGNMENT_CREATED",
         title: "Test",
         message: "Message",
-        metadata: null,
+        metadata: {
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "CS101",
+          classId: 1,
+          dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
+        },
         isRead: false,
         readAt: null,
         createdAt: new Date(),
@@ -341,7 +418,14 @@ describe("NotificationService", () => {
         type: "ASSIGNMENT_CREATED",
         title: "Test",
         message: "Message",
-        metadata: null,
+        metadata: {
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "CS101",
+          classId: 1,
+          dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
+        },
         isRead: false,
         readAt: null,
         createdAt: new Date(),
@@ -375,7 +459,14 @@ describe("NotificationService", () => {
         type: "ASSIGNMENT_CREATED",
         title: "Test",
         message: "Message",
-        metadata: null,
+        metadata: {
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "CS101",
+          classId: 1,
+          dueDate: "2024-12-31",
+          assignmentUrl: "http://example.com",
+        },
         isRead: false,
         readAt: null,
         createdAt: new Date(),

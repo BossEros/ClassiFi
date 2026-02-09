@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
 import type { Notification } from "@/business/models/notification/types"
 import * as Icons from "lucide-react"
@@ -11,6 +12,7 @@ interface NotificationCardProps {
 
 /**
  * Full notification card component for the notifications page.
+ * Clicking navigates to the relevant content based on notification type.
  *
  * @param props - The component props of type NotificationCardProps.
  * @param props.notification - The Notification object to display.
@@ -23,6 +25,7 @@ export function NotificationCard({
   onMarkAsRead,
   onDelete,
 }: NotificationCardProps) {
+  const navigate = useNavigate()
   const iconName = notificationService.getNotificationIcon(notification.type)
   const Icon =
     (Icons as unknown as Record<string, typeof Icons.Bell>)[iconName] ||
@@ -31,19 +34,41 @@ export function NotificationCard({
     notification.createdAt,
   )
 
+  const getNavigationUrl = (): string | null => {
+    switch (notification.type) {
+      case "ASSIGNMENT_CREATED":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "SUBMISSION_GRADED":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "CLASS_ANNOUNCEMENT":
+        return `/dashboard/classes/${notification.metadata.classId}`
+      case "DEADLINE_REMINDER":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "ENROLLMENT_CONFIRMED":
+        return `/dashboard/classes/${notification.metadata.classId}`
+      default:
+        return null
+    }
+  }
+
   const handleClick = () => {
     if (!notification.isRead) {
       onMarkAsRead(notification.id)
+    }
+
+    const url = getNavigationUrl()
+    if (url) {
+      navigate(url)
     }
   }
 
   return (
     <div
       onClick={handleClick}
-      className={`p-4 rounded-lg border transition-colors ${
+      className={`p-4 rounded-lg border transition-colors cursor-pointer ${
         !notification.isRead
-          ? "bg-blue-500/10 border-blue-500/30 cursor-pointer hover:bg-blue-500/15"
-          : "bg-slate-800 border-white/10"
+          ? "bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15"
+          : "bg-slate-800 border-white/10 hover:bg-slate-700"
       }`}
     >
       <div className="flex items-start gap-4">
