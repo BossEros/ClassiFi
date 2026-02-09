@@ -16,6 +16,7 @@ import {
   CustomToolbar,
   CalendarFilters,
   CustomDayView,
+  CustomWeekView,
 } from "@/presentation/components/calendar"
 import { EventDetailsModal } from "@/presentation/components/calendar/EventDetailsModal"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
@@ -231,14 +232,83 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {/* Loading State */}
+            {/* Loading State - Skeleton Loader */}
             {isLoading && (
-              <div className="flex-1 flex items-center justify-center bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl">
-                <div className="text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin mb-4" />
-                  <p className="text-slate-400 text-sm">
-                    Loading calendar events...
-                  </p>
+              <div className="flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
+                {/* Skeleton Toolbar */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                    <div className="w-32 h-5 rounded bg-slate-800 animate-pulse" />
+                    <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                    <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                    <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Skeleton Grid */}
+                <div className="p-4">
+                  {/* Day Headers */}
+                  <div className="grid grid-cols-7 gap-2 mb-4">
+                    {[...Array(7)].map((_, i) => (
+                      <div key={i} className="text-center">
+                        <div className="w-8 h-3 mx-auto rounded bg-slate-800 animate-pulse mb-2" />
+                        <div className="w-6 h-6 mx-auto rounded-full bg-slate-800 animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Calendar Grid Rows */}
+                  <div className="space-y-2">
+                    {[...Array(5)].map((_, rowIndex) => (
+                      <div key={rowIndex} className="grid grid-cols-7 gap-2">
+                        {[...Array(7)].map((_, colIndex) => (
+                          <div
+                            key={colIndex}
+                            className="h-24 rounded-lg bg-slate-800/50 border border-white/5 p-2"
+                          >
+                            {/* Random event skeleton */}
+                            {(rowIndex + colIndex) % 3 === 0 && (
+                              <div className="w-full h-5 rounded bg-slate-700/50 animate-pulse" />
+                            )}
+                            {(rowIndex + colIndex) % 4 === 1 && (
+                              <div className="space-y-1">
+                                <div className="w-full h-5 rounded bg-slate-700/50 animate-pulse" />
+                                <div className="w-3/4 h-5 rounded bg-slate-700/50 animate-pulse" />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Centered Loading Indicator Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                  <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-slate-800/90 border border-white/10 shadow-xl">
+                    <div className="relative">
+                      <div className="w-12 h-12 rounded-full border-4 border-teal-500/20 border-t-teal-500 animate-spin" />
+                      <div
+                        className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-b-teal-400/50 animate-spin"
+                        style={{
+                          animationDirection: "reverse",
+                          animationDuration: "1.5s",
+                        }}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-white font-medium text-sm">
+                        Loading Events
+                      </p>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Fetching your calendar...
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -246,9 +316,18 @@ export default function CalendarPage() {
             {/* Calendar */}
             {!isLoading && (
               <div className="flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden calendar-container relative">
-                {/* Use CustomDayView for day view, standard Calendar for month/week */}
+                {/* Use CustomDayView for day view, CustomWeekView for week view, standard Calendar for month */}
                 {currentView === "day" ? (
                   <CustomDayView
+                    date={currentDate}
+                    events={filteredEvents}
+                    onSelectEvent={handleSelectEvent}
+                    onNavigate={navigatePeriod}
+                    onViewChange={changeView}
+                    currentView={currentView}
+                  />
+                ) : currentView === "week" ? (
+                  <CustomWeekView
                     date={currentDate}
                     events={filteredEvents}
                     onSelectEvent={handleSelectEvent}
