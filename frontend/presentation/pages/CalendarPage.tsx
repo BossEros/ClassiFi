@@ -8,7 +8,7 @@
  * Day view uses CustomDayView component with stacked events by default.
  */
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
 import { useCalendar } from "@/presentation/hooks/useCalendar"
 import {
@@ -43,7 +43,7 @@ import "./CalendarPage.css"
 export default function CalendarPage() {
   const user = getCurrentUser()
   const userInitials = user
-    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    ? `${user.firstName && user.firstName.length > 0 ? user.firstName[0] : "?"}${user.lastName && user.lastName.length > 0 ? user.lastName[0] : "?"}`.toUpperCase()
     : "?"
 
   const topBar = useTopBar({ user, userInitials })
@@ -176,21 +176,24 @@ export default function CalendarPage() {
    * @param view - The react-big-calendar View
    * @returns The corresponding CalendarView
    */
-  const convertToCalendarView = (view: View): typeof currentView => {
-    // View from react-big-calendar is compatible with CalendarView
-    // but we need to ensure it's one of our supported views
-    if (
-      view === "month" ||
-      view === "week" ||
-      view === "day" ||
-      view === "agenda"
-    ) {
-      return view as typeof currentView
-    }
+  const convertToCalendarView = useCallback(
+    (view: View): typeof currentView => {
+      // View from react-big-calendar is compatible with CalendarView
+      // but we need to ensure it's one of our supported views
+      if (
+        view === "month" ||
+        view === "week" ||
+        view === "day" ||
+        view === "agenda"
+      ) {
+        return view as typeof currentView
+      }
 
-    // Default to month if unsupported view
-    return "month"
-  }
+      // Default to month if unsupported view
+      return "month"
+    },
+    [],
+  )
 
   /**
    * Toolbar wrapper component.
@@ -213,7 +216,7 @@ export default function CalendarPage() {
           />
         )
       },
-    [currentView, changeView],
+    [currentView, changeView, convertToCalendarView],
   )
 
   return (
@@ -378,7 +381,10 @@ export default function CalendarPage() {
                     view={currentView as View}
                     views={["month", "week", "day"]}
                     onNavigate={handleNavigate}
-                    onView={(view) => changeView(view as typeof currentView)}
+                    onView={(view) => {
+                      const validatedView = convertToCalendarView(view)
+                      changeView(validatedView)
+                    }}
                     onSelectEvent={handleSelectEvent}
                     onShowMore={handleShowMore}
                     components={{

@@ -357,15 +357,17 @@ export function formatCalendarDate(date: Date, view?: CalendarView): string {
       return format(date, "MMMM yyyy")
 
     case "week": {
-      // Format: "Oct 16-22, 2023"
+      // Format: "Oct 16-22, 2023" or "Oct 30 - Nov 5, 2023" for cross-month
       const weekStart = startOfWeek(date, { weekStartsOn: 0 })
       const weekEnd = endOfWeek(date, { weekStartsOn: 0 })
 
-      const startStr = format(weekStart, "MMM d")
-      const endDay = format(weekEnd, "d")
-      const year = format(weekEnd, "yyyy")
-
-      return `${startStr}-${endDay}, ${year}`
+      if (format(weekStart, "MMM") === format(weekEnd, "MMM")) {
+        // Same month: compact form
+        return `${format(weekStart, "MMM d")}-${format(weekEnd, "d")}, ${format(weekEnd, "yyyy")}`
+      } else {
+        // Different months: include both month names
+        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}, ${format(weekEnd, "yyyy")}`
+      }
     }
 
     case "day":
@@ -683,6 +685,7 @@ function filterAssignmentsByDateRange(
 
 /**
  * Creates a map of assignment ID to submission for quick lookup.
+ * Keeps only the most recent submission per assignment.
  *
  * @param submissions - Array of submissions
  * @returns Map of assignment ID to submission
@@ -692,7 +695,15 @@ function createSubmissionMap(
 ): Map<number, Submission> {
   const submissionMap = new Map<number, Submission>()
   submissions.forEach((sub) => {
-    submissionMap.set(sub.assignmentId, sub)
+    const existing = submissionMap.get(sub.assignmentId)
+
+    if (!existing) {
+      submissionMap.set(sub.assignmentId, sub)
+    } else {
+      if (sub.submittedAt > existing.submittedAt) {
+        submissionMap.set(sub.assignmentId, sub)
+      }
+    }
   })
   return submissionMap
 }
@@ -803,9 +814,9 @@ function sortEventsByDeadline(events: CalendarEvent[]): CalendarEvent[] {
  */
 function isDateOnlyDeadline(deadline: Date): boolean {
   return (
-    deadline.getHours() === 0 &&
-    deadline.getMinutes() === 0 &&
-    deadline.getSeconds() === 0 &&
-    deadline.getMilliseconds() === 0
+    deadline.getUTCHours() === 0 &&
+    deadline.getUTCMinutes() === 0 &&
+    deadline.getUTCSeconds() === 0 &&
+    deadline.getUTCMilliseconds() === 0
   )
 }

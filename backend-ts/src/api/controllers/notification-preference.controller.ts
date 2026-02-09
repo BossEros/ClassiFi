@@ -54,7 +54,7 @@ export async function notificationPreferenceRoutes(
 
         return reply.code(500).send({
           success: false,
-          error: "Internal Server Error",
+          message: "An unexpected error occurred. Please try again later.",
         })
       }
     },
@@ -100,7 +100,7 @@ export async function notificationPreferenceRoutes(
 
         return reply.code(500).send({
           success: false,
-          error: "Internal Server Error",
+          message: "An unexpected error occurred. Please try again later.",
         })
       }
     },
