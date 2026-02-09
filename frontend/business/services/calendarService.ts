@@ -511,14 +511,18 @@ async function fetchAssignmentsForClasses(
       return await classService.getClassAssignments(cls.id)
     } catch (error) {
       // Silently filter out unauthorized classes
-      if (
-        error instanceof Error &&
-        (error.message.includes("unauthorized") ||
-          error.message.includes("permission") ||
-          error.message.includes("403"))
-      ) {
-        console.warn(`No access to assignments for class ${cls.id}`)
-        return []
+      if (error instanceof Error) {
+        // Normalize error message to lowercase for case-insensitive matching
+        const msg = error.message.toLowerCase()
+
+        if (
+          msg.includes("unauthorized") ||
+          msg.includes("permission") ||
+          msg.includes("403")
+        ) {
+          console.warn(`No access to assignments for class ${cls.id}`)
+          return []
+        }
       }
 
       // Log other errors but continue
