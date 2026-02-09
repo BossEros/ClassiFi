@@ -65,17 +65,19 @@ export function NotificationCard({
   return (
     <div
       onClick={handleClick}
-      className={`p-4 rounded-lg border transition-colors cursor-pointer ${!notification.isRead
-        ? "bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15"
-        : "bg-slate-800 border-white/10 hover:bg-slate-700"
-        }`}
+      className={`p-4 rounded-lg border transition-colors cursor-pointer ${
+        !notification.isRead
+          ? "bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/15"
+          : "bg-slate-800 border-white/10 hover:bg-slate-700"
+      }`}
     >
       <div className="flex items-start gap-4">
         <div
-          className={`p-3 rounded-full shrink-0 ${!notification.isRead
-            ? "bg-blue-500/20 text-blue-400"
-            : "bg-slate-700 text-slate-400"
-            }`}
+          className={`p-3 rounded-full shrink-0 ${
+            !notification.isRead
+              ? "bg-blue-500/20 text-blue-400"
+              : "bg-slate-700 text-slate-400"
+          }`}
         >
           <Icon className="w-6 h-6" />
         </div>
@@ -83,8 +85,9 @@ export function NotificationCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <h3
-              className={`text-base font-semibold ${!notification.isRead ? "text-white" : "text-slate-300"
-                }`}
+              className={`text-base font-semibold ${
+                !notification.isRead ? "text-white" : "text-slate-300"
+              }`}
             >
               {notification.title}
             </h3>

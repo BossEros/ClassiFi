@@ -7,14 +7,40 @@ interface CustomEventComponentProps {
 }
 
 /**
+ * Color darkening constants
+ */
+const DARKEN_FACTOR = 0.7
+
+/**
  * Generates a darker shade of the given color for borders and accents.
+ * Reduces each RGB component by 30% to create a visually darker version.
  *
- * @param color - The base color in hex format
- * @returns A darker version of the color
+ * @param color - The base color in hex format (e.g., "#3b82f6")
+ * @returns A darker version of the color in hex format
  */
 function getDarkerShade(color: string): string {
-  // Simple approach: add transparency for border effect
-  return color
+  // Remove # if present
+  const hex = color.replace("#", "")
+
+  // Parse hex to RGB components
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+
+  // Validate parsed values - return original if invalid
+  if (isNaN(r) || isNaN(g) || isNaN(b)) {
+    return color
+  }
+
+  // Darken each RGB component
+  const darkR = Math.round(r * DARKEN_FACTOR)
+  const darkG = Math.round(g * DARKEN_FACTOR)
+  const darkB = Math.round(b * DARKEN_FACTOR)
+
+  // Convert back to hex with proper padding
+  const toHex = (n: number) => n.toString(16).padStart(2, "0")
+
+  return `#${toHex(darkR)}${toHex(darkG)}${toHex(darkB)}`
 }
 
 /**

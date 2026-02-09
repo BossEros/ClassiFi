@@ -1,5 +1,4 @@
 import { useMemo } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import {
   format,
   startOfWeek,
@@ -10,7 +9,28 @@ import {
 } from "date-fns"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/shared/utils/calendarConfig"
+import { CustomViewToolbar } from "./CustomViewToolbar"
 import "./CustomWeekView.css"
+
+/**
+ * Layout constants for consistent sizing
+ */
+const LAYOUT = {
+  /** Minimum height for empty time slots (pixels) */
+  EMPTY_SLOT_HEIGHT: 35,
+  /** Height per event in a slot (pixels) */
+  EVENT_HEIGHT: 38,
+  /** Padding between events in a slot (pixels) */
+  SLOT_PADDING: 8,
+  /** Hours in a day */
+  HOURS_PER_DAY: 24,
+  /** Minutes per time slot */
+  MINUTES_PER_SLOT: 30,
+  /** Number of time slots per day (48 = 24 hours * 2 slots per hour) */
+  SLOTS_PER_DAY: 48,
+  /** Minimum width for the week label */
+  WEEK_LABEL_MIN_WIDTH: "240px",
+} as const
 
 interface DayColumn {
   date: Date
@@ -40,6 +60,8 @@ interface CustomWeekViewProps {
  * Displays a 7-day week grid where events at the same time are stacked
  * vertically instead of displayed side-by-side. Each day column contains
  * time slots that expand to fit all events at that time.
+ *
+ * Uses the shared CustomViewToolbar for navigation and view switching.
  *
  * This is a custom implementation that replaces react-big-calendar's
  * default week view for better handling of multiple events at the same time.
@@ -78,7 +100,10 @@ export function CustomWeekView({
       dayEvents.forEach((event) => {
         const startTime = event.timing.start
         // Round to the nearest 30-minute slot (0 or 30)
-        const slotMinute = startTime.getMinutes() < 30 ? 0 : 30
+        const slotMinute =
+          startTime.getMinutes() < LAYOUT.MINUTES_PER_SLOT
+            ? 0
+            : LAYOUT.MINUTES_PER_SLOT
         const timeKey = `${startTime.getHours()}:${slotMinute}`
 
         if (!slotMap.has(timeKey)) {
@@ -91,8 +116,8 @@ export function CustomWeekView({
       // Generate time slots from 00:00 to 23:30 (30-minute intervals)
       const timeSlots: TimeSlot[] = []
 
-      for (let hour = 0; hour < 24; hour++) {
-        for (let minute = 0; minute < 60; minute += 30) {
+      for (let hour = 0; hour < LAYOUT.HOURS_PER_DAY; hour++) {
+        for (let minute = 0; minute < 60; minute += LAYOUT.MINUTES_PER_SLOT) {
           const timeKey = `${hour}:${minute}`
           const slotEvents = slotMap.get(timeKey) || []
 
@@ -125,9 +150,12 @@ export function CustomWeekView({
       ...dayColumns.map((col) => col.timeSlots[slotIndex]?.events.length || 0),
     )
 
-    if (maxEvents === 0) return 35
+    if (maxEvents === 0) return LAYOUT.EMPTY_SLOT_HEIGHT
 
-    return Math.max(35, maxEvents * 38 + 8)
+    return Math.max(
+      LAYOUT.EMPTY_SLOT_HEIGHT,
+      maxEvents * LAYOUT.EVENT_HEIGHT + LAYOUT.SLOT_PADDING,
+    )
   }
 
   /**
@@ -156,65 +184,15 @@ export function CustomWeekView({
 
   return (
     <div className="custom-week-view">
-      {/* Toolbar */}
-      <div className="custom-week-toolbar">
-        {/* Left: Date Label + Navigation Controls */}
-        <div className="flex items-center gap-5">
-          {/* Date Label */}
-          <h2 className="text-lg font-semibold text-white min-w-[240px]">
-            {weekRangeText}
-          </h2>
-
-          {/* Navigation Control Group */}
-          <div className="flex items-center gap-3">
-            {/* Navigation Arrows */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onNavigate("prev")}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-800/80 backdrop-blur-sm border border-white/10 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-white/20 transition-all duration-200 shadow-sm"
-                aria-label="Previous Week"
-                title="Previous"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-
-              <button
-                onClick={() => onNavigate("next")}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-slate-800/80 backdrop-blur-sm border border-white/10 text-slate-200 hover:bg-slate-700 hover:text-white hover:border-white/20 transition-all duration-200 shadow-sm"
-                aria-label="Next Week"
-                title="Next"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Today Button */}
-            <button
-              onClick={() => onNavigate("today")}
-              className="px-4 py-1.5 text-sm font-medium bg-slate-800/80 backdrop-blur-sm border border-white/10 text-slate-200 rounded-lg hover:bg-slate-700 hover:text-white hover:border-white/20 transition-all duration-200 shadow-sm"
-            >
-              Today
-            </button>
-          </div>
-        </div>
-
-        {/* Right: View Toggle */}
-        <div className="flex items-center bg-slate-800/80 border border-white/10 rounded-lg p-1">
-          {(["month", "week", "day"] as const).map((view) => (
-            <button
-              key={view}
-              onClick={() => onViewChange(view)}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all duration-150 ${
-                currentView === view
-                  ? "bg-teal-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-              }`}
-            >
-              {view.charAt(0).toUpperCase() + view.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Shared Toolbar */}
+      <CustomViewToolbar
+        label={weekRangeText}
+        onNavigate={onNavigate}
+        onViewChange={onViewChange}
+        currentView={currentView}
+        navigationLabel="Week"
+        labelMinWidth={LAYOUT.WEEK_LABEL_MIN_WIDTH}
+      />
 
       {/* Week Grid */}
       <div className="week-view-container">
@@ -239,9 +217,9 @@ export function CustomWeekView({
         {/* Time Grid */}
         <div className="week-view-grid">
           {/* Generate rows for each time slot */}
-          {Array.from({ length: 48 }).map((_, slotIndex) => {
+          {Array.from({ length: LAYOUT.SLOTS_PER_DAY }).map((_, slotIndex) => {
             const hour = Math.floor(slotIndex / 2)
-            const minute = (slotIndex % 2) * 30
+            const minute = (slotIndex % 2) * LAYOUT.MINUTES_PER_SLOT
             const isHourMark = minute === 0
             const rowHeight = getRowHeight(slotIndex)
 
@@ -282,6 +260,7 @@ export function CustomWeekView({
                                 borderLeftColor: event.classInfo.color,
                               }}
                               title={`${event.classInfo.name}: ${event.title}`}
+                              aria-label={`${event.classInfo.name}: ${event.title}`}
                             >
                               <div className="week-event-content">
                                 <div className="week-event-title">

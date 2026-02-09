@@ -118,7 +118,11 @@ export function useCalendar(): UseCalendarReturn {
 
       // Initialize selected classes with all classes ONLY on first load
       // After that, respect user's selection (even if they deselect all)
-      if (isInitialLoad.current && selectedClasses.size === 0 && fetchedClasses.length > 0) {
+      if (
+        isInitialLoad.current &&
+        selectedClasses.size === 0 &&
+        fetchedClasses.length > 0
+      ) {
         setSelectedClasses(new Set(fetchedClasses.map((cls) => cls.id)))
         isInitialLoad.current = false
       }
@@ -148,9 +152,7 @@ export function useCalendar(): UseCalendarReturn {
     }
 
     // Filter events by selected classes
-    return events.filter((event) =>
-      selectedClasses.has(event.classInfo.id),
-    )
+    return events.filter((event) => selectedClasses.has(event.classInfo.id))
   }, [events, selectedClasses])
 
   // ============================================================================
@@ -313,12 +315,15 @@ export function useCalendar(): UseCalendarReturn {
    */
   useEffect(() => {
     if (filteredEvents.length > 0) {
-      console.log("Calendar Events:", filteredEvents.map(e => ({
-        id: e.id,
-        title: e.title,
-        start: e.timing.start,
-        classId: e.classInfo.id
-      })))
+      console.log(
+        "Calendar Events:",
+        filteredEvents.map((e) => ({
+          id: e.id,
+          title: e.title,
+          start: e.timing.start,
+          classId: e.classInfo.id,
+        })),
+      )
     }
   }, [filteredEvents])
 

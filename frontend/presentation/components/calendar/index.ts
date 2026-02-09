@@ -20,8 +20,18 @@ export {
 } from "./CalendarViewToggle"
 export { CalendarFilters, type CalendarFiltersProps } from "./CalendarFilters"
 
+// Modal Components
+export {
+  EventDetailsModal,
+  type EventDetailsModalProps,
+} from "./EventDetailsModal"
+
 // React Big Calendar Customizations
 export { CustomEventComponent } from "./CustomEventComponent"
 export { CustomToolbar } from "./CustomToolbar"
 export { CustomDayView } from "./CustomDayView"
 export { CustomWeekView } from "./CustomWeekView"
+export {
+  CustomViewToolbar,
+  type CustomViewToolbarProps,
+} from "./CustomViewToolbar"

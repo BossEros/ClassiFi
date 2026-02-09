@@ -359,9 +359,11 @@
   font-weight: 600;
   line-height: 1.4;
   margin: 0 3px;
-  
+
   /* Smooth transitions */
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .calendar-container .rbc-time-view .rbc-event:hover {

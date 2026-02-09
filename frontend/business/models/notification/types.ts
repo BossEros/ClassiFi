@@ -71,25 +71,25 @@ interface BaseNotification {
  */
 export type Notification =
   | (BaseNotification & {
-    type: "ASSIGNMENT_CREATED"
-    metadata: AssignmentCreatedMetadata
-  })
+      type: "ASSIGNMENT_CREATED"
+      metadata: AssignmentCreatedMetadata
+    })
   | (BaseNotification & {
-    type: "SUBMISSION_GRADED"
-    metadata: SubmissionGradedMetadata
-  })
+      type: "SUBMISSION_GRADED"
+      metadata: SubmissionGradedMetadata
+    })
   | (BaseNotification & {
-    type: "CLASS_ANNOUNCEMENT"
-    metadata: ClassAnnouncementMetadata
-  })
+      type: "CLASS_ANNOUNCEMENT"
+      metadata: ClassAnnouncementMetadata
+    })
   | (BaseNotification & {
-    type: "DEADLINE_REMINDER"
-    metadata: DeadlineReminderMetadata
-  })
+      type: "DEADLINE_REMINDER"
+      metadata: DeadlineReminderMetadata
+    })
   | (BaseNotification & {
-    type: "ENROLLMENT_CONFIRMED"
-    metadata: EnrollmentConfirmedMetadata
-  })
+      type: "ENROLLMENT_CONFIRMED"
+      metadata: EnrollmentConfirmedMetadata
+    })
 
 /**
  * Type guard to check if a Notification matches a specific type and narrow its type.

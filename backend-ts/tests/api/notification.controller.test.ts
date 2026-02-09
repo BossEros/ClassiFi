@@ -10,8 +10,8 @@ vi.mock("tsyringe", () => ({
   container: {
     resolve: vi.fn(),
   },
-  injectable: () => () => { },
-  inject: () => () => { },
+  injectable: () => () => {},
+  inject: () => () => {},
 }))
 
 // Mock utils

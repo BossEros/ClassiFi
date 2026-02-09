@@ -69,12 +69,8 @@ describe("NotificationRepository", () => {
       const inAppWhereMock = vi
         .fn()
         .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi
-        .fn()
-        .mockReturnValue({ where: inAppWhereMock })
-      const inAppSelectMock = vi
-        .fn()
-        .mockReturnValue({ from: inAppFromMock })
+      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
+      const _inAppSelectMock = vi.fn().mockReturnValue({ from: inAppFromMock })
 
       // Mock the main findByUserId query (second query)
       const offsetMock = vi.fn().mockResolvedValue(mockNotifications)
@@ -82,7 +78,7 @@ describe("NotificationRepository", () => {
       const orderByMock = vi.fn().mockReturnValue({ limit: limitMock })
       const whereMock = vi.fn().mockReturnValue({ orderBy: orderByMock })
       const fromMock = vi.fn().mockReturnValue({ where: whereMock })
-      const selectMock = vi.fn().mockReturnValue({ from: fromMock })
+      const _selectMock = vi.fn().mockReturnValue({ from: fromMock })
 
       // Setup mockDb.select to return different mocks based on call order
       let selectCallCount = 0
@@ -112,9 +108,7 @@ describe("NotificationRepository", () => {
       const inAppWhereMock = vi
         .fn()
         .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi
-        .fn()
-        .mockReturnValue({ where: inAppWhereMock })
+      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
 
       // Mock the main countByUserId query (second query)
       const whereMock = vi.fn().mockResolvedValue([{ count: 5 }])
@@ -142,9 +136,7 @@ describe("NotificationRepository", () => {
     it("should return 0 when user has no notifications", async () => {
       // Mock the getInAppNotificationIds query (first query)
       const inAppWhereMock = vi.fn().mockResolvedValue([])
-      const inAppFromMock = vi
-        .fn()
-        .mockReturnValue({ where: inAppWhereMock })
+      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
 
       // Setup mockDb.select
       mockDb.select = vi.fn().mockReturnValue({ from: inAppFromMock })
@@ -165,9 +157,7 @@ describe("NotificationRepository", () => {
       const inAppWhereMock = vi
         .fn()
         .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi
-        .fn()
-        .mockReturnValue({ where: inAppWhereMock })
+      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
 
       // Mock the main countUnreadByUserId query (second query)
       const whereMock = vi.fn().mockResolvedValue([{ count: 3 }])
@@ -250,9 +240,7 @@ describe("NotificationRepository", () => {
       const inAppWhereMock = vi
         .fn()
         .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi
-        .fn()
-        .mockReturnValue({ where: inAppWhereMock })
+      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
 
       // Mock the main findRecentUnread query (second query)
       const offsetMock = vi.fn().mockResolvedValue(mockNotifications)

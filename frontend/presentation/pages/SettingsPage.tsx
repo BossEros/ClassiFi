@@ -60,7 +60,7 @@ export function SettingsPage() {
   const topBar = useTopBar({
     user,
     userInitials,
-    onProfileClick: () => { }, // No-op since we're already on settings page
+    onProfileClick: () => {}, // No-op since we're already on settings page
   })
 
   if (!user) return null

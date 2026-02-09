@@ -201,7 +201,8 @@ export function NotificationsPage() {
 
               {notifications.length > 0 && total > 0 && (
                 <div className="mt-4 text-center text-sm text-slate-400">
-                  Showing {notifications.length} of {total} notification{total !== 1 ? 's' : ''}
+                  Showing {notifications.length} of {total} notification
+                  {total !== 1 ? "s" : ""}
                 </div>
               )}
             </>

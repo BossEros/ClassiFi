@@ -4,6 +4,8 @@
  * Styles for the stacked events day view with expanded time slots.
  * This view displays events vertically stacked at their scheduled times
  * with dynamic slot heights based on event count.
+ * 
+ * Note: Toolbar styles are handled by the CustomViewToolbar component.
  */
 
 /* Container */
@@ -13,18 +15,6 @@
   flex-direction: column;
   background-color: rgb(15 23 42 / 0.95);
   overflow: hidden;
-}
-
-/* Toolbar */
-.custom-day-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background-color: rgb(15 23 42 / 0.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
 }
 
 /* Grid - Removed header, increased time column width */

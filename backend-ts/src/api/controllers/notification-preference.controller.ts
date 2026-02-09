@@ -3,10 +3,10 @@ import { container } from "tsyringe"
 import { NotificationPreferenceService } from "../../services/notification/preference.service.js"
 import { toJsonSchema } from "../utils/swagger.js"
 import {
-    UpdateNotificationPreferenceSchema,
-    NotificationPreferencesResponseSchema,
-    NotificationPreferenceResponseSchema,
-    type UpdateNotificationPreferenceRequest,
+  UpdateNotificationPreferenceSchema,
+  NotificationPreferencesResponseSchema,
+  NotificationPreferenceResponseSchema,
+  type UpdateNotificationPreferenceRequest,
 } from "../schemas/notification-preference.schema.js"
 
 /**
@@ -16,69 +16,69 @@ import {
  * @param app - Fastify application instance to register routes on.
  */
 export async function notificationPreferenceRoutes(
-    app: FastifyInstance,
+  app: FastifyInstance,
 ): Promise<void> {
-    const preferenceService = container.resolve<NotificationPreferenceService>(
-        "NotificationPreferenceService",
-    )
+  const preferenceService = container.resolve<NotificationPreferenceService>(
+    "NotificationPreferenceService",
+  )
 
-    /**
-     * GET /
-     * Get user's notification preferences
-     */
-    app.get("/", {
-        schema: {
-            tags: ["Notification Preferences"],
-            summary: "Get user's notification preferences",
-            description:
-                "Retrieves all notification preferences for the authenticated user",
-            security: [{ bearerAuth: [] }],
-            response: {
-                200: toJsonSchema(NotificationPreferencesResponseSchema),
-            },
-        },
-        handler: async (request, reply) => {
-            const userId = request.user!.id
-            const preferences = await preferenceService.getAllPreferences(userId)
+  /**
+   * GET /
+   * Get user's notification preferences
+   */
+  app.get("/", {
+    schema: {
+      tags: ["Notification Preferences"],
+      summary: "Get user's notification preferences",
+      description:
+        "Retrieves all notification preferences for the authenticated user",
+      security: [{ bearerAuth: [] }],
+      response: {
+        200: toJsonSchema(NotificationPreferencesResponseSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const userId = request.user!.id
+      const preferences = await preferenceService.getAllPreferences(userId)
 
-            return reply.send({
-                success: true,
-                preferences,
-            })
-        },
-    })
+      return reply.send({
+        success: true,
+        preferences,
+      })
+    },
+  })
 
-    /**
-     * PUT /
-     * Update notification preference
-     */
-    app.put<{ Body: UpdateNotificationPreferenceRequest }>("/", {
-        schema: {
-            tags: ["Notification Preferences"],
-            summary: "Update notification preference",
-            description:
-                "Updates notification preferences for a specific notification type",
-            security: [{ bearerAuth: [] }],
-            body: toJsonSchema(UpdateNotificationPreferenceSchema),
-            response: {
-                200: toJsonSchema(NotificationPreferenceResponseSchema),
-            },
-        },
-        handler: async (request, reply) => {
-            const userId = request.user!.id
-            const { notificationType, emailEnabled, inAppEnabled } = request.body
+  /**
+   * PUT /
+   * Update notification preference
+   */
+  app.put<{ Body: UpdateNotificationPreferenceRequest }>("/", {
+    schema: {
+      tags: ["Notification Preferences"],
+      summary: "Update notification preference",
+      description:
+        "Updates notification preferences for a specific notification type",
+      security: [{ bearerAuth: [] }],
+      body: toJsonSchema(UpdateNotificationPreferenceSchema),
+      response: {
+        200: toJsonSchema(NotificationPreferenceResponseSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const userId = request.user!.id
+      const { notificationType, emailEnabled, inAppEnabled } = request.body
 
-            const preference = await preferenceService.updatePreference(
-                userId,
-                notificationType,
-                emailEnabled,
-                inAppEnabled,
-            )
+      const preference = await preferenceService.updatePreference(
+        userId,
+        notificationType,
+        emailEnabled,
+        inAppEnabled,
+      )
 
-            return reply.send({
-                success: true,
-                preference,
-            })
-        },
-    })
+      return reply.send({
+        success: true,
+        preference,
+      })
+    },
+  })
 }

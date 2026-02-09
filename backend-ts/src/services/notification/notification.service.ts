@@ -26,7 +26,7 @@ export class NotificationService {
     private queueService: NotificationQueueService,
     @inject("NotificationPreferenceService")
     private preferenceService: NotificationPreferenceService,
-  ) { }
+  ) {}
 
   /**
    * Creates and queues a notification for delivery.

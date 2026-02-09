@@ -32,7 +32,7 @@ export class NotificationQueueService {
     private emailService: IEmailService,
     @inject("UserRepository")
     private userRepo: UserRepository,
-  ) { }
+  ) {}
 
   /**
    * Enqueues a notification delivery.

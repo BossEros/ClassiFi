@@ -59,8 +59,14 @@ container.registerSingleton("TestCaseRepository", TestCaseRepository)
 container.registerSingleton("TestResultRepository", TestResultRepository)
 container.registerSingleton("GradebookRepository", GradebookRepository)
 container.registerSingleton("NotificationRepository", NotificationRepository)
-container.registerSingleton("NotificationDeliveryRepository",NotificationDeliveryRepository,)
-container.registerSingleton("NotificationPreferenceRepository",NotificationPreferenceRepository,)
+container.registerSingleton(
+  "NotificationDeliveryRepository",
+  NotificationDeliveryRepository,
+)
+container.registerSingleton(
+  "NotificationPreferenceRepository",
+  NotificationPreferenceRepository,
+)
 
 // Register infrastructure adapters as singletons
 container.registerSingleton("SupabaseAuthAdapter", SupabaseAuthAdapter)
@@ -78,10 +84,14 @@ container.registerSingleton("UserService", UserService)
 container.registerSingleton("GradebookService", GradebookService)
 container.registerSingleton("LatePenaltyService", LatePenaltyService)
 container.registerSingleton("EmailService", EmailService)
-container.registerSingleton("NotificationQueueService",
+container.registerSingleton(
+  "NotificationQueueService",
   NotificationQueueService,
 )
-container.registerSingleton("NotificationPreferenceService",NotificationPreferenceService,)
+container.registerSingleton(
+  "NotificationPreferenceService",
+  NotificationPreferenceService,
+)
 container.registerSingleton("NotificationService", NotificationService)
 
 // Register code execution services
@@ -96,8 +106,14 @@ container.registerSingleton("AdminClassService", AdminClassService)
 container.registerSingleton("AdminEnrollmentService", AdminEnrollmentService)
 
 // Register Plagiarism component services
-container.registerSingleton("PlagiarismDetectorFactory",PlagiarismDetectorFactory,)
+container.registerSingleton(
+  "PlagiarismDetectorFactory",
+  PlagiarismDetectorFactory,
+)
 container.registerSingleton("SubmissionFileService", SubmissionFileService)
-container.registerSingleton("PlagiarismPersistenceService",PlagiarismPersistenceService,)
+container.registerSingleton(
+  "PlagiarismPersistenceService",
+  PlagiarismPersistenceService,
+)
 
 export { container }

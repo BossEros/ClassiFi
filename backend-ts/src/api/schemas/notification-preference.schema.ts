@@ -7,17 +7,17 @@ import { NotificationTypeSchema } from "./notification.schema.js"
 
 /** Notification preference response schema */
 export const NotificationPreferenceSchema = z.object({
-    id: z.number(),
-    userId: z.number(),
-    notificationType: NotificationTypeSchema,
-    emailEnabled: z.boolean(),
-    inAppEnabled: z.boolean(),
-    createdAt: z.string(),
-    updatedAt: z.string().nullable().optional(),
+  id: z.number(),
+  userId: z.number(),
+  notificationType: NotificationTypeSchema,
+  emailEnabled: z.boolean(),
+  inAppEnabled: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string().nullable().optional(),
 })
 
 export type NotificationPreferenceResponse = z.infer<
-    typeof NotificationPreferenceSchema
+  typeof NotificationPreferenceSchema
 >
 
 // ============================================================================
@@ -26,13 +26,13 @@ export type NotificationPreferenceResponse = z.infer<
 
 /** Update notification preference request schema */
 export const UpdateNotificationPreferenceSchema = z.object({
-    notificationType: NotificationTypeSchema,
-    emailEnabled: z.boolean(),
-    inAppEnabled: z.boolean(),
+  notificationType: NotificationTypeSchema,
+  emailEnabled: z.boolean(),
+  inAppEnabled: z.boolean(),
 })
 
 export type UpdateNotificationPreferenceRequest = z.infer<
-    typeof UpdateNotificationPreferenceSchema
+  typeof UpdateNotificationPreferenceSchema
 >
 
 // ============================================================================
@@ -41,20 +41,20 @@ export type UpdateNotificationPreferenceRequest = z.infer<
 
 /** Notification preferences list response schema */
 export const NotificationPreferencesResponseSchema = z.object({
-    success: z.literal(true),
-    preferences: z.array(NotificationPreferenceSchema),
+  success: z.literal(true),
+  preferences: z.array(NotificationPreferenceSchema),
 })
 
 export type NotificationPreferencesResponse = z.infer<
-    typeof NotificationPreferencesResponseSchema
+  typeof NotificationPreferencesResponseSchema
 >
 
 /** Single notification preference response schema */
 export const NotificationPreferenceResponseSchema = z.object({
-    success: z.literal(true),
-    preference: NotificationPreferenceSchema,
+  success: z.literal(true),
+  preference: NotificationPreferenceSchema,
 })
 
 export type SingleNotificationPreferenceResponse = z.infer<
-    typeof NotificationPreferenceResponseSchema
+  typeof NotificationPreferenceResponseSchema
 >

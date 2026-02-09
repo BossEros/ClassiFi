@@ -60,23 +60,26 @@ export function NotificationItem({
 
   return (
     <div
-      className={`p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${!notification.isRead ? "bg-blue-500/10" : ""
-        }`}
+      className={`p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${
+        !notification.isRead ? "bg-blue-500/10" : ""
+      }`}
       onClick={handleClick}
     >
       <div className="flex items-start gap-3">
         <div
-          className={`p-2 rounded-full shrink-0 ${!notification.isRead
+          className={`p-2 rounded-full shrink-0 ${
+            !notification.isRead
               ? "bg-blue-500/20 text-blue-400"
               : "bg-slate-700 text-slate-400"
-            }`}
+          }`}
         >
           <Icon className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
           <p
-            className={`text-sm font-medium ${!notification.isRead ? "text-white" : "text-slate-300"
-              }`}
+            className={`text-sm font-medium ${
+              !notification.isRead ? "text-white" : "text-slate-300"
+            }`}
           >
             {notification.title}
           </p>

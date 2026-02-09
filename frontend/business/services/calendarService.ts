@@ -137,10 +137,7 @@ async function getStudentCalendarEvents(
   // We'll match them with assignments ourselves
   let submissions: Submission[] = []
   try {
-    submissions = await assignmentService.getStudentSubmissions(
-      studentId,
-      true,
-    )
+    submissions = await assignmentService.getStudentSubmissions(studentId, true)
   } catch (error) {
     console.warn("Error fetching student submissions:", error)
     // Continue without submissions - assignments will show as not-started
@@ -555,18 +552,12 @@ function isValidCalendarEvent(event: CalendarEvent): boolean {
       return false
     }
 
-    if (
-      !event.classInfo?.name ||
-      typeof event.classInfo.name !== "string"
-    ) {
+    if (!event.classInfo?.name || typeof event.classInfo.name !== "string") {
       console.warn("Invalid event: missing or invalid classInfo.name", event)
       return false
     }
 
-    if (
-      !event.classInfo?.color ||
-      typeof event.classInfo.color !== "string"
-    ) {
+    if (!event.classInfo?.color || typeof event.classInfo.color !== "string") {
       console.warn("Invalid event: missing or invalid classInfo.color", event)
       return false
     }

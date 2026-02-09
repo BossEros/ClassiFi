@@ -14,7 +14,7 @@ import type { CalendarEvent } from "@/business/models/calendar/types"
 import { getCurrentUser } from "@/business/services/authService"
 import { formatCalendarDate } from "@/business/services/calendarService"
 
-interface EventDetailsModalProps {
+export interface EventDetailsModalProps {
   isOpen: boolean
   onClose: () => void
   event: CalendarEvent | null

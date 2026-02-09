@@ -120,10 +120,11 @@ export function CalendarFilters({
             <div className="flex gap-2">
               <button
                 onClick={onSelectAll}
-                className={`text-xs font-medium transition-colors ${allSelected
+                className={`text-xs font-medium transition-colors ${
+                  allSelected
                     ? "text-slate-500 cursor-default"
                     : "text-blue-400 hover:text-blue-300"
-                  }`}
+                }`}
                 disabled={allSelected}
               >
                 All
@@ -131,10 +132,11 @@ export function CalendarFilters({
               <span className="text-slate-600">|</span>
               <button
                 onClick={onDeselectAll}
-                className={`text-xs font-medium transition-colors ${selectedCount === 0
+                className={`text-xs font-medium transition-colors ${
+                  selectedCount === 0
                     ? "text-slate-500 cursor-default"
                     : "text-blue-400 hover:text-blue-300"
-                  }`}
+                }`}
                 disabled={selectedCount === 0}
               >
                 None
@@ -171,10 +173,11 @@ export function CalendarFilters({
                         aria-label={`Filter by ${classInfo.name}`}
                       />
                       <div
-                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isChecked
+                        className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                          isChecked
                             ? "bg-blue-600 border-blue-600"
                             : "bg-transparent border-slate-500 group-hover:border-slate-400"
-                          }`}
+                        }`}
                       >
                         {isChecked && <Check className="w-3 h-3 text-white" />}
                       </div>

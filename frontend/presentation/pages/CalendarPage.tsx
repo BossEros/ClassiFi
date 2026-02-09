@@ -17,8 +17,8 @@ import {
   CalendarFilters,
   CustomDayView,
   CustomWeekView,
+  EventDetailsModal,
 } from "@/presentation/components/calendar"
-import { EventDetailsModal } from "@/presentation/components/calendar/EventDetailsModal"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import { calendarLocalizer } from "@/shared/utils/calendarConfig"
@@ -174,7 +174,7 @@ export default function CalendarPage() {
    * Wraps CustomToolbar to pass view state since react-big-calendar
    * doesn't support custom props on toolbar components directly.
    */
-  const ToolbarWrapper = (props: any) => {
+  const ToolbarWrapper = (props: Record<string, unknown>) => {
     return (
       <CustomToolbar
         {...props}
