@@ -423,6 +423,46 @@ export async function getClassesForFilter(
 // ============================================================================
 
 /**
+ * Type guard to validate if an object matches the Class interface structure.
+ *
+ * @param obj - Object to validate
+ * @returns True if object has required Class properties
+ */
+function isValidClass(obj: unknown): obj is Class {
+  if (typeof obj !== "object" || obj === null) {
+    return false
+  }
+
+  const candidate = obj as Record<string, unknown>
+
+  return (
+    typeof candidate.id === "number" &&
+    typeof candidate.teacherId === "number" &&
+    typeof candidate.className === "string" &&
+    typeof candidate.classCode === "string" &&
+    (candidate.description === null ||
+      typeof candidate.description === "string") &&
+    typeof candidate.isActive === "boolean" &&
+    typeof candidate.createdAt === "string" &&
+    typeof candidate.yearLevel === "number" &&
+    typeof candidate.semester === "number" &&
+    typeof candidate.academicYear === "string" &&
+    typeof candidate.schedule === "object" &&
+    candidate.schedule !== null
+  )
+}
+
+/**
+ * Safely maps and validates response data to Class array.
+ *
+ * @param classes - Array of class objects from API response
+ * @returns Validated array of Class objects
+ */
+function mapToClassArray(classes: unknown[]): Class[] {
+  return classes.filter(isValidClass)
+}
+
+/**
  * Fetches enrolled classes for a student.
  *
  * @param studentId - Student user ID
@@ -436,7 +476,21 @@ async function fetchEnrolledClasses(studentId: number): Promise<Class[]> {
     return []
   }
 
-  return classesResponse.classes as unknown as Class[]
+  // Safely validate and map the response to Class array
+  if (!Array.isArray(classesResponse.classes)) {
+    console.warn("Invalid classes response: expected array")
+    return []
+  }
+
+  const validClasses = mapToClassArray(classesResponse.classes)
+
+  if (validClasses.length !== classesResponse.classes.length) {
+    console.warn(
+      `Filtered out ${classesResponse.classes.length - validClasses.length} invalid class objects`,
+    )
+  }
+
+  return validClasses
 }
 
 /**

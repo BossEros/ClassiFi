@@ -8,6 +8,7 @@ import {
   NotificationPreferenceResponseSchema,
   type UpdateNotificationPreferenceRequest,
 } from "../schemas/notification-preference.schema.js"
+import { ErrorResponseSchema } from "../schemas/auth.schema.js"
 
 /**
  * Registers all notification preference routes under /api/v1/notification-preferences/*.
@@ -35,16 +36,27 @@ export async function notificationPreferenceRoutes(
       security: [{ bearerAuth: [] }],
       response: {
         200: toJsonSchema(NotificationPreferencesResponseSchema),
+        401: toJsonSchema(ErrorResponseSchema),
+        500: toJsonSchema(ErrorResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const userId = request.user!.id
-      const preferences = await preferenceService.getAllPreferences(userId)
+      try {
+        const userId = request.user!.id
+        const preferences = await preferenceService.getAllPreferences(userId)
 
-      return reply.send({
-        success: true,
-        preferences,
-      })
+        return reply.send({
+          success: true,
+          preferences,
+        })
+      } catch (err) {
+        request.log.error(err, "Failed to fetch notification preferences")
+
+        return reply.code(500).send({
+          success: false,
+          error: "Internal Server Error",
+        })
+      }
     },
   })
 
@@ -62,23 +74,35 @@ export async function notificationPreferenceRoutes(
       body: toJsonSchema(UpdateNotificationPreferenceSchema),
       response: {
         200: toJsonSchema(NotificationPreferenceResponseSchema),
+        400: toJsonSchema(ErrorResponseSchema),
+        401: toJsonSchema(ErrorResponseSchema),
+        500: toJsonSchema(ErrorResponseSchema),
       },
     },
     handler: async (request, reply) => {
-      const userId = request.user!.id
-      const { notificationType, emailEnabled, inAppEnabled } = request.body
+      try {
+        const userId = request.user!.id
+        const { notificationType, emailEnabled, inAppEnabled } = request.body
 
-      const preference = await preferenceService.updatePreference(
-        userId,
-        notificationType,
-        emailEnabled,
-        inAppEnabled,
-      )
+        const preference = await preferenceService.updatePreference(
+          userId,
+          notificationType,
+          emailEnabled,
+          inAppEnabled,
+        )
 
-      return reply.send({
-        success: true,
-        preference,
-      })
+        return reply.send({
+          success: true,
+          preference,
+        })
+      } catch (err) {
+        request.log.error(err, "Failed to update notification preference")
+
+        return reply.code(500).send({
+          success: false,
+          error: "Internal Server Error",
+        })
+      }
     },
   })
 }

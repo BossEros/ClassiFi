@@ -14,6 +14,16 @@ import type { CalendarEvent, ClassInfo } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/shared/utils/calendarConfig"
 
 /**
+ * Type guard to validate user role.
+ *
+ * @param role - The role to validate
+ * @returns True if role is valid, false otherwise
+ */
+function isValidRole(role: unknown): role is "student" | "teacher" {
+  return role === "student" || role === "teacher"
+}
+
+/**
  * Return type for the useCalendar hook.
  */
 export interface UseCalendarReturn {
@@ -93,6 +103,24 @@ export function useCalendar(): UseCalendarReturn {
         return
       }
 
+      // Validate and parse user ID
+      const userId = Number(user.id)
+
+      if (!Number.isFinite(userId) || userId <= 0) {
+        setError("Invalid user ID")
+        setEvents([])
+
+        return
+      }
+
+      // Validate user role
+      if (!isValidRole(user.role)) {
+        setError("Invalid user role")
+        setEvents([])
+
+        return
+      }
+
       // Calculate date range based on current view
       const dateRange = calendarService.getDateRangeForView(
         currentDate,
@@ -104,13 +132,10 @@ export function useCalendar(): UseCalendarReturn {
         calendarService.getCalendarEvents(
           dateRange.start,
           dateRange.end,
-          parseInt(user.id),
-          user.role as "student" | "teacher",
+          userId,
+          user.role,
         ),
-        calendarService.getClassesForFilter(
-          parseInt(user.id),
-          user.role as "student" | "teacher",
-        ),
+        calendarService.getClassesForFilter(userId, user.role),
       ])
 
       setEvents(fetchedEvents)

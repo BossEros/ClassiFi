@@ -8,8 +8,8 @@
  * Day view uses CustomDayView component with stacked events by default.
  */
 
-import { useEffect } from "react"
-import { Calendar, type View } from "react-big-calendar"
+import { useEffect, useMemo } from "react"
+import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
 import { useCalendar } from "@/presentation/hooks/useCalendar"
 import {
   CustomEventComponent,
@@ -170,19 +170,51 @@ export default function CalendarPage() {
   }
 
   /**
+   * Converts react-big-calendar's View type to CalendarView.
+   * Ensures type safety when translating between library and app types.
+   *
+   * @param view - The react-big-calendar View
+   * @returns The corresponding CalendarView
+   */
+  const convertToCalendarView = (view: View): typeof currentView => {
+    // View from react-big-calendar is compatible with CalendarView
+    // but we need to ensure it's one of our supported views
+    if (
+      view === "month" ||
+      view === "week" ||
+      view === "day" ||
+      view === "agenda"
+    ) {
+      return view as typeof currentView
+    }
+
+    // Default to month if unsupported view
+    return "month"
+  }
+
+  /**
    * Toolbar wrapper component.
    * Wraps CustomToolbar to pass view state since react-big-calendar
    * doesn't support custom props on toolbar components directly.
+   * Memoized to prevent unnecessary remounts.
    */
-  const ToolbarWrapper = (props: Record<string, unknown>) => {
-    return (
-      <CustomToolbar
-        {...props}
-        currentView={currentView}
-        onViewChange={changeView}
-      />
-    )
-  }
+  const ToolbarWrapper = useMemo(
+    () =>
+      function MemoizedToolbarWrapper(
+        props: ToolbarProps<CalendarEvent, object>,
+      ) {
+        return (
+          <CustomToolbar
+            {...props}
+            currentView={currentView as View}
+            onViewChange={(view: View) =>
+              changeView(convertToCalendarView(view))
+            }
+          />
+        )
+      },
+    [currentView, changeView],
+  )
 
   return (
     <DashboardLayout className="p-0" topBar={topBar}>
@@ -234,7 +266,7 @@ export default function CalendarPage() {
 
             {/* Loading State - Skeleton Loader */}
             {isLoading && (
-              <div className="flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
+              <div className="relative flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
                 {/* Skeleton Toolbar */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
                   <div className="flex items-center gap-3">

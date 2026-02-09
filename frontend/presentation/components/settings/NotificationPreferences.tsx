@@ -14,7 +14,7 @@ import { Mail, Bell } from "lucide-react"
 export function NotificationPreferences() {
   const [preferences, setPreferences] = useState<NotificationPreference[]>([])
   const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState<string | null>(null)
+  const [updating, setUpdating] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     loadPreferences()
@@ -38,13 +38,29 @@ export function NotificationPreferences() {
     currentValue: boolean,
   ) => {
     const updateKey = `${type}-${field}`
-    setUpdating(updateKey)
+
+    // Add the key to the updating set
+    setUpdating((prev) => new Set(prev).add(updateKey))
+
+    // Helper to remove the key from the updating set
+    const clearUpdating = () => {
+      setUpdating((prev) => {
+        const next = new Set(prev)
+        next.delete(updateKey)
+
+        return next
+      })
+    }
+
+    const preference = preferences.find((p) => p.notificationType === type)
+
+    if (!preference) {
+      clearUpdating()
+
+      return
+    }
 
     try {
-      const preference = preferences.find((p) => p.notificationType === type)
-
-      if (!preference) return
-
       const updatedPreference =
         await notificationPreferenceService.updatePreference(
           type,
@@ -58,7 +74,7 @@ export function NotificationPreferences() {
     } catch (error) {
       console.error("Failed to update notification preference:", error)
     } finally {
-      setUpdating(null)
+      clearUpdating()
     }
   }
 
@@ -115,9 +131,9 @@ export function NotificationPreferences() {
                       preference.emailEnabled,
                     )
                   }
-                  disabled={
-                    updating === `${preference.notificationType}-emailEnabled`
-                  }
+                  disabled={updating.has(
+                    `${preference.notificationType}-emailEnabled`,
+                  )}
                 />
               </div>
 
@@ -136,9 +152,9 @@ export function NotificationPreferences() {
                       preference.inAppEnabled,
                     )
                   }
-                  disabled={
-                    updating === `${preference.notificationType}-inAppEnabled`
-                  }
+                  disabled={updating.has(
+                    `${preference.notificationType}-inAppEnabled`,
+                  )}
                 />
               </div>
             </div>

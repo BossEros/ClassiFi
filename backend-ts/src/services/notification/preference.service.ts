@@ -2,6 +2,7 @@ import { injectable, inject } from "tsyringe"
 import type { NotificationPreferenceRepository } from "../../repositories/notification-preference.repository.js"
 import type { NotificationPreference } from "../../models/index.js"
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
+import { NOTIFICATION_TYPES } from "./types.js"
 
 /**
  * Service for managing notification preferences.
@@ -61,13 +62,7 @@ export class NotificationPreferenceService {
     )
 
     // Ensure all notification types have a preference entry
-    const allTypes: NotificationType[] = [
-      "ASSIGNMENT_CREATED",
-      "SUBMISSION_GRADED",
-      "CLASS_ANNOUNCEMENT",
-      "DEADLINE_REMINDER",
-      "ENROLLMENT_CONFIRMED",
-    ]
+    const allTypes = Object.keys(NOTIFICATION_TYPES) as NotificationType[]
 
     return allTypes.map((type) => {
       const existing = preferenceMap.get(type)

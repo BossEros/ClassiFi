@@ -63,7 +63,8 @@ export class NotificationPreferenceRepository extends BaseRepository<
   }
 
   /**
-   * Creates or updates a notification preference.
+   * Creates or updates a notification preference atomically.
+   * Uses PostgreSQL's ON CONFLICT DO UPDATE for thread-safe upsert.
    *
    * @param userId - The ID of the user
    * @param notificationType - The notification type
@@ -77,27 +78,31 @@ export class NotificationPreferenceRepository extends BaseRepository<
     emailEnabled: boolean,
     inAppEnabled: boolean,
   ): Promise<NotificationPreference> {
-    const existing = await this.findByUserAndType(userId, notificationType)
+    const now = new Date()
 
-    if (existing) {
-      const updated = await this.db
-        .update(notificationPreferences)
-        .set({
+    const result = await this.db
+      .insert(notificationPreferences)
+      .values({
+        userId,
+        notificationType,
+        emailEnabled,
+        inAppEnabled,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: [
+          notificationPreferences.userId,
+          notificationPreferences.notificationType,
+        ],
+        set: {
           emailEnabled,
           inAppEnabled,
-          updatedAt: new Date(),
-        })
-        .where(eq(notificationPreferences.id, existing.id))
-        .returning()
+          updatedAt: now,
+        },
+      })
+      .returning()
 
-      return updated[0] as NotificationPreference
-    }
-
-    return this.create({
-      userId,
-      notificationType,
-      emailEnabled,
-      inAppEnabled,
-    })
+    return result[0] as NotificationPreference
   }
 }

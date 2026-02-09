@@ -5,6 +5,8 @@
  * These types represent calendar events, date ranges, filters, and related data structures.
  */
 
+import type { Event as RBCEvent } from "react-big-calendar"
+
 /**
  * Represents the status of a student's assignment submission.
  */
@@ -69,8 +71,9 @@ export interface CalendarEventAssignmentInfo {
 /**
  * Represents a displayable event on the calendar.
  * Primary data structure for calendar UI rendering.
+ * Extends react-big-calendar's Event interface for compatibility.
  */
-export interface CalendarEvent {
+export interface CalendarEvent extends RBCEvent {
   /** Unique identifier for the event (typically assignment ID) */
   id: number
 

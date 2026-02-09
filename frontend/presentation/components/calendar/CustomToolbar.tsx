@@ -1,11 +1,15 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import type { ToolbarProps, View } from "react-big-calendar"
+import type { ToolbarProps, View, Event } from "react-big-calendar"
 
 /**
  * Props for the CustomToolbar component.
- * Extends react-big-calendar's ToolbarProps with view control.
+ * Picks only the needed properties from react-big-calendar's ToolbarProps
+ * and adds custom view control properties.
  */
-interface CustomToolbarProps extends ToolbarProps {
+interface CustomToolbarProps extends Pick<
+  ToolbarProps<Event, object>,
+  "onNavigate" | "label"
+> {
   currentView: View
   onViewChange: (view: View) => void
 }
