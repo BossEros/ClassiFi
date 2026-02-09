@@ -1,9 +1,3 @@
-/**
- * Supabase Auth Adapter
- * Centralizes all Supabase Auth admin operations to follow DIP.
- * Services should inject this adapter instead of using supabase directly.
- */
-
 import { injectable } from "tsyringe"
 import { supabase } from "@/shared/supabase.js"
 import {

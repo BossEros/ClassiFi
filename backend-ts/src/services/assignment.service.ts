@@ -32,11 +32,11 @@ export class AssignmentService {
     private enrollmentRepo: EnrollmentRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
   /**
    * Create an assignment for a class.
-   * Validates class ownership.
+   * Validates class ownership and sends notifications to enrolled students.
    */
   async createAssignment(
     data: CreateAssignmentServiceDTO,
@@ -71,14 +71,25 @@ export class AssignmentService {
       scheduledDate,
     })
 
-    // Get class details for notification
-    const classData = await this.classRepo.getClassById(classId)
+    // Notify enrolled students asynchronously (don't block assignment creation)
+    this.notifyStudentsOfNewAssignment(assignment).catch((error) => {
+      console.error("Failed to send assignment notifications:", error)
+    })
 
-    // Get enrolled students
+    return toAssignmentDTO(assignment)
+  }
+
+  /**
+   * Notify all enrolled students about a new assignment.
+   * Runs asynchronously to avoid blocking the main flow.
+   */
+  private async notifyStudentsOfNewAssignment(
+    assignment: Awaited<ReturnType<typeof this.assignmentRepo.createAssignment>>,
+  ): Promise<void> {
+    const classData = await this.classRepo.getClassById(assignment.classId)
     const enrolledStudents =
-      await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
+      await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
 
-    // Create notifications for each enrolled student
     const notificationPromises = enrolledStudents.map((enrollment) =>
       this.notificationService.createNotification(
         enrollment.user.id,
@@ -90,25 +101,20 @@ export class AssignmentService {
           classId: assignment.classId,
           dueDate: assignment.deadline
             ? new Date(assignment.deadline).toLocaleString("en-US", {
-                month: "numeric",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
+              month: "numeric",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })
             : "No deadline",
           assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
         },
       ),
     )
 
-    // Send notifications asynchronously (don't block assignment creation)
-    Promise.all(notificationPromises).catch((error) => {
-      console.error("Failed to send assignment notifications:", error)
-    })
-
-    return toAssignmentDTO(assignment)
+    await Promise.all(notificationPromises)
   }
 
   /**

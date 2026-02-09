@@ -1,4 +1,3 @@
-// db is accessed via BaseRepository.db
 import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
 import {
   classes,
@@ -22,6 +21,30 @@ export interface ClassFilterOptions {
   yearLevel?: number
   semester?: number
   academicYear?: string
+}
+
+/** Data required to create a new class */
+export interface CreateClassData {
+  teacherId: number
+  className: string
+  classCode: string
+  yearLevel: number
+  semester: number
+  academicYear: string
+  schedule: ClassSchedule
+  description?: string
+}
+
+/** Data for updating an existing class */
+export interface UpdateClassData {
+  className?: string
+  description?: string | null
+  isActive?: boolean
+  yearLevel?: number
+  semester?: number
+  academicYear?: string
+  schedule?: ClassSchedule
+  teacherId?: number
 }
 
 /**
@@ -186,16 +209,7 @@ export class ClassRepository extends BaseRepository<
   }
 
   /** Create a new class */
-  async createClass(data: {
-    teacherId: number
-    className: string
-    classCode: string
-    yearLevel: number
-    semester: number
-    academicYear: string
-    schedule: ClassSchedule
-    description?: string
-  }): Promise<Class> {
+  async createClass(data: CreateClassData): Promise<Class> {
     const results = await this.db
       .insert(classes)
       .values({
@@ -217,19 +231,7 @@ export class ClassRepository extends BaseRepository<
   /** Update a class */
   async updateClass(
     classId: number,
-    data: Partial<
-      Pick<
-        NewClass,
-        | "className"
-        | "description"
-        | "isActive"
-        | "yearLevel"
-        | "semester"
-        | "academicYear"
-        | "schedule"
-        | "teacherId"
-      >
-    >,
+    data: UpdateClassData,
   ): Promise<Class | undefined> {
     const updateData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined),
@@ -292,9 +294,9 @@ export class ClassRepository extends BaseRepository<
       .where(
         activeOnly
           ? and(
-              eq(enrollments.studentId, studentId),
-              eq(classes.isActive, true),
-            )
+            eq(enrollments.studentId, studentId),
+            eq(classes.isActive, true),
+          )
           : eq(enrollments.studentId, studentId),
       )
       .orderBy(desc(classes.createdAt))

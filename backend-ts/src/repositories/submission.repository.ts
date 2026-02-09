@@ -7,6 +7,13 @@ import {
 } from "@/models/index.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
+
+/** Submission with student information */
+export interface SubmissionWithStudent {
+  submission: Submission
+  studentName: string
+}
+
 /**
  * Repository for submission-related database operations.
  */
@@ -229,12 +236,7 @@ export class SubmissionRepository extends BaseRepository<
   async getSubmissionsWithStudentInfo(
     assignmentId: number,
     latestOnly: boolean = true,
-  ): Promise<
-    Array<{
-      submission: Submission
-      studentName: string
-    }>
-  > {
+  ): Promise<SubmissionWithStudent[]> {
     const query = this.db
       .select({
         submission: submissions,
@@ -245,9 +247,9 @@ export class SubmissionRepository extends BaseRepository<
       .where(
         latestOnly
           ? and(
-              eq(submissions.assignmentId, assignmentId),
-              eq(submissions.isLatest, true),
-            )
+            eq(submissions.assignmentId, assignmentId),
+            eq(submissions.isLatest, true),
+          )
           : eq(submissions.assignmentId, assignmentId),
       )
       .orderBy(desc(submissions.submittedAt))
@@ -256,10 +258,9 @@ export class SubmissionRepository extends BaseRepository<
   }
 
   /** Get a single submission with student name */
-  async getSubmissionWithStudent(submissionId: number): Promise<{
-    submission: Submission
-    studentName: string
-  } | null> {
+  async getSubmissionWithStudent(
+    submissionId: number,
+  ): Promise<SubmissionWithStudent | null> {
     const results = await this.db
       .select({
         submission: submissions,
@@ -274,12 +275,9 @@ export class SubmissionRepository extends BaseRepository<
   }
 
   /** Get multiple submissions with student names by IDs */
-  async getBatchSubmissionsWithStudents(submissionIds: number[]): Promise<
-    Array<{
-      submission: Submission
-      studentName: string
-    }>
-  > {
+  async getBatchSubmissionsWithStudents(
+    submissionIds: number[],
+  ): Promise<SubmissionWithStudent[]> {
     if (submissionIds.length === 0) return []
 
     return await this.db

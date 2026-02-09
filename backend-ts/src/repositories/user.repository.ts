@@ -1,4 +1,3 @@
-// db is accessed via BaseRepository.db
 import { eq, or, ilike, and, desc, count } from "drizzle-orm"
 import { users, type User, type NewUser } from "../models/index.js"
 import { BaseRepository } from "./base.repository.js"
@@ -9,6 +8,24 @@ export const USER_ROLES = ["student", "teacher", "admin"] as const
 
 /** User role type - derived from the USER_ROLES array */
 export type UserRole = (typeof USER_ROLES)[number]
+
+/** Data required to create a new user */
+export interface CreateUserData {
+  supabaseUserId: string
+  email: string
+  firstName: string
+  lastName: string
+  role: UserRole
+}
+
+/** Data for updating an existing user */
+export interface UpdateUserData {
+  email?: string
+  firstName?: string
+  lastName?: string
+  role?: UserRole
+  avatarUrl?: string
+}
 
 /** Filter options for user queries */
 export interface UserFilterOptions {
@@ -43,13 +60,7 @@ export class UserRepository extends BaseRepository<
   }
 
   /** Create a new user */
-  async createUser(data: {
-    supabaseUserId: string
-    email: string
-    firstName: string
-    lastName: string
-    role: UserRole
-  }): Promise<User> {
+  async createUser(data: CreateUserData): Promise<User> {
     const results = await this.db
       .insert(users)
       .values({
@@ -94,9 +105,7 @@ export class UserRepository extends BaseRepository<
   /** Update user information */
   async updateUser(
     userId: number,
-    data: Partial<
-      Pick<NewUser, "email" | "firstName" | "lastName" | "role" | "avatarUrl">
-    >,
+    data: UpdateUserData,
   ): Promise<User | undefined> {
     // Filter out undefined values
     const updateData = Object.fromEntries(

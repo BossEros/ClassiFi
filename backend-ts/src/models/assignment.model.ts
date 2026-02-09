@@ -11,6 +11,8 @@ import {
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { classes } from "@/models/class.model.js"
+import { submissions } from "@/models/submission.model.js"
+import { similarityReports } from "@/models/similarity-report.model.js"
 
 /** Programming language enum for assignments */
 export const programmingLanguageEnum = pgEnum("programming_language", [
@@ -71,6 +73,3 @@ export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
 export type Assignment = typeof assignments.$inferSelect
 export type NewAssignment = typeof assignments.$inferInsert
 
-// Import related tables
-import { submissions } from "@/models/submission.model.js"
-import { similarityReports } from "@/models/similarity-report.model.js"

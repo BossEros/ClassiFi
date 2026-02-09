@@ -125,6 +125,7 @@ export class TestResultRepository {
     const total = results.length
     const passed = results.filter((r) => r.status === "Accepted").length
     const percentage = total > 0 ? Math.round((passed / total) * 100) : 0
+    
     return { passed, total, percentage }
   }
 }

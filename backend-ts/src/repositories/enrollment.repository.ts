@@ -3,12 +3,28 @@ import { eq, and } from "drizzle-orm"
 import {
   enrollments,
   classes,
+  users,
   type Enrollment,
   type NewEnrollment,
   type Class,
 } from "../models/index.js"
 import { BaseRepository } from "./base.repository.js"
 import { injectable } from "tsyringe"
+
+/** Enrolled student with user information */
+export interface EnrolledStudentInfo {
+  user: {
+    id: number
+    email: string
+    firstName: string
+    lastName: string
+    avatarUrl: string | null
+    role: string
+    isActive: boolean
+    createdAt: Date | null
+  }
+  enrolledAt: Date | null
+}
 
 /**
  * Repository for enrollment-related database operations.
@@ -40,6 +56,7 @@ export class EnrollmentRepository extends BaseRepository<
     }
     return results[0]
   }
+
   /** Unenroll a student from a class */
   async unenrollStudent(studentId: number, classId: number): Promise<boolean> {
     const results = await this.db
@@ -90,9 +107,9 @@ export class EnrollmentRepository extends BaseRepository<
   /** Get enrollment with class details */
   async getEnrollmentWithClass(enrollmentId: number): Promise<
     | {
-        enrollment: Enrollment
-        class: Class
-      }
+      enrollment: Enrollment
+      class: Class
+    }
     | undefined
   > {
     const results = await this.db
@@ -112,23 +129,9 @@ export class EnrollmentRepository extends BaseRepository<
    * Get enrolled students with user info for a class.
    * Used for admin enrollment management.
    */
-  async getEnrolledStudentsWithInfo(classId: number): Promise<
-    Array<{
-      user: {
-        id: number
-        email: string
-        firstName: string
-        lastName: string
-        avatarUrl: string | null
-        role: string
-        isActive: boolean
-        createdAt: Date | null
-      }
-      enrolledAt: Date | null
-    }>
-  > {
-    const { users } = await import("../models/index.js")
-
+  async getEnrolledStudentsWithInfo(
+    classId: number,
+  ): Promise<EnrolledStudentInfo[]> {
     return await this.db
       .select({
         user: users,

@@ -9,6 +9,9 @@ import {
   boolean,
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
+import { classes } from "./class.model.js"
+import { enrollments } from "./enrollment.model.js"
+import { submissions } from "./submission.model.js"
 
 /** User role enum matching PostgreSQL type */
 export const userRoleEnum = pgEnum("user_role", ["student", "teacher", "admin"])
@@ -40,7 +43,3 @@ export const usersRelations = relations(users, ({ many }) => ({
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 
-// Import related tables (forward declarations handled by TypeScript)
-import { classes } from "./class.model.js"
-import { enrollments } from "./enrollment.model.js"
-import { submissions } from "./submission.model.js"

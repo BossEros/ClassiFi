@@ -8,10 +8,14 @@ import type { TransactionContext } from "../shared/transaction.js"
  * Base repository with common CRUD operations.
  * All repositories should extend this class.
  * Supports dependency injection via tsyringe.
+ *
+ * @template TTable - The Drizzle table type (must have an id column)
+ * @template TSelect - The select (read) type for the table
+ * @template TInsert - The insert (write) type for the table
  */
 @injectable()
 export class BaseRepository<
-  TTable extends PgTable,
+  TTable extends PgTable & { id: any },
   TSelect = TTable["$inferSelect"],
   TInsert = TTable["$inferInsert"],
 > {
@@ -22,7 +26,10 @@ export class BaseRepository<
     this.table = table
   }
 
-  /** Use a specific database context (for transactions) */
+  /**
+   * Use a specific database context (for transactions).
+   * Creates a shallow clone with the new context.
+   */
   withContext(context: TransactionContext): this {
     const clone = Object.create(Object.getPrototypeOf(this))
     Object.assign(clone, this)
@@ -37,15 +44,10 @@ export class BaseRepository<
 
   /** Find record by ID */
   async findById(id: number): Promise<TSelect | undefined> {
-    const idColumn = (this.table as any).id
-    if (!idColumn) {
-      throw new Error("Table does not have an id column")
-    }
-
     const results = await this.db
       .select()
       .from(this.table)
-      .where(eq(idColumn, id))
+      .where(eq(this.table.id, id))
       .limit(1)
 
     return results[0] as TSelect | undefined
@@ -66,15 +68,10 @@ export class BaseRepository<
     id: number,
     data: Partial<TInsert>,
   ): Promise<TSelect | undefined> {
-    const idColumn = (this.table as any).id
-    if (!idColumn) {
-      throw new Error("Table does not have an id column")
-    }
-
     const results = await this.db
       .update(this.table)
       .set(data as any)
-      .where(eq(idColumn, id))
+      .where(eq(this.table.id, id))
       .returning()
 
     return results[0] as TSelect | undefined
@@ -82,14 +79,9 @@ export class BaseRepository<
 
   /** Delete a record by ID */
   async delete(id: number): Promise<boolean> {
-    const idColumn = (this.table as any).id
-    if (!idColumn) {
-      throw new Error("Table does not have an id column")
-    }
-
     const results = await this.db
       .delete(this.table)
-      .where(eq(idColumn, id))
+      .where(eq(this.table.id, id))
       .returning()
 
     return results.length > 0

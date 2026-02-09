@@ -13,6 +13,7 @@ import {
 import { relations, sql } from "drizzle-orm"
 import { assignments } from "@/models/assignment.model.js"
 import { users } from "@/models/user.model.js"
+
 /** Submissions table - stores student code submissions for assignments */
 export const submissions = pgTable(
   "submissions",

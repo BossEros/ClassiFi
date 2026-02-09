@@ -74,6 +74,7 @@ export {
   notificationChannelEnum,
 } from "./notification.model.js"
 export type { Notification, NewNotification } from "./notification.model.js"
+// Note: For type-safe notifications with discriminated metadata, use TypedNotification from "@/shared/guards.js"
 
 // Notification Delivery model
 export {

@@ -118,17 +118,6 @@ describe("BaseRepository", () => {
       expect(result).toBeUndefined()
     })
 
-    it("should throw error when table has no id column", async () => {
-      const tableWithoutId = { name: "name" } as any
-
-      const { BaseRepository } =
-        await import("../../src/repositories/base.repository.js")
-      const repo = new BaseRepository(tableWithoutId)
-
-      await expect(repo.findById(1)).rejects.toThrow(
-        "Table does not have an id column",
-      )
-    })
   })
 
   // ============ create Tests ============
@@ -186,17 +175,6 @@ describe("BaseRepository", () => {
       expect(result).toBeUndefined()
     })
 
-    it("should throw error when table has no id column", async () => {
-      const tableWithoutId = { name: "name" } as any
-
-      const { BaseRepository } =
-        await import("../../src/repositories/base.repository.js")
-      const repo = new BaseRepository(tableWithoutId)
-
-      await expect(repo.update(1, { name: "Test" })).rejects.toThrow(
-        "Table does not have an id column",
-      )
-    })
   })
 
   // ============ delete Tests ============
@@ -231,17 +209,6 @@ describe("BaseRepository", () => {
       expect(result).toBe(false)
     })
 
-    it("should throw error when table has no id column", async () => {
-      const tableWithoutId = { name: "name" } as any
-
-      const { BaseRepository } =
-        await import("../../src/repositories/base.repository.js")
-      const repo = new BaseRepository(tableWithoutId)
-
-      await expect(repo.delete(1)).rejects.toThrow(
-        "Table does not have an id column",
-      )
-    })
   })
 
   // ============ count Tests ============

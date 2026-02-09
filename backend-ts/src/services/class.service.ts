@@ -24,6 +24,7 @@ import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
   UpdateClassServiceDTO,
+  EnrolledStudentDTO,
 } from "./service-dtos.js"
 
 @injectable()
@@ -38,7 +39,7 @@ export class ClassService {
     @inject("SubmissionRepository")
     private submissionRepo: SubmissionRepository,
     @inject("StorageService") private storageService: StorageService,
-  ) {}
+  ) { }
 
   /** Generate a unique class code using shared utility */
   async generateClassCode(): Promise<string> {
@@ -47,39 +48,15 @@ export class ClassService {
 
   /** Create a new class */
   async createClass(data: CreateClassServiceDTO): Promise<ClassDTO> {
-    const {
-      teacherId,
-      className,
-      classCode,
-      yearLevel,
-      semester,
-      academicYear,
-      schedule,
-      description,
-    } = data
-
     // Verify teacher exists
-    const teacher = await this.userRepo.getUserById(teacherId)
+    const teacher = await this.userRepo.getUserById(data.teacherId)
 
-    if (!teacher) {
-      throw new InvalidRoleError("teacher")
-    }
-
-    if (teacher.role !== "teacher") {
+    if (!teacher || teacher.role !== "teacher") {
       throw new InvalidRoleError("teacher")
     }
 
     // Create the class
-    const newClass = await this.classRepo.createClass({
-      teacherId,
-      className,
-      classCode,
-      yearLevel,
-      semester,
-      academicYear,
-      schedule,
-      description,
-    })
+    const newClass = await this.classRepo.createClass(data)
 
     const studentCount = await this.classRepo.getStudentCount(newClass.id)
 
@@ -322,15 +299,7 @@ export class ClassService {
   }
 
   /** Get all students enrolled in a class */
-  async getClassStudents(classId: number): Promise<
-    Array<{
-      id: number
-      email: string
-      firstName: string
-      lastName: string
-      avatarUrl: string | null
-    }>
-  > {
+  async getClassStudents(classId: number): Promise<EnrolledStudentDTO[]> {
     const studentsWithInfo =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
 

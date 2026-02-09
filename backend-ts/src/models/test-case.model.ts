@@ -10,6 +10,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { assignments } from "@/models/assignment.model.js"
+import { testResults } from "./test-result.model.js"
 
 /**
  * Test Cases table - stores teacher-defined test cases for assignments.
@@ -51,5 +52,3 @@ export const testCasesRelations = relations(testCases, ({ one, many }) => ({
 export type TestCase = typeof testCases.$inferSelect
 export type NewTestCase = typeof testCases.$inferInsert
 
-// Forward reference for circular dependency
-import { testResults } from "./test-result.model.js"

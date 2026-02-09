@@ -42,5 +42,4 @@ export const notificationPreferencesRelations = relations(
 )
 
 export type NotificationPreference = typeof notificationPreferences.$inferSelect
-export type NewNotificationPreference =
-  typeof notificationPreferences.$inferInsert
+export type NewNotificationPreference = typeof notificationPreferences.$inferInsert

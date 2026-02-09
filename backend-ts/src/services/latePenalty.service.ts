@@ -36,7 +36,7 @@ export class LatePenaltyService {
   constructor(
     @inject(AssignmentRepository)
     private assignmentRepo: AssignmentRepository,
-  ) {}
+  ) { }
 
   /**
    * Calculate the penalty for a submission based on how late it was.
@@ -48,74 +48,19 @@ export class LatePenaltyService {
   ): PenaltyResult {
     const hoursLate = this.getHoursLate(submissionDate, deadline)
 
-    // Not late
     if (hoursLate <= 0) {
-      return {
-        isLate: false,
-        hoursLate: 0,
-        penaltyPercent: 0,
-        gradeMultiplier: 1.0,
-        tierLabel: "On time",
-      }
+      return this.createOnTimeResult()
     }
 
-    // Within grace period
     if (hoursLate <= config.gracePeriodHours) {
-      return {
-        isLate: true,
-        hoursLate,
-        penaltyPercent: 0,
-        gradeMultiplier: 1.0,
-        tierLabel: "Within grace period",
-      }
+      return this.createGracePeriodResult(hoursLate)
     }
 
-    // Beyond rejection threshold
-    if (
-      config.rejectAfterHours !== null &&
-      hoursLate > config.rejectAfterHours
-    ) {
-      return {
-        isLate: true,
-        hoursLate,
-        penaltyPercent: 100,
-        gradeMultiplier: 0,
-        tierLabel: "Submission rejected (too late)",
-      }
+    if (this.isRejected(hoursLate, config.rejectAfterHours)) {
+      return this.createRejectedResult(hoursLate)
     }
 
-    // Find applicable tier
-    const hoursAfterGrace = hoursLate - config.gracePeriodHours
-
-    // Sort tiers by hoursAfterGrace ascending
-    const sortedTiers = [...config.tiers].sort(
-      (a, b) => a.hoursAfterGrace - b.hoursAfterGrace,
-    )
-
-    // Find the tier that applies (the highest threshold that has been passed)
-    let applicablePenalty = 0
-    let tierLabel = "Late submission"
-
-    for (const tier of sortedTiers) {
-      if (hoursAfterGrace >= tier.hoursAfterGrace) {
-        applicablePenalty = tier.penaltyPercent
-        tierLabel = `${tier.hoursAfterGrace}+ hours late (-${tier.penaltyPercent}%)`
-      }
-    }
-
-    // If we're past grace but no tier applies yet, find the first tier
-    if (applicablePenalty === 0 && sortedTiers.length > 0) {
-      applicablePenalty = sortedTiers[0].penaltyPercent
-      tierLabel = `Late (-${applicablePenalty}%)`
-    }
-
-    return {
-      isLate: true,
-      hoursLate,
-      penaltyPercent: applicablePenalty,
-      gradeMultiplier: (100 - applicablePenalty) / 100,
-      tierLabel,
-    }
+    return this.calculateTierPenalty(hoursLate, config)
   }
 
   /**
@@ -226,5 +171,111 @@ export class LatePenaltyService {
   private getHoursLate(submissionDate: Date, deadline: Date): number {
     const diffMs = submissionDate.getTime() - deadline.getTime()
     return diffMs / (1000 * 60 * 60) // Convert to hours
+  }
+
+  /**
+   * Create result for on-time submission.
+   */
+  private createOnTimeResult(): PenaltyResult {
+    return {
+      isLate: false,
+      hoursLate: 0,
+      penaltyPercent: 0,
+      gradeMultiplier: 1.0,
+      tierLabel: "On time",
+    }
+  }
+
+  /**
+   * Create result for submission within grace period.
+   */
+  private createGracePeriodResult(hoursLate: number): PenaltyResult {
+    return {
+      isLate: true,
+      hoursLate,
+      penaltyPercent: 0,
+      gradeMultiplier: 1.0,
+      tierLabel: "Within grace period",
+    }
+  }
+
+  /**
+   * Check if submission should be rejected due to being too late.
+   */
+  private isRejected(
+    hoursLate: number,
+    rejectAfterHours: number | null,
+  ): boolean {
+    return rejectAfterHours !== null && hoursLate > rejectAfterHours
+  }
+
+  /**
+   * Create result for rejected submission.
+   */
+  private createRejectedResult(hoursLate: number): PenaltyResult {
+    return {
+      isLate: true,
+      hoursLate,
+      penaltyPercent: 100,
+      gradeMultiplier: 0,
+      tierLabel: "Submission rejected (too late)",
+    }
+  }
+
+  /**
+   * Calculate penalty based on tier configuration.
+   */
+  private calculateTierPenalty(
+    hoursLate: number,
+    config: LatePenaltyConfig,
+  ): PenaltyResult {
+    const hoursAfterGrace = hoursLate - config.gracePeriodHours
+    const sortedTiers = this.sortTiersByHours(config.tiers)
+    const { penaltyPercent, tierLabel } = this.findApplicableTier(
+      hoursAfterGrace,
+      sortedTiers,
+    )
+
+    return {
+      isLate: true,
+      hoursLate,
+      penaltyPercent,
+      gradeMultiplier: (100 - penaltyPercent) / 100,
+      tierLabel,
+    }
+  }
+
+  /**
+   * Sort penalty tiers by hours in ascending order.
+   */
+  private sortTiersByHours(
+    tiers: Array<{ hoursAfterGrace: number; penaltyPercent: number }>,
+  ) {
+    return [...tiers].sort((a, b) => a.hoursAfterGrace - b.hoursAfterGrace)
+  }
+
+  /**
+   * Find the applicable penalty tier for the given hours after grace period.
+   */
+  private findApplicableTier(
+    hoursAfterGrace: number,
+    sortedTiers: Array<{ hoursAfterGrace: number; penaltyPercent: number }>,
+  ): { penaltyPercent: number; tierLabel: string } {
+    let applicablePenalty = 0
+    let tierLabel = "Late submission"
+
+    for (const tier of sortedTiers) {
+      if (hoursAfterGrace >= tier.hoursAfterGrace) {
+        applicablePenalty = tier.penaltyPercent
+        tierLabel = `${tier.hoursAfterGrace}+ hours late (-${tier.penaltyPercent}%)`
+      }
+    }
+
+    if (applicablePenalty === 0 && sortedTiers.length > 0) {
+      applicablePenalty = sortedTiers[0].penaltyPercent
+      tierLabel = `Late (-${applicablePenalty}%)`
+    }
+
+    return { penaltyPercent: applicablePenalty, tierLabel }
   }
 }
