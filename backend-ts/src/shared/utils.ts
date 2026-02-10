@@ -163,7 +163,13 @@ export function formatAssignmentDueDate(
     return "No deadline"
   }
 
-  return new Date(deadline).toLocaleString("en-US", {
+    const date = new Date(deadline)
+
+  if (isNaN(date.getTime())) {
+    return "Invalid deadline"
+  }
+
+  return date.toLocaleString("en-US", {
     month: "numeric",
     day: "numeric",
     year: "numeric",

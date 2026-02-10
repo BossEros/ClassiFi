@@ -37,7 +37,7 @@ export class AssignmentService {
     private submissionRepo: SubmissionRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
   /**
    * Create an assignment for a class.
@@ -327,8 +327,10 @@ export class AssignmentService {
       })
     }
 
-    // Update the last reminder sent timestamp
-    await this.assignmentRepo.updateLastReminderSentAt(assignmentId)
+    // Update the last reminder sent timestamp only if at least one notification succeeded
+    if (successCount > 0) {
+      await this.assignmentRepo.updateLastReminderSentAt(assignmentId)
+    }
 
     return { remindersSent: successCount }
   }
