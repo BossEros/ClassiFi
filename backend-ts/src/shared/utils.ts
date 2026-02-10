@@ -135,3 +135,16 @@ export function parseOptionalDate(
   }
   return parseDate(dateValue, fieldName)
 }
+
+/**
+ * Filter out undefined values from an object.
+ * Returns a new object with only defined properties.
+ *
+ * @param obj - The object to filter
+ * @returns A new object with undefined values removed
+ */
+export function filterUndefined<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined),
+  ) as Partial<T>
+}

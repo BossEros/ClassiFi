@@ -433,26 +433,44 @@ export async function getClassesForFilter(
  */
 function isValidClass(obj: unknown): obj is Class {
   if (typeof obj !== "object" || obj === null) {
+    console.warn("Invalid class: not an object or null", obj)
     return false
   }
 
   const candidate = obj as Record<string, unknown>
 
-  return (
-    typeof candidate.id === "number" &&
-    typeof candidate.teacherId === "number" &&
-    typeof candidate.className === "string" &&
-    typeof candidate.classCode === "string" &&
-    (candidate.description === null ||
-      typeof candidate.description === "string") &&
-    typeof candidate.isActive === "boolean" &&
-    typeof candidate.createdAt === "string" &&
-    typeof candidate.yearLevel === "number" &&
-    typeof candidate.semester === "number" &&
-    typeof candidate.academicYear === "string" &&
-    typeof candidate.schedule === "object" &&
-    candidate.schedule !== null
-  )
+  const checks = {
+    id: typeof candidate.id === "number",
+    teacherId: typeof candidate.teacherId === "number",
+    className: typeof candidate.className === "string",
+    classCode: typeof candidate.classCode === "string",
+    description:
+      candidate.description === null ||
+      typeof candidate.description === "string",
+    isActive: typeof candidate.isActive === "boolean",
+    createdAt: typeof candidate.createdAt === "string",
+    yearLevel: typeof candidate.yearLevel === "number",
+    semester: typeof candidate.semester === "number",
+    academicYear: typeof candidate.academicYear === "string",
+    schedule:
+      typeof candidate.schedule === "object" && candidate.schedule !== null,
+  }
+
+  const isValid = Object.values(checks).every((check) => check === true)
+
+  if (!isValid) {
+    console.log("❌ Invalid class object")
+    console.log("Class data:", candidate)
+    console.log("Validation checks:", checks)
+    console.log(
+      "Failed fields:",
+      Object.entries(checks)
+        .filter(([, passed]) => !passed)
+        .map(([field]) => field),
+    )
+  }
+
+  return isValid
 }
 
 /**

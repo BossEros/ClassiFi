@@ -10,8 +10,47 @@ import {
 } from "@/models/index.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
-/** Programming language type */
-export type ProgrammingLanguage = "python" | "java" | "c"
+import type { ProgrammingLanguage } from "@/shared/constants.js"
+import { filterUndefined } from "@/shared/utils.js"
+
+/** Pending task result for teacher dashboard */
+export interface PendingTeacherTask {
+  id: number
+  assignmentName: string
+  deadline: Date | null
+  classId: number
+  className: string
+  studentCount: number
+  submissionCount: number
+}
+
+/** Data required to create a new assignment */
+export interface CreateAssignmentData {
+  classId: number
+  assignmentName: string
+  description: string
+  programmingLanguage: ProgrammingLanguage
+  deadline: Date
+  allowResubmission?: boolean
+  maxAttempts?: number | null
+  templateCode?: string | null
+  totalScore?: number
+  scheduledDate?: Date | null
+}
+
+/** Data for updating an existing assignment */
+export interface UpdateAssignmentData {
+  assignmentName?: string
+  description?: string
+  programmingLanguage?: ProgrammingLanguage
+  deadline?: Date
+  allowResubmission?: boolean
+  maxAttempts?: number | null
+  isActive?: boolean
+  templateCode?: string | null
+  totalScore?: number
+  scheduledDate?: Date | null
+}
 
 /**
  * Repository for assignment-related database operations.
@@ -86,37 +125,40 @@ export class AssignmentRepository extends BaseRepository<
 
   /**
    * Get pending tasks for a teacher.
-   * Combines logic to check for upcoming deadlines or active submissions.
-   * Optimized to avoid N+1 query problem.
+   * Returns assignments with upcoming deadlines or ungraded submissions.
    */
   async getPendingTasksForTeacher(
     teacherId: number,
     limit: number = 10,
-  ): Promise<
-    Array<{
-      id: number
-      assignmentName: string
-      deadline: Date | null
-      classId: number
-      className: string
-      studentCount: number
-      submissionCount: number
-    }>
-  > {
-    const now = new Date()
+  ): Promise<PendingTeacherTask[]> {
+    const studentCountsSubquery = this.buildStudentCountsSubquery()
+    const submissionCountsSubquery = this.buildSubmissionCountsSubquery()
 
-    // Subquery for student counts per class
-    const classStudentCounts = this.db
+    const results = await this.executePendingTasksQuery(
+      teacherId,
+      limit,
+      studentCountsSubquery,
+      submissionCountsSubquery,
+    )
+
+    return results.map(this.mapToPendingTask)
+  }
+
+  /** Subquery: Count enrolled students per class */
+  private buildStudentCountsSubquery() {
+    return this.db
       .select({
         classId: enrollments.classId,
         count: sql<number>`count(*)`.as("studentCount"),
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
-      .as("csc")
+      .as("studentCounts")
+  }
 
-    // Subquery for latest submission counts per assignment
-    const assignmentSubmissionCounts = this.db
+  /** Subquery: Count latest submissions per assignment */
+  private buildSubmissionCountsSubquery() {
+    return this.db
       .select({
         assignmentId: submissions.assignmentId,
         count: sql<number>`count(*)`.as("submissionCount"),
@@ -124,24 +166,39 @@ export class AssignmentRepository extends BaseRepository<
       .from(submissions)
       .where(eq(submissions.isLatest, true))
       .groupBy(submissions.assignmentId)
-      .as("asc")
+      .as("submissionCounts")
+  }
 
-    const results = await this.db
+  /** Execute the pending tasks query with subqueries joined */
+  private async executePendingTasksQuery(
+    teacherId: number,
+    limit: number,
+    studentCountsSubquery: ReturnType<typeof this.buildStudentCountsSubquery>,
+    submissionCountsSubquery: ReturnType<
+      typeof this.buildSubmissionCountsSubquery
+    >,
+  ) {
+    const now = new Date()
+
+    return await this.db
       .select({
         id: assignments.id,
         assignmentName: assignments.assignmentName,
         deadline: assignments.deadline,
         classId: classes.id,
         className: classes.className,
-        studentCount: sql<number>`COALESCE(${classStudentCounts.count}, 0)`,
-        submissionCount: sql<number>`COALESCE(${assignmentSubmissionCounts.count}, 0)`,
+        studentCount: sql<number>`COALESCE(${studentCountsSubquery.count}, 0)`,
+        submissionCount: sql<number>`COALESCE(${submissionCountsSubquery.count}, 0)`,
       })
       .from(assignments)
       .innerJoin(classes, eq(assignments.classId, classes.id))
-      .leftJoin(classStudentCounts, eq(classes.id, classStudentCounts.classId))
       .leftJoin(
-        assignmentSubmissionCounts,
-        eq(assignments.id, assignmentSubmissionCounts.assignmentId),
+        studentCountsSubquery,
+        eq(classes.id, studentCountsSubquery.classId),
+      )
+      .leftJoin(
+        submissionCountsSubquery,
+        eq(assignments.id, submissionCountsSubquery.assignmentId),
       )
       .where(
         and(
@@ -150,34 +207,35 @@ export class AssignmentRepository extends BaseRepository<
           eq(assignments.isActive, true),
           or(
             gt(assignments.deadline, now),
-            gt(sql`COALESCE(${assignmentSubmissionCounts.count}, 0)`, 0),
+            gt(sql`COALESCE(${submissionCountsSubquery.count}, 0)`, 0),
           ),
         ),
       )
       .orderBy(asc(assignments.deadline))
       .limit(limit)
-
-    return results.map((r) => ({
-      ...r,
-      studentCount: Number(r.studentCount),
-      submissionCount: Number(r.submissionCount),
-      deadline: r.deadline ? new Date(r.deadline) : null,
-    }))
   }
 
-  /** Create a new assignment */
-  async createAssignment(data: {
-    classId: number
+  /** Map raw query result to PendingTeacherTask */
+  private mapToPendingTask = (row: {
+    id: number
     assignmentName: string
-    description: string
-    programmingLanguage: ProgrammingLanguage
-    deadline: Date
-    allowResubmission?: boolean
-    maxAttempts?: number | null
-    templateCode?: string | null
-    totalScore?: number
-    scheduledDate?: Date | null
-  }): Promise<Assignment> {
+    deadline: Date | null
+    classId: number
+    className: string
+    studentCount: number
+    submissionCount: number
+  }): PendingTeacherTask => ({
+    id: row.id,
+    assignmentName: row.assignmentName,
+    deadline: row.deadline,
+    classId: row.classId,
+    className: row.className,
+    studentCount: Number(row.studentCount),
+    submissionCount: Number(row.submissionCount),
+  })
+
+  /** Create a new assignment */
+  async createAssignment(data: CreateAssignmentData): Promise<Assignment> {
     const results = await this.db
       .insert(assignments)
       .values({
@@ -201,25 +259,9 @@ export class AssignmentRepository extends BaseRepository<
   /** Update an assignment */
   async updateAssignment(
     assignmentId: number,
-    data: Partial<
-      Pick<
-        NewAssignment,
-        | "assignmentName"
-        | "description"
-        | "programmingLanguage"
-        | "deadline"
-        | "allowResubmission"
-        | "maxAttempts"
-        | "isActive"
-        | "templateCode"
-        | "totalScore"
-        | "scheduledDate"
-      >
-    >,
+    data: UpdateAssignmentData,
   ): Promise<Assignment | undefined> {
-    const updateData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined),
-    )
+    const updateData = filterUndefined(data)
 
     if (Object.keys(updateData).length === 0) {
       return await this.getAssignmentById(assignmentId)

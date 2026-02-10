@@ -29,6 +29,22 @@ export interface RemoveStudentServiceDTO {
   teacherId: number
 }
 
+/** DTO for enrolled student info returned by ClassService.getClassStudents */
+export interface EnrolledStudentDTO {
+  id: number
+  email: string
+  firstName: string
+  lastName: string
+  avatarUrl: string | null
+}
+
+/** DTO for file upload in SubmissionService.submitAssignment */
+export interface SubmissionFileDTO {
+  filename: string
+  data: Buffer
+  mimetype: string
+}
+
 /** DTO for ClassService.updateClass */
 export interface UpdateClassServiceDTO {
   classId: number

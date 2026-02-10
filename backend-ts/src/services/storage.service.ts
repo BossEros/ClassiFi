@@ -27,6 +27,7 @@ export class StorageService implements IStorageService {
     })
 
     if (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error(`Storage upload error for ${path}:`, error)
       throw new Error(`File upload failed: ${error.message}`)
     }
@@ -41,6 +42,7 @@ export class StorageService implements IStorageService {
     const { data, error } = await supabase.storage.from(bucket).download(path)
 
     if (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error(`Storage download error for ${path}:`, error)
       throw new Error(`File download failed: ${error.message}`)
     }
@@ -60,11 +62,13 @@ export class StorageService implements IStorageService {
     const { error, data } = await supabase.storage.from(bucket).remove(paths)
 
     if (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error(`Storage delete error:`, error)
       return 0
     }
 
     const deletedCount = data?.length ?? 0
+    // TODO: Replace with structured logger (e.g., pino, winston) for better observability
     console.log(`Deleted ${deletedCount} files from ${bucket}`)
     return deletedCount
   }
@@ -83,6 +87,7 @@ export class StorageService implements IStorageService {
       .createSignedUrl(path, expiresIn, options)
 
     if (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error(`Storage signed URL error for ${path}:`, error)
       throw new Error(`Failed to create signed URL: ${error.message}`)
     }
@@ -118,6 +123,7 @@ export class StorageService implements IStorageService {
       const result = await this.deleteFiles("avatars", [path])
       return result > 0
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Failed to delete avatar:", error)
       return false
     }

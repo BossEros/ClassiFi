@@ -29,6 +29,19 @@ export interface GradeEntry {
 }
 
 /**
+ * Detailed grade information for a specific submission.
+ */
+export interface SubmissionGradeDetails {
+  grade: number | null
+  isOverridden: boolean
+  feedback: string | null
+  overriddenAt: Date | null
+  testsPassed: number
+  testsTotal: number
+  latePenalty: PenaltyResult | null
+}
+
+/**
  * Gradebook Service
  * Handles all gradebook-related business logic including
  * grade aggregation, overrides, exports, and statistics.
@@ -119,6 +132,7 @@ export class GradebookService {
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
       })
       .catch((error) => {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error("Failed to send grade notification:", error)
       })
   }
@@ -216,15 +230,9 @@ export class GradebookService {
   /**
    * Get detailed grade information for a specific submission.
    */
-  async getSubmissionGradeDetails(submissionId: number): Promise<{
-    grade: number | null
-    isOverridden: boolean
-    feedback: string | null
-    overriddenAt: Date | null
-    testsPassed: number
-    testsTotal: number
-    latePenalty: PenaltyResult | null
-  } | null> {
+  async getSubmissionGradeDetails(
+    submissionId: number,
+  ): Promise<SubmissionGradeDetails | null> {
     const submission = await this.submissionRepo.getSubmissionById(submissionId)
     if (!submission) return null
 

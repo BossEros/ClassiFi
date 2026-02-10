@@ -10,6 +10,8 @@ import {
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { users } from "./user.model.js"
+import { assignments } from "./assignment.model.js"
+import { enrollments } from "./enrollment.model.js"
 
 /** Schedule type for class meetings */
 export type ClassSchedule = {
@@ -58,7 +60,3 @@ export const classesRelations = relations(classes, ({ one, many }) => ({
 /** Type definitions for Class */
 export type Class = typeof classes.$inferSelect
 export type NewClass = typeof classes.$inferInsert
-
-// Import related tables
-import { assignments } from "./assignment.model.js"
-import { enrollments } from "./enrollment.model.js"

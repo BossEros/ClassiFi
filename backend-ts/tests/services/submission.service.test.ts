@@ -367,17 +367,16 @@ describe("SubmissionService", () => {
     // "should increment submission number correctly" is invalid with current logic (it resets to 1)
     // so I will verify that behaviour or remove the test.
     // Actually, logic is: `const submissionNumber = 1;` after cleanup.
-    // So checking if it increments is checking for behavior that no longer exists (single active submission policy).
-    // I will remove that specific test or replace it with "should reset submission number to 1".
-    it("should reset submission number to 1 on resubmission", async () => {
+    // Submission number should increment based on existing submissions count
+    it("should increment submission number based on existing submissions", async () => {
       const assignment = createMockAssignment({
         isActive: true,
         deadline: futureDeadline,
         allowResubmission: true,
         programmingLanguage: "python",
       })
-      const existingSubmission = createMockSubmission({ submissionNumber: 5 })
-      const newSubmission = createMockSubmission({ submissionNumber: 1 })
+      const existingSubmission = createMockSubmission({ submissionNumber: 1 })
+      const newSubmission = createMockSubmission({ submissionNumber: 2 })
 
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
       mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
@@ -390,7 +389,7 @@ describe("SubmissionService", () => {
       await submissionService.submitAssignment(1, 1, validFile)
 
       expect(mockSubmissionRepo.createSubmission).toHaveBeenCalledWith(
-        expect.objectContaining({ submissionNumber: 1 }),
+        expect.objectContaining({ submissionNumber: 2 }),
       )
     })
   })

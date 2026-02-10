@@ -70,10 +70,10 @@ describe("LatePenaltyService", () => {
       expect(result.tierLabel).toBe("Within grace period")
     })
 
-    it("should apply 10% penalty for 24-48 hours late after grace", () => {
+    it("should apply 10% penalty for up to 24 hours late after grace", () => {
       const deadline = new Date("2026-01-15T00:00:00")
-      // 24h grace + 30h = 54 hours after deadline
-      const submissionDate = new Date("2026-01-17T06:00:00")
+      // 24h grace + 20h = 44 hours after deadline (20h after grace, within 24h upper bound)
+      const submissionDate = new Date("2026-01-16T20:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,
@@ -86,10 +86,10 @@ describe("LatePenaltyService", () => {
       expect(result.gradeMultiplier).toBe(0.9)
     })
 
-    it("should apply 25% penalty for 48-72 hours late after grace", () => {
+    it("should apply 25% penalty for up to 48 hours late after grace", () => {
       const deadline = new Date("2026-01-15T00:00:00")
-      // 24h grace + 60h = 84 hours after deadline
-      const submissionDate = new Date("2026-01-18T12:00:00")
+      // 24h grace + 40h = 64 hours after deadline (40h after grace, within 48h upper bound)
+      const submissionDate = new Date("2026-01-17T16:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,

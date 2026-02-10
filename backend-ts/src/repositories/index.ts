@@ -1,8 +1,3 @@
-/**
- * Repositories Index
- * Re-exports all repository classes
- */
-
 export { BaseRepository } from "./base.repository.js"
 export { UserRepository } from "./user.repository.js"
 export { ClassRepository } from "./class.repository.js"

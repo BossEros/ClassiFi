@@ -335,23 +335,6 @@ export function useCalendar(): UseCalendarReturn {
     fetchEvents()
   }, [fetchEvents])
 
-  /**
-   * Debug: Log filtered events to verify uniqueness
-   */
-  useEffect(() => {
-    if (filteredEvents.length > 0) {
-      console.log(
-        "Calendar Events:",
-        filteredEvents.map((e) => ({
-          id: e.id,
-          title: e.title,
-          start: e.timing.start,
-          classId: e.classInfo.id,
-        })),
-      )
-    }
-  }, [filteredEvents])
-
   // ============================================================================
   // Return Hook Value
   // ============================================================================
