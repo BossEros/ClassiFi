@@ -50,10 +50,12 @@ export class SMTPEmailService implements IEmailService {
         text: options.text || this.stripHtml(options.html),
       })
 
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.log(
         `✅ Email sent successfully via SMTP (Message ID: ${info.messageId})`,
       )
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Failed to send email via SMTP:", error)
       throw new Error(
         `SMTP email sending failed: ${error instanceof Error ? error.message : "Unknown error"}`,

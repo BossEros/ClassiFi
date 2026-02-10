@@ -203,6 +203,7 @@ export function toStudentDTO(user: User): StudentDTO {
 
 export interface DashboardClassDTO {
   id: number
+  teacherId: number
   className: string
   classCode: string
   description: string | null
@@ -227,6 +228,7 @@ export function toDashboardClassDTO(
 ): DashboardClassDTO {
   return {
     id: classData.id,
+    teacherId: classData.teacherId,
     className: classData.className,
     classCode: classData.classCode,
     description: classData.description,

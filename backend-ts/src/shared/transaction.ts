@@ -1,7 +1,3 @@
-/**
- * Transaction and Unit of Work Support
- * Provides database transaction management for atomic operations
- */
 import postgres from "postgres"
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import { env } from "./config.js"

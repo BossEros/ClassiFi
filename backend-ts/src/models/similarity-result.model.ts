@@ -12,6 +12,7 @@ import {
 import { relations, sql } from "drizzle-orm"
 import { similarityReports } from "./similarity-report.model.js"
 import { submissions } from "./submission.model.js"
+import { matchFragments } from "./match-fragment.model.js"
 
 /** Similarity results table - stores pairwise similarity comparison results */
 export const similarityResults = pgTable(
@@ -81,8 +82,6 @@ export const similarityResults = pgTable(
     index("idx_similarity_results_hybrid_score").on(table.hybridScore),
   ],
 )
-
-import { matchFragments } from "./match-fragment.model.js"
 
 /** Similarity result relations */
 export const similarityResultsRelations = relations(

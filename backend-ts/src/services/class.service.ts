@@ -24,6 +24,7 @@ import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
   UpdateClassServiceDTO,
+  EnrolledStudentDTO,
 } from "./service-dtos.js"
 
 @injectable()
@@ -47,39 +48,15 @@ export class ClassService {
 
   /** Create a new class */
   async createClass(data: CreateClassServiceDTO): Promise<ClassDTO> {
-    const {
-      teacherId,
-      className,
-      classCode,
-      yearLevel,
-      semester,
-      academicYear,
-      schedule,
-      description,
-    } = data
-
     // Verify teacher exists
-    const teacher = await this.userRepo.getUserById(teacherId)
+    const teacher = await this.userRepo.getUserById(data.teacherId)
 
-    if (!teacher) {
-      throw new InvalidRoleError("teacher")
-    }
-
-    if (teacher.role !== "teacher") {
+    if (!teacher || teacher.role !== "teacher") {
       throw new InvalidRoleError("teacher")
     }
 
     // Create the class
-    const newClass = await this.classRepo.createClass({
-      teacherId,
-      className,
-      classCode,
-      yearLevel,
-      semester,
-      academicYear,
-      schedule,
-      description,
-    })
+    const newClass = await this.classRepo.createClass(data)
 
     const studentCount = await this.classRepo.getStudentCount(newClass.id)
 
@@ -223,6 +200,7 @@ export class ClassService {
       try {
         await this.performClassDeletion(cls.id)
       } catch (error) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error(
           `Failed to delete class ${cls.id} for teacher ${teacherId}:`,
           error,
@@ -246,6 +224,7 @@ export class ClassService {
         await this.storageService.deleteSubmissionFiles(filePaths)
       }
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Error cleaning up class submission files:", error)
       // Continue with deletion anyway
     }
@@ -322,15 +301,7 @@ export class ClassService {
   }
 
   /** Get all students enrolled in a class */
-  async getClassStudents(classId: number): Promise<
-    Array<{
-      id: number
-      email: string
-      firstName: string
-      lastName: string
-      avatarUrl: string | null
-    }>
-  > {
+  async getClassStudents(classId: number): Promise<EnrolledStudentDTO[]> {
     const studentsWithInfo =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
 
