@@ -163,7 +163,7 @@ export function formatAssignmentDueDate(
     return "No deadline"
   }
 
-    const date = new Date(deadline)
+  const date = new Date(deadline)
 
   if (isNaN(date.getTime())) {
     return "Invalid deadline"

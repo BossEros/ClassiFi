@@ -37,7 +37,7 @@ export class AssignmentService {
     private submissionRepo: SubmissionRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Create an assignment for a class.
@@ -98,22 +98,55 @@ export class AssignmentService {
     const enrolledStudents =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
 
-    const notificationPromises = enrolledStudents.map((enrollment) =>
-      this.notificationService.createNotification(
-        enrollment.user.id,
-        "ASSIGNMENT_CREATED",
-        {
-          assignmentId: assignment.id,
-          assignmentTitle: assignment.assignmentName,
-          className: classData?.className || "Unknown Class",
-          classId: assignment.classId,
-          dueDate: formatAssignmentDueDate(assignment.deadline),
-          assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
-        },
+    const notificationTargets = enrolledStudents.map((enrollment) => ({
+      recipientUserId: enrollment.user.id,
+      notificationData: {
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        className: classData?.className || "Unknown Class",
+        classId: assignment.classId,
+        dueDate: formatAssignmentDueDate(assignment.deadline),
+        assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      },
+    }))
+
+    const settledNotificationResults = await Promise.allSettled(
+      notificationTargets.map((target) =>
+        this.notificationService.createNotification(
+          target.recipientUserId,
+          "ASSIGNMENT_CREATED",
+          target.notificationData,
+        ),
       ),
     )
 
-    await Promise.allSettled(notificationPromises)
+    const failedRecipientUserIds: number[] = []
+
+    settledNotificationResults.forEach((settledResult, index) => {
+      if (settledResult.status === "fulfilled") {
+        return
+      }
+
+      const failedTarget = notificationTargets[index]
+      failedRecipientUserIds.push(failedTarget.recipientUserId)
+
+      console.error(
+        "Failed to send assignment notification:",
+        {
+          assignmentId: assignment.id,
+          recipientUserId: failedTarget.recipientUserId,
+          notificationType: "ASSIGNMENT_CREATED",
+          notificationData: failedTarget.notificationData,
+        },
+        settledResult.reason,
+      )
+    })
+
+    if (failedRecipientUserIds.length > 0) {
+      throw new Error(
+        `Failed to send assignment notifications for assignment ${assignment.id}. Failed recipients: ${failedRecipientUserIds.join(", ")}`,
+      )
+    }
   }
 
   /**
