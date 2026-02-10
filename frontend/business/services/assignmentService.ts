@@ -214,3 +214,33 @@ export async function getSubmissionDownloadUrl(
 
   return response.data.downloadUrl
 }
+
+/**
+ * Sends reminder notifications to students who haven't submitted an assignment
+ *
+ * @param assignmentId - ID of the assignment
+ * @param teacherId - ID of the teacher sending the reminder
+ * @returns Success status and message
+ */
+export async function sendReminderToNonSubmitters(
+  assignmentId: number,
+  teacherId: number,
+): Promise<{ success: boolean; message: string }> {
+  validateId(assignmentId, "assignment")
+  validateId(teacherId, "teacher")
+
+  const response = await assignmentRepository.sendReminderToNonSubmitters(
+    assignmentId,
+    teacherId,
+  )
+
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  if (!response.data) {
+    throw new Error("Failed to send reminders")
+  }
+
+  return response.data
+}

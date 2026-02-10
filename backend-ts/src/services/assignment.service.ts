@@ -3,18 +3,21 @@ import { AssignmentRepository } from "../repositories/assignment.repository.js"
 import { TestCaseRepository } from "../repositories/testCase.repository.js"
 import { ClassRepository } from "../repositories/class.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
+import { SubmissionRepository } from "../repositories/submission.repository.js"
 import { NotificationService } from "./notification/notification.service.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
 import {
   AssignmentNotFoundError,
   InvalidAssignmentDataError,
+  BadRequestError,
 } from "../shared/errors.js"
 import type {
   UpdateAssignmentServiceDTO,
   CreateAssignmentServiceDTO,
 } from "./service-dtos.js"
 import { settings } from "../shared/config.js"
+import { formatAssignmentDueDate } from "../shared/utils.js"
 
 /**
  * Business logic for assignment-related operations.
@@ -30,6 +33,8 @@ export class AssignmentService {
     @inject("TestCaseRepository") private testCaseRepo: TestCaseRepository,
     @inject("EnrollmentRepository")
     private enrollmentRepo: EnrollmentRepository,
+    @inject("SubmissionRepository")
+    private submissionRepo: SubmissionRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
   ) {}
@@ -102,22 +107,13 @@ export class AssignmentService {
           assignmentTitle: assignment.assignmentName,
           className: classData?.className || "Unknown Class",
           classId: assignment.classId,
-          dueDate: assignment.deadline
-            ? new Date(assignment.deadline).toLocaleString("en-US", {
-                month: "numeric",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
-            : "No deadline",
+          dueDate: formatAssignmentDueDate(assignment.deadline),
           assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
         },
       ),
     )
 
-    await Promise.all(notificationPromises)
+    await Promise.allSettled(notificationPromises)
   }
 
   /**
@@ -241,10 +237,12 @@ export class AssignmentService {
   /**
    * Send deadline reminder notifications to students who haven't submitted.
    * Only sends to students who are enrolled but have no submissions.
+   * Enforces a 24-hour cooldown to prevent spam.
    *
    * @param assignmentId - The assignment ID
    * @param teacherId - The teacher ID (for authorization)
    * @returns Object with count of reminders sent
+   * @throws BadRequestError if reminder was sent within the last 24 hours
    */
   async sendReminderToNonSubmitters(
     assignmentId: number,
@@ -260,15 +258,26 @@ export class AssignmentService {
     // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
+    // Check cooldown: prevent sending reminders more than once per 24 hours
+    if (assignment.lastReminderSentAt) {
+      const hoursSinceLastReminder =
+        (Date.now() - assignment.lastReminderSentAt.getTime()) /
+        (1000 * 60 * 60)
+
+      if (hoursSinceLastReminder < 24) {
+        const hoursRemaining = Math.ceil(24 - hoursSinceLastReminder)
+        throw new BadRequestError(
+          `Reminder was already sent ${Math.floor(hoursSinceLastReminder)} hours ago. Please wait ${hoursRemaining} more hour(s) before sending another reminder.`,
+        )
+      }
+    }
+
     // Get all enrolled students
     const enrolledStudents =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
 
     // Get all students who have submitted (latest submissions only)
-    const { SubmissionRepository } =
-      await import("../repositories/submission.repository.js")
-    const submissionRepo = new SubmissionRepository()
-    const submissions = await submissionRepo.getSubmissionsByAssignment(
+    const submissions = await this.submissionRepo.getSubmissionsByAssignment(
       assignmentId,
       true,
     )
@@ -281,29 +290,46 @@ export class AssignmentService {
 
     // Send notifications to non-submitters
     const notificationPromises = nonSubmitters.map((enrollment) =>
-      this.notificationService.createNotification(
-        enrollment.user.id,
-        "DEADLINE_REMINDER",
-        {
+      this.notificationService
+        .createNotification(enrollment.user.id, "DEADLINE_REMINDER", {
           assignmentId: assignment.id,
           assignmentTitle: assignment.assignmentName,
-          dueDate: assignment.deadline
-            ? new Date(assignment.deadline).toLocaleString("en-US", {
-                month: "numeric",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
-            : "No deadline",
+          dueDate: formatAssignmentDueDate(assignment.deadline),
           assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
-        },
-      ),
+        })
+        .then(() => ({
+          status: "fulfilled" as const,
+          userId: enrollment.user.id,
+        }))
+        .catch((error) => ({
+          status: "rejected" as const,
+          userId: enrollment.user.id,
+          error,
+        })),
     )
 
-    await Promise.all(notificationPromises)
+    const results = await Promise.all(notificationPromises)
 
-    return { remindersSent: nonSubmitters.length }
+    // Count successful and failed notifications
+    const successCount = results.filter((r) => r.status === "fulfilled").length
+    const failedResults = results.filter(
+      (r): r is { status: "rejected"; userId: number; error: unknown } =>
+        r.status === "rejected",
+    )
+
+    // Log errors for failed notifications
+    if (failedResults.length > 0) {
+      failedResults.forEach(({ userId, error }) => {
+        console.error(
+          `Failed to send deadline reminder for assignment ${assignment.id} to user ${userId}:`,
+          error,
+        )
+      })
+    }
+
+    // Update the last reminder sent timestamp
+    await this.assignmentRepo.updateLastReminderSentAt(assignmentId)
+
+    return { remindersSent: successCount }
   }
 }

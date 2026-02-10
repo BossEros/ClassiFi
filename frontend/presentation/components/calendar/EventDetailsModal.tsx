@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import { getCurrentUser } from "@/business/services/authService"
 import { formatCalendarDate } from "@/business/services/calendarService"
-import { sendReminderToNonSubmitters } from "@/data/repositories/assignmentRepository"
+import { sendReminderToNonSubmitters } from "@/business/services/assignmentService"
 import { useToast } from "@/shared/context/ToastContext"
 
 export interface EventDetailsModalProps {
@@ -131,25 +131,27 @@ export function EventDetailsModal({
   const handleSendReminder = async () => {
     if (!currentUser || !isTeacher) return
 
+    const teacherId = Number(currentUser.id)
+
+    if (!Number.isFinite(teacherId) || teacherId <= 0) {
+      showToast("Invalid teacher ID", "error")
+      return
+    }
+
     setIsSendingReminder(true)
 
     try {
-      const response = await sendReminderToNonSubmitters(
+      const result = await sendReminderToNonSubmitters(
         event.assignment.assignmentId,
-        Number(currentUser.id),
+        teacherId,
       )
 
-      if (response.data?.success) {
-        showToast(
-          response.data.message || "Reminders sent successfully",
-          "success",
-        )
-      } else {
-        showToast(response.error || "Failed to send reminders", "error")
-      }
+      showToast(result.message || "Reminders sent successfully", "success")
     } catch (error) {
       console.error("Error sending reminders:", error)
-      showToast("Failed to send reminders", "error")
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send reminders"
+      showToast(errorMessage, "error")
     } finally {
       setIsSendingReminder(false)
     }
