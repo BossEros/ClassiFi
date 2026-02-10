@@ -59,10 +59,6 @@ export function CalendarFilters({
     }
   }, [isOpen])
 
-  const handleCheckboxChange = (classId: number) => {
-    onFilterChange(classId)
-  }
-
   const selectedCount = selectedClasses.size
   const totalCount = classes.length
   const allSelected = selectedCount === totalCount
@@ -166,7 +162,7 @@ export function CalendarFilters({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => handleCheckboxChange(classInfo.id)}
+                        onChange={() => onFilterChange(classInfo.id)}
                         className="sr-only"
                         aria-label={`Filter by ${classInfo.name}`}
                       />

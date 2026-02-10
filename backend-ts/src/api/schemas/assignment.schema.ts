@@ -1,7 +1,7 @@
 import { z } from "zod"
-import { PROGRAMMING_LANGUAGES } from "@/repositories/assignment.repository.js"
+import { PROGRAMMING_LANGUAGES } from "@/shared/constants.js"
 
-/** Programming language enum - derived from repository constant */
+/** Programming language enum - derived from shared constant */
 export const ProgrammingLanguageSchema = z.enum(PROGRAMMING_LANGUAGES)
 export type ProgrammingLanguage = z.infer<typeof ProgrammingLanguageSchema>
 

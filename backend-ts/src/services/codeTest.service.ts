@@ -19,6 +19,10 @@ import type {
   Submission,
   Assignment,
 } from "@/models/index.js"
+import {
+  SubmissionNotFoundError,
+  AssignmentNotFoundError,
+} from "@/shared/errors.js"
 import { settings } from "@/shared/config.js"
 
 /** Test execution summary */
@@ -71,7 +75,7 @@ export class CodeTestService {
     @inject("StorageService") private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) {}
+  ) { }
 
   /**
    * Run all test cases for a submission and save results.
@@ -136,8 +140,8 @@ export class CodeTestService {
     language: ProgrammingLanguage,
     assignmentId: number,
   ): Promise<TestPreviewResult> {
-    // Get test cases for this assignment
     const testCases = await this.testCaseRepo.getByAssignmentId(assignmentId)
+
     if (testCases.length === 0) {
       return {
         passed: 0,
@@ -147,32 +151,29 @@ export class CodeTestService {
       }
     }
 
-    // Preprocess source code once
-    let codeToRun = sourceCode
-    if (language === "java") {
-      codeToRun = this.preprocessJavaSourceCode(sourceCode)
-    }
+    // Preprocess source code (reusing helper)
+    const processedCode =
+      language === "java"
+        ? this.preprocessJavaSourceCode(sourceCode)
+        : sourceCode
 
-    // Build execution requests
+    // Build execution requests (no fileName needed for preview)
     const requests: ExecutionRequest[] = testCases.map((tc) => ({
-      sourceCode: codeToRun,
+      sourceCode: processedCode,
       language,
       stdin: tc.input,
       expectedOutput: tc.expectedOutput,
       timeLimitSeconds: tc.timeLimit,
     }))
 
-    // Execute all tests in batch
     const executionResults = await this.executor.executeBatch(requests)
 
-    // Calculate score
     const passed = executionResults.filter(
       (r) => r.status === "Accepted",
     ).length
     const total = executionResults.length
     const percentage = total > 0 ? Math.round((passed / total) * 100) : 100
 
-    // Build response
     const results = this.buildResultDetails(testCases, executionResults)
 
     return {
@@ -209,11 +210,11 @@ export class CodeTestService {
       ...(r.testCase.isHidden
         ? {}
         : {
-            input: r.testCase.input,
-            expectedOutput: r.testCase.expectedOutput,
-            actualOutput: r.actualOutput ?? undefined,
-            errorMessage: r.errorMessage ?? undefined,
-          }),
+          input: r.testCase.input,
+          expectedOutput: r.testCase.expectedOutput,
+          actualOutput: r.actualOutput ?? undefined,
+          errorMessage: r.errorMessage ?? undefined,
+        }),
     }))
 
     return {
@@ -239,7 +240,7 @@ export class CodeTestService {
     const submission = await this.submissionRepo.getSubmissionById(submissionId)
 
     if (!submission) {
-      throw new Error(`Submission ${submissionId} not found`)
+      throw new SubmissionNotFoundError(submissionId)
     }
 
     const assignment = await this.assignmentRepo.getAssignmentById(
@@ -247,7 +248,7 @@ export class CodeTestService {
     )
 
     if (!assignment) {
-      throw new Error(`Assignment ${submission.assignmentId} not found`)
+      throw new AssignmentNotFoundError(submission.assignmentId)
     }
 
     return { submission, assignment }
@@ -276,7 +277,7 @@ export class CodeTestService {
    */
   private async prepareSourceCode(
     filePath: string,
-    language: string,
+    language: ProgrammingLanguage,
   ): Promise<string> {
     let sourceCode = await this.storageService.download("submissions", filePath)
 
@@ -295,7 +296,7 @@ export class CodeTestService {
     testCases: TestCase[],
     language: ProgrammingLanguage,
     filePath: string,
-  ) {
+  ): Promise<ExecutionResult[]> {
     const requests: ExecutionRequest[] = testCases.map((tc) => ({
       sourceCode,
       language,
@@ -316,6 +317,12 @@ export class CodeTestService {
     testCases: TestCase[],
     executionResults: ExecutionResult[],
   ): Promise<void> {
+    if (executionResults.length !== testCases.length) {
+      throw new Error(
+        `Result count mismatch: expected ${testCases.length}, got ${executionResults.length}`,
+      )
+    }
+
     const newResults: Omit<NewTestResult, "id" | "createdAt">[] =
       executionResults.map((result, index) => ({
         submissionId,
@@ -384,11 +391,11 @@ export class CodeTestService {
         ...(tc.isHidden
           ? {}
           : {
-              input: tc.input,
-              expectedOutput: tc.expectedOutput,
-              actualOutput: result.stdout ?? undefined,
-              errorMessage: result.stderr || result.compileOutput || undefined,
-            }),
+            input: tc.input,
+            expectedOutput: tc.expectedOutput,
+            actualOutput: result.stdout ?? undefined,
+            errorMessage: result.stderr || result.compileOutput || undefined,
+          }),
       }
     })
   }

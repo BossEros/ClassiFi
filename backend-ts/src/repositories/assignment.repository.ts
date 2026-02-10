@@ -10,12 +10,7 @@ import {
 } from "@/models/index.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
-
-/** Valid programming languages - single source of truth for both type and runtime validation */
-export const PROGRAMMING_LANGUAGES = ["python", "java", "c"] as const
-
-/** Programming language type - derived from the PROGRAMMING_LANGUAGES array */
-export type ProgrammingLanguage = (typeof PROGRAMMING_LANGUAGES)[number]
+import type { ProgrammingLanguage } from "@/shared/constants.js"
 
 /** Pending task result for teacher dashboard */
 export interface PendingTeacherTask {
@@ -231,7 +226,7 @@ export class AssignmentRepository extends BaseRepository<
   }): PendingTeacherTask => ({
     id: row.id,
     assignmentName: row.assignmentName,
-    deadline: row.deadline ? new Date(row.deadline) : null,
+    deadline: row.deadline,
     classId: row.classId,
     className: row.className,
     studentCount: Number(row.studentCount),
@@ -265,9 +260,13 @@ export class AssignmentRepository extends BaseRepository<
     assignmentId: number,
     data: UpdateAssignmentData,
   ): Promise<Assignment | undefined> {
-    const updateData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined),
-    )
+    const updateData: Partial<UpdateAssignmentData> = {}
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        updateData[key as keyof UpdateAssignmentData] = value
+      }
+    }
 
     if (Object.keys(updateData).length === 0) {
       return await this.getAssignmentById(assignmentId)

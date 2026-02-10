@@ -209,9 +209,13 @@ export class ClassRepository extends BaseRepository<
     classId: number,
     data: UpdateClassData,
   ): Promise<Class | undefined> {
-    const updateData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined),
-    )
+    const updateData: Partial<UpdateClassData> = {}
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        updateData[key as keyof UpdateClassData] = value
+      }
+    }
 
     if (Object.keys(updateData).length === 0) {
       return await this.getClassById(classId)
@@ -270,9 +274,9 @@ export class ClassRepository extends BaseRepository<
       .where(
         activeOnly
           ? and(
-              eq(enrollments.studentId, studentId),
-              eq(classes.isActive, true),
-            )
+            eq(enrollments.studentId, studentId),
+            eq(classes.isActive, true),
+          )
           : eq(enrollments.studentId, studentId),
       )
       .orderBy(desc(classes.createdAt))

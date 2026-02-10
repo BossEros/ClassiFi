@@ -108,9 +108,13 @@ export class UserRepository extends BaseRepository<
     data: UpdateUserData,
   ): Promise<User | undefined> {
     // Filter out undefined values, but keep null values (null means "clear the field")
-    const updateData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined),
-    )
+    const updateData: Partial<UpdateUserData> = {}
+
+    for (const [key, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        updateData[key as keyof UpdateUserData] = value
+      }
+    }
 
     if (Object.keys(updateData).length === 0) {
       return await this.getUserById(userId)

@@ -47,9 +47,16 @@ export class SubmissionService {
     private codeTestService: CodeTestService,
     @inject("LatePenaltyService")
     private latePenaltyService: LatePenaltyService,
-  ) {}
+  ) { }
 
-  /** Submit an assignment */
+  /**
+   * Submit an assignment for a student, validating rules and running tests.
+   *
+   * @param assignmentId - The ID of the assignment being submitted.
+   * @param studentId - The ID of the student submitting.
+   * @param file - The submission file payload.
+   * @returns The created submission as a DTO.
+   */
   async submitAssignment(
     assignmentId: number,
     studentId: number,
@@ -96,7 +103,13 @@ export class SubmissionService {
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
 
-  /** Get submission history for a student-assignment pair */
+  /**
+   * Get submission history for a student-assignment pair.
+   *
+   * @param assignmentId - The ID of the assignment.
+   * @param studentId - The ID of the student.
+   * @returns Array of all submissions for this student-assignment pair.
+   */
   async getSubmissionHistory(
     assignmentId: number,
     studentId: number,
@@ -108,7 +121,13 @@ export class SubmissionService {
     return submissions.map((s) => toSubmissionDTO(s))
   }
 
-  /** Get all submissions for an assignment */
+  /**
+   * Get all submissions for an assignment.
+   *
+   * @param assignmentId - The ID of the assignment.
+   * @param latestOnly - If true, returns only the latest submission per student. Defaults to true.
+   * @returns Array of submissions with student information.
+   */
   async getAssignmentSubmissions(
     assignmentId: number,
     latestOnly: boolean = true,
@@ -125,7 +144,13 @@ export class SubmissionService {
     )
   }
 
-  /** Get all submissions by a student */
+  /**
+   * Get all submissions by a student across all assignments.
+   *
+   * @param studentId - The ID of the student.
+   * @param latestOnly - If true, returns only the latest submission per assignment. Defaults to true.
+   * @returns Array of submissions for this student.
+   */
   async getStudentSubmissions(
     studentId: number,
     latestOnly: boolean = true,
@@ -137,7 +162,13 @@ export class SubmissionService {
     return submissions.map((s) => toSubmissionDTO(s))
   }
 
-  /** Get file download URL using StorageService */
+  /**
+   * Get a signed URL for downloading a submission file.
+   *
+   * @param filePath - The storage path of the file.
+   * @param expiresIn - URL expiration time in seconds. Defaults to 3600 (1 hour).
+   * @returns A signed URL for downloading the file.
+   */
   async getFileDownloadUrl(
     filePath: string,
     expiresIn: number = 3600,
@@ -149,7 +180,12 @@ export class SubmissionService {
     )
   }
 
-  /** Get submission content for preview */
+  /**
+   * Get submission file content for preview in the browser.
+   *
+   * @param submissionId - The ID of the submission.
+   * @returns Object containing the file content and programming language.
+   */
   async getSubmissionContent(
     submissionId: number,
   ): Promise<{ content: string; language: string }> {
@@ -181,6 +217,12 @@ export class SubmissionService {
     }
   }
 
+  /**
+   * Get a signed URL for downloading a submission file by submission ID.
+   *
+   * @param submissionId - The ID of the submission.
+   * @returns A signed URL for downloading the file with original filename.
+   */
   async getSubmissionDownloadUrl(submissionId: number): Promise<string> {
     const submission = await this.submissionRepo.getSubmissionById(submissionId)
     if (!submission) {
@@ -336,6 +378,7 @@ export class SubmissionService {
       )
       return filePath
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Submission upload error:", error)
       throw new UploadFailedError(
         error instanceof Error ? error.message : "Unknown upload error",
@@ -376,6 +419,7 @@ export class SubmissionService {
     try {
       await this.codeTestService.runTestsForSubmission(submissionId)
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Automatic test execution failed:", error)
       return
     }
@@ -398,27 +442,33 @@ export class SubmissionService {
 
   /**
    * Cleanup old submissions after successful new submission.
+   * Deletes database records first, then attempts best-effort file cleanup.
+   * This ensures the authoritative database record is removed even if file deletion fails.
    */
   private async cleanupOldSubmissions(
     submissions: Submission[],
   ): Promise<void> {
     for (const sub of submissions) {
       try {
+        // Delete database records first (authoritative source of truth)
         await this.testResultRepo.deleteBySubmissionId(sub.id)
+        await this.submissionRepo.delete(sub.id)
 
+        // Best-effort file cleanup (non-critical)
         if (sub.filePath) {
           try {
             await this.storageService.deleteFiles("submissions", [sub.filePath])
-          } catch (err) {
+          } catch (fileError) {
+            // TODO: Replace with structured logger (e.g., pino, winston) for better observability
+            // Log but don't fail - file cleanup is non-critical
             console.error(
-              `Failed to delete old submission file: ${sub.filePath}`,
-              err,
+              `Failed to delete file for submission ${sub.id}: ${sub.filePath}`,
+              fileError,
             )
           }
         }
-
-        await this.submissionRepo.delete(sub.id)
       } catch (err) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error(
           `Failed to cleanup submission ${sub.id} (file: ${sub.filePath || "none"}):`,
           err,

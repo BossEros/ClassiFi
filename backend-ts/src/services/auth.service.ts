@@ -13,6 +13,7 @@ import {
   UserNotFoundError,
   InvalidRoleError,
 } from "@/shared/errors.js"
+import type { User } from "@/models/index.js"
 import type { RegisterUserServiceDTO } from "./service-dtos.js"
 
 /** Auth result type */
@@ -51,7 +52,7 @@ export class AuthService {
   constructor(
     @inject("UserRepository") private userRepo: UserRepository,
     @inject("SupabaseAuthAdapter") private authAdapter: SupabaseAuthAdapter,
-  ) {}
+  ) { }
 
   /**
    * Register a new user.
@@ -147,7 +148,7 @@ export class AuthService {
     firstName: string,
     lastName: string,
     role: UserRole,
-  ): Promise<Awaited<ReturnType<typeof this.userRepo.createUser>>> {
+  ): Promise<User> {
     try {
       return await this.userRepo.createUser({
         supabaseUserId,
@@ -184,7 +185,12 @@ export class AuthService {
    * Check if error is a unique email constraint violation.
    */
   private isUniqueEmailViolation(error: unknown): boolean {
+    if (typeof error !== "object" || error === null) {
+      return false
+    }
+
     const dbError = error as { code?: string; constraint?: string }
+
     return (
       dbError.code === "23505" &&
       !!dbError.constraint &&
