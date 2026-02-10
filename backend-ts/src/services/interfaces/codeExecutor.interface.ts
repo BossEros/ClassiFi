@@ -5,8 +5,9 @@
  * Allows swapping between Judge0, custom sandbox, or other providers.
  */
 
-/** Supported programming languages */
-export type ProgrammingLanguage = "python" | "java" | "c"
+import type { ProgrammingLanguage as ProgrammingLanguageType } from "@/shared/constants.js"
+
+export type ProgrammingLanguage = ProgrammingLanguageType
 
 /** Execution status from code runner */
 export type ExecutionStatus =

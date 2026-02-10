@@ -244,6 +244,23 @@ export async function executeTestsForSubmissionById(
   return await apiClient.post(`/submissions/${submissionId}/run-tests`, {})
 }
 
+/**
+ * Sends deadline reminder notifications to students who haven't submitted an assignment.
+ *
+ * @param assignmentId - The assignment ID
+ * @param teacherId - The teacher ID (for authorization)
+ * @returns API response with success message and count of reminders sent
+ */
+export async function sendReminderToNonSubmitters(
+  assignmentId: number,
+  teacherId: number,
+): Promise<ApiResponse<{ success: boolean; message: string }>> {
+  return await apiClient.post(
+    `/assignments/${assignmentId}/send-reminder?teacherId=${teacherId}`,
+    {},
+  )
+}
+
 // Helper functions
 
 async function retrieveAuthenticationTokenFromSession(): Promise<

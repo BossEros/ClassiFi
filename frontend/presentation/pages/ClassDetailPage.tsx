@@ -10,6 +10,7 @@ import { AssignmentFilterBar } from "@/presentation/components/dashboard/Assignm
 import { AssignmentSection } from "@/presentation/components/dashboard/AssignmentSection"
 import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
+import { ClassCalendarTab } from "@/presentation/components/calendar"
 import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal"
 import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal"
 import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal"
@@ -582,19 +583,12 @@ export function ClassDetailPage() {
                 </div>
               )}
 
-              {/* TO-DO: Calendar Tab (Placeholder) */}
-              {activeTab === "calendar" && (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                    <ClipboardList className="w-8 h-8 text-gray-500" />
-                  </div>
-                  <p className="text-gray-300 font-medium mb-1">
-                    Calendar Coming Soon
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    This feature is under development.
-                  </p>
-                </div>
+              {/* Calendar Tab */}
+              {activeTab === "calendar" && classInfo && (
+                <ClassCalendarTab
+                  classId={classInfo.id}
+                  className={classInfo.className}
+                />
               )}
 
               {/* TO-DO: Grades Tab (Placeholder) */}

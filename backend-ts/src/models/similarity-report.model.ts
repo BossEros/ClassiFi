@@ -11,6 +11,8 @@ import {
 import { relations, sql } from "drizzle-orm"
 import { assignments } from "@/models/assignment.model.js"
 import { users } from "@/models/user.model.js"
+import { similarityResults } from "./similarity-result.model.js"
+
 /** Similarity reports table - stores class-wide similarity analysis reports */
 export const similarityReports = pgTable(
   "similarity_reports",
@@ -75,6 +77,3 @@ export const similarityReportsRelations = relations(
 /** Type definitions for SimilarityReport */
 export type SimilarityReport = typeof similarityReports.$inferSelect
 export type NewSimilarityReport = typeof similarityReports.$inferInsert
-
-// Import related table
-import { similarityResults } from "./similarity-result.model.js"

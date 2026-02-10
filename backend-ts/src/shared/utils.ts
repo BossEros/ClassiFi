@@ -135,3 +135,46 @@ export function parseOptionalDate(
   }
   return parseDate(dateValue, fieldName)
 }
+
+/**
+ * Filter out undefined values from an object.
+ * Returns a new object with only defined properties.
+ *
+ * @param obj - The object to filter
+ * @returns A new object with undefined values removed
+ */
+export function filterUndefined<T extends object>(obj: T): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined),
+  ) as Partial<T>
+}
+
+/**
+ * Format an assignment due date for display in notifications.
+ * Returns a formatted date string or "No deadline" if the date is null/undefined.
+ *
+ * @param deadline - The deadline date (string or Date object)
+ * @returns Formatted date string or "No deadline"
+ */
+export function formatAssignmentDueDate(
+  deadline: string | Date | null | undefined,
+): string {
+  if (!deadline) {
+    return "No deadline"
+  }
+
+  const date = new Date(deadline)
+
+  if (isNaN(date.getTime())) {
+    return "Invalid deadline"
+  }
+
+  return date.toLocaleString("en-US", {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+}

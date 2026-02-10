@@ -186,6 +186,15 @@ export class ResubmissionNotAllowedError extends BadRequestError {
   }
 }
 
+export class MaxAttemptsExceededError extends BadRequestError {
+  constructor(maxAttempts: number) {
+    super(
+      `Maximum number of attempts (${maxAttempts}) has been reached for this assignment`,
+    )
+    this.name = "MaxAttemptsExceededError"
+  }
+}
+
 export class InvalidFileTypeError extends BadRequestError {
   constructor(expected: string[], received: string) {
     super(

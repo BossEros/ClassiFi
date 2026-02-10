@@ -45,6 +45,7 @@ export class UserService {
         await this.storageService.deleteSubmissionFiles(filePaths)
       }
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Error cleaning up submission files:", error)
       // Continue with deletion anyway
     }

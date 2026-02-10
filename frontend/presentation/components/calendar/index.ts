@@ -6,13 +6,6 @@
  * dark theme design system.
  */
 
-// Layout Components
-export { CalendarHeader } from "./CalendarHeader"
-export {
-  CalendarNavigation,
-  type CalendarNavigationProps,
-} from "./CalendarNavigation"
-
 // Control Components
 export {
   CalendarViewToggle,
@@ -25,6 +18,12 @@ export {
   EventDetailsModal,
   type EventDetailsModalProps,
 } from "./EventDetailsModal"
+
+// Composite Components
+export {
+  ClassCalendarTab,
+  type ClassCalendarTabProps,
+} from "./ClassCalendarTab"
 
 // React Big Calendar Customizations
 export { CustomEventComponent } from "./CustomEventComponent"
