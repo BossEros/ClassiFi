@@ -73,6 +73,7 @@ export class AssignmentService {
 
     // Notify enrolled students asynchronously (don't block assignment creation)
     this.notifyStudentsOfNewAssignment(assignment).catch((error) => {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Failed to send assignment notifications:", error)
     })
 

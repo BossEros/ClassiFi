@@ -44,6 +44,23 @@ function isValidUserRole(role: string): role is UserRole {
 }
 
 /**
+ * Type guard for database errors with code and constraint fields.
+ * Used to safely check for specific database constraint violations.
+ */
+function isDbError(
+  error: unknown,
+): error is { code: string; constraint: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    "constraint" in error &&
+    typeof (error as Record<string, unknown>).code === "string" &&
+    typeof (error as Record<string, unknown>).constraint === "string"
+  )
+}
+
+/**
  * Business logic for authentication operations.
  * Coordinates between Supabase Auth and local users table.
  */
@@ -52,7 +69,7 @@ export class AuthService {
   constructor(
     @inject("UserRepository") private userRepo: UserRepository,
     @inject("SupabaseAuthAdapter") private authAdapter: SupabaseAuthAdapter,
-  ) { }
+  ) {}
 
   /**
    * Register a new user.
@@ -177,7 +194,11 @@ export class AuthService {
     try {
       await this.authAdapter.deleteUser(supabaseUserId)
     } catch (rollbackError) {
-      console.error("Failed to rollback Supabase user:", rollbackError)
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
+      console.error(
+        `Failed to rollback Supabase user [${supabaseUserId}]. Manual cleanup required.`,
+        rollbackError,
+      )
     }
   }
 
@@ -185,17 +206,11 @@ export class AuthService {
    * Check if error is a unique email constraint violation.
    */
   private isUniqueEmailViolation(error: unknown): boolean {
-    if (typeof error !== "object" || error === null) {
+    if (!isDbError(error)) {
       return false
     }
 
-    const dbError = error as { code?: string; constraint?: string }
-
-    return (
-      dbError.code === "23505" &&
-      !!dbError.constraint &&
-      dbError.constraint.includes("email")
-    )
+    return error.code === "23505" && error.constraint.includes("email")
   }
 
   /**

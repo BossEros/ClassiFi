@@ -132,6 +132,7 @@ export class GradebookService {
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
       })
       .catch((error) => {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error("Failed to send grade notification:", error)
       })
   }

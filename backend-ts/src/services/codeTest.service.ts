@@ -75,7 +75,7 @@ export class CodeTestService {
     @inject("StorageService") private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Run all test cases for a submission and save results.
@@ -157,13 +157,14 @@ export class CodeTestService {
         ? this.preprocessJavaSourceCode(sourceCode)
         : sourceCode
 
-    // Build execution requests (no fileName needed for preview)
+    // Build execution requests
     const requests: ExecutionRequest[] = testCases.map((tc) => ({
       sourceCode: processedCode,
       language,
       stdin: tc.input,
       expectedOutput: tc.expectedOutput,
       timeLimitSeconds: tc.timeLimit,
+      fileName: language === "java" ? "Main.java" : undefined,
     }))
 
     const executionResults = await this.executor.executeBatch(requests)
@@ -210,11 +211,11 @@ export class CodeTestService {
       ...(r.testCase.isHidden
         ? {}
         : {
-          input: r.testCase.input,
-          expectedOutput: r.testCase.expectedOutput,
-          actualOutput: r.actualOutput ?? undefined,
-          errorMessage: r.errorMessage ?? undefined,
-        }),
+            input: r.testCase.input,
+            expectedOutput: r.testCase.expectedOutput,
+            actualOutput: r.actualOutput ?? undefined,
+            errorMessage: r.errorMessage ?? undefined,
+          }),
     }))
 
     return {
@@ -367,6 +368,7 @@ export class CodeTestService {
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
       })
       .catch((error) => {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error("Failed to send grade notification:", error)
       })
   }
@@ -391,11 +393,11 @@ export class CodeTestService {
         ...(tc.isHidden
           ? {}
           : {
-            input: tc.input,
-            expectedOutput: tc.expectedOutput,
-            actualOutput: result.stdout ?? undefined,
-            errorMessage: result.stderr || result.compileOutput || undefined,
-          }),
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              actualOutput: result.stdout ?? undefined,
+              errorMessage: result.stderr || result.compileOutput || undefined,
+            }),
       }
     })
   }

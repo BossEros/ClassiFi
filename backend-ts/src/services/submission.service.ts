@@ -47,7 +47,7 @@ export class SubmissionService {
     private codeTestService: CodeTestService,
     @inject("LatePenaltyService")
     private latePenaltyService: LatePenaltyService,
-  ) { }
+  ) {}
 
   /**
    * Submit an assignment for a student, validating rules and running tests.
@@ -93,8 +93,14 @@ export class SubmissionService {
       submissionNumber,
     )
 
-    await this.runTestsAndApplyPenalty(submission.id, penaltyResult)
-    await this.cleanupOldSubmissions(existingSubmissions)
+    const testsPassed = await this.runTestsAndApplyPenalty(
+      submission.id,
+      penaltyResult,
+    )
+
+    if (testsPassed) {
+      await this.cleanupOldSubmissions(existingSubmissions)
+    }
 
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
       submission.id,
@@ -411,21 +417,23 @@ export class SubmissionService {
 
   /**
    * Run tests and apply late penalty to grade if applicable.
+   *
+   * @returns True if tests executed successfully, false if test execution failed.
    */
   private async runTestsAndApplyPenalty(
     submissionId: number,
     penaltyResult: PenaltyResult | null,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await this.codeTestService.runTestsForSubmission(submissionId)
     } catch (error) {
       // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Automatic test execution failed:", error)
-      return
+      return false
     }
 
     if (!penaltyResult || penaltyResult.penaltyPercent === 0) {
-      return
+      return true
     }
 
     const updatedSubmission =
@@ -438,6 +446,8 @@ export class SubmissionService {
       )
       await this.submissionRepo.updateGrade(submissionId, penalizedGrade)
     }
+
+    return true
   }
 
   /**

@@ -200,6 +200,7 @@ export class ClassService {
       try {
         await this.performClassDeletion(cls.id)
       } catch (error) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error(
           `Failed to delete class ${cls.id} for teacher ${teacherId}:`,
           error,
@@ -223,6 +224,7 @@ export class ClassService {
         await this.storageService.deleteSubmissionFiles(filePaths)
       }
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Error cleaning up class submission files:", error)
       // Continue with deletion anyway
     }

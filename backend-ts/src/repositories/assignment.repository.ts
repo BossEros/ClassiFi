@@ -11,6 +11,7 @@ import {
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 import type { ProgrammingLanguage } from "@/shared/constants.js"
+import { filterUndefined } from "@/shared/utils.js"
 
 /** Pending task result for teacher dashboard */
 export interface PendingTeacherTask {
@@ -260,13 +261,7 @@ export class AssignmentRepository extends BaseRepository<
     assignmentId: number,
     data: UpdateAssignmentData,
   ): Promise<Assignment | undefined> {
-    const updateData: Partial<UpdateAssignmentData> = {}
-
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        updateData[key as keyof UpdateAssignmentData] = value
-      }
-    }
+    const updateData = filterUndefined(data)
 
     if (Object.keys(updateData).length === 0) {
       return await this.getAssignmentById(assignmentId)

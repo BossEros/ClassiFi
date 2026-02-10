@@ -8,6 +8,7 @@ import {
 } from "@/models/index.js"
 import { BaseRepository } from "./base.repository.js"
 import { injectable } from "tsyringe"
+import { filterUndefined } from "@/shared/utils.js"
 import type { PaginatedResult } from "./user.repository.js"
 import type {
   CreateClassData as AdminCreateClassData,
@@ -209,13 +210,7 @@ export class ClassRepository extends BaseRepository<
     classId: number,
     data: UpdateClassData,
   ): Promise<Class | undefined> {
-    const updateData: Partial<UpdateClassData> = {}
-
-    for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) {
-        updateData[key as keyof UpdateClassData] = value
-      }
-    }
+    const updateData = filterUndefined(data)
 
     if (Object.keys(updateData).length === 0) {
       return await this.getClassById(classId)
@@ -274,9 +269,9 @@ export class ClassRepository extends BaseRepository<
       .where(
         activeOnly
           ? and(
-            eq(enrollments.studentId, studentId),
-            eq(classes.isActive, true),
-          )
+              eq(enrollments.studentId, studentId),
+              eq(classes.isActive, true),
+            )
           : eq(enrollments.studentId, studentId),
       )
       .orderBy(desc(classes.createdAt))

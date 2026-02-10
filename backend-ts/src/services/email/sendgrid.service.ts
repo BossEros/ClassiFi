@@ -42,15 +42,18 @@ export class SendGridEmailService implements IEmailService {
 
       const [response] = await sgMail.send(msg)
 
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.log(
         `✅ Email sent successfully via SendGrid (Status: ${response.statusCode})`,
       )
     } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       console.error("Failed to send email via SendGrid:", error)
 
       // SendGrid errors have a response property with details
       if (error && typeof error === "object" && "response" in error) {
         const sgError = error as { response?: { body?: unknown } }
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error("SendGrid error details:", sgError.response?.body)
       }
 
