@@ -5,14 +5,24 @@ import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { CodeTestService } from "@/services/codeTest.service.js"
-import { LatePenaltyService } from "@/services/latePenalty.service.js"
+import {
+  LatePenaltyService,
+  type PenaltyResult,
+} from "@/services/latePenalty.service.js"
 import { toSubmissionDTO, type SubmissionDTO } from "@/shared/mappers.js"
+import { type SubmissionFileDTO } from "@/services/service-dtos.js"
+import type { Assignment, Submission } from "@/models/index.js"
+import {
+  ALLOWED_EXTENSIONS,
+  type ProgrammingLanguage,
+} from "@/shared/constants.js"
 import {
   AssignmentNotFoundError,
   AssignmentInactiveError,
   DeadlinePassedError,
   NotEnrolledError,
   ResubmissionNotAllowedError,
+  MaxAttemptsExceededError,
   InvalidFileTypeError,
   FileTooLargeError,
   UploadFailedError,
@@ -43,189 +53,73 @@ export class SubmissionService {
     private latePenaltyService: LatePenaltyService,
   ) {}
 
-  /** Submit an assignment */
+  /**
+   * Submit an assignment for a student, validating rules and running tests.
+   *
+   * @param assignmentId - The ID of the assignment being submitted.
+   * @param studentId - The ID of the student submitting.
+   * @param file - The submission file payload.
+   * @returns The created submission as a DTO.
+   */
   async submitAssignment(
     assignmentId: number,
     studentId: number,
-    file: { filename: string; data: Buffer; mimetype: string },
+    file: SubmissionFileDTO,
   ): Promise<SubmissionDTO> {
-    // Validate assignment exists and is active
-    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+    const assignment = await this.validateAssignment(assignmentId)
+    const penaltyResult = await this.checkDeadlineAndPenalty(assignment)
+    await this.validateEnrollment(studentId, assignment.classId)
 
-    if (!assignment) {
-      throw new AssignmentNotFoundError(assignmentId)
-    }
-
-    if (!assignment.isActive) {
-      throw new AssignmentInactiveError()
-    }
-
-    // Check deadline and late penalty
-    const now = new Date()
-    let isLate = false
-    let penaltyResult: import("./latePenalty.service.js").PenaltyResult | null =
-      null
-
-    if (assignment.deadline && now > assignment.deadline) {
-      // Submission is late - check if late penalties are enabled
-      if (assignment.latePenaltyEnabled && assignment.latePenaltyConfig) {
-        penaltyResult = this.latePenaltyService.calculatePenalty(
-          now,
-          assignment.deadline,
-          assignment.latePenaltyConfig,
-        )
-
-        // If penalty is 100%, reject the submission
-        if (penaltyResult.penaltyPercent >= 100) {
-          throw new DeadlinePassedError()
-        }
-
-        isLate = penaltyResult.isLate
-      } else {
-        // No late penalty configured - reject late submission
-        throw new DeadlinePassedError()
-      }
-    }
-
-    // Check if student is enrolled in the class
-    const isEnrolled = await this.enrollmentRepo.isEnrolled(
-      studentId,
-      assignment.classId,
-    )
-    if (!isEnrolled) {
-      throw new NotEnrolledError()
-    }
-
-    // Check for existing submissions
-    const existingSubmissions = await this.submissionRepo.getSubmissionHistory(
+    const existingSubmissions = await this.checkExistingSubmissions(
       assignmentId,
       studentId,
+      assignment.allowResubmission,
+      assignment.maxAttempts,
     )
 
-    // Store existing submissions to delete after successful new submission
-    const submissionsToDelete =
-      existingSubmissions.length > 0 ? existingSubmissions : []
+    this.validateFile(file, assignment.programmingLanguage)
 
-    if (existingSubmissions.length > 0 && !assignment.allowResubmission) {
-      throw new ResubmissionNotAllowedError()
-    }
+    const submissionNumber = existingSubmissions.length + 1
 
-    // Validate file extension
-    const extension = file.filename.split(".").pop()?.toLowerCase()
-    const validExtensions: Record<string, string[]> = {
-      python: ["py"],
-      java: ["java"],
-      c: ["c", "h"],
-    }
-
-    const allowedExtensions =
-      validExtensions[assignment.programmingLanguage] ?? []
-    if (!extension || !allowedExtensions.includes(extension)) {
-      throw new InvalidFileTypeError(allowedExtensions, extension ?? "unknown")
-    }
-
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024
-    if (file.data.length > maxSize) {
-      throw new FileTooLargeError(10)
-    }
-
-    // Always use submission number 1 (old submissions will be cleaned up after successful creation)
-    const submissionNumber = 1
-
-    // Upload file using StorageService
-    const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`
-
-    try {
-      await this.storageService.upload(
-        "submissions",
-        filePath,
-        file.data,
-        file.mimetype,
-        true,
-      )
-    } catch (error) {
-      console.error("Submission upload error:", error)
-      throw new UploadFailedError(
-        error instanceof Error ? error.message : "Unknown upload error",
-      )
-    }
-
-    // Create submission record
-    const submission = await this.submissionRepo.createSubmission({
+    const filePath = await this.uploadFile(
       assignmentId,
       studentId,
-      fileName: file.filename,
-      filePath,
-      fileSize: file.data.length,
+      file,
       submissionNumber,
-      isLate,
-      penaltyApplied: penaltyResult?.penaltyPercent ?? 0,
-    })
+    )
 
-    // Run tests automatically
-    try {
-      await this.codeTestService.runTestsForSubmission(submission.id)
-    } catch (error) {
-      console.error("Automatic test execution failed:", error)
-      // We don't fail the submission itself if tests fail to run, just log it
+    const submission = await this.createSubmission(
+      assignmentId,
+      studentId,
+      file,
+      filePath,
+      penaltyResult,
+      submissionNumber,
+    )
+
+    const testsPassed = await this.runTestsAndApplyPenalty(
+      submission.id,
+      penaltyResult,
+    )
+
+    if (testsPassed) {
+      await this.cleanupOldSubmissions(existingSubmissions)
     }
 
-    // Fetch updated submission to get grade from tests
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
       submission.id,
     )
 
-    // Apply late penalty if applicable and grade is available
-    if (
-      updatedSubmission &&
-      updatedSubmission.grade !== null &&
-      isLate &&
-      penaltyResult &&
-      penaltyResult.penaltyPercent > 0
-    ) {
-      const penalizedGrade = this.latePenaltyService.applyPenalty(
-        updatedSubmission.grade,
-        penaltyResult,
-      )
-      // Update grade with penalty applied
-      await this.submissionRepo.updateGrade(submission.id, penalizedGrade)
-      // Update in-memory object for DTO return
-      updatedSubmission.grade = penalizedGrade
-    }
-
-    // Cleanup old submissions only after successful new submission creation
-    for (const sub of submissionsToDelete) {
-      try {
-        // Delete test results
-        await this.testResultRepo.deleteBySubmissionId(sub.id)
-
-        // Delete file from storage
-        if (sub.filePath) {
-          try {
-            await this.storageService.deleteFiles("submissions", [sub.filePath])
-          } catch (err) {
-            console.error(
-              `Failed to delete old submission file: ${sub.filePath}`,
-              err,
-            )
-          }
-        }
-
-        // Delete submission record
-        await this.submissionRepo.delete(sub.id)
-      } catch (err) {
-        console.error(
-          `Failed to cleanup submission ${sub.id} (file: ${sub.filePath || "none"}):`,
-          err,
-        )
-      }
-    }
-
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
 
-  /** Get submission history for a student-assignment pair */
+  /**
+   * Get submission history for a student-assignment pair.
+   *
+   * @param assignmentId - The ID of the assignment.
+   * @param studentId - The ID of the student.
+   * @returns Array of all submissions for this student-assignment pair.
+   */
   async getSubmissionHistory(
     assignmentId: number,
     studentId: number,
@@ -237,7 +131,13 @@ export class SubmissionService {
     return submissions.map((s) => toSubmissionDTO(s))
   }
 
-  /** Get all submissions for an assignment */
+  /**
+   * Get all submissions for an assignment.
+   *
+   * @param assignmentId - The ID of the assignment.
+   * @param latestOnly - If true, returns only the latest submission per student. Defaults to true.
+   * @returns Array of submissions with student information.
+   */
   async getAssignmentSubmissions(
     assignmentId: number,
     latestOnly: boolean = true,
@@ -254,7 +154,13 @@ export class SubmissionService {
     )
   }
 
-  /** Get all submissions by a student */
+  /**
+   * Get all submissions by a student across all assignments.
+   *
+   * @param studentId - The ID of the student.
+   * @param latestOnly - If true, returns only the latest submission per assignment. Defaults to true.
+   * @returns Array of submissions for this student.
+   */
   async getStudentSubmissions(
     studentId: number,
     latestOnly: boolean = true,
@@ -266,7 +172,13 @@ export class SubmissionService {
     return submissions.map((s) => toSubmissionDTO(s))
   }
 
-  /** Get file download URL using StorageService */
+  /**
+   * Get a signed URL for downloading a submission file.
+   *
+   * @param filePath - The storage path of the file.
+   * @param expiresIn - URL expiration time in seconds. Defaults to 3600 (1 hour).
+   * @returns A signed URL for downloading the file.
+   */
   async getFileDownloadUrl(
     filePath: string,
     expiresIn: number = 3600,
@@ -278,7 +190,12 @@ export class SubmissionService {
     )
   }
 
-  /** Get submission content for preview */
+  /**
+   * Get submission file content for preview in the browser.
+   *
+   * @param submissionId - The ID of the submission.
+   * @returns Object containing the file content and programming language.
+   */
   async getSubmissionContent(
     submissionId: number,
   ): Promise<{ content: string; language: string }> {
@@ -310,6 +227,12 @@ export class SubmissionService {
     }
   }
 
+  /**
+   * Get a signed URL for downloading a submission file by submission ID.
+   *
+   * @param submissionId - The ID of the submission.
+   * @returns A signed URL for downloading the file with original filename.
+   */
   async getSubmissionDownloadUrl(submissionId: number): Promise<string> {
     const submission = await this.submissionRepo.getSubmissionById(submissionId)
     if (!submission) {
@@ -326,5 +249,240 @@ export class SubmissionService {
       3600,
       { download: submission.fileName },
     )
+  }
+
+  /**
+   * Validate assignment exists and is active.
+   */
+  private async validateAssignment(assignmentId: number): Promise<Assignment> {
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+
+    if (!assignment) {
+      throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    if (!assignment.isActive) {
+      throw new AssignmentInactiveError()
+    }
+
+    return assignment
+  }
+
+  /**
+   * Check deadline and calculate late penalty if applicable.
+   */
+  private async checkDeadlineAndPenalty(
+    assignment: Assignment,
+  ): Promise<PenaltyResult | null> {
+    const now = new Date()
+
+    if (!assignment.deadline || now <= assignment.deadline) {
+      return null
+    }
+
+    if (assignment.latePenaltyEnabled && assignment.latePenaltyConfig) {
+      const penaltyResult = this.latePenaltyService.calculatePenalty(
+        now,
+        assignment.deadline,
+        assignment.latePenaltyConfig,
+      )
+
+      if (penaltyResult.penaltyPercent >= 100) {
+        throw new DeadlinePassedError()
+      }
+
+      return penaltyResult
+    }
+
+    throw new DeadlinePassedError()
+  }
+
+  /**
+   * Validate student is enrolled in the class.
+   */
+  private async validateEnrollment(
+    studentId: number,
+    classId: number,
+  ): Promise<void> {
+    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
+
+    if (!isEnrolled) {
+      throw new NotEnrolledError()
+    }
+  }
+
+  /**
+   * Check for existing submissions and validate resubmission rules.
+   * Enforces both allowResubmission and maxAttempts constraints.
+   */
+  private async checkExistingSubmissions(
+    assignmentId: number,
+    studentId: number,
+    allowResubmission: boolean,
+    maxAttempts: number | null,
+  ): Promise<Submission[]> {
+    const existingSubmissions = await this.submissionRepo.getSubmissionHistory(
+      assignmentId,
+      studentId,
+    )
+
+    // Check if resubmission is allowed
+    if (existingSubmissions.length > 0 && !allowResubmission) {
+      throw new ResubmissionNotAllowedError()
+    }
+
+    // Check if max attempts has been reached
+    if (maxAttempts != null && existingSubmissions.length >= maxAttempts) {
+      throw new MaxAttemptsExceededError(maxAttempts)
+    }
+
+    return existingSubmissions
+  }
+
+  /**
+   * Validate file extension and size.
+   */
+  private validateFile(
+    file: SubmissionFileDTO,
+    programmingLanguage: string,
+  ): void {
+    const extension = file.filename.split(".").pop()?.toLowerCase()
+    const allowedExtensions =
+      ALLOWED_EXTENSIONS[programmingLanguage as ProgrammingLanguage] ?? []
+
+    if (!extension || !allowedExtensions.includes(extension)) {
+      throw new InvalidFileTypeError(allowedExtensions, extension ?? "unknown")
+    }
+
+    const maxSize = 10 * 1024 * 1024
+
+    if (file.data.length > maxSize) {
+      throw new FileTooLargeError(10)
+    }
+  }
+
+  /**
+   * Upload file to storage.
+   * Uses upsert:true to allow overwriting files at the same path.
+   */
+  private async uploadFile(
+    assignmentId: number,
+    studentId: number,
+    file: SubmissionFileDTO,
+    submissionNumber: number,
+  ): Promise<string> {
+    const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`
+
+    try {
+      await this.storageService.upload(
+        "submissions",
+        filePath,
+        file.data,
+        file.mimetype,
+        true,
+      )
+      return filePath
+    } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
+      console.error("Submission upload error:", error)
+      throw new UploadFailedError(
+        error instanceof Error ? error.message : "Unknown upload error",
+      )
+    }
+  }
+
+  /**
+   * Create submission record in database.
+   */
+  private async createSubmission(
+    assignmentId: number,
+    studentId: number,
+    file: SubmissionFileDTO,
+    filePath: string,
+    penaltyResult: PenaltyResult | null,
+    submissionNumber: number,
+  ): Promise<Submission> {
+    return await this.submissionRepo.createSubmission({
+      assignmentId,
+      studentId,
+      fileName: file.filename,
+      filePath,
+      fileSize: file.data.length,
+      submissionNumber,
+      isLate: penaltyResult?.isLate ?? false,
+      penaltyApplied: penaltyResult?.penaltyPercent ?? 0,
+    })
+  }
+
+  /**
+   * Run tests and apply late penalty to grade if applicable.
+   *
+   * @returns True if tests executed successfully, false if test execution failed.
+   */
+  private async runTestsAndApplyPenalty(
+    submissionId: number,
+    penaltyResult: PenaltyResult | null,
+  ): Promise<boolean> {
+    try {
+      await this.codeTestService.runTestsForSubmission(submissionId)
+    } catch (error) {
+      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
+      console.error("Automatic test execution failed:", error)
+      return false
+    }
+
+    if (!penaltyResult || penaltyResult.penaltyPercent === 0) {
+      return true
+    }
+
+    const updatedSubmission =
+      await this.submissionRepo.getSubmissionById(submissionId)
+
+    if (updatedSubmission && updatedSubmission.grade !== null) {
+      const penalizedGrade = this.latePenaltyService.applyPenalty(
+        updatedSubmission.grade,
+        penaltyResult,
+      )
+      await this.submissionRepo.updateGrade(submissionId, penalizedGrade)
+    }
+
+    return true
+  }
+
+  /**
+   * Cleanup old submissions after successful new submission.
+   * Deletes database records first, then attempts best-effort file cleanup.
+   * This ensures the authoritative database record is removed even if file deletion fails.
+   */
+  private async cleanupOldSubmissions(
+    submissions: Submission[],
+  ): Promise<void> {
+    for (const sub of submissions) {
+      try {
+        // Delete database records first (authoritative source of truth)
+        await this.testResultRepo.deleteBySubmissionId(sub.id)
+        await this.submissionRepo.delete(sub.id)
+
+        // Best-effort file cleanup (non-critical)
+        if (sub.filePath) {
+          try {
+            await this.storageService.deleteFiles("submissions", [sub.filePath])
+          } catch (fileError) {
+            // TODO: Replace with structured logger (e.g., pino, winston) for better observability
+            // Log but don't fail - file cleanup is non-critical
+            console.error(
+              `Failed to delete file for submission ${sub.id}: ${sub.filePath}`,
+              fileError,
+            )
+          }
+        }
+      } catch (err) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
+        console.error(
+          `Failed to cleanup submission ${sub.id} (file: ${sub.filePath || "none"}):`,
+          err,
+        )
+      }
+    }
   }
 }

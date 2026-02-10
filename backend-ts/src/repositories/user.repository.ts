@@ -1,14 +1,32 @@
-// db is accessed via BaseRepository.db
 import { eq, or, ilike, and, desc, count } from "drizzle-orm"
 import { users, type User, type NewUser } from "../models/index.js"
 import { BaseRepository } from "./base.repository.js"
 import { injectable } from "tsyringe"
+import { filterUndefined } from "@/shared/utils.js"
 
 /** Valid user roles - single source of truth for both type and runtime validation */
 export const USER_ROLES = ["student", "teacher", "admin"] as const
 
 /** User role type - derived from the USER_ROLES array */
 export type UserRole = (typeof USER_ROLES)[number]
+
+/** Data required to create a new user at repository level */
+export interface CreateUserRepoData {
+  supabaseUserId: string
+  email: string
+  firstName: string
+  lastName: string
+  role: UserRole
+}
+
+/** Data for updating an existing user at repository level */
+export interface UpdateUserRepoData {
+  email?: string
+  firstName?: string
+  lastName?: string
+  role?: UserRole
+  avatarUrl?: string | null
+}
 
 /** Filter options for user queries */
 export interface UserFilterOptions {
@@ -42,14 +60,12 @@ export class UserRepository extends BaseRepository<
     super(users)
   }
 
-  /** Create a new user */
-  async createUser(data: {
-    supabaseUserId: string
-    email: string
-    firstName: string
-    lastName: string
-    role: UserRole
-  }): Promise<User> {
+  /**
+   * Create a new user.
+   *
+   * @throws {Error} If insert fails to return a user record
+   */
+  async createUser(data: CreateUserRepoData): Promise<User> {
     const results = await this.db
       .insert(users)
       .values({
@@ -60,6 +76,10 @@ export class UserRepository extends BaseRepository<
         role: data.role,
       })
       .returning()
+
+    if (!results[0]) {
+      throw new Error("Failed to create user: insert returned no rows")
+    }
 
     return results[0]
   }
@@ -94,14 +114,9 @@ export class UserRepository extends BaseRepository<
   /** Update user information */
   async updateUser(
     userId: number,
-    data: Partial<
-      Pick<NewUser, "email" | "firstName" | "lastName" | "role" | "avatarUrl">
-    >,
+    data: UpdateUserRepoData,
   ): Promise<User | undefined> {
-    // Filter out undefined values
-    const updateData = Object.fromEntries(
-      Object.entries(data).filter(([_, v]) => v !== undefined),
-    )
+    const updateData = filterUndefined(data)
 
     if (Object.keys(updateData).length === 0) {
       return await this.getUserById(userId)

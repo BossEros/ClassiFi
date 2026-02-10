@@ -1,11 +1,44 @@
-/**
- * Shared Guard Utilities
- * Reusable validation helpers for common authorization patterns.
- */
-
 import type { ClassRepository } from "../repositories/class.repository.js"
-import type { Class } from "../models/index.js"
+import type { Class, Notification } from "../models/index.js"
+import type { NotificationType } from "../api/schemas/notification.schema.js"
+import type { NotificationDataByType } from "../services/notification/types.js"
 import { ClassNotFoundError, NotClassOwnerError } from "./errors.js"
+
+// ============================================================================
+// Notification Type Guards
+// ============================================================================
+
+/**
+ * A typed notification with specific metadata based on its type.
+ * Extends the base Notification with discriminated union for type-safe metadata access.
+ */
+export type TypedNotification<T extends NotificationType = NotificationType> =
+  Omit<Notification, "type" | "metadata"> & {
+    type: T
+    metadata: NotificationDataByType[T]
+  }
+
+/**
+ * Type guard to check if a Notification matches a specific type and narrow its type.
+ *
+ * @param notification - The Notification to check.
+ * @param type - The NotificationType value to match.
+ * @returns True when notification is of the narrowed TypedNotification<T>, enabling TypeScript to narrow the type.
+ *
+ * @example
+ * ```typescript
+ * if (isNotificationType(notification, "ASSIGNMENT_CREATED")) {
+ *   // notification.metadata is now AssignmentCreatedPayload
+ *   console.log(notification.metadata.assignmentTitle)
+ * }
+ * ```
+ */
+export function isNotificationType<T extends NotificationType>(
+  notification: Notification,
+  type: T,
+): notification is TypedNotification<T> {
+  return notification.type === type
+}
 
 /**
  * Require a class to exist.

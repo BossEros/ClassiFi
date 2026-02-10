@@ -148,6 +148,36 @@ function isUserAuthorizedForLevel(
 - Use **discriminated unions** for state management
 - Use **`as const`** for immutable arrays/objects
 
+**Type Organization & Colocation:**
+- **Colocate types with their usage** - Keep types close to where they're used (principle of colocation)
+- **Avoid "god files"** - Don't create massive centralized type files that become hard to navigate
+- **Layer-specific types stay in their layer**:
+  - Database models & enums → `src/models/` (exported via `models/index.ts`)
+  - Repository DTOs (operation-specific) → Keep in repository files
+  - Service interfaces → Keep in service files
+  - API contracts (request/response) → `src/api/schemas/` (Zod schemas)
+  - Shared domain types (used across 3+ files) → `src/shared/types.ts`
+- **When to centralize**: Only move types to shared locations when they're genuinely reused across multiple layers or features
+
+**Example Structure:**
+```typescript
+// ✅ Good - Colocated types
+// src/repositories/assignment.repository.ts
+export interface CreateAssignmentData { /* ... */ }
+export interface UpdateAssignmentData { /* ... */ }
+export class AssignmentRepository {
+  async create(data: CreateAssignmentData) { /* ... */ }
+}
+
+// ✅ Good - Shared domain types
+// src/models/assignment.model.ts
+export type ProgrammingLanguage = "python" | "java" | "c"
+export interface LatePenaltyConfig { /* ... */ }
+
+// ❌ Bad - Unnecessary centralization
+// src/types/all-types.ts (500+ lines of unrelated types)
+```
+
 **Example:**
 ```typescript
 // ❌ Bad - using any

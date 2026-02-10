@@ -21,8 +21,10 @@ export class FallbackEmailService implements IEmailService {
     if (settings.sendgridApiKey) {
       try {
         this.primaryService = new SendGridEmailService()
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.log("✅ Primary email service (SendGrid) initialized")
       } catch (error) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.warn("⚠️  Failed to initialize SendGrid:", error)
       }
     }
@@ -31,8 +33,10 @@ export class FallbackEmailService implements IEmailService {
     if (settings.smtpUser && settings.smtpPassword) {
       try {
         this.backupService = new SMTPEmailService()
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.log("✅ Backup email service (SMTP) initialized")
       } catch (error) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.warn("⚠️  Failed to initialize SMTP:", error)
       }
     }
@@ -57,7 +61,9 @@ export class FallbackEmailService implements IEmailService {
         await this.primaryService.sendEmail(options)
         return // Success! No need to try backup
       } catch (error) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error("❌ Primary email service (SendGrid) failed:", error)
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.log("🔄 Attempting backup email service (SMTP)...")
       }
     }
@@ -66,9 +72,11 @@ export class FallbackEmailService implements IEmailService {
     if (this.backupService) {
       try {
         await this.backupService.sendEmail(options)
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.log("✅ Email sent via backup service (SMTP)")
         return // Success!
       } catch (error) {
+        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
         console.error("❌ Backup email service (SMTP) also failed:", error)
         throw new Error(
           "All email services failed. Please check your email configuration.",

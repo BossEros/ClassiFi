@@ -1,7 +1,8 @@
 import { z } from "zod"
+import { PROGRAMMING_LANGUAGES } from "@/shared/constants.js"
 
-/** Programming language enum */
-export const ProgrammingLanguageSchema = z.enum(["python", "java", "c"])
+/** Programming language enum - derived from shared constant */
+export const ProgrammingLanguageSchema = z.enum(PROGRAMMING_LANGUAGES)
 export type ProgrammingLanguage = z.infer<typeof ProgrammingLanguageSchema>
 
 /** Create assignment request schema */

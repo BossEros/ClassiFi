@@ -189,4 +189,77 @@ describe("UserRepository", () => {
       expect(result.role).toBe("teacher")
     })
   })
+
+  describe("updateUser", () => {
+    it("should update user with provided fields", async () => {
+      const mockUser = createMockUser({
+        avatarUrl: "https://example.com/avatar.jpg",
+      })
+      const updatedUser = { ...mockUser, firstName: "Updated" }
+
+      const returningMock = vi.fn().mockResolvedValue([updatedUser])
+      const whereMock = vi.fn().mockReturnValue({ returning: returningMock })
+      const setMock = vi.fn().mockReturnValue({ where: whereMock })
+      const updateMock = vi.fn().mockReturnValue({ set: setMock })
+      mockDb.update = updateMock
+
+      const { UserRepository } =
+        await import("../../src/repositories/user.repository.js")
+      const userRepo = new UserRepository()
+
+      const result = await userRepo.updateUser(1, { firstName: "Updated" })
+
+      expect(result).toEqual(updatedUser)
+      expect(setMock).toHaveBeenCalledWith({ firstName: "Updated" })
+    })
+
+    it("should allow clearing avatarUrl with null", async () => {
+      const mockUser = createMockUser({
+        avatarUrl: "https://example.com/avatar.jpg",
+      })
+      const updatedUser = { ...mockUser, avatarUrl: null }
+
+      const returningMock = vi.fn().mockResolvedValue([updatedUser])
+      const whereMock = vi.fn().mockReturnValue({ returning: returningMock })
+      const setMock = vi.fn().mockReturnValue({ where: whereMock })
+      const updateMock = vi.fn().mockReturnValue({ set: setMock })
+      mockDb.update = updateMock
+
+      const { UserRepository } =
+        await import("../../src/repositories/user.repository.js")
+      const userRepo = new UserRepository()
+
+      const result = await userRepo.updateUser(1, { avatarUrl: null })
+
+      expect(result).toEqual(updatedUser)
+      // Verify that null is passed to the database (not filtered out)
+      expect(setMock).toHaveBeenCalledWith({ avatarUrl: null })
+    })
+
+    it("should not update avatarUrl when undefined", async () => {
+      const mockUser = createMockUser({
+        avatarUrl: "https://example.com/avatar.jpg",
+      })
+      const updatedUser = { ...mockUser, firstName: "Updated" }
+
+      const returningMock = vi.fn().mockResolvedValue([updatedUser])
+      const whereMock = vi.fn().mockReturnValue({ returning: returningMock })
+      const setMock = vi.fn().mockReturnValue({ where: whereMock })
+      const updateMock = vi.fn().mockReturnValue({ set: setMock })
+      mockDb.update = updateMock
+
+      const { UserRepository } =
+        await import("../../src/repositories/user.repository.js")
+      const userRepo = new UserRepository()
+
+      const result = await userRepo.updateUser(1, {
+        firstName: "Updated",
+        avatarUrl: undefined,
+      })
+
+      expect(result).toEqual(updatedUser)
+      // Verify that undefined is filtered out (avatarUrl should not be in the update)
+      expect(setMock).toHaveBeenCalledWith({ firstName: "Updated" })
+    })
+  })
 })
