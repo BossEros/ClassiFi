@@ -237,4 +237,73 @@ export class AssignmentService {
 
     return assignment ? toAssignmentDTO(assignment) : null
   }
+
+  /**
+   * Send deadline reminder notifications to students who haven't submitted.
+   * Only sends to students who are enrolled but have no submissions.
+   *
+   * @param assignmentId - The assignment ID
+   * @param teacherId - The teacher ID (for authorization)
+   * @returns Object with count of reminders sent
+   */
+  async sendReminderToNonSubmitters(
+    assignmentId: number,
+    teacherId: number,
+  ): Promise<{ remindersSent: number }> {
+    // Get assignment and verify it exists
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+
+    if (!assignment) {
+      throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    // Verify teacher owns the class
+    await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
+
+    // Get all enrolled students
+    const enrolledStudents =
+      await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
+
+    // Get all students who have submitted (latest submissions only)
+    const { SubmissionRepository } =
+      await import("../repositories/submission.repository.js")
+    const submissionRepo = new SubmissionRepository()
+    const submissions = await submissionRepo.getSubmissionsByAssignment(
+      assignmentId,
+      true,
+    )
+    const submittedStudentIds = new Set(submissions.map((sub) => sub.studentId))
+
+    // Filter to students who haven't submitted
+    const nonSubmitters = enrolledStudents.filter(
+      (enrollment) => !submittedStudentIds.has(enrollment.user.id),
+    )
+
+    // Send notifications to non-submitters
+    const notificationPromises = nonSubmitters.map((enrollment) =>
+      this.notificationService.createNotification(
+        enrollment.user.id,
+        "DEADLINE_REMINDER",
+        {
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          dueDate: assignment.deadline
+            ? new Date(assignment.deadline).toLocaleString("en-US", {
+                month: "numeric",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
+            : "No deadline",
+          assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        },
+      ),
+    )
+
+    await Promise.all(notificationPromises)
+
+    return { remindersSent: nonSubmitters.length }
+  }
 }

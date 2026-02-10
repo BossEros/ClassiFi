@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import {
   X,
@@ -8,11 +8,14 @@ import {
   ExternalLink,
   Clock,
   AlertCircle,
+  Bell,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import { getCurrentUser } from "@/business/services/authService"
 import { formatCalendarDate } from "@/business/services/calendarService"
+import { sendReminderToNonSubmitters } from "@/data/repositories/assignmentRepository"
+import { useToast } from "@/shared/context/ToastContext"
 
 export interface EventDetailsModalProps {
   isOpen: boolean
@@ -38,6 +41,8 @@ export function EventDetailsModal({
 }: EventDetailsModalProps) {
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
+  const { showToast } = useToast()
+  const [isSendingReminder, setIsSendingReminder] = useState(false)
 
   // Close modal on Escape key
   useEffect(() => {
@@ -118,6 +123,36 @@ export function EventDetailsModal({
     }
 
     onClose()
+  }
+
+  /**
+   * Handles sending reminder to students who haven't submitted.
+   */
+  const handleSendReminder = async () => {
+    if (!currentUser || !isTeacher) return
+
+    setIsSendingReminder(true)
+
+    try {
+      const response = await sendReminderToNonSubmitters(
+        event.assignment.assignmentId,
+        Number(currentUser.id),
+      )
+
+      if (response.data?.success) {
+        showToast(
+          response.data.message || "Reminders sent successfully",
+          "success",
+        )
+      } else {
+        showToast(response.error || "Failed to send reminders", "error")
+      }
+    } catch (error) {
+      console.error("Error sending reminders:", error)
+      showToast("Failed to send reminders", "error")
+    } finally {
+      setIsSendingReminder(false)
+    }
   }
 
   const statusConfig = getStatusConfig()
@@ -255,7 +290,24 @@ export function EventDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-2">
+        <div className="px-6 pb-6 pt-2 space-y-3">
+          {/* Teacher: Send Reminder Button */}
+          {isTeacher && (
+            <button
+              onClick={handleSendReminder}
+              disabled={isSendingReminder}
+              className="w-full px-4 py-3 rounded-xl font-medium text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+            >
+              <Bell className="w-4 h-4" />
+              <span>
+                {isSendingReminder
+                  ? "Sending Reminders..."
+                  : "Send Reminder to Non-Submitters"}
+              </span>
+            </button>
+          )}
+
+          {/* View Assignment/Submissions Button */}
           <button
             onClick={handleNavigateToAssignment}
             className="w-full px-4 py-3 rounded-xl font-medium text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:brightness-110"
