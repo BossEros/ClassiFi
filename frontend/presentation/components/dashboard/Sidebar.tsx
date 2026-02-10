@@ -39,6 +39,12 @@ const teacherNavigationItems = [
     icon: Clock,
   },
   {
+    id: "calendar",
+    label: "Calendar",
+    path: "/dashboard/calendar",
+    icon: Calendar,
+  },
+  {
     id: "notifications",
     label: "Notifications",
     path: "/dashboard/notifications",

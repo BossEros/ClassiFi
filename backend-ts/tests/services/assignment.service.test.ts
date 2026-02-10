@@ -5,6 +5,7 @@ import type { ClassRepository } from "../../src/repositories/class.repository.js
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
 import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
+import type { SubmissionRepository } from "../../src/repositories/submission.repository.js"
 import type { NotificationService } from "../../src/services/notification/notification.service.js"
 import {
   ClassNotFoundError,
@@ -19,6 +20,7 @@ describe("AssignmentService", () => {
   let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
   let mockTestCaseRepo: Partial<MockedObject<TestCaseRepository>>
   let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
+  let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
   let mockNotificationService: Partial<MockedObject<NotificationService>>
 
   beforeEach(() => {
@@ -42,6 +44,10 @@ describe("AssignmentService", () => {
       getEnrolledStudentsWithInfo: vi.fn(),
     }
 
+    mockSubmissionRepo = {
+      getSubmissionsByAssignment: vi.fn(),
+    }
+
     mockNotificationService = {
       createNotification: vi.fn(),
     }
@@ -51,6 +57,7 @@ describe("AssignmentService", () => {
       mockClassRepo as unknown as ClassRepository,
       mockTestCaseRepo as unknown as TestCaseRepository,
       mockEnrollmentRepo as unknown as EnrollmentRepository,
+      mockSubmissionRepo as unknown as SubmissionRepository,
       mockNotificationService as unknown as NotificationService,
     )
   })

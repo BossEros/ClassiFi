@@ -325,4 +325,14 @@ export class AssignmentRepository extends BaseRepository<
       config: result[0].latePenaltyConfig,
     }
   }
+
+  /**
+   * Update the last reminder sent timestamp for an assignment.
+   */
+  async updateLastReminderSentAt(assignmentId: number): Promise<void> {
+    await this.db
+      .update(assignments)
+      .set({ lastReminderSentAt: new Date() })
+      .where(eq(assignments.id, assignmentId))
+  }
 }

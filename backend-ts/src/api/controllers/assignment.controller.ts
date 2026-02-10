@@ -374,4 +374,42 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
       },
     },
   )
+
+  /**
+   * POST /:assignmentId/send-reminder
+   * Send deadline reminder to students who haven't submitted
+   */
+  app.post<{
+    Params: { assignmentId: string }
+    Querystring: { teacherId: string }
+  }>("/:assignmentId/send-reminder", {
+    schema: {
+      tags: ["Assignments"],
+      summary: "Send reminder to non-submitters",
+      description:
+        "Sends deadline reminder notifications to students who haven't submitted the assignment",
+      params: toJsonSchema(AssignmentIdParamSchema),
+      querystring: toJsonSchema(TeacherIdQuerySchema),
+      response: {
+        200: toJsonSchema(SuccessMessageSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const assignmentId = parsePositiveInt(
+        request.params.assignmentId,
+        "Assignment ID",
+      )
+      const teacherId = parsePositiveInt(request.query.teacherId, "Teacher ID")
+
+      const result = await assignmentService.sendReminderToNonSubmitters(
+        assignmentId,
+        teacherId,
+      )
+
+      return reply.send({
+        success: true,
+        message: `Reminder sent to ${result.remindersSent} student${result.remindersSent !== 1 ? "s" : ""}`,
+      })
+    },
+  })
 }

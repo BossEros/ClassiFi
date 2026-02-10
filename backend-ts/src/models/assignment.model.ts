@@ -57,6 +57,11 @@ export const assignments = pgTable("assignments", {
   // Late Penalty Configuration
   latePenaltyEnabled: boolean("late_penalty_enabled").default(false).notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
+
+  // Reminder tracking
+  lastReminderSentAt: timestamp("last_reminder_sent_at", {
+    withTimezone: true,
+  }),
 })
 
 /** Assignment relations */
