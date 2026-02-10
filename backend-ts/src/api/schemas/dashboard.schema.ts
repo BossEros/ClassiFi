@@ -4,6 +4,7 @@ import { ClassScheduleSchema } from "./common.schema.js"
 /** Dashboard class response */
 export const DashboardClassResponseSchema = z.object({
   id: z.number(),
+  teacherId: z.number(),
   className: z.string(),
   classCode: z.string(),
   description: z.string().nullable(),

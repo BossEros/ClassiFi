@@ -141,6 +141,8 @@ export function useCalendar(): UseCalendarReturn {
       setEvents(fetchedEvents)
       setAvailableClasses(fetchedClasses)
 
+      console.log("Fetched classes for filter:", fetchedClasses)
+
       // Initialize selected classes with all classes ONLY on first load
       // After that, respect user's selection (even if they deselect all)
       if (
@@ -148,6 +150,7 @@ export function useCalendar(): UseCalendarReturn {
         selectedClasses.size === 0 &&
         fetchedClasses.length > 0
       ) {
+        console.log("Auto-selecting all classes:", fetchedClasses.map((c) => c.id))
         setSelectedClasses(new Set(fetchedClasses.map((cls) => cls.id)))
         isInitialLoad.current = false
       }
