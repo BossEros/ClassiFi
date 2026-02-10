@@ -77,4 +77,3 @@ export const similarityReportsRelations = relations(
 /** Type definitions for SimilarityReport */
 export type SimilarityReport = typeof similarityReports.$inferSelect
 export type NewSimilarityReport = typeof similarityReports.$inferInsert
-

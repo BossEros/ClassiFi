@@ -36,7 +36,7 @@ export class LatePenaltyService {
   constructor(
     @inject(AssignmentRepository)
     private assignmentRepo: AssignmentRepository,
-  ) { }
+  ) {}
 
   /**
    * Calculate the penalty for a submission based on how late it was.
@@ -206,7 +206,7 @@ export class LatePenaltyService {
     hoursLate: number,
     rejectAfterHours: number | null,
   ): boolean {
-    return rejectAfterHours !== null && hoursLate > rejectAfterHours
+    return rejectAfterHours != null && hoursLate > rejectAfterHours
   }
 
   /**
@@ -256,26 +256,36 @@ export class LatePenaltyService {
 
   /**
    * Find the applicable penalty tier for the given hours after grace period.
+   * Tiers are treated as upper bounds: returns the first tier where hoursAfterGrace <= tier.hoursAfterGrace.
+   * If hoursAfterGrace exceeds all tiers, returns the last tier's penalty.
    */
   private findApplicableTier(
     hoursAfterGrace: number,
     sortedTiers: Array<{ hoursAfterGrace: number; penaltyPercent: number }>,
   ): { penaltyPercent: number; tierLabel: string } {
-    let applicablePenalty = 0
-    let tierLabel = "Late submission"
-
-    for (const tier of sortedTiers) {
-      if (hoursAfterGrace >= tier.hoursAfterGrace) {
-        applicablePenalty = tier.penaltyPercent
-        tierLabel = `${tier.hoursAfterGrace}+ hours late (-${tier.penaltyPercent}%)`
+    // Handle empty tiers array
+    if (sortedTiers.length === 0) {
+      return {
+        penaltyPercent: 0,
+        tierLabel: "Late submission",
       }
     }
 
-    if (applicablePenalty === 0 && sortedTiers.length > 0) {
-      applicablePenalty = sortedTiers[0].penaltyPercent
-      tierLabel = `Late (-${applicablePenalty}%)`
+    // Find the first tier where hoursAfterGrace is within the upper bound
+    for (const tier of sortedTiers) {
+      if (hoursAfterGrace <= tier.hoursAfterGrace) {
+        return {
+          penaltyPercent: tier.penaltyPercent,
+          tierLabel: `Up to ${tier.hoursAfterGrace} hours late (-${tier.penaltyPercent}%)`,
+        }
+      }
     }
 
-    return { penaltyPercent: applicablePenalty, tierLabel }
+    // If hoursAfterGrace exceeds all tier upper bounds, use the last tier
+    const lastTier = sortedTiers[sortedTiers.length - 1]
+    return {
+      penaltyPercent: lastTier.penaltyPercent,
+      tierLabel: `${lastTier.hoursAfterGrace}+ hours late (-${lastTier.penaltyPercent}%)`,
+    }
   }
 }

@@ -11,8 +11,14 @@ import {
   type ICodeExecutor,
   type ExecutionRequest,
   type ExecutionResult,
+  type ProgrammingLanguage,
 } from "./interfaces/codeExecutor.interface.js"
-import type { TestCase, NewTestResult, Submission, Assignment } from "@/models/index.js"
+import type {
+  TestCase,
+  NewTestResult,
+  Submission,
+  Assignment,
+} from "@/models/index.js"
 import { settings } from "@/shared/config.js"
 
 /** Test execution summary */
@@ -65,7 +71,7 @@ export class CodeTestService {
     @inject("StorageService") private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Run all test cases for a submission and save results.
@@ -93,7 +99,7 @@ export class CodeTestService {
     const executionResults = await this.executeTests(
       sourceCode,
       testCases,
-      assignment.programmingLanguage as "python" | "java" | "c",
+      assignment.programmingLanguage,
       submission.filePath,
     )
 
@@ -127,7 +133,7 @@ export class CodeTestService {
    */
   async runTestsPreview(
     sourceCode: string,
-    language: "python" | "java" | "c",
+    language: ProgrammingLanguage,
     assignmentId: number,
   ): Promise<TestPreviewResult> {
     // Get test cases for this assignment
@@ -203,11 +209,11 @@ export class CodeTestService {
       ...(r.testCase.isHidden
         ? {}
         : {
-          input: r.testCase.input,
-          expectedOutput: r.testCase.expectedOutput,
-          actualOutput: r.actualOutput ?? undefined,
-          errorMessage: r.errorMessage ?? undefined,
-        }),
+            input: r.testCase.input,
+            expectedOutput: r.testCase.expectedOutput,
+            actualOutput: r.actualOutput ?? undefined,
+            errorMessage: r.errorMessage ?? undefined,
+          }),
     }))
 
     return {
@@ -230,8 +236,7 @@ export class CodeTestService {
    * Fetch submission and assignment data.
    */
   private async fetchSubmissionData(submissionId: number) {
-    const submission =
-      await this.submissionRepo.getSubmissionById(submissionId)
+    const submission = await this.submissionRepo.getSubmissionById(submissionId)
 
     if (!submission) {
       throw new Error(`Submission ${submissionId} not found`)
@@ -288,7 +293,7 @@ export class CodeTestService {
   private async executeTests(
     sourceCode: string,
     testCases: TestCase[],
-    language: "python" | "java" | "c",
+    language: ProgrammingLanguage,
     filePath: string,
   ) {
     const requests: ExecutionRequest[] = testCases.map((tc) => ({
@@ -379,11 +384,11 @@ export class CodeTestService {
         ...(tc.isHidden
           ? {}
           : {
-            input: tc.input,
-            expectedOutput: tc.expectedOutput,
-            actualOutput: result.stdout ?? undefined,
-            errorMessage: result.stderr || result.compileOutput || undefined,
-          }),
+              input: tc.input,
+              expectedOutput: tc.expectedOutput,
+              actualOutput: result.stdout ?? undefined,
+              errorMessage: result.stderr || result.compileOutput || undefined,
+            }),
       }
     })
   }

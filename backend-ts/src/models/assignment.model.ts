@@ -72,4 +72,3 @@ export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
 /** Type definitions for Assignment */
 export type Assignment = typeof assignments.$inferSelect
 export type NewAssignment = typeof assignments.$inferInsert
-

@@ -94,6 +94,8 @@ export function ClassCalendarTab({
       navigatePeriod("next")
     } else if (action === "TODAY") {
       navigatePeriod("today")
+    } else if (action === "DATE") {
+      navigateToDate(_newDate)
     }
   }
 

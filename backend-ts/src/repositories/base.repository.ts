@@ -1,6 +1,6 @@
 import { db } from "../shared/database.js"
 import { eq, sql } from "drizzle-orm"
-import type { PgTable } from "drizzle-orm/pg-core"
+import type { PgTable, PgColumn } from "drizzle-orm/pg-core"
 import { injectable } from "tsyringe"
 import type { TransactionContext } from "../shared/transaction.js"
 
@@ -15,7 +15,7 @@ import type { TransactionContext } from "../shared/transaction.js"
  */
 @injectable()
 export class BaseRepository<
-  TTable extends PgTable & { id: any },
+  TTable extends PgTable & { id: PgColumn },
   TSelect = TTable["$inferSelect"],
   TInsert = TTable["$inferInsert"],
 > {

@@ -2,6 +2,7 @@ import { useMemo } from "react"
 
 import { useCalendar, type UseCalendarReturn } from "./useCalendar"
 import { getClassColor } from "@/business/services/calendarService"
+import { getCurrentUser } from "@/business/services/authService"
 import type { ClassInfo } from "@/business/models/calendar/types"
 
 // ============================================================================
@@ -37,6 +38,10 @@ export function useClassCalendar({
 }: UseClassCalendarProps): UseCalendarReturn {
   const calendar = useCalendar()
 
+  // Get current user to determine role-based flags
+  const currentUser = getCurrentUser()
+  const userRole = currentUser?.role
+
   /**
    * Filter events to only include those belonging to the target class.
    * Applies on top of the base hook's fetched events (not `filteredEvents`,
@@ -51,6 +56,11 @@ export function useClassCalendar({
    * Build a single-item class info array for the current class.
    * This replaces the full list of classes so the UI only shows
    * the relevant class context (no multi-class filter needed).
+   *
+   * Derives isTeaching and isEnrolled from the current user's role:
+   * - Teachers are considered to be teaching the class
+   * - Students are considered to be enrolled in the class
+   * (Access control should be enforced at routing/permission level)
    */
   const singleClassInfo: ClassInfo[] = useMemo(
     () => [
@@ -58,11 +68,11 @@ export function useClassCalendar({
         id: classId,
         name: className,
         color: getClassColor(classId),
-        isEnrolled: true,
-        isTeaching: false,
+        isEnrolled: userRole === "student",
+        isTeaching: userRole === "teacher",
       },
     ],
-    [classId, className],
+    [classId, className, userRole],
   )
 
   /**

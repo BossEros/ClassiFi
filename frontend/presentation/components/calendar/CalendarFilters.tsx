@@ -8,7 +8,7 @@ export interface CalendarFiltersProps {
   /** Currently selected class IDs */
   selectedClasses: Set<number>
   /** Callback when filter changes */
-  onFilterChange: (classId: number, checked: boolean) => void
+  onFilterChange: (classId: number) => void
   /** Callback to select all classes */
   onSelectAll: () => void
   /** Callback to deselect all classes */
@@ -59,8 +59,8 @@ export function CalendarFilters({
     }
   }, [isOpen])
 
-  const handleCheckboxChange = (classId: number, checked: boolean) => {
-    onFilterChange(classId, checked)
+  const handleCheckboxChange = (classId: number) => {
+    onFilterChange(classId)
   }
 
   const selectedCount = selectedClasses.size
@@ -166,9 +166,7 @@ export function CalendarFilters({
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={(e) =>
-                          handleCheckboxChange(classInfo.id, e.target.checked)
-                        }
+                        onChange={() => handleCheckboxChange(classInfo.id)}
                         className="sr-only"
                         aria-label={`Filter by ${classInfo.name}`}
                       />

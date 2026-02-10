@@ -32,7 +32,7 @@ export class AssignmentService {
     private enrollmentRepo: EnrollmentRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Create an assignment for a class.
@@ -84,7 +84,9 @@ export class AssignmentService {
    * Runs asynchronously to avoid blocking the main flow.
    */
   private async notifyStudentsOfNewAssignment(
-    assignment: Awaited<ReturnType<typeof this.assignmentRepo.createAssignment>>,
+    assignment: Awaited<
+      ReturnType<typeof this.assignmentRepo.createAssignment>
+    >,
   ): Promise<void> {
     const classData = await this.classRepo.getClassById(assignment.classId)
     const enrolledStudents =
@@ -101,13 +103,13 @@ export class AssignmentService {
           classId: assignment.classId,
           dueDate: assignment.deadline
             ? new Date(assignment.deadline).toLocaleString("en-US", {
-              month: "numeric",
-              day: "numeric",
-              year: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })
+                month: "numeric",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })
             : "No deadline",
           assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
         },

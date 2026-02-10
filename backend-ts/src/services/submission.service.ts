@@ -18,6 +18,7 @@ import {
   DeadlinePassedError,
   NotEnrolledError,
   ResubmissionNotAllowedError,
+  MaxAttemptsExceededError,
   InvalidFileTypeError,
   FileTooLargeError,
   UploadFailedError,
@@ -46,7 +47,7 @@ export class SubmissionService {
     private codeTestService: CodeTestService,
     @inject("LatePenaltyService")
     private latePenaltyService: LatePenaltyService,
-  ) { }
+  ) {}
 
   /** Submit an assignment */
   async submitAssignment(
@@ -62,11 +63,19 @@ export class SubmissionService {
       assignmentId,
       studentId,
       assignment.allowResubmission,
+      assignment.maxAttempts,
     )
 
     this.validateFile(file, assignment.programmingLanguage)
 
-    const filePath = await this.uploadFile(assignmentId, studentId, file)
+    const submissionNumber = existingSubmissions.length + 1
+
+    const filePath = await this.uploadFile(
+      assignmentId,
+      studentId,
+      file,
+      submissionNumber,
+    )
 
     const submission = await this.createSubmission(
       assignmentId,
@@ -74,6 +83,7 @@ export class SubmissionService {
       file,
       filePath,
       penaltyResult,
+      submissionNumber,
     )
 
     await this.runTestsAndApplyPenalty(submission.id, penaltyResult)
@@ -193,8 +203,7 @@ export class SubmissionService {
    * Validate assignment exists and is active.
    */
   private async validateAssignment(assignmentId: number): Promise<Assignment> {
-    const assignment =
-      await this.assignmentRepo.getAssignmentById(assignmentId)
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
 
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
@@ -252,19 +261,27 @@ export class SubmissionService {
 
   /**
    * Check for existing submissions and validate resubmission rules.
+   * Enforces both allowResubmission and maxAttempts constraints.
    */
   private async checkExistingSubmissions(
     assignmentId: number,
     studentId: number,
     allowResubmission: boolean,
+    maxAttempts: number | null,
   ): Promise<Submission[]> {
     const existingSubmissions = await this.submissionRepo.getSubmissionHistory(
       assignmentId,
       studentId,
     )
 
+    // Check if resubmission is allowed
     if (existingSubmissions.length > 0 && !allowResubmission) {
       throw new ResubmissionNotAllowedError()
+    }
+
+    // Check if max attempts has been reached
+    if (maxAttempts != null && existingSubmissions.length >= maxAttempts) {
+      throw new MaxAttemptsExceededError(maxAttempts)
     }
 
     return existingSubmissions
@@ -299,13 +316,14 @@ export class SubmissionService {
 
   /**
    * Upload file to storage.
+   * Uses upsert:true to allow overwriting files at the same path.
    */
   private async uploadFile(
     assignmentId: number,
     studentId: number,
     file: SubmissionFileDTO,
+    submissionNumber: number,
   ): Promise<string> {
-    const submissionNumber = 1
     const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`
 
     try {
@@ -334,6 +352,7 @@ export class SubmissionService {
     file: SubmissionFileDTO,
     filePath: string,
     penaltyResult: PenaltyResult | null,
+    submissionNumber: number,
   ): Promise<Submission> {
     return await this.submissionRepo.createSubmission({
       assignmentId,
@@ -341,7 +360,7 @@ export class SubmissionService {
       fileName: file.filename,
       filePath,
       fileSize: file.data.length,
-      submissionNumber: 1,
+      submissionNumber,
       isLate: penaltyResult?.isLate ?? false,
       penaltyApplied: penaltyResult?.penaltyPercent ?? 0,
     })

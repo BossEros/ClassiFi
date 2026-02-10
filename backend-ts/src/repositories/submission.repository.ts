@@ -247,9 +247,9 @@ export class SubmissionRepository extends BaseRepository<
       .where(
         latestOnly
           ? and(
-            eq(submissions.assignmentId, assignmentId),
-            eq(submissions.isLatest, true),
-          )
+              eq(submissions.assignmentId, assignmentId),
+              eq(submissions.isLatest, true),
+            )
           : eq(submissions.assignmentId, assignmentId),
       )
       .orderBy(desc(submissions.submittedAt))

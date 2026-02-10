@@ -452,7 +452,8 @@ function isValidClass(obj: unknown): obj is Class {
     yearLevel: typeof candidate.yearLevel === "number",
     semester: typeof candidate.semester === "number",
     academicYear: typeof candidate.academicYear === "string",
-    schedule: typeof candidate.schedule === "object" && candidate.schedule !== null,
+    schedule:
+      typeof candidate.schedule === "object" && candidate.schedule !== null,
   }
 
   const isValid = Object.values(checks).every((check) => check === true)
@@ -461,9 +462,12 @@ function isValidClass(obj: unknown): obj is Class {
     console.log("❌ Invalid class object")
     console.log("Class data:", candidate)
     console.log("Validation checks:", checks)
-    console.log("Failed fields:", Object.entries(checks)
-      .filter(([_, passed]) => !passed)
-      .map(([field]) => field))
+    console.log(
+      "Failed fields:",
+      Object.entries(checks)
+        .filter(([, passed]) => !passed)
+        .map(([field]) => field),
+    )
   }
 
   return isValid

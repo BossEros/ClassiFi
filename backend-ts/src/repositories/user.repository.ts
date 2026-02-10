@@ -24,7 +24,7 @@ export interface UpdateUserData {
   firstName?: string
   lastName?: string
   role?: UserRole
-  avatarUrl?: string
+  avatarUrl?: string | null
 }
 
 /** Filter options for user queries */
@@ -107,7 +107,7 @@ export class UserRepository extends BaseRepository<
     userId: number,
     data: UpdateUserData,
   ): Promise<User | undefined> {
-    // Filter out undefined values
+    // Filter out undefined values, but keep null values (null means "clear the field")
     const updateData = Object.fromEntries(
       Object.entries(data).filter(([_, v]) => v !== undefined),
     )

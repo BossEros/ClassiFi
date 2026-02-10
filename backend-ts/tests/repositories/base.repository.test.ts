@@ -117,7 +117,6 @@ describe("BaseRepository", () => {
 
       expect(result).toBeUndefined()
     })
-
   })
 
   // ============ create Tests ============
@@ -174,7 +173,6 @@ describe("BaseRepository", () => {
 
       expect(result).toBeUndefined()
     })
-
   })
 
   // ============ delete Tests ============
@@ -208,7 +206,6 @@ describe("BaseRepository", () => {
 
       expect(result).toBe(false)
     })
-
   })
 
   // ============ count Tests ============

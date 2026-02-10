@@ -60,4 +60,3 @@ export const classesRelations = relations(classes, ({ one, many }) => ({
 /** Type definitions for Class */
 export type Class = typeof classes.$inferSelect
 export type NewClass = typeof classes.$inferInsert
-

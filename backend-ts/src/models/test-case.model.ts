@@ -51,4 +51,3 @@ export const testCasesRelations = relations(testCases, ({ one, many }) => ({
 /** Type definitions for TestCase */
 export type TestCase = typeof testCases.$inferSelect
 export type NewTestCase = typeof testCases.$inferInsert
-

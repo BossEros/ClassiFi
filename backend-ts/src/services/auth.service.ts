@@ -51,7 +51,7 @@ export class AuthService {
   constructor(
     @inject("UserRepository") private userRepo: UserRepository,
     @inject("SupabaseAuthAdapter") private authAdapter: SupabaseAuthAdapter,
-  ) { }
+  ) {}
 
   /**
    * Register a new user.

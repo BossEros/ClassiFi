@@ -107,9 +107,9 @@ export class EnrollmentRepository extends BaseRepository<
   /** Get enrollment with class details */
   async getEnrollmentWithClass(enrollmentId: number): Promise<
     | {
-      enrollment: Enrollment
-      class: Class
-    }
+        enrollment: Enrollment
+        class: Class
+      }
     | undefined
   > {
     const results = await this.db

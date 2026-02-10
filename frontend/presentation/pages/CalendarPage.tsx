@@ -165,7 +165,7 @@ export default function CalendarPage() {
    *
    * @param classId - The class ID to toggle
    */
-  const handleFilterChange = (classId: number, _checked: boolean) => {
+  const handleFilterChange = (classId: number) => {
     toggleClassFilter(classId)
   }
 

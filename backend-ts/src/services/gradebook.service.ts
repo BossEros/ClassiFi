@@ -61,7 +61,7 @@ export class GradebookService {
     private testResultRepo: TestResultRepository,
     @inject("NotificationService")
     private notificationService: NotificationService,
-  ) { }
+  ) {}
 
   /**
    * Get the complete gradebook for a class.
@@ -210,8 +210,8 @@ export class GradebookService {
       const average =
         validGrades.length > 0
           ? Math.round(
-            validGrades.reduce((a, b) => a + b, 0) / validGrades.length,
-          )
+              validGrades.reduce((a, b) => a + b, 0) / validGrades.length,
+            )
           : ""
 
       return [student.name, student.email, ...gradeValues, average.toString()]
