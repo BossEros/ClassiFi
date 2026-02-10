@@ -12,7 +12,10 @@ import {
 import { toSubmissionDTO, type SubmissionDTO } from "@/shared/mappers.js"
 import { type SubmissionFileDTO } from "@/services/service-dtos.js"
 import type { Assignment, Submission } from "@/models/index.js"
-import { ALLOWED_EXTENSIONS } from "@/shared/constants.js"
+import {
+  ALLOWED_EXTENSIONS,
+  type ProgrammingLanguage,
+} from "@/shared/constants.js"
 import {
   AssignmentNotFoundError,
   AssignmentInactiveError,
@@ -344,7 +347,8 @@ export class SubmissionService {
     programmingLanguage: string,
   ): void {
     const extension = file.filename.split(".").pop()?.toLowerCase()
-    const allowedExtensions = ALLOWED_EXTENSIONS[programmingLanguage] ?? []
+    const allowedExtensions =
+      ALLOWED_EXTENSIONS[programmingLanguage as ProgrammingLanguage] ?? []
 
     if (!extension || !allowedExtensions.includes(extension)) {
       throw new InvalidFileTypeError(allowedExtensions, extension ?? "unknown")
