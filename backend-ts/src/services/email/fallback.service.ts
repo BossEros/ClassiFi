@@ -6,6 +6,9 @@ import type {
 import { SendGridEmailService } from "./sendgrid.service.js"
 import { SMTPEmailService } from "./smtp.service.js"
 import { settings } from "../../shared/config.js"
+import { createLogger } from "../../shared/logger.js"
+
+const logger = createLogger("FallbackEmailService")
 
 /**
  * Fallback email service that tries multiple providers.
@@ -21,11 +24,14 @@ export class FallbackEmailService implements IEmailService {
     if (settings.sendgridApiKey) {
       try {
         this.primaryService = new SendGridEmailService()
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.log("✅ Primary email service (SendGrid) initialized")
+        logger.info("Primary email service initialized", {
+          provider: "sendgrid",
+        })
       } catch (error) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.warn("⚠️  Failed to initialize SendGrid:", error)
+        logger.warn("Failed to initialize primary email service", {
+          provider: "sendgrid",
+          error,
+        })
       }
     }
 
@@ -33,11 +39,14 @@ export class FallbackEmailService implements IEmailService {
     if (settings.smtpUser && settings.smtpPassword) {
       try {
         this.backupService = new SMTPEmailService()
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.log("✅ Backup email service (SMTP) initialized")
+        logger.info("Backup email service initialized", {
+          provider: "smtp",
+        })
       } catch (error) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.warn("⚠️  Failed to initialize SMTP:", error)
+        logger.warn("Failed to initialize backup email service", {
+          provider: "smtp",
+          error,
+        })
       }
     }
 
@@ -61,10 +70,13 @@ export class FallbackEmailService implements IEmailService {
         await this.primaryService.sendEmail(options)
         return // Success! No need to try backup
       } catch (error) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error("❌ Primary email service (SendGrid) failed:", error)
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.log("🔄 Attempting backup email service (SMTP)...")
+        logger.error("Primary email service failed", {
+          provider: "sendgrid",
+          error,
+        })
+        logger.info("Attempting backup email service", {
+          provider: "smtp",
+        })
       }
     }
 
@@ -72,12 +84,15 @@ export class FallbackEmailService implements IEmailService {
     if (this.backupService) {
       try {
         await this.backupService.sendEmail(options)
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.log("✅ Email sent via backup service (SMTP)")
+        logger.info("Email sent via backup service", {
+          provider: "smtp",
+        })
         return // Success!
       } catch (error) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error("❌ Backup email service (SMTP) also failed:", error)
+        logger.error("Backup email service also failed", {
+          provider: "smtp",
+          error,
+        })
         throw new Error(
           "All email services failed. Please check your email configuration.",
         )

@@ -7,22 +7,14 @@ import {
   type Enrollment,
   type NewEnrollment,
   type Class,
+  type User,
 } from "../models/index.js"
 import { BaseRepository } from "./base.repository.js"
 import { injectable } from "tsyringe"
 
 /** Enrolled student with user information */
 export interface EnrolledStudentInfo {
-  user: {
-    id: number
-    email: string
-    firstName: string
-    lastName: string
-    avatarUrl: string | null
-    role: string
-    isActive: boolean
-    createdAt: Date | null
-  }
+  user: User
   enrolledAt: Date | null
 }
 

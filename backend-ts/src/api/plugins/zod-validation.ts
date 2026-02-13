@@ -21,6 +21,17 @@ interface ValidationErrorResponse {
   }>
 }
 
+/** Typed view of FastifyRequest with validated payload fields. */
+export type ValidatedRequest<
+  TBody = unknown,
+  TQuery = unknown,
+  TParams = unknown,
+> = FastifyRequest & {
+  validatedBody: TBody
+  validatedQuery: TQuery
+  validatedParams: TParams
+}
+
 /** Format Zod errors for API response */
 function formatZodError(error: ZodError): ValidationErrorResponse {
   return {
@@ -42,8 +53,8 @@ export function validateBody<T>(schema: ZodSchema<T>) {
       return reply.status(400).send(formatZodError(result.error))
     }
 
-    // Attach parsed data to request
-    ;(request as any).validatedBody = result.data
+    const validatedRequest = request as ValidatedRequest<T>
+    validatedRequest.validatedBody = result.data
   }
 }
 
@@ -56,7 +67,8 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
       return reply.status(400).send(formatZodError(result.error))
     }
 
-    ;(request as any).validatedQuery = result.data
+    const validatedRequest = request as ValidatedRequest<unknown, T>
+    validatedRequest.validatedQuery = result.data
   }
 }
 
@@ -69,7 +81,8 @@ export function validateParams<T>(schema: ZodSchema<T>) {
       return reply.status(400).send(formatZodError(result.error))
     }
 
-    ;(request as any).validatedParams = result.data
+    const validatedRequest = request as ValidatedRequest<unknown, unknown, T>
+    validatedRequest.validatedParams = result.data
   }
 }
 

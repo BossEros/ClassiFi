@@ -20,12 +20,15 @@ import {
   StudentNotInClassError,
   BadRequestError,
 } from "../shared/errors.js"
+import { createLogger } from "../shared/logger.js"
 import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
   UpdateClassServiceDTO,
   EnrolledStudentDTO,
 } from "./service-dtos.js"
+
+const logger = createLogger("ClassService")
 
 @injectable()
 export class ClassService {
@@ -200,8 +203,7 @@ export class ClassService {
       try {
         await this.performClassDeletion(cls.id)
       } catch (error) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error(
+        logger.error(
           `Failed to delete class ${cls.id} for teacher ${teacherId}:`,
           error,
         )
@@ -224,8 +226,7 @@ export class ClassService {
         await this.storageService.deleteSubmissionFiles(filePaths)
       }
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Error cleaning up class submission files:", error)
+      logger.error("Error cleaning up class submission files:", error)
       // Continue with deletion anyway
     }
 
@@ -338,3 +339,8 @@ export class ClassService {
     }
   }
 }
+
+
+
+
+

@@ -18,12 +18,15 @@ import type {
 } from "./service-dtos.js"
 import { settings } from "../shared/config.js"
 import { formatAssignmentDueDate } from "../shared/utils.js"
+import { createLogger } from "../shared/logger.js"
 
 /**
  * Business logic for assignment-related operations.
  * Follows SRP - handles only assignment concerns.
  * Uses domain errors for exceptional conditions.
  */
+const logger = createLogger("AssignmentService")
+
 @injectable()
 export class AssignmentService {
   constructor(
@@ -78,8 +81,7 @@ export class AssignmentService {
 
     // Notify enrolled students asynchronously (don't block assignment creation)
     this.notifyStudentsOfNewAssignment(assignment).catch((error) => {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Failed to send assignment notifications:", error)
+      logger.error("Failed to send assignment notifications:", error)
     })
 
     return toAssignmentDTO(assignment)
@@ -130,16 +132,13 @@ export class AssignmentService {
       const failedTarget = notificationTargets[index]
       failedRecipientUserIds.push(failedTarget.recipientUserId)
 
-      console.error(
-        "Failed to send assignment notification:",
-        {
+      logger.error("Failed to send assignment notification", {
           assignmentId: assignment.id,
           recipientUserId: failedTarget.recipientUserId,
           notificationType: "ASSIGNMENT_CREATED",
           notificationData: failedTarget.notificationData,
-        },
-        settledResult.reason,
-      )
+          reason: settledResult.reason,
+      })
     })
 
     if (failedRecipientUserIds.length > 0) {
@@ -353,7 +352,7 @@ export class AssignmentService {
     // Log errors for failed notifications
     if (failedResults.length > 0) {
       failedResults.forEach(({ userId, error }) => {
-        console.error(
+        logger.error(
           `Failed to send deadline reminder for assignment ${assignment.id} to user ${userId}:`,
           error,
         )
@@ -368,3 +367,9 @@ export class AssignmentService {
     return { remindersSent: successCount }
   }
 }
+
+
+
+
+
+

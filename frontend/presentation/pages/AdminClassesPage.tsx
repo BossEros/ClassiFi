@@ -26,6 +26,9 @@ import * as adminService from "@/business/services/adminService"
 import type { AdminClass, AdminUser } from "@/business/services/adminService"
 import type { User as AuthUser } from "@/business/models/auth/types"
 import { useToast } from "@/shared/context/ToastContext"
+import { useDebouncedValue } from "@/presentation/hooks/useDebouncedValue"
+import { useDocumentClick } from "@/presentation/hooks/useDocumentClick"
+import { useRequestState } from "@/presentation/hooks/useRequestState"
 
 export function AdminClassesPage() {
   const navigate = useNavigate()
@@ -33,8 +36,6 @@ export function AdminClassesPage() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [classes, setClasses] = useState<AdminClass[]>([])
   const [teachers, setTeachers] = useState<AdminUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "archived"
@@ -59,43 +60,37 @@ export function AdminClassesPage() {
     useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [classToEdit, setClassToEdit] = useState<AdminClass | null>(null)
+  const { isLoading, error, setError, executeRequest } = useRequestState(true)
 
   const limit = 20
 
-  // Debounced search
-  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-      setPage(1)
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+    setPage(1)
+  }, [debouncedSearch])
 
   // Fetch classes
   const fetchClasses = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = await adminService.getAllClasses({
-        page,
-        limit,
-        search: debouncedSearch || undefined,
-        status: statusFilter,
-        yearLevel: yearLevelFilter === "all" ? undefined : yearLevelFilter,
-        semester: semesterFilter === "all" ? undefined : semesterFilter,
-        academicYear:
-          academicYearFilter === "all" ? undefined : academicYearFilter,
-      })
-      setClasses(response.data)
-      setTotalPages(response.totalPages)
-      setTotal(response.total)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load classes")
-    } finally {
-      setIsLoading(false)
-    }
+    await executeRequest({
+      requestFn: () =>
+        adminService.getAllClasses({
+          page,
+          limit,
+          search: debouncedSearch || undefined,
+          status: statusFilter,
+          yearLevel: yearLevelFilter === "all" ? undefined : yearLevelFilter,
+          semester: semesterFilter === "all" ? undefined : semesterFilter,
+          academicYear:
+            academicYearFilter === "all" ? undefined : academicYearFilter,
+        }),
+      onSuccess: (response) => {
+        setClasses(response.data)
+        setTotalPages(response.totalPages)
+        setTotal(response.total)
+      },
+      fallbackErrorMessage: "Failed to load classes",
+    })
   }, [
     page,
     limit,
@@ -104,6 +99,7 @@ export function AdminClassesPage() {
     yearLevelFilter,
     semesterFilter,
     academicYearFilter,
+    executeRequest,
   ])
 
   // Fetch teachers
@@ -136,18 +132,15 @@ export function AdminClassesPage() {
     }
   }, [currentUser, fetchClasses])
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setActiveDropdown(null)
-      setShowStatusDropdown(false)
-      setShowYearDropdown(false)
-      setShowSemesterDropdown(false)
-      setShowAcademicYearDropdown(false)
-    }
-    document.addEventListener("click", handleClickOutside)
-    return () => document.removeEventListener("click", handleClickOutside)
+  const handleClickOutside = useCallback(() => {
+    setActiveDropdown(null)
+    setShowStatusDropdown(false)
+    setShowYearDropdown(false)
+    setShowSemesterDropdown(false)
+    setShowAcademicYearDropdown(false)
   }, [])
+
+  useDocumentClick(handleClickOutside)
 
   const handleArchiveClass = async (classId: number) => {
     try {

@@ -9,6 +9,9 @@ import {
 } from "@/services/latePenalty.service.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("GradebookService")
 
 /**
  * Grade entry for a single assignment in the gradebook.
@@ -132,8 +135,7 @@ export class GradebookService {
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
       })
       .catch((error) => {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error("Failed to send grade notification:", error)
+        logger.error("Failed to send grade notification:", error)
       })
   }
 
@@ -268,3 +270,7 @@ export class GradebookService {
     }
   }
 }
+
+
+
+

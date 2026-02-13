@@ -168,6 +168,7 @@ backend-ts/
 │   │   ├── container.ts      # DI container
 │   │   ├── database.ts       # Database connection
 │   │   ├── errors.ts         # Domain error classes
+│   │   ├── logger.ts         # Centralized pino logger wrapper
 │   │   ├── mappers.ts        # DTO mappers
 │   │   ├── supabase.ts       # Supabase clients
 │   │   └── transaction.ts    # Transaction support
@@ -1017,14 +1018,20 @@ const result = await withTransaction(async (tx) => {
 Declarative request validation:
 
 ```typescript
+import type { ValidatedRequest } from "@/api/plugins/zod-validation"
+
 app.post("/register", {
   preHandler: validateBody(RegisterRequestSchema),
   handler: async (request, reply) => {
-    const body = request.validatedBody as RegisterRequest;
+    const body = (request as ValidatedRequest<RegisterRequest>).validatedBody;
     // body is fully typed and validated
   },
 });
 ```
+
+Validation plugin notes:
+- `ValidatedRequest<TBody, TQuery, TParams>` provides typed access for validated fields.
+- `validatedBody`, `validatedQuery`, and `validatedParams` are attached by pre-handlers in `src/api/plugins/zod-validation.ts`.
 
 ### Swagger/OpenAPI
 
@@ -1041,6 +1048,22 @@ app.post('/login', {
   handler: ...
 });
 ```
+
+### Logging (Pino)
+
+Runtime logging is centralized through `src/shared/logger.ts`, which wraps `pino` behind a small `Logger` interface:
+
+```typescript
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("AuthService")
+logger.error("Failed to rollback Supabase user", { error })
+```
+
+Guidelines:
+- Use `createLogger("<ServiceOrModuleName>")` in services/controllers/plugins.
+- Prefer structured context objects over string interpolation for diagnostics.
+- Keep API responses generic and safe; log internal details only in server logs.
 
 ---
 

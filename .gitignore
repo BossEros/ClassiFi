@@ -193,3 +193,7 @@ judge0/postgres-data/
 .Jules/
 .kiro/
 
+
+frontend/lint-errors.txt
+frontend/remaining-errors.txt
+frontend/test_output.txt

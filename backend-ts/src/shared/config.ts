@@ -1,5 +1,8 @@
 import { z } from "zod"
 import "dotenv/config"
+import { createLogger } from "./logger.js"
+
+const logger = createLogger("ConfigValidation")
 
 /** Environment variable schema */
 const EnvSchema = z
@@ -88,10 +91,15 @@ function validateEnv(): Env {
   const result = EnvSchema.safeParse(process.env)
 
   if (!result.success) {
-    console.error("❌ Invalid environment variables:")
+    logger.error("Invalid environment variables")
+
     for (const error of result.error.issues) {
-      console.error(`   - ${error.path.join(".")}: ${error.message}`)
+      logger.error("Environment variable validation failure", {
+        path: error.path.join("."),
+        message: error.message,
+      })
     }
+
     process.exit(1)
   }
 

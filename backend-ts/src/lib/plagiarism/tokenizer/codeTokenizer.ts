@@ -19,7 +19,9 @@ export class CodeTokenizer extends Tokenizer {
   constructor(language: ProgrammingLanguage, options?: TokenizerOptions) {
     super(language.name, options)
     this.parser = new Parser()
-    this.parser.setLanguage(language.grammar)
+    this.parser.setLanguage(
+      language.grammar as Parameters<Parser["setLanguage"]>[0],
+    )
   }
 
   /**

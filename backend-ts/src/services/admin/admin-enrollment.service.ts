@@ -35,7 +35,7 @@ export class AdminEnrollmentService {
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
 
     return enrolledStudents.map((row) => ({
-      ...toUserDTO(row.user as any),
+      ...toUserDTO(row.user),
       enrolledAt: row.enrolledAt?.toISOString() ?? new Date().toISOString(),
     }))
   }

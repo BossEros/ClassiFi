@@ -159,6 +159,12 @@ Routing is handled in `presentation/App.tsx`.
   - Late penalty configuration
   - Deadline and resubmission settings
 
+### Shared Presentation Hooks (Admin Pages)
+
+- **`useDebouncedValue`** (`presentation/hooks/useDebouncedValue.ts`): Centralizes debounced search input behavior used by admin list pages.
+- **`useDocumentClick`** (`presentation/hooks/useDocumentClick.ts`): Standardized click-outside handling for dropdown dismissal and menu cleanup.
+- **`useRequestState`** (`presentation/hooks/useRequestState.ts`): Shared fetch lifecycle utility for loading/error state and request execution wrappers.
+
 ---
 
 ## Business Services
