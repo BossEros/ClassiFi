@@ -1,11 +1,14 @@
 import { injectable } from "tsyringe"
 import sgMail from "@sendgrid/mail"
 import { settings } from "../../shared/config.js"
+import { createLogger } from "../../shared/logger.js"
 import type {
   IEmailService,
   EmailOptions,
 } from "../interfaces/email.interface.js"
 import striptags from "striptags"
+
+const logger = createLogger("SendGridEmailService")
 
 /**
  * SendGrid email service implementation.
@@ -42,19 +45,16 @@ export class SendGridEmailService implements IEmailService {
 
       const [response] = await sgMail.send(msg)
 
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.log(
+      logger.info(
         `✅ Email sent successfully via SendGrid (Status: ${response.statusCode})`,
       )
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Failed to send email via SendGrid:", error)
+      logger.error("Failed to send email via SendGrid:", error)
 
       // SendGrid errors have a response property with details
       if (error && typeof error === "object" && "response" in error) {
         const sgError = error as { response?: { body?: unknown } }
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error("SendGrid error details:", sgError.response?.body)
+        logger.error("SendGrid error details:", sgError.response?.body)
       }
 
       throw new Error(
@@ -73,3 +73,7 @@ export class SendGridEmailService implements IEmailService {
     return striptags(html).trim()
   }
 }
+
+
+
+

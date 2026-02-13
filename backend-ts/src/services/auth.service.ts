@@ -7,6 +7,7 @@ import {
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { settings } from "@/shared/config.js"
 import { toUserDTO, type UserDTO } from "@/shared/mappers.js"
+import { createLogger } from "@/shared/logger.js"
 import {
   UserAlreadyExistsError,
   InvalidCredentialsError,
@@ -15,6 +16,8 @@ import {
 } from "@/shared/errors.js"
 import type { User } from "@/models/index.js"
 import type { RegisterUserServiceDTO } from "./service-dtos.js"
+
+const logger = createLogger("AuthService")
 
 /** Auth result type */
 interface AuthResult {
@@ -194,8 +197,7 @@ export class AuthService {
     try {
       await this.authAdapter.deleteUser(supabaseUserId)
     } catch (rollbackError) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error(
+      logger.error(
         `Failed to rollback Supabase user [${supabaseUserId}]. Manual cleanup required.`,
         rollbackError,
       )
@@ -266,3 +268,6 @@ export class AuthService {
     )
   }
 }
+
+
+

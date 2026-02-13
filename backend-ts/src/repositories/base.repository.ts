@@ -57,7 +57,7 @@ export class BaseRepository<
   async create(data: TInsert): Promise<TSelect> {
     const results = await this.db
       .insert(this.table)
-      .values(data as any)
+      .values(data as TTable["$inferInsert"])
       .returning()
 
     return results[0] as TSelect
@@ -70,7 +70,7 @@ export class BaseRepository<
   ): Promise<TSelect | undefined> {
     const results = await this.db
       .update(this.table)
-      .set(data as any)
+      .set(data as Partial<TTable["$inferInsert"]>)
       .where(eq(this.table.id, id))
       .returning()
 

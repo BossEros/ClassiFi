@@ -4,6 +4,9 @@ import type {
 } from "../interfaces/email.interface.js"
 import { FallbackEmailService } from "./fallback.service.js"
 import { settings } from "../../shared/config.js"
+import { createLogger } from "../../shared/logger.js"
+
+const logger = createLogger("EmailServiceFactory")
 
 /**
  * Factory function to create the appropriate email service based on configuration.
@@ -15,8 +18,8 @@ export function createEmailService(): IEmailService {
     settings.sendgridApiKey || (settings.smtpUser && settings.smtpPassword)
 
   if (settings.environment === "development" && !hasEmailConfig) {
-    console.warn(
-      "⚠️  No email service configured. Emails will be logged to console.",
+    logger.warn(
+      "No email service configured. Development mode will use mock email logger.",
     )
     return new MockEmailService()
   }
@@ -29,11 +32,10 @@ export const EmailService = FallbackEmailService
 
 /**
  * Mock email service for development when no API key is configured.
- * Logs emails to console instead of sending them.
  */
 class MockEmailService implements IEmailService {
   async sendEmail(options: EmailOptions): Promise<void> {
-    console.log("📧 [MOCK] Email would be sent:", {
+    logger.info("Mock email would be sent", {
       to: options.to,
       subject: options.subject,
       preview: options.html.substring(0, 100) + "...",

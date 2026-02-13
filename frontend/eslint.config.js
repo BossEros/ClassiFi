@@ -25,7 +25,13 @@ export default tseslint.config(
       ],
     },
   },
-  // Allow 'any' in test files
+  {
+    files: ["frontend/shared/context/ToastContext.tsx", "shared/context/ToastContext.tsx"],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  // Allow test utilities to export non-components and any where needed.
   {
     files: [
       "**/*.test.{ts,tsx}",
@@ -34,6 +40,7 @@ export default tseslint.config(
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      "react-refresh/only-export-components": "off",
     },
   },
 )

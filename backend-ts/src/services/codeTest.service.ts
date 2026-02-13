@@ -24,6 +24,9 @@ import {
   AssignmentNotFoundError,
 } from "@/shared/errors.js"
 import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("CodeTestService")
 
 /** Test execution summary */
 export interface TestExecutionSummary {
@@ -368,8 +371,7 @@ export class CodeTestService {
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
       })
       .catch((error) => {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error("Failed to send grade notification:", error)
+        logger.error("Failed to send grade notification:", error)
       })
   }
 
@@ -426,3 +428,6 @@ export class CodeTestService {
     return sourceCode.replace(/public\s+class\s+\w+/, "public class Main")
   }
 }
+
+
+

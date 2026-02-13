@@ -29,6 +29,9 @@ import {
   SubmissionNotFoundError,
   SubmissionFileNotFoundError,
 } from "@/shared/errors.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("SubmissionService")
 
 /**
  * Business logic for submission-related operations.
@@ -383,8 +386,7 @@ export class SubmissionService {
       )
       return filePath
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Submission upload error:", error)
+      logger.error("Submission upload error:", error)
       throw new UploadFailedError(
         error instanceof Error ? error.message : "Unknown upload error",
       )
@@ -426,8 +428,7 @@ export class SubmissionService {
     try {
       await this.codeTestService.runTestsForSubmission(submissionId)
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Automatic test execution failed:", error)
+      logger.error("Automatic test execution failed:", error)
       return false
     }
 
@@ -468,17 +469,15 @@ export class SubmissionService {
           try {
             await this.storageService.deleteFiles("submissions", [sub.filePath])
           } catch (fileError) {
-            // TODO: Replace with structured logger (e.g., pino, winston) for better observability
             // Log but don't fail - file cleanup is non-critical
-            console.error(
+            logger.error(
               `Failed to delete file for submission ${sub.id}: ${sub.filePath}`,
               fileError,
             )
           }
         }
       } catch (err) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error(
+        logger.error(
           `Failed to cleanup submission ${sub.id} (file: ${sub.filePath || "none"}):`,
           err,
         )
@@ -486,3 +485,7 @@ export class SubmissionService {
     }
   }
 }
+
+
+
+

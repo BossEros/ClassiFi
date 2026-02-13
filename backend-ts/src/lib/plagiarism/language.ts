@@ -1,5 +1,8 @@
 import { CodeTokenizer } from "./tokenizer/codeTokenizer.js"
 import { TokenizerOptions } from "./tokenizer/tokenizer.js"
+import { createLogger } from "../../shared/logger.js"
+
+const logger = createLogger("PlagiarismLanguage")
 
 /**
  * Supported programming languages.
@@ -13,7 +16,7 @@ export class ProgrammingLanguage {
   constructor(
     public readonly name: string,
     public readonly extensions: string[],
-    public readonly grammar: any,
+    public readonly grammar: unknown,
   ) {}
 
   /**
@@ -100,9 +103,9 @@ export async function createDefaultRegistry(): Promise<LanguageRegistry> {
       new ProgrammingLanguage("c", [".c", ".h"], cModule.default),
     )
   } catch (error) {
-    console.warn("Failed to load tree-sitter grammars:", error)
-    console.warn(
-      "Make sure tree-sitter-java, tree-sitter-python, and tree-sitter-c are installed.",
+    logger.warn("Failed to load tree-sitter grammars", { error })
+    logger.warn(
+      "Ensure tree-sitter-java, tree-sitter-python, and tree-sitter-c are installed.",
     )
   }
 

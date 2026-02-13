@@ -14,6 +14,7 @@ import type {
   SimilarityResult,
   Submission,
 } from "../../models/index.js"
+import type { TransactionContext } from "../../shared/transaction.js"
 // Note: Error classes are preserved for future use but not imported to avoid TS6192
 // import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "../../shared/errors.js";
 import type { AnalyzeResponse } from "../plagiarism.service.js"
@@ -60,7 +61,9 @@ export class PlagiarismPersistenceService {
   ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
     return await db.transaction(async (tx) => {
       // Use transaction-aware repository
-      const similarityRepoTx = this.similarityRepo.withContext(tx as any)
+      const similarityRepoTx = this.similarityRepo.withContext(
+        tx as unknown as TransactionContext,
+      )
 
       // Create report
       const dbReport = await similarityRepoTx.createReport({
