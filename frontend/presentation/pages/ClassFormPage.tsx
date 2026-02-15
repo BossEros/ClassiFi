@@ -40,6 +40,7 @@ import { DAYS, TIME_OPTIONS } from "@/shared/constants/schedule"
 import { formatTimeDisplay } from "@/shared/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/shared/utils/dateUtils"
 import type { Schedule, DayOfWeek } from "@/business/models/dashboard/types"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 interface FormData {
   className: string
@@ -182,6 +183,12 @@ export function ClassFormPage() {
     return Object.keys(newErrors).length === 0
   }
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -237,7 +244,7 @@ export function ClassFormPage() {
   // Show loading state while fetching class data in edit mode
   if (isFetching) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
@@ -249,7 +256,7 @@ export function ClassFormPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-2">

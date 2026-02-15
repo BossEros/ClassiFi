@@ -23,6 +23,7 @@ import {
 import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
 import { formatDeadline } from "@/shared/utils/dateUtils"
 import { useToast } from "@/shared/context/ToastContext"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import type {
   AssignmentDetail,
   Submission,
@@ -31,6 +32,7 @@ import type {
 export function AssignmentSubmissionsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const navigate = useNavigate()
+  const [currentUser] = useState(() => getCurrentUser())
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -109,6 +111,12 @@ export function AssignmentSubmissionsPage() {
   ).length
   const lateCount = totalSubmissions - onTimeCount
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   // Handle Check Similarities button
   const handleCheckSimilarities = async () => {
     if (!assignmentId) return
@@ -144,7 +152,7 @@ export function AssignmentSubmissionsPage() {
   // Loading state
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center h-96">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto"></div>
@@ -158,7 +166,7 @@ export function AssignmentSubmissionsPage() {
   // Error state
   if (error || !assignment) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <Card className="bg-red-500/10 border-red-500/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 text-red-400">
@@ -173,7 +181,7 @@ export function AssignmentSubmissionsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="space-y-6 max-w-[1600px]">
         {/* Header Section */}
         {/* Back Button */}

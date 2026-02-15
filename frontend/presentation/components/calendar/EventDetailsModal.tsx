@@ -28,7 +28,7 @@ export interface EventDetailsModalProps {
  *
  * Displays detailed information about a calendar event (assignment).
  * Shows role-specific information for students and teachers.
- * Features a clean, professional design with colored header accent.
+ * Features a clean, professional design.
  *
  * @param isOpen - Whether the modal is visible
  * @param onClose - Callback to close the modal
@@ -164,32 +164,29 @@ export function EventDetailsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
         onClick={onClose}
       />
 
       {/* Modal Content */}
-      <div className="relative z-10 w-full max-w-md min-w-[400px] overflow-hidden rounded-2xl bg-slate-900 shadow-2xl border border-white/10 animate-in fade-in zoom-in-95 duration-200">
-        {/* Colored Header Bar */}
-        <div className="h-1.5" style={{ backgroundColor: classColor }} />
-
+      <div className="relative z-10 w-full max-w-lg sm:min-w-96 overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-900/95 shadow-[0_24px_80px_rgba(2,6,23,0.72)] animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 pt-5 pb-4">
+        <div className="px-6 pt-6 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               {/* Class Badge */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/80 px-2.5 py-1">
                 <div
-                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full ring-1 ring-white/30"
                   style={{ backgroundColor: classColor }}
                 />
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider truncate">
+                <span className="truncate text-xs font-medium uppercase tracking-wider text-slate-300">
                   {event.classInfo.name}
                 </span>
               </div>
 
               {/* Title */}
-              <h3 className="text-lg font-semibold text-white leading-tight">
+              <h3 className="text-xl font-semibold text-white leading-tight">
                 {event.title}
               </h3>
             </div>
@@ -205,12 +202,12 @@ export function EventDetailsModal({
         </div>
 
         {/* Divider */}
-        <div className="h-px bg-white/5 mx-6" />
+        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
         {/* Content */}
         <div className="px-6 py-5 space-y-4">
           {/* Deadline Card */}
-          <div className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 border border-white/5">
+          <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
             <div
               className="p-2.5 rounded-lg"
               style={{ backgroundColor: `${classColor}20` }}
@@ -229,7 +226,7 @@ export function EventDetailsModal({
 
           {/* Student-specific: Status */}
           {isStudent && statusConfig && (
-            <div className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 border border-white/5">
+            <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
               <div className={`p-2.5 rounded-lg ${statusConfig.bgColor}`}>
                 <StatusIcon className={`w-5 h-5 ${statusConfig.textColor}`} />
               </div>
@@ -248,7 +245,7 @@ export function EventDetailsModal({
           {isStudent &&
             event.assignment.grade !== undefined &&
             event.assignment.grade !== null && (
-              <div className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 border border-white/5">
+              <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
                 <div className="p-2.5 rounded-lg bg-emerald-500/15">
                   <CheckCircle className="w-5 h-5 text-emerald-400" />
                 </div>
@@ -268,7 +265,7 @@ export function EventDetailsModal({
 
           {/* Teacher-specific: Submissions */}
           {isTeacher && (
-            <div className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 border border-white/5">
+            <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
               <div className="p-2.5 rounded-lg bg-blue-500/15">
                 <Users className="w-5 h-5 text-blue-400" />
               </div>
@@ -292,13 +289,13 @@ export function EventDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 pb-6 pt-2 space-y-3">
+        <div className="space-y-3 border-t border-white/5 px-6 pb-6 pt-4">
           {/* Teacher: Send Reminder Button */}
           {isTeacher && (
             <button
               onClick={handleSendReminder}
               disabled={isSendingReminder}
-              className="w-full px-4 py-3 rounded-xl font-medium text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] bg-slate-700 hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed border border-white/10"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600/70 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-all active:scale-[0.98] hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Bell className="w-4 h-4" />
               <span>
@@ -312,11 +309,7 @@ export function EventDetailsModal({
           {/* View Assignment/Submissions Button */}
           <button
             onClick={handleNavigateToAssignment}
-            className="w-full px-4 py-3 rounded-xl font-medium text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:brightness-110"
-            style={{
-              backgroundColor: classColor,
-              boxShadow: `0 4px 14px ${classColor}40`,
-            }}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-400/20 bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition-all active:scale-[0.98] hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           >
             <span>{isStudent ? "View Assignment" : "View Submissions"}</span>
             <ExternalLink className="w-4 h-4" />

@@ -156,20 +156,17 @@ export function StudentDashboardPage() {
                     onClick={() =>
                       navigate(`/dashboard/assignments/${assignment.id}`)
                     }
-                    className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer"
+                    className="min-h-24 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col"
                   >
-                    <h4 className="text-sm font-medium text-white mb-1 truncate">
+                    <h4 className="text-sm font-medium text-white mb-3 truncate">
                       {assignment.assignmentName}
                     </h4>
-                    <p className="text-xs text-slate-400 mb-2 truncate">
-                      {assignment.className}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-slate-400">
-                        {assignment.programmingLanguage}
+                    <div className="mt-auto flex items-center justify-between gap-3">
+                      <span className="flex-1 text-xs text-slate-400 truncate">
+                        {assignment.className || "Unknown class"}
                       </span>
                       <span
-                        className={`text-xs font-medium ${
+                        className={`shrink-0 text-xs font-medium ${
                           new Date(assignment.deadline) < new Date()
                             ? "text-red-400"
                             : "text-teal-400"
