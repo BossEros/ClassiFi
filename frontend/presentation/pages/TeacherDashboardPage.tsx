@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Home, Grid3x3, ClipboardList } from "lucide-react"
+import { Grid3x3, ClipboardList, FileText, ArrowRight } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
-import { TaskCard } from "@/presentation/components/dashboard/TaskCard"
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import { getDashboardData } from "@/business/services/teacherDashboardService"
+import { getDeadlineStatus } from "@/shared/utils/dateUtils"
 import type { User } from "@/business/models/auth/types"
 import type { Class, Task } from "@/business/models/dashboard/types"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function TeacherDashboardPage() {
   const navigate = useNavigate()
@@ -57,23 +57,22 @@ export function TeacherDashboardPage() {
     fetchData()
   }, [navigate])
 
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="p-2 rounded-lg bg-teal-500/20">
-            <Home className="w-5 h-5 text-teal-300" />
-          </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Home</h1>
-        </div>
-        {user && (
-          <p className="text-slate-300 ml-11 text-sm">
-            Welcome back,{" "}
-            <span className="text-white font-semibold">{user.firstName}</span>!
-            Here's what's happening today.
-          </p>
-        )}
+        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
+          Welcome back, {user?.firstName}!
+        </h1>
+        <p className="text-slate-400 text-base">
+          Here's what's happening with your courses today.
+        </p>
       </div>
 
       {/* Error Message */}
@@ -84,14 +83,25 @@ export function TeacherDashboardPage() {
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Classes Panel */}
-        <Card className="lg:col-span-7 h-fit">
+        <Card className="lg:col-span-2 h-fit">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Recent Classes</CardTitle>
-            <CardDescription className="text-sm mt-1.5">
-              Here you'll see the classes you've recently been active in
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <Grid3x3 className="w-5 h-5 text-white" strokeWidth={2.5} />
+                </div>
+                <CardTitle className="text-xl">Recent Classes</CardTitle>
+              </div>
+              <button
+                onClick={() => navigate("/dashboard/classes")}
+                className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors group"
+              >
+                View All
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </button>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -100,7 +110,7 @@ export function TeacherDashboardPage() {
                 <p className="text-slate-400">Loading dashboard...</p>
               </div>
             ) : classes.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {classes.map((classItem) => (
                   <ClassCard
                     key={classItem.id}
@@ -120,7 +130,7 @@ export function TeacherDashboardPage() {
                   No recent classes found
                 </p>
                 <p className="text-xs text-slate-500">
-                  Classes you've recently accessed will appear here.
+                  Classes you've recently been active in will appear here.
                 </p>
               </div>
             )}
@@ -128,12 +138,14 @@ export function TeacherDashboardPage() {
         </Card>
 
         {/* To-Check Panel */}
-        <Card className="lg:col-span-3">
+        <Card className="lg:col-span-1">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xl">To-Check</CardTitle>
-            <CardDescription className="text-sm mt-1.5">
-              Tasks and assignments that need your attention
-            </CardDescription>
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <FileText className="w-5 h-5 text-white" strokeWidth={2.5} />
+              </div>
+              <CardTitle className="text-xl">To-Check</CardTitle>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -144,13 +156,31 @@ export function TeacherDashboardPage() {
             ) : tasks.length > 0 ? (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                 {tasks.map((task) => (
-                  <TaskCard
+                  <div
                     key={task.id}
-                    task={task}
                     onClick={() =>
                       navigate(`/dashboard/assignments/${task.id}/submissions`)
                     }
-                  />
+                    className="min-h-24 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col"
+                  >
+                    <h4 className="text-sm font-medium text-white mb-3 truncate">
+                      {task.assignmentName}
+                    </h4>
+                    <div className="mt-auto flex items-center justify-between gap-3">
+                      <span className="flex-1 text-xs text-slate-400 truncate">
+                        {task.className || "Unknown class"}
+                      </span>
+                      <span
+                        className={`shrink-0 text-xs font-medium ${
+                          new Date(task.deadline) < new Date()
+                            ? "text-red-400"
+                            : "text-teal-400"
+                        }`}
+                      >
+                        {getDeadlineStatus(new Date(task.deadline))}
+                      </span>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (

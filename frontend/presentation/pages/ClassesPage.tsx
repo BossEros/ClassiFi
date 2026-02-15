@@ -13,6 +13,7 @@ import { getCurrentUser } from "@/business/services/authService"
 import { getAllClasses } from "@/business/services/classService"
 import { useToast } from "@/shared/context/ToastContext"
 import type { Class } from "@/business/models/dashboard/types"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function ClassesPage() {
   const navigate = useNavigate()
@@ -28,6 +29,7 @@ export function ClassesPage() {
   const [status, setStatus] = useState<FilterStatus>("active")
   const [selectedTerm, setSelectedTerm] = useState("all")
   const [selectedYearLevel, setSelectedYearLevel] = useState("all")
+  const [currentUser] = useState(() => getCurrentUser())
 
   // Show toast if redirected from class deletion
   useEffect(() => {
@@ -123,23 +125,30 @@ export function ClassesPage() {
     })
   }, [classes, status, selectedTerm, selectedYearLevel, searchQuery])
 
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    status !== "active" ||
+    selectedTerm !== "all" ||
+    selectedYearLevel !== "all"
+
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-teal-500/10 rounded-lg border border-teal-500/20">
-              <Grid3x3 className="w-6 h-6 text-teal-400" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
-                Classes
-              </h1>
-              <p className="text-slate-300 text-sm mt-1">
-                Manage your courses and students
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
+              Classes
+            </h1>
+            <p className="text-slate-300 text-sm mt-1">
+              Manage your courses and students
+            </p>
           </div>
           <Button
             onClick={() => navigate("/dashboard/classes/new")}
@@ -209,11 +218,11 @@ export function ClassesPage() {
                 No classes found
               </h3>
               <p className="text-slate-300 max-w-sm min-w-[200px] mx-auto mb-8 whitespace-normal break-words">
-                {searchQuery || status !== "active"
+                {hasActiveFilters
                   ? "We couldn't find any classes matching your current filters. Try adjusting them."
                   : "Get started by creating your first class to manage students and assignments."}
               </p>
-              {!searchQuery && status === "active" && (
+              {!hasActiveFilters && (
                 <Button
                   onClick={() => navigate("/dashboard/classes/new")}
                   className="w-auto bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-500/20"

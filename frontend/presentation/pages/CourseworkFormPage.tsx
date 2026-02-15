@@ -8,9 +8,12 @@ import { BasicInfoForm } from "@/presentation/components/forms/coursework/BasicI
 import { SubmissionSettings } from "@/presentation/components/forms/coursework/SubmissionSettings"
 import { LatePenaltyConfig } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
+import { getCurrentUser } from "@/business/services/authService"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
 export function CourseworkFormPage() {
   const navigate = useNavigate()
+  const currentUser = getCurrentUser()
   const {
     // State
     formData,
@@ -39,10 +42,16 @@ export function CourseworkFormPage() {
     handleDeletePendingTestCase,
   } = useCourseworkForm()
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   // Show loading state while fetching data
   if (isFetching) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
@@ -54,7 +63,7 @@ export function CourseworkFormPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
         <BackButton />

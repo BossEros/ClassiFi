@@ -118,6 +118,20 @@ Both platforms auto-deploy when:
 - New commits are pushed to `main`
 - Pull requests are merged
 
+### Optional: Trigger Deploys from GitHub Actions CI
+
+If you want deploy visibility directly in CI, configure deploy hooks as GitHub repository secrets and let `.github/workflows/ci.yml` trigger them after tests pass on `main`.
+
+Configure one or both:
+
+- `RENDER_DEPLOY_HOOK_URL` - Render deploy hook URL
+- `VERCEL_DEPLOY_HOOK_URL` - Vercel deploy hook URL
+
+Notes:
+
+- Missing secrets are skipped automatically.
+- If Vercel already auto-deploys via Git integration, leave `VERCEL_DEPLOY_HOOK_URL` unset to avoid duplicate deploys.
+
 ---
 
 ## ⚠️ Important Notes
