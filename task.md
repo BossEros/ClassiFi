@@ -156,4 +156,4 @@
 - [x] Move real controller/service/repository/model/schema files into `backend-ts/src/modules/*`
 - [x] Rewire API v1 route imports to module entry points
 - [x] Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
-- [ ] Commit Phase 4 checkpoint
+- [x] Commit Phase 4 checkpoint
