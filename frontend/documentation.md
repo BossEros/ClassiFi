@@ -24,60 +24,52 @@ The ClassiFi Frontend is a modern, responsive web application built with **React
 
 ## Project Structure
 
-The codebase is organized into three main layers defined in the root directory:
+The codebase keeps application source under `src/`:
 
-```
+```text
 frontend/
-├── business/               # Domain Logic Layer
-│   ├── models/             # Domain entities and interfaces (e.g., User, Class)
-│   ├── services/           # Business logic and use cases (e.g., AuthService)
-│   └── validation/         # Zod schemas for data validation
-│
-├── data/                   # Data Access Layer
-│   ├── api/                # API clients, types, and adapters (Supabase)
-│   ├── repositories/       # Implementation of data access patterns
-│   └── mappers.ts          # Transformers between API DTOs and Domain Models
-│
-├── presentation/           # UI Layer
-│   ├── components/         # Reusable React components
-│   │   ├── admin/          # Admin-specific components
-│   │   ├── dashboard/      # Dashboard widgets and distinct views
-│   │   ├── forms/          # Complex form components
-│   │   ├── gradebook/      # Gradebook and assessment UI
-│   │   ├── modals/         # Dialogs and overlays
-│   │   ├── plagiarism/     # Plagiarism detection UI components
-│   │   ├── settings/       # User settings components
-│   │   └── ui/             # Generic/Shared UI atoms (Button, Input, etc.)
-│   ├── hooks/              # Custom React hooks
-│   ├── pages/              # Full page views corresponding to routes
-│   └── styles/             # Global styles and tailwind config
-│
-├── shared/                 # Cross-cutting concerns
-│   ├── constants/          # Application constants
-│   ├── context/            # React Contexts (e.g., ToastContext)
-│   ├── types/              # Shared utility types
-│   └── utils/              # Helper functions (Date formatting, etc.)
-│
-└── main.tsx                # Application Entry Point
+|-- src/
+|   |-- business/           # Domain Logic Layer
+|   |   |-- models/
+|   |   |-- services/
+|   |   `-- validation/
+|   |-- data/               # Data Access Layer
+|   |   |-- api/
+|   |   |-- repositories/
+|   |   `-- mappers.ts
+|   |-- presentation/       # UI Layer
+|   |   |-- components/
+|   |   |-- hooks/
+|   |   |-- pages/
+|   |   `-- styles/
+|   |-- shared/             # Cross-cutting concerns
+|   |   |-- constants/
+|   |   |-- context/
+|   |   |-- types/
+|   |   `-- utils/
+|   |-- tests/              # Vitest + Playwright test files and mocks
+|   |-- index.css
+|   `-- main.tsx            # Application Entry Point
+|-- public/
+`-- index.html
 ```
-
 ---
 
 ## Architecture
 
 ### Clean Architecture Layers
 
-1.  **Presentation Layer (`/presentation`)**:
+1.  **Presentation Layer (`/src/presentation`)**:
     - **Responsibility**: Renders UI and handles user interactions.
     - **Dependency**: Depends only on the Business Layer.
     - **Key Concept**: Components should generally call _Services_, not Repositories or APIs directly.
 
-2.  **Business Layer (`/business`)**:
+2.  **Business Layer (`/src/business`)**:
     - **Responsibility**: Enforces business rules, validates data, and orchestrates workflows.
     - **Dependency**: Depends on the Data Layer (via Interfaces/Repositories) and Models.
     - **Key Concept**: Services are "pure" logic containers. `AuthService`, `ClassService`, etc.
 
-3.  **Data Layer (`/data`)**:
+3.  **Data Layer (`/src/data`)**:
     - **Responsibility**: Communicates with the Backend API and Supabase.
     - **Dependency**: None (conceptually, though it implements Business interfaces).
     - **Key Concept**: `Repositories` abstract the source of data. `Mappers` ensure the app uses clean Domain Models, not raw API DTOs.
@@ -92,7 +84,7 @@ frontend/
 
 ## Routing & Navigation
 
-Routing is handled in `presentation/App.tsx`.
+Routing is handled in `src/presentation/App.tsx`.
 
 ### Route Types
 
@@ -167,9 +159,9 @@ Routing is handled in `presentation/App.tsx`.
 
 ### Shared Presentation Hooks (Admin Pages)
 
-- **`useDebouncedValue`** (`presentation/hooks/useDebouncedValue.ts`): Centralizes debounced search input behavior used by admin list pages.
-- **`useDocumentClick`** (`presentation/hooks/useDocumentClick.ts`): Standardized click-outside handling for dropdown dismissal and menu cleanup.
-- **`useRequestState`** (`presentation/hooks/useRequestState.ts`): Shared fetch lifecycle utility for loading/error state and request execution wrappers.
+- **`useDebouncedValue`** (`src/presentation/hooks/useDebouncedValue.ts`): Centralizes debounced search input behavior used by admin list pages.
+- **`useDocumentClick`** (`src/presentation/hooks/useDocumentClick.ts`): Standardized click-outside handling for dropdown dismissal and menu cleanup.
+- **`useRequestState`** (`src/presentation/hooks/useRequestState.ts`): Shared fetch lifecycle utility for loading/error state and request execution wrappers.
 
 ---
 
@@ -181,18 +173,18 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 | Service                     | Location                                       | Purpose                                                                |
 | --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
-| **authService**             | `business/services/authService.ts`             | User authentication, registration, password management                 |
-| **assignmentService**       | `business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
-| **classService**            | `business/services/classService.ts`            | Class management, enrollment operations                                |
-| **gradebookService**        | `business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
-| **notificationService**     | `business/services/notificationService.ts`     | Notification management, unread counts, mark as read                   |
-| **plagiarismService**       | `business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
-| **studentDashboardService** | `business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
-| **teacherDashboardService** | `business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
-| **testCaseService**         | `business/services/testCaseService.ts`         | Test case management for assignments                                   |
-| **testService**             | `business/services/testService.ts`             | Code execution and testing                                             |
-| **adminService**            | `business/services/adminService.ts`            | Admin operations (user management, analytics)                          |
-| **userService**             | `business/services/userService.ts`             | User profile operations (avatar upload, account deletion)              |
+| **authService**             | `src/business/services/authService.ts`             | User authentication, registration, password management                 |
+| **assignmentService**       | `src/business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
+| **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                |
+| **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
+| **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                   |
+| **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
+| **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
+| **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
+| **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                   |
+| **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                             |
+| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, analytics)                          |
+| **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, account deletion)              |
 
 ### Service Guidelines
 
@@ -497,29 +489,29 @@ Specialized types for the class detail page redesign:
 
 ### Adding a New Page
 
-1.  Create the page component in `presentation/pages/NewPage.tsx`.
-2.  Define the route in `presentation/App.tsx`.
-3.  (Optional) specific components in `presentation/components/feature/`.
+1.  Create the page component in `src/presentation/pages/NewPage.tsx`.
+2.  Define the route in `src/presentation/App.tsx`.
+3.  (Optional) specific components in `src/presentation/components/feature/`.
 
 ### Adding Data Logic
 
-1.  Define the Model in `business/models/`.
-2.  Create/Update specific `Repository` in `data/repositories/`.
-3.  Create/Update `Service` in `business/services/`.
+1.  Define the Model in `src/business/models/`.
+2.  Create/Update specific `Repository` in `src/data/repositories/`.
+3.  Create/Update `Service` in `src/business/services/`.
 4.  Consume in Component.
 
 ### Styling
 
 - Use **Tailwind CSS** utility classes.
 - Avoid arbitrary values (e.g., `w-[123px]`); use theme spacing.
-- Common UI components (`Button`, `Card`) are in `presentation/components/ui`.
+- Common UI components (`Button`, `Card`) are in `src/presentation/components/ui`.
 
 ---
 
 ## Testing
 
-- **Unit Tests**: `npm run test` (Vitest). Focus on `business/services` and utility logic.
-- **E2E Tests**: Playwright (setup in `tests/e2e`).
+- **Unit Tests**: `npm run test` (Vitest). Focus on `src/business/services` and utility logic.
+- **E2E Tests**: Playwright (setup in `src/tests/e2e`).
   - Authentication flows
   - Class and assignment creation
   - Submission workflows
@@ -534,3 +526,4 @@ The project maintains comprehensive test coverage for:
 - Utility functions (date formatting, validation)
 - UI components (Button, Card, Input, Toast)
 - E2E workflows (login, class creation, assignment submission)
+

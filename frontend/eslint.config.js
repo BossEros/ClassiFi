@@ -26,7 +26,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["frontend/shared/context/ToastContext.tsx", "shared/context/ToastContext.tsx"],
+    files: ["src/shared/context/ToastContext.tsx", "shared/context/ToastContext.tsx"],
     rules: {
       "react-refresh/only-export-components": "off",
     },

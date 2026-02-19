@@ -7,13 +7,18 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["./tests/setup.ts"],
+    setupFiles: ["./src/tests/setup.ts"],
     include: ["**/*.test.ts", "**/*.test.tsx"],
     exclude: ["node_modules", "dist"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      exclude: ["node_modules", "dist", "tests/setup.ts", "tests/mocks/**"],
+      exclude: [
+        "node_modules",
+        "dist",
+        "src/tests/setup.ts",
+        "src/tests/mocks/**",
+      ],
     },
     env: {
       VITE_SUPABASE_URL: "http://localhost:54321",
@@ -23,7 +28,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "."),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
 })
