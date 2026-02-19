@@ -5,8 +5,8 @@ import {
   createAssignment,
   updateAssignment,
   getClassById,
-  uploadCourseworkDescriptionImage,
-  removeCourseworkDescriptionImage,
+  uploadAssignmentDescriptionImage,
+  removeAssignmentDescriptionImage,
 } from "@/business/services/classService"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useToast } from "@/shared/context/ToastContext"
@@ -33,12 +33,12 @@ import type {
   LatePenaltyConfig,
   PenaltyTier,
 } from "@/shared/types/gradebook"
-import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
+import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/assignment/LatePenaltyConfig"
 import { toLocalDateTimeString } from "@/shared/utils/dateUtils"
 import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
 import { type ProgrammingLanguage } from "@/data/api/types"
 
-export interface CourseworkFormData {
+export interface AssignmentFormData {
   assignmentName: string
   description: string
   descriptionImageUrl: string | null
@@ -107,7 +107,7 @@ function normalizeLatePenaltyConfig(
   }
 }
 
-export function useCourseworkForm() {
+export function useAssignmentForm() {
   const navigate = useNavigate()
   const { classId, assignmentId } = useParams<{
     classId: string
@@ -131,7 +131,7 @@ export function useCourseworkForm() {
     useState(false)
   const [showTemplateCode, setShowTemplateCode] = useState(false)
 
-  const [formData, setFormData] = useState<CourseworkFormData>({
+  const [formData, setFormData] = useState<AssignmentFormData>({
     assignmentName: "",
     description: "",
     descriptionImageUrl: null,
@@ -224,9 +224,9 @@ export function useCourseworkForm() {
     fetchTestCases()
   }, [isEditMode, assignmentId])
 
-  const handleInputChange = <K extends keyof CourseworkFormData>(
+  const handleInputChange = <K extends keyof AssignmentFormData>(
     field: K,
-    value: CourseworkFormData[K],
+    value: AssignmentFormData[K],
   ) => {
     setFormData((prev) => {
       const updatedFormData = { ...prev, [field]: value }
@@ -337,7 +337,7 @@ export function useCourseworkForm() {
             ? formData.latePenaltyConfig
             : null,
         })
-        showToast("Coursework updated successfully")
+        showToast("Assignment updated successfully")
       } else {
         // Create new assignment
         const newAssignment = await createAssignment({
@@ -376,10 +376,10 @@ export function useCourseworkForm() {
             })
           }
           showToast(
-            `Coursework created successfully with ${pendingTestCases.length} test case(s)`,
+            `Assignment created successfully with ${pendingTestCases.length} test case(s)`,
           )
         } else {
-          showToast("Coursework created successfully (0 test cases)")
+          showToast("Assignment created successfully (0 test cases)")
         }
       }
       navigate(`/dashboard/classes/${classId}`)
@@ -387,7 +387,7 @@ export function useCourseworkForm() {
       setErrors({
         general: `Failed to ${
           isEditMode ? "update" : "create"
-        } coursework. Please try again.`,
+        } assignment. Please try again.`,
       })
     } finally {
       setIsLoading(false)
@@ -465,7 +465,7 @@ export function useCourseworkForm() {
     try {
       const previousDescriptionImageUrl = formData.descriptionImageUrl
 
-      const uploadedImageUrl = await uploadCourseworkDescriptionImage(
+      const uploadedImageUrl = await uploadAssignmentDescriptionImage(
         parseInt(currentUser.id),
         parseInt(classId, 10),
         file,
@@ -477,7 +477,7 @@ export function useCourseworkForm() {
         descriptionImageAlt:
           prev.descriptionImageAlt.trim() ||
           prev.assignmentName.trim() ||
-          "Coursework description image",
+          "Assignment description image",
       }))
       setErrors((prev) => ({ ...prev, description: undefined, general: undefined }))
 
@@ -485,7 +485,7 @@ export function useCourseworkForm() {
         previousDescriptionImageUrl &&
         previousDescriptionImageUrl !== uploadedImageUrl
       ) {
-        await removeCourseworkDescriptionImage(previousDescriptionImageUrl)
+        await removeAssignmentDescriptionImage(previousDescriptionImageUrl)
       }
     } catch (error) {
       const uploadErrorMessage =
@@ -516,9 +516,9 @@ export function useCourseworkForm() {
     }
 
     try {
-      await removeCourseworkDescriptionImage(currentDescriptionImageUrl)
+      await removeAssignmentDescriptionImage(currentDescriptionImageUrl)
     } catch (error) {
-      console.error("Failed to remove coursework description image:", error)
+      console.error("Failed to remove assignment description image:", error)
     }
   }
 

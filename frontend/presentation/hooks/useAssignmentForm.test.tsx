@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, act, waitFor } from "@testing-library/react"
-import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm"
+import { useAssignmentForm } from "@/presentation/hooks/useAssignmentForm"
 import * as authService from "@/business/services/authService"
 import * as classService from "@/business/services/classService"
 import * as assignmentService from "@/business/services/assignmentService"
@@ -9,7 +9,7 @@ import { ToastProvider } from "@/shared/context/ToastContext"
 import { MemoryRouter } from "react-router-dom"
 import type { User } from "@/shared/types/auth"
 import type { ISODateString } from "@/shared/types/class"
-import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
+import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/assignment/LatePenaltyConfig"
 
 // Mock dependencies
 vi.mock("@/business/services/authService")
@@ -18,7 +18,7 @@ vi.mock("@/business/services/assignmentService")
 vi.mock("@/business/services/testCaseService")
 
 // Mock LatePenaltyConfig to avoid importing UI component
-vi.mock("@/presentation/components/forms/coursework/LatePenaltyConfig", () => ({
+vi.mock("@/presentation/components/forms/assignment/LatePenaltyConfig", () => ({
   DEFAULT_LATE_PENALTY_CONFIG: {
     tiers: [],
     rejectAfterHours: 120,
@@ -58,7 +58,7 @@ vi.mock("react-router-dom", async () => {
   }
 })
 
-describe("useCourseworkForm", () => {
+describe("useAssignmentForm", () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <ToastProvider>
       <MemoryRouter>{children}</MemoryRouter>
@@ -108,7 +108,7 @@ describe("useCourseworkForm", () => {
 
   describe("Initialization", () => {
     it("should initialize with default values in create mode", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
 
       await waitFor(() => {
         expect(result.current.className).toBe("Test Class")
@@ -148,7 +148,7 @@ describe("useCourseworkForm", () => {
       )
       vi.mocked(testCaseService.getTestCases).mockResolvedValue([])
 
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
 
       expect(result.current.isFetching).toBe(true)
 
@@ -164,7 +164,7 @@ describe("useCourseworkForm", () => {
 
   describe("Form Submission (Create)", () => {
     it("should create assignment and navigate on success", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
 
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
@@ -200,7 +200,7 @@ describe("useCourseworkForm", () => {
         await import("@/business/validation/assignmentValidation")
       vi.mocked(validateAssignmentTitle).mockReturnValue("Title required")
 
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
       await act(async () => {
@@ -212,7 +212,7 @@ describe("useCourseworkForm", () => {
     })
 
     it("should prevent submission when release date is set without release time", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
 
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
@@ -233,7 +233,7 @@ describe("useCourseworkForm", () => {
     })
 
     it("should disable late submissions when deadline is cleared", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
       act(() => {
@@ -251,7 +251,7 @@ describe("useCourseworkForm", () => {
     })
 
     it("should send late penalty as disabled when deadline is empty", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
       act(() => {
@@ -280,7 +280,7 @@ describe("useCourseworkForm", () => {
 
   describe("Test Case Management", () => {
     it("should add pending test case in create mode", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
 
       const newTestCase = {
         tempId: "temp-1",
@@ -303,7 +303,7 @@ describe("useCourseworkForm", () => {
     })
 
     it("should call createTestCase with new assignment ID after creation", async () => {
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
       act(() => {
@@ -368,7 +368,7 @@ describe("useCourseworkForm", () => {
       vi.mocked(testCaseService.getTestCases).mockResolvedValue([])
       vi.mocked(classService.updateAssignment).mockResolvedValue({} as any) // Mock void/result
 
-      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      const { result } = renderHook(() => useAssignmentForm(), { wrapper })
       await waitFor(() => expect(result.current.isFetching).toBe(false))
 
       act(() => {

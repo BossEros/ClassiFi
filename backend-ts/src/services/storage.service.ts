@@ -127,7 +127,7 @@ export class StorageService implements IStorageService {
   }
 
   /**
-   * Delete a coursework description image file.
+   * Delete an assignment description image file.
    * Accepts either a full public URL or a storage-relative path.
    */
   async deleteAssignmentDescriptionImage(imageUrl: string): Promise<boolean> {

@@ -48,7 +48,7 @@ export interface IStorageService {
   ): Promise<string>
 
   /**
-   * Delete a coursework description image.
+   * Delete an assignment description image.
    * @param imageUrl - Public URL or storage path of the description image
    * @returns True if deleted successfully
    */

@@ -32,8 +32,8 @@ import type {
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }
 
-const COURSEWORK_DESCRIPTION_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
-const COURSEWORK_DESCRIPTION_IMAGE_ALLOWED_TYPES = [
+const ASSIGNMENT_DESCRIPTION_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
+const ASSIGNMENT_DESCRIPTION_IMAGE_ALLOWED_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
@@ -284,21 +284,21 @@ export async function createAssignment(
 }
 
 /**
- * Uploads a coursework description image and returns the resulting public URL.
+ * Uploads an assignment description image and returns the resulting public URL.
  *
  * @param teacherId - The unique identifier of the teacher.
  * @param classId - The unique identifier of the class.
  * @param file - The image file to upload.
  * @returns The public URL of the uploaded image.
  */
-export async function uploadCourseworkDescriptionImage(
+export async function uploadAssignmentDescriptionImage(
   teacherId: number,
   classId: number,
   file: File,
 ): Promise<string> {
   validateId(teacherId, "teacher")
   validateId(classId, "class")
-  validateCourseworkDescriptionImageFile(file)
+  validateAssignmentDescriptionImageFile(file)
 
   return await assignmentRepository.uploadAssignmentDescriptionImage(
     teacherId,
@@ -308,12 +308,12 @@ export async function uploadCourseworkDescriptionImage(
 }
 
 /**
- * Removes a coursework description image from storage.
+ * Removes an assignment description image from storage.
  *
  * @param imageUrl - The image URL to remove.
  * @returns A promise that resolves when cleanup is complete.
  */
-export async function removeCourseworkDescriptionImage(
+export async function removeAssignmentDescriptionImage(
   imageUrl: string,
 ): Promise<void> {
   if (!imageUrl?.trim()) {
@@ -370,17 +370,17 @@ export async function updateAssignment(
 }
 
 /**
- * Validates coursework description image file constraints.
+ * Validates assignment description image file constraints.
  *
  * @param file - The image file to validate.
  * @throws {Error} If file is invalid.
  */
-function validateCourseworkDescriptionImageFile(file: File): void {
-  if (!COURSEWORK_DESCRIPTION_IMAGE_ALLOWED_TYPES.includes(file.type as (typeof COURSEWORK_DESCRIPTION_IMAGE_ALLOWED_TYPES)[number])) {
+function validateAssignmentDescriptionImageFile(file: File): void {
+  if (!ASSIGNMENT_DESCRIPTION_IMAGE_ALLOWED_TYPES.includes(file.type as (typeof ASSIGNMENT_DESCRIPTION_IMAGE_ALLOWED_TYPES)[number])) {
     throw new Error("Invalid image type. Allowed formats: JPG, PNG, WEBP, GIF")
   }
 
-  if (file.size > COURSEWORK_DESCRIPTION_IMAGE_MAX_SIZE_BYTES) {
+  if (file.size > ASSIGNMENT_DESCRIPTION_IMAGE_MAX_SIZE_BYTES) {
     throw new Error("Image size must be 5MB or less")
   }
 }

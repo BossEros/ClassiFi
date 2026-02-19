@@ -37,7 +37,7 @@ export function AssignmentsPage() {
         setSubmissions(data)
       } catch (err) {
         console.error("Failed to fetch submissions:", err)
-        setError("Failed to load coursework. Please try refreshing the page.")
+        setError("Failed to load assignments. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
       }
@@ -56,9 +56,9 @@ export function AssignmentsPage() {
     <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">My Coursework</h1>
+        <h1 className="text-3xl font-bold text-white mb-2">My Assignments</h1>
         <p className="text-slate-400 text-base">
-          View all your coursework and submissions
+          View all your assignments and submissions
         </p>
       </div>
 
@@ -75,7 +75,7 @@ export function AssignmentsPage() {
           {isLoading ? (
             <div className="py-12 text-center">
               <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading coursework...</p>
+              <p className="text-gray-400">Loading assignments...</p>
             </div>
           ) : submissions.length > 0 ? (
             <div className="space-y-3">
@@ -93,7 +93,7 @@ export function AssignmentsPage() {
                     <div className="flex-1">
                       <h3 className="text-base font-medium text-white mb-1">
                         {submission.assignmentName ||
-                          `Coursework ${submission.assignmentId}`}
+                          `Assignment ${submission.assignmentId}`}
                       </h3>
                       <div className="flex items-center gap-2 text-xs text-gray-400">
                         <Calendar className="w-3.5 h-3.5" />
@@ -131,7 +131,7 @@ export function AssignmentsPage() {
                 No submissions yet
               </p>
               <p className="text-sm text-gray-500">
-                Your submitted coursework will appear here.
+                Your submitted assignments will appear here.
               </p>
             </div>
           )}

@@ -268,7 +268,7 @@ export async function sendReminderToNonSubmitters(
 }
 
 /**
- * Uploads a coursework description image to Supabase Storage and returns its public URL.
+ * Uploads an assignment description image to Supabase Storage and returns its public URL.
  */
 export async function uploadAssignmentDescriptionImage(
   teacherId: number,
@@ -296,7 +296,7 @@ export async function uploadAssignmentDescriptionImage(
       return publicUrl
     }
 
-    lastUploadErrorMessage = uploadError.message || "Failed to upload coursework image"
+    lastUploadErrorMessage = uploadError.message || "Failed to upload assignment image"
 
     if (isStorageBucketConfigurationError(uploadError.message)) {
       continue
@@ -307,12 +307,12 @@ export async function uploadAssignmentDescriptionImage(
 
   throw new Error(
     lastUploadErrorMessage ||
-      "Coursework image storage is not configured. Configure VITE_SUPABASE_ASSIGNMENT_DESCRIPTION_BUCKET or create the assignment-descriptions bucket with upload permissions.",
+      "Assignment image storage is not configured. Configure VITE_SUPABASE_ASSIGNMENT_DESCRIPTION_BUCKET or create the assignment-descriptions bucket with upload permissions.",
   )
 }
 
 /**
- * Deletes a coursework description image from Supabase Storage.
+ * Deletes an assignment description image from Supabase Storage.
  * Fails silently if deletion is unsuccessful.
  */
 export async function deleteAssignmentDescriptionImage(
@@ -328,7 +328,7 @@ export async function deleteAssignmentDescriptionImage(
       .from(storageLocation.bucket)
       .remove([storageLocation.path])
   } catch (error) {
-    console.error("Failed to delete coursework description image:", error)
+    console.error("Failed to delete assignment description image:", error)
   }
 }
 
@@ -355,7 +355,7 @@ function sanitizeFilename(fileName: string): string {
   const normalizedFileName = fileName.trim().toLowerCase()
   const sanitizedFileName = normalizedFileName.replace(/[^a-z0-9-_]/g, "-")
   const compactFileName = sanitizedFileName.replace(/-+/g, "-")
-  return compactFileName || "coursework-description"
+  return compactFileName || "assignment-description"
 }
 
 function getConfiguredAssignmentDescriptionBucket(): string {

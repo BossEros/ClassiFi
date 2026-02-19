@@ -206,7 +206,7 @@ export function AssignmentDetailPage() {
         const errorMessage =
           err instanceof Error
             ? err.message
-            : "Failed to load coursework. Please try again."
+            : "Failed to load assignment. Please try again."
         setError(errorMessage)
       } finally {
         setIsLoading(false)
@@ -346,7 +346,7 @@ export function AssignmentDetailPage() {
             "error",
           )
         } else if (success) {
-          showToast("Coursework submitted successfully!")
+          showToast("Assignment submitted successfully!")
         }
       } catch (abortError) {
         if (abortError instanceof Error && abortError.message !== "Aborted") {
@@ -359,7 +359,7 @@ export function AssignmentDetailPage() {
     } catch (err) {
       console.error("Failed to submit assignment:", err)
       setError(
-        err instanceof Error ? err.message : "Failed to submit coursework",
+        err instanceof Error ? err.message : "Failed to submit assignment",
       )
     } finally {
       setIsSubmitting(false)
@@ -496,7 +496,7 @@ export function AssignmentDetailPage() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading coursework...</p>
+            <p className="text-gray-400">Loading assignment...</p>
           </div>
         </div>
       ) : error && !assignment ? (
@@ -509,12 +509,12 @@ export function AssignmentDetailPage() {
             <p className="text-gray-300 font-medium mb-2">
               {error.toLowerCase().includes("unauthorized")
                 ? "Access Denied"
-                : "Error Loading Coursework"}
+                : "Error Loading Assignment"}
             </p>
             <p className="text-sm text-gray-500 mb-4">{error}</p>
             {error.toLowerCase().includes("unauthorized") && (
               <p className="text-xs text-gray-600 mb-4">
-                You don't have permission to view this coursework. Make sure
+                You don't have permission to view this assignment. Make sure
                 you're enrolled in the class.
               </p>
             )}
@@ -643,8 +643,8 @@ export function AssignmentDetailPage() {
                   <CardHeader>
                     <CardTitle>
                       {hasSubmitted
-                        ? "Resubmit Coursework"
-                        : "Submit Coursework"}
+                        ? "Resubmit Assignment"
+                        : "Submit Assignment"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -770,7 +770,7 @@ export function AssignmentDetailPage() {
                         ) : (
                           <>
                             <Upload className="w-4 h-4 mr-2" />
-                            Submit Coursework
+                            Submit Assignment
                           </>
                         )}
                       </Button>
@@ -786,10 +786,10 @@ export function AssignmentDetailPage() {
                     <div className="text-center">
                       <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-400" />
                       <p className="text-gray-300 font-medium mb-1">
-                        Coursework Submitted
+                        Assignment Submitted
                       </p>
                       <p className="text-sm text-gray-500">
-                        Resubmission is not allowed for this coursework.
+                        Resubmission is not allowed for this assignment.
                       </p>
                     </div>
                   </CardContent>

@@ -4,15 +4,15 @@ import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm"
-import { BasicInfoForm } from "@/presentation/components/forms/coursework/BasicInfoForm"
-import { SubmissionSettings } from "@/presentation/components/forms/coursework/SubmissionSettings"
-import { LatePenaltyConfig } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
+import { useAssignmentForm } from "@/presentation/hooks/useAssignmentForm"
+import { BasicInfoForm } from "@/presentation/components/forms/assignment/BasicInfoForm"
+import { SubmissionSettings } from "@/presentation/components/forms/assignment/SubmissionSettings"
+import { LatePenaltyConfig } from "@/presentation/components/forms/assignment/LatePenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
-export function CourseworkFormPage() {
+export function AssignmentFormPage() {
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
   const {
@@ -44,7 +44,7 @@ export function CourseworkFormPage() {
     handleAddPendingTestCase,
     handleUpdatePendingTestCase,
     handleDeletePendingTestCase,
-  } = useCourseworkForm()
+  } = useAssignmentForm()
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
@@ -60,7 +60,7 @@ export function CourseworkFormPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading coursework data...</p>
+            <p className="text-gray-400">Loading assignment data...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -76,7 +76,7 @@ export function CourseworkFormPage() {
           <div className="flex items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white tracking-tight">
-                {isEditMode ? "Edit Coursework" : "Create Coursework for"}
+                {isEditMode ? "Edit Assignment" : "Create Assignment for"}
                 {className && (
                   <span className="text-teal-400"> {className}</span>
                 )}
@@ -162,13 +162,13 @@ export function CourseworkFormPage() {
                   ) : (
                     <Check className="w-4 h-4 mr-2" />
                   )}
-                  {isEditMode ? "Save Changes" : "Create Coursework"}
+                  {isEditMode ? "Save Changes" : "Create Assignment"}
                 </Button>
                 <Button
                   type="button"
                   onClick={() => navigate(-1)}
                   disabled={isLoading}
-                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl transition-all"
+                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 rounded-xl transition-all"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Cancel
@@ -182,4 +182,4 @@ export function CourseworkFormPage() {
   )
 }
 
-export default CourseworkFormPage
+export default AssignmentFormPage

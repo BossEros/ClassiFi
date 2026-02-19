@@ -328,7 +328,7 @@ export class AssignmentService {
   }
 
   /**
-   * Ensures coursework has at least one description surface.
+   * Ensures assignment has at least one description surface.
    */
   private validateDescriptionContent(
     description: string,
@@ -359,7 +359,7 @@ export class AssignmentService {
   }
 
   /**
-   * Best-effort cleanup for coursework description image files.
+   * Best-effort cleanup for assignment description image files.
    */
   private async deleteDescriptionImageSafely(imageUrl: string): Promise<void> {
     try {

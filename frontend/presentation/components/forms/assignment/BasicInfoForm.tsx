@@ -23,9 +23,9 @@ import { DatePicker } from "@/presentation/components/ui/DatePicker"
 import { TimePicker } from "@/presentation/components/ui/TimePicker"
 import {
   programmingLanguageOptions,
-  type CourseworkFormData,
+  type AssignmentFormData,
   type FormErrors,
-} from "@/presentation/hooks/useCourseworkForm"
+} from "@/presentation/hooks/useAssignmentForm"
 import { formatTimeRemaining } from "@/shared/utils/dateUtils"
 import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
 import {
@@ -39,7 +39,7 @@ import type {
 } from "@/shared/types/testCase"
 
 interface BasicInfoFormProps {
-  formData: CourseworkFormData
+  formData: AssignmentFormData
   errors: FormErrors
   isLoading: boolean
   isUploadingDescriptionImage: boolean
@@ -48,7 +48,7 @@ interface BasicInfoFormProps {
   onDescriptionImageUpload: (file: File) => Promise<void>
   onDescriptionImageRemove: () => Promise<void>
   onInputChange: (
-    field: keyof CourseworkFormData,
+    field: keyof AssignmentFormData,
     value: string | number | boolean | null,
   ) => void
 
@@ -68,7 +68,7 @@ interface BasicInfoFormProps {
 
 function mapTemplateFileNameToProgrammingLanguage(
   fileName: string,
-): CourseworkFormData["programmingLanguage"] {
+): AssignmentFormData["programmingLanguage"] {
   const lowerCaseFileName = fileName.toLowerCase()
 
   if (lowerCaseFileName.endsWith(".py")) {
@@ -152,13 +152,13 @@ export function BasicInfoForm({
 
       <CardContent className="space-y-6">
         <div className="space-y-6">
-          {/* Coursework Title */}
+          {/* Assignment Title */}
           <div className="space-y-2">
             <label
               htmlFor="assignmentName"
               className="block text-sm font-medium text-gray-200"
             >
-              Coursework Title <span className="text-red-400">*</span>
+              Assignment Title <span className="text-red-400">*</span>
             </label>
             <Input
               id="assignmentName"
@@ -213,7 +213,7 @@ export function BasicInfoForm({
                     <img
                       src={formData.descriptionImageUrl}
                       alt={
-                        formData.descriptionImageAlt || "Coursework description"
+                        formData.descriptionImageAlt || "Assignment description"
                       }
                       className="w-full max-h-64 object-contain"
                     />
@@ -469,7 +469,7 @@ export function BasicInfoForm({
                     Scheduled Release
                   </h3>
                   <p className="text-xs text-gray-400">
-                    Automatically publish this coursework at a future date and
+                    Automatically publish this assignment at a future date and
                     time
                   </p>
                 </div>

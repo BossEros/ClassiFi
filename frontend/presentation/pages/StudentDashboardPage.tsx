@@ -192,7 +192,7 @@ export function StudentDashboardPage() {
                   All caught up!
                 </p>
                 <p className="text-xs text-slate-500">
-                  New coursework will appear here when assigned.
+                  New assignments will appear here when assigned.
                 </p>
               </div>
             )}

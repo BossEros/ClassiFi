@@ -185,7 +185,7 @@ export function DeleteAccountModal({
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5 shrink-0">•</span>
                   <span className="flex-1 min-w-0">
-                    All your submissions and coursework
+                    All your submissions and assignment
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

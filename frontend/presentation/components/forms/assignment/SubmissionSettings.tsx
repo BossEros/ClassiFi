@@ -7,16 +7,16 @@ import {
   CardTitle,
 } from "@/presentation/components/ui/Card"
 import {
-  type CourseworkFormData,
+  type AssignmentFormData,
   type FormErrors,
-} from "@/presentation/hooks/useCourseworkForm"
+} from "@/presentation/hooks/useAssignmentForm"
 
 interface SubmissionSettingsProps {
-  formData: CourseworkFormData
+  formData: AssignmentFormData
   errors: FormErrors
   isLoading: boolean
   onInputChange: (
-    field: keyof CourseworkFormData,
+    field: keyof AssignmentFormData,
     value: string | number | boolean | null,
   ) => void
 }
@@ -41,7 +41,7 @@ export function SubmissionSettings({
       <CardContent className="space-y-5">
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
           <div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium text-gray-200">
               Allow students to resubmit
             </p>
           </div>

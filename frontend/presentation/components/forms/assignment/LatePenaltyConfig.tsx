@@ -160,7 +160,7 @@ export function LatePenaltyConfig({
       <CardContent className="space-y-4 pt-0">
         <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
           <div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium text-gray-200">
               Allow late submissions
             </p>
           </div>

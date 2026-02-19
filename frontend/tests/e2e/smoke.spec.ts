@@ -327,13 +327,13 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     // Navigate to class detail
     await page.goto(`/dashboard/classes/${classId}`)
 
-    // Click "Add Coursework"
+    // Click "Add Assignment"
     // Use first() as there might be buttons in header and empty state
     await page
-      .getByRole("button", { name: /add coursework/i })
+      .getByRole("button", { name: /add assignment/i })
       .first()
       .click()
-    await expect(page).toHaveURL(/.*\/coursework\/new/)
+    await expect(page).toHaveURL(/.*\/assignments\/new/)
 
     // Fill Assignment Name
     const timestamp = Date.now()
@@ -386,7 +386,7 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
 
     // Verify test case added
     await expect(page.getByText("Hello World Test")).toBeVisible()
-    await page.getByRole("button", { name: /create coursework/i }).click()
+    await page.getByRole("button", { name: /create assignment/i }).click()
 
     // Verify success
     await expect(page).toHaveURL(new RegExp(`/dashboard/classes/${classId}`))
@@ -445,16 +445,16 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     await expect(page.getByText(fileName)).toBeVisible()
 
     // Submit
-    // Text in UI is "Submit Coursework"
+    // Text in UI is "Submit Assignment"
     await page
-      .getByRole("button", { name: /submit coursework/i })
+      .getByRole("button", { name: /submit assignment/i })
       .first()
       .click()
 
-    // Toast text is "Coursework submitted successfully!"
+    // Toast text is "Assignment submitted successfully!"
     try {
       await expect(
-        page.getByText(/coursework submitted successfully/i),
+        page.getByText(/assignment submitted successfully/i),
       ).toBeVisible({ timeout: 15000 })
     } catch (e) {
       console.log("Submission success toast not found!")

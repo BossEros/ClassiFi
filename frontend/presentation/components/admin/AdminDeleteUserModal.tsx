@@ -152,7 +152,7 @@ export function AdminDeleteUserModal({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>
-                  All submissions and coursework
+                  All submissions and assignment
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5">•</span>

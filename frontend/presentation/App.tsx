@@ -22,7 +22,7 @@ import { SimilarityResultsPage } from "@/presentation/pages/SimilarityResultsPag
 import { TasksPage } from "@/presentation/pages/TasksPage"
 import { HistoryPage } from "@/presentation/pages/HistoryPage"
 import { ClassFormPage } from "@/presentation/pages/ClassFormPage"
-import { CourseworkFormPage } from "@/presentation/pages/CourseworkFormPage"
+import { AssignmentFormPage } from "@/presentation/pages/AssignmentFormPage"
 import { EmailConfirmationPage } from "@/presentation/pages/EmailConfirmationPage"
 import { SettingsPage } from "@/presentation/pages/SettingsPage"
 import { NotificationsPage } from "@/presentation/pages/NotificationsPage"
@@ -232,18 +232,18 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/classes/:classId/coursework/new"
+            path="/dashboard/classes/:classId/assignments/new"
             element={
               <ProtectedRoute>
-                <CourseworkFormPage />
+                <AssignmentFormPage />
               </ProtectedRoute>
             }
           />
           <Route
-            path="/dashboard/classes/:classId/coursework/:assignmentId/edit"
+            path="/dashboard/classes/:classId/assignments/:assignmentId/edit"
             element={
               <ProtectedRoute>
-                <CourseworkFormPage />
+                <AssignmentFormPage />
               </ProtectedRoute>
             }
           />
