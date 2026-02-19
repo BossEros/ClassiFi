@@ -1,5 +1,0 @@
-export { NotificationService } from "@/modules/notifications/notification.service.js"
-export { NotificationQueueService } from "@/modules/notifications/notification-queue.service.js"
-export { NotificationPreferenceService } from "@/modules/notifications/notification-preference.service.js"
-export { NOTIFICATION_TYPES } from "@/services/notification/types.js"
-export type { NotificationTypeConfig } from "@/services/notification/types.js"

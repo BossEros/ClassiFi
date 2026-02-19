@@ -2,7 +2,7 @@ import { injectable, inject } from "tsyringe"
 import type { NotificationPreferenceRepository } from "@/modules/notifications/notification-preference.repository.js"
 import type { NotificationPreference } from "@/models/index.js"
 import type { NotificationType } from "@/modules/notifications/notification.schema.js"
-import { NOTIFICATION_TYPES } from "@/services/notification/types.js"
+import { NOTIFICATION_TYPES } from "@/modules/notifications/notification.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**

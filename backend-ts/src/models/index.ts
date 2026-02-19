@@ -24,8 +24,8 @@ export type {
 } from "@/modules/assignments/assignment.model.js"
 
 // Enrollment model
-export { enrollments, enrollmentsRelations } from "@/models/enrollment.model.js"
-export type { Enrollment, NewEnrollment } from "@/models/enrollment.model.js"
+export { enrollments, enrollmentsRelations } from "@/modules/enrollments/enrollment.model.js"
+export type { Enrollment, NewEnrollment } from "@/modules/enrollments/enrollment.model.js"
 
 // Submission model
 export { submissions, submissionsRelations } from "@/modules/submissions/submission.model.js"
@@ -96,3 +96,4 @@ export type {
   NotificationPreference,
   NewNotificationPreference,
 } from "@/modules/notifications/notification-preference.model.js"
+

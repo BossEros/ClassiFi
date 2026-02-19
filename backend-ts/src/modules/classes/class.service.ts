@@ -1,7 +1,7 @@
 import { inject, injectable } from "tsyringe"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
+import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { StorageService } from "@/services/storage.service.js"
@@ -26,7 +26,7 @@ import type {
   RemoveStudentServiceDTO,
   UpdateClassServiceDTO,
   EnrolledStudentDTO,
-} from "@/services/service-dtos.js"
+} from "@/modules/classes/class.dtos.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("ClassService")
@@ -361,6 +361,8 @@ export class ClassService {
     }
   }
 }
+
+
 
 
 

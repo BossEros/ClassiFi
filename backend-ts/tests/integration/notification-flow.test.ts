@@ -6,7 +6,7 @@ import { NotificationDeliveryRepository } from "../../src/modules/notifications/
 import { AssignmentService } from "../../src/modules/assignments/assignment.service.js"
 import { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import { ClassRepository } from "../../src/modules/classes/class.repository.js"
-import { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
+import { EnrollmentRepository } from "../../src/modules/enrollments/enrollment.repository.js"
 import { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
 import { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
@@ -681,3 +681,4 @@ describe("Notification Flow Integration Tests", () => {
     })
   })
 })
+

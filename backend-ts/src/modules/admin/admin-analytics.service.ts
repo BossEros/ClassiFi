@@ -3,7 +3,7 @@ import { UserRepository } from "@/modules/users/user.repository.js"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
-import type { AdminStats, ActivityItem } from "@/services/admin/admin.types.js"
+import type { AdminStats, ActivityItem } from "@/modules/admin/admin.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**

@@ -5,7 +5,7 @@ import { container } from "tsyringe"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
+import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { DashboardQueryRepository } from "@/modules/dashboard/dashboard-query.repository.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
@@ -156,3 +156,4 @@ container.registerSingleton(
 )
 
 export { container }
+

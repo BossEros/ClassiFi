@@ -10,7 +10,7 @@ import {
   type NotificationMetadataByType,
   type PayloadFor,
   type NotificationTypeConfig,
-} from "@/services/notification/types.js"
+} from "@/modules/notifications/notification.types.js"
 import { NotFoundError, ForbiddenError } from "@/shared/errors.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

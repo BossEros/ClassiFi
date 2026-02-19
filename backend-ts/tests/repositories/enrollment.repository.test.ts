@@ -58,7 +58,7 @@ describe("EnrollmentRepository", () => {
       mockDb.insert = insertMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.enrollStudent(1, 1)
@@ -77,7 +77,7 @@ describe("EnrollmentRepository", () => {
       mockDb.delete = deleteMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.unenrollStudent(1, 1)
@@ -92,7 +92,7 @@ describe("EnrollmentRepository", () => {
       mockDb.delete = deleteMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.unenrollStudent(999, 999)
@@ -111,7 +111,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.isEnrolled(1, 1)
@@ -127,7 +127,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.isEnrolled(999, 999)
@@ -149,7 +149,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.getEnrollmentsByStudent(1)
@@ -164,7 +164,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.getEnrollmentsByStudent(999)
@@ -187,7 +187,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.getEnrollmentsByClass(1)
@@ -212,7 +212,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.getEnrollmentWithClass(1)
@@ -230,7 +230,7 @@ describe("EnrollmentRepository", () => {
       mockDb.select = selectMock
 
       const { EnrollmentRepository } =
-        await import("../../src/repositories/enrollment.repository.js")
+        await import("../../src/modules/enrollments/enrollment.repository.js")
       const enrollmentRepo = new EnrollmentRepository()
 
       const result = await enrollmentRepo.getEnrollmentWithClass(999)
@@ -239,3 +239,4 @@ describe("EnrollmentRepository", () => {
     })
   })
 })
+

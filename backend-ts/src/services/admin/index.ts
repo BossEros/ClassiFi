@@ -1,5 +1,0 @@
-export * from "@/services/admin/admin.types.js"
-export { AdminUserService } from "@/modules/admin/admin-user.service.js"
-export { AdminAnalyticsService } from "@/modules/admin/admin-analytics.service.js"
-export { AdminClassService } from "@/modules/admin/admin-class.service.js"
-export { AdminEnrollmentService } from "@/modules/admin/admin-enrollment.service.js"

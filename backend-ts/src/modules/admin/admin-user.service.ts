@@ -12,7 +12,7 @@ import type {
   UserFilterOptions,
   PaginatedResult,
   CreateUserData,
-} from "@/services/admin/admin.types.js"
+} from "@/modules/admin/admin.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 @injectable()

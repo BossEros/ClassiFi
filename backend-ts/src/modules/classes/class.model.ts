@@ -11,7 +11,7 @@ import {
 import { relations } from "drizzle-orm"
 import { users } from "@/modules/users/user.model.js"
 import { assignments } from "@/modules/assignments/assignment.model.js"
-import { enrollments } from "@/models/enrollment.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
 
 /** Schedule type for class meetings */
 export type ClassSchedule = {
@@ -60,3 +60,4 @@ export const classesRelations = relations(classes, ({ one, many }) => ({
 /** Type definitions for Class */
 export type Class = typeof classes.$inferSelect
 export type NewClass = typeof classes.$inferInsert
+

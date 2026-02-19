@@ -4,7 +4,7 @@ import { AssignmentService } from "../../src/modules/assignments/assignment.serv
 import type { ClassRepository } from "../../src/modules/classes/class.repository.js"
 import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import type { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
-import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
+import type { EnrollmentRepository } from "../../src/modules/enrollments/enrollment.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import type { StorageService } from "../../src/services/storage.service.js"
@@ -715,3 +715,4 @@ describe("AssignmentService", () => {
     })
   })
 })
+

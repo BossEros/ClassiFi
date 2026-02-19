@@ -14,7 +14,7 @@ import type {
   CreateClassData as AdminCreateClassData,
   UpdateClassData,
   ClassFilterOptions,
-} from "@/services/admin/admin.types.js"
+} from "@/modules/admin/admin.types.js"
 
 /**
  * Data required to create a new class in the repository.
@@ -524,3 +524,4 @@ export class ClassRepository extends BaseRepository<
     }))
   }
 }
+

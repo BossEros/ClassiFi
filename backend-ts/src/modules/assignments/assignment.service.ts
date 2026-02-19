@@ -2,7 +2,7 @@ import { inject, injectable } from "tsyringe"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { TestCaseRepository } from "@/modules/test-cases/test-case.repository.js"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
-import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
+import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { StorageService } from "@/services/storage.service.js"
@@ -16,7 +16,7 @@ import {
 import type {
   UpdateAssignmentServiceDTO,
   CreateAssignmentServiceDTO,
-} from "@/services/service-dtos.js"
+} from "@/modules/assignments/assignment.dtos.js"
 import { settings } from "@/shared/config.js"
 import { formatAssignmentDueDate } from "@/shared/utils.js"
 import { createLogger } from "@/shared/logger.js"
@@ -477,6 +477,8 @@ export class AssignmentService {
     return { remindersSent: successCount }
   }
 }
+
+
 
 
 

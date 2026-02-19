@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { classes } from "@/modules/classes/class.model.js"
-import { enrollments } from "@/models/enrollment.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
 
 /** User role enum matching PostgreSQL type */
@@ -42,3 +42,4 @@ export const usersRelations = relations(users, ({ many }) => ({
 /** Type definitions for User */
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+

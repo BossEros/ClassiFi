@@ -110,11 +110,12 @@ backend-ts/
 |  |  |- gradebook/
 |  |  |- dashboard/
 |  |  |- notifications/
+|  |  |- enrollments/
 |  |  |- plagiarism/
 |  |  `- admin/
 |  |- services/               # Cross-cutting services (email, adapters, interfaces)
 |  |- repositories/           # Shared repositories only (base/shared query repos)
-|  |- models/                 # Shared models only (currently enrollment + model barrel)
+|  |- models/                 # Shared model barrel exports
 |  |- shared/                 # Config, DI container, errors, guards, mappers, utils
 |  |- lib/                    # Library/engine code (plagiarism engine)
 |  |- app.ts
@@ -176,6 +177,7 @@ The backend now uses a module-first layout under `src/modules/*`.
 - `src/modules/gradebook`
 - `src/modules/dashboard`
 - `src/modules/notifications`
+- `src/modules/enrollments`
 - `src/modules/plagiarism`
 - `src/modules/admin`
 - `src/modules/test-cases`

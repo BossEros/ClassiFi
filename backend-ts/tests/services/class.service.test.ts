@@ -3,7 +3,7 @@ import type { MockedObject } from "vitest"
 import { ClassService } from "../../src/modules/classes/class.service.js"
 import type { ClassRepository } from "../../src/modules/classes/class.repository.js"
 import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
-import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
+import type { EnrollmentRepository } from "../../src/modules/enrollments/enrollment.repository.js"
 import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { StorageService } from "../../src/services/storage.service.js"
@@ -272,3 +272,4 @@ describe("ClassService", () => {
     })
   })
 })
+

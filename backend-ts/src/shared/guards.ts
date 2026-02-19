@@ -1,7 +1,7 @@
 import type { ClassRepository } from "@/modules/classes/class.repository.js"
 import type { Class, Notification } from "@/models/index.js"
 import type { NotificationType } from "@/modules/notifications/notification.schema.js"
-import type { NotificationDataByType } from "@/services/notification/types.js"
+import type { NotificationDataByType } from "@/modules/notifications/notification.types.js"
 import { ClassNotFoundError, NotClassOwnerError } from "@/shared/errors.js"
 
 // ============================================================================
@@ -73,3 +73,4 @@ export async function requireClassOwnership(
 
   return classData
 }
+

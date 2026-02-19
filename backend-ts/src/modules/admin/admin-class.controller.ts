@@ -20,7 +20,7 @@ import {
   type UpdateClass,
   type ReassignTeacher,
 } from "@/modules/admin/admin.schema.js"
-import type { UpdateClassData } from "@/services/admin/admin.types.js"
+import type { UpdateClassData } from "@/modules/admin/admin.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**

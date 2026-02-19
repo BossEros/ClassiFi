@@ -1,7 +1,7 @@
 import { inject, injectable } from "tsyringe"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
+import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
@@ -10,7 +10,7 @@ import {
   type PenaltyResult,
 } from "@/services/latePenalty.service.js"
 import { toSubmissionDTO, type SubmissionDTO } from "@/shared/mappers.js"
-import { type SubmissionFileDTO } from "@/services/service-dtos.js"
+import { type SubmissionFileDTO } from "@/modules/submissions/submission.dtos.js"
 import type { Assignment, Submission } from "@/models/index.js"
 import {
   ALLOWED_EXTENSIONS,
@@ -489,6 +489,8 @@ export class SubmissionService {
     }
   }
 }
+
+
 
 
 

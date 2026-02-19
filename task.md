@@ -157,3 +157,12 @@
 - [x] Rewire API v1 route imports to module entry points
 - [x] Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
 - [x] Commit Phase 4 checkpoint
+
+## Backend Module-Folder Migration (Phase 4, Item 3)
+
+- [x] Move enrollment repository/model to `src/modules/enrollments`
+- [x] Split `src/services/service-dtos.ts` into module-local DTO files
+- [x] Move `services/admin/admin.types.ts` to `src/modules/admin/admin.types.ts`
+- [x] Move `services/notification/types.ts` to `src/modules/notifications/notification.types.ts`
+- [x] Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`, `backend-ts: npm run lint`)
+- [x] Commit Item 3 checkpoint

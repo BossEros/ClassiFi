@@ -22,7 +22,7 @@ import {
 // Mock repositories
 vi.mock("../../src/modules/submissions/submission.repository.js")
 vi.mock("../../src/modules/assignments/assignment.repository.js")
-vi.mock("../../src/repositories/enrollment.repository.js")
+vi.mock("../../src/modules/enrollments/enrollment.repository.js")
 vi.mock("../../src/modules/classes/class.repository.js")
 vi.mock("../../src/modules/test-cases/test-result.repository.js")
 vi.mock("../../src/services/code-test.service.js")
@@ -566,3 +566,4 @@ describe("SubmissionService", () => {
     })
   })
 })
+

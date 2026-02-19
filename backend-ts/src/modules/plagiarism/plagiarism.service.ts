@@ -8,7 +8,7 @@ import {
 } from "@/lib/plagiarism/index.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
-import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
+import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { PlagiarismDetectorFactory } from "@/services/plagiarism/plagiarism-detector.factory.js"
 import { SubmissionFileService } from "@/services/plagiarism/submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/services/plagiarism/plagiarism-persistence.service.js"
