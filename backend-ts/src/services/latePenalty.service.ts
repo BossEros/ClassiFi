@@ -97,7 +97,7 @@ export class LatePenaltyService {
     return {
       enabled: penaltyConfig.enabled,
       config: this.normalizeConfig(
-        (penaltyConfig.config ?? DEFAULT_PENALTY_CONFIG) as LatePenaltyConfig,
+        penaltyConfig.config ?? DEFAULT_PENALTY_CONFIG,
       ),
     }
   }
@@ -288,25 +288,31 @@ export class LatePenaltyService {
    * Normalize configuration for legacy payloads and ensure current shape.
    */
   private normalizeConfig(config: LatePenaltyConfigInput): LatePenaltyConfig {
-    const legacyConfig = config as LatePenaltyConfig & LegacyLatePenaltyConfig
-    const legacyTiers = Array.isArray(legacyConfig.tiers)
-      ? legacyConfig.tiers
-      : []
+    const legacyTiers = Array.isArray(config.tiers) ? config.tiers : []
 
     return {
       tiers: legacyTiers.map((tier) => {
-        const tierWithLegacy = tier as LegacyPenaltyTier
-        const hoursLate =
-          typeof tierWithLegacy.hoursLate === "number"
-            ? tierWithLegacy.hoursLate
-            : (tierWithLegacy.hoursAfterGrace ?? 0)
+        let hoursLate: number
+
+        if (typeof tier.hoursLate === "number") {
+          hoursLate = tier.hoursLate
+        } else if (
+          "hoursAfterGrace" in tier &&
+          typeof tier.hoursAfterGrace === "number"
+        ) {
+          hoursLate = tier.hoursAfterGrace
+        } else {
+          throw new Error(
+            "Invalid late penalty configuration: each tier must include hoursLate or hoursAfterGrace",
+          )
+        }
 
         return {
           hoursLate,
           penaltyPercent: tier.penaltyPercent,
         }
       }),
-      rejectAfterHours: legacyConfig.rejectAfterHours ?? null,
+      rejectAfterHours: config.rejectAfterHours ?? null,
     }
   }
 }

@@ -311,6 +311,17 @@ describe("LatePenaltyService", () => {
         DEFAULT_PENALTY_CONFIG,
       )
     })
+
+    it("rejects legacy tiers that are missing hours fields", async () => {
+      await expect(
+        latePenaltyService.setAssignmentConfig(1, true, {
+          tiers: [{ penaltyPercent: 10 }],
+          rejectAfterHours: null,
+        }),
+      ).rejects.toThrow(
+        "Invalid late penalty configuration: each tier must include hoursLate or hoursAfterGrace",
+      )
+    })
   })
 
   describe("getDefaultConfig", () => {
