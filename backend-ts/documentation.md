@@ -91,97 +91,38 @@ npm start
 
 ## Project Structure
 
-```
+```text
 backend-ts/
-├── src/
-│   ├── api/
-│   │   ├── controllers/      # Route handlers
-│   │   │   ├── admin/        # Admin-specific controllers
-│   │   │   │   ├── admin-analytics.controller.ts
-│   │   │   │   ├── admin-class.controller.ts
-│   │   │   │   ├── admin-enrollment.controller.ts
-│   │   │   │   └── admin-user.controller.ts
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── class.controller.ts
-│   │   │   ├── assignment.controller.ts
-│   │   │   ├── submission.controller.ts
-│   │   │   ├── student-dashboard.controller.ts
-│   │   │   ├── teacher-dashboard.controller.ts
-│   │   │   ├── gradebook.controller.ts
-│   │   │   ├── plagiarism.controller.ts
-│   │   │   ├── testCase.controller.ts
-│   │   │   ├── user.controller.ts
-│   │   │   └── admin.controller.ts
-│   │   ├── middlewares/      # Error handling
-│   │   │   └── error-handler.ts
-│   │   ├── plugins/          # Fastify plugins
-│   │   │   ├── swagger.ts
-│   │   │   └── zod-validation.ts
-│   │   ├── routes/           # Route aggregators
-│   │   │   └── v1/index.ts
-│   │   └── schemas/          # Zod validation schemas
-│   │       ├── auth.schema.ts
-│   │       ├── class.schema.ts
-│   │       ├── assignment.schema.ts
-│   │       ├── submission.schema.ts
-│   │       ├── dashboard.schema.ts
-│   │       ├── gradebook.schema.ts
-│   │       ├── plagiarism.schema.ts
-│   │       ├── testCase.schema.ts
-│   │       ├── user.schema.ts
-│   │       └── admin.schema.ts
-│   ├── lib/                  # External library integrations
-│   │   └── plagiarism/       # Plagiarism detection engine
-│   ├── models/               # Drizzle ORM schemas
-│   │   ├── user.model.ts
-│   │   ├── class.model.ts
-│   │   ├── assignment.model.ts
-│   │   ├── enrollment.model.ts
-│   │   ├── submission.model.ts
-│   │   ├── similarity-report.model.ts
-│   │   ├── similarity-result.model.ts
-│   │   ├── match-fragment.model.ts
-│   │   ├── test-case.model.ts
-│   │   ├── test-result.model.ts
-│   │   └── index.ts
-│   ├── repositories/         # Data access layer
-│   │   ├── base.repository.ts
-│   │   ├── user.repository.ts
-│   │   ├── class.repository.ts
-│   │   ├── assignment.repository.ts
-│   │   ├── enrollment.repository.ts
-│   │   ├── submission.repository.ts
-│   │   └── index.ts
-│   ├── services/             # Business logic layer
-│   │   ├── auth.service.ts
-│   │   ├── class.service.ts
-│   │   ├── submission.service.ts
-│   │   ├── student-dashboard.service.ts
-│   │   ├── teacher-dashboard.service.ts
-│   │   ├── gradebook.service.ts
-│   │   ├── plagiarism.service.ts
-│   │   ├── codeTest.service.ts
-│   │   ├── admin/            # Admin services
-│   │   └── index.ts
-│   ├── shared/               # Shared utilities
-│   │   ├── config.ts         # Environment configuration
-│   │   ├── container.ts      # DI container
-│   │   ├── database.ts       # Database connection
-│   │   ├── errors.ts         # Domain error classes
-│   │   ├── logger.ts         # Centralized pino logger wrapper
-│   │   ├── mappers.ts        # DTO mappers
-│   │   ├── supabase.ts       # Supabase clients
-│   │   └── transaction.ts    # Transaction support
-│   ├── app.ts                # Fastify app configuration
-│   └── server.ts             # Entry point
-├── tests/
-│   ├── services/             # Service tests
-│   ├── shared/               # Utility tests
-│   ├── utils/factories.ts    # Test factories
-│   └── setup.ts              # Test setup
-├── package.json
-├── tsconfig.json
-└── vitest.config.ts
+|- src/
+|  |- api/                    # Transport layer (middlewares/plugins/routes/common schemas)
+|  |  |- middlewares/
+|  |  |- plugins/
+|  |  |- routes/v1/index.ts
+|  |  |- schemas/common.schema.ts
+|  |  `- utils/
+|  |- modules/                # Feature modules (controller/service/repository/model/schema)
+|  |  |- auth/
+|  |  |- users/
+|  |  |- classes/
+|  |  |- assignments/
+|  |  |- submissions/
+|  |  |- test-cases/
+|  |  |- gradebook/
+|  |  |- dashboard/
+|  |  |- notifications/
+|  |  |- plagiarism/
+|  |  `- admin/
+|  |- services/               # Cross-cutting services (email, adapters, interfaces)
+|  |- repositories/           # Shared repositories only (base/shared query repos)
+|  |- models/                 # Shared models only (currently enrollment + model barrel)
+|  |- shared/                 # Config, DI container, errors, guards, mappers, utils
+|  |- lib/                    # Library/engine code (plagiarism engine)
+|  |- app.ts
+|  `- server.ts
+|- tests/
+|- package.json
+|- tsconfig.json
+`- vitest.config.ts
 ```
 
 ---
@@ -190,18 +131,18 @@ backend-ts/
 
 ### Controller-Service-Repository Pattern
 
-```
-┌──────────────┐
-│  Controller  │  ← Handles HTTP requests, validation
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│   Service    │  ← Business logic, domain rules
-└──────┬───────┘
-       │
-┌──────▼───────┐
-│  Repository  │  ← Data access, database queries
-└──────────────┘
+```text
++--------------+    Handles HTTP requests, validation
+|  Controller  |
++------+-------+
+       |
++------+-------+    Business logic, domain rules
+|   Service    |
++------+-------+
+       |
++------+-------+    Data access, database queries
+|  Repository  |
++--------------+
 ```
 
 ### Dependency Injection
@@ -211,17 +152,19 @@ Uses **tsyringe** for constructor injection:
 ```typescript
 @injectable()
 export class AuthService {
-  constructor(@inject("UserRepository") private userRepo: UserRepository) {}
+  constructor(
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository
+  ) {}
 }
 ```
 
 Resolve from container in controllers:
 
 ```typescript
-const authService = container.resolve<AuthService>("AuthService");
+const authService = container.resolve<AuthService>(DI_TOKENS.services.auth);
 ```
 
-### Feature Module Layer (Phase 4)
+### Feature Module Layer
 
 The backend now uses a module-first layout under `src/modules/*`.
 
