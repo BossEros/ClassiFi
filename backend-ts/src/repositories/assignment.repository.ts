@@ -28,28 +28,34 @@ export interface PendingTeacherTask {
 export interface CreateAssignmentData {
   classId: number
   assignmentName: string
-  description: string
+  instructions: string
+  instructionsImageUrl?: string | null
   programmingLanguage: ProgrammingLanguage
-  deadline: Date
+  deadline: Date | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
+  allowLateSubmissions?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 /** Data for updating an existing assignment */
 export interface UpdateAssignmentData {
   assignmentName?: string
-  description?: string
+  instructions?: string
+  instructionsImageUrl?: string | null
   programmingLanguage?: ProgrammingLanguage
-  deadline?: Date
+  deadline?: Date | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   isActive?: boolean
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
+  allowLateSubmissions?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 /**
@@ -241,14 +247,18 @@ export class AssignmentRepository extends BaseRepository<
       .values({
         classId: data.classId,
         assignmentName: data.assignmentName,
-        description: data.description,
+        instructions: data.instructions,
+        instructionsImageUrl: data.instructionsImageUrl ?? null,
         programmingLanguage: data.programmingLanguage,
-        deadline: data.deadline,
+        deadline: data.deadline ?? null,
         allowResubmission: data.allowResubmission ?? true,
         maxAttempts: data.maxAttempts ?? null,
         templateCode: data.templateCode ?? null,
         totalScore: data.totalScore ?? 100,
         scheduledDate: data.scheduledDate ?? null,
+        allowLateSubmissions: data.allowLateSubmissions ?? false,
+        latePenaltyConfig:
+          data.allowLateSubmissions === true ? (data.latePenaltyConfig ?? null) : null,
         isActive: true,
       })
       .returning()
@@ -293,7 +303,7 @@ export class AssignmentRepository extends BaseRepository<
     const result = await this.db
       .update(assignments)
       .set({
-        latePenaltyEnabled: enabled,
+        allowLateSubmissions: enabled,
         latePenaltyConfig: config,
       })
       .where(eq(assignments.id, assignmentId))
@@ -311,7 +321,7 @@ export class AssignmentRepository extends BaseRepository<
   ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null } | null> {
     const result = await this.db
       .select({
-        latePenaltyEnabled: assignments.latePenaltyEnabled,
+        allowLateSubmissions: assignments.allowLateSubmissions,
         latePenaltyConfig: assignments.latePenaltyConfig,
       })
       .from(assignments)
@@ -321,8 +331,18 @@ export class AssignmentRepository extends BaseRepository<
     if (!result[0]) return null
 
     return {
-      enabled: result[0].latePenaltyEnabled,
+      enabled: result[0].allowLateSubmissions,
       config: result[0].latePenaltyConfig,
     }
+  }
+
+  /**
+   * Update the last reminder sent timestamp for an assignment.
+   */
+  async updateLastReminderSentAt(assignmentId: number): Promise<void> {
+    await this.db
+      .update(assignments)
+      .set({ lastReminderSentAt: new Date() })
+      .where(eq(assignments.id, assignmentId))
   }
 }

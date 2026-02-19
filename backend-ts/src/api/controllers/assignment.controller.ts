@@ -108,7 +108,7 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
         tags: ["Assignments"],
         summary: "Update an assignment",
         description:
-          "Updates assignment details including title, description, and deadlines",
+          "Updates assignment details including title, instructions, and deadlines",
         params: toJsonSchema(AssignmentIdParamSchema),
         body: toJsonSchema(UpdateAssignmentRequestSchema),
         response: {
@@ -123,13 +123,18 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
 
         const { teacherId, ...assignmentUpdateData } = request.body
 
+        const parsedDeadline =
+          assignmentUpdateData.deadline === undefined
+            ? undefined
+            : assignmentUpdateData.deadline === null
+              ? null
+              : parseDate(assignmentUpdateData.deadline, "deadline")
+
         const updateRequestWithParsedDates = {
           assignmentId,
           teacherId,
           ...assignmentUpdateData,
-          deadline: assignmentUpdateData.deadline
-            ? parseDate(assignmentUpdateData.deadline, "deadline")
-            : undefined,
+          deadline: parsedDeadline,
           scheduledDate: assignmentUpdateData.scheduledDate
             ? parseDate(assignmentUpdateData.scheduledDate, "scheduledDate")
             : undefined,
@@ -374,4 +379,42 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
       },
     },
   )
+
+  /**
+   * POST /:assignmentId/send-reminder
+   * Send deadline reminder to students who haven't submitted
+   */
+  app.post<{
+    Params: { assignmentId: string }
+    Querystring: { teacherId: string }
+  }>("/:assignmentId/send-reminder", {
+    schema: {
+      tags: ["Assignments"],
+      summary: "Send reminder to non-submitters",
+      description:
+        "Sends deadline reminder notifications to students who haven't submitted the assignment",
+      params: toJsonSchema(AssignmentIdParamSchema),
+      querystring: toJsonSchema(TeacherIdQuerySchema),
+      response: {
+        200: toJsonSchema(SuccessMessageSchema),
+      },
+    },
+    handler: async (request, reply) => {
+      const assignmentId = parsePositiveInt(
+        request.params.assignmentId,
+        "Assignment ID",
+      )
+      const teacherId = parsePositiveInt(request.query.teacherId, "Teacher ID")
+
+      const result = await assignmentService.sendReminderToNonSubmitters(
+        assignmentId,
+        teacherId,
+      )
+
+      return reply.send({
+        success: true,
+        message: `Reminder sent to ${result.remindersSent} student${result.remindersSent !== 1 ? "s" : ""}`,
+      })
+    },
+  })
 }

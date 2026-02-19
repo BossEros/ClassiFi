@@ -8,6 +8,9 @@ import {
   InsufficientDownloadedFilesError,
   FileDownloadError,
 } from "../../shared/errors.js"
+import { createLogger } from "../../shared/logger.js"
+
+const logger = createLogger("SubmissionFileService")
 
 @injectable()
 export class SubmissionFileService {
@@ -51,8 +54,7 @@ export class SubmissionFileService {
           }),
         )
       } catch (error) {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.warn(
+        logger.warn(
           `Failed to download file for submission ${submission.id}:`,
           error,
         )
@@ -83,9 +85,13 @@ export class SubmissionFileService {
 
       return [leftContent, rightContent]
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Failed to download submission files:", error)
+      logger.error("Failed to download submission files:", error)
       throw new FileDownloadError(0, "Failed to download file content")
     }
   }
 }
+
+
+
+
+

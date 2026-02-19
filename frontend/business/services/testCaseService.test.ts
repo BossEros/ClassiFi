@@ -245,9 +245,9 @@ describe("testCaseService", () => {
       success: true,
       message: "Success",
       data: {
-        passedCount: 3,
-        totalCount: 5,
-        score: 60,
+        passed: 3,
+        total: 5,
+        percentage: 60,
         results: [
           {
             testCaseId: 1,
@@ -277,6 +277,31 @@ describe("testCaseService", () => {
       expect(result!.total).toBe(5)
       expect(result!.percentage).toBe(60)
       expect(result!.results).toHaveLength(1)
+    })
+
+    it("supports legacy test result summary fields", async () => {
+      vi.mocked(
+        assignmentRepository.getTestResultsForSubmissionById,
+      ).mockResolvedValue({
+        data: {
+          success: true,
+          message: "Success",
+          data: {
+            passedCount: 3,
+            totalCount: 5,
+            score: 60,
+            results: mockRawResults.data.results,
+          },
+        } as any,
+        status: 200,
+      })
+
+      const result = await testCaseService.getTestResults(1)
+
+      expect(result).not.toBeNull()
+      expect(result!.passed).toBe(3)
+      expect(result!.total).toBe(5)
+      expect(result!.percentage).toBe(60)
     })
 
     it("throws error for invalid submission ID", async () => {

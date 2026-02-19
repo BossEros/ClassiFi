@@ -4,7 +4,7 @@ import { z } from "zod"
 import { ClassService } from "@/services/class.service.js"
 import { AssignmentService } from "@/services/assignment.service.js"
 import { toJsonSchema } from "@/api/utils/swagger.js"
-import { parseDate, parseOptionalDate } from "@/shared/utils.js"
+import { parseOptionalDate } from "@/shared/utils.js"
 import {
   CreateClassRequestSchema,
   UpdateClassRequestSchema,
@@ -292,7 +292,10 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
         const { deadline, scheduledDate, ...assignmentData } = request.body
 
         try {
-          const parsedDeadlineDate = parseDate(deadline, "deadline date")
+          const parsedDeadlineDate = parseOptionalDate(
+            deadline,
+            "deadline date",
+          )
           const parsedScheduledDate = parseOptionalDate(
             scheduledDate,
             "scheduled date",

@@ -168,6 +168,7 @@ backend-ts/
 │   │   ├── container.ts      # DI container
 │   │   ├── database.ts       # Database connection
 │   │   ├── errors.ts         # Domain error classes
+│   │   ├── logger.ts         # Centralized pino logger wrapper
 │   │   ├── mappers.ts        # DTO mappers
 │   │   ├── supabase.ts       # Supabase clients
 │   │   └── transaction.ts    # Transaction support
@@ -343,6 +344,17 @@ The programming language is specified at assignment creation and enforced during
 | GET    | `/submissions/history/:assignmentId/:studentId` | Get submission history        |
 | GET    | `/submissions/assignment/:assignmentId`         | Get all submissions           |
 | GET    | `/submissions/student/:studentId`               | Get student's submissions     |
+
+**Assignment Instructions Content**:
+- Assignment create/update supports both text (`instructions`) and an optional image field (`instructionsImageUrl`)
+- Business rule requires at least one instructions surface: text or image
+- Assignment deadline is optional (`deadline` may be `null`) to support assignment with no due date
+- Assignment create/update also supports late submission policy fields (`allowLateSubmissions`, `latePenaltyConfig`)
+- If `allowLateSubmissions` is false, submissions after deadline are rejected when a deadline exists
+- If `allowLateSubmissions` is true, late submissions are accepted and penalties are computed from the stored config (or default fallback) when a deadline exists
+- Late penalty tiers apply immediately after the deadline (no grace-period window), with optional `rejectAfterHours` cutoff
+- Instruction images are stored in the `assignment-descriptions` bucket and are cleaned up on image replacement, assignment deletion, and class deletion
+- Storage setup is provisioned via SQL migration scripts under `backend-ts/drizzle/`
 
 ### Gradebook
 
@@ -852,6 +864,11 @@ class ClassService {
   - `grade`: Student's grade (null if not yet graded)
   - `maxGrade`: Maximum possible grade (defaults to 100)
 
+**Assignment Instructions Media Support**:
+- Assignment creation and updates support an optional instruction image (`instructionsImageUrl`)
+- Assignment responses include instruction image fields for rendering in teacher/student assignment views
+- Class-level cleanup includes best-effort deletion of assignment instruction images when classes are deleted
+
 ### SubmissionService
 
 Handles file submissions with validation:
@@ -1017,14 +1034,20 @@ const result = await withTransaction(async (tx) => {
 Declarative request validation:
 
 ```typescript
+import type { ValidatedRequest } from "@/api/plugins/zod-validation"
+
 app.post("/register", {
   preHandler: validateBody(RegisterRequestSchema),
   handler: async (request, reply) => {
-    const body = request.validatedBody as RegisterRequest;
+    const body = (request as ValidatedRequest<RegisterRequest>).validatedBody;
     // body is fully typed and validated
   },
 });
 ```
+
+Validation plugin notes:
+- `ValidatedRequest<TBody, TQuery, TParams>` provides typed access for validated fields.
+- `validatedBody`, `validatedQuery`, and `validatedParams` are attached by pre-handlers in `src/api/plugins/zod-validation.ts`.
 
 ### Swagger/OpenAPI
 
@@ -1041,6 +1064,22 @@ app.post('/login', {
   handler: ...
 });
 ```
+
+### Logging (Pino)
+
+Runtime logging is centralized through `src/shared/logger.ts`, which wraps `pino` behind a small `Logger` interface:
+
+```typescript
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("AuthService")
+logger.error("Failed to rollback Supabase user", { error })
+```
+
+Guidelines:
+- Use `createLogger("<ServiceOrModuleName>")` in services/controllers/plugins.
+- Prefer structured context objects over string interpolation for diagnostics.
+- Keep API responses generic and safe; log internal details only in server logs.
 
 ---
 

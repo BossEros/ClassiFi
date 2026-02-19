@@ -3,24 +3,31 @@ import { AssignmentRepository } from "../repositories/assignment.repository.js"
 import { TestCaseRepository } from "../repositories/testCase.repository.js"
 import { ClassRepository } from "../repositories/class.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
+import { SubmissionRepository } from "../repositories/submission.repository.js"
 import { NotificationService } from "./notification/notification.service.js"
+import { StorageService } from "./storage.service.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
 import {
   AssignmentNotFoundError,
   InvalidAssignmentDataError,
+  BadRequestError,
 } from "../shared/errors.js"
 import type {
   UpdateAssignmentServiceDTO,
   CreateAssignmentServiceDTO,
 } from "./service-dtos.js"
 import { settings } from "../shared/config.js"
+import { formatAssignmentDueDate } from "../shared/utils.js"
+import { createLogger } from "../shared/logger.js"
 
 /**
  * Business logic for assignment-related operations.
  * Follows SRP - handles only assignment concerns.
  * Uses domain errors for exceptional conditions.
  */
+const logger = createLogger("AssignmentService")
+
 @injectable()
 export class AssignmentService {
   constructor(
@@ -30,6 +37,10 @@ export class AssignmentService {
     @inject("TestCaseRepository") private testCaseRepo: TestCaseRepository,
     @inject("EnrollmentRepository")
     private enrollmentRepo: EnrollmentRepository,
+    @inject("SubmissionRepository")
+    private submissionRepo: SubmissionRepository,
+    @inject("StorageService")
+    private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
   ) {}
@@ -45,7 +56,8 @@ export class AssignmentService {
       classId,
       teacherId,
       assignmentName,
-      description,
+      instructions,
+      instructionsImageUrl,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -53,15 +65,28 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+      allowLateSubmissions,
+      latePenaltyConfig,
     } = data
 
     // Verify class exists and teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
+    const normalizedInstructions = instructions.trim()
+    const normalizedInstructionsImageUrl = this.normalizeNullableString(
+      instructionsImageUrl,
+    )
+
+    this.validateInstructionsContent(
+      normalizedInstructions,
+      normalizedInstructionsImageUrl,
+    )
+
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
       assignmentName,
-      description,
+      instructions: normalizedInstructions,
+      instructionsImageUrl: normalizedInstructionsImageUrl,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -69,12 +94,13 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+      allowLateSubmissions,
+      latePenaltyConfig,
     })
 
     // Notify enrolled students asynchronously (don't block assignment creation)
     this.notifyStudentsOfNewAssignment(assignment).catch((error) => {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Failed to send assignment notifications:", error)
+      logger.error("Failed to send assignment notifications:", error)
     })
 
     return toAssignmentDTO(assignment)
@@ -93,31 +119,52 @@ export class AssignmentService {
     const enrolledStudents =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
 
-    const notificationPromises = enrolledStudents.map((enrollment) =>
-      this.notificationService.createNotification(
-        enrollment.user.id,
-        "ASSIGNMENT_CREATED",
-        {
-          assignmentId: assignment.id,
-          assignmentTitle: assignment.assignmentName,
-          className: classData?.className || "Unknown Class",
-          classId: assignment.classId,
-          dueDate: assignment.deadline
-            ? new Date(assignment.deadline).toLocaleString("en-US", {
-                month: "numeric",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })
-            : "No deadline",
-          assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
-        },
+    const notificationTargets = enrolledStudents.map((enrollment) => ({
+      recipientUserId: enrollment.user.id,
+      notificationData: {
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        className: classData?.className || "Unknown Class",
+        classId: assignment.classId,
+        dueDate: formatAssignmentDueDate(assignment.deadline),
+        assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      },
+    }))
+
+    const settledNotificationResults = await Promise.allSettled(
+      notificationTargets.map((target) =>
+        this.notificationService.createNotification(
+          target.recipientUserId,
+          "ASSIGNMENT_CREATED",
+          target.notificationData,
+        ),
       ),
     )
 
-    await Promise.all(notificationPromises)
+    const failedRecipientUserIds: number[] = []
+
+    settledNotificationResults.forEach((settledResult, index) => {
+      if (settledResult.status === "fulfilled") {
+        return
+      }
+
+      const failedTarget = notificationTargets[index]
+      failedRecipientUserIds.push(failedTarget.recipientUserId)
+
+      logger.error("Failed to send assignment notification", {
+          assignmentId: assignment.id,
+          recipientUserId: failedTarget.recipientUserId,
+          notificationType: "ASSIGNMENT_CREATED",
+          notificationData: failedTarget.notificationData,
+          reason: settledResult.reason,
+      })
+    })
+
+    if (failedRecipientUserIds.length > 0) {
+      throw new Error(
+        `Failed to send assignment notifications for assignment ${assignment.id}. Failed recipients: ${failedRecipientUserIds.join(", ")}`,
+      )
+    }
   }
 
   /**
@@ -182,9 +229,14 @@ export class AssignmentService {
 
     // Validate business rule: deadline must be after scheduled date
     // Handle partial updates by comparing against existing values
-    const finalDeadline = updateData.deadline ?? existingAssignment.deadline
+    const finalDeadline =
+      updateData.deadline === undefined
+        ? existingAssignment.deadline
+        : updateData.deadline
     const finalScheduledDate =
-      updateData.scheduledDate ?? existingAssignment.scheduledDate
+      updateData.scheduledDate === undefined
+        ? existingAssignment.scheduledDate
+        : updateData.scheduledDate
 
     if (
       finalDeadline &&
@@ -196,13 +248,49 @@ export class AssignmentService {
       )
     }
 
+    const normalizedInstructions =
+      updateData.instructions !== undefined
+        ? updateData.instructions.trim()
+        : undefined
+    const normalizedInstructionsImageUrl =
+      updateData.instructionsImageUrl !== undefined
+        ? this.normalizeNullableString(updateData.instructionsImageUrl)
+        : undefined
+
+    const finalInstructions = (
+      normalizedInstructions ?? existingAssignment.instructions
+    ).trim()
+    const finalInstructionsImageUrl =
+      normalizedInstructionsImageUrl !== undefined
+        ? normalizedInstructionsImageUrl
+        : existingAssignment.instructionsImageUrl
+
+    this.validateInstructionsContent(
+      finalInstructions,
+      finalInstructionsImageUrl,
+    )
+
+    const previousInstructionsImageUrl = existingAssignment.instructionsImageUrl
+
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
       assignmentId,
-      updateData,
+      {
+        ...updateData,
+        instructions: normalizedInstructions,
+        instructionsImageUrl: normalizedInstructionsImageUrl,
+      },
     )
 
     if (!updatedAssignment) {
       throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    const nextInstructionsImageUrl = updatedAssignment.instructionsImageUrl
+    if (
+      previousInstructionsImageUrl &&
+      previousInstructionsImageUrl !== nextInstructionsImageUrl
+    ) {
+      await this.deleteInstructionsImageSafely(previousInstructionsImageUrl)
     }
 
     return toAssignmentDTO(updatedAssignment)
@@ -225,7 +313,56 @@ export class AssignmentService {
     // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
+    if (assignment.instructionsImageUrl) {
+      await this.deleteInstructionsImageSafely(assignment.instructionsImageUrl)
+    }
+
     await this.assignmentRepo.deleteAssignment(assignmentId)
+  }
+
+  /**
+   * Ensures assignment has at least one instructions surface.
+   */
+  private validateInstructionsContent(
+    instructions: string,
+    instructionsImageUrl: string | null | undefined,
+  ): void {
+    const hasTextInstructions = instructions.trim().length > 0
+    const hasImageInstructions = !!instructionsImageUrl?.trim()
+
+    if (!hasTextInstructions && !hasImageInstructions) {
+      throw new InvalidAssignmentDataError(
+        "Either instructions text or instructions image is required",
+      )
+    }
+  }
+
+  /**
+   * Normalizes optional text values by trimming and converting blanks to null.
+   */
+  private normalizeNullableString(
+    value: string | null | undefined,
+  ): string | null {
+    if (value === undefined || value === null) {
+      return null
+    }
+
+    const trimmedValue = value.trim()
+    return trimmedValue.length > 0 ? trimmedValue : null
+  }
+
+  /**
+   * Best-effort cleanup for assignment instructions image files.
+   */
+  private async deleteInstructionsImageSafely(imageUrl: string): Promise<void> {
+    try {
+      await this.storageService.deleteAssignmentInstructionsImage(imageUrl)
+    } catch (error) {
+      logger.error("Failed to delete assignment instructions image", {
+        imageUrl,
+        error,
+      })
+    }
   }
 
   /**
@@ -237,4 +374,111 @@ export class AssignmentService {
 
     return assignment ? toAssignmentDTO(assignment) : null
   }
+
+  /**
+   * Send deadline reminder notifications to students who haven't submitted.
+   * Only sends to students who are enrolled but have no submissions.
+   * Enforces a 24-hour cooldown to prevent spam.
+   *
+   * @param assignmentId - The assignment ID
+   * @param teacherId - The teacher ID (for authorization)
+   * @returns Object with count of reminders sent
+   * @throws BadRequestError if reminder was sent within the last 24 hours
+   */
+  async sendReminderToNonSubmitters(
+    assignmentId: number,
+    teacherId: number,
+  ): Promise<{ remindersSent: number }> {
+    // Get assignment and verify it exists
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+
+    if (!assignment) {
+      throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    // Verify teacher owns the class
+    await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
+
+    // Check cooldown: prevent sending reminders more than once per 24 hours
+    if (assignment.lastReminderSentAt) {
+      const hoursSinceLastReminder =
+        (Date.now() - assignment.lastReminderSentAt.getTime()) /
+        (1000 * 60 * 60)
+
+      if (hoursSinceLastReminder < 24) {
+        const hoursRemaining = Math.ceil(24 - hoursSinceLastReminder)
+        throw new BadRequestError(
+          `Reminder was already sent ${Math.floor(hoursSinceLastReminder)} hours ago. Please wait ${hoursRemaining} more hour(s) before sending another reminder.`,
+        )
+      }
+    }
+
+    // Get all enrolled students
+    const enrolledStudents =
+      await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
+
+    // Get all students who have submitted (latest submissions only)
+    const submissions = await this.submissionRepo.getSubmissionsByAssignment(
+      assignmentId,
+      true,
+    )
+    const submittedStudentIds = new Set(submissions.map((sub) => sub.studentId))
+
+    // Filter to students who haven't submitted
+    const nonSubmitters = enrolledStudents.filter(
+      (enrollment) => !submittedStudentIds.has(enrollment.user.id),
+    )
+
+    // Send notifications to non-submitters
+    const notificationPromises = nonSubmitters.map((enrollment) =>
+      this.notificationService
+        .createNotification(enrollment.user.id, "DEADLINE_REMINDER", {
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          dueDate: formatAssignmentDueDate(assignment.deadline),
+          assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        })
+        .then(() => ({
+          status: "fulfilled" as const,
+          userId: enrollment.user.id,
+        }))
+        .catch((error) => ({
+          status: "rejected" as const,
+          userId: enrollment.user.id,
+          error,
+        })),
+    )
+
+    const results = await Promise.all(notificationPromises)
+
+    // Count successful and failed notifications
+    const successCount = results.filter((r) => r.status === "fulfilled").length
+    const failedResults = results.filter(
+      (r): r is { status: "rejected"; userId: number; error: unknown } =>
+        r.status === "rejected",
+    )
+
+    // Log errors for failed notifications
+    if (failedResults.length > 0) {
+      failedResults.forEach(({ userId, error }) => {
+        logger.error(
+          `Failed to send deadline reminder for assignment ${assignment.id} to user ${userId}:`,
+          error,
+        )
+      })
+    }
+
+    // Update the last reminder sent timestamp only if at least one notification succeeded
+    if (successCount > 0) {
+      await this.assignmentRepo.updateLastReminderSentAt(assignmentId)
+    }
+
+    return { remindersSent: successCount }
+  }
 }
+
+
+
+
+
+

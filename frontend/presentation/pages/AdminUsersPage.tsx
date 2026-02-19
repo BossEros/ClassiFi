@@ -27,14 +27,15 @@ import { useToast } from "@/shared/context/ToastContext"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
 import type { User } from "@/business/models/auth/types"
+import { useDebouncedValue } from "@/presentation/hooks/useDebouncedValue"
+import { useDocumentClick } from "@/presentation/hooks/useDocumentClick"
+import { useRequestState } from "@/presentation/hooks/useRequestState"
 
 export function AdminUsersPage() {
   const navigate = useNavigate()
   const { showToast } = useToast()
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<
     "all" | "student" | "teacher" | "admin"
@@ -52,40 +53,34 @@ export function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
+  const { isLoading, error, setError, executeRequest } = useRequestState(true)
 
   const limit = 20
 
-  // Debounced search
-  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const debouncedSearch = useDebouncedValue(searchQuery, 300)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-      setPage(1) // Reset to first page on search
-    }, 300)
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+    setPage(1)
+  }, [debouncedSearch])
 
   // Fetch users
   const fetchUsers = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
-      const response = await adminService.getAllUsers({
-        page,
-        limit,
-        search: debouncedSearch || undefined,
-        role: roleFilter,
-      })
-      setUsers(response.data)
-      setTotalPages(response.totalPages)
-      setTotal(response.total)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load users")
-    } finally {
-      setIsLoading(false)
-    }
-  }, [page, limit, debouncedSearch, roleFilter])
+    await executeRequest({
+      requestFn: () =>
+        adminService.getAllUsers({
+          page,
+          limit,
+          search: debouncedSearch || undefined,
+          role: roleFilter,
+        }),
+      onSuccess: (response) => {
+        setUsers(response.data)
+        setTotalPages(response.totalPages)
+        setTotal(response.total)
+      },
+      fallbackErrorMessage: "Failed to load users",
+    })
+  }, [page, limit, debouncedSearch, roleFilter, executeRequest])
 
   useEffect(() => {
     const user = getCurrentUser()
@@ -106,15 +101,12 @@ export function AdminUsersPage() {
     }
   }, [currentUser, fetchUsers])
 
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setActiveDropdown(null)
-      setShowFilterDropdown(false)
-    }
-    document.addEventListener("click", handleClickOutside)
-    return () => document.removeEventListener("click", handleClickOutside)
+  const handleClickOutside = useCallback(() => {
+    setActiveDropdown(null)
+    setShowFilterDropdown(false)
   }, [])
+
+  useDocumentClick(handleClickOutside)
 
   const handleDropdownClick = (e: React.MouseEvent, userId: number) => {
     e.stopPropagation()
@@ -186,7 +178,7 @@ export function AdminUsersPage() {
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all font-medium text-sm"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 border border-blue-500/40 transition-colors font-medium text-sm"
             >
               <UserPlus className="w-4 h-4" />
               <span>Add User</span>
@@ -384,7 +376,7 @@ export function AdminUsersPage() {
                           <button
                             onClick={(e) => handleDropdownClick(e, user.id)}
                             disabled={actionLoading === user.id}
-                            className={`p-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-all ${activeDropdown?.id === user.id ? "bg-white/10 text-white shadow-lg shadow-white/5" : ""}`}
+                            className={`p-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-colors ${activeDropdown?.id === user.id ? "bg-white/10 text-white" : ""}`}
                           >
                             {actionLoading === user.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

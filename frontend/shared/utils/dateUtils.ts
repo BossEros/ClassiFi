@@ -5,8 +5,16 @@
 /**
  * Format a date/string into a human-readable deadline format
  */
-export function formatDeadline(date: Date | string): string {
+export function formatDeadline(date: Date | string | null | undefined): string {
+  if (!date) {
+    return "No deadline"
+  }
+
   const dateObj = typeof date === "string" ? new Date(date) : date
+  if (Number.isNaN(dateObj.getTime())) {
+    return "No deadline"
+  }
+
   const options: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -24,8 +32,14 @@ export function formatDeadline(date: Date | string): string {
  * - < 3 days: yellow
  * - Otherwise: gray
  */
-export function getDeadlineColor(date: Date | string): string {
+export function getDeadlineColor(
+  date: Date | string | null | undefined,
+): string {
+  if (!date) return "text-gray-400"
+
   const dateObj = typeof date === "string" ? new Date(date) : date
+  if (Number.isNaN(dateObj.getTime())) return "text-gray-400"
+
   const now = new Date()
   const diffTime = dateObj.getTime() - now.getTime()
   const diffDays = diffTime / (1000 * 60 * 60 * 24)
@@ -79,19 +93,34 @@ export function formatTimeAgo(date: Date | string): string {
  */
 export function isLateSubmission(
   submittedAt: Date | string,
-  deadline: Date | string,
+  deadline: Date | string | null | undefined,
 ): boolean {
+  if (!deadline) {
+    return false
+  }
+
   const submitted =
     typeof submittedAt === "string" ? new Date(submittedAt) : submittedAt
   const due = typeof deadline === "string" ? new Date(deadline) : deadline
+
+  if (Number.isNaN(submitted.getTime()) || Number.isNaN(due.getTime())) {
+    return false
+  }
+
   return submitted.getTime() > due.getTime()
 }
 
 /**
  * Format time remaining until a deadline (e.g., "3d 5h", "2h 30m", "Past due")
  */
-export function formatTimeRemaining(deadline: Date | string): string {
+export function formatTimeRemaining(
+  deadline: Date | string | null | undefined,
+): string {
+  if (!deadline) return "No deadline"
+
   const dateObj = typeof deadline === "string" ? new Date(deadline) : deadline
+  if (Number.isNaN(dateObj.getTime())) return "No deadline"
+
   const diff = dateObj.getTime() - new Date().getTime()
 
   if (diff <= 0) return "Past due"
@@ -107,8 +136,18 @@ export function formatTimeRemaining(deadline: Date | string): string {
 /**
  * Get human-readable deadline status (e.g., "Due today", "Due in 3 days", "Overdue")
  */
-export function getDeadlineStatus(deadline: Date | string): string {
+export function getDeadlineStatus(
+  deadline: Date | string | null | undefined,
+): string {
+  if (!deadline) {
+    return "No deadline"
+  }
+
   const dateObj = typeof deadline === "string" ? new Date(deadline) : deadline
+  if (Number.isNaN(dateObj.getTime())) {
+    return "No deadline"
+  }
+
   const now = new Date()
 
   // Normalize both dates to midnight (start of day) for calendar date comparison
@@ -132,9 +171,20 @@ export function getDeadlineStatus(deadline: Date | string): string {
 /**
  * Format a date/string into a consistent datetime format
  * Used for displaying submission times, etc.
+ * Returns "N/A" when the input is missing or invalid.
  */
-export function formatDateTime(date: Date | string): string {
+export function formatDateTime(
+  date: Date | string | null | undefined,
+): string {
+  if (!date) {
+    return "N/A"
+  }
+
   const dateObj = typeof date === "string" ? new Date(date) : date
+  if (Number.isNaN(dateObj.getTime())) {
+    return "N/A"
+  }
+
   return dateObj.toLocaleString("en-US", {
     month: "short",
     day: "numeric",

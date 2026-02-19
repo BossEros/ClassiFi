@@ -96,6 +96,10 @@ describe("SubmissionService", () => {
         penaltyPercent: 0,
         isRejected: false,
       }),
+      getDefaultConfig: vi.fn().mockReturnValue({
+        tiers: [{ hoursLate: 24, penaltyPercent: 10 }],
+        rejectAfterHours: 120,
+      }),
       applyPenalty: vi.fn(
         (score: number, penalty: number) => score * (1 - penalty / 100),
       ),
@@ -182,6 +186,36 @@ describe("SubmissionService", () => {
       await expect(
         submissionService.submitAssignment(1, 1, validFile),
       ).rejects.toThrow(DeadlinePassedError)
+    })
+
+    it("should allow late submission with default config when late submissions are enabled", async () => {
+      const pastDeadline = new Date(Date.now() - 1000)
+      const assignment = createMockAssignment({
+        isActive: true,
+        deadline: pastDeadline,
+        programmingLanguage: "python",
+        allowLateSubmissions: true,
+        latePenaltyConfig: null,
+      })
+      const mockSubmission = createMockSubmission({ id: 777 })
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
+      mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
+      mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission)
+      mockLatePenaltyService.calculatePenalty.mockReturnValue({
+        isLate: true,
+        hoursLate: 2,
+        penaltyPercent: 10,
+        gradeMultiplier: 0.9,
+        tierLabel: "Up to 24 hours late (-10%)",
+      })
+
+      const result = await submissionService.submitAssignment(1, 1, validFile)
+
+      expect(result.id).toBe(777)
+      expect(mockLatePenaltyService.getDefaultConfig).toHaveBeenCalled()
+      expect(mockLatePenaltyService.calculatePenalty).toHaveBeenCalled()
     })
 
     it("should allow submission when deadline is null", async () => {

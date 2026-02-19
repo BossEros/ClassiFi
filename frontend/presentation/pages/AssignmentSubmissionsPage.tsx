@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
-import { Card, CardContent } from "@/presentation/components/ui/Card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
@@ -10,8 +15,6 @@ import {
   Search,
   Shield,
   Calendar,
-  Code,
-  FileText,
   Inbox,
   Loader2,
 } from "lucide-react"
@@ -23,6 +26,7 @@ import {
 import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
 import { formatDeadline } from "@/shared/utils/dateUtils"
 import { useToast } from "@/shared/context/ToastContext"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import type {
   AssignmentDetail,
   Submission,
@@ -31,6 +35,7 @@ import type {
 export function AssignmentSubmissionsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const navigate = useNavigate()
+  const [currentUser] = useState(() => getCurrentUser())
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -101,13 +106,21 @@ export function AssignmentSubmissionsPage() {
 
   // Calculate statistics
   const totalSubmissions = submissions.length
+  const assignmentDeadline = assignment?.deadline
+    ? new Date(assignment.deadline)
+    : null
   const onTimeCount = submissions.filter(
     (sub) =>
-      assignment &&
-      new Date(sub.submittedAt).getTime() <=
-        new Date(assignment.deadline).getTime(),
+      !assignmentDeadline ||
+      new Date(sub.submittedAt).getTime() <= assignmentDeadline.getTime(),
   ).length
   const lateCount = totalSubmissions - onTimeCount
+
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
 
   // Handle Check Similarities button
   const handleCheckSimilarities = async () => {
@@ -144,11 +157,11 @@ export function AssignmentSubmissionsPage() {
   // Loading state
   if (loading) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center h-96">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto"></div>
-            <p className="text-slate-300">Loading coursework submissions...</p>
+            <p className="text-slate-300">Loading assignment submissions...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -158,12 +171,12 @@ export function AssignmentSubmissionsPage() {
   // Error state
   if (error || !assignment) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <Card className="bg-red-500/10 border-red-500/20">
           <CardContent className="p-6">
             <div className="flex items-center gap-3 text-red-400">
               <Inbox className="w-5 h-5" />
-              <p className="font-medium">{error || "Coursework not found"}</p>
+              <p className="font-medium">{error || "Assignment not found"}</p>
             </div>
             <BackButton to={-1} label="Go Back" className="mt-4" />
           </CardContent>
@@ -173,7 +186,7 @@ export function AssignmentSubmissionsPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="space-y-6 max-w-[1600px]">
         {/* Header Section */}
         {/* Back Button */}
@@ -188,29 +201,41 @@ export function AssignmentSubmissionsPage() {
             {assignment.assignmentName}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>Due: {formatDeadline(assignment.deadline)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Code className="w-4 h-4" />
-              <span className="capitalize">
-                {assignment.programmingLanguage}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span>{assignment.className}</span>
-            </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-fit">
+            <Calendar className="w-3.5 h-3.5 text-blue-400" />
+            <span className="text-xs font-medium text-blue-100">
+              {assignment.deadline
+                ? `Due ${formatDeadline(assignment.deadline)}`
+                : "No deadline"}
+            </span>
           </div>
-
-          {assignment.description && (
-            <p className="text-gray-300 text-sm leading-relaxed max-w-3xl">
-              {assignment.description}
-            </p>
-          )}
         </div>
+
+        {/* Instructions Card */}
+        <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+          <CardHeader>
+            <CardTitle>Instructions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {assignment.instructions && (
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {assignment.instructions}
+                </p>
+              )}
+
+              {assignment.instructionsImageUrl && (
+                <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                  <img
+                    src={assignment.instructionsImageUrl}
+                    alt={assignment.assignmentName}
+                    className="w-full max-h-[28rem] object-contain bg-black/30"
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Statistics Card */}
         <Card className="bg-white/5 backdrop-blur-sm border-white/10">
@@ -258,7 +283,7 @@ export function AssignmentSubmissionsPage() {
             )}
           </Button>
 
-          <div className="flex-1 max-w-md relative">
+          <div className="flex-1 max-w-[28rem] relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             <Input
               type="text"
@@ -276,17 +301,17 @@ export function AssignmentSubmissionsPage() {
             // Empty State
             <Card className="bg-white/5 backdrop-blur-sm border-white/10">
               <CardContent className="p-12">
-                <div className="text-center space-y-4">
+                <div className="w-full text-center space-y-4 flex flex-col items-center">
                   <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
                     <Inbox className="w-8 h-8 text-gray-500" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 w-full max-w-[36rem]">
                     <h3 className="text-lg font-semibold text-white">
                       {searchQuery
                         ? "No matching submissions"
                         : "No submissions yet"}
                     </h3>
-                    <p className="text-sm text-gray-400 max-w-md mx-auto">
+                    <p className="block w-full text-sm text-gray-400 leading-relaxed text-center whitespace-normal break-normal">
                       {searchQuery
                         ? `No submissions found matching "${searchQuery}"`
                         : "Students haven't submitted their work yet. Check back later."}
@@ -307,7 +332,9 @@ export function AssignmentSubmissionsPage() {
                 <SubmissionCard
                   key={submission.id}
                   submission={submission}
-                  deadline={new Date(assignment.deadline)}
+                  deadline={
+                    assignment.deadline ? new Date(assignment.deadline) : null
+                  }
                   onClick={handleViewSubmission}
                 />
               ))}

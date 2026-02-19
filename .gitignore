@@ -192,4 +192,9 @@ judge0/postgres-data/
 .gemini/
 .Jules/
 .kiro/
+.cursor/
 
+
+frontend/lint-errors.txt
+frontend/remaining-errors.txt
+frontend/test_output.txt

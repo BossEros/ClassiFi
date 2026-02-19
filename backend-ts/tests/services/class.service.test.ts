@@ -38,15 +38,22 @@ describe("ClassService", () => {
       deleteClass: vi.fn(),
     } as any
 
-    mockAssignmentRepo = {} as any
+    mockAssignmentRepo = {
+      getAssignmentsByClassId: vi.fn(),
+    } as any
     mockEnrollmentRepo = {} as any
 
     mockUserRepo = {
       getUserById: vi.fn(),
     } as any
 
-    mockSubmissionRepo = {} as any
-    mockStorageService = {} as any
+    mockSubmissionRepo = {
+      getSubmissionsByClass: vi.fn(),
+    } as any
+    mockStorageService = {
+      deleteSubmissionFiles: vi.fn(),
+      deleteAssignmentInstructionsImage: vi.fn(),
+    } as any
 
     classService = new ClassService(
       mockClassRepo as unknown as ClassRepository,
@@ -239,6 +246,8 @@ describe("ClassService", () => {
       const existingClass = createMockClass({ teacherId: 1 })
       mockClassRepo.getClassById!.mockResolvedValue(existingClass)
       mockClassRepo.deleteClass!.mockResolvedValue(true)
+      mockSubmissionRepo.getSubmissionsByClass!.mockResolvedValue([])
+      mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([])
 
       await classService.deleteClass(1, 1)
 

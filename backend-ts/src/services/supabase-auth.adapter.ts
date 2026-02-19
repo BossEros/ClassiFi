@@ -4,6 +4,9 @@ import {
   EmailNotVerifiedError,
   InvalidCredentialsError,
 } from "@/shared/errors.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("SupabaseAuthAdapter")
 
 export interface AuthUser {
   id: string
@@ -49,9 +52,8 @@ export class SupabaseAuthAdapter {
     const { error } = await supabase.auth.admin.deleteUser(supabaseUserId)
 
     if (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
       // Log but don't throw - deletion should be idempotent
-      console.error("Failed to delete user from Supabase Auth:", error)
+      logger.error("Failed to delete user from Supabase Auth:", error)
     }
   }
 
@@ -156,8 +158,7 @@ export class SupabaseAuthAdapter {
 
           if (isRetryable && attempt < maxRetries) {
             const delay = Math.pow(2, attempt) * 100 // 200ms, 400ms, 800ms
-            // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-            console.warn(
+            logger.warn(
               `[Auth] Supabase connection error (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`,
             )
             await new Promise((resolve) => setTimeout(resolve, delay))
@@ -184,15 +185,13 @@ export class SupabaseAuthAdapter {
 
         if (isRetryable && attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 100
-          // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-          console.warn(
+          logger.warn(
             `[Auth] Supabase request failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms...`,
           )
           await new Promise((resolve) => setTimeout(resolve, delay))
           continue
         }
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error(
+        logger.error(
           `[Auth] Supabase auth failed after ${attempt} attempts:`,
           lastError.message,
         )
@@ -219,3 +218,7 @@ export class SupabaseAuthAdapter {
     }
   }
 }
+
+
+
+

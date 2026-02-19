@@ -243,9 +243,9 @@ describe("ClassDetailPage - Pagination", () => {
       expect(screen.getByText("Student 11")).toBeInTheDocument()
     })
 
-    // Switch to Coursework tab
-    const courseworkTab = screen.getByRole("tab", { name: /coursework/i })
-    await userEvent.click(courseworkTab)
+    // Switch to Assignments tab
+    const assignmentsTab = screen.getByRole("tab", { name: /assignments/i })
+    await userEvent.click(assignmentsTab)
 
     // Switch back to Students tab
     await userEvent.click(studentsTab)

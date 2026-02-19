@@ -7,12 +7,12 @@ describe("ClassTabs", () => {
   it("renders all tabs", () => {
     const onTabChange = vi.fn()
     render(
-      <ClassTabs activeTab="coursework" onTabChange={onTabChange}>
+      <ClassTabs activeTab="assignments" onTabChange={onTabChange}>
         <div>Content</div>
       </ClassTabs>,
     )
 
-    expect(screen.getByText("Coursework")).toBeInTheDocument()
+    expect(screen.getByText("Assignments")).toBeInTheDocument()
     expect(screen.getByText("Students")).toBeInTheDocument()
     expect(screen.getByText("Calendar")).toBeInTheDocument()
   })
@@ -34,7 +34,7 @@ describe("ClassTabs", () => {
     const user = userEvent.setup()
     const onTabChange = vi.fn()
     render(
-      <ClassTabs activeTab="coursework" onTabChange={onTabChange}>
+      <ClassTabs activeTab="assignments" onTabChange={onTabChange}>
         <div>Content</div>
       </ClassTabs>,
     )
@@ -46,7 +46,7 @@ describe("ClassTabs", () => {
   it("renders children content", () => {
     const onTabChange = vi.fn()
     render(
-      <ClassTabs activeTab="coursework" onTabChange={onTabChange}>
+      <ClassTabs activeTab="assignments" onTabChange={onTabChange}>
         <div>Test Content</div>
       </ClassTabs>,
     )
@@ -69,19 +69,19 @@ describe("ClassTabs", () => {
   it("sets aria-controls for each tab", () => {
     const onTabChange = vi.fn()
     render(
-      <ClassTabs activeTab="coursework" onTabChange={onTabChange}>
+      <ClassTabs activeTab="assignments" onTabChange={onTabChange}>
         <div>Content</div>
       </ClassTabs>,
     )
 
-    const courseworkTab = screen.getByText("Coursework").closest("button")
-    expect(courseworkTab).toHaveAttribute("aria-controls", "coursework-panel")
+    const assignmentsTab = screen.getByText("Assignments").closest("button")
+    expect(assignmentsTab).toHaveAttribute("aria-controls", "assignments-panel")
   })
 
   it("renders icons for each tab", () => {
     const onTabChange = vi.fn()
     const { container } = render(
-      <ClassTabs activeTab="coursework" onTabChange={onTabChange}>
+      <ClassTabs activeTab="assignments" onTabChange={onTabChange}>
         <div>Content</div>
       </ClassTabs>,
     )

@@ -1,6 +1,7 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify"
 
 import { ApiError } from "@/shared/errors.js"
+import { createLogger } from "@/shared/logger.js"
 
 export {
   ApiError,
@@ -9,6 +10,8 @@ export {
   ForbiddenError,
   NotFoundError,
 } from "@/shared/errors.js"
+
+const logger = createLogger("ErrorHandler")
 
 /** Global error handler for Fastify */
 export function errorHandler(
@@ -19,10 +22,13 @@ export function errorHandler(
   const statusCode = error instanceof ApiError ? error.statusCode : 500
   const message = error.message || "Internal Server Error"
 
-  // Log error in development
+  // Preserve current behavior: detailed logging in development
   if (process.env.ENVIRONMENT === "development") {
-    console.error(`[ERROR] ${statusCode} - ${message}`)
-    console.error(error.stack)
+    logger.error("Request handling error", {
+      statusCode,
+      message,
+      stack: error.stack,
+    })
   }
 
   reply.status(statusCode).send({

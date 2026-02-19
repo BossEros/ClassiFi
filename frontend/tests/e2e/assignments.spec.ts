@@ -94,9 +94,9 @@ test.describe("Assignment Management", () => {
         })
       })
 
-      // Click Add Coursework button
-      await page.getByRole("button", { name: /add coursework/i }).click()
-      await expect(page).toHaveURL(/\/dashboard\/classes\/1\/coursework\/new/)
+      // Click Add Assignment button
+      await page.getByRole("button", { name: /add assignment/i }).click()
+      await expect(page).toHaveURL(/\/dashboard\/classes\/1\/assignments\/new/)
 
       // Fill in assignment details using IDs
       await page.locator("#assignmentName").fill("Hello World in Python")
@@ -139,12 +139,12 @@ test.describe("Assignment Management", () => {
       })
 
       // Submit
-      await page.getByRole("button", { name: /create coursework/i }).click()
+      await page.getByRole("button", { name: /create assignment/i }).click()
 
       // Verify success and list
       await expect(page).toHaveURL(/\/dashboard\/classes\/1$/)
       await expect(
-        page.getByText(/coursework created successfully/i),
+        page.getByText(/assignment created successfully/i),
       ).toBeVisible()
       await expect(page.getByText("Hello World in Python")).toBeVisible()
     })
@@ -208,7 +208,7 @@ test.describe("Assignment Management", () => {
       await page.goto("/dashboard")
     })
 
-    test("should successfully submit coursework", async ({ page }) => {
+    test("should successfully submit assignment", async ({ page }) => {
       // Navigate to assignment
       await page.getByText("Hello World in Python").first().click()
       await expect(page).toHaveURL(/\/dashboard\/assignments\/101/)

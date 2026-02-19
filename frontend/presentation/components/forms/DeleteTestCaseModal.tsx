@@ -44,7 +44,7 @@ export function DeleteTestCaseModal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4"
+      className="fixed inset-0 z-[10000] grid place-items-center p-4"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Backdrop */}

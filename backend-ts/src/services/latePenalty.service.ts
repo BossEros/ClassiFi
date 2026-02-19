@@ -2,6 +2,19 @@ import { injectable, inject } from "tsyringe"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
 import { type LatePenaltyConfig } from "@/models/index.js"
 
+interface LegacyPenaltyTier {
+  hoursLate?: number
+  hoursAfterGrace?: number
+  penaltyPercent: number
+}
+
+interface LegacyLatePenaltyConfig {
+  tiers?: LegacyPenaltyTier[]
+  rejectAfterHours?: number | null
+}
+
+type LatePenaltyConfigInput = LatePenaltyConfig | LegacyLatePenaltyConfig
+
 /**
  * Result of a late penalty calculation.
  */
@@ -10,7 +23,7 @@ export interface PenaltyResult {
   hoursLate: number
   penaltyPercent: number
   gradeMultiplier: number // e.g., 0.9 for 10% penalty
-  tierLabel: string // e.g., "24-48 hours late"
+  tierLabel: string // e.g., "Up to 24 hours late (-10%)"
 }
 
 /**
@@ -18,13 +31,12 @@ export interface PenaltyResult {
  * Used when an assignment doesn't have a specific config.
  */
 export const DEFAULT_PENALTY_CONFIG: LatePenaltyConfig = {
-  gracePeriodHours: 24,
   tiers: [
-    { hoursAfterGrace: 24, penaltyPercent: 10 }, // Up to 24h after grace: -10%
-    { hoursAfterGrace: 48, penaltyPercent: 25 }, // Up to 48h after grace: -25%
-    { hoursAfterGrace: 72, penaltyPercent: 50 }, // Up to 72h after grace: -50%
+    { hoursLate: 24, penaltyPercent: 10 }, // Up to 24h late: -10%
+    { hoursLate: 48, penaltyPercent: 25 }, // Up to 48h late: -25%
+    { hoursLate: 72, penaltyPercent: 50 }, // Up to 72h late: -50%
   ],
-  rejectAfterHours: 120, // 5 days after grace
+  rejectAfterHours: 120, // 5 days late
 }
 
 /**
@@ -46,21 +58,18 @@ export class LatePenaltyService {
     deadline: Date,
     config: LatePenaltyConfig,
   ): PenaltyResult {
+    const normalizedConfig = this.normalizeConfig(config)
     const hoursLate = this.getHoursLate(submissionDate, deadline)
 
     if (hoursLate <= 0) {
       return this.createOnTimeResult()
     }
 
-    if (hoursLate <= config.gracePeriodHours) {
-      return this.createGracePeriodResult(hoursLate)
-    }
-
-    if (this.isRejected(hoursLate, config.rejectAfterHours)) {
+    if (this.isRejected(hoursLate, normalizedConfig.rejectAfterHours)) {
       return this.createRejectedResult(hoursLate)
     }
 
-    return this.calculateTierPenalty(hoursLate, config)
+    return this.calculateTierPenalty(hoursLate, normalizedConfig)
   }
 
   /**
@@ -87,7 +96,9 @@ export class LatePenaltyService {
 
     return {
       enabled: penaltyConfig.enabled,
-      config: penaltyConfig.config ?? DEFAULT_PENALTY_CONFIG,
+      config: this.normalizeConfig(
+        penaltyConfig.config ?? DEFAULT_PENALTY_CONFIG,
+      ),
     }
   }
 
@@ -99,34 +110,32 @@ export class LatePenaltyService {
   async setAssignmentConfig(
     assignmentId: number,
     enabled: boolean,
-    config: LatePenaltyConfig,
+    config: LatePenaltyConfigInput,
   ): Promise<boolean> {
-    // Validate gracePeriodHours
-    if (config.gracePeriodHours < 0) {
-      throw new Error(
-        "Invalid late penalty configuration: gracePeriodHours must be non-negative",
-      )
-    }
+    const normalizedConfig = this.normalizeConfig(config)
 
     // Validate rejectAfterHours (use != null to catch both null and undefined)
-    if (config.rejectAfterHours != null && config.rejectAfterHours < 0) {
+    if (
+      normalizedConfig.rejectAfterHours != null &&
+      normalizedConfig.rejectAfterHours < 0
+    ) {
       throw new Error(
         "Invalid late penalty configuration: rejectAfterHours must be non-negative",
       )
     }
 
     // Validate tiers array
-    if (!Array.isArray(config.tiers)) {
+    if (!Array.isArray(normalizedConfig.tiers)) {
       throw new Error(
         "Invalid late penalty configuration: tiers must be an array",
       )
     }
 
     // Validate individual tiers
-    for (const tier of config.tiers) {
-      if (tier.hoursAfterGrace < 0) {
+    for (const tier of normalizedConfig.tiers) {
+      if (tier.hoursLate < 0) {
         throw new Error(
-          "Invalid late penalty configuration: tier hoursAfterGrace must be non-negative",
+          "Invalid late penalty configuration: tier hoursLate must be non-negative",
         )
       }
       if (tier.penaltyPercent < 0 || tier.penaltyPercent > 100) {
@@ -136,16 +145,18 @@ export class LatePenaltyService {
       }
     }
 
-    // Validate logical consistency: rejectAfterHours must be >= gracePeriodHours + max tier hours
-    if (config.rejectAfterHours != null && config.tiers.length > 0) {
+    // Validate logical consistency: rejectAfterHours must be >= max tier hours
+    if (
+      normalizedConfig.rejectAfterHours != null &&
+      normalizedConfig.tiers.length > 0
+    ) {
       const maxTierHours = Math.max(
-        ...config.tiers.map((tier) => tier.hoursAfterGrace),
+        ...normalizedConfig.tiers.map((tier) => tier.hoursLate),
       )
-      const minimumRejectHours = config.gracePeriodHours + maxTierHours
 
-      if (config.rejectAfterHours < minimumRejectHours) {
+      if (normalizedConfig.rejectAfterHours < maxTierHours) {
         throw new Error(
-          `Invalid late penalty configuration: rejectAfterHours (${config.rejectAfterHours}) must be >= gracePeriodHours (${config.gracePeriodHours}) + max tier hours (${maxTierHours}) = ${minimumRejectHours}`,
+          `Invalid late penalty configuration: rejectAfterHours (${normalizedConfig.rejectAfterHours}) must be >= max tier hours (${maxTierHours})`,
         )
       }
     }
@@ -153,7 +164,7 @@ export class LatePenaltyService {
     return await this.assignmentRepo.setLatePenaltyConfig(
       assignmentId,
       enabled,
-      config,
+      normalizedConfig,
     )
   }
 
@@ -187,19 +198,6 @@ export class LatePenaltyService {
   }
 
   /**
-   * Create result for submission within grace period.
-   */
-  private createGracePeriodResult(hoursLate: number): PenaltyResult {
-    return {
-      isLate: true,
-      hoursLate,
-      penaltyPercent: 0,
-      gradeMultiplier: 1.0,
-      tierLabel: "Within grace period",
-    }
-  }
-
-  /**
    * Check if submission should be rejected due to being too late.
    */
   private isRejected(
@@ -229,10 +227,9 @@ export class LatePenaltyService {
     hoursLate: number,
     config: LatePenaltyConfig,
   ): PenaltyResult {
-    const hoursAfterGrace = hoursLate - config.gracePeriodHours
     const sortedTiers = this.sortTiersByHours(config.tiers)
     const { penaltyPercent, tierLabel } = this.findApplicableTier(
-      hoursAfterGrace,
+      hoursLate,
       sortedTiers,
     )
 
@@ -248,20 +245,18 @@ export class LatePenaltyService {
   /**
    * Sort penalty tiers by hours in ascending order.
    */
-  private sortTiersByHours(
-    tiers: Array<{ hoursAfterGrace: number; penaltyPercent: number }>,
-  ) {
-    return [...tiers].sort((a, b) => a.hoursAfterGrace - b.hoursAfterGrace)
+  private sortTiersByHours(tiers: LatePenaltyConfig["tiers"]) {
+    return [...tiers].sort((a, b) => a.hoursLate - b.hoursLate)
   }
 
   /**
-   * Find the applicable penalty tier for the given hours after grace period.
-   * Tiers are treated as upper bounds: returns the first tier where hoursAfterGrace <= tier.hoursAfterGrace.
-   * If hoursAfterGrace exceeds all tiers, returns the last tier's penalty.
+   * Find the applicable penalty tier for the given hours late.
+   * Tiers are treated as upper bounds: returns the first tier where hoursLate <= tier.hoursLate.
+   * If hoursLate exceeds all tiers, returns the last tier's penalty.
    */
   private findApplicableTier(
-    hoursAfterGrace: number,
-    sortedTiers: Array<{ hoursAfterGrace: number; penaltyPercent: number }>,
+    hoursLate: number,
+    sortedTiers: LatePenaltyConfig["tiers"],
   ): { penaltyPercent: number; tierLabel: string } {
     // Handle empty tiers array
     if (sortedTiers.length === 0) {
@@ -271,21 +266,53 @@ export class LatePenaltyService {
       }
     }
 
-    // Find the first tier where hoursAfterGrace is within the upper bound
+    // Find the first tier where hoursLate is within the upper bound
     for (const tier of sortedTiers) {
-      if (hoursAfterGrace <= tier.hoursAfterGrace) {
+      if (hoursLate <= tier.hoursLate) {
         return {
           penaltyPercent: tier.penaltyPercent,
-          tierLabel: `Up to ${tier.hoursAfterGrace} hours late (-${tier.penaltyPercent}%)`,
+          tierLabel: `Up to ${tier.hoursLate} hours late (-${tier.penaltyPercent}%)`,
         }
       }
     }
 
-    // If hoursAfterGrace exceeds all tier upper bounds, use the last tier
+    // If hoursLate exceeds all tier upper bounds, use the last tier
     const lastTier = sortedTiers[sortedTiers.length - 1]
     return {
       penaltyPercent: lastTier.penaltyPercent,
-      tierLabel: `${lastTier.hoursAfterGrace}+ hours late (-${lastTier.penaltyPercent}%)`,
+      tierLabel: `${lastTier.hoursLate}+ hours late (-${lastTier.penaltyPercent}%)`,
+    }
+  }
+
+  /**
+   * Normalize configuration for legacy payloads and ensure current shape.
+   */
+  private normalizeConfig(config: LatePenaltyConfigInput): LatePenaltyConfig {
+    const legacyTiers = Array.isArray(config.tiers) ? config.tiers : []
+
+    return {
+      tiers: legacyTiers.map((tier) => {
+        let hoursLate: number
+
+        if (typeof tier.hoursLate === "number") {
+          hoursLate = tier.hoursLate
+        } else if (
+          "hoursAfterGrace" in tier &&
+          typeof tier.hoursAfterGrace === "number"
+        ) {
+          hoursLate = tier.hoursAfterGrace
+        } else {
+          throw new Error(
+            "Invalid late penalty configuration: each tier must include hoursLate or hoursAfterGrace",
+          )
+        }
+
+        return {
+          hoursLate,
+          penaltyPercent: tier.penaltyPercent,
+        }
+      }),
+      rejectAfterHours: config.rejectAfterHours ?? null,
     }
   }
 }

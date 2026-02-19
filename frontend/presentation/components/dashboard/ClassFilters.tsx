@@ -76,15 +76,17 @@ export function ClassFilters({
 
       {/* Filters Group */}
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Status Filter */}
+        {/* Year Level Filter */}
         <div className="min-w-[160px] relative group">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
+          <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
-            value={currentFilters.status}
-            onChange={(value) => onStatusChange(value as FilterStatus)}
-            options={statusOptions}
-            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer"
+            value={currentFilters.selectedYearLevel}
+            onChange={onYearLevelChange}
+            options={yearLevelOptions}
+            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={yearLevels.length === 0}
+            placeholder={yearLevels.length === 0 ? "No levels" : "Year Level"}
           />
         </div>
 
@@ -102,17 +104,15 @@ export function ClassFilters({
           />
         </div>
 
-        {/* Year Level Filter */}
+        {/* Status Filter */}
         <div className="min-w-[160px] relative group">
-          <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
+          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
-            value={currentFilters.selectedYearLevel}
-            onChange={onYearLevelChange}
-            options={yearLevelOptions}
-            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={yearLevels.length === 0}
-            placeholder={yearLevels.length === 0 ? "No levels" : "Year Level"}
+            value={currentFilters.status}
+            onChange={(value) => onStatusChange(value as FilterStatus)}
+            options={statusOptions}
+            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer"
           />
         </div>
       </div>

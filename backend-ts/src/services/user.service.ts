@@ -4,6 +4,9 @@ import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { UserNotFoundError } from "@/shared/errors.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("UserService")
 
 @injectable()
 export class UserService {
@@ -45,8 +48,7 @@ export class UserService {
         await this.storageService.deleteSubmissionFiles(filePaths)
       }
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Error cleaning up submission files:", error)
+      logger.error("Error cleaning up submission files:", error)
       // Continue with deletion anyway
     }
 
@@ -84,3 +86,8 @@ export class UserService {
     return await this.userRepo.getUserById(userId)
   }
 }
+
+
+
+
+

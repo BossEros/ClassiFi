@@ -1,6 +1,9 @@
 import { injectable } from "tsyringe"
 import { supabase } from "../shared/supabase.js"
 import { type IStorageService } from "./interfaces/storage.interface.js"
+import { createLogger } from "../shared/logger.js"
+
+const logger = createLogger("StorageService")
 
 // Re-export for backwards compatibility
 export type { IStorageService } from "./interfaces/storage.interface.js"
@@ -27,8 +30,7 @@ export class StorageService implements IStorageService {
     })
 
     if (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error(`Storage upload error for ${path}:`, error)
+      logger.error(`Storage upload error for ${path}:`, error)
       throw new Error(`File upload failed: ${error.message}`)
     }
 
@@ -42,8 +44,7 @@ export class StorageService implements IStorageService {
     const { data, error } = await supabase.storage.from(bucket).download(path)
 
     if (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error(`Storage download error for ${path}:`, error)
+      logger.error(`Storage download error for ${path}:`, error)
       throw new Error(`File download failed: ${error.message}`)
     }
 
@@ -62,14 +63,12 @@ export class StorageService implements IStorageService {
     const { error, data } = await supabase.storage.from(bucket).remove(paths)
 
     if (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error(`Storage delete error:`, error)
+      logger.error(`Storage delete error:`, error)
       return 0
     }
 
     const deletedCount = data?.length ?? 0
-    // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-    console.log(`Deleted ${deletedCount} files from ${bucket}`)
+    logger.info(`Deleted ${deletedCount} files from ${bucket}`)
     return deletedCount
   }
 
@@ -87,8 +86,7 @@ export class StorageService implements IStorageService {
       .createSignedUrl(path, expiresIn, options)
 
     if (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error(`Storage signed URL error for ${path}:`, error)
+      logger.error(`Storage signed URL error for ${path}:`, error)
       throw new Error(`Failed to create signed URL: ${error.message}`)
     }
 
@@ -123,9 +121,97 @@ export class StorageService implements IStorageService {
       const result = await this.deleteFiles("avatars", [path])
       return result > 0
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Failed to delete avatar:", error)
+      logger.error("Failed to delete avatar:", error)
       return false
+    }
+  }
+
+  /**
+   * Delete an assignment instructions image file.
+   * Accepts either a full public URL or a storage-relative path.
+   */
+  async deleteAssignmentInstructionsImage(imageUrl: string): Promise<boolean> {
+    try {
+      const storageLocation = this.parseStorageLocationFromPublicUrl(imageUrl)
+
+      if (!storageLocation) {
+        return false
+      }
+
+      const result = await this.deleteFiles(storageLocation.bucket, [
+        storageLocation.path,
+      ])
+      return result > 0
+    } catch (error) {
+      logger.error("Failed to delete assignment instructions image:", error)
+      return false
+    }
+  }
+
+  /**
+   * Parse bucket/path from a Supabase public URL or storage-relative path.
+   */
+  private parseStorageLocationFromPublicUrl(
+    storagePublicUrl: string,
+  ): { bucket: string; path: string } | null {
+    if (!storagePublicUrl?.trim()) {
+      return null
+    }
+
+    const parsedAbsoluteLocation =
+      this.parseStorageLocationFromAbsoluteUrl(storagePublicUrl)
+    if (parsedAbsoluteLocation) {
+      return parsedAbsoluteLocation
+    }
+
+    const [bucketName, ...pathSegments] = storagePublicUrl.split("/")
+    if (!bucketName || pathSegments.length === 0) {
+      return null
+    }
+
+    const normalizedPath = pathSegments.join("/").split("?")[0]
+    if (!normalizedPath) {
+      return null
+    }
+
+    return { bucket: bucketName, path: normalizedPath }
+  }
+
+  /**
+   * Parse bucket/path from canonical Supabase public object URLs.
+   */
+  private parseStorageLocationFromAbsoluteUrl(
+    storagePublicUrl: string,
+  ): { bucket: string; path: string } | null {
+    try {
+      const parsedUrl = new URL(storagePublicUrl)
+      const storagePublicMarker = "/storage/v1/object/public/"
+      const markerIndex = parsedUrl.pathname.indexOf(storagePublicMarker)
+
+      if (markerIndex === -1) {
+        return null
+      }
+
+      const bucketAndPath = parsedUrl.pathname.slice(
+        markerIndex + storagePublicMarker.length,
+      )
+      const [bucketName, ...pathSegments] = bucketAndPath.split("/")
+
+      if (!bucketName || pathSegments.length === 0) {
+        return null
+      }
+
+      const decodedPath = decodeURIComponent(pathSegments.join("/"))
+      if (!decodedPath) {
+        return null
+      }
+
+      return {
+        bucket: decodeURIComponent(bucketName),
+        path: decodedPath,
+      }
+    } catch {
+      return null
     }
   }
 
@@ -144,3 +230,7 @@ export class StorageService implements IStorageService {
     return await this.upload("submissions", path, data, contentType)
   }
 }
+
+
+
+

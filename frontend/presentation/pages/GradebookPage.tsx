@@ -19,6 +19,7 @@ import {
 } from "@/presentation/hooks/useGradebook"
 import { useToast } from "@/shared/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import {
   getClassById,
   type GradeEntry,
@@ -38,6 +39,7 @@ export function GradebookPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
   const { showToast } = useToast()
+  const [currentUser] = useState(() => getCurrentUser())
 
   const [classInfo, setClassInfo] = useState<Class | null>(null)
   const [classLoading, setClassLoading] = useState(true)
@@ -166,8 +168,14 @@ export function GradebookPage() {
 
   const isLoading = classLoading || gradebookLoading
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Loading State */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20">

@@ -7,7 +7,36 @@ import type {
   UpdateTestCaseRequest,
   TestExecutionSummary,
 } from "@/shared/types/testCase"
+import type { TestResultsResponse } from "@/data/api/types"
 import { normalizeTestResult } from "@/shared/utils/testNormalization"
+
+function mapTestExecutionSummary(
+  testExecutionSummaryData: TestResultsResponse["data"],
+  submissionId: number,
+): TestExecutionSummary {
+  const passedTestCount =
+    testExecutionSummaryData.passed ?? testExecutionSummaryData.passedCount
+  const totalTestCount =
+    testExecutionSummaryData.total ?? testExecutionSummaryData.totalCount
+  const scorePercentage =
+    testExecutionSummaryData.percentage ?? testExecutionSummaryData.score
+
+  if (
+    passedTestCount === undefined ||
+    totalTestCount === undefined ||
+    scorePercentage === undefined
+  ) {
+    throw new Error("Test results summary is incomplete")
+  }
+
+  return {
+    submissionId,
+    passed: passedTestCount,
+    total: totalTestCount,
+    percentage: scorePercentage,
+    results: testExecutionSummaryData.results.map(normalizeTestResult),
+  }
+}
 
 /**
  * Retrieves all test cases associated with a specific assignment.
@@ -144,11 +173,5 @@ export async function getTestResults(
 
   const rawData = resultsResponse.data.data
 
-  return {
-    submissionId: submissionId,
-    passed: rawData.passedCount,
-    total: rawData.totalCount,
-    percentage: rawData.score,
-    results: rawData.results.map(normalizeTestResult),
-  }
+  return mapTestExecutionSummary(rawData, submissionId)
 }

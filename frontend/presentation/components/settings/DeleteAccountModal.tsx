@@ -92,7 +92,7 @@ export function DeleteAccountModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -185,7 +185,7 @@ export function DeleteAccountModal({
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-0.5 shrink-0">•</span>
                   <span className="flex-1 min-w-0">
-                    All your submissions and coursework
+                    All your submissions and assignment
                   </span>
                 </li>
                 <li className="flex items-start gap-2">

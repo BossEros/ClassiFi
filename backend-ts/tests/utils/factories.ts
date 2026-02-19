@@ -47,6 +47,8 @@ export function createMockClass(overrides: Partial<Class> = {}): Class {
     },
     createdAt: new Date(),
     isActive: true,
+    allowLateSubmissions: false,
+    latePenaltyConfig: null,
     ...overrides,
   }
 }
@@ -61,7 +63,7 @@ export function createMockAssignment(
     id: 1,
     classId: 1,
     assignmentName: "Test Assignment",
-    description: "Test assignment description",
+    instructions: "Test assignment instructions",
     programmingLanguage: "python",
     deadline,
     allowResubmission: true,

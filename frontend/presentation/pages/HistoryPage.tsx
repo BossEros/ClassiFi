@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
-import { Clock } from "lucide-react"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
@@ -31,11 +30,10 @@ export function HistoryPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Clock className="w-6 h-6 text-white" />
-          <h1 className="text-3xl font-bold text-white">Analysis History</h1>
-        </div>
-        <p className="text-gray-400 ml-9">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          Analysis History
+        </h1>
+        <p className="text-gray-400">
           View your analysis and grading history
         </p>
       </div>

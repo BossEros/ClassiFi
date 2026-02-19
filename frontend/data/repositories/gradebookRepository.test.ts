@@ -341,9 +341,8 @@ describe("gradebookRepository", () => {
   describe("getLatePenaltyConfigurationForAssignmentId", () => {
     it("fetches late penalty config when enabled", async () => {
       const mockConfig = {
-        penaltyType: "percentage",
-        penaltyValue: 10,
-        gracePeriodMinutes: 15,
+        tiers: [{ id: "tier-1", hoursLate: 24, penaltyPercent: 10 }],
+        rejectAfterHours: 72,
       }
 
       vi.mocked(apiClient.get).mockResolvedValue({
@@ -404,8 +403,7 @@ describe("gradebookRepository", () => {
   describe("updateLatePenaltyConfigurationForAssignmentId", () => {
     it("updates late penalty config with settings", async () => {
       const config = {
-        gracePeriodHours: 1,
-        tiers: [{ id: "tier-1", hoursAfterGrace: 0, penaltyPercent: 10 }],
+        tiers: [{ id: "tier-1", hoursLate: 0, penaltyPercent: 10 }],
         rejectAfterHours: null,
       }
 

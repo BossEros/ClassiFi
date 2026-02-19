@@ -111,7 +111,7 @@ export class StudentDashboardService {
               assignmentName: assignment.assignmentName,
               className: classData.className,
               classId: classData.id,
-              deadline: assignment.deadline?.toISOString(),
+              deadline: assignment.deadline.toISOString(),
               hasSubmitted: false,
               programmingLanguage: assignment.programmingLanguage,
             })

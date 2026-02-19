@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Bell } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
@@ -42,12 +42,7 @@ export function NotificationsPage() {
 
   const topBar = useTopBar({ user, userInitials })
 
-  useEffect(() => {
-    loadNotifications()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page])
-
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     try {
       if (page === 1) {
         setLoading(true)
@@ -72,7 +67,11 @@ export function NotificationsPage() {
       setLoading(false)
       setLoadingMore(false)
     }
-  }
+  }, [page, showToast])
+
+  useEffect(() => {
+    loadNotifications()
+  }, [loadNotifications])
 
   const handleMarkAsRead = async (notificationId: number) => {
     try {
@@ -141,7 +140,7 @@ export function NotificationsPage() {
           {notifications.length > 0 && (
             <Button
               onClick={handleMarkAllAsRead}
-              className="w-full md:w-auto px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+              className="w-full md:w-auto px-6 bg-blue-600 hover:bg-blue-700 text-white border border-blue-500/40"
               disabled={loading}
             >
               Mark all as read

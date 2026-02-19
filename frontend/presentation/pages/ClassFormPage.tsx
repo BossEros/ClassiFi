@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
-  ArrowLeft,
   BookOpen,
   Calendar,
   Clock,
   RefreshCw,
   Check,
   X,
-  Plus,
-  Edit,
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import {
@@ -17,7 +14,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import {
@@ -40,6 +36,8 @@ import { DAYS, TIME_OPTIONS } from "@/shared/constants/schedule"
 import { formatTimeDisplay } from "@/shared/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/shared/utils/dateUtils"
 import type { Schedule, DayOfWeek } from "@/business/models/dashboard/types"
+import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { BackButton } from "@/presentation/components/ui/BackButton"
 
 interface FormData {
   className: string
@@ -174,13 +172,21 @@ export function ClassFormPage() {
     }
 
     // Additional time validation (not in centralized validators)
-    if (formData.schedule.startTime >= formData.schedule.endTime) {
+    if (!formData.schedule.startTime || !formData.schedule.endTime) {
+      newErrors.schedule = "Start time and end time are required"
+    } else if (formData.schedule.startTime >= formData.schedule.endTime) {
       newErrors.schedule = "End time must be after start time"
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
+
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -237,7 +243,7 @@ export function ClassFormPage() {
   // Show loading state while fetching class data in edit mode
   if (isFetching) {
     return (
-      <DashboardLayout>
+      <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
@@ -249,32 +255,16 @@ export function ClassFormPage() {
   }
 
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-teal-500/20">
-              {isEditMode ? (
-                <Edit className="w-5 h-5 text-teal-300" />
-              ) : (
-                <Plus className="w-5 h-5 text-teal-300" />
-              )}
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              {isEditMode ? "Edit Class" : "Create New Class"}
-            </h1>
-          </div>
-          <Button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="w-auto px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+        <BackButton />
+        <div className="mb-2">
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            {isEditMode ? "Edit Class" : "Create New Class"}
+          </h1>
         </div>
-        <p className="text-slate-300 ml-11 text-sm">
+        <p className="text-slate-300 text-sm">
           {isEditMode
             ? "Update your class information"
             : "Set up a new class for your students"}
@@ -301,12 +291,7 @@ export function ClassFormPage() {
                   <div className="p-2 rounded-lg bg-teal-500/20">
                     <BookOpen className="w-5 h-5 text-teal-300" />
                   </div>
-                  <div>
-                    <CardTitle>Basic Information</CardTitle>
-                    <CardDescription className="mt-1">
-                      Enter the core details for your class
-                    </CardDescription>
-                  </div>
+                  <CardTitle>Basic Information</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -376,8 +361,9 @@ export function ClassFormPage() {
                       <Button
                         type="button"
                         onClick={handleGenerateCode}
+                        variant="secondary"
                         disabled={isGenerating || isLoading}
-                        className="w-auto px-4 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                        className="w-auto px-4 bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-600 hover:border-slate-500 shadow-none hover:shadow-none hover:translate-y-0"
                       >
                         {isGenerating ? (
                           <RefreshCw className="w-4 h-4 animate-spin" />
@@ -406,12 +392,7 @@ export function ClassFormPage() {
                   <div className="p-2 rounded-lg bg-green-500/20">
                     <Clock className="w-5 h-5 text-green-300" />
                   </div>
-                  <div>
-                    <CardTitle>Schedule</CardTitle>
-                    <CardDescription className="mt-1">
-                      Set when this class meets
-                    </CardDescription>
-                  </div>
+                  <CardTitle>Schedule</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -445,7 +426,9 @@ export function ClassFormPage() {
 
                 {/* Time */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-white">Time</label>
+                  <label className="text-sm font-medium text-white">
+                    Time <span className="text-red-400">*</span>
+                  </label>
                   <div className="flex items-center gap-3">
                     <select
                       value={formData.schedule.startTime}
@@ -505,12 +488,7 @@ export function ClassFormPage() {
                   <div className="p-2 rounded-lg bg-blue-500/20">
                     <Calendar className="w-5 h-5 text-blue-300" />
                   </div>
-                  <div>
-                    <CardTitle>Academic Period</CardTitle>
-                    <CardDescription className="mt-1">
-                      When this class runs
-                    </CardDescription>
-                  </div>
+                  <CardTitle>Academic Period</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -612,7 +590,12 @@ export function ClassFormPage() {
             {/* Action Buttons Card */}
             <Card>
               <CardContent className="p-6 space-y-3">
-                <Button type="submit" disabled={isLoading} className="w-full">
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  disabled={isLoading}
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white border border-teal-500/40 shadow-none hover:shadow-none hover:translate-y-0"
+                >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
@@ -623,8 +606,9 @@ export function ClassFormPage() {
                 <Button
                   type="button"
                   onClick={() => navigate(-1)}
+                  variant="secondary"
                   disabled={isLoading}
-                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20"
+                  className="w-full bg-transparent hover:bg-white/5 text-slate-300 hover:text-white border border-white/15 shadow-none hover:shadow-none hover:translate-y-0"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Cancel

@@ -18,13 +18,29 @@ interface DatePickerProps {
   value: string // ISO string date component
   onChange: (value: string | null) => void
   label?: string
+  labelClassName?: string
+  required?: boolean
   error?: string
   minDate?: Date
   disabled?: boolean
+  triggerStyle?: React.CSSProperties
 }
 
 export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
-  ({ value, onChange, label, error, minDate, disabled }, ref) => {
+  (
+    {
+      value,
+      onChange,
+      label,
+      labelClassName,
+      required,
+      error,
+      minDate,
+      disabled,
+      triggerStyle,
+    },
+    ref,
+  ) => {
     const [isOpen, setIsOpen] = React.useState(false)
 
     // Parse initial state with validation
@@ -127,8 +143,14 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
     return (
       <div ref={ref} className="w-full space-y-2">
         {label && (
-          <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+          <label
+            className={cn(
+              "text-sm font-medium text-gray-300 flex items-center gap-2",
+              labelClassName,
+            )}
+          >
             {label}
+            {required && <span className="text-red-400">*</span>}
           </label>
         )}
 
@@ -142,6 +164,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                 type="button"
                 disabled={disabled}
                 aria-expanded={isOpen}
+                style={triggerStyle}
                 className={cn(
                   "flex items-center justify-between w-full h-11 px-4 rounded-xl border transition-all duration-200 group text-left",
                   disabled
@@ -149,8 +172,8 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                     : "cursor-pointer",
                   !disabled &&
                     (isOpen
-                      ? "bg-white/10 border-blue-500/50 ring-2 ring-blue-500/20"
-                      : "bg-black/20 border-white/10 hover:bg-black/30 hover:border-white/20"),
+                      ? "bg-black/20 border-blue-500/50 ring-2 ring-blue-500/20"
+                      : "bg-black/20 border-white/10 hover:bg-black/20 hover:border-white/20"),
                   error && "border-red-500/50",
                 )}
               >
@@ -179,14 +202,21 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                       : "Pick a date..."}
                   </span>
                 </div>
-                <ChevronDown className="w-4 h-4 text-gray-500" />
+                {!value || !validatedDateObj ? (
+                  <ChevronDown
+                    className={cn(
+                      "w-4 h-4 text-gray-500 transition-transform duration-200",
+                      isOpen && !disabled && "rotate-180",
+                    )}
+                  />
+                ) : null}
               </button>
               {!disabled && value && (
                 <button
                   type="button"
                   onClick={clearDate}
                   aria-label="Clear date"
-                  className="absolute right-10 p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors z-10"
+                  className="absolute right-3 p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors z-10"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -242,7 +272,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                       className={cn(
                         "h-8 w-8 text-sm rounded-lg flex items-center justify-center transition-all",
                         isSelectedDay
-                          ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 font-semibold"
+                          ? "bg-blue-600 text-white border border-blue-500/40 font-semibold"
                           : isTodayDay
                             ? "bg-white/10 text-blue-400 font-medium"
                             : "text-gray-300 hover:bg-white/5",

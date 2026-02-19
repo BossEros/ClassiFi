@@ -2,11 +2,14 @@ import { injectable } from "tsyringe"
 import nodemailer from "nodemailer"
 import type { Transporter } from "nodemailer"
 import { settings } from "../../shared/config.js"
+import { createLogger } from "../../shared/logger.js"
 import type {
   IEmailService,
   EmailOptions,
 } from "../interfaces/email.interface.js"
 import { htmlToText } from "html-to-text"
+
+const logger = createLogger("SMTPEmailService")
 
 /**
  * SMTP email service implementation using nodemailer.
@@ -50,13 +53,11 @@ export class SMTPEmailService implements IEmailService {
         text: options.text || this.stripHtml(options.html),
       })
 
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.log(
+      logger.info(
         `✅ Email sent successfully via SMTP (Message ID: ${info.messageId})`,
       )
     } catch (error) {
-      // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-      console.error("Failed to send email via SMTP:", error)
+      logger.error("Failed to send email via SMTP:", error)
       throw new Error(
         `SMTP email sending failed: ${error instanceof Error ? error.message : "Unknown error"}`,
       )
@@ -73,3 +74,7 @@ export class SMTPEmailService implements IEmailService {
     return htmlToText(html, { wordwrap: false }).trim()
   }
 }
+
+
+
+

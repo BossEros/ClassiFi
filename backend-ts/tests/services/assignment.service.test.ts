@@ -5,7 +5,9 @@ import type { ClassRepository } from "../../src/repositories/class.repository.js
 import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
 import type { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
 import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
+import type { SubmissionRepository } from "../../src/repositories/submission.repository.js"
 import type { NotificationService } from "../../src/services/notification/notification.service.js"
+import type { StorageService } from "../../src/services/storage.service.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -19,6 +21,8 @@ describe("AssignmentService", () => {
   let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
   let mockTestCaseRepo: Partial<MockedObject<TestCaseRepository>>
   let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
+  let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
+  let mockStorageService: Partial<MockedObject<StorageService>>
   let mockNotificationService: Partial<MockedObject<NotificationService>>
 
   beforeEach(() => {
@@ -42,6 +46,14 @@ describe("AssignmentService", () => {
       getEnrolledStudentsWithInfo: vi.fn(),
     }
 
+    mockSubmissionRepo = {
+      getSubmissionsByAssignment: vi.fn(),
+    }
+
+    mockStorageService = {
+      deleteAssignmentInstructionsImage: vi.fn(),
+    }
+
     mockNotificationService = {
       createNotification: vi.fn(),
     }
@@ -51,6 +63,8 @@ describe("AssignmentService", () => {
       mockClassRepo as unknown as ClassRepository,
       mockTestCaseRepo as unknown as TestCaseRepository,
       mockEnrollmentRepo as unknown as EnrollmentRepository,
+      mockSubmissionRepo as unknown as SubmissionRepository,
+      mockStorageService as unknown as StorageService,
       mockNotificationService as unknown as NotificationService,
     )
   })
@@ -61,7 +75,7 @@ describe("AssignmentService", () => {
   describe("createAssignment", () => {
     const validAssignmentData = {
       assignmentName: "Test Assignment",
-      description: "Test description for the assignment",
+      instructions: "Test instructions for the assignment",
       programmingLanguage: "python" as const,
       deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
       allowResubmission: true,
@@ -85,10 +99,13 @@ describe("AssignmentService", () => {
       expect(result).toBeDefined()
       expect(result.id).toBe(mockAssignment.id)
       expect(result.assignmentName).toBe(mockAssignment.assignmentName)
-      expect(mockAssignmentRepo.createAssignment).toHaveBeenCalledWith({
-        classId: 1,
-        ...validAssignmentData,
-      })
+      expect(mockAssignmentRepo.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          classId: 1,
+          ...validAssignmentData,
+          instructionsImageUrl: null,
+        }),
+      )
     })
 
     it("should create notifications for all enrolled students", async () => {
@@ -261,7 +278,7 @@ describe("AssignmentService", () => {
         classId: 1,
         teacherId: 1,
         assignmentName: "Holiday Assignment",
-        description: "Test",
+        instructions: "Test",
         programmingLanguage: "python",
         deadline,
       })
@@ -325,7 +342,7 @@ describe("AssignmentService", () => {
         classId: 1,
         teacherId: 1,
         assignmentName: "Future Assignment",
-        description: "Test",
+        instructions: "Test",
         programmingLanguage: "python",
         deadline,
       })
@@ -405,7 +422,7 @@ describe("AssignmentService", () => {
 
       const dataWithoutResubmission = {
         assignmentName: "Test",
-        description: "Test description",
+        instructions: "Test instructions",
         programmingLanguage: "java" as const,
         deadline: new Date(Date.now() + 86400000),
       }
@@ -598,7 +615,7 @@ describe("AssignmentService", () => {
         assignmentId: 1,
         teacherId: 1,
         assignmentName: "Updated",
-        description: "New description",
+        instructions: "New instructions",
         programmingLanguage: "java" as const,
         deadline: newDeadline,
         allowResubmission: false,
@@ -613,10 +630,10 @@ describe("AssignmentService", () => {
       const result = await assignmentService.updateAssignment(updatedData)
 
       expect(result.assignmentName).toBe("Updated")
-      expect(result.description).toBe("New description")
+      expect(result.instructions).toBe("New instructions")
       expect(mockAssignmentRepo.updateAssignment).toHaveBeenCalledWith(1, {
         assignmentName: "Updated",
-        description: "New description",
+        instructions: "New instructions",
         programmingLanguage: "java",
         deadline: newDeadline,
         allowResubmission: false,

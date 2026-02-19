@@ -9,6 +9,9 @@ import {
 } from "@/services/latePenalty.service.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("GradebookService")
 
 /**
  * Grade entry for a single assignment in the gradebook.
@@ -17,7 +20,7 @@ export interface GradeEntry {
   assignmentId: number
   assignmentName: string
   totalScore: number
-  deadline: Date
+  deadline: Date | null
   submissionId: number | null
   grade: number | null
   percentage: number | null
@@ -132,8 +135,7 @@ export class GradebookService {
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
       })
       .catch((error) => {
-        // TODO: Replace with structured logger (e.g., pino, winston) for better observability
-        console.error("Failed to send grade notification:", error)
+        logger.error("Failed to send grade notification:", error)
       })
   }
 
@@ -249,7 +251,7 @@ export class GradebookService {
     const penaltyConfig = await this.latePenaltyService.getAssignmentConfig(
       submission.assignmentId,
     )
-    if (penaltyConfig.enabled) {
+    if (penaltyConfig.enabled && assignment.deadline) {
       latePenalty = this.latePenaltyService.calculatePenalty(
         submission.submittedAt,
         assignment.deadline,
@@ -268,3 +270,7 @@ export class GradebookService {
     }
   }
 }
+
+
+
+

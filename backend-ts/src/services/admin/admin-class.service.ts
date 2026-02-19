@@ -142,7 +142,7 @@ export class AdminClassService {
     }
 
     // Update the class via repository
-    const updateData: Record<string, unknown> = {}
+    const updateData: Partial<UpdateClassData> = {}
     if (data.className !== undefined) updateData.className = data.className
     if (data.description !== undefined)
       updateData.description = data.description
@@ -154,7 +154,7 @@ export class AdminClassService {
     if (data.schedule !== undefined) updateData.schedule = data.schedule
     if (data.teacherId !== undefined) updateData.teacherId = data.teacherId
 
-    const updated = await this.classRepo.updateClass(classId, updateData as any)
+    const updated = await this.classRepo.updateClass(classId, updateData)
 
     if (!updated) {
       throw new ClassNotFoundError(classId)
@@ -202,7 +202,7 @@ export class AdminClassService {
     Array<{
       id: number
       title: string
-      description: string | null
+      instructions: string | null
       deadline: string | null
       createdAt: string
       submissionCount: number
@@ -226,7 +226,7 @@ export class AdminClassService {
         return {
           id: assignment.id,
           title: assignment.assignmentName,
-          description: assignment.description,
+          instructions: assignment.instructions,
           deadline: assignment.deadline || null,
           createdAt: assignment.createdAt || new Date().toISOString(),
           submissionCount: submissions.length,

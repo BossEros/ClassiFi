@@ -153,16 +153,13 @@ export async function updateLatePenaltyConfig(
   }
 
   if (config) {
-    if (config.gracePeriodHours < 0) {
-      throw new Error("Grace period must be non-negative")
-    }
     if (config.tiers && config.tiers.length > 0) {
       for (const tier of config.tiers) {
         if (tier.penaltyPercent < 0 || tier.penaltyPercent > 100) {
           throw new Error("Penalty percentage must be between 0 and 100")
         }
-        if (tier.hoursAfterGrace < 0) {
-          throw new Error("Hours after grace must be non-negative")
+        if (tier.hoursLate < 0) {
+          throw new Error("Tier hours late must be non-negative")
         }
       }
     }

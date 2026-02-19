@@ -6,10 +6,41 @@ import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
+  TestResultsResponse,
 } from "@/data/api/types"
 import { normalizeTestResult } from "@/shared/utils/testNormalization"
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }
+
+function mapTestExecutionSummaryToPreviewResult(
+  testExecutionSummaryData: TestResultsResponse["data"],
+): TestPreviewResult {
+  const passedTestCount =
+    testExecutionSummaryData.passed ?? testExecutionSummaryData.passedCount
+  const totalTestCount =
+    testExecutionSummaryData.total ?? testExecutionSummaryData.totalCount
+  const scorePercentage =
+    testExecutionSummaryData.percentage ?? testExecutionSummaryData.score
+
+  if (
+    passedTestCount === undefined ||
+    totalTestCount === undefined ||
+    scorePercentage === undefined
+  ) {
+    throw new Error("Test execution summary is incomplete")
+  }
+
+  const normalizedResults = Array.isArray(testExecutionSummaryData.results)
+    ? testExecutionSummaryData.results.map(normalizeTestResult)
+    : []
+
+  return {
+    passed: passedTestCount,
+    total: totalTestCount,
+    percentage: scorePercentage,
+    results: normalizedResults,
+  }
+}
 
 /**
  * Executes a dry run of the provided source code against the assignment's test cases.
@@ -47,13 +78,7 @@ export async function runTestsPreview(
     throw new Error("Test execution data is missing from the response")
   }
 
-  const data = executionResponse.data.data
-  return {
-    passed: data.passedCount,
-    total: data.totalCount,
-    percentage: data.score,
-    results: data.results.map(normalizeTestResult),
-  }
+  return mapTestExecutionSummaryToPreviewResult(executionResponse.data.data)
 }
 
 /**
@@ -85,10 +110,5 @@ export async function getTestResultsForSubmission(
     throw new Error("Test results data is missing from the response")
   }
 
-  return {
-    passed: summary.passedCount,
-    total: summary.totalCount,
-    percentage: summary.score,
-    results: summary.results.map(normalizeTestResult),
-  }
+  return mapTestExecutionSummaryToPreviewResult(summary)
 }
