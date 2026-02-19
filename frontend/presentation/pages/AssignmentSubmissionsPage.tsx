@@ -228,10 +228,7 @@ export function AssignmentSubmissionsPage() {
                 <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
                   <img
                     src={assignment.instructionsImageUrl}
-                    alt={
-                      assignment.instructionsImageAlt ||
-                      assignment.assignmentName
-                    }
+                    alt={assignment.assignmentName}
                     className="w-full max-h-[28rem] object-contain bg-black/30"
                   />
                 </div>

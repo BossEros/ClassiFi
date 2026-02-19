@@ -95,7 +95,6 @@ export function AssignmentDetailPage() {
     assignmentName: "Assignment Title",
     instructions: "Assignment instructions will be loaded from the API",
     instructionsImageUrl: null,
-    instructionsImageAlt: null,
     programmingLanguage: "python",
     deadline: null,
     allowResubmission: true,
@@ -625,10 +624,7 @@ export function AssignmentDetailPage() {
                       <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
                         <img
                           src={tempAssignment.instructionsImageUrl}
-                          alt={
-                            tempAssignment.instructionsImageAlt ||
-                            tempAssignment.assignmentName
-                          }
+                          alt={tempAssignment.assignmentName}
                           className="w-full max-h-[28rem] object-contain bg-black/30"
                         />
                       </div>

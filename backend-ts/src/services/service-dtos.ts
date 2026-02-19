@@ -66,7 +66,6 @@ export interface CreateAssignmentServiceDTO {
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: "python" | "java" | "c"
   deadline: Date | null
   allowResubmission?: boolean
@@ -85,7 +84,6 @@ export interface UpdateAssignmentServiceDTO {
   assignmentName?: string
   instructions?: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage?: "python" | "java" | "c"
   deadline?: Date | null
   allowResubmission?: boolean

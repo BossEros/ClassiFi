@@ -346,7 +346,7 @@ The programming language is specified at assignment creation and enforced during
 | GET    | `/submissions/student/:studentId`               | Get student's submissions     |
 
 **Assignment Instructions Content**:
-- Assignment create/update supports both text (`instructions`) and optional image fields (`instructionsImageUrl`, `instructionsImageAlt`)
+- Assignment create/update supports both text (`instructions`) and an optional image field (`instructionsImageUrl`)
 - Business rule requires at least one instructions surface: text or image
 - Assignment deadline is optional (`deadline` may be `null`) to support assignment with no due date
 - Assignment create/update also supports late submission policy fields (`allowLateSubmissions`, `latePenaltyConfig`)
@@ -865,7 +865,7 @@ class ClassService {
   - `maxGrade`: Maximum possible grade (defaults to 100)
 
 **Assignment Instructions Media Support**:
-- Assignment creation and updates support optional instruction image metadata (`instructionsImageUrl`, `instructionsImageAlt`)
+- Assignment creation and updates support an optional instruction image (`instructionsImageUrl`)
 - Assignment responses include instruction image fields for rendering in teacher/student assignment views
 - Class-level cleanup includes best-effort deletion of assignment instruction images when classes are deleted
 

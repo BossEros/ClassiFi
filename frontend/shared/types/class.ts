@@ -1,4 +1,4 @@
-import type { LatePenaltyConfig } from "@/shared/types/gradebook"
+﻿import type { LatePenaltyConfig } from "@/shared/types/gradebook"
 
 // ============================================================================
 // Class/Dashboard Types - Shared Layer
@@ -87,7 +87,6 @@ export interface Assignment {
   studentCount?: number
   instructions?: string | null
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   allowResubmission?: boolean
   isActive?: boolean
   createdAt?: ISODateString

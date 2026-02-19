@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   ClassStatistics,
   GradeEntry,
   GradebookAssignment,
@@ -88,7 +88,6 @@ export interface TaskDTO {
   assignmentName: string
   instructions: string | null
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   className?: string
   deadline: string | null
   programmingLanguage: string
@@ -117,7 +116,6 @@ export interface AssignmentDetail {
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
   deadline: string | null
   allowResubmission: boolean
@@ -179,7 +177,6 @@ export interface CreateAssignmentRequest {
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
   deadline?: Date | string | null
   allowResubmission?: boolean
@@ -196,7 +193,6 @@ export interface UpdateAssignmentRequest {
   assignmentName?: string
   instructions?: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage?: ProgrammingLanguage
   deadline?: Date | string | null
   allowResubmission?: boolean
@@ -358,7 +354,6 @@ export interface TeacherDashboardTaskResponse {
   assignmentName: string
   instructions: string | null
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -403,7 +398,6 @@ export interface AssignmentResponse {
   assignmentName: string
   instructions: string | null
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -784,7 +778,6 @@ export interface AssignmentDetailDTO {
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean

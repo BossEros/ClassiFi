@@ -88,7 +88,6 @@ export interface AssignmentDTO {
   assignmentName: string
   instructions: string
   instructionsImageUrl: string | null
-  instructionsImageAlt: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -128,7 +127,6 @@ export function toAssignmentDTO(
     assignmentName: assignment.assignmentName,
     instructions: assignment.instructions,
     instructionsImageUrl: assignment.instructionsImageUrl ?? null,
-    instructionsImageAlt: assignment.instructionsImageAlt ?? null,
     programmingLanguage: assignment.programmingLanguage,
     deadline: assignment.deadline?.toISOString() ?? null,
     allowResubmission: assignment.allowResubmission ?? true,

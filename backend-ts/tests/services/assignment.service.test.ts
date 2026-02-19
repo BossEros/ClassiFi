@@ -104,7 +104,6 @@ describe("AssignmentService", () => {
           classId: 1,
           ...validAssignmentData,
           instructionsImageUrl: null,
-          instructionsImageAlt: null,
         }),
       )
     })

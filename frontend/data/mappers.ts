@@ -102,7 +102,6 @@ export function mapAssignmentDetail(
     assignmentName: dto.assignmentName,
     instructions: dto.instructions,
     instructionsImageUrl: dto.instructionsImageUrl ?? null,
-    instructionsImageAlt: dto.instructionsImageAlt ?? null,
     programmingLanguage,
     deadline: dto.deadline,
     allowResubmission: dto.allowResubmission,

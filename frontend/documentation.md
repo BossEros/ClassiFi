@@ -154,7 +154,7 @@ Routing is handled in `presentation/App.tsx`.
 - **`ClassForm`**: Create/Edit classes with schedule configuration.
 - **`AssignmentForm`**: Create/Edit assignments with:
   - Programming language selection (Python, Java, C)
-  - Instructions text plus optional image attachment (preview + alt text)
+  - Instructions text plus optional image attachment (preview)
   - File attachments
   - Test cases with input/output validation
   - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)

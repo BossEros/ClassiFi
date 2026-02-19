@@ -30,7 +30,6 @@ export interface CreateAssignmentData {
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
   deadline: Date | null
   allowResubmission?: boolean
@@ -47,7 +46,6 @@ export interface UpdateAssignmentData {
   assignmentName?: string
   instructions?: string
   instructionsImageUrl?: string | null
-  instructionsImageAlt?: string | null
   programmingLanguage?: ProgrammingLanguage
   deadline?: Date | null
   allowResubmission?: boolean
@@ -251,7 +249,6 @@ export class AssignmentRepository extends BaseRepository<
         assignmentName: data.assignmentName,
         instructions: data.instructions,
         instructionsImageUrl: data.instructionsImageUrl ?? null,
-        instructionsImageAlt: data.instructionsImageAlt ?? null,
         programmingLanguage: data.programmingLanguage,
         deadline: data.deadline ?? null,
         allowResubmission: data.allowResubmission ?? true,

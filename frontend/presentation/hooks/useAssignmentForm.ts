@@ -42,7 +42,6 @@ export interface AssignmentFormData {
   assignmentName: string
   instructions: string
   instructionsImageUrl: string | null
-  instructionsImageAlt: string
   programmingLanguage: ProgrammingLanguage | ""
   deadline: string
   allowResubmission: boolean
@@ -135,7 +134,6 @@ export function useAssignmentForm() {
     assignmentName: "",
     instructions: "",
     instructionsImageUrl: null,
-    instructionsImageAlt: "",
     programmingLanguage: "",
     deadline: "",
     allowResubmission: false,
@@ -173,7 +171,6 @@ export function useAssignmentForm() {
               assignmentName: assignment.assignmentName,
               instructions: assignment.instructions,
               instructionsImageUrl: assignment.instructionsImageUrl ?? null,
-              instructionsImageAlt: assignment.instructionsImageAlt ?? "",
               programmingLanguage:
                 assignment.programmingLanguage as ProgrammingLanguage,
               deadline: assignment.deadline
@@ -321,7 +318,6 @@ export function useAssignmentForm() {
           assignmentName: formData.assignmentName.trim(),
           instructions: formData.instructions.trim(),
           instructionsImageUrl: formData.instructionsImageUrl,
-          instructionsImageAlt: formData.instructionsImageAlt.trim() || null,
           programmingLanguage:
             formData.programmingLanguage as ProgrammingLanguage,
           deadline: formData.deadline ? new Date(formData.deadline) : null,
@@ -346,7 +342,6 @@ export function useAssignmentForm() {
           assignmentName: formData.assignmentName.trim(),
           instructions: formData.instructions.trim(),
           instructionsImageUrl: formData.instructionsImageUrl,
-          instructionsImageAlt: formData.instructionsImageAlt.trim() || null,
           programmingLanguage:
             formData.programmingLanguage as ProgrammingLanguage,
           deadline: formData.deadline ? new Date(formData.deadline) : null,
@@ -474,10 +469,6 @@ export function useAssignmentForm() {
       setFormData((prev) => ({
         ...prev,
         instructionsImageUrl: uploadedImageUrl,
-        instructionsImageAlt:
-          prev.instructionsImageAlt.trim() ||
-          prev.assignmentName.trim() ||
-          "Assignment instructions image",
       }))
       setErrors((prev) => ({ ...prev, instructions: undefined, general: undefined }))
 
@@ -508,7 +499,6 @@ export function useAssignmentForm() {
     setFormData((prev) => ({
       ...prev,
       instructionsImageUrl: null,
-      instructionsImageAlt: "",
     }))
 
     if (!currentInstructionsImageUrl) {

@@ -212,9 +212,7 @@ export function BasicInfoForm({
                   <div className="rounded-lg overflow-hidden border border-white/10 bg-black/20">
                     <img
                       src={formData.instructionsImageUrl}
-                      alt={
-                        formData.instructionsImageAlt || "Assignment instructions"
-                      }
+                      alt="Assignment instructions"
                       className="w-full max-h-64 object-contain"
                     />
                   </div>

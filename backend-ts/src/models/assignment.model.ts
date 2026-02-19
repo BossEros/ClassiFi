@@ -40,7 +40,6 @@ export const assignments = pgTable("assignments", {
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
   instructions: text("instructions").notNull(),
   instructionsImageUrl: text("instructions_image_url"),
-  instructionsImageAlt: varchar("instructions_image_alt", { length: 255 }),
   programmingLanguage: programmingLanguageEnum(
     "programming_language",
   ).notNull(),

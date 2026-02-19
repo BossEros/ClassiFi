@@ -261,7 +261,6 @@ export async function createAssignment(
       assignmentName: createAssignmentData.assignmentName.trim(),
       instructions: createAssignmentData.instructions.trim(),
       instructionsImageUrl: createAssignmentData.instructionsImageUrl ?? null,
-      instructionsImageAlt: createAssignmentData.instructionsImageAlt ?? null,
       programmingLanguage: createAssignmentData.programmingLanguage,
       deadline: createAssignmentData.deadline
         ? typeof createAssignmentData.deadline === "string"
@@ -345,7 +344,6 @@ export async function updateAssignment(
     assignmentName: updateAssignmentData.assignmentName?.trim(),
     instructions: updateAssignmentData.instructions?.trim(),
     instructionsImageUrl: updateAssignmentData.instructionsImageUrl,
-    instructionsImageAlt: updateAssignmentData.instructionsImageAlt,
     programmingLanguage: updateAssignmentData.programmingLanguage,
     deadline:
       updateAssignmentData.deadline === undefined

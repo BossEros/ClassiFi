@@ -58,7 +58,6 @@ export class AssignmentService {
       assignmentName,
       instructions,
       instructionsImageUrl,
-      instructionsImageAlt,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -77,9 +76,6 @@ export class AssignmentService {
     const normalizedInstructionsImageUrl = this.normalizeNullableString(
       instructionsImageUrl,
     )
-    const normalizedInstructionsImageAlt = this.normalizeNullableString(
-      instructionsImageAlt,
-    )
 
     this.validateInstructionsContent(
       normalizedInstructions,
@@ -91,7 +87,6 @@ export class AssignmentService {
       assignmentName,
       instructions: normalizedInstructions,
       instructionsImageUrl: normalizedInstructionsImageUrl,
-      instructionsImageAlt: normalizedInstructionsImageAlt,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -261,10 +256,6 @@ export class AssignmentService {
       updateData.instructionsImageUrl !== undefined
         ? this.normalizeNullableString(updateData.instructionsImageUrl)
         : undefined
-    const normalizedInstructionsImageAlt =
-      updateData.instructionsImageAlt !== undefined
-        ? this.normalizeNullableString(updateData.instructionsImageAlt)
-        : undefined
 
     const finalInstructions = (
       normalizedInstructions ?? existingAssignment.instructions
@@ -287,7 +278,6 @@ export class AssignmentService {
         ...updateData,
         instructions: normalizedInstructions,
         instructionsImageUrl: normalizedInstructionsImageUrl,
-        instructionsImageAlt: normalizedInstructionsImageAlt,
       },
     )
 
