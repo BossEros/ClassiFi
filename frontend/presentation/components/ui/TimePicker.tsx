@@ -1,5 +1,5 @@
 import * as React from "react"
-import { Clock, X } from "lucide-react"
+import { Clock, X, ChevronDown } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { Popover } from "@/presentation/components/ui/Popover"
 
@@ -7,12 +7,27 @@ interface TimePickerProps {
   value: string // "HH:MM" 24h format
   onChange: (value: string | null) => void
   label?: string
+  labelClassName?: string
+  required?: boolean
   error?: string
   disabled?: boolean
+  triggerStyle?: React.CSSProperties
 }
 
 export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
-  ({ value, onChange, label, error, disabled }, ref) => {
+  (
+    {
+      value,
+      onChange,
+      label,
+      labelClassName,
+      required,
+      error,
+      disabled,
+      triggerStyle,
+    },
+    ref,
+  ) => {
     const [isOpen, setIsOpen] = React.useState(false)
     const [inputValue, setInputValue] = React.useState("")
 
@@ -126,8 +141,14 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
     return (
       <div className="w-full space-y-2">
         {label && (
-          <label className="text-sm font-medium text-gray-300 flex items-center gap-2">
+          <label
+            className={cn(
+              "text-sm font-medium text-gray-300 flex items-center gap-2",
+              labelClassName,
+            )}
+          >
             {label}
+            {required && <span className="text-red-400">*</span>}
           </label>
         )}
 
@@ -138,14 +159,15 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
             className="w-[150px] p-2 max-h-[300px] overflow-y-auto"
             trigger={
               <div
+                style={triggerStyle}
                 className={cn(
                   "flex items-center justify-between w-full h-11 px-4 rounded-xl border transition-all duration-200 group relative",
                   disabled
                     ? "bg-white/5 border-white/5 cursor-not-allowed opacity-50"
-                    : "bg-black/20 border-white/10 hover:bg-black/30 hover:border-white/20",
+                    : "bg-black/20 border-white/10 hover:bg-black/20 hover:border-white/20",
                   isOpen &&
                     !disabled &&
-                    "bg-white/10 border-blue-500/50 ring-2 ring-blue-500/20",
+                    "bg-black/20 border-blue-500/50 ring-2 ring-blue-500/20",
                   error && "border-red-500/50",
                 )}
               >
@@ -180,8 +202,8 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                   />
                 </div>
 
-                <div className="flex items-center gap-1">
-                  {!disabled && value && (
+                <div className="flex items-center">
+                  {!disabled && value ? (
                     <button
                       type="button"
                       onClick={(e) => {
@@ -194,6 +216,14 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
+                  ) : (
+                    <ChevronDown
+                      className={cn(
+                        "w-4 h-4 text-gray-500 transition-transform duration-200",
+                        isOpen && !disabled && "rotate-180",
+                        disabled && "opacity-50",
+                      )}
+                    />
                   )}
                 </div>
               </div>

@@ -149,7 +149,7 @@ export function AvatarUploadModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -314,8 +314,8 @@ export function AvatarUploadModal({
                 disabled={!selectedFile || isUploading}
                 className={cn(
                   "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "bg-gradient-to-r from-teal-600 to-teal-500 text-white",
-                  "hover:from-teal-700 hover:to-teal-600",
+                  "bg-teal-600 text-white border border-teal-500/40",
+                  "hover:bg-teal-700",
                   "transition-colors duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                   "disabled:opacity-50 disabled:cursor-not-allowed",

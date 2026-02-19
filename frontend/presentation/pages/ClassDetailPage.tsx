@@ -41,9 +41,9 @@ const STUDENTS_PER_PAGE = 10
 const STUDENT_GRID_TEMPLATE = "400px 1fr 150px 60px"
 
 /**
- * Displays detailed information about a class including coursework, students, and management options.
+ * Displays detailed information about a class including assignments, students, and management options.
  *
- * @returns JSX.Element - The class detail page component with tabs for coursework and students
+ * @returns JSX.Element - The class detail page component with tabs for assignments and students
  */
 export function ClassDetailPage() {
   const navigate = useNavigate()
@@ -56,7 +56,7 @@ export function ClassDetailPage() {
   const [students, setStudents] = useState<EnrolledStudent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<ClassTab>("coursework")
+  const [activeTab, setActiveTab] = useState<ClassTab>("assignments")
   const [assignmentFilter, setAssignmentFilter] =
     useState<AssignmentFilter>("all")
   const [currentStudentPage, setCurrentStudentPage] = useState(1)
@@ -254,7 +254,7 @@ export function ClassDetailPage() {
   }
 
   const handleEditAssignment = (assignment: Assignment) => {
-    navigate(`/dashboard/classes/${classId}/coursework/${assignment.id}/edit`)
+    navigate(`/dashboard/classes/${classId}/assignments/${assignment.id}/edit`)
   }
 
   const handleDeleteAssignmentClick = (assignment: Assignment) => {
@@ -271,12 +271,12 @@ export function ClassDetailPage() {
 
       // Remove from list
       setAssignments(assignments.filter((a) => a.id !== assignmentToDelete.id))
-      showToast("Coursework deleted successfully")
+      showToast("Assignment deleted successfully")
       setIsDeleteAssignmentModalOpen(false)
       setAssignmentToDelete(null)
     } catch (err) {
       console.error("Failed to delete assignment:", err)
-      showToast("Failed to delete coursework", "error")
+      showToast("Failed to delete assignment", "error")
     } finally {
       setIsDeletingAssignment(false)
     }
@@ -361,8 +361,8 @@ export function ClassDetailPage() {
           {/* Tabs and Content */}
           <div className="bg-slate-900 border border-white/10 rounded-lg p-6">
             <ClassTabs activeTab={activeTab} onTabChange={handleTabChange}>
-              {/* Coursework Tab */}
-              {activeTab === "coursework" && (
+              {/* Assignments Tab */}
+              {activeTab === "assignments" && (
                 <div className="space-y-6">
                   {/* Filter Bar and Add Button */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -375,13 +375,13 @@ export function ClassDetailPage() {
                       <Button
                         onClick={() =>
                           navigate(
-                            `/dashboard/classes/${classId}/coursework/new`,
+                            `/dashboard/classes/${classId}/assignments/new`,
                           )
                         }
                         className="w-full sm:w-auto"
                       >
                         <Plus className="w-4 h-4 mr-2" />
-                        Add Coursework
+                        Add Assignment
                       </Button>
                     )}
                   </div>
@@ -428,28 +428,28 @@ export function ClassDetailPage() {
                         <ClipboardList className="w-8 h-8 text-gray-500" />
                       </div>
                       <p className="text-gray-300 font-medium mb-1">
-                        No coursework yet
+                        No assignments yet
                       </p>
                       {isTeacher ? (
                         <>
                           <p className="text-sm text-gray-500 mb-4">
-                            Create your first coursework to get started.
+                            Create your first assignment to get started.
                           </p>
                           <Button
                             onClick={() =>
                               navigate(
-                                `/dashboard/classes/${classId}/coursework/new`,
+                                `/dashboard/classes/${classId}/assignments/new`,
                               )
                             }
                             className="w-auto"
                           >
                             <Plus className="w-4 h-4 mr-2" />
-                            Add Coursework
+                            Add Assignment
                           </Button>
                         </>
                       ) : (
                         <p className="text-sm text-gray-500">
-                          Your teacher hasn't created any coursework yet.
+                          Your teacher hasn't created any assignments yet.
                         </p>
                       )}
                     </div>

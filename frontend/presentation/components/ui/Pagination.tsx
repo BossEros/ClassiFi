@@ -162,7 +162,7 @@ export function Pagination({
                   "w-10 h-10 rounded-lg text-sm font-medium transition-all duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                   isActive
-                    ? "bg-gradient-to-r from-teal-600 to-teal-500 text-white shadow-lg"
+                    ? "bg-teal-600 text-white border border-teal-500/40"
                     : "text-gray-400 hover:bg-white/5 hover:text-white",
                 )}
               >

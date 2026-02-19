@@ -1,17 +1,18 @@
 import { useNavigate } from "react-router-dom"
 import { RefreshCw, Check, X } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm"
-import { BasicInfoForm } from "@/presentation/components/forms/coursework/BasicInfoForm"
-import { SubmissionSettings } from "@/presentation/components/forms/coursework/SubmissionSettings"
-import { LatePenaltyConfig } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
+import { useAssignmentForm } from "@/presentation/hooks/useAssignmentForm"
+import { BasicInfoForm } from "@/presentation/components/forms/assignment/BasicInfoForm"
+import { SubmissionSettings } from "@/presentation/components/forms/assignment/SubmissionSettings"
+import { LatePenaltyConfig } from "@/presentation/components/forms/assignment/LatePenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
-export function CourseworkFormPage() {
+export function AssignmentFormPage() {
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
   const {
@@ -24,6 +25,7 @@ export function CourseworkFormPage() {
     testCases,
     pendingTestCases,
     isLoadingTestCases,
+    isUploadingInstructionsImage,
     isEditMode,
     assignmentId,
     showTemplateCode,
@@ -31,6 +33,8 @@ export function CourseworkFormPage() {
     // Actions
     setShowTemplateCode,
     handleInputChange,
+    handleInstructionsImageUpload,
+    handleRemoveInstructionsImage,
     handleSubmit,
 
     // Test Case Actions
@@ -40,11 +44,12 @@ export function CourseworkFormPage() {
     handleAddPendingTestCase,
     handleUpdatePendingTestCase,
     handleDeletePendingTestCase,
-  } = useCourseworkForm()
+  } = useAssignmentForm()
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
     : "?"
+  const hasDeadlineConfigured = formData.deadline.trim().length > 0
 
   const topBar = useTopBar({ user: currentUser, userInitials })
 
@@ -55,7 +60,7 @@ export function CourseworkFormPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading coursework data...</p>
+            <p className="text-gray-400">Loading assignment data...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -71,7 +76,7 @@ export function CourseworkFormPage() {
           <div className="flex items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-white tracking-tight">
-                {isEditMode ? "Edit Coursework" : "Create Coursework for"}
+                {isEditMode ? "Edit Assignment" : "Create Assignment for"}
                 {className && (
                   <span className="text-teal-400"> {className}</span>
                 )}
@@ -104,6 +109,9 @@ export function CourseworkFormPage() {
               showTemplateCode={showTemplateCode}
               setShowTemplateCode={setShowTemplateCode}
               onInputChange={handleInputChange}
+              isUploadingInstructionsImage={isUploadingInstructionsImage}
+              onInstructionsImageUpload={handleInstructionsImageUpload}
+              onInstructionsImageRemove={handleRemoveInstructionsImage}
               // Test Case Props
               testCases={testCases}
               pendingTestCases={pendingTestCases}
@@ -128,45 +136,45 @@ export function CourseworkFormPage() {
               onInputChange={handleInputChange}
             />
 
-            {/* Late Penalty Configuration */}
+            {/* Late Submission Policy */}
             <LatePenaltyConfig
-              enabled={formData.latePenaltyEnabled}
+              enabled={formData.allowLateSubmissions}
               config={formData.latePenaltyConfig}
               onEnabledChange={(enabled) =>
-                handleInputChange("latePenaltyEnabled", enabled)
+                handleInputChange("allowLateSubmissions", enabled)
               }
               onConfigChange={(config: LatePenaltyConfigType) =>
                 handleInputChange("latePenaltyConfig", config)
               }
-              disabled={isLoading}
+              disabled={isLoading || !hasDeadlineConfigured}
             />
 
             {/* Action Buttons Card */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden p-6">
-              <div className="space-y-3">
+            <Card>
+              <CardContent className="p-6 space-y-3">
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg shadow-teal-500/20 font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl border border-teal-500/40 font-medium"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Check className="w-4 h-4 mr-2" />
                   )}
-                  {isEditMode ? "Save Changes" : "Create Coursework"}
+                  {isEditMode ? "Save Changes" : "Create Assignment"}
                 </Button>
                 <Button
                   type="button"
                   onClick={() => navigate(-1)}
                   disabled={isLoading}
-                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white border border-white/10 rounded-xl transition-all"
+                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 rounded-xl transition-all"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </form>
@@ -174,4 +182,4 @@ export function CourseworkFormPage() {
   )
 }
 
-export default CourseworkFormPage
+export default AssignmentFormPage

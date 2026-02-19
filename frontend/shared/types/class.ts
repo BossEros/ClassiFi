@@ -1,3 +1,5 @@
+﻿import type { LatePenaltyConfig } from "@/shared/types/gradebook"
+
 // ============================================================================
 // Class/Dashboard Types - Shared Layer
 // ============================================================================
@@ -78,12 +80,13 @@ export interface Assignment {
   classId: number
   assignmentName: string
   className?: string
-  deadline: ISODateString
+  deadline: ISODateString | null
   programmingLanguage: string
   hasSubmitted?: boolean
   submissionCount?: number
   studentCount?: number
-  description?: string | null
+  instructions?: string | null
+  instructionsImageUrl?: string | null
   allowResubmission?: boolean
   isActive?: boolean
   createdAt?: ISODateString
@@ -92,8 +95,10 @@ export interface Assignment {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: ISODateString | null
-  submittedAt?: ISODateString
-  grade?: number
+  allowLateSubmissions?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
+  submittedAt?: ISODateString | null
+  grade?: number | null
   maxGrade?: number
 }
 
@@ -130,4 +135,4 @@ export type AssignmentFilter = "all" | "pending" | "submitted"
 /**
  * Class detail page tab options
  */
-export type ClassTab = "coursework" | "students" | "calendar" | "grades"
+export type ClassTab = "assignments" | "students" | "calendar" | "grades"

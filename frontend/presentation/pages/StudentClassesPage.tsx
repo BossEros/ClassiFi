@@ -139,7 +139,7 @@ export function StudentClassesPage() {
           </div>
           <Button
             onClick={() => setIsJoinModalOpen(true)}
-            className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20 transition-all hover:scale-105"
+            className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white border border-teal-500/40"
             disabled={isLoading}
           >
             <Plus className="w-4 h-4 mr-2" />

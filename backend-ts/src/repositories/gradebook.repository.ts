@@ -14,7 +14,7 @@ export interface GradebookAssignment {
   id: number
   name: string
   totalScore: number
-  deadline: Date
+  deadline: Date | null
 }
 
 /** Enrolled student basic info */
@@ -72,7 +72,7 @@ export interface ClassAssignmentInfo {
   classId: number
   name: string
   totalScore: number
-  deadline: Date
+  deadline: Date | null
 }
 
 /** Student submission for grade lookup */
@@ -89,7 +89,7 @@ export interface StudentAssignmentGrade {
   assignmentId: number
   assignmentName: string
   totalScore: number
-  deadline: Date
+  deadline: Date | null
   grade: number | null
   isOverridden: boolean
   feedback: string | null

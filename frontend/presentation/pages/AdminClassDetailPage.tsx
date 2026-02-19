@@ -36,7 +36,7 @@ export function AdminClassDetailPage() {
   const [assignments, setAssignments] = useState<ClassAssignment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<"students" | "coursework">(
+  const [activeTab, setActiveTab] = useState<"students" | "assignments">(
     "students",
   )
   const [searchQuery, setSearchQuery] = useState("")
@@ -193,7 +193,7 @@ export function AdminClassDetailPage() {
 
               <button
                 onClick={() => setShowAddStudentModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all font-medium whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 border border-blue-500/40 transition-colors font-medium whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
                 Enroll Student
@@ -219,15 +219,15 @@ export function AdminClassDetailPage() {
             </span>
           </button>
           <button
-            onClick={() => setActiveTab("coursework")}
+            onClick={() => setActiveTab("assignments")}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              activeTab === "coursework"
+              activeTab === "assignments"
                 ? "bg-white/10 text-white shadow-sm"
                 : "text-gray-400 hover:text-white hover:bg-white/5"
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            Coursework
+            Assignments
             <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white/10 text-xs">
               {assignments.length}
             </span>
@@ -353,8 +353,8 @@ export function AdminClassDetailPage() {
             </div>
           )}
 
-          {/* Coursework List */}
-          {activeTab === "coursework" && (
+          {/* Assignments List */}
+          {activeTab === "assignments" && (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {assignments.length > 0 ? (
                 assignments.map((assignment) => (
@@ -384,7 +384,7 @@ export function AdminClassDetailPage() {
                       {assignment.title}
                     </h3>
                     <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">
-                      {assignment.description}
+                      {assignment.instructions}
                     </p>
 
                     <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-white/5">
@@ -406,7 +406,7 @@ export function AdminClassDetailPage() {
               ) : (
                 <div className="col-span-full py-12 text-center text-gray-500 bg-slate-900/20 rounded-xl border border-white/5 border-dashed">
                   <BookOpen className="w-10 h-10 opacity-20 mx-auto mb-3" />
-                  <p>No coursework created for this class yet.</p>
+                  <p>No assignments created for this class yet.</p>
                 </div>
               )}
             </div>

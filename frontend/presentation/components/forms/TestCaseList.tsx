@@ -4,7 +4,6 @@ import {
   Trash2,
   Edit2,
   EyeOff,
-  Clock,
   ChevronDown,
   FlaskConical,
 } from "lucide-react"
@@ -84,6 +83,8 @@ export function TestCaseList({
     })),
   ]
 
+  const resolveAutoCaseName = (index: number): string => `Case ${index + 1}`
+
   const [showSection, setShowSection] = useState(allTestCases.length > 0)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingTestCase, setEditingTestCase] = useState<
@@ -111,6 +112,36 @@ export function TestCaseList({
   const handleSave = async (
     data: CreateTestCaseRequest | UpdateTestCaseRequest,
   ) => {
+    const normalizedName = data.name?.trim() ?? ""
+
+    const fallbackNameForEdit = (() => {
+      if (!editingTestCase) {
+        return resolveAutoCaseName(allTestCases.length)
+      }
+
+      const editIndex = allTestCases.findIndex((tc) =>
+        editingTestCase.tempId
+          ? tc.tempId === editingTestCase.tempId
+          : tc.id === editingTestCase.id,
+      )
+
+      if (editIndex >= 0) {
+        return resolveAutoCaseName(editIndex)
+      }
+
+      return resolveAutoCaseName(allTestCases.length)
+    })()
+
+    const resolvedName =
+      normalizedName ||
+      (editingTestCase?.name?.trim() ?? "") ||
+      fallbackNameForEdit
+
+    const normalizedData = {
+      ...data,
+      name: resolvedName,
+    }
+
     try {
       if (editingTestCase) {
         // Editing existing
@@ -118,31 +149,34 @@ export function TestCaseList({
           // Pending test case
           onUpdatePending?.(editingTestCase.tempId, {
             tempId: editingTestCase.tempId,
-            name: data.name || "",
-            input: data.input || "",
-            expectedOutput: data.expectedOutput || "",
-            isHidden: data.isHidden ?? false,
-            timeLimit: data.timeLimit ?? 5,
+            name: normalizedData.name,
+            input: normalizedData.input || "",
+            expectedOutput: normalizedData.expectedOutput || "",
+            isHidden: normalizedData.isHidden ?? false,
+            timeLimit: normalizedData.timeLimit ?? 5,
             sortOrder: editingTestCase.sortOrder,
           })
         } else {
           // Persisted test case
           setSavingId(editingTestCase.id)
-          await onUpdate(editingTestCase.id, data as UpdateTestCaseRequest)
+          await onUpdate(
+            editingTestCase.id,
+            normalizedData as UpdateTestCaseRequest,
+          )
         }
       } else {
         // Adding new
         if (isEditMode) {
-          await onAdd(data as CreateTestCaseRequest)
+          await onAdd(normalizedData as CreateTestCaseRequest)
         } else {
           // Create pending test case
           onAddPending?.({
             tempId: `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-            name: data.name || "",
-            input: data.input || "",
-            expectedOutput: data.expectedOutput || "",
-            isHidden: data.isHidden ?? false,
-            timeLimit: data.timeLimit ?? 5,
+            name: normalizedData.name,
+            input: normalizedData.input || "",
+            expectedOutput: normalizedData.expectedOutput || "",
+            isHidden: normalizedData.isHidden ?? false,
+            timeLimit: normalizedData.timeLimit ?? 5,
             sortOrder: pendingTestCases.length,
           })
         }
@@ -182,7 +216,7 @@ export function TestCaseList({
       <button
         type="button"
         onClick={() => setShowSection(!showSection)}
-        className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors"
+        className="flex items-center gap-2 text-sm font-medium text-gray-200 hover:text-white transition-colors"
       >
         <FlaskConical className="w-4 h-4" />
         Test Cases {allTestCases.length > 0 && `(${allTestCases.length})`}
@@ -195,7 +229,7 @@ export function TestCaseList({
 
       {showSection && (
         <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-300">
             Define test cases to automatically verify student submissions.
             {!isEditMode &&
               pendingTestCases.length > 0 &&
@@ -225,26 +259,17 @@ export function TestCaseList({
 
                     {/* Name */}
                     <span className="flex-1 text-sm text-white truncate">
-                      {tc.name}
+                      {tc.name?.trim() || resolveAutoCaseName(index)}
                     </span>
 
                     {/* Badges */}
                     <div className="flex items-center gap-2">
-                      {isPending && (
-                        <span className="px-2 py-0.5 rounded-full bg-teal-500/20 text-teal-300 text-xs">
-                          Pending
-                        </span>
-                      )}
                       {tc.isHidden && (
                         <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs">
                           <EyeOff className="w-3 h-3" />
                           Hidden
                         </span>
                       )}
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-gray-400 text-xs">
-                        <Clock className="w-3 h-3" />
-                        {tc.timeLimit}s
-                      </span>
                     </div>
 
                     {/* Actions */}
@@ -315,6 +340,7 @@ export function TestCaseList({
         onClose={() => setModalOpen(false)}
         onSave={handleSave}
         testCase={editingTestCase}
+        defaultName={resolveAutoCaseName(allTestCases.length)}
         isLoading={savingId !== null}
       />
 

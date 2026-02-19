@@ -23,10 +23,9 @@ export const programmingLanguageEnum = pgEnum("programming_language", [
 
 /** Late penalty configuration type */
 export interface LatePenaltyConfig {
-  gracePeriodHours: number // Hours after deadline with no penalty
   tiers: Array<{
     // Penalty tiers
-    hoursAfterGrace: number // Hours after grace period ends
+    hoursLate: number // Maximum hours late covered by this tier
     penaltyPercent: number // Percentage to deduct (e.g., 10 = -10%)
   }>
   rejectAfterHours: number | null // Reject submissions after X hours (null = always accept)
@@ -39,11 +38,12 @@ export const assignments = pgTable("assignments", {
     .notNull()
     .references(() => classes.id, { onDelete: "cascade" }),
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
-  description: text("description").notNull(),
+  instructions: text("instructions").notNull(),
+  instructionsImageUrl: text("instructions_image_url"),
   programmingLanguage: programmingLanguageEnum(
     "programming_language",
   ).notNull(),
-  deadline: timestamp("deadline", { withTimezone: true }).notNull(),
+  deadline: timestamp("deadline", { withTimezone: true }),
   allowResubmission: boolean("allow_resubmission").default(true).notNull(),
   maxAttempts: integer("max_attempts"),
   templateCode: text("template_code"),
@@ -55,7 +55,7 @@ export const assignments = pgTable("assignments", {
   isActive: boolean("is_active").default(true).notNull(),
 
   // Late Penalty Configuration
-  latePenaltyEnabled: boolean("late_penalty_enabled").default(false).notNull(),
+  allowLateSubmissions: boolean("allow_late_submissions").default(false).notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
 
   // Reminder tracking

@@ -90,7 +90,7 @@ export class TeacherDashboardService {
       assignmentName: t.assignmentName,
       className: t.className,
       classId: t.classId,
-      deadline: t.deadline?.toISOString() ?? "",
+      deadline: t.deadline?.toISOString() ?? null,
       submissionCount: t.submissionCount,
       totalStudents: t.studentCount,
     }))

@@ -3,12 +3,9 @@ import { useNavigate } from "react-router-dom"
 import {
   Home,
   Grid3x3,
-  List,
-  Clock,
   Menu,
   X,
   LogOut,
-  FileText,
   Settings,
   Users,
   GraduationCap,
@@ -24,19 +21,12 @@ import { getCurrentUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
 
 const teacherNavigationItems = [
-  { id: "home", label: "Home", path: "/dashboard", icon: Home },
+  { id: "home", label: "Dashboard", path: "/dashboard", icon: Home },
   {
     id: "classes",
     label: "Classes",
     path: "/dashboard/classes",
     icon: Grid3x3,
-  },
-  { id: "tasks", label: "All Tasks", path: "/dashboard/tasks", icon: List },
-  {
-    id: "history",
-    label: "Analysis History",
-    path: "/dashboard/history",
-    icon: Clock,
   },
   {
     id: "calendar",
@@ -53,18 +43,12 @@ const teacherNavigationItems = [
 ]
 
 const studentNavigationItems = [
-  { id: "home", label: "Home", path: "/dashboard", icon: Home },
+  { id: "home", label: "Dashboard", path: "/dashboard", icon: Home },
   {
     id: "classes",
     label: "Classes",
     path: "/dashboard/classes",
     icon: Grid3x3,
-  },
-  {
-    id: "assignments",
-    label: "Coursework",
-    path: "/dashboard/assignments",
-    icon: FileText,
   },
   {
     id: "calendar",

@@ -97,7 +97,7 @@ export function AdminAddStudentModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[10000] grid place-items-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         className="w-full max-w-lg min-w-[320px] mx-auto bg-[#0B1120] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 flex-shrink-0"
         onClick={(e) => e.stopPropagation()}

@@ -5,6 +5,7 @@ import { ClassRepository } from "../repositories/class.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
 import { SubmissionRepository } from "../repositories/submission.repository.js"
 import { NotificationService } from "./notification/notification.service.js"
+import { StorageService } from "./storage.service.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
 import {
@@ -38,6 +39,8 @@ export class AssignmentService {
     private enrollmentRepo: EnrollmentRepository,
     @inject("SubmissionRepository")
     private submissionRepo: SubmissionRepository,
+    @inject("StorageService")
+    private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
   ) {}
@@ -53,7 +56,8 @@ export class AssignmentService {
       classId,
       teacherId,
       assignmentName,
-      description,
+      instructions,
+      instructionsImageUrl,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -61,15 +65,28 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+      allowLateSubmissions,
+      latePenaltyConfig,
     } = data
 
     // Verify class exists and teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
+    const normalizedInstructions = instructions.trim()
+    const normalizedInstructionsImageUrl = this.normalizeNullableString(
+      instructionsImageUrl,
+    )
+
+    this.validateInstructionsContent(
+      normalizedInstructions,
+      normalizedInstructionsImageUrl,
+    )
+
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
       assignmentName,
-      description,
+      instructions: normalizedInstructions,
+      instructionsImageUrl: normalizedInstructionsImageUrl,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -77,6 +94,8 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+      allowLateSubmissions,
+      latePenaltyConfig,
     })
 
     // Notify enrolled students asynchronously (don't block assignment creation)
@@ -210,9 +229,14 @@ export class AssignmentService {
 
     // Validate business rule: deadline must be after scheduled date
     // Handle partial updates by comparing against existing values
-    const finalDeadline = updateData.deadline ?? existingAssignment.deadline
+    const finalDeadline =
+      updateData.deadline === undefined
+        ? existingAssignment.deadline
+        : updateData.deadline
     const finalScheduledDate =
-      updateData.scheduledDate ?? existingAssignment.scheduledDate
+      updateData.scheduledDate === undefined
+        ? existingAssignment.scheduledDate
+        : updateData.scheduledDate
 
     if (
       finalDeadline &&
@@ -224,13 +248,49 @@ export class AssignmentService {
       )
     }
 
+    const normalizedInstructions =
+      updateData.instructions !== undefined
+        ? updateData.instructions.trim()
+        : undefined
+    const normalizedInstructionsImageUrl =
+      updateData.instructionsImageUrl !== undefined
+        ? this.normalizeNullableString(updateData.instructionsImageUrl)
+        : undefined
+
+    const finalInstructions = (
+      normalizedInstructions ?? existingAssignment.instructions
+    ).trim()
+    const finalInstructionsImageUrl =
+      normalizedInstructionsImageUrl !== undefined
+        ? normalizedInstructionsImageUrl
+        : existingAssignment.instructionsImageUrl
+
+    this.validateInstructionsContent(
+      finalInstructions,
+      finalInstructionsImageUrl,
+    )
+
+    const previousInstructionsImageUrl = existingAssignment.instructionsImageUrl
+
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
       assignmentId,
-      updateData,
+      {
+        ...updateData,
+        instructions: normalizedInstructions,
+        instructionsImageUrl: normalizedInstructionsImageUrl,
+      },
     )
 
     if (!updatedAssignment) {
       throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    const nextInstructionsImageUrl = updatedAssignment.instructionsImageUrl
+    if (
+      previousInstructionsImageUrl &&
+      previousInstructionsImageUrl !== nextInstructionsImageUrl
+    ) {
+      await this.deleteInstructionsImageSafely(previousInstructionsImageUrl)
     }
 
     return toAssignmentDTO(updatedAssignment)
@@ -253,7 +313,56 @@ export class AssignmentService {
     // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
+    if (assignment.instructionsImageUrl) {
+      await this.deleteInstructionsImageSafely(assignment.instructionsImageUrl)
+    }
+
     await this.assignmentRepo.deleteAssignment(assignmentId)
+  }
+
+  /**
+   * Ensures assignment has at least one instructions surface.
+   */
+  private validateInstructionsContent(
+    instructions: string,
+    instructionsImageUrl: string | null | undefined,
+  ): void {
+    const hasTextInstructions = instructions.trim().length > 0
+    const hasImageInstructions = !!instructionsImageUrl?.trim()
+
+    if (!hasTextInstructions && !hasImageInstructions) {
+      throw new InvalidAssignmentDataError(
+        "Either instructions text or instructions image is required",
+      )
+    }
+  }
+
+  /**
+   * Normalizes optional text values by trimming and converting blanks to null.
+   */
+  private normalizeNullableString(
+    value: string | null | undefined,
+  ): string | null {
+    if (value === undefined || value === null) {
+      return null
+    }
+
+    const trimmedValue = value.trim()
+    return trimmedValue.length > 0 ? trimmedValue : null
+  }
+
+  /**
+   * Best-effort cleanup for assignment instructions image files.
+   */
+  private async deleteInstructionsImageSafely(imageUrl: string): Promise<void> {
+    try {
+      await this.storageService.deleteAssignmentInstructionsImage(imageUrl)
+    } catch (error) {
+      logger.error("Failed to delete assignment instructions image", {
+        imageUrl,
+        error,
+      })
+    }
   }
 
   /**

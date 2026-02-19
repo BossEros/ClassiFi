@@ -124,7 +124,7 @@ Routing is handled in `presentation/App.tsx`.
 - **`Header`**: User profile, notifications, breadcrumbs.
 - **`ClassCard`**: Displays class information in list view with code pattern background, instructor avatar, student count, term info, and archived status. Used in classes list pages.
 - **`ClassHeader`**: Displays class information including name, instructor, schedule, and optional description with action buttons (teachers: Gradebook button and Edit/Delete dropdown; students: Leave Class dropdown).
-- **`ClassTabs`**: Tab navigation for Coursework, Students, and Calendar views with keyboard accessibility.
+- **`ClassTabs`**: Tab navigation for Assignment, Students, and Calendar views with keyboard accessibility.
 - **`InstructorInfo`**: Displays instructor name with user icon for class detail views.
 - **`ScheduleInfo`**: Displays class schedule with days and time range.
 - **`ClassCodeBadge`**: Styled badge displaying the class join code.
@@ -152,12 +152,18 @@ Routing is handled in `presentation/App.tsx`.
 ### Forms
 
 - **`ClassForm`**: Create/Edit classes with schedule configuration.
-- **`CourseworkForm`**: Create/Edit assignments with:
+- **`AssignmentForm`**: Create/Edit assignments with:
   - Programming language selection (Python, Java, C)
+  - Instructions text plus optional image attachment (preview)
   - File attachments
   - Test cases with input/output validation
-  - Late penalty configuration
-  - Deadline and resubmission settings
+  - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
+  - Optional deadline settings (assignment can be created without a deadline)
+  - Resubmission settings
+
+**Assignment Instructions Image Storage Configuration**:
+- Uses Supabase Storage bucket configured via `VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET` (defaults to `assignment-descriptions`)
+- If the configured bucket is unavailable, the client attempts fallback upload buckets for compatibility
 
 ### Shared Presentation Hooks (Admin Pages)
 
@@ -410,7 +416,7 @@ Specialized types for the class detail page redesign:
 
 - **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for assignment cards and filtering
 - **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Filter options for assignment list
-- **`ClassTab`**: `'coursework' | 'students' | 'calendar'` - Tab navigation options
+- **`ClassTab`**: `'assignment' | 'students' | 'calendar'` - Tab navigation options
 
 ### Type Utilities
 
@@ -435,7 +441,7 @@ Specialized types for the class detail page redesign:
    - Click on any assignment card to navigate to the assignment detail page
    - View grades directly on assignment cards for graded work (displayed as "95/100" format)
 5. **Switch Tabs**:
-   - Use the tab navigation to switch between Coursework, Students, and Calendar views
+   - Use the tab navigation to switch between Assignment, Students, and Calendar views
    - Filter selections persist when switching between tabs
    - Keyboard navigation supported (arrow keys + Enter)
 
@@ -455,9 +461,9 @@ Specialized types for the class detail page redesign:
 4. **View Students**:
    - Switch to Students tab to view enrolled students
    - Manage student enrollments
-5. **Create New Coursework**:
-   - Click "Create Coursework" button in the Coursework tab
-   - Configure assignment details, test cases, and deadlines
+5. **Create New Assignment**:
+   - Click "Create Assignment" button in the Assignment tab
+   - Configure assignment details, test cases, deadlines, and late submission policy
 
 ### Teacher: Reviewing Plagiarism Results
 

@@ -1,5 +1,6 @@
 import { apiClient, type ApiResponse } from "@/data/api/apiClient"
 import { supabase } from "@/data/api/supabaseClient"
+import { sanitizeUserFacingErrorMessage } from "@/shared/utils/errorUtils"
 import {
   mapSubmission,
   mapSubmissionWithAssignment,
@@ -24,6 +25,12 @@ import type { Submission } from "@/shared/types/submission"
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
+const DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET = "assignment-descriptions"
+const ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET =
+  "assignment-descriptions-fallback"
+const ASSIGNMENT_INSTRUCTIONS_BUCKET = getConfiguredAssignmentInstructionsBucket()
+const ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES =
+  resolveAssignmentInstructionsBucketCandidates(ASSIGNMENT_INSTRUCTIONS_BUCKET)
 
 export async function submitAssignmentWithFile(
   submissionRequest: SubmitAssignmentRequest,
@@ -261,7 +268,239 @@ export async function sendReminderToNonSubmitters(
   )
 }
 
+/**
+ * Uploads an assignment instructions image to Supabase Storage and returns its public URL.
+ */
+export async function uploadAssignmentInstructionsImage(
+  teacherId: number,
+  classId: number,
+  file: File,
+): Promise<string> {
+  const fileExtension = resolveFileExtension(file)
+  const safeBaseName = sanitizeFilename(file.name.replace(/\.[^/.]+$/, ""))
+  const filePath = `${teacherId}/${classId}/${Date.now()}_${safeBaseName}.${fileExtension}`
+  let lastUploadErrorMessage: string | null = null
+
+  for (const bucketName of ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES) {
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+      })
+
+    if (!uploadError) {
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from(bucketName).getPublicUrl(filePath)
+
+      return publicUrl
+    }
+
+    lastUploadErrorMessage = uploadError.message || "Failed to upload assignment image"
+
+    if (isStorageBucketConfigurationError(uploadError.message)) {
+      continue
+    }
+
+    throw new Error(lastUploadErrorMessage)
+  }
+
+  throw new Error(
+    lastUploadErrorMessage ||
+      "Assignment image storage is not configured. Configure VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET or create the assignment-descriptions bucket with upload permissions.",
+  )
+}
+
+/**
+ * Deletes an assignment instructions image from Supabase Storage.
+ * Fails silently if deletion is unsuccessful.
+ */
+export async function deleteAssignmentInstructionsImage(
+  imageUrl: string,
+): Promise<void> {
+  try {
+    const storageLocation = parseStorageLocationFromPublicUrl(imageUrl)
+    if (!storageLocation) {
+      return
+    }
+
+    await supabase.storage
+      .from(storageLocation.bucket)
+      .remove([storageLocation.path])
+  } catch (error) {
+    console.error("Failed to delete assignment instructions image:", error)
+  }
+}
+
 // Helper functions
+
+function resolveFileExtension(file: File): string {
+  const extensionFromName = file.name.split(".").pop()
+  if (extensionFromName && extensionFromName !== file.name) {
+    return extensionFromName.toLowerCase()
+  }
+
+  const mimeToExtension: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+  }
+
+  return mimeToExtension[file.type] || "jpg"
+}
+
+function sanitizeFilename(fileName: string): string {
+  const normalizedFileName = fileName.trim().toLowerCase()
+  const sanitizedFileName = normalizedFileName.replace(/[^a-z0-9-_]/g, "-")
+  const compactFileName = sanitizedFileName.replace(/-+/g, "-")
+  return compactFileName || "assignment-instructions"
+}
+
+function getConfiguredAssignmentInstructionsBucket(): string {
+  const configuredBucketName =
+    import.meta.env.VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET
+
+  if (
+    typeof configuredBucketName === "string" &&
+    configuredBucketName.trim().length > 0
+  ) {
+    return configuredBucketName.trim()
+  }
+
+  return DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET
+}
+
+function resolveAssignmentInstructionsBucketCandidates(
+  primaryBucketName: string,
+): string[] {
+  const candidateBuckets = [
+    primaryBucketName,
+    DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET,
+    ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET,
+  ]
+
+  return Array.from(
+    new Set(
+      candidateBuckets
+        .map((bucketName) => bucketName.trim())
+        .filter((bucketName) => bucketName.length > 0),
+    ),
+  )
+}
+
+function isStorageBucketConfigurationError(errorMessage: string): boolean {
+  const normalizedMessage = errorMessage.toLowerCase()
+
+  return (
+    normalizedMessage.includes("bucket") ||
+    normalizedMessage.includes("not found") ||
+    normalizedMessage.includes("does not exist") ||
+    normalizedMessage.includes("row-level security") ||
+    normalizedMessage.includes("permission denied") ||
+    normalizedMessage.includes("not authorized")
+  )
+}
+
+interface StorageLocation {
+  bucket: string
+  path: string
+}
+
+function parseStorageLocationFromPublicUrl(
+  storagePublicUrl: string,
+): StorageLocation | null {
+  if (!storagePublicUrl?.trim()) {
+    return null
+  }
+
+  const parsedAbsoluteUrlLocation =
+    parseStorageLocationFromAbsoluteUrl(storagePublicUrl)
+  if (parsedAbsoluteUrlLocation) {
+    return parsedAbsoluteUrlLocation
+  }
+
+  const legacyBucketLocation = parseStorageLocationFromLegacyPattern(
+    storagePublicUrl,
+  )
+  if (legacyBucketLocation) {
+    return legacyBucketLocation
+  }
+
+  const [bucketName, ...pathSegments] = storagePublicUrl.split("/")
+  if (!bucketName || pathSegments.length === 0) {
+    return null
+  }
+
+  const normalizedPath = pathSegments.join("/").split("?")[0]
+  if (!normalizedPath) {
+    return null
+  }
+
+  return { bucket: bucketName, path: normalizedPath }
+}
+
+function parseStorageLocationFromAbsoluteUrl(
+  storagePublicUrl: string,
+): StorageLocation | null {
+  try {
+    const parsedUrl = new URL(storagePublicUrl)
+    const storagePublicMarker = "/storage/v1/object/public/"
+    const storageMarkerIndex = parsedUrl.pathname.indexOf(storagePublicMarker)
+
+    if (storageMarkerIndex === -1) {
+      return null
+    }
+
+    const bucketAndPath = parsedUrl.pathname.slice(
+      storageMarkerIndex + storagePublicMarker.length,
+    )
+    const [bucketName, ...pathSegments] = bucketAndPath.split("/")
+
+    if (!bucketName || pathSegments.length === 0) {
+      return null
+    }
+
+    const decodedPath = decodeURIComponent(pathSegments.join("/"))
+    if (!decodedPath) {
+      return null
+    }
+
+    return {
+      bucket: decodeURIComponent(bucketName),
+      path: decodedPath,
+    }
+  } catch {
+    return null
+  }
+}
+
+function parseStorageLocationFromLegacyPattern(
+  storagePublicUrl: string,
+): StorageLocation | null {
+  for (const bucketName of ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES) {
+    const bucketMarker = `/${bucketName}/`
+    if (!storagePublicUrl.includes(bucketMarker)) {
+      continue
+    }
+
+    const pathParts = storagePublicUrl.split(bucketMarker)
+    const rawPath = pathParts[pathParts.length - 1].split("?")[0]
+
+    if (!rawPath) {
+      return null
+    }
+
+    return {
+      bucket: bucketName,
+      path: rawPath,
+    }
+  }
+
+  return null
+}
 
 async function retrieveAuthenticationTokenFromSession(): Promise<
   string | null
@@ -304,7 +543,7 @@ function buildErrorResponseForFailedSubmission(
   })
 
   return {
-    error: `${errorMessage} (Status: ${httpResponse.status})`,
+    error: sanitizeUserFacingErrorMessage(errorMessage),
     status: httpResponse.status,
   }
 }

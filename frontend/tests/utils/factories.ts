@@ -145,7 +145,7 @@ export function createMockAssignment(
     assignmentName: "Hello World Assignment",
     deadline: toISO(deadline),
     programmingLanguage: "python",
-    description: "Write a program that prints Hello World",
+    instructions: "Write a program that prints Hello World",
     allowResubmission: true,
     isActive: true,
     createdAt: toISO(now),

@@ -33,7 +33,7 @@ describe("teacherDashboardRepository", () => {
     id: 1,
     classId: 1,
     assignmentName: "Hello World",
-    description: "Write Hello World",
+    instructions: "Write Hello World",
     programmingLanguage: "python",
     deadline: "2024-12-31T23:59:59Z",
     allowResubmission: true,

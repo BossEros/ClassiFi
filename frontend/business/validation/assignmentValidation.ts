@@ -26,20 +26,25 @@ export const validateAssignmentTitle = (title: string): string | null => {
 }
 
 /**
- * Validates the assignment description.
+ * Validates the assignment instructions.
  *
- * @param description - The description to validate.
+ * @param instructions - The instructions to validate.
+ * @param instructionsImageUrl - Optional image URL used as the main instructions.
  * @returns An error message string if invalid, otherwise null.
  */
-export const validateDescription = (description: string): string | null => {
-  const trimmed = description.trim()
+export const validateInstructions = (
+  instructions: string,
+  instructionsImageUrl?: string | null,
+): string | null => {
+  const trimmed = instructions.trim()
+  const hasInstructionsImage = !!instructionsImageUrl?.trim()
 
-  if (!trimmed) {
-    return "Description is required"
+  if (!trimmed && !hasInstructionsImage) {
+    return "Add instructions or upload an image"
   }
 
-  if (trimmed.length < 10) {
-    return "Description must be at least 10 characters"
+  if (trimmed.length > 5000) {
+    return "Instructions must not exceed 5000 characters"
   }
 
   return null
@@ -76,9 +81,11 @@ export const validateProgrammingLanguage = (
  * @param deadline - The deadline date or string to validate.
  * @returns An error message string if invalid, otherwise null.
  */
-export const validateDeadline = (deadline: Date | string): string | null => {
+export const validateDeadline = (
+  deadline: Date | string | null | undefined,
+): string | null => {
   if (!deadline) {
-    return "Deadline is required"
+    return null
   }
 
   const deadlineDate =
@@ -122,15 +129,20 @@ export const validateCreateAssignmentData = (
     })
   }
 
-  // Validate description
-  if (data.description !== undefined) {
-    const descriptionError = validateDescription(data.description)
-
-    if (descriptionError) {
-      errors.push({ field: "description", message: descriptionError })
+  // Validate instructions
+  if (data.instructions !== undefined || data.instructionsImageUrl !== undefined) {
+    const instructionsError = validateInstructions(
+      data.instructions ?? "",
+      data.instructionsImageUrl,
+    )
+    if (instructionsError) {
+      errors.push({ field: "instructions", message: instructionsError })
     }
   } else {
-    errors.push({ field: "description", message: "Description is required" })
+    errors.push({
+      field: "instructions",
+      message: "Add instructions or upload an image",
+    })
   }
 
   // Validate programming language
@@ -154,8 +166,6 @@ export const validateCreateAssignmentData = (
     if (deadlineError) {
       errors.push({ field: "deadline", message: deadlineError })
     }
-  } else {
-    errors.push({ field: "deadline", message: "Deadline is required" })
   }
 
   return {
@@ -188,15 +198,6 @@ export const validateUpdateAssignmentData = (
     }
   }
 
-  // Validate description if provided
-  if (data.description !== undefined) {
-    const descError = validateDescription(data.description)
-
-    if (descError) {
-      throw new Error(descError)
-    }
-  }
-
   // Validate deadline if provided
   if (data.deadline !== undefined) {
     const deadlineError = validateDeadline(data.deadline)
@@ -204,5 +205,15 @@ export const validateUpdateAssignmentData = (
     if (deadlineError) {
       throw new Error(deadlineError)
     }
+  }
+
+  // Validate instructions content consistency
+  const instructionsError = validateInstructions(
+    data.instructions ?? "",
+    data.instructionsImageUrl,
+  )
+
+  if (instructionsError) {
+    throw new Error(instructionsError)
   }
 }

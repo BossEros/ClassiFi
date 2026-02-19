@@ -100,7 +100,8 @@ export function mapAssignmentDetail(
     classId: dto.classId,
     className: dto.className,
     assignmentName: dto.assignmentName,
-    description: dto.description,
+    instructions: dto.instructions,
+    instructionsImageUrl: dto.instructionsImageUrl ?? null,
     programmingLanguage,
     deadline: dto.deadline,
     allowResubmission: dto.allowResubmission,
@@ -111,6 +112,8 @@ export function mapAssignmentDetail(
     hasTemplateCode: dto.hasTemplateCode ?? false,
     totalScore: dto.totalScore,
     scheduledDate: dto.scheduledDate ?? null,
+    allowLateSubmissions: dto.allowLateSubmissions ?? false,
+    latePenaltyConfig: dto.latePenaltyConfig ?? null,
     testCases: dto.testCases ?? [],
   }
 }

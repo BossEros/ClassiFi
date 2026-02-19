@@ -58,7 +58,7 @@ export function CalendarViewToggle({
                             focus:outline-none focus:ring-2 focus:ring-blue-500/50
                             ${
                               isActive
-                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                                ? "bg-blue-600 text-white border border-blue-500/40"
                                 : "text-slate-400 hover:text-white hover:bg-white/10"
                             }
                         `}

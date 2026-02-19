@@ -14,7 +14,7 @@ import { formatTimeAgo, isLateSubmission } from "@/shared/utils/dateUtils"
 
 interface SubmissionCardProps {
   submission: Submission
-  deadline: Date
+  deadline: Date | null
   onClick?: () => void
   className?: string
 }

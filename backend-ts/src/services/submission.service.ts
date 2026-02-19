@@ -283,11 +283,14 @@ export class SubmissionService {
       return null
     }
 
-    if (assignment.latePenaltyEnabled && assignment.latePenaltyConfig) {
+    if (assignment.allowLateSubmissions) {
+      const latePenaltyConfiguration =
+        assignment.latePenaltyConfig ?? this.latePenaltyService.getDefaultConfig()
+
       const penaltyResult = this.latePenaltyService.calculatePenalty(
         now,
         assignment.deadline,
-        assignment.latePenaltyConfig,
+        latePenaltyConfiguration,
       )
 
       if (penaltyResult.penaltyPercent >= 100) {

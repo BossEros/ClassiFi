@@ -86,6 +86,8 @@ export interface TaskDTO {
   id: number
   classId: number
   assignmentName: string
+  instructions: string | null
+  instructionsImageUrl?: string | null
   className?: string
   deadline: string | null
   programmingLanguage: string
@@ -112,9 +114,10 @@ export interface AssignmentDetail {
   classId: number
   className: string
   assignmentName: string
-  description: string
+  instructions: string
+  instructionsImageUrl?: string | null
   programmingLanguage: ProgrammingLanguage
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   maxAttempts?: number | null
   createdAt?: string
@@ -126,7 +129,7 @@ export interface AssignmentDetail {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
 }
@@ -172,38 +175,41 @@ export interface CreateAssignmentRequest {
   classId: number
   teacherId: number
   assignmentName: string
-  description: string
+  instructions: string
+  instructionsImageUrl?: string | null
   programmingLanguage: ProgrammingLanguage
-  deadline: Date | string
+  deadline?: Date | string | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 export interface UpdateAssignmentRequest {
   teacherId: number
   assignmentName?: string
-  description?: string
+  instructions?: string
+  instructionsImageUrl?: string | null
   programmingLanguage?: ProgrammingLanguage
-  deadline?: Date | string
+  deadline?: Date | string | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 export interface UpdateAssignmentValidationData {
   teacherId?: number
   assignmentName?: string
-  description?: string
-  deadline?: Date | string
+  instructions?: string
+  instructionsImageUrl?: string | null
+  deadline?: Date | string | null
 }
 
 // ============================================================================
@@ -346,9 +352,10 @@ export interface TeacherDashboardTaskResponse {
   id: number
   classId: number
   assignmentName: string
-  description: string | null
+  instructions: string | null
+  instructionsImageUrl?: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   isActive: boolean
   createdAt: string
@@ -389,9 +396,10 @@ export interface AssignmentResponse {
   id: number
   classId: number
   assignmentName: string
-  description: string | null
+  instructions: string | null
+  instructionsImageUrl?: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   isActive: boolean
   createdAt: string
@@ -606,7 +614,7 @@ export interface UpdateClassData {
 export interface ClassAssignment {
   id: number
   title: string
-  description: string
+  instructions: string
   deadline: string | null
   createdAt: string
   submissionCount: number
@@ -768,9 +776,10 @@ export interface AssignmentDetailDTO {
   classId: number
   className: string
   assignmentName: string
-  description: string
+  instructions: string
+  instructionsImageUrl?: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   maxAttempts?: number | null
   isActive: boolean
@@ -779,6 +788,8 @@ export interface AssignmentDetailDTO {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
+  allowLateSubmissions?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
 }
 
@@ -810,15 +821,23 @@ export interface TestCaseResponse {
   testCase: TestCase
 }
 
+export interface TestExecutionSummaryData {
+  submissionId?: number
+  results: RawTestResult[]
+  // Current backend contract
+  passed?: number
+  total?: number
+  percentage?: number
+  // Legacy contract kept for compatibility
+  passedCount?: number
+  totalCount?: number
+  score?: number
+}
+
 export interface TestResultsResponse {
   success: boolean
   message: string
-  data: {
-    results: RawTestResult[]
-    passedCount: number
-    totalCount: number
-    score: number
-  }
+  data: TestExecutionSummaryData
 }
 
 export interface SuccessResponse {

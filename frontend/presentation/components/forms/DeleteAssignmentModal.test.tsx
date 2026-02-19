@@ -28,10 +28,10 @@ describe("DeleteAssignmentModal", () => {
       expect(screen.getByRole("dialog")).toBeInTheDocument()
     })
 
-    it("displays Delete Coursework title", () => {
+    it("displays Delete Assignment title", () => {
       render(<DeleteAssignmentModal {...defaultProps} />)
       expect(
-        screen.getByRole("heading", { name: "Delete Coursework" }),
+        screen.getByRole("heading", { name: "Delete Assignment" }),
       ).toBeInTheDocument()
     })
 
@@ -57,10 +57,10 @@ describe("DeleteAssignmentModal", () => {
       expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument()
     })
 
-    it("displays Delete Coursework button", () => {
+    it("displays Delete Assignment button", () => {
       render(<DeleteAssignmentModal {...defaultProps} />)
       expect(
-        screen.getByRole("button", { name: "Delete Coursework" }),
+        screen.getByRole("button", { name: "Delete Assignment" }),
       ).toBeInTheDocument()
     })
   })
@@ -79,7 +79,7 @@ describe("DeleteAssignmentModal", () => {
       const onConfirm = vi.fn()
       render(<DeleteAssignmentModal {...defaultProps} onConfirm={onConfirm} />)
 
-      fireEvent.click(screen.getByRole("button", { name: "Delete Coursework" }))
+      fireEvent.click(screen.getByRole("button", { name: "Delete Assignment" }))
 
       expect(onConfirm).toHaveBeenCalledTimes(1)
     })
@@ -192,7 +192,7 @@ describe("DeleteAssignmentModal", () => {
       const labelId = dialog.getAttribute("aria-labelledby")
       expect(labelId).toBe("delete-assignment-modal-title")
       expect(document.getElementById(labelId!)).toHaveTextContent(
-        "Delete Coursework",
+        "Delete Assignment",
       )
     })
   })

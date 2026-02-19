@@ -33,7 +33,7 @@ describe("calendarService", () => {
       id: 1,
       classId: 1,
       assignmentName: "Test Assignment",
-      description: "Test description",
+      instructions: "Test description",
       programmingLanguage: "python",
       deadline: "2024-12-31T23:59:59Z" as any,
       allowResubmission: true,

@@ -753,7 +753,7 @@ function transformToStudentEvent(
     id: assignment.id,
     type: "assignment",
     title: assignment.assignmentName,
-    description: assignment.description || undefined,
+    description: assignment.instructions || undefined,
     timing: {
       start: deadlineDate,
       end: deadlineDate,
@@ -797,7 +797,7 @@ function transformToTeacherEvent(
     id: assignment.id,
     type: "assignment",
     title: assignment.assignmentName,
-    description: assignment.description || undefined,
+    description: assignment.instructions || undefined,
     timing: {
       start: deadlineDate,
       end: deadlineDate,

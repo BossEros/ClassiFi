@@ -230,7 +230,28 @@ export class ClassService {
       // Continue with deletion anyway
     }
 
-    // 2. Delete class from database (cascades to assignments, submissions, enrollments)
+    // 2. Clean up assignment instructions images
+    try {
+      const classAssignments = await this.assignmentRepo.getAssignmentsByClassId(
+        classId,
+        false,
+      )
+
+      const instructionsImageUrls = classAssignments
+        .map((assignment) => assignment.instructionsImageUrl)
+        .filter((imageUrl): imageUrl is string => !!imageUrl)
+
+      await Promise.all(
+        instructionsImageUrls.map((imageUrl) =>
+          this.storageService.deleteAssignmentInstructionsImage(imageUrl),
+        ),
+      )
+    } catch (error) {
+      logger.error("Error cleaning up assignment instructions images:", error)
+      // Continue with deletion anyway
+    }
+
+    // 3. Delete class from database (cascades to assignments, submissions, enrollments)
     await this.classRepo.deleteClass(classId)
   }
 

@@ -8,7 +8,10 @@ import type { LatePenaltyConfig } from "../../src/models/index.js"
 
 describe("LatePenaltyService", () => {
   let latePenaltyService: LatePenaltyService
-  let mockAssignmentRepo: any
+  let mockAssignmentRepo: {
+    getLatePenaltyConfig: ReturnType<typeof vi.fn>
+    setLatePenaltyConfig: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
     mockAssignmentRepo = {
@@ -17,27 +20,23 @@ describe("LatePenaltyService", () => {
     }
 
     latePenaltyService = new LatePenaltyService(
-      mockAssignmentRepo as AssignmentRepository,
+      mockAssignmentRepo as unknown as AssignmentRepository,
     )
   })
 
-  // ============================================
-  // Penalty Calculation Tests
-  // ============================================
   describe("calculatePenalty", () => {
     const testConfig: LatePenaltyConfig = {
-      gracePeriodHours: 24,
       tiers: [
-        { hoursAfterGrace: 24, penaltyPercent: 10 },
-        { hoursAfterGrace: 48, penaltyPercent: 25 },
-        { hoursAfterGrace: 96, penaltyPercent: 50 },
+        { hoursLate: 24, penaltyPercent: 10 },
+        { hoursLate: 48, penaltyPercent: 25 },
+        { hoursLate: 96, penaltyPercent: 50 },
       ],
       rejectAfterHours: 120,
     }
 
-    it("should return no penalty for on-time submission", () => {
+    it("returns no penalty for on-time submission", () => {
       const deadline = new Date("2026-01-15T23:59:59")
-      const submissionDate = new Date("2026-01-15T12:00:00") // 12 hours before deadline
+      const submissionDate = new Date("2026-01-15T12:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,
@@ -52,28 +51,9 @@ describe("LatePenaltyService", () => {
       expect(result.tierLabel).toBe("On time")
     })
 
-    it("should return no penalty for submission within grace period", () => {
-      const deadline = new Date("2026-01-15T23:59:59")
-      const submissionDate = new Date("2026-01-16T12:00:00") // ~12 hours late
-
-      const result = latePenaltyService.calculatePenalty(
-        submissionDate,
-        deadline,
-        testConfig,
-      )
-
-      expect(result.isLate).toBe(true)
-      expect(result.hoursLate).toBeGreaterThan(0)
-      expect(result.hoursLate).toBeLessThan(24)
-      expect(result.penaltyPercent).toBe(0)
-      expect(result.gradeMultiplier).toBe(1.0)
-      expect(result.tierLabel).toBe("Within grace period")
-    })
-
-    it("should apply 10% penalty for up to 24 hours late after grace", () => {
+    it("applies first tier immediately after deadline", () => {
       const deadline = new Date("2026-01-15T00:00:00")
-      // 24h grace + 20h = 44 hours after deadline (20h after grace, within 24h upper bound)
-      const submissionDate = new Date("2026-01-16T20:00:00")
+      const submissionDate = new Date("2026-01-15T12:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,
@@ -86,10 +66,9 @@ describe("LatePenaltyService", () => {
       expect(result.gradeMultiplier).toBe(0.9)
     })
 
-    it("should apply 25% penalty for up to 48 hours late after grace", () => {
+    it("applies 25% penalty up to 48 hours late", () => {
       const deadline = new Date("2026-01-15T00:00:00")
-      // 24h grace + 40h = 64 hours after deadline (40h after grace, within 48h upper bound)
-      const submissionDate = new Date("2026-01-17T16:00:00")
+      const submissionDate = new Date("2026-01-16T16:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,
@@ -102,20 +81,17 @@ describe("LatePenaltyService", () => {
       expect(result.gradeMultiplier).toBe(0.75)
     })
 
-    it("should apply 50% penalty for 96+ hours late after grace", () => {
-      // Use a config with a higher rejection threshold for this test
+    it("applies last tier when late beyond all configured tiers", () => {
       const config50Test: LatePenaltyConfig = {
-        gracePeriodHours: 24,
         tiers: [
-          { hoursAfterGrace: 24, penaltyPercent: 10 },
-          { hoursAfterGrace: 48, penaltyPercent: 25 },
-          { hoursAfterGrace: 96, penaltyPercent: 50 },
+          { hoursLate: 24, penaltyPercent: 10 },
+          { hoursLate: 48, penaltyPercent: 25 },
+          { hoursLate: 96, penaltyPercent: 50 },
         ],
-        rejectAfterHours: 200, // Increase to allow testing 50% tier
+        rejectAfterHours: 200,
       }
 
       const deadline = new Date("2026-01-15T00:00:00")
-      // Need 24h grace + 97h = 121 hours total after deadline
       const submissionDate = new Date("2026-01-20T01:00:00")
 
       const result = latePenaltyService.calculatePenalty(
@@ -125,14 +101,12 @@ describe("LatePenaltyService", () => {
       )
 
       expect(result.isLate).toBe(true)
-      // At 121h total, that's 97h after the 24h grace = hits the 96h tier for 50%
       expect(result.penaltyPercent).toBe(50)
       expect(result.gradeMultiplier).toBe(0.5)
     })
 
-    it("should reject submission after rejectAfterHours", () => {
+    it("rejects submission after rejectAfterHours", () => {
       const deadline = new Date("2026-01-15T00:00:00")
-      // 130 hours after deadline (past 120h rejection)
       const submissionDate = new Date("2026-01-20T10:00:00")
 
       const result = latePenaltyService.calculatePenalty(
@@ -147,13 +121,13 @@ describe("LatePenaltyService", () => {
       expect(result.tierLabel).toBe("Submission rejected (too late)")
     })
 
-    it("should handle null rejectAfterHours (no rejection)", () => {
+    it("handles null rejectAfterHours (no rejection)", () => {
       const configNoReject: LatePenaltyConfig = {
         ...testConfig,
         rejectAfterHours: null,
       }
       const deadline = new Date("2026-01-15T00:00:00")
-      const submissionDate = new Date("2026-01-25T00:00:00") // 10 days late
+      const submissionDate = new Date("2026-01-25T00:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,
@@ -162,18 +136,17 @@ describe("LatePenaltyService", () => {
       )
 
       expect(result.isLate).toBe(true)
-      expect(result.penaltyPercent).toBe(50) // Maximum tier
+      expect(result.penaltyPercent).toBe(50)
       expect(result.gradeMultiplier).toBe(0.5)
     })
 
-    it("should handle config with no tiers (just grace period)", () => {
+    it("handles config with no tiers", () => {
       const configNoTiers: LatePenaltyConfig = {
-        gracePeriodHours: 24,
         tiers: [],
         rejectAfterHours: null,
       }
       const deadline = new Date("2026-01-15T00:00:00")
-      const submissionDate = new Date("2026-01-20T00:00:00") // 5 days late
+      const submissionDate = new Date("2026-01-20T00:00:00")
 
       const result = latePenaltyService.calculatePenalty(
         submissionDate,
@@ -182,16 +155,13 @@ describe("LatePenaltyService", () => {
       )
 
       expect(result.isLate).toBe(true)
-      expect(result.penaltyPercent).toBe(0) // No tiers = no penalty
+      expect(result.penaltyPercent).toBe(0)
       expect(result.gradeMultiplier).toBe(1.0)
     })
   })
 
-  // ============================================
-  // Apply Penalty Tests
-  // ============================================
   describe("applyPenalty", () => {
-    it("should return full grade for on-time submission", () => {
+    it("returns full grade for on-time submission", () => {
       const penalty = {
         isLate: false,
         hoursLate: 0,
@@ -201,11 +171,10 @@ describe("LatePenaltyService", () => {
       }
 
       const result = latePenaltyService.applyPenalty(100, penalty)
-
       expect(result).toBe(100)
     })
 
-    it("should apply 10% penalty correctly", () => {
+    it("applies 10% penalty correctly", () => {
       const penalty = {
         isLate: true,
         hoursLate: 48,
@@ -215,11 +184,10 @@ describe("LatePenaltyService", () => {
       }
 
       const result = latePenaltyService.applyPenalty(100, penalty)
-
       expect(result).toBe(90)
     })
 
-    it("should apply 25% penalty correctly", () => {
+    it("applies 25% penalty correctly", () => {
       const penalty = {
         isLate: true,
         hoursLate: 72,
@@ -229,11 +197,10 @@ describe("LatePenaltyService", () => {
       }
 
       const result = latePenaltyService.applyPenalty(80, penalty)
-
       expect(result).toBe(60)
     })
 
-    it("should return 0 for rejected submission", () => {
+    it("returns 0 for rejected submission", () => {
       const penalty = {
         isLate: true,
         hoursLate: 200,
@@ -243,11 +210,10 @@ describe("LatePenaltyService", () => {
       }
 
       const result = latePenaltyService.applyPenalty(100, penalty)
-
       expect(result).toBe(0)
     })
 
-    it("should never return negative grades", () => {
+    it("never returns negative grades", () => {
       const penalty = {
         isLate: true,
         hoursLate: 100,
@@ -257,12 +223,11 @@ describe("LatePenaltyService", () => {
       }
 
       const result = latePenaltyService.applyPenalty(0, penalty)
-
       expect(result).toBe(0)
       expect(result).toBeGreaterThanOrEqual(0)
     })
 
-    it("should round down partial grades", () => {
+    it("rounds partial grades", () => {
       const penalty = {
         isLate: true,
         hoursLate: 48,
@@ -271,21 +236,15 @@ describe("LatePenaltyService", () => {
         tierLabel: "Late",
       }
 
-      // 85 * 0.9 = 76.5, should round to 77
       const result = latePenaltyService.applyPenalty(85, penalty)
-
-      expect(result).toBe(77) // Math.round(76.5) = 77
+      expect(result).toBe(77)
     })
   })
 
-  // ============================================
-  // Assignment Config Tests
-  // ============================================
   describe("getAssignmentConfig", () => {
-    it("should return config when enabled", async () => {
+    it("returns config when enabled", async () => {
       const mockConfig: LatePenaltyConfig = {
-        gracePeriodHours: 12,
-        tiers: [{ hoursAfterGrace: 24, penaltyPercent: 20 }],
+        tiers: [{ hoursLate: 24, penaltyPercent: 20 }],
         rejectAfterHours: 72,
       }
 
@@ -301,7 +260,7 @@ describe("LatePenaltyService", () => {
       expect(mockAssignmentRepo.getLatePenaltyConfig).toHaveBeenCalledWith(1)
     })
 
-    it("should return default config when not found", async () => {
+    it("returns default config when not found", async () => {
       mockAssignmentRepo.getLatePenaltyConfig.mockResolvedValue(null)
 
       const result = await latePenaltyService.getAssignmentConfig(1)
@@ -310,7 +269,7 @@ describe("LatePenaltyService", () => {
       expect(result.config).toEqual(DEFAULT_PENALTY_CONFIG)
     })
 
-    it("should return default config when config is null but enabled", async () => {
+    it("returns default config when config is null but enabled", async () => {
       mockAssignmentRepo.getLatePenaltyConfig.mockResolvedValue({
         enabled: true,
         config: null,
@@ -324,10 +283,9 @@ describe("LatePenaltyService", () => {
   })
 
   describe("setAssignmentConfig", () => {
-    it("should set config correctly", async () => {
+    it("sets config correctly", async () => {
       const newConfig: LatePenaltyConfig = {
-        gracePeriodHours: 48,
-        tiers: [{ hoursAfterGrace: 24, penaltyPercent: 15 }],
+        tiers: [{ hoursLate: 24, penaltyPercent: 15 }],
         rejectAfterHours: null,
       }
 
@@ -340,7 +298,7 @@ describe("LatePenaltyService", () => {
       )
     })
 
-    it("should disable config correctly", async () => {
+    it("disables config correctly", async () => {
       await latePenaltyService.setAssignmentConfig(
         1,
         false,
@@ -353,25 +311,33 @@ describe("LatePenaltyService", () => {
         DEFAULT_PENALTY_CONFIG,
       )
     })
+
+    it("rejects legacy tiers that are missing hours fields", async () => {
+      await expect(
+        latePenaltyService.setAssignmentConfig(1, true, {
+          tiers: [{ penaltyPercent: 10 }],
+          rejectAfterHours: null,
+        }),
+      ).rejects.toThrow(
+        "Invalid late penalty configuration: each tier must include hoursLate or hoursAfterGrace",
+      )
+    })
   })
 
-  // ============================================
-  // Default Config Tests
-  // ============================================
   describe("getDefaultConfig", () => {
-    it("should return a copy of default config", () => {
+    it("returns a copy of default config", () => {
       const config1 = latePenaltyService.getDefaultConfig()
       const config2 = latePenaltyService.getDefaultConfig()
 
       expect(config1).toEqual(config2)
-      expect(config1).not.toBe(config2) // Different object references
+      expect(config1).not.toBe(config2)
     })
 
-    it("should have sensible defaults", () => {
+    it("has sensible defaults", () => {
       const config = latePenaltyService.getDefaultConfig()
 
-      expect(config.gracePeriodHours).toBeGreaterThan(0)
       expect(config.tiers.length).toBeGreaterThan(0)
+      expect(config.tiers[0].hoursLate).toBeGreaterThan(0)
       expect(config.tiers[0].penaltyPercent).toBeGreaterThan(0)
     })
   })

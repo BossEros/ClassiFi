@@ -202,7 +202,7 @@ export class AdminClassService {
     Array<{
       id: number
       title: string
-      description: string | null
+      instructions: string | null
       deadline: string | null
       createdAt: string
       submissionCount: number
@@ -226,7 +226,7 @@ export class AdminClassService {
         return {
           id: assignment.id,
           title: assignment.assignmentName,
-          description: assignment.description,
+          instructions: assignment.instructions,
           deadline: assignment.deadline || null,
           createdAt: assignment.createdAt || new Date().toISOString(),
           submissionCount: submissions.length,

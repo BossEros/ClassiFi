@@ -108,7 +108,7 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
         tags: ["Assignments"],
         summary: "Update an assignment",
         description:
-          "Updates assignment details including title, description, and deadlines",
+          "Updates assignment details including title, instructions, and deadlines",
         params: toJsonSchema(AssignmentIdParamSchema),
         body: toJsonSchema(UpdateAssignmentRequestSchema),
         response: {
@@ -123,13 +123,18 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
 
         const { teacherId, ...assignmentUpdateData } = request.body
 
+        const parsedDeadline =
+          assignmentUpdateData.deadline === undefined
+            ? undefined
+            : assignmentUpdateData.deadline === null
+              ? null
+              : parseDate(assignmentUpdateData.deadline, "deadline")
+
         const updateRequestWithParsedDates = {
           assignmentId,
           teacherId,
           ...assignmentUpdateData,
-          deadline: assignmentUpdateData.deadline
-            ? parseDate(assignmentUpdateData.deadline, "deadline")
-            : undefined,
+          deadline: parsedDeadline,
           scheduledDate: assignmentUpdateData.scheduledDate
             ? parseDate(assignmentUpdateData.scheduledDate, "scheduledDate")
             : undefined,

@@ -161,7 +161,7 @@ describe("TeacherDashboardService", () => {
       expect(result[0].totalStudents).toBe(20)
     })
 
-    it("should map null deadline to empty string", async () => {
+    it("should map null deadline to null", async () => {
       const mockTasks = [
         {
           id: 1,
@@ -178,7 +178,7 @@ describe("TeacherDashboardService", () => {
 
       const result = await dashboardService.getPendingTasks(1)
 
-      expect(result[0].deadline).toBe("")
+      expect(result[0].deadline).toBeNull()
     })
   })
 })

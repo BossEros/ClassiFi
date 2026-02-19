@@ -26,9 +26,9 @@ describe("testService", () => {
     const mockAssignmentId = 1
 
     const mockRawResult = {
-      passedCount: 1,
-      totalCount: 1,
-      score: 100,
+      passed: 1,
+      total: 1,
+      percentage: 100,
       results: [
         {
           testCaseId: 1,
@@ -77,6 +77,38 @@ describe("testService", () => {
         percentage: 100,
         results: [mockNormalizedResult],
       })
+    })
+
+    it("supports legacy preview summary fields", async () => {
+      vi.mocked(
+        testCaseRepository.executeTestsInPreviewModeWithoutSaving,
+      ).mockResolvedValue({
+        data: {
+          success: true,
+          message: "",
+          data: {
+            passedCount: 1,
+            totalCount: 1,
+            score: 100,
+            results: mockRawResult.results,
+          },
+        } as any,
+        status: 200,
+      })
+
+      vi.mocked(testNormalization.normalizeTestResult).mockReturnValue(
+        mockNormalizedResult as any,
+      )
+
+      const result = await testService.runTestsPreview(
+        mockSourceCode,
+        mockLanguage,
+        mockAssignmentId,
+      )
+
+      expect(result.passed).toBe(1)
+      expect(result.total).toBe(1)
+      expect(result.percentage).toBe(100)
     })
 
     it("throws error when execution fails", async () => {
@@ -145,9 +177,9 @@ describe("testService", () => {
   describe("getTestResultsForSubmission", () => {
     const mockSubmissionId = 123
     const mockRawSummary = {
-      passedCount: 2,
-      totalCount: 3,
-      score: 66,
+      passed: 2,
+      total: 3,
+      percentage: 66,
       results: [
         {
           testCaseId: 1,
@@ -191,6 +223,31 @@ describe("testService", () => {
       expect(result.passed).toBe(2)
       expect(result.total).toBe(3)
       expect(testNormalization.normalizeTestResult).toHaveBeenCalledTimes(3)
+    })
+
+    it("supports legacy submission summary fields", async () => {
+      vi.mocked(
+        assignmentRepository.getTestResultsForSubmissionById,
+      ).mockResolvedValue({
+        data: {
+          success: true,
+          message: "",
+          data: {
+            passedCount: 2,
+            totalCount: 3,
+            score: 66,
+            results: mockRawSummary.results,
+          },
+        } as any,
+        status: 200,
+      })
+
+      const result =
+        await testService.getTestResultsForSubmission(mockSubmissionId)
+
+      expect(result.passed).toBe(2)
+      expect(result.total).toBe(3)
+      expect(result.percentage).toBe(66)
     })
 
     it("throws error when fetch fails", async () => {
