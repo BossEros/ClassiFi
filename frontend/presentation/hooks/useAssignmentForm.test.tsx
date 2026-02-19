@@ -28,7 +28,7 @@ vi.mock("@/presentation/components/forms/assignment/LatePenaltyConfig", () => ({
 // Mock validation to separate concerns
 vi.mock("@/business/validation/assignmentValidation", () => ({
   validateAssignmentTitle: vi.fn(),
-  validateDescription: vi.fn(),
+  validateInstructions: vi.fn(),
   validateProgrammingLanguage: vi.fn(),
   validateDeadline: vi.fn(),
 }))
@@ -95,13 +95,13 @@ describe("useAssignmentForm", () => {
     // Default validation mocks
     const {
       validateAssignmentTitle,
-      validateDescription,
+      validateInstructions,
       validateProgrammingLanguage,
       validateDeadline,
     } = await import("@/business/validation/assignmentValidation")
 
     vi.mocked(validateAssignmentTitle).mockReturnValue(null)
-    vi.mocked(validateDescription).mockReturnValue(null)
+    vi.mocked(validateInstructions).mockReturnValue(null)
     vi.mocked(validateProgrammingLanguage).mockReturnValue(null)
     vi.mocked(validateDeadline).mockReturnValue(null)
   })
@@ -129,7 +129,7 @@ describe("useAssignmentForm", () => {
         classId: 101,
         teacherId: 1,
         assignmentName: "Existing Assignment",
-        description: "Existing Description",
+        instructions: "Existing Instructions",
         programmingLanguage: "python",
         deadline: new Date("2024-12-31T23:59:00Z"),
         allowResubmission: true,
@@ -139,7 +139,7 @@ describe("useAssignmentForm", () => {
         createdAt: new Date(),
         status: "published",
         scheduledDate: null,
-        latePenaltyEnabled: true,
+        allowLateSubmissions: true,
         latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
       }
 
@@ -170,7 +170,7 @@ describe("useAssignmentForm", () => {
 
       act(() => {
         result.current.handleInputChange("assignmentName", "New Assignment")
-        result.current.handleInputChange("description", "Desc")
+        result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("deadline", "2024-12-31T23:59")
         result.current.handleInputChange("totalScore", 100)
@@ -218,7 +218,7 @@ describe("useAssignmentForm", () => {
 
       act(() => {
         result.current.handleInputChange("assignmentName", "Scheduled Assignment")
-        result.current.handleInputChange("description", "Desc")
+        result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("totalScore", 100)
         result.current.handleInputChange("scheduledDate", "2026-01-01")
@@ -238,16 +238,16 @@ describe("useAssignmentForm", () => {
 
       act(() => {
         result.current.handleInputChange("deadline", "2026-12-31T23:59")
-        result.current.handleInputChange("latePenaltyEnabled", true)
+        result.current.handleInputChange("allowLateSubmissions", true)
       })
 
-      expect(result.current.formData.latePenaltyEnabled).toBe(true)
+      expect(result.current.formData.allowLateSubmissions).toBe(true)
 
       act(() => {
         result.current.handleInputChange("deadline", "")
       })
 
-      expect(result.current.formData.latePenaltyEnabled).toBe(false)
+      expect(result.current.formData.allowLateSubmissions).toBe(false)
     })
 
     it("should send late penalty as disabled when deadline is empty", async () => {
@@ -256,10 +256,10 @@ describe("useAssignmentForm", () => {
 
       act(() => {
         result.current.handleInputChange("assignmentName", "No Deadline Assignment")
-        result.current.handleInputChange("description", "Desc")
+        result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("totalScore", 100)
-        result.current.handleInputChange("latePenaltyEnabled", true)
+        result.current.handleInputChange("allowLateSubmissions", true)
       })
 
       vi.mocked(classService.createAssignment).mockResolvedValue({ id: 303 } as any)
@@ -271,7 +271,7 @@ describe("useAssignmentForm", () => {
       expect(classService.createAssignment).toHaveBeenCalledWith(
         expect.objectContaining({
           deadline: null,
-          latePenaltyEnabled: false,
+          allowLateSubmissions: false,
           latePenaltyConfig: null,
         }),
       )
@@ -352,7 +352,7 @@ describe("useAssignmentForm", () => {
         classId: 101,
         teacherId: 1,
         assignmentName: "Old Name",
-        description: "Old Description",
+        instructions: "Old Instructions",
         programmingLanguage: "python",
         deadline: new Date().toISOString() as ISODateString,
         allowResubmission: true,
@@ -362,7 +362,7 @@ describe("useAssignmentForm", () => {
         createdAt: new Date().toISOString() as ISODateString,
         status: "published",
         scheduledDate: null,
-        latePenaltyEnabled: false,
+        allowLateSubmissions: false,
         latePenaltyConfig: null,
       } as any)
       vi.mocked(testCaseService.getTestCases).mockResolvedValue([])

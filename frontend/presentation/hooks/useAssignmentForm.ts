@@ -5,14 +5,14 @@ import {
   createAssignment,
   updateAssignment,
   getClassById,
-  uploadAssignmentDescriptionImage,
-  removeAssignmentDescriptionImage,
+  uploadAssignmentInstructionsImage,
+  removeAssignmentInstructionsImage,
 } from "@/business/services/classService"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useToast } from "@/shared/context/ToastContext"
 import {
   validateAssignmentTitle,
-  validateDescription,
+  validateInstructions,
   validateProgrammingLanguage,
   validateDeadline,
 } from "@/business/validation/assignmentValidation"
@@ -40,9 +40,9 @@ import { type ProgrammingLanguage } from "@/data/api/types"
 
 export interface AssignmentFormData {
   assignmentName: string
-  description: string
-  descriptionImageUrl: string | null
-  descriptionImageAlt: string
+  instructions: string
+  instructionsImageUrl: string | null
+  instructionsImageAlt: string
   programmingLanguage: ProgrammingLanguage | ""
   deadline: string
   allowResubmission: boolean
@@ -50,13 +50,13 @@ export interface AssignmentFormData {
   templateCode: string
   totalScore: number | null
   scheduledDate: string | null
-  latePenaltyEnabled: boolean
+  allowLateSubmissions: boolean
   latePenaltyConfig: LatePenaltyConfig
 }
 
 export interface FormErrors {
   assignmentName?: string
-  description?: string
+  instructions?: string
   programmingLanguage?: string
   deadline?: string
   scheduledDate?: string
@@ -127,15 +127,15 @@ export function useAssignmentForm() {
     [],
   )
   const [isLoadingTestCases, setIsLoadingTestCases] = useState(false)
-  const [isUploadingDescriptionImage, setIsUploadingDescriptionImage] =
+  const [isUploadingInstructionsImage, setIsUploadingInstructionsImage] =
     useState(false)
   const [showTemplateCode, setShowTemplateCode] = useState(false)
 
   const [formData, setFormData] = useState<AssignmentFormData>({
     assignmentName: "",
-    description: "",
-    descriptionImageUrl: null,
-    descriptionImageAlt: "",
+    instructions: "",
+    instructionsImageUrl: null,
+    instructionsImageAlt: "",
     programmingLanguage: "",
     deadline: "",
     allowResubmission: false,
@@ -143,7 +143,7 @@ export function useAssignmentForm() {
     templateCode: "",
     totalScore: null,
     scheduledDate: null,
-    latePenaltyEnabled: false,
+    allowLateSubmissions: false,
     latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
   })
 
@@ -171,9 +171,9 @@ export function useAssignmentForm() {
           if (assignment) {
             setFormData({
               assignmentName: assignment.assignmentName,
-              description: assignment.description,
-              descriptionImageUrl: assignment.descriptionImageUrl ?? null,
-              descriptionImageAlt: assignment.descriptionImageAlt ?? "",
+              instructions: assignment.instructions,
+              instructionsImageUrl: assignment.instructionsImageUrl ?? null,
+              instructionsImageAlt: assignment.instructionsImageAlt ?? "",
               programmingLanguage:
                 assignment.programmingLanguage as ProgrammingLanguage,
               deadline: assignment.deadline
@@ -186,8 +186,8 @@ export function useAssignmentForm() {
               scheduledDate: assignment.scheduledDate
                 ? toLocalDateTimeString(assignment.scheduledDate)
                 : null,
-              latePenaltyEnabled: assignment.deadline
-                ? (assignment.latePenaltyEnabled ?? false)
+              allowLateSubmissions: assignment.deadline
+                ? (assignment.allowLateSubmissions ?? false)
                 : false,
               latePenaltyConfig: normalizeLatePenaltyConfig(
                 assignment.latePenaltyConfig,
@@ -236,7 +236,7 @@ export function useAssignmentForm() {
           typeof value === "string" && value.trim().length > 0
 
         if (!hasDeadline) {
-          updatedFormData.latePenaltyEnabled = false
+          updatedFormData.allowLateSubmissions = false
         }
       }
 
@@ -251,11 +251,11 @@ export function useAssignmentForm() {
     const nameError = validateAssignmentTitle(formData.assignmentName)
     if (nameError) newErrors.assignmentName = nameError
 
-    const descError = validateDescription(
-      formData.description,
-      formData.descriptionImageUrl,
+    const descError = validateInstructions(
+      formData.instructions,
+      formData.instructionsImageUrl,
     )
-    if (descError) newErrors.description = descError
+    if (descError) newErrors.instructions = descError
 
     const langError = validateProgrammingLanguage(formData.programmingLanguage)
     if (langError) newErrors.programmingLanguage = langError
@@ -309,7 +309,7 @@ export function useAssignmentForm() {
     }
 
     const hasDeadline = formData.deadline.trim().length > 0
-    const shouldEnableLatePenalty = hasDeadline && formData.latePenaltyEnabled
+    const shouldEnableLatePenalty = hasDeadline && formData.allowLateSubmissions
 
     setIsLoading(true)
 
@@ -319,9 +319,9 @@ export function useAssignmentForm() {
         await updateAssignment(parseInt(assignmentId), {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
-          description: formData.description.trim(),
-          descriptionImageUrl: formData.descriptionImageUrl,
-          descriptionImageAlt: formData.descriptionImageAlt.trim() || null,
+          instructions: formData.instructions.trim(),
+          instructionsImageUrl: formData.instructionsImageUrl,
+          instructionsImageAlt: formData.instructionsImageAlt.trim() || null,
           programmingLanguage:
             formData.programmingLanguage as ProgrammingLanguage,
           deadline: formData.deadline ? new Date(formData.deadline) : null,
@@ -332,7 +332,7 @@ export function useAssignmentForm() {
           scheduledDate: formData.scheduledDate
             ? new Date(formData.scheduledDate)
             : null,
-          latePenaltyEnabled: shouldEnableLatePenalty,
+          allowLateSubmissions: shouldEnableLatePenalty,
           latePenaltyConfig: shouldEnableLatePenalty
             ? formData.latePenaltyConfig
             : null,
@@ -344,9 +344,9 @@ export function useAssignmentForm() {
           classId: parseInt(classId),
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
-          description: formData.description.trim(),
-          descriptionImageUrl: formData.descriptionImageUrl,
-          descriptionImageAlt: formData.descriptionImageAlt.trim() || null,
+          instructions: formData.instructions.trim(),
+          instructionsImageUrl: formData.instructionsImageUrl,
+          instructionsImageAlt: formData.instructionsImageAlt.trim() || null,
           programmingLanguage:
             formData.programmingLanguage as ProgrammingLanguage,
           deadline: formData.deadline ? new Date(formData.deadline) : null,
@@ -357,7 +357,7 @@ export function useAssignmentForm() {
           scheduledDate: formData.scheduledDate
             ? new Date(formData.scheduledDate)
             : null,
-          latePenaltyEnabled: shouldEnableLatePenalty,
+          allowLateSubmissions: shouldEnableLatePenalty,
           latePenaltyConfig: shouldEnableLatePenalty
             ? formData.latePenaltyConfig
             : null,
@@ -455,17 +455,17 @@ export function useAssignmentForm() {
     setPendingTestCases((prev) => prev.filter((tc) => tc.tempId !== tempId))
   }
 
-  const handleDescriptionImageUpload = async (file: File) => {
+  const handleInstructionsImageUpload = async (file: File) => {
     if (!currentUser?.id || !classId) {
       setErrors({ general: "You must be logged in" })
       return
     }
 
-    setIsUploadingDescriptionImage(true)
+    setIsUploadingInstructionsImage(true)
     try {
-      const previousDescriptionImageUrl = formData.descriptionImageUrl
+      const previousInstructionsImageUrl = formData.instructionsImageUrl
 
-      const uploadedImageUrl = await uploadAssignmentDescriptionImage(
+      const uploadedImageUrl = await uploadAssignmentInstructionsImage(
         parseInt(currentUser.id),
         parseInt(classId, 10),
         file,
@@ -473,52 +473,52 @@ export function useAssignmentForm() {
 
       setFormData((prev) => ({
         ...prev,
-        descriptionImageUrl: uploadedImageUrl,
-        descriptionImageAlt:
-          prev.descriptionImageAlt.trim() ||
+        instructionsImageUrl: uploadedImageUrl,
+        instructionsImageAlt:
+          prev.instructionsImageAlt.trim() ||
           prev.assignmentName.trim() ||
-          "Assignment description image",
+          "Assignment instructions image",
       }))
-      setErrors((prev) => ({ ...prev, description: undefined, general: undefined }))
+      setErrors((prev) => ({ ...prev, instructions: undefined, general: undefined }))
 
       if (
-        previousDescriptionImageUrl &&
-        previousDescriptionImageUrl !== uploadedImageUrl
+        previousInstructionsImageUrl &&
+        previousInstructionsImageUrl !== uploadedImageUrl
       ) {
-        await removeAssignmentDescriptionImage(previousDescriptionImageUrl)
+        await removeAssignmentInstructionsImage(previousInstructionsImageUrl)
       }
     } catch (error) {
       const uploadErrorMessage =
         error instanceof Error
           ? error.message
-          : "Failed to upload description image"
+          : "Failed to upload instructions image"
       setErrors((prev) => ({
         ...prev,
         general: uploadErrorMessage,
       }))
       showToast(uploadErrorMessage, "error")
     } finally {
-      setIsUploadingDescriptionImage(false)
+      setIsUploadingInstructionsImage(false)
     }
   }
 
-  const handleRemoveDescriptionImage = async () => {
-    const currentDescriptionImageUrl = formData.descriptionImageUrl
+  const handleRemoveInstructionsImage = async () => {
+    const currentInstructionsImageUrl = formData.instructionsImageUrl
 
     setFormData((prev) => ({
       ...prev,
-      descriptionImageUrl: null,
-      descriptionImageAlt: "",
+      instructionsImageUrl: null,
+      instructionsImageAlt: "",
     }))
 
-    if (!currentDescriptionImageUrl) {
+    if (!currentInstructionsImageUrl) {
       return
     }
 
     try {
-      await removeAssignmentDescriptionImage(currentDescriptionImageUrl)
+      await removeAssignmentInstructionsImage(currentInstructionsImageUrl)
     } catch (error) {
-      console.error("Failed to remove assignment description image:", error)
+      console.error("Failed to remove assignment instructions image:", error)
     }
   }
 
@@ -532,7 +532,7 @@ export function useAssignmentForm() {
     testCases,
     pendingTestCases,
     isLoadingTestCases,
-    isUploadingDescriptionImage,
+    isUploadingInstructionsImage,
     isEditMode,
     assignmentId,
     showTemplateCode,
@@ -540,8 +540,8 @@ export function useAssignmentForm() {
     // Actions
     setShowTemplateCode,
     handleInputChange,
-    handleDescriptionImageUpload,
-    handleRemoveDescriptionImage,
+    handleInstructionsImageUpload,
+    handleRemoveInstructionsImage,
     handleSubmit,
 
     // Test Case Actions

@@ -48,11 +48,11 @@ export interface IStorageService {
   ): Promise<string>
 
   /**
-   * Delete an assignment description image.
-   * @param imageUrl - Public URL or storage path of the description image
+   * Delete an assignment instructions image.
+   * @param imageUrl - Public URL or storage path of the instructions image
    * @returns True if deleted successfully
    */
-  deleteAssignmentDescriptionImage?(imageUrl: string): Promise<boolean>
+  deleteAssignmentInstructionsImage?(imageUrl: string): Promise<boolean>
 }
 
 /** Dependency injection token for IStorageService */

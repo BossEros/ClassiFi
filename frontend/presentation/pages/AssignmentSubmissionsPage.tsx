@@ -211,25 +211,25 @@ export function AssignmentSubmissionsPage() {
           </div>
         </div>
 
-        {/* Description Card */}
+        {/* Instructions Card */}
         <Card className="bg-white/5 backdrop-blur-sm border-white/10">
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle>Instructions</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {assignment.description && (
+              {assignment.instructions && (
                 <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
-                  {assignment.description}
+                  {assignment.instructions}
                 </p>
               )}
 
-              {assignment.descriptionImageUrl && (
+              {assignment.instructionsImageUrl && (
                 <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
                   <img
-                    src={assignment.descriptionImageUrl}
+                    src={assignment.instructionsImageUrl}
                     alt={
-                      assignment.descriptionImageAlt ||
+                      assignment.instructionsImageAlt ||
                       assignment.assignmentName
                     }
                     className="w-full max-h-[28rem] object-contain bg-black/30"

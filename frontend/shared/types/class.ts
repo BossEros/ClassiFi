@@ -85,9 +85,9 @@ export interface Assignment {
   hasSubmitted?: boolean
   submissionCount?: number
   studentCount?: number
-  description?: string | null
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions?: string | null
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   allowResubmission?: boolean
   isActive?: boolean
   createdAt?: ISODateString
@@ -96,7 +96,7 @@ export interface Assignment {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: ISODateString | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   submittedAt?: ISODateString | null
   grade?: number | null

@@ -25,7 +25,7 @@ export function AssignmentFormPage() {
     testCases,
     pendingTestCases,
     isLoadingTestCases,
-    isUploadingDescriptionImage,
+    isUploadingInstructionsImage,
     isEditMode,
     assignmentId,
     showTemplateCode,
@@ -33,8 +33,8 @@ export function AssignmentFormPage() {
     // Actions
     setShowTemplateCode,
     handleInputChange,
-    handleDescriptionImageUpload,
-    handleRemoveDescriptionImage,
+    handleInstructionsImageUpload,
+    handleRemoveInstructionsImage,
     handleSubmit,
 
     // Test Case Actions
@@ -109,9 +109,9 @@ export function AssignmentFormPage() {
               showTemplateCode={showTemplateCode}
               setShowTemplateCode={setShowTemplateCode}
               onInputChange={handleInputChange}
-              isUploadingDescriptionImage={isUploadingDescriptionImage}
-              onDescriptionImageUpload={handleDescriptionImageUpload}
-              onDescriptionImageRemove={handleRemoveDescriptionImage}
+              isUploadingInstructionsImage={isUploadingInstructionsImage}
+              onInstructionsImageUpload={handleInstructionsImageUpload}
+              onInstructionsImageRemove={handleRemoveInstructionsImage}
               // Test Case Props
               testCases={testCases}
               pendingTestCases={pendingTestCases}
@@ -138,10 +138,10 @@ export function AssignmentFormPage() {
 
             {/* Late Submission Policy */}
             <LatePenaltyConfig
-              enabled={formData.latePenaltyEnabled}
+              enabled={formData.allowLateSubmissions}
               config={formData.latePenaltyConfig}
               onEnabledChange={(enabled) =>
-                handleInputChange("latePenaltyEnabled", enabled)
+                handleInputChange("allowLateSubmissions", enabled)
               }
               onConfigChange={(config: LatePenaltyConfigType) =>
                 handleInputChange("latePenaltyConfig", config)

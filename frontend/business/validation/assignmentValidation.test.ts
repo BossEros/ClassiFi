@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import {
   validateAssignmentTitle,
-  validateDescription,
+  validateInstructions,
   validateProgrammingLanguage,
   validateDeadline,
   validateCreateAssignmentData,
@@ -38,33 +38,33 @@ describe("assignmentValidation", () => {
     })
   })
 
-  // ============ validateDescription Tests ============
-  describe("validateDescription", () => {
-    it("should return null for valid description", () => {
+  // ============ validateInstructions Tests ============
+  describe("validateInstructions", () => {
+    it("should return null for valid instructions", () => {
       expect(
-        validateDescription(
-          "This is a detailed assignment description that is long enough.",
+        validateInstructions(
+          "This is a detailed assignment instructions that is long enough.",
         ),
       ).toBeNull()
     })
 
-    it("should return error when both description and image are missing", () => {
-      expect(validateDescription("")).toBe(
-        "Add a description or upload an image",
+    it("should return error when both instructions and image are missing", () => {
+      expect(validateInstructions("")).toBe(
+        "Add instructions or upload an image",
       )
     })
 
-    it("should allow short description when provided", () => {
-      expect(validateDescription("Short")).toBeNull()
+    it("should allow short instructions when provided", () => {
+      expect(validateInstructions("Short")).toBeNull()
     })
 
-    it("should allow image-only description", () => {
-      expect(validateDescription("", "https://example.com/image.png")).toBeNull()
+    it("should allow image-only instructions", () => {
+      expect(validateInstructions("", "https://example.com/image.png")).toBeNull()
     })
 
-    it("should return error for overly long description", () => {
-      expect(validateDescription("A".repeat(5001))).toBe(
-        "Description must not exceed 5000 characters",
+    it("should return error for overly long instructions", () => {
+      expect(validateInstructions("A".repeat(5001))).toBe(
+        "Instructions must not exceed 5000 characters",
       )
     })
   })
@@ -158,7 +158,7 @@ describe("assignmentValidation", () => {
     it("should return valid result for complete correct data", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1: Variables",
-        description:
+        instructions:
           "This assignment covers variables and data types in Python.",
         programmingLanguage: "python",
         deadline: "2024-07-01T12:00:00Z",
@@ -170,7 +170,7 @@ describe("assignmentValidation", () => {
 
     it("should return error for missing assignmentName", () => {
       const result = validateCreateAssignmentData({
-        description: "Some valid description here.",
+        instructions: "Some valid instructions here.",
         programmingLanguage: "python",
         deadline: "2024-07-01T12:00:00Z",
       })
@@ -181,7 +181,7 @@ describe("assignmentValidation", () => {
       ).toBe("Assignment title is required")
     })
 
-    it("should return error for missing description and image", () => {
+    it("should return error for missing instructions and image", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
         programmingLanguage: "python",
@@ -190,15 +190,15 @@ describe("assignmentValidation", () => {
 
       expect(result.isValid).toBe(false)
       expect(
-        result.errors.find((e) => e.field === "description")?.message,
-      ).toBe("Add a description or upload an image")
+        result.errors.find((e) => e.field === "instructions")?.message,
+      ).toBe("Add instructions or upload an image")
     })
 
-    it("should allow create with image-only description", () => {
+    it("should allow create with image-only instructions", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
-        description: "",
-        descriptionImageUrl: "https://example.com/image.png",
+        instructions: "",
+        instructionsImageUrl: "https://example.com/image.png",
         programmingLanguage: "python",
         deadline: "2024-07-01T12:00:00Z",
       })
@@ -210,7 +210,7 @@ describe("assignmentValidation", () => {
     it("should return error for missing programmingLanguage", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
-        description: "Some valid description here.",
+        instructions: "Some valid instructions here.",
         deadline: "2024-07-01T12:00:00Z",
       })
 
@@ -223,7 +223,7 @@ describe("assignmentValidation", () => {
     it("should allow missing deadline", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
-        description: "Some valid description here.",
+        instructions: "Some valid instructions here.",
         programmingLanguage: "python",
       })
 
@@ -238,7 +238,7 @@ describe("assignmentValidation", () => {
       expect(
         result.errors.find((e) => e.field === "assignmentName"),
       ).toBeDefined()
-      expect(result.errors.find((e) => e.field === "description")).toBeDefined()
+      expect(result.errors.find((e) => e.field === "instructions")).toBeDefined()
       expect(
         result.errors.find((e) => e.field === "programmingLanguage"),
       ).toBeDefined()
@@ -262,7 +262,7 @@ describe("assignmentValidation", () => {
         validateUpdateAssignmentData({
           teacherId: 1,
           assignmentName: "Updated Lab 1",
-          description: "Updated description that is long enough.",
+          instructions: "Updated instructions that is long enough.",
           deadline: "2024-07-01T12:00:00Z",
         }),
       ).not.toThrow()
@@ -301,13 +301,13 @@ describe("assignmentValidation", () => {
       ).toThrow("Assignment title is required")
     })
 
-    it("should throw for overly long description if provided", () => {
+    it("should throw for overly long instructions if provided", () => {
       expect(() =>
         validateUpdateAssignmentData({
           teacherId: 1,
-          description: "A".repeat(5001),
+          instructions: "A".repeat(5001),
         }),
-      ).toThrow("Description must not exceed 5000 characters")
+      ).toThrow("Instructions must not exceed 5000 characters")
     })
 
     it("should throw for past deadline if provided", () => {

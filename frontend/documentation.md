@@ -154,15 +154,15 @@ Routing is handled in `presentation/App.tsx`.
 - **`ClassForm`**: Create/Edit classes with schedule configuration.
 - **`AssignmentForm`**: Create/Edit assignments with:
   - Programming language selection (Python, Java, C)
-  - Description text plus optional image attachment (preview + alt text)
+  - Instructions text plus optional image attachment (preview + alt text)
   - File attachments
   - Test cases with input/output validation
   - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
   - Optional deadline settings (assignment can be created without a deadline)
   - Resubmission settings
 
-**Assignment Description Image Storage Configuration**:
-- Uses Supabase Storage bucket configured via `VITE_SUPABASE_ASSIGNMENT_DESCRIPTION_BUCKET` (defaults to `assignment-descriptions`)
+**Assignment Instructions Image Storage Configuration**:
+- Uses Supabase Storage bucket configured via `VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET` (defaults to `assignment-descriptions`)
 - If the configured bucket is unavailable, the client attempts fallback upload buckets for compatibility
 
 ### Shared Presentation Hooks (Admin Pages)

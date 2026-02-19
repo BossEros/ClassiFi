@@ -21,11 +21,11 @@ export type Database = {
           class_id: number
           created_at: string
           deadline: string | null
-          description: string
+          instructions: string
           id: number
           is_active: boolean
           late_penalty_config: Json | null
-          late_penalty_enabled: boolean
+          allow_late_submissions: boolean
           max_attempts: number | null
           programming_language: Database["public"]["Enums"]["programming_language"]
           scheduled_date: string | null
@@ -38,11 +38,11 @@ export type Database = {
           class_id: number
           created_at?: string
           deadline?: string | null
-          description: string
+          instructions: string
           id?: number
           is_active?: boolean
           late_penalty_config?: Json | null
-          late_penalty_enabled?: boolean
+          allow_late_submissions?: boolean
           max_attempts?: number | null
           programming_language: Database["public"]["Enums"]["programming_language"]
           scheduled_date?: string | null
@@ -55,11 +55,11 @@ export type Database = {
           class_id?: number
           created_at?: string
           deadline?: string | null
-          description?: string
+          instructions?: string
           id?: number
           is_active?: boolean
           late_penalty_config?: Json | null
-          late_penalty_enabled?: boolean
+          allow_late_submissions?: boolean
           max_attempts?: number | null
           programming_language?: Database["public"]["Enums"]["programming_language"]
           scheduled_date?: string | null

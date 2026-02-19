@@ -86,9 +86,9 @@ export interface TaskDTO {
   id: number
   classId: number
   assignmentName: string
-  description: string | null
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string | null
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   className?: string
   deadline: string | null
   programmingLanguage: string
@@ -115,9 +115,9 @@ export interface AssignmentDetail {
   classId: number
   className: string
   assignmentName: string
-  description: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
   deadline: string | null
   allowResubmission: boolean
@@ -131,7 +131,7 @@ export interface AssignmentDetail {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
 }
@@ -177,9 +177,9 @@ export interface CreateAssignmentRequest {
   classId: number
   teacherId: number
   assignmentName: string
-  description: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
   deadline?: Date | string | null
   allowResubmission?: boolean
@@ -187,16 +187,16 @@ export interface CreateAssignmentRequest {
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 export interface UpdateAssignmentRequest {
   teacherId: number
   assignmentName?: string
-  description?: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions?: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage?: ProgrammingLanguage
   deadline?: Date | string | null
   allowResubmission?: boolean
@@ -204,15 +204,15 @@ export interface UpdateAssignmentRequest {
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 export interface UpdateAssignmentValidationData {
   teacherId?: number
   assignmentName?: string
-  description?: string
-  descriptionImageUrl?: string | null
+  instructions?: string
+  instructionsImageUrl?: string | null
   deadline?: Date | string | null
 }
 
@@ -356,9 +356,9 @@ export interface TeacherDashboardTaskResponse {
   id: number
   classId: number
   assignmentName: string
-  description: string | null
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string | null
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -401,9 +401,9 @@ export interface AssignmentResponse {
   id: number
   classId: number
   assignmentName: string
-  description: string | null
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string | null
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -620,7 +620,7 @@ export interface UpdateClassData {
 export interface ClassAssignment {
   id: number
   title: string
-  description: string
+  instructions: string
   deadline: string | null
   createdAt: string
   submissionCount: number
@@ -782,9 +782,9 @@ export interface AssignmentDetailDTO {
   classId: number
   className: string
   assignmentName: string
-  description: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -795,7 +795,7 @@ export interface AssignmentDetailDTO {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
 }

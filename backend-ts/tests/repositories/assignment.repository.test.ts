@@ -45,7 +45,7 @@ describe("AssignmentRepository - Logic Tests", () => {
     it("should filter out undefined values from update data", () => {
       const updateData: Partial<Assignment> = {
         assignmentName: "Updated",
-        description: undefined,
+        instructions: undefined,
         programmingLanguage: "java",
       }
 
@@ -57,13 +57,13 @@ describe("AssignmentRepository - Logic Tests", () => {
         assignmentName: "Updated",
         programmingLanguage: "java",
       })
-      expect(filteredData.description).toBeUndefined()
+      expect(filteredData.instructions).toBeUndefined()
     })
 
     it("should return empty object when all values are undefined", () => {
       const updateData: Partial<Assignment> = {
         assignmentName: undefined,
-        description: undefined,
+        instructions: undefined,
       }
 
       const filteredData = Object.fromEntries(
@@ -82,7 +82,7 @@ describe("AssignmentRepository - Logic Tests", () => {
       const inputData: {
         classId: number
         assignmentName: string
-        description: string
+        instructions: string
         programmingLanguage: "python" | "java" | "c"
         deadline: Date
         allowResubmission?: boolean
@@ -90,7 +90,7 @@ describe("AssignmentRepository - Logic Tests", () => {
       } = {
         classId: 1,
         assignmentName: "Test",
-        description: "Description",
+        instructions: "Instructions",
         programmingLanguage: "python",
         deadline: new Date(),
       }
@@ -112,7 +112,7 @@ describe("AssignmentRepository - Logic Tests", () => {
       const inputData: {
         classId: number
         assignmentName: string
-        description: string
+        instructions: string
         programmingLanguage: "python" | "java" | "c"
         deadline: Date
         allowResubmission?: boolean
@@ -120,7 +120,7 @@ describe("AssignmentRepository - Logic Tests", () => {
       } = {
         classId: 1,
         assignmentName: "Test",
-        description: "Description",
+        instructions: "Instructions",
         programmingLanguage: "python",
         deadline: new Date(),
         allowResubmission: false,
@@ -140,7 +140,7 @@ describe("AssignmentRepository - Logic Tests", () => {
       const inputData: {
         classId: number
         assignmentName: string
-        description: string
+        instructions: string
         programmingLanguage: "python" | "java" | "c"
         deadline: Date
         allowResubmission?: boolean
@@ -148,7 +148,7 @@ describe("AssignmentRepository - Logic Tests", () => {
       } = {
         classId: 1,
         assignmentName: "Test",
-        description: "Description",
+        instructions: "Instructions",
         programmingLanguage: "python",
         deadline: new Date(),
         maxAttempts: 5,

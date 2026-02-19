@@ -38,9 +38,9 @@ export const assignments = pgTable("assignments", {
     .notNull()
     .references(() => classes.id, { onDelete: "cascade" }),
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
-  description: text("description").notNull(),
-  descriptionImageUrl: text("description_image_url"),
-  descriptionImageAlt: varchar("description_image_alt", { length: 255 }),
+  instructions: text("instructions").notNull(),
+  instructionsImageUrl: text("instructions_image_url"),
+  instructionsImageAlt: varchar("instructions_image_alt", { length: 255 }),
   programmingLanguage: programmingLanguageEnum(
     "programming_language",
   ).notNull(),
@@ -56,7 +56,7 @@ export const assignments = pgTable("assignments", {
   isActive: boolean("is_active").default(true).notNull(),
 
   // Late Penalty Configuration
-  latePenaltyEnabled: boolean("late_penalty_enabled").default(false).notNull(),
+  allowLateSubmissions: boolean("allow_late_submissions").default(false).notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
 
   // Reminder tracking

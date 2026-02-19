@@ -52,7 +52,7 @@ describe("ClassService", () => {
     } as any
     mockStorageService = {
       deleteSubmissionFiles: vi.fn(),
-      deleteAssignmentDescriptionImage: vi.fn(),
+      deleteAssignmentInstructionsImage: vi.fn(),
     } as any
 
     classService = new ClassService(

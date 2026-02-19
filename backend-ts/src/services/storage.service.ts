@@ -127,10 +127,10 @@ export class StorageService implements IStorageService {
   }
 
   /**
-   * Delete an assignment description image file.
+   * Delete an assignment instructions image file.
    * Accepts either a full public URL or a storage-relative path.
    */
-  async deleteAssignmentDescriptionImage(imageUrl: string): Promise<boolean> {
+  async deleteAssignmentInstructionsImage(imageUrl: string): Promise<boolean> {
     try {
       const storageLocation = this.parseStorageLocationFromPublicUrl(imageUrl)
 
@@ -143,7 +143,7 @@ export class StorageService implements IStorageService {
       ])
       return result > 0
     } catch (error) {
-      logger.error("Failed to delete assignment description image:", error)
+      logger.error("Failed to delete assignment instructions image:", error)
       return false
     }
   }

@@ -283,7 +283,7 @@ export class SubmissionService {
       return null
     }
 
-    if (assignment.latePenaltyEnabled) {
+    if (assignment.allowLateSubmissions) {
       const latePenaltyConfiguration =
         assignment.latePenaltyConfig ?? this.latePenaltyService.getDefaultConfig()
 

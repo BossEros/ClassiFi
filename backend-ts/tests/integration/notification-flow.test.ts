@@ -105,7 +105,7 @@ describe("Notification Flow Integration Tests", () => {
     } as any
 
     const mockStorageService = {
-      deleteAssignmentDescriptionImage: vi.fn().mockResolvedValue(true),
+      deleteAssignmentInstructionsImage: vi.fn().mockResolvedValue(true),
     } as any
 
     // Create mock preference service
@@ -163,7 +163,7 @@ describe("Notification Flow Integration Tests", () => {
         classId,
         teacherId,
         assignmentName: "Test Assignment",
-        description: "Test description",
+        instructions: "Test instructions",
         programmingLanguage: "python" as const,
         deadline: new Date("2024-12-31"),
         allowResubmission: true,
@@ -293,7 +293,7 @@ describe("Notification Flow Integration Tests", () => {
         classId,
         teacherId,
         assignmentName: "Test Assignment",
-        description: "Test description",
+        instructions: "Test instructions",
         programmingLanguage: "python" as const,
         deadline: new Date("2024-12-31"),
         allowResubmission: true,

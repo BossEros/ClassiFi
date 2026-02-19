@@ -93,9 +93,9 @@ export function AssignmentDetailPage() {
   const tempAssignment = assignment || {
     id: parseInt(assignmentId || "0"),
     assignmentName: "Assignment Title",
-    description: "Assignment description will be loaded from the API",
-    descriptionImageUrl: null,
-    descriptionImageAlt: null,
+    instructions: "Assignment instructions will be loaded from the API",
+    instructionsImageUrl: null,
+    instructionsImageAlt: null,
     programmingLanguage: "python",
     deadline: null,
     allowResubmission: true,
@@ -608,25 +608,25 @@ export function AssignmentDetailPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Assignment Details */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Assignment Description */}
+              {/* Assignment Instructions */}
               <Card className="border-white/10 bg-white/5 backdrop-blur-sm w-full">
                 <CardHeader>
-                  <CardTitle>Description</CardTitle>
+                  <CardTitle>Instructions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="block w-full space-y-4">
-                    {tempAssignment.description && (
+                    {tempAssignment.instructions && (
                       <p className="text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
-                        {tempAssignment.description}
+                        {tempAssignment.instructions}
                       </p>
                     )}
 
-                    {tempAssignment.descriptionImageUrl && (
+                    {tempAssignment.instructionsImageUrl && (
                       <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
                         <img
-                          src={tempAssignment.descriptionImageUrl}
+                          src={tempAssignment.instructionsImageUrl}
                           alt={
-                            tempAssignment.descriptionImageAlt ||
+                            tempAssignment.instructionsImageAlt ||
                             tempAssignment.assignmentName
                           }
                           className="w-full max-h-[28rem] object-contain bg-black/30"

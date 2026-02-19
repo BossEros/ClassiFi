@@ -25,11 +25,11 @@ import type { Submission } from "@/shared/types/submission"
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
-const DEFAULT_ASSIGNMENT_DESCRIPTION_BUCKET = "assignment-descriptions"
-const ASSIGNMENT_DESCRIPTION_FALLBACK_BUCKET = "avatars"
-const ASSIGNMENT_DESCRIPTION_BUCKET = getConfiguredAssignmentDescriptionBucket()
-const ASSIGNMENT_DESCRIPTION_BUCKET_CANDIDATES =
-  resolveAssignmentDescriptionBucketCandidates(ASSIGNMENT_DESCRIPTION_BUCKET)
+const DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET = "assignment-descriptions"
+const ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET = "avatars"
+const ASSIGNMENT_INSTRUCTIONS_BUCKET = getConfiguredAssignmentInstructionsBucket()
+const ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES =
+  resolveAssignmentInstructionsBucketCandidates(ASSIGNMENT_INSTRUCTIONS_BUCKET)
 
 export async function submitAssignmentWithFile(
   submissionRequest: SubmitAssignmentRequest,
@@ -268,9 +268,9 @@ export async function sendReminderToNonSubmitters(
 }
 
 /**
- * Uploads an assignment description image to Supabase Storage and returns its public URL.
+ * Uploads an assignment instructions image to Supabase Storage and returns its public URL.
  */
-export async function uploadAssignmentDescriptionImage(
+export async function uploadAssignmentInstructionsImage(
   teacherId: number,
   classId: number,
   file: File,
@@ -280,7 +280,7 @@ export async function uploadAssignmentDescriptionImage(
   const filePath = `${teacherId}/${classId}/${Date.now()}_${safeBaseName}.${fileExtension}`
   let lastUploadErrorMessage: string | null = null
 
-  for (const bucketName of ASSIGNMENT_DESCRIPTION_BUCKET_CANDIDATES) {
+  for (const bucketName of ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES) {
     const { error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(filePath, file, {
@@ -307,15 +307,15 @@ export async function uploadAssignmentDescriptionImage(
 
   throw new Error(
     lastUploadErrorMessage ||
-      "Assignment image storage is not configured. Configure VITE_SUPABASE_ASSIGNMENT_DESCRIPTION_BUCKET or create the assignment-descriptions bucket with upload permissions.",
+      "Assignment image storage is not configured. Configure VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET or create the assignment-descriptions bucket with upload permissions.",
   )
 }
 
 /**
- * Deletes an assignment description image from Supabase Storage.
+ * Deletes an assignment instructions image from Supabase Storage.
  * Fails silently if deletion is unsuccessful.
  */
-export async function deleteAssignmentDescriptionImage(
+export async function deleteAssignmentInstructionsImage(
   imageUrl: string,
 ): Promise<void> {
   try {
@@ -328,7 +328,7 @@ export async function deleteAssignmentDescriptionImage(
       .from(storageLocation.bucket)
       .remove([storageLocation.path])
   } catch (error) {
-    console.error("Failed to delete assignment description image:", error)
+    console.error("Failed to delete assignment instructions image:", error)
   }
 }
 
@@ -355,12 +355,12 @@ function sanitizeFilename(fileName: string): string {
   const normalizedFileName = fileName.trim().toLowerCase()
   const sanitizedFileName = normalizedFileName.replace(/[^a-z0-9-_]/g, "-")
   const compactFileName = sanitizedFileName.replace(/-+/g, "-")
-  return compactFileName || "assignment-description"
+  return compactFileName || "assignment-instructions"
 }
 
-function getConfiguredAssignmentDescriptionBucket(): string {
+function getConfiguredAssignmentInstructionsBucket(): string {
   const configuredBucketName =
-    import.meta.env.VITE_SUPABASE_ASSIGNMENT_DESCRIPTION_BUCKET
+    import.meta.env.VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET
 
   if (
     typeof configuredBucketName === "string" &&
@@ -369,16 +369,16 @@ function getConfiguredAssignmentDescriptionBucket(): string {
     return configuredBucketName.trim()
   }
 
-  return DEFAULT_ASSIGNMENT_DESCRIPTION_BUCKET
+  return DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET
 }
 
-function resolveAssignmentDescriptionBucketCandidates(
+function resolveAssignmentInstructionsBucketCandidates(
   primaryBucketName: string,
 ): string[] {
   const candidateBuckets = [
     primaryBucketName,
-    DEFAULT_ASSIGNMENT_DESCRIPTION_BUCKET,
-    ASSIGNMENT_DESCRIPTION_FALLBACK_BUCKET,
+    DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET,
+    ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET,
   ]
 
   return Array.from(
@@ -479,7 +479,7 @@ function parseStorageLocationFromAbsoluteUrl(
 function parseStorageLocationFromLegacyPattern(
   storagePublicUrl: string,
 ): StorageLocation | null {
-  for (const bucketName of ASSIGNMENT_DESCRIPTION_BUCKET_CANDIDATES) {
+  for (const bucketName of ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES) {
     const bucketMarker = `/${bucketName}/`
     if (!storagePublicUrl.includes(bucketMarker)) {
       continue

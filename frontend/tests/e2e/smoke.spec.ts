@@ -338,7 +338,7 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     // Fill Assignment Name
     const timestamp = Date.now()
     await page.fill("#assignmentName", `E2E Assignment - ${timestamp}`)
-    await page.fill("#description", "E2E Test Assignment Description")
+    await page.fill("#instructions", "E2E Test Assignment Instructions")
     await page.selectOption("#programmingLanguage", "python")
 
     // Handle Date Picker

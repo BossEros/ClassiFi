@@ -56,9 +56,9 @@ export class AssignmentService {
       classId,
       teacherId,
       assignmentName,
-      description,
-      descriptionImageUrl,
-      descriptionImageAlt,
+      instructions,
+      instructionsImageUrl,
+      instructionsImageAlt,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -66,32 +66,32 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
-      latePenaltyEnabled,
+      allowLateSubmissions,
       latePenaltyConfig,
     } = data
 
     // Verify class exists and teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
-    const normalizedDescription = description.trim()
-    const normalizedDescriptionImageUrl = this.normalizeNullableString(
-      descriptionImageUrl,
+    const normalizedInstructions = instructions.trim()
+    const normalizedInstructionsImageUrl = this.normalizeNullableString(
+      instructionsImageUrl,
     )
-    const normalizedDescriptionImageAlt = this.normalizeNullableString(
-      descriptionImageAlt,
+    const normalizedInstructionsImageAlt = this.normalizeNullableString(
+      instructionsImageAlt,
     )
 
-    this.validateDescriptionContent(
-      normalizedDescription,
-      normalizedDescriptionImageUrl,
+    this.validateInstructionsContent(
+      normalizedInstructions,
+      normalizedInstructionsImageUrl,
     )
 
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
       assignmentName,
-      description: normalizedDescription,
-      descriptionImageUrl: normalizedDescriptionImageUrl,
-      descriptionImageAlt: normalizedDescriptionImageAlt,
+      instructions: normalizedInstructions,
+      instructionsImageUrl: normalizedInstructionsImageUrl,
+      instructionsImageAlt: normalizedInstructionsImageAlt,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -99,7 +99,7 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
-      latePenaltyEnabled,
+      allowLateSubmissions,
       latePenaltyConfig,
     })
 
@@ -253,38 +253,41 @@ export class AssignmentService {
       )
     }
 
-    const normalizedDescription =
-      updateData.description !== undefined
-        ? updateData.description.trim()
+    const normalizedInstructions =
+      updateData.instructions !== undefined
+        ? updateData.instructions.trim()
         : undefined
-    const normalizedDescriptionImageUrl =
-      updateData.descriptionImageUrl !== undefined
-        ? this.normalizeNullableString(updateData.descriptionImageUrl)
+    const normalizedInstructionsImageUrl =
+      updateData.instructionsImageUrl !== undefined
+        ? this.normalizeNullableString(updateData.instructionsImageUrl)
         : undefined
-    const normalizedDescriptionImageAlt =
-      updateData.descriptionImageAlt !== undefined
-        ? this.normalizeNullableString(updateData.descriptionImageAlt)
+    const normalizedInstructionsImageAlt =
+      updateData.instructionsImageAlt !== undefined
+        ? this.normalizeNullableString(updateData.instructionsImageAlt)
         : undefined
 
-    const finalDescription = (
-      normalizedDescription ?? existingAssignment.description
+    const finalInstructions = (
+      normalizedInstructions ?? existingAssignment.instructions
     ).trim()
-    const finalDescriptionImageUrl =
-      normalizedDescriptionImageUrl !== undefined
-        ? normalizedDescriptionImageUrl
-        : existingAssignment.descriptionImageUrl
+    const finalInstructionsImageUrl =
+      normalizedInstructionsImageUrl !== undefined
+        ? normalizedInstructionsImageUrl
+        : existingAssignment.instructionsImageUrl
 
-    this.validateDescriptionContent(finalDescription, finalDescriptionImageUrl)
+    this.validateInstructionsContent(
+      finalInstructions,
+      finalInstructionsImageUrl,
+    )
 
-    const previousDescriptionImageUrl = existingAssignment.descriptionImageUrl
+    const previousInstructionsImageUrl = existingAssignment.instructionsImageUrl
 
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
       assignmentId,
       {
         ...updateData,
-        description: normalizedDescription,
-        descriptionImageUrl: normalizedDescriptionImageUrl,
-        descriptionImageAlt: normalizedDescriptionImageAlt,
+        instructions: normalizedInstructions,
+        instructionsImageUrl: normalizedInstructionsImageUrl,
+        instructionsImageAlt: normalizedInstructionsImageAlt,
       },
     )
 
@@ -292,12 +295,12 @@ export class AssignmentService {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    const nextDescriptionImageUrl = updatedAssignment.descriptionImageUrl
+    const nextInstructionsImageUrl = updatedAssignment.instructionsImageUrl
     if (
-      previousDescriptionImageUrl &&
-      previousDescriptionImageUrl !== nextDescriptionImageUrl
+      previousInstructionsImageUrl &&
+      previousInstructionsImageUrl !== nextInstructionsImageUrl
     ) {
-      await this.deleteDescriptionImageSafely(previousDescriptionImageUrl)
+      await this.deleteInstructionsImageSafely(previousInstructionsImageUrl)
     }
 
     return toAssignmentDTO(updatedAssignment)
@@ -320,26 +323,26 @@ export class AssignmentService {
     // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
-    if (assignment.descriptionImageUrl) {
-      await this.deleteDescriptionImageSafely(assignment.descriptionImageUrl)
+    if (assignment.instructionsImageUrl) {
+      await this.deleteInstructionsImageSafely(assignment.instructionsImageUrl)
     }
 
     await this.assignmentRepo.deleteAssignment(assignmentId)
   }
 
   /**
-   * Ensures assignment has at least one description surface.
+   * Ensures assignment has at least one instructions surface.
    */
-  private validateDescriptionContent(
-    description: string,
-    descriptionImageUrl: string | null | undefined,
+  private validateInstructionsContent(
+    instructions: string,
+    instructionsImageUrl: string | null | undefined,
   ): void {
-    const hasTextDescription = description.trim().length > 0
-    const hasImageDescription = !!descriptionImageUrl?.trim()
+    const hasTextInstructions = instructions.trim().length > 0
+    const hasImageInstructions = !!instructionsImageUrl?.trim()
 
-    if (!hasTextDescription && !hasImageDescription) {
+    if (!hasTextInstructions && !hasImageInstructions) {
       throw new InvalidAssignmentDataError(
-        "Either description text or description image is required",
+        "Either instructions text or instructions image is required",
       )
     }
   }
@@ -359,13 +362,13 @@ export class AssignmentService {
   }
 
   /**
-   * Best-effort cleanup for assignment description image files.
+   * Best-effort cleanup for assignment instructions image files.
    */
-  private async deleteDescriptionImageSafely(imageUrl: string): Promise<void> {
+  private async deleteInstructionsImageSafely(imageUrl: string): Promise<void> {
     try {
-      await this.storageService.deleteAssignmentDescriptionImage(imageUrl)
+      await this.storageService.deleteAssignmentInstructionsImage(imageUrl)
     } catch (error) {
-      logger.error("Failed to delete assignment description image", {
+      logger.error("Failed to delete assignment instructions image", {
         imageUrl,
         error,
       })

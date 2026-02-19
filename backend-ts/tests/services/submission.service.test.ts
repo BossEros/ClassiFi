@@ -194,7 +194,7 @@ describe("SubmissionService", () => {
         isActive: true,
         deadline: pastDeadline,
         programmingLanguage: "python",
-        latePenaltyEnabled: true,
+        allowLateSubmissions: true,
         latePenaltyConfig: null,
       })
       const mockSubmission = createMockSubmission({ id: 777 })

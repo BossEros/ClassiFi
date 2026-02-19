@@ -28,9 +28,9 @@ export interface PendingTeacherTask {
 export interface CreateAssignmentData {
   classId: number
   assignmentName: string
-  description: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
   deadline: Date | null
   allowResubmission?: boolean
@@ -38,16 +38,16 @@ export interface CreateAssignmentData {
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 /** Data for updating an existing assignment */
 export interface UpdateAssignmentData {
   assignmentName?: string
-  description?: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions?: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage?: ProgrammingLanguage
   deadline?: Date | null
   allowResubmission?: boolean
@@ -56,7 +56,7 @@ export interface UpdateAssignmentData {
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
@@ -249,9 +249,9 @@ export class AssignmentRepository extends BaseRepository<
       .values({
         classId: data.classId,
         assignmentName: data.assignmentName,
-        description: data.description,
-        descriptionImageUrl: data.descriptionImageUrl ?? null,
-        descriptionImageAlt: data.descriptionImageAlt ?? null,
+        instructions: data.instructions,
+        instructionsImageUrl: data.instructionsImageUrl ?? null,
+        instructionsImageAlt: data.instructionsImageAlt ?? null,
         programmingLanguage: data.programmingLanguage,
         deadline: data.deadline ?? null,
         allowResubmission: data.allowResubmission ?? true,
@@ -259,9 +259,9 @@ export class AssignmentRepository extends BaseRepository<
         templateCode: data.templateCode ?? null,
         totalScore: data.totalScore ?? 100,
         scheduledDate: data.scheduledDate ?? null,
-        latePenaltyEnabled: data.latePenaltyEnabled ?? false,
+        allowLateSubmissions: data.allowLateSubmissions ?? false,
         latePenaltyConfig:
-          data.latePenaltyEnabled === true ? (data.latePenaltyConfig ?? null) : null,
+          data.allowLateSubmissions === true ? (data.latePenaltyConfig ?? null) : null,
         isActive: true,
       })
       .returning()
@@ -306,7 +306,7 @@ export class AssignmentRepository extends BaseRepository<
     const result = await this.db
       .update(assignments)
       .set({
-        latePenaltyEnabled: enabled,
+        allowLateSubmissions: enabled,
         latePenaltyConfig: config,
       })
       .where(eq(assignments.id, assignmentId))
@@ -324,7 +324,7 @@ export class AssignmentRepository extends BaseRepository<
   ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null } | null> {
     const result = await this.db
       .select({
-        latePenaltyEnabled: assignments.latePenaltyEnabled,
+        allowLateSubmissions: assignments.allowLateSubmissions,
         latePenaltyConfig: assignments.latePenaltyConfig,
       })
       .from(assignments)
@@ -334,7 +334,7 @@ export class AssignmentRepository extends BaseRepository<
     if (!result[0]) return null
 
     return {
-      enabled: result[0].latePenaltyEnabled,
+      enabled: result[0].allowLateSubmissions,
       config: result[0].latePenaltyConfig,
     }
   }

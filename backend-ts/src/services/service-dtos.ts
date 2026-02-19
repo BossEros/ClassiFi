@@ -64,9 +64,9 @@ export interface CreateAssignmentServiceDTO {
   classId: number
   teacherId: number
   assignmentName: string
-  description: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage: "python" | "java" | "c"
   deadline: Date | null
   allowResubmission?: boolean
@@ -74,7 +74,7 @@ export interface CreateAssignmentServiceDTO {
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }
 
@@ -83,9 +83,9 @@ export interface UpdateAssignmentServiceDTO {
   assignmentId: number
   teacherId: number
   assignmentName?: string
-  description?: string
-  descriptionImageUrl?: string | null
-  descriptionImageAlt?: string | null
+  instructions?: string
+  instructionsImageUrl?: string | null
+  instructionsImageAlt?: string | null
   programmingLanguage?: "python" | "java" | "c"
   deadline?: Date | null
   allowResubmission?: boolean
@@ -93,6 +93,6 @@ export interface UpdateAssignmentServiceDTO {
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
-  latePenaltyEnabled?: boolean
+  allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
 }

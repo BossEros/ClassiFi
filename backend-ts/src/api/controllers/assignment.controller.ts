@@ -108,7 +108,7 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
         tags: ["Assignments"],
         summary: "Update an assignment",
         description:
-          "Updates assignment details including title, description, and deadlines",
+          "Updates assignment details including title, instructions, and deadlines",
         params: toJsonSchema(AssignmentIdParamSchema),
         body: toJsonSchema(UpdateAssignmentRequestSchema),
         response: {

@@ -332,7 +332,7 @@ describe("assignmentRepository", () => {
         classId: 1,
         className: "Introduction to Programming",
         assignmentName: "Hello World",
-        description: "Write Hello World program",
+        instructions: "Write Hello World program",
         programmingLanguage: "python",
         deadline: "2024-12-31T23:59:59Z",
         allowResubmission: true,

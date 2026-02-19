@@ -32,8 +32,8 @@ import type {
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }
 
-const ASSIGNMENT_DESCRIPTION_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
-const ASSIGNMENT_DESCRIPTION_IMAGE_ALLOWED_TYPES = [
+const ASSIGNMENT_INSTRUCTIONS_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
+const ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
@@ -259,9 +259,9 @@ export async function createAssignment(
     {
       teacherId: createAssignmentData.teacherId,
       assignmentName: createAssignmentData.assignmentName.trim(),
-      description: createAssignmentData.description.trim(),
-      descriptionImageUrl: createAssignmentData.descriptionImageUrl ?? null,
-      descriptionImageAlt: createAssignmentData.descriptionImageAlt ?? null,
+      instructions: createAssignmentData.instructions.trim(),
+      instructionsImageUrl: createAssignmentData.instructionsImageUrl ?? null,
+      instructionsImageAlt: createAssignmentData.instructionsImageAlt ?? null,
       programmingLanguage: createAssignmentData.programmingLanguage,
       deadline: createAssignmentData.deadline
         ? typeof createAssignmentData.deadline === "string"
@@ -277,30 +277,30 @@ export async function createAssignment(
           ? createAssignmentData.scheduledDate
           : createAssignmentData.scheduledDate.toISOString()
         : null,
-      latePenaltyEnabled: createAssignmentData.latePenaltyEnabled,
+      allowLateSubmissions: createAssignmentData.allowLateSubmissions,
       latePenaltyConfig: createAssignmentData.latePenaltyConfig,
     },
   )
 }
 
 /**
- * Uploads an assignment description image and returns the resulting public URL.
+ * Uploads an assignment instructions image and returns the resulting public URL.
  *
  * @param teacherId - The unique identifier of the teacher.
  * @param classId - The unique identifier of the class.
  * @param file - The image file to upload.
  * @returns The public URL of the uploaded image.
  */
-export async function uploadAssignmentDescriptionImage(
+export async function uploadAssignmentInstructionsImage(
   teacherId: number,
   classId: number,
   file: File,
 ): Promise<string> {
   validateId(teacherId, "teacher")
   validateId(classId, "class")
-  validateAssignmentDescriptionImageFile(file)
+  validateAssignmentInstructionsImageFile(file)
 
-  return await assignmentRepository.uploadAssignmentDescriptionImage(
+  return await assignmentRepository.uploadAssignmentInstructionsImage(
     teacherId,
     classId,
     file,
@@ -308,19 +308,19 @@ export async function uploadAssignmentDescriptionImage(
 }
 
 /**
- * Removes an assignment description image from storage.
+ * Removes an assignment instructions image from storage.
  *
  * @param imageUrl - The image URL to remove.
  * @returns A promise that resolves when cleanup is complete.
  */
-export async function removeAssignmentDescriptionImage(
+export async function removeAssignmentInstructionsImage(
   imageUrl: string,
 ): Promise<void> {
   if (!imageUrl?.trim()) {
     return
   }
 
-  await assignmentRepository.deleteAssignmentDescriptionImage(imageUrl)
+  await assignmentRepository.deleteAssignmentInstructionsImage(imageUrl)
 }
 
 /**
@@ -343,9 +343,9 @@ export async function updateAssignment(
   return await assignmentRepository.updateAssignmentDetailsById(assignmentId, {
     teacherId: updateAssignmentData.teacherId,
     assignmentName: updateAssignmentData.assignmentName?.trim(),
-    description: updateAssignmentData.description?.trim(),
-    descriptionImageUrl: updateAssignmentData.descriptionImageUrl,
-    descriptionImageAlt: updateAssignmentData.descriptionImageAlt,
+    instructions: updateAssignmentData.instructions?.trim(),
+    instructionsImageUrl: updateAssignmentData.instructionsImageUrl,
+    instructionsImageAlt: updateAssignmentData.instructionsImageAlt,
     programmingLanguage: updateAssignmentData.programmingLanguage,
     deadline:
       updateAssignmentData.deadline === undefined
@@ -364,23 +364,23 @@ export async function updateAssignment(
         ? updateAssignmentData.scheduledDate
         : updateAssignmentData.scheduledDate.toISOString()
       : undefined,
-    latePenaltyEnabled: updateAssignmentData.latePenaltyEnabled,
+    allowLateSubmissions: updateAssignmentData.allowLateSubmissions,
     latePenaltyConfig: updateAssignmentData.latePenaltyConfig,
   })
 }
 
 /**
- * Validates assignment description image file constraints.
+ * Validates assignment instructions image file constraints.
  *
  * @param file - The image file to validate.
  * @throws {Error} If file is invalid.
  */
-function validateAssignmentDescriptionImageFile(file: File): void {
-  if (!ASSIGNMENT_DESCRIPTION_IMAGE_ALLOWED_TYPES.includes(file.type as (typeof ASSIGNMENT_DESCRIPTION_IMAGE_ALLOWED_TYPES)[number])) {
+function validateAssignmentInstructionsImageFile(file: File): void {
+  if (!ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES.includes(file.type as (typeof ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES)[number])) {
     throw new Error("Invalid image type. Allowed formats: JPG, PNG, WEBP, GIF")
   }
 
-  if (file.size > ASSIGNMENT_DESCRIPTION_IMAGE_MAX_SIZE_BYTES) {
+  if (file.size > ASSIGNMENT_INSTRUCTIONS_IMAGE_MAX_SIZE_BYTES) {
     throw new Error("Image size must be 5MB or less")
   }
 }

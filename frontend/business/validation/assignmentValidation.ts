@@ -26,25 +26,25 @@ export const validateAssignmentTitle = (title: string): string | null => {
 }
 
 /**
- * Validates the assignment description.
+ * Validates the assignment instructions.
  *
- * @param description - The description to validate.
- * @param descriptionImageUrl - Optional image URL used as the main description.
+ * @param instructions - The instructions to validate.
+ * @param instructionsImageUrl - Optional image URL used as the main instructions.
  * @returns An error message string if invalid, otherwise null.
  */
-export const validateDescription = (
-  description: string,
-  descriptionImageUrl?: string | null,
+export const validateInstructions = (
+  instructions: string,
+  instructionsImageUrl?: string | null,
 ): string | null => {
-  const trimmed = description.trim()
-  const hasDescriptionImage = !!descriptionImageUrl?.trim()
+  const trimmed = instructions.trim()
+  const hasInstructionsImage = !!instructionsImageUrl?.trim()
 
-  if (!trimmed && !hasDescriptionImage) {
-    return "Add a description or upload an image"
+  if (!trimmed && !hasInstructionsImage) {
+    return "Add instructions or upload an image"
   }
 
   if (trimmed.length > 5000) {
-    return "Description must not exceed 5000 characters"
+    return "Instructions must not exceed 5000 characters"
   }
 
   return null
@@ -129,19 +129,19 @@ export const validateCreateAssignmentData = (
     })
   }
 
-  // Validate description
-  if (data.description !== undefined || data.descriptionImageUrl !== undefined) {
-    const descriptionError = validateDescription(
-      data.description ?? "",
-      data.descriptionImageUrl,
+  // Validate instructions
+  if (data.instructions !== undefined || data.instructionsImageUrl !== undefined) {
+    const instructionsError = validateInstructions(
+      data.instructions ?? "",
+      data.instructionsImageUrl,
     )
-    if (descriptionError) {
-      errors.push({ field: "description", message: descriptionError })
+    if (instructionsError) {
+      errors.push({ field: "instructions", message: instructionsError })
     }
   } else {
     errors.push({
-      field: "description",
-      message: "Add a description or upload an image",
+      field: "instructions",
+      message: "Add instructions or upload an image",
     })
   }
 
@@ -198,10 +198,10 @@ export const validateUpdateAssignmentData = (
     }
   }
 
-  // Validate description if provided
-  if (data.description !== undefined) {
-    if (data.description.trim().length > 5000) {
-      throw new Error("Description must not exceed 5000 characters")
+  // Validate instructions if provided
+  if (data.instructions !== undefined) {
+    if (data.instructions.trim().length > 5000) {
+      throw new Error("Instructions must not exceed 5000 characters")
     }
   }
 

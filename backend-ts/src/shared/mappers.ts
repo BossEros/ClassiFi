@@ -86,9 +86,9 @@ export interface AssignmentDTO {
   id: number
   classId: number
   assignmentName: string
-  description: string
-  descriptionImageUrl: string | null
-  descriptionImageAlt: string | null
+  instructions: string
+  instructionsImageUrl: string | null
+  instructionsImageAlt: string | null
   programmingLanguage: string
   deadline: string | null
   allowResubmission: boolean
@@ -99,7 +99,7 @@ export interface AssignmentDTO {
   hasTemplateCode: boolean
   totalScore: number
   scheduledDate: string | null
-  latePenaltyEnabled: boolean
+  allowLateSubmissions: boolean
   latePenaltyConfig: Assignment["latePenaltyConfig"] | null
   submissionCount?: number
   hasSubmitted?: boolean
@@ -126,9 +126,9 @@ export function toAssignmentDTO(
     id: assignment.id,
     classId: assignment.classId,
     assignmentName: assignment.assignmentName,
-    description: assignment.description,
-    descriptionImageUrl: assignment.descriptionImageUrl ?? null,
-    descriptionImageAlt: assignment.descriptionImageAlt ?? null,
+    instructions: assignment.instructions,
+    instructionsImageUrl: assignment.instructionsImageUrl ?? null,
+    instructionsImageAlt: assignment.instructionsImageAlt ?? null,
     programmingLanguage: assignment.programmingLanguage,
     deadline: assignment.deadline?.toISOString() ?? null,
     allowResubmission: assignment.allowResubmission ?? true,
@@ -139,7 +139,7 @@ export function toAssignmentDTO(
     hasTemplateCode: !!assignment.templateCode,
     totalScore: assignment.totalScore ?? DEFAULT_TOTAL_SCORE,
     scheduledDate: assignment.scheduledDate?.toISOString() ?? null,
-    latePenaltyEnabled: assignment.latePenaltyEnabled ?? false,
+    allowLateSubmissions: assignment.allowLateSubmissions ?? false,
     latePenaltyConfig: assignment.latePenaltyConfig ?? null,
     ...extras,
   }

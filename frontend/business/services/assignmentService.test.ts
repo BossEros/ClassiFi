@@ -228,7 +228,7 @@ describe("assignmentService", () => {
       ...mockAssignment,
       className: "Test Class",
       deadline: new Date().toISOString(),
-      description: mockAssignment.description || "Test description",
+      instructions: mockAssignment.instructions || "Test description",
       programmingLanguage: mockAssignment.programmingLanguage as
         | "python"
         | "java"

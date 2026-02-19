@@ -384,7 +384,7 @@ export function AdminClassDetailPage() {
                       {assignment.title}
                     </h3>
                     <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">
-                      {assignment.description}
+                      {assignment.instructions}
                     </p>
 
                     <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-white/5">
