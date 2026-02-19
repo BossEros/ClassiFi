@@ -94,8 +94,10 @@ export function AssignmentDetailPage() {
     id: parseInt(assignmentId || "0"),
     assignmentName: "Assignment Title",
     description: "Assignment description will be loaded from the API",
+    descriptionImageUrl: null,
+    descriptionImageAlt: null,
     programmingLanguage: "python",
-    deadline: new Date(),
+    deadline: null,
     allowResubmission: true,
     maxAttempts: null,
     isActive: true,
@@ -540,7 +542,9 @@ export function AssignmentDetailPage() {
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
                       <Calendar className="w-3.5 h-3.5 text-blue-400" />
                       <span className="text-xs font-medium text-blue-100">
-                        Due {formatDateTime(tempAssignment.deadline)}
+                        {tempAssignment.deadline
+                          ? `Due ${formatDateTime(tempAssignment.deadline)}`
+                          : "No deadline"}
                       </span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
@@ -610,10 +614,25 @@ export function AssignmentDetailPage() {
                   <CardTitle>Description</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="block w-full">
-                    <p className="text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
-                      {tempAssignment.description}
-                    </p>
+                  <div className="block w-full space-y-4">
+                    {tempAssignment.description && (
+                      <p className="text-gray-300 whitespace-pre-wrap break-words leading-relaxed">
+                        {tempAssignment.description}
+                      </p>
+                    )}
+
+                    {tempAssignment.descriptionImageUrl && (
+                      <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                        <img
+                          src={tempAssignment.descriptionImageUrl}
+                          alt={
+                            tempAssignment.descriptionImageAlt ||
+                            tempAssignment.assignmentName
+                          }
+                          className="w-full max-h-[28rem] object-contain bg-black/30"
+                        />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

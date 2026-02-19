@@ -5,6 +5,8 @@ import {
   createAssignment,
   updateAssignment,
   getClassById,
+  uploadCourseworkDescriptionImage,
+  removeCourseworkDescriptionImage,
 } from "@/business/services/classService"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useToast } from "@/shared/context/ToastContext"
@@ -27,7 +29,10 @@ import type {
 } from "@/shared/types/testCase"
 import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList"
 import type { SelectOption } from "@/presentation/components/ui/Select"
-import type { LatePenaltyConfig } from "@/shared/types/gradebook"
+import type {
+  LatePenaltyConfig,
+  PenaltyTier,
+} from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/coursework/LatePenaltyConfig"
 import { toLocalDateTimeString } from "@/shared/utils/dateUtils"
 import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
@@ -36,12 +41,14 @@ import { type ProgrammingLanguage } from "@/data/api/types"
 export interface CourseworkFormData {
   assignmentName: string
   description: string
+  descriptionImageUrl: string | null
+  descriptionImageAlt: string
   programmingLanguage: ProgrammingLanguage | ""
   deadline: string
   allowResubmission: boolean
   maxAttempts: number | null
   templateCode: string
-  totalScore: number
+  totalScore: number | null
   scheduledDate: string | null
   latePenaltyEnabled: boolean
   latePenaltyConfig: LatePenaltyConfig
@@ -52,12 +59,53 @@ export interface FormErrors {
   description?: string
   programmingLanguage?: string
   deadline?: string
+  scheduledDate?: string
+  totalScore?: string
   maxAttempts?: string
   general?: string
 }
 
 export const programmingLanguageOptions: SelectOption[] =
   PROGRAMMING_LANGUAGE_OPTIONS.map((opt) => ({ ...opt }))
+
+function generateTierId(): string {
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID()
+  }
+
+  return `tier-${Math.random().toString(36).slice(2, 10)}`
+}
+
+function normalizeLatePenaltyConfig(
+  latePenaltyConfig: LatePenaltyConfig | null | undefined,
+): LatePenaltyConfig {
+  const sourceConfig = latePenaltyConfig ?? DEFAULT_LATE_PENALTY_CONFIG
+
+  const normalizedTiers: PenaltyTier[] = sourceConfig.tiers.map((tier) => {
+    const tierWithOptionalId = tier as PenaltyTier & { id?: string }
+    const tierWithLegacyHours = tier as PenaltyTier & {
+      hoursAfterGrace?: number
+    }
+    const hasValidId =
+      typeof tierWithOptionalId.id === "string" &&
+      tierWithOptionalId.id.trim().length > 0
+    const tierHoursLate =
+      typeof tier.hoursLate === "number"
+        ? tier.hoursLate
+        : (tierWithLegacyHours.hoursAfterGrace ?? 0)
+
+    return {
+      id: hasValidId ? tierWithOptionalId.id : generateTierId(),
+      hoursLate: Math.max(0, tierHoursLate),
+      penaltyPercent: tier.penaltyPercent,
+    }
+  })
+
+  return {
+    tiers: normalizedTiers,
+    rejectAfterHours: sourceConfig.rejectAfterHours,
+  }
+}
 
 export function useCourseworkForm() {
   const navigate = useNavigate()
@@ -79,17 +127,21 @@ export function useCourseworkForm() {
     [],
   )
   const [isLoadingTestCases, setIsLoadingTestCases] = useState(false)
+  const [isUploadingDescriptionImage, setIsUploadingDescriptionImage] =
+    useState(false)
   const [showTemplateCode, setShowTemplateCode] = useState(false)
 
   const [formData, setFormData] = useState<CourseworkFormData>({
     assignmentName: "",
     description: "",
+    descriptionImageUrl: null,
+    descriptionImageAlt: "",
     programmingLanguage: "",
     deadline: "",
-    allowResubmission: true,
+    allowResubmission: false,
     maxAttempts: null,
     templateCode: "",
-    totalScore: 100,
+    totalScore: null,
     scheduledDate: null,
     latePenaltyEnabled: false,
     latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
@@ -120,19 +172,26 @@ export function useCourseworkForm() {
             setFormData({
               assignmentName: assignment.assignmentName,
               description: assignment.description,
+              descriptionImageUrl: assignment.descriptionImageUrl ?? null,
+              descriptionImageAlt: assignment.descriptionImageAlt ?? "",
               programmingLanguage:
                 assignment.programmingLanguage as ProgrammingLanguage,
-              deadline: toLocalDateTimeString(assignment.deadline),
+              deadline: assignment.deadline
+                ? toLocalDateTimeString(assignment.deadline)
+                : "",
               allowResubmission: assignment.allowResubmission,
               maxAttempts: assignment.maxAttempts ?? null,
               templateCode: assignment.templateCode ?? "",
-              totalScore: assignment.totalScore ?? 100,
+              totalScore: assignment.totalScore ?? null,
               scheduledDate: assignment.scheduledDate
                 ? toLocalDateTimeString(assignment.scheduledDate)
                 : null,
-              latePenaltyEnabled: assignment.latePenaltyEnabled ?? false,
-              latePenaltyConfig:
-                assignment.latePenaltyConfig ?? DEFAULT_LATE_PENALTY_CONFIG,
+              latePenaltyEnabled: assignment.deadline
+                ? (assignment.latePenaltyEnabled ?? false)
+                : false,
+              latePenaltyConfig: normalizeLatePenaltyConfig(
+                assignment.latePenaltyConfig,
+              ),
             })
             setShowTemplateCode(!!assignment.templateCode)
           }
@@ -169,7 +228,20 @@ export function useCourseworkForm() {
     field: K,
     value: CourseworkFormData[K],
   ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData((prev) => {
+      const updatedFormData = { ...prev, [field]: value }
+
+      if (field === "deadline") {
+        const hasDeadline =
+          typeof value === "string" && value.trim().length > 0
+
+        if (!hasDeadline) {
+          updatedFormData.latePenaltyEnabled = false
+        }
+      }
+
+      return updatedFormData
+    })
     setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }))
   }
 
@@ -179,17 +251,33 @@ export function useCourseworkForm() {
     const nameError = validateAssignmentTitle(formData.assignmentName)
     if (nameError) newErrors.assignmentName = nameError
 
-    const descError = validateDescription(formData.description)
+    const descError = validateDescription(
+      formData.description,
+      formData.descriptionImageUrl,
+    )
     if (descError) newErrors.description = descError
 
     const langError = validateProgrammingLanguage(formData.programmingLanguage)
     if (langError) newErrors.programmingLanguage = langError
 
-    if (!formData.deadline) {
-      newErrors.deadline = "Deadline is required"
-    } else {
+    if (formData.deadline) {
       const deadlineError = validateDeadline(new Date(formData.deadline))
       if (deadlineError) newErrors.deadline = deadlineError
+    }
+
+    if (formData.scheduledDate) {
+      const scheduledTime = formData.scheduledDate.split("T")[1]?.slice(0, 5)
+      const hasScheduledTime = Boolean(scheduledTime)
+
+      if (!hasScheduledTime) {
+        newErrors.scheduledDate = "Release time is required"
+      }
+    }
+
+    if (formData.totalScore === null) {
+      newErrors.totalScore = "Total score is required"
+    } else if (formData.totalScore < 1) {
+      newErrors.totalScore = "Total score must be at least 1"
     }
 
     if (formData.allowResubmission && formData.maxAttempts !== null) {
@@ -212,6 +300,17 @@ export function useCourseworkForm() {
       return
     }
 
+    if (formData.totalScore === null) {
+      setErrors((prev) => ({
+        ...prev,
+        totalScore: "Total score is required",
+      }))
+      return
+    }
+
+    const hasDeadline = formData.deadline.trim().length > 0
+    const shouldEnableLatePenalty = hasDeadline && formData.latePenaltyEnabled
+
     setIsLoading(true)
 
     try {
@@ -221,9 +320,11 @@ export function useCourseworkForm() {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
           description: formData.description.trim(),
+          descriptionImageUrl: formData.descriptionImageUrl,
+          descriptionImageAlt: formData.descriptionImageAlt.trim() || null,
           programmingLanguage:
             formData.programmingLanguage as ProgrammingLanguage,
-          deadline: new Date(formData.deadline),
+          deadline: formData.deadline ? new Date(formData.deadline) : null,
           allowResubmission: formData.allowResubmission,
           maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
           templateCode: formData.templateCode || null,
@@ -231,8 +332,8 @@ export function useCourseworkForm() {
           scheduledDate: formData.scheduledDate
             ? new Date(formData.scheduledDate)
             : null,
-          latePenaltyEnabled: formData.latePenaltyEnabled,
-          latePenaltyConfig: formData.latePenaltyEnabled
+          latePenaltyEnabled: shouldEnableLatePenalty,
+          latePenaltyConfig: shouldEnableLatePenalty
             ? formData.latePenaltyConfig
             : null,
         })
@@ -244,9 +345,11 @@ export function useCourseworkForm() {
           teacherId: parseInt(currentUser.id),
           assignmentName: formData.assignmentName.trim(),
           description: formData.description.trim(),
+          descriptionImageUrl: formData.descriptionImageUrl,
+          descriptionImageAlt: formData.descriptionImageAlt.trim() || null,
           programmingLanguage:
             formData.programmingLanguage as ProgrammingLanguage,
-          deadline: new Date(formData.deadline),
+          deadline: formData.deadline ? new Date(formData.deadline) : null,
           allowResubmission: formData.allowResubmission,
           maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
           templateCode: formData.templateCode || null,
@@ -254,8 +357,8 @@ export function useCourseworkForm() {
           scheduledDate: formData.scheduledDate
             ? new Date(formData.scheduledDate)
             : null,
-          latePenaltyEnabled: formData.latePenaltyEnabled,
-          latePenaltyConfig: formData.latePenaltyEnabled
+          latePenaltyEnabled: shouldEnableLatePenalty,
+          latePenaltyConfig: shouldEnableLatePenalty
             ? formData.latePenaltyConfig
             : null,
         })
@@ -352,6 +455,73 @@ export function useCourseworkForm() {
     setPendingTestCases((prev) => prev.filter((tc) => tc.tempId !== tempId))
   }
 
+  const handleDescriptionImageUpload = async (file: File) => {
+    if (!currentUser?.id || !classId) {
+      setErrors({ general: "You must be logged in" })
+      return
+    }
+
+    setIsUploadingDescriptionImage(true)
+    try {
+      const previousDescriptionImageUrl = formData.descriptionImageUrl
+
+      const uploadedImageUrl = await uploadCourseworkDescriptionImage(
+        parseInt(currentUser.id),
+        parseInt(classId, 10),
+        file,
+      )
+
+      setFormData((prev) => ({
+        ...prev,
+        descriptionImageUrl: uploadedImageUrl,
+        descriptionImageAlt:
+          prev.descriptionImageAlt.trim() ||
+          prev.assignmentName.trim() ||
+          "Coursework description image",
+      }))
+      setErrors((prev) => ({ ...prev, description: undefined, general: undefined }))
+
+      if (
+        previousDescriptionImageUrl &&
+        previousDescriptionImageUrl !== uploadedImageUrl
+      ) {
+        await removeCourseworkDescriptionImage(previousDescriptionImageUrl)
+      }
+    } catch (error) {
+      const uploadErrorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to upload description image"
+      setErrors((prev) => ({
+        ...prev,
+        general: uploadErrorMessage,
+      }))
+      showToast(uploadErrorMessage, "error")
+    } finally {
+      setIsUploadingDescriptionImage(false)
+    }
+  }
+
+  const handleRemoveDescriptionImage = async () => {
+    const currentDescriptionImageUrl = formData.descriptionImageUrl
+
+    setFormData((prev) => ({
+      ...prev,
+      descriptionImageUrl: null,
+      descriptionImageAlt: "",
+    }))
+
+    if (!currentDescriptionImageUrl) {
+      return
+    }
+
+    try {
+      await removeCourseworkDescriptionImage(currentDescriptionImageUrl)
+    } catch (error) {
+      console.error("Failed to remove coursework description image:", error)
+    }
+  }
+
   return {
     // State
     formData,
@@ -362,6 +532,7 @@ export function useCourseworkForm() {
     testCases,
     pendingTestCases,
     isLoadingTestCases,
+    isUploadingDescriptionImage,
     isEditMode,
     assignmentId,
     showTemplateCode,
@@ -369,6 +540,8 @@ export function useCourseworkForm() {
     // Actions
     setShowTemplateCode,
     handleInputChange,
+    handleDescriptionImageUpload,
+    handleRemoveDescriptionImage,
     handleSubmit,
 
     // Test Case Actions

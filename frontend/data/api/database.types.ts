@@ -20,7 +20,7 @@ export type Database = {
           assignment_name: string
           class_id: number
           created_at: string
-          deadline: string
+          deadline: string | null
           description: string
           id: number
           is_active: boolean
@@ -37,7 +37,7 @@ export type Database = {
           assignment_name: string
           class_id: number
           created_at?: string
-          deadline: string
+          deadline?: string | null
           description: string
           id?: number
           is_active?: boolean
@@ -54,7 +54,7 @@ export type Database = {
           assignment_name?: string
           class_id?: number
           created_at?: string
-          deadline?: string
+          deadline?: string | null
           description?: string
           id?: number
           is_active?: boolean

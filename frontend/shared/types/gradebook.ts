@@ -9,13 +9,12 @@ export interface GradeEntry {
 /** Penalty tier for late submissions */
 export interface PenaltyTier {
   id: string
-  hoursAfterGrace: number
+  hoursLate: number
   penaltyPercent: number
 }
 
 /** Late penalty configuration */
 export interface LatePenaltyConfig {
-  gracePeriodHours: number
   tiers: PenaltyTier[]
   rejectAfterHours: number | null
 }
@@ -34,7 +33,7 @@ export interface StudentGradeEntry {
   assignmentId: number
   assignmentName: string
   totalScore: number
-  deadline: string
+  deadline: string | null
   grade: number | null
   isOverridden: boolean
   feedback: string | null
@@ -56,7 +55,7 @@ export interface GradebookAssignment {
   id: number
   name: string
   totalScore: number
-  deadline: string
+  deadline: string | null
 }
 
 /** Student row in gradebook */

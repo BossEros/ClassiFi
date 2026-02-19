@@ -1,4 +1,5 @@
 import { supabase } from "@/data/api/supabaseClient"
+import { sanitizeUserFacingErrorMessage } from "@/shared/utils/errorUtils"
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
@@ -115,7 +116,7 @@ class ApiClient {
           }
 
           return {
-            error: errorMessage,
+            error: sanitizeUserFacingErrorMessage(errorMessage),
             status: response.status,
           }
         }
@@ -191,7 +192,7 @@ class ApiClient {
         }
 
         return {
-          error: errorMessage,
+          error: sanitizeUserFacingErrorMessage(errorMessage),
           status: response.status,
         }
       }
@@ -204,7 +205,7 @@ class ApiClient {
       return {
         error:
           error instanceof Error
-            ? error.message
+            ? sanitizeUserFacingErrorMessage(error.message)
             : "Unable to connect to the server. Please check your internet connection.",
         status: 0,
       }

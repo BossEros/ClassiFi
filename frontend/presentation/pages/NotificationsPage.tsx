@@ -140,7 +140,7 @@ export function NotificationsPage() {
           {notifications.length > 0 && (
             <Button
               onClick={handleMarkAllAsRead}
-              className="w-full md:w-auto px-6 bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105"
+              className="w-full md:w-auto px-6 bg-blue-600 hover:bg-blue-700 text-white border border-blue-500/40"
               disabled={loading}
             >
               Mark all as read

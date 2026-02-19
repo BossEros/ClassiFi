@@ -10,7 +10,7 @@ export type AssignmentStatus = "pending" | "not-started" | "submitted" | "late"
  */
 export function getAssignmentStatus(assignment: Assignment): AssignmentStatus {
   const now = new Date()
-  const deadline = new Date(assignment.deadline)
+  const deadline = assignment.deadline ? new Date(assignment.deadline) : null
   const hasSubmitted = assignment.hasSubmitted
   const hasGrade = assignment.grade !== null && assignment.grade !== undefined
   const submittedAt = assignment.submittedAt
@@ -18,12 +18,12 @@ export function getAssignmentStatus(assignment: Assignment): AssignmentStatus {
     : null
 
   // Not submitted and past deadline
-  if (!hasSubmitted && deadline < now) {
+  if (deadline && !hasSubmitted && deadline < now) {
     return "late"
   }
 
   // Submitted after deadline
-  if (hasSubmitted && submittedAt && submittedAt > deadline) {
+  if (deadline && hasSubmitted && submittedAt && submittedAt > deadline) {
     return "late"
   }
 

@@ -132,6 +132,7 @@ describe("assignmentRepository", () => {
         await assignmentRepository.submitAssignmentWithFile(mockRequest)
 
       expect(result.error).toContain("File type not allowed")
+      expect(result.error).not.toContain("Status: 400")
       expect(result.status).toBe(400)
     })
 
@@ -146,6 +147,7 @@ describe("assignmentRepository", () => {
         await assignmentRepository.submitAssignmentWithFile(mockRequest)
 
       expect(result.error).toContain("Submission deadline has passed")
+      expect(result.error).not.toContain("Status: 400")
     })
 
     it("handles network errors gracefully", async () => {

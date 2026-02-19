@@ -128,10 +128,9 @@ describe("gradebookService", () => {
   describe("updateLatePenaltyConfig", () => {
     it("should validate inputs and call repository", async () => {
       const config = {
-        gracePeriodHours: 2,
         tiers: [
-          { id: "1", hoursAfterGrace: 0, penaltyPercent: 10 },
-          { id: "2", hoursAfterGrace: 24, penaltyPercent: 20 },
+          { id: "1", hoursLate: 0, penaltyPercent: 10 },
+          { id: "2", hoursLate: 24, penaltyPercent: 20 },
         ],
         rejectAfterHours: 72,
       }
@@ -154,8 +153,7 @@ describe("gradebookService", () => {
 
     it("should throw error for invalid penalty percentage", async () => {
       const config = {
-        gracePeriodHours: 2,
-        tiers: [{ id: "1", hoursAfterGrace: 0, penaltyPercent: 101 }],
+        tiers: [{ id: "1", hoursLate: 0, penaltyPercent: 101 }],
         rejectAfterHours: 72,
       }
       await expect(
@@ -163,15 +161,14 @@ describe("gradebookService", () => {
       ).rejects.toThrow("Penalty percentage must be between 0 and 100")
     })
 
-    it("should throw error for negative grace period", async () => {
+    it("should throw error for negative tier hours late", async () => {
       const config = {
-        gracePeriodHours: -1,
-        tiers: [{ id: "1", hoursAfterGrace: 0, penaltyPercent: 10 }],
+        tiers: [{ id: "1", hoursLate: -1, penaltyPercent: 10 }],
         rejectAfterHours: 72,
       }
       await expect(
         gradebookService.updateLatePenaltyConfig(1, true, config),
-      ).rejects.toThrow("Grace period must be non-negative")
+      ).rejects.toThrow("Tier hours late must be non-negative")
     })
   })
 })

@@ -87,8 +87,10 @@ export interface AssignmentDTO {
   classId: number
   assignmentName: string
   description: string
+  descriptionImageUrl: string | null
+  descriptionImageAlt: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   maxAttempts: number | null
   createdAt: string
@@ -97,6 +99,8 @@ export interface AssignmentDTO {
   hasTemplateCode: boolean
   totalScore: number
   scheduledDate: string | null
+  latePenaltyEnabled: boolean
+  latePenaltyConfig: Assignment["latePenaltyConfig"] | null
   submissionCount?: number
   hasSubmitted?: boolean
   submittedAt?: string | null
@@ -123,8 +127,10 @@ export function toAssignmentDTO(
     classId: assignment.classId,
     assignmentName: assignment.assignmentName,
     description: assignment.description,
+    descriptionImageUrl: assignment.descriptionImageUrl ?? null,
+    descriptionImageAlt: assignment.descriptionImageAlt ?? null,
     programmingLanguage: assignment.programmingLanguage,
-    deadline: assignment.deadline?.toISOString() ?? "",
+    deadline: assignment.deadline?.toISOString() ?? null,
     allowResubmission: assignment.allowResubmission ?? true,
     maxAttempts: assignment.maxAttempts ?? null,
     createdAt: assignment.createdAt?.toISOString() ?? new Date().toISOString(),
@@ -133,6 +139,8 @@ export function toAssignmentDTO(
     hasTemplateCode: !!assignment.templateCode,
     totalScore: assignment.totalScore ?? DEFAULT_TOTAL_SCORE,
     scheduledDate: assignment.scheduledDate?.toISOString() ?? null,
+    latePenaltyEnabled: assignment.latePenaltyEnabled ?? false,
+    latePenaltyConfig: assignment.latePenaltyConfig ?? null,
     ...extras,
   }
 }
@@ -247,7 +255,7 @@ export interface PendingAssignmentDTO {
   assignmentName: string
   className: string
   classId: number
-  deadline: string
+  deadline: string | null
   hasSubmitted: boolean
   programmingLanguage: string
 }
@@ -257,7 +265,7 @@ export interface PendingTaskDTO {
   assignmentName: string
   className: string
   classId: number
-  deadline: string
+  deadline: string | null
   submissionCount: number
   totalStudents: number
 }
@@ -395,7 +403,7 @@ export interface GradebookAssignmentDTO {
   id: number
   name: string
   totalScore: number
-  deadline: string
+  deadline: string | null
 }
 
 export interface GradebookGradeDTO {
@@ -422,7 +430,7 @@ export interface StudentGradeAssignmentDTO {
   assignmentId: number
   assignmentName: string
   totalScore: number
-  deadline: string
+  deadline: string | null
   grade: number | null
   isOverridden: boolean
   feedback: string | null
@@ -441,7 +449,7 @@ export function toClassGradebookDTO(gradebook: {
     id: number
     name: string
     totalScore: number
-    deadline: Date
+    deadline: Date | null
   }>
   students: Array<{
     id: number
@@ -461,7 +469,7 @@ export function toClassGradebookDTO(gradebook: {
       id: a.id,
       name: a.name,
       totalScore: a.totalScore,
-      deadline: a.deadline.toISOString(),
+      deadline: a.deadline?.toISOString() ?? null,
     })),
     students: gradebook.students.map((s) => ({
       id: s.id,
@@ -487,7 +495,7 @@ export function toStudentGradesDTO(
       assignmentId: number
       assignmentName: string
       totalScore: number
-      deadline: Date
+      deadline: Date | null
       grade: number | null
       isOverridden: boolean
       feedback: string | null
@@ -503,7 +511,7 @@ export function toStudentGradesDTO(
       assignmentId: a.assignmentId,
       assignmentName: a.assignmentName,
       totalScore: a.totalScore,
-      deadline: a.deadline?.toISOString() ?? "",
+      deadline: a.deadline?.toISOString() ?? null,
       grade: a.grade,
       isOverridden: a.isOverridden,
       feedback: a.feedback,

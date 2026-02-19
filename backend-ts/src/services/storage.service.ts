@@ -127,6 +127,95 @@ export class StorageService implements IStorageService {
   }
 
   /**
+   * Delete a coursework description image file.
+   * Accepts either a full public URL or a storage-relative path.
+   */
+  async deleteAssignmentDescriptionImage(imageUrl: string): Promise<boolean> {
+    try {
+      const storageLocation = this.parseStorageLocationFromPublicUrl(imageUrl)
+
+      if (!storageLocation) {
+        return false
+      }
+
+      const result = await this.deleteFiles(storageLocation.bucket, [
+        storageLocation.path,
+      ])
+      return result > 0
+    } catch (error) {
+      logger.error("Failed to delete assignment description image:", error)
+      return false
+    }
+  }
+
+  /**
+   * Parse bucket/path from a Supabase public URL or storage-relative path.
+   */
+  private parseStorageLocationFromPublicUrl(
+    storagePublicUrl: string,
+  ): { bucket: string; path: string } | null {
+    if (!storagePublicUrl?.trim()) {
+      return null
+    }
+
+    const parsedAbsoluteLocation =
+      this.parseStorageLocationFromAbsoluteUrl(storagePublicUrl)
+    if (parsedAbsoluteLocation) {
+      return parsedAbsoluteLocation
+    }
+
+    const [bucketName, ...pathSegments] = storagePublicUrl.split("/")
+    if (!bucketName || pathSegments.length === 0) {
+      return null
+    }
+
+    const normalizedPath = pathSegments.join("/").split("?")[0]
+    if (!normalizedPath) {
+      return null
+    }
+
+    return { bucket: bucketName, path: normalizedPath }
+  }
+
+  /**
+   * Parse bucket/path from canonical Supabase public object URLs.
+   */
+  private parseStorageLocationFromAbsoluteUrl(
+    storagePublicUrl: string,
+  ): { bucket: string; path: string } | null {
+    try {
+      const parsedUrl = new URL(storagePublicUrl)
+      const storagePublicMarker = "/storage/v1/object/public/"
+      const markerIndex = parsedUrl.pathname.indexOf(storagePublicMarker)
+
+      if (markerIndex === -1) {
+        return null
+      }
+
+      const bucketAndPath = parsedUrl.pathname.slice(
+        markerIndex + storagePublicMarker.length,
+      )
+      const [bucketName, ...pathSegments] = bucketAndPath.split("/")
+
+      if (!bucketName || pathSegments.length === 0) {
+        return null
+      }
+
+      const decodedPath = decodeURIComponent(pathSegments.join("/"))
+      if (!decodedPath) {
+        return null
+      }
+
+      return {
+        bucket: decodeURIComponent(bucketName),
+        path: decodedPath,
+      }
+    } catch {
+      return null
+    }
+  }
+
+  /**
    * Upload a submission file.
    */
   async uploadSubmission(

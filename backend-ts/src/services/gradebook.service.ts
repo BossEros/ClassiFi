@@ -20,7 +20,7 @@ export interface GradeEntry {
   assignmentId: number
   assignmentName: string
   totalScore: number
-  deadline: Date
+  deadline: Date | null
   submissionId: number | null
   grade: number | null
   percentage: number | null
@@ -251,7 +251,7 @@ export class GradebookService {
     const penaltyConfig = await this.latePenaltyService.getAssignmentConfig(
       submission.assignmentId,
     )
-    if (penaltyConfig.enabled) {
+    if (penaltyConfig.enabled && assignment.deadline) {
       latePenalty = this.latePenaltyService.calculatePenalty(
         submission.submittedAt,
         assignment.deadline,

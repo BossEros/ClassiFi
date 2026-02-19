@@ -193,7 +193,7 @@ export function AdminClassDetailPage() {
 
               <button
                 onClick={() => setShowAddStudentModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20 transition-all font-medium whitespace-nowrap"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 border border-blue-500/40 transition-colors font-medium whitespace-nowrap"
               >
                 <UserPlus className="w-4 h-4" />
                 Enroll Student

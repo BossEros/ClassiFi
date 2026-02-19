@@ -5,18 +5,35 @@ import { PROGRAMMING_LANGUAGES } from "@/shared/constants.js"
 export const ProgrammingLanguageSchema = z.enum(PROGRAMMING_LANGUAGES)
 export type ProgrammingLanguage = z.infer<typeof ProgrammingLanguageSchema>
 
+/** Late penalty tier schema */
+export const LatePenaltyTierSchema = z.object({
+  id: z.string().optional(),
+  hoursLate: z.number().min(0),
+  penaltyPercent: z.number().min(0).max(100),
+})
+
+/** Late penalty configuration schema */
+export const LatePenaltyConfigSchema = z.object({
+  tiers: z.array(LatePenaltyTierSchema),
+  rejectAfterHours: z.number().nullable(),
+})
+
 /** Create assignment request schema */
 export const CreateAssignmentRequestSchema = z.object({
   teacherId: z.number().int().min(1),
   assignmentName: z.string().min(1).max(150),
-  description: z.string().min(1),
+  description: z.string().max(5000).default(""),
+  descriptionImageUrl: z.string().url().max(2000).nullable().optional(),
+  descriptionImageAlt: z.string().max(255).nullable().optional(),
   programmingLanguage: ProgrammingLanguageSchema,
-  deadline: z.string().datetime(),
+  deadline: z.string().datetime().nullable().optional(),
   allowResubmission: z.boolean().default(true),
   maxAttempts: z.number().int().min(1).max(99).nullable().optional(),
   templateCode: z.string().max(50000).nullable().optional(),
   totalScore: z.number().int().min(1).default(100),
   scheduledDate: z.string().datetime().nullable().optional(),
+  latePenaltyEnabled: z.boolean().default(false),
+  latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
 })
 
 export type CreateAssignmentRequest = z.infer<
@@ -27,14 +44,18 @@ export type CreateAssignmentRequest = z.infer<
 export const UpdateAssignmentRequestSchema = z.object({
   teacherId: z.number().int().min(1),
   assignmentName: z.string().min(1).max(150).optional(),
-  description: z.string().min(1).optional(),
+  description: z.string().max(5000).optional(),
+  descriptionImageUrl: z.string().url().max(2000).nullable().optional(),
+  descriptionImageAlt: z.string().max(255).nullable().optional(),
   programmingLanguage: ProgrammingLanguageSchema.optional(),
-  deadline: z.string().datetime().optional(),
+  deadline: z.string().datetime().nullable().optional(),
   allowResubmission: z.boolean().optional(),
   maxAttempts: z.number().int().min(1).max(99).nullable().optional(),
   templateCode: z.string().max(50000).nullable().optional(),
   totalScore: z.number().int().min(1).optional(),
   scheduledDate: z.string().datetime().nullable().optional(),
+  latePenaltyEnabled: z.boolean().optional(),
+  latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
 })
 
 export type UpdateAssignmentRequest = z.infer<
@@ -47,8 +68,10 @@ export const AssignmentResponseSchema = z.object({
   classId: z.number(),
   assignmentName: z.string(),
   description: z.string(),
+  descriptionImageUrl: z.string().nullable().optional(),
+  descriptionImageAlt: z.string().nullable().optional(),
   programmingLanguage: z.string(),
-  deadline: z.string(),
+  deadline: z.string().nullable(),
   allowResubmission: z.boolean(),
   maxAttempts: z.number().nullable().optional(),
   createdAt: z.string(),
@@ -57,6 +80,8 @@ export const AssignmentResponseSchema = z.object({
   hasTemplateCode: z.boolean().optional(),
   totalScore: z.number().optional(),
   scheduledDate: z.string().nullable().optional(),
+  latePenaltyEnabled: z.boolean().optional(),
+  latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
   submissionCount: z.number().optional(),
   hasSubmitted: z.boolean().optional(),
   submittedAt: z.string().nullable().optional(),

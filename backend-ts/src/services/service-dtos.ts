@@ -1,5 +1,6 @@
 import type { UserRole } from "@/repositories/user.repository.js"
 import type { ClassSchedule } from "@/models/index.js"
+import type { LatePenaltyConfig } from "@/models/index.js"
 
 /** DTO for AuthService.registerUser */
 export interface RegisterUserServiceDTO {
@@ -64,13 +65,17 @@ export interface CreateAssignmentServiceDTO {
   teacherId: number
   assignmentName: string
   description: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: "python" | "java" | "c"
-  deadline: Date
+  deadline: Date | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
+  latePenaltyEnabled?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 /** DTO for AssignmentService.updateAssignment */
@@ -79,11 +84,15 @@ export interface UpdateAssignmentServiceDTO {
   teacherId: number
   assignmentName?: string
   description?: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage?: "python" | "java" | "c"
-  deadline?: Date
+  deadline?: Date | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
+  latePenaltyEnabled?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
 }

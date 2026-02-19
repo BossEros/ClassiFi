@@ -10,7 +10,7 @@ export { SuccessResponseSchema }
 
 /** Penalty tier schema */
 export const PenaltyTierSchema = z.object({
-  hoursAfterGrace: z.number().min(0),
+  hoursLate: z.number().min(0),
   penaltyPercent: z.number().min(0).max(100),
 })
 
@@ -18,7 +18,6 @@ export type PenaltyTier = z.infer<typeof PenaltyTierSchema>
 
 /** Late penalty configuration schema */
 export const LatePenaltyConfigSchema = z.object({
-  gracePeriodHours: z.number().min(0),
   tiers: z.array(PenaltyTierSchema),
   rejectAfterHours: z.number().nullable(),
 })
@@ -56,7 +55,7 @@ export const GradebookAssignmentSchema = z.object({
   id: z.number(),
   name: z.string(),
   totalScore: z.number(),
-  deadline: z.string(),
+  deadline: z.string().nullable(),
 })
 
 export type GradebookAssignment = z.infer<typeof GradebookAssignmentSchema>
@@ -99,7 +98,7 @@ export const StudentGradesResponseSchema = z.object({
           id: z.number(),
           name: z.string(),
           totalScore: z.number(),
-          deadline: z.string(),
+          deadline: z.string().nullable(),
           grade: z.number().nullable(),
           isOverridden: z.boolean(),
           feedback: z.string().nullable(),

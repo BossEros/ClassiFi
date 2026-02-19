@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { RefreshCw, Check, X } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { useCourseworkForm } from "@/presentation/hooks/useCourseworkForm"
@@ -24,6 +25,7 @@ export function CourseworkFormPage() {
     testCases,
     pendingTestCases,
     isLoadingTestCases,
+    isUploadingDescriptionImage,
     isEditMode,
     assignmentId,
     showTemplateCode,
@@ -31,6 +33,8 @@ export function CourseworkFormPage() {
     // Actions
     setShowTemplateCode,
     handleInputChange,
+    handleDescriptionImageUpload,
+    handleRemoveDescriptionImage,
     handleSubmit,
 
     // Test Case Actions
@@ -45,6 +49,7 @@ export function CourseworkFormPage() {
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
     : "?"
+  const hasDeadlineConfigured = formData.deadline.trim().length > 0
 
   const topBar = useTopBar({ user: currentUser, userInitials })
 
@@ -104,6 +109,9 @@ export function CourseworkFormPage() {
               showTemplateCode={showTemplateCode}
               setShowTemplateCode={setShowTemplateCode}
               onInputChange={handleInputChange}
+              isUploadingDescriptionImage={isUploadingDescriptionImage}
+              onDescriptionImageUpload={handleDescriptionImageUpload}
+              onDescriptionImageRemove={handleRemoveDescriptionImage}
               // Test Case Props
               testCases={testCases}
               pendingTestCases={pendingTestCases}
@@ -128,7 +136,7 @@ export function CourseworkFormPage() {
               onInputChange={handleInputChange}
             />
 
-            {/* Late Penalty Configuration */}
+            {/* Late Submission Policy */}
             <LatePenaltyConfig
               enabled={formData.latePenaltyEnabled}
               config={formData.latePenaltyConfig}
@@ -138,16 +146,16 @@ export function CourseworkFormPage() {
               onConfigChange={(config: LatePenaltyConfigType) =>
                 handleInputChange("latePenaltyConfig", config)
               }
-              disabled={isLoading}
+              disabled={isLoading || !hasDeadlineConfigured}
             />
 
             {/* Action Buttons Card */}
-            <div className="rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden p-6">
-              <div className="space-y-3">
+            <Card>
+              <CardContent className="p-6 space-y-3">
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl shadow-lg shadow-teal-500/20 font-medium transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl border border-teal-500/40 font-medium"
                 >
                   {isLoading ? (
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -165,8 +173,8 @@ export function CourseworkFormPage() {
                   <X className="w-4 h-4 mr-2" />
                   Cancel
                 </Button>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </form>

@@ -47,6 +47,8 @@ export function createMockClass(overrides: Partial<Class> = {}): Class {
     },
     createdAt: new Date(),
     isActive: true,
+    latePenaltyEnabled: false,
+    latePenaltyConfig: null,
     ...overrides,
   }
 }

@@ -86,6 +86,9 @@ export interface TaskDTO {
   id: number
   classId: number
   assignmentName: string
+  description: string | null
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   className?: string
   deadline: string | null
   programmingLanguage: string
@@ -113,8 +116,10 @@ export interface AssignmentDetail {
   className: string
   assignmentName: string
   description: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   maxAttempts?: number | null
   createdAt?: string
@@ -173,8 +178,10 @@ export interface CreateAssignmentRequest {
   teacherId: number
   assignmentName: string
   description: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
-  deadline: Date | string
+  deadline?: Date | string | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
@@ -188,8 +195,10 @@ export interface UpdateAssignmentRequest {
   teacherId: number
   assignmentName?: string
   description?: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage?: ProgrammingLanguage
-  deadline?: Date | string
+  deadline?: Date | string | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
@@ -203,7 +212,8 @@ export interface UpdateAssignmentValidationData {
   teacherId?: number
   assignmentName?: string
   description?: string
-  deadline?: Date | string
+  descriptionImageUrl?: string | null
+  deadline?: Date | string | null
 }
 
 // ============================================================================
@@ -347,8 +357,10 @@ export interface TeacherDashboardTaskResponse {
   classId: number
   assignmentName: string
   description: string | null
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   isActive: boolean
   createdAt: string
@@ -390,8 +402,10 @@ export interface AssignmentResponse {
   classId: number
   assignmentName: string
   description: string | null
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   isActive: boolean
   createdAt: string
@@ -769,8 +783,10 @@ export interface AssignmentDetailDTO {
   className: string
   assignmentName: string
   description: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: string
-  deadline: string
+  deadline: string | null
   allowResubmission: boolean
   maxAttempts?: number | null
   isActive: boolean
@@ -779,6 +795,8 @@ export interface AssignmentDetailDTO {
   hasTemplateCode?: boolean
   totalScore?: number
   scheduledDate?: string | null
+  latePenaltyEnabled?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
 }
 
@@ -810,15 +828,23 @@ export interface TestCaseResponse {
   testCase: TestCase
 }
 
+export interface TestExecutionSummaryData {
+  submissionId?: number
+  results: RawTestResult[]
+  // Current backend contract
+  passed?: number
+  total?: number
+  percentage?: number
+  // Legacy contract kept for compatibility
+  passedCount?: number
+  totalCount?: number
+  score?: number
+}
+
 export interface TestResultsResponse {
   success: boolean
   message: string
-  data: {
-    results: RawTestResult[]
-    passedCount: number
-    totalCount: number
-    score: number
-  }
+  data: TestExecutionSummaryData
 }
 
 export interface SuccessResponse {

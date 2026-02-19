@@ -154,10 +154,16 @@ Routing is handled in `presentation/App.tsx`.
 - **`ClassForm`**: Create/Edit classes with schedule configuration.
 - **`CourseworkForm`**: Create/Edit assignments with:
   - Programming language selection (Python, Java, C)
+  - Description text plus optional image attachment (preview + alt text)
   - File attachments
   - Test cases with input/output validation
-  - Late penalty configuration
-  - Deadline and resubmission settings
+  - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
+  - Optional deadline settings (coursework can be created without a deadline)
+  - Resubmission settings
+
+**Coursework Description Image Storage Configuration**:
+- Uses Supabase Storage bucket configured via `VITE_SUPABASE_ASSIGNMENT_DESCRIPTION_BUCKET` (defaults to `assignment-descriptions`)
+- If the configured bucket is unavailable, the client attempts fallback upload buckets for compatibility
 
 ### Shared Presentation Hooks (Admin Pages)
 
@@ -457,7 +463,7 @@ Specialized types for the class detail page redesign:
    - Manage student enrollments
 5. **Create New Coursework**:
    - Click "Create Coursework" button in the Coursework tab
-   - Configure assignment details, test cases, and deadlines
+   - Configure assignment details, test cases, deadlines, and late submission policy
 
 ### Teacher: Reviewing Plagiarism Results
 

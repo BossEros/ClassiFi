@@ -1,7 +1,12 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
-import { Card, CardContent } from "@/presentation/components/ui/Card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
@@ -10,8 +15,6 @@ import {
   Search,
   Shield,
   Calendar,
-  Code,
-  FileText,
   Inbox,
   Loader2,
 } from "lucide-react"
@@ -103,11 +106,13 @@ export function AssignmentSubmissionsPage() {
 
   // Calculate statistics
   const totalSubmissions = submissions.length
+  const assignmentDeadline = assignment?.deadline
+    ? new Date(assignment.deadline)
+    : null
   const onTimeCount = submissions.filter(
     (sub) =>
-      assignment &&
-      new Date(sub.submittedAt).getTime() <=
-        new Date(assignment.deadline).getTime(),
+      !assignmentDeadline ||
+      new Date(sub.submittedAt).getTime() <= assignmentDeadline.getTime(),
   ).length
   const lateCount = totalSubmissions - onTimeCount
 
@@ -196,29 +201,44 @@ export function AssignmentSubmissionsPage() {
             {assignment.assignmentName}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              <span>Due: {formatDeadline(assignment.deadline)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Code className="w-4 h-4" />
-              <span className="capitalize">
-                {assignment.programmingLanguage}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              <span>{assignment.className}</span>
-            </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-fit">
+            <Calendar className="w-3.5 h-3.5 text-blue-400" />
+            <span className="text-xs font-medium text-blue-100">
+              {assignment.deadline
+                ? `Due ${formatDeadline(assignment.deadline)}`
+                : "No deadline"}
+            </span>
           </div>
-
-          {assignment.description && (
-            <p className="text-gray-300 text-sm leading-relaxed max-w-3xl">
-              {assignment.description}
-            </p>
-          )}
         </div>
+
+        {/* Description Card */}
+        <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+          <CardHeader>
+            <CardTitle>Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {assignment.description && (
+                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {assignment.description}
+                </p>
+              )}
+
+              {assignment.descriptionImageUrl && (
+                <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                  <img
+                    src={assignment.descriptionImageUrl}
+                    alt={
+                      assignment.descriptionImageAlt ||
+                      assignment.assignmentName
+                    }
+                    className="w-full max-h-[28rem] object-contain bg-black/30"
+                  />
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Statistics Card */}
         <Card className="bg-white/5 backdrop-blur-sm border-white/10">
@@ -266,7 +286,7 @@ export function AssignmentSubmissionsPage() {
             )}
           </Button>
 
-          <div className="flex-1 max-w-md relative">
+          <div className="flex-1 max-w-[28rem] relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
             <Input
               type="text"
@@ -284,17 +304,17 @@ export function AssignmentSubmissionsPage() {
             // Empty State
             <Card className="bg-white/5 backdrop-blur-sm border-white/10">
               <CardContent className="p-12">
-                <div className="text-center space-y-4">
+                <div className="w-full text-center space-y-4 flex flex-col items-center">
                   <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
                     <Inbox className="w-8 h-8 text-gray-500" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 w-full max-w-[36rem]">
                     <h3 className="text-lg font-semibold text-white">
                       {searchQuery
                         ? "No matching submissions"
                         : "No submissions yet"}
                     </h3>
-                    <p className="text-sm text-gray-400 max-w-md mx-auto">
+                    <p className="block w-full text-sm text-gray-400 leading-relaxed text-center whitespace-normal break-normal">
                       {searchQuery
                         ? `No submissions found matching "${searchQuery}"`
                         : "Students haven't submitted their work yet. Check back later."}
@@ -315,7 +335,9 @@ export function AssignmentSubmissionsPage() {
                 <SubmissionCard
                   key={submission.id}
                   submission={submission}
-                  deadline={new Date(assignment.deadline)}
+                  deadline={
+                    assignment.deadline ? new Date(assignment.deadline) : null
+                  }
                   onClick={handleViewSubmission}
                 />
               ))}

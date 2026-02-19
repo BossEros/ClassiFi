@@ -4,10 +4,37 @@ import {
   errorResponse,
   successResponse,
   getErrorMessage,
+  sanitizeUserFacingErrorMessage,
   withErrorHandling,
 } from "@/shared/utils/errorUtils"
 
 describe("errorUtils", () => {
+  // ============================================================================
+  // sanitizeUserFacingErrorMessage Tests
+  // ============================================================================
+
+  describe("sanitizeUserFacingErrorMessage", () => {
+    it("removes trailing status suffix", () => {
+      const result = sanitizeUserFacingErrorMessage(
+        "The deadline has passed (Status: 400)",
+      )
+
+      expect(result).toBe("The deadline has passed")
+    })
+
+    it("removes trailing HTTP suffix", () => {
+      const result = sanitizeUserFacingErrorMessage("Request failed (HTTP 500)")
+
+      expect(result).toBe("Request failed")
+    })
+
+    it("keeps message unchanged when no technical suffix is present", () => {
+      const result = sanitizeUserFacingErrorMessage("Invalid class code")
+
+      expect(result).toBe("Invalid class code")
+    })
+  })
+
   // ============================================================================
   // errorResponse Tests
   // ============================================================================
@@ -89,10 +116,23 @@ describe("errorUtils", () => {
       expect(result).toBe("Test error message")
     })
 
+    it("sanitizes technical status suffix from Error message", () => {
+      const error = new Error("Submission failed (Status: 400)")
+      const result = getErrorMessage(error)
+
+      expect(result).toBe("Submission failed")
+    })
+
     it("returns string error directly", () => {
       const result = getErrorMessage("String error")
 
       expect(result).toBe("String error")
+    })
+
+    it("sanitizes technical status suffix from string error", () => {
+      const result = getErrorMessage("Access denied (HTTP 403)")
+
+      expect(result).toBe("Access denied")
     })
 
     it("returns default fallback for unknown error types", () => {

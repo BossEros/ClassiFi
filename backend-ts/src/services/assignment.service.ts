@@ -5,6 +5,7 @@ import { ClassRepository } from "../repositories/class.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
 import { SubmissionRepository } from "../repositories/submission.repository.js"
 import { NotificationService } from "./notification/notification.service.js"
+import { StorageService } from "./storage.service.js"
 import { toAssignmentDTO, type AssignmentDTO } from "../shared/mappers.js"
 import { requireClassOwnership } from "../shared/guards.js"
 import {
@@ -38,6 +39,8 @@ export class AssignmentService {
     private enrollmentRepo: EnrollmentRepository,
     @inject("SubmissionRepository")
     private submissionRepo: SubmissionRepository,
+    @inject("StorageService")
+    private storageService: StorageService,
     @inject("NotificationService")
     private notificationService: NotificationService,
   ) {}
@@ -54,6 +57,8 @@ export class AssignmentService {
       teacherId,
       assignmentName,
       description,
+      descriptionImageUrl,
+      descriptionImageAlt,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -61,15 +66,32 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+      latePenaltyEnabled,
+      latePenaltyConfig,
     } = data
 
     // Verify class exists and teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
+    const normalizedDescription = description.trim()
+    const normalizedDescriptionImageUrl = this.normalizeNullableString(
+      descriptionImageUrl,
+    )
+    const normalizedDescriptionImageAlt = this.normalizeNullableString(
+      descriptionImageAlt,
+    )
+
+    this.validateDescriptionContent(
+      normalizedDescription,
+      normalizedDescriptionImageUrl,
+    )
+
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
       assignmentName,
-      description,
+      description: normalizedDescription,
+      descriptionImageUrl: normalizedDescriptionImageUrl,
+      descriptionImageAlt: normalizedDescriptionImageAlt,
       programmingLanguage,
       deadline,
       allowResubmission,
@@ -77,6 +99,8 @@ export class AssignmentService {
       templateCode,
       totalScore,
       scheduledDate,
+      latePenaltyEnabled,
+      latePenaltyConfig,
     })
 
     // Notify enrolled students asynchronously (don't block assignment creation)
@@ -210,9 +234,14 @@ export class AssignmentService {
 
     // Validate business rule: deadline must be after scheduled date
     // Handle partial updates by comparing against existing values
-    const finalDeadline = updateData.deadline ?? existingAssignment.deadline
+    const finalDeadline =
+      updateData.deadline === undefined
+        ? existingAssignment.deadline
+        : updateData.deadline
     const finalScheduledDate =
-      updateData.scheduledDate ?? existingAssignment.scheduledDate
+      updateData.scheduledDate === undefined
+        ? existingAssignment.scheduledDate
+        : updateData.scheduledDate
 
     if (
       finalDeadline &&
@@ -224,13 +253,51 @@ export class AssignmentService {
       )
     }
 
+    const normalizedDescription =
+      updateData.description !== undefined
+        ? updateData.description.trim()
+        : undefined
+    const normalizedDescriptionImageUrl =
+      updateData.descriptionImageUrl !== undefined
+        ? this.normalizeNullableString(updateData.descriptionImageUrl)
+        : undefined
+    const normalizedDescriptionImageAlt =
+      updateData.descriptionImageAlt !== undefined
+        ? this.normalizeNullableString(updateData.descriptionImageAlt)
+        : undefined
+
+    const finalDescription = (
+      normalizedDescription ?? existingAssignment.description
+    ).trim()
+    const finalDescriptionImageUrl =
+      normalizedDescriptionImageUrl !== undefined
+        ? normalizedDescriptionImageUrl
+        : existingAssignment.descriptionImageUrl
+
+    this.validateDescriptionContent(finalDescription, finalDescriptionImageUrl)
+
+    const previousDescriptionImageUrl = existingAssignment.descriptionImageUrl
+
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
       assignmentId,
-      updateData,
+      {
+        ...updateData,
+        description: normalizedDescription,
+        descriptionImageUrl: normalizedDescriptionImageUrl,
+        descriptionImageAlt: normalizedDescriptionImageAlt,
+      },
     )
 
     if (!updatedAssignment) {
       throw new AssignmentNotFoundError(assignmentId)
+    }
+
+    const nextDescriptionImageUrl = updatedAssignment.descriptionImageUrl
+    if (
+      previousDescriptionImageUrl &&
+      previousDescriptionImageUrl !== nextDescriptionImageUrl
+    ) {
+      await this.deleteDescriptionImageSafely(previousDescriptionImageUrl)
     }
 
     return toAssignmentDTO(updatedAssignment)
@@ -253,7 +320,56 @@ export class AssignmentService {
     // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
+    if (assignment.descriptionImageUrl) {
+      await this.deleteDescriptionImageSafely(assignment.descriptionImageUrl)
+    }
+
     await this.assignmentRepo.deleteAssignment(assignmentId)
+  }
+
+  /**
+   * Ensures coursework has at least one description surface.
+   */
+  private validateDescriptionContent(
+    description: string,
+    descriptionImageUrl: string | null | undefined,
+  ): void {
+    const hasTextDescription = description.trim().length > 0
+    const hasImageDescription = !!descriptionImageUrl?.trim()
+
+    if (!hasTextDescription && !hasImageDescription) {
+      throw new InvalidAssignmentDataError(
+        "Either description text or description image is required",
+      )
+    }
+  }
+
+  /**
+   * Normalizes optional text values by trimming and converting blanks to null.
+   */
+  private normalizeNullableString(
+    value: string | null | undefined,
+  ): string | null {
+    if (value === undefined || value === null) {
+      return null
+    }
+
+    const trimmedValue = value.trim()
+    return trimmedValue.length > 0 ? trimmedValue : null
+  }
+
+  /**
+   * Best-effort cleanup for coursework description image files.
+   */
+  private async deleteDescriptionImageSafely(imageUrl: string): Promise<void> {
+    try {
+      await this.storageService.deleteAssignmentDescriptionImage(imageUrl)
+    } catch (error) {
+      logger.error("Failed to delete assignment description image", {
+        imageUrl,
+        error,
+      })
+    }
   }
 
   /**

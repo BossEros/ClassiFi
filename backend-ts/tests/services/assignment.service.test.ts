@@ -7,6 +7,7 @@ import type { TestCaseRepository } from "../../src/repositories/testCase.reposit
 import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
 import type { SubmissionRepository } from "../../src/repositories/submission.repository.js"
 import type { NotificationService } from "../../src/services/notification/notification.service.js"
+import type { StorageService } from "../../src/services/storage.service.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -21,6 +22,7 @@ describe("AssignmentService", () => {
   let mockTestCaseRepo: Partial<MockedObject<TestCaseRepository>>
   let mockEnrollmentRepo: Partial<MockedObject<EnrollmentRepository>>
   let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
+  let mockStorageService: Partial<MockedObject<StorageService>>
   let mockNotificationService: Partial<MockedObject<NotificationService>>
 
   beforeEach(() => {
@@ -48,6 +50,10 @@ describe("AssignmentService", () => {
       getSubmissionsByAssignment: vi.fn(),
     }
 
+    mockStorageService = {
+      deleteAssignmentDescriptionImage: vi.fn(),
+    }
+
     mockNotificationService = {
       createNotification: vi.fn(),
     }
@@ -58,6 +64,7 @@ describe("AssignmentService", () => {
       mockTestCaseRepo as unknown as TestCaseRepository,
       mockEnrollmentRepo as unknown as EnrollmentRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
+      mockStorageService as unknown as StorageService,
       mockNotificationService as unknown as NotificationService,
     )
   })
@@ -92,10 +99,14 @@ describe("AssignmentService", () => {
       expect(result).toBeDefined()
       expect(result.id).toBe(mockAssignment.id)
       expect(result.assignmentName).toBe(mockAssignment.assignmentName)
-      expect(mockAssignmentRepo.createAssignment).toHaveBeenCalledWith({
-        classId: 1,
-        ...validAssignmentData,
-      })
+      expect(mockAssignmentRepo.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          classId: 1,
+          ...validAssignmentData,
+          descriptionImageUrl: null,
+          descriptionImageAlt: null,
+        }),
+      )
     })
 
     it("should create notifications for all enrolled students", async () => {

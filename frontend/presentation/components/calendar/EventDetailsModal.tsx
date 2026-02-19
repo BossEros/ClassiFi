@@ -161,7 +161,7 @@ export function EventDetailsModal({
   const StatusIcon = statusConfig?.icon || Clock
 
   const modalContent = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
@@ -295,7 +295,7 @@ export function EventDetailsModal({
             <button
               onClick={handleSendReminder}
               disabled={isSendingReminder}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600/70 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-all active:scale-[0.98] hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600/70 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Bell className="w-4 h-4" />
               <span>
@@ -309,7 +309,7 @@ export function EventDetailsModal({
           {/* View Assignment/Submissions Button */}
           <button
             onClick={handleNavigateToAssignment}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-400/20 bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition-all active:scale-[0.98] hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/40 bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
           >
             <span>{isStudent ? "View Assignment" : "View Submissions"}</span>
             <ExternalLink className="w-4 h-4" />

@@ -29,27 +29,35 @@ export interface CreateAssignmentData {
   classId: number
   assignmentName: string
   description: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage: ProgrammingLanguage
-  deadline: Date
+  deadline: Date | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
+  latePenaltyEnabled?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 /** Data for updating an existing assignment */
 export interface UpdateAssignmentData {
   assignmentName?: string
   description?: string
+  descriptionImageUrl?: string | null
+  descriptionImageAlt?: string | null
   programmingLanguage?: ProgrammingLanguage
-  deadline?: Date
+  deadline?: Date | null
   allowResubmission?: boolean
   maxAttempts?: number | null
   isActive?: boolean
   templateCode?: string | null
   totalScore?: number
   scheduledDate?: Date | null
+  latePenaltyEnabled?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
 }
 
 /**
@@ -242,13 +250,18 @@ export class AssignmentRepository extends BaseRepository<
         classId: data.classId,
         assignmentName: data.assignmentName,
         description: data.description,
+        descriptionImageUrl: data.descriptionImageUrl ?? null,
+        descriptionImageAlt: data.descriptionImageAlt ?? null,
         programmingLanguage: data.programmingLanguage,
-        deadline: data.deadline,
+        deadline: data.deadline ?? null,
         allowResubmission: data.allowResubmission ?? true,
         maxAttempts: data.maxAttempts ?? null,
         templateCode: data.templateCode ?? null,
         totalScore: data.totalScore ?? 100,
         scheduledDate: data.scheduledDate ?? null,
+        latePenaltyEnabled: data.latePenaltyEnabled ?? false,
+        latePenaltyConfig:
+          data.latePenaltyEnabled === true ? (data.latePenaltyConfig ?? null) : null,
         isActive: true,
       })
       .returning()

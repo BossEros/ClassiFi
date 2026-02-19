@@ -70,7 +70,9 @@ export function AssignmentCard({
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-orange-400 flex-shrink-0" />
                   <p className="text-xs text-gray-400">
-                    Due {formatDateTime(assignment.deadline)}
+                    {assignment.deadline
+                      ? `Due ${formatDateTime(assignment.deadline)}`
+                      : "No deadline"}
                   </p>
                 </div>
               )}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { createPortal } from "react-dom"
-import { X, Save, Eye, EyeOff, Terminal } from "lucide-react"
+import { X, Eye, EyeOff, Terminal } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { Textarea } from "@/presentation/components/ui/Textarea"
@@ -19,6 +19,7 @@ interface TestCaseModalProps {
   onClose: () => void
   onSave: (data: CreateTestCaseRequest | UpdateTestCaseRequest) => Promise<void>
   testCase?: EditableTestCase | null
+  defaultName?: string
   isLoading?: boolean
 }
 
@@ -27,6 +28,7 @@ export function TestCaseModal({
   onClose,
   onSave,
   testCase,
+  defaultName = "",
   isLoading = false,
 }: TestCaseModalProps) {
   const isEditMode = !!testCase
@@ -57,7 +59,7 @@ export function TestCaseModal({
         })
       } else {
         setFormData({
-          name: "",
+          name: defaultName,
           input: "",
           expectedOutput: "",
           isHidden: false,
@@ -70,7 +72,7 @@ export function TestCaseModal({
     if (isOpen) {
       initializeForm()
     }
-  }, [isOpen, testCase])
+  }, [isOpen, testCase, defaultName])
 
   const handleChange = (
     field: keyof typeof formData,
@@ -83,9 +85,7 @@ export function TestCaseModal({
   const validate = (): boolean => {
     const newErrors: typeof errors = {}
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Test case name is required"
-    } else if (formData.name.length > 100) {
+    if (formData.name.length > 100) {
       newErrors.name = "Name must be 100 characters or less"
     }
 
@@ -119,19 +119,19 @@ export function TestCaseModal({
   // Use portal to render modal outside parent form
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 grid place-items-center p-4"
+      className="fixed inset-0 z-[10000] grid place-items-center p-4"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl min-w-[320px] mx-auto bg-[#0f111a] border border-white/10 rounded-xl shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh] flex-shrink-0">
+      <div className="relative w-full max-w-[560px] min-w-[320px] mx-auto bg-[#161926] border border-white/15 rounded-xl shadow-[0_8px_60px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.06)] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh] flex-shrink-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-white/[0.04]">
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <Terminal className="w-5 h-5 text-teal-400" />
@@ -148,62 +148,64 @@ export function TestCaseModal({
         </div>
 
         {/* Scrollable Form Content */}
-        <div className="overflow-y-auto custom-scrollbar p-6">
+        <div className="overflow-y-auto p-5">
           <form
             id="test-case-form"
             onSubmit={handleSubmit}
-            className="space-y-6"
+            className="space-y-4"
           >
             {/* Name Field */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label
                 htmlFor="tcName"
                 className="text-sm font-medium text-gray-300"
               >
-                Test Case Name <span className="text-red-400">*</span>
+                Test Case Name
               </label>
               <Input
                 id="tcName"
-                placeholder="e.g., Basic Input Test"
+                placeholder="e.g., Basic Input Test (optional)"
                 value={formData.name}
                 onChange={(e) => handleChange("name", e.target.value)}
                 disabled={isLoading}
                 maxLength={100}
                 className={cn(
-                  "bg-white/5 border-white/10 focus:ring-teal-500/30",
+                  "bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50",
                   errors.name && "border-red-500/50",
                 )}
               />
               {errors.name && (
                 <p className="text-xs text-red-400">{errors.name}</p>
               )}
+              {!errors.name && (
+                <p className="text-xs text-gray-500">
+                  Leave empty to auto-name this case.
+                </p>
+              )}
             </div>
 
-            {/* Input & Output */}
-            <div className="space-y-4">
+            {/* Input & Output - Stacked */}
+            <div className="space-y-3">
               {/* Input */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label
-                    htmlFor="tcInput"
-                    className="text-sm font-medium text-gray-300"
-                  >
-                    Input
-                  </label>
-                  <span className="text-xs text-gray-500">Optional</span>
-                </div>
+              <div className="space-y-1.5">
+                <label
+                  htmlFor="tcInput"
+                  className="text-sm font-medium text-gray-300"
+                >
+                  Input
+                </label>
                 <Textarea
                   id="tcInput"
                   placeholder="Enter input..."
                   value={formData.input}
                   onChange={(e) => handleChange("input", e.target.value)}
                   disabled={isLoading}
-                  className="min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-teal-500/30"
+                  className="min-h-[88px] resize-none font-mono text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50"
                 />
               </div>
 
               {/* Output */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="tcOutput"
@@ -221,7 +223,7 @@ export function TestCaseModal({
                   }
                   disabled={isLoading}
                   className={cn(
-                    "min-h-[100px] font-mono text-sm bg-white/5 border-white/10 placeholder:text-gray-600 focus:ring-teal-500/30",
+                    "min-h-[88px] resize-none font-mono text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50",
                     errors.expectedOutput && "border-red-500/50",
                   )}
                 />
@@ -234,13 +236,13 @@ export function TestCaseModal({
             </div>
 
             {/* Visibility Setting - Improved UI */}
-            <div className="pt-2">
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
+            <div className="pt-1">
+              <label className="text-sm font-medium text-gray-300 mb-1.5 block">
                 Configuration
               </label>
               <div
                 className={cn(
-                  "flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer group",
+                  "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group",
                   formData.isHidden
                     ? "bg-amber-500/[0.08] border-amber-500/30"
                     : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05]",
@@ -292,30 +294,28 @@ export function TestCaseModal({
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-white/10 bg-white/[0.02] flex justify-end gap-3 z-10">
-          <Button
-            type="button"
-            onClick={onClose}
-            disabled={isLoading}
-            className="bg-white/5 hover:bg-white/10 text-gray-300 border border-white/10"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            form="test-case-form"
-            disabled={isLoading}
-            className="bg-teal-600 hover:bg-teal-700 text-white min-w-[100px] shadow-lg shadow-teal-500/20"
-          >
-            {isLoading ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                {isEditMode ? "Save" : "Add Case"}
-              </>
-            )}
-          </Button>
+        <div className="border-t border-white/10 bg-white/[0.04] px-5 py-4 z-10">
+          <div className="flex items-center justify-center gap-2.5">
+            <Button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              variant="secondary"
+              size="sm"
+              className="min-w-[110px]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              form="test-case-form"
+              isLoading={isLoading}
+              size="sm"
+              className="min-w-[140px]"
+            >
+              {isEditMode ? "Save Changes" : "Add Test Case"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

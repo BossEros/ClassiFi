@@ -111,7 +111,7 @@ export class StudentDashboardService {
               assignmentName: assignment.assignmentName,
               className: classData.className,
               classId: classData.id,
-              deadline: assignment.deadline?.toISOString(),
+              deadline: assignment.deadline.toISOString(),
               hasSubmitted: false,
               programmingLanguage: assignment.programmingLanguage,
             })
@@ -122,7 +122,9 @@ export class StudentDashboardService {
 
     // Sort by deadline and limit
     pendingAssignments.sort(
-      (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
+      (a, b) =>
+        new Date(a.deadline ?? 0).getTime() -
+        new Date(b.deadline ?? 0).getTime(),
     )
 
     return pendingAssignments.slice(0, limit)

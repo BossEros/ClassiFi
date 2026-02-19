@@ -48,23 +48,23 @@ describe("assignmentValidation", () => {
       ).toBeNull()
     })
 
-    it("should return error for empty description", () => {
-      expect(validateDescription("")).toBe("Description is required")
-    })
-
-    it("should return error for description less than 10 characters", () => {
-      expect(validateDescription("Short")).toBe(
-        "Description must be at least 10 characters",
+    it("should return error when both description and image are missing", () => {
+      expect(validateDescription("")).toBe(
+        "Add a description or upload an image",
       )
     })
 
-    it("should return null for exactly 10 characters", () => {
-      expect(validateDescription("1234567890")).toBeNull()
+    it("should allow short description when provided", () => {
+      expect(validateDescription("Short")).toBeNull()
     })
 
-    it("should trim whitespace and validate length", () => {
-      expect(validateDescription("   Short   ")).toBe(
-        "Description must be at least 10 characters",
+    it("should allow image-only description", () => {
+      expect(validateDescription("", "https://example.com/image.png")).toBeNull()
+    })
+
+    it("should return error for overly long description", () => {
+      expect(validateDescription("A".repeat(5001))).toBe(
+        "Description must not exceed 5000 characters",
       )
     })
   })
@@ -121,12 +121,12 @@ describe("assignmentValidation", () => {
       expect(validateDeadline("2024-06-20T12:00:00Z")).toBeNull()
     })
 
-    it("should return error for empty deadline", () => {
-      expect(validateDeadline("")).toBe("Deadline is required")
+    it("should return null for empty deadline", () => {
+      expect(validateDeadline("")).toBeNull()
     })
 
-    it("should return error for null deadline", () => {
-      expect(validateDeadline(null as any)).toBe("Deadline is required")
+    it("should return null for null deadline", () => {
+      expect(validateDeadline(null as any)).toBeNull()
     })
 
     it("should return error for invalid date string", () => {
@@ -181,7 +181,7 @@ describe("assignmentValidation", () => {
       ).toBe("Assignment title is required")
     })
 
-    it("should return error for missing description", () => {
+    it("should return error for missing description and image", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
         programmingLanguage: "python",
@@ -191,7 +191,20 @@ describe("assignmentValidation", () => {
       expect(result.isValid).toBe(false)
       expect(
         result.errors.find((e) => e.field === "description")?.message,
-      ).toBe("Description is required")
+      ).toBe("Add a description or upload an image")
+    })
+
+    it("should allow create with image-only description", () => {
+      const result = validateCreateAssignmentData({
+        assignmentName: "Lab 1",
+        description: "",
+        descriptionImageUrl: "https://example.com/image.png",
+        programmingLanguage: "python",
+        deadline: "2024-07-01T12:00:00Z",
+      })
+
+      expect(result.isValid).toBe(true)
+      expect(result.errors).toHaveLength(0)
     })
 
     it("should return error for missing programmingLanguage", () => {
@@ -207,17 +220,15 @@ describe("assignmentValidation", () => {
       ).toBe("Programming language is required")
     })
 
-    it("should return error for missing deadline", () => {
+    it("should allow missing deadline", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
         description: "Some valid description here.",
         programmingLanguage: "python",
       })
 
-      expect(result.isValid).toBe(false)
-      expect(result.errors.find((e) => e.field === "deadline")?.message).toBe(
-        "Deadline is required",
-      )
+      expect(result.isValid).toBe(true)
+      expect(result.errors.find((e) => e.field === "deadline")).toBeUndefined()
     })
 
     it("should return multiple errors for multiple invalid fields", () => {
@@ -231,7 +242,7 @@ describe("assignmentValidation", () => {
       expect(
         result.errors.find((e) => e.field === "programmingLanguage"),
       ).toBeDefined()
-      expect(result.errors.find((e) => e.field === "deadline")).toBeDefined()
+      expect(result.errors.find((e) => e.field === "deadline")).toBeUndefined()
     })
   })
 
@@ -290,13 +301,13 @@ describe("assignmentValidation", () => {
       ).toThrow("Assignment title is required")
     })
 
-    it("should throw for invalid description if provided", () => {
+    it("should throw for overly long description if provided", () => {
       expect(() =>
         validateUpdateAssignmentData({
           teacherId: 1,
-          description: "short",
+          description: "A".repeat(5001),
         }),
-      ).toThrow("Description must be at least 10 characters")
+      ).toThrow("Description must not exceed 5000 characters")
     })
 
     it("should throw for past deadline if provided", () => {

@@ -20,7 +20,6 @@ vi.mock("@/business/services/testCaseService")
 // Mock LatePenaltyConfig to avoid importing UI component
 vi.mock("@/presentation/components/forms/coursework/LatePenaltyConfig", () => ({
   DEFAULT_LATE_PENALTY_CONFIG: {
-    gracePeriodHours: 1,
     tiers: [],
     rejectAfterHours: 120,
   },
@@ -117,6 +116,8 @@ describe("useCourseworkForm", () => {
 
       expect(result.current.formData.assignmentName).toBe("")
       expect(result.current.formData.programmingLanguage).toBe("")
+      expect(result.current.formData.allowResubmission).toBe(false)
+      expect(result.current.formData.totalScore).toBeNull()
       expect(result.current.isEditMode).toBe(false)
       expect(result.current.isLoading).toBe(false)
     })
@@ -172,6 +173,7 @@ describe("useCourseworkForm", () => {
         result.current.handleInputChange("description", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("deadline", "2024-12-31T23:59")
+        result.current.handleInputChange("totalScore", 100)
       })
 
       const mockCreatedAssignment = { id: 303 }
@@ -208,6 +210,72 @@ describe("useCourseworkForm", () => {
       expect(result.current.errors.assignmentName).toBe("Title required")
       expect(classService.createAssignment).not.toHaveBeenCalled()
     })
+
+    it("should prevent submission when release date is set without release time", async () => {
+      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+
+      await waitFor(() => expect(result.current.className).toBe("Test Class"))
+
+      act(() => {
+        result.current.handleInputChange("assignmentName", "Scheduled Assignment")
+        result.current.handleInputChange("description", "Desc")
+        result.current.handleInputChange("programmingLanguage", "python")
+        result.current.handleInputChange("totalScore", 100)
+        result.current.handleInputChange("scheduledDate", "2026-01-01")
+      })
+
+      await act(async () => {
+        await result.current.handleSubmit({ preventDefault: vi.fn() } as any)
+      })
+
+      expect(result.current.errors.scheduledDate).toBe("Release time is required")
+      expect(classService.createAssignment).not.toHaveBeenCalled()
+    })
+
+    it("should disable late submissions when deadline is cleared", async () => {
+      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      await waitFor(() => expect(result.current.className).toBe("Test Class"))
+
+      act(() => {
+        result.current.handleInputChange("deadline", "2026-12-31T23:59")
+        result.current.handleInputChange("latePenaltyEnabled", true)
+      })
+
+      expect(result.current.formData.latePenaltyEnabled).toBe(true)
+
+      act(() => {
+        result.current.handleInputChange("deadline", "")
+      })
+
+      expect(result.current.formData.latePenaltyEnabled).toBe(false)
+    })
+
+    it("should send late penalty as disabled when deadline is empty", async () => {
+      const { result } = renderHook(() => useCourseworkForm(), { wrapper })
+      await waitFor(() => expect(result.current.className).toBe("Test Class"))
+
+      act(() => {
+        result.current.handleInputChange("assignmentName", "No Deadline Assignment")
+        result.current.handleInputChange("description", "Desc")
+        result.current.handleInputChange("programmingLanguage", "python")
+        result.current.handleInputChange("totalScore", 100)
+        result.current.handleInputChange("latePenaltyEnabled", true)
+      })
+
+      vi.mocked(classService.createAssignment).mockResolvedValue({ id: 303 } as any)
+
+      await act(async () => {
+        await result.current.handleSubmit({ preventDefault: vi.fn() } as any)
+      })
+
+      expect(classService.createAssignment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deadline: null,
+          latePenaltyEnabled: false,
+          latePenaltyConfig: null,
+        }),
+      )
+    })
   })
 
   describe("Test Case Management", () => {
@@ -241,6 +309,7 @@ describe("useCourseworkForm", () => {
       act(() => {
         result.current.handleInputChange("assignmentName", "With Tests")
         result.current.handleInputChange("deadline", "2024-12-31T23:59")
+        result.current.handleInputChange("totalScore", 100)
         result.current.handleAddPendingTestCase({
           tempId: "t1",
           name: "TC1",

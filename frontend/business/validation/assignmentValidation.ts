@@ -29,17 +29,22 @@ export const validateAssignmentTitle = (title: string): string | null => {
  * Validates the assignment description.
  *
  * @param description - The description to validate.
+ * @param descriptionImageUrl - Optional image URL used as the main description.
  * @returns An error message string if invalid, otherwise null.
  */
-export const validateDescription = (description: string): string | null => {
+export const validateDescription = (
+  description: string,
+  descriptionImageUrl?: string | null,
+): string | null => {
   const trimmed = description.trim()
+  const hasDescriptionImage = !!descriptionImageUrl?.trim()
 
-  if (!trimmed) {
-    return "Description is required"
+  if (!trimmed && !hasDescriptionImage) {
+    return "Add a description or upload an image"
   }
 
-  if (trimmed.length < 10) {
-    return "Description must be at least 10 characters"
+  if (trimmed.length > 5000) {
+    return "Description must not exceed 5000 characters"
   }
 
   return null
@@ -76,9 +81,11 @@ export const validateProgrammingLanguage = (
  * @param deadline - The deadline date or string to validate.
  * @returns An error message string if invalid, otherwise null.
  */
-export const validateDeadline = (deadline: Date | string): string | null => {
+export const validateDeadline = (
+  deadline: Date | string | null | undefined,
+): string | null => {
   if (!deadline) {
-    return "Deadline is required"
+    return null
   }
 
   const deadlineDate =
@@ -123,14 +130,19 @@ export const validateCreateAssignmentData = (
   }
 
   // Validate description
-  if (data.description !== undefined) {
-    const descriptionError = validateDescription(data.description)
-
+  if (data.description !== undefined || data.descriptionImageUrl !== undefined) {
+    const descriptionError = validateDescription(
+      data.description ?? "",
+      data.descriptionImageUrl,
+    )
     if (descriptionError) {
       errors.push({ field: "description", message: descriptionError })
     }
   } else {
-    errors.push({ field: "description", message: "Description is required" })
+    errors.push({
+      field: "description",
+      message: "Add a description or upload an image",
+    })
   }
 
   // Validate programming language
@@ -154,8 +166,6 @@ export const validateCreateAssignmentData = (
     if (deadlineError) {
       errors.push({ field: "deadline", message: deadlineError })
     }
-  } else {
-    errors.push({ field: "deadline", message: "Deadline is required" })
   }
 
   return {
@@ -190,10 +200,8 @@ export const validateUpdateAssignmentData = (
 
   // Validate description if provided
   if (data.description !== undefined) {
-    const descError = validateDescription(data.description)
-
-    if (descError) {
-      throw new Error(descError)
+    if (data.description.trim().length > 5000) {
+      throw new Error("Description must not exceed 5000 characters")
     }
   }
 

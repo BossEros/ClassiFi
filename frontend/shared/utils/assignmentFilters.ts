@@ -44,20 +44,28 @@ export function groupAssignments(assignments: Assignment[]): {
   past: Assignment[]
 } {
   const now = new Date()
+  const getDeadlineTimestamp = (deadline: Assignment["deadline"]): number => {
+    if (!deadline) {
+      return Number.POSITIVE_INFINITY
+    }
+
+    const parsed = new Date(deadline).getTime()
+    return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed
+  }
 
   const current = assignments.filter(
-    (a) => new Date(a.deadline).getTime() >= now.getTime(),
+    (a) => !a.deadline || getDeadlineTimestamp(a.deadline) >= now.getTime(),
   )
   const past = assignments.filter(
-    (a) => new Date(a.deadline).getTime() < now.getTime(),
+    (a) => !!a.deadline && getDeadlineTimestamp(a.deadline) < now.getTime(),
   )
 
   // Sort by deadline (earliest first)
   current.sort(
-    (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
+    (a, b) => getDeadlineTimestamp(a.deadline) - getDeadlineTimestamp(b.deadline),
   )
   past.sort(
-    (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
+    (a, b) => getDeadlineTimestamp(a.deadline) - getDeadlineTimestamp(b.deadline),
   )
 
   return { current, past }

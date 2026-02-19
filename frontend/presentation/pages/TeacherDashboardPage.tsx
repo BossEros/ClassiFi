@@ -172,12 +172,16 @@ export function TeacherDashboardPage() {
                       </span>
                       <span
                         className={`shrink-0 text-xs font-medium ${
-                          new Date(task.deadline) < new Date()
+                          task.deadline && new Date(task.deadline) < new Date()
                             ? "text-red-400"
-                            : "text-teal-400"
+                            : task.deadline
+                              ? "text-teal-400"
+                              : "text-slate-400"
                         }`}
                       >
-                        {getDeadlineStatus(new Date(task.deadline))}
+                        {task.deadline
+                          ? getDeadlineStatus(new Date(task.deadline))
+                          : "No deadline"}
                       </span>
                     </div>
                   </div>

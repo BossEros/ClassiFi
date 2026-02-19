@@ -227,7 +227,7 @@ describe("testCaseRepository", () => {
       vi.mocked(apiClient.post).mockResolvedValue({
         data: {
           success: true,
-          data: { results: [], passedCount: 0, totalCount: 0, score: 0 },
+          data: { results: [], passed: 0, total: 0, percentage: 0 },
         },
         status: 200,
       })

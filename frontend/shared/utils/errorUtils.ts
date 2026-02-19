@@ -25,6 +25,19 @@ export interface SuccessResponse<T = void> {
 export type ApiResponse<T = void> = SuccessResponse<T> | ErrorResponse
 
 /**
+ * Removes technical status-code decorations from user-facing error text.
+ *
+ * @param message - The raw message that may include transport-level details.
+ * @returns A cleaned message suitable for student/teacher UI surfaces.
+ */
+export function sanitizeUserFacingErrorMessage(message: string): string {
+  return message
+    .replace(/\s*\(Status:\s*\d{3}\)\s*$/i, "")
+    .replace(/\s*\(HTTP\s*\d{3}\)\s*$/i, "")
+    .trim()
+}
+
+/**
  * Create an error response
  * @param message - Error message
  * @returns Standardized error response
@@ -57,10 +70,10 @@ export function getErrorMessage(
   fallback: string = "An unexpected error occurred",
 ): string {
   if (error instanceof Error) {
-    return error.message
+    return sanitizeUserFacingErrorMessage(error.message)
   }
   if (typeof error === "string") {
-    return error
+    return sanitizeUserFacingErrorMessage(error)
   }
   return fallback
 }

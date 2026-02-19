@@ -46,6 +46,13 @@ export interface IStorageService {
     expiresIn: number,
     options?: { download?: string | boolean },
   ): Promise<string>
+
+  /**
+   * Delete a coursework description image.
+   * @param imageUrl - Public URL or storage path of the description image
+   * @returns True if deleted successfully
+   */
+  deleteAssignmentDescriptionImage?(imageUrl: string): Promise<boolean>
 }
 
 /** Dependency injection token for IStorageService */

@@ -9,6 +9,7 @@ import { setupSwagger } from "@/api/plugins/swagger.js"
 // zodValidation plugin is registered via setupSwagger
 // import zodValidation from '@/api/plugins/zod-validation.js';
 import "@/shared/container.js"
+
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: settings.debug,

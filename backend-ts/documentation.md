@@ -345,6 +345,17 @@ The programming language is specified at assignment creation and enforced during
 | GET    | `/submissions/assignment/:assignmentId`         | Get all submissions           |
 | GET    | `/submissions/student/:studentId`               | Get student's submissions     |
 
+**Assignment Description Content**:
+- Assignment create/update supports both text (`description`) and optional image fields (`descriptionImageUrl`, `descriptionImageAlt`)
+- Business rule requires at least one description surface: text or image
+- Assignment deadline is optional (`deadline` may be `null`) to support coursework with no due date
+- Assignment create/update also supports late submission policy fields (`latePenaltyEnabled`, `latePenaltyConfig`)
+- If `latePenaltyEnabled` is false, submissions after deadline are rejected when a deadline exists
+- If `latePenaltyEnabled` is true, late submissions are accepted and penalties are computed from the stored config (or default fallback) when a deadline exists
+- Late penalty tiers apply immediately after the deadline (no grace-period window), with optional `rejectAfterHours` cutoff
+- Description images are stored in the `assignment-descriptions` bucket and are cleaned up on image replacement, assignment deletion, and class deletion
+- Storage setup is provisioned via SQL migration `drizzle/0002_setup_assignment_description_storage.sql`
+
 ### Gradebook
 
 | Method | Endpoint                                               | Description              |
@@ -852,6 +863,11 @@ class ClassService {
   - `submittedAt`: Timestamp of submission (null if not submitted)
   - `grade`: Student's grade (null if not yet graded)
   - `maxGrade`: Maximum possible grade (defaults to 100)
+
+**Coursework Description Media Support**:
+- Assignment creation and updates support optional description image metadata (`descriptionImageUrl`, `descriptionImageAlt`)
+- Assignment responses include description image fields for rendering in teacher/student assignment views
+- Class-level cleanup includes best-effort deletion of assignment description images when classes are deleted
 
 ### SubmissionService
 

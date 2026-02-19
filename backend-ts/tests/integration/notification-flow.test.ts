@@ -104,6 +104,10 @@ describe("Notification Flow Integration Tests", () => {
       processDelivery: vi.fn().mockResolvedValue(undefined),
     } as any
 
+    const mockStorageService = {
+      deleteAssignmentDescriptionImage: vi.fn().mockResolvedValue(true),
+    } as any
+
     // Create mock preference service
     const mockPreferenceService = {
       getEnabledChannels: vi.fn().mockResolvedValue(["EMAIL", "IN_APP"]),
@@ -127,6 +131,7 @@ describe("Notification Flow Integration Tests", () => {
     container.registerInstance("ClassRepository", mockClassRepo)
     container.registerInstance("EnrollmentRepository", mockEnrollmentRepo)
     container.registerInstance("SubmissionRepository", mockSubmissionRepo)
+    container.registerInstance("StorageService", mockStorageService)
     container.registerInstance("TestCaseRepository", mockTestCaseRepo)
     container.registerInstance("TestResultRepository", mockTestResultRepo)
     container.registerInstance("LatePenaltyService", mockLatePenaltyService)

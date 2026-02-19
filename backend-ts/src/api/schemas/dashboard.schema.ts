@@ -29,7 +29,7 @@ export const DashboardAssignmentResponseSchema = z.object({
   assignmentName: z.string(),
   className: z.string(),
   classId: z.number(),
-  deadline: z.string(),
+  deadline: z.string().nullable(),
   hasSubmitted: z.boolean().optional(),
   submittedAt: z.string().nullable().optional(),
   grade: z.number().nullable().optional(),
@@ -75,7 +75,7 @@ export const DashboardTaskResponseSchema = z.object({
   assignmentName: z.string(),
   className: z.string(),
   classId: z.number(),
-  deadline: z.string(),
+  deadline: z.string().nullable(),
   submissionCount: z.number(),
   totalStudents: z.number(),
 })

@@ -167,12 +167,17 @@ export function StudentDashboardPage() {
                       </span>
                       <span
                         className={`shrink-0 text-xs font-medium ${
+                          assignment.deadline &&
                           new Date(assignment.deadline) < new Date()
                             ? "text-red-400"
-                            : "text-teal-400"
+                            : assignment.deadline
+                              ? "text-teal-400"
+                              : "text-slate-400"
                         }`}
                       >
-                        {getDeadlineStatus(new Date(assignment.deadline))}
+                        {assignment.deadline
+                          ? getDeadlineStatus(new Date(assignment.deadline))
+                          : "No deadline"}
                       </span>
                     </div>
                   </div>
