@@ -198,13 +198,6 @@ export const validateUpdateAssignmentData = (
     }
   }
 
-  // Validate instructions if provided
-  if (data.instructions !== undefined) {
-    if (data.instructions.trim().length > 5000) {
-      throw new Error("Instructions must not exceed 5000 characters")
-    }
-  }
-
   // Validate deadline if provided
   if (data.deadline !== undefined) {
     const deadlineError = validateDeadline(data.deadline)
@@ -212,5 +205,15 @@ export const validateUpdateAssignmentData = (
     if (deadlineError) {
       throw new Error(deadlineError)
     }
+  }
+
+  // Validate instructions content consistency
+  const instructionsError = validateInstructions(
+    data.instructions ?? "",
+    data.instructionsImageUrl,
+  )
+
+  if (instructionsError) {
+    throw new Error(instructionsError)
   }
 }

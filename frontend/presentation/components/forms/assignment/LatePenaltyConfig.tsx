@@ -47,9 +47,9 @@ export function LatePenaltyConfig({
   disabled = false,
 }: LatePenaltyConfigProps) {
   const [showPreview, setShowPreview] = useState(false)
-  const [tierDraftValues, setTierDraftValues] = useState<Record<string, string>>(
-    {},
-  )
+  const [tierDraftValues, setTierDraftValues] = useState<
+    Record<string, string>
+  >({})
 
   const handleRejectAfterChange = (value: number | null) => {
     onConfigChange({
@@ -118,7 +118,12 @@ export function LatePenaltyConfig({
     const parsedValue = parseInt(rawValue, 10)
 
     if (!Number.isNaN(parsedValue)) {
-      handleTierChange(tierId, field, parsedValue)
+      const sanitizedValue =
+        field === "penaltyPercent"
+          ? Math.min(100, Math.max(0, parsedValue))
+          : parsedValue
+
+      handleTierChange(tierId, field, sanitizedValue)
     }
   }
 
@@ -135,6 +140,17 @@ export function LatePenaltyConfig({
 
     if (draftValue === "") {
       handleTierChange(tierId, field, 0)
+    } else {
+      const parsedValue = parseInt(draftValue, 10)
+
+      if (!Number.isNaN(parsedValue)) {
+        const sanitizedValue =
+          field === "penaltyPercent"
+            ? Math.min(100, Math.max(0, parsedValue))
+            : parsedValue
+
+        handleTierChange(tierId, field, sanitizedValue)
+      }
     }
 
     setTierDraftValues((prevDraftValues) => {
@@ -143,6 +159,12 @@ export function LatePenaltyConfig({
       return nextDraftValues
     })
   }
+
+  const sortedPreviewTiers = [...config.tiers].sort(
+    (a, b) => a.hoursLate - b.hoursLate,
+  )
+  const highestPreviewTierHours =
+    sortedPreviewTiers[sortedPreviewTiers.length - 1]?.hoursLate ?? 0
 
   return (
     <Card className="border-white/10">
@@ -242,8 +264,9 @@ export function LatePenaltyConfig({
                         <Input
                           type="number"
                           value={
-                            tierDraftValues[buildTierDraftKey(tier.id, "hoursLate")] ??
-                            String(tier.hoursLate)
+                            tierDraftValues[
+                              buildTierDraftKey(tier.id, "hoursLate")
+                            ] ?? String(tier.hoursLate)
                           }
                           onChange={(e) =>
                             handleTierDraftChange(
@@ -252,7 +275,9 @@ export function LatePenaltyConfig({
                               e.target.value,
                             )
                           }
-                          onBlur={() => handleTierDraftBlur(tier.id, "hoursLate")}
+                          onBlur={() =>
+                            handleTierDraftBlur(tier.id, "hoursLate")
+                          }
                           min={1}
                           disabled={disabled}
                           className="h-8 text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50"
@@ -330,9 +355,9 @@ export function LatePenaltyConfig({
                 </div>
 
                 <ul className="text-xs text-gray-300 space-y-1 ml-6">
-                  {config.tiers.map((tier, index) => {
+                  {sortedPreviewTiers.map((tier, index) => {
                     const previousHours =
-                      index === 0 ? 0 : config.tiers[index - 1].hoursLate
+                      index === 0 ? 0 : sortedPreviewTiers[index - 1].hoursLate
 
                     return (
                       <li key={tier.id}>
@@ -341,11 +366,12 @@ export function LatePenaltyConfig({
                       </li>
                     )
                   })}
-                  {config.rejectAfterHours && (
-                    <li className="text-red-400">
-                      After {config.rejectAfterHours}h: Rejected
-                    </li>
-                  )}
+                  {config.rejectAfterHours != null &&
+                    config.rejectAfterHours >= highestPreviewTierHours && (
+                      <li className="text-red-400">
+                        After {config.rejectAfterHours}h: Rejected
+                      </li>
+                    )}
                 </ul>
               </div>
             )}

@@ -150,38 +150,42 @@ export function StudentDashboardPage() {
               </div>
             ) : pendingAssignments.length > 0 ? (
               <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {pendingAssignments.map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    onClick={() =>
-                      navigate(`/dashboard/assignments/${assignment.id}`)
-                    }
-                    className="min-h-24 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col"
-                  >
-                    <h4 className="text-sm font-medium text-white mb-3 truncate">
-                      {assignment.assignmentName}
-                    </h4>
-                    <div className="mt-auto flex items-center justify-between gap-3">
-                      <span className="flex-1 text-xs text-slate-400 truncate">
-                        {assignment.className || "Unknown class"}
-                      </span>
-                      <span
-                        className={`shrink-0 text-xs font-medium ${
-                          assignment.deadline &&
-                          new Date(assignment.deadline) < new Date()
-                            ? "text-red-400"
-                            : assignment.deadline
-                              ? "text-teal-400"
-                              : "text-slate-400"
-                        }`}
-                      >
-                        {assignment.deadline
-                          ? getDeadlineStatus(new Date(assignment.deadline))
-                          : "No deadline"}
-                      </span>
+                {pendingAssignments.map((assignment) => {
+                  const status = assignment.deadline
+                    ? getDeadlineStatus(new Date(assignment.deadline))
+                    : "No deadline"
+
+                  const statusColorClass =
+                    status === "Overdue"
+                      ? "text-red-400"
+                      : status === "Due today"
+                        ? "text-teal-400"
+                        : "text-slate-400"
+
+                  return (
+                    <div
+                      key={assignment.id}
+                      onClick={() =>
+                        navigate(`/dashboard/assignments/${assignment.id}`)
+                      }
+                      className="min-h-24 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col"
+                    >
+                      <h4 className="text-sm font-medium text-white mb-3 truncate">
+                        {assignment.assignmentName}
+                      </h4>
+                      <div className="mt-auto flex items-center justify-between gap-3">
+                        <span className="flex-1 text-xs text-slate-400 truncate">
+                          {assignment.className || "Unknown class"}
+                        </span>
+                        <span
+                          className={`shrink-0 text-xs font-medium ${statusColorClass}`}
+                        >
+                          {status}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             ) : (
               <div className="py-12 text-center">

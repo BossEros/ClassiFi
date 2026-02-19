@@ -126,7 +126,7 @@ describe("assignmentValidation", () => {
     })
 
     it("should return null for null deadline", () => {
-      expect(validateDeadline(null as any)).toBeNull()
+      expect(validateDeadline(null)).toBeNull()
     })
 
     it("should return error for invalid date string", () => {
@@ -310,6 +310,16 @@ describe("assignmentValidation", () => {
       ).toThrow("Instructions must not exceed 5000 characters")
     })
 
+    it("should not throw for image-only instructions update", () => {
+      expect(() =>
+        validateUpdateAssignmentData({
+          teacherId: 1,
+          instructions: "",
+          instructionsImageUrl: "https://example.com/image.png",
+        }),
+      ).not.toThrow()
+    })
+
     it("should throw for past deadline if provided", () => {
       expect(() =>
         validateUpdateAssignmentData({
@@ -319,12 +329,12 @@ describe("assignmentValidation", () => {
       ).toThrow("Deadline must be in the future")
     })
 
-    it("should not validate fields that are not provided", () => {
+    it("should throw when both instructions and image are missing", () => {
       expect(() =>
         validateUpdateAssignmentData({
           teacherId: 1,
         }),
-      ).not.toThrow()
+      ).toThrow("Add instructions or upload an image")
     })
   })
 })

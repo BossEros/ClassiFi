@@ -1,4 +1,4 @@
-import * as React from "react"
+﻿import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { AlertTriangle, X, Trash2, AlertCircle, Loader2 } from "lucide-react"
 import type { AdminUser } from "@/business/services/adminService"
@@ -147,15 +147,15 @@ export function AdminDeleteUserModal({
               </p>
               <ul className="text-sm text-gray-400 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="text-red-400 mt-0.5">â€¢</span>
                   Their profile and personal information
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
-                  All submissions and assignment
+                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  All submissions and assignments
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="text-red-400 mt-0.5">â€¢</span>
                   All class enrollments and associations
                 </li>
               </ul>
@@ -280,3 +280,4 @@ export function AdminDeleteUserModal({
     </div>
   )
 }
+

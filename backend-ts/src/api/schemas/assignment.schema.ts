@@ -15,7 +15,7 @@ export const LatePenaltyTierSchema = z.object({
 /** Late penalty configuration schema */
 export const LatePenaltyConfigSchema = z.object({
   tiers: z.array(LatePenaltyTierSchema),
-  rejectAfterHours: z.number().nullable(),
+  rejectAfterHours: z.number().min(0).nullable(),
 })
 
 /** Create assignment request schema */

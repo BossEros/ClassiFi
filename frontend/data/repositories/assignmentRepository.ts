@@ -26,7 +26,8 @@ import type { Submission } from "@/shared/types/submission"
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
 const DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET = "assignment-descriptions"
-const ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET = "avatars"
+const ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET =
+  "assignment-descriptions-fallback"
 const ASSIGNMENT_INSTRUCTIONS_BUCKET = getConfiguredAssignmentInstructionsBucket()
 const ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES =
   resolveAssignmentInstructionsBucketCandidates(ASSIGNMENT_INSTRUCTIONS_BUCKET)

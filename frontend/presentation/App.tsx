@@ -4,6 +4,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useParams,
 } from "react-router-dom"
 import { ToastProvider } from "@/shared/context/ToastContext"
 import { LoginPage } from "@/presentation/pages/LoginPage"
@@ -172,6 +173,34 @@ function TeacherOnlyRoute({ children }: { children: ReactNode }) {
   return children
 }
 
+function LegacyCourseworkNewRedirect() {
+  const { classId } = useParams<{ classId: string }>()
+
+  if (!classId) {
+    return <Navigate to="/dashboard/classes" replace />
+  }
+
+  return <Navigate to={`/dashboard/classes/${classId}/assignments/new`} replace />
+}
+
+function LegacyCourseworkEditRedirect() {
+  const { classId, assignmentId } = useParams<{
+    classId: string
+    assignmentId: string
+  }>()
+
+  if (!classId || !assignmentId) {
+    return <Navigate to="/dashboard/classes" replace />
+  }
+
+  return (
+    <Navigate
+      to={`/dashboard/classes/${classId}/assignments/${assignmentId}/edit`}
+      replace
+    />
+  )
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -240,10 +269,26 @@ function App() {
             }
           />
           <Route
+            path="/dashboard/classes/:classId/coursework/new"
+            element={
+              <ProtectedRoute>
+                <LegacyCourseworkNewRedirect />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/dashboard/classes/:classId/assignments/:assignmentId/edit"
             element={
               <ProtectedRoute>
                 <AssignmentFormPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/classes/:classId/coursework/:assignmentId/edit"
+            element={
+              <ProtectedRoute>
+                <LegacyCourseworkEditRedirect />
               </ProtectedRoute>
             }
           />

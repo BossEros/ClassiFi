@@ -122,9 +122,7 @@ export class StudentDashboardService {
 
     // Sort by deadline and limit
     pendingAssignments.sort(
-      (a, b) =>
-        new Date(a.deadline ?? 0).getTime() -
-        new Date(b.deadline ?? 0).getTime(),
+      (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
     )
 
     return pendingAssignments.slice(0, limit)

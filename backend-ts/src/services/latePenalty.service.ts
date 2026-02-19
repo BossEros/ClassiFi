@@ -13,6 +13,8 @@ interface LegacyLatePenaltyConfig {
   rejectAfterHours?: number | null
 }
 
+type LatePenaltyConfigInput = LatePenaltyConfig | LegacyLatePenaltyConfig
+
 /**
  * Result of a late penalty calculation.
  */
@@ -108,7 +110,7 @@ export class LatePenaltyService {
   async setAssignmentConfig(
     assignmentId: number,
     enabled: boolean,
-    config: LatePenaltyConfig,
+    config: LatePenaltyConfigInput,
   ): Promise<boolean> {
     const normalizedConfig = this.normalizeConfig(config)
 
@@ -285,7 +287,7 @@ export class LatePenaltyService {
   /**
    * Normalize configuration for legacy payloads and ensure current shape.
    */
-  private normalizeConfig(config: LatePenaltyConfig): LatePenaltyConfig {
+  private normalizeConfig(config: LatePenaltyConfigInput): LatePenaltyConfig {
     const legacyConfig = config as LatePenaltyConfig & LegacyLatePenaltyConfig
     const legacyTiers = Array.isArray(legacyConfig.tiers)
       ? legacyConfig.tiers

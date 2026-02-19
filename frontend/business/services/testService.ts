@@ -30,11 +30,15 @@ function mapTestExecutionSummaryToPreviewResult(
     throw new Error("Test execution summary is incomplete")
   }
 
+  const normalizedResults = Array.isArray(testExecutionSummaryData.results)
+    ? testExecutionSummaryData.results.map(normalizeTestResult)
+    : []
+
   return {
     passed: passedTestCount,
     total: totalTestCount,
     percentage: scorePercentage,
-    results: testExecutionSummaryData.results.map(normalizeTestResult),
+    results: normalizedResults,
   }
 }
 

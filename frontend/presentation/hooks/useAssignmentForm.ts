@@ -476,7 +476,14 @@ export function useAssignmentForm() {
         previousInstructionsImageUrl &&
         previousInstructionsImageUrl !== uploadedImageUrl
       ) {
-        await removeAssignmentInstructionsImage(previousInstructionsImageUrl)
+        try {
+          await removeAssignmentInstructionsImage(previousInstructionsImageUrl)
+        } catch (cleanupError) {
+          console.error(
+            "Failed to cleanup previous instructions image after successful upload:",
+            cleanupError,
+          )
+        }
       }
     } catch (error) {
       const uploadErrorMessage =

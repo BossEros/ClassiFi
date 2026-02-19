@@ -171,17 +171,18 @@ export function getDeadlineStatus(
 /**
  * Format a date/string into a consistent datetime format
  * Used for displaying submission times, etc.
+ * Returns "N/A" when the input is missing or invalid.
  */
 export function formatDateTime(
   date: Date | string | null | undefined,
 ): string {
   if (!date) {
-    return "No deadline"
+    return "N/A"
   }
 
   const dateObj = typeof date === "string" ? new Date(date) : date
   if (Number.isNaN(dateObj.getTime())) {
-    return "No deadline"
+    return "N/A"
   }
 
   return dateObj.toLocaleString("en-US", {

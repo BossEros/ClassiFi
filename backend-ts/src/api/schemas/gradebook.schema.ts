@@ -9,10 +9,21 @@ export { SuccessResponseSchema }
 // ============================================================================
 
 /** Penalty tier schema */
-export const PenaltyTierSchema = z.object({
-  hoursLate: z.number().min(0),
-  penaltyPercent: z.number().min(0).max(100),
-})
+export const PenaltyTierSchema = z
+  .object({
+    hoursLate: z.number().min(0).optional(),
+    hoursAfterGrace: z.number().min(0).optional(),
+    penaltyPercent: z.number().min(0).max(100),
+  })
+  .refine(
+    (tier) =>
+      typeof tier.hoursLate === "number" ||
+      typeof tier.hoursAfterGrace === "number",
+    {
+      message: "Either hoursLate or hoursAfterGrace is required",
+      path: ["hoursLate"],
+    },
+  )
 
 export type PenaltyTier = z.infer<typeof PenaltyTierSchema>
 
