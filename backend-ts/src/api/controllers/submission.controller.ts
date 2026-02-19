@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { SubmissionService } from "@/services/submission.service.js"
-import { CodeTestService } from "@/services/codeTest.service.js"
+import { CodeTestService } from "@/services/code-test.service.js"
 import { toJsonSchema } from "@/api/utils/swagger.js"
 import { parsePositiveInt } from "@/shared/utils.js"
 import { LatestOnlyQuerySchema } from "@/api/schemas/common.schema.js"

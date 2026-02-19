@@ -1,5 +1,5 @@
 import { inject, injectable } from "tsyringe"
-import { TestCaseRepository } from "@/repositories/testCase.repository.js"
+import { TestCaseRepository } from "@/repositories/test-case.repository.js"
 import type { NewTestCase, TestCase } from "@/models/test-case.model.js"
 import {
   TestCaseNotFoundError,

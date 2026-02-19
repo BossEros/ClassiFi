@@ -8,7 +8,7 @@ import { AssignmentRepository } from "../../src/repositories/assignment.reposito
 import { ClassRepository } from "../../src/repositories/class.repository.js"
 import { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
 import { SubmissionRepository } from "../../src/repositories/submission.repository.js"
-import { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
+import { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
 import { TestResultRepository } from "../../src/repositories/testResult.repository.js"
 import { LatePenaltyService } from "../../src/services/latePenalty.service.js"
 import type {

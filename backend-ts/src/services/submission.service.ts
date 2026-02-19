@@ -4,7 +4,7 @@ import { AssignmentRepository } from "@/repositories/assignment.repository.js"
 import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { StorageService } from "@/services/storage.service.js"
-import { CodeTestService } from "@/services/codeTest.service.js"
+import { CodeTestService } from "@/services/code-test.service.js"
 import {
   LatePenaltyService,
   type PenaltyResult,

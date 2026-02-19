@@ -25,7 +25,7 @@ vi.mock("../../src/repositories/assignment.repository.js")
 vi.mock("../../src/repositories/enrollment.repository.js")
 vi.mock("../../src/repositories/class.repository.js")
 vi.mock("../../src/repositories/testResult.repository.js")
-vi.mock("../../src/services/codeTest.service.js")
+vi.mock("../../src/services/code-test.service.js")
 
 // Mock Supabase (for legacy tests that still use it)
 vi.mock("../../src/shared/supabase.js", () => ({

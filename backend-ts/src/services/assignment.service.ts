@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe"
 import { AssignmentRepository } from "../repositories/assignment.repository.js"
-import { TestCaseRepository } from "../repositories/testCase.repository.js"
+import { TestCaseRepository } from "../repositories/test-case.repository.js"
 import { ClassRepository } from "../repositories/class.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
 import { SubmissionRepository } from "../repositories/submission.repository.js"

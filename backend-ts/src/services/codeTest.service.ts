@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe"
 import { db } from "@/shared/database.js"
-import { TestCaseRepository } from "@/repositories/testCase.repository.js"
+import { TestCaseRepository } from "@/repositories/test-case.repository.js"
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
