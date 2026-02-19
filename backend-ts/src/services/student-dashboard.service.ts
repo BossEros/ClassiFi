@@ -4,6 +4,7 @@ import { EnrollmentRepository } from "@/repositories/enrollment.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
 import { SubmissionRepository } from "@/repositories/submission.repository.js"
 import { UserRepository } from "@/repositories/user.repository.js"
+import type { DashboardQueryReadRepository } from "@/repositories/dashboard-query.repository.js"
 import {
   toDashboardClassDTO,
   type DashboardClassDTO,
@@ -32,6 +33,8 @@ export class StudentDashboardService {
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.dashboardQuery)
+    private dashboardQueryRepo?: DashboardQueryReadRepository,
   ) {}
 
   /** Get complete dashboard data for a student */
@@ -83,6 +86,24 @@ export class StudentDashboardService {
     studentId: number,
     limit: number = 10,
   ): Promise<PendingAssignmentDTO[]> {
+    if (this.dashboardQueryRepo?.getPendingAssignmentsForStudent) {
+      const pendingAssignments =
+        await this.dashboardQueryRepo.getPendingAssignmentsForStudent(
+          studentId,
+          limit,
+        )
+
+      return pendingAssignments.map((assignment) => ({
+        id: assignment.id,
+        assignmentName: assignment.assignmentName,
+        className: assignment.className,
+        classId: assignment.classId,
+        deadline: assignment.deadline.toISOString(),
+        hasSubmitted: false,
+        programmingLanguage: assignment.programmingLanguage,
+      }))
+    }
+
     const enrolledClasses = await this.classRepo.getClassesByStudent(
       studentId,
       true,

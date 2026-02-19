@@ -9,6 +9,7 @@ export const DI_TOKENS = {
     assignment: "AssignmentRepository",
     enrollment: "EnrollmentRepository",
     submission: "SubmissionRepository",
+    dashboardQuery: "DashboardQueryRepository",
     similarity: "SimilarityRepository",
     testCase: "TestCaseRepository",
     testResult: "TestResultRepository",
@@ -47,4 +48,3 @@ export const DI_TOKENS = {
     plagiarismPersistence: "PlagiarismPersistenceService",
   },
 } as const
-

@@ -144,8 +144,8 @@
 - [x] Phase 1: Commit checkpoint
 - [x] Phase 2: Add naming consistency wrappers for non-kebab-case service/repository files
 - [x] Phase 2: Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
-- [ ] Phase 2: Commit checkpoint
-- [ ] Phase 3: Extract dashboard query-heavy reads into dedicated query repository (non-breaking service API)
-- [ ] Phase 3: Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
+- [x] Phase 2: Commit checkpoint
+- [x] Phase 3: Extract dashboard query-heavy reads into dedicated query repository (non-breaking service API)
+- [x] Phase 3: Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
 - [ ] Phase 3: Commit checkpoint
-- [ ] Update `backend-ts/documentation.md` with repository categories (Entity vs Query) and module guidance
+- [x] Update `backend-ts/documentation.md` with repository categories (Entity vs Query) and module guidance

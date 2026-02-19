@@ -993,6 +993,29 @@ class NotificationService {
 
 ## Repositories
 
+### Repository Categories
+
+ClassiFi uses two repository categories:
+
+1. **Entity Repositories**  
+   Table-oriented repositories for CRUD and direct entity persistence (e.g., `UserRepository`, `AssignmentRepository`, `SubmissionRepository`).
+
+2. **Query Repositories**  
+   Read-model repositories for aggregate/query-heavy views used by specific use-cases (e.g., `DashboardQueryRepository` for student/teacher dashboard summaries).
+
+Guideline:
+- Put transactional table writes in Entity Repositories.
+- Put multi-table dashboard/reporting read queries in Query Repositories.
+- Keep controllers calling services only; services orchestrate repositories.
+
+### Naming Compatibility
+
+Canonical import paths now follow kebab-case for new usage:
+- `@/repositories/test-case.repository.js`
+- `@/services/code-test.service.js`
+
+Legacy camelCase files still exist as compatibility targets and are re-exported by the kebab-case modules to avoid breaking existing code.
+
 ### BaseRepository
 
 Generic CRUD operations:

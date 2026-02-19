@@ -1,6 +1,7 @@
 import { inject, injectable } from "tsyringe"
 import { ClassRepository } from "@/repositories/class.repository.js"
 import { AssignmentRepository } from "@/repositories/assignment.repository.js"
+import type { DashboardQueryReadRepository } from "@/repositories/dashboard-query.repository.js"
 // Note: SubmissionRepository reserved for future use
 import {
   toDashboardClassDTO,
@@ -19,6 +20,8 @@ export class TeacherDashboardService {
     @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
     @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
+    @inject(DI_TOKENS.repositories.dashboardQuery)
+    private dashboardQueryRepo?: DashboardQueryReadRepository,
   ) {}
 
   /** Get complete dashboard data for a teacher */
@@ -50,6 +53,21 @@ export class TeacherDashboardService {
     teacherId: number,
     limit: number = 5,
   ): Promise<DashboardClassDTO[]> {
+    if (this.dashboardQueryRepo?.getRecentClassesForTeacher) {
+      const classesWithCounts =
+        await this.dashboardQueryRepo.getRecentClassesForTeacher(
+          teacherId,
+          limit,
+        )
+
+      return classesWithCounts.map((dashboardClass) =>
+        toDashboardClassDTO(dashboardClass, {
+          studentCount: dashboardClass.studentCount,
+          assignmentCount: dashboardClass.assignmentCount,
+        }),
+      )
+    }
+
     // Use optimized query that fetches student counts in a single query
     const classesWithCounts =
       await this.classRepo.getRecentClassesWithStudentCounts(teacherId, limit)

@@ -7,6 +7,7 @@ import { ClassRepository } from "../repositories/class.repository.js"
 import { AssignmentRepository } from "../repositories/assignment.repository.js"
 import { EnrollmentRepository } from "../repositories/enrollment.repository.js"
 import { SubmissionRepository } from "../repositories/submission.repository.js"
+import { DashboardQueryRepository } from "../repositories/dashboard-query.repository.js"
 import { SimilarityRepository } from "../repositories/similarity.repository.js"
 import { TestCaseRepository } from "../repositories/test-case.repository.js"
 import { TestResultRepository } from "../repositories/testResult.repository.js"
@@ -63,6 +64,10 @@ container.registerSingleton(
 container.registerSingleton(
   DI_TOKENS.repositories.submission,
   SubmissionRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.dashboardQuery,
+  DashboardQueryRepository,
 )
 container.registerSingleton(
   DI_TOKENS.repositories.similarity,
