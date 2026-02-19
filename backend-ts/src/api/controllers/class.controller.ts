@@ -32,6 +32,7 @@ import {
 } from "@/api/schemas/assignment.schema.js"
 import { BadRequestError, ApiError } from "@/shared/errors.js"
 import type { AssignmentDTO } from "@/shared/mappers.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers all class-related API routes.
@@ -40,9 +41,9 @@ import type { AssignmentDTO } from "@/shared/mappers.js"
  * @returns A promise that resolves when all routes are registered.
  */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
-  const classService = container.resolve<ClassService>("ClassService")
+  const classService = container.resolve<ClassService>(DI_TOKENS.services.class)
   const assignmentService =
-    container.resolve<AssignmentService>("AssignmentService")
+    container.resolve<AssignmentService>(DI_TOKENS.services.assignment)
 
   /**
    * POST /

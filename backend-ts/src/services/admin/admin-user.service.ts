@@ -13,14 +13,15 @@ import type {
   PaginatedResult,
   CreateUserData,
 } from "./admin.types.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 @injectable()
 export class AdminUserService {
   constructor(
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("UserService") private userService: UserService,
-    @inject("ClassService") private classService: ClassService,
-    @inject("SupabaseAuthAdapter") private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.services.user) private userService: UserService,
+    @inject(DI_TOKENS.services.class) private classService: ClassService,
+    @inject(DI_TOKENS.adapters.supabaseAuth) private authAdapter: SupabaseAuthAdapter,
   ) {}
 
   /**

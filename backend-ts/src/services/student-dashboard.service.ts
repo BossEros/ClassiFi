@@ -15,6 +15,7 @@ import {
   AlreadyEnrolledError,
   NotEnrolledError,
 } from "@/shared/errors.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Business logic for student dashboard operations.
@@ -23,14 +24,14 @@ import {
 @injectable()
 export class StudentDashboardService {
   constructor(
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("EnrollmentRepository")
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("UserRepository") private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
   ) {}
 
   /** Get complete dashboard data for a student */

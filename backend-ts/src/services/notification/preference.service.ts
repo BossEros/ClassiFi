@@ -3,6 +3,7 @@ import type { NotificationPreferenceRepository } from "../../repositories/notifi
 import type { NotificationPreference } from "../../models/index.js"
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
 import { NOTIFICATION_TYPES } from "./types.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Service for managing notification preferences.
@@ -11,7 +12,7 @@ import { NOTIFICATION_TYPES } from "./types.js"
 @injectable()
 export class NotificationPreferenceService {
   constructor(
-    @inject("NotificationPreferenceRepository")
+    @inject(DI_TOKENS.repositories.notificationPreference)
     private preferenceRepo: NotificationPreferenceRepository,
   ) {}
 

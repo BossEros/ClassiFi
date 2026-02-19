@@ -30,6 +30,7 @@ import {
   SubmissionFileNotFoundError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("SubmissionService")
 
@@ -40,19 +41,19 @@ const logger = createLogger("SubmissionService")
 @injectable()
 export class SubmissionService {
   constructor(
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject("EnrollmentRepository")
+    @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
-    @inject("TestResultRepository")
+    @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
-    @inject("StorageService")
+    @inject(DI_TOKENS.services.storage)
     private storageService: StorageService,
-    @inject("CodeTestService")
+    @inject(DI_TOKENS.services.codeTest)
     private codeTestService: CodeTestService,
-    @inject("LatePenaltyService")
+    @inject(DI_TOKENS.services.latePenalty)
     private latePenaltyService: LatePenaltyService,
   ) {}
 
@@ -488,7 +489,6 @@ export class SubmissionService {
     }
   }
 }
-
 
 
 

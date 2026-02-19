@@ -10,6 +10,7 @@ import {
 import { TestResultRepository } from "@/repositories/testResult.repository.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("GradebookService")
 
@@ -52,17 +53,17 @@ export interface SubmissionGradeDetails {
 @injectable()
 export class GradebookService {
   constructor(
-    @inject(GradebookRepository)
+    @inject(DI_TOKENS.repositories.gradebook)
     private gradebookRepo: GradebookRepository,
-    @inject(SubmissionRepository)
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject(AssignmentRepository)
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject(LatePenaltyService)
+    @inject(DI_TOKENS.services.latePenalty)
     private latePenaltyService: LatePenaltyService,
-    @inject(TestResultRepository)
+    @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
-    @inject("NotificationService")
+    @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
 
@@ -270,7 +271,6 @@ export class GradebookService {
     }
   }
 }
-
 
 
 

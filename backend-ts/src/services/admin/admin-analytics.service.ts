@@ -4,6 +4,7 @@ import { ClassRepository } from "../../repositories/class.repository.js"
 import { SubmissionRepository } from "../../repositories/submission.repository.js"
 import { SimilarityRepository } from "../../repositories/similarity.repository.js"
 import type { AdminStats, ActivityItem } from "./admin.types.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Admin service for analytics and dashboard statistics.
@@ -13,11 +14,11 @@ import type { AdminStats, ActivityItem } from "./admin.types.js"
 @injectable()
 export class AdminAnalyticsService {
   constructor(
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("SimilarityRepository")
+    @inject(DI_TOKENS.repositories.similarity)
     private similarityRepo: SimilarityRepository,
   ) {}
 

@@ -27,21 +27,22 @@ import type {
   UpdateClassServiceDTO,
   EnrolledStudentDTO,
 } from "./service-dtos.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("ClassService")
 
 @injectable()
 export class ClassService {
   constructor(
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject("EnrollmentRepository")
+    @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("StorageService") private storageService: StorageService,
+    @inject(DI_TOKENS.services.storage) private storageService: StorageService,
   ) {}
 
   /** Generate a unique class code using shared utility */
@@ -360,7 +361,6 @@ export class ClassService {
     }
   }
 }
-
 
 
 

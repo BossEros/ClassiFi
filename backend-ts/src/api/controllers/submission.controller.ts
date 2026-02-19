@@ -22,6 +22,7 @@ import {
   NotFoundError,
 } from "@/api/middlewares/error-handler.js"
 import { settings } from "@/shared/config.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Type definition for multipart form field values.
@@ -40,8 +41,8 @@ interface MultipartField {
  */
 export async function submissionRoutes(app: FastifyInstance): Promise<void> {
   const submissionService =
-    container.resolve<SubmissionService>("SubmissionService")
-  const codeTestService = container.resolve<CodeTestService>("CodeTestService")
+    container.resolve<SubmissionService>(DI_TOKENS.services.submission)
+  const codeTestService = container.resolve<CodeTestService>(DI_TOKENS.services.codeTest)
 
   /**
    * POST /

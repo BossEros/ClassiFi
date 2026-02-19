@@ -21,6 +21,7 @@ import {
   type ReassignTeacher,
 } from "../../schemas/admin.schema.js"
 import type { UpdateClassData } from "../../../services/admin/admin.types.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Maps UpdateClass DTO from the API schema to UpdateClassData expected by the service.
@@ -53,7 +54,7 @@ function mapUpdateClassDtoToServiceData(dto: UpdateClass): UpdateClassData {
  */
 export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
   const adminClassService =
-    container.resolve<AdminClassService>("AdminClassService")
+    container.resolve<AdminClassService>(DI_TOKENS.services.adminClass)
   const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
 
   /**

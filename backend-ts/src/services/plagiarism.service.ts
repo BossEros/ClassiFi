@@ -32,6 +32,7 @@ import {
   UnauthorizedAccessError,
 } from "../shared/errors.js"
 import type { MatchFragment } from "../models/index.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /** Request body for analyzing files */
 export interface AnalyzeRequest {
@@ -145,16 +146,16 @@ export class PlagiarismService {
   private cleanupIntervalId: ReturnType<typeof setInterval> | null = null
 
   constructor(
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject("ClassRepository")
+    @inject(DI_TOKENS.repositories.class)
     private classRepo: ClassRepository,
-    @inject("EnrollmentRepository")
+    @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
-    @inject("PlagiarismDetectorFactory")
+    @inject(DI_TOKENS.services.plagiarismDetectorFactory)
     private detectorFactory: PlagiarismDetectorFactory,
-    @inject("SubmissionFileService") private fileService: SubmissionFileService,
-    @inject("PlagiarismPersistenceService")
+    @inject(DI_TOKENS.services.submissionFile) private fileService: SubmissionFileService,
+    @inject(DI_TOKENS.services.plagiarismPersistence)
     private persistenceService: PlagiarismPersistenceService,
   ) {
     // Run cleanup every hour and store the interval ID for cleanup

@@ -15,6 +15,7 @@ import {
   type VerifyRequest,
 } from "../schemas/auth.schema.js"
 import { ApiError } from "../middlewares/error-handler.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers all authentication-related routes under /api/v1/auth/*.
@@ -24,7 +25,7 @@ import { ApiError } from "../middlewares/error-handler.js"
  * @param app - Fastify application instance to register routes on.
  */
 export async function authRoutes(app: FastifyInstance): Promise<void> {
-  const authService = container.resolve<AuthService>("AuthService")
+  const authService = container.resolve<AuthService>(DI_TOKENS.services.auth)
 
   /**
    * POST /register

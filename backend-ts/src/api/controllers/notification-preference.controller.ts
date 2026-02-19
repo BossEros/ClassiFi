@@ -9,6 +9,7 @@ import {
   type UpdateNotificationPreferenceRequest,
 } from "../schemas/notification-preference.schema.js"
 import { ErrorResponseSchema } from "../schemas/auth.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers all notification preference routes under /api/v1/notification-preferences/*.
@@ -20,7 +21,7 @@ export async function notificationPreferenceRoutes(
   app: FastifyInstance,
 ): Promise<void> {
   const preferenceService = container.resolve<NotificationPreferenceService>(
-    "NotificationPreferenceService",
+    DI_TOKENS.services.notificationPreference,
   )
 
   /**

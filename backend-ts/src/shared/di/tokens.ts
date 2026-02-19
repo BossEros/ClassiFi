@@ -1,0 +1,50 @@
+/**
+ * Centralized dependency injection tokens.
+ * Keep all tsyringe registration/resolve keys in one place to avoid drift.
+ */
+export const DI_TOKENS = {
+  repositories: {
+    user: "UserRepository",
+    class: "ClassRepository",
+    assignment: "AssignmentRepository",
+    enrollment: "EnrollmentRepository",
+    submission: "SubmissionRepository",
+    similarity: "SimilarityRepository",
+    testCase: "TestCaseRepository",
+    testResult: "TestResultRepository",
+    gradebook: "GradebookRepository",
+    notification: "NotificationRepository",
+    notificationDelivery: "NotificationDeliveryRepository",
+    notificationPreference: "NotificationPreferenceRepository",
+  },
+  adapters: {
+    supabaseAuth: "SupabaseAuthAdapter",
+  },
+  services: {
+    storage: "StorageService",
+    assignment: "AssignmentService",
+    auth: "AuthService",
+    class: "ClassService",
+    submission: "SubmissionService",
+    studentDashboard: "StudentDashboardService",
+    teacherDashboard: "TeacherDashboardService",
+    plagiarism: "PlagiarismService",
+    user: "UserService",
+    gradebook: "GradebookService",
+    latePenalty: "LatePenaltyService",
+    email: "EmailService",
+    notification: "NotificationService",
+    notificationQueue: "NotificationQueueService",
+    notificationPreference: "NotificationPreferenceService",
+    codeTest: "CodeTestService",
+    testCase: "TestCaseService",
+    adminUser: "AdminUserService",
+    adminAnalytics: "AdminAnalyticsService",
+    adminClass: "AdminClassService",
+    adminEnrollment: "AdminEnrollmentService",
+    plagiarismDetectorFactory: "PlagiarismDetectorFactory",
+    submissionFile: "SubmissionFileService",
+    plagiarismPersistence: "PlagiarismPersistenceService",
+  },
+} as const
+

@@ -47,72 +47,106 @@ import { AdminEnrollmentService } from "../services/admin/admin-enrollment.servi
 import { PlagiarismDetectorFactory } from "../services/plagiarism/plagiarism-detector.factory.js"
 import { SubmissionFileService } from "../services/plagiarism/submission-file.service.js"
 import { PlagiarismPersistenceService } from "../services/plagiarism/plagiarism-persistence.service.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 // Register repositories as singletons
-container.registerSingleton("UserRepository", UserRepository)
-container.registerSingleton("ClassRepository", ClassRepository)
-container.registerSingleton("AssignmentRepository", AssignmentRepository)
-container.registerSingleton("EnrollmentRepository", EnrollmentRepository)
-container.registerSingleton("SubmissionRepository", SubmissionRepository)
-container.registerSingleton("SimilarityRepository", SimilarityRepository)
-container.registerSingleton("TestCaseRepository", TestCaseRepository)
-container.registerSingleton("TestResultRepository", TestResultRepository)
-container.registerSingleton("GradebookRepository", GradebookRepository)
-container.registerSingleton("NotificationRepository", NotificationRepository)
+container.registerSingleton(DI_TOKENS.repositories.user, UserRepository)
+container.registerSingleton(DI_TOKENS.repositories.class, ClassRepository)
 container.registerSingleton(
-  "NotificationDeliveryRepository",
+  DI_TOKENS.repositories.assignment,
+  AssignmentRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.enrollment,
+  EnrollmentRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.submission,
+  SubmissionRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.similarity,
+  SimilarityRepository,
+)
+container.registerSingleton(DI_TOKENS.repositories.testCase, TestCaseRepository)
+container.registerSingleton(
+  DI_TOKENS.repositories.testResult,
+  TestResultRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.gradebook,
+  GradebookRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.notification,
+  NotificationRepository,
+)
+container.registerSingleton(
+  DI_TOKENS.repositories.notificationDelivery,
   NotificationDeliveryRepository,
 )
 container.registerSingleton(
-  "NotificationPreferenceRepository",
+  DI_TOKENS.repositories.notificationPreference,
   NotificationPreferenceRepository,
 )
 
 // Register infrastructure adapters as singletons
-container.registerSingleton("SupabaseAuthAdapter", SupabaseAuthAdapter)
+container.registerSingleton(DI_TOKENS.adapters.supabaseAuth, SupabaseAuthAdapter)
 
 // Register services as singletons
-container.registerSingleton("StorageService", StorageService)
-container.registerSingleton("AssignmentService", AssignmentService)
-container.registerSingleton("AuthService", AuthService)
-container.registerSingleton("ClassService", ClassService)
-container.registerSingleton("SubmissionService", SubmissionService)
-container.registerSingleton("StudentDashboardService", StudentDashboardService)
-container.registerSingleton("TeacherDashboardService", TeacherDashboardService)
-container.registerSingleton("PlagiarismService", PlagiarismService)
-container.registerSingleton("UserService", UserService)
-container.registerSingleton("GradebookService", GradebookService)
-container.registerSingleton("LatePenaltyService", LatePenaltyService)
-container.registerSingleton("EmailService", EmailService)
+container.registerSingleton(DI_TOKENS.services.storage, StorageService)
+container.registerSingleton(DI_TOKENS.services.assignment, AssignmentService)
+container.registerSingleton(DI_TOKENS.services.auth, AuthService)
+container.registerSingleton(DI_TOKENS.services.class, ClassService)
+container.registerSingleton(DI_TOKENS.services.submission, SubmissionService)
 container.registerSingleton(
-  "NotificationQueueService",
+  DI_TOKENS.services.studentDashboard,
+  StudentDashboardService,
+)
+container.registerSingleton(
+  DI_TOKENS.services.teacherDashboard,
+  TeacherDashboardService,
+)
+container.registerSingleton(DI_TOKENS.services.plagiarism, PlagiarismService)
+container.registerSingleton(DI_TOKENS.services.user, UserService)
+container.registerSingleton(DI_TOKENS.services.gradebook, GradebookService)
+container.registerSingleton(DI_TOKENS.services.latePenalty, LatePenaltyService)
+container.registerSingleton(DI_TOKENS.services.email, EmailService)
+container.registerSingleton(
+  DI_TOKENS.services.notificationQueue,
   NotificationQueueService,
 )
 container.registerSingleton(
-  "NotificationPreferenceService",
+  DI_TOKENS.services.notificationPreference,
   NotificationPreferenceService,
 )
-container.registerSingleton("NotificationService", NotificationService)
+container.registerSingleton(DI_TOKENS.services.notification, NotificationService)
 
 // Register code execution services
 container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)
-container.registerSingleton("CodeTestService", CodeTestService)
-container.registerSingleton("TestCaseService", TestCaseService)
+container.registerSingleton(DI_TOKENS.services.codeTest, CodeTestService)
+container.registerSingleton(DI_TOKENS.services.testCase, TestCaseService)
 
 // Register focused admin services as singletons
-container.registerSingleton("AdminUserService", AdminUserService)
-container.registerSingleton("AdminAnalyticsService", AdminAnalyticsService)
-container.registerSingleton("AdminClassService", AdminClassService)
-container.registerSingleton("AdminEnrollmentService", AdminEnrollmentService)
+container.registerSingleton(DI_TOKENS.services.adminUser, AdminUserService)
+container.registerSingleton(
+  DI_TOKENS.services.adminAnalytics,
+  AdminAnalyticsService,
+)
+container.registerSingleton(DI_TOKENS.services.adminClass, AdminClassService)
+container.registerSingleton(
+  DI_TOKENS.services.adminEnrollment,
+  AdminEnrollmentService,
+)
 
 // Register Plagiarism component services
 container.registerSingleton(
-  "PlagiarismDetectorFactory",
+  DI_TOKENS.services.plagiarismDetectorFactory,
   PlagiarismDetectorFactory,
 )
-container.registerSingleton("SubmissionFileService", SubmissionFileService)
+container.registerSingleton(DI_TOKENS.services.submissionFile, SubmissionFileService)
 container.registerSingleton(
-  "PlagiarismPersistenceService",
+  DI_TOKENS.services.plagiarismPersistence,
   PlagiarismPersistenceService,
 )
 

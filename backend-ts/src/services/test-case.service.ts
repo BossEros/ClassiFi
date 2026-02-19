@@ -5,6 +5,7 @@ import {
   TestCaseNotFoundError,
   TestCaseOwnershipError,
 } from "@/shared/errors.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Business logic for test case operations.
@@ -13,7 +14,7 @@ import {
 @injectable()
 export class TestCaseService {
   constructor(
-    @inject("TestCaseRepository") private testCaseRepo: TestCaseRepository,
+    @inject(DI_TOKENS.repositories.testCase) private testCaseRepo: TestCaseRepository,
   ) {}
 
   /**

@@ -16,6 +16,7 @@ import type {
   CreateClassData,
   UpdateClassData,
 } from "./admin.types.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Admin service for class oversight operations.
@@ -24,11 +25,11 @@ import type {
 @injectable()
 export class AdminClassService {
   constructor(
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("ClassService") private classService: ClassService,
+    @inject(DI_TOKENS.services.class) private classService: ClassService,
   ) {}
 
   /**

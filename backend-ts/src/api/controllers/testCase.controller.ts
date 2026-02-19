@@ -13,6 +13,7 @@ import {
   type UpdateTestCaseRequest,
   type RunTestsPreviewRequest,
 } from "../schemas/testCase.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers test case routes for managing test cases and running code tests.
@@ -21,8 +22,8 @@ import {
  * @returns A promise that resolves when all routes are registered.
  */
 export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
-  const testCaseService = container.resolve<TestCaseService>("TestCaseService")
-  const codeTestService = container.resolve<CodeTestService>("CodeTestService")
+  const testCaseService = container.resolve<TestCaseService>(DI_TOKENS.services.testCase)
+  const codeTestService = container.resolve<CodeTestService>(DI_TOKENS.services.codeTest)
 
   /**
    * PUT /:testCaseId

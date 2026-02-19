@@ -4,6 +4,7 @@ import { UserRepository } from "../../repositories/user.repository.js"
 import { EnrollmentRepository } from "../../repositories/enrollment.repository.js"
 import { toUserDTO, type UserDTO } from "../../shared/mappers.js"
 import { UserNotFoundError, ClassNotFoundError } from "../../shared/errors.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Admin service for class enrollment management.
@@ -13,9 +14,9 @@ import { UserNotFoundError, ClassNotFoundError } from "../../shared/errors.js"
 @injectable()
 export class AdminEnrollmentService {
   constructor(
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("EnrollmentRepository")
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
   ) {}
 

@@ -5,6 +5,7 @@ import type { IEmailService } from "../interfaces/email.interface.js"
 import type { NotificationDelivery } from "../../models/index.js"
 import type { NotificationType } from "../../api/schemas/notification.schema.js"
 import { NOTIFICATION_TYPES, type PayloadFor } from "./types.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Type guard to check if a value is an Error instance.
@@ -26,11 +27,11 @@ export class NotificationQueueService {
   private static readonly RETRY_DELAY_BASE_MS = 60000 // 1 minute
 
   constructor(
-    @inject("NotificationDeliveryRepository")
+    @inject(DI_TOKENS.repositories.notificationDelivery)
     private deliveryRepo: NotificationDeliveryRepository,
-    @inject("EmailService")
+    @inject(DI_TOKENS.services.email)
     private emailService: IEmailService,
-    @inject("UserRepository")
+    @inject(DI_TOKENS.repositories.user)
     private userRepo: UserRepository,
   ) {}
 

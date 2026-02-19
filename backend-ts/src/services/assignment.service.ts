@@ -20,6 +20,7 @@ import type {
 import { settings } from "../shared/config.js"
 import { formatAssignmentDueDate } from "../shared/utils.js"
 import { createLogger } from "../shared/logger.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Business logic for assignment-related operations.
@@ -31,17 +32,17 @@ const logger = createLogger("AssignmentService")
 @injectable()
 export class AssignmentService {
   constructor(
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("TestCaseRepository") private testCaseRepo: TestCaseRepository,
-    @inject("EnrollmentRepository")
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.testCase) private testCaseRepo: TestCaseRepository,
+    @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("StorageService")
+    @inject(DI_TOKENS.services.storage)
     private storageService: StorageService,
-    @inject("NotificationService")
+    @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
 
@@ -476,7 +477,6 @@ export class AssignmentService {
     return { remindersSent: successCount }
   }
 }
-
 
 
 

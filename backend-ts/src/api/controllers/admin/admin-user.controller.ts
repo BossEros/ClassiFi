@@ -22,6 +22,7 @@ import {
   type UpdateUserEmail,
   type CreateUser,
 } from "../../schemas/admin.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers admin user management routes for user CRUD operations.
@@ -35,7 +36,7 @@ import {
  */
 export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
   const adminUserService =
-    container.resolve<AdminUserService>("AdminUserService")
+    container.resolve<AdminUserService>(DI_TOKENS.services.adminUser)
   const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
 
   /**

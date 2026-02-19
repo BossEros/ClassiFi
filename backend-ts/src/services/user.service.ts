@@ -5,17 +5,18 @@ import { StorageService } from "@/services/storage.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { UserNotFoundError } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("UserService")
 
 @injectable()
 export class UserService {
   constructor(
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("StorageService") private storageService: StorageService,
-    @inject("SupabaseAuthAdapter") private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.services.storage) private storageService: StorageService,
+    @inject(DI_TOKENS.adapters.supabaseAuth) private authAdapter: SupabaseAuthAdapter,
   ) {}
 
   /**
@@ -86,7 +87,6 @@ export class UserService {
     return await this.userRepo.getUserById(userId)
   }
 }
-
 
 
 

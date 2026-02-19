@@ -25,6 +25,7 @@ import {
 } from "@/shared/errors.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("CodeTestService")
 
@@ -68,15 +69,15 @@ export interface TestPreviewResult {
 export class CodeTestService {
   constructor(
     @inject(CODE_EXECUTOR_TOKEN) private executor: ICodeExecutor,
-    @inject("TestCaseRepository") private testCaseRepo: TestCaseRepository,
-    @inject("TestResultRepository")
+    @inject(DI_TOKENS.repositories.testCase) private testCaseRepo: TestCaseRepository,
+    @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject("StorageService") private storageService: StorageService,
-    @inject("NotificationService")
+    @inject(DI_TOKENS.services.storage) private storageService: StorageService,
+    @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
 
@@ -428,6 +429,5 @@ export class CodeTestService {
     return sourceCode.replace(/public\s+class\s+\w+/, "public class Main")
   }
 }
-
 
 

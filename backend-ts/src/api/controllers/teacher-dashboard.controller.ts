@@ -10,6 +10,7 @@ import {
   DashboardClassListResponseSchema,
   TaskListResponseSchema,
 } from "@/api/schemas/dashboard.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers teacher dashboard routes for retrieving dashboard data, classes, and tasks.
@@ -21,7 +22,7 @@ export async function teacherDashboardRoutes(
   app: FastifyInstance,
 ): Promise<void> {
   const teacherDashboardService = container.resolve<TeacherDashboardService>(
-    "TeacherDashboardService",
+    DI_TOKENS.services.teacherDashboard,
   )
 
   /**

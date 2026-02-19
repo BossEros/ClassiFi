@@ -9,15 +9,16 @@ import {
   FileDownloadError,
 } from "../../shared/errors.js"
 import { createLogger } from "../../shared/logger.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("SubmissionFileService")
 
 @injectable()
 export class SubmissionFileService {
   constructor(
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
-    @inject("StorageService") private storageService: StorageService,
+    @inject(DI_TOKENS.services.storage) private storageService: StorageService,
   ) {}
 
   /** Fetch and download all submission files for an assignment */
@@ -90,7 +91,6 @@ export class SubmissionFileService {
     }
   }
 }
-
 
 
 

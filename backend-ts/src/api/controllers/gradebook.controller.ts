@@ -20,6 +20,7 @@ import {
   SubmissionIdParamSchema,
   type GradeOverrideBody,
 } from "../schemas/gradebook.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers all gradebook-related API routes.
@@ -29,7 +30,7 @@ import {
  */
 export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
   const gradebookService =
-    container.resolve<GradebookService>("GradebookService")
+    container.resolve<GradebookService>(DI_TOKENS.services.gradebook)
 
   /**
    * GET /classes/:classId

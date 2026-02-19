@@ -18,13 +18,14 @@ import type { TransactionContext } from "../../shared/transaction.js"
 // Note: Error classes are preserved for future use but not imported to avoid TS6192
 // import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "../../shared/errors.js";
 import type { AnalyzeResponse } from "../plagiarism.service.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 @injectable()
 export class PlagiarismPersistenceService {
   constructor(
-    @inject("SimilarityRepository")
+    @inject(DI_TOKENS.repositories.similarity)
     private similarityRepo: SimilarityRepository,
-    @inject("SubmissionRepository")
+    @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
   ) {}
 

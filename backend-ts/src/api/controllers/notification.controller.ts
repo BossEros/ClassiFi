@@ -13,6 +13,7 @@ import {
   type NotificationQueryParams,
   type NotificationParams,
 } from "../schemas/notification.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers all notification-related routes under /api/v1/notifications/*.
@@ -23,7 +24,7 @@ import {
  */
 export async function notificationRoutes(app: FastifyInstance): Promise<void> {
   const notificationService = container.resolve<NotificationService>(
-    "NotificationService",
+    DI_TOKENS.services.notification,
   )
 
   /**

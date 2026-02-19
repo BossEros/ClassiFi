@@ -18,6 +18,7 @@ import {
   type JoinClassRequest,
   type LeaveClassRequest,
 } from "@/api/schemas/dashboard.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers student dashboard routes for managing student class enrollments and assignments.
@@ -29,7 +30,7 @@ export async function studentDashboardRoutes(
   app: FastifyInstance,
 ): Promise<void> {
   const studentDashboardService = container.resolve<StudentDashboardService>(
-    "StudentDashboardService",
+    DI_TOKENS.services.studentDashboard,
   )
 
   /**

@@ -16,6 +16,7 @@ import {
 } from "@/shared/errors.js"
 import type { User } from "@/models/index.js"
 import type { RegisterUserServiceDTO } from "./service-dtos.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("AuthService")
 
@@ -70,8 +71,8 @@ function isDbError(
 @injectable()
 export class AuthService {
   constructor(
-    @inject("UserRepository") private userRepo: UserRepository,
-    @inject("SupabaseAuthAdapter") private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.adapters.supabaseAuth) private authAdapter: SupabaseAuthAdapter,
   ) {}
 
   /**
@@ -268,6 +269,5 @@ export class AuthService {
     )
   }
 }
-
 
 

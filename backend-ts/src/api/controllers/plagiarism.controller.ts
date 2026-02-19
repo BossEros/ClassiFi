@@ -21,6 +21,7 @@ import {
   StudentPairsResponseSchema,
   type AnalyzeRequest,
 } from "../schemas/plagiarism.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers plagiarism detection routes for analyzing code submissions.
@@ -30,7 +31,7 @@ import {
  */
 export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
   const plagiarismService =
-    container.resolve<PlagiarismService>("PlagiarismService")
+    container.resolve<PlagiarismService>(DI_TOKENS.services.plagiarism)
 
   /**
    * POST /analyze

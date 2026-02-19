@@ -12,6 +12,7 @@ import {
   type NotificationTypeConfig,
 } from "./types.js"
 import { NotFoundError, ForbiddenError } from "../../shared/errors.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Service for managing notifications.
@@ -20,11 +21,11 @@ import { NotFoundError, ForbiddenError } from "../../shared/errors.js"
 @injectable()
 export class NotificationService {
   constructor(
-    @inject("NotificationRepository")
+    @inject(DI_TOKENS.repositories.notification)
     private notificationRepo: NotificationRepository,
-    @inject("NotificationQueueService")
+    @inject(DI_TOKENS.services.notificationQueue)
     private queueService: NotificationQueueService,
-    @inject("NotificationPreferenceService")
+    @inject(DI_TOKENS.services.notificationPreference)
     private preferenceService: NotificationPreferenceService,
   ) {}
 

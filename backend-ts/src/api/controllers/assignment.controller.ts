@@ -29,6 +29,7 @@ import {
   type ReorderTestCasesRequest,
 } from "../schemas/testCase.schema.js"
 import { BadRequestError } from "../middlewares/error-handler.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Parses and validates a date string or Date object.
@@ -59,10 +60,10 @@ function parseDate(value: string | Date, fieldName: string): Date {
  */
 export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
   const assignmentService =
-    container.resolve<AssignmentService>("AssignmentService")
+    container.resolve<AssignmentService>(DI_TOKENS.services.assignment)
   const latePenaltyService =
-    container.resolve<LatePenaltyService>("LatePenaltyService")
-  const testCaseService = container.resolve<TestCaseService>("TestCaseService")
+    container.resolve<LatePenaltyService>(DI_TOKENS.services.latePenalty)
+  const testCaseService = container.resolve<TestCaseService>(DI_TOKENS.services.testCase)
 
   /**
    * GET /:assignmentId

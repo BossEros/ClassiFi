@@ -7,6 +7,7 @@ import {
   type DashboardClassDTO,
   type PendingTaskDTO,
 } from "@/shared/mappers.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Business logic for teacher dashboard operations.
@@ -15,8 +16,8 @@ import {
 @injectable()
 export class TeacherDashboardService {
   constructor(
-    @inject("ClassRepository") private classRepo: ClassRepository,
-    @inject("AssignmentRepository")
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
   ) {}
 

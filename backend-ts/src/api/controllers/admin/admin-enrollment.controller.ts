@@ -13,6 +13,7 @@ import {
   type EnrollStudentBody,
   type StudentEnrollmentParams,
 } from "../../schemas/admin.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const StudentEnrollmentDtoSchema = z.object({
   id: z.number(),
@@ -41,7 +42,7 @@ export async function adminEnrollmentRoutes(
   app: FastifyInstance,
 ): Promise<void> {
   const adminEnrollmentService = container.resolve<AdminEnrollmentService>(
-    "AdminEnrollmentService",
+    DI_TOKENS.services.adminEnrollment,
   )
   const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
 

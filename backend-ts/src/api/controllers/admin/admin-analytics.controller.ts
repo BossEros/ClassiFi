@@ -10,6 +10,7 @@ import {
   ActivityResponseSchema,
   type ActivityQuery,
 } from "@/api/schemas/admin.schema.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Registers admin analytics and statistics routes for system monitoring.
@@ -25,7 +26,7 @@ export async function adminAnalyticsRoutes(
   app: FastifyInstance,
 ): Promise<void> {
   const adminAnalyticsService = container.resolve<AdminAnalyticsService>(
-    "AdminAnalyticsService",
+    DI_TOKENS.services.adminAnalytics,
   )
   const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
 

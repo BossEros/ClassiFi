@@ -6,6 +6,7 @@ import { toJsonSchema } from "../utils/swagger.js"
 import { SuccessMessageSchema } from "../schemas/common.schema.js"
 import { toUserDTO } from "../../shared/mappers.js"
 import { z } from "zod"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const UpdateAvatarSchema = z.object({
   avatarUrl: z
@@ -56,7 +57,7 @@ const ErrorResponseSchema = z.object({
  * @returns A promise that resolves when all routes are registered.
  */
 export async function userRoutes(app: FastifyInstance): Promise<void> {
-  const userService = container.resolve<UserService>("UserService")
+  const userService = container.resolve<UserService>(DI_TOKENS.services.user)
 
   /**
    * GET /me
