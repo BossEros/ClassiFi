@@ -2,11 +2,11 @@ import { injectable } from "tsyringe"
 import type {
   IEmailService,
   EmailOptions,
-} from "../interfaces/email.interface.js"
-import { SendGridEmailService } from "./sendgrid.service.js"
-import { SMTPEmailService } from "./smtp.service.js"
-import { settings } from "../../shared/config.js"
-import { createLogger } from "../../shared/logger.js"
+} from "@/services/interfaces/email.interface.js"
+import { SendGridEmailService } from "@/services/email/sendgrid.service.js"
+import { SMTPEmailService } from "@/services/email/smtp.service.js"
+import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("FallbackEmailService")
 

@@ -8,8 +8,8 @@ import {
   type NewEnrollment,
   type Class,
   type User,
-} from "../models/index.js"
-import { BaseRepository } from "./base.repository.js"
+} from "@/models/index.js"
+import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 
 /** Enrolled student with user information */

@@ -1,8 +1,8 @@
-import { db } from "../shared/database.js"
+import { db } from "@/shared/database.js"
 import { eq, sql } from "drizzle-orm"
 import type { PgTable, PgColumn } from "drizzle-orm/pg-core"
 import { injectable } from "tsyringe"
-import type { TransactionContext } from "../shared/transaction.js"
+import type { TransactionContext } from "@/shared/transaction.js"
 
 /**
  * Base repository with common CRUD operations.

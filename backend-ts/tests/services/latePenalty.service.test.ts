@@ -3,7 +3,7 @@ import {
   LatePenaltyService,
   DEFAULT_PENALTY_CONFIG,
 } from "../../src/services/latePenalty.service.js"
-import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
+import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import type { LatePenaltyConfig } from "../../src/models/index.js"
 
 describe("LatePenaltyService", () => {

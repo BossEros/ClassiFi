@@ -1,6 +1,6 @@
-import { File } from "../file/file.js"
-import { TokenizedFile } from "../file/tokenizedFile.js"
-import { Region } from "../util/region.js"
+import { File } from "@/lib/plagiarism/file/file.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
+import { Region } from "@/lib/plagiarism/util/region.js"
 
 /**
  * A token with its source location.

@@ -1,4 +1,4 @@
-import { settings } from "../../shared/config.js"
+import { settings } from "@/shared/config.js"
 
 /**
  * Escapes HTML special characters to prevent HTML injection attacks.

@@ -392,6 +392,12 @@ Improve backend structure consistency with low-risk, incremental changes:
    - Extract dashboard-heavy read logic into dedicated query repository.
    - Keep service APIs and controller contracts unchanged.
 
+4. **Phase 4 (Module-Folder Migration, Active Structure)**
+   - Move real `controller/service/repository/model/schema` implementations into `backend-ts/src/modules/*`.
+   - Rewire API v1 routes and DI/test imports to the module-first paths.
+   - Keep only minimal shared cross-cutting code in `api`, `services`, `repositories`, and `models`.
+   - Update tests/imports to avoid stale pre-module file paths.
+
 ## Verification
 
 - `backend-ts`: `npm run typecheck` (required)

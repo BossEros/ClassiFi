@@ -1,10 +1,10 @@
 import type {
   IEmailService,
   EmailOptions,
-} from "../interfaces/email.interface.js"
-import { FallbackEmailService } from "./fallback.service.js"
-import { settings } from "../../shared/config.js"
-import { createLogger } from "../../shared/logger.js"
+} from "@/services/interfaces/email.interface.js"
+import { FallbackEmailService } from "@/services/email/fallback.service.js"
+import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("EmailServiceFactory")
 

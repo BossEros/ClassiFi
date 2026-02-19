@@ -65,7 +65,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getClassById(1)
@@ -81,7 +81,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getClassById(999)
@@ -101,7 +101,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getClassByCode("ABC123")
@@ -117,7 +117,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getClassByCode("INVALID")
@@ -136,7 +136,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.checkClassCodeExists("ABC123")
@@ -152,7 +152,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.checkClassCodeExists("NEWCODE")
@@ -171,7 +171,7 @@ describe("ClassRepository", () => {
       mockDb.insert = insertMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.createClass({
@@ -199,7 +199,7 @@ describe("ClassRepository", () => {
       mockDb.update = updateMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.updateClass(1, {
@@ -217,7 +217,7 @@ describe("ClassRepository", () => {
       mockDb.update = updateMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.updateClass(999, { className: "Updated" })
@@ -249,7 +249,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getStudentCount(1)
@@ -265,7 +265,7 @@ describe("ClassRepository", () => {
       mockDb.select = selectMock
 
       const { ClassRepository } =
-        await import("../../src/repositories/class.repository.js")
+        await import("../../src/modules/classes/class.repository.js")
       const classRepo = new ClassRepository()
 
       const result = await classRepo.getStudentCount(1)

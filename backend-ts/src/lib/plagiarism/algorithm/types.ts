@@ -1,9 +1,9 @@
-import { Range } from "../util/range.js"
-import { TokenizedFile } from "../file/tokenizedFile.js"
-import { SharedFingerprint } from "./sharedFingerprint.js"
+import { Range } from "@/lib/plagiarism/util/range.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
+import { SharedFingerprint } from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
 
 // Re-export ASTRegion for convenience
-export type { ASTRegion } from "./astRegion.js"
+export type { ASTRegion } from "@/lib/plagiarism/algorithm/astRegion.js"
 
 /**
  * Entry for a file in the index.

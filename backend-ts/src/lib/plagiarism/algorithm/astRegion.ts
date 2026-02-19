@@ -1,4 +1,4 @@
-import { Region } from "../util/region.js"
+import { Region } from "@/lib/plagiarism/util/region.js"
 
 /**
  * Information about one side of a paired occurrence (matching k-gram).

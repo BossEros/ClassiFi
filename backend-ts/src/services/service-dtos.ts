@@ -1,4 +1,4 @@
-import type { UserRole } from "@/repositories/user.repository.js"
+import type { UserRole } from "@/modules/users/user.repository.js"
 import type { ClassSchedule } from "@/models/index.js"
 import type { LatePenaltyConfig } from "@/models/index.js"
 

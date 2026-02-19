@@ -147,5 +147,13 @@
 - [x] Phase 2: Commit checkpoint
 - [x] Phase 3: Extract dashboard query-heavy reads into dedicated query repository (non-breaking service API)
 - [x] Phase 3: Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
-- [ ] Phase 3: Commit checkpoint
+- [x] Phase 3: Commit checkpoint
 - [x] Update `backend-ts/documentation.md` with repository categories (Entity vs Query) and module guidance
+
+## Backend Module-Folder Migration (Phase 4)
+
+- [x] Add Phase 4 scope to implementation plan
+- [x] Move real controller/service/repository/model/schema files into `backend-ts/src/modules/*`
+- [x] Rewire API v1 route imports to module entry points
+- [x] Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`)
+- [ ] Commit Phase 4 checkpoint

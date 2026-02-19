@@ -1,7 +1,7 @@
-import { assert } from "../util/utils.js"
-import { PairedOccurrence } from "./pairedOccurrence.js"
-import { Region } from "../util/region.js"
-import { Range } from "../util/range.js"
+import { assert } from "@/lib/plagiarism/util/utils.js"
+import { PairedOccurrence } from "@/lib/plagiarism/algorithm/pairedOccurrence.js"
+import { Region } from "@/lib/plagiarism/util/region.js"
+import { Range } from "@/lib/plagiarism/util/range.js"
 
 /**
  * A fragment is a contiguous region of matching code between two files.

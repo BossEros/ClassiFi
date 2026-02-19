@@ -1,7 +1,7 @@
-import { buildApp } from "./app.js"
-import { settings } from "./shared/config.js"
-import { closeDatabase } from "./shared/database.js"
-import { createLogger } from "./shared/logger.js"
+import { buildApp } from "@/app.js"
+import { settings } from "@/shared/config.js"
+import { closeDatabase } from "@/shared/database.js"
+import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("Server")
 

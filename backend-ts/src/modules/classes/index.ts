@@ -1,0 +1,5 @@
+export * from '@/modules/classes/class.controller.js'
+export * from '@/modules/classes/class.service.js'
+export * from '@/modules/classes/class.repository.js'
+export * from '@/modules/classes/class.model.js'
+export * from '@/modules/classes/class.schema.js'

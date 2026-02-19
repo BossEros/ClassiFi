@@ -1,3 +1,3 @@
 // File exports
-export { File, FileInfo } from "./file.js"
-export { TokenizedFile } from "./tokenizedFile.js"
+export { File, FileInfo } from "@/lib/plagiarism/file/file.js"
+export { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"

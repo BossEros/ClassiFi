@@ -1,23 +1,23 @@
 import { inject, injectable } from "tsyringe"
-import { db } from "../../shared/database.js"
-import { SimilarityRepository } from "../../repositories/similarity.repository.js"
-import { SubmissionRepository } from "../../repositories/submission.repository.js"
-import { Report, Pair } from "../../lib/plagiarism/index.js"
+import { db } from "@/shared/database.js"
+import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
+import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { Report, Pair } from "@/lib/plagiarism/index.js"
 import {
   PLAGIARISM_CONFIG,
   type PlagiarismPairDTO,
-} from "../../shared/mappers.js"
+} from "@/shared/mappers.js"
 import type {
   NewSimilarityResult,
   NewMatchFragment,
   MatchFragment,
   SimilarityResult,
   Submission,
-} from "../../models/index.js"
-import type { TransactionContext } from "../../shared/transaction.js"
+} from "@/models/index.js"
+import type { TransactionContext } from "@/shared/transaction.js"
 // Note: Error classes are preserved for future use but not imported to avoid TS6192
-// import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "../../shared/errors.js";
-import type { AnalyzeResponse } from "../plagiarism.service.js"
+// import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "@/shared/errors.js";
+import type { AnalyzeResponse } from "@/modules/plagiarism/plagiarism.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 @injectable()

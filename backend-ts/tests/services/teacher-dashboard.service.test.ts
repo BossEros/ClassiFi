@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { TeacherDashboardService } from "../../src/services/teacher-dashboard.service.js"
+import { TeacherDashboardService } from "../../src/modules/dashboard/teacher-dashboard.service.js"
 import { createMockClass, createMockAssignment } from "../utils/factories.js"
 
 describe("TeacherDashboardService", () => {

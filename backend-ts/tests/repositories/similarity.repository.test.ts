@@ -21,7 +21,7 @@ vi.mock("drizzle-orm", () => ({
 }))
 
 // Mock models
-vi.mock("../../src/models/similarity-report.model.js", () => ({
+vi.mock("../../src/modules/plagiarism/similarity-report.model.js", () => ({
   similarityReports: {
     id: "id",
     assignmentId: "assignmentId",
@@ -29,7 +29,7 @@ vi.mock("../../src/models/similarity-report.model.js", () => ({
   },
 }))
 
-vi.mock("../../src/models/similarity-result.model.js", () => ({
+vi.mock("../../src/modules/plagiarism/similarity-result.model.js", () => ({
   similarityResults: {
     id: "id",
     reportId: "reportId",
@@ -37,7 +37,7 @@ vi.mock("../../src/models/similarity-result.model.js", () => ({
   },
 }))
 
-vi.mock("../../src/models/match-fragment.model.js", () => ({
+vi.mock("../../src/modules/plagiarism/match-fragment.model.js", () => ({
   matchFragments: {
     id: "id",
     similarityResultId: "similarityResultId",
@@ -73,7 +73,7 @@ describe("SimilarityRepository", () => {
       mockDb.insert = insertMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createReport({
@@ -102,7 +102,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportById(1)
@@ -118,7 +118,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportById(999)
@@ -141,7 +141,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportsByAssignment(1)
@@ -158,7 +158,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportsByAssignment(999)
@@ -180,7 +180,7 @@ describe("SimilarityRepository", () => {
       mockDb.insert = insertMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createResults([
@@ -203,7 +203,7 @@ describe("SimilarityRepository", () => {
 
     it("should return empty array when no results to insert", async () => {
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createResults([])
@@ -226,7 +226,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getResultsByReport(1)
@@ -248,7 +248,7 @@ describe("SimilarityRepository", () => {
       mockDb.insert = insertMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createFragments([
@@ -261,7 +261,7 @@ describe("SimilarityRepository", () => {
 
     it("should return empty array when no fragments to insert", async () => {
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createFragments([])
@@ -281,7 +281,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getResultById(1)
@@ -303,7 +303,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getFragmentsByResult(1)
@@ -322,7 +322,7 @@ describe("SimilarityRepository", () => {
       mockDb.select = selectMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getResultWithFragments(999)
@@ -340,7 +340,7 @@ describe("SimilarityRepository", () => {
       mockDb.delete = deleteMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.deleteReport(1)
@@ -355,7 +355,7 @@ describe("SimilarityRepository", () => {
       mockDb.delete = deleteMock
 
       const { SimilarityRepository } =
-        await import("../../src/repositories/similarity.repository.js")
+        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.deleteReport(999)

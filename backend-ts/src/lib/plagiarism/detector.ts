@@ -1,13 +1,13 @@
-import { Report } from "./report.js"
-import { Options, DetectorOptions } from "./options.js"
-import { FingerprintIndex } from "./algorithm/fingerprintIndex.js"
-import { File } from "./file/file.js"
-import { TokenizedFile } from "./file/tokenizedFile.js"
+import { Report } from "@/lib/plagiarism/report.js"
+import { Options, DetectorOptions } from "@/lib/plagiarism/options.js"
+import { FingerprintIndex } from "@/lib/plagiarism/algorithm/fingerprintIndex.js"
+import { File } from "@/lib/plagiarism/file/file.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
 import {
   ProgrammingLanguage,
   LanguageRegistry,
   createDefaultRegistry,
-} from "./language.js"
+} from "@/lib/plagiarism/language.js"
 
 /**
  * PlagiarismDetector - Main entry point for source code plagiarism detection.

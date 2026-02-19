@@ -1,5 +1,5 @@
 import { injectable, inject } from "tsyringe"
-import { AssignmentRepository } from "@/repositories/assignment.repository.js"
+import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { type LatePenaltyConfig } from "@/models/index.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

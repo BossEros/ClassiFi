@@ -221,6 +221,27 @@ Resolve from container in controllers:
 const authService = container.resolve<AuthService>("AuthService");
 ```
 
+### Feature Module Layer (Phase 4)
+
+The backend now uses a module-first layout under `src/modules/*`.
+
+- `src/modules/auth`
+- `src/modules/users`
+- `src/modules/classes`
+- `src/modules/assignments`
+- `src/modules/submissions`
+- `src/modules/gradebook`
+- `src/modules/dashboard`
+- `src/modules/notifications`
+- `src/modules/plagiarism`
+- `src/modules/admin`
+- `src/modules/test-cases`
+
+Current behavior:
+- Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
+- Route registration imports module entry points from `src/modules/*/index.ts`.
+- Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
+
 ---
 
 ## Configuration
@@ -1008,13 +1029,12 @@ Guideline:
 - Put multi-table dashboard/reporting read queries in Query Repositories.
 - Keep controllers calling services only; services orchestrate repositories.
 
-### Naming Compatibility
+### Module-First Imports
 
-Canonical import paths now follow kebab-case for new usage:
-- `@/repositories/test-case.repository.js`
-- `@/services/code-test.service.js`
-
-Legacy camelCase files still exist as compatibility targets and are re-exported by the kebab-case modules to avoid breaking existing code.
+Canonical imports now point to module paths:
+- `@/modules/test-cases/test-case.repository.js`
+- `@/modules/test-cases/code-test.service.js`
+- `@/modules/notifications/notification.service.js`
 
 ### BaseRepository
 

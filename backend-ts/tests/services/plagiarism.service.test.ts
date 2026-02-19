@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import {
   PlagiarismService,
   type AnalyzeRequest,
-} from "../../src/services/plagiarism.service.js"
+} from "../../src/modules/plagiarism/plagiarism.service.js"
 import { createMockAssignment } from "../utils/factories.js"
 import {
   AssignmentNotFoundError,
@@ -11,7 +11,7 @@ import {
 } from "../../src/shared/errors.js"
 
 // Mock repositories
-vi.mock("../../src/repositories/assignment.repository.js")
+vi.mock("../../src/modules/assignments/assignment.repository.js")
 
 // Mock new services
 vi.mock("../../src/services/plagiarism/plagiarism-persistence.service.js")

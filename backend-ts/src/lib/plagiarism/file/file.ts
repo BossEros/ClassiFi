@@ -1,4 +1,4 @@
-import { Identifiable } from "../util/identifiable.js"
+import { Identifiable } from "@/lib/plagiarism/util/identifiable.js"
 
 /**
  * Optional metadata for a file.

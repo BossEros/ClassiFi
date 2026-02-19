@@ -1,14 +1,14 @@
 import { inject, injectable } from "tsyringe"
-import { SubmissionRepository } from "../../repositories/submission.repository.js"
-import { StorageService } from "../storage.service.js"
-import { File } from "../../lib/plagiarism/index.js"
-import { PLAGIARISM_CONFIG } from "../../shared/mappers.js"
+import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { StorageService } from "@/services/storage.service.js"
+import { File } from "@/lib/plagiarism/index.js"
+import { PLAGIARISM_CONFIG } from "@/shared/mappers.js"
 import {
   InsufficientFilesError,
   InsufficientDownloadedFilesError,
   FileDownloadError,
-} from "../../shared/errors.js"
-import { createLogger } from "../../shared/logger.js"
+} from "@/shared/errors.js"
+import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("SubmissionFileService")

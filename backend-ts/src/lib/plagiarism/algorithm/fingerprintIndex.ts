@@ -1,12 +1,12 @@
-import { HashFilter } from "../hashing/hashFilter.js"
-import { Range } from "../util/range.js"
-import { Region } from "../util/region.js"
-import { WinnowFilter } from "../hashing/winnowFilter.js"
-import { TokenizedFile } from "../file/tokenizedFile.js"
-import { SharedFingerprint, Occurrence } from "./sharedFingerprint.js"
-import { Pair } from "./pair.js"
-import { FileEntry } from "./types.js"
-import { assert, assertDefined } from "../util/utils.js"
+import { HashFilter } from "@/lib/plagiarism/hashing/hashFilter.js"
+import { Range } from "@/lib/plagiarism/util/range.js"
+import { Region } from "@/lib/plagiarism/util/region.js"
+import { WinnowFilter } from "@/lib/plagiarism/hashing/winnowFilter.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
+import { SharedFingerprint, Occurrence } from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
+import { Pair } from "@/lib/plagiarism/algorithm/pair.js"
+import { FileEntry } from "@/lib/plagiarism/algorithm/types.js"
+import { assert, assertDefined } from "@/lib/plagiarism/util/utils.js"
 
 export type Hash = number
 

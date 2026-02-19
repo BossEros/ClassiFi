@@ -6,7 +6,7 @@ import type {
   ExecutionResult,
   ExecutionStatus,
   ProgrammingLanguage,
-} from "./interfaces/codeExecutor.interface.js"
+} from "@/services/interfaces/codeExecutor.interface.js"
 
 /** Judge0 API submission response */
 interface Judge0SubmissionResponse {

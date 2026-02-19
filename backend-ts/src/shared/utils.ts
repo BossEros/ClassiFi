@@ -4,8 +4,8 @@
  */
 
 import { v4 as uuidv4 } from "uuid"
-import type { ClassRepository } from "../repositories/class.repository.js"
-import { BadRequestError } from "./errors.js"
+import type { ClassRepository } from "@/modules/classes/class.repository.js"
+import { BadRequestError } from "@/shared/errors.js"
 
 /**
  * Generate a unique class code.

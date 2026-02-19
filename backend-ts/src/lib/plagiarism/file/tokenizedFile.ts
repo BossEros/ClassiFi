@@ -1,5 +1,5 @@
-import { File } from "./file.js"
-import { Region } from "../util/region.js"
+import { File } from "@/lib/plagiarism/file/file.js"
+import { Region } from "@/lib/plagiarism/util/region.js"
 
 /**
  * A file that has been tokenized into AST tokens.

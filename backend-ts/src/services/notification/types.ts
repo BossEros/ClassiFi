@@ -1,11 +1,11 @@
-import type { NotificationType } from "../../api/schemas/notification.schema.js"
+import type { NotificationType } from "@/modules/notifications/notification.schema.js"
 import {
   assignmentCreatedEmailTemplate,
   submissionGradedEmailTemplate,
   classAnnouncementEmailTemplate,
   deadlineReminderEmailTemplate,
   enrollmentConfirmedEmailTemplate,
-} from "../email/templates.js"
+} from "@/services/email/templates.js"
 
 // ============================================================================
 // Notification Payload Types (Discriminated Union)

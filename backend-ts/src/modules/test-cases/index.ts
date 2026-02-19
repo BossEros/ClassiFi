@@ -1,0 +1,5 @@
+export { testCaseRoutes } from "@/modules/test-cases/test-case.controller.js"
+export { TestCaseService } from "@/modules/test-cases/test-case.service.js"
+export { CodeTestService } from "@/modules/test-cases/code-test.service.js"
+export { TestCaseRepository } from "@/modules/test-cases/test-case.repository.js"
+export { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"

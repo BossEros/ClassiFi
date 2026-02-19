@@ -1,7 +1,7 @@
 import Parser, { SyntaxNode } from "tree-sitter"
-import { Region } from "../util/region.js"
-import { Token, Tokenizer, TokenizerOptions } from "./tokenizer.js"
-import { ProgrammingLanguage } from "../language.js"
+import { Region } from "@/lib/plagiarism/util/region.js"
+import { Token, Tokenizer, TokenizerOptions } from "@/lib/plagiarism/tokenizer/tokenizer.js"
+import { ProgrammingLanguage } from "@/lib/plagiarism/language.js"
 
 /**
  * Tokenizer that uses tree-sitter for AST-based parsing.

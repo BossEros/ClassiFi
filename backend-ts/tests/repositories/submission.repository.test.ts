@@ -90,7 +90,7 @@ describe("SubmissionRepository", () => {
       mockDb.select = selectMock
 
       const { SubmissionRepository } =
-        await import("../../src/repositories/submission.repository.js")
+        await import("../../src/modules/submissions/submission.repository.js")
       const submissionRepo = new SubmissionRepository()
 
       const result = await submissionRepo.getSubmissionById(1)
@@ -106,7 +106,7 @@ describe("SubmissionRepository", () => {
       mockDb.select = selectMock
 
       const { SubmissionRepository } =
-        await import("../../src/repositories/submission.repository.js")
+        await import("../../src/modules/submissions/submission.repository.js")
       const submissionRepo = new SubmissionRepository()
 
       const result = await submissionRepo.getSubmissionById(999)
@@ -241,7 +241,7 @@ describe("SubmissionRepository", () => {
       mockDb.update = updateMock
 
       const { SubmissionRepository } =
-        await import("../../src/repositories/submission.repository.js")
+        await import("../../src/modules/submissions/submission.repository.js")
       const submissionRepo = new SubmissionRepository()
 
       const result = await submissionRepo.createSubmission({

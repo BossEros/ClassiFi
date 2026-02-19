@@ -4,7 +4,7 @@ import type {
   preHandlerHookHandler,
 } from "fastify"
 import { container } from "tsyringe"
-import { AuthService } from "@/services/auth.service.js"
+import { AuthService } from "@/modules/auth/auth.service.js"
 import { UnauthorizedError } from "@/api/middlewares/error-handler.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

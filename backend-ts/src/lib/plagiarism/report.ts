@@ -1,9 +1,9 @@
-import { Options } from "./options.js"
-import { FingerprintIndex } from "./algorithm/fingerprintIndex.js"
-import { TokenizedFile } from "./file/tokenizedFile.js"
-import { Pair } from "./algorithm/pair.js"
-import { Fragment } from "./algorithm/fragment.js"
-import { ProgrammingLanguage } from "./language.js"
+import { Options } from "@/lib/plagiarism/options.js"
+import { FingerprintIndex } from "@/lib/plagiarism/algorithm/fingerprintIndex.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
+import { Pair } from "@/lib/plagiarism/algorithm/pair.js"
+import { Fragment } from "@/lib/plagiarism/algorithm/fragment.js"
+import { ProgrammingLanguage } from "@/lib/plagiarism/language.js"
 
 /**
  * Analysis report containing all results.

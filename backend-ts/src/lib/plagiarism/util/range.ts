@@ -1,4 +1,4 @@
-import { assert } from "./utils.js"
+import { assert } from "@/lib/plagiarism/util/utils.js"
 
 /**
  * Represents a range of integers [from, to).
