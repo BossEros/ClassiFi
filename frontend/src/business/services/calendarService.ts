@@ -18,7 +18,7 @@ import type {
   DateRange,
 } from "@/business/models/calendar/types"
 import type { Assignment, Class } from "@/business/models/dashboard/types"
-import type { Submission } from "@/data/api/types"
+import type { Submission } from "@/business/models/assignment/types"
 import type { CalendarView } from "@/shared/utils/calendarConfig"
 
 // ============================================================================

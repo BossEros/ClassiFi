@@ -7,7 +7,7 @@ import type {
   TestResultDetail,
   TestPreviewResponse,
   TestResultsResponse,
-} from "@/data/api/types"
+} from "@/business/models/test/types"
 import { normalizeTestResult } from "@/shared/utils/testNormalization"
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }

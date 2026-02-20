@@ -20,14 +20,18 @@ import type {
   EnrolledStudent,
   ClassDetailData,
 } from "@/business/models/dashboard/types"
-import type { UpdateAssignmentRequest } from "@/business/models/assignment/types"
+import type {
+  CreateAssignmentRequest,
+  UpdateAssignmentRequest,
+} from "@/business/models/assignment/types"
 import type {
   CreateClassRequest,
   UpdateClassRequest,
-  CreateAssignmentRequest,
+} from "@/business/models/class/types"
+import type {
   GradeEntry,
   GradebookStudent,
-} from "@/data/api/types"
+} from "@/shared/types/gradebook"
 
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }

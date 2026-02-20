@@ -11,15 +11,15 @@
 - [x] Add ESLint boundary rules
 - [x] Run `npm run build`
 - [x] Run `npm test`
-- [ ] Commit checkpoint 4
+- [x] Commit checkpoint 4
 
 ## Checkpoint 5: Canonical Business Domain Types
-- [ ] Define/normalize business model contracts
-- [ ] Remove `business -> data/api/types` imports in non-test code
-- [ ] Keep compatibility aliases only where needed
-- [ ] Run `npm run build`
-- [ ] Run `npm test`
-- [ ] Commit checkpoint 5
+- [x] Define/normalize business model contracts
+- [x] Remove `business -> data/api/types` imports in non-test code
+- [x] Keep compatibility aliases only where needed
+- [x] Run `npm run build`
+- [x] Run `npm test`
+- [x] Commit checkpoint 5
 
 ## Checkpoint 6: Shared Cleanup
 - [ ] Move business-only utils to business layer

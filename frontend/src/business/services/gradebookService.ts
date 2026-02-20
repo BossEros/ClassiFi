@@ -1,11 +1,11 @@
 import * as gradebookRepository from "@/data/repositories/gradebookRepository"
 import { validateId } from "@/shared/utils/validators"
-import type { LatePenaltyConfig } from "@/data/api/types"
 import type {
   ClassGradebook,
   ClassStatistics,
   StudentClassGrades,
   StudentRank,
+  LatePenaltyConfig,
 } from "@/shared/types/gradebook"
 
 // Re-export types for presentation layer

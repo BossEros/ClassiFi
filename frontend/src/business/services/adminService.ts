@@ -10,7 +10,7 @@ import type {
   UpdateClassData,
   EnrolledStudent,
   ClassAssignment,
-} from "@/data/api/types"
+} from "@/business/models/admin/types"
 
 // Re-export common types for consumers
 export type {
