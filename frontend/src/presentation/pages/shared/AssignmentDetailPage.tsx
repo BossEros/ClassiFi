@@ -19,12 +19,8 @@ import {
 } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { getCurrentUser } from "@/business/services/authService"
 import {
   submitAssignment,
-  getSubmissionHistory,
-  getAssignmentSubmissions,
-  getAssignmentById,
   validateFile,
   getSubmissionContent,
   getSubmissionDownloadUrl,
@@ -36,16 +32,12 @@ import {
   type TestPreviewResult,
   getTestResultsForSubmission,
 } from "@/business/services/testService"
-import type { User } from "@/business/models/auth/types"
-import type {
-  AssignmentDetail,
-  Submission,
-} from "@/business/models/assignment/types"
 import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { AssignmentSubmissionForm } from "@/presentation/components/shared/assignmentDetail/AssignmentSubmissionForm"
 import { AssignmentTestResultsCard } from "@/presentation/components/shared/assignmentDetail/AssignmentTestResultsCard"
 import { TeacherSubmissionListCard } from "@/presentation/components/shared/assignmentDetail/TeacherSubmissionListCard"
+import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
@@ -55,13 +47,8 @@ export function AssignmentDetailPage() {
   const submissionAbortRef = useRef<AbortController | null>(null)
   const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
 
-  const [user, setUser] = useState<User | null>(null)
-  const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
-  const [submissions, setSubmissions] = useState<Submission[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
   const [isRunningPreview, setIsRunningPreview] = useState(false)
   const [previewResults, setPreviewResults] =
@@ -69,8 +56,6 @@ export function AssignmentDetailPage() {
   const [expandedPreviewTests, setExpandedPreviewTests] = useState<Set<number>>(
     new Set(),
   )
-  const [submissionTestResults, setSubmissionTestResults] =
-    useState<TestPreviewResult | null>(null)
   const [expandedSubmissionTests, setExpandedSubmissionTests] = useState<
     Set<number>
   >(new Set())
@@ -85,6 +70,21 @@ export function AssignmentDetailPage() {
   const [previewLanguage, setPreviewLanguage] = useState("")
   const [previewFileName, setPreviewFileName] = useState("")
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
+
+  const {
+    user,
+    assignment,
+    submissions,
+    submissionTestResults,
+    isLoading,
+    error,
+    setError,
+    setSubmissions,
+    setSubmissionTestResults,
+  } = useAssignmentDetailData({
+    assignmentId,
+    navigate,
+  })
 
   // Fallback data if assignment is not yet loaded or found
   const tempAssignment = assignment || {
@@ -125,92 +125,6 @@ export function AssignmentDetailPage() {
       timeoutIdsRef.current = []
     }
   }, [])
-
-  useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
-      navigate("/login")
-      return
-    }
-
-    setUser(currentUser)
-
-    // Fetch assignment data
-    const fetchAssignmentData = async () => {
-      if (!assignmentId || !currentUser) {
-        setError("Assignment not found")
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        setIsLoading(true)
-        setError(null)
-
-        // Fetch assignment details
-        const assignmentData = await getAssignmentById(
-          parseInt(assignmentId),
-          parseInt(currentUser.id),
-        )
-        setAssignment(assignmentData)
-
-        // Fetch submissions based on role
-        if (currentUser.role === "student") {
-          const historyResponse = await getSubmissionHistory(
-            parseInt(assignmentId),
-            parseInt(currentUser.id),
-          )
-
-          // Sort submissions by submissionNumber descending (newest first)
-          // This ensures consistent ordering with handleSubmit (which prepends)
-          // and ensures submissions[0] is interpreted as the latest in the render logic
-          const sortedSubmissions = [...historyResponse.submissions].sort(
-            (a, b) => b.submissionNumber - a.submissionNumber,
-          )
-          setSubmissions(sortedSubmissions)
-
-          // Fetch test results for the latest submission
-          const latestSubmission =
-            sortedSubmissions.find((s) => s.isLatest) || sortedSubmissions[0]
-
-          if (latestSubmission) {
-            try {
-              const results = await getTestResultsForSubmission(
-                latestSubmission.id,
-              )
-              setSubmissionTestResults(results)
-            } catch (e) {
-              console.error(
-                "Failed to load test results for latest submission",
-                e,
-              )
-            }
-          }
-        } else if (
-          currentUser.role === "teacher" ||
-          currentUser.role === "admin"
-        ) {
-          // Fetch all submissions for teacher
-          const allSubmissions = await getAssignmentSubmissions(
-            parseInt(assignmentId),
-            true, // latest only
-          )
-          setSubmissions(allSubmissions)
-        }
-      } catch (err) {
-        console.error("Failed to fetch assignment data:", err)
-        const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Failed to load assignment. Please try again."
-        setError(errorMessage)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchAssignmentData()
-  }, [navigate, assignmentId])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]

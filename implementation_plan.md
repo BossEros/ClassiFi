@@ -218,6 +218,34 @@ Improve semantic clarity by renaming the late-submission enablement field end-to
 - `backend-ts/src/api/schemas/assignment.schema.ts`
 - `backend-ts/src/services/assignment.service.ts`
 - `backend-ts/src/services/submission.service.ts`
+
+---
+
+# SRP Refactor Plan: Assignment Detail + Calendar Service
+
+## Objective
+
+Reduce SRP violations without changing behavior by:
+- Splitting `AssignmentDetailPage` orchestration into focused hooks.
+- Moving non-domain helper logic out of `calendarService.ts`.
+- Preserving current service APIs and UI behavior.
+
+## Checkpoints
+
+1. Checkpoint 1: Extract assignment/auth/loading orchestration from `AssignmentDetailPage` into `useAssignmentDetailData`.
+2. Checkpoint 2: Extract submission flow (file validation, preview tests, submit polling, expansion state) into a dedicated hook.
+3. Checkpoint 3: Extract submission/file preview + download modal logic into a dedicated hook and keep page as composition.
+4. Checkpoint 4: Move calendar color/date helpers and class response mapping/type guards into dedicated utility/mapper modules while keeping `calendarService` focused on domain orchestration.
+
+## Verification Per Checkpoint
+
+- Frontend: `npm run build` (must pass before each checkpoint commit).
+
+## Success Criteria
+
+- `AssignmentDetailPage` primarily composes hooks/components and route-level concerns.
+- `calendarService.ts` keeps orchestration/business logic, with pure formatting/color logic extracted.
+- No user-visible behavior regressions in assignment detail and calendar flows.
 - `backend-ts/src/shared/mappers.ts`
 - Related tests and factories
 
