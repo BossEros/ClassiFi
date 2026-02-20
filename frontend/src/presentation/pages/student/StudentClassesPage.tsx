@@ -1,77 +1,70 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from "react"
-import { useNavigate, useLocation } from "react-router-dom"
+import { useEffect, useState, useMemo } from "react"
+import { useNavigate } from "react-router-dom"
 import { Grid3x3, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
+import { JoinClassModal } from "@/presentation/components/forms/JoinClassModal"
 import {
   ClassFilters,
   type FilterStatus,
 } from "@/presentation/components/dashboard/ClassFilters"
 import { getCurrentUser } from "@/business/services/authService"
-import { getAllClasses } from "@/business/services/classService"
-import { useToast } from "@/shared/context/ToastContext"
+import { getDashboardData } from "@/business/services/studentDashboardService"
+import { useToast } from "@/presentation/context/ToastContext"
+import type { User } from "@/business/models/auth/types"
 import type { Class } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 
-export function ClassesPage() {
+export function StudentClassesPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { showToast } = useToast()
-  const hasShownDeleteToast = useRef(false)
+  const [user, setUser] = useState<User | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
 
   // Filter States
   const [searchQuery, setSearchQuery] = useState("")
   const [status, setStatus] = useState<FilterStatus>("active")
   const [selectedTerm, setSelectedTerm] = useState("all")
   const [selectedYearLevel, setSelectedYearLevel] = useState("all")
-  const [currentUser] = useState(() => getCurrentUser())
 
-  // Show toast if redirected from class deletion
   useEffect(() => {
-    if (location.state?.deleted && !hasShownDeleteToast.current) {
-      hasShownDeleteToast.current = true
-      showToast("Class deleted successfully")
-      // Clear state to prevent showing again on refresh
-      navigate(location.pathname, { replace: true })
-    }
-  }, [location.state, location.pathname, showToast, navigate])
-
-  const fetchData = useCallback(async () => {
     const currentUser = getCurrentUser()
     if (!currentUser) {
       navigate("/login")
       return
     }
 
-    try {
-      setIsLoading(true)
-      setError(null)
+    setUser(currentUser)
 
-      const activeOnlyParam = status === "active"
-
-      const allClasses = await getAllClasses(
-        parseInt(currentUser.id),
-        activeOnlyParam,
-      )
-
-      setClasses(allClasses)
-    } catch (err) {
-      console.error("Failed to fetch classes:", err)
-      setError("Failed to load classes. Please try refreshing the page.")
-    } finally {
-      setIsLoading(false)
+    // Fetch enrolled classes
+    const fetchClasses = async () => {
+      try {
+        setIsLoading(true)
+        setError(null)
+        const data = await getDashboardData(parseInt(currentUser.id))
+        // Cast is safe: API returns ISO date strings compatible with ISODateString
+        setClasses(data.enrolledClasses as Class[])
+      } catch (err) {
+        console.error("Failed to fetch classes:", err)
+        setError("Failed to load classes. Please try refreshing the page.")
+      } finally {
+        setIsLoading(false)
+      }
     }
-  }, [navigate, status])
 
-  // Fetch classes when status changes (backend filter)
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchClasses()
+  }, [navigate])
+
+  const handleJoinSuccess = (classInfo: Class) => {
+    // Add the new class to the list
+    setClasses((prev) => [classInfo, ...prev])
+    showToast(`Successfully joined ${classInfo.className}!`, "success")
+  }
 
   // Extract unique terms from classes for the dropdown
   const terms = useMemo(() => {
@@ -88,19 +81,20 @@ export function ClassesPage() {
   const yearLevels = useMemo(() => {
     const uniqueLevels = new Set<string>(["1", "2", "3", "4"]) // Default year levels
     classes.forEach((c) => {
-      if (c.yearLevel) {
+      if (c.yearLevel !== undefined && c.yearLevel !== null) {
         uniqueLevels.add(c.yearLevel.toString())
       }
     })
     return Array.from(uniqueLevels).sort() // Low to High
   }, [classes])
 
-  // Client-side filtering for Search, Term, and Year Level (and strictly archived status)
+  // Client-side filtering logic
   const filteredClasses = useMemo(() => {
     return classes.filter((c) => {
-      // 1. Status Filter (Refinement)
-      // Since backend 'activeOnly=false' returns ALL, we need to manually filter if 'archived' is selected
+      // 1. Status Filter
       if (status === "archived" && c.isActive) return false
+      if (status === "active" && !c.isActive) return false // Students might have inactive classes if archived by teacher?
+      // Assuming 'active' implies showing only active classes by default
 
       // 2. Term Filter
       if (selectedTerm !== "all") {
@@ -110,7 +104,8 @@ export function ClassesPage() {
 
       // 3. Year Level Filter
       if (selectedYearLevel !== "all") {
-        if (c.yearLevel.toString() !== selectedYearLevel) return false
+        if (!c.yearLevel || c.yearLevel.toString() !== selectedYearLevel)
+          return false
       }
 
       // 4. Search Filter
@@ -125,60 +120,48 @@ export function ClassesPage() {
     })
   }, [classes, status, selectedTerm, selectedYearLevel, searchQuery])
 
-  const hasActiveFilters =
-    searchQuery.trim().length > 0 ||
-    status !== "active" ||
-    selectedTerm !== "all" ||
-    selectedYearLevel !== "all"
-
-  const userInitials = currentUser
-    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : "?"
 
-  const topBar = useTopBar({ user: currentUser, userInitials })
+  const topBar = useTopBar({ user, userInitials })
 
   return (
     <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-300">
-              Classes
-            </h1>
-            <p className="text-slate-300 text-sm mt-1">
-              Manage your courses and students
+            <h1 className="text-3xl font-bold text-white mb-2">My Classes</h1>
+            <p className="text-slate-400 text-base">
+              View and manage your enrolled courses
             </p>
           </div>
           <Button
-            onClick={() => navigate("/dashboard/classes/new")}
+            onClick={() => setIsJoinModalOpen(true)}
             className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white border border-teal-500/40"
             disabled={isLoading}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Create New Class
+            Join a Class
           </Button>
         </div>
 
         {/* Filters */}
-        <div className="p-1">
-          <ClassFilters
-            onSearchChange={setSearchQuery}
-            onStatusChange={setStatus}
-            onTermChange={setSelectedTerm}
-            onYearLevelChange={setSelectedYearLevel}
-            currentFilters={{
-              searchQuery,
-              status,
-              selectedTerm,
-              selectedYearLevel,
-            }}
-            terms={terms}
-            yearLevels={yearLevels}
-          />
-        </div>
-
-        <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mb-8"></div>
+        <ClassFilters
+          onSearchChange={setSearchQuery}
+          onStatusChange={setStatus}
+          onTermChange={setSelectedTerm}
+          onYearLevelChange={setSelectedYearLevel}
+          currentFilters={{
+            searchQuery,
+            status,
+            selectedTerm,
+            selectedYearLevel,
+          }}
+          terms={terms}
+          yearLevels={yearLevels}
+        />
       </div>
 
       {/* Error Message */}
@@ -218,23 +201,24 @@ export function ClassesPage() {
                 No classes found
               </h3>
               <p className="text-slate-300 max-w-sm min-w-[200px] mx-auto mb-8 whitespace-normal break-words">
-                {hasActiveFilters
+                {searchQuery || status !== "active"
                   ? "We couldn't find any classes matching your current filters. Try adjusting them."
-                  : "Get started by creating your first class to manage students and assignments."}
+                  : "You haven't enrolled in any classes yet."}
               </p>
-              {!hasActiveFilters && (
-                <Button
-                  onClick={() => navigate("/dashboard/classes/new")}
-                  className="w-auto bg-teal-600 hover:bg-teal-700 border border-teal-500/40"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create a Class
-                </Button>
-              )}
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Join Class Modal */}
+      {user && (
+        <JoinClassModal
+          isOpen={isJoinModalOpen}
+          onClose={() => setIsJoinModalOpen(false)}
+          onSuccess={handleJoinSuccess}
+          studentId={parseInt(user.id)}
+        />
+      )}
     </DashboardLayout>
   )
 }

@@ -1,7 +1,7 @@
 import Editor from "@monaco-editor/react"
 import { X, Copy, Check } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
 import { useState, useEffect } from "react"
 

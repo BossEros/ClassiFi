@@ -9,7 +9,7 @@ import {
   removeAssignmentInstructionsImage,
 } from "@/business/services/classService"
 import { getAssignmentById } from "@/business/services/assignmentService"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import {
   validateAssignmentTitle,
   validateInstructions,

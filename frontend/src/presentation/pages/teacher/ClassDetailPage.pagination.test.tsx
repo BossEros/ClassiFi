@@ -5,7 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ClassDetailPage } from "./ClassDetailPage"
 import * as authService from "@/business/services/authService"
 import * as classService from "@/business/services/classService"
-import { ToastProvider } from "@/shared/context/ToastContext"
+import { ToastProvider } from "@/presentation/context/ToastContext"
 import type { ISODateString, DayOfWeek } from "@/shared/types/class"
 
 // Mock services

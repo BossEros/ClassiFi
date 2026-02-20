@@ -15,7 +15,7 @@ import type { CalendarEvent } from "@/business/models/calendar/types"
 import { getCurrentUser } from "@/business/services/authService"
 import { formatCalendarDate } from "@/business/services/calendarService"
 import { sendReminderToNonSubmitters } from "@/business/services/assignmentService"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 
 export interface EventDetailsModalProps {
   isOpen: boolean

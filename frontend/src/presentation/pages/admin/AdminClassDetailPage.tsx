@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { Avatar } from "@/presentation/components/ui/Avatar"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import {
   getAdminClassDetailData,
   removeStudentFromClass,

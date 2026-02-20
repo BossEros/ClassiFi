@@ -22,7 +22,7 @@ import {
   deleteClass,
   deleteAssignment,
 } from "@/business/services/classService"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import type { User } from "@/business/models/auth/types"
 import type {

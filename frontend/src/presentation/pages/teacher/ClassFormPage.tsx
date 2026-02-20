@@ -31,7 +31,7 @@ import {
 import { Input } from "@/presentation/components/ui/Input"
 import { Textarea } from "@/presentation/components/ui/Textarea"
 import { Button } from "@/presentation/components/ui/Button"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import { DAYS, TIME_OPTIONS } from "@/shared/constants/schedule"
 import { formatTimeDisplay } from "@/shared/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/shared/utils/dateUtils"

@@ -1,4 +1,4 @@
-import { RegisterForm } from "../components/forms/RegisterForm"
+import { RegisterForm } from "@/presentation/components/forms/RegisterForm"
 import { useNavigate } from "react-router-dom"
 
 export function RegisterPage() {

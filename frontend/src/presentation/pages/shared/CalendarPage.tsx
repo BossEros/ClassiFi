@@ -22,7 +22,7 @@ import {
 import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
 import { calendarLocalizer } from "@/shared/utils/calendarConfig"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import "react-big-calendar/lib/css/react-big-calendar.css"

@@ -17,11 +17,11 @@ import { CustomDayView } from "./CustomDayView"
 import { CustomWeekView } from "./CustomWeekView"
 import { EventDetailsModal } from "./EventDetailsModal"
 import { calendarLocalizer } from "@/shared/utils/calendarConfig"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/shared/utils/calendarConfig"
 import "react-big-calendar/lib/css/react-big-calendar.css"
-import "@/presentation/pages/CalendarPage.css"
+import "@/presentation/pages/shared/CalendarPage.css"
 
 // ============================================================================
 // Types

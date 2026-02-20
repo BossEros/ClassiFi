@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
-import { Button } from "../components/ui/Button"
+import { Button } from "@/presentation/components/ui/Button"
 
 interface EmailConfirmationPageProps {
   onRedirectToLogin?: () => void
