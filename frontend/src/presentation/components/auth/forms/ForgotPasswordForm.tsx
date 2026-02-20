@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { Input } from "../ui/Input"
-import { Button } from "../ui/Button"
+import { Input } from "@/presentation/components/ui/Input"
+import { Button } from "@/presentation/components/ui/Button"
 import { Mail, ArrowRight, CheckCircle2 } from "lucide-react"
 import { requestPasswordReset } from "@/business/services/authService"
 

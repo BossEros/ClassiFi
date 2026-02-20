@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Grid3x3, ClipboardList, FileText, ArrowRight } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
-import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
 import {
   Card,
   CardContent,
@@ -14,7 +14,7 @@ import { getDashboardData } from "@/business/services/teacherDashboardService"
 import { getDeadlineStatus } from "@/shared/utils/dateUtils"
 import type { User } from "@/business/models/auth/types"
 import type { Class, Task } from "@/business/models/dashboard/types"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function TeacherDashboardPage() {
   const navigate = useNavigate()
@@ -208,3 +208,4 @@ export function TeacherDashboardPage() {
     </DashboardLayout>
   )
 }
+

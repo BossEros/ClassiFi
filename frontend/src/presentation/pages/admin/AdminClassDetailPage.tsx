@@ -14,7 +14,7 @@ import {
   XCircle,
   FileText,
 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { useToast } from "@/presentation/context/ToastContext"
 import {
@@ -424,3 +424,4 @@ export function AdminClassDetailPage() {
     </DashboardLayout>
   )
 }
+

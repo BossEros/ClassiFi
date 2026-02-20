@@ -12,7 +12,7 @@ import {
   Loader2,
   type LucideIcon,
 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -303,3 +303,4 @@ export function AdminDashboardPage() {
     </DashboardLayout>
   )
 }
+

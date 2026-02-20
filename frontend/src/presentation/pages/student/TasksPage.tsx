@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function TasksPage() {
   const [currentUser] = useState(() => getCurrentUser())
@@ -42,3 +42,4 @@ export function TasksPage() {
     </DashboardLayout>
   )
 }
+

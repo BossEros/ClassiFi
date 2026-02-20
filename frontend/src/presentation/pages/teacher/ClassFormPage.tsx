@@ -8,7 +8,7 @@ import {
   Check,
   X,
 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -36,7 +36,7 @@ import { DAYS, TIME_OPTIONS } from "@/shared/constants/schedule"
 import { formatTimeDisplay } from "@/shared/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/shared/utils/dateUtils"
 import type { Schedule, DayOfWeek } from "@/business/models/dashboard/types"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 
 interface FormData {
@@ -625,3 +625,4 @@ export function ClassFormPage() {
 // Export with both names for backwards compatibility
 export { ClassFormPage as CreateClassPage }
 export default ClassFormPage
+

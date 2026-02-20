@@ -1,5 +1,5 @@
 import { Route } from "react-router-dom"
-import { ProtectedRoute } from "@/presentation/components/dashboard/ProtectedRoute"
+import { ProtectedRoute } from "@/presentation/components/shared/dashboard/ProtectedRoute"
 import { AssignmentFormPage } from "@/presentation/pages/teacher/AssignmentFormPage"
 import { AssignmentSubmissionsPage } from "@/presentation/pages/teacher/AssignmentSubmissionsPage"
 import { ClassFormPage } from "@/presentation/pages/teacher/ClassFormPage"
@@ -91,3 +91,4 @@ export function TeacherRoutes() {
     </>
   )
 }
+

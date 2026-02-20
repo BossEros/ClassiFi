@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
-import { useTestResults } from "@/presentation/hooks/useTestResults"
+import { useTestResults } from "@/presentation/hooks/shared/useTestResults"
 import type { TestResultDetail } from "@/shared/types/testCase"
 
 interface TestResultsPanelProps {
@@ -282,3 +282,4 @@ function TestResultItem({
 }
 
 export default TestResultsPanel
+

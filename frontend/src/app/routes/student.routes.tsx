@@ -1,5 +1,5 @@
 import { Route } from "react-router-dom"
-import { ProtectedRoute } from "@/presentation/components/dashboard/ProtectedRoute"
+import { ProtectedRoute } from "@/presentation/components/shared/dashboard/ProtectedRoute"
 import { HistoryPage } from "@/presentation/pages/student/HistoryPage"
 import { StudentGradesPage } from "@/presentation/pages/student/StudentGradesPage"
 import { TasksPage } from "@/presentation/pages/student/TasksPage"
@@ -34,3 +34,4 @@ export function StudentRoutes() {
     </>
   )
 }
+

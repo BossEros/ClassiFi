@@ -31,7 +31,7 @@ import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
 import {
   TestCaseList,
   type PendingTestCase,
-} from "@/presentation/components/forms/TestCaseList"
+} from "@/presentation/components/teacher/forms/testCases/TestCaseList"
 import type {
   TestCase,
   CreateTestCaseRequest,
@@ -709,4 +709,5 @@ export function BasicInfoForm({
     </Card>
   )
 }
+
 

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { RefreshCw, Check, X } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
@@ -10,7 +10,7 @@ import { SubmissionSettings } from "@/presentation/components/teacher/forms/assi
 import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
 import { getCurrentUser } from "@/business/services/authService"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
@@ -183,4 +183,5 @@ export function AssignmentFormPage() {
 }
 
 export default AssignmentFormPage
+
 

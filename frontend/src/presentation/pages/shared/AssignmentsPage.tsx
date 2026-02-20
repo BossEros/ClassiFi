@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { FileText, Calendar } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import { getStudentSubmissions } from "@/business/services/assignmentService"
 import type { User } from "@/business/models/auth/types"
 import type { Submission } from "@/business/models/assignment/types"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function AssignmentsPage() {
   const navigate = useNavigate()
@@ -140,3 +140,4 @@ export function AssignmentsPage() {
     </DashboardLayout>
   )
 }
+

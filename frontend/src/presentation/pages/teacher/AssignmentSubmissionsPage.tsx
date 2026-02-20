@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { SubmissionCard } from "@/presentation/components/dashboard/SubmissionCard"
+import { SubmissionCard } from "@/presentation/components/shared/dashboard/SubmissionCard"
 import {
   Search,
   Shield,
@@ -26,7 +26,7 @@ import {
 import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
 import { formatDeadline } from "@/shared/utils/dateUtils"
 import { useToast } from "@/presentation/context/ToastContext"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import type {
   AssignmentDetail,
   Submission,
@@ -345,3 +345,4 @@ export function AssignmentSubmissionsPage() {
     </DashboardLayout>
   )
 }
+

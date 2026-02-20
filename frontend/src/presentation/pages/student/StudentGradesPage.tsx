@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import type {
   StudentClassGrades,
   StudentGradeEntry,
 } from "@/shared/types/gradebook"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function StudentGradesPage() {
   const navigate = useNavigate()
@@ -307,4 +307,5 @@ function getGradeColor(percentage: number): string {
   if (percentage >= 40) return "text-orange-400"
   return "text-red-400"
 }
+
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -24,9 +24,9 @@ import {
   ChangePasswordModal,
   DeleteAccountModal,
   AvatarUploadModal,
-} from "@/presentation/components/settings"
-import { NotificationPreferences } from "@/presentation/components/settings/NotificationPreferences"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+} from "@/presentation/components/shared/settings"
+import { NotificationPreferences } from "@/presentation/components/shared/settings/NotificationPreferences"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function SettingsPage() {
   const [user, setUser] = useState<User | null>(null)
@@ -243,3 +243,4 @@ export function SettingsPage() {
     </DashboardLayout>
   )
 }
+

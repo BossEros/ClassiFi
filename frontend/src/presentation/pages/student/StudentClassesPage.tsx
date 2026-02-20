@@ -1,21 +1,21 @@
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Grid3x3, Plus } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
-import { ClassCard } from "@/presentation/components/dashboard/ClassCard"
-import { JoinClassModal } from "@/presentation/components/forms/JoinClassModal"
+import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
+import { JoinClassModal } from "@/presentation/components/student/forms/JoinClassModal"
 import {
   ClassFilters,
   type FilterStatus,
-} from "@/presentation/components/dashboard/ClassFilters"
+} from "@/presentation/components/shared/dashboard/ClassFilters"
 import { getCurrentUser } from "@/business/services/authService"
 import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useToast } from "@/presentation/context/ToastContext"
 import type { User } from "@/business/models/auth/types"
 import type { Class } from "@/business/models/dashboard/types"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function StudentClassesPage() {
   const navigate = useNavigate()
@@ -222,3 +222,4 @@ export function StudentClassesPage() {
     </DashboardLayout>
   )
 }
+

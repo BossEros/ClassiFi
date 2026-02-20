@@ -15,7 +15,7 @@ import {
   Download,
   Lock,
 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -47,8 +47,8 @@ import type {
   AssignmentDetail,
   Submission,
 } from "@/business/models/assignment/types"
-import { CodePreviewModal } from "@/presentation/components/modals/CodePreviewModal"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
@@ -1397,3 +1397,4 @@ export function AssignmentDetailPage() {
     </DashboardLayout>
   )
 }
+

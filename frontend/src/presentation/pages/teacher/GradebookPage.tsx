@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Download, BarChart3, RefreshCw, BookOpen } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import {
 } from "@/presentation/hooks/teacher/useGradebook"
 import { useToast } from "@/presentation/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import {
   getClassById,
   type GradeEntry,
@@ -304,4 +304,5 @@ export function GradebookPage() {
     </DashboardLayout>
   )
 }
+
 

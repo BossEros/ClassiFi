@@ -18,7 +18,7 @@ import {
   Plus,
   BookOpen,
 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { AdminCreateClassModal } from "@/presentation/components/admin/AdminCreateClassModal"
 import { AdminDeleteClassModal } from "@/presentation/components/admin/AdminDeleteClassModal"
 import { getCurrentUser } from "@/business/services/authService"
@@ -26,9 +26,9 @@ import * as adminService from "@/business/services/adminService"
 import type { AdminClass, AdminUser } from "@/business/services/adminService"
 import type { User as AuthUser } from "@/business/models/auth/types"
 import { useToast } from "@/presentation/context/ToastContext"
-import { useDebouncedValue } from "@/presentation/hooks/useDebouncedValue"
-import { useDocumentClick } from "@/presentation/hooks/useDocumentClick"
-import { useRequestState } from "@/presentation/hooks/useRequestState"
+import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
+import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
+import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
 
 export function AdminClassesPage() {
   const navigate = useNavigate()
@@ -787,3 +787,4 @@ export function AdminClassesPage() {
     </DashboardLayout>
   )
 }
+

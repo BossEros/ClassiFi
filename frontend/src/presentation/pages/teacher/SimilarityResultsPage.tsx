@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { useParams, useLocation } from "react-router-dom"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import {
@@ -28,7 +28,7 @@ import {
   type PairResponse,
   type StudentSummary,
 } from "@/business/services/plagiarismService"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { getCurrentUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
 
@@ -543,3 +543,4 @@ export function SimilarityResultsPage() {
     </DashboardLayout>
   )
 }
+

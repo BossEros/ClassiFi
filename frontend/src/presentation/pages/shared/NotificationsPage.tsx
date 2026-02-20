@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from "react"
 import { Bell } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import * as notificationService from "@/business/services/notificationService"
 import type { Notification } from "@/business/models/notification/types"
-import { NotificationCard } from "@/presentation/components/notifications/NotificationCard"
+import { NotificationCard } from "@/presentation/components/shared/notifications/NotificationCard"
 import { useToast } from "@/presentation/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import type { User } from "@/business/models/auth/types"
 
 /**
@@ -211,3 +211,4 @@ export function NotificationsPage() {
     </DashboardLayout>
   )
 }
+

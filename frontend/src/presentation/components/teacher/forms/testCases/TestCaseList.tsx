@@ -8,8 +8,8 @@ import {
   FlaskConical,
 } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
-import { TestCaseModal } from "@/presentation/components/forms/TestCaseModal"
-import { DeleteTestCaseModal } from "@/presentation/components/forms/DeleteTestCaseModal"
+import { TestCaseModal } from "@/presentation/components/teacher/forms/testCases/TestCaseModal"
+import { DeleteTestCaseModal } from "@/presentation/components/teacher/forms/testCases/DeleteTestCaseModal"
 import type {
   TestCase,
   CreateTestCaseRequest,
@@ -358,3 +358,4 @@ export function TestCaseList({
     </div>
   )
 }
+

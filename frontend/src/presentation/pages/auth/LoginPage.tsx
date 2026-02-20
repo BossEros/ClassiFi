@@ -1,4 +1,4 @@
-import { LoginForm } from "@/presentation/components/forms/LoginForm"
+import { LoginForm } from "@/presentation/components/auth/forms/LoginForm"
 import { useNavigate } from "react-router-dom"
 import { getCurrentUser } from "@/business/services/authService"
 
@@ -75,3 +75,4 @@ export function LoginPage() {
     </div>
   )
 }
+

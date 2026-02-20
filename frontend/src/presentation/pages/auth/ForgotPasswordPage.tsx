@@ -1,4 +1,4 @@
-import { ForgotPasswordForm } from "@/presentation/components/forms/ForgotPasswordForm"
+import { ForgotPasswordForm } from "@/presentation/components/auth/forms/ForgotPasswordForm"
 import { useNavigate } from "react-router-dom"
 
 export function ForgotPasswordPage() {
@@ -42,3 +42,4 @@ export function ForgotPasswordPage() {
     </div>
   )
 }
+

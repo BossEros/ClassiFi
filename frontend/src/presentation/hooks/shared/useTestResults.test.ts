@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, waitFor, act } from "@testing-library/react"
 
-import { useTestResults } from "@/presentation/hooks/useTestResults"
+import { useTestResults } from "@/presentation/hooks/shared/useTestResults"
 import * as testCaseService from "@/business/services/testCaseService"
 
 // Mock the service
@@ -197,3 +197,4 @@ describe("useTestResults", () => {
     })
   })
 })
+

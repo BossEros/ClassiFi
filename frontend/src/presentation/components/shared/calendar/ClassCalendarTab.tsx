@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
-import { useClassCalendar } from "@/presentation/hooks/useClassCalendar"
+import { useClassCalendar } from "@/presentation/hooks/shared/useClassCalendar"
 import { CustomEventComponent } from "./CustomEventComponent"
 import { CustomToolbar } from "./CustomToolbar"
 import { CustomDayView } from "./CustomDayView"
@@ -369,3 +369,4 @@ export function ClassCalendarTab({
     </div>
   )
 }
+

@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { Input } from "../ui/Input"
-import { Button } from "../ui/Button"
+import { Input } from "@/presentation/components/ui/Input"
+import { Button } from "@/presentation/components/ui/Button"
 import { Eye, EyeOff, ArrowLeft, GraduationCap, Users } from "lucide-react"
 import { registerUser } from "@/business/services/authService"
 import { validateField } from "@/business/validation/authValidation"

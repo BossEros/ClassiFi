@@ -1,5 +1,5 @@
 import { Route } from "react-router-dom"
-import { ProtectedRoute } from "@/presentation/components/dashboard/ProtectedRoute"
+import { ProtectedRoute } from "@/presentation/components/shared/dashboard/ProtectedRoute"
 import { AssignmentDetailPage } from "@/presentation/pages/shared/AssignmentDetailPage"
 import { AssignmentsPage } from "@/presentation/pages/shared/AssignmentsPage"
 import CalendarPage from "@/presentation/pages/shared/CalendarPage"
@@ -81,3 +81,4 @@ export function SharedRoutes() {
     </>
   )
 }
+

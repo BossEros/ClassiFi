@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { render, screen, fireEvent } from "@testing-library/react"
-import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal"
+import { DeleteAssignmentModal } from "@/presentation/components/teacher/forms/class/DeleteAssignmentModal"
 describe("DeleteAssignmentModal", () => {
   const defaultProps = {
     isOpen: true,
@@ -214,3 +214,4 @@ describe("DeleteAssignmentModal", () => {
     })
   })
 })
+

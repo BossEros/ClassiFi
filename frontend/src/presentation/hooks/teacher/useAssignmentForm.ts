@@ -27,7 +27,7 @@ import type {
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
 } from "@/shared/types/testCase"
-import type { PendingTestCase } from "@/presentation/components/forms/TestCaseList"
+import type { PendingTestCase } from "@/presentation/components/teacher/forms/testCases/TestCaseList"
 import type { SelectOption } from "@/presentation/components/ui/Select"
 import type {
   LatePenaltyConfig,
@@ -550,4 +550,5 @@ export function useAssignmentForm() {
     handleDeletePendingTestCase,
   }
 }
+
 

@@ -1,20 +1,20 @@
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ClipboardList, Users, Plus, BarChart3 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { ClassHeader } from "@/presentation/components/dashboard/ClassHeader"
-import { ClassTabs } from "@/presentation/components/dashboard/ClassTabs"
-import { AssignmentFilterBar } from "@/presentation/components/dashboard/AssignmentFilterBar"
-import { AssignmentSection } from "@/presentation/components/dashboard/AssignmentSection"
-import { StudentListItem } from "@/presentation/components/dashboard/StudentListItem"
+import { ClassHeader } from "@/presentation/components/shared/dashboard/ClassHeader"
+import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs"
+import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
+import { AssignmentSection } from "@/presentation/components/shared/dashboard/AssignmentSection"
+import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
-import { ClassCalendarTab } from "@/presentation/components/calendar"
-import { DeleteClassModal } from "@/presentation/components/forms/DeleteClassModal"
-import { LeaveClassModal } from "@/presentation/components/forms/LeaveClassModal"
-import { DeleteAssignmentModal } from "@/presentation/components/forms/DeleteAssignmentModal"
-import { RemoveStudentModal } from "@/presentation/components/forms/RemoveStudentModal"
+import { ClassCalendarTab } from "@/presentation/components/shared/calendar"
+import { DeleteClassModal } from "@/presentation/components/teacher/forms/class/DeleteClassModal"
+import { LeaveClassModal } from "@/presentation/components/shared/forms/LeaveClassModal"
+import { DeleteAssignmentModal } from "@/presentation/components/teacher/forms/class/DeleteAssignmentModal"
+import { RemoveStudentModal } from "@/presentation/components/teacher/forms/class/RemoveStudentModal"
 import { getCurrentUser } from "@/business/services/authService"
 import type { ClassTab } from "@/shared/types/class"
 import {
@@ -23,7 +23,7 @@ import {
   deleteAssignment,
 } from "@/business/services/classService"
 import { useToast } from "@/presentation/context/ToastContext"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import type { User } from "@/business/models/auth/types"
 import type {
   Class,
@@ -673,3 +673,4 @@ export function ClassDetailPage() {
     </DashboardLayout>
   )
 }
+

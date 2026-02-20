@@ -13,4 +13,12 @@
 - [x] Move role-specific components into `presentation/components/{student,teacher,admin,shared}`
 - [x] Move role-specific hooks into `presentation/hooks/{student,teacher,admin,shared}`
 - [x] Run `npm run build` and `npm test`
-- [ ] Commit checkpoint 2
+- [x] Commit checkpoint 2
+
+## Checkpoint 3
+- [x] Move shared components into `presentation/components/shared/*`
+- [x] Split legacy `components/forms` into `auth`, `student`, `teacher`, and `shared` form folders
+- [x] Move reusable hooks into `presentation/hooks/shared/*`
+- [x] Update imports and internal references after moves
+- [x] Run `npm run build` and `npm test`
+- [x] Commit checkpoint 3

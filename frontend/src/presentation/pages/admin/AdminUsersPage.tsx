@@ -17,7 +17,7 @@ import {
   ChevronDown,
   User as UserIcon,
 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { AdminUserModal } from "@/presentation/components/admin/AdminUserModal"
 import { AdminEditUserModal } from "@/presentation/components/admin/AdminEditUserModal"
@@ -27,9 +27,9 @@ import { useToast } from "@/presentation/context/ToastContext"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
 import type { User } from "@/business/models/auth/types"
-import { useDebouncedValue } from "@/presentation/hooks/useDebouncedValue"
-import { useDocumentClick } from "@/presentation/hooks/useDocumentClick"
-import { useRequestState } from "@/presentation/hooks/useRequestState"
+import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
+import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
+import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
 
 export function AdminUsersPage() {
   const navigate = useNavigate()
@@ -525,3 +525,4 @@ export function AdminUsersPage() {
     </DashboardLayout>
   )
 }
+

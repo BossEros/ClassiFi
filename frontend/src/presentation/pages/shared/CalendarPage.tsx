@@ -10,7 +10,7 @@
 
 import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
-import { useCalendar } from "@/presentation/hooks/useCalendar"
+import { useCalendar } from "@/presentation/hooks/shared/useCalendar"
 import {
   CustomEventComponent,
   CustomToolbar,
@@ -18,9 +18,9 @@ import {
   CustomDayView,
   CustomWeekView,
   EventDetailsModal,
-} from "@/presentation/components/calendar"
-import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLayout"
-import { useTopBar } from "@/presentation/components/dashboard/TopBar"
+} from "@/presentation/components/shared/calendar"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { calendarLocalizer } from "@/shared/utils/calendarConfig"
 import { useToast } from "@/presentation/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
@@ -417,3 +417,4 @@ export default function CalendarPage() {
     </DashboardLayout>
   )
 }
+
