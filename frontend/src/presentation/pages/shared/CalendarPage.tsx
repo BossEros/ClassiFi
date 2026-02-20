@@ -21,7 +21,7 @@ import {
 } from "@/presentation/components/shared/calendar"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
-import { calendarLocalizer } from "@/shared/utils/calendarConfig"
+import { calendarLocalizer } from "@/presentation/constants/calendarConfig"
 import { useToast } from "@/presentation/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
 import type { CalendarEvent } from "@/business/models/calendar/types"

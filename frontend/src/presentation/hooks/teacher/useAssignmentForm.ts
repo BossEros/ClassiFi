@@ -34,7 +34,7 @@ import type {
   PenaltyTier,
 } from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
-import { toLocalDateTimeString } from "@/shared/utils/dateUtils"
+import { toLocalDateTimeString } from "@/presentation/utils/dateUtils"
 import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
 import { type ProgrammingLanguage } from "@/business/models/assignment/types"
 

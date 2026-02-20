@@ -24,7 +24,7 @@ import { getCurrentUser } from "@/business/services/authService"
 import * as adminService from "@/business/services/adminService"
 import type { AdminStats, ActivityItem } from "@/business/services/adminService"
 import type { User } from "@/business/models/auth/types"
-import { formatTimeAgo } from "@/shared/utils/dateUtils"
+import { formatTimeAgo } from "@/presentation/utils/dateUtils"
 
 interface DashboardStat {
   label: string

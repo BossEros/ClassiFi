@@ -9,8 +9,8 @@ import {
   ArrowRight,
 } from "lucide-react"
 import type { Submission } from "@/business/models/assignment/types"
-import { formatFileSize } from "@/shared/utils/formatUtils"
-import { formatTimeAgo, isLateSubmission } from "@/shared/utils/dateUtils"
+import { formatFileSize } from "@/presentation/utils/formatUtils"
+import { formatTimeAgo, isLateSubmission } from "@/presentation/utils/dateUtils"
 
 interface SubmissionCardProps {
   submission: Submission

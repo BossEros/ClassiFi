@@ -22,13 +22,13 @@
 - [x] Commit checkpoint 5
 
 ## Checkpoint 6: Shared Cleanup
-- [ ] Move business-only utils to business layer
-- [ ] Move presentation-only utils to presentation layer
-- [ ] Move data-only utils to data layer
-- [ ] Remove dead runtime utility `scheduleUtils.ts`
-- [ ] Run `npm run build`
-- [ ] Run `npm test`
-- [ ] Commit checkpoint 6
+- [x] Move business-only utils to business layer
+- [x] Move presentation-only utils to presentation layer
+- [x] Move data-only utils to data layer
+- [x] Remove dead runtime utility `scheduleUtils.ts`
+- [x] Run `npm run build`
+- [x] Run `npm test`
+- [x] Commit checkpoint 6
 
 ## Checkpoint 7: API Type File Decomposition
 - [ ] Split `src/data/api/types.ts` by feature

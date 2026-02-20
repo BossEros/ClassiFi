@@ -4,7 +4,7 @@ import {
   formatFullName,
   withFullName,
   normalizeUserName,
-} from "@/shared/utils/formatUtils"
+} from "@/presentation/utils/formatUtils"
 
 describe("formatUtils", () => {
   // ============================================================================

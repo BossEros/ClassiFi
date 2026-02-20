@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import type { CalendarEvent } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/shared/utils/calendarConfig"
+import type { CalendarView } from "@/business/models/calendar/types"
 import { format } from "date-fns"
 import { CustomViewToolbar } from "./CustomViewToolbar"
 import "./CustomDayView.css"

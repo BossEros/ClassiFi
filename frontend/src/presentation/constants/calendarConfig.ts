@@ -8,6 +8,7 @@
 import { dateFnsLocalizer } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enUS } from "date-fns/locale"
+import type { CalendarView } from "@/business/models/calendar/types"
 
 /**
  * Date-fns localizer configuration for React Big Calendar.
@@ -48,11 +49,6 @@ export const calendarLocalizer = dateFnsLocalizer({
     "en-US": enUS,
   },
 })
-
-/**
- * Calendar view types supported by React Big Calendar.
- */
-export type CalendarView = "month" | "week" | "day" | "agenda"
 
 /**
  * Default calendar configuration options.

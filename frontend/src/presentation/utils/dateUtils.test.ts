@@ -9,7 +9,7 @@ import {
   formatTimeRemaining,
   getDeadlineStatus,
   formatDateTime,
-} from "@/shared/utils/dateUtils"
+} from "@/presentation/utils/dateUtils"
 
 describe("dateUtils", () => {
   // ============================================================================

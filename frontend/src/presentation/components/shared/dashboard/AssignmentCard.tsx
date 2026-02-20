@@ -7,7 +7,7 @@ import { StatusBadge } from "@/presentation/components/ui/StatusBadge"
 import { GradeDisplay } from "@/presentation/components/ui/GradeDisplay"
 import { parseISODate } from "@/shared/types/class"
 import { getAssignmentStatus } from "@/shared/utils/assignmentStatus"
-import { formatDateTime } from "@/shared/utils/dateUtils"
+import { formatDateTime } from "@/presentation/utils/dateUtils"
 
 interface AssignmentCardProps {
   assignment: Assignment

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 
-import { normalizeTestResult } from "@/shared/utils/testNormalization"
+import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 import type { RawTestResult } from "@/shared/types/testCase"
 
 describe("testNormalization", () => {

@@ -1,5 +1,5 @@
 import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import type {
   AnalyzeResponse,
   PairResponse,

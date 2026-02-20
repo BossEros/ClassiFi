@@ -11,7 +11,7 @@ import {
 } from "@/presentation/components/ui/Card"
 import { getCurrentUser } from "@/business/services/authService"
 import { getDashboardData } from "@/business/services/teacherDashboardService"
-import { getDeadlineStatus } from "@/shared/utils/dateUtils"
+import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
 import type { User } from "@/business/models/auth/types"
 import type { Class, Task } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"

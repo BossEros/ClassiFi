@@ -1,4 +1,4 @@
-import type { CalendarView } from "@/shared/utils/calendarConfig"
+import type { CalendarView } from "@/business/models/calendar/types"
 
 export interface CalendarViewToggleProps {
   /** Currently active view */

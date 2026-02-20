@@ -1,7 +1,7 @@
 import * as assignmentService from "./assignmentService"
 import * as classService from "./classService"
 import * as studentDashboardService from "./studentDashboardService"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import {
   startOfMonth,
   endOfMonth,
@@ -19,7 +19,7 @@ import type {
 } from "@/business/models/calendar/types"
 import type { Assignment, Class } from "@/business/models/dashboard/types"
 import type { Submission } from "@/business/models/assignment/types"
-import type { CalendarView } from "@/shared/utils/calendarConfig"
+import type { CalendarView } from "@/business/models/calendar/types"
 
 // ============================================================================
 // Color Scheme Constants

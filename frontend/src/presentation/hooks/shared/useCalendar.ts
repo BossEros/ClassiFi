@@ -11,7 +11,7 @@ import {
 import * as calendarService from "@/business/services/calendarService"
 import * as authService from "@/business/services/authService"
 import type { CalendarEvent, ClassInfo } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/shared/utils/calendarConfig"
+import type { CalendarView } from "@/business/models/calendar/types"
 
 /**
  * Type guard to validate user role.

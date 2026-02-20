@@ -34,8 +34,8 @@ import {
   getSubmissionContent,
   getSubmissionDownloadUrl,
 } from "@/business/services/assignmentService"
-import { formatFileSize } from "@/shared/utils/formatUtils"
-import { formatDateTime } from "@/shared/utils/dateUtils"
+import { formatFileSize } from "@/presentation/utils/formatUtils"
+import { formatDateTime } from "@/presentation/utils/dateUtils"
 import { useToast } from "@/presentation/context/ToastContext"
 import {
   runTestsPreview,

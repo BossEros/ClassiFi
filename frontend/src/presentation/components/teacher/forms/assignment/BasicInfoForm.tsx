@@ -26,8 +26,8 @@ import {
   type AssignmentFormData,
   type FormErrors,
 } from "@/presentation/hooks/teacher/useAssignmentForm"
-import { formatTimeRemaining } from "@/shared/utils/dateUtils"
-import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
+import { formatTimeRemaining } from "@/presentation/utils/dateUtils"
+import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
 import {
   TestCaseList,
   type PendingTestCase,

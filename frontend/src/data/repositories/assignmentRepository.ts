@@ -1,6 +1,6 @@
 import { apiClient, type ApiResponse } from "@/data/api/apiClient"
 import { supabase } from "@/data/api/supabaseClient"
-import { sanitizeUserFacingErrorMessage } from "@/shared/utils/errorUtils"
+import { sanitizeUserFacingErrorMessage } from "@/data/api/errorMapping"
 import {
   mapSubmission,
   mapSubmissionWithAssignment,

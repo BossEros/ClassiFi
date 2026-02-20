@@ -1,5 +1,5 @@
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import type {
   Submission,
   SubmissionHistoryResponse,
@@ -7,7 +7,7 @@ import type {
   SubmitAssignmentRequest,
   SubmissionContent,
 } from "@/business/models/assignment/types"
-import { validateFile } from "@/shared/utils/assignmentValidation"
+import { validateFile } from "@/business/validation/submissionFileValidation"
 export { validateFile }
 
 /**

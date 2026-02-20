@@ -4,7 +4,7 @@ import type {
   Class,
   Task,
 } from "@/business/models/dashboard/types"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 
 /**
  * Fetches the complete dashboard overview for a specific teacher.

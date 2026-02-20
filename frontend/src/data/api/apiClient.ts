@@ -1,5 +1,5 @@
 import { supabase } from "@/data/api/supabaseClient"
-import { sanitizeUserFacingErrorMessage } from "@/shared/utils/errorUtils"
+import { sanitizeUserFacingErrorMessage } from "@/data/api/errorMapping"
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"

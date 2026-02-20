@@ -6,7 +6,7 @@ import {
   getErrorMessage,
   sanitizeUserFacingErrorMessage,
   withErrorHandling,
-} from "@/shared/utils/errorUtils"
+} from "@/data/api/errorMapping"
 
 describe("errorUtils", () => {
   // ============================================================================

@@ -18,6 +18,11 @@ export type AssignmentStatus = "not-started" | "pending" | "submitted" | "late"
 export type CalendarEventType = "assignment"
 
 /**
+ * Supported calendar views.
+ */
+export type CalendarView = "month" | "week" | "day" | "agenda"
+
+/**
  * Class metadata attached to a calendar event.
  */
 export interface CalendarEventClassInfo {

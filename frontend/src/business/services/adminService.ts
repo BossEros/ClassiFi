@@ -26,7 +26,7 @@ export type {
   ClassAssignment,
 }
 
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import {
   validateEmail,
   validateRole,

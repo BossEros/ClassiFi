@@ -24,7 +24,7 @@ import {
   getAssignmentSubmissions,
 } from "@/business/services/assignmentService"
 import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
-import { formatDeadline } from "@/shared/utils/dateUtils"
+import { formatDeadline } from "@/presentation/utils/dateUtils"
 import { useToast } from "@/presentation/context/ToastContext"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import type {

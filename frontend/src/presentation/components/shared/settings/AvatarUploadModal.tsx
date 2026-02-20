@@ -9,7 +9,10 @@ import {
   Image as ImageIcon,
 } from "lucide-react"
 import { uploadAvatar } from "@/business/services/userService"
-import { validateImageFile, FILE_VALIDATION } from "@/shared/utils/validators"
+import {
+  validateImageFile,
+  FILE_VALIDATION,
+} from "@/presentation/utils/imageValidation"
 
 interface AvatarUploadModalProps {
   isOpen: boolean

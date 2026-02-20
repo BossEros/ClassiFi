@@ -3,7 +3,7 @@ import { Clock } from "lucide-react"
 import {
   convertToSingleLetterAbbr,
   formatTimeRange,
-} from "@/shared/constants/schedule"
+} from "@/presentation/constants/schedule.constants"
 import type { DayOfWeek } from "@/shared/types/class"
 
 interface ScheduleInfoProps {

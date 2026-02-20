@@ -3,13 +3,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as testService from "./testService"
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import * as testNormalization from "@/shared/utils/testNormalization"
+import * as testNormalization from "@/business/services/testResultNormalizer"
 import type { RawTestResult } from "@/shared/types/testCase"
 
 // Mock dependencies
 vi.mock("@/data/repositories/testCaseRepository")
 vi.mock("@/data/repositories/assignmentRepository")
-vi.mock("@/shared/utils/testNormalization")
+vi.mock("@/business/services/testResultNormalizer")
 
 describe("testService", () => {
   beforeEach(() => {

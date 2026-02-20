@@ -1,6 +1,6 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import type {
   TestCase,
   CreateTestCaseRequest,
@@ -8,7 +8,7 @@ import type {
   TestExecutionSummary,
 } from "@/shared/types/testCase"
 import type { TestResultsResponse } from "@/business/models/test/types"
-import { normalizeTestResult } from "@/shared/utils/testNormalization"
+import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
 function mapTestExecutionSummary(
   testExecutionSummaryData: TestResultsResponse["data"],

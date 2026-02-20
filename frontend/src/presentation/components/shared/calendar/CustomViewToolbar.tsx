@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import type { CalendarView } from "@/shared/utils/calendarConfig"
+import type { CalendarView } from "@/business/models/calendar/types"
 
 /**
  * Props for the CustomViewToolbar component

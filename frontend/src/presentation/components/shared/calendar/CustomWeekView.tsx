@@ -8,7 +8,7 @@ import {
   isToday,
 } from "date-fns"
 import type { CalendarEvent } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/shared/utils/calendarConfig"
+import type { CalendarView } from "@/business/models/calendar/types"
 import { CustomViewToolbar } from "./CustomViewToolbar"
 import "./CustomWeekView.css"
 

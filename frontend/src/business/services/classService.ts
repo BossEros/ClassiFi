@@ -13,7 +13,7 @@ import {
   validateAcademicYear,
   validateSchedule,
 } from "@/business/validation/classValidation"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import type {
   Class,
   Assignment,
