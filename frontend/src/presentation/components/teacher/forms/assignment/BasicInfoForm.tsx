@@ -21,11 +21,12 @@ import {
 } from "@/presentation/components/ui/Card"
 import { DatePicker } from "@/presentation/components/ui/DatePicker"
 import { TimePicker } from "@/presentation/components/ui/TimePicker"
-import {
-  programmingLanguageOptions,
-  type AssignmentFormData,
-  type FormErrors,
-} from "@/presentation/hooks/teacher/useAssignmentForm"
+import { programmingLanguageOptions } from "@/presentation/hooks/teacher/useAssignmentForm"
+import type {
+  AssignmentFormData,
+  AssignmentFormInputChangeHandler,
+  FormErrors,
+} from "@/presentation/hooks/teacher/assignmentForm.types"
 import { formatTimeRemaining } from "@/presentation/utils/dateUtils"
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
 import {
@@ -47,10 +48,7 @@ interface BasicInfoFormProps {
   setShowTemplateCode: (show: boolean) => void
   onInstructionsImageUpload: (file: File) => Promise<void>
   onInstructionsImageRemove: () => Promise<void>
-  onInputChange: (
-    field: keyof AssignmentFormData,
-    value: string | number | boolean | null,
-  ) => void
+  onInputChange: AssignmentFormInputChangeHandler
 
   // Test Case Props
   testCases: TestCase[]
@@ -298,7 +296,10 @@ export function BasicInfoForm({
                 options={programmingLanguageOptions}
                 value={formData.programmingLanguage}
                 onChange={(value) =>
-                  onInputChange("programmingLanguage", value)
+                  onInputChange(
+                    "programmingLanguage",
+                    value as AssignmentFormData["programmingLanguage"],
+                  )
                 }
                 disabled={isLoading}
                 className={`h-11 py-0 bg-[#1A2130] border-white/10 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${

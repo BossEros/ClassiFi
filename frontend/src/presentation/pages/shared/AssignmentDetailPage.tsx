@@ -1,19 +1,14 @@
 import { useEffect, useState, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
-  Upload,
   FileCode,
   Clock,
   Calendar,
-  Code,
   CheckCircle,
   RefreshCw,
   AlertCircle,
-  Play,
-  ChevronDown,
   Eye,
   Download,
-  Lock,
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
@@ -34,7 +29,6 @@ import {
   getSubmissionContent,
   getSubmissionDownloadUrl,
 } from "@/business/services/assignmentService"
-import { formatFileSize } from "@/presentation/utils/formatUtils"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
 import { useToast } from "@/presentation/context/ToastContext"
 import {
@@ -49,6 +43,9 @@ import type {
 } from "@/business/models/assignment/types"
 import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { AssignmentSubmissionForm } from "@/presentation/components/shared/assignmentDetail/AssignmentSubmissionForm"
+import { AssignmentTestResultsCard } from "@/presentation/components/shared/assignmentDetail/AssignmentTestResultsCard"
+import { TeacherSubmissionListCard } from "@/presentation/components/shared/assignmentDetail/TeacherSubmissionListCard"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
@@ -633,164 +630,22 @@ export function AssignmentDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* File Upload Section - Only for Students */}
-              {!isTeacher && canResubmit && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
-                      {hasSubmitted
-                        ? "Resubmit Assignment"
-                        : "Submit Assignment"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {/* File Input */}
-                      <div>
-                        <label
-                          htmlFor="file-upload"
-                          className="block w-full p-8 border border-dashed border-white/20 rounded-xl cursor-pointer hover:border-teal-500/50 hover:bg-white/[0.02] transition-all group"
-                        >
-                          <input
-                            id="file-upload"
-                            ref={fileInputRef}
-                            type="file"
-                            className="hidden"
-                            onChange={handleFileSelect}
-                            accept={
-                              tempAssignment.programmingLanguage === "python"
-                                ? ".py,.ipynb"
-                                : tempAssignment.programmingLanguage === "java"
-                                  ? ".java,.jar"
-                                  : ".c,.h"
-                            }
-                          />
-                          <div className="text-center">
-                            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                              <Upload className="w-6 h-6 text-teal-400" />
-                            </div>
-                            <p className="text-gray-200 font-medium mb-1">
-                              Click to select file
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {tempAssignment.programmingLanguage === "python"
-                                ? "Accepted: .py, .ipynb"
-                                : tempAssignment.programmingLanguage === "java"
-                                  ? "Accepted: .java, .jar"
-                                  : "Accepted: .c, .h"}
-                            </p>
-                            <p className="text-xs text-gray-600 mt-2">
-                              Maximum file size: 10MB
-                            </p>
-                          </div>
-                        </label>
-
-                        {/* File Error */}
-                        {fileError && (
-                          <p className="mt-2 text-sm text-red-400">
-                            {fileError}
-                          </p>
-                        )}
-
-                        {/* Selected File Info */}
-                        {selectedFile && !fileError && (
-                          <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <FileCode className="w-5 h-5 text-teal-400" />
-                                <div>
-                                  <p className="text-gray-300 font-medium">
-                                    {selectedFile.name}
-                                  </p>
-                                  <p className="text-sm text-gray-500">
-                                    {formatFileSize(selectedFile.size)}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  onClick={handleFilePreview}
-                                  className="h-8 w-auto px-3 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
-                                >
-                                  <Eye className="w-3.5 h-3.5 mr-2" />
-                                  Preview
-                                </Button>
-                                <button
-                                  onClick={handleClearFile}
-                                  className="text-gray-400 hover:text-white transition-colors p-1"
-                                >
-                                  ✕
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Run Tests Button */}
-                        {selectedFile && !fileError && (
-                          <Button
-                            onClick={handleRunPreviewTests}
-                            disabled={isRunningPreview || isSubmitting}
-                            className="w-full mt-4 h-11 bg-gradient-to-r from-gray-800 to-gray-900 hover:from-black hover:to-gray-900 border border-white/10 shadow-lg shadow-black/20 transition-all duration-300 group"
-                          >
-                            {isRunningPreview ? (
-                              <>
-                                <RefreshCw className="w-4 h-4 mr-2 animate-spin text-teal-400" />
-                                <span className="text-gray-300">
-                                  Running Tests...
-                                </span>
-                              </>
-                            ) : (
-                              <>
-                                <Play className="w-4 h-4 mr-2 text-teal-400 group-hover:scale-110 transition-transform" />
-                                <span className="text-gray-200 font-medium">
-                                  Run Tests
-                                </span>
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* Submit Button */}
-                      <Button
-                        onClick={handleSubmit}
-                        disabled={!selectedFile || isSubmitting || !!fileError}
-                        className="w-full"
-                      >
-                        {isSubmitting ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                            Submitting...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 mr-2" />
-                            Submit Assignment
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Resubmission Not Allowed Message - Only for Students */}
-              {!isTeacher && !canResubmit && (
-                <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-                  <CardContent className="py-8">
-                    <div className="text-center">
-                      <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-400" />
-                      <p className="text-gray-300 font-medium mb-1">
-                        Assignment Submitted
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Resubmission is not allowed for this assignment.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              <AssignmentSubmissionForm
+                isTeacher={isTeacher}
+                canResubmit={canResubmit}
+                hasSubmitted={hasSubmitted}
+                programmingLanguage={tempAssignment.programmingLanguage}
+                fileInputRef={fileInputRef}
+                selectedFile={selectedFile}
+                fileError={fileError}
+                isRunningPreview={isRunningPreview}
+                isSubmitting={isSubmitting}
+                onFileSelect={handleFileSelect}
+                onFilePreview={handleFilePreview}
+                onClearFile={handleClearFile}
+                onRunPreviewTests={handleRunPreviewTests}
+                onSubmit={handleSubmit}
+              />
             </div>
 
             {/* Right Column - Submission History */}
@@ -815,9 +670,7 @@ export function AssignmentDetailPage() {
                         </div>
                       </div>
                       <div className="pt-4 border-t border-white/10">
-                        <p className="text-sm text-gray-400 mb-1">
-                          Latest Submission:
-                        </p>
+                        <p className="text-sm text-gray-400 mb-1">Latest Submission:</p>
                         <p className="text-gray-300 font-mono text-sm">
                           {latestSubmission?.fileName}
                         </p>
@@ -890,495 +743,31 @@ export function AssignmentDetailPage() {
                         <Clock className="w-5 h-5 text-yellow-400" />
                       </div>
                       <div>
-                        <p className="text-gray-300 font-medium">
-                          Not Submitted
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          No submissions yet
-                        </p>
+                        <p className="text-gray-300 font-medium">Not Submitted</p>
+                        <p className="text-sm text-gray-500">No submissions yet</p>
                       </div>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Test Results Card - Handles Preview, Submission, and Initial Test Cases */}
-              {(previewResults ||
-                submissionTestResults ||
-                (assignment?.testCases && assignment.testCases.length > 0)) &&
-                (() => {
-                  const activeResults = previewResults || submissionTestResults
-                  const isPreview = !!previewResults
+              <AssignmentTestResultsCard
+                previewResults={previewResults}
+                submissionTestResults={submissionTestResults}
+                assignmentTestCases={assignment?.testCases}
+                expandedPreviewTests={expandedPreviewTests}
+                expandedSubmissionTests={expandedSubmissionTests}
+                expandedInitialTests={expandedInitialTests}
+                onTogglePreviewTestExpand={togglePreviewTestExpand}
+                onToggleSubmissionTestExpand={toggleSubmissionTestExpand}
+                onToggleInitialTestExpand={toggleInitialTestExpand}
+              />
 
-                  // If we have actual results (preview or submission)
-                  if (activeResults) {
-                    const expandedSet = isPreview
-                      ? expandedPreviewTests
-                      : expandedSubmissionTests
-                    const toggleFn = isPreview
-                      ? togglePreviewTestExpand
-                      : toggleSubmissionTestExpand
-                    const resultCount = activeResults.results.length
-
-                    return (
-                      <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="flex items-center gap-2">
-                            <Code className="w-5 h-5 text-purple-400" />
-                            {resultCount === 1 ? "Test Case" : "Test Cases"}
-                          </CardTitle>
-                          <span
-                            className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                              activeResults.percentage === 100
-                                ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
-                            }`}
-                          >
-                            {activeResults.passed}/{activeResults.total} Passed
-                            ({activeResults.percentage}%)
-                          </span>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            {activeResults.results
-                              .map((r, i) => ({ ...r, originalIndex: i }))
-                              .filter((r) => !r.isHidden)
-                              .map(({ originalIndex, ...result }) => {
-                                const isAccepted = result.status === "Accepted"
-                                const isExpanded =
-                                  expandedSet.has(originalIndex)
-
-                                return (
-                                  <div
-                                    key={originalIndex}
-                                    className="rounded-lg border border-white/5 overflow-hidden bg-black/20"
-                                  >
-                                    <button
-                                      onClick={() => toggleFn(originalIndex)}
-                                      className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <span
-                                          className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-mono border ${
-                                            isAccepted
-                                              ? "bg-green-500/10 text-green-400 border-green-500/20"
-                                              : "bg-red-500/10 text-red-400 border-red-500/20"
-                                          }`}
-                                        >
-                                          {originalIndex + 1}
-                                        </span>
-                                        <div className="flex flex-col items-start">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium text-gray-200">
-                                              {result.name}
-                                            </span>
-                                          </div>
-                                          <span
-                                            className={`text-xs ${
-                                              isAccepted
-                                                ? "text-green-500/70"
-                                                : "text-red-500/70"
-                                            }`}
-                                          >
-                                            {result.status}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <ChevronDown
-                                        className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                                          isExpanded ? "rotate-180" : ""
-                                        }`}
-                                      />
-                                    </button>
-
-                                    {isExpanded && (
-                                      <div className="border-t border-white/5 bg-gray-950/50 p-4 space-y-4">
-                                        <div className="grid grid-cols-1 gap-4">
-                                          <div>
-                                            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
-                                              <span className="w-1 h-1 rounded-full bg-blue-500"></span>
-                                              Input
-                                            </p>
-                                            <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
-                                              <pre
-                                                className={`text-xs font-mono whitespace-pre-wrap ${
-                                                  !result.input
-                                                    ? "text-gray-500 italic"
-                                                    : "text-gray-300"
-                                                }`}
-                                              >
-                                                {result.input ||
-                                                  "(No input required)"}
-                                              </pre>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                          {result.expectedOutput && (
-                                            <div>
-                                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
-                                                <span className="w-1 h-1 rounded-full bg-gray-500"></span>
-                                                Expected
-                                              </p>
-                                              <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
-                                                <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
-                                                  {result.expectedOutput}
-                                                </pre>
-                                              </div>
-                                            </div>
-                                          )}
-
-                                          {(result.actualOutput ||
-                                            !isAccepted) && (
-                                            <div>
-                                              <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
-                                                <span
-                                                  className={`w-1 h-1 rounded-full ${
-                                                    isAccepted
-                                                      ? "bg-green-500"
-                                                      : "bg-red-500"
-                                                  }`}
-                                                ></span>
-                                                Actual
-                                              </p>
-                                              <div
-                                                className={`p-3 rounded-lg border max-h-60 overflow-y-auto custom-scrollbar ${
-                                                  isAccepted
-                                                    ? "bg-green-500/5 border-green-500/10"
-                                                    : "bg-red-500/5 border-red-500/10"
-                                                }`}
-                                              >
-                                                <pre
-                                                  className={`text-xs font-mono whitespace-pre-wrap ${
-                                                    isAccepted
-                                                      ? "text-green-300"
-                                                      : "text-red-300"
-                                                  } ${
-                                                    !result.actualOutput
-                                                      ? "italic opacity-50"
-                                                      : ""
-                                                  }`}
-                                                >
-                                                  {result.actualOutput ||
-                                                    "(No output generated)"}
-                                                </pre>
-                                              </div>
-                                            </div>
-                                          )}
-                                        </div>
-
-                                        {result.errorMessage && (
-                                          <div>
-                                            <p className="text-[10px] uppercase tracking-wider font-semibold text-red-500 mb-1.5 flex items-center gap-1.5">
-                                              <span className="w-1 h-1 rounded-full bg-red-500"></span>
-                                              Error
-                                            </p>
-                                            <div className="p-3 bg-red-950/20 rounded-lg border border-red-500/20 max-h-60 overflow-y-auto custom-scrollbar">
-                                              <pre className="text-xs text-red-400 font-mono whitespace-pre-wrap">
-                                                {result.errorMessage}
-                                              </pre>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })}
-
-                            {activeResults.results.some((r) => r.isHidden) && (
-                              <div className="relative rounded-lg border border-white/5 overflow-hidden bg-black/20 group select-none">
-                                {/* Blurred Background Content (Simulating standard rows) */}
-                                <div className="absolute inset-0 flex flex-col pointer-events-none opacity-40 blur-[2px]">
-                                  {/* Fake Row 1 */}
-                                  <div className="flex items-center justify-between p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20"></div>
-                                      <div className="h-4 w-32 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-4 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                  </div>
-                                  {/* Fake Row 2 */}
-                                  <div className="flex items-center justify-between p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20"></div>
-                                      <div className="h-4 w-24 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-4 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                  </div>
-                                  {/* Fake Row 3 */}
-                                  <div className="flex items-center justify-between p-3">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20"></div>
-                                      <div className="h-4 w-40 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-4 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Foreground Content */}
-                                <div className="relative p-8 flex flex-col items-center justify-center text-center z-10 bg-black/40 backdrop-blur-sm">
-                                  <div className="w-12 h-12 rounded-full bg-gradient-to-b from-white/10 to-transparent border border-white/10 flex items-center justify-center mb-3 shadow-xl">
-                                    <Lock className="w-5 h-5 text-gray-300" />
-                                  </div>
-                                  <p className="text-sm font-medium text-gray-200">
-                                    {
-                                      activeResults.results.filter(
-                                        (r) => r.isHidden,
-                                      ).length
-                                    }{" "}
-                                    Hidden Case
-                                    {activeResults.results.filter(
-                                      (r) => r.isHidden,
-                                    ).length !== 1
-                                      ? "s"
-                                      : ""}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1 max-w-[240px]">
-                                    These test cases are hidden to test your
-                                    solution against edge cases.
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  }
-
-                  // Initial display of test cases (before running any tests)
-                  // Show list of test cases from assignment details
-                  if (
-                    assignment?.testCases &&
-                    assignment.testCases.length > 0
-                  ) {
-                    const testCases = assignment.testCases
-                    const resultCount = testCases.length
-
-                    return (
-                      <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-                        <CardHeader className="flex flex-row items-center justify-between pb-2">
-                          <CardTitle className="flex items-center gap-2">
-                            <Code className="w-5 h-5 text-teal-400" />
-                            {resultCount === 1 ? "Test Case" : "Test Cases"}
-                          </CardTitle>
-                          <span className="text-xs font-semibold px-2.5 py-1 rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20">
-                            {resultCount} {resultCount === 1 ? "Case" : "Cases"}
-                          </span>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-3">
-                            {testCases
-                              .map((tc, i) => ({ ...tc, originalIndex: i }))
-                              .filter((tc) => !tc.isHidden)
-                              .map(({ originalIndex, ...testCase }) => {
-                                const isExpanded =
-                                  expandedInitialTests.has(originalIndex)
-
-                                return (
-                                  <div
-                                    key={testCase.id}
-                                    className="rounded-lg border border-white/5 overflow-hidden bg-black/20"
-                                  >
-                                    <button
-                                      onClick={() =>
-                                        toggleInitialTestExpand(originalIndex)
-                                      }
-                                      className="w-full flex items-center justify-between p-3 hover:bg-white/5 transition-colors text-left"
-                                    >
-                                      <div className="flex items-center gap-3">
-                                        <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-mono border bg-teal-500/10 text-teal-400 border-teal-500/20">
-                                          {originalIndex + 1}
-                                        </span>
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-sm font-medium text-gray-200">
-                                            {testCase.name}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center gap-3">
-                                        {isExpanded ? (
-                                          <ChevronDown className="w-4 h-4 text-gray-500" />
-                                        ) : (
-                                          <ChevronDown className="w-4 h-4 text-gray-500 -rotate-90" />
-                                        )}
-                                      </div>
-                                    </button>
-
-                                    {isExpanded && (
-                                      <div className="border-t border-white/5 bg-gray-950/50 p-4 space-y-4">
-                                        {testCase.input ||
-                                        testCase.expectedOutput ? (
-                                          <>
-                                            <div className="grid grid-cols-1 gap-4">
-                                              <div>
-                                                <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
-                                                  <span className="w-1 h-1 rounded-full bg-blue-500"></span>
-                                                  Input
-                                                </p>
-                                                <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
-                                                  <pre
-                                                    className={`text-xs font-mono whitespace-pre-wrap ${
-                                                      !testCase.input
-                                                        ? "text-gray-500 italic"
-                                                        : "text-gray-300"
-                                                    }`}
-                                                  >
-                                                    {testCase.input ||
-                                                      "(No input required)"}
-                                                  </pre>
-                                                </div>
-                                              </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 gap-4">
-                                              {testCase.expectedOutput && (
-                                                <div>
-                                                  <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
-                                                    <span className="w-1 h-1 rounded-full bg-gray-500"></span>
-                                                    Expected Output
-                                                  </p>
-                                                  <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
-                                                    <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
-                                                      {testCase.expectedOutput}
-                                                    </pre>
-                                                  </div>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </>
-                                        ) : (
-                                          <p className="text-xs text-gray-500 italic">
-                                            No details available.
-                                          </p>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                )
-                              })}
-
-                            {testCases.some((tc) => tc.isHidden) && (
-                              <div className="relative rounded-lg border border-white/5 overflow-hidden bg-black/20 group select-none">
-                                {/* Blurred Background Content (Simulating standard rows) */}
-                                <div className="absolute inset-0 flex flex-col pointer-events-none opacity-40 blur-[2px]">
-                                  {/* Fake Row 1 */}
-                                  <div className="flex items-center justify-between p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20"></div>
-                                      <div className="h-4 w-32 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-4 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                  </div>
-                                  {/* Fake Row 2 */}
-                                  <div className="flex items-center justify-between p-3 border-b border-white/5">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20"></div>
-                                      <div className="h-4 w-24 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-4 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                  </div>
-                                  {/* Fake Row 3 */}
-                                  <div className="flex items-center justify-between p-3">
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-md bg-teal-500/10 border border-teal-500/20"></div>
-                                      <div className="h-4 w-40 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <div className="h-4 w-4 bg-gray-700/20 rounded"></div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Foreground Content */}
-                                <div className="relative p-8 flex flex-col items-center justify-center text-center z-10 bg-black/40 backdrop-blur-sm">
-                                  <div className="w-12 h-12 rounded-full bg-gradient-to-b from-white/10 to-transparent border border-white/10 flex items-center justify-center mb-3 shadow-xl">
-                                    <Lock className="w-5 h-5 text-gray-300" />
-                                  </div>
-                                  <p className="text-sm font-medium text-gray-200">
-                                    {
-                                      testCases.filter((tc) => tc.isHidden)
-                                        .length
-                                    }{" "}
-                                    Hidden Case
-                                    {testCases.filter((tc) => tc.isHidden)
-                                      .length !== 1
-                                      ? "s"
-                                      : ""}
-                                  </p>
-                                  <p className="text-xs text-gray-500 mt-1 max-w-[240px]">
-                                    These test cases are hidden to test your
-                                    solution against edge cases.
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )
-                  }
-
-                  return null
-                })()}
-
-              {/* Student List - only for Teachers */}
-              {isTeacher && (
-                <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle>Student Submissions</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {submissions.length > 0 ? (
-                      <div className="space-y-3">
-                        {submissions.map((submission) => (
-                          <div
-                            key={submission.id}
-                            className="p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors cursor-pointer group"
-                            onClick={() =>
-                              handleSubmissionPreview(submission.id)
-                            }
-                          >
-                            <div className="flex items-start justify-between mb-2">
-                              <p className="text-gray-300 font-medium text-sm">
-                                {submission.studentName || "Unknown Student"}
-                              </p>
-                              <span className="text-xs px-2 py-0.5 rounded bg-green-500/20 text-green-400">
-                                Submitted
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-400 font-mono mb-1">
-                              {submission.fileName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatFileSize(submission.fileSize)} •{" "}
-                              {formatDateTime(submission.submittedAt)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-400 text-sm">
-                          No submissions yet
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+              <TeacherSubmissionListCard
+                isTeacher={isTeacher}
+                submissions={submissions}
+                onPreviewSubmission={handleSubmissionPreview}
+              />
             </div>
           </div>
         </>
@@ -1397,4 +786,3 @@ export function AssignmentDetailPage() {
     </DashboardLayout>
   )
 }
-

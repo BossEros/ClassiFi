@@ -39,8 +39,8 @@
 - [x] Commit checkpoint 7
 
 ## Checkpoint 8: Large File Decomposition
-- [ ] Decompose large page/hook files into feature subcomponents/hooks
-- [ ] Preserve behavior and route outputs
-- [ ] Run `npm run build`
-- [ ] Run `npm test`
+- [x] Decompose large page/hook files into feature subcomponents/hooks
+- [x] Preserve behavior and route outputs
+- [x] Run `npm run build`
+- [x] Run `npm test`
 - [ ] Commit checkpoint 8

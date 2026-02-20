@@ -11,12 +11,6 @@ import {
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useToast } from "@/presentation/context/ToastContext"
 import {
-  validateAssignmentTitle,
-  validateInstructions,
-  validateProgrammingLanguage,
-  validateDeadline,
-} from "@/business/validation/assignmentValidation"
-import {
   getTestCases,
   createTestCase,
   updateTestCase,
@@ -29,82 +23,22 @@ import type {
 } from "@/shared/types/testCase"
 import type { PendingTestCase } from "@/presentation/components/teacher/forms/testCases/TestCaseList"
 import type { SelectOption } from "@/presentation/components/ui/Select"
-import type {
-  LatePenaltyConfig,
-  PenaltyTier,
-} from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import { toLocalDateTimeString } from "@/presentation/utils/dateUtils"
 import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
 import { type ProgrammingLanguage } from "@/business/models/assignment/types"
-
-export interface AssignmentFormData {
-  assignmentName: string
-  instructions: string
-  instructionsImageUrl: string | null
-  programmingLanguage: ProgrammingLanguage | ""
-  deadline: string
-  allowResubmission: boolean
-  maxAttempts: number | null
-  templateCode: string
-  totalScore: number | null
-  scheduledDate: string | null
-  allowLateSubmissions: boolean
-  latePenaltyConfig: LatePenaltyConfig
-}
-
-export interface FormErrors {
-  assignmentName?: string
-  instructions?: string
-  programmingLanguage?: string
-  deadline?: string
-  scheduledDate?: string
-  totalScore?: string
-  maxAttempts?: string
-  general?: string
-}
+import type {
+  AssignmentFormData,
+  FormErrors,
+} from "@/presentation/hooks/teacher/assignmentForm.types"
+import {
+  buildAssignmentPayload,
+  normalizeLatePenaltyConfig,
+  validateAssignmentFormData,
+} from "@/presentation/hooks/teacher/assignmentForm.helpers"
 
 export const programmingLanguageOptions: SelectOption[] =
   PROGRAMMING_LANGUAGE_OPTIONS.map((opt) => ({ ...opt }))
-
-function generateTierId(): string {
-  if (typeof globalThis.crypto?.randomUUID === "function") {
-    return globalThis.crypto.randomUUID()
-  }
-
-  return `tier-${Math.random().toString(36).slice(2, 10)}`
-}
-
-function normalizeLatePenaltyConfig(
-  latePenaltyConfig: LatePenaltyConfig | null | undefined,
-): LatePenaltyConfig {
-  const sourceConfig = latePenaltyConfig ?? DEFAULT_LATE_PENALTY_CONFIG
-
-  const normalizedTiers: PenaltyTier[] = sourceConfig.tiers.map((tier) => {
-    const tierWithOptionalId = tier as PenaltyTier & { id?: string }
-    const tierWithLegacyHours = tier as PenaltyTier & {
-      hoursAfterGrace?: number
-    }
-    const hasValidId =
-      typeof tierWithOptionalId.id === "string" &&
-      tierWithOptionalId.id.trim().length > 0
-    const tierHoursLate =
-      typeof tier.hoursLate === "number"
-        ? tier.hoursLate
-        : (tierWithLegacyHours.hoursAfterGrace ?? 0)
-
-    return {
-      id: hasValidId ? tierWithOptionalId.id : generateTierId(),
-      hoursLate: Math.max(0, tierHoursLate),
-      penaltyPercent: tier.penaltyPercent,
-    }
-  })
-
-  return {
-    tiers: normalizedTiers,
-    rejectAfterHours: sourceConfig.rejectAfterHours,
-  }
-}
 
 export function useAssignmentForm() {
   const navigate = useNavigate()
@@ -243,46 +177,7 @@ export function useAssignmentForm() {
   }
 
   const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    const nameError = validateAssignmentTitle(formData.assignmentName)
-    if (nameError) newErrors.assignmentName = nameError
-
-    const descError = validateInstructions(
-      formData.instructions,
-      formData.instructionsImageUrl,
-    )
-    if (descError) newErrors.instructions = descError
-
-    const langError = validateProgrammingLanguage(formData.programmingLanguage)
-    if (langError) newErrors.programmingLanguage = langError
-
-    if (formData.deadline) {
-      const deadlineError = validateDeadline(new Date(formData.deadline))
-      if (deadlineError) newErrors.deadline = deadlineError
-    }
-
-    if (formData.scheduledDate) {
-      const scheduledTime = formData.scheduledDate.split("T")[1]?.slice(0, 5)
-      const hasScheduledTime = Boolean(scheduledTime)
-
-      if (!hasScheduledTime) {
-        newErrors.scheduledDate = "Release time is required"
-      }
-    }
-
-    if (formData.totalScore === null) {
-      newErrors.totalScore = "Total score is required"
-    } else if (formData.totalScore < 1) {
-      newErrors.totalScore = "Total score must be at least 1"
-    }
-
-    if (formData.allowResubmission && formData.maxAttempts !== null) {
-      if (formData.maxAttempts < 1 || formData.maxAttempts > 99) {
-        newErrors.maxAttempts = "Max attempts must be between 1 and 99"
-      }
-    }
-
+    const newErrors = validateAssignmentFormData(formData)
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -305,57 +200,23 @@ export function useAssignmentForm() {
       return
     }
 
-    const hasDeadline = formData.deadline.trim().length > 0
-    const shouldEnableLatePenalty = hasDeadline && formData.allowLateSubmissions
-
     setIsLoading(true)
 
     try {
+      const assignmentPayload = buildAssignmentPayload(
+        formData,
+        parseInt(currentUser.id),
+      )
+
       if (isEditMode && assignmentId) {
         // Update existing assignment
-        await updateAssignment(parseInt(assignmentId), {
-          teacherId: parseInt(currentUser.id),
-          assignmentName: formData.assignmentName.trim(),
-          instructions: formData.instructions.trim(),
-          instructionsImageUrl: formData.instructionsImageUrl,
-          programmingLanguage:
-            formData.programmingLanguage as ProgrammingLanguage,
-          deadline: formData.deadline ? new Date(formData.deadline) : null,
-          allowResubmission: formData.allowResubmission,
-          maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
-          templateCode: formData.templateCode || null,
-          totalScore: formData.totalScore,
-          scheduledDate: formData.scheduledDate
-            ? new Date(formData.scheduledDate)
-            : null,
-          allowLateSubmissions: shouldEnableLatePenalty,
-          latePenaltyConfig: shouldEnableLatePenalty
-            ? formData.latePenaltyConfig
-            : null,
-        })
+        await updateAssignment(parseInt(assignmentId), assignmentPayload)
         showToast("Assignment updated successfully")
       } else {
         // Create new assignment
         const newAssignment = await createAssignment({
           classId: parseInt(classId),
-          teacherId: parseInt(currentUser.id),
-          assignmentName: formData.assignmentName.trim(),
-          instructions: formData.instructions.trim(),
-          instructionsImageUrl: formData.instructionsImageUrl,
-          programmingLanguage:
-            formData.programmingLanguage as ProgrammingLanguage,
-          deadline: formData.deadline ? new Date(formData.deadline) : null,
-          allowResubmission: formData.allowResubmission,
-          maxAttempts: formData.allowResubmission ? formData.maxAttempts : 1,
-          templateCode: formData.templateCode || null,
-          totalScore: formData.totalScore,
-          scheduledDate: formData.scheduledDate
-            ? new Date(formData.scheduledDate)
-            : null,
-          allowLateSubmissions: shouldEnableLatePenalty,
-          latePenaltyConfig: shouldEnableLatePenalty
-            ? formData.latePenaltyConfig
-            : null,
+          ...assignmentPayload,
         })
 
         // Create pending test cases

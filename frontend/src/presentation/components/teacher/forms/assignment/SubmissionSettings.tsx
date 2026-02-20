@@ -8,17 +8,15 @@ import {
 } from "@/presentation/components/ui/Card"
 import {
   type AssignmentFormData,
+  type AssignmentFormInputChangeHandler,
   type FormErrors,
-} from "@/presentation/hooks/teacher/useAssignmentForm"
+} from "@/presentation/hooks/teacher/assignmentForm.types"
 
 interface SubmissionSettingsProps {
   formData: AssignmentFormData
   errors: FormErrors
   isLoading: boolean
-  onInputChange: (
-    field: keyof AssignmentFormData,
-    value: string | number | boolean | null,
-  ) => void
+  onInputChange: AssignmentFormInputChangeHandler
 }
 
 export function SubmissionSettings({

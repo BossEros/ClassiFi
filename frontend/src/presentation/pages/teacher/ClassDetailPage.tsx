@@ -1,20 +1,17 @@
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { ClipboardList, Users, Plus, BarChart3 } from "lucide-react"
+import { ClipboardList, BarChart3 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { ClassHeader } from "@/presentation/components/shared/dashboard/ClassHeader"
 import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs"
-import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
-import { AssignmentSection } from "@/presentation/components/shared/dashboard/AssignmentSection"
-import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
-import { Pagination } from "@/presentation/components/ui/Pagination"
 import { ClassCalendarTab } from "@/presentation/components/shared/calendar"
 import { DeleteClassModal } from "@/presentation/components/teacher/forms/class/DeleteClassModal"
 import { LeaveClassModal } from "@/presentation/components/shared/forms/LeaveClassModal"
 import { DeleteAssignmentModal } from "@/presentation/components/teacher/forms/class/DeleteAssignmentModal"
 import { RemoveStudentModal } from "@/presentation/components/teacher/forms/class/RemoveStudentModal"
+import { AssignmentsTabContent } from "@/presentation/components/teacher/classDetail/AssignmentsTabContent"
+import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent"
 import { getCurrentUser } from "@/business/services/authService"
 import type { ClassTab } from "@/shared/types/class"
 import {
@@ -36,6 +33,7 @@ import {
   groupAssignments,
   calculateFilterCounts,
 } from "@/shared/utils/assignmentFilters"
+import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers"
 
 const STUDENTS_PER_PAGE = 10
 const STUDENT_GRID_TEMPLATE = "400px 1fr 150px 60px"
@@ -99,20 +97,10 @@ export function ClassDetailPage() {
   )
 
   // Pagination calculations for students
-  const filteredStudents = useMemo(() => {
-    if (!studentSearchQuery.trim()) {
-      return students
-    }
-
-    const query = studentSearchQuery.toLowerCase()
-    return students.filter(
-      (student) =>
-        (student.fullName ?? "").toLowerCase().includes(query) ||
-        (student.email ?? "").toLowerCase().includes(query) ||
-        (student.firstName ?? "").toLowerCase().includes(query) ||
-        (student.lastName ?? "").toLowerCase().includes(query),
-    )
-  }, [students, studentSearchQuery])
+  const filteredStudents = useMemo(
+    () => filterStudentsByQuery(students, studentSearchQuery),
+    [students, studentSearchQuery],
+  )
 
   const totalStudentPages = useMemo(
     () => Math.ceil(filteredStudents.length / STUDENTS_PER_PAGE),
@@ -179,25 +167,10 @@ export function ClassDetailPage() {
         (s) => s.id !== studentToRemove.id,
       )
       setStudents(updatedStudents)
-
-      // Apply the same filtering logic to updatedStudents to get the filtered count
-      const filteredUpdatedStudents = !studentSearchQuery.trim()
-        ? updatedStudents
-        : updatedStudents.filter(
-            (student) =>
-              (student.fullName ?? "")
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()) ||
-              (student.email ?? "")
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()) ||
-              (student.firstName ?? "")
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()) ||
-              (student.lastName ?? "")
-                .toLowerCase()
-                .includes(studentSearchQuery.toLowerCase()),
-          )
+      const filteredUpdatedStudents = filterStudentsByQuery(
+        updatedStudents,
+        studentSearchQuery,
+      )
 
       // If current page becomes empty, go to previous page
       const newTotalPages = Math.ceil(
@@ -363,224 +336,42 @@ export function ClassDetailPage() {
             <ClassTabs activeTab={activeTab} onTabChange={handleTabChange}>
               {/* Assignments Tab */}
               {activeTab === "assignments" && (
-                <div className="space-y-6">
-                  {/* Filter Bar and Add Button */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <AssignmentFilterBar
-                      activeFilter={assignmentFilter}
-                      onFilterChange={setAssignmentFilter}
-                      counts={filterCounts}
-                    />
-                    {isTeacher && (
-                      <Button
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/classes/${classId}/assignments/new`,
-                          )
-                        }
-                        className="w-full sm:w-auto"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Assignment
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Assignment Sections */}
-                  {assignments.length > 0 ? (
-                    <div className="space-y-6">
-                      <AssignmentSection
-                        title="CURRENT & UPCOMING"
-                        assignments={groupedAssignments.current}
-                        onAssignmentClick={handleAssignmentClick}
-                        onEditAssignment={handleEditAssignment}
-                        onDeleteAssignment={handleDeleteAssignmentClick}
-                        isTeacher={isTeacher}
-                      />
-                      <AssignmentSection
-                        title="PAST ASSIGNMENTS"
-                        assignments={groupedAssignments.past}
-                        onAssignmentClick={handleAssignmentClick}
-                        onEditAssignment={handleEditAssignment}
-                        onDeleteAssignment={handleDeleteAssignmentClick}
-                        isTeacher={isTeacher}
-                      />
-
-                      {/* Empty state for filtered results */}
-                      {filteredAssignments.length === 0 && (
-                        <div className="py-12 text-center">
-                          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                            <ClipboardList className="w-8 h-8 text-gray-500" />
-                          </div>
-                          <p className="text-gray-300 font-medium mb-1">
-                            No assignments match this filter
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Try selecting a different filter to see more
-                            assignments.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="py-12 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                        <ClipboardList className="w-8 h-8 text-gray-500" />
-                      </div>
-                      <p className="text-gray-300 font-medium mb-1">
-                        No assignments yet
-                      </p>
-                      {isTeacher ? (
-                        <>
-                          <p className="text-sm text-gray-500 mb-4">
-                            Create your first assignment to get started.
-                          </p>
-                          <Button
-                            onClick={() =>
-                              navigate(
-                                `/dashboard/classes/${classId}/assignments/new`,
-                              )
-                            }
-                            className="w-auto"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Assignment
-                          </Button>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-500">
-                          Your teacher hasn't created any assignments yet.
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <AssignmentsTabContent
+                  assignments={assignments}
+                  groupedAssignments={groupedAssignments}
+                  filteredAssignments={filteredAssignments}
+                  assignmentFilter={assignmentFilter}
+                  filterCounts={filterCounts}
+                  isTeacher={isTeacher}
+                  onFilterChange={setAssignmentFilter}
+                  onCreateAssignment={() =>
+                    navigate(`/dashboard/classes/${classId}/assignments/new`)
+                  }
+                  onAssignmentClick={handleAssignmentClick}
+                  onEditAssignment={handleEditAssignment}
+                  onDeleteAssignment={handleDeleteAssignmentClick}
+                />
               )}
 
               {/* Students Tab */}
               {activeTab === "students" && (
-                <div className="space-y-6">
-                  {students.length > 0 ? (
-                    <>
-                      {/* Header with Search */}
-                      <div className="flex items-center justify-between gap-4">
-                        {/* Title with Count */}
-                        <div className="flex items-center gap-3">
-                          <h2 className="text-xl font-bold text-white">
-                            Enrolled Students
-                          </h2>
-                          <span className="px-3 py-1 rounded-full text-sm font-medium bg-white/10 text-gray-300">
-                            {students.length}
-                          </span>
-                        </div>
-
-                        {/* Search */}
-                        <div className="relative">
-                          <label htmlFor="student-search" className="sr-only">
-                            Search students by name or email
-                          </label>
-                          <input
-                            id="student-search"
-                            type="text"
-                            placeholder="Search students..."
-                            value={studentSearchQuery}
-                            onChange={(e) => {
-                              setStudentSearchQuery(e.target.value)
-                              setCurrentStudentPage(1) // Reset to first page on search
-                            }}
-                            className="w-64 h-10 pl-10 pr-4 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all"
-                          />
-                          <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* Table Container */}
-                      <div className="border border-white/10 rounded-lg overflow-hidden bg-slate-900/50">
-                        {/* Table Header */}
-                        <div
-                          className="grid gap-4 px-6 py-3 bg-slate-800/50 border-b border-white/10"
-                          style={{ gridTemplateColumns: STUDENT_GRID_TEMPLATE }}
-                        >
-                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                            Student
-                          </div>
-                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                            Email Address
-                          </div>
-                          <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                            Role
-                          </div>
-                          <div className="w-10"></div>{" "}
-                          {/* Space for remove button */}
-                        </div>
-
-                        {/* Student List */}
-                        {filteredStudents.length > 0 ? (
-                          <div>
-                            {paginatedStudents.map((student, index) => (
-                              <StudentListItem
-                                key={student.id}
-                                student={student}
-                                isLast={index === paginatedStudents.length - 1}
-                                gridTemplate={STUDENT_GRID_TEMPLATE}
-                                onRemove={
-                                  isTeacher
-                                    ? () => handleRemoveStudentClick(student)
-                                    : undefined
-                                }
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="py-12 text-center">
-                            <p className="text-gray-400">
-                              No students match your search.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Pagination Controls */}
-                      {totalStudentPages > 1 && filteredStudents.length > 0 && (
-                        <Pagination
-                          currentPage={currentStudentPage}
-                          totalPages={totalStudentPages}
-                          totalItems={filteredStudents.length}
-                          itemsPerPage={STUDENTS_PER_PAGE}
-                          onPageChange={handleStudentPageChange}
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <div className="py-12 text-center">
-                      <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                        <Users className="w-8 h-8 text-gray-500" />
-                      </div>
-                      <p className="text-gray-300 font-medium mb-1">
-                        No students enrolled
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Share the class code{" "}
-                        <span className="text-teal-400 font-mono">
-                          {classInfo?.classCode}
-                        </span>{" "}
-                        with your students.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                <StudentsTabContent
+                  students={students}
+                  filteredStudents={filteredStudents}
+                  paginatedStudents={paginatedStudents}
+                  isTeacher={isTeacher}
+                  classCode={classInfo?.classCode}
+                  studentSearchQuery={studentSearchQuery}
+                  currentStudentPage={currentStudentPage}
+                  totalStudentPages={totalStudentPages}
+                  studentGridTemplate={STUDENT_GRID_TEMPLATE}
+                  onStudentSearchQueryChange={(value) => {
+                    setStudentSearchQuery(value)
+                    setCurrentStudentPage(1)
+                  }}
+                  onRemoveStudent={handleRemoveStudentClick}
+                  onStudentPageChange={handleStudentPageChange}
+                />
               )}
 
               {/* Calendar Tab */}
