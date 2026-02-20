@@ -25,7 +25,7 @@ import {
   programmingLanguageOptions,
   type AssignmentFormData,
   type FormErrors,
-} from "@/presentation/hooks/useAssignmentForm"
+} from "@/presentation/hooks/teacher/useAssignmentForm"
 import { formatTimeRemaining } from "@/shared/utils/dateUtils"
 import { getMonacoLanguage } from "@/shared/utils/monacoUtils"
 import {
@@ -709,3 +709,4 @@ export function BasicInfoForm({
     </Card>
   )
 }
+

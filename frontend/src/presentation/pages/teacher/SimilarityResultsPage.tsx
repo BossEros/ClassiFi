@@ -19,7 +19,7 @@ import {
   StudentSummaryTable,
   StudentPairsDetail,
   type FilePair,
-} from "@/presentation/components/plagiarism"
+} from "@/presentation/components/teacher/plagiarism"
 import {
   getResultDetails,
   getStudentSummary,

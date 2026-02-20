@@ -9,14 +9,14 @@ import {
 } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { GradebookTable } from "@/presentation/components/gradebook/GradebookTable"
-import { GradeOverrideModal } from "@/presentation/components/gradebook/GradeOverrideModal"
-import { StatisticsPanel } from "@/presentation/components/gradebook/StatisticsPanel"
+import { GradebookTable } from "@/presentation/components/teacher/gradebook/GradebookTable"
+import { GradeOverrideModal } from "@/presentation/components/teacher/gradebook/GradeOverrideModal"
+import { StatisticsPanel } from "@/presentation/components/teacher/gradebook/StatisticsPanel"
 import {
   useClassGradebook,
   useGradeOverride,
   useGradebookExport,
-} from "@/presentation/hooks/useGradebook"
+} from "@/presentation/hooks/teacher/useGradebook"
 import { useToast } from "@/presentation/context/ToastContext"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
@@ -304,3 +304,4 @@ export function GradebookPage() {
     </DashboardLayout>
   )
 }
+

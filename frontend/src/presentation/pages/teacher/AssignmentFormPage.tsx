@@ -4,10 +4,10 @@ import { DashboardLayout } from "@/presentation/components/dashboard/DashboardLa
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { useAssignmentForm } from "@/presentation/hooks/useAssignmentForm"
-import { BasicInfoForm } from "@/presentation/components/forms/assignment/BasicInfoForm"
-import { SubmissionSettings } from "@/presentation/components/forms/assignment/SubmissionSettings"
-import { LatePenaltyConfig } from "@/presentation/components/forms/assignment/LatePenaltyConfig"
+import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentForm"
+import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignment/BasicInfoForm"
+import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
+import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/dashboard/TopBar"
@@ -183,3 +183,4 @@ export function AssignmentFormPage() {
 }
 
 export default AssignmentFormPage
+

@@ -10,8 +10,8 @@ import {
   CardDescription,
 } from "@/presentation/components/ui/Card"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import { LatePenaltyBadge } from "@/presentation/components/gradebook/LatePenaltyBadge"
-import { useStudentGrades } from "@/presentation/hooks/useGradebook"
+import { LatePenaltyBadge } from "@/presentation/components/teacher/gradebook/LatePenaltyBadge"
+import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
 import { getCurrentUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
 import type {
@@ -307,3 +307,4 @@ function getGradeColor(percentage: number): string {
   if (percentage >= 40) return "text-orange-400"
   return "text-red-400"
 }
+

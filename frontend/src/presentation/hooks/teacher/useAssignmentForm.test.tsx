@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, act, waitFor } from "@testing-library/react"
-import { useAssignmentForm } from "@/presentation/hooks/useAssignmentForm"
+import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentForm"
 import * as authService from "@/business/services/authService"
 import * as classService from "@/business/services/classService"
 import * as assignmentService from "@/business/services/assignmentService"
@@ -9,7 +9,7 @@ import { ToastProvider } from "@/presentation/context/ToastContext"
 import { MemoryRouter } from "react-router-dom"
 import type { User } from "@/shared/types/auth"
 import type { ISODateString } from "@/shared/types/class"
-import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/forms/assignment/LatePenaltyConfig"
+import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 
 // Mock dependencies
 vi.mock("@/business/services/authService")
@@ -18,7 +18,7 @@ vi.mock("@/business/services/assignmentService")
 vi.mock("@/business/services/testCaseService")
 
 // Mock LatePenaltyConfig to avoid importing UI component
-vi.mock("@/presentation/components/forms/assignment/LatePenaltyConfig", () => ({
+vi.mock("@/presentation/components/teacher/forms/assignment/LatePenaltyConfig", () => ({
   DEFAULT_LATE_PENALTY_CONFIG: {
     tiers: [],
     rejectAfterHours: 120,
@@ -389,3 +389,4 @@ describe("useAssignmentForm", () => {
     })
   })
 })
+

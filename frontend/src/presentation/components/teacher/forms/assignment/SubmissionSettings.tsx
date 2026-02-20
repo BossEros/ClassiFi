@@ -9,7 +9,7 @@ import {
 import {
   type AssignmentFormData,
   type FormErrors,
-} from "@/presentation/hooks/useAssignmentForm"
+} from "@/presentation/hooks/teacher/useAssignmentForm"
 
 interface SubmissionSettingsProps {
   formData: AssignmentFormData
@@ -108,3 +108,4 @@ export function SubmissionSettings({
     </Card>
   )
 }
+

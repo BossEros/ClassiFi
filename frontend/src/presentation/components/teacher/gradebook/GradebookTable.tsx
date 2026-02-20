@@ -3,7 +3,7 @@ import type {
   GradebookStudent,
   GradeEntry,
 } from "@/shared/types/gradebook"
-import { GradeCell } from "@/presentation/components/gradebook/GradeCell"
+import { GradeCell } from "@/presentation/components/teacher/gradebook/GradeCell"
 
 interface GradebookTableProps {
   assignments: GradebookAssignment[]
@@ -151,3 +151,4 @@ function getAverageColorClass(average: number): string {
   if (average >= 60) return "bg-yellow-500/20 text-yellow-400"
   return "bg-red-500/20 text-red-400"
 }
+
