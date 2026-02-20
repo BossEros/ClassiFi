@@ -6,15 +6,11 @@ import { settings } from "@/shared/config.js"
 import { errorHandler } from "@/api/middlewares/error-handler.js"
 import { apiV1Routes } from "@/api/routes/v1/index.js"
 import { setupSwagger } from "@/api/plugins/swagger.js"
-// zodValidation plugin is registered via setupSwagger
-// import zodValidation from '@/api/plugins/zod-validation.js';
 import "@/shared/container.js"
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
     logger: settings.debug,
-    // Set request timeout slightly higher than test execution timeout
-    // to allow graceful 504 response instead of connection drop
     requestTimeout: (settings.testExecutionTimeoutSeconds + 5) * 1000,
   })
 

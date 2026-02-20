@@ -14,9 +14,9 @@ import {
 vi.mock("../../src/modules/assignments/assignment.repository.js")
 
 // Mock new services
-vi.mock("../../src/services/plagiarism/plagiarism-persistence.service.js")
-vi.mock("../../src/services/plagiarism/submission-file.service.js")
-vi.mock("../../src/services/plagiarism/plagiarism-detector.factory.js")
+vi.mock("../../src/modules/plagiarism/plagiarism-persistence.service.js")
+vi.mock("../../src/modules/plagiarism/plagiarism-submission-file.service.js")
+vi.mock("../../src/modules/plagiarism/plagiarism-detector.factory.js")
 
 // Mock PlagiarismDetector
 const mockReport = {
@@ -217,8 +217,8 @@ describe("PlagiarismService", () => {
     })
 
     // Note: Logic for insufficient files/submissions is now largely inside
-    // SubmissionFileService or PlagiarismDetector or handled by empty array return.
-    // If SubmissionFileService throws, we expect that error.
+    // PlagiarismSubmissionFileService or PlagiarismDetector or handled by empty array return.
+    // If PlagiarismSubmissionFileService throws, we expect that error.
     // If it returns empty array, PlagiarismDetector might complain or we check it before.
     // Looking at code: PlagiarismService.analyzeAssignmentSubmissions (refactored)
     // calls `fileService.fetchSubmissionFiles(assignmentId)`.

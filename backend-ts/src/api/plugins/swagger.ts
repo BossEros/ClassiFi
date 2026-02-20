@@ -1,11 +1,8 @@
-/**
- * Swagger/OpenAPI Configuration
- * Provides API documentation at /docs
- */
 import type { FastifyInstance } from "fastify"
 import swagger from "@fastify/swagger"
 import swaggerUi from "@fastify/swagger-ui"
 import { settings } from "@/shared/config.js"
+
 /** Configure Swagger documentation */
 export async function setupSwagger(app: FastifyInstance): Promise<void> {
   await app.register(swagger, {

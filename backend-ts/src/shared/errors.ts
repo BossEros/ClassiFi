@@ -1,4 +1,3 @@
-/** Custom API error class */
 export class ApiError extends Error {
   statusCode: number
 

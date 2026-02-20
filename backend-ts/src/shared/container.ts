@@ -32,7 +32,7 @@ import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
 import { TestCaseService } from "@/modules/test-cases/test-case.service.js"
 import { CODE_EXECUTOR_TOKEN } from "@/services/interfaces/codeExecutor.interface.js"
 import { GradebookService } from "@/modules/gradebook/gradebook.service.js"
-import { LatePenaltyService } from "@/services/latePenalty.service.js"
+import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
 import { EmailService } from "@/services/email/index.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { NotificationQueueService } from "@/modules/notifications/notification-queue.service.js"
@@ -45,9 +45,9 @@ import { AdminClassService } from "@/modules/admin/admin-class.service.js"
 import { AdminEnrollmentService } from "@/modules/admin/admin-enrollment.service.js"
 
 // Plagiarism Services
-import { PlagiarismDetectorFactory } from "@/services/plagiarism/plagiarism-detector.factory.js"
-import { SubmissionFileService } from "@/services/plagiarism/submission-file.service.js"
-import { PlagiarismPersistenceService } from "@/services/plagiarism/plagiarism-persistence.service.js"
+import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
+import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
+import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 // Register repositories as singletons
@@ -149,11 +149,13 @@ container.registerSingleton(
   DI_TOKENS.services.plagiarismDetectorFactory,
   PlagiarismDetectorFactory,
 )
-container.registerSingleton(DI_TOKENS.services.submissionFile, SubmissionFileService)
+container.registerSingleton(
+  DI_TOKENS.services.plagiarismSubmissionFile,
+  PlagiarismSubmissionFileService,
+)
 container.registerSingleton(
   DI_TOKENS.services.plagiarismPersistence,
   PlagiarismPersistenceService,
 )
 
 export { container }
-

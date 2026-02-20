@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AssignmentService } from "@/modules/assignments/assignment.service.js"
-import { LatePenaltyService } from "@/services/latePenalty.service.js"
+import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
 import { TestCaseService } from "@/modules/test-cases/test-case.service.js"
 import { toJsonSchema } from "@/api/utils/swagger.js"
 import { parsePositiveInt } from "@/shared/utils.js"

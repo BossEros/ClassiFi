@@ -6,7 +6,7 @@ import { NotificationService } from "@/modules/notifications/notification.servic
 import {
   LatePenaltyService,
   type PenaltyResult,
-} from "@/services/latePenalty.service.js"
+} from "@/modules/assignments/late-penalty.service.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
@@ -271,6 +271,5 @@ export class GradebookService {
     }
   }
 }
-
 
 

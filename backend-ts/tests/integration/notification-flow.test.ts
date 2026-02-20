@@ -10,7 +10,7 @@ import { EnrollmentRepository } from "../../src/modules/enrollments/enrollment.r
 import { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
 import { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
-import { LatePenaltyService } from "../../src/services/latePenalty.service.js"
+import { LatePenaltyService } from "../../src/modules/assignments/late-penalty.service.js"
 import type {
   Notification,
   NotificationDelivery,

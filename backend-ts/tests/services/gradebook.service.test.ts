@@ -3,7 +3,7 @@ import { GradebookService } from "../../src/modules/gradebook/gradebook.service.
 import type { GradebookRepository } from "../../src/modules/gradebook/gradebook-query.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
-import type { LatePenaltyService } from "../../src/services/latePenalty.service.js"
+import type { LatePenaltyService } from "../../src/modules/assignments/late-penalty.service.js"
 import type { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 

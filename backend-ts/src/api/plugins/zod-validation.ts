@@ -1,7 +1,3 @@
-/**
- * Zod Validation Plugin for Fastify
- * Provides declarative validation using Zod schemas
- */
 import type {
   FastifyInstance,
   FastifyRequest,
