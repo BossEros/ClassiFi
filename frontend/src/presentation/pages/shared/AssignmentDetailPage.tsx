@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   FileCode,
@@ -19,10 +18,6 @@ import {
 } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
-import {
-  getSubmissionContent,
-  getSubmissionDownloadUrl,
-} from "@/business/services/assignmentService"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
 import { useToast } from "@/presentation/context/ToastContext"
 import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
@@ -32,18 +27,12 @@ import { AssignmentTestResultsCard } from "@/presentation/components/shared/assi
 import { TeacherSubmissionListCard } from "@/presentation/components/shared/assignmentDetail/TeacherSubmissionListCard"
 import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData"
 import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow"
+import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const { showToast } = useToast()
-
-  // Preview Modal State
-  const [showPreview, setShowPreview] = useState(false)
-  const [previewContent, setPreviewContent] = useState("")
-  const [previewLanguage, setPreviewLanguage] = useState("")
-  const [previewFileName, setPreviewFileName] = useState("")
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
   const {
     user,
@@ -88,6 +77,21 @@ export function AssignmentDetailPage() {
     showToast,
   })
 
+  const {
+    showPreview,
+    previewContent,
+    previewLanguage,
+    previewFileName,
+    isPreviewLoading,
+    openFilePreview,
+    openSubmissionPreview,
+    downloadSubmissionFile,
+    clearPreviewFileName,
+    closePreview,
+  } = useAssignmentCodePreview({
+    showToast,
+  })
+
   // Fallback data if assignment is not yet loaded or found
   const tempAssignment = assignment || {
     id: parseInt(assignmentId || "0"),
@@ -115,52 +119,8 @@ export function AssignmentDetailPage() {
   const topBar = useTopBar({ user, userInitials })
 
   const handleClearFile = () => {
-    setPreviewFileName("")
+    clearPreviewFileName()
     clearSelectedFile()
-  }
-
-  const handleFilePreview = async () => {
-    if (!selectedFile) return
-
-    try {
-      const content = await selectedFile.text()
-      setPreviewContent(content)
-      setPreviewLanguage(assignment?.programmingLanguage || "plaintext")
-      setPreviewFileName(selectedFile.name)
-      setShowPreview(true)
-    } catch (err) {
-      console.error("Failed to read file:", err)
-      showToast("Failed to read file content", "error")
-    }
-  }
-
-  const handleSubmissionPreview = async (submissionId: number) => {
-    try {
-      setIsPreviewLoading(true)
-      const submission = submissions.find((s) => s.id === submissionId)
-      if (submission) {
-        setPreviewFileName(submission.fileName)
-      }
-      const data = await getSubmissionContent(submissionId)
-      setPreviewContent(data.content)
-      setPreviewLanguage(data.language || "plaintext")
-      setShowPreview(true)
-    } catch (err) {
-      console.error("Failed to load submission content:", err)
-      showToast("Failed to load submission content", "error")
-    } finally {
-      setIsPreviewLoading(false)
-    }
-  }
-
-  const handleSubmissionDownload = async (submissionId: number) => {
-    try {
-      const url = await getSubmissionDownloadUrl(submissionId)
-      window.open(url, "_blank")
-    } catch (err) {
-      console.error("Failed to download submission:", err)
-      showToast("Failed to download submission", "error")
-    }
   }
 
   return (
@@ -319,7 +279,9 @@ export function AssignmentDetailPage() {
                 isRunningPreview={isRunningPreview}
                 isSubmitting={isSubmitting}
                 onFileSelect={handleFileSelect}
-                onFilePreview={handleFilePreview}
+                onFilePreview={() =>
+                  openFilePreview(selectedFile, assignment?.programmingLanguage)
+                }
                 onClearFile={handleClearFile}
                 onRunPreviewTests={handleRunPreviewTests}
                 onSubmit={handleSubmit}
@@ -360,7 +322,10 @@ export function AssignmentDetailPage() {
                           <Button
                             onClick={() =>
                               latestSubmission &&
-                              handleSubmissionPreview(latestSubmission.id)
+                              openSubmissionPreview(
+                                latestSubmission.id,
+                                submissions,
+                              )
                             }
                             disabled={isPreviewLoading}
                             className="flex-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
@@ -375,7 +340,7 @@ export function AssignmentDetailPage() {
                           <Button
                             onClick={() =>
                               latestSubmission &&
-                              handleSubmissionDownload(latestSubmission.id)
+                              downloadSubmissionFile(latestSubmission.id)
                             }
                             className="flex-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
                           >
@@ -444,7 +409,9 @@ export function AssignmentDetailPage() {
               <TeacherSubmissionListCard
                 isTeacher={isTeacher}
                 submissions={submissions}
-                onPreviewSubmission={handleSubmissionPreview}
+                onPreviewSubmission={(submissionId) =>
+                  openSubmissionPreview(submissionId, submissions)
+                }
               />
             </div>
           </div>
@@ -454,7 +421,7 @@ export function AssignmentDetailPage() {
       {/* Code Preview Modal */}
       <CodePreviewModal
         isOpen={showPreview}
-        onClose={() => setShowPreview(false)}
+        onClose={closePreview}
         code={previewContent}
         fileName={
           previewFileName || latestSubmission?.fileName || "Code Preview"
