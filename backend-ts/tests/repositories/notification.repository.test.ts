@@ -91,7 +91,7 @@ describe("NotificationRepository", () => {
       })
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.findByUserId(1, 10, 0)
@@ -125,7 +125,7 @@ describe("NotificationRepository", () => {
       })
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.countByUserId(1)
@@ -142,7 +142,7 @@ describe("NotificationRepository", () => {
       mockDb.select = vi.fn().mockReturnValue({ from: inAppFromMock })
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.countByUserId(1)
@@ -174,7 +174,7 @@ describe("NotificationRepository", () => {
       })
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.countUnreadByUserId(1)
@@ -191,7 +191,7 @@ describe("NotificationRepository", () => {
       mockDb.update = updateMock
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       await notificationRepo.markAsRead(1)
@@ -214,7 +214,7 @@ describe("NotificationRepository", () => {
       mockDb.update = updateMock
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       await notificationRepo.markAllAsReadByUserId(1)
@@ -260,7 +260,7 @@ describe("NotificationRepository", () => {
       })
 
       const { NotificationRepository } =
-        await import("../../src/repositories/notification.repository.js")
+        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.findRecentUnread(1, 5, 0)

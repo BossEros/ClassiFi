@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { NOTIFICATION_TYPES } from "../../src/services/notification/types.js"
+import { NOTIFICATION_TYPES } from "../../src/modules/notifications/notification.types.js"
 
 describe("Notification Types Registry", () => {
   describe("ASSIGNMENT_CREATED", () => {
@@ -184,3 +184,4 @@ describe("Notification Types Registry", () => {
     })
   })
 })
+

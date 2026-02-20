@@ -38,7 +38,7 @@ export default tseslint.config(
       "**/lib/plagiarism/language.ts",
       "**/services/admin/**/*.ts",
       "**/services/plagiarism/**/*.ts",
-      "**/api/controllers/admin/**/*.ts",
+      "**/modules/admin/**/*.ts",
     ],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",

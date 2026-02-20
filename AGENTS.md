@@ -405,6 +405,39 @@ When you encounter issues or need guidance:
 2. **Error Resolution**: Use **Exa MCP** or **Perplexity MCP** for searching solutions to error messages
 3. **Modern Patterns**: Use web search tools to find current implementation patterns and best practices
 
+### 6.1 MCP-First Tool Routing (Mandatory)
+
+Use MCP tools by default whenever a task depends on external knowledge, third-party services, or platform operations.
+
+1. **Library/framework docs**:
+   - First choice: **Context7 MCP**
+   - Fallback: **Ref MCP**
+2. **General web search / current facts**:
+   - First choice: **Exa MCP** (`web_search_exa`)
+   - Fallback: **Perplexity MCP**
+3. **Code examples and API usage patterns**:
+   - First choice: **Exa MCP** (`get_code_context_exa`)
+   - Fallback: **Context7 MCP** for official docs examples
+4. **Error investigation and debugging research**:
+   - First choice: **Exa MCP**
+   - Second opinion: **Perplexity MCP**
+5. **Documentation lookup from known URLs or doc indexes**:
+   - Use **Ref MCP** (`ref_search_documentation`, `ref_read_url`)
+6. **Supabase tasks (DB, functions, branches, advisories)**:
+   - Use **Supabase MCP** directly instead of ad-hoc SQL or guessed commands
+7. **Render deployment/ops tasks**:
+   - Use **Render MCP** directly for services, logs, and metrics
+8. **Notion tasks (search, pages, comments, databases)**:
+   - Use **Notion MCP** directly
+9. **UI generation/edit tasks**:
+   - Use **Stitch MCP** directly
+10. **Automated test planning/generation flows**:
+    - Use **TestSprite MCP** according to project state and config rules
+
+- Prefer MCP over manual web browsing whenever an MCP can solve the task.
+- Choose the MCP that is closest to the task domain before trying generic search.
+- If a chosen MCP fails, retry with a domain-appropriate fallback MCP, then continue.
+
 ## 7. 🔑 Test Credentials
 
 Use these accounts for browser-based testing or login flows.

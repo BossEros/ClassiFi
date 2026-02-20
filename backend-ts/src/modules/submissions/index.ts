@@ -1,0 +1,5 @@
+export * from '@/modules/submissions/submission.controller.js'
+export * from '@/modules/submissions/submission.service.js'
+export * from '@/modules/submissions/submission.repository.js'
+export * from '@/modules/submissions/submission.model.js'
+export * from '@/modules/submissions/submission.schema.js'

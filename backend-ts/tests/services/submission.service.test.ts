@@ -3,7 +3,7 @@
  * Comprehensive tests for submission operations
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { SubmissionService } from "../../src/services/submission.service.js"
+import { SubmissionService } from "../../src/modules/submissions/submission.service.js"
 import {
   createMockAssignment,
   createMockSubmission,
@@ -20,12 +20,12 @@ import {
 } from "../../src/shared/errors.js"
 
 // Mock repositories
-vi.mock("../../src/repositories/submission.repository.js")
-vi.mock("../../src/repositories/assignment.repository.js")
-vi.mock("../../src/repositories/enrollment.repository.js")
-vi.mock("../../src/repositories/class.repository.js")
-vi.mock("../../src/repositories/testResult.repository.js")
-vi.mock("../../src/services/codeTest.service.js")
+vi.mock("../../src/modules/submissions/submission.repository.js")
+vi.mock("../../src/modules/assignments/assignment.repository.js")
+vi.mock("../../src/modules/enrollments/enrollment.repository.js")
+vi.mock("../../src/modules/classes/class.repository.js")
+vi.mock("../../src/modules/test-cases/test-result.repository.js")
+vi.mock("../../src/services/code-test.service.js")
 
 // Mock Supabase (for legacy tests that still use it)
 vi.mock("../../src/shared/supabase.js", () => ({
@@ -566,3 +566,4 @@ describe("SubmissionService", () => {
     })
   })
 })
+

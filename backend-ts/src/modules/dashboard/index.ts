@@ -1,0 +1,6 @@
+export * from '@/modules/dashboard/student-dashboard.controller.js'
+export * from '@/modules/dashboard/teacher-dashboard.controller.js'
+export * from '@/modules/dashboard/student-dashboard.service.js'
+export * from '@/modules/dashboard/teacher-dashboard.service.js'
+export * from '@/modules/dashboard/dashboard-query.repository.js'
+export * from '@/modules/dashboard/dashboard.schema.js'

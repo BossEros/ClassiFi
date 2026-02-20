@@ -2,13 +2,10 @@
  * DTOs and Mappers Unit Tests
  */
 import { describe, it, expect } from "vitest"
-import {
-  toUserDTO,
-  toClassDTO,
-  toAssignmentDTO,
-  toSubmissionDTO,
-  toStudentDTO,
-} from "../../src/shared/mappers.js"
+import { toUserDTO, toStudentDTO } from "../../src/modules/users/user.mapper.js"
+import { toClassDTO } from "../../src/modules/classes/class.mapper.js"
+import { toAssignmentDTO } from "../../src/modules/assignments/assignment.mapper.js"
+import { toSubmissionDTO } from "../../src/modules/submissions/submission.mapper.js"
 import {
   createMockUser,
   createMockClass,

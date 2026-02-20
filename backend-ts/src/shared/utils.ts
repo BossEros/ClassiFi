@@ -3,31 +3,7 @@
  * Common utilities used across services.
  */
 
-import { v4 as uuidv4 } from "uuid"
-import type { ClassRepository } from "../repositories/class.repository.js"
-import { BadRequestError } from "./errors.js"
-
-/**
- * Generate a unique class code.
- * Creates an 8-character uppercase alphanumeric code and verifies uniqueness.
- *
- * @param classRepo - ClassRepository instance to check for existing codes
- * @returns A unique class code
- */
-export async function generateUniqueClassCode(
-  classRepo: ClassRepository,
-): Promise<string> {
-  let code: string
-  let exists = true
-
-  while (exists) {
-    // Generate 8-character uppercase alphanumeric code
-    code = uuidv4().substring(0, 8).toUpperCase()
-    exists = await classRepo.checkClassCodeExists(code)
-  }
-
-  return code!
-}
+import { BadRequestError } from "@/shared/errors.js"
 
 /**
  * Parse and validate a positive integer from a string.
@@ -149,32 +125,3 @@ export function filterUndefined<T extends object>(obj: T): Partial<T> {
   ) as Partial<T>
 }
 
-/**
- * Format an assignment due date for display in notifications.
- * Returns a formatted date string or "No deadline" if the date is null/undefined.
- *
- * @param deadline - The deadline date (string or Date object)
- * @returns Formatted date string or "No deadline"
- */
-export function formatAssignmentDueDate(
-  deadline: string | Date | null | undefined,
-): string {
-  if (!deadline) {
-    return "No deadline"
-  }
-
-  const date = new Date(deadline)
-
-  if (isNaN(date.getTime())) {
-    return "Invalid deadline"
-  }
-
-  return date.toLocaleString("en-US", {
-    month: "numeric",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
-}

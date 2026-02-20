@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { AuthService } from "../../src/services/auth.service.js"
-import { UserRepository } from "../../src/repositories/user.repository.js"
+import { AuthService } from "../../src/modules/auth/auth.service.js"
+import { UserRepository } from "../../src/modules/users/user.repository.js"
 import { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
 import { createMockUser, createMockTeacher } from "../utils/factories.js"
 import {
@@ -11,10 +11,10 @@ import {
 } from "../../src/shared/errors.js"
 
 // Mock the UserRepository class but preserve USER_ROLES constant
-vi.mock("../../src/repositories/user.repository.js", async (importOriginal) => {
+vi.mock("../../src/modules/users/user.repository.js", async (importOriginal) => {
   const original =
     await importOriginal<
-      typeof import("../../src/repositories/user.repository.js")
+      typeof import("../../src/modules/users/user.repository.js")
     >()
   return {
     ...original,

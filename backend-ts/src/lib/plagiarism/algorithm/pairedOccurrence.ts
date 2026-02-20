@@ -1,4 +1,4 @@
-import { ASTRegion } from "./astRegion.js"
+import { ASTRegion } from "@/lib/plagiarism/algorithm/astRegion.js"
 
 // Re-export for backward compatibility
 export type { ASTRegion }

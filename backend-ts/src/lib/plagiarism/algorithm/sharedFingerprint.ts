@@ -1,6 +1,6 @@
-import { TokenizedFile } from "../file/tokenizedFile.js"
-import { Identifiable } from "../util/identifiable.js"
-import { ASTRegion } from "./astRegion.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
+import { Identifiable } from "@/lib/plagiarism/util/identifiable.js"
+import { ASTRegion } from "@/lib/plagiarism/algorithm/astRegion.js"
 
 /**
  * Represents an occurrence of a fingerprint in a specific file.

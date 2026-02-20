@@ -1,4 +1,4 @@
-import { assert } from "./utils.js"
+import { assert } from "@/lib/plagiarism/util/utils.js"
 
 /**
  * Represents a selection/region in a source file.

@@ -1,12 +1,12 @@
 import { injectable } from "tsyringe"
-import { supabase } from "../shared/supabase.js"
-import { type IStorageService } from "./interfaces/storage.interface.js"
-import { createLogger } from "../shared/logger.js"
+import { supabase } from "@/shared/supabase.js"
+import { type IStorageService } from "@/services/interfaces/storage.interface.js"
+import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("StorageService")
 
 // Re-export for backwards compatibility
-export type { IStorageService } from "./interfaces/storage.interface.js"
+export type { IStorageService } from "@/services/interfaces/storage.interface.js"
 
 /**
  * Supabase Storage Service implementation.

@@ -1,9 +1,9 @@
 import postgres from "postgres"
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js"
-import { env } from "./config.js"
+import { env } from "@/shared/config.js"
 
 // Import all schema tables for transaction context
-import * as schema from "../models/index.js"
+import * as schema from "@/models/index.js"
 
 /** Create a new database connection for transactions */
 function createConnection(): postgres.Sql {

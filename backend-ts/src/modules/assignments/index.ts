@@ -1,0 +1,5 @@
+export * from '@/modules/assignments/assignment.controller.js'
+export * from '@/modules/assignments/assignment.service.js'
+export * from '@/modules/assignments/assignment.repository.js'
+export * from '@/modules/assignments/assignment.model.js'
+export * from '@/modules/assignments/assignment.schema.js'

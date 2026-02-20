@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import { NotificationQueueService } from "../../src/services/notification/queue.service.js"
-import type { NotificationDeliveryRepository } from "../../src/repositories/notification-delivery.repository.js"
-import type { UserRepository } from "../../src/repositories/user.repository.js"
+import { NotificationQueueService } from "../../src/modules/notifications/notification-queue.service.js"
+import type { NotificationDeliveryRepository } from "../../src/modules/notifications/notification-delivery.repository.js"
+import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { IEmailService } from "../../src/services/interfaces/email.interface.js"
 import type {
   NotificationDelivery,

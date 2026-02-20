@@ -1,11 +1,11 @@
 import { injectable } from "tsyringe"
 import sgMail from "@sendgrid/mail"
-import { settings } from "../../shared/config.js"
-import { createLogger } from "../../shared/logger.js"
+import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
 import type {
   IEmailService,
   EmailOptions,
-} from "../interfaces/email.interface.js"
+} from "@/services/interfaces/email.interface.js"
 import striptags from "striptags"
 
 const logger = createLogger("SendGridEmailService")

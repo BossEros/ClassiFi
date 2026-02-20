@@ -1,4 +1,4 @@
-import { TokenHash } from "./tokenHash.js"
+import { TokenHash } from "@/lib/plagiarism/hashing/tokenHash.js"
 
 /**
  * A fingerprint represents a k-gram hash with its position.

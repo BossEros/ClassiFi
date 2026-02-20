@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import type { MockedObject } from "vitest"
-import { AssignmentService } from "../../src/services/assignment.service.js"
-import type { ClassRepository } from "../../src/repositories/class.repository.js"
-import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
-import type { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
-import type { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
-import type { SubmissionRepository } from "../../src/repositories/submission.repository.js"
-import type { NotificationService } from "../../src/services/notification/notification.service.js"
+import { AssignmentService } from "../../src/modules/assignments/assignment.service.js"
+import type { ClassRepository } from "../../src/modules/classes/class.repository.js"
+import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
+import type { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
+import type { EnrollmentRepository } from "../../src/modules/enrollments/enrollment.repository.js"
+import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import type { StorageService } from "../../src/services/storage.service.js"
 import {
   ClassNotFoundError,
@@ -715,3 +715,4 @@ describe("AssignmentService", () => {
     })
   })
 })
+

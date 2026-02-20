@@ -49,7 +49,7 @@ describe("UserRepository", () => {
       mockDb.select = selectMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.checkEmailExists("existing@example.com")
@@ -65,7 +65,7 @@ describe("UserRepository", () => {
       mockDb.select = selectMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.checkEmailExists("new@example.com")
@@ -84,7 +84,7 @@ describe("UserRepository", () => {
       mockDb.select = selectMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.getUserBySupabaseId("supabase-id")
@@ -100,7 +100,7 @@ describe("UserRepository", () => {
       mockDb.select = selectMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.getUserBySupabaseId("non-existent-id")
@@ -119,7 +119,7 @@ describe("UserRepository", () => {
       mockDb.select = selectMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.getUserByEmail("test@example.com")
@@ -135,7 +135,7 @@ describe("UserRepository", () => {
       mockDb.select = selectMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.getUserByEmail("nonexistent@example.com")
@@ -153,7 +153,7 @@ describe("UserRepository", () => {
       mockDb.insert = insertMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.createUser({
@@ -175,7 +175,7 @@ describe("UserRepository", () => {
       mockDb.insert = insertMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.createUser({
@@ -204,7 +204,7 @@ describe("UserRepository", () => {
       mockDb.update = updateMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.updateUser(1, { firstName: "Updated" })
@@ -226,7 +226,7 @@ describe("UserRepository", () => {
       mockDb.update = updateMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.updateUser(1, { avatarUrl: null })
@@ -249,7 +249,7 @@ describe("UserRepository", () => {
       mockDb.update = updateMock
 
       const { UserRepository } =
-        await import("../../src/repositories/user.repository.js")
+        await import("../../src/modules/users/user.repository.js")
       const userRepo = new UserRepository()
 
       const result = await userRepo.updateUser(1, {

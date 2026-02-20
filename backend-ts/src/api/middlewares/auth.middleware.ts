@@ -1,15 +1,12 @@
-/**
- * Authentication Middleware
- * Verifies JWT tokens and attaches user info to requests
- */
 import type {
   FastifyRequest,
   FastifyReply,
   preHandlerHookHandler,
 } from "fastify"
 import { container } from "tsyringe"
-import { AuthService } from "@/services/auth.service.js"
+import { AuthService } from "@/modules/auth/auth.service.js"
 import { UnauthorizedError } from "@/api/middlewares/error-handler.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /** Extended request type with user info */
 declare module "fastify" {
@@ -25,17 +22,7 @@ declare module "fastify" {
   }
 }
 
-/**
- * Authentication hook that verifies the Authorization header
- * and attaches user info to the request.
- *
- * Usage in routes:
- * ```typescript
- * app.get('/protected', { preHandler: [authMiddleware] }, async (request, reply) => {
- *     const userId = request.user!.id;
- * });
- * ```
- */
+
 export const authMiddleware: preHandlerHookHandler = async (
   request: FastifyRequest,
   _reply: FastifyReply,
@@ -55,7 +42,7 @@ export const authMiddleware: preHandlerHookHandler = async (
   const token = parts[1]
 
   try {
-    const authService = container.resolve<AuthService>("AuthService")
+    const authService = container.resolve<AuthService>(DI_TOKENS.services.auth)
     const userData = await authService.verifyToken(token)
 
     // Attach user to request
@@ -87,7 +74,7 @@ export const optionalAuthMiddleware: preHandlerHookHandler = async (
   const token = parts[1]
 
   try {
-    const authService = container.resolve<AuthService>("AuthService")
+    const authService = container.resolve<AuthService>(DI_TOKENS.services.auth)
     const userData = await authService.verifyToken(token)
     request.user = userData
   } catch {

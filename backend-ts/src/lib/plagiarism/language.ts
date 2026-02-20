@@ -1,6 +1,6 @@
-import { CodeTokenizer } from "./tokenizer/codeTokenizer.js"
-import { TokenizerOptions } from "./tokenizer/tokenizer.js"
-import { createLogger } from "../../shared/logger.js"
+import { CodeTokenizer } from "@/lib/plagiarism/tokenizer/codeTokenizer.js"
+import { TokenizerOptions } from "@/lib/plagiarism/tokenizer/tokenizer.js"
+import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("PlagiarismLanguage")
 

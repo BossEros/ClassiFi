@@ -1,17 +1,21 @@
 import type { FastifyInstance } from "fastify"
-import { authRoutes } from "@/api/controllers/auth.controller.js"
-import { classRoutes } from "@/api/controllers/class.controller.js"
-import { assignmentRoutes } from "@/api/controllers/assignment.controller.js"
-import { submissionRoutes } from "@/api/controllers/submission.controller.js"
-import { studentDashboardRoutes } from "@/api/controllers/student-dashboard.controller.js"
-import { teacherDashboardRoutes } from "@/api/controllers/teacher-dashboard.controller.js"
-import { plagiarismRoutes } from "@/api/controllers/plagiarism.controller.js"
-import { userRoutes } from "@/api/controllers/user.controller.js"
-import { adminRoutes } from "@/api/controllers/admin.controller.js"
-import { testCaseRoutes } from "@/api/controllers/testCase.controller.js"
-import { gradebookRoutes } from "@/api/controllers/gradebook.controller.js"
-import { notificationRoutes } from "@/api/controllers/notification.controller.js"
-import { notificationPreferenceRoutes } from "@/api/controllers/notification-preference.controller.js"
+import { authRoutes } from "@/modules/auth/index.js"
+import { classRoutes } from "@/modules/classes/index.js"
+import { assignmentRoutes } from "@/modules/assignments/index.js"
+import { submissionRoutes } from "@/modules/submissions/index.js"
+import {
+  studentDashboardRoutes,
+  teacherDashboardRoutes,
+} from "@/modules/dashboard/index.js"
+import { plagiarismRoutes } from "@/modules/plagiarism/index.js"
+import { userRoutes } from "@/modules/users/index.js"
+import { adminRoutes } from "@/modules/admin/index.js"
+import { testCaseRoutes } from "@/modules/test-cases/index.js"
+import { gradebookRoutes } from "@/modules/gradebook/index.js"
+import {
+  notificationRoutes,
+  notificationPreferenceRoutes,
+} from "@/modules/notifications/index.js"
 import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 
 /**

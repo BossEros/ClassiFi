@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import { NotificationService } from "../../src/services/notification/notification.service.js"
-import type { NotificationRepository } from "../../src/repositories/notification.repository.js"
-import type { NotificationQueueService } from "../../src/services/notification/queue.service.js"
-import type { NotificationPreferenceService } from "../../src/services/notification/preference.service.js"
+import { NotificationService } from "../../src/modules/notifications/notification.service.js"
+import type { NotificationRepository } from "../../src/modules/notifications/notification.repository.js"
+import type { NotificationQueueService } from "../../src/modules/notifications/notification-queue.service.js"
+import type { NotificationPreferenceService } from "../../src/modules/notifications/notification-preference.service.js"
 import type { Notification } from "../../src/models/index.js"
 import { NotFoundError, ForbiddenError } from "../../src/shared/errors.js"
 

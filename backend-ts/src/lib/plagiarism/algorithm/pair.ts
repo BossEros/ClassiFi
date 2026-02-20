@@ -1,10 +1,10 @@
-import { Range } from "../util/range.js"
-import { PairedOccurrence } from "./pairedOccurrence.js"
-import { Fragment } from "./fragment.js"
-import { Identifiable } from "../util/identifiable.js"
-import { SharedFingerprint, Occurrence } from "./sharedFingerprint.js"
-import { TokenizedFile } from "../file/tokenizedFile.js"
-import { FileEntry } from "./types.js"
+import { Range } from "@/lib/plagiarism/util/range.js"
+import { PairedOccurrence } from "@/lib/plagiarism/algorithm/pairedOccurrence.js"
+import { Fragment } from "@/lib/plagiarism/algorithm/fragment.js"
+import { Identifiable } from "@/lib/plagiarism/util/identifiable.js"
+import { SharedFingerprint, Occurrence } from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
+import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
+import { FileEntry } from "@/lib/plagiarism/algorithm/types.js"
 
 type LeftRight = string
 

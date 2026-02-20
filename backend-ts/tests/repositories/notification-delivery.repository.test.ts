@@ -73,7 +73,7 @@ describe("NotificationDeliveryRepository", () => {
       mockDb.select = selectMock
 
       const { NotificationDeliveryRepository } =
-        await import("../../src/repositories/notification-delivery.repository.js")
+        await import("../../src/modules/notifications/notification-delivery.repository.js")
       const deliveryRepo = new NotificationDeliveryRepository()
 
       const result = await deliveryRepo.findPending(100)
@@ -91,7 +91,7 @@ describe("NotificationDeliveryRepository", () => {
       mockDb.select = selectMock
 
       const { NotificationDeliveryRepository } =
-        await import("../../src/repositories/notification-delivery.repository.js")
+        await import("../../src/modules/notifications/notification-delivery.repository.js")
       const deliveryRepo = new NotificationDeliveryRepository()
 
       await deliveryRepo.findPending()
@@ -117,7 +117,7 @@ describe("NotificationDeliveryRepository", () => {
       mockDb.select = selectMock
 
       const { NotificationDeliveryRepository } =
-        await import("../../src/repositories/notification-delivery.repository.js")
+        await import("../../src/modules/notifications/notification-delivery.repository.js")
       const deliveryRepo = new NotificationDeliveryRepository()
 
       const result = await deliveryRepo.getNotification(1)
@@ -133,7 +133,7 @@ describe("NotificationDeliveryRepository", () => {
       mockDb.select = selectMock
 
       const { NotificationDeliveryRepository } =
-        await import("../../src/repositories/notification-delivery.repository.js")
+        await import("../../src/modules/notifications/notification-delivery.repository.js")
       const deliveryRepo = new NotificationDeliveryRepository()
 
       await expect(deliveryRepo.getNotification(999)).rejects.toThrow(

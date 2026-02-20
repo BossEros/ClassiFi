@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
 import type { FastifyInstance, FastifyRequest, FastifyReply } from "fastify"
-import { notificationRoutes } from "../../src/api/controllers/notification.controller.js"
-import type { NotificationService } from "../../src/services/notification/notification.service.js"
+import { notificationRoutes } from "../../src/modules/notifications/notification.controller.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import type { Notification } from "../../src/models/index.js"
 import { NotFoundError, ForbiddenError } from "../../src/shared/errors.js"
 

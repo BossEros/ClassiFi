@@ -1,13 +1,11 @@
 import { z } from "zod"
 import "dotenv/config"
-import { createLogger } from "./logger.js"
+import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("ConfigValidation")
 
-/** Environment variable schema */
 const EnvSchema = z
   .object({
-    // Supabase
     SUPABASE_URL: z.string().url("SUPABASE_URL must be a valid URL"),
     SUPABASE_ANON_KEY: z.string().min(1, "SUPABASE_ANON_KEY is required"),
     SUPABASE_SERVICE_ROLE_KEY: z
@@ -72,7 +70,6 @@ const EnvSchema = z
       .min(1, "SMTP_PASSWORD is required for backup email service"),
   })
   .superRefine((data, ctx) => {
-    // Validate SMTP_PORT is an integer within valid TCP port range (1-65535)
     const port = data.SMTP_PORT
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
       ctx.addIssue({

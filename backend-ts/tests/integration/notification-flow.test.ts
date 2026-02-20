@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest"
 import { container } from "tsyringe"
-import { NotificationService } from "../../src/services/notification/notification.service.js"
-import { NotificationRepository } from "../../src/repositories/notification.repository.js"
-import { NotificationDeliveryRepository } from "../../src/repositories/notification-delivery.repository.js"
-import { AssignmentService } from "../../src/services/assignment.service.js"
-import { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
-import { ClassRepository } from "../../src/repositories/class.repository.js"
-import { EnrollmentRepository } from "../../src/repositories/enrollment.repository.js"
-import { SubmissionRepository } from "../../src/repositories/submission.repository.js"
-import { TestCaseRepository } from "../../src/repositories/testCase.repository.js"
-import { TestResultRepository } from "../../src/repositories/testResult.repository.js"
-import { LatePenaltyService } from "../../src/services/latePenalty.service.js"
+import { NotificationService } from "../../src/modules/notifications/notification.service.js"
+import { NotificationRepository } from "../../src/modules/notifications/notification.repository.js"
+import { NotificationDeliveryRepository } from "../../src/modules/notifications/notification-delivery.repository.js"
+import { AssignmentService } from "../../src/modules/assignments/assignment.service.js"
+import { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
+import { ClassRepository } from "../../src/modules/classes/class.repository.js"
+import { EnrollmentRepository } from "../../src/modules/enrollments/enrollment.repository.js"
+import { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
+import { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
+import { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
+import { LatePenaltyService } from "../../src/modules/assignments/late-penalty.service.js"
 import type {
   Notification,
   NotificationDelivery,
@@ -681,3 +681,4 @@ describe("Notification Flow Integration Tests", () => {
     })
   })
 })
+

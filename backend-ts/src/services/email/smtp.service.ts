@@ -1,12 +1,12 @@
 import { injectable } from "tsyringe"
 import nodemailer from "nodemailer"
 import type { Transporter } from "nodemailer"
-import { settings } from "../../shared/config.js"
-import { createLogger } from "../../shared/logger.js"
+import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
 import type {
   IEmailService,
   EmailOptions,
-} from "../interfaces/email.interface.js"
+} from "@/services/interfaces/email.interface.js"
 import { htmlToText } from "html-to-text"
 
 const logger = createLogger("SMTPEmailService")

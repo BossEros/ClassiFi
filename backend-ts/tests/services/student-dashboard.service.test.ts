@@ -3,7 +3,7 @@
  * Comprehensive tests for student dashboard operations
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { StudentDashboardService } from "../../src/services/student-dashboard.service.js"
+import { StudentDashboardService } from "../../src/modules/dashboard/student-dashboard.service.js"
 import {
   createMockClass,
   createMockAssignment,

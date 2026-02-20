@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest"
-import { GradebookService } from "../../src/services/gradebook.service.js"
-import type { GradebookRepository } from "../../src/repositories/gradebook.repository.js"
-import type { SubmissionRepository } from "../../src/repositories/submission.repository.js"
-import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
-import type { LatePenaltyService } from "../../src/services/latePenalty.service.js"
-import type { TestResultRepository } from "../../src/repositories/testResult.repository.js"
-import type { NotificationService } from "../../src/services/notification/notification.service.js"
+import { GradebookService } from "../../src/modules/gradebook/gradebook.service.js"
+import type { GradebookRepository } from "../../src/modules/gradebook/gradebook-query.repository.js"
+import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
+import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
+import type { LatePenaltyService } from "../../src/modules/assignments/late-penalty.service.js"
+import type { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 
 describe("GradebookService", () => {
   let gradebookService: GradebookService

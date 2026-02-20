@@ -1,5 +1,5 @@
-import { Fingerprint, HashFilter } from "./hashFilter.js"
-import { RollingHash } from "./rollingHash.js"
+import { Fingerprint, HashFilter } from "@/lib/plagiarism/hashing/hashFilter.js"
+import { RollingHash } from "@/lib/plagiarism/hashing/rollingHash.js"
 
 /**
  * Winnow algorithm for fingerprint selection.

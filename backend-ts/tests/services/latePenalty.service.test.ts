@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest"
 import {
   LatePenaltyService,
   DEFAULT_PENALTY_CONFIG,
-} from "../../src/services/latePenalty.service.js"
-import type { AssignmentRepository } from "../../src/repositories/assignment.repository.js"
+} from "../../src/modules/assignments/late-penalty.service.js"
+import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import type { LatePenaltyConfig } from "../../src/models/index.js"
 
 describe("LatePenaltyService", () => {
