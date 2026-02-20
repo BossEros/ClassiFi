@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react"
-import { Navigate, useNavigate, useParams } from "react-router-dom"
+import { Navigate, useNavigate } from "react-router-dom"
 import { getCurrentUser } from "@/business/services/authService"
 import { AdminDashboardPage } from "@/presentation/pages/admin/AdminDashboardPage"
 import { AdminClassDetailPage } from "@/presentation/pages/admin/AdminClassDetailPage"
@@ -132,32 +132,4 @@ export function TeacherOnlyRoute({ children }: { children: ReactNode }) {
   }
 
   return children
-}
-
-export function LegacyCourseworkNewRedirect() {
-  const { classId } = useParams<{ classId: string }>()
-
-  if (!classId) {
-    return <Navigate to="/dashboard/classes" replace />
-  }
-
-  return <Navigate to={`/dashboard/classes/${classId}/assignments/new`} replace />
-}
-
-export function LegacyCourseworkEditRedirect() {
-  const { classId, assignmentId } = useParams<{
-    classId: string
-    assignmentId: string
-  }>()
-
-  if (!classId || !assignmentId) {
-    return <Navigate to="/dashboard/classes" replace />
-  }
-
-  return (
-    <Navigate
-      to={`/dashboard/classes/${classId}/assignments/${assignmentId}/edit`}
-      replace
-    />
-  )
 }

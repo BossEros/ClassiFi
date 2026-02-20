@@ -1,13 +1,3 @@
-/**
- * ClassCalendarTab Component
- *
- * Renders a fully functional calendar within the ClassDetailPage calendar tab.
- * Reuses all existing calendar infrastructure (React Big Calendar, custom views,
- * event modal) but scoped to a single class's assignments.
- *
- * No DashboardLayout wrapper — the parent ClassDetailPage already provides one.
- */
-
 import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
 import { useClassCalendar } from "@/presentation/hooks/shared/useClassCalendar"

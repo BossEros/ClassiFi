@@ -1,7 +1,7 @@
 import type { UserRole } from "@/shared/types/auth"
 import type { DayOfWeek, EnrolledStudent } from "@/shared/types/class"
 
-export type { EnrolledStudent } from "@/shared/types/class"
+export type { EnrolledStudent }
 
 export interface AdminUser {
   id: number

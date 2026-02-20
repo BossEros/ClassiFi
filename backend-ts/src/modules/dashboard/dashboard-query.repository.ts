@@ -114,7 +114,7 @@ export class DashboardQueryRepository implements DashboardQueryReadRepository {
     const studentCountSubquery = db
       .select({
         classId: enrollments.classId,
-        count: sql<number>`count(*)`.as("count"),
+        studentCount: sql<number>`count(*)`.as("student_count"),
       })
       .from(enrollments)
       .groupBy(enrollments.classId)
@@ -123,7 +123,7 @@ export class DashboardQueryRepository implements DashboardQueryReadRepository {
     const assignmentCountSubquery = db
       .select({
         classId: assignments.classId,
-        count: sql<number>`count(*)`.as("count"),
+        assignmentCount: sql<number>`count(*)`.as("assignment_count"),
       })
       .from(assignments)
       .where(eq(assignments.isActive, true))
@@ -143,8 +143,8 @@ export class DashboardQueryRepository implements DashboardQueryReadRepository {
         schedule: classes.schedule,
         createdAt: classes.createdAt,
         isActive: classes.isActive,
-        studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
-        assignmentCount: sql<number>`COALESCE(${assignmentCountSubquery.count}, 0)`,
+        studentCount: sql<number>`COALESCE(${studentCountSubquery.studentCount}, 0)`,
+        assignmentCount: sql<number>`COALESCE(${assignmentCountSubquery.assignmentCount}, 0)`,
       })
       .from(classes)
       .leftJoin(

@@ -12,38 +12,19 @@ import type {
   StudentRank,
 } from "@/shared/types/gradebook"
 
-/** Penalty tier for late submissions */
-export type { PenaltyTier }
-
-/** Late penalty configuration */
-export type { LatePenaltyConfig }
-
-/** Penalty calculation result */
-export type { PenaltyResult }
-
-/** Single grade entry in gradebook */
-export type { GradeEntry }
-
-/** Assignment info in gradebook */
-export type { GradebookAssignment }
-
-/** Student row in gradebook */
-export type { GradebookStudent }
-
-/** Class gradebook data */
-export type { ClassGradebook }
-
-/** Student grade for an assignment */
-export type { StudentGradeEntry }
-
-/** Student grades for a class */
-export type { StudentClassGrades }
-
-/** Class statistics */
-export type { ClassStatistics }
-
-/** Student rank in class */
-export type { StudentRank }
+export type { 
+  PenaltyTier, 
+  LatePenaltyConfig,
+  PenaltyResult, 
+  StudentGradeEntry, 
+  StudentClassGrades, 
+  ClassGradebook, 
+  GradebookStudent, 
+  GradebookAssignment, 
+  GradeEntry, 
+  ClassStatistics, 
+  StudentRank 
+}
 
 export interface ClassGradebookResponse {
   success: boolean

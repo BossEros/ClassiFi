@@ -1,8 +1,4 @@
 /**
- * Business-layer validation helpers.
- */
-
-/**
  * Validates that an ID is a positive number
  * @param id - The ID to validate
  * @param fieldName - Name of the field for error message (e.g., 'class', 'teacher', 'student')

@@ -3,26 +3,24 @@ import { ProtectedRoute } from "@/presentation/components/shared/dashboard/Prote
 import AdminEnrollmentsPage from "@/presentation/pages/admin/AdminEnrollmentsPage"
 import { AdminUsersPage } from "@/presentation/pages/admin/AdminUsersPage"
 
-export function AdminRoutes() {
-  return (
-    <>
-      <Route
-        path="/dashboard/users"
-        element={
-          <ProtectedRoute>
-            <AdminUsersPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/enrollments"
-        element={
-          <ProtectedRoute>
-            <AdminEnrollmentsPage />
-          </ProtectedRoute>
-        }
-      />
-    </>
-  )
-}
+export const adminRouteElements = (
+  <>
+    <Route
+      path="/dashboard/users"
+      element={
+        <ProtectedRoute>
+          <AdminUsersPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/enrollments"
+      element={
+        <ProtectedRoute>
+          <AdminEnrollmentsPage />
+        </ProtectedRoute>
+      }
+    />
+  </>
+)
 

@@ -11,74 +11,72 @@ import {
   RoleBasedDashboard,
 } from "@/app/routes/routeGuards"
 
-export function SharedRoutes() {
-  return (
-    <>
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <RoleBasedDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/classes"
-        element={
-          <ProtectedRoute>
-            <RoleBasedClassesPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/classes/:classId"
-        element={
-          <ProtectedRoute>
-            <RoleBasedClassDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/assignments"
-        element={
-          <ProtectedRoute>
-            <AssignmentsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/assignments/:assignmentId"
-        element={
-          <ProtectedRoute>
-            <AssignmentDetailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/settings"
-        element={
-          <ProtectedRoute>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/notifications"
-        element={
-          <ProtectedRoute>
-            <NotificationsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/dashboard/calendar"
-        element={
-          <ProtectedRoute>
-            <CalendarPage />
-          </ProtectedRoute>
-        }
-      />
-    </>
-  )
-}
+export const sharedRouteElements = (
+  <>
+    <Route
+      path="/dashboard"
+      element={
+        <ProtectedRoute>
+          <RoleBasedDashboard />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/classes"
+      element={
+        <ProtectedRoute>
+          <RoleBasedClassesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/classes/:classId"
+      element={
+        <ProtectedRoute>
+          <RoleBasedClassDetailPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/assignments"
+      element={
+        <ProtectedRoute>
+          <AssignmentsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/assignments/:assignmentId"
+      element={
+        <ProtectedRoute>
+          <AssignmentDetailPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/settings"
+      element={
+        <ProtectedRoute>
+          <SettingsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/notifications"
+      element={
+        <ProtectedRoute>
+          <NotificationsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/calendar"
+      element={
+        <ProtectedRoute>
+          <CalendarPage />
+        </ProtectedRoute>
+      }
+    />  
+  </>
+)
 
