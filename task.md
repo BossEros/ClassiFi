@@ -186,8 +186,8 @@
 - [x] Read project/frontend architecture docs and inspect current `AssignmentDetailPage` + `calendarService` responsibilities
 - [x] Checkpoint 1: Extract assignment data/auth loading orchestration into `useAssignmentDetailData`
 - [x] Checkpoint 1: Run frontend verification (`npm run build` blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
-- [ ] Checkpoint 2: Extract submission flow and test polling logic into dedicated hook
-- [ ] Checkpoint 2: Run frontend verification (`npm run build`) and commit
+- [x] Checkpoint 2: Extract submission flow and test polling logic into dedicated hook
+- [x] Checkpoint 2: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
 - [ ] Checkpoint 3: Extract preview/download modal actions into dedicated hook and keep page composition-focused
 - [ ] Checkpoint 3: Run frontend verification (`npm run build`) and commit
 - [ ] Checkpoint 4: Extract calendar date/color and class mapping utilities from `calendarService`

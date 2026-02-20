@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   FileCode,
@@ -20,49 +20,23 @@ import {
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import {
-  submitAssignment,
-  validateFile,
   getSubmissionContent,
   getSubmissionDownloadUrl,
 } from "@/business/services/assignmentService"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
 import { useToast } from "@/presentation/context/ToastContext"
-import {
-  runTestsPreview,
-  type TestPreviewResult,
-  getTestResultsForSubmission,
-} from "@/business/services/testService"
 import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { AssignmentSubmissionForm } from "@/presentation/components/shared/assignmentDetail/AssignmentSubmissionForm"
 import { AssignmentTestResultsCard } from "@/presentation/components/shared/assignmentDetail/AssignmentTestResultsCard"
 import { TeacherSubmissionListCard } from "@/presentation/components/shared/assignmentDetail/TeacherSubmissionListCard"
 import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData"
+import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const { showToast } = useToast()
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const submissionAbortRef = useRef<AbortController | null>(null)
-  const timeoutIdsRef = useRef<NodeJS.Timeout[]>([])
-
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [fileError, setFileError] = useState<string | null>(null)
-  const [isRunningPreview, setIsRunningPreview] = useState(false)
-  const [previewResults, setPreviewResults] =
-    useState<TestPreviewResult | null>(null)
-  const [expandedPreviewTests, setExpandedPreviewTests] = useState<Set<number>>(
-    new Set(),
-  )
-  const [expandedSubmissionTests, setExpandedSubmissionTests] = useState<
-    Set<number>
-  >(new Set())
-  const [expandedInitialTests, setExpandedInitialTests] = useState<Set<number>>(
-    new Set(),
-  )
-  const [resultsError, setResultsError] = useState<string | null>(null)
 
   // Preview Modal State
   const [showPreview, setShowPreview] = useState(false)
@@ -84,6 +58,34 @@ export function AssignmentDetailPage() {
   } = useAssignmentDetailData({
     assignmentId,
     navigate,
+  })
+
+  const {
+    fileInputRef,
+    selectedFile,
+    fileError,
+    isSubmitting,
+    isRunningPreview,
+    previewResults,
+    resultsError,
+    expandedPreviewTests,
+    expandedSubmissionTests,
+    expandedInitialTests,
+    handleFileSelect,
+    clearSelectedFile,
+    handleSubmit,
+    handleRunPreviewTests,
+    togglePreviewTestExpand,
+    toggleSubmissionTestExpand,
+    toggleInitialTestExpand,
+  } = useAssignmentSubmissionFlow({
+    assignmentId,
+    user,
+    assignment,
+    setError,
+    setSubmissions,
+    setSubmissionTestResults,
+    showToast,
   })
 
   // Fallback data if assignment is not yet loaded or found
@@ -112,247 +114,9 @@ export function AssignmentDetailPage() {
 
   const topBar = useTopBar({ user, userInitials })
 
-  // Cleanup effect for abort controller and timers
-  useEffect(() => {
-    return () => {
-      // Abort any ongoing submission result fetching
-      if (submissionAbortRef.current) {
-        submissionAbortRef.current.abort()
-        submissionAbortRef.current = null
-      }
-      // Clear any pending timeouts
-      timeoutIdsRef.current.forEach((id) => clearTimeout(id))
-      timeoutIdsRef.current = []
-    }
-  }, [])
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) {
-      setSelectedFile(null)
-      setFileError(null)
-      return
-    }
-
-    // Validate file if assignment data is available
-    if (assignment) {
-      const validationError = validateFile(file, assignment.programmingLanguage)
-      if (validationError) {
-        setFileError(validationError)
-        setSelectedFile(null)
-        return
-      }
-    }
-
-    setFileError(null)
-    setSelectedFile(file)
-  }
-
-  const fetchTestResultsWithRetry = async (
-    submissionId: number,
-    signal: AbortSignal,
-  ): Promise<boolean> => {
-    const MAX_RETRIES = 10
-    const RETRY_DELAY_MS = 1000
-
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      if (signal.aborted) return false
-
-      try {
-        const results = await getTestResultsForSubmission(submissionId)
-        if (!signal.aborted) {
-          setSubmissionTestResults(results)
-          return true
-        }
-        return false
-      } catch (e) {
-        console.error(`Attempt ${attempt} failed to load results`, e)
-
-        if (attempt === MAX_RETRIES) {
-          if (!signal.aborted) {
-            console.error("Failed to load test results after all retries", e)
-          }
-          return false
-        }
-
-        if (!signal.aborted) {
-          await new Promise<void>((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-              if (!signal.aborted) {
-                resolve()
-              } else {
-                reject(new Error("Aborted"))
-              }
-            }, RETRY_DELAY_MS)
-
-            timeoutIdsRef.current.push(timeoutId)
-            signal.addEventListener(
-              "abort",
-              () => {
-                clearTimeout(timeoutId)
-                reject(new Error("Aborted"))
-              },
-              { once: true },
-            )
-          })
-        }
-      }
-    }
-
-    return false
-  }
-
-  const clearSubmissionForm = () => {
-    setSelectedFile(null)
-    setPreviewResults(null)
-    setExpandedPreviewTests(new Set())
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
-  const handleSubmit = async () => {
-    if (!selectedFile || !user || !assignmentId || !assignment) return
-
-    const validationError = validateFile(
-      selectedFile,
-      assignment.programmingLanguage,
-    )
-    if (validationError) {
-      setFileError(validationError)
-      return
-    }
-
-    try {
-      setIsSubmitting(true)
-      setError(null)
-      setResultsError(null)
-
-      const submission = await submitAssignment({
-        assignmentId: parseInt(assignmentId),
-        studentId: parseInt(user.id),
-        file: selectedFile,
-        programmingLanguage: assignment.programmingLanguage,
-      })
-
-      setSubmissions((prev) => [submission, ...prev])
-      clearSubmissionForm()
-
-      submissionAbortRef.current = new AbortController()
-      const signal = submissionAbortRef.current.signal
-
-      timeoutIdsRef.current.forEach((id) => clearTimeout(id))
-      timeoutIdsRef.current = []
-
-      try {
-        const success = await fetchTestResultsWithRetry(submission.id, signal)
-
-        if (!success && !signal.aborted) {
-          setResultsError(
-            "Failed to load test results after multiple attempts. Please refresh the page.",
-          )
-          showToast(
-            "Submission successful, but test results failed to load",
-            "error",
-          )
-        } else if (success) {
-          showToast("Assignment submitted successfully!")
-        }
-      } catch (abortError) {
-        if (abortError instanceof Error && abortError.message !== "Aborted") {
-          throw abortError
-        }
-      } finally {
-        timeoutIdsRef.current.forEach((id) => clearTimeout(id))
-        timeoutIdsRef.current = []
-      }
-    } catch (err) {
-      console.error("Failed to submit assignment:", err)
-      setError(
-        err instanceof Error ? err.message : "Failed to submit assignment",
-      )
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
   const handleClearFile = () => {
-    setSelectedFile(null)
-    setFileError(null)
-    setPreviewResults(null)
     setPreviewFileName("")
-    setExpandedPreviewTests(new Set())
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ""
-    }
-  }
-
-  const togglePreviewTestExpand = (index: number) => {
-    setExpandedPreviewTests((prev) => {
-      const next = new Set(prev)
-      if (next.has(index)) {
-        next.delete(index)
-      } else {
-        next.add(index)
-      }
-      return next
-    })
-  }
-
-  const toggleSubmissionTestExpand = (index: number) => {
-    setExpandedSubmissionTests((prev) => {
-      const next = new Set(prev)
-      if (next.has(index)) {
-        next.delete(index)
-      } else {
-        next.add(index)
-      }
-      return next
-    })
-  }
-
-  const toggleInitialTestExpand = (index: number) => {
-    setExpandedInitialTests((prev) => {
-      const next = new Set(prev)
-      if (next.has(index)) {
-        next.delete(index)
-      } else {
-        next.add(index)
-      }
-      return next
-    })
-  }
-
-  const handleRunPreviewTests = async () => {
-    if (!selectedFile || !assignment || !assignmentId) return
-
-    try {
-      setIsRunningPreview(true)
-      setPreviewResults(null)
-
-      // Read file content
-      const fileContent = await selectedFile.text()
-
-      // Run preview tests
-      const results = await runTestsPreview(
-        fileContent,
-        assignment.programmingLanguage as "python" | "java" | "c",
-        parseInt(assignmentId),
-      )
-
-      setPreviewResults(results)
-
-      if (results.percentage === 100) {
-        showToast(`All ${results.total} tests passed! You can now submit.`)
-      } else {
-        showToast(`${results.passed}/${results.total} tests passed`)
-      }
-    } catch (err) {
-      console.error("Failed to run preview tests:", err)
-      showToast(err instanceof Error ? err.message : "Failed to run tests")
-    } finally {
-      setIsRunningPreview(false)
-    }
+    clearSelectedFile()
   }
 
   const handleFilePreview = async () => {
