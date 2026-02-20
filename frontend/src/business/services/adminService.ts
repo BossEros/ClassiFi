@@ -10,7 +10,12 @@ import type {
   UpdateClassData,
   EnrolledStudent,
   ClassAssignment,
-} from "@/data/api/types"
+} from "@/business/models/admin/types"
+import { validateId } from "@/business/validation/commonValidation"
+import {
+  validateEmail,
+  validateRole,
+} from "@/business/validation/authValidation"
 
 // Re-export common types for consumers
 export type {
@@ -25,12 +30,6 @@ export type {
   EnrolledStudent,
   ClassAssignment,
 }
-
-import { validateId } from "@/shared/utils/validators"
-import {
-  validateEmail,
-  validateRole,
-} from "@/business/validation/authValidation"
 
 // ============ User Management ============
 
@@ -112,6 +111,7 @@ export async function updateUserRole(
   role: string,
 ): Promise<AdminUser> {
   validateId(userId, "user")
+
   const roleError = validateRole(role)
   if (roleError) throw new Error(roleError)
 
@@ -161,6 +161,7 @@ export async function updateUserEmail(
   email: string,
 ): Promise<AdminUser> {
   validateId(userId, "user")
+
   const emailError = validateEmail(email)
   if (emailError) throw new Error(emailError)
 
@@ -206,6 +207,7 @@ export async function deleteUser(userId: number): Promise<void> {
   await adminRepository.deleteUserAccountById(userId)
 }
 
+
 // ============ Analytics ============
 
 /**
@@ -240,6 +242,7 @@ export async function getRecentActivity(
 
   return response.activity
 }
+
 
 // ============ Class Management ============
 

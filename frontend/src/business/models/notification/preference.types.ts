@@ -1,7 +1,3 @@
-/**
- * Notification preference model types
- */
-
 import type { NotificationType } from "./types"
 
 export type { NotificationType }

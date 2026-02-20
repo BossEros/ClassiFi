@@ -20,7 +20,7 @@ import {
   DAY_ABBREVIATIONS,
   convertToDayOfWeek,
   convertToAbbreviations,
-} from "@/shared/constants/schedule"
+} from "@/presentation/constants/schedule.constants"
 
 interface AdminCreateClassModalProps {
   isOpen: boolean

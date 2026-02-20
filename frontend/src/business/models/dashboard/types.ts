@@ -1,4 +1,3 @@
-// Re-export shared types for backward compatibility
 export type {
   DayOfWeek,
   Schedule,
@@ -11,22 +10,41 @@ export type {
   ClassTab,
 } from "@/shared/types/class"
 
-// Re-export API response types
-export type {
-  ClassDetailResponse,
-  ClassListResponse,
-  AssignmentListResponse,
-  StudentListResponse,
-  DeleteResponse,
-  GenerateCodeResponse,
-} from "@/data/api/types"
-
-// Import types locally for use in this file's interfaces
 import type { Class, Task, EnrolledStudent } from "@/shared/types/class"
 
-// ============================================================================
-// Business Layer Specific Types
-// ============================================================================
+export interface ClassDetailResponse {
+  success: boolean
+  message?: string
+  class?: Class
+}
+
+export interface ClassListResponse {
+  success: boolean
+  message?: string
+  classes: Class[]
+}
+
+export interface AssignmentListResponse {
+  success: boolean
+  message?: string
+  assignments: Task[]
+}
+
+export interface StudentListResponse {
+  success: boolean
+  message?: string
+  students: EnrolledStudent[]
+}
+
+export interface DeleteResponse {
+  success: boolean
+  message?: string
+}
+
+export interface GenerateCodeResponse {
+  success: boolean
+  classCode?: string
+}
 
 export interface ClassDetailData {
   classInfo: Class
@@ -53,7 +71,6 @@ export interface DashboardData {
   pendingTasks: Task[]
 }
 
-// Backend response type (does not include fullName - we compute it on the frontend)
 export interface StudentBackendResponse {
   id: number
   email: string

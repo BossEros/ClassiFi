@@ -1,8 +1,8 @@
 import type {
   CreateAssignmentRequest,
   UpdateAssignmentValidationData,
-} from "@/data/api/types"
-import { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/types"
+} from "@/business/models/assignment/types"
+import { VALID_PROGRAMMING_LANGUAGES } from "@/business/models/assignment/types"
 import type { ValidationError, ValidationResult } from "@/shared/types/auth"
 
 /**

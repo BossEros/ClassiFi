@@ -9,7 +9,7 @@ import type {
   StudentListResponse,
   DeleteResponse,
   GenerateCodeResponse,
-} from "@/data/api/types"
+} from "@/data/api/class.types"
 
 export async function createNewClass(
   newClassData: CreateClassRequest,

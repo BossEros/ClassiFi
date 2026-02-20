@@ -166,3 +166,30 @@
 - [x] Move `services/notification/types.ts` to `src/modules/notifications/notification.types.ts`
 - [x] Run verification (`backend-ts: npm run typecheck`, `backend-ts: npm test`, `backend-ts: npm run lint`)
 - [x] Commit Item 3 checkpoint
+
+## React Router Route Group Runtime Fix
+
+- [x] Inspect frontend route-group composition and identify invalid `<Routes>` children
+- [x] Refactor route-group exports to route-element fragments (non-component usage inside `<Routes>`)
+- [x] Update app route mounting to inject route-element fragments directly
+- [ ] Run required frontend verification (`npm run build`)
+
+## Legacy Coursework Redirect Cleanup
+
+- [x] Audit references for `LegacyCourseworkNewRedirect` and `LegacyCourseworkEditRedirect`
+- [x] Confirm no active internal callers or UI links target `/coursework/*` routes
+- [x] Remove legacy redirect components and teacher route entries
+- [ ] Run required frontend verification (`npm run build`)
+
+## SRP Refactor Checkpoints (Assignment Detail + Calendar Service)
+
+- [x] Read project/frontend architecture docs and inspect current `AssignmentDetailPage` + `calendarService` responsibilities
+- [x] Checkpoint 1: Extract assignment data/auth loading orchestration into `useAssignmentDetailData`
+- [x] Checkpoint 1: Run frontend verification (`npm run build` blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
+- [x] Checkpoint 2: Extract submission flow and test polling logic into dedicated hook
+- [x] Checkpoint 2: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
+- [x] Checkpoint 3: Extract preview/download modal actions into dedicated hook and keep page composition-focused
+- [x] Checkpoint 3: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
+- [x] Checkpoint 4: Extract calendar date/color and class mapping utilities from `calendarService`
+- [x] Checkpoint 4: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
+- [x] Update frontend architecture docs for new assignment-detail hooks

@@ -7,9 +7,9 @@ import type {
   SubmissionDTO,
   AssignmentDetailDTO,
   AssignmentDetail,
-  ProgrammingLanguage,
-} from "@/data/api/types"
-import { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/types"
+} from "@/data/api/assignment.types"
+import type { ProgrammingLanguage } from "@/data/api/shared.types"
+import { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/shared.types"
 
 /**
  * Maps a raw submission DTO to a domain Submission model.

@@ -3,7 +3,7 @@ import type {
   TeacherDashboardResponse,
   TeacherDashboardClassListResponse,
   TeacherDashboardTaskListResponse,
-} from "@/data/api/types"
+} from "@/data/api/dashboard.types"
 
 // Export response types for consumers
 export type {

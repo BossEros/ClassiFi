@@ -3,11 +3,13 @@ import type {
   ClassResponse,
   AssignmentResponse,
   StudentDashboardBackendResponse,
+} from "@/data/api/dashboard.types"
+import type {
   JoinClassResponse,
   LeaveClassResponse,
   ClassListResponse,
   AssignmentListResponse,
-} from "@/data/api/types"
+} from "@/data/api/class.types"
 
 // Export response types for consumers
 export type {

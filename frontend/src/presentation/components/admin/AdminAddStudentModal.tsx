@@ -4,7 +4,7 @@ import {
   getAllUsers,
   addStudentToClass,
 } from "@/business/services/adminService"
-import { useToast } from "@/shared/context/ToastContext"
+import { useToast } from "@/presentation/context/ToastContext"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import type {
   AdminUser,

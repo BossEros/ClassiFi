@@ -3,7 +3,7 @@ import {
   formatGrade,
   getGradePercentage,
   getGradeColor,
-} from "@/shared/utils/gradeUtils"
+} from "@/presentation/utils/gradeUtils"
 
 interface GradeDisplayProps {
   grade: number | null | undefined

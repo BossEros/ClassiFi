@@ -29,6 +29,9 @@ The codebase keeps application source under `src/`:
 ```text
 frontend/
 |-- src/
+|   |-- app/                # App composition and route wiring
+|   |   |-- routes/
+|   |   `-- App.tsx
 |   |-- business/           # Domain Logic Layer
 |   |   |-- models/
 |   |   |-- services/
@@ -39,7 +42,16 @@ frontend/
 |   |   `-- mappers.ts
 |   |-- presentation/       # UI Layer
 |   |   |-- components/
+|   |   |   |-- admin/
+|   |   |   |-- auth/
+|   |   |   |-- shared/
+|   |   |   |-- student/
+|   |   |   |-- teacher/
+|   |   |   `-- ui/
+|   |   |-- context/
 |   |   |-- hooks/
+|   |   |   |-- shared/
+|   |   |   `-- teacher/
 |   |   |-- pages/
 |   |   `-- styles/
 |   |-- shared/             # Cross-cutting concerns
@@ -77,14 +89,14 @@ frontend/
 ### State Management
 
 - **Local State**: Managed with `useState` and `useReducer` for component-specific logic.
-- **Global State**: Minimal global state. Authentication state is synchronized via `supabaseAuthAdapter`. UI state (like Toasts) is managed via `ToastContext`.
+- **Global State**: Minimal global state. Authentication state is synchronized via `supabaseAuthAdapter`. UI state (like Toasts) is managed via `src/presentation/context/ToastContext.tsx`.
 - **Server State**: Fetched via Services. The app typically fetches fresh data on mount (useEffect) rather than using a heavy global cache, ensuring simplicity.
 
 ---
 
 ## Routing & Navigation
 
-Routing is handled in `src/presentation/App.tsx`.
+Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/routes/*`.
 
 ### Route Types
 
@@ -159,9 +171,12 @@ Routing is handled in `src/presentation/App.tsx`.
 
 ### Shared Presentation Hooks (Admin Pages)
 
-- **`useDebouncedValue`** (`src/presentation/hooks/useDebouncedValue.ts`): Centralizes debounced search input behavior used by admin list pages.
-- **`useDocumentClick`** (`src/presentation/hooks/useDocumentClick.ts`): Standardized click-outside handling for dropdown dismissal and menu cleanup.
-- **`useRequestState`** (`src/presentation/hooks/useRequestState.ts`): Shared fetch lifecycle utility for loading/error state and request execution wrappers.
+- **`useDebouncedValue`** (`src/presentation/hooks/shared/useDebouncedValue.ts`): Centralizes debounced search input behavior used by admin list pages.
+- **`useDocumentClick`** (`src/presentation/hooks/shared/useDocumentClick.ts`): Standardized click-outside handling for dropdown dismissal and menu cleanup.
+- **`useRequestState`** (`src/presentation/hooks/shared/useRequestState.ts`): Shared fetch lifecycle utility for loading/error state and request execution wrappers.
+- **`useAssignmentDetailData`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData.ts`): Handles assignment detail authentication and role-based initial data loading.
+- **`useAssignmentSubmissionFlow`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow.ts`): Encapsulates assignment submission workflow, file validation, test preview execution, and submission-result polling.
+- **`useAssignmentCodePreview`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview.ts`): Manages code preview modal state, submission preview loading, and submission download actions.
 
 ---
 
@@ -490,7 +505,7 @@ Specialized types for the class detail page redesign:
 ### Adding a New Page
 
 1.  Create the page component in `src/presentation/pages/NewPage.tsx`.
-2.  Define the route in `src/presentation/App.tsx`.
+2.  Define the route in `src/app/routes/*.routes.tsx` and mount it in `src/app/App.tsx`.
 3.  (Optional) specific components in `src/presentation/components/feature/`.
 
 ### Adding Data Logic

@@ -1,4 +1,5 @@
-import type { CreateClassRequest, Schedule } from "@/data/api/types"
+import type { CreateClassRequest } from "@/business/models/class/types"
+import type { Schedule } from "@/shared/types/class"
 import type { ValidationError, ValidationResult } from "@/shared/types/auth"
 
 /**

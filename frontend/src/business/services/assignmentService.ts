@@ -1,13 +1,13 @@
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import type {
   Submission,
   SubmissionHistoryResponse,
   AssignmentDetail,
   SubmitAssignmentRequest,
   SubmissionContent,
-} from "@/data/api/types"
-import { validateFile } from "@/shared/utils/assignmentValidation"
+} from "@/business/models/assignment/types"
+import { validateFile } from "@/business/validation/submissionFileValidation"
 export { validateFile }
 
 /**

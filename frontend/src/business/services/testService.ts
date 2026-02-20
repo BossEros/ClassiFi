@@ -1,14 +1,14 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/shared/utils/validators"
+import { validateId } from "@/business/validation/commonValidation"
 import type { ProgrammingLanguage } from "@/business/models/assignment/types"
 import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
   TestResultsResponse,
-} from "@/data/api/types"
-import { normalizeTestResult } from "@/shared/utils/testNormalization"
+} from "@/business/models/test/types"
+import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }
 
