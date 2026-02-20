@@ -9,9 +9,9 @@ import {
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
-import { PlagiarismDetectorFactory } from "@/services/plagiarism/plagiarism-detector.factory.js"
-import { SubmissionFileService } from "@/services/plagiarism/submission-file.service.js"
-import { PlagiarismPersistenceService } from "@/services/plagiarism/plagiarism-persistence.service.js"
+import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
+import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
+import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import {
   PLAGIARISM_CONFIG,
   PLAGIARISM_LANGUAGE_MAP,
@@ -20,7 +20,7 @@ import {
   type PlagiarismPairDTO,
   type PlagiarismFragmentDTO,
   type PlagiarismSummaryDTO,
-} from "@/shared/mappers.js"
+} from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
   AssignmentNotFoundError,
   PlagiarismReportNotFoundError,
@@ -154,7 +154,8 @@ export class PlagiarismService {
     private enrollmentRepo: EnrollmentRepository,
     @inject(DI_TOKENS.services.plagiarismDetectorFactory)
     private detectorFactory: PlagiarismDetectorFactory,
-    @inject(DI_TOKENS.services.submissionFile) private fileService: SubmissionFileService,
+    @inject(DI_TOKENS.services.plagiarismSubmissionFile)
+    private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.plagiarismPersistence)
     private persistenceService: PlagiarismPersistenceService,
   ) {

@@ -3,10 +3,10 @@ import {
   UserRepository,
   type UserRole,
 } from "@/modules/users/user.repository.js"
+import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { UserService } from "@/modules/users/user.service.js"
 import { ClassService } from "@/modules/classes/class.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
-import { toUserDTO, type UserDTO } from "@/shared/mappers.js"
 import { UserNotFoundError, InvalidRoleError } from "@/shared/errors.js"
 import type {
   UserFilterOptions,

@@ -4,15 +4,14 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { toClassDTO, type ClassDTO } from "@/modules/classes/class.mapper.js"
+import {
+  toAssignmentDTO,
+  type AssignmentDTO,
+} from "@/modules/assignments/assignment.mapper.js"
+import { generateUniqueClassCode } from "@/modules/classes/class-code.util.js"
 import { StorageService } from "@/services/storage.service.js"
 import type { ClassSchedule } from "@/models/index.js"
-import {
-  toClassDTO,
-  toAssignmentDTO,
-  type ClassDTO,
-  type AssignmentDTO,
-} from "@/shared/mappers.js"
-import { generateUniqueClassCode } from "@/shared/utils.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,

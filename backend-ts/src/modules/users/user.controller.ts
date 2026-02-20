@@ -4,7 +4,7 @@ import { UserService } from "@/modules/users/user.service.js"
 import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 import { toJsonSchema } from "@/api/utils/swagger.js"
 import { SuccessMessageSchema } from "@/api/schemas/common.schema.js"
-import { toUserDTO } from "@/shared/mappers.js"
+import { toUserDTO } from "@/modules/users/user.mapper.js"
 import { z } from "zod"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

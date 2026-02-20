@@ -6,8 +6,11 @@ import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repositor
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { StorageService } from "@/services/storage.service.js"
-import { toAssignmentDTO, type AssignmentDTO } from "@/shared/mappers.js"
-import { requireClassOwnership } from "@/shared/guards.js"
+import {
+  toAssignmentDTO,
+  type AssignmentDTO,
+} from "@/modules/assignments/assignment.mapper.js"
+import { requireClassOwnership } from "@/modules/classes/class.guard.js"
 import {
   AssignmentNotFoundError,
   InvalidAssignmentDataError,
@@ -18,7 +21,7 @@ import type {
   CreateAssignmentServiceDTO,
 } from "@/modules/assignments/assignment.dtos.js"
 import { settings } from "@/shared/config.js"
-import { formatAssignmentDueDate } from "@/shared/utils.js"
+import { formatAssignmentDueDate } from "@/modules/assignments/assignment-deadline.util.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

@@ -31,7 +31,7 @@ import {
   type CreateAssignmentRequest,
 } from "@/modules/assignments/assignment.schema.js"
 import { BadRequestError, ApiError } from "@/shared/errors.js"
-import type { AssignmentDTO } from "@/shared/mappers.js"
+import type { AssignmentDTO } from "@/modules/assignments/assignment.mapper.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**

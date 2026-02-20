@@ -116,7 +116,7 @@ backend-ts/
 |  |- services/               # Cross-cutting services (email, adapters, interfaces)
 |  |- repositories/           # Shared repositories only (base/shared query repos)
 |  |- models/                 # Shared model barrel exports
-|  |- shared/                 # Config, DI container, errors, guards, mappers, utils
+|  |- shared/                 # Config, DI container, database, errors, logger, shared utils
 |  |- lib/                    # Library/engine code (plagiarism engine)
 |  |- app.ts
 |  `- server.ts
@@ -184,6 +184,8 @@ The backend now uses a module-first layout under `src/modules/*`.
 
 Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
+- Feature-specific helper services are colocated with their module (for example, plagiarism helper services under `src/modules/plagiarism` and late penalty logic under `src/modules/assignments`).
+- Feature-specific mappers/guards/helpers are colocated with their module (for example, `src/modules/*/*.mapper.ts`, `src/modules/classes/class.guard.ts`).
 - Route registration imports module entry points from `src/modules/*/index.ts`.
 - Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
 

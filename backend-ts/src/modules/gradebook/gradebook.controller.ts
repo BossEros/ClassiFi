@@ -5,7 +5,7 @@ import { parsePositiveInt } from "@/shared/utils.js"
 import {
   toClassGradebookDTO,
   toStudentGradesDTO,
-} from "@/shared/mappers.js"
+} from "@/modules/gradebook/gradebook.mapper.js"
 import { toJsonSchema } from "@/api/utils/swagger.js"
 import {
   ClassIdParamSchema,

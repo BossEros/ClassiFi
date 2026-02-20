@@ -4,9 +4,9 @@ import {
   USER_ROLES,
   type UserRole,
 } from "@/modules/users/user.repository.js"
+import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { settings } from "@/shared/config.js"
-import { toUserDTO, type UserDTO } from "@/shared/mappers.js"
 import { createLogger } from "@/shared/logger.js"
 import {
   UserAlreadyExistsError,

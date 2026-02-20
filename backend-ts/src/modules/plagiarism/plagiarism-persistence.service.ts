@@ -6,7 +6,7 @@ import { Report, Pair } from "@/lib/plagiarism/index.js"
 import {
   PLAGIARISM_CONFIG,
   type PlagiarismPairDTO,
-} from "@/shared/mappers.js"
+} from "@/modules/plagiarism/plagiarism.mapper.js"
 import type {
   NewSimilarityResult,
   NewMatchFragment,

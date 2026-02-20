@@ -9,7 +9,7 @@ import {
   toDashboardClassDTO,
   type DashboardClassDTO,
   type PendingAssignmentDTO,
-} from "@/shared/mappers.js"
+} from "@/modules/dashboard/dashboard.mapper.js"
 import {
   ClassNotFoundError,
   ClassInactiveError,

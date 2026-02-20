@@ -2,7 +2,7 @@ import { inject, injectable } from "tsyringe"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
-import { toUserDTO, type UserDTO } from "@/shared/mappers.js"
+import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { UserNotFoundError, ClassNotFoundError } from "@/shared/errors.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

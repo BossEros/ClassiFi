@@ -17,6 +17,7 @@ export {
   assignmentsRelations,
   programmingLanguageEnum,
 } from "@/modules/assignments/assignment.model.js"
+
 export type {
   Assignment,
   NewAssignment,
@@ -74,7 +75,7 @@ export {
   notificationChannelEnum,
 } from "@/modules/notifications/notification.model.js"
 export type { Notification, NewNotification } from "@/modules/notifications/notification.model.js"
-// Note: For type-safe notifications with discriminated metadata, use TypedNotification from "@/shared/guards.js"
+// Note: For type-safe notifications with discriminated metadata, use TypedNotification from "@/modules/notifications/notification.guard.js"
 
 // Notification Delivery model
 export {
@@ -96,4 +97,3 @@ export type {
   NotificationPreference,
   NewNotificationPreference,
 } from "@/modules/notifications/notification-preference.model.js"
-

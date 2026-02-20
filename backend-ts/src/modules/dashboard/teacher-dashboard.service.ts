@@ -7,7 +7,7 @@ import {
   toDashboardClassDTO,
   type DashboardClassDTO,
   type PendingTaskDTO,
-} from "@/shared/mappers.js"
+} from "@/modules/dashboard/dashboard.mapper.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**

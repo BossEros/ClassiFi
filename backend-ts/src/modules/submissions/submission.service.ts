@@ -8,8 +8,11 @@ import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
 import {
   LatePenaltyService,
   type PenaltyResult,
-} from "@/services/latePenalty.service.js"
-import { toSubmissionDTO, type SubmissionDTO } from "@/shared/mappers.js"
+} from "@/modules/assignments/late-penalty.service.js"
+import {
+  toSubmissionDTO,
+  type SubmissionDTO,
+} from "@/modules/submissions/submission.mapper.js"
 import { type SubmissionFileDTO } from "@/modules/submissions/submission.dtos.js"
 import type { Assignment, Submission } from "@/models/index.js"
 import {

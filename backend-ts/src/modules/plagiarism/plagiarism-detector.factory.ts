@@ -1,6 +1,6 @@
 import { injectable } from "tsyringe"
 import { PlagiarismDetector, LanguageName } from "@/lib/plagiarism/index.js"
-import { PLAGIARISM_CONFIG } from "@/shared/mappers.js"
+import { PLAGIARISM_CONFIG } from "@/modules/plagiarism/plagiarism.mapper.js"
 
 export interface PlagiarismDetectorConfig {
   language: LanguageName

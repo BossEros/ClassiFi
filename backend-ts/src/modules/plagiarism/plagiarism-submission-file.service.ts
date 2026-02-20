@@ -2,7 +2,7 @@ import { inject, injectable } from "tsyringe"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { File } from "@/lib/plagiarism/index.js"
-import { PLAGIARISM_CONFIG } from "@/shared/mappers.js"
+import { PLAGIARISM_CONFIG } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
   InsufficientFilesError,
   InsufficientDownloadedFilesError,
@@ -11,10 +11,10 @@ import {
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
-const logger = createLogger("SubmissionFileService")
+const logger = createLogger("PlagiarismSubmissionFileService")
 
 @injectable()
-export class SubmissionFileService {
+export class PlagiarismSubmissionFileService {
   constructor(
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
@@ -91,7 +91,5 @@ export class SubmissionFileService {
     }
   }
 }
-
-
 
 
