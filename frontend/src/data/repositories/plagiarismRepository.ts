@@ -4,7 +4,7 @@ import type {
   ResultDetailsResponse,
   StudentSummary,
   PairResponse,
-} from "@/data/api/types"
+} from "@/data/api/plagiarism.types"
 
 /**
  * Analyzes all submissions for a specific assignment to detect plagiarism.

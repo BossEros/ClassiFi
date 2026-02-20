@@ -31,12 +31,12 @@
 - [x] Commit checkpoint 6
 
 ## Checkpoint 7: API Type File Decomposition
-- [ ] Split `src/data/api/types.ts` by feature
-- [ ] Keep temporary barrel for compatibility
-- [ ] Update imports to feature type files
-- [ ] Run `npm run build`
-- [ ] Run `npm test`
-- [ ] Commit checkpoint 7
+- [x] Split `src/data/api/types.ts` by feature
+- [x] Keep temporary barrel for compatibility
+- [x] Update imports to feature type files
+- [x] Run `npm run build`
+- [x] Run `npm test`
+- [x] Commit checkpoint 7
 
 ## Checkpoint 8: Large File Decomposition
 - [ ] Decompose large page/hook files into feature subcomponents/hooks

@@ -4,7 +4,7 @@ import {
   mapSubmissionWithAssignment,
   mapSubmissionWithStudent,
 } from "@/data/mappers"
-import type { SubmissionDTO } from "@/data/api/types"
+import type { SubmissionDTO } from "@/data/api/assignment.types"
 
 describe("mappers", () => {
   // ============================================================================

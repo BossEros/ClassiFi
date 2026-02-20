@@ -7,7 +7,7 @@ import type {
   ResultDetailsResponse,
   StudentSummary,
   PairResponse,
-} from "@/data/api/types"
+} from "@/data/api/plagiarism.types"
 
 // Mock the repository
 vi.mock("@/data/repositories/plagiarismRepository")

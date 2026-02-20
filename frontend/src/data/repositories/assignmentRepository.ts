@@ -16,10 +16,10 @@ import type {
   MappedAssignmentDetailResponse,
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
-  TestResultsResponse,
-  DeleteResponse,
   SubmissionDTO,
-} from "@/data/api/types"
+} from "@/data/api/assignment.types"
+import type { TestResultsResponse } from "@/data/api/test-case.types"
+import type { DeleteResponse } from "@/data/api/class.types"
 import type { Assignment } from "@/shared/types/class"
 import type { Submission } from "@/shared/types/submission"
 

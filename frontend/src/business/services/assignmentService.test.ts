@@ -7,7 +7,7 @@ import {
   createMockSubmission,
   createMockAssignment,
 } from "@/tests/utils/factories"
-import type { AssignmentDetail } from "@/data/api/types"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/assignmentRepository")

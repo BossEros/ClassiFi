@@ -14,7 +14,7 @@ import type {
   AdminStudentsResponse,
   AdminAssignmentsResponse,
   AdminTeachersResponse,
-} from "@/data/api/types"
+} from "@/data/api/admin.types"
 
 // ============ User Management ============
 

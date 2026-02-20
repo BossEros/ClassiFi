@@ -11,8 +11,8 @@ import type {
   TestCaseListResponse,
   TestCaseResponse,
   TestResultsResponse,
-  SuccessResponse,
-} from "@/data/api/types"
+} from "@/data/api/test-case.types"
+import type { SuccessResponse } from "@/data/api/shared.types"
 
 export type {
   TestCase,

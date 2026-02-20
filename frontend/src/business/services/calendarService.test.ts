@@ -5,7 +5,7 @@ import {
   formatCalendarDate,
 } from "./calendarService"
 import type { Assignment } from "@/business/models/dashboard/types"
-import type { Submission } from "@/data/api/types"
+import type { Submission } from "@/data/api/shared.types"
 
 describe("calendarService", () => {
   describe("getClassColor", () => {
