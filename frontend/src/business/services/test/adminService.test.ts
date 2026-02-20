@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as adminService from "./adminService"
+import * as adminService from "../adminService"
 import * as adminRepository from "@/data/repositories/adminRepository"
 import * as authValidation from "@/business/validation/authValidation"
 import type { AdminUser, AdminClass } from "@/data/api/admin.types"

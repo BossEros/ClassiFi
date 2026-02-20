@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as classRepository from "./classRepository"
+import * as classRepository from "@/data/repositories/classRepository"
 import { apiClient } from "@/data/api/apiClient"
 import type { ISODateString } from "@/shared/types/class"
 
@@ -461,3 +461,4 @@ describe("classRepository", () => {
     })
   })
 })
+

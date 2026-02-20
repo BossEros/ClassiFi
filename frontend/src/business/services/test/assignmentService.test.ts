@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as assignmentService from "./assignmentService"
+import * as assignmentService from "@/business/services/assignmentService"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import * as assignmentValidation from "@/business/validation/submissionFileValidation"
 import {
@@ -360,3 +360,4 @@ describe("assignmentService", () => {
     })
   })
 })
+

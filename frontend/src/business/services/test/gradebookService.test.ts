@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import * as gradebookService from "./gradebookService"
+import * as gradebookService from "@/business/services/gradebookService"
 import * as gradebookRepository from "@/data/repositories/gradebookRepository"
 
 // Mock the repository
@@ -172,3 +172,4 @@ describe("gradebookService", () => {
     })
   })
 })
+

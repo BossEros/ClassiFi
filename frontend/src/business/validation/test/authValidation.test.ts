@@ -8,7 +8,7 @@ import {
   validateLastName,
   validateRole,
   validateRegistrationData,
-} from "./authValidation"
+} from "../authValidation"
 
 describe("Auth Validation", () => {
   describe("validateEmail", () => {

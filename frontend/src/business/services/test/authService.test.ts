@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import * as authService from "./authService"
+import * as authService from "@/business/services/authService"
 import * as authRepository from "@/data/repositories/authRepository"
 import * as authValidation from "@/business/validation/authValidation"
 import type {
@@ -480,3 +480,4 @@ describe("authService", () => {
     })
   })
 })
+

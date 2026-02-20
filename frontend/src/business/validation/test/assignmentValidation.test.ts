@@ -6,7 +6,7 @@ import {
   validateDeadline,
   validateCreateAssignmentData,
   validateUpdateAssignmentData,
-} from "./assignmentValidation"
+} from "../assignmentValidation"
 
 describe("assignmentValidation", () => {
   // ============ validateAssignmentTitle Tests ============

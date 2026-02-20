@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from "vitest"
 
-import * as assignmentRepository from "./assignmentRepository"
+import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
@@ -486,3 +486,4 @@ describe("assignmentRepository", () => {
     })
   })
 })
+

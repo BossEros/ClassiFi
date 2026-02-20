@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as adminRepository from "./adminRepository"
+import * as adminRepository from "@/data/repositories/adminRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
@@ -791,3 +791,4 @@ describe("adminRepository", () => {
     })
   })
 })
+

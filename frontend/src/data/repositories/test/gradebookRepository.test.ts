@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import * as gradebookRepository from "./gradebookRepository"
+import * as gradebookRepository from "@/data/repositories/gradebookRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
@@ -458,3 +458,4 @@ describe("gradebookRepository", () => {
     })
   })
 })
+

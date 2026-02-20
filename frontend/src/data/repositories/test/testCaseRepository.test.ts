@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import * as testCaseRepository from "./testCaseRepository"
+import * as testCaseRepository from "../testCaseRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient

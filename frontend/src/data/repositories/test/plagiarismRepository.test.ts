@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as plagiarismRepository from "./plagiarismRepository"
+import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
@@ -194,3 +194,4 @@ describe("plagiarismRepository", () => {
     })
   })
 })
+

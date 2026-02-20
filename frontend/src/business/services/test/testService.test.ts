@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as testService from "./testService"
+import * as testService from "../testService"
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import * as testNormalization from "@/business/services/testResultNormalizer"

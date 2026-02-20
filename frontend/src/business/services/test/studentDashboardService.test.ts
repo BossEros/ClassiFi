@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as studentDashboardService from "./studentDashboardService"
+import * as studentDashboardService from "../studentDashboardService"
 import * as dashboardRepository from "@/data/repositories/studentDashboardRepository"
 import * as classValidation from "@/business/validation/classValidation"
 import type { StudentDashboardBackendResponse } from "@/data/repositories/studentDashboardRepository"

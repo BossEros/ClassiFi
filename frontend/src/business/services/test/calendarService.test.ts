@@ -3,7 +3,7 @@ import {
   getClassColor,
   calculateSubmissionStatus,
   formatCalendarDate,
-} from "./calendarService"
+} from "@/business/services/calendarService"
 import type { Assignment } from "@/business/models/dashboard/types"
 import type { Submission } from "@/data/api/shared.types"
 
@@ -118,3 +118,4 @@ describe("calendarService", () => {
     })
   })
 })
+

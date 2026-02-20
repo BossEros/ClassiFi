@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as teacherDashboardRepository from "./teacherDashboardRepository"
+import * as teacherDashboardRepository from "../teacherDashboardRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module

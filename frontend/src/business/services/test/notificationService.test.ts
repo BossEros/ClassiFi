@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import * as notificationService from "./notificationService"
+import * as notificationService from "@/business/services/notificationService"
 import { notificationRepository } from "@/data/repositories/notificationRepository"
 import type {
   Notification,
@@ -350,10 +350,12 @@ describe("notificationService", () => {
     })
 
     it("returns Bell icon for unknown notification type", () => {
-      // @ts-expect-error Testing invalid type
+      // @ts-expect-error Testing fallback behavior for unknown type input
       const result = notificationService.getNotificationIcon("UNKNOWN_TYPE")
 
       expect(result).toBe("Bell")
     })
   })
 })
+
+

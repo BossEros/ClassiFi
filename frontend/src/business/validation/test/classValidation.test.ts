@@ -4,7 +4,7 @@ import {
   validateClassDescription,
   validateCreateClassData,
   validateClassField,
-} from "./classValidation"
+} from "../classValidation"
 
 describe("classValidation", () => {
   // ============ validateClassName Tests ============

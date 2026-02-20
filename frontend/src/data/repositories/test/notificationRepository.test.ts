@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { NotificationRepository } from "./notificationRepository"
+import { NotificationRepository } from "@/data/repositories/notificationRepository"
 import { apiClient } from "@/data/api/apiClient"
 import type {
   Notification,
@@ -322,3 +322,4 @@ describe("NotificationRepository", () => {
     })
   })
 })
+

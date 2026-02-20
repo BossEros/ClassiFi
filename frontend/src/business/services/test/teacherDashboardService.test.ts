@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-import * as teacherDashboardService from "./teacherDashboardService"
+import * as teacherDashboardService from "../teacherDashboardService"
 import * as dashboardRepository from "@/data/repositories/teacherDashboardRepository"
 
 // Mock dependencies
