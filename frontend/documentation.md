@@ -174,6 +174,9 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 - **`useDebouncedValue`** (`src/presentation/hooks/shared/useDebouncedValue.ts`): Centralizes debounced search input behavior used by admin list pages.
 - **`useDocumentClick`** (`src/presentation/hooks/shared/useDocumentClick.ts`): Standardized click-outside handling for dropdown dismissal and menu cleanup.
 - **`useRequestState`** (`src/presentation/hooks/shared/useRequestState.ts`): Shared fetch lifecycle utility for loading/error state and request execution wrappers.
+- **`useAssignmentDetailData`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData.ts`): Handles assignment detail authentication and role-based initial data loading.
+- **`useAssignmentSubmissionFlow`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow.ts`): Encapsulates assignment submission workflow, file validation, test preview execution, and submission-result polling.
+- **`useAssignmentCodePreview`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview.ts`): Manages code preview modal state, submission preview loading, and submission download actions.
 
 ---
 

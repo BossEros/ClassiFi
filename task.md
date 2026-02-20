@@ -190,5 +190,6 @@
 - [x] Checkpoint 2: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
 - [x] Checkpoint 3: Extract preview/download modal actions into dedicated hook and keep page composition-focused
 - [x] Checkpoint 3: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
-- [ ] Checkpoint 4: Extract calendar date/color and class mapping utilities from `calendarService`
-- [ ] Checkpoint 4: Run frontend verification (`npm run build`) and commit
+- [x] Checkpoint 4: Extract calendar date/color and class mapping utilities from `calendarService`
+- [x] Checkpoint 4: Run frontend verification (`npm run build` still blocked by pre-existing unrelated test-module path issues; validated with `npx tsc -p tsconfig.app.json`) and commit
+- [x] Update frontend architecture docs for new assignment-detail hooks

@@ -9,7 +9,6 @@ import {
   endOfWeek,
   startOfDay,
   endOfDay,
-  format,
 } from "date-fns"
 import type {
   CalendarEvent,
@@ -20,33 +19,11 @@ import type {
 import type { Assignment, Class } from "@/business/models/dashboard/types"
 import type { Submission } from "@/business/models/assignment/types"
 import type { CalendarView } from "@/business/models/calendar/types"
-
-// ============================================================================
-// Color Scheme Constants
-// ============================================================================
-
-/**
- * All available colors for class color assignment.
- * Uses a diverse palette to ensure different classes get different colors.
- */
-const ALL_COLORS = [
-  "#3B82F6", // Blue
-  "#EC4899", // Pink
-  "#10B981", // Green
-  "#F97316", // Orange
-  "#8B5CF6", // Purple
-  "#06B6D4", // Cyan
-  "#EAB308", // Yellow
-  "#EF4444", // Red
-  "#14B8A6", // Teal
-  "#A855F7", // Violet
-  "#84CC16", // Lime
-  "#F59E0B", // Amber
-  "#6366F1", // Indigo
-  "#0EA5E9", // Sky
-  "#F472B6", // Light Pink
-  "#FB923C", // Light Orange
-]
+import {
+  isValidClass as isValidClassValue,
+} from "@/business/services/calendar/classMappers"
+import { formatCalendarDate as formatCalendarDateValue } from "@/shared/utils/calendarDateUtils"
+import { getClassColor as getClassColorValue } from "@/shared/utils/colorUtils"
 
 /**
  * Fetches calendar events for a date range based on user role.
@@ -275,16 +252,7 @@ export function getDateRangeForView(date: Date, view: CalendarView): DateRange {
  * Requirements: 4.3, 5.4, 7.5
  */
 export function getClassColor(classId: number): string {
-  // Use ALL_COLORS palette for better distribution
-  // This ensures different classes get different colors
-  const palette = ALL_COLORS
-
-  // Use a simple hash function to distribute colors more evenly
-  // This prevents adjacent class IDs from getting similar colors
-  const hash = (classId * 2654435761) % palette.length
-  const index = Math.abs(hash)
-
-  return palette[index]
+  return getClassColorValue(classId)
 }
 
 /**
@@ -340,48 +308,7 @@ export function calculateSubmissionStatus(
  * Requirements: 3.4, 9.4
  */
 export function formatCalendarDate(date: Date, view?: CalendarView): string {
-  if (!view) {
-    // Full date with time for event details
-    return date.toLocaleString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    })
-  }
-
-  switch (view) {
-    case "month":
-      // Format: "October 2023"
-      return format(date, "MMMM yyyy")
-
-    case "week": {
-      // Format: "Oct 16-22, 2023" or "Oct 30 - Nov 5, 2023" for cross-month
-      const weekStart = startOfWeek(date, { weekStartsOn: 0 })
-      const weekEnd = endOfWeek(date, { weekStartsOn: 0 })
-
-      if (format(weekStart, "MMM") === format(weekEnd, "MMM")) {
-        // Same month: compact form
-        return `${format(weekStart, "MMM d")}-${format(weekEnd, "d")}, ${format(weekEnd, "yyyy")}`
-      } else {
-        // Different months: include both month names
-        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}, ${format(weekEnd, "yyyy")}`
-      }
-    }
-
-    case "day":
-      // Format: "October 16, 2023"
-      return format(date, "MMMM d, yyyy")
-
-    case "agenda":
-      // Same as month for agenda view
-      return format(date, "MMMM yyyy")
-
-    default:
-      return format(date, "MMMM yyyy")
-  }
+  return formatCalendarDateValue(date, view)
 }
 
 /**
@@ -432,45 +359,7 @@ export async function getClassesForFilter(
  * @returns True if object has required Class properties
  */
 function isValidClass(obj: unknown): obj is Class {
-  if (typeof obj !== "object" || obj === null) {
-    console.warn("Invalid class: not an object or null", obj)
-    return false
-  }
-
-  const candidate = obj as Record<string, unknown>
-
-  const checks = {
-    id: typeof candidate.id === "number",
-    teacherId: typeof candidate.teacherId === "number",
-    className: typeof candidate.className === "string",
-    classCode: typeof candidate.classCode === "string",
-    description:
-      candidate.description === null ||
-      typeof candidate.description === "string",
-    isActive: typeof candidate.isActive === "boolean",
-    createdAt: typeof candidate.createdAt === "string",
-    yearLevel: typeof candidate.yearLevel === "number",
-    semester: typeof candidate.semester === "number",
-    academicYear: typeof candidate.academicYear === "string",
-    schedule:
-      typeof candidate.schedule === "object" && candidate.schedule !== null,
-  }
-
-  const isValid = Object.values(checks).every((check) => check === true)
-
-  if (!isValid) {
-    console.log("❌ Invalid class object")
-    console.log("Class data:", candidate)
-    console.log("Validation checks:", checks)
-    console.log(
-      "Failed fields:",
-      Object.entries(checks)
-        .filter(([, passed]) => !passed)
-        .map(([field]) => field),
-    )
-  }
-
-  return isValid
+  return isValidClassValue(obj)
 }
 
 /**
@@ -843,3 +732,4 @@ function isDateOnlyDeadline(deadline: Date): boolean {
     deadline.getUTCMilliseconds() === 0
   )
 }
+
