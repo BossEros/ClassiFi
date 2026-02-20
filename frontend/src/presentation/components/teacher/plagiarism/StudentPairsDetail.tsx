@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from "react"
 import { ArrowLeft } from "lucide-react"
-import type { StudentSummary } from "@/data/api/types"
-import type { PairResponse } from "@/data/api/types"
+import type {
+  StudentSummary,
+  PairResponse,
+} from "@/business/services/plagiarismService"
 import { OriginalityBadge } from "./OriginalityBadge"
 import { SimilarityBadge } from "./SimilarityBadge"
 

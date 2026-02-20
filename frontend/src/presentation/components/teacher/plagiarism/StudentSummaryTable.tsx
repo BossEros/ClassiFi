@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react"
 import { Search, X } from "lucide-react"
-import type { StudentSummary } from "@/data/api/types"
+import type { StudentSummary } from "@/business/services/plagiarismService"
 import { OriginalityBadge } from "./OriginalityBadge"
 
 type SortKey = "name" | "originality" | "similarity"

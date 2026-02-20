@@ -1,4 +1,4 @@
-import type { DayOfWeek } from "@/business/models/dashboard/types"
+import type { DayOfWeek } from "@/shared/types/class"
 
 /**
  * Days of the week with labels and short forms for UI display

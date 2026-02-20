@@ -36,7 +36,7 @@ import type {
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import { toLocalDateTimeString } from "@/shared/utils/dateUtils"
 import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
-import { type ProgrammingLanguage } from "@/data/api/types"
+import { type ProgrammingLanguage } from "@/business/models/assignment/types"
 
 export interface AssignmentFormData {
   assignmentName: string

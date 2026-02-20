@@ -26,9 +26,60 @@ export default tseslint.config(
     },
   },
   {
-    files: ["src/shared/context/ToastContext.tsx", "shared/context/ToastContext.tsx"],
+    files: ["src/presentation/context/ToastContext.tsx"],
     rules: {
       "react-refresh/only-export-components": "off",
+    },
+  },
+  {
+    files: ["src/presentation/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/data/*"],
+              message:
+                "Presentation layer must not import data-layer modules directly. Use business services/models.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/shared/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/presentation/*", "@/business/*"],
+              message:
+                "Shared layer must remain cross-cutting and cannot depend on presentation or business layers.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/business/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "@/data/api/types",
+              message:
+                "Business layer should depend on business models/domain contracts instead of API DTO type files.",
+            },
+          ],
+        },
+      ],
     },
   },
   // Allow test utilities to export non-components and any where needed.
