@@ -8,6 +8,7 @@ import {
   adminEditUserFormSchema,
   type AdminEditUserFormValues,
 } from "@/presentation/schemas/admin/adminUserSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface AdminEditUserModalProps {
   isOpen: boolean
@@ -22,28 +23,6 @@ const INITIAL_EDIT_FORM_VALUES: AdminEditUserFormValues = {
   email: "",
   role: "student",
   isActive: false,
-}
-
-function getFirstErrorMessage(errorNode: unknown): string | null {
-  if (!errorNode || typeof errorNode !== "object") {
-    return null
-  }
-
-  const maybeMessage = (errorNode as { message?: unknown }).message
-
-  if (typeof maybeMessage === "string") {
-    return maybeMessage
-  }
-
-  for (const nestedValue of Object.values(errorNode)) {
-    const nestedMessage = getFirstErrorMessage(nestedValue)
-
-    if (nestedMessage) {
-      return nestedMessage
-    }
-  }
-
-  return null
 }
 
 export function AdminEditUserModal({
@@ -168,7 +147,7 @@ export function AdminEditUserModal({
   const handleInvalidSubmit = (
     validationErrors: FieldErrors<AdminEditUserFormValues>,
   ) => {
-    const firstErrorMessage = getFirstErrorMessage(validationErrors)
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
     if (firstErrorMessage) {
       setError(firstErrorMessage)

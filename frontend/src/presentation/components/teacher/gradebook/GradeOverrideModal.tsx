@@ -7,6 +7,7 @@ import {
   createGradeOverrideFormSchema,
   type GradeOverrideFormValues,
 } from "@/presentation/schemas/gradebook/gradebookSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface GradeOverrideModalProps {
   isOpen: boolean
@@ -18,28 +19,6 @@ interface GradeOverrideModalProps {
   assignmentName: string
   currentGrade: number | null
   totalScore: number
-}
-
-function getFirstErrorMessage(errorNode: unknown): string | null {
-  if (!errorNode || typeof errorNode !== "object") {
-    return null
-  }
-
-  const maybeMessage = (errorNode as { message?: unknown }).message
-
-  if (typeof maybeMessage === "string") {
-    return maybeMessage
-  }
-
-  for (const nestedValue of Object.values(errorNode)) {
-    const nestedMessage = getFirstErrorMessage(nestedValue)
-
-    if (nestedMessage) {
-      return nestedMessage
-    }
-  }
-
-  return null
 }
 
 export function GradeOverrideModal({
@@ -167,7 +146,7 @@ export function GradeOverrideModal({
   const handleInvalidSubmit = (
     validationErrors: FieldErrors<GradeOverrideFormValues>,
   ) => {
-    const firstErrorMessage = getFirstErrorMessage(validationErrors)
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
     if (firstErrorMessage) {
       setError(firstErrorMessage)

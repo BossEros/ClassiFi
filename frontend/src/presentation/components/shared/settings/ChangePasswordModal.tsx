@@ -9,6 +9,7 @@ import {
   changePasswordFormSchema,
   type ChangePasswordFormValues,
 } from "@/presentation/schemas/auth/authSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface ChangePasswordModalProps {
   isOpen: boolean
@@ -20,28 +21,6 @@ const INITIAL_FORM_STATE: ChangePasswordRequest = {
   currentPassword: "",
   newPassword: "",
   confirmPassword: "",
-}
-
-function getFirstErrorMessage(errorNode: unknown): string | null {
-  if (!errorNode || typeof errorNode !== "object") {
-    return null
-  }
-
-  const maybeMessage = (errorNode as { message?: unknown }).message
-
-  if (typeof maybeMessage === "string") {
-    return maybeMessage
-  }
-
-  for (const nestedValue of Object.values(errorNode)) {
-    const nestedMessage = getFirstErrorMessage(nestedValue)
-
-    if (nestedMessage) {
-      return nestedMessage
-    }
-  }
-
-  return null
 }
 
 export function ChangePasswordModal({
@@ -124,7 +103,7 @@ export function ChangePasswordModal({
   const handleInvalidSubmit = (
     validationErrors: FieldErrors<ChangePasswordFormValues>,
   ) => {
-    const firstErrorMessage = getFirstErrorMessage(validationErrors)
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
     if (firstErrorMessage) {
       setError(firstErrorMessage)

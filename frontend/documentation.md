@@ -176,6 +176,21 @@ Frontend form validation schemas are colocated in `src/presentation/schemas/*` b
 - `admin/` for admin user forms
 - `gradebook/` for grade override forms
 
+### RHF + Zod Form Pattern (Standard)
+
+All new or refactored Presentation-layer forms should follow this pattern:
+- Define a feature-local Zod schema in `src/presentation/schemas/<feature>/...`.
+- Infer form types from schema using `z.infer<typeof schema>`.
+- Use `useZodForm` to wire `react-hook-form` and `zodResolver` consistently.
+- Map field errors through `getFieldErrorMessage` and modal-level summaries through `getFirstFormErrorMessage`.
+- Keep submit handlers delegating to Business services, preserving Clean Architecture boundaries.
+
+Reference implementations:
+- `src/presentation/components/auth/forms/LoginForm.tsx`
+- `src/presentation/pages/teacher/AssignmentFormPage.tsx`
+- `src/presentation/components/admin/AdminUserModal.tsx`
+- `src/presentation/components/shared/settings/ChangePasswordModal.tsx`
+
 **Assignment Instructions Image Storage Configuration**:
 
 - Uses Supabase Storage bucket configured via `VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET` (defaults to `assignment-descriptions`)

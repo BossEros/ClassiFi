@@ -71,3 +71,31 @@ export function getFieldErrorMessage<TFieldValues extends FieldValues>(
 
   return typeof maybeMessage === "string" ? maybeMessage : undefined
 }
+
+/**
+ * Recursively finds the first string error message from nested form errors.
+ *
+ * @param errorNode - A nested form error structure.
+ * @returns The first discovered message or null.
+ */
+export function getFirstFormErrorMessage(errorNode: unknown): string | null {
+  if (!errorNode || typeof errorNode !== "object") {
+    return null
+  }
+
+  const maybeMessage = (errorNode as { message?: unknown }).message
+
+  if (typeof maybeMessage === "string") {
+    return maybeMessage
+  }
+
+  for (const nestedValue of Object.values(errorNode)) {
+    const nestedMessage = getFirstFormErrorMessage(nestedValue)
+
+    if (nestedMessage) {
+      return nestedMessage
+    }
+  }
+
+  return null
+}

@@ -3,6 +3,7 @@ import { z } from "zod"
 import type { FieldErrors } from "react-hook-form"
 import type { ZodIssue } from "zod"
 import {
+  getFirstFormErrorMessage,
   getFieldErrorMessage,
   mapZodIssuesToFieldErrors,
 } from "@/presentation/utils/formErrorMap"
@@ -117,6 +118,29 @@ describe("formErrorMap", () => {
 
       expect(getFieldErrorMessage(errors, "password")).toBeUndefined()
       expect(getFieldErrorMessage(errors, "profile.firstName")).toBeUndefined()
+    })
+  })
+
+  describe("getFirstFormErrorMessage", () => {
+    it("returns first nested message", () => {
+      const nestedErrors = {
+        details: {
+          profile: {
+            firstName: {
+              message: "First name is required",
+            },
+          },
+        },
+      }
+
+      expect(getFirstFormErrorMessage(nestedErrors)).toBe(
+        "First name is required",
+      )
+    })
+
+    it("returns null when no message exists", () => {
+      expect(getFirstFormErrorMessage({ details: { value: true } })).toBeNull()
+      expect(getFirstFormErrorMessage(null)).toBeNull()
     })
   })
 })
