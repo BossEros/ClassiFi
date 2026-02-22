@@ -86,17 +86,6 @@ export class TestCaseRepository {
   }
 
   /**
-   * Update sort order for multiple test cases.
-   */
-  async updateSortOrder(
-    updates: Array<{ id: number; sortOrder: number }>,
-  ): Promise<void> {
-    for (const { id, sortOrder } of updates) {
-      await db.update(testCases).set({ sortOrder }).where(eq(testCases.id, id))
-    }
-  }
-
-  /**
    * Get the next sort order for a new test case.
    */
   async getNextSortOrder(assignmentId: number): Promise<number> {

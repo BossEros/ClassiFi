@@ -61,16 +61,6 @@ export async function deleteTestCaseById(
   return apiClient.delete<SuccessResponse>(`/test-cases/${testCaseId}`)
 }
 
-export async function updateTestCasesSortOrderForAssignment(
-  assignmentId: number,
-  newSortOrderList: Array<{ id: number; sortOrder: number }>,
-): Promise<ApiResponse<SuccessResponse>> {
-  return apiClient.put<SuccessResponse>(
-    `/assignments/${assignmentId}/test-cases/reorder`,
-    { order: newSortOrderList },
-  )
-}
-
 export async function executeTestsInPreviewModeWithoutSaving(
   sourceCodeContent: string,
   programmingLanguage: "python" | "java" | "c",

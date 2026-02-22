@@ -1,9 +1,7 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { UserService } from "@/modules/users/user.service.js"
-import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
-import { SuccessMessageSchema } from "@/api/schemas/common.schema.js"
+import { validateBody } from "@/api/plugins/zod-validation.js"
 import { toUserDTO } from "@/modules/users/user.mapper.js"
 import { z } from "zod"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -28,28 +26,6 @@ const UpdateAvatarSchema = z.object({
 
 type UpdateAvatarRequest = z.infer<typeof UpdateAvatarSchema>
 
-const UserDTOSchema = z.object({
-  id: z.number(),
-  supabaseUserId: z.string().nullable(),
-  email: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  role: z.string(),
-  avatarUrl: z.string().nullable(),
-  isActive: z.boolean(),
-  createdAt: z.string(),
-})
-
-const GetMeResponseSchema = z.object({
-  success: z.boolean(),
-  user: UserDTOSchema,
-})
-
-const ErrorResponseSchema = z.object({
-  success: z.boolean(),
-  message: z.string(),
-})
-
 /**
  * Registers user routes for profile management, avatar updates, and account deletion.
  *
@@ -64,18 +40,6 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
    * Get current user's profile
    */
   app.get("/me", {
-    preHandler: [authMiddleware],
-    schema: {
-      tags: ["User"],
-      summary: "Get current user profile",
-      description:
-        "Returns the authenticated user's profile information including name, email, and role",
-      security: [{ bearerAuth: [] }],
-      response: {
-        200: toJsonSchema(GetMeResponseSchema),
-        404: toJsonSchema(ErrorResponseSchema),
-      },
-    },
     handler: async (request, reply) => {
       const authenticatedUserId = request.user!.id
 
@@ -99,22 +63,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
    * PATCH /me/avatar
    * Update the current user's avatar URL
    */
-  app.patch<{ Body: UpdateAvatarRequest }>("/me/avatar", {
-    preHandler: [authMiddleware],
-    schema: {
-      tags: ["User"],
-      summary: "Update user avatar URL",
-      description:
-        "Updates the authenticated user's profile picture by providing a new avatar URL",
-      security: [{ bearerAuth: [] }],
-      body: toJsonSchema(UpdateAvatarSchema),
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
+  app.patch("/me/avatar", {
+    preHandler: validateBody(UpdateAvatarSchema),
     handler: async (request, reply) => {
       const authenticatedUserId = request.user!.id
-      const { avatarUrl: newAvatarUrl } = request.body
+      const { avatarUrl: newAvatarUrl } =
+        request.validatedBody as UpdateAvatarRequest
 
       await userService.updateAvatarUrl(authenticatedUserId, newAvatarUrl)
 
@@ -130,17 +84,6 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
    * Delete the current user's account
    */
   app.delete("/me", {
-    preHandler: [authMiddleware],
-    schema: {
-      tags: ["User"],
-      summary: "Delete current user account",
-      description:
-        "Permanently deletes the authenticated user's account and all associated data. This action cannot be undone.",
-      security: [{ bearerAuth: [] }],
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
     handler: async (request, reply) => {
       const authenticatedUserId = request.user!.id
 

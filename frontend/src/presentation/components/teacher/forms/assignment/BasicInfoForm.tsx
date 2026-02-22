@@ -134,8 +134,9 @@ export function BasicInfoForm({
   const templateCodeMonacoLanguage = getMonacoLanguage(
     formData.programmingLanguage || "",
   )
-  const templateCodeEditorPath =
-    mapMonacoLanguageToTemplatePath(templateCodeMonacoLanguage)
+  const templateCodeEditorPath = mapMonacoLanguageToTemplatePath(
+    templateCodeMonacoLanguage,
+  )
 
   return (
     <Card>
@@ -368,7 +369,8 @@ export function BasicInfoForm({
                 value={formData.deadline}
                 triggerStyle={{ backgroundColor: "#1A2130" }}
                 onChange={(dateIso) => {
-                  const time = formData.deadline.split("T")[1]?.slice(0, 5) || ""
+                  const time =
+                    formData.deadline.split("T")[1]?.slice(0, 5) || ""
                   const date = dateIso ? dateIso.split("T")[0] : ""
                   if (date) {
                     onInputChange("deadline", time ? `${date}T${time}` : date)
@@ -485,10 +487,7 @@ export function BasicInfoForm({
                     const now = new Date()
                     now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
                     const todayDateOnly = now.toISOString().split("T")[0]
-                    onInputChange(
-                      "scheduledDate",
-                      todayDateOnly,
-                    )
+                    onInputChange("scheduledDate", todayDateOnly)
                   }
                 }}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 ${
@@ -513,8 +512,7 @@ export function BasicInfoForm({
                     value={formData.scheduledDate}
                     onChange={(dateIso) => {
                       const time =
-                        formData.scheduledDate?.split("T")[1]?.slice(0, 5) ||
-                        ""
+                        formData.scheduledDate?.split("T")[1]?.slice(0, 5) || ""
                       const date = dateIso ? dateIso.split("T")[0] : ""
                       if (date) {
                         onInputChange(
@@ -533,8 +531,7 @@ export function BasicInfoForm({
                     labelClassName="text-gray-200"
                     required
                     value={
-                      formData.scheduledDate.split("T")[1]?.slice(0, 5) ||
-                      ""
+                      formData.scheduledDate.split("T")[1]?.slice(0, 5) || ""
                     }
                     onChange={(timeVal) => {
                       const date = formData.scheduledDate?.split("T")[0]
@@ -710,5 +707,3 @@ export function BasicInfoForm({
     </Card>
   )
 }
-
-

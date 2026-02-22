@@ -184,36 +184,36 @@ export type LatePenaltyUpdateBody = z.infer<typeof LatePenaltyUpdateBodySchema>
 
 /** Class ID param */
 export const ClassIdParamSchema = z.object({
-  classId: z.string(),
+  classId: z.coerce.number().int().min(1),
 })
 
 export type ClassIdParam = z.infer<typeof ClassIdParamSchema>
 
 /** Student ID param */
 export const StudentIdParamSchema = z.object({
-  studentId: z.string(),
+  studentId: z.coerce.number().int().min(1),
 })
 
 export type StudentIdParam = z.infer<typeof StudentIdParamSchema>
 
 /** Student + Class ID params */
 export const StudentClassParamsSchema = z.object({
-  studentId: z.string(),
-  classId: z.string(),
+  studentId: z.coerce.number().int().min(1),
+  classId: z.coerce.number().int().min(1),
 })
 
 export type StudentClassParams = z.infer<typeof StudentClassParamsSchema>
 
 /** Submission ID param */
 export const SubmissionIdParamSchema = z.object({
-  submissionId: z.string(),
+  submissionId: z.coerce.number().int().min(1),
 })
 
 export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>
 
 /** Assignment ID param */
 export const AssignmentIdParamSchema = z.object({
-  id: z.string(),
+  id: z.coerce.number().int().min(1),
 })
 
 export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>

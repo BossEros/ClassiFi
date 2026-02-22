@@ -21,7 +21,8 @@ export class AdminUserService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.services.user) private userService: UserService,
     @inject(DI_TOKENS.services.class) private classService: ClassService,
-    @inject(DI_TOKENS.adapters.supabaseAuth) private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.adapters.supabaseAuth)
+    private authAdapter: SupabaseAuthAdapter,
   ) {}
 
   /**

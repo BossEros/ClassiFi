@@ -41,6 +41,7 @@ function formatZodError(error: ZodError): ValidationErrorResponse {
 }
 
 /** Validate request body against a Zod schema */
+// For JSON payloads (POST, PUT, PATCH)
 export function validateBody<T>(schema: ZodSchema<T>) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const result = schema.safeParse(request.body)
@@ -55,6 +56,7 @@ export function validateBody<T>(schema: ZodSchema<T>) {
 }
 
 /** Validate request query against a Zod schema */
+// For URL query parameters (GET)
 export function validateQuery<T>(schema: ZodSchema<T>) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const result = schema.safeParse(request.query)
@@ -69,6 +71,7 @@ export function validateQuery<T>(schema: ZodSchema<T>) {
 }
 
 /** Validate request params against a Zod schema */
+// For URL path parameters (GET, POST, PUT, DELETE)
 export function validateParams<T>(schema: ZodSchema<T>) {
   return async (request: FastifyRequest, reply: FastifyReply) => {
     const result = schema.safeParse(request.params)

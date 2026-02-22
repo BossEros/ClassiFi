@@ -38,7 +38,8 @@ export class AssignmentService {
     @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
     @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
-    @inject(DI_TOKENS.repositories.testCase) private testCaseRepo: TestCaseRepository,
+    @inject(DI_TOKENS.repositories.testCase)
+    private testCaseRepo: TestCaseRepository,
     @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
     @inject(DI_TOKENS.repositories.submission)
@@ -77,9 +78,8 @@ export class AssignmentService {
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
     const normalizedInstructions = instructions.trim()
-    const normalizedInstructionsImageUrl = this.normalizeNullableString(
-      instructionsImageUrl,
-    )
+    const normalizedInstructionsImageUrl =
+      this.normalizeNullableString(instructionsImageUrl)
 
     this.validateInstructionsContent(
       normalizedInstructions,
@@ -156,11 +156,11 @@ export class AssignmentService {
       failedRecipientUserIds.push(failedTarget.recipientUserId)
 
       logger.error("Failed to send assignment notification", {
-          assignmentId: assignment.id,
-          recipientUserId: failedTarget.recipientUserId,
-          notificationType: "ASSIGNMENT_CREATED",
-          notificationData: failedTarget.notificationData,
-          reason: settledResult.reason,
+        assignmentId: assignment.id,
+        recipientUserId: failedTarget.recipientUserId,
+        notificationType: "ASSIGNMENT_CREATED",
+        notificationData: failedTarget.notificationData,
+        reason: settledResult.reason,
       })
     })
 
@@ -480,9 +480,3 @@ export class AssignmentService {
     return { remindersSent: successCount }
   }
 }
-
-
-
-
-
-

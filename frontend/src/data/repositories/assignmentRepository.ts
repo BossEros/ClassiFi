@@ -28,7 +28,8 @@ const API_BASE_URL =
 const DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET = "assignment-descriptions"
 const ASSIGNMENT_INSTRUCTIONS_FALLBACK_BUCKET =
   "assignment-descriptions-fallback"
-const ASSIGNMENT_INSTRUCTIONS_BUCKET = getConfiguredAssignmentInstructionsBucket()
+const ASSIGNMENT_INSTRUCTIONS_BUCKET =
+  getConfiguredAssignmentInstructionsBucket()
 const ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES =
   resolveAssignmentInstructionsBucketCandidates(ASSIGNMENT_INSTRUCTIONS_BUCKET)
 
@@ -297,7 +298,8 @@ export async function uploadAssignmentInstructionsImage(
       return publicUrl
     }
 
-    lastUploadErrorMessage = uploadError.message || "Failed to upload assignment image"
+    lastUploadErrorMessage =
+      uploadError.message || "Failed to upload assignment image"
 
     if (isStorageBucketConfigurationError(uploadError.message)) {
       continue
@@ -360,8 +362,8 @@ function sanitizeFilename(fileName: string): string {
 }
 
 function getConfiguredAssignmentInstructionsBucket(): string {
-  const configuredBucketName =
-    import.meta.env.VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET
+  const configuredBucketName = import.meta.env
+    .VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET
 
   if (
     typeof configuredBucketName === "string" &&
@@ -422,9 +424,8 @@ function parseStorageLocationFromPublicUrl(
     return parsedAbsoluteUrlLocation
   }
 
-  const legacyBucketLocation = parseStorageLocationFromLegacyPattern(
-    storagePublicUrl,
-  )
+  const legacyBucketLocation =
+    parseStorageLocationFromLegacyPattern(storagePublicUrl)
   if (legacyBucketLocation) {
     return legacyBucketLocation
   }

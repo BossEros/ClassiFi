@@ -19,9 +19,7 @@ import type {
 import type { Assignment, Class } from "@/business/models/dashboard/types"
 import type { Submission } from "@/business/models/assignment/types"
 import type { CalendarView } from "@/business/models/calendar/types"
-import {
-  isValidClass as isValidClassValue,
-} from "@/business/services/calendar/classMappers"
+import { isValidClass as isValidClassValue } from "@/business/services/calendar/classMappers"
 import { formatCalendarDate as formatCalendarDateValue } from "@/shared/utils/calendarDateUtils"
 import { getClassColor as getClassColorValue } from "@/shared/utils/colorUtils"
 
@@ -732,4 +730,3 @@ function isDateOnlyDeadline(deadline: Date): boolean {
     deadline.getUTCMilliseconds() === 0
   )
 }
-

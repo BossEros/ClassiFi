@@ -1,6 +1,10 @@
 import Parser, { SyntaxNode } from "tree-sitter"
 import { Region } from "@/lib/plagiarism/util/region.js"
-import { Token, Tokenizer, TokenizerOptions } from "@/lib/plagiarism/tokenizer/tokenizer.js"
+import {
+  Token,
+  Tokenizer,
+  TokenizerOptions,
+} from "@/lib/plagiarism/tokenizer/tokenizer.js"
 import { ProgrammingLanguage } from "@/lib/plagiarism/language.js"
 
 /**

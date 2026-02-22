@@ -18,12 +18,15 @@ vi.mock("@/business/services/assignmentService")
 vi.mock("@/business/services/testCaseService")
 
 // Mock LatePenaltyConfig to avoid importing UI component
-vi.mock("@/presentation/components/teacher/forms/assignment/LatePenaltyConfig", () => ({
-  DEFAULT_LATE_PENALTY_CONFIG: {
-    tiers: [],
-    rejectAfterHours: 120,
-  },
-}))
+vi.mock(
+  "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig",
+  () => ({
+    DEFAULT_LATE_PENALTY_CONFIG: {
+      tiers: [],
+      rejectAfterHours: 120,
+    },
+  }),
+)
 
 // Mock validation to separate concerns
 vi.mock("@/business/validation/assignmentValidation", () => ({
@@ -217,7 +220,10 @@ describe("useAssignmentForm", () => {
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
       act(() => {
-        result.current.handleInputChange("assignmentName", "Scheduled Assignment")
+        result.current.handleInputChange(
+          "assignmentName",
+          "Scheduled Assignment",
+        )
         result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("totalScore", 100)
@@ -228,7 +234,9 @@ describe("useAssignmentForm", () => {
         await result.current.handleSubmit({ preventDefault: vi.fn() } as any)
       })
 
-      expect(result.current.errors.scheduledDate).toBe("Release time is required")
+      expect(result.current.errors.scheduledDate).toBe(
+        "Release time is required",
+      )
       expect(classService.createAssignment).not.toHaveBeenCalled()
     })
 
@@ -255,14 +263,19 @@ describe("useAssignmentForm", () => {
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
       act(() => {
-        result.current.handleInputChange("assignmentName", "No Deadline Assignment")
+        result.current.handleInputChange(
+          "assignmentName",
+          "No Deadline Assignment",
+        )
         result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("totalScore", 100)
         result.current.handleInputChange("allowLateSubmissions", true)
       })
 
-      vi.mocked(classService.createAssignment).mockResolvedValue({ id: 303 } as any)
+      vi.mocked(classService.createAssignment).mockResolvedValue({
+        id: 303,
+      } as any)
 
       await act(async () => {
         await result.current.handleSubmit({ preventDefault: vi.fn() } as any)
@@ -389,4 +402,3 @@ describe("useAssignmentForm", () => {
     })
   })
 })
-

@@ -1,4 +1,9 @@
-import { useCallback, useState, type Dispatch, type SetStateAction } from "react"
+import {
+  useCallback,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react"
 
 interface ExecuteRequestArgs<TResponse> {
   requestFn: () => Promise<TResponse>
@@ -24,7 +29,7 @@ export function useRequestState(initialLoading: boolean = true): {
   const [error, setError] = useState<string | null>(null)
 
   const executeRequest = useCallback(
-    async <TResponse,>({
+    async <TResponse>({
       requestFn,
       onSuccess,
       fallbackErrorMessage,

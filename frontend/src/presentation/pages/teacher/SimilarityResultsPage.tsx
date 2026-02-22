@@ -543,4 +543,3 @@ export function SimilarityResultsPage() {
     </DashboardLayout>
   )
 }
-

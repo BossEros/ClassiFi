@@ -258,7 +258,9 @@ export class AssignmentRepository extends BaseRepository<
         scheduledDate: data.scheduledDate ?? null,
         allowLateSubmissions: data.allowLateSubmissions ?? false,
         latePenaltyConfig:
-          data.allowLateSubmissions === true ? (data.latePenaltyConfig ?? null) : null,
+          data.allowLateSubmissions === true
+            ? (data.latePenaltyConfig ?? null)
+            : null,
         isActive: true,
       })
       .returning()

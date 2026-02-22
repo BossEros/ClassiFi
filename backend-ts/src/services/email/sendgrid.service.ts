@@ -73,7 +73,3 @@ export class SendGridEmailService implements IEmailService {
     return striptags(html).trim()
   }
 }
-
-
-
-

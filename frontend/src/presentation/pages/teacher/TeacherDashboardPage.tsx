@@ -168,7 +168,9 @@ export function TeacherDashboardPage() {
                     <div
                       key={task.id}
                       onClick={() =>
-                        navigate(`/dashboard/assignments/${task.id}/submissions`)
+                        navigate(
+                          `/dashboard/assignments/${task.id}/submissions`,
+                        )
                       }
                       className="min-h-24 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col"
                     >
@@ -208,4 +210,3 @@ export function TeacherDashboardPage() {
     </DashboardLayout>
   )
 }
-

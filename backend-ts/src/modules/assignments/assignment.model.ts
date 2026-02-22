@@ -55,7 +55,9 @@ export const assignments = pgTable("assignments", {
   isActive: boolean("is_active").default(true).notNull(),
 
   // Late Penalty Configuration
-  allowLateSubmissions: boolean("allow_late_submissions").default(false).notNull(),
+  allowLateSubmissions: boolean("allow_late_submissions")
+    .default(false)
+    .notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
 
   // Reminder tracking

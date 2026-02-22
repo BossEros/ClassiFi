@@ -173,9 +173,7 @@ export function getDeadlineStatus(
  * Used for displaying submission times, etc.
  * Returns "N/A" when the input is missing or invalid.
  */
-export function formatDateTime(
-  date: Date | string | null | undefined,
-): string {
+export function formatDateTime(date: Date | string | null | undefined): string {
   if (!date) {
     return "N/A"
   }

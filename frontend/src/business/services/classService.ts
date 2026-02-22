@@ -28,10 +28,7 @@ import type {
   CreateClassRequest,
   UpdateClassRequest,
 } from "@/business/models/class/types"
-import type {
-  GradeEntry,
-  GradebookStudent,
-} from "@/shared/types/gradebook"
+import type { GradeEntry, GradebookStudent } from "@/shared/types/gradebook"
 
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }
@@ -378,7 +375,11 @@ export async function updateAssignment(
  * @throws {Error} If file is invalid.
  */
 function validateAssignmentInstructionsImageFile(file: File): void {
-  if (!ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES.includes(file.type as (typeof ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES)[number])) {
+  if (
+    !ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES.includes(
+      file.type as (typeof ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES)[number],
+    )
+  ) {
     throw new Error("Invalid image type. Allowed formats: JPG, PNG, WEBP, GIF")
   }
 

@@ -2,21 +2,26 @@ import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { SubmissionService } from "@/modules/submissions/submission.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
+import { validateParams, validateQuery } from "@/api/plugins/zod-validation.js"
 import { parsePositiveInt } from "@/shared/utils.js"
-import { LatestOnlyQuerySchema } from "@/api/schemas/common.schema.js"
-import { AssignmentIdParamSchema } from "@/modules/assignments/assignment.schema.js"
-import { StudentIdParamSchema } from "@/modules/classes/class.schema.js"
 import {
-  SubmitAssignmentResponseSchema,
-  SubmissionListResponseSchema,
-  SubmissionHistoryResponseSchema,
+  LatestOnlyQuerySchema,
+  type LatestOnlyQuery,
+} from "@/api/schemas/common.schema.js"
+import {
+  AssignmentIdParamSchema,
+  type AssignmentIdParam,
+} from "@/modules/assignments/assignment.schema.js"
+import {
+  StudentIdParamSchema,
+  type StudentIdParam,
+} from "@/modules/classes/class.schema.js"
+import {
   SubmissionIdParamSchema,
   HistoryParamsSchema,
-  DownloadResponseSchema,
-  SubmissionContentResponseSchema,
+  type SubmissionIdParam,
+  type HistoryParams,
 } from "@/modules/submissions/submission.schema.js"
-import { TestResultsResponseSchema } from "@/modules/test-cases/test-case.schema.js"
 import {
   BadRequestError,
   NotFoundError,
@@ -40,25 +45,18 @@ interface MultipartField {
  * @returns A promise that resolves when all routes are registered.
  */
 export async function submissionRoutes(app: FastifyInstance): Promise<void> {
-  const submissionService =
-    container.resolve<SubmissionService>(DI_TOKENS.services.submission)
-  const codeTestService = container.resolve<CodeTestService>(DI_TOKENS.services.codeTest)
+  const submissionService = container.resolve<SubmissionService>(
+    DI_TOKENS.services.submission,
+  )
+  const codeTestService = container.resolve<CodeTestService>(
+    DI_TOKENS.services.codeTest,
+  )
 
   /**
    * POST /
    * Submit an assignment (file upload)
    */
   app.post("/", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Submit an assignment (file upload)",
-      description:
-        "Upload code file for assignment submission using multipart/form-data",
-      consumes: ["multipart/form-data"],
-      response: {
-        201: toJsonSchema(SubmitAssignmentResponseSchema),
-      },
-    },
     handler: async (request, reply) => {
       const uploadedFile = await request.file()
 
@@ -103,67 +101,38 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * GET /history/:assignmentId/:studentId
    * Get submission history for a student on an assignment
    */
-  app.get<{ Params: { assignmentId: string; studentId: string } }>(
-    "/history/:assignmentId/:studentId",
-    {
-      schema: {
-        tags: ["Submissions"],
-        summary: "Get submission history for a student on an assignment",
-        description:
-          "Returns all past submissions for a specific student-assignment pair",
-        params: toJsonSchema(HistoryParamsSchema),
-        response: {
-          200: toJsonSchema(SubmissionHistoryResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const assignmentId = parsePositiveInt(
-          request.params.assignmentId,
-          "Assignment ID",
-        )
-        const studentId = parsePositiveInt(
-          request.params.studentId,
-          "Student ID",
-        )
+  app.get("/history/:assignmentId/:studentId", {
+    preHandler: validateParams(HistoryParamsSchema),
+    handler: async (request, reply) => {
+      const { assignmentId, studentId } =
+        request.validatedParams as HistoryParams
 
-        const submissionHistoryList =
-          await submissionService.getSubmissionHistory(assignmentId, studentId)
+      const submissionHistoryList =
+        await submissionService.getSubmissionHistory(assignmentId, studentId)
 
-        return reply.send({
-          success: true,
-          message: "Submission history retrieved successfully",
-          submissions: submissionHistoryList,
-          totalSubmissions: submissionHistoryList.length,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Submission history retrieved successfully",
+        submissions: submissionHistoryList,
+        totalSubmissions: submissionHistoryList.length,
+      })
     },
-  )
+  })
 
   /**
    * GET /assignment/:assignmentId
    * Get all submissions for an assignment
    */
-  app.get<{
-    Params: { assignmentId: string }
-    Querystring: { latestOnly: boolean }
-  }>("/assignment/:assignmentId", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Get all submissions for an assignment",
-      description:
-        "Returns submissions from all students for a specific assignment. Use latestOnly=true to get only the most recent submission per student",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      querystring: toJsonSchema(LatestOnlyQuerySchema),
-      response: {
-        200: toJsonSchema(SubmissionListResponseSchema),
-      },
-    },
+  app.get("/assignment/:assignmentId", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateQuery(LatestOnlyQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
-      const { latestOnly: shouldReturnLatestOnly } = request.query
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
+
+      const { latestOnly: shouldReturnLatestOnly } =
+        request.validatedQuery as LatestOnlyQuery
 
       const submissionsList = await submissionService.getAssignmentSubmissions(
         assignmentId,
@@ -183,24 +152,15 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * GET /student/:studentId
    * Get all submissions by a student
    */
-  app.get<{
-    Params: { studentId: string }
-    Querystring: { latestOnly: boolean }
-  }>("/student/:studentId", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Get all submissions by a student",
-      description:
-        "Returns all submissions across all assignments for a specific student. Use latestOnly=true to get only the most recent submission per assignment",
-      params: toJsonSchema(StudentIdParamSchema),
-      querystring: toJsonSchema(LatestOnlyQuerySchema),
-      response: {
-        200: toJsonSchema(SubmissionListResponseSchema),
-      },
-    },
+  app.get("/student/:studentId", {
+    preHandler: [
+      validateParams(StudentIdParamSchema),
+      validateQuery(LatestOnlyQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const studentId = parsePositiveInt(request.params.studentId, "Student ID")
-      const { latestOnly: shouldReturnLatestOnly } = request.query
+      const { studentId } = request.validatedParams as StudentIdParam
+      const { latestOnly: shouldReturnLatestOnly } =
+        request.validatedQuery as LatestOnlyQuery
 
       const studentSubmissionsList =
         await submissionService.getStudentSubmissions(
@@ -221,22 +181,10 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * GET /:submissionId/download
    * Get download URL for a submission
    */
-  app.get<{ Params: { submissionId: string } }>("/:submissionId/download", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Get download URL for a submission",
-      description:
-        "Generates a signed URL for downloading the submission file from storage",
-      params: toJsonSchema(SubmissionIdParamSchema),
-      response: {
-        200: toJsonSchema(DownloadResponseSchema),
-      },
-    },
+  app.get("/:submissionId/download", {
+    preHandler: validateParams(SubmissionIdParamSchema),
     handler: async (request, reply) => {
-      const submissionId = parsePositiveInt(
-        request.params.submissionId,
-        "Submission ID",
-      )
+      const { submissionId } = request.validatedParams as SubmissionIdParam
 
       const signedDownloadUrl =
         await submissionService.getSubmissionDownloadUrl(submissionId)
@@ -253,22 +201,10 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * GET /:submissionId/content
    * Get submission content for preview
    */
-  app.get<{ Params: { submissionId: string } }>("/:submissionId/content", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Get submission content for preview",
-      description:
-        "Retrieves the raw code content and detected programming language for in-browser preview",
-      params: toJsonSchema(SubmissionIdParamSchema),
-      response: {
-        200: toJsonSchema(SubmissionContentResponseSchema),
-      },
-    },
+  app.get("/:submissionId/content", {
+    preHandler: validateParams(SubmissionIdParamSchema),
     handler: async (request, reply) => {
-      const submissionId = parsePositiveInt(
-        request.params.submissionId,
-        "Submission ID",
-      )
+      const { submissionId } = request.validatedParams as SubmissionIdParam
 
       const submissionContentData =
         await submissionService.getSubmissionContent(submissionId)
@@ -286,22 +222,10 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * GET /:submissionId/test-results
    * Get test results for a submission
    */
-  app.get<{ Params: { submissionId: string } }>("/:submissionId/test-results", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Get test results for a submission",
-      description:
-        "Retrieves the test execution results including pass/fail status for each test case",
-      params: toJsonSchema(SubmissionIdParamSchema),
-      response: {
-        200: toJsonSchema(TestResultsResponseSchema),
-      },
-    },
+  app.get("/:submissionId/test-results", {
+    preHandler: validateParams(SubmissionIdParamSchema),
     handler: async (request, reply) => {
-      const submissionId = parsePositiveInt(
-        request.params.submissionId,
-        "Submission ID",
-      )
+      const { submissionId } = request.validatedParams as SubmissionIdParam
 
       const testResultsData = await codeTestService.getTestResults(submissionId)
 
@@ -321,29 +245,10 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * POST /:submissionId/run-tests
    * Run tests for a submission with timeout protection
    */
-  app.post<{ Params: { submissionId: string } }>("/:submissionId/run-tests", {
-    schema: {
-      tags: ["Submissions"],
-      summary: "Run tests for a submission",
-      description: `Manually triggers test execution for a submission and returns the results. Request will timeout after ${settings.testExecutionTimeoutSeconds} seconds if tests take too long to execute.`,
-      params: toJsonSchema(SubmissionIdParamSchema),
-      response: {
-        200: toJsonSchema(TestResultsResponseSchema),
-        504: {
-          type: "object",
-          properties: {
-            success: { type: "boolean" },
-            message: { type: "string" },
-            error: { type: "string" },
-          },
-        },
-      },
-    },
+  app.post("/:submissionId/run-tests", {
+    preHandler: validateParams(SubmissionIdParamSchema),
     handler: async (request, reply) => {
-      const submissionId = parsePositiveInt(
-        request.params.submissionId,
-        "Submission ID",
-      )
+      const { submissionId } = request.validatedParams as SubmissionIdParam
 
       // Create cancelable timeout promise
       const timeoutMs = settings.testExecutionTimeoutSeconds * 1000

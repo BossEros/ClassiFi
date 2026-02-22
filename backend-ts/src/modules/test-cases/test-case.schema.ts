@@ -28,20 +28,6 @@ export const UpdateTestCaseRequestSchema = z.object({
 
 export type UpdateTestCaseRequest = z.infer<typeof UpdateTestCaseRequestSchema>
 
-/** Reorder test cases request schema */
-export const ReorderTestCasesRequestSchema = z.object({
-  order: z.array(
-    z.object({
-      id: z.number().int(),
-      sortOrder: z.number().int().min(0),
-    }),
-  ),
-})
-
-export type ReorderTestCasesRequest = z.infer<
-  typeof ReorderTestCasesRequestSchema
->
-
 /** Test case response schema */
 export const TestCaseResponseSchema = z.object({
   id: z.number(),
@@ -105,21 +91,21 @@ export type TestExecutionSummary = z.infer<typeof TestExecutionSummarySchema>
 
 /** Assignment ID param schema */
 export const AssignmentIdParamSchema = z.object({
-  assignmentId: z.string(),
+  assignmentId: z.coerce.number().int().min(1),
 })
 
 export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>
 
 /** Test case ID param schema */
 export const TestCaseIdParamSchema = z.object({
-  testCaseId: z.string(),
+  testCaseId: z.coerce.number().int().min(1),
 })
 
 export type TestCaseIdParam = z.infer<typeof TestCaseIdParamSchema>
 
 /** Submission ID param schema */
 export const SubmissionIdParamSchema = z.object({
-  submissionId: z.string(),
+  submissionId: z.coerce.number().int().min(1),
 })
 
 export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>

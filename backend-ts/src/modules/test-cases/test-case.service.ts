@@ -1,10 +1,10 @@
 import { inject, injectable } from "tsyringe"
 import { TestCaseRepository } from "@/modules/test-cases/test-case.repository.js"
-import type { NewTestCase, TestCase } from "@/modules/test-cases/test-case.model.js"
-import {
-  TestCaseNotFoundError,
-  TestCaseOwnershipError,
-} from "@/shared/errors.js"
+import type {
+  NewTestCase,
+  TestCase,
+} from "@/modules/test-cases/test-case.model.js"
+import { TestCaseNotFoundError } from "@/shared/errors.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
@@ -14,7 +14,8 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 @injectable()
 export class TestCaseService {
   constructor(
-    @inject(DI_TOKENS.repositories.testCase) private testCaseRepo: TestCaseRepository,
+    @inject(DI_TOKENS.repositories.testCase)
+    private testCaseRepo: TestCaseRepository,
   ) {}
 
   /**
@@ -74,44 +75,5 @@ export class TestCaseService {
     }
 
     return true
-  }
-
-  /**
-   * Reorder test cases
-   */
-  async reorderTestCases(
-    order: Array<{ id: number; sortOrder: number }>,
-  ): Promise<void> {
-    await this.testCaseRepo.updateSortOrder(order)
-  }
-
-  /**
-   * Reorder test cases for a specific assignment with ownership validation.
-   * Ensures all test cases belong to the specified assignment before reordering.
-   *
-   * @param assignmentId - The assignment ID to validate ownership against.
-   * @param order - Array of test case IDs with their new sort orders.
-   * @throws TestCaseNotFoundError if any test case doesn't exist.
-   * @throws TestCaseOwnershipError if any test case doesn't belong to the assignment.
-   */
-  async reorderTestCasesForAssignment(
-    assignmentId: number,
-    order: Array<{ id: number; sortOrder: number }>,
-  ): Promise<void> {
-    // Validate that all test cases exist and belong to the assignment
-    for (const { id } of order) {
-      const testCase = await this.testCaseRepo.getById(id)
-
-      if (!testCase) {
-        throw new TestCaseNotFoundError(id)
-      }
-
-      if (testCase.assignmentId !== assignmentId) {
-        throw new TestCaseOwnershipError(id, assignmentId)
-      }
-    }
-
-    // All test cases are valid, proceed with reordering
-    await this.testCaseRepo.updateSortOrder(order)
   }
 }

@@ -1,19 +1,18 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AdminClassService } from "@/modules/admin/admin-class.service.js"
-import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 import { adminMiddleware } from "@/api/middlewares/admin.middleware.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
+import {
+  validateQuery,
+  validateParams,
+  validateBody,
+} from "@/api/plugins/zod-validation.js"
 import {
   ClassFilterQuerySchema,
   ClassParamsSchema,
   CreateClassSchema,
   UpdateClassSchema,
   ReassignTeacherSchema,
-  PaginatedClassesResponseSchema,
-  SingleClassResponseSchema,
-  SuccessResponseSchema,
-  ClassAssignmentsResponseSchema,
   type ClassFilterQuery,
   type ClassParams,
   type CreateClass,
@@ -53,27 +52,22 @@ function mapUpdateClassDtoToServiceData(dto: UpdateClass): UpdateClassData {
  * @returns A promise that resolves when all routes are registered.
  */
 export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
-  const adminClassService =
-    container.resolve<AdminClassService>(DI_TOKENS.services.adminClass)
-  const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
+  const adminClassService = container.resolve<AdminClassService>(
+    DI_TOKENS.services.adminClass,
+  )
+  const preHandlerMiddlewares = [adminMiddleware]
 
   /**
    * GET /classes
    * List all classes with filtering
    */
-  app.get<{ Querystring: ClassFilterQuery }>("/classes", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "List all classes with filtering",
-      description:
-        "Retrieves a paginated list of classes with optional search and filter options",
-      security: [{ bearerAuth: [] }],
-      querystring: toJsonSchema(ClassFilterQuerySchema),
-      response: { 200: toJsonSchema(PaginatedClassesResponseSchema) },
-    },
+  app.get("/classes", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateQuery(ClassFilterQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const filterQuery = request.query
+      const filterQuery = request.validatedQuery as ClassFilterQuery
 
       const paginatedClassesResult =
         await adminClassService.getAllClasses(filterQuery)
@@ -86,18 +80,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
    * GET /classes/:id
    * Get class details by ID
    */
-  app.get<{ Params: ClassParams }>("/classes/:id", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "Get class details by ID",
-      description: "Retrieves detailed information for a specific class",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassParamsSchema),
-      response: { 200: toJsonSchema(SingleClassResponseSchema) },
-    },
+  app.get("/classes/:id", {
+    preHandler: [...preHandlerMiddlewares, validateParams(ClassParamsSchema)],
     handler: async (request, reply) => {
-      const classId = request.params.id
+      const { id: classId } = request.validatedParams as ClassParams
 
       const classDetails = await adminClassService.getClassById(classId)
 
@@ -109,19 +95,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
    * POST /classes
    * Create a new class
    */
-  app.post<{ Body: CreateClass }>("/classes", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "Create a new class",
-      description:
-        "Creates a new class with specified details and assigns a teacher",
-      security: [{ bearerAuth: [] }],
-      body: toJsonSchema(CreateClassSchema),
-      response: { 201: toJsonSchema(SingleClassResponseSchema) },
-    },
+  app.post("/classes", {
+    preHandler: [...preHandlerMiddlewares, validateBody(CreateClassSchema)],
     handler: async (request, reply) => {
-      const newClassData = request.body
+      const newClassData = request.validatedBody as CreateClass
 
       const createdClass = await adminClassService.createClass(newClassData)
 
@@ -140,21 +117,15 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
    * PUT /classes/:id
    * Update class information
    */
-  app.put<{ Params: ClassParams; Body: UpdateClass }>("/classes/:id", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "Update class information",
-      description:
-        "Updates class details such as name, description, and schedule",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassParamsSchema),
-      body: toJsonSchema(UpdateClassSchema),
-      response: { 200: toJsonSchema(SingleClassResponseSchema) },
-    },
+  app.put("/classes/:id", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateParams(ClassParamsSchema),
+      validateBody(UpdateClassSchema),
+    ],
     handler: async (request, reply) => {
-      const classId = request.params.id
-      const updatedClassDto = request.body
+      const { id: classId } = request.validatedParams as ClassParams
+      const updatedClassDto = request.validatedBody as UpdateClass
       const serviceData = mapUpdateClassDtoToServiceData(updatedClassDto)
 
       await adminClassService.updateClass(classId, serviceData)
@@ -169,18 +140,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
    * DELETE /classes/:id
    * Delete a class
    */
-  app.delete<{ Params: ClassParams }>("/classes/:id", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "Delete a class",
-      description: "Permanently deletes a class and all associated data",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassParamsSchema),
-      response: { 200: toJsonSchema(SuccessResponseSchema) },
-    },
+  app.delete("/classes/:id", {
+    preHandler: [...preHandlerMiddlewares, validateParams(ClassParamsSchema)],
     handler: async (request, reply) => {
-      const classId = request.params.id
+      const { id: classId } = request.validatedParams as ClassParams
 
       await adminClassService.deleteClass(classId)
 
@@ -195,47 +158,32 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
    * PATCH /classes/:id/reassign
    * Reassign class teacher
    */
-  app.patch<{ Params: ClassParams; Body: ReassignTeacher }>(
-    "/classes/:id/reassign",
-    {
-      preHandler: preHandlerMiddlewares,
-      schema: {
-        tags: ["Admin - Classes"],
-        summary: "Reassign class teacher",
-        description: "Assigns a different teacher to the class",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(ClassParamsSchema),
-        body: toJsonSchema(ReassignTeacherSchema),
-        response: { 200: toJsonSchema(SingleClassResponseSchema) },
-      },
-      handler: async (request, reply) => {
-        const classId = request.params.id
-        const newTeacherId = request.body.teacherId
+  app.patch("/classes/:id/reassign", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateParams(ClassParamsSchema),
+      validateBody(ReassignTeacherSchema),
+    ],
+    handler: async (request, reply) => {
+      const { id: classId } = request.validatedParams as ClassParams
+      const { teacherId: newTeacherId } =
+        request.validatedBody as ReassignTeacher
 
-        const reassignedClassDetails =
-          await adminClassService.reassignClassTeacher(classId, newTeacherId)
+      const reassignedClassDetails =
+        await adminClassService.reassignClassTeacher(classId, newTeacherId)
 
-        return reply.send({ success: true, class: reassignedClassDetails })
-      },
+      return reply.send({ success: true, class: reassignedClassDetails })
     },
-  )
+  })
 
   /**
    * PATCH /classes/:id/archive
    * Archive a class
    */
-  app.patch<{ Params: ClassParams }>("/classes/:id/archive", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "Archive a class",
-      description: "Marks a class as archived (soft delete)",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassParamsSchema),
-      response: { 200: toJsonSchema(SingleClassResponseSchema) },
-    },
+  app.patch("/classes/:id/archive", {
+    preHandler: [...preHandlerMiddlewares, validateParams(ClassParamsSchema)],
     handler: async (request, reply) => {
-      const classId = request.params.id
+      const { id: classId } = request.validatedParams as ClassParams
 
       const archivedClassDetails = await adminClassService.archiveClass(classId)
 
@@ -247,18 +195,10 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
    * GET /classes/:id/assignments
    * Get class assignments
    */
-  app.get<{ Params: ClassParams }>("/classes/:id/assignments", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Classes"],
-      summary: "Get class assignments",
-      description: "Retrieves all assignments for a specific class",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassParamsSchema),
-      response: { 200: toJsonSchema(ClassAssignmentsResponseSchema) },
-    },
+  app.get("/classes/:id/assignments", {
+    preHandler: [...preHandlerMiddlewares, validateParams(ClassParamsSchema)],
     handler: async (request, reply) => {
-      const classId = request.params.id
+      const { id: classId } = request.validatedParams as ClassParams
 
       const classAssignmentsList =
         await adminClassService.getClassAssignments(classId)

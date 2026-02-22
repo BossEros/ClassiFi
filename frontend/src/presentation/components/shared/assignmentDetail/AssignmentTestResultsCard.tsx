@@ -1,5 +1,10 @@
 import { ChevronDown, Code, Lock } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import type { AssignmentTestCase } from "@/business/models/assignment/types"
 import type { TestPreviewResult } from "@/business/models/test/types"
 
@@ -77,15 +82,24 @@ export function AssignmentTestResultsCard({
   const activeResults = previewResults || submissionTestResults
   const isPreview = !!previewResults
 
-  if (!activeResults && (!assignmentTestCases || assignmentTestCases.length === 0)) {
+  if (
+    !activeResults &&
+    (!assignmentTestCases || assignmentTestCases.length === 0)
+  ) {
     return null
   }
 
   if (activeResults) {
-    const expandedSet = isPreview ? expandedPreviewTests : expandedSubmissionTests
-    const toggleFn = isPreview ? onTogglePreviewTestExpand : onToggleSubmissionTestExpand
+    const expandedSet = isPreview
+      ? expandedPreviewTests
+      : expandedSubmissionTests
+    const toggleFn = isPreview
+      ? onTogglePreviewTestExpand
+      : onToggleSubmissionTestExpand
     const resultCount = activeResults.results.length
-    const hiddenCount = activeResults.results.filter((result) => result.isHidden).length
+    const hiddenCount = activeResults.results.filter(
+      (result) => result.isHidden,
+    ).length
 
     return (
       <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
@@ -101,7 +115,8 @@ export function AssignmentTestResultsCard({
                 : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
             }`}
           >
-            {activeResults.passed}/{activeResults.total} Passed ({activeResults.percentage}%)
+            {activeResults.passed}/{activeResults.total} Passed (
+            {activeResults.percentage}%)
           </span>
         </CardHeader>
         <CardContent>
@@ -134,11 +149,15 @@ export function AssignmentTestResultsCard({
                         </span>
                         <div className="flex flex-col items-start">
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-gray-200">{result.name}</span>
+                            <span className="text-sm font-medium text-gray-200">
+                              {result.name}
+                            </span>
                           </div>
                           <span
                             className={`text-xs ${
-                              isAccepted ? "text-green-500/70" : "text-red-500/70"
+                              isAccepted
+                                ? "text-green-500/70"
+                                : "text-red-500/70"
                             }`}
                           >
                             {result.status}
@@ -163,7 +182,9 @@ export function AssignmentTestResultsCard({
                             <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
                               <pre
                                 className={`text-xs font-mono whitespace-pre-wrap ${
-                                  !result.input ? "text-gray-500 italic" : "text-gray-300"
+                                  !result.input
+                                    ? "text-gray-500 italic"
+                                    : "text-gray-300"
                                 }`}
                               >
                                 {result.input || "(No input required)"}
@@ -206,10 +227,13 @@ export function AssignmentTestResultsCard({
                               >
                                 <pre
                                   className={`text-xs font-mono whitespace-pre-wrap ${
-                                    isAccepted ? "text-green-300" : "text-red-300"
+                                    isAccepted
+                                      ? "text-green-300"
+                                      : "text-red-300"
                                   } ${!result.actualOutput ? "italic opacity-50" : ""}`}
                                 >
-                                  {result.actualOutput || "(No output generated)"}
+                                  {result.actualOutput ||
+                                    "(No output generated)"}
                                 </pre>
                               </div>
                             </div>
@@ -247,7 +271,9 @@ export function AssignmentTestResultsCard({
   }
 
   const resultCount = assignmentTestCases.length
-  const hiddenCount = assignmentTestCases.filter((testCase) => testCase.isHidden).length
+  const hiddenCount = assignmentTestCases.filter(
+    (testCase) => testCase.isHidden,
+  ).length
 
   return (
     <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
@@ -282,7 +308,9 @@ export function AssignmentTestResultsCard({
                         {originalIndex + 1}
                       </span>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-200">{testCase.name}</span>
+                        <span className="text-sm font-medium text-gray-200">
+                          {testCase.name}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -307,7 +335,9 @@ export function AssignmentTestResultsCard({
                               <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
                                 <pre
                                   className={`text-xs font-mono whitespace-pre-wrap ${
-                                    !testCase.input ? "text-gray-500 italic" : "text-gray-300"
+                                    !testCase.input
+                                      ? "text-gray-500 italic"
+                                      : "text-gray-300"
                                   }`}
                                 >
                                   {testCase.input || "(No input required)"}
@@ -333,7 +363,9 @@ export function AssignmentTestResultsCard({
                           </div>
                         </>
                       ) : (
-                        <p className="text-xs text-gray-500 italic">No details available.</p>
+                        <p className="text-xs text-gray-500 italic">
+                          No details available.
+                        </p>
                       )}
                     </div>
                   )}

@@ -75,7 +75,7 @@ export function AdminClassesTable({
   onCloseDropdown,
 }: AdminClassesTableProps) {
   const activeClass = activeDropdown
-    ? classes.find((item) => item.id === activeDropdown.id) ?? null
+    ? (classes.find((item) => item.id === activeDropdown.id) ?? null)
     : null
 
   return (
@@ -198,7 +198,9 @@ export function AdminClassesTable({
                   <td className="px-6 py-5 text-right">
                     <div className="relative inline-block">
                       <button
-                        onClick={(event) => onDropdownClick(event, selectedClass.id)}
+                        onClick={(event) =>
+                          onDropdownClick(event, selectedClass.id)
+                        }
                         disabled={actionLoading === selectedClass.id}
                         className={`p-2 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-colors ${
                           activeDropdown?.id === selectedClass.id
@@ -218,13 +220,20 @@ export function AdminClassesTable({
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center text-gray-500">
+                <td
+                  colSpan={6}
+                  className="px-6 py-16 text-center text-gray-500"
+                >
                   <div className="flex flex-col items-center gap-3">
                     <div className="p-4 rounded-full bg-white/5">
                       <Search className="w-8 h-8 opacity-40" />
                     </div>
-                    <p className="text-lg font-medium text-gray-400">No classes found</p>
-                    <p className="text-sm">Try adjusting your search or filters</p>
+                    <p className="text-lg font-medium text-gray-400">
+                      No classes found
+                    </p>
+                    <p className="text-sm">
+                      Try adjusting your search or filters
+                    </p>
                   </div>
                 </td>
               </tr>

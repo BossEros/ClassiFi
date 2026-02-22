@@ -4,6 +4,7 @@ import { notificationRoutes } from "../../src/modules/notifications/notification
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import type { Notification } from "../../src/models/index.js"
 import { NotFoundError, ForbiddenError } from "../../src/shared/errors.js"
+import { NotificationParamsSchema } from "../../src/modules/notifications/notification.schema.js"
 
 // Mock container
 vi.mock("tsyringe", () => ({
@@ -14,21 +15,17 @@ vi.mock("tsyringe", () => ({
   inject: () => () => {},
 }))
 
-// Mock utils
-vi.mock("../../src/shared/utils.js", () => ({
-  parsePositiveInt: (value: string) => {
-    const num = parseInt(value, 10)
-    if (isNaN(num) || num <= 0) {
-      throw new Error(`Invalid positive integer: ${value}`)
-    }
-    return num
-  },
+// Mock zod-validation plugin (validators are bypassed in unit tests)
+vi.mock("../../src/api/plugins/zod-validation.js", () => ({
+  validateParams: () => async () => {},
+  validateBody: () => async () => {},
+  validateQuery: () => async () => {},
 }))
 
 describe("Notification Controller", () => {
   let mockNotificationService: NotificationService
   let mockApp: FastifyInstance
-  let mockRequest: Partial<FastifyRequest>
+  let mockRequest: any
   let mockReply: Partial<FastifyReply>
 
   const mockNotification: Notification = {
@@ -96,7 +93,7 @@ describe("Notification Controller", () => {
       const getCall = vi.mocked(mockApp.get).mock.calls[0]
       const handler = getCall[1].handler
 
-      mockRequest.query = { page: 1, limit: 20 }
+      mockRequest.validatedQuery = { page: 1, limit: 20 }
 
       await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -130,7 +127,7 @@ describe("Notification Controller", () => {
       const getCall = vi.mocked(mockApp.get).mock.calls[0]
       const handler = getCall[1].handler
 
-      mockRequest.query = { page: 1, limit: 20, unreadOnly: true }
+      mockRequest.validatedQuery = { page: 1, limit: 20, unreadOnly: true }
 
       await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -158,7 +155,7 @@ describe("Notification Controller", () => {
       const getCall = vi.mocked(mockApp.get).mock.calls[0]
       const handler = getCall[1].handler
 
-      mockRequest.query = {}
+      mockRequest.validatedQuery = {}
 
       await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -217,7 +214,7 @@ describe("Notification Controller", () => {
       const patchCall = vi.mocked(mockApp.patch).mock.calls[0]
       const handler = patchCall[1].handler
 
-      mockRequest.params = { id: "1" }
+      mockRequest.validatedParams = { id: 1 }
 
       await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -228,17 +225,10 @@ describe("Notification Controller", () => {
       })
     })
 
-    it("should throw error for invalid notification ID", async () => {
-      await notificationRoutes(mockApp)
+    it("should reject invalid notification ID via schema", () => {
+      const result = NotificationParamsSchema.safeParse({ id: "invalid" })
 
-      const patchCall = vi.mocked(mockApp.patch).mock.calls[0]
-      const handler = patchCall[1].handler
-
-      mockRequest.params = { id: "invalid" }
-
-      await expect(
-        handler(mockRequest as FastifyRequest, mockReply as FastifyReply),
-      ).rejects.toThrow()
+      expect(result.success).toBe(false)
     })
 
     it("should handle NotFoundError", async () => {
@@ -251,7 +241,7 @@ describe("Notification Controller", () => {
       const patchCall = vi.mocked(mockApp.patch).mock.calls[0]
       const handler = patchCall[1].handler
 
-      mockRequest.params = { id: "999" }
+      mockRequest.validatedParams = { id: 999 }
 
       await expect(
         handler(mockRequest as FastifyRequest, mockReply as FastifyReply),
@@ -268,7 +258,7 @@ describe("Notification Controller", () => {
       const patchCall = vi.mocked(mockApp.patch).mock.calls[0]
       const handler = patchCall[1].handler
 
-      mockRequest.params = { id: "1" }
+      mockRequest.validatedParams = { id: 1 }
 
       await expect(
         handler(mockRequest as FastifyRequest, mockReply as FastifyReply),
@@ -310,7 +300,7 @@ describe("Notification Controller", () => {
       const deleteCall = vi.mocked(mockApp.delete).mock.calls[0]
       const handler = deleteCall[1].handler
 
-      mockRequest.params = { id: "1" }
+      mockRequest.validatedParams = { id: 1 }
 
       await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -324,17 +314,10 @@ describe("Notification Controller", () => {
       })
     })
 
-    it("should throw error for invalid notification ID", async () => {
-      await notificationRoutes(mockApp)
+    it("should reject invalid notification ID via schema", () => {
+      const result = NotificationParamsSchema.safeParse({ id: "invalid" })
 
-      const deleteCall = vi.mocked(mockApp.delete).mock.calls[0]
-      const handler = deleteCall[1].handler
-
-      mockRequest.params = { id: "invalid" }
-
-      await expect(
-        handler(mockRequest as FastifyRequest, mockReply as FastifyReply),
-      ).rejects.toThrow()
+      expect(result.success).toBe(false)
     })
 
     it("should handle NotFoundError", async () => {
@@ -347,7 +330,7 @@ describe("Notification Controller", () => {
       const deleteCall = vi.mocked(mockApp.delete).mock.calls[0]
       const handler = deleteCall[1].handler
 
-      mockRequest.params = { id: "999" }
+      mockRequest.validatedParams = { id: 999 }
 
       await expect(
         handler(mockRequest as FastifyRequest, mockReply as FastifyReply),
@@ -364,7 +347,7 @@ describe("Notification Controller", () => {
       const deleteCall = vi.mocked(mockApp.delete).mock.calls[0]
       const handler = deleteCall[1].handler
 
-      mockRequest.params = { id: "1" }
+      mockRequest.validatedParams = { id: 1 }
 
       await expect(
         handler(mockRequest as FastifyRequest, mockReply as FastifyReply),

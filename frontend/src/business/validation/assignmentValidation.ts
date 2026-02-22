@@ -130,7 +130,10 @@ export const validateCreateAssignmentData = (
   }
 
   // Validate instructions
-  if (data.instructions !== undefined || data.instructionsImageUrl !== undefined) {
+  if (
+    data.instructions !== undefined ||
+    data.instructionsImageUrl !== undefined
+  ) {
     const instructionsError = validateInstructions(
       data.instructions ?? "",
       data.instructionsImageUrl,

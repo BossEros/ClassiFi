@@ -177,48 +177,6 @@ describe("testCaseRepository", () => {
   })
 
   // ============================================================================
-  // updateTestCasesSortOrderForAssignment Tests
-  // ============================================================================
-
-  describe("updateTestCasesSortOrderForAssignment", () => {
-    const order = [
-      { id: 1, sortOrder: 2 },
-      { id: 2, sortOrder: 1 },
-    ]
-
-    it("reorders test cases successfully", async () => {
-      vi.mocked(apiClient.put).mockResolvedValue({
-        data: { success: true, message: "Reordered" },
-        status: 200,
-      })
-
-      const result =
-        await testCaseRepository.updateTestCasesSortOrderForAssignment(1, order)
-
-      expect(apiClient.put).toHaveBeenCalledWith(
-        "/assignments/1/test-cases/reorder",
-        { order },
-      )
-      expect(result.data?.success).toBe(true)
-    })
-
-    it("returns error on failure", async () => {
-      vi.mocked(apiClient.put).mockResolvedValue({
-        error: "Assignment not found",
-        status: 404,
-      })
-
-      const result =
-        await testCaseRepository.updateTestCasesSortOrderForAssignment(
-          999,
-          order,
-        )
-
-      expect(result.error).toBe("Assignment not found")
-    })
-  })
-
-  // ============================================================================
   // executeTestsInPreviewModeWithoutSaving Tests
   // ============================================================================
 

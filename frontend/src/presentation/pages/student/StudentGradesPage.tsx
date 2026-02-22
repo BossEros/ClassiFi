@@ -307,5 +307,3 @@ function getGradeColor(percentage: number): string {
   if (percentage >= 40) return "text-orange-400"
   return "text-red-400"
 }
-
-

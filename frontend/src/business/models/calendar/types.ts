@@ -49,7 +49,6 @@ export interface DateRange {
   end: Date
 }
 
-
 export interface CalendarFilters {
   classIds: Set<number>
   showPastEvents: boolean

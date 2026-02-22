@@ -1,8 +1,3 @@
-/**
- * Shared Utility Functions
- * Common utilities used across services.
- */
-
 import { BadRequestError } from "@/shared/errors.js"
 
 /**
@@ -124,4 +119,3 @@ export function filterUndefined<T extends object>(obj: T): Partial<T> {
     Object.entries(obj).filter(([, value]) => value !== undefined),
   ) as Partial<T>
 }
-

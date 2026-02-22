@@ -184,4 +184,3 @@ describe("Notification Types Registry", () => {
     })
   })
 })
-

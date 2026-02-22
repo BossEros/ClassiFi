@@ -524,4 +524,3 @@ export class ClassRepository extends BaseRepository<
     }))
   }
 }
-

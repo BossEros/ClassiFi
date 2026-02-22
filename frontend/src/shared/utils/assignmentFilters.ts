@@ -62,10 +62,12 @@ export function groupAssignments(assignments: Assignment[]): {
 
   // Sort by deadline (earliest first)
   current.sort(
-    (a, b) => getDeadlineTimestamp(a.deadline) - getDeadlineTimestamp(b.deadline),
+    (a, b) =>
+      getDeadlineTimestamp(a.deadline) - getDeadlineTimestamp(b.deadline),
   )
   past.sort(
-    (a, b) => getDeadlineTimestamp(a.deadline) - getDeadlineTimestamp(b.deadline),
+    (a, b) =>
+      getDeadlineTimestamp(a.deadline) - getDeadlineTimestamp(b.deadline),
   )
 
   return { current, past }

@@ -230,7 +230,3 @@ export class StorageService implements IStorageService {
     return await this.upload("submissions", path, data, contentType)
   }
 }
-
-
-
-
