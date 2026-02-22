@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  changePasswordFormSchema,
   forgotPasswordFormSchema,
   loginFormSchema,
   registerFormSchema,
@@ -47,6 +48,31 @@ describe("authSchemas", () => {
     const parseResult = resetPasswordFormSchema.safeParse({
       newPassword: "Password1!",
       confirmPassword: "Password2!",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.message).toBe("Passwords do not match")
+      expect(parseResult.error.issues[0]?.path).toEqual(["confirmPassword"])
+    }
+  })
+
+  it("accepts valid change password values", () => {
+    const parseResult = changePasswordFormSchema.safeParse({
+      currentPassword: "OldPassword1!",
+      newPassword: "NewPassword1!",
+      confirmPassword: "NewPassword1!",
+    })
+
+    expect(parseResult.success).toBe(true)
+  })
+
+  it("rejects change password mismatch", () => {
+    const parseResult = changePasswordFormSchema.safeParse({
+      currentPassword: "OldPassword1!",
+      newPassword: "NewPassword1!",
+      confirmPassword: "AnotherPassword1!",
     })
 
     expect(parseResult.success).toBe(false)

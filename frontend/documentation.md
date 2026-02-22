@@ -165,6 +165,16 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
   - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
   - Optional deadline settings (assignment can be created without a deadline)
   - Resubmission settings
+- **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
+- **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
+- **`GradeOverrideModal`**: Grade override input uses `react-hook-form` + dynamic Zod schema with assignment-score bounds.
+
+Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:
+- `auth/` for authentication forms
+- `class/` for class management forms
+- `assignment/` for assignment authoring forms
+- `admin/` for admin user forms
+- `gradebook/` for grade override forms
 
 **Assignment Instructions Image Storage Configuration**:
 

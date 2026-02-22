@@ -4,8 +4,8 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `70%`
-- Current phase: `Phase 4 - Remaining Modals and Admin/Settings Forms`
+- Overall progress: `85%`
+- Current phase: `Phase 5 - Cleanup and Documentation`
 - Last updated: `2026-02-22`
 
 ## Execution Checklist
@@ -47,11 +47,11 @@ Related plan: `implementation_plan.md`
 
 ## Phase 4: Remaining Modals and Admin/Settings Forms
 
-- [ ] Migrate admin user modals
-- [ ] Migrate settings/password modal forms
-- [ ] Migrate grade override form modal
-- [ ] Add/update tests for migrated modals
-- [ ] Run verification gate (`frontend build` + `frontend tests`)
+- [x] Migrate admin user modals
+- [x] Migrate settings/password modal forms
+- [x] Migrate grade override form modal
+- [x] Add/update tests for migrated modals
+- [x] Run verification gate (`frontend build` + `frontend tests`)
 
 ## Phase 5: Cleanup and Documentation
 
@@ -93,6 +93,10 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 3 post-migration backend `npm test`
 - [x] 2026-02-22: Phase 3 checkpoint tests `npx vitest run src/presentation/hooks/teacher/useAssignmentForm.test.tsx src/presentation/components/teacher/forms/testCases/TestCaseModal.test.tsx src/presentation/schemas/assignment/assignmentSchemas.test.ts`
 - [x] 2026-02-22: Phase 3 checkpoint frontend `npm run build`
+- [x] 2026-02-22: Phase 4 frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 4 frontend `npm run build`
+- [x] 2026-02-22: Phase 4 backend `npm run typecheck`
+- [x] 2026-02-22: Phase 4 backend `npm test`
 
 ## Notes
 

@@ -77,7 +77,25 @@ export const registerFormSchema = z
     path: ["confirmPassword"],
   })
 
+/**
+ * Change password form schema.
+ */
+export const changePasswordFormSchema = z
+  .object({
+    currentPassword: requiredPasswordSchema,
+    newPassword: strongPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine(
+    ({ newPassword, confirmPassword }) => newPassword === confirmPassword,
+    {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    },
+  )
+
 export type LoginFormValues = z.infer<typeof loginFormSchema>
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>
 export type RegisterFormValues = z.infer<typeof registerFormSchema>
+export type ChangePasswordFormValues = z.infer<typeof changePasswordFormSchema>
