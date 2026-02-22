@@ -4,8 +4,8 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `35%`
-- Current phase: `Phase 2 - Class Management Forms`
+- Overall progress: `50%`
+- Current phase: `Phase 3 - Assignment Authoring Forms`
 - Last updated: `2026-02-22`
 
 ## Execution Checklist
@@ -29,12 +29,12 @@ Related plan: `implementation_plan.md`
 
 ## Phase 2: Class Management Forms
 
-- [ ] Migrate `frontend/src/presentation/pages/teacher/ClassFormPage.tsx`
-- [ ] Migrate `frontend/src/presentation/components/student/forms/JoinClassModal.tsx`
-- [ ] Migrate `frontend/src/presentation/components/admin/AdminCreateClassModal.tsx`
-- [ ] Align class validation rules with Zod schemas (no behavior change)
-- [ ] Add/update class form tests
-- [ ] Run verification gate (`frontend build` + `frontend tests`)
+- [x] Migrate `frontend/src/presentation/pages/teacher/ClassFormPage.tsx`
+- [x] Migrate `frontend/src/presentation/components/student/forms/JoinClassModal.tsx`
+- [x] Migrate `frontend/src/presentation/components/admin/AdminCreateClassModal.tsx`
+- [x] Align class validation rules with Zod schemas (no behavior change)
+- [x] Add/update class form tests
+- [x] Run verification gate (`frontend build` + `frontend tests`)
 
 ## Phase 3: Assignment Authoring Forms
 
@@ -75,6 +75,11 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 1 frontend `npm test -- --run`
 - [x] 2026-02-22: Phase 1 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 1 backend `npm test`
+- [x] 2026-02-22: Phase 2 class tests `npx vitest run src/presentation/schemas/class/classSchemas.test.ts src/presentation/components/student/forms/JoinClassModal.test.tsx src/presentation/components/admin/AdminCreateClassModal.test.tsx`
+- [x] 2026-02-22: Phase 2 frontend `npm run build`
+- [x] 2026-02-22: Phase 2 frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 2 backend `npm run typecheck`
+- [x] 2026-02-22: Phase 2 backend `npm test`
 
 ## Notes
 

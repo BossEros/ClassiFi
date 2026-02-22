@@ -9,18 +9,19 @@ import {
   ChevronDown,
   AlertCircle,
 } from "lucide-react"
+import type { FieldErrors } from "react-hook-form"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser, AdminClass } from "@/business/services/adminService"
-import {
-  validateClassName,
-  validateAcademicYear,
-  validateSchedule,
-} from "@/business/validation/classValidation"
 import {
   DAY_ABBREVIATIONS,
   convertToDayOfWeek,
   convertToAbbreviations,
 } from "@/presentation/constants/schedule.constants"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  adminClassFormSchema,
+  type AdminClassFormValues,
+} from "@/presentation/schemas/class/classSchemas"
 
 interface AdminCreateClassModalProps {
   isOpen: boolean
@@ -28,6 +29,57 @@ interface AdminCreateClassModalProps {
   onSuccess: () => void
   teachers: AdminUser[]
   classToEdit?: AdminClass | null
+}
+
+interface AdminClassModalFormData {
+  className: string
+  description: string
+  teacherId: string
+  yearLevel: 1 | 2 | 3 | 4
+  semester: 1 | 2
+  academicYear: string
+  scheduleDays: string[]
+  startTime: string
+  endTime: string
+}
+
+function getDefaultFormData(): AdminClassModalFormData {
+  return {
+    className: "",
+    description: "",
+    teacherId: "",
+    yearLevel: 1,
+    semester: 1,
+    academicYear:
+      new Date().getFullYear().toString() +
+      "-" +
+      (new Date().getFullYear() + 1).toString(),
+    scheduleDays: [],
+    startTime: "08:00",
+    endTime: "09:30",
+  }
+}
+
+function getFirstErrorMessage(errorNode: unknown): string | null {
+  if (!errorNode || typeof errorNode !== "object") {
+    return null
+  }
+
+  const maybeMessage = (errorNode as { message?: unknown }).message
+
+  if (typeof maybeMessage === "string") {
+    return maybeMessage
+  }
+
+  for (const nestedValue of Object.values(errorNode)) {
+    const nestedMessage = getFirstErrorMessage(nestedValue)
+
+    if (nestedMessage) {
+      return nestedMessage
+    }
+  }
+
+  return null
 }
 
 export function AdminCreateClassModal({
@@ -39,138 +91,125 @@ export function AdminCreateClassModal({
 }: AdminCreateClassModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Default form values for creating a new class
-  const getDefaultFormData = () => ({
-    className: "",
-    description: "",
-    teacherId: "",
-    yearLevel: 1,
-    semester: 1,
-    academicYear:
-      new Date().getFullYear().toString() +
-      "-" +
-      (new Date().getFullYear() + 1).toString(),
-    scheduleDays: [] as string[],
-    startTime: "08:00",
-    endTime: "09:30",
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+  } = useZodForm({
+    schema: adminClassFormSchema,
+    defaultValues: getDefaultFormData(),
+    mode: "onSubmit",
   })
 
-  const [formData, setFormData] = useState(getDefaultFormData())
+  const classNameField = register("className")
+  const descriptionField = register("description")
+  const teacherIdField = register("teacherId")
+  const yearLevelField = register("yearLevel", { valueAsNumber: true })
+  const semesterField = register("semester", { valueAsNumber: true })
+  const academicYearField = register("academicYear")
+  const startTimeField = register("startTime")
+  const endTimeField = register("endTime")
 
-  // Reset or Populate form when modal opens
+  const scheduleDaysValue = watch("scheduleDays")
+  const classNameValue = watch("className")
+  const descriptionValue = watch("description")
+  const teacherIdValue = watch("teacherId")
+  const yearLevelValue = watch("yearLevel")
+  const semesterValue = watch("semester")
+  const academicYearValue = watch("academicYear")
+  const startTimeValue = watch("startTime")
+  const endTimeValue = watch("endTime")
+
+  // Reset or populate form when modal opens
   useEffect(() => {
-    if (isOpen) {
-      if (classToEdit) {
-        // Populate form with class data for editing
-        setFormData({
-          className: classToEdit.className,
-          description: classToEdit.description || "",
-          teacherId: classToEdit.teacherId.toString(),
-          yearLevel: classToEdit.yearLevel,
-          semester: classToEdit.semester,
-          academicYear: classToEdit.academicYear,
-          scheduleDays: convertToAbbreviations(classToEdit.schedule.days),
-          startTime: classToEdit.schedule.startTime,
-          endTime: classToEdit.schedule.endTime,
-        })
-      } else {
-        setFormData(getDefaultFormData())
-      }
-      setError(null)
+    if (!isOpen) {
+      return
     }
-  }, [isOpen, classToEdit])
+
+    if (classToEdit) {
+      reset({
+        className: classToEdit.className,
+        description: classToEdit.description || "",
+        teacherId: classToEdit.teacherId.toString(),
+        yearLevel: classToEdit.yearLevel as 1 | 2 | 3 | 4,
+        semester: classToEdit.semester as 1 | 2,
+        academicYear: classToEdit.academicYear,
+        scheduleDays: convertToAbbreviations(classToEdit.schedule.days),
+        startTime: classToEdit.schedule.startTime,
+        endTime: classToEdit.schedule.endTime,
+      })
+    } else {
+      reset(getDefaultFormData())
+    }
+
+    setError(null)
+  }, [isOpen, classToEdit, reset])
 
   const toggleDay = (day: string) => {
-    setFormData((prev) => {
-      const days = prev.scheduleDays.includes(day)
-        ? prev.scheduleDays.filter((d) => d !== day)
-        : [...prev.scheduleDays, day]
+    const updatedScheduleDays = scheduleDaysValue.includes(day)
+      ? scheduleDaysValue.filter((scheduleDay) => scheduleDay !== day)
+      : [...scheduleDaysValue, day]
 
-      // Sort days based on standard week order
-      return {
-        ...prev,
-        scheduleDays: days.sort(
-          (a, b) => DAY_ABBREVIATIONS.indexOf(a) - DAY_ABBREVIATIONS.indexOf(b),
-        ),
-      }
+    const sortedScheduleDays = updatedScheduleDays.sort(
+      (firstDay, secondDay) =>
+        DAY_ABBREVIATIONS.indexOf(firstDay) -
+        DAY_ABBREVIATIONS.indexOf(secondDay),
+    )
+
+    setValue("scheduleDays", sortedScheduleDays, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
     })
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Validate teacher selection
-    if (!formData.teacherId) {
-      setError("Please select a teacher")
-      return
-    }
-
-    // Use centralized validators
-    const classNameError = validateClassName(formData.className)
-    if (classNameError) {
-      setError(classNameError)
-      return
-    }
-
-    // Validate schedule using centralized validator
-    const scheduleError = validateSchedule({
-      days: convertToDayOfWeek(formData.scheduleDays),
-      startTime: formData.startTime,
-      endTime: formData.endTime,
-    })
-    if (scheduleError) {
-      setError(scheduleError)
-      return
-    }
-
-    // Validate time (end must be after start)
-    if (formData.startTime >= formData.endTime) {
-      setError("End time must be after start time")
-      return
-    }
-
-    // Use centralized academic year validation
-    const academicYearError = validateAcademicYear(formData.academicYear)
-    if (academicYearError) {
-      setError(academicYearError)
-      return
-    }
-
+  const handleValidSubmit = async (formValues: AdminClassFormValues) => {
     try {
       setIsLoading(true)
       setError(null)
 
-      const commonData = {
-        className: formData.className,
-        description: formData.description,
-        teacherId: Number(formData.teacherId),
-        yearLevel: Number(formData.yearLevel),
-        semester: Number(formData.semester),
-        academicYear: formData.academicYear,
+      const commonClassData = {
+        className: formValues.className,
+        description: formValues.description,
+        teacherId: Number(formValues.teacherId),
+        yearLevel: Number(formValues.yearLevel),
+        semester: Number(formValues.semester),
+        academicYear: formValues.academicYear,
         schedule: {
-          days: convertToDayOfWeek(formData.scheduleDays),
-          startTime: formData.startTime,
-          endTime: formData.endTime,
+          days: convertToDayOfWeek(formValues.scheduleDays),
+          startTime: formValues.startTime,
+          endTime: formValues.endTime,
         },
       }
 
       if (classToEdit) {
-        await adminService.updateClass(classToEdit.id, commonData)
+        await adminService.updateClass(classToEdit.id, commonClassData)
       } else {
-        await adminService.createClass(commonData)
+        await adminService.createClass(commonClassData)
       }
 
       onSuccess()
       onClose()
-    } catch (err) {
+    } catch (submitError) {
       setError(
-        err instanceof Error
-          ? err.message
+        submitError instanceof Error
+          ? submitError.message
           : `Failed to ${classToEdit ? "update" : "create"} class`,
       )
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<AdminClassFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
     }
   }
 
@@ -212,7 +251,11 @@ export function AdminCreateClassModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+          className="space-y-6"
+          noValidate
+        >
           {/* Basic Info */}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-gray-300 uppercase tracking-wider flex items-center gap-2">
@@ -232,10 +275,8 @@ export function AdminCreateClassModal({
                 </label>
                 <input
                   type="text"
-                  value={formData.className}
-                  onChange={(e) =>
-                    setFormData({ ...formData, className: e.target.value })
-                  }
+                  {...classNameField}
+                  value={classNameValue}
                   className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                   placeholder="e.g. Introduction to Computer Science"
                   required
@@ -248,10 +289,8 @@ export function AdminCreateClassModal({
                 </label>
                 <div className="relative">
                   <select
-                    value={formData.teacherId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, teacherId: e.target.value })
-                    }
+                    {...teacherIdField}
+                    value={teacherIdValue}
                     className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
                     required
                   >
@@ -277,10 +316,8 @@ export function AdminCreateClassModal({
                   Description (Optional)
                 </label>
                 <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  {...descriptionField}
+                  value={descriptionValue}
                   className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all min-h-[80px] resize-none"
                   placeholder="Brief description of the class..."
                 />
@@ -304,18 +341,17 @@ export function AdminCreateClassModal({
                 </label>
                 <div className="relative">
                   <select
-                    value={formData.yearLevel}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        yearLevel: Number(e.target.value),
-                      })
-                    }
+                    {...yearLevelField}
+                    value={yearLevelValue}
                     className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
                   >
-                    {[1, 2, 3, 4].map((y) => (
-                      <option key={y} value={y} className="bg-slate-900">
-                        Year {y}
+                    {[1, 2, 3, 4].map((yearLevelOption) => (
+                      <option
+                        key={yearLevelOption}
+                        value={yearLevelOption}
+                        className="bg-slate-900"
+                      >
+                        Year {yearLevelOption}
                       </option>
                     ))}
                   </select>
@@ -329,13 +365,8 @@ export function AdminCreateClassModal({
                 </label>
                 <div className="relative">
                   <select
-                    value={formData.semester}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        semester: Number(e.target.value),
-                      })
-                    }
+                    {...semesterField}
+                    value={semesterValue}
                     className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent transition-all appearance-none cursor-pointer pr-10"
                   >
                     <option value={1} className="bg-slate-900">
@@ -355,10 +386,8 @@ export function AdminCreateClassModal({
                 </label>
                 <input
                   type="text"
-                  value={formData.academicYear}
-                  onChange={(e) =>
-                    setFormData({ ...formData, academicYear: e.target.value })
-                  }
+                  {...academicYearField}
+                  value={academicYearValue}
                   className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-transparent transition-all"
                   placeholder="e.g. 2023-2024"
                   required
@@ -387,7 +416,7 @@ export function AdminCreateClassModal({
                     type="button"
                     onClick={() => toggleDay(day)}
                     className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                      formData.scheduleDays.includes(day)
+                      scheduleDaysValue.includes(day)
                         ? "bg-green-500/20 text-green-400 border border-green-500/30 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
                         : "bg-white/5 text-gray-400 border border-white/5 hover:bg-white/10 hover:text-white"
                     }`}
@@ -405,10 +434,8 @@ export function AdminCreateClassModal({
                 </label>
                 <input
                   type="time"
-                  value={formData.startTime}
-                  onChange={(e) =>
-                    setFormData({ ...formData, startTime: e.target.value })
-                  }
+                  {...startTimeField}
+                  value={startTimeValue}
                   className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all [color-scheme:dark]"
                   required
                 />
@@ -419,10 +446,8 @@ export function AdminCreateClassModal({
                 </label>
                 <input
                   type="time"
-                  value={formData.endTime}
-                  onChange={(e) =>
-                    setFormData({ ...formData, endTime: e.target.value })
-                  }
+                  {...endTimeField}
+                  value={endTimeValue}
                   className="w-full px-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all [color-scheme:dark]"
                   required
                 />
