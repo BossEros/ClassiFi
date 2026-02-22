@@ -61,6 +61,15 @@ Related plan: `implementation_plan.md`
 - [x] Run final verification gate (`frontend build` + `frontend tests`)
 - [x] Run backend safety checks (`backend-ts typecheck` + `backend-ts tests`)
 
+## Phase 6: Post-Migration Risk Review
+
+- [x] Run architecture boundary scan for Presentation form modules
+- [x] Run form inventory scan for remaining manual form patterns
+- [x] Fix UI text encoding defect in `AdminDeleteUserModal`
+- [ ] Decouple Presentation schemas from `business/validation` helpers
+- [ ] Migrate destructive confirmation modals (`DeleteAccountModal`, `AdminDeleteUserModal`) to RHF + Zod
+- [ ] Add component tests for destructive confirmation modals
+
 ## Verification Log
 
 - [x] 2026-02-22: Baseline frontend `npm run build`
@@ -101,6 +110,7 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 5 frontend `npm run build`
 - [x] 2026-02-22: Phase 5 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 5 backend `npm test`
+- [x] 2026-02-22: Phase 6 frontend `npm run build`
 
 ## Notes
 

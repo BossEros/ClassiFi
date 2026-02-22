@@ -147,15 +147,15 @@ export function AdminDeleteUserModal({
               </p>
               <ul className="text-sm text-gray-400 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  <span className="text-red-400 mt-0.5">&bull;</span>
                   Their profile and personal information
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  <span className="text-red-400 mt-0.5">&bull;</span>
                   All submissions and assignments
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  <span className="text-red-400 mt-0.5">&bull;</span>
                   All class enrollments and associations
                 </li>
               </ul>
