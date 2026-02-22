@@ -3,11 +3,13 @@ import { useForm, type FieldValues, type UseFormProps } from "react-hook-form"
 import type { z } from "zod"
 
 export interface UseZodFormOptions<
-  TFieldValues extends FieldValues,
-  TTransformedValues extends FieldValues = TFieldValues,
+  TSchema extends z.ZodType<unknown, FieldValues>,
   TContext = unknown,
-> extends Omit<UseFormProps<TFieldValues, TContext>, "resolver" | "formControl"> {
-  schema: z.ZodType<TTransformedValues, TFieldValues>
+> extends Omit<
+  UseFormProps<z.input<TSchema>, TContext, z.output<TSchema>>,
+  "resolver" | "formControl"
+> {
+  schema: TSchema
 }
 
 /**
@@ -17,15 +19,12 @@ export interface UseZodFormOptions<
  * @returns React Hook Form instance with schema-derived input and output types.
  */
 export function useZodForm<
-  TFieldValues extends FieldValues,
-  TTransformedValues extends FieldValues = TFieldValues,
+  TSchema extends z.ZodType<unknown, FieldValues>,
   TContext = unknown,
->(
-  options: UseZodFormOptions<TFieldValues, TTransformedValues, TContext>,
-) {
+>(options: UseZodFormOptions<TSchema, TContext>) {
   const { schema, ...formOptions } = options
 
-  return useForm<TFieldValues, TContext, TTransformedValues>({
+  return useForm<z.input<TSchema>, TContext, z.output<TSchema>>({
     resolver: zodResolver(schema),
     ...formOptions,
   })

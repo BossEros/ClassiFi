@@ -8,7 +8,10 @@ import {
   registerFormSchema,
   type RegisterFormValues,
 } from "@/presentation/schemas/auth/authSchemas"
-import type { RegistrationStep, RegistrationStepInfo } from "@/shared/types/auth"
+import type {
+  RegistrationStep,
+  RegistrationStepInfo,
+} from "@/shared/types/auth"
 
 interface RegisterFormProps {
   onSuccess?: () => void
@@ -69,21 +72,29 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
     setIsLoading(true)
     setError(null)
 
-    const result = await registerUser({
-      role: formValues.role,
-      firstName: formValues.firstName,
-      lastName: formValues.lastName,
-      email: formValues.email,
-      password: formValues.password,
-      confirmPassword: formValues.confirmPassword,
-    })
+    try {
+      const result = await registerUser({
+        role: formValues.role,
+        firstName: formValues.firstName,
+        lastName: formValues.lastName,
+        email: formValues.email,
+        password: formValues.password,
+        confirmPassword: formValues.confirmPassword,
+      })
 
-    setIsLoading(false)
-
-    if (result.success) {
-      setCurrentStep("complete")
-    } else {
-      setError(result.message || "Registration failed")
+      if (result.success) {
+        setCurrentStep("complete")
+      } else {
+        setError(result.message || "Registration failed")
+      }
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Registration failed",
+      )
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -101,7 +112,11 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
     }
 
     if (currentStep === "personal") {
-      const isPersonalStepValid = await trigger(["firstName", "lastName", "email"])
+      const isPersonalStepValid = await trigger([
+        "firstName",
+        "lastName",
+        "email",
+      ])
 
       if (isPersonalStepValid) {
         setCurrentStep("credentials")
@@ -274,10 +289,16 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 }}
                 required
                 hasError={!!errors.firstName}
-                aria-describedby={errors.firstName ? "firstName-error" : undefined}
+                aria-describedby={
+                  errors.firstName ? "firstName-error" : undefined
+                }
               />
               {errors.firstName && (
-                <p id="firstName-error" className="text-sm text-red-400" role="alert">
+                <p
+                  id="firstName-error"
+                  className="text-sm text-red-400"
+                  role="alert"
+                >
                   {errors.firstName.message}
                 </p>
               )}
@@ -301,10 +322,16 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 }}
                 required
                 hasError={!!errors.lastName}
-                aria-describedby={errors.lastName ? "lastName-error" : undefined}
+                aria-describedby={
+                  errors.lastName ? "lastName-error" : undefined
+                }
               />
               {errors.lastName && (
-                <p id="lastName-error" className="text-sm text-red-400" role="alert">
+                <p
+                  id="lastName-error"
+                  className="text-sm text-red-400"
+                  role="alert"
+                >
                   {errors.lastName.message}
                 </p>
               )}
@@ -371,7 +398,9 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 className="pr-11"
                 required
                 hasError={!!errors.password}
-                aria-describedby={errors.password ? "password-error" : undefined}
+                aria-describedby={
+                  errors.password ? "password-error" : undefined
+                }
               />
               <button
                 type="button"
@@ -387,7 +416,11 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               </button>
             </div>
             {errors.password && (
-              <p id="password-error" className="text-sm text-red-400" role="alert">
+              <p
+                id="password-error"
+                className="text-sm text-red-400"
+                role="alert"
+              >
                 {errors.password.message}
               </p>
             )}

@@ -27,9 +27,8 @@ import { Select } from "@/presentation/components/ui/Select"
 import { Textarea } from "@/presentation/components/ui/Textarea"
 import { TimePicker } from "@/presentation/components/ui/TimePicker"
 import { programmingLanguageOptions } from "@/presentation/hooks/teacher/useAssignmentForm"
-import {
-  type AssignmentFormValues,
-} from "@/presentation/schemas/assignment/assignmentSchemas"
+import { type AssignmentFormValues } from "@/presentation/schemas/assignment/assignmentSchemas"
+import type { AssignmentFormData } from "@/presentation/hooks/teacher/assignmentForm.types"
 import { formatTimeRemaining } from "@/presentation/utils/dateUtils"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
@@ -57,6 +56,10 @@ interface BasicInfoFormProps {
   onUpdatePendingTestCase: (tempId: string, data: PendingTestCase) => void
   onDeleteTestCase: (id: number) => Promise<void>
   onDeletePendingTestCase: (tempId: string) => void
+  handleInputChange: <K extends keyof AssignmentFormData>(
+    field: K,
+    value: AssignmentFormData[K],
+  ) => void
 }
 
 function mapTemplateFileNameToProgrammingLanguage(
@@ -113,11 +116,10 @@ export function BasicInfoForm({
   onUpdatePendingTestCase,
   onDeleteTestCase,
   onDeletePendingTestCase,
+  handleInputChange,
 }: BasicInfoFormProps) {
   const {
     watch,
-    setValue,
-    clearErrors,
     formState: { errors: formErrors },
   } = useFormContext<AssignmentFormValues>()
   const formData = watch()
@@ -125,35 +127,13 @@ export function BasicInfoForm({
   const errors = {
     assignmentName: getFieldErrorMessage(formErrors, "assignmentName"),
     instructions: getFieldErrorMessage(formErrors, "instructions"),
-    programmingLanguage: getFieldErrorMessage(formErrors, "programmingLanguage"),
+    programmingLanguage: getFieldErrorMessage(
+      formErrors,
+      "programmingLanguage",
+    ),
     deadline: getFieldErrorMessage(formErrors, "deadline"),
     scheduledDate: getFieldErrorMessage(formErrors, "scheduledDate"),
     totalScore: getFieldErrorMessage(formErrors, "totalScore"),
-  }
-
-  const handleInputChange = <K extends keyof AssignmentFormValues>(
-    field: K,
-    value: AssignmentFormValues[K],
-  ) => {
-    const normalizedField = field as keyof AssignmentFormValues
-
-    setValue(normalizedField, value as never, {
-      shouldDirty: true,
-      shouldTouch: true,
-    })
-
-    if (field === "deadline") {
-      const hasDeadline = typeof value === "string" && value.trim().length > 0
-
-      if (!hasDeadline) {
-        setValue("allowLateSubmissions", false, {
-          shouldDirty: true,
-          shouldTouch: true,
-        })
-      }
-    }
-
-    clearErrors(field)
   }
 
   const deadlineDate = formData.deadline ? new Date(formData.deadline) : null
@@ -326,7 +306,10 @@ export function BasicInfoForm({
                 options={programmingLanguageOptions}
                 value={formData.programmingLanguage}
                 onChange={(value) =>
-                  handleInputChange("programmingLanguage", value)
+                  handleInputChange(
+                    "programmingLanguage",
+                    value as AssignmentFormData["programmingLanguage"],
+                  )
                 }
                 disabled={isLoading}
                 className={`h-11 py-0 bg-[#1A2130] border-white/10 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
@@ -396,11 +379,15 @@ export function BasicInfoForm({
                 value={formData.deadline}
                 triggerStyle={{ backgroundColor: "#1A2130" }}
                 onChange={(dateIso) => {
-                  const time = formData.deadline.split("T")[1]?.slice(0, 5) || ""
+                  const time =
+                    formData.deadline.split("T")[1]?.slice(0, 5) || ""
                   const date = dateIso ? dateIso.split("T")[0] : ""
 
                   if (date) {
-                    handleInputChange("deadline", time ? `${date}T${time}` : date)
+                    handleInputChange(
+                      "deadline",
+                      time ? `${date}T${time}` : date,
+                    )
                   } else {
                     handleInputChange("deadline", "")
                   }
@@ -479,7 +466,9 @@ export function BasicInfoForm({
                 >
                   <Calendar
                     className={`w-5 h-5 ${
-                      formData.scheduledDate ? "text-purple-400" : "text-gray-400"
+                      formData.scheduledDate
+                        ? "text-purple-400"
+                        : "text-gray-400"
                     }`}
                   />
                 </div>
@@ -533,7 +522,8 @@ export function BasicInfoForm({
                     required
                     value={formData.scheduledDate}
                     onChange={(dateIso) => {
-                      const time = formData.scheduledDate?.split("T")[1]?.slice(0, 5) || ""
+                      const time =
+                        formData.scheduledDate?.split("T")[1]?.slice(0, 5) || ""
                       const date = dateIso ? dateIso.split("T")[0] : ""
 
                       if (date) {
@@ -552,7 +542,9 @@ export function BasicInfoForm({
                     label="Release Time"
                     labelClassName="text-gray-200"
                     required
-                    value={formData.scheduledDate.split("T")[1]?.slice(0, 5) || ""}
+                    value={
+                      formData.scheduledDate.split("T")[1]?.slice(0, 5) || ""
+                    }
                     onChange={(timeValue) => {
                       const date = formData.scheduledDate?.split("T")[0]
 
@@ -561,7 +553,10 @@ export function BasicInfoForm({
                       }
 
                       if (timeValue) {
-                        handleInputChange("scheduledDate", `${date}T${timeValue}`)
+                        handleInputChange(
+                          "scheduledDate",
+                          `${date}T${timeValue}`,
+                        )
                       } else {
                         handleInputChange("scheduledDate", date)
                       }
@@ -658,7 +653,7 @@ export function BasicInfoForm({
                           ) {
                             handleInputChange(
                               "programmingLanguage",
-                              detectedTemplateProgrammingLanguage,
+                              detectedTemplateProgrammingLanguage as AssignmentFormData["programmingLanguage"],
                             )
                           }
 

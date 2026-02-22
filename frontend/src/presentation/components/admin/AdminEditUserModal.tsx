@@ -77,56 +77,85 @@ export function AdminEditUserModal({
       setIsLoading(true)
       setError(null)
 
-      let hasChanges = false
+      const updateOperations: Array<{
+        label: string
+        promise: Promise<unknown>
+      }> = []
 
-      if (formValues.role !== user.role) {
-        try {
-          await adminService.updateUserRole(user.id, formValues.role)
-          hasChanges = true
-        } catch (updateRoleError) {
-          throw new Error(
-            `Failed to update user role: ${updateRoleError instanceof Error ? updateRoleError.message : "Unknown error"}`,
-          )
-        }
-      }
-
-      if (formValues.isActive !== user.isActive) {
-        try {
-          await adminService.toggleUserStatus(user.id)
-          hasChanges = true
-        } catch (toggleStatusError) {
-          throw new Error(
-            `Failed to toggle user status: ${toggleStatusError instanceof Error ? toggleStatusError.message : "Unknown error"}`,
-          )
-        }
-      }
-
-      if (
+      const shouldUpdateRole = formValues.role !== user.role
+      const shouldToggleUserStatus = formValues.isActive !== user.isActive
+      const shouldUpdateUserDetails =
         formValues.firstName !== user.firstName ||
         formValues.lastName !== user.lastName
-      ) {
-        try {
-          await adminService.updateUserDetails(user.id, {
-            firstName: formValues.firstName,
-            lastName: formValues.lastName,
-          })
-          hasChanges = true
-        } catch (updateDetailsError) {
-          throw new Error(
-            `Failed to update user details: ${updateDetailsError instanceof Error ? updateDetailsError.message : "Unknown error"}`,
-          )
-        }
+      const shouldUpdateUserEmail = formValues.email !== user.email
+
+      if (shouldUpdateRole) {
+        updateOperations.push({
+          label: "update user role",
+          promise: adminService.updateUserRole(user.id, formValues.role),
+        })
       }
 
-      if (formValues.email !== user.email) {
-        try {
-          await adminService.updateUserEmail(user.id, formValues.email)
-          hasChanges = true
-        } catch (updateEmailError) {
-          throw new Error(
-            `Failed to update user email: ${updateEmailError instanceof Error ? updateEmailError.message : "Unknown error"}`,
+      if (shouldToggleUserStatus) {
+        updateOperations.push({
+          label: "toggle user status",
+          promise: adminService.toggleUserStatus(user.id),
+        })
+      }
+
+      if (shouldUpdateUserDetails) {
+        updateOperations.push({
+          label: "update user details",
+          promise: adminService.updateUserDetails(user.id, {
+            firstName: formValues.firstName,
+            lastName: formValues.lastName,
+          }),
+        })
+      }
+
+      if (shouldUpdateUserEmail) {
+        updateOperations.push({
+          label: "update user email",
+          promise: adminService.updateUserEmail(user.id, formValues.email),
+        })
+      }
+
+      if (updateOperations.length === 0) {
+        onClose()
+        return
+      }
+
+      const operationResults = await Promise.allSettled(
+        updateOperations.map((operation) => operation.promise),
+      )
+
+      const hasChanges = operationResults.some(
+        (operationResult) => operationResult.status === "fulfilled",
+      )
+      const failedOperations: string[] = []
+
+      operationResults.forEach((operationResult, operationIndex) => {
+        if (operationResult.status === "rejected") {
+          const operationLabel = updateOperations[operationIndex]?.label
+          const operationError =
+            operationResult.reason instanceof Error
+              ? operationResult.reason.message
+              : "Unknown error"
+
+          failedOperations.push(
+            `${operationLabel ?? "update user operation"}: ${operationError}`,
           )
         }
+      })
+
+      if (failedOperations.length > 0) {
+        const partialChangesMessage = hasChanges
+          ? "Some changes may have been applied. "
+          : ""
+
+        throw new Error(
+          `${partialChangesMessage}Failed to complete the following operations: ${failedOperations.join("; ")}`,
+        )
       }
 
       if (hasChanges) {
