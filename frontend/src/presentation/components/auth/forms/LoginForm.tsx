@@ -3,7 +3,11 @@ import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react"
 import { loginUser } from "@/business/services/authService"
-import { validateField } from "@/business/validation/authValidation"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  loginFormSchema,
+  type LoginFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
 
 interface LoginFormProps {
   onSuccess?: () => void
@@ -17,19 +21,33 @@ export function LoginForm({
   onForgotPasswordClick,
 }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const {
+    register,
+    handleSubmit,
+    trigger,
+    formState: { errors },
+  } = useZodForm({
+    schema: loginFormSchema,
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+    mode: "onSubmit",
+  })
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const emailField = register("email")
+  const passwordField = register("password")
+
+  const handleLogin = async (formValues: LoginFormValues) => {
     setIsLoading(true)
     setError(null)
-    setFieldErrors({})
 
-    const result = await loginUser({ email, password })
+    const result = await loginUser({
+      email: formValues.email,
+      password: formValues.password,
+    })
 
     setIsLoading(false)
 
@@ -40,29 +58,8 @@ export function LoginForm({
     }
   }
 
-  // Handle field blur for real-time validation
-  const handleFieldBlur = (fieldName: string, value: string) => {
-    // For login, don't validate password complexity on blur
-    // Only validate it's not empty on form submit
-    if (fieldName === "password") {
-      return
-    }
-
-    const error = validateField(fieldName, value)
-
-    if (error) {
-      setFieldErrors((prev) => ({ ...prev, [fieldName]: error }))
-    } else {
-      setFieldErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[fieldName]
-        return newErrors
-      })
-    }
-  }
-
   return (
-    <form onSubmit={handleLogin} className="space-y-5" noValidate>
+    <form onSubmit={handleSubmit(handleLogin)} className="space-y-5" noValidate>
       {/* Error Message */}
       {error && (
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -84,23 +81,24 @@ export function LoginForm({
           </div>
           <Input
             id="email"
-            name="email"
             type="email"
             placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={(e) => handleFieldBlur("email", e.target.value)}
+            {...emailField}
+            onBlur={(event) => {
+              emailField.onBlur(event)
+              void trigger("email")
+            }}
             className="pl-11"
             required
             aria-required="true"
             disabled={isLoading}
-            hasError={!!fieldErrors.email}
-            aria-describedby={fieldErrors.email ? "email-error" : undefined}
+            hasError={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
           />
         </div>
-        {fieldErrors.email && (
+        {errors.email && (
           <p id="email-error" className="text-sm text-red-400" role="alert">
-            {fieldErrors.email}
+            {errors.email.message}
           </p>
         )}
       </div>
@@ -129,20 +127,18 @@ export function LoginForm({
           </div>
           <Input
             id="password"
-            name="password"
             type={showPassword ? "text" : "password"}
             placeholder="Enter your password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            onBlur={(e) => handleFieldBlur("password", e.target.value)}
+            {...passwordField}
+            onBlur={(event) => {
+              passwordField.onBlur(event)
+            }}
             className="pl-11 pr-11"
             required
             aria-required="true"
             disabled={isLoading}
-            hasError={!!fieldErrors.password}
-            aria-describedby={
-              fieldErrors.password ? "password-error" : undefined
-            }
+            hasError={!!errors.password}
+            aria-describedby={errors.password ? "password-error" : undefined}
           />
           <button
             type="button"
@@ -159,9 +155,9 @@ export function LoginForm({
             )}
           </button>
         </div>
-        {fieldErrors.password && (
+        {errors.password && (
           <p id="password-error" className="text-sm text-red-400" role="alert">
-            {fieldErrors.password}
+            {errors.password.message}
           </p>
         )}
       </div>

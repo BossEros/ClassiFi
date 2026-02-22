@@ -165,6 +165,33 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
   - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
   - Optional deadline settings (assignment can be created without a deadline)
   - Resubmission settings
+- **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
+- **`AdminDeleteUserModal`**: Admin delete-user confirmation flow uses `react-hook-form` + Zod confirmation schema.
+- **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
+- **`DeleteAccountModal`**: Account deletion confirmation flow uses `react-hook-form` + Zod schema for password + destructive confirmation.
+- **`GradeOverrideModal`**: Grade override input uses `react-hook-form` + dynamic Zod schema with assignment-score bounds.
+
+Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:
+- `auth/` for authentication forms
+- `class/` for class management forms
+- `assignment/` for assignment authoring forms
+- `admin/` for admin user forms
+- `gradebook/` for grade override forms
+
+### RHF + Zod Form Pattern (Standard)
+
+All new or refactored Presentation-layer forms should follow this pattern:
+- Define a feature-local Zod schema in `src/presentation/schemas/<feature>/...`.
+- Infer form types from schema using `z.infer<typeof schema>`.
+- Use `useZodForm` to wire `react-hook-form` and `zodResolver` consistently.
+- Map field errors through `getFieldErrorMessage` and modal-level summaries through `getFirstFormErrorMessage`.
+- Keep submit handlers delegating to Business services, preserving Clean Architecture boundaries.
+
+Reference implementations:
+- `src/presentation/components/auth/forms/LoginForm.tsx`
+- `src/presentation/pages/teacher/AssignmentFormPage.tsx`
+- `src/presentation/components/admin/AdminUserModal.tsx`
+- `src/presentation/components/shared/settings/ChangePasswordModal.tsx`
 
 **Assignment Instructions Image Storage Configuration**:
 
@@ -522,6 +549,25 @@ Specialized types for the class detail page redesign:
 - Use **Tailwind CSS** utility classes.
 - Avoid arbitrary values (e.g., `w-[123px]`); use theme spacing.
 - Common UI components (`Button`, `Card`) are in `src/presentation/components/ui`.
+
+### Form Validation Standard (RHF + Zod)
+
+Frontend form migration follows a standardized pattern:
+
+1. **Schema Colocation**
+   - Keep Zod schemas in `src/presentation/schemas/*` by feature:
+     - `auth/` for authentication forms
+     - `class/` for class flows
+     - `assignment/` for assignment flows
+     - `shared/` for reusable primitives (email, password, etc.)
+2. **Form State**
+   - Use `react-hook-form` with `zodResolver`.
+   - Use shared hook `src/presentation/hooks/shared/useZodForm.ts` for consistent setup and typing.
+3. **Error Mapping**
+   - Use shared mapper `src/presentation/utils/formErrorMap.ts` for field-path error handling.
+4. **Behavior Preservation**
+   - Preserve current submit payloads, loading states, and navigation behavior when migrating existing forms.
+   - Backend validation remains the final source of truth.
 
 ---
 

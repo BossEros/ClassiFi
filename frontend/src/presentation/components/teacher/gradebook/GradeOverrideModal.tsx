@@ -1,6 +1,13 @@
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { Edit2, X, RotateCcw } from "lucide-react"
+import type { FieldErrors } from "react-hook-form"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  createGradeOverrideFormSchema,
+  type GradeOverrideFormValues,
+} from "@/presentation/schemas/gradebook/gradebookSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface GradeOverrideModalProps {
   isOpen: boolean
@@ -25,42 +32,53 @@ export function GradeOverrideModal({
   currentGrade,
   totalScore,
 }: GradeOverrideModalProps) {
-  const [grade, setGrade] = React.useState<string>(
-    currentGrade?.toString() ?? "",
-  )
-  const [feedback, setFeedback] = React.useState<string>("")
   const [error, setError] = React.useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+  } = useZodForm({
+    schema: createGradeOverrideFormSchema(totalScore),
+    defaultValues: {
+      grade: currentGrade?.toString() ?? "",
+      feedback: "",
+    },
+    mode: "onSubmit",
+  })
+
+  const gradeField = register("grade")
+  const feedbackField = register("feedback")
+  const grade = watch("grade")
+  const feedback = watch("feedback")
 
   const modalRef = React.useRef<HTMLDivElement>(null)
   const previousFocusRef = React.useRef<HTMLElement | null>(null)
   const previousIsOpenRef = React.useRef<boolean>(false)
 
-  // Reset form when modal opens
   React.useEffect(() => {
     if (isOpen) {
-      setGrade(currentGrade?.toString() ?? "")
-      setFeedback("")
+      reset({
+        grade: currentGrade?.toString() ?? "",
+        feedback: "",
+      })
       setError(null)
       previousFocusRef.current = document.activeElement as HTMLElement
     }
-  }, [isOpen, currentGrade])
+  }, [isOpen, currentGrade, reset])
 
-  // Handle focus trap and escape key
   React.useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      // Handle Escape
       if (event.key === "Escape" && !isSubmitting) {
         onClose()
         return
       }
 
-      // Handle Focus Trap (Tab key)
       if (event.key === "Tab" && modalRef.current) {
         const focusableElements = modalRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         )
 
-        // Guard: bail out if no focusable elements
         if (focusableElements.length === 0) return
 
         const firstElement = focusableElements[0] as HTMLElement
@@ -68,7 +86,6 @@ export function GradeOverrideModal({
           focusableElements.length - 1
         ] as HTMLElement
 
-        // Additional safety check
         if (!firstElement || !lastElement) return
 
         if (event.shiftKey) {
@@ -76,22 +93,17 @@ export function GradeOverrideModal({
             lastElement.focus()
             event.preventDefault()
           }
-        } else {
-          if (document.activeElement === lastElement) {
-            firstElement.focus()
-            event.preventDefault()
-          }
+        } else if (document.activeElement === lastElement) {
+          firstElement.focus()
+          event.preventDefault()
         }
       }
     }
 
-    // Track previous isOpen state for cleanup
     const wasOpen = previousIsOpenRef.current
     previousIsOpenRef.current = isOpen
 
-    // Only run cleanup when modal transitions from open to closed
     if (!isOpen && wasOpen) {
-      // Modal just closed - restore focus
       if (previousFocusRef.current) {
         previousFocusRef.current.focus()
       }
@@ -103,13 +115,10 @@ export function GradeOverrideModal({
     document.addEventListener("keydown", handleKeyDown)
     document.body.style.overflow = "hidden"
 
-    // Auto-focus the grade input or the first focusable element
-    // Using setTimeout to ensure render is complete
     setTimeout(() => {
       if (modalRef.current) {
-        const gradeInput = modalRef.current.querySelector(
-          "#grade",
-        ) as HTMLElement
+        const gradeInput = modalRef.current.querySelector("#grade") as HTMLElement
+
         if (gradeInput) {
           gradeInput.focus()
         } else {
@@ -127,35 +136,32 @@ export function GradeOverrideModal({
     }
   }, [isOpen, onClose, isSubmitting])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleValidSubmit = (formValues: GradeOverrideFormValues) => {
     setError(null)
 
-    const parsedGrade = parseFloat(grade)
-    if (isNaN(parsedGrade)) {
-      setError("Please enter a valid grade")
-      return
-    }
+    const parsedGrade = Number.parseFloat(formValues.grade)
+    onSubmit(parsedGrade, formValues.feedback.trim() || null)
+  }
 
-    if (parsedGrade < 0 || parsedGrade > totalScore) {
-      setError(`Grade must be between 0 and ${totalScore}`)
-      return
-    }
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<GradeOverrideFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
-    onSubmit(parsedGrade, feedback.trim() || null)
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
   }
 
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={!isSubmitting ? onClose : undefined}
       />
 
-      {/* Modal */}
       <div
         ref={modalRef}
         className={cn(
@@ -168,7 +174,6 @@ export function GradeOverrideModal({
         aria-modal="true"
         aria-labelledby="grade-override-modal-title"
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           disabled={isSubmitting}
@@ -183,14 +188,12 @@ export function GradeOverrideModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center">
             <Edit2 className="w-8 h-8 text-teal-400" />
           </div>
         </div>
 
-        {/* Title */}
         <h2
           id="grade-override-modal-title"
           className="text-xl font-semibold text-white text-center mb-2"
@@ -198,7 +201,6 @@ export function GradeOverrideModal({
           Override Grade
         </h2>
 
-        {/* Info */}
         <div className="text-center mb-6">
           <p className="text-gray-400">
             <span className="text-white font-medium">{studentName}</span>
@@ -206,9 +208,11 @@ export function GradeOverrideModal({
           <p className="text-sm text-gray-500">{assignmentName}</p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Grade Input */}
+        <form
+          onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           <div>
             <label
               htmlFor="grade"
@@ -221,8 +225,12 @@ export function GradeOverrideModal({
               id="grade"
               step="0.01"
               inputMode="decimal"
+              {...gradeField}
               value={grade}
-              onChange={(e) => setGrade(e.target.value)}
+              onChange={(event) => {
+                gradeField.onChange(event)
+                if (error) setError(null)
+              }}
               min={0}
               max={totalScore}
               disabled={isSubmitting}
@@ -238,7 +246,6 @@ export function GradeOverrideModal({
             />
           </div>
 
-          {/* Feedback Textarea */}
           <div>
             <label
               htmlFor="feedback"
@@ -248,8 +255,12 @@ export function GradeOverrideModal({
             </label>
             <textarea
               id="feedback"
+              {...feedbackField}
               value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
+              onChange={(event) => {
+                feedbackField.onChange(event)
+                if (error) setError(null)
+              }}
               disabled={isSubmitting}
               rows={3}
               className={cn(
@@ -264,10 +275,8 @@ export function GradeOverrideModal({
             />
           </div>
 
-          {/* Error Message */}
           {error && <p className="text-sm text-red-400 text-center">{error}</p>}
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <button
               type="button"
@@ -298,7 +307,6 @@ export function GradeOverrideModal({
             </button>
           </div>
 
-          {/* Remove Override Button */}
           {onRemoveOverride && currentGrade !== null && (
             <button
               type="button"

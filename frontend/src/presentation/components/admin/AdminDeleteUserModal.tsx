@@ -1,7 +1,14 @@
-﻿import * as React from "react"
+import * as React from "react"
+import type { FieldErrors } from "react-hook-form"
 import { cn } from "@/shared/utils/cn"
 import { AlertTriangle, X, Trash2, AlertCircle, Loader2 } from "lucide-react"
 import type { AdminUser } from "@/business/services/adminService"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  adminDeleteUserFormSchema,
+  type AdminDeleteUserFormValues,
+} from "@/presentation/schemas/admin/adminUserSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface AdminDeleteUserModalProps {
   isOpen: boolean
@@ -10,26 +17,37 @@ interface AdminDeleteUserModalProps {
   user: AdminUser | null
 }
 
+const INITIAL_DELETE_USER_VALUES: AdminDeleteUserFormValues = {
+  confirmation: "",
+}
+
 export function AdminDeleteUserModal({
   isOpen,
   onClose,
   onConfirm,
   user,
 }: AdminDeleteUserModalProps) {
-  const [confirmation, setConfirmation] = React.useState("")
+  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
+    schema: adminDeleteUserFormSchema,
+    defaultValues: INITIAL_DELETE_USER_VALUES,
+    mode: "onSubmit",
+  })
   const [isDeleting, setIsDeleting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [step, setStep] = React.useState<"warning" | "confirm">("warning")
 
+  const confirmationField = register("confirmation")
+  const confirmationValue = watch("confirmation")
+
   // Reset form when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
-      setConfirmation("")
+      reset(INITIAL_DELETE_USER_VALUES)
       setError(null)
       setStep("warning")
       setIsDeleting(false)
     }
-  }, [isOpen])
+  }, [isOpen, reset])
 
   // Close on escape key
   React.useEffect(() => {
@@ -54,7 +72,7 @@ export function AdminDeleteUserModal({
     setStep("confirm")
   }
 
-  const handleDelete = async () => {
+  const handleValidSubmit = async () => {
     setError(null)
     setIsDeleting(true)
 
@@ -67,7 +85,17 @@ export function AdminDeleteUserModal({
     }
   }
 
-  const isConfirmDisabled = confirmation !== "DELETE" || isDeleting
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<AdminDeleteUserFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
+  }
+
+  const isConfirmDisabled = confirmationValue !== "DELETE" || isDeleting
 
   if (!isOpen || !user) return null
 
@@ -147,15 +175,15 @@ export function AdminDeleteUserModal({
               </p>
               <ul className="text-sm text-gray-400 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  <span className="text-red-400 mt-0.5">&bull;</span>
                   Their profile and personal information
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  <span className="text-red-400 mt-0.5">&bull;</span>
                   All submissions and assignments
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">â€¢</span>
+                  <span className="text-red-400 mt-0.5">&bull;</span>
                   All class enrollments and associations
                 </li>
               </ul>
@@ -198,7 +226,11 @@ export function AdminDeleteUserModal({
               below.
             </p>
 
-            <div className="space-y-4">
+            <form
+              onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+              className="space-y-4"
+              noValidate
+            >
               {/* Error message */}
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
@@ -215,9 +247,13 @@ export function AdminDeleteUserModal({
                 </label>
                 <input
                   type="text"
-                  value={confirmation}
-                  onChange={(e) => {
-                    setConfirmation(e.target.value.toUpperCase())
+                  {...confirmationField}
+                  value={confirmationValue}
+                  onChange={(event) => {
+                    setValue("confirmation", event.target.value.toUpperCase(), {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    })
                     setError(null)
                   }}
                   className={cn(
@@ -226,7 +262,7 @@ export function AdminDeleteUserModal({
                     "text-white placeholder-gray-500",
                     "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
                     "transition-all duration-200",
-                    confirmation === "DELETE" && "border-red-500/50",
+                    confirmationValue === "DELETE" && "border-red-500/50",
                   )}
                   placeholder="DELETE"
                   disabled={isDeleting}
@@ -239,6 +275,7 @@ export function AdminDeleteUserModal({
                 <button
                   onClick={() => setStep("warning")}
                   disabled={isDeleting}
+                  type="button"
                   className={cn(
                     "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
                     "border border-white/20 text-white",
@@ -250,7 +287,7 @@ export function AdminDeleteUserModal({
                   Back
                 </button>
                 <button
-                  onClick={handleDelete}
+                  type="submit"
                   disabled={isConfirmDisabled}
                   className={cn(
                     "flex-1 px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2",
@@ -273,7 +310,7 @@ export function AdminDeleteUserModal({
                   )}
                 </button>
               </div>
-            </div>
+            </form>
           </>
         )}
       </div>

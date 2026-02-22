@@ -1,16 +1,7 @@
-import {
-  validateAssignmentTitle,
-  validateInstructions,
-  validateProgrammingLanguage,
-  validateDeadline,
-} from "@/business/validation/assignmentValidation"
 import type { ProgrammingLanguage } from "@/business/models/assignment/types"
 import type { LatePenaltyConfig, PenaltyTier } from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
-import type {
-  AssignmentFormData,
-  FormErrors,
-} from "@/presentation/hooks/teacher/assignmentForm.types"
+import type { AssignmentFormData } from "@/presentation/hooks/teacher/assignmentForm.types"
 
 function generateTierId(): string {
   if (typeof globalThis.crypto?.randomUUID === "function") {
@@ -49,52 +40,6 @@ export function normalizeLatePenaltyConfig(
     tiers: normalizedTiers,
     rejectAfterHours: sourceConfig.rejectAfterHours,
   }
-}
-
-export function validateAssignmentFormData(
-  formData: AssignmentFormData,
-): FormErrors {
-  const newErrors: FormErrors = {}
-
-  const nameError = validateAssignmentTitle(formData.assignmentName)
-  if (nameError) newErrors.assignmentName = nameError
-
-  const descError = validateInstructions(
-    formData.instructions,
-    formData.instructionsImageUrl,
-  )
-  if (descError) newErrors.instructions = descError
-
-  const langError = validateProgrammingLanguage(formData.programmingLanguage)
-  if (langError) newErrors.programmingLanguage = langError
-
-  if (formData.deadline) {
-    const deadlineError = validateDeadline(new Date(formData.deadline))
-    if (deadlineError) newErrors.deadline = deadlineError
-  }
-
-  if (formData.scheduledDate) {
-    const scheduledTime = formData.scheduledDate.split("T")[1]?.slice(0, 5)
-    const hasScheduledTime = Boolean(scheduledTime)
-
-    if (!hasScheduledTime) {
-      newErrors.scheduledDate = "Release time is required"
-    }
-  }
-
-  if (formData.totalScore === null) {
-    newErrors.totalScore = "Total score is required"
-  } else if (formData.totalScore < 1) {
-    newErrors.totalScore = "Total score must be at least 1"
-  }
-
-  if (formData.allowResubmission && formData.maxAttempts !== null) {
-    if (formData.maxAttempts < 1 || formData.maxAttempts > 99) {
-      newErrors.maxAttempts = "Max attempts must be between 1 and 99"
-    }
-  }
-
-  return newErrors
 }
 
 export interface AssignmentPayload {

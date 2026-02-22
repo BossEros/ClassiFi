@@ -1,15 +1,28 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { X, Mail, Shield, Loader2, Power, CheckCircle } from "lucide-react"
+import type { FieldErrors } from "react-hook-form"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
-
-type UserRole = "student" | "teacher" | "admin"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  adminEditUserFormSchema,
+  type AdminEditUserFormValues,
+} from "@/presentation/schemas/admin/adminUserSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface AdminEditUserModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
   user: AdminUser | null
+}
+
+const INITIAL_EDIT_FORM_VALUES: AdminEditUserFormValues = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  role: "student",
+  isActive: false,
 }
 
 export function AdminEditUserModal({
@@ -20,73 +33,98 @@ export function AdminEditUserModal({
 }: AdminEditUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [role, setRole] = useState<UserRole>("student")
-  const [isActive, setIsActive] = useState(false)
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState("")
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+  } = useZodForm({
+    schema: adminEditUserFormSchema,
+    defaultValues: INITIAL_EDIT_FORM_VALUES,
+    mode: "onSubmit",
+  })
+
+  const firstNameField = register("firstName")
+  const lastNameField = register("lastName")
+  const emailField = register("email")
+  const roleField = register("role")
+
+  const firstName = watch("firstName")
+  const lastName = watch("lastName")
+  const email = watch("email")
+  const role = watch("role")
+  const isActive = watch("isActive")
 
   useEffect(() => {
-    if (user) {
-      setRole(user.role as UserRole)
-      setIsActive(user.isActive)
-      setFirstName(user.firstName)
-      setLastName(user.lastName)
-      setEmail(user.email)
+    if (!user) {
+      return
     }
-  }, [user])
+
+    reset({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      isActive: user.isActive,
+    })
+  }, [user, reset])
 
   if (!isOpen || !user) return null
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleValidSubmit = async (formValues: AdminEditUserFormValues) => {
     try {
       setIsLoading(true)
       setError(null)
 
       let hasChanges = false
 
-      // Perform updates sequentially with early exit on error
-      if (role !== user.role) {
+      if (formValues.role !== user.role) {
         try {
-          await adminService.updateUserRole(user.id, role)
+          await adminService.updateUserRole(user.id, formValues.role)
           hasChanges = true
-        } catch (err) {
+        } catch (updateRoleError) {
           throw new Error(
-            `Failed to update user role: ${err instanceof Error ? err.message : "Unknown error"}`,
+            `Failed to update user role: ${updateRoleError instanceof Error ? updateRoleError.message : "Unknown error"}`,
           )
         }
       }
 
-      if (isActive !== user.isActive) {
+      if (formValues.isActive !== user.isActive) {
         try {
           await adminService.toggleUserStatus(user.id)
           hasChanges = true
-        } catch (err) {
+        } catch (toggleStatusError) {
           throw new Error(
-            `Failed to toggle user status: ${err instanceof Error ? err.message : "Unknown error"}`,
+            `Failed to toggle user status: ${toggleStatusError instanceof Error ? toggleStatusError.message : "Unknown error"}`,
           )
         }
       }
 
-      if (firstName !== user.firstName || lastName !== user.lastName) {
+      if (
+        formValues.firstName !== user.firstName ||
+        formValues.lastName !== user.lastName
+      ) {
         try {
-          await adminService.updateUserDetails(user.id, { firstName, lastName })
+          await adminService.updateUserDetails(user.id, {
+            firstName: formValues.firstName,
+            lastName: formValues.lastName,
+          })
           hasChanges = true
-        } catch (err) {
+        } catch (updateDetailsError) {
           throw new Error(
-            `Failed to update user details: ${err instanceof Error ? err.message : "Unknown error"}`,
+            `Failed to update user details: ${updateDetailsError instanceof Error ? updateDetailsError.message : "Unknown error"}`,
           )
         }
       }
 
-      if (email !== user.email) {
+      if (formValues.email !== user.email) {
         try {
-          await adminService.updateUserEmail(user.id, email)
+          await adminService.updateUserEmail(user.id, formValues.email)
           hasChanges = true
-        } catch (err) {
+        } catch (updateEmailError) {
           throw new Error(
-            `Failed to update user email: ${err instanceof Error ? err.message : "Unknown error"}`,
+            `Failed to update user email: ${updateEmailError instanceof Error ? updateEmailError.message : "Unknown error"}`,
           )
         }
       }
@@ -95,24 +133,34 @@ export function AdminEditUserModal({
         onSuccess()
         onClose()
       } else {
-        onClose() // No changes
+        onClose()
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update user")
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error ? submitError.message : "Failed to update user",
+      )
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<AdminEditUserFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
+  }
+
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal Content */}
       <div className="relative w-full max-w-md min-w-[450px] transform overflow-hidden rounded-2xl bg-slate-900/95 p-6 text-left shadow-2xl transition-all border border-white/10 backdrop-blur-xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -138,8 +186,11 @@ export function AdminEditUserModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Section: Personal Info */}
+        <form
+          onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+          className="space-y-6"
+          noValidate
+        >
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-white/5">
               <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
@@ -154,8 +205,12 @@ export function AdminEditUserModal({
                 </label>
                 <input
                   type="text"
+                  {...firstNameField}
                   value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  onChange={(event) => {
+                    firstNameField.onChange(event)
+                    if (error) setError(null)
+                  }}
                   className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
                   placeholder="First Name"
                   required
@@ -167,8 +222,12 @@ export function AdminEditUserModal({
                 </label>
                 <input
                   type="text"
+                  {...lastNameField}
                   value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  onChange={(event) => {
+                    lastNameField.onChange(event)
+                    if (error) setError(null)
+                  }}
                   className="w-full bg-black/20 border border-white/10 rounded-xl px-3 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
                   placeholder="Last Name"
                   required
@@ -184,8 +243,12 @@ export function AdminEditUserModal({
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="email"
+                  {...emailField}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(event) => {
+                    emailField.onChange(event)
+                    if (error) setError(null)
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 transition-all placeholder:text-gray-600"
                   placeholder="user@example.com"
                   required
@@ -197,7 +260,6 @@ export function AdminEditUserModal({
             </div>
           </div>
 
-          {/* Section: Account Settings */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-white/5 pt-2">
               <h4 className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
@@ -213,8 +275,12 @@ export function AdminEditUserModal({
                 <div className="relative">
                   <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                   <select
+                    {...roleField}
                     value={role}
-                    onChange={(e) => setRole(e.target.value as UserRole)}
+                    onChange={(event) => {
+                      roleField.onChange(event)
+                      if (error) setError(null)
+                    }}
                     className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all appearance-none cursor-pointer hover:bg-white/5"
                   >
                     <option value="student" className="bg-slate-900 text-white">
@@ -251,7 +317,13 @@ export function AdminEditUserModal({
                 </label>
                 <button
                   type="button"
-                  onClick={() => setIsActive(!isActive)}
+                  onClick={() => {
+                    setValue("isActive", !isActive, {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    })
+                    if (error) setError(null)
+                  }}
                   className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all group ${
                     isActive
                       ? "bg-emerald-500/10 border-emerald-500/50 hover:bg-emerald-500/20"

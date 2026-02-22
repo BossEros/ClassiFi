@@ -28,14 +28,6 @@ vi.mock(
   }),
 )
 
-// Mock validation to separate concerns
-vi.mock("@/business/validation/assignmentValidation", () => ({
-  validateAssignmentTitle: vi.fn(),
-  validateInstructions: vi.fn(),
-  validateProgrammingLanguage: vi.fn(),
-  validateDeadline: vi.fn(),
-}))
-
 const mockUser: User = {
   id: "1",
   email: "teacher@example.com",
@@ -60,6 +52,13 @@ vi.mock("react-router-dom", async () => {
     useParams: () => mockParams,
   }
 })
+
+function buildFutureLocalDateTimeString(daysAhead = 30): string {
+  const futureDate = new Date()
+  futureDate.setDate(futureDate.getDate() + daysAhead)
+
+  return futureDate.toISOString().slice(0, 16)
+}
 
 describe("useAssignmentForm", () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -94,19 +93,6 @@ describe("useAssignmentForm", () => {
         endTime: "10:00",
       },
     })
-
-    // Default validation mocks
-    const {
-      validateAssignmentTitle,
-      validateInstructions,
-      validateProgrammingLanguage,
-      validateDeadline,
-    } = await import("@/business/validation/assignmentValidation")
-
-    vi.mocked(validateAssignmentTitle).mockReturnValue(null)
-    vi.mocked(validateInstructions).mockReturnValue(null)
-    vi.mocked(validateProgrammingLanguage).mockReturnValue(null)
-    vi.mocked(validateDeadline).mockReturnValue(null)
   })
 
   describe("Initialization", () => {
@@ -175,7 +161,10 @@ describe("useAssignmentForm", () => {
         result.current.handleInputChange("assignmentName", "New Assignment")
         result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
-        result.current.handleInputChange("deadline", "2024-12-31T23:59")
+        result.current.handleInputChange(
+          "deadline",
+          buildFutureLocalDateTimeString(),
+        )
         result.current.handleInputChange("totalScore", 100)
       })
 
@@ -199,10 +188,6 @@ describe("useAssignmentForm", () => {
     })
 
     it("should prevent submission if validation fails", async () => {
-      const { validateAssignmentTitle } =
-        await import("@/business/validation/assignmentValidation")
-      vi.mocked(validateAssignmentTitle).mockReturnValue("Title required")
-
       const { result } = renderHook(() => useAssignmentForm(), { wrapper })
       await waitFor(() => expect(result.current.className).toBe("Test Class"))
 
@@ -210,7 +195,9 @@ describe("useAssignmentForm", () => {
         await result.current.handleSubmit({ preventDefault: vi.fn() } as any)
       })
 
-      expect(result.current.errors.assignmentName).toBe("Title required")
+      expect(result.current.errors.assignmentName).toBe(
+        "Assignment title is required",
+      )
       expect(classService.createAssignment).not.toHaveBeenCalled()
     })
 
@@ -321,7 +308,12 @@ describe("useAssignmentForm", () => {
 
       act(() => {
         result.current.handleInputChange("assignmentName", "With Tests")
-        result.current.handleInputChange("deadline", "2024-12-31T23:59")
+        result.current.handleInputChange("instructions", "Desc")
+        result.current.handleInputChange("programmingLanguage", "python")
+        result.current.handleInputChange(
+          "deadline",
+          buildFutureLocalDateTimeString(),
+        )
         result.current.handleInputChange("totalScore", 100)
         result.current.handleAddPendingTestCase({
           tempId: "t1",
@@ -367,7 +359,9 @@ describe("useAssignmentForm", () => {
         assignmentName: "Old Name",
         instructions: "Old Instructions",
         programmingLanguage: "python",
-        deadline: new Date().toISOString() as ISODateString,
+        deadline: new Date(
+          Date.now() + 1000 * 60 * 60 * 24 * 30,
+        ).toISOString() as ISODateString,
         allowResubmission: true,
         maxAttempts: 3,
         templateCode: "",

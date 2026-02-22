@@ -3,6 +3,13 @@ import { cn } from "@/shared/utils/cn"
 import { Lock, X, Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react"
 import { changePassword } from "@/business/services/authService"
 import type { ChangePasswordRequest } from "@/business/models/auth/types"
+import type { FieldErrors } from "react-hook-form"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  changePasswordFormSchema,
+  type ChangePasswordFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface ChangePasswordModalProps {
   isOpen: boolean
@@ -21,28 +28,37 @@ export function ChangePasswordModal({
   onClose,
   onSuccess,
 }: ChangePasswordModalProps) {
-  const [formData, setFormData] =
-    React.useState<ChangePasswordRequest>(INITIAL_FORM_STATE)
   const [showCurrentPassword, setShowCurrentPassword] = React.useState(false)
   const [showNewPassword, setShowNewPassword] = React.useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState(false)
+  const { register, handleSubmit, watch, reset } = useZodForm({
+    schema: changePasswordFormSchema,
+    defaultValues: INITIAL_FORM_STATE,
+    mode: "onSubmit",
+  })
 
-  // Reset form when modal opens/closes
+  const currentPasswordField = register("currentPassword")
+  const newPasswordField = register("newPassword")
+  const confirmPasswordField = register("confirmPassword")
+
+  const currentPasswordValue = watch("currentPassword")
+  const newPasswordValue = watch("newPassword")
+  const confirmPasswordValue = watch("confirmPassword")
+
   React.useEffect(() => {
     if (!isOpen) {
-      setFormData(INITIAL_FORM_STATE)
+      reset(INITIAL_FORM_STATE)
       setError(null)
       setSuccess(false)
       setShowCurrentPassword(false)
       setShowNewPassword(false)
       setShowConfirmPassword(false)
     }
-  }, [isOpen])
+  }, [isOpen, reset])
 
-  // Close on escape key
   React.useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape" && !isSubmitting) {
@@ -61,20 +77,12 @@ export function ChangePasswordModal({
     }
   }, [isOpen, onClose, isSubmitting])
 
-  const handleInputChange =
-    (field: keyof ChangePasswordRequest) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: e.target.value }))
-      setError(null)
-    }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleValidSubmit = async (formValues: ChangePasswordFormValues) => {
     setError(null)
     setIsSubmitting(true)
 
     try {
-      const result = await changePassword(formData)
+      const result = await changePassword(formValues)
 
       if (result.success) {
         setSuccess(true)
@@ -92,7 +100,16 @@ export function ChangePasswordModal({
     }
   }
 
-  // Password strength indicator
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<ChangePasswordFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
+  }
+
   const getPasswordStrength = (
     password: string,
   ): { label: string; color: string; width: string } => {
@@ -114,19 +131,19 @@ export function ChangePasswordModal({
     return levels[Math.min(strength, 3)] || levels[0]
   }
 
-  const passwordStrength = getPasswordStrength(formData.newPassword)
+  const passwordStrength = getPasswordStrength(newPasswordValue)
+  const hasPasswordMismatch =
+    !!confirmPasswordValue && newPasswordValue !== confirmPasswordValue
 
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={!isSubmitting ? onClose : undefined}
       />
 
-      {/* Modal */}
       <div
         className={cn(
           "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[480px] mx-4 p-6 shrink-0",
@@ -138,7 +155,6 @@ export function ChangePasswordModal({
         aria-modal="true"
         aria-labelledby="change-password-title"
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           disabled={isSubmitting}
@@ -153,7 +169,6 @@ export function ChangePasswordModal({
           <X className="w-5 h-5" />
         </button>
 
-        {/* Icon */}
         <div className="flex justify-center mb-4">
           <div
             className={cn(
@@ -169,7 +184,6 @@ export function ChangePasswordModal({
           </div>
         </div>
 
-        {/* Title */}
         <h2
           id="change-password-title"
           className="text-xl font-semibold text-white text-center mb-2"
@@ -177,7 +191,6 @@ export function ChangePasswordModal({
           {success ? "Password Changed!" : "Change Password"}
         </h2>
 
-        {/* Description */}
         <p className="text-gray-400 text-center mb-6 text-sm w-full">
           {success
             ? "Your password has been updated successfully."
@@ -185,8 +198,11 @@ export function ChangePasswordModal({
         </p>
 
         {!success && (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Error message */}
+          <form
+            onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+            className="space-y-4"
+            noValidate
+          >
             {error && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 w-full">
                 <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
@@ -194,7 +210,6 @@ export function ChangePasswordModal({
               </div>
             )}
 
-            {/* Current Password */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300">
                 Current Password
@@ -202,8 +217,12 @@ export function ChangePasswordModal({
               <div className="relative">
                 <input
                   type={showCurrentPassword ? "text" : "password"}
-                  value={formData.currentPassword}
-                  onChange={handleInputChange("currentPassword")}
+                  {...currentPasswordField}
+                  value={currentPasswordValue}
+                  onChange={(event) => {
+                    currentPasswordField.onChange(event)
+                    setError(null)
+                  }}
                   className={cn(
                     "w-full px-4 py-3 pr-12 rounded-lg",
                     "bg-black/20 border border-white/10",
@@ -229,7 +248,6 @@ export function ChangePasswordModal({
               </div>
             </div>
 
-            {/* New Password */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300">
                 New Password
@@ -237,8 +255,12 @@ export function ChangePasswordModal({
               <div className="relative">
                 <input
                   type={showNewPassword ? "text" : "password"}
-                  value={formData.newPassword}
-                  onChange={handleInputChange("newPassword")}
+                  {...newPasswordField}
+                  value={newPasswordValue}
+                  onChange={(event) => {
+                    newPasswordField.onChange(event)
+                    setError(null)
+                  }}
                   className={cn(
                     "w-full px-4 py-3 pr-12 rounded-lg",
                     "bg-black/20 border border-white/10",
@@ -262,8 +284,7 @@ export function ChangePasswordModal({
                   )}
                 </button>
               </div>
-              {/* Password strength indicator */}
-              {formData.newPassword && (
+              {newPasswordValue && (
                 <div className="space-y-1">
                   <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
                     <div
@@ -295,7 +316,6 @@ export function ChangePasswordModal({
               )}
             </div>
 
-            {/* Confirm Password */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-300">
                 Confirm New Password
@@ -303,17 +323,19 @@ export function ChangePasswordModal({
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange("confirmPassword")}
+                  {...confirmPasswordField}
+                  value={confirmPasswordValue}
+                  onChange={(event) => {
+                    confirmPasswordField.onChange(event)
+                    setError(null)
+                  }}
                   className={cn(
                     "w-full px-4 py-3 pr-12 rounded-lg",
                     "bg-black/20 border border-white/10",
                     "text-white placeholder-gray-500",
                     "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
                     "transition-all duration-200",
-                    formData.confirmPassword &&
-                      formData.newPassword !== formData.confirmPassword &&
-                      "border-red-500/50 focus:ring-red-500",
+                    hasPasswordMismatch && "border-red-500/50 focus:ring-red-500",
                   )}
                   placeholder="Confirm new password"
                   disabled={isSubmitting}
@@ -331,13 +353,11 @@ export function ChangePasswordModal({
                   )}
                 </button>
               </div>
-              {formData.confirmPassword &&
-                formData.newPassword !== formData.confirmPassword && (
-                  <p className="text-xs text-red-400">Passwords do not match</p>
-                )}
+              {hasPasswordMismatch && (
+                <p className="text-xs text-red-400">Passwords do not match</p>
+              )}
             </div>
 
-            {/* Actions */}
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
@@ -355,10 +375,7 @@ export function ChangePasswordModal({
               </button>
               <button
                 type="submit"
-                disabled={
-                  isSubmitting ||
-                  formData.newPassword !== formData.confirmPassword
-                }
+                disabled={isSubmitting || hasPasswordMismatch}
                 className={cn(
                   "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
                   "bg-teal-600 text-white border border-teal-500/40",

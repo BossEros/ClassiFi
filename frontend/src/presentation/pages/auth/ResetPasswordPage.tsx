@@ -3,29 +3,43 @@ import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { Eye, EyeOff, Lock, CheckCircle, XCircle } from "lucide-react"
 import {
-  validatePassword,
-  validatePasswordsMatch,
-} from "@/business/validation/authValidation"
-import {
   resetPassword,
   initializeResetFlow,
 } from "@/business/services/authService"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  resetPasswordFormSchema,
+  type ResetPasswordFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
 
 interface ResetPasswordPageProps {
   onSuccess?: () => void
 }
 
 export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [tokenError, setTokenError] = useState(false)
   const [isCheckingSession, setIsCheckingSession] = useState(true)
+  const {
+    register,
+    handleSubmit,
+    trigger,
+    formState: { errors },
+  } = useZodForm({
+    schema: resetPasswordFormSchema,
+    defaultValues: {
+      newPassword: "",
+      confirmPassword: "",
+    },
+    mode: "onSubmit",
+  })
+
+  const newPasswordField = register("newPassword")
+  const confirmPasswordField = register("confirmPassword")
 
   useEffect(() => {
     let isMounted = true
@@ -59,26 +73,13 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
     }
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleResetPasswordSubmit = async (
+    formValues: ResetPasswordFormValues,
+  ) => {
     setError(null)
-    setFieldErrors({})
 
     if (tokenError) {
       setError("Invalid reset link. Please request a new password reset.")
-      return
-    }
-
-    // Validate passwords
-    const passwordError = validatePassword(newPassword)
-    const confirmError = validatePasswordsMatch(newPassword, confirmPassword)
-
-    const errors: Record<string, string> = {}
-    if (passwordError) errors.newPassword = passwordError
-    if (confirmError) errors.confirmPassword = confirmError
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors)
       return
     }
 
@@ -87,8 +88,8 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
     try {
       // Use authService for password reset (follows 3-tier architecture)
       const result = await resetPassword({
-        newPassword: newPassword,
-        confirmPassword: confirmPassword,
+        newPassword: formValues.newPassword,
+        confirmPassword: formValues.confirmPassword,
       })
 
       if (result.success) {
@@ -110,26 +111,6 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
       )
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleFieldBlur = (fieldName: string, value: string) => {
-    let error: string | null = null
-
-    if (fieldName === "newPassword") {
-      error = validatePassword(value)
-    } else if (fieldName === "confirmPassword") {
-      error = validatePasswordsMatch(newPassword, value)
-    }
-
-    if (error) {
-      setFieldErrors((prev) => ({ ...prev, [fieldName]: error! }))
-    } else {
-      setFieldErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[fieldName]
-        return newErrors
-      })
     }
   }
 
@@ -243,7 +224,11 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          <form
+            onSubmit={handleSubmit(handleResetPasswordSubmit)}
+            className="space-y-6"
+            noValidate
+          >
             {/* Error Message */}
             {error && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -267,12 +252,18 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   id="newPassword"
                   type={showNewPassword ? "text" : "password"}
                   placeholder="Enter your new password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  onBlur={(e) => handleFieldBlur("newPassword", e.target.value)}
+                  {...newPasswordField}
+                  onBlur={(event) => {
+                    newPasswordField.onBlur(event)
+                    void trigger("newPassword")
+                  }}
                   className="pl-11 pr-11 placeholder:text-slate-400"
                   required
                   disabled={isLoading}
+                  hasError={!!errors.newPassword}
+                  aria-describedby={
+                    errors.newPassword ? "newPassword-error" : undefined
+                  }
                 />
                 <button
                   type="button"
@@ -289,9 +280,9 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   )}
                 </button>
               </div>
-              {fieldErrors.newPassword && (
-                <p className="text-sm text-red-400">
-                  {fieldErrors.newPassword}
+              {errors.newPassword && (
+                <p id="newPassword-error" className="text-sm text-red-400">
+                  {errors.newPassword.message}
                 </p>
               )}
               <p className="text-xs text-slate-400">
@@ -316,14 +307,18 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder="Confirm your new password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  onBlur={(e) =>
-                    handleFieldBlur("confirmPassword", e.target.value)
-                  }
+                  {...confirmPasswordField}
+                  onBlur={(event) => {
+                    confirmPasswordField.onBlur(event)
+                    void trigger("confirmPassword")
+                  }}
                   className="pl-11 pr-11 placeholder:text-slate-400"
                   required
                   disabled={isLoading}
+                  hasError={!!errors.confirmPassword}
+                  aria-describedby={
+                    errors.confirmPassword ? "confirmPassword-error" : undefined
+                  }
                 />
                 <button
                   type="button"
@@ -340,9 +335,9 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                   )}
                 </button>
               </div>
-              {fieldErrors.confirmPassword && (
-                <p className="text-sm text-red-400">
-                  {fieldErrors.confirmPassword}
+              {errors.confirmPassword && (
+                <p id="confirmPassword-error" className="text-sm text-red-400">
+                  {errors.confirmPassword.message}
                 </p>
               )}
             </div>
