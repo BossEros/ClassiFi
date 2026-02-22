@@ -4,8 +4,8 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `62%`
-- Current phase: `Phase 3 - Assignment Authoring Forms`
+- Overall progress: `70%`
+- Current phase: `Phase 4 - Remaining Modals and Admin/Settings Forms`
 - Last updated: `2026-02-22`
 
 ## Execution Checklist
@@ -39,8 +39,8 @@ Related plan: `implementation_plan.md`
 ## Phase 3: Assignment Authoring Forms
 
 - [x] Refactor `frontend/src/presentation/hooks/teacher/useAssignmentForm.ts` for RHF integration
-- [ ] Migrate `frontend/src/presentation/pages/teacher/AssignmentFormPage.tsx`
-- [ ] Migrate assignment subforms and test case modal components
+- [x] Migrate `frontend/src/presentation/pages/teacher/AssignmentFormPage.tsx`
+- [x] Migrate assignment subforms and test case modal components
 - [x] Add Zod schemas for assignment, schedule, late penalties, and attempts
 - [x] Add/update assignment form tests
 - [x] Run verification gate (`frontend build` + `frontend tests`)
@@ -86,6 +86,13 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 3 frontend `npm test -- --run`
 - [x] 2026-02-22: Phase 3 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 3 backend `npm test`
+- [x] 2026-02-22: Phase 3 assignment integration tests `npx vitest run src/presentation/hooks/teacher/useAssignmentForm.test.tsx src/presentation/components/teacher/forms/testCases/TestCaseModal.test.tsx src/presentation/schemas/assignment/assignmentSchemas.test.ts`
+- [x] 2026-02-22: Phase 3 post-migration frontend `npm run build`
+- [x] 2026-02-22: Phase 3 post-migration frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 3 post-migration backend `npm run typecheck`
+- [x] 2026-02-22: Phase 3 post-migration backend `npm test`
+- [x] 2026-02-22: Phase 3 checkpoint tests `npx vitest run src/presentation/hooks/teacher/useAssignmentForm.test.tsx src/presentation/components/teacher/forms/testCases/TestCaseModal.test.tsx src/presentation/schemas/assignment/assignmentSchemas.test.ts`
+- [x] 2026-02-22: Phase 3 checkpoint frontend `npm run build`
 
 ## Notes
 

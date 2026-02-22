@@ -11,11 +11,13 @@ import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assig
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
 import { getCurrentUser } from "@/business/services/authService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { FormProvider } from "react-hook-form"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
   const currentUser = getCurrentUser()
   const {
+    formMethods,
     // State
     formData,
     errors,
@@ -98,86 +100,80 @@ export function AssignmentFormPage() {
       )}
 
       {/* Form Content */}
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Basic Information */}
-          <div className="lg:col-span-2 space-y-6">
-            <BasicInfoForm
-              formData={formData}
-              errors={errors}
-              isLoading={isLoading}
-              showTemplateCode={showTemplateCode}
-              setShowTemplateCode={setShowTemplateCode}
-              onInputChange={handleInputChange}
-              isUploadingInstructionsImage={isUploadingInstructionsImage}
-              onInstructionsImageUpload={handleInstructionsImageUpload}
-              onInstructionsImageRemove={handleRemoveInstructionsImage}
-              // Test Case Props
-              testCases={testCases}
-              pendingTestCases={pendingTestCases}
-              isLoadingTestCases={isLoadingTestCases}
-              isEditMode={isEditMode}
-              assignmentId={assignmentId}
-              onAddTestCase={handleAddTestCase}
-              onAddPendingTestCase={handleAddPendingTestCase}
-              onUpdateTestCase={handleUpdateTestCase}
-              onUpdatePendingTestCase={handleUpdatePendingTestCase}
-              onDeleteTestCase={handleDeleteTestCase}
-              onDeletePendingTestCase={handleDeletePendingTestCase}
-            />
+      <FormProvider {...formMethods}>
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Basic Information */}
+            <div className="lg:col-span-2 space-y-6">
+              <BasicInfoForm
+                isLoading={isLoading}
+                showTemplateCode={showTemplateCode}
+                setShowTemplateCode={setShowTemplateCode}
+                isUploadingInstructionsImage={isUploadingInstructionsImage}
+                onInstructionsImageUpload={handleInstructionsImageUpload}
+                onInstructionsImageRemove={handleRemoveInstructionsImage}
+                // Test Case Props
+                testCases={testCases}
+                pendingTestCases={pendingTestCases}
+                isLoadingTestCases={isLoadingTestCases}
+                isEditMode={isEditMode}
+                assignmentId={assignmentId}
+                onAddTestCase={handleAddTestCase}
+                onAddPendingTestCase={handleAddPendingTestCase}
+                onUpdateTestCase={handleUpdateTestCase}
+                onUpdatePendingTestCase={handleUpdatePendingTestCase}
+                onDeleteTestCase={handleDeleteTestCase}
+                onDeletePendingTestCase={handleDeletePendingTestCase}
+              />
+            </div>
+
+            {/* Right Column - Submission Settings & Actions */}
+            <div className="space-y-6">
+              <SubmissionSettings isLoading={isLoading} />
+
+              {/* Late Submission Policy */}
+              <LatePenaltyConfig
+                enabled={formData.allowLateSubmissions}
+                config={formData.latePenaltyConfig}
+                onEnabledChange={(enabled) =>
+                  handleInputChange("allowLateSubmissions", enabled)
+                }
+                onConfigChange={(config: LatePenaltyConfigType) =>
+                  handleInputChange("latePenaltyConfig", config)
+                }
+                disabled={isLoading || !hasDeadlineConfigured}
+              />
+
+              {/* Action Buttons Card */}
+              <Card>
+                <CardContent className="p-6 space-y-3">
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl border border-teal-500/40 font-medium"
+                  >
+                    {isLoading ? (
+                      <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Check className="w-4 h-4 mr-2" />
+                    )}
+                    {isEditMode ? "Save Changes" : "Create Assignment"}
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => navigate(-1)}
+                    disabled={isLoading}
+                    className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 rounded-xl transition-all"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          {/* Right Column - Submission Settings & Actions */}
-          <div className="space-y-6">
-            <SubmissionSettings
-              formData={formData}
-              errors={errors}
-              isLoading={isLoading}
-              onInputChange={handleInputChange}
-            />
-
-            {/* Late Submission Policy */}
-            <LatePenaltyConfig
-              enabled={formData.allowLateSubmissions}
-              config={formData.latePenaltyConfig}
-              onEnabledChange={(enabled) =>
-                handleInputChange("allowLateSubmissions", enabled)
-              }
-              onConfigChange={(config: LatePenaltyConfigType) =>
-                handleInputChange("latePenaltyConfig", config)
-              }
-              disabled={isLoading || !hasDeadlineConfigured}
-            />
-
-            {/* Action Buttons Card */}
-            <Card>
-              <CardContent className="p-6 space-y-3">
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl border border-teal-500/40 font-medium"
-                >
-                  {isLoading ? (
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Check className="w-4 h-4 mr-2" />
-                  )}
-                  {isEditMode ? "Save Changes" : "Create Assignment"}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => navigate(-1)}
-                  disabled={isLoading}
-                  className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 rounded-xl transition-all"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancel
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </form>
+        </form>
+      </FormProvider>
     </DashboardLayout>
   )
 }

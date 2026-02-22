@@ -86,6 +86,11 @@ export function useAssignmentForm() {
     useState(false)
   const [showTemplateCode, setShowTemplateCode] = useState(false)
 
+  const formMethods = useZodForm({
+    schema: assignmentFormSchema,
+    defaultValues: buildDefaultFormValues(),
+    mode: "onSubmit",
+  })
   const {
     watch,
     setValue,
@@ -93,11 +98,7 @@ export function useAssignmentForm() {
     reset,
     handleSubmit: handleValidatedSubmit,
     formState: { errors: formStateErrors },
-  } = useZodForm({
-    schema: assignmentFormSchema,
-    defaultValues: buildDefaultFormValues(),
-    mode: "onSubmit",
-  })
+  } = formMethods
 
   const formData = watch() as AssignmentFormData
   const errors: FormErrors = {
@@ -439,6 +440,7 @@ export function useAssignmentForm() {
   }
 
   return {
+    formMethods,
     formData,
     errors,
     isLoading,

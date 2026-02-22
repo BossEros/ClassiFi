@@ -10,9 +10,11 @@ import {
   LoaderCircle,
 } from "lucide-react"
 import Editor from "@monaco-editor/react"
-import { Input } from "@/presentation/components/ui/Input"
-import { Textarea } from "@/presentation/components/ui/Textarea"
-import { Select } from "@/presentation/components/ui/Select"
+import { useFormContext } from "react-hook-form"
+import {
+  TestCaseList,
+  type PendingTestCase,
+} from "@/presentation/components/teacher/forms/testCases/TestCaseList"
 import {
   Card,
   CardContent,
@@ -20,37 +22,30 @@ import {
   CardTitle,
 } from "@/presentation/components/ui/Card"
 import { DatePicker } from "@/presentation/components/ui/DatePicker"
+import { Input } from "@/presentation/components/ui/Input"
+import { Select } from "@/presentation/components/ui/Select"
+import { Textarea } from "@/presentation/components/ui/Textarea"
 import { TimePicker } from "@/presentation/components/ui/TimePicker"
 import { programmingLanguageOptions } from "@/presentation/hooks/teacher/useAssignmentForm"
-import type {
-  AssignmentFormData,
-  AssignmentFormInputChangeHandler,
-  FormErrors,
-} from "@/presentation/hooks/teacher/assignmentForm.types"
-import { formatTimeRemaining } from "@/presentation/utils/dateUtils"
-import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
 import {
-  TestCaseList,
-  type PendingTestCase,
-} from "@/presentation/components/teacher/forms/testCases/TestCaseList"
+  type AssignmentFormValues,
+} from "@/presentation/schemas/assignment/assignmentSchemas"
+import { formatTimeRemaining } from "@/presentation/utils/dateUtils"
+import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
 import type {
-  TestCase,
   CreateTestCaseRequest,
+  TestCase,
   UpdateTestCaseRequest,
 } from "@/shared/types/testCase"
 
 interface BasicInfoFormProps {
-  formData: AssignmentFormData
-  errors: FormErrors
   isLoading: boolean
   isUploadingInstructionsImage: boolean
   showTemplateCode: boolean
   setShowTemplateCode: (show: boolean) => void
   onInstructionsImageUpload: (file: File) => Promise<void>
   onInstructionsImageRemove: () => Promise<void>
-  onInputChange: AssignmentFormInputChangeHandler
-
-  // Test Case Props
   testCases: TestCase[]
   pendingTestCases: PendingTestCase[]
   isLoadingTestCases: boolean
@@ -66,7 +61,7 @@ interface BasicInfoFormProps {
 
 function mapTemplateFileNameToProgrammingLanguage(
   fileName: string,
-): AssignmentFormData["programmingLanguage"] {
+): AssignmentFormValues["programmingLanguage"] {
   const lowerCaseFileName = fileName.toLowerCase()
 
   if (lowerCaseFileName.endsWith(".py")) {
@@ -101,16 +96,12 @@ function mapMonacoLanguageToTemplatePath(monacoLanguage: string): string {
 }
 
 export function BasicInfoForm({
-  formData,
-  errors,
   isLoading,
   isUploadingInstructionsImage,
   showTemplateCode,
   setShowTemplateCode,
   onInstructionsImageUpload,
   onInstructionsImageRemove,
-  onInputChange,
-  // Test Case props pass-through
   testCases,
   pendingTestCases,
   isLoadingTestCases,
@@ -123,11 +114,51 @@ export function BasicInfoForm({
   onDeleteTestCase,
   onDeletePendingTestCase,
 }: BasicInfoFormProps) {
-  // Parse deadline once to avoid errors and double-parsing
+  const {
+    watch,
+    setValue,
+    clearErrors,
+    formState: { errors: formErrors },
+  } = useFormContext<AssignmentFormValues>()
+  const formData = watch()
+
+  const errors = {
+    assignmentName: getFieldErrorMessage(formErrors, "assignmentName"),
+    instructions: getFieldErrorMessage(formErrors, "instructions"),
+    programmingLanguage: getFieldErrorMessage(formErrors, "programmingLanguage"),
+    deadline: getFieldErrorMessage(formErrors, "deadline"),
+    scheduledDate: getFieldErrorMessage(formErrors, "scheduledDate"),
+    totalScore: getFieldErrorMessage(formErrors, "totalScore"),
+  }
+
+  const handleInputChange = <K extends keyof AssignmentFormValues>(
+    field: K,
+    value: AssignmentFormValues[K],
+  ) => {
+    const normalizedField = field as keyof AssignmentFormValues
+
+    setValue(normalizedField, value as never, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+
+    if (field === "deadline") {
+      const hasDeadline = typeof value === "string" && value.trim().length > 0
+
+      if (!hasDeadline) {
+        setValue("allowLateSubmissions", false, {
+          shouldDirty: true,
+          shouldTouch: true,
+        })
+      }
+    }
+
+    clearErrors(field)
+  }
+
   const deadlineDate = formData.deadline ? new Date(formData.deadline) : null
   const isValidDeadline = deadlineDate && !Number.isNaN(deadlineDate.getTime())
 
-  // Parse assignmentId once
   const parsedId = assignmentId ? parseInt(assignmentId, 10) : Number.NaN
   const validAssignmentId = !Number.isNaN(parsedId) ? parsedId : undefined
   const isInstructionsImageBusy = isLoading || isUploadingInstructionsImage
@@ -151,7 +182,6 @@ export function BasicInfoForm({
 
       <CardContent className="space-y-6">
         <div className="space-y-6">
-          {/* Assignment Title */}
           <div className="space-y-2">
             <label
               htmlFor="assignmentName"
@@ -164,7 +194,9 @@ export function BasicInfoForm({
               type="text"
               placeholder="e.g., Fibonacci Sequence Implementation"
               value={formData.assignmentName}
-              onChange={(e) => onInputChange("assignmentName", e.target.value)}
+              onChange={(event) =>
+                handleInputChange("assignmentName", event.target.value)
+              }
               disabled={isLoading}
               className={`h-11 bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
                 errors.assignmentName ? "border-red-500/50" : ""
@@ -176,7 +208,6 @@ export function BasicInfoForm({
             )}
           </div>
 
-          {/* Instructions */}
           <div className="space-y-2">
             <label
               htmlFor="instructions"
@@ -192,15 +223,16 @@ export function BasicInfoForm({
             >
               <Textarea
                 id="instructions"
-                placeholder="Write clear instructions for your students…"
+                placeholder="Write clear instructions for your students..."
                 value={formData.instructions}
-                onChange={(e) => onInputChange("instructions", e.target.value)}
+                onChange={(event) =>
+                  handleInputChange("instructions", event.target.value)
+                }
                 disabled={isLoading}
                 className="min-h-[140px] w-full resize-y rounded-none border-0 bg-transparent px-4 py-3 text-sm leading-relaxed text-white placeholder:text-gray-500 shadow-none ring-0 transition-none hover:bg-transparent focus:border-0 focus:bg-transparent focus:ring-0 focus:outline-none"
                 rows={6}
               />
 
-              {/* Attached Image Preview */}
               {formData.instructionsImageUrl && (
                 <div className="mx-3 mb-3 space-y-2">
                   <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-slate-500">
@@ -218,7 +250,6 @@ export function BasicInfoForm({
                 </div>
               )}
 
-              {/* Bottom Toolbar */}
               <div className="flex items-center justify-between border-t border-white/[0.06] px-3 py-2">
                 <div className="flex items-center gap-1.5">
                   <label
@@ -235,7 +266,7 @@ export function BasicInfoForm({
                       <Upload className="w-3.5 h-3.5" />
                     )}
                     {isUploadingInstructionsImage
-                      ? "Uploading…"
+                      ? "Uploading..."
                       : formData.instructionsImageUrl
                         ? "Replace image"
                         : "Attach image"}
@@ -282,9 +313,7 @@ export function BasicInfoForm({
             )}
           </div>
 
-          {/* Programming Language & Total Score */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Programming Language */}
             <div className="space-y-2">
               <label
                 htmlFor="programmingLanguage"
@@ -297,10 +326,7 @@ export function BasicInfoForm({
                 options={programmingLanguageOptions}
                 value={formData.programmingLanguage}
                 onChange={(value) =>
-                  onInputChange(
-                    "programmingLanguage",
-                    value as AssignmentFormData["programmingLanguage"],
-                  )
+                  handleInputChange("programmingLanguage", value)
                 }
                 disabled={isLoading}
                 className={`h-11 py-0 bg-[#1A2130] border-white/10 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
@@ -319,7 +345,6 @@ export function BasicInfoForm({
               )}
             </div>
 
-            {/* Total Score */}
             <div className="space-y-2">
               <label
                 htmlFor="totalScore"
@@ -332,15 +357,18 @@ export function BasicInfoForm({
                   id="totalScore"
                   type="number"
                   value={formData.totalScore ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    if (val === "") {
-                      onInputChange("totalScore", null)
+                  onChange={(event) => {
+                    const value = event.target.value
+
+                    if (value === "") {
+                      handleInputChange("totalScore", null)
                       return
                     }
-                    const parsed = parseInt(val, 10)
+
+                    const parsed = parseInt(value, 10)
+
                     if (!Number.isNaN(parsed)) {
-                      onInputChange("totalScore", parsed)
+                      handleInputChange("totalScore", parsed)
                     }
                   }}
                   placeholder="Enter total score"
@@ -360,7 +388,6 @@ export function BasicInfoForm({
             </div>
           </div>
 
-          {/* Deadline - Full Width Section */}
           <div className="space-y-4 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DatePicker
@@ -369,13 +396,13 @@ export function BasicInfoForm({
                 value={formData.deadline}
                 triggerStyle={{ backgroundColor: "#1A2130" }}
                 onChange={(dateIso) => {
-                  const time =
-                    formData.deadline.split("T")[1]?.slice(0, 5) || ""
+                  const time = formData.deadline.split("T")[1]?.slice(0, 5) || ""
                   const date = dateIso ? dateIso.split("T")[0] : ""
+
                   if (date) {
-                    onInputChange("deadline", time ? `${date}T${time}` : date)
+                    handleInputChange("deadline", time ? `${date}T${time}` : date)
                   } else {
-                    onInputChange("deadline", "")
+                    handleInputChange("deadline", "")
                   }
                 }}
                 error={errors.deadline}
@@ -387,26 +414,24 @@ export function BasicInfoForm({
                 labelClassName="text-gray-200"
                 value={formData.deadline.split("T")[1]?.slice(0, 5) || ""}
                 triggerStyle={{ backgroundColor: "#1A2130" }}
-                onChange={(timeVal) => {
+                onChange={(timeValue) => {
                   const date = formData.deadline.split("T")[0]
+
                   if (!date) {
                     return
                   }
 
-                  if (timeVal) {
-                    onInputChange("deadline", `${date}T${timeVal}`)
+                  if (timeValue) {
+                    handleInputChange("deadline", `${date}T${timeValue}`)
                   } else {
-                    onInputChange("deadline", date)
+                    handleInputChange("deadline", date)
                   }
                 }}
                 disabled={isLoading}
               />
             </div>
-
-            {/* Quick Preset Buttons */}
           </div>
 
-          {/* Deadline Preview */}
           {isValidDeadline && deadlineDate && (
             <div className="p-4 rounded-xl bg-gradient-to-br from-orange-500/10 to-transparent border border-orange-500/10">
               <div className="flex items-center justify-between">
@@ -438,7 +463,6 @@ export function BasicInfoForm({
             </div>
           )}
 
-          {/* Scheduled Release */}
           <div className="space-y-4 pt-6 border-t border-white/10">
             <div
               className={`flex items-center justify-between p-4 rounded-xl border transition-all duration-300 ${
@@ -455,9 +479,7 @@ export function BasicInfoForm({
                 >
                   <Calendar
                     className={`w-5 h-5 ${
-                      formData.scheduledDate
-                        ? "text-purple-400"
-                        : "text-gray-400"
+                      formData.scheduledDate ? "text-purple-400" : "text-gray-400"
                     }`}
                   />
                 </div>
@@ -482,12 +504,12 @@ export function BasicInfoForm({
                 aria-checked={!!formData.scheduledDate}
                 onClick={() => {
                   if (formData.scheduledDate) {
-                    onInputChange("scheduledDate", null)
+                    handleInputChange("scheduledDate", null)
                   } else {
                     const now = new Date()
                     now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
                     const todayDateOnly = now.toISOString().split("T")[0]
-                    onInputChange("scheduledDate", todayDateOnly)
+                    handleInputChange("scheduledDate", todayDateOnly)
                   }
                 }}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/40 focus:ring-offset-2 focus:ring-offset-slate-900 ${
@@ -511,16 +533,16 @@ export function BasicInfoForm({
                     required
                     value={formData.scheduledDate}
                     onChange={(dateIso) => {
-                      const time =
-                        formData.scheduledDate?.split("T")[1]?.slice(0, 5) || ""
+                      const time = formData.scheduledDate?.split("T")[1]?.slice(0, 5) || ""
                       const date = dateIso ? dateIso.split("T")[0] : ""
+
                       if (date) {
-                        onInputChange(
+                        handleInputChange(
                           "scheduledDate",
                           time ? `${date}T${time}` : date,
                         )
                       } else {
-                        onInputChange("scheduledDate", null)
+                        handleInputChange("scheduledDate", null)
                       }
                     }}
                     minDate={new Date()}
@@ -530,20 +552,18 @@ export function BasicInfoForm({
                     label="Release Time"
                     labelClassName="text-gray-200"
                     required
-                    value={
-                      formData.scheduledDate.split("T")[1]?.slice(0, 5) || ""
-                    }
-                    onChange={(timeVal) => {
+                    value={formData.scheduledDate.split("T")[1]?.slice(0, 5) || ""}
+                    onChange={(timeValue) => {
                       const date = formData.scheduledDate?.split("T")[0]
 
                       if (!date) {
                         return
                       }
 
-                      if (timeVal) {
-                        onInputChange("scheduledDate", `${date}T${timeVal}`)
+                      if (timeValue) {
+                        handleInputChange("scheduledDate", `${date}T${timeValue}`)
                       } else {
-                        onInputChange("scheduledDate", date)
+                        handleInputChange("scheduledDate", date)
                       }
                     }}
                     error={errors.scheduledDate}
@@ -559,7 +579,6 @@ export function BasicInfoForm({
           )}
         </div>
 
-        {/* Template Code */}
         <div className="space-y-2 pt-4 border-t border-white/10">
           <button
             type="button"
@@ -592,7 +611,7 @@ export function BasicInfoForm({
                   path={templateCodeEditorPath}
                   value={formData.templateCode}
                   onChange={(value) =>
-                    onInputChange("templateCode", value || "")
+                    handleInputChange("templateCode", value || "")
                   }
                   options={{
                     minimap: { enabled: false },
@@ -608,7 +627,6 @@ export function BasicInfoForm({
                   }}
                 />
 
-                {/* Template Code Toolbar */}
                 <div className="flex items-center justify-between border-t border-white/[0.06] bg-black/20 px-3 py-2">
                   <div className="flex items-center gap-1.5">
                     <label
@@ -638,7 +656,7 @@ export function BasicInfoForm({
                             detectedTemplateProgrammingLanguage !==
                               formData.programmingLanguage
                           ) {
-                            onInputChange(
+                            handleInputChange(
                               "programmingLanguage",
                               detectedTemplateProgrammingLanguage,
                             )
@@ -646,11 +664,11 @@ export function BasicInfoForm({
 
                           const reader = new FileReader()
 
-                          reader.onload = (e) => {
-                            const content = e.target?.result
+                          reader.onload = (loadEvent) => {
+                            const content = loadEvent.target?.result
 
                             if (typeof content === "string") {
-                              onInputChange("templateCode", content)
+                              handleInputChange("templateCode", content)
                             }
                           }
 
@@ -667,7 +685,7 @@ export function BasicInfoForm({
 
                         <button
                           type="button"
-                          onClick={() => onInputChange("templateCode", "")}
+                          onClick={() => handleInputChange("templateCode", "")}
                           className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs font-medium text-red-400/80 hover:text-red-300 hover:bg-red-500/[0.08] transition-all duration-200"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -679,7 +697,7 @@ export function BasicInfoForm({
 
                   {formData.templateCode && (
                     <span className="text-[11px] tabular-nums text-slate-500">
-                      {formData.templateCode.split("\n").length} lines ·{" "}
+                      {formData.templateCode.split("\n").length} lines -{" "}
                       {formData.templateCode.length} chars
                     </span>
                   )}
@@ -689,7 +707,6 @@ export function BasicInfoForm({
           )}
         </div>
 
-        {/* Test Cases Section */}
         <TestCaseList
           testCases={testCases}
           pendingTestCases={pendingTestCases}

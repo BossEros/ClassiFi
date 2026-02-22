@@ -1,30 +1,48 @@
 import { RefreshCw } from "lucide-react"
-import { Input } from "@/presentation/components/ui/Input"
+import { useFormContext } from "react-hook-form"
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
+import { Input } from "@/presentation/components/ui/Input"
 import {
-  type AssignmentFormData,
-  type AssignmentFormInputChangeHandler,
-  type FormErrors,
-} from "@/presentation/hooks/teacher/assignmentForm.types"
+  type AssignmentFormValues,
+} from "@/presentation/schemas/assignment/assignmentSchemas"
+import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface SubmissionSettingsProps {
-  formData: AssignmentFormData
-  errors: FormErrors
   isLoading: boolean
-  onInputChange: AssignmentFormInputChangeHandler
 }
 
-export function SubmissionSettings({
-  formData,
-  errors,
-  isLoading,
-  onInputChange,
-}: SubmissionSettingsProps) {
+export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
+  const {
+    watch,
+    setValue,
+    clearErrors,
+    formState: { errors: formErrors },
+  } = useFormContext<AssignmentFormValues>()
+  const allowResubmission = watch("allowResubmission")
+  const maxAttempts = watch("maxAttempts")
+  const maxAttemptsError = getFieldErrorMessage(formErrors, "maxAttempts")
+
+  const handleAllowResubmissionChange = (allowValue: boolean) => {
+    setValue("allowResubmission", allowValue, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+    clearErrors("allowResubmission")
+  }
+
+  const handleMaxAttemptsChange = (rawValue: string) => {
+    setValue("maxAttempts", rawValue === "" ? null : parseInt(rawValue, 10), {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+    clearErrors("maxAttempts")
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -47,9 +65,9 @@ export function SubmissionSettings({
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
-              checked={formData.allowResubmission}
+              checked={allowResubmission}
               onChange={(event) =>
-                onInputChange("allowResubmission", event.target.checked)
+                handleAllowResubmissionChange(event.target.checked)
               }
               disabled={isLoading}
               className="sr-only peer"
@@ -58,8 +76,7 @@ export function SubmissionSettings({
           </label>
         </div>
 
-        {/* Max Attempts - Only shown when resubmission is allowed */}
-        {formData.allowResubmission && (
+        {allowResubmission && (
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-3">
               <label
@@ -74,18 +91,12 @@ export function SubmissionSettings({
                   id="maxAttempts"
                   type="number"
                   inputMode="numeric"
-                  value={formData.maxAttempts ?? ""}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    onInputChange(
-                      "maxAttempts",
-                      value === "" ? null : parseInt(value, 10),
-                    )
-                  }}
+                  value={maxAttempts ?? ""}
+                  onChange={(event) => handleMaxAttemptsChange(event.target.value)}
                   disabled={isLoading}
-                  placeholder="∞"
+                  placeholder="Unlimited"
                   className={`h-10 w-full bg-[#1A2130] border-white/10 px-3 text-center text-white placeholder-gray-500 rounded-lg transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
-                    errors.maxAttempts ? "border-red-500/50" : ""
+                    maxAttemptsError ? "border-red-500/50" : ""
                   }`}
                   min={1}
                   max={99}
@@ -93,8 +104,8 @@ export function SubmissionSettings({
               </div>
             </div>
 
-            {errors.maxAttempts && (
-              <p className="text-xs text-red-400">{errors.maxAttempts}</p>
+            {maxAttemptsError && (
+              <p className="text-xs text-red-400">{maxAttemptsError}</p>
             )}
 
             <p className="pl-3 text-xs text-gray-500">
