@@ -523,6 +523,25 @@ Specialized types for the class detail page redesign:
 - Avoid arbitrary values (e.g., `w-[123px]`); use theme spacing.
 - Common UI components (`Button`, `Card`) are in `src/presentation/components/ui`.
 
+### Form Validation Standard (RHF + Zod)
+
+Frontend form migration follows a standardized pattern:
+
+1. **Schema Colocation**
+   - Keep Zod schemas in `src/presentation/schemas/*` by feature:
+     - `auth/` for authentication forms
+     - `class/` for class flows
+     - `assignment/` for assignment flows
+     - `shared/` for reusable primitives (email, password, etc.)
+2. **Form State**
+   - Use `react-hook-form` with `zodResolver`.
+   - Use shared hook `src/presentation/hooks/shared/useZodForm.ts` for consistent setup and typing.
+3. **Error Mapping**
+   - Use shared mapper `src/presentation/utils/formErrorMap.ts` for field-path error handling.
+4. **Behavior Preservation**
+   - Preserve current submit payloads, loading states, and navigation behavior when migrating existing forms.
+   - Backend validation remains the final source of truth.
+
 ---
 
 ## Testing
