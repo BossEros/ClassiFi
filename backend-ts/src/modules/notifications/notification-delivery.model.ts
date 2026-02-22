@@ -8,7 +8,10 @@ import {
   jsonb,
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
-import { notifications, notificationChannelEnum } from "@/modules/notifications/notification.model.js"
+import {
+  notifications,
+  notificationChannelEnum,
+} from "@/modules/notifications/notification.model.js"
 
 export const deliveryStatusEnum = pgEnum("delivery_status", [
   "PENDING",

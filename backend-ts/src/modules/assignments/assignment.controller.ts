@@ -3,30 +3,29 @@ import { container } from "tsyringe"
 import { AssignmentService } from "@/modules/assignments/assignment.service.js"
 import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
 import { TestCaseService } from "@/modules/test-cases/test-case.service.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
-import { parsePositiveInt } from "@/shared/utils.js"
-import { SuccessMessageSchema } from "@/api/schemas/common.schema.js"
-import { TeacherIdQuerySchema } from "@/modules/classes/class.schema.js"
+
+import {
+  TeacherIdQuery,
+  TeacherIdQuerySchema,
+} from "@/modules/classes/class.schema.js"
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "@/api/plugins/zod-validation.js"
 import {
   UpdateAssignmentRequestSchema,
   AssignmentIdParamSchema,
-  GetAssignmentResponseSchema,
-  UpdateAssignmentResponseSchema,
   type UpdateAssignmentRequest,
+  type AssignmentIdParam,
 } from "@/modules/assignments/assignment.schema.js"
 import {
   LatePenaltyUpdateBodySchema,
-  LatePenaltyConfigResponseSchema,
-  SuccessResponseSchema,
   type LatePenaltyUpdateBody,
 } from "@/modules/gradebook/gradebook.schema.js"
 import {
   CreateTestCaseRequestSchema,
-  ReorderTestCasesRequestSchema,
-  GetTestCasesResponseSchema,
-  CreateTestCaseResponseSchema,
   type CreateTestCaseRequest,
-  type ReorderTestCasesRequest,
 } from "@/modules/test-cases/test-case.schema.js"
 import { BadRequestError } from "@/api/middlewares/error-handler.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -59,33 +58,24 @@ function parseDate(value: string | Date, fieldName: string): Date {
  * @param app - Fastify application instance to register routes on.
  */
 export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
-  const assignmentService =
-    container.resolve<AssignmentService>(DI_TOKENS.services.assignment)
-  const latePenaltyService =
-    container.resolve<LatePenaltyService>(DI_TOKENS.services.latePenalty)
-  const testCaseService = container.resolve<TestCaseService>(DI_TOKENS.services.testCase)
+  const assignmentService = container.resolve<AssignmentService>(
+    DI_TOKENS.services.assignment,
+  )
+  const latePenaltyService = container.resolve<LatePenaltyService>(
+    DI_TOKENS.services.latePenalty,
+  )
+  const testCaseService = container.resolve<TestCaseService>(
+    DI_TOKENS.services.testCase,
+  )
 
   /**
    * GET /:assignmentId
    * Get assignment details
    */
-  app.get<{
-    Params: { assignmentId: string }
-  }>("/:assignmentId", {
-    schema: {
-      tags: ["Assignments"],
-      summary: "Get assignment details",
-      description: "Retrieves detailed information about a specific assignment",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      response: {
-        200: toJsonSchema(GetAssignmentResponseSchema),
-      },
-    },
+  app.get("/:assignmentId", {
+    preHandler: validateParams(AssignmentIdParamSchema),
     async handler(request, reply) {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
 
       const assignment =
         await assignmentService.getAssignmentDetails(assignmentId)
@@ -102,82 +92,58 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * PUT /:assignmentId
    * Update an assignment
    */
-  app.put<{ Params: { assignmentId: string }; Body: UpdateAssignmentRequest }>(
-    "/:assignmentId",
-    {
-      schema: {
-        tags: ["Assignments"],
-        summary: "Update an assignment",
-        description:
-          "Updates assignment details including title, instructions, and deadlines",
-        params: toJsonSchema(AssignmentIdParamSchema),
-        body: toJsonSchema(UpdateAssignmentRequestSchema),
-        response: {
-          200: toJsonSchema(UpdateAssignmentResponseSchema),
-        },
-      },
-      async handler(request, reply) {
-        const assignmentId = parsePositiveInt(
-          request.params.assignmentId,
-          "Assignment ID",
-        )
+  app.put("/:assignmentId", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateBody(UpdateAssignmentRequestSchema),
+    ],
+    async handler(request, reply) {
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
 
-        const { teacherId, ...assignmentUpdateData } = request.body
+      const { teacherId, ...assignmentUpdateData } =
+        request.validatedBody as UpdateAssignmentRequest
 
-        const parsedDeadline =
-          assignmentUpdateData.deadline === undefined
-            ? undefined
-            : assignmentUpdateData.deadline === null
-              ? null
-              : parseDate(assignmentUpdateData.deadline, "deadline")
+      const parsedDeadline =
+        assignmentUpdateData.deadline === undefined
+          ? undefined
+          : assignmentUpdateData.deadline === null
+            ? null
+            : parseDate(assignmentUpdateData.deadline, "deadline")
 
-        const updateRequestWithParsedDates = {
-          assignmentId,
-          teacherId,
-          ...assignmentUpdateData,
-          deadline: parsedDeadline,
-          scheduledDate: assignmentUpdateData.scheduledDate
-            ? parseDate(assignmentUpdateData.scheduledDate, "scheduledDate")
-            : undefined,
-        }
+      const updateRequestWithParsedDates = {
+        assignmentId,
+        teacherId,
+        ...assignmentUpdateData,
+        deadline: parsedDeadline,
+        scheduledDate: assignmentUpdateData.scheduledDate
+          ? parseDate(assignmentUpdateData.scheduledDate, "scheduledDate")
+          : undefined,
+      }
 
-        const updatedAssignment = await assignmentService.updateAssignment(
-          updateRequestWithParsedDates,
-        )
+      const updatedAssignment = await assignmentService.updateAssignment(
+        updateRequestWithParsedDates,
+      )
 
-        return reply.send({
-          success: true,
-          message: "Assignment updated successfully",
-          assignment: updatedAssignment,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Assignment updated successfully",
+        assignment: updatedAssignment,
+      })
     },
-  )
+  })
 
   /**
    * DELETE /:assignmentId
    * Delete an assignment
    */
-  app.delete<{
-    Params: { assignmentId: string }
-    Querystring: { teacherId: string }
-  }>("/:assignmentId", {
-    schema: {
-      tags: ["Assignments"],
-      summary: "Delete an assignment",
-      description: "Permanently deletes an assignment and all associated data",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      querystring: toJsonSchema(TeacherIdQuerySchema),
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
+  app.delete("/:assignmentId", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateQuery(TeacherIdQuerySchema),
+    ],
     async handler(request, reply) {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
-      const teacherId = parsePositiveInt(request.query.teacherId, "Teacher ID")
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
+      const { teacherId } = request.validatedQuery as TeacherIdQuery
 
       await assignmentService.deleteAssignment(assignmentId, teacherId)
 
@@ -192,22 +158,10 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * GET /:assignmentId/late-penalty
    * Get late penalty configuration for an assignment
    */
-  app.get<{ Params: { assignmentId: string } }>("/:assignmentId/late-penalty", {
-    schema: {
-      tags: ["Assignments"],
-      summary: "Get late penalty config",
-      description:
-        "Retrieves the late submission penalty configuration for an assignment",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      response: {
-        200: toJsonSchema(LatePenaltyConfigResponseSchema),
-      },
-    },
+  app.get("/:assignmentId/late-penalty", {
+    preHandler: validateParams(AssignmentIdParamSchema),
     handler: async (request, reply) => {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
 
       const latePenaltyConfig =
         await latePenaltyService.getAssignmentConfig(assignmentId)
@@ -224,29 +178,16 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * PUT /:assignmentId/late-penalty
    * Update late penalty configuration for an assignment
    */
-  app.put<{
-    Params: { assignmentId: string }
-    Body: LatePenaltyUpdateBody
-  }>("/:assignmentId/late-penalty", {
-    schema: {
-      tags: ["Assignments"],
-      summary: "Update late penalty config",
-      description:
-        "Updates the late submission penalty configuration for an assignment",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      body: toJsonSchema(LatePenaltyUpdateBodySchema),
-      response: {
-        200: toJsonSchema(SuccessResponseSchema),
-      },
-    },
+  app.put("/:assignmentId/late-penalty", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateBody(LatePenaltyUpdateBodySchema),
+    ],
     handler: async (request, reply) => {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
 
       const { enabled: isLatePenaltyEnabled, config: providedConfig } =
-        request.body
+        request.validatedBody as LatePenaltyUpdateBody
 
       const latePenaltyConfigToApply =
         providedConfig ?? latePenaltyService.getDefaultConfig()
@@ -268,22 +209,10 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * GET /:assignmentId/test-cases
    * Get all test cases for an assignment
    */
-  app.get<{ Params: { assignmentId: string } }>("/:assignmentId/test-cases", {
-    schema: {
-      tags: ["Assignments"],
-      summary: "Get test cases for an assignment",
-      description:
-        "Retrieves all test cases associated with a specific assignment",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      response: {
-        200: toJsonSchema(GetTestCasesResponseSchema),
-      },
-    },
+  app.get("/:assignmentId/test-cases", {
+    preHandler: validateParams(AssignmentIdParamSchema),
     handler: async (request, reply) => {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
 
       const testCasesList =
         await testCaseService.getTestCasesByAssignment(assignmentId)
@@ -305,107 +234,44 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
    * POST /:assignmentId/test-cases
    * Create a new test case for an assignment
    */
-  app.post<{ Params: { assignmentId: string }; Body: CreateTestCaseRequest }>(
-    "/:assignmentId/test-cases",
-    {
-      schema: {
-        tags: ["Assignments"],
-        summary: "Create a test case",
-        description: "Creates a new test case for automated code evaluation",
-        params: toJsonSchema(AssignmentIdParamSchema),
-        body: toJsonSchema(CreateTestCaseRequestSchema),
-        response: {
-          201: toJsonSchema(CreateTestCaseResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const assignmentId = parsePositiveInt(
-          request.params.assignmentId,
-          "Assignment ID",
-        )
+  app.post("/:assignmentId/test-cases", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateBody(CreateTestCaseRequestSchema),
+    ],
+    handler: async (request, reply) => {
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
 
-        const createdTestCase = await testCaseService.createTestCase(
-          assignmentId,
-          request.body,
-        )
+      const createdTestCase = await testCaseService.createTestCase(
+        assignmentId,
+        request.validatedBody as CreateTestCaseRequest,
+      )
 
-        const testCaseWithFormattedDate = {
-          ...createdTestCase,
-          createdAt: createdTestCase.createdAt.toISOString(),
-        }
+      const testCaseWithFormattedDate = {
+        ...createdTestCase,
+        createdAt: createdTestCase.createdAt.toISOString(),
+      }
 
-        return reply.status(201).send({
-          success: true,
-          message: "Test case created successfully",
-          testCase: testCaseWithFormattedDate,
-        })
-      },
+      return reply.status(201).send({
+        success: true,
+        message: "Test case created successfully",
+        testCase: testCaseWithFormattedDate,
+      })
     },
-  )
-
-  /**
-   * PUT /:assignmentId/test-cases/reorder
-   * Reorder test cases
-   */
-  app.put<{ Params: { assignmentId: string }; Body: ReorderTestCasesRequest }>(
-    "/:assignmentId/test-cases/reorder",
-    {
-      schema: {
-        tags: ["Assignments"],
-        summary: "Reorder test cases",
-        description:
-          "Updates the display order of test cases for an assignment",
-        params: toJsonSchema(AssignmentIdParamSchema),
-        body: toJsonSchema(ReorderTestCasesRequestSchema),
-        response: {
-          200: toJsonSchema(SuccessMessageSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const assignmentId = parsePositiveInt(
-          request.params.assignmentId,
-          "Assignment ID",
-        )
-        const newTestCaseOrder = request.body.order
-
-        await testCaseService.reorderTestCasesForAssignment(
-          assignmentId,
-          newTestCaseOrder,
-        )
-
-        return reply.send({
-          success: true,
-          message: "Test cases reordered successfully",
-        })
-      },
-    },
-  )
+  })
 
   /**
    * POST /:assignmentId/send-reminder
    * Send deadline reminder to students who haven't submitted
    */
-  app.post<{
-    Params: { assignmentId: string }
-    Querystring: { teacherId: string }
-  }>("/:assignmentId/send-reminder", {
-    schema: {
-      tags: ["Assignments"],
-      summary: "Send reminder to non-submitters",
-      description:
-        "Sends deadline reminder notifications to students who haven't submitted the assignment",
-      params: toJsonSchema(AssignmentIdParamSchema),
-      querystring: toJsonSchema(TeacherIdQuerySchema),
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
+  app.post("/:assignmentId/send-reminder", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateQuery(TeacherIdQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const assignmentId = parsePositiveInt(
-        request.params.assignmentId,
-        "Assignment ID",
-      )
-      const teacherId = parsePositiveInt(request.query.teacherId, "Teacher ID")
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
+      const { teacherId } = request.validatedQuery as TeacherIdQuery
 
       const result = await assignmentService.sendReminderToNonSubmitters(
         assignmentId,

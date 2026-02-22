@@ -1,10 +1,6 @@
 import { useEffect, useState, useCallback, type MouseEvent } from "react"
 import { useNavigate } from "react-router-dom"
-import {
-  RefreshCw,
-  XCircle,
-  Plus,
-} from "lucide-react"
+import { RefreshCw, XCircle, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { AdminCreateClassModal } from "@/presentation/components/admin/AdminCreateClassModal"
 import { AdminDeleteClassModal } from "@/presentation/components/admin/AdminDeleteClassModal"
@@ -289,5 +285,3 @@ export function AdminClassesPage() {
     </DashboardLayout>
   )
 }
-
-

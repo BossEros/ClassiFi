@@ -1,13 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import {
-  BookOpen,
-  Calendar,
-  Clock,
-  RefreshCw,
-  Check,
-  X,
-} from "lucide-react"
+import { BookOpen, Calendar, Clock, RefreshCw, Check, X } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
@@ -625,4 +618,3 @@ export function ClassFormPage() {
 // Export with both names for backwards compatibility
 export { ClassFormPage as CreateClassPage }
 export default ClassFormPage
-

@@ -38,7 +38,10 @@ export { TokenHash } from "@/lib/plagiarism/hashing/tokenHash.js"
 
 // Tokenizer classes
 export { Tokenizer } from "@/lib/plagiarism/tokenizer/tokenizer.js"
-export type { Token, TokenizerOptions } from "@/lib/plagiarism/tokenizer/tokenizer.js"
+export type {
+  Token,
+  TokenizerOptions,
+} from "@/lib/plagiarism/tokenizer/tokenizer.js"
 export { CodeTokenizer } from "@/lib/plagiarism/tokenizer/codeTokenizer.js"
 
 // Utility classes

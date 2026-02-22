@@ -139,7 +139,7 @@ export type GetClassByIdQuery = z.infer<typeof GetClassByIdQuerySchema>
 
 /** Teacher ID query schema */
 export const TeacherIdQuerySchema = z.object({
-  teacherId: z.string(),
+  teacherId: z.coerce.number().int().min(1),
 })
 
 export type TeacherIdQuery = z.infer<typeof TeacherIdQuerySchema>

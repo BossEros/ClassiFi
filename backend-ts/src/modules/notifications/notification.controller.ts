@@ -1,14 +1,10 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
-import { parsePositiveInt } from "@/shared/utils.js"
+import { validateQuery, validateParams } from "@/api/plugins/zod-validation.js"
 import {
   NotificationQueryParamsSchema,
   NotificationParamsSchema,
-  NotificationsResponseSchema,
-  UnreadCountResponseSchema,
-  SuccessResponseSchema,
   ListNotificationsDto,
   type NotificationQueryParams,
   type NotificationParams,
@@ -31,21 +27,12 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
    * GET /
    * Get user's notifications with pagination
    */
-  app.get<{ Querystring: NotificationQueryParams }>("/", {
-    schema: {
-      tags: ["Notifications"],
-      summary: "Get user's notifications",
-      description:
-        "Retrieves paginated list of notifications for the authenticated user",
-      security: [{ bearerAuth: [] }],
-      querystring: toJsonSchema(NotificationQueryParamsSchema),
-      response: {
-        200: toJsonSchema(NotificationsResponseSchema),
-      },
-    },
+  app.get("/", {
+    preHandler: validateQuery(NotificationQueryParamsSchema),
     handler: async (request, reply) => {
       const userId = request.user!.id
-      const dto = new ListNotificationsDto(request.query)
+      const query = request.validatedQuery as NotificationQueryParams
+      const dto = new ListNotificationsDto(query)
 
       const result = await notificationService.getUserNotifications(
         userId,
@@ -68,16 +55,6 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
    * Get count of unread notifications
    */
   app.get("/unread-count", {
-    schema: {
-      tags: ["Notifications"],
-      summary: "Get unread notification count",
-      description:
-        "Returns the total count of unread notifications for the authenticated user",
-      security: [{ bearerAuth: [] }],
-      response: {
-        200: toJsonSchema(UnreadCountResponseSchema),
-      },
-    },
     handler: async (request, reply) => {
       const userId = request.user!.id
       const unreadCount = await notificationService.getUnreadCount(userId)
@@ -93,23 +70,11 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
    * PATCH /:id/read
    * Mark notification as read
    */
-  app.patch<{ Params: NotificationParams }>("/:id/read", {
-    schema: {
-      tags: ["Notifications"],
-      summary: "Mark notification as read",
-      description:
-        "Marks a specific notification as read for the authenticated user",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(NotificationParamsSchema),
-      response: {
-        200: toJsonSchema(SuccessResponseSchema),
-      },
-    },
+  app.patch("/:id/read", {
+    preHandler: validateParams(NotificationParamsSchema),
     handler: async (request, reply) => {
-      const notificationId = parsePositiveInt(
-        request.params.id,
-        "Notification ID",
-      )
+      const { id: notificationId } =
+        request.validatedParams as NotificationParams
       const userId = request.user!.id
 
       await notificationService.markAsRead(notificationId, userId)
@@ -126,15 +91,6 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
    * Mark all notifications as read
    */
   app.patch("/read-all", {
-    schema: {
-      tags: ["Notifications"],
-      summary: "Mark all notifications as read",
-      description: "Marks all notifications as read for the authenticated user",
-      security: [{ bearerAuth: [] }],
-      response: {
-        200: toJsonSchema(SuccessResponseSchema),
-      },
-    },
     handler: async (request, reply) => {
       const userId = request.user!.id
 
@@ -151,23 +107,11 @@ export async function notificationRoutes(app: FastifyInstance): Promise<void> {
    * DELETE /:id
    * Delete a notification
    */
-  app.delete<{ Params: NotificationParams }>("/:id", {
-    schema: {
-      tags: ["Notifications"],
-      summary: "Delete a notification",
-      description:
-        "Permanently deletes a notification for the authenticated user",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(NotificationParamsSchema),
-      response: {
-        200: toJsonSchema(SuccessResponseSchema),
-      },
-    },
+  app.delete("/:id", {
+    preHandler: validateParams(NotificationParamsSchema),
     handler: async (request, reply) => {
-      const notificationId = parsePositiveInt(
-        request.params.id,
-        "Notification ID",
-      )
+      const { id: notificationId } =
+        request.validatedParams as NotificationParams
       const userId = request.user!.id
 
       await notificationService.deleteNotification(notificationId, userId)

@@ -11,13 +11,7 @@ import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { SubmissionCard } from "@/presentation/components/shared/dashboard/SubmissionCard"
-import {
-  Search,
-  Shield,
-  Calendar,
-  Inbox,
-  Loader2,
-} from "lucide-react"
+import { Search, Shield, Calendar, Inbox, Loader2 } from "lucide-react"
 import { getCurrentUser } from "@/business/services/authService"
 import {
   getAssignmentById,
@@ -345,4 +339,3 @@ export function AssignmentSubmissionsPage() {
     </DashboardLayout>
   )
 }
-

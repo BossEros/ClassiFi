@@ -69,7 +69,8 @@ export interface TestPreviewResult {
 export class CodeTestService {
   constructor(
     @inject(CODE_EXECUTOR_TOKEN) private executor: ICodeExecutor,
-    @inject(DI_TOKENS.repositories.testCase) private testCaseRepo: TestCaseRepository,
+    @inject(DI_TOKENS.repositories.testCase)
+    private testCaseRepo: TestCaseRepository,
     @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
     @inject(DI_TOKENS.repositories.submission)
@@ -429,5 +430,3 @@ export class CodeTestService {
     return sourceCode.replace(/public\s+class\s+\w+/, "public class Main")
   }
 }
-
-

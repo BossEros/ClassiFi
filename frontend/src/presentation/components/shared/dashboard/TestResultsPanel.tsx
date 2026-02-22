@@ -282,4 +282,3 @@ function TestResultItem({
 }
 
 export default TestResultsPanel
-

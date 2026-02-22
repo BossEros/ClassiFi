@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest"
-import { validateImageFile, FILE_VALIDATION } from "@/presentation/utils/imageValidation"
+import {
+  validateImageFile,
+  FILE_VALIDATION,
+} from "@/presentation/utils/imageValidation"
 
 describe("imageValidation", () => {
   const createMockFile = (

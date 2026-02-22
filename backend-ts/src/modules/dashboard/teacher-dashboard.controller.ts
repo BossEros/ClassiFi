@@ -1,15 +1,19 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { TeacherDashboardService } from "@/modules/dashboard/teacher-dashboard.service.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
-import { LimitQuerySchema } from "@/api/schemas/common.schema.js"
+import {
+  LimitQuerySchema,
+  type LimitQuery,
+} from "@/api/schemas/common.schema.js"
+import { validateParams, validateQuery } from "@/api/plugins/zod-validation.js"
 import { TeacherIdParamSchema } from "@/modules/classes/class.schema.js"
 import {
-  TeacherDashboardResponseSchema,
   TeacherDashboardQuerySchema,
-  DashboardClassListResponseSchema,
-  TaskListResponseSchema,
+  type TeacherDashboardQuery,
 } from "@/modules/dashboard/dashboard.schema.js"
+import { z } from "zod"
+
+type TeacherIdParam = z.infer<typeof TeacherIdParamSchema>
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
@@ -29,24 +33,15 @@ export async function teacherDashboardRoutes(
    * GET /:teacherId
    * Get complete dashboard data for a teacher
    */
-  app.get<{
-    Params: { teacherId: number }
-    Querystring: { recentClassesLimit?: number; pendingTasksLimit?: number }
-  }>("/:teacherId", {
-    schema: {
-      tags: ["Teacher Dashboard"],
-      summary: "Get complete dashboard data for a teacher",
-      description:
-        "Returns recent classes and pending tasks for the teacher's dashboard overview",
-      params: toJsonSchema(TeacherIdParamSchema),
-      querystring: toJsonSchema(TeacherDashboardQuerySchema),
-      response: {
-        200: toJsonSchema(TeacherDashboardResponseSchema),
-      },
-    },
+  app.get("/:teacherId", {
+    preHandler: [
+      validateParams(TeacherIdParamSchema),
+      validateQuery(TeacherDashboardQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const { teacherId } = request.params
-      const { recentClassesLimit = 12, pendingTasksLimit = 10 } = request.query
+      const { teacherId } = request.validatedParams as TeacherIdParam
+      const { recentClassesLimit = 12, pendingTasksLimit = 10 } =
+        request.validatedQuery as TeacherDashboardQuery
 
       const dashboardData = await teacherDashboardService.getDashboardData(
         teacherId,
@@ -67,71 +62,51 @@ export async function teacherDashboardRoutes(
    * GET /:teacherId/classes
    * Get recent classes for a teacher
    */
-  app.get<{ Params: { teacherId: number }; Querystring: { limit?: number } }>(
-    "/:teacherId/classes",
-    {
-      schema: {
-        tags: ["Teacher Dashboard"],
-        summary: "Get recent classes for a teacher",
-        description:
-          "Returns a list of the teacher's most recently updated classes",
-        params: toJsonSchema(TeacherIdParamSchema),
-        querystring: toJsonSchema(LimitQuerySchema),
-        response: {
-          200: toJsonSchema(DashboardClassListResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const { teacherId } = request.params
-        const { limit = 5 } = request.query
+  app.get("/:teacherId/classes", {
+    preHandler: [
+      validateParams(TeacherIdParamSchema),
+      validateQuery(LimitQuerySchema),
+    ],
+    handler: async (request, reply) => {
+      const { teacherId } = request.validatedParams as TeacherIdParam
+      const { limit = 5 } = request.validatedQuery as LimitQuery
 
-        const recentClasses = await teacherDashboardService.getRecentClasses(
-          teacherId,
-          limit,
-        )
+      const recentClasses = await teacherDashboardService.getRecentClasses(
+        teacherId,
+        limit,
+      )
 
-        return reply.send({
-          success: true,
-          message: "Recent classes retrieved successfully",
-          classes: recentClasses,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Recent classes retrieved successfully",
+        classes: recentClasses,
+      })
     },
-  )
+  })
 
   /**
    * GET /:teacherId/tasks
    * Get pending tasks for a teacher
    */
-  app.get<{ Params: { teacherId: number }; Querystring: { limit?: number } }>(
-    "/:teacherId/tasks",
-    {
-      schema: {
-        tags: ["Teacher Dashboard"],
-        summary: "Get pending tasks for a teacher",
-        description:
-          "Returns a list of pending grading tasks (ungraded submissions) for the teacher",
-        params: toJsonSchema(TeacherIdParamSchema),
-        querystring: toJsonSchema(LimitQuerySchema),
-        response: {
-          200: toJsonSchema(TaskListResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const { teacherId } = request.params
-        const { limit = 10 } = request.query
+  app.get("/:teacherId/tasks", {
+    preHandler: [
+      validateParams(TeacherIdParamSchema),
+      validateQuery(LimitQuerySchema),
+    ],
+    handler: async (request, reply) => {
+      const { teacherId } = request.validatedParams as TeacherIdParam
+      const { limit = 10 } = request.validatedQuery as LimitQuery
 
-        const pendingTasks = await teacherDashboardService.getPendingTasks(
-          teacherId,
-          limit,
-        )
+      const pendingTasks = await teacherDashboardService.getPendingTasks(
+        teacherId,
+        limit,
+      )
 
-        return reply.send({
-          success: true,
-          message: "Pending tasks retrieved successfully",
-          tasks: pendingTasks,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Pending tasks retrieved successfully",
+        tasks: pendingTasks,
+      })
     },
-  )
+  })
 }

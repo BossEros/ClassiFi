@@ -40,7 +40,7 @@ export type NotificationResponse = z.infer<typeof NotificationSchema>
 
 /** Notification ID param schema */
 export const NotificationParamsSchema = z.object({
-  id: z.string(),
+  id: z.coerce.number().int().min(1),
 })
 
 export type NotificationParams = z.infer<typeof NotificationParamsSchema>
@@ -73,33 +73,3 @@ export class ListNotificationsDto {
     this.unreadOnly = validated.unreadOnly
   }
 }
-
-// ============================================================================
-// Response Schemas (for controller routes)
-// ============================================================================
-
-/** Notifications list response schema */
-export const NotificationsResponseSchema = z.object({
-  success: z.literal(true),
-  notifications: z.array(NotificationSchema),
-  total: z.number(),
-  hasMore: z.boolean(),
-})
-
-export type NotificationsResponse = z.infer<typeof NotificationsResponseSchema>
-
-/** Unread count response schema */
-export const UnreadCountResponseSchema = z.object({
-  success: z.literal(true),
-  unreadCount: z.number(),
-})
-
-export type UnreadCountResponse = z.infer<typeof UnreadCountResponseSchema>
-
-/** Success response schema */
-export const SuccessResponseSchema = z.object({
-  success: z.literal(true),
-  message: z.string(),
-})
-
-export type SuccessResponse = z.infer<typeof SuccessResponseSchema>

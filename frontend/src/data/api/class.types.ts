@@ -1,4 +1,9 @@
-import type { Schedule, Class, Assignment, EnrolledStudent } from "@/shared/types/class"
+import type {
+  Schedule,
+  Class,
+  Assignment,
+  EnrolledStudent,
+} from "@/shared/types/class"
 
 /** Base class fields shared across all class representations */
 interface ClassBase {

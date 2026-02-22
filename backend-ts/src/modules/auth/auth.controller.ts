@@ -1,13 +1,10 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AuthService } from "@/modules/auth/auth.service.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
-import { SuccessMessageSchema } from "@/api/schemas/common.schema.js"
 import {
-  RegisterRequestSchemaForDocs,
+  RegisterRequestSchema,
   LoginRequestSchema,
   ForgotPasswordRequestSchema,
-  AuthResponseSchema,
   VerifyRequestSchema,
   type RegisterRequest,
   type LoginRequest,
@@ -16,6 +13,7 @@ import {
 } from "@/modules/auth/auth.schema.js"
 import { ApiError } from "@/api/middlewares/error-handler.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { validateBody } from "@/api/plugins/zod-validation.js"
 
 /**
  * Registers all authentication-related routes under /api/v1/auth/*.
@@ -31,24 +29,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
    * POST /register
    * Register a new user
    */
-  app.post<{ Body: RegisterRequest }>("/register", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Register a new user",
-      description:
-        "Creates a new user account with email and password authentication",
-      body: toJsonSchema(RegisterRequestSchemaForDocs),
-      response: {
-        201: toJsonSchema(AuthResponseSchema),
-      },
-    },
+  app.post("/register", {
+    preHandler: validateBody(RegisterRequestSchema),
     handler: async (request, reply) => {
-      const { confirmPassword, ...userRegistrationData } = request.body
-
-      // Validate password confirmation
-      if (userRegistrationData.password !== confirmPassword) {
-        throw new ApiError("Passwords do not match", 400)
-      }
+      const { confirmPassword: _confirmPassword, ...userRegistrationData } =
+        request.validatedBody as RegisterRequest
 
       const registrationResult =
         await authService.registerUser(userRegistrationData)
@@ -66,18 +51,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
    * POST /login
    * Login with email and password
    */
-  app.post<{ Body: LoginRequest }>("/login", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Login with email and password",
-      description: "Authenticates a user and returns an access token",
-      body: toJsonSchema(LoginRequestSchema),
-      response: {
-        200: toJsonSchema(AuthResponseSchema),
-      },
-    },
+  app.post("/login", {
+    preHandler: validateBody(LoginRequestSchema),
     handler: async (request, reply) => {
-      const { email: userEmail, password: userPassword } = request.body
+      const { email: userEmail, password: userPassword } =
+        request.validatedBody as LoginRequest
 
       const loginResult = await authService.loginUser(userEmail, userPassword)
 
@@ -94,16 +72,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
    * POST /verify
    * Verify access token
    */
-  app.post<{ Body: VerifyRequest }>("/verify", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Verify access token",
-      description:
-        "Validates a Supabase access token and returns user information",
-      body: toJsonSchema(VerifyRequestSchema),
-    },
+  app.post("/verify", {
+    preHandler: validateBody(VerifyRequestSchema),
     handler: async (request, reply) => {
-      const { token: accessToken } = request.body
+      const { token: accessToken } = request.validatedBody as VerifyRequest
 
       if (!accessToken) {
         throw new ApiError("Token is required", 400)
@@ -123,18 +95,11 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
    * POST /forgot-password
    * Request password reset email
    */
-  app.post<{ Body: ForgotPasswordRequest }>("/forgot-password", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Request password reset email",
-      description: "Sends a password reset link to the user's email address",
-      body: toJsonSchema(ForgotPasswordRequestSchema),
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
+  app.post("/forgot-password", {
+    preHandler: validateBody(ForgotPasswordRequestSchema),
     handler: async (request, reply) => {
-      const { email: userEmail } = request.body
+      const { email: userEmail } =
+        request.validatedBody as ForgotPasswordRequest
 
       await authService.requestPasswordReset(userEmail)
 
@@ -150,15 +115,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
    * Logout user
    */
   app.post("/logout", {
-    schema: {
-      tags: ["Auth"],
-      summary: "Logout user",
-      description:
-        "Logout endpoint (actual session clearing happens client-side)",
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
     handler: async (_request, reply) => {
       return reply.send({
         success: true,

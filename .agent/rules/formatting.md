@@ -21,6 +21,11 @@ To improve readability and visual separation of logic:
   - The parameters include complex inline types or object destructuring.
   - There are many parameters (3+).
 
+## Variable Declarations
+
+- **Single Line (Preferred):** Always write variable declarations and assignments on a single line if they can fit reasonably within the line length limit (typically < 80-100 chars). Do not break statements after the equals sign (`=`) unnecessarily.
+- **Multi-Line:** Only split variables and assignments across multiple lines if the expression is naturally too long to fit on a single line or if breaking it improves readability.
+
 ## Example
 
 ```typescript
@@ -51,21 +56,21 @@ function createUser(
 ```typescript
 // bad
 function processUser(id: number) {
-  const user = await db.getUser(id);
+  const user = await db.getUser(id)
   if (!user) {
-    throw new Error("No user");
+    throw new Error("No user")
   }
-  return user;
+  return user
 }
 
 // good
 function processUser(id: number) {
-  const user = await db.getUser(id);
+  const user = await db.getUser(id)
 
   if (!user) {
-    throw new Error("No user");
+    throw new Error("No user")
   }
 
-  return user;
+  return user
 }
 ```

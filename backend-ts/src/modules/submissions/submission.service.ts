@@ -289,7 +289,8 @@ export class SubmissionService {
 
     if (assignment.allowLateSubmissions) {
       const latePenaltyConfiguration =
-        assignment.latePenaltyConfig ?? this.latePenaltyService.getDefaultConfig()
+        assignment.latePenaltyConfig ??
+        this.latePenaltyService.getDefaultConfig()
 
       const penaltyResult = this.latePenaltyService.calculatePenalty(
         now,
@@ -492,8 +493,3 @@ export class SubmissionService {
     }
   }
 }
-
-
-
-
-

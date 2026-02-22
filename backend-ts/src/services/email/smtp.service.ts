@@ -74,7 +74,3 @@ export class SMTPEmailService implements IEmailService {
     return htmlToText(html, { wordwrap: false }).trim()
   }
 }
-
-
-
-

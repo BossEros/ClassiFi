@@ -16,7 +16,8 @@ export class UserService {
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.services.storage) private storageService: StorageService,
-    @inject(DI_TOKENS.adapters.supabaseAuth) private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.adapters.supabaseAuth)
+    private authAdapter: SupabaseAuthAdapter,
   ) {}
 
   /**
@@ -87,7 +88,3 @@ export class UserService {
     return await this.userRepo.getUserById(userId)
   }
 }
-
-
-
-

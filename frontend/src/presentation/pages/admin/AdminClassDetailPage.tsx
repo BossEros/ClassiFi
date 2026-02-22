@@ -424,4 +424,3 @@ export function AdminClassDetailPage() {
     </DashboardLayout>
   )
 }
-

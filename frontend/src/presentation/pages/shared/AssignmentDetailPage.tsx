@@ -310,7 +310,9 @@ export function AssignmentDetailPage() {
                         </div>
                       </div>
                       <div className="pt-4 border-t border-white/10">
-                        <p className="text-sm text-gray-400 mb-1">Latest Submission:</p>
+                        <p className="text-sm text-gray-400 mb-1">
+                          Latest Submission:
+                        </p>
                         <p className="text-gray-300 font-mono text-sm">
                           {latestSubmission?.fileName}
                         </p>
@@ -386,8 +388,12 @@ export function AssignmentDetailPage() {
                         <Clock className="w-5 h-5 text-yellow-400" />
                       </div>
                       <div>
-                        <p className="text-gray-300 font-medium">Not Submitted</p>
-                        <p className="text-sm text-gray-500">No submissions yet</p>
+                        <p className="text-gray-300 font-medium">
+                          Not Submitted
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          No submissions yet
+                        </p>
                       </div>
                     </div>
                   )}

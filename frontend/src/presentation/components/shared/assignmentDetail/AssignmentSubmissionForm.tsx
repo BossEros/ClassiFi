@@ -1,6 +1,18 @@
 import type { ChangeEvent, RefObject } from "react"
-import { CheckCircle, Eye, FileCode, Play, RefreshCw, Upload } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
+import {
+  CheckCircle,
+  Eye,
+  FileCode,
+  Play,
+  RefreshCw,
+  Upload,
+} from "lucide-react"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { formatFileSize } from "@/presentation/utils/formatUtils"
 import type { ProgrammingLanguage } from "@/business/models/assignment/types"
@@ -22,7 +34,9 @@ interface AssignmentSubmissionFormProps {
   onSubmit: () => void
 }
 
-function getAcceptedExtensions(programmingLanguage: ProgrammingLanguage): string {
+function getAcceptedExtensions(
+  programmingLanguage: ProgrammingLanguage,
+): string {
   if (programmingLanguage === "python") {
     return ".py,.ipynb"
   }
@@ -72,7 +86,9 @@ export function AssignmentSubmissionForm({
         <CardContent className="py-8">
           <div className="text-center">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-400" />
-            <p className="text-gray-300 font-medium mb-1">Assignment Submitted</p>
+            <p className="text-gray-300 font-medium mb-1">
+              Assignment Submitted
+            </p>
             <p className="text-sm text-gray-500">
               Resubmission is not allowed for this assignment.
             </p>
@@ -85,7 +101,9 @@ export function AssignmentSubmissionForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{hasSubmitted ? "Resubmit Assignment" : "Submit Assignment"}</CardTitle>
+        <CardTitle>
+          {hasSubmitted ? "Resubmit Assignment" : "Submit Assignment"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -106,13 +124,21 @@ export function AssignmentSubmissionForm({
                 <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Upload className="w-6 h-6 text-teal-400" />
                 </div>
-                <p className="text-gray-200 font-medium mb-1">Click to select file</p>
-                <p className="text-sm text-gray-500">{getAcceptedLabel(programmingLanguage)}</p>
-                <p className="text-xs text-gray-600 mt-2">Maximum file size: 10MB</p>
+                <p className="text-gray-200 font-medium mb-1">
+                  Click to select file
+                </p>
+                <p className="text-sm text-gray-500">
+                  {getAcceptedLabel(programmingLanguage)}
+                </p>
+                <p className="text-xs text-gray-600 mt-2">
+                  Maximum file size: 10MB
+                </p>
               </div>
             </label>
 
-            {fileError && <p className="mt-2 text-sm text-red-400">{fileError}</p>}
+            {fileError && (
+              <p className="mt-2 text-sm text-red-400">{fileError}</p>
+            )}
 
             {selectedFile && !fileError && (
               <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
@@ -120,8 +146,12 @@ export function AssignmentSubmissionForm({
                   <div className="flex items-center gap-3">
                     <FileCode className="w-5 h-5 text-teal-400" />
                     <div>
-                      <p className="text-gray-300 font-medium">{selectedFile.name}</p>
-                      <p className="text-sm text-gray-500">{formatFileSize(selectedFile.size)}</p>
+                      <p className="text-gray-300 font-medium">
+                        {selectedFile.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {formatFileSize(selectedFile.size)}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

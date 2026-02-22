@@ -1,6 +1,9 @@
 import type { LatePenaltyConfig } from "@/shared/types/gradebook"
 import type { Submission } from "@/shared/types/submission"
-import type { AssignmentTestCase, ProgrammingLanguage } from "@/data/api/shared.types"
+import type {
+  AssignmentTestCase,
+  ProgrammingLanguage,
+} from "@/data/api/shared.types"
 import type { TaskDTO } from "@/data/api/class.types"
 
 export interface AssignmentDetail {

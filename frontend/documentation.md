@@ -65,6 +65,7 @@ frontend/
 |-- public/
 `-- index.html
 ```
+
 ---
 
 ## Architecture
@@ -166,6 +167,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
   - Resubmission settings
 
 **Assignment Instructions Image Storage Configuration**:
+
 - Uses Supabase Storage bucket configured via `VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET` (defaults to `assignment-descriptions`)
 - If the configured bucket is unavailable, the client attempts fallback upload buckets for compatibility
 
@@ -186,8 +188,8 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ### Available Services
 
-| Service                     | Location                                       | Purpose                                                                |
-| --------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------- |
+| Service                     | Location                                           | Purpose                                                                |
+| --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
 | **authService**             | `src/business/services/authService.ts`             | User authentication, registration, password management                 |
 | **assignmentService**       | `src/business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
 | **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                |
@@ -541,4 +543,3 @@ The project maintains comprehensive test coverage for:
 - Utility functions (date formatting, validation)
 - UI components (Button, Card, Input, Toast)
 - E2E workflows (login, class creation, assignment submission)
-

@@ -1,13 +1,10 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AdminAnalyticsService } from "@/modules/admin/admin-analytics.service.js"
-import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 import { adminMiddleware } from "@/api/middlewares/admin.middleware.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
+import { validateQuery } from "@/api/plugins/zod-validation.js"
 import {
-  AdminStatsResponseSchema,
   ActivityQuerySchema,
-  ActivityResponseSchema,
   type ActivityQuery,
 } from "@/modules/admin/admin.schema.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -28,7 +25,7 @@ export async function adminAnalyticsRoutes(
   const adminAnalyticsService = container.resolve<AdminAnalyticsService>(
     DI_TOKENS.services.adminAnalytics,
   )
-  const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
+  const preHandlerMiddlewares = [adminMiddleware]
 
   /**
    * GET /stats
@@ -36,14 +33,6 @@ export async function adminAnalyticsRoutes(
    */
   app.get("/stats", {
     preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Analytics"],
-      summary: "Get dashboard statistics",
-      description:
-        "Retrieves system-wide statistics including user counts, class counts, and activity metrics",
-      security: [{ bearerAuth: [] }],
-      response: { 200: toJsonSchema(AdminStatsResponseSchema) },
-    },
     handler: async (_request, reply) => {
       const systemStatistics = await adminAnalyticsService.getAdminStats()
 
@@ -55,19 +44,10 @@ export async function adminAnalyticsRoutes(
    * GET /activity
    * Get recent activity
    */
-  app.get<{ Querystring: ActivityQuery }>("/activity", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Analytics"],
-      summary: "Get recent activity",
-      description:
-        "Retrieves recent platform activity with optional limit parameter",
-      security: [{ bearerAuth: [] }],
-      querystring: toJsonSchema(ActivityQuerySchema),
-      response: { 200: toJsonSchema(ActivityResponseSchema) },
-    },
+  app.get("/activity", {
+    preHandler: [...preHandlerMiddlewares, validateQuery(ActivityQuerySchema)],
     handler: async (request, reply) => {
-      const activityLimit = request.query.limit
+      const { limit: activityLimit } = request.validatedQuery as ActivityQuery
 
       const recentActivityList =
         await adminAnalyticsService.getRecentActivity(activityLimit)

@@ -163,8 +163,7 @@ export function useAssignmentForm() {
       const updatedFormData = { ...prev, [field]: value }
 
       if (field === "deadline") {
-        const hasDeadline =
-          typeof value === "string" && value.trim().length > 0
+        const hasDeadline = typeof value === "string" && value.trim().length > 0
 
         if (!hasDeadline) {
           updatedFormData.allowLateSubmissions = false
@@ -331,7 +330,11 @@ export function useAssignmentForm() {
         ...prev,
         instructionsImageUrl: uploadedImageUrl,
       }))
-      setErrors((prev) => ({ ...prev, instructions: undefined, general: undefined }))
+      setErrors((prev) => ({
+        ...prev,
+        instructions: undefined,
+        general: undefined,
+      }))
 
       if (
         previousInstructionsImageUrl &&
@@ -411,5 +414,3 @@ export function useAssignmentForm() {
     handleDeletePendingTestCase,
   }
 }
-
-
