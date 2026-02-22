@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   adminCreateUserFormSchema,
+  adminDeleteUserFormSchema,
   adminEditUserFormSchema,
 } from "@/presentation/schemas/admin/adminUserSchemas"
 
@@ -48,6 +49,28 @@ describe("adminUserSchemas", () => {
 
     if (!parseResult.success) {
       expect(parseResult.error.issues[0]?.message).toBe("Invalid role selected")
+    }
+  })
+
+  it("accepts valid delete-user confirmation", () => {
+    const parseResult = adminDeleteUserFormSchema.safeParse({
+      confirmation: "DELETE",
+    })
+
+    expect(parseResult.success).toBe(true)
+  })
+
+  it("rejects invalid delete-user confirmation", () => {
+    const parseResult = adminDeleteUserFormSchema.safeParse({
+      confirmation: "remove",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Please type DELETE to confirm",
+      )
     }
   })
 })

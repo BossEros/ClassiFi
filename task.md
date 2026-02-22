@@ -4,8 +4,8 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `100%`
-- Current phase: `Completed`
+- Overall progress: `97%`
+- Current phase: `Phase 6 - Post-Migration Risk Review`
 - Last updated: `2026-02-22`
 
 ## Execution Checklist
@@ -67,8 +67,8 @@ Related plan: `implementation_plan.md`
 - [x] Run form inventory scan for remaining manual form patterns
 - [x] Fix UI text encoding defect in `AdminDeleteUserModal`
 - [ ] Decouple Presentation schemas from `business/validation` helpers
-- [ ] Migrate destructive confirmation modals (`DeleteAccountModal`, `AdminDeleteUserModal`) to RHF + Zod
-- [ ] Add component tests for destructive confirmation modals
+- [x] Migrate destructive confirmation modals (`DeleteAccountModal`, `AdminDeleteUserModal`) to RHF + Zod
+- [x] Add component tests for destructive confirmation modals
 
 ## Verification Log
 
@@ -111,6 +111,9 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 5 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 5 backend `npm test`
 - [x] 2026-02-22: Phase 6 frontend `npm run build`
+- [x] 2026-02-22: Phase 6 frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 6 backend `npm run typecheck`
+- [x] 2026-02-22: Phase 6 backend `npm test`
 
 ## Notes
 

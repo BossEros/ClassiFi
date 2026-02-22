@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   changePasswordFormSchema,
+  deleteAccountFormSchema,
   forgotPasswordFormSchema,
   loginFormSchema,
   registerFormSchema,
@@ -110,6 +111,30 @@ describe("authSchemas", () => {
 
     if (!parseResult.success) {
       expect(parseResult.error.issues[0]?.message).toBe("Please select a role")
+    }
+  })
+
+  it("accepts valid delete account confirmation payload", () => {
+    const parseResult = deleteAccountFormSchema.safeParse({
+      password: "Password1!",
+      confirmation: "DELETE",
+    })
+
+    expect(parseResult.success).toBe(true)
+  })
+
+  it("rejects invalid delete account confirmation text", () => {
+    const parseResult = deleteAccountFormSchema.safeParse({
+      password: "Password1!",
+      confirmation: "DEL",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Please type DELETE to confirm account deletion",
+      )
     }
   })
 })

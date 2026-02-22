@@ -32,5 +32,12 @@ export const adminEditUserFormSchema = z.object({
   isActive: z.boolean(),
 })
 
+export const adminDeleteUserFormSchema = z.object({
+  confirmation: z.string().regex(/^DELETE$/, {
+    message: "Please type DELETE to confirm",
+  }),
+})
+
 export type AdminCreateUserFormValues = z.infer<typeof adminCreateUserFormSchema>
 export type AdminEditUserFormValues = z.infer<typeof adminEditUserFormSchema>
+export type AdminDeleteUserFormValues = z.infer<typeof adminDeleteUserFormSchema>

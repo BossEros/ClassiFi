@@ -166,7 +166,9 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
   - Optional deadline settings (assignment can be created without a deadline)
   - Resubmission settings
 - **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
+- **`AdminDeleteUserModal`**: Admin delete-user confirmation flow uses `react-hook-form` + Zod confirmation schema.
 - **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
+- **`DeleteAccountModal`**: Account deletion confirmation flow uses `react-hook-form` + Zod schema for password + destructive confirmation.
 - **`GradeOverrideModal`**: Grade override input uses `react-hook-form` + dynamic Zod schema with assignment-score bounds.
 
 Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:

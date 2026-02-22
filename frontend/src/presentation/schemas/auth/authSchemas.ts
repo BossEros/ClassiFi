@@ -94,8 +94,19 @@ export const changePasswordFormSchema = z
     },
   )
 
+/**
+ * Delete account confirmation form schema.
+ */
+export const deleteAccountFormSchema = z.object({
+  password: requiredPasswordSchema,
+  confirmation: z.string().regex(/^DELETE$/, {
+    message: "Please type DELETE to confirm account deletion",
+  }),
+})
+
 export type LoginFormValues = z.infer<typeof loginFormSchema>
 export type ForgotPasswordFormValues = z.infer<typeof forgotPasswordFormSchema>
 export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>
 export type RegisterFormValues = z.infer<typeof registerFormSchema>
 export type ChangePasswordFormValues = z.infer<typeof changePasswordFormSchema>
+export type DeleteAccountFormValues = z.infer<typeof deleteAccountFormSchema>

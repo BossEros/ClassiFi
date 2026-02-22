@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
+import type { FieldErrors } from "react-hook-form"
 import {
   AlertTriangle,
   X,
@@ -11,10 +12,21 @@ import {
 } from "lucide-react"
 import { deleteAccount } from "@/business/services/authService"
 import { useNavigate } from "react-router-dom"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  deleteAccountFormSchema,
+  type DeleteAccountFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface DeleteAccountModalProps {
   isOpen: boolean
   onClose: () => void
+}
+
+const INITIAL_DELETE_ACCOUNT_VALUES: DeleteAccountFormValues = {
+  password: "",
+  confirmation: "",
 }
 
 export function DeleteAccountModal({
@@ -22,8 +34,17 @@ export function DeleteAccountModal({
   onClose,
 }: DeleteAccountModalProps) {
   const navigate = useNavigate()
-  const [password, setPassword] = React.useState("")
-  const [confirmation, setConfirmation] = React.useState("")
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+  } = useZodForm({
+    schema: deleteAccountFormSchema,
+    defaultValues: INITIAL_DELETE_ACCOUNT_VALUES,
+    mode: "onSubmit",
+  })
   const [isDeleting, setIsDeleting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [step, setStep] = React.useState<"warning" | "confirm" | "success">(
@@ -31,15 +52,19 @@ export function DeleteAccountModal({
   )
   const [showPassword, setShowPassword] = React.useState(false)
 
+  const passwordField = register("password")
+  const confirmationField = register("confirmation")
+  const passwordValue = watch("password")
+  const confirmationValue = watch("confirmation")
+
   // Reset form when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
-      setPassword("")
-      setConfirmation("")
+      reset(INITIAL_DELETE_ACCOUNT_VALUES)
       setError(null)
       setStep("warning")
     }
-  }, [isOpen])
+  }, [isOpen, reset])
 
   // Close on escape key
   React.useEffect(() => {
@@ -64,12 +89,12 @@ export function DeleteAccountModal({
     setStep("confirm")
   }
 
-  const handleDelete = async () => {
+  const handleValidSubmit = async (formValues: DeleteAccountFormValues) => {
     setError(null)
     setIsDeleting(true)
 
     try {
-      const result = await deleteAccount({ password, confirmation })
+      const result = await deleteAccount(formValues)
 
       if (result.success) {
         // Show success message before redirecting
@@ -87,7 +112,18 @@ export function DeleteAccountModal({
     }
   }
 
-  const isConfirmDisabled = confirmation !== "DELETE" || !password || isDeleting
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<DeleteAccountFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
+  }
+
+  const isConfirmDisabled =
+    confirmationValue !== "DELETE" || !passwordValue || isDeleting
 
   if (!isOpen) return null
 
@@ -177,19 +213,19 @@ export function DeleteAccountModal({
               </p>
               <ul className="text-sm text-gray-400 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5 shrink-0">•</span>
+                  <span className="text-red-400 mt-0.5 shrink-0">&bull;</span>
                   <span className="flex-1 min-w-0">
                     Your profile and personal information
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5 shrink-0">•</span>
+                  <span className="text-red-400 mt-0.5 shrink-0">&bull;</span>
                   <span className="flex-1 min-w-0">
                     All your submissions and assignment
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5 shrink-0">•</span>
+                  <span className="text-red-400 mt-0.5 shrink-0">&bull;</span>
                   <span className="flex-1 min-w-0">
                     Your enrollments in all classes
                   </span>
@@ -234,7 +270,11 @@ export function DeleteAccountModal({
               .
             </p>
 
-            <div className="space-y-4">
+            <form
+              onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+              className="space-y-4"
+              noValidate
+            >
               {/* Error message */}
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 w-full">
@@ -251,9 +291,10 @@ export function DeleteAccountModal({
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
-                    value={password}
+                    {...passwordField}
+                    value={passwordValue}
                     onChange={(e) => {
-                      setPassword(e.target.value)
+                      passwordField.onChange(e)
                       setError(null)
                     }}
                     className={cn(
@@ -289,9 +330,13 @@ export function DeleteAccountModal({
                 </label>
                 <input
                   type="text"
-                  value={confirmation}
+                  {...confirmationField}
+                  value={confirmationValue}
                   onChange={(e) => {
-                    setConfirmation(e.target.value.toUpperCase())
+                    setValue("confirmation", e.target.value.toUpperCase(), {
+                      shouldDirty: true,
+                      shouldTouch: true,
+                    })
                     setError(null)
                   }}
                   className={cn(
@@ -300,7 +345,7 @@ export function DeleteAccountModal({
                     "text-white placeholder-gray-500",
                     "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
                     "transition-all duration-200",
-                    confirmation === "DELETE" && "border-red-500/50",
+                    confirmationValue === "DELETE" && "border-red-500/50",
                   )}
                   placeholder="DELETE"
                   disabled={isDeleting}
@@ -312,6 +357,7 @@ export function DeleteAccountModal({
                 <button
                   onClick={() => setStep("warning")}
                   disabled={isDeleting}
+                  type="button"
                   className={cn(
                     "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
                     "border border-white/20 text-white",
@@ -323,7 +369,7 @@ export function DeleteAccountModal({
                   Back
                 </button>
                 <button
-                  onClick={handleDelete}
+                  type="submit"
                   disabled={isConfirmDisabled}
                   className={cn(
                     "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
@@ -336,7 +382,7 @@ export function DeleteAccountModal({
                   {isDeleting ? "Deleting..." : "Delete My Account"}
                 </button>
               </div>
-            </div>
+            </form>
           </>
         ) : (
           <>
@@ -354,3 +400,4 @@ export function DeleteAccountModal({
     </div>
   )
 }
+
