@@ -100,7 +100,7 @@ export function useAssignmentForm() {
     formState: { errors: formStateErrors },
   } = formMethods
 
-  const formData = watch() as AssignmentFormData
+  const formData = watch()
   const errors: FormErrors = {
     assignmentName: getFieldErrorMessage(formStateErrors, "assignmentName"),
     instructions: getFieldErrorMessage(formStateErrors, "instructions"),
@@ -243,7 +243,7 @@ export function useAssignmentForm() {
 
     try {
       const assignmentPayload = buildAssignmentPayload(
-        validatedFormData as AssignmentFormData,
+        validatedFormData,
         parseInt(currentUser.id, 10),
       )
 

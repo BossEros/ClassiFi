@@ -124,6 +124,7 @@ export function AssignmentFormPage() {
                 onUpdatePendingTestCase={handleUpdatePendingTestCase}
                 onDeleteTestCase={handleDeleteTestCase}
                 onDeletePendingTestCase={handleDeletePendingTestCase}
+                handleInputChange={handleInputChange}
               />
             </div>
 

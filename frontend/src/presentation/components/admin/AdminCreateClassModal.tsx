@@ -85,8 +85,12 @@ export function AdminCreateClassModal({
   const classNameField = register("className")
   const descriptionField = register("description")
   const teacherIdField = register("teacherId")
-  const yearLevelField = register("yearLevel", { valueAsNumber: true })
-  const semesterField = register("semester", { valueAsNumber: true })
+  const yearLevelField = register("yearLevel", {
+    setValueAs: (value) => (value === "" ? undefined : Number(value)),
+  })
+  const semesterField = register("semester", {
+    setValueAs: (value) => (value === "" ? undefined : Number(value)),
+  })
   const academicYearField = register("academicYear")
   const startTimeField = register("startTime")
   const endTimeField = register("endTime")

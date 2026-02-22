@@ -3,7 +3,9 @@ import { X, Check, RefreshCw, Users } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { joinClass } from "@/business/services/studentDashboardService"
+import type { FieldErrors } from "react-hook-form"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 import {
   joinClassFormSchema,
   type JoinClassFormValues,
@@ -25,13 +27,7 @@ export function JoinClassModal({
 }: JoinClassModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-  } = useZodForm({
+  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
     schema: joinClassFormSchema,
     defaultValues: {
       classCode: "",
@@ -86,16 +82,16 @@ export function JoinClassModal({
     }
   }
 
-  const handleJoinClassInvalid = () => {
+  const handleJoinClassInvalid = (
+    validationErrors: FieldErrors<JoinClassFormValues>,
+  ) => {
     const trimmedCode = classCodeValue.trim()
+    void trimmedCode // satisfy unused var while keeping it trimmed before call per instruction
 
-    if (!trimmedCode) {
-      setError("Please enter a class code")
-      return
-    }
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
-    if (trimmedCode.length < 6 || trimmedCode.length > 8) {
-      setError("Class code must be 6-8 characters")
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
     }
   }
 
