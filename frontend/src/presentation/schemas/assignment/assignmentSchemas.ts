@@ -1,10 +1,5 @@
 import { z } from "zod"
-import {
-  validateAssignmentTitle,
-  validateDeadline,
-  validateInstructions,
-  validateProgrammingLanguage,
-} from "@/business/validation/assignmentValidation"
+import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
 
 const penaltyTierSchema = z.object({
   id: z.string(),
@@ -16,6 +11,70 @@ const latePenaltyConfigSchema = z.object({
   tiers: z.array(penaltyTierSchema),
   rejectAfterHours: z.number().nullable(),
 })
+
+const supportedProgrammingLanguages = new Set<string>(
+  PROGRAMMING_LANGUAGE_OPTIONS.map((option) => option.value),
+)
+
+function validateAssignmentTitleValue(titleValue: string): string | null {
+  const normalizedTitle = titleValue.trim()
+
+  if (!normalizedTitle) {
+    return "Assignment title is required"
+  }
+
+  if (normalizedTitle.length > 150) {
+    return "Assignment title must not exceed 150 characters"
+  }
+
+  return null
+}
+
+function validateInstructionsValue(
+  instructionsValue: string,
+  instructionsImageUrlValue: string | null,
+): string | null {
+  const normalizedInstructions = instructionsValue.trim()
+  const hasInstructionsImage = Boolean(instructionsImageUrlValue?.trim())
+
+  if (!normalizedInstructions && !hasInstructionsImage) {
+    return "Add instructions or upload an image"
+  }
+
+  if (normalizedInstructions.length > 5000) {
+    return "Instructions must not exceed 5000 characters"
+  }
+
+  return null
+}
+
+function validateProgrammingLanguageValue(
+  programmingLanguageValue: string,
+): string | null {
+  if (!programmingLanguageValue) {
+    return "Programming language is required"
+  }
+
+  if (!supportedProgrammingLanguages.has(programmingLanguageValue.toLowerCase())) {
+    return "Invalid programming language. Must be Python, Java, or C"
+  }
+
+  return null
+}
+
+function validateDeadlineValue(deadlineValue: Date): string | null {
+  if (Number.isNaN(deadlineValue.getTime())) {
+    return "Invalid deadline date"
+  }
+
+  const currentDate = new Date()
+
+  if (deadlineValue <= currentDate) {
+    return "Deadline must be in the future"
+  }
+
+  return null
+}
 
 /**
  * Assignment form schema used by the teacher assignment create/edit flow.
@@ -36,7 +95,9 @@ export const assignmentFormSchema = z
     latePenaltyConfig: latePenaltyConfigSchema,
   })
   .superRefine((formValue, context) => {
-    const assignmentNameError = validateAssignmentTitle(formValue.assignmentName)
+    const assignmentNameError = validateAssignmentTitleValue(
+      formValue.assignmentName,
+    )
 
     if (assignmentNameError) {
       context.addIssue({
@@ -46,7 +107,7 @@ export const assignmentFormSchema = z
       })
     }
 
-    const instructionsError = validateInstructions(
+    const instructionsError = validateInstructionsValue(
       formValue.instructions,
       formValue.instructionsImageUrl,
     )
@@ -59,7 +120,7 @@ export const assignmentFormSchema = z
       })
     }
 
-    const programmingLanguageError = validateProgrammingLanguage(
+    const programmingLanguageError = validateProgrammingLanguageValue(
       formValue.programmingLanguage,
     )
 
@@ -74,7 +135,7 @@ export const assignmentFormSchema = z
     const hasDeadline = formValue.deadline.trim().length > 0
 
     if (hasDeadline) {
-      const deadlineError = validateDeadline(new Date(formValue.deadline))
+      const deadlineError = validateDeadlineValue(new Date(formValue.deadline))
 
       if (deadlineError) {
         context.addIssue({

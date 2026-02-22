@@ -1,9 +1,4 @@
 import { z } from "zod"
-import {
-  validateAcademicYear,
-  validateClassDescription,
-  validateClassName,
-} from "@/business/validation/classValidation"
 import { DAY_ABBREVIATIONS } from "@/presentation/constants/schedule.constants"
 import type { DayOfWeek } from "@/shared/types/class"
 
@@ -18,6 +13,7 @@ const dayOfWeekValues = [
 ] as const satisfies readonly DayOfWeek[]
 
 const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/
+const academicYearPattern = /^\d{4}-\d{4}$/
 
 function parseTimeToMinutes(timeValue: string): number {
   const [hours, minutes] = timeValue.split(":").map(Number)
@@ -25,8 +21,48 @@ function parseTimeToMinutes(timeValue: string): number {
   return hours * 60 + minutes
 }
 
+function validateClassNameValue(classNameValue: string): string | null {
+  const normalizedClassName = classNameValue.trim()
+
+  if (!normalizedClassName) {
+    return "Class name is required"
+  }
+
+  if (normalizedClassName.length > 100) {
+    return "Class name must not exceed 100 characters"
+  }
+
+  return null
+}
+
+function validateDescriptionValue(descriptionValue: string): string | null {
+  if (descriptionValue.trim().length > 1000) {
+    return "Description must not exceed 1000 characters"
+  }
+
+  return null
+}
+
+function validateAcademicYearValue(academicYearValue: string): string | null {
+  if (!academicYearValue) {
+    return "Academic year is required"
+  }
+
+  if (!academicYearPattern.test(academicYearValue)) {
+    return "Academic year must be in format YYYY-YYYY (e.g., 2024-2025)"
+  }
+
+  const [startYear, endYear] = academicYearValue.split("-").map(Number)
+
+  if (endYear !== startYear + 1) {
+    return "End year must be exactly one year after start year"
+  }
+
+  return null
+}
+
 const classNameSchema = z.string().superRefine((classNameValue, context) => {
-  const classNameError = validateClassName(classNameValue)
+  const classNameError = validateClassNameValue(classNameValue)
 
   if (classNameError) {
     context.addIssue({
@@ -39,7 +75,7 @@ const classNameSchema = z.string().superRefine((classNameValue, context) => {
 const descriptionSchema = z
   .string()
   .superRefine((descriptionValue, context) => {
-    const descriptionError = validateClassDescription(descriptionValue)
+    const descriptionError = validateDescriptionValue(descriptionValue)
 
     if (descriptionError) {
       context.addIssue({
@@ -52,7 +88,7 @@ const descriptionSchema = z
 const academicYearSchema = z
   .string()
   .superRefine((academicYearValue, context) => {
-    const academicYearError = validateAcademicYear(academicYearValue)
+    const academicYearError = validateAcademicYearValue(academicYearValue)
 
     if (academicYearError) {
       context.addIssue({

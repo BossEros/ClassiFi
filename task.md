@@ -4,8 +4,8 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `97%`
-- Current phase: `Phase 6 - Post-Migration Risk Review`
+- Overall progress: `100%`
+- Current phase: `Phase 6 Complete`
 - Last updated: `2026-02-22`
 
 ## Execution Checklist
@@ -66,7 +66,7 @@ Related plan: `implementation_plan.md`
 - [x] Run architecture boundary scan for Presentation form modules
 - [x] Run form inventory scan for remaining manual form patterns
 - [x] Fix UI text encoding defect in `AdminDeleteUserModal`
-- [ ] Decouple Presentation schemas from `business/validation` helpers
+- [x] Decouple Presentation schemas from `business/validation` helpers
 - [x] Migrate destructive confirmation modals (`DeleteAccountModal`, `AdminDeleteUserModal`) to RHF + Zod
 - [x] Add component tests for destructive confirmation modals
 
@@ -114,6 +114,11 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 6 frontend `npm test -- --run`
 - [x] 2026-02-22: Phase 6 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 6 backend `npm test`
+- [x] 2026-02-22: Phase 6 decoupling tests `npx vitest run src/presentation/schemas/class/classSchemas.test.ts src/presentation/schemas/assignment/assignmentSchemas.test.ts src/presentation/hooks/teacher/useAssignmentForm.test.tsx`
+- [x] 2026-02-22: Phase 6 decoupling frontend `npm run build`
+- [x] 2026-02-22: Phase 6 decoupling frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 6 decoupling backend `npm run typecheck`
+- [x] 2026-02-22: Phase 6 decoupling backend `npm test`
 
 ## Notes
 
