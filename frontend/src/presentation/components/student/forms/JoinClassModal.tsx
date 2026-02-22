@@ -3,6 +3,11 @@ import { X, Check, RefreshCw, Users } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { joinClass } from "@/business/services/studentDashboardService"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  joinClassFormSchema,
+  type JoinClassFormValues,
+} from "@/presentation/schemas/class/classSchemas"
 import type { Class } from "@/business/models/dashboard/types"
 
 interface JoinClassModalProps {
@@ -18,40 +23,47 @@ export function JoinClassModal({
   onSuccess,
   studentId,
 }: JoinClassModalProps) {
-  const [classCode, setClassCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+  } = useZodForm({
+    schema: joinClassFormSchema,
+    defaultValues: {
+      classCode: "",
+    },
+    mode: "onSubmit",
+  })
+
+  const classCodeValue = watch("classCode")
+  const classCodeField = register("classCode")
 
   // Reset form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
-      setClassCode("")
+      reset({ classCode: "" })
       setError(null)
     }
-  }, [isOpen])
+  }, [isOpen, reset])
 
   const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Convert to uppercase and remove spaces
     const value = e.target.value.toUpperCase().replace(/\s/g, "")
-    setClassCode(value)
+    setValue("classCode", value, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
     if (error) setError(null)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleJoinClassSubmit = async (formValues: JoinClassFormValues) => {
     setError(null)
 
-    // Basic validation
-    const trimmedCode = classCode.trim()
-    if (!trimmedCode) {
-      setError("Please enter a class code")
-      return
-    }
-
-    if (trimmedCode.length < 6 || trimmedCode.length > 8) {
-      setError("Class code must be 6-8 characters")
-      return
-    }
+    const trimmedCode = formValues.classCode.trim()
 
     setIsSubmitting(true)
     try {
@@ -71,6 +83,19 @@ export function JoinClassModal({
       setError("Failed to join class. Please try again.")
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleJoinClassInvalid = () => {
+    const trimmedCode = classCodeValue.trim()
+
+    if (!trimmedCode) {
+      setError("Please enter a class code")
+      return
+    }
+
+    if (trimmedCode.length < 6 || trimmedCode.length > 8) {
+      setError("Class code must be 6-8 characters")
     }
   }
 
@@ -109,7 +134,10 @@ export function JoinClassModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6 w-full">
+        <form
+          onSubmit={handleSubmit(handleJoinClassSubmit, handleJoinClassInvalid)}
+          className="space-y-6 w-full"
+        >
           {/* Error Message */}
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
@@ -129,7 +157,8 @@ export function JoinClassModal({
               id="classCode"
               type="text"
               placeholder="Enter class code (e.g., ABC123)"
-              value={classCode}
+              {...classCodeField}
+              value={classCodeValue}
               onChange={handleClassCodeChange}
               disabled={isSubmitting}
               maxLength={8}
@@ -155,7 +184,7 @@ export function JoinClassModal({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || !classCode.trim()}
+              disabled={isSubmitting || !classCodeValue.trim()}
               className="flex-1"
             >
               {isSubmitting ? (

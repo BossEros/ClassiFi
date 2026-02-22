@@ -15,12 +15,6 @@ import {
   getClassById,
   updateClass,
 } from "@/business/services/classService"
-import {
-  validateClassName,
-  validateClassCode,
-  validateAcademicYear,
-  validateSchedule,
-} from "@/business/validation/classValidation"
 import { Input } from "@/presentation/components/ui/Input"
 import { Textarea } from "@/presentation/components/ui/Textarea"
 import { Button } from "@/presentation/components/ui/Button"
@@ -28,26 +22,30 @@ import { useToast } from "@/presentation/context/ToastContext"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/presentation/utils/dateUtils"
-import type { Schedule, DayOfWeek } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { BackButton } from "@/presentation/components/ui/BackButton"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  teacherClassFormSchema,
+  type TeacherClassFormValues,
+} from "@/presentation/schemas/class/classSchemas"
+import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import type { DayOfWeek } from "@/business/models/dashboard/types"
 
-interface FormData {
-  className: string
-  description: string
-  classCode: string
-  yearLevel: 1 | 2 | 3 | 4
-  semester: 1 | 2
-  academicYear: string
-  schedule: Schedule
-}
-
-interface FormErrors {
-  className?: string
-  classCode?: string
-  academicYear?: string
-  schedule?: string
-  general?: string
+function getDefaultClassFormValues(): TeacherClassFormValues {
+  return {
+    className: "",
+    description: "",
+    classCode: "",
+    yearLevel: 1,
+    semester: 1,
+    academicYear: getCurrentAcademicYear(),
+    schedule: {
+      days: [],
+      startTime: "08:00",
+      endTime: "09:30",
+    },
+  }
 }
 
 export function ClassFormPage() {
@@ -62,117 +60,96 @@ export function ClassFormPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(isEditMode)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
-
-  const [formData, setFormData] = useState<FormData>({
-    className: "",
-    description: "",
-    classCode: "",
-    yearLevel: 1,
-    semester: 1,
-    academicYear: getCurrentAcademicYear(),
-    schedule: {
-      days: [],
-      startTime: "08:00",
-      endTime: "09:30",
-    },
+  const [generalError, setGeneralError] = useState<string | null>(null)
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    clearErrors,
+    formState: { errors },
+  } = useZodForm({
+    schema: teacherClassFormSchema,
+    defaultValues: getDefaultClassFormValues(),
+    mode: "onSubmit",
   })
+
+  const classNameField = register("className")
+  const descriptionField = register("description")
+  const classCodeField = register("classCode")
+  const yearLevelField = register("yearLevel", { valueAsNumber: true })
+  const semesterField = register("semester", { valueAsNumber: true })
+  const academicYearField = register("academicYear")
+  const scheduleStartTimeField = register("schedule.startTime")
+  const scheduleEndTimeField = register("schedule.endTime")
+
+  const scheduleDays = watch("schedule.days")
+  const classCodeValue = watch("classCode")
 
   // Fetch existing class data when in edit mode
   useEffect(() => {
-    if (isEditMode && classId) {
-      const user = getCurrentUser()
-      if (!user) return
-
-      const fetchClassData = async () => {
-        setIsFetching(true)
-        try {
-          const classData = await getClassById(
-            parseInt(classId),
-            parseInt(user.id),
-          )
-          setFormData({
-            className: classData.className,
-            description: classData.description || "",
-            classCode: classData.classCode,
-            yearLevel: classData.yearLevel as 1 | 2 | 3 | 4,
-            semester: classData.semester as 1 | 2,
-            academicYear: classData.academicYear,
-            schedule: classData.schedule,
-          })
-        } catch (error) {
-          console.error("Error loading class data:", error)
-          setErrors({
-            general: "Failed to load class data. Please try again.",
-          })
-        } finally {
-          setIsFetching(false)
-        }
-      }
-      fetchClassData()
+    if (!isEditMode || !classId) {
+      return
     }
-  }, [isEditMode, classId])
+
+    const user = getCurrentUser()
+    if (!user) return
+
+    const fetchClassData = async () => {
+      setIsFetching(true)
+      try {
+        const classData = await getClassById(parseInt(classId), parseInt(user.id))
+
+        reset({
+          className: classData.className,
+          description: classData.description || "",
+          classCode: classData.classCode,
+          yearLevel: classData.yearLevel as 1 | 2 | 3 | 4,
+          semester: classData.semester as 1 | 2,
+          academicYear: classData.academicYear,
+          schedule: classData.schedule,
+        })
+      } catch (error) {
+        console.error("Error loading class data:", error)
+        setGeneralError("Failed to load class data. Please try again.")
+      } finally {
+        setIsFetching(false)
+      }
+    }
+
+    fetchClassData()
+  }, [isEditMode, classId, reset])
 
   const handleGenerateCode = async () => {
     setIsGenerating(true)
     try {
       const code = await generateClassCode()
-      setFormData((prev) => ({ ...prev, classCode: code }))
-      setErrors((prev) => ({ ...prev, classCode: undefined }))
+      setValue("classCode", code, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      })
+      clearErrors("classCode")
     } catch {
-      setErrors((prev) => ({ ...prev, classCode: "Failed to generate code" }))
+      setValue("classCode", "", {
+        shouldValidate: true,
+      })
     } finally {
       setIsGenerating(false)
     }
   }
 
-  const handleInputChange = (
-    field: keyof FormData,
-    value: string | number | Schedule,
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }))
-  }
-
   const toggleDay = (day: DayOfWeek) => {
-    const newDays = formData.schedule.days.includes(day)
-      ? formData.schedule.days.filter((d) => d !== day)
-      : [...formData.schedule.days, day]
-    handleInputChange("schedule", { ...formData.schedule, days: newDays })
-  }
+    const updatedDays = scheduleDays.includes(day)
+      ? scheduleDays.filter((selectedDay) => selectedDay !== day)
+      : [...scheduleDays, day]
 
-  const validateForm = (): boolean => {
-    const newErrors: FormErrors = {}
-
-    // Use centralized validators
-    const classNameError = validateClassName(formData.className)
-    if (classNameError) {
-      newErrors.className = classNameError
-    }
-
-    const classCodeError = validateClassCode(formData.classCode)
-    if (classCodeError) {
-      newErrors.classCode = classCodeError
-    }
-    const academicYearError = validateAcademicYear(formData.academicYear)
-    if (academicYearError) {
-      newErrors.academicYear = academicYearError
-    }
-
-    const scheduleError = validateSchedule(formData.schedule)
-    if (scheduleError) {
-      newErrors.schedule = scheduleError
-    }
-
-    // Additional time validation (not in centralized validators)
-    if (!formData.schedule.startTime || !formData.schedule.endTime) {
-      newErrors.schedule = "Start time and end time are required"
-    } else if (formData.schedule.startTime >= formData.schedule.endTime) {
-      newErrors.schedule = "End time must be after start time"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
+    setValue("schedule.days", updatedDays, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
   }
 
   const userInitials = currentUser
@@ -181,29 +158,26 @@ export function ClassFormPage() {
 
   const topBar = useTopBar({ user: currentUser, userInitials })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) return
-
+  const handleValidSubmit = async (formValues: TeacherClassFormValues) => {
     if (!currentUser?.id) {
-      setErrors({ general: "You must be logged in" })
+      setGeneralError("You must be logged in")
       return
     }
 
     setIsLoading(true)
+    setGeneralError(null)
 
     try {
       if (isEditMode && classId) {
         // Update existing class
         await updateClass(parseInt(classId), {
           teacherId: parseInt(currentUser.id),
-          className: formData.className.trim(),
-          description: formData.description.trim() || undefined,
-          yearLevel: formData.yearLevel,
-          semester: formData.semester,
-          academicYear: formData.academicYear,
-          schedule: formData.schedule,
+          className: formValues.className.trim(),
+          description: formValues.description.trim() || undefined,
+          yearLevel: formValues.yearLevel,
+          semester: formValues.semester,
+          academicYear: formValues.academicYear,
+          schedule: formValues.schedule,
         })
         showToast("Class updated successfully")
         navigate(`/dashboard/classes/${classId}`)
@@ -211,27 +185,31 @@ export function ClassFormPage() {
         // Create new class
         await createClass({
           teacherId: parseInt(currentUser.id),
-          className: formData.className.trim(),
-          description: formData.description.trim() || undefined,
-          classCode: formData.classCode,
-          yearLevel: formData.yearLevel,
-          semester: formData.semester,
-          academicYear: formData.academicYear,
-          schedule: formData.schedule,
+          className: formValues.className.trim(),
+          description: formValues.description.trim() || undefined,
+          classCode: formValues.classCode,
+          yearLevel: formValues.yearLevel,
+          semester: formValues.semester,
+          academicYear: formValues.academicYear,
+          schedule: formValues.schedule,
         })
         showToast("Class created successfully")
         navigate("/dashboard/classes")
       }
     } catch {
-      setErrors({
-        general: `Failed to ${
-          isEditMode ? "update" : "create"
-        } class. Please try again.`,
-      })
+      setGeneralError(
+        `Failed to ${isEditMode ? "update" : "create"} class. Please try again.`,
+      )
     } finally {
       setIsLoading(false)
     }
   }
+
+  const scheduleErrorMessage =
+    getFieldErrorMessage(errors, "schedule.days") ||
+    getFieldErrorMessage(errors, "schedule.startTime") ||
+    getFieldErrorMessage(errors, "schedule.endTime") ||
+    getFieldErrorMessage(errors, "schedule")
 
   // Show loading state while fetching class data in edit mode
   if (isFetching) {
@@ -266,14 +244,14 @@ export function ClassFormPage() {
       </div>
 
       {/* Error Banner */}
-      {errors.general && (
+      {generalError && (
         <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20">
-          <p className="text-sm text-red-400">{errors.general}</p>
+          <p className="text-sm text-red-400">{generalError}</p>
         </div>
       )}
 
       {/* Form Content */}
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(handleValidSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Basic Information */}
           <div className="lg:col-span-2 space-y-6">
@@ -300,15 +278,14 @@ export function ClassFormPage() {
                     id="className"
                     type="text"
                     placeholder="e.g., Introduction to Programming"
-                    value={formData.className}
-                    onChange={(e) =>
-                      handleInputChange("className", e.target.value)
-                    }
+                    {...classNameField}
                     disabled={isLoading}
                     className={errors.className ? "border-red-500/50" : ""}
                   />
                   {errors.className && (
-                    <p className="text-xs text-red-400">{errors.className}</p>
+                    <p className="text-xs text-red-400">
+                      {errors.className.message}
+                    </p>
                   )}
                 </div>
 
@@ -323,10 +300,7 @@ export function ClassFormPage() {
                   <Textarea
                     id="description"
                     placeholder="Brief description of the class..."
-                    value={formData.description}
-                    onChange={(e) =>
-                      handleInputChange("description", e.target.value)
-                    }
+                    {...descriptionField}
                     disabled={isLoading}
                     rows={3}
                   />
@@ -340,7 +314,8 @@ export function ClassFormPage() {
                   <div className="flex gap-2">
                     <Input
                       type="text"
-                      value={formData.classCode}
+                      {...classCodeField}
+                      value={classCodeValue}
                       placeholder={isEditMode ? "" : "Click Generate"}
                       readOnly
                       className={`flex-1 bg-white/5 font-mono text-lg tracking-wider uppercase ${
@@ -367,7 +342,9 @@ export function ClassFormPage() {
                     )}
                   </div>
                   {errors.classCode && (
-                    <p className="text-xs text-red-400">{errors.classCode}</p>
+                    <p className="text-xs text-red-400">
+                      {errors.classCode.message}
+                    </p>
                   )}
                   <p className="text-xs text-gray-500">
                     {isEditMode
@@ -403,7 +380,7 @@ export function ClassFormPage() {
                         disabled={isLoading}
                         title={day.label}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                          formData.schedule.days.includes(day.value)
+                          scheduleDays.includes(day.value)
                             ? "bg-teal-500 text-white border-transparent"
                             : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                         }`}
@@ -412,8 +389,8 @@ export function ClassFormPage() {
                       </button>
                     ))}
                   </div>
-                  {errors.schedule && (
-                    <p className="text-xs text-red-400">{errors.schedule}</p>
+                  {scheduleErrorMessage && (
+                    <p className="text-xs text-red-400">{scheduleErrorMessage}</p>
                   )}
                 </div>
 
@@ -424,13 +401,7 @@ export function ClassFormPage() {
                   </label>
                   <div className="flex items-center gap-3">
                     <select
-                      value={formData.schedule.startTime}
-                      onChange={(e) =>
-                        handleInputChange("schedule", {
-                          ...formData.schedule,
-                          startTime: e.target.value,
-                        })
-                      }
+                      {...scheduleStartTimeField}
                       disabled={isLoading}
                       className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                     >
@@ -446,13 +417,7 @@ export function ClassFormPage() {
                     </select>
                     <span className="text-gray-400 text-sm">to</span>
                     <select
-                      value={formData.schedule.endTime}
-                      onChange={(e) =>
-                        handleInputChange("schedule", {
-                          ...formData.schedule,
-                          endTime: e.target.value,
-                        })
-                      }
+                      {...scheduleEndTimeField}
                       disabled={isLoading}
                       className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                     >
@@ -495,13 +460,7 @@ export function ClassFormPage() {
                   </label>
                   <select
                     id="yearLevel"
-                    value={formData.yearLevel}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "yearLevel",
-                        parseInt(e.target.value) as 1 | 2 | 3 | 4,
-                      )
-                    }
+                    {...yearLevelField}
                     disabled={isLoading}
                     className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                   >
@@ -530,13 +489,7 @@ export function ClassFormPage() {
                   </label>
                   <select
                     id="semester"
-                    value={formData.semester}
-                    onChange={(e) =>
-                      handleInputChange(
-                        "semester",
-                        parseInt(e.target.value) as 1 | 2,
-                      )
-                    }
+                    {...semesterField}
                     disabled={isLoading}
                     className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                   >
@@ -561,16 +514,13 @@ export function ClassFormPage() {
                     id="academicYear"
                     type="text"
                     placeholder="e.g., 2024-2025"
-                    value={formData.academicYear}
-                    onChange={(e) =>
-                      handleInputChange("academicYear", e.target.value)
-                    }
+                    {...academicYearField}
                     disabled={isLoading}
                     className={errors.academicYear ? "border-red-500/50" : ""}
                   />
                   {errors.academicYear && (
                     <p className="text-xs text-red-400">
-                      {errors.academicYear}
+                      {errors.academicYear.message}
                     </p>
                   )}
                   <p className="text-xs text-gray-500">

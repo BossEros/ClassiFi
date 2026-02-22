@@ -10,8 +10,14 @@ import {
   EyeOff,
   UserPlus,
 } from "lucide-react"
+import type { FieldErrors } from "react-hook-form"
 import * as adminService from "@/business/services/adminService"
-import { validatePassword } from "@/business/validation/authValidation"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  adminCreateUserFormSchema,
+  type AdminCreateUserFormValues,
+} from "@/presentation/schemas/admin/adminUserSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface AdminUserModalProps {
   isOpen: boolean
@@ -19,12 +25,12 @@ interface AdminUserModalProps {
   onSuccess: () => void
 }
 
-const INITIAL_FORM_DATA = {
+const INITIAL_FORM_DATA: AdminCreateUserFormValues = {
   email: "",
   password: "",
   firstName: "",
   lastName: "",
-  role: "student" as "student" | "teacher" | "admin",
+  role: "student",
 }
 
 export function AdminUserModal({
@@ -35,50 +41,74 @@ export function AdminUserModal({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showPassword, setShowPassword] = useState(false)
-  const [passwordError, setPasswordError] = useState<string | null>(null)
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA)
+  const {
+    register,
+    handleSubmit,
+    watch,
+    trigger,
+    clearErrors,
+    reset,
+    formState: { errors },
+  } = useZodForm({
+    schema: adminCreateUserFormSchema,
+    defaultValues: INITIAL_FORM_DATA,
+    mode: "onSubmit",
+  })
+
+  const firstNameField = register("firstName")
+  const lastNameField = register("lastName")
+  const emailField = register("email")
+  const passwordField = register("password")
+  const roleField = register("role")
+
+  const firstNameValue = watch("firstName")
+  const lastNameValue = watch("lastName")
+  const emailValue = watch("email")
+  const passwordValue = watch("password")
+  const roleValue = watch("role")
 
   if (!isOpen) return null
 
-  const handlePasswordBlur = () => {
-    const error = validatePassword(formData.password)
-    setPasswordError(error)
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const passwordValidationError = validatePassword(formData.password)
-    if (passwordValidationError) {
-      setPasswordError(passwordValidationError)
-      return
-    }
-
+  const handleValidSubmit = async (formValues: AdminCreateUserFormValues) => {
     try {
       setIsLoading(true)
       setError(null)
-      await adminService.createUser(formData)
+
+      await adminService.createUser(formValues)
+
       onSuccess()
       onClose()
-      // Reset form
-      setFormData(INITIAL_FORM_DATA)
-      setPasswordError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create user")
+      reset(INITIAL_FORM_DATA)
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to create user",
+      )
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleInvalidSubmit = (
+    validationErrors: FieldErrors<AdminCreateUserFormValues>,
+  ) => {
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
+  }
+
+  const passwordError = errors.password?.message
+
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      {/* Modal Content */}
       <div className="relative w-full max-w-md min-w-[450px] transform overflow-hidden rounded-2xl bg-slate-900/95 p-6 text-left shadow-2xl transition-all border border-white/10 backdrop-blur-xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -104,7 +134,11 @@ export function AdminUserModal({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
+          className="space-y-4"
+          noValidate
+        >
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-gray-400 ml-1">
@@ -114,10 +148,12 @@ export function AdminUserModal({
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
-                  value={formData.firstName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, firstName: e.target.value })
-                  }
+                  {...firstNameField}
+                  value={firstNameValue}
+                  onChange={(event) => {
+                    firstNameField.onChange(event)
+                    if (error) setError(null)
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                   placeholder="John"
                   required
@@ -132,10 +168,12 @@ export function AdminUserModal({
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
                 <input
                   type="text"
-                  value={formData.lastName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, lastName: e.target.value })
-                  }
+                  {...lastNameField}
+                  value={lastNameValue}
+                  onChange={(event) => {
+                    lastNameField.onChange(event)
+                    if (error) setError(null)
+                  }}
                   className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                   placeholder="Doe"
                   required
@@ -152,10 +190,12 @@ export function AdminUserModal({
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
               <input
                 type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                {...emailField}
+                value={emailValue}
+                onChange={(event) => {
+                  emailField.onChange(event)
+                  if (error) setError(null)
+                }}
                 className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                 placeholder="john.doe@example.com"
                 required
@@ -171,14 +211,25 @@ export function AdminUserModal({
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
               <input
                 type={showPassword ? "text" : "password"}
-                value={formData.password}
-                onChange={(e) => {
-                  setFormData({ ...formData, password: e.target.value })
-                  if (passwordError) setPasswordError(null)
+                {...passwordField}
+                value={passwordValue}
+                onChange={(event) => {
+                  passwordField.onChange(event)
+
+                  if (passwordError) {
+                    clearErrors("password")
+                  }
+
+                  if (error) {
+                    setError(null)
+                  }
                 }}
-                onBlur={handlePasswordBlur}
+                onBlur={(event) => {
+                  passwordField.onBlur(event)
+                  void trigger("password")
+                }}
                 className={`w-full pl-10 pr-10 py-2.5 bg-black/20 border rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all ${passwordError ? "border-red-500/50" : "border-white/10"}`}
-                placeholder="••••••••"
+                placeholder="********"
                 required
               />
               <button
@@ -210,13 +261,12 @@ export function AdminUserModal({
             <div className="relative group">
               <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
               <select
-                value={formData.role}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    role: e.target.value as "student" | "teacher" | "admin",
-                  })
-                }
+                {...roleField}
+                value={roleValue}
+                onChange={(event) => {
+                  roleField.onChange(event)
+                  if (error) setError(null)
+                }}
                 className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-white text-sm placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
                 <option value="student" className="bg-slate-900">

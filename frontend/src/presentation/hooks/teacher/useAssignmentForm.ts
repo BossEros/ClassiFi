@@ -1,44 +1,66 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
+import { type ProgrammingLanguage } from "@/business/models/assignment/types"
+import { getAssignmentById } from "@/business/services/assignmentService"
 import { getCurrentUser } from "@/business/services/authService"
 import {
   createAssignment,
-  updateAssignment,
   getClassById,
-  uploadAssignmentInstructionsImage,
   removeAssignmentInstructionsImage,
+  updateAssignment,
+  uploadAssignmentInstructionsImage,
 } from "@/business/services/classService"
-import { getAssignmentById } from "@/business/services/assignmentService"
+import {
+  createTestCase,
+  deleteTestCase,
+  getTestCases,
+  updateTestCase,
+} from "@/business/services/testCaseService"
+import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
+import type { PendingTestCase } from "@/presentation/components/teacher/forms/testCases/TestCaseList"
 import { useToast } from "@/presentation/context/ToastContext"
 import {
-  getTestCases,
-  createTestCase,
-  updateTestCase,
-  deleteTestCase,
-} from "@/business/services/testCaseService"
-import type {
-  TestCase,
-  CreateTestCaseRequest,
-  UpdateTestCaseRequest,
-} from "@/shared/types/testCase"
-import type { PendingTestCase } from "@/presentation/components/teacher/forms/testCases/TestCaseList"
-import type { SelectOption } from "@/presentation/components/ui/Select"
-import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
-import { toLocalDateTimeString } from "@/presentation/utils/dateUtils"
-import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
-import { type ProgrammingLanguage } from "@/business/models/assignment/types"
+  buildAssignmentPayload,
+  normalizeLatePenaltyConfig,
+} from "@/presentation/hooks/teacher/assignmentForm.helpers"
 import type {
   AssignmentFormData,
   FormErrors,
 } from "@/presentation/hooks/teacher/assignmentForm.types"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
 import {
-  buildAssignmentPayload,
-  normalizeLatePenaltyConfig,
-  validateAssignmentFormData,
-} from "@/presentation/hooks/teacher/assignmentForm.helpers"
+  assignmentFormSchema,
+  type AssignmentFormValues,
+} from "@/presentation/schemas/assignment/assignmentSchemas"
+import { toLocalDateTimeString } from "@/presentation/utils/dateUtils"
+import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import type { SelectOption } from "@/presentation/components/ui/Select"
+import { PROGRAMMING_LANGUAGE_OPTIONS } from "@/shared/constants"
+import type {
+  CreateTestCaseRequest,
+  TestCase,
+  UpdateTestCaseRequest,
+} from "@/shared/types/testCase"
 
 export const programmingLanguageOptions: SelectOption[] =
-  PROGRAMMING_LANGUAGE_OPTIONS.map((opt) => ({ ...opt }))
+  PROGRAMMING_LANGUAGE_OPTIONS.map((option) => ({ ...option }))
+
+function buildDefaultFormValues(): AssignmentFormValues {
+  return {
+    assignmentName: "",
+    instructions: "",
+    instructionsImageUrl: null,
+    programmingLanguage: "",
+    deadline: "",
+    allowResubmission: false,
+    maxAttempts: null,
+    templateCode: "",
+    totalScore: null,
+    scheduledDate: null,
+    allowLateSubmissions: false,
+    latePenaltyConfig: normalizeLatePenaltyConfig(DEFAULT_LATE_PENALTY_CONFIG),
+  }
+}
 
 export function useAssignmentForm() {
   const navigate = useNavigate()
@@ -53,7 +75,7 @@ export function useAssignmentForm() {
 
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(isEditMode)
-  const [errors, setErrors] = useState<FormErrors>({})
+  const [generalError, setGeneralError] = useState<string | undefined>()
   const [className, setClassName] = useState("")
   const [testCases, setTestCases] = useState<TestCase[]>([])
   const [pendingTestCases, setPendingTestCases] = useState<PendingTestCase[]>(
@@ -64,44 +86,62 @@ export function useAssignmentForm() {
     useState(false)
   const [showTemplateCode, setShowTemplateCode] = useState(false)
 
-  const [formData, setFormData] = useState<AssignmentFormData>({
-    assignmentName: "",
-    instructions: "",
-    instructionsImageUrl: null,
-    programmingLanguage: "",
-    deadline: "",
-    allowResubmission: false,
-    maxAttempts: null,
-    templateCode: "",
-    totalScore: null,
-    scheduledDate: null,
-    allowLateSubmissions: false,
-    latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
+  const formMethods = useZodForm({
+    schema: assignmentFormSchema,
+    defaultValues: buildDefaultFormValues(),
+    mode: "onSubmit",
   })
+  const {
+    watch,
+    setValue,
+    clearErrors,
+    reset,
+    handleSubmit: handleValidatedSubmit,
+    formState: { errors: formStateErrors },
+  } = formMethods
 
-  // Fetch class name and existing assignment data
+  const formData = watch() as AssignmentFormData
+  const errors: FormErrors = {
+    assignmentName: getFieldErrorMessage(formStateErrors, "assignmentName"),
+    instructions: getFieldErrorMessage(formStateErrors, "instructions"),
+    programmingLanguage: getFieldErrorMessage(
+      formStateErrors,
+      "programmingLanguage",
+    ),
+    deadline: getFieldErrorMessage(formStateErrors, "deadline"),
+    scheduledDate: getFieldErrorMessage(formStateErrors, "scheduledDate"),
+    totalScore: getFieldErrorMessage(formStateErrors, "totalScore"),
+    maxAttempts: getFieldErrorMessage(formStateErrors, "maxAttempts"),
+    general: generalError,
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       const user = getCurrentUser()
-      if (!user || !classId) return
+
+      if (!user || !classId) {
+        return
+      }
 
       setIsFetching(true)
+
       try {
-        // Fetch class name
+        setGeneralError(undefined)
+
         const classData = await getClassById(
-          parseInt(classId),
-          parseInt(user.id),
+          parseInt(classId, 10),
+          parseInt(user.id, 10),
         )
         setClassName(classData.className)
 
-        // If editing, fetch assignment data
         if (isEditMode && assignmentId) {
           const assignment = await getAssignmentById(
-            parseInt(assignmentId),
-            parseInt(user.id),
+            parseInt(assignmentId, 10),
+            parseInt(user.id, 10),
           )
+
           if (assignment) {
-            setFormData({
+            reset({
               assignmentName: assignment.assignmentName,
               instructions: assignment.instructions,
               instructionsImageUrl: assignment.instructionsImageUrl ?? null,
@@ -128,21 +168,26 @@ export function useAssignmentForm() {
           }
         }
       } catch {
-        setErrors({ general: "Failed to load data. Please try again." })
+        setGeneralError("Failed to load data. Please try again.")
       } finally {
         setIsFetching(false)
       }
     }
-    fetchData()
-  }, [classId, isEditMode, assignmentId])
 
-  // Fetch test cases
+    void fetchData()
+  }, [assignmentId, classId, isEditMode, reset])
+
   useEffect(() => {
-    const fetchTestCases = async () => {
-      if (!isEditMode || !assignmentId) return
+    const fetchAssignmentTestCases = async () => {
+      if (!isEditMode || !assignmentId) {
+        return
+      }
+
       setIsLoadingTestCases(true)
+
       try {
-        const fetchedTestCases = await getTestCases(parseInt(assignmentId))
+        const fetchedTestCases = await getTestCases(parseInt(assignmentId, 10))
+
         if (fetchedTestCases) {
           setTestCases(fetchedTestCases)
         }
@@ -152,50 +197,45 @@ export function useAssignmentForm() {
         setIsLoadingTestCases(false)
       }
     }
-    fetchTestCases()
-  }, [isEditMode, assignmentId])
+
+    void fetchAssignmentTestCases()
+  }, [assignmentId, isEditMode])
 
   const handleInputChange = <K extends keyof AssignmentFormData>(
     field: K,
     value: AssignmentFormData[K],
   ) => {
-    setFormData((prev) => {
-      const updatedFormData = { ...prev, [field]: value }
+    const normalizedField = field as keyof AssignmentFormValues
 
-      if (field === "deadline") {
-        const hasDeadline = typeof value === "string" && value.trim().length > 0
+    setValue(
+      normalizedField,
+      value as AssignmentFormValues[typeof normalizedField],
+      {
+        shouldDirty: true,
+        shouldTouch: true,
+      },
+    )
 
-        if (!hasDeadline) {
-          updatedFormData.allowLateSubmissions = false
-        }
+    if (field === "deadline") {
+      const hasDeadline = typeof value === "string" && value.trim().length > 0
+
+      if (!hasDeadline) {
+        setValue("allowLateSubmissions", false, {
+          shouldDirty: true,
+          shouldTouch: true,
+        })
       }
-
-      return updatedFormData
-    })
-    setErrors((prev) => ({ ...prev, [field]: undefined, general: undefined }))
-  }
-
-  const validateForm = (): boolean => {
-    const newErrors = validateAssignmentFormData(formData)
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!validateForm()) return
-
-    if (!currentUser?.id || !classId) {
-      setErrors({ general: "You must be logged in" })
-      return
     }
 
-    if (formData.totalScore === null) {
-      setErrors((prev) => ({
-        ...prev,
-        totalScore: "Total score is required",
-      }))
+    clearErrors(normalizedField)
+    setGeneralError(undefined)
+  }
+
+  const submitAssignment = handleValidatedSubmit(async (validatedFormData) => {
+    setGeneralError(undefined)
+
+    if (!currentUser?.id || !classId) {
+      setGeneralError("You must be logged in")
       return
     }
 
@@ -203,33 +243,31 @@ export function useAssignmentForm() {
 
     try {
       const assignmentPayload = buildAssignmentPayload(
-        formData,
-        parseInt(currentUser.id),
+        validatedFormData as AssignmentFormData,
+        parseInt(currentUser.id, 10),
       )
 
       if (isEditMode && assignmentId) {
-        // Update existing assignment
-        await updateAssignment(parseInt(assignmentId), assignmentPayload)
+        await updateAssignment(parseInt(assignmentId, 10), assignmentPayload)
         showToast("Assignment updated successfully")
       } else {
-        // Create new assignment
         const newAssignment = await createAssignment({
-          classId: parseInt(classId),
+          classId: parseInt(classId, 10),
           ...assignmentPayload,
         })
 
-        // Create pending test cases
         if (pendingTestCases.length > 0 && newAssignment?.id) {
-          for (const pending of pendingTestCases) {
+          for (const pendingTestCase of pendingTestCases) {
             await createTestCase(newAssignment.id, {
-              name: pending.name,
-              input: pending.input,
-              expectedOutput: pending.expectedOutput,
-              isHidden: pending.isHidden,
-              timeLimit: pending.timeLimit,
-              sortOrder: pending.sortOrder,
+              name: pendingTestCase.name,
+              input: pendingTestCase.input,
+              expectedOutput: pendingTestCase.expectedOutput,
+              isHidden: pendingTestCase.isHidden,
+              timeLimit: pendingTestCase.timeLimit,
+              sortOrder: pendingTestCase.sortOrder,
             })
           }
+
           showToast(
             `Assignment created successfully with ${pendingTestCases.length} test case(s)`,
           )
@@ -237,25 +275,32 @@ export function useAssignmentForm() {
           showToast("Assignment created successfully (0 test cases)")
         }
       }
+
       navigate(`/dashboard/classes/${classId}`)
     } catch {
-      setErrors({
-        general: `Failed to ${
-          isEditMode ? "update" : "create"
-        } assignment. Please try again.`,
-      })
+      setGeneralError(
+        `Failed to ${isEditMode ? "update" : "create"} assignment. Please try again.`,
+      )
     } finally {
       setIsLoading(false)
     }
+  })
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    await submitAssignment()
   }
 
-  // Test case handlers
   const handleAddTestCase = async (data: CreateTestCaseRequest) => {
-    if (!assignmentId) return
+    if (!assignmentId) {
+      return
+    }
+
     try {
-      const newTestCase = await createTestCase(parseInt(assignmentId), data)
+      const newTestCase = await createTestCase(parseInt(assignmentId, 10), data)
+
       if (newTestCase) {
-        setTestCases((prev) => [...prev, newTestCase])
+        setTestCases((currentTestCases) => [...currentTestCases, newTestCase])
         showToast("Test case added")
       }
     } catch (error) {
@@ -270,9 +315,12 @@ export function useAssignmentForm() {
   ) => {
     try {
       const updatedTestCase = await updateTestCase(id, data)
+
       if (updatedTestCase) {
-        setTestCases((prev) =>
-          prev.map((tc) => (tc.id === id ? updatedTestCase : tc)),
+        setTestCases((currentTestCases) =>
+          currentTestCases.map((testCase) =>
+            testCase.id === id ? updatedTestCase : testCase,
+          ),
         )
         showToast("Test case updated")
       }
@@ -285,7 +333,9 @@ export function useAssignmentForm() {
   const handleDeleteTestCase = async (id: number) => {
     try {
       await deleteTestCase(id)
-      setTestCases((prev) => prev.filter((tc) => tc.id !== id))
+      setTestCases((currentTestCases) =>
+        currentTestCases.filter((testCase) => testCase.id !== id),
+      )
       showToast("Test case deleted")
     } catch (error) {
       console.error("Failed to delete test case:", error)
@@ -293,48 +343,56 @@ export function useAssignmentForm() {
     }
   }
 
-  const handleAddPendingTestCase = (data: PendingTestCase) => {
-    setPendingTestCases((prev) => [...prev, data])
+  const handleAddPendingTestCase = (pendingTestCase: PendingTestCase) => {
+    setPendingTestCases((currentPendingTestCases) => [
+      ...currentPendingTestCases,
+      pendingTestCase,
+    ])
   }
 
   const handleUpdatePendingTestCase = (
     tempId: string,
-    data: PendingTestCase,
+    pendingTestCase: PendingTestCase,
   ) => {
-    setPendingTestCases((prev) =>
-      prev.map((tc) => (tc.tempId === tempId ? data : tc)),
+    setPendingTestCases((currentPendingTestCases) =>
+      currentPendingTestCases.map((currentPendingTestCase) =>
+        currentPendingTestCase.tempId === tempId
+          ? pendingTestCase
+          : currentPendingTestCase,
+      ),
     )
   }
 
   const handleDeletePendingTestCase = (tempId: string) => {
-    setPendingTestCases((prev) => prev.filter((tc) => tc.tempId !== tempId))
+    setPendingTestCases((currentPendingTestCases) =>
+      currentPendingTestCases.filter(
+        (currentPendingTestCase) => currentPendingTestCase.tempId !== tempId,
+      ),
+    )
   }
 
   const handleInstructionsImageUpload = async (file: File) => {
     if (!currentUser?.id || !classId) {
-      setErrors({ general: "You must be logged in" })
+      setGeneralError("You must be logged in")
       return
     }
 
     setIsUploadingInstructionsImage(true)
+
     try {
       const previousInstructionsImageUrl = formData.instructionsImageUrl
-
       const uploadedImageUrl = await uploadAssignmentInstructionsImage(
-        parseInt(currentUser.id),
+        parseInt(currentUser.id, 10),
         parseInt(classId, 10),
         file,
       )
 
-      setFormData((prev) => ({
-        ...prev,
-        instructionsImageUrl: uploadedImageUrl,
-      }))
-      setErrors((prev) => ({
-        ...prev,
-        instructions: undefined,
-        general: undefined,
-      }))
+      setValue("instructionsImageUrl", uploadedImageUrl, {
+        shouldDirty: true,
+        shouldTouch: true,
+      })
+      clearErrors("instructions")
+      setGeneralError(undefined)
 
       if (
         previousInstructionsImageUrl &&
@@ -354,10 +412,8 @@ export function useAssignmentForm() {
         error instanceof Error
           ? error.message
           : "Failed to upload instructions image"
-      setErrors((prev) => ({
-        ...prev,
-        general: uploadErrorMessage,
-      }))
+
+      setGeneralError(uploadErrorMessage)
       showToast(uploadErrorMessage, "error")
     } finally {
       setIsUploadingInstructionsImage(false)
@@ -367,10 +423,10 @@ export function useAssignmentForm() {
   const handleRemoveInstructionsImage = async () => {
     const currentInstructionsImageUrl = formData.instructionsImageUrl
 
-    setFormData((prev) => ({
-      ...prev,
-      instructionsImageUrl: null,
-    }))
+    setValue("instructionsImageUrl", null, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
 
     if (!currentInstructionsImageUrl) {
       return
@@ -384,7 +440,7 @@ export function useAssignmentForm() {
   }
 
   return {
-    // State
+    formMethods,
     formData,
     errors,
     isLoading,
@@ -397,15 +453,11 @@ export function useAssignmentForm() {
     isEditMode,
     assignmentId,
     showTemplateCode,
-
-    // Actions
     setShowTemplateCode,
     handleInputChange,
     handleInstructionsImageUpload,
     handleRemoveInstructionsImage,
     handleSubmit,
-
-    // Test Case Actions
     handleAddTestCase,
     handleUpdateTestCase,
     handleDeleteTestCase,
