@@ -4,7 +4,7 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `50%`
+- Overall progress: `62%`
 - Current phase: `Phase 3 - Assignment Authoring Forms`
 - Last updated: `2026-02-22`
 
@@ -38,12 +38,12 @@ Related plan: `implementation_plan.md`
 
 ## Phase 3: Assignment Authoring Forms
 
-- [ ] Refactor `frontend/src/presentation/hooks/teacher/useAssignmentForm.ts` for RHF integration
+- [x] Refactor `frontend/src/presentation/hooks/teacher/useAssignmentForm.ts` for RHF integration
 - [ ] Migrate `frontend/src/presentation/pages/teacher/AssignmentFormPage.tsx`
 - [ ] Migrate assignment subforms and test case modal components
-- [ ] Add Zod schemas for assignment, schedule, late penalties, and attempts
-- [ ] Add/update assignment form tests
-- [ ] Run verification gate (`frontend build` + `frontend tests`)
+- [x] Add Zod schemas for assignment, schedule, late penalties, and attempts
+- [x] Add/update assignment form tests
+- [x] Run verification gate (`frontend build` + `frontend tests`)
 
 ## Phase 4: Remaining Modals and Admin/Settings Forms
 
@@ -80,6 +80,12 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 2 frontend `npm test -- --run`
 - [x] 2026-02-22: Phase 2 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 2 backend `npm test`
+- [x] 2026-02-22: Phase 3 assignment tests `npx vitest run src/presentation/hooks/teacher/useAssignmentForm.test.tsx src/presentation/schemas/assignment/assignmentSchemas.test.ts`
+- [x] 2026-02-22: Phase 3 assignment modal tests `npx vitest run src/presentation/components/teacher/forms/testCases/TestCaseModal.test.tsx src/presentation/hooks/teacher/useAssignmentForm.test.tsx src/presentation/schemas/assignment/assignmentSchemas.test.ts`
+- [x] 2026-02-22: Phase 3 frontend `npm run build`
+- [x] 2026-02-22: Phase 3 frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 3 backend `npm run typecheck`
+- [x] 2026-02-22: Phase 3 backend `npm test`
 
 ## Notes
 

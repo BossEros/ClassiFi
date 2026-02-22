@@ -1,9 +1,14 @@
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { createPortal } from "react-dom"
 import { X, Eye, EyeOff, Terminal } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { Textarea } from "@/presentation/components/ui/Textarea"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  testCaseFormSchema,
+  type TestCaseFormValues,
+} from "@/presentation/schemas/assignment/assignmentSchemas"
 import { cn } from "@/shared/utils/cn"
 import type {
   TestCase,
@@ -11,7 +16,6 @@ import type {
   UpdateTestCaseRequest,
 } from "@/shared/types/testCase"
 
-// Extended type for test cases that may be pending (not yet persisted)
 type EditableTestCase = TestCase & { tempId?: string }
 
 interface TestCaseModalProps {
@@ -23,6 +27,29 @@ interface TestCaseModalProps {
   isLoading?: boolean
 }
 
+function buildInitialFormValues(
+  testCase: EditableTestCase | null | undefined,
+  defaultName: string,
+): TestCaseFormValues {
+  if (testCase) {
+    return {
+      name: testCase.name || "",
+      input: testCase.input || "",
+      expectedOutput: testCase.expectedOutput || "",
+      isHidden: testCase.isHidden ?? false,
+      timeLimit: testCase.timeLimit ?? 5,
+    }
+  }
+
+  return {
+    name: defaultName,
+    input: "",
+    expectedOutput: "",
+    isHidden: false,
+    timeLimit: 5,
+  }
+}
+
 export function TestCaseModal({
   isOpen,
   onClose,
@@ -32,105 +59,67 @@ export function TestCaseModal({
   isLoading = false,
 }: TestCaseModalProps) {
   const isEditMode = !!testCase
-
-  const [formData, setFormData] = useState({
-    name: "",
-    input: "",
-    expectedOutput: "",
-    isHidden: false,
-    timeLimit: 5,
+  const {
+    register,
+    watch,
+    setValue,
+    reset,
+    handleSubmit,
+    formState: { errors },
+  } = useZodForm({
+    schema: testCaseFormSchema,
+    defaultValues: buildInitialFormValues(testCase, defaultName),
+    mode: "onSubmit",
   })
 
-  const [errors, setErrors] = useState<{
-    name?: string
-    expectedOutput?: string
-  }>({})
+  const isHidden = watch("isHidden")
+  const nameField = register("name")
+  const inputField = register("input")
+  const expectedOutputField = register("expectedOutput")
 
-  // Reset form when modal opens or testCase changes
   useEffect(() => {
-    const initializeForm = () => {
-      if (testCase) {
-        setFormData({
-          name: testCase.name || "",
-          input: testCase.input || "",
-          expectedOutput: testCase.expectedOutput || "",
-          isHidden: testCase.isHidden ?? false,
-          timeLimit: testCase.timeLimit ?? 5,
-        })
-      } else {
-        setFormData({
-          name: defaultName,
-          input: "",
-          expectedOutput: "",
-          isHidden: false,
-          timeLimit: 5,
-        })
-      }
-      setErrors({})
+    if (!isOpen) {
+      return
     }
 
-    if (isOpen) {
-      initializeForm()
+    reset(buildInitialFormValues(testCase, defaultName))
+  }, [defaultName, isOpen, reset, testCase])
+
+  const submitTestCase = handleSubmit(async (formValues) => {
+    if (isLoading) {
+      return
     }
-  }, [isOpen, testCase, defaultName])
-
-  const handleChange = (
-    field: keyof typeof formData,
-    value: string | number | boolean,
-  ) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
-    setErrors((prev) => ({ ...prev, [field]: undefined }))
-  }
-
-  const validate = (): boolean => {
-    const newErrors: typeof errors = {}
-
-    if (formData.name.length > 100) {
-      newErrors.name = "Name must be 100 characters or less"
-    }
-
-    if (!formData.expectedOutput.trim()) {
-      newErrors.expectedOutput = "Expected output is required"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    e.stopPropagation() // Prevent event from bubbling to parent forms
-
-    if (isLoading) return
-
-    if (!validate()) return
 
     await onSave({
-      name: formData.name.trim(),
-      input: formData.input,
-      expectedOutput: formData.expectedOutput,
-      isHidden: formData.isHidden,
-      timeLimit: formData.timeLimit,
+      name: formValues.name.trim(),
+      input: formValues.input,
+      expectedOutput: formValues.expectedOutput,
+      isHidden: formValues.isHidden,
+      timeLimit: formValues.timeLimit,
     })
+  })
+
+  const handleModalSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    event.stopPropagation()
+    await submitTestCase()
   }
 
-  if (!isOpen) return null
+  if (!isOpen) {
+    return null
+  }
 
-  // Use portal to render modal outside parent form
   const modalContent = (
     <div
       className="fixed inset-0 z-[10000] grid place-items-center p-4"
-      onClick={(e) => e.stopPropagation()}
+      onClick={(event) => event.stopPropagation()}
     >
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="relative w-full max-w-[560px] min-w-[320px] mx-auto bg-[#161926] border border-white/15 rounded-xl shadow-[0_8px_60px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,255,255,0.06)] animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh] flex-shrink-0">
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-white/[0.04]">
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -147,14 +136,12 @@ export function TestCaseModal({
           </button>
         </div>
 
-        {/* Scrollable Form Content */}
         <div className="overflow-y-auto p-5">
           <form
             id="test-case-form"
-            onSubmit={handleSubmit}
+            onSubmit={handleModalSubmit}
             className="space-y-4"
           >
-            {/* Name Field */}
             <div className="space-y-1.5">
               <label
                 htmlFor="tcName"
@@ -165,8 +152,7 @@ export function TestCaseModal({
               <Input
                 id="tcName"
                 placeholder="e.g., Basic Input Test (optional)"
-                value={formData.name}
-                onChange={(e) => handleChange("name", e.target.value)}
+                {...nameField}
                 disabled={isLoading}
                 maxLength={100}
                 className={cn(
@@ -175,7 +161,7 @@ export function TestCaseModal({
                 )}
               />
               {errors.name && (
-                <p className="text-xs text-red-400">{errors.name}</p>
+                <p className="text-xs text-red-400">{errors.name.message}</p>
               )}
               {!errors.name && (
                 <p className="text-xs text-gray-500">
@@ -184,9 +170,7 @@ export function TestCaseModal({
               )}
             </div>
 
-            {/* Input & Output - Stacked */}
             <div className="space-y-3">
-              {/* Input */}
               <div className="space-y-1.5">
                 <label
                   htmlFor="tcInput"
@@ -197,14 +181,12 @@ export function TestCaseModal({
                 <Textarea
                   id="tcInput"
                   placeholder="Enter input..."
-                  value={formData.input}
-                  onChange={(e) => handleChange("input", e.target.value)}
+                  {...inputField}
                   disabled={isLoading}
                   className="min-h-[88px] resize-none font-mono text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50"
                 />
               </div>
 
-              {/* Output */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label
@@ -217,10 +199,7 @@ export function TestCaseModal({
                 <Textarea
                   id="tcOutput"
                   placeholder="Enter expected output..."
-                  value={formData.expectedOutput}
-                  onChange={(e) =>
-                    handleChange("expectedOutput", e.target.value)
-                  }
+                  {...expectedOutputField}
                   disabled={isLoading}
                   className={cn(
                     "min-h-[88px] resize-none font-mono text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50",
@@ -229,13 +208,12 @@ export function TestCaseModal({
                 />
                 {errors.expectedOutput && (
                   <p className="text-xs text-red-400">
-                    {errors.expectedOutput}
+                    {errors.expectedOutput.message}
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Visibility Setting - Improved UI */}
             <div className="pt-1">
               <label className="text-sm font-medium text-gray-300 mb-1.5 block">
                 Configuration
@@ -243,15 +221,20 @@ export function TestCaseModal({
               <div
                 className={cn(
                   "flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer group",
-                  formData.isHidden
+                  isHidden
                     ? "bg-amber-500/[0.08] border-amber-500/30"
                     : "bg-white/[0.03] border-white/10 hover:bg-white/[0.05]",
                 )}
-                onClick={() => handleChange("isHidden", !formData.isHidden)}
+                onClick={() => {
+                  setValue("isHidden", !isHidden, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  })
+                }}
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    {formData.isHidden ? (
+                    {isHidden ? (
                       <EyeOff className="w-4 h-4 text-amber-400" />
                     ) : (
                       <Eye className="w-4 h-4 text-teal-400" />
@@ -259,32 +242,29 @@ export function TestCaseModal({
                     <span
                       className={cn(
                         "text-sm font-medium transition-colors",
-                        formData.isHidden ? "text-amber-200" : "text-gray-200",
+                        isHidden ? "text-amber-200" : "text-gray-200",
                       )}
                     >
-                      {formData.isHidden
-                        ? "Hidden Test Case"
-                        : "Visible Test Case"}
+                      {isHidden ? "Hidden Test Case" : "Visible Test Case"}
                     </span>
                   </div>
                   <p className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors">
-                    {formData.isHidden
+                    {isHidden
                       ? "Input and output are hidden from students."
                       : "Students can see the input and expected output."}
                   </p>
                 </div>
 
-                {/* Switch Toggle */}
                 <div
                   className={cn(
                     "relative h-6 w-11 rounded-full transition-colors duration-200",
-                    formData.isHidden ? "bg-amber-500" : "bg-gray-600",
+                    isHidden ? "bg-amber-500" : "bg-gray-600",
                   )}
                 >
                   <div
                     className={cn(
                       "absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200",
-                      formData.isHidden ? "left-6" : "left-1",
+                      isHidden ? "left-6" : "left-1",
                     )}
                   />
                 </div>
@@ -293,7 +273,6 @@ export function TestCaseModal({
           </form>
         </div>
 
-        {/* Footer */}
         <div className="border-t border-white/10 bg-white/[0.04] px-5 py-4 z-10">
           <div className="flex items-center justify-center gap-2.5">
             <Button
@@ -321,6 +300,5 @@ export function TestCaseModal({
     </div>
   )
 
-  // Render modal using portal to escape parent form context
   return createPortal(modalContent, document.body)
 }
