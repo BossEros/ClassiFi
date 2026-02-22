@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
 import { formatFileSize } from "@/presentation/utils/formatUtils"
 import type { Submission } from "@/business/models/assignment/types"
@@ -40,9 +45,12 @@ export function TeacherSubmissionListCard({
                     Submitted
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 font-mono mb-1">{submission.fileName}</p>
+                <p className="text-xs text-gray-400 font-mono mb-1">
+                  {submission.fileName}
+                </p>
                 <p className="text-xs text-gray-500">
-                  {formatFileSize(submission.fileSize)} • {formatDateTime(submission.submittedAt)}
+                  {formatFileSize(submission.fileSize)} •{" "}
+                  {formatDateTime(submission.submittedAt)}
                 </p>
               </div>
             ))}

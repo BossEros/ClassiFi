@@ -1,5 +1,4 @@
 import type { FastifyError, FastifyReply, FastifyRequest } from "fastify"
-
 import { ApiError } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
 

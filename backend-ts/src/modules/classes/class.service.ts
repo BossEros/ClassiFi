@@ -232,10 +232,8 @@ export class ClassService {
 
     // 2. Clean up assignment instructions images
     try {
-      const classAssignments = await this.assignmentRepo.getAssignmentsByClassId(
-        classId,
-        false,
-      )
+      const classAssignments =
+        await this.assignmentRepo.getAssignmentsByClassId(classId, false)
 
       const instructionsImageUrls = classAssignments
         .map((assignment) => assignment.instructionsImageUrl)
@@ -360,9 +358,3 @@ export class ClassService {
     }
   }
 }
-
-
-
-
-
-

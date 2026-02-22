@@ -46,16 +46,23 @@ export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>
 // Param Schemas
 // ============================================================================
 
-/** Report ID param schema */
+/** Report ID param schema (string - supports both numeric and legacy UUIDs) */
 export const ReportIdParamSchema = z.object({
-  reportId: z.string(),
+  reportId: z.string().min(1),
 })
 
 export type ReportIdParam = z.infer<typeof ReportIdParamSchema>
 
+/** Report ID param schema (numeric only - for DB-backed endpoints) */
+export const NumericReportIdParamSchema = z.object({
+  reportId: z.coerce.number().int().min(1),
+})
+
+export type NumericReportIdParam = z.infer<typeof NumericReportIdParamSchema>
+
 /** Assignment ID param schema for plagiarism */
 export const PlagiarismAssignmentIdParamSchema = z.object({
-  assignmentId: z.string(),
+  assignmentId: z.coerce.number().int().min(1),
 })
 
 export type PlagiarismAssignmentIdParam = z.infer<
@@ -64,15 +71,15 @@ export type PlagiarismAssignmentIdParam = z.infer<
 
 /** Report and Pair ID params schema */
 export const ReportPairParamsSchema = z.object({
-  reportId: z.string(),
-  pairId: z.string(),
+  reportId: z.string().min(1),
+  pairId: z.coerce.number().int().min(1),
 })
 
 export type ReportPairParams = z.infer<typeof ReportPairParamsSchema>
 
 /** Result ID param schema */
 export const ResultIdParamSchema = z.object({
-  resultId: z.string(),
+  resultId: z.coerce.number().int().min(1),
 })
 
 export type ResultIdParam = z.infer<typeof ResultIdParamSchema>
@@ -262,8 +269,8 @@ export type StudentSummaryResponse = z.infer<
 
 /** Student pairs params schema */
 export const StudentPairsParamsSchema = z.object({
-  reportId: z.string(),
-  submissionId: z.string(),
+  reportId: z.coerce.number().int().min(1),
+  submissionId: z.coerce.number().int().min(1),
 })
 
 export type StudentPairsParams = z.infer<typeof StudentPairsParamsSchema>

@@ -5,10 +5,7 @@ import {
   validateDeadline,
 } from "@/business/validation/assignmentValidation"
 import type { ProgrammingLanguage } from "@/business/models/assignment/types"
-import type {
-  LatePenaltyConfig,
-  PenaltyTier,
-} from "@/shared/types/gradebook"
+import type { LatePenaltyConfig, PenaltyTier } from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type {
   AssignmentFormData,

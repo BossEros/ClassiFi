@@ -151,4 +151,3 @@ function getAverageColorClass(average: number): string {
   if (average >= 60) return "bg-yellow-500/20 text-yellow-400"
   return "bg-red-500/20 text-red-400"
 }
-

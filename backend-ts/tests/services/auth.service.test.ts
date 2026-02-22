@@ -11,16 +11,19 @@ import {
 } from "../../src/shared/errors.js"
 
 // Mock the UserRepository class but preserve USER_ROLES constant
-vi.mock("../../src/modules/users/user.repository.js", async (importOriginal) => {
-  const original =
-    await importOriginal<
-      typeof import("../../src/modules/users/user.repository.js")
-    >()
-  return {
-    ...original,
-    UserRepository: vi.fn(),
-  }
-})
+vi.mock(
+  "../../src/modules/users/user.repository.js",
+  async (importOriginal) => {
+    const original =
+      await importOriginal<
+        typeof import("../../src/modules/users/user.repository.js")
+      >()
+    return {
+      ...original,
+      UserRepository: vi.fn(),
+    }
+  },
+)
 // Mock the SupabaseAuthAdapter
 vi.mock("../../src/services/supabase-auth.adapter.js")
 // Mock config

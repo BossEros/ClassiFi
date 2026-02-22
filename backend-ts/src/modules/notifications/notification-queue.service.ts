@@ -4,7 +4,10 @@ import type { UserRepository } from "@/modules/users/user.repository.js"
 import type { IEmailService } from "@/services/interfaces/email.interface.js"
 import type { NotificationDelivery } from "@/models/index.js"
 import type { NotificationType } from "@/modules/notifications/notification.schema.js"
-import { NOTIFICATION_TYPES, type PayloadFor } from "@/modules/notifications/notification.types.js"
+import {
+  NOTIFICATION_TYPES,
+  type PayloadFor,
+} from "@/modules/notifications/notification.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**

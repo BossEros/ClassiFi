@@ -3,7 +3,10 @@ import { Range } from "@/lib/plagiarism/util/range.js"
 import { Region } from "@/lib/plagiarism/util/region.js"
 import { WinnowFilter } from "@/lib/plagiarism/hashing/winnowFilter.js"
 import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
-import { SharedFingerprint, Occurrence } from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
+import {
+  SharedFingerprint,
+  Occurrence,
+} from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
 import { Pair } from "@/lib/plagiarism/algorithm/pair.js"
 import { FileEntry } from "@/lib/plagiarism/algorithm/types.js"
 import { assert, assertDefined } from "@/lib/plagiarism/util/utils.js"

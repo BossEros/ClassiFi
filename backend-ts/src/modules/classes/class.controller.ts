@@ -3,7 +3,11 @@ import { container } from "tsyringe"
 import { z } from "zod"
 import { ClassService } from "@/modules/classes/class.service.js"
 import { AssignmentService } from "@/modules/assignments/assignment.service.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "@/api/plugins/zod-validation.js"
 import { parseOptionalDate } from "@/shared/utils.js"
 import {
   CreateClassRequestSchema,
@@ -13,21 +17,18 @@ import {
   GetClassesQuerySchema,
   GetClassByIdQuerySchema,
   TeacherIdQuerySchema,
-  CreateClassResponseSchema,
-  GetClassResponseSchema,
-  UpdateClassResponseSchema,
-  ClassListResponseSchema,
-  GenerateCodeResponseSchema,
-  ClassStudentsResponseSchema,
-  SuccessMessageSchema,
   ClassStudentParamsSchema,
   type CreateClassRequest,
   type UpdateClassRequest,
+  type ClassIdParam,
+  type TeacherIdParam,
+  type GetClassesQuery,
+  type GetClassByIdQuery,
+  type TeacherIdQuery,
+  type ClassStudentParams,
 } from "@/modules/classes/class.schema.js"
 import {
   CreateAssignmentRequestSchema,
-  AssignmentListResponseSchema,
-  CreateAssignmentResponseSchema,
   type CreateAssignmentRequest,
 } from "@/modules/assignments/assignment.schema.js"
 import { BadRequestError, ApiError } from "@/shared/errors.js"
@@ -42,27 +43,20 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
  */
 export async function classRoutes(app: FastifyInstance): Promise<void> {
   const classService = container.resolve<ClassService>(DI_TOKENS.services.class)
-  const assignmentService =
-    container.resolve<AssignmentService>(DI_TOKENS.services.assignment)
+  const assignmentService = container.resolve<AssignmentService>(
+    DI_TOKENS.services.assignment,
+  )
 
   /**
    * POST /
    * Create a new class
    */
-  app.post<{ Body: CreateClassRequest }>("/", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Create a new class",
-      description:
-        "Creates a new class with the provided details and returns the created class data",
-      security: [{ bearerAuth: [] }],
-      body: toJsonSchema(CreateClassRequestSchema),
-      response: {
-        201: toJsonSchema(CreateClassResponseSchema),
-      },
-    },
+  app.post("/", {
+    preHandler: validateBody(CreateClassRequestSchema),
     handler: async (request, reply) => {
-      const createdClassData = await classService.createClass(request.body)
+      const createdClassData = await classService.createClass(
+        request.validatedBody as CreateClassRequest,
+      )
 
       return reply.status(201).send({
         success: true,
@@ -77,16 +71,6 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * Generate a unique class code
    */
   app.get("/generate-code", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Generate a unique class code",
-      description:
-        "Generates a unique 6-character alphanumeric code for class enrollment",
-      security: [{ bearerAuth: [] }],
-      response: {
-        200: toJsonSchema(GenerateCodeResponseSchema),
-      },
-    },
     handler: async (_request, reply) => {
       const generatedClassCode = await classService.generateClassCode()
 
@@ -102,29 +86,17 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * GET /teacher/:teacherId
    * Get all classes for a teacher
    */
-  app.get<{
-    Params: { teacherId: string }
-    Querystring: { activeOnly?: string }
-  }>("/teacher/:teacherId", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Get all classes for a teacher",
-      description:
-        "Retrieves all classes taught by a specific teacher, optionally filtered to active classes only",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(TeacherIdParamSchema),
-      querystring: toJsonSchema(GetClassesQuerySchema),
-      response: {
-        200: toJsonSchema(ClassListResponseSchema),
-      },
-    },
+  app.get("/teacher/:teacherId", {
+    preHandler: [
+      validateParams(TeacherIdParamSchema),
+      validateQuery(GetClassesQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const parsedTeacherId = parseInt(request.params.teacherId, 10)
-      const shouldFilterActiveOnly = request.query.activeOnly !== "false"
+      const { teacherId: parsedTeacherId } =
+        request.validatedParams as TeacherIdParam
+      const { activeOnly } = request.validatedQuery as GetClassesQuery
 
-      if (isNaN(parsedTeacherId)) {
-        throw new BadRequestError("Invalid teacher ID")
-      }
+      const shouldFilterActiveOnly = activeOnly !== "false"
 
       const teacherClassList = await classService.getClassesByTeacher(
         parsedTeacherId,
@@ -143,116 +115,76 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * GET /:classId
    * Get a class by ID
    */
-  app.get<{ Params: { classId: string }; Querystring: { teacherId?: string } }>(
-    "/:classId",
-    {
-      schema: {
-        tags: ["Classes"],
-        summary: "Get a class by ID",
-        description:
-          "Retrieves detailed information about a specific class, optionally verifying teacher ownership",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(ClassIdParamSchema),
-        querystring: toJsonSchema(GetClassByIdQuerySchema),
-        response: {
-          200: toJsonSchema(GetClassResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const parsedClassId = parseInt(request.params.classId, 10)
-        const parsedTeacherId = request.query.teacherId
-          ? parseInt(request.query.teacherId, 10)
-          : undefined
+  app.get("/:classId", {
+    preHandler: [
+      validateParams(ClassIdParamSchema),
+      validateQuery(GetClassByIdQuerySchema),
+    ],
+    handler: async (request, reply) => {
+      const { classId: parsedClassId } = request.validatedParams as ClassIdParam
+      const { teacherId: rawTeacherId } =
+        request.validatedQuery as GetClassByIdQuery
 
-        if (isNaN(parsedClassId)) {
-          throw new BadRequestError("Invalid class ID")
-        }
+      const parsedTeacherId = rawTeacherId
+        ? parseInt(rawTeacherId, 10)
+        : undefined
 
-        if (parsedTeacherId !== undefined && isNaN(parsedTeacherId)) {
-          throw new BadRequestError("Invalid teacher ID")
-        }
+      if (parsedTeacherId !== undefined && isNaN(parsedTeacherId)) {
+        throw new BadRequestError("Invalid teacher ID")
+      }
 
-        const retrievedClassData = await classService.getClassById(
-          parsedClassId,
-          parsedTeacherId,
-        )
+      const retrievedClassData = await classService.getClassById(
+        parsedClassId,
+        parsedTeacherId,
+      )
 
-        return reply.send({
-          success: true,
-          message: "Class retrieved successfully",
-          class: retrievedClassData,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Class retrieved successfully",
+        class: retrievedClassData,
+      })
     },
-  )
+  })
 
   /**
    * PUT /:classId
    * Update a class
    */
-  app.put<{ Params: { classId: string }; Body: UpdateClassRequest }>(
-    "/:classId",
-    {
-      schema: {
-        tags: ["Classes"],
-        summary: "Update a class",
-        description:
-          "Updates class details such as name, description, schedule, or active status",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(ClassIdParamSchema),
-        body: toJsonSchema(UpdateClassRequestSchema),
-        response: {
-          200: toJsonSchema(UpdateClassResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const parsedClassId = parseInt(request.params.classId, 10)
+  app.put("/:classId", {
+    preHandler: [
+      validateParams(ClassIdParamSchema),
+      validateBody(UpdateClassRequestSchema),
+    ],
+    handler: async (request, reply) => {
+      const { classId: parsedClassId } = request.validatedParams as ClassIdParam
+      const updatePayload = request.validatedBody as UpdateClassRequest
 
-        if (isNaN(parsedClassId)) {
-          throw new BadRequestError("Invalid class ID")
-        }
+      const updatedClassData = await classService.updateClass({
+        classId: parsedClassId,
+        ...updatePayload,
+      })
 
-        const updatedClassData = await classService.updateClass({
-          classId: parsedClassId,
-          ...request.body,
-        })
-
-        return reply.send({
-          success: true,
-          message: "Class updated successfully",
-          class: updatedClassData,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Class updated successfully",
+        class: updatedClassData,
+      })
     },
-  )
+  })
 
   /**
    * DELETE /:classId
    * Delete a class
    */
-  app.delete<{
-    Params: { classId: string }
-    Querystring: { teacherId: string }
-  }>("/:classId", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Delete a class",
-      description:
-        "Permanently deletes a class and all associated data after verifying teacher ownership",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassIdParamSchema),
-      querystring: toJsonSchema(TeacherIdQuerySchema),
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
+  app.delete("/:classId", {
+    preHandler: [
+      validateParams(ClassIdParamSchema),
+      validateQuery(TeacherIdQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const parsedClassId = parseInt(request.params.classId, 10)
-      const parsedTeacherId = parseInt(request.query.teacherId, 10)
-
-      if (isNaN(parsedClassId) || isNaN(parsedTeacherId)) {
-        throw new BadRequestError("Invalid ID parameters")
-      }
+      const { classId: parsedClassId } = request.validatedParams as ClassIdParam
+      const { teacherId: parsedTeacherId } =
+        request.validatedQuery as TeacherIdQuery
 
       await classService.deleteClass(parsedClassId, parsedTeacherId)
 
@@ -267,149 +199,106 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * POST /:classId/assignments
    * Create an assignment for a class
    */
-  app.post<{ Params: { classId: string }; Body: CreateAssignmentRequest }>(
-    "/:classId/assignments",
-    {
-      schema: {
-        tags: ["Classes"],
-        summary: "Create an assignment for a class",
-        description:
-          "Creates a new assignment with test cases, deadline, and optional scheduled release date",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(ClassIdParamSchema),
-        body: toJsonSchema(CreateAssignmentRequestSchema),
-        response: {
-          201: toJsonSchema(CreateAssignmentResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const parsedClassId = parseInt(request.params.classId, 10)
+  app.post("/:classId/assignments", {
+    preHandler: [
+      validateParams(ClassIdParamSchema),
+      validateBody(CreateAssignmentRequestSchema),
+    ],
+    handler: async (request, reply) => {
+      const { classId: parsedClassId } = request.validatedParams as ClassIdParam
+      const assignmentPayload = request.validatedBody as CreateAssignmentRequest
 
-        if (isNaN(parsedClassId)) {
-          throw new BadRequestError("Invalid class ID")
+      // Destructure to separate date strings from other fields
+      const { deadline, scheduledDate, ...assignmentData } = assignmentPayload
+
+      try {
+        const parsedDeadlineDate = parseOptionalDate(deadline, "deadline date")
+        const parsedScheduledDate = parseOptionalDate(
+          scheduledDate,
+          "scheduled date",
+        )
+
+        const createdAssignment = await assignmentService.createAssignment({
+          classId: parsedClassId,
+          ...assignmentData,
+          deadline: parsedDeadlineDate,
+          scheduledDate: parsedScheduledDate,
+        })
+
+        return reply.status(201).send({
+          success: true,
+          message: "Assignment created successfully",
+          assignment: createdAssignment,
+        })
+      } catch (error) {
+        // Re-throw BadRequestError and other ApiErrors to preserve status codes
+        if (error instanceof ApiError) {
+          throw error
         }
 
-        // Destructure to separate date strings from other fields
-        const { deadline, scheduledDate, ...assignmentData } = request.body
-
-        try {
-          const parsedDeadlineDate = parseOptionalDate(
-            deadline,
-            "deadline date",
-          )
-          const parsedScheduledDate = parseOptionalDate(
-            scheduledDate,
-            "scheduled date",
-          )
-
-          const createdAssignment = await assignmentService.createAssignment({
-            classId: parsedClassId,
-            ...assignmentData,
-            deadline: parsedDeadlineDate,
-            scheduledDate: parsedScheduledDate,
-          })
-
-          return reply.status(201).send({
-            success: true,
-            message: "Assignment created successfully",
-            assignment: createdAssignment,
-          })
-        } catch (error) {
-          // Re-throw BadRequestError and other ApiErrors to preserve status codes
-          if (error instanceof ApiError) {
-            throw error
-          }
-
-          // Wrap unknown errors as internal server errors
-          throw new ApiError("Failed to create assignment", 500)
-        }
-      },
+        // Wrap unknown errors as internal server errors
+        throw new ApiError("Failed to create assignment", 500)
+      }
     },
-  )
+  })
 
   /**
    * GET /:classId/assignments
    * Get all assignments for a class
    */
-  app.get<{ Params: { classId: string }; Querystring: { studentId?: string } }>(
-    "/:classId/assignments",
-    {
-      schema: {
-        tags: ["Classes"],
-        summary: "Get all assignments for a class",
-        description:
-          "Retrieves all assignments associated with a specific class. If studentId is provided, includes submission status, grade, and submission timestamp for that student.",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(ClassIdParamSchema),
-        querystring: toJsonSchema(
-          z.object({
-            studentId: z.string().optional(),
-          }),
-        ),
-        response: {
-          200: toJsonSchema(AssignmentListResponseSchema),
-        },
-      },
-      handler: async (request, reply) => {
-        const parsedClassId = parseInt(request.params.classId, 10)
-        const parsedStudentId = request.query.studentId
-          ? parseInt(request.query.studentId, 10)
-          : undefined
+  app.get("/:classId/assignments", {
+    preHandler: [
+      validateParams(ClassIdParamSchema),
+      validateQuery(
+        z.object({
+          studentId: z.string().optional(),
+        }),
+      ),
+    ],
+    handler: async (request, reply) => {
+      const { classId: parsedClassId } = request.validatedParams as ClassIdParam
+      const { studentId: rawStudentId } = request.validatedQuery as {
+        studentId?: string
+      }
 
-        if (isNaN(parsedClassId)) {
-          throw new BadRequestError("Invalid class ID")
-        }
+      const parsedStudentId = rawStudentId
+        ? parseInt(rawStudentId, 10)
+        : undefined
 
-        if (parsedStudentId !== undefined && isNaN(parsedStudentId)) {
-          throw new BadRequestError("Invalid student ID")
-        }
+      if (parsedStudentId !== undefined && isNaN(parsedStudentId)) {
+        throw new BadRequestError("Invalid student ID")
+      }
 
-        let classAssignmentList: AssignmentDTO[]
+      let classAssignmentList: AssignmentDTO[]
 
-        if (parsedStudentId !== undefined) {
-          // Fetch assignments with student-specific data
-          classAssignmentList =
-            await classService.getClassAssignmentsForStudent(
-              parsedClassId,
-              parsedStudentId,
-            )
-        } else {
-          // Fetch assignments without student data
-          classAssignmentList =
-            await classService.getClassAssignments(parsedClassId)
-        }
+      if (parsedStudentId !== undefined) {
+        // Fetch assignments with student-specific data
+        classAssignmentList = await classService.getClassAssignmentsForStudent(
+          parsedClassId,
+          parsedStudentId,
+        )
+      } else {
+        // Fetch assignments without student data
+        classAssignmentList =
+          await classService.getClassAssignments(parsedClassId)
+      }
 
-        return reply.send({
-          success: true,
-          message: "Assignments retrieved successfully",
-          assignments: classAssignmentList,
-        })
-      },
+      return reply.send({
+        success: true,
+        message: "Assignments retrieved successfully",
+        assignments: classAssignmentList,
+      })
     },
-  )
+  })
 
   /**
    * GET /:classId/students
    * Get all students in a class
    */
-  app.get<{ Params: { classId: string } }>("/:classId/students", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Get all students in a class",
-      description:
-        "Retrieves all enrolled students with their enrollment details for a specific class",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassIdParamSchema),
-      response: {
-        200: toJsonSchema(ClassStudentsResponseSchema),
-      },
-    },
+  app.get("/:classId/students", {
+    preHandler: validateParams(ClassIdParamSchema),
     handler: async (request, reply) => {
-      const parsedClassId = parseInt(request.params.classId, 10)
-
-      if (isNaN(parsedClassId)) {
-        throw new BadRequestError("Invalid class ID")
-      }
+      const { classId: parsedClassId } = request.validatedParams as ClassIdParam
 
       const enrolledStudentList =
         await classService.getClassStudents(parsedClassId)
@@ -426,34 +315,16 @@ export async function classRoutes(app: FastifyInstance): Promise<void> {
    * DELETE /:classId/students/:studentId
    * Remove a student from a class
    */
-  app.delete<{
-    Params: { classId: string; studentId: string }
-    Querystring: { teacherId: string }
-  }>("/:classId/students/:studentId", {
-    schema: {
-      tags: ["Classes"],
-      summary: "Remove a student from a class",
-      description:
-        "Removes a student's enrollment from a class after verifying teacher ownership",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(ClassStudentParamsSchema),
-      querystring: toJsonSchema(TeacherIdQuerySchema),
-      response: {
-        200: toJsonSchema(SuccessMessageSchema),
-      },
-    },
+  app.delete("/:classId/students/:studentId", {
+    preHandler: [
+      validateParams(ClassStudentParamsSchema),
+      validateQuery(TeacherIdQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const parsedClassId = parseInt(request.params.classId, 10)
-      const parsedStudentId = parseInt(request.params.studentId, 10)
-      const parsedTeacherId = parseInt(request.query.teacherId, 10)
-
-      if (
-        isNaN(parsedClassId) ||
-        isNaN(parsedStudentId) ||
-        isNaN(parsedTeacherId)
-      ) {
-        throw new BadRequestError("Invalid ID parameters")
-      }
+      const { classId: parsedClassId, studentId: parsedStudentId } =
+        request.validatedParams as ClassStudentParams
+      const { teacherId: parsedTeacherId } =
+        request.validatedQuery as TeacherIdQuery
 
       await classService.removeStudent({
         classId: parsedClassId,

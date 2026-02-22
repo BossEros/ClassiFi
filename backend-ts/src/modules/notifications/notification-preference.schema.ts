@@ -34,27 +34,3 @@ export const UpdateNotificationPreferenceSchema = z.object({
 export type UpdateNotificationPreferenceRequest = z.infer<
   typeof UpdateNotificationPreferenceSchema
 >
-
-// ============================================================================
-// Response Schemas
-// ============================================================================
-
-/** Notification preferences list response schema */
-export const NotificationPreferencesResponseSchema = z.object({
-  success: z.literal(true),
-  preferences: z.array(NotificationPreferenceSchema),
-})
-
-export type NotificationPreferencesResponse = z.infer<
-  typeof NotificationPreferencesResponseSchema
->
-
-/** Single notification preference response schema */
-export const NotificationPreferenceResponseSchema = z.object({
-  success: z.literal(true),
-  preference: NotificationPreferenceSchema,
-})
-
-export type SingleNotificationPreferenceResponse = z.infer<
-  typeof NotificationPreferenceResponseSchema
->

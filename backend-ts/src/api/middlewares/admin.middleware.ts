@@ -5,14 +5,13 @@ import type {
 } from "fastify"
 import { ForbiddenError } from "@/api/middlewares/error-handler.js"
 
-
 export const adminMiddleware: preHandlerHookHandler = async (
   request: FastifyRequest,
   _reply: FastifyReply,
 ) => {
   // Ensure user is authenticated first
   if (!request.user) {
-    throw new ForbiddenError("Authentication required")
+    throw new ForbiddenError("You are not logged in")
   }
 
   // Check for admin role

@@ -104,7 +104,7 @@ export type AssignmentDetailResponse = z.infer<
 
 /** Assignment ID param schema */
 export const AssignmentIdParamSchema = z.object({
-  assignmentId: z.string(),
+  assignmentId: z.coerce.number().int().min(1),
 })
 
 export type AssignmentIdParam = z.infer<typeof AssignmentIdParamSchema>

@@ -59,7 +59,9 @@ describe("assignmentValidation", () => {
     })
 
     it("should allow image-only instructions", () => {
-      expect(validateInstructions("", "https://example.com/image.png")).toBeNull()
+      expect(
+        validateInstructions("", "https://example.com/image.png"),
+      ).toBeNull()
     })
 
     it("should return error for overly long instructions", () => {
@@ -238,7 +240,9 @@ describe("assignmentValidation", () => {
       expect(
         result.errors.find((e) => e.field === "assignmentName"),
       ).toBeDefined()
-      expect(result.errors.find((e) => e.field === "instructions")).toBeDefined()
+      expect(
+        result.errors.find((e) => e.field === "instructions"),
+      ).toBeDefined()
       expect(
         result.errors.find((e) => e.field === "programmingLanguage"),
       ).toBeDefined()

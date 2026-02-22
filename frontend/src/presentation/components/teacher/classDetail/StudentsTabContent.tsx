@@ -40,8 +40,9 @@ export function StudentsTabContent({
         </div>
         <p className="text-gray-300 font-medium mb-1">No students enrolled</p>
         <p className="text-sm text-gray-500">
-          Share the class code <span className="text-teal-400 font-mono">{classCode}</span>{" "}
-          with your students.
+          Share the class code{" "}
+          <span className="text-teal-400 font-mono">{classCode}</span> with your
+          students.
         </p>
       </div>
     )
@@ -110,7 +111,9 @@ export function StudentsTabContent({
                 student={student}
                 isLast={index === paginatedStudents.length - 1}
                 gridTemplate={studentGridTemplate}
-                onRemove={isTeacher ? () => onRemoveStudent(student) : undefined}
+                onRemove={
+                  isTeacher ? () => onRemoveStudent(student) : undefined
+                }
               />
             ))}
           </div>

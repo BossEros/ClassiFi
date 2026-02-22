@@ -1,10 +1,5 @@
 import { useMemo, useState } from "react"
-import {
-  CheckCircle,
-  ChevronDown,
-  Filter,
-  Search,
-} from "lucide-react"
+import { CheckCircle, ChevronDown, Filter, Search } from "lucide-react"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 
 type StatusFilter = "all" | "active" | "archived"
@@ -121,7 +116,9 @@ export function AdminClassesFilters({
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white transition-all min-w-[140px] justify-between text-sm"
           >
             <div className="flex items-center gap-2">
-              <span className="capitalize">{getYearLabel(yearLevelFilter)}</span>
+              <span className="capitalize">
+                {getYearLabel(yearLevelFilter)}
+              </span>
             </div>
             <ChevronDown
               className={`w-3.5 h-3.5 text-gray-500 transition-transform ${
@@ -152,7 +149,9 @@ export function AdminClassesFilters({
                         : "text-gray-400 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <span className="capitalize font-medium">{option.label}</span>
+                    <span className="capitalize font-medium">
+                      {option.label}
+                    </span>
                     {yearLevelFilter === option.value && (
                       <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
                     )}
@@ -175,7 +174,9 @@ export function AdminClassesFilters({
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white transition-all min-w-[150px] justify-between text-sm"
           >
             <div className="flex items-center gap-2">
-              <span className="capitalize">{getSemesterLabel(semesterFilter)}</span>
+              <span className="capitalize">
+                {getSemesterLabel(semesterFilter)}
+              </span>
             </div>
             <ChevronDown
               className={`w-3.5 h-3.5 text-gray-500 transition-transform ${
@@ -204,7 +205,9 @@ export function AdminClassesFilters({
                         : "text-gray-400 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <span className="capitalize font-medium">{option.label}</span>
+                    <span className="capitalize font-medium">
+                      {option.label}
+                    </span>
                     {semesterFilter === option.value && (
                       <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
                     )}
@@ -254,7 +257,9 @@ export function AdminClassesFilters({
                         : "text-gray-400 hover:bg-white/5 hover:text-white"
                     }`}
                   >
-                    <span className="capitalize font-medium">{option.label}</span>
+                    <span className="capitalize font-medium">
+                      {option.label}
+                    </span>
                     {academicYearFilter === option.value && (
                       <CheckCircle className="w-3.5 h-3.5 text-orange-400" />
                     )}

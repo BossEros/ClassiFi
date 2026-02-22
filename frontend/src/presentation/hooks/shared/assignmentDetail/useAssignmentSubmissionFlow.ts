@@ -74,9 +74,8 @@ export function useAssignmentSubmissionFlow({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
   const [isRunningPreview, setIsRunningPreview] = useState(false)
-  const [previewResults, setPreviewResults] = useState<TestPreviewResult | null>(
-    null,
-  )
+  const [previewResults, setPreviewResults] =
+    useState<TestPreviewResult | null>(null)
   const [expandedPreviewTests, setExpandedPreviewTests] = useState<Set<number>>(
     new Set(),
   )
@@ -221,7 +220,10 @@ export function useAssignmentSubmissionFlow({
         programmingLanguage: assignment.programmingLanguage,
       })
 
-      setSubmissions((previousSubmissions) => [submission, ...previousSubmissions])
+      setSubmissions((previousSubmissions) => [
+        submission,
+        ...previousSubmissions,
+      ])
       clearSubmissionForm()
 
       submissionAbortRef.current = new AbortController()

@@ -207,7 +207,6 @@ export async function deleteUser(userId: number): Promise<void> {
   await adminRepository.deleteUserAccountById(userId)
 }
 
-
 // ============ Analytics ============
 
 /**
@@ -242,7 +241,6 @@ export async function getRecentActivity(
 
   return response.activity
 }
-
 
 // ============ Class Management ============
 

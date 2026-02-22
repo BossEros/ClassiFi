@@ -68,15 +68,15 @@ export type SubmissionDetailResponse = z.infer<
 
 /** Submission ID param schema */
 export const SubmissionIdParamSchema = z.object({
-  submissionId: z.string(),
+  submissionId: z.coerce.number().int().min(1),
 })
 
 export type SubmissionIdParam = z.infer<typeof SubmissionIdParamSchema>
 
 /** History params schema (assignmentId + studentId) */
 export const HistoryParamsSchema = z.object({
-  assignmentId: z.string(),
-  studentId: z.string(),
+  assignmentId: z.coerce.number().int().min(1),
+  studentId: z.coerce.number().int().min(1),
 })
 
 export type HistoryParams = z.infer<typeof HistoryParamsSchema>

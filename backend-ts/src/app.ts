@@ -7,6 +7,7 @@ import { errorHandler } from "@/api/middlewares/error-handler.js"
 import { apiV1Routes } from "@/api/routes/v1/index.js"
 import { setupSwagger } from "@/api/plugins/swagger.js"
 import "@/shared/container.js"
+import zodValidationPlugin from "@/api/plugins/zod-validation.js"
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -49,6 +50,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     environment: settings.environment,
     docs: "/docs",
   }))
+
+  // Register Zod validation plugin
+  await app.register(zodValidationPlugin)
 
   // Register API v1 routes
   await app.register(apiV1Routes, { prefix: `${settings.apiPrefix}/v1` })

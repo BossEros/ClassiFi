@@ -304,5 +304,3 @@ export function GradebookPage() {
     </DashboardLayout>
   )
 }
-
-

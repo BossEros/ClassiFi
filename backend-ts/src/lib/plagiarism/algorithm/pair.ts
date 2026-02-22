@@ -2,7 +2,10 @@ import { Range } from "@/lib/plagiarism/util/range.js"
 import { PairedOccurrence } from "@/lib/plagiarism/algorithm/pairedOccurrence.js"
 import { Fragment } from "@/lib/plagiarism/algorithm/fragment.js"
 import { Identifiable } from "@/lib/plagiarism/util/identifiable.js"
-import { SharedFingerprint, Occurrence } from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
+import {
+  SharedFingerprint,
+  Occurrence,
+} from "@/lib/plagiarism/algorithm/sharedFingerprint.js"
 import { TokenizedFile } from "@/lib/plagiarism/file/tokenizedFile.js"
 import { FileEntry } from "@/lib/plagiarism/algorithm/types.js"
 

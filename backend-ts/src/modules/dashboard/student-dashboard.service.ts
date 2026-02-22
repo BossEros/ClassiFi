@@ -200,4 +200,3 @@ export class StudentDashboardService {
     await this.enrollmentRepo.unenrollStudent(studentId, classId)
   }
 }
-

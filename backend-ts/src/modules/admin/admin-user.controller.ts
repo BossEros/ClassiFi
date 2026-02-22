@@ -1,9 +1,12 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AdminUserService } from "@/modules/admin/admin-user.service.js"
-import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 import { adminMiddleware } from "@/api/middlewares/admin.middleware.js"
-import { toJsonSchema } from "@/api/utils/swagger.js"
+import {
+  validateQuery,
+  validateParams,
+  validateBody,
+} from "@/api/plugins/zod-validation.js"
 import {
   UserFilterQuerySchema,
   UserParamsSchema,
@@ -11,10 +14,6 @@ import {
   UpdateUserDetailsSchema,
   UpdateUserEmailSchema,
   CreateUserSchema,
-  PaginatedUsersResponseSchema,
-  SingleUserResponseSchema,
-  TeachersListResponseSchema,
-  SuccessResponseSchema,
   type UserFilterQuery,
   type UserParams,
   type UpdateUserRole,
@@ -35,27 +34,23 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
  * @returns A promise that resolves when all routes are registered.
  */
 export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
-  const adminUserService =
-    container.resolve<AdminUserService>(DI_TOKENS.services.adminUser)
-  const preHandlerMiddlewares = [authMiddleware, adminMiddleware]
+  const adminUserService = container.resolve<AdminUserService>(
+    DI_TOKENS.services.adminUser,
+  )
+  const preHandlerMiddlewares = [adminMiddleware]
 
   /**
    * GET /users
    * List all users with filtering
    */
-  app.get<{ Querystring: UserFilterQuery }>("/users", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "List all users with filtering",
-      description:
-        "Retrieves a paginated list of users with optional search and filter options by role and status",
-      security: [{ bearerAuth: [] }],
-      querystring: toJsonSchema(UserFilterQuerySchema),
-      response: { 200: toJsonSchema(PaginatedUsersResponseSchema) },
-    },
+  app.get("/users", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateQuery(UserFilterQuerySchema),
+    ],
     handler: async (request, reply) => {
-      const { page, limit, search, role, status } = request.query
+      const { page, limit, search, role, status } =
+        request.validatedQuery as UserFilterQuery
 
       const normalizedRole = role === "all" ? undefined : role
       const normalizedStatus = status === "all" ? undefined : status
@@ -78,14 +73,6 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    */
   app.get("/users/teachers", {
     preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Get all teachers",
-      description:
-        "Retrieves a list of all users with teacher role for use in selection dropdowns",
-      security: [{ bearerAuth: [] }],
-      response: { 200: toJsonSchema(TeachersListResponseSchema) },
-    },
     handler: async (_request, reply) => {
       const teachersList = await adminUserService.getAllTeachers()
 
@@ -97,18 +84,10 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    * GET /users/:id
    * Get user details by ID
    */
-  app.get<{ Params: UserParams }>("/users/:id", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Get user details by ID",
-      description: "Retrieves detailed information for a specific user",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(UserParamsSchema),
-      response: { 200: toJsonSchema(SingleUserResponseSchema) },
-    },
+  app.get("/users/:id", {
+    preHandler: [...preHandlerMiddlewares, validateParams(UserParamsSchema)],
     handler: async (request, reply) => {
-      const userId = request.params.id
+      const { id: userId } = request.validatedParams as UserParams
 
       const userDetails = await adminUserService.getUserById(userId)
 
@@ -120,18 +99,10 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    * POST /users
    * Create a new user
    */
-  app.post<{ Body: CreateUser }>("/users", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Create a new user",
-      description: "Creates a new user account with specified role and details",
-      security: [{ bearerAuth: [] }],
-      body: toJsonSchema(CreateUserSchema),
-      response: { 201: toJsonSchema(SingleUserResponseSchema) },
-    },
+  app.post("/users", {
+    preHandler: [...preHandlerMiddlewares, validateBody(CreateUserSchema)],
     handler: async (request, reply) => {
-      const newUserData = request.body
+      const newUserData = request.validatedBody as CreateUser
 
       const createdUser = await adminUserService.createUser(newUserData)
 
@@ -143,53 +114,39 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    * PATCH /users/:id/details
    * Update user profile details
    */
-  app.patch<{ Params: UserParams; Body: UpdateUserDetails }>(
-    "/users/:id/details",
-    {
-      preHandler: preHandlerMiddlewares,
-      schema: {
-        tags: ["Admin - Users"],
-        summary: "Update user profile details",
-        description:
-          "Updates user profile information such as first name, last name, and avatar URL",
-        security: [{ bearerAuth: [] }],
-        params: toJsonSchema(UserParamsSchema),
-        body: toJsonSchema(UpdateUserDetailsSchema),
-        response: { 200: toJsonSchema(SingleUserResponseSchema) },
-      },
-      handler: async (request, reply) => {
-        const userId = request.params.id
-        const updatedDetailsData = request.body
+  app.patch("/users/:id/details", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateParams(UserParamsSchema),
+      validateBody(UpdateUserDetailsSchema),
+    ],
+    handler: async (request, reply) => {
+      const { id: userId } = request.validatedParams as UserParams
+      const updatedDetailsData = request.validatedBody as UpdateUserDetails
 
-        const updatedUser = await adminUserService.updateUserDetails(
-          userId,
-          updatedDetailsData,
-        )
+      const updatedUser = await adminUserService.updateUserDetails(
+        userId,
+        updatedDetailsData,
+      )
 
-        return reply.send({ success: true, user: updatedUser })
-      },
+      return reply.send({ success: true, user: updatedUser })
     },
-  )
+  })
 
   /**
    * PATCH /users/:id/email
    * Update user email address
    */
-  app.patch<{ Params: UserParams; Body: UpdateUserEmail }>("/users/:id/email", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Update user email address",
-      description:
-        "Updates a user's email address for account recovery purposes",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(UserParamsSchema),
-      body: toJsonSchema(UpdateUserEmailSchema),
-      response: { 200: toJsonSchema(SingleUserResponseSchema) },
-    },
+  app.patch("/users/:id/email", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateParams(UserParamsSchema),
+      validateBody(UpdateUserEmailSchema),
+    ],
     handler: async (request, reply) => {
-      const userId = request.params.id
-      const newEmailAddress = request.body.email
+      const { id: userId } = request.validatedParams as UserParams
+      const { email: newEmailAddress } =
+        request.validatedBody as UpdateUserEmail
 
       const updatedUser = await adminUserService.updateUserEmail(
         userId,
@@ -204,21 +161,15 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    * PATCH /users/:id/role
    * Update user role
    */
-  app.patch<{ Params: UserParams; Body: UpdateUserRole }>("/users/:id/role", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Update user role",
-      description:
-        "Changes a user's role (e.g., student, teacher, admin) in the system",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(UserParamsSchema),
-      body: toJsonSchema(UpdateUserRoleSchema),
-      response: { 200: toJsonSchema(SingleUserResponseSchema) },
-    },
+  app.patch("/users/:id/role", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateParams(UserParamsSchema),
+      validateBody(UpdateUserRoleSchema),
+    ],
     handler: async (request, reply) => {
-      const userId = request.params.id
-      const newUserRole = request.body.role
+      const { id: userId } = request.validatedParams as UserParams
+      const { role: newUserRole } = request.validatedBody as UpdateUserRole
 
       const updatedUser = await adminUserService.updateUserRole(
         userId,
@@ -233,19 +184,10 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    * PATCH /users/:id/status
    * Toggle user account status
    */
-  app.patch<{ Params: UserParams }>("/users/:id/status", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Toggle user account status",
-      description:
-        "Toggles a user's account status between active and inactive",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(UserParamsSchema),
-      response: { 200: toJsonSchema(SingleUserResponseSchema) },
-    },
+  app.patch("/users/:id/status", {
+    preHandler: [...preHandlerMiddlewares, validateParams(UserParamsSchema)],
     handler: async (request, reply) => {
-      const userId = request.params.id
+      const { id: userId } = request.validatedParams as UserParams
 
       const updatedUser = await adminUserService.toggleUserStatus(userId)
 
@@ -257,18 +199,10 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
    * DELETE /users/:id
    * Delete a user account
    */
-  app.delete<{ Params: UserParams }>("/users/:id", {
-    preHandler: preHandlerMiddlewares,
-    schema: {
-      tags: ["Admin - Users"],
-      summary: "Delete a user account",
-      description: "Permanently deletes a user account and all associated data",
-      security: [{ bearerAuth: [] }],
-      params: toJsonSchema(UserParamsSchema),
-      response: { 200: toJsonSchema(SuccessResponseSchema) },
-    },
+  app.delete("/users/:id", {
+    preHandler: [...preHandlerMiddlewares, validateParams(UserParamsSchema)],
     handler: async (request, reply) => {
-      const userId = request.params.id
+      const { id: userId } = request.validatedParams as UserParams
 
       await adminUserService.deleteUser(userId)
 

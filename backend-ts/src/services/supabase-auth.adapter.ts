@@ -218,7 +218,3 @@ export class SupabaseAuthAdapter {
     }
   }
 }
-
-
-
-

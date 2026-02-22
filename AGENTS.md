@@ -91,49 +91,55 @@ npm test        # MUST PASS: Runs unit tests
 Code should be self-explanatory through clear naming conventions:
 
 **Variables:**
+
 - Avoid single letters (except short loop counters)
 - Include content + structure: `userList`, `usersArray` (not just `data`)
 - Include units: `timeoutMs`, `priceUsd`
 
 **Functions:**
+
 - Use verb-noun pattern: `fetchUserProfile()`, `deleteUserAccount()`
 - Be specific: `validateEmailFormat()` (not `check()`)
 - Booleans should read like questions: `isValid`, `hasAccess`, `shouldRetry`
 
 **Classes:**
+
 - Use noun pattern: `UserManager`, `UserAuthenticationService`
 
 **Example:**
+
 ```typescript
 // ❌ Bad
 function check(u: User, p: number) {
-  const t = Date.now();
-  if (u.a && u.l > p) return true;
-  return false;
+  const t = Date.now()
+  if (u.a && u.l > p) return true
+  return false
 }
 
 // ✅ Good
 function isUserAuthorizedForLevel(
   user: User,
-  requiredAccessLevel: number
+  requiredAccessLevel: number,
 ): boolean {
-  const currentTimestampMs = Date.now();
-  const isActiveUser = user.isActive;
-  const hasSufficientPrivileges = user.accessLevel > requiredAccessLevel;
+  const currentTimestampMs = Date.now()
+  const isActiveUser = user.isActive
+  const hasSufficientPrivileges = user.accessLevel > requiredAccessLevel
 
-  return isActiveUser && hasSufficientPrivileges;
+  return isActiveUser && hasSufficientPrivileges
 }
 ```
 
 ### 5.4 TypeScript Best Practices
 
 **Type Safety:**
+
 - Enable `strict: true` in `tsconfig.json`
 - **Never use `any` — always use specific types instead**
 - Use explicit types at module boundaries, infer internally
 - Use lowercase primitives (`string`, `number`, `boolean`)
 
 **Type Hierarchy (from best to worst):**
+
 1. **Specific types/interfaces** - Define exact structure (preferred)
 2. **Generics** - For reusable type-safe code
 3. **Union types** - When multiple specific types are possible
@@ -142,6 +148,7 @@ function isUserAuthorizedForLevel(
 6. **`any`** - ❌ Never use (disables type checking)
 
 **Type Definitions:**
+
 - Prefer **interfaces** for object shapes (extensible, better tooling)
 - Use **type aliases** for unions, intersections, and utility compositions
 - Use **string literal unions** instead of plain `string` for known values
@@ -149,6 +156,7 @@ function isUserAuthorizedForLevel(
 - Use **`as const`** for immutable arrays/objects
 
 **Type Organization & Colocation:**
+
 - **Colocate types with their usage** - Keep types close to where they're used (principle of colocation)
 - **Avoid "god files"** - Don't create massive centralized type files that become hard to navigate
 - **Layer-specific types stay in their layer**:
@@ -160,76 +168,88 @@ function isUserAuthorizedForLevel(
 - **When to centralize**: Only move types to shared locations when they're genuinely reused across multiple layers or features
 
 **Example Structure:**
+
 ```typescript
 // ✅ Good - Colocated types
 // src/repositories/assignment.repository.ts
-export interface CreateAssignmentData { /* ... */ }
-export interface UpdateAssignmentData { /* ... */ }
+export interface CreateAssignmentData {
+  /* ... */
+}
+export interface UpdateAssignmentData {
+  /* ... */
+}
 export class AssignmentRepository {
-  async create(data: CreateAssignmentData) { /* ... */ }
+  async create(data: CreateAssignmentData) {
+    /* ... */
+  }
 }
 
 // ✅ Good - Shared domain types
 // src/models/assignment.model.ts
 export type ProgrammingLanguage = "python" | "java" | "c"
-export interface LatePenaltyConfig { /* ... */ }
+export interface LatePenaltyConfig {
+  /* ... */
+}
 
 // ❌ Bad - Unnecessary centralization
 // src/types/all-types.ts (500+ lines of unrelated types)
 ```
 
 **Example:**
+
 ```typescript
 // ❌ Bad - using any
 function process(data: any) {
-  return data.value.toUpperCase();
+  return data.value.toUpperCase()
 }
 
 // ✅ Good - using specific type
 interface Data {
-  value: string;
+  value: string
 }
 
 function process(data: Data) {
-  return data.value.toUpperCase();
+  return data.value.toUpperCase()
 }
 
 // ✅ Best - using discriminated union for multiple types
-type Result = 
-  | { status: 'success'; data: Data }
-  | { status: 'error'; error: string };
+type Result =
+  | { status: "success"; data: Data }
+  | { status: "error"; error: string }
 
 function handleResult(result: Result) {
-  if (result.status === 'success') {
-    return result.data.value; // TypeScript knows data exists
+  if (result.status === "success") {
+    return result.data.value // TypeScript knows data exists
   }
-  return result.error; // TypeScript knows error exists
+  return result.error // TypeScript knows error exists
 }
 
 // ⚠️ Acceptable - unknown for external data (validate immediately)
 function parseExternal(input: unknown): Data {
   if (isValidData(input)) {
-    return input; // Now typed as Data
+    return input // Now typed as Data
   }
-  throw new Error('Invalid data');
+  throw new Error("Invalid data")
 }
 
 function isValidData(data: unknown): data is Data {
   return (
-    typeof data === 'object' &&
+    typeof data === "object" &&
     data !== null &&
-    'value' in data &&
-    typeof (data as Data).value === 'string'
-  );
+    "value" in data &&
+    typeof (data as Data).value === "string"
+  )
 }
 ```
 
 **Runtime Safety:**
+
 - Use **type guards** (`x is T`) for runtime type checking
 - Use **optional chaining** (`?.`) and **nullish coalescing** (`??`)
 - Create **custom error classes** with typed properties
 
 **Utility Types:**
+
 - `Partial<T>` for optional properties
 - `Pick<T, Keys>` to select specific properties
 - `Omit<T, Keys>` to exclude properties
@@ -243,11 +263,13 @@ function isValidData(data: unknown): data is Data {
 Every exported function must include a full JSDoc block:
 
 **Required Elements:**
+
 - **Summary**: Clear, concise sentence describing the function's action
 - **@param**: Must be present for every parameter with descriptive text
 - **@returns**: Must be present for non-void functions
 
 **Example:**
+
 ```typescript
 /**
  * Retrieves the submission history for a specific student and assignment.
@@ -258,7 +280,7 @@ Every exported function must include a full JSDoc block:
  */
 export async function getSubmissionHistory(
   assignmentId: number,
-  studentId: number
+  studentId: number,
 ): Promise<SubmissionHistoryResponse> {
   // Implementation
 }
@@ -269,6 +291,7 @@ export async function getSubmissionHistory(
 Every API endpoint must include comprehensive Fastify schema documentation:
 
 **Required Elements:**
+
 - **Endpoint comment**: Multi-line comment block with HTTP method, path, and summary for better readability
 - **tags**: Array with category (e.g., `["Admin - Users"]`, `["Classes"]`)
 - **summary**: Brief description of what the endpoint does
@@ -278,6 +301,7 @@ Every API endpoint must include comprehensive Fastify schema documentation:
 - **response**: Expected response schemas by status code
 
 **Example:**
+
 ```typescript
 /**
  * GET /classes/:id/students
@@ -296,10 +320,10 @@ app.get<{ Params: ClassParams }>("/classes/:id/students", {
     },
   },
   handler: async (request, reply) => {
-    const students = await classService.getEnrolledStudents(request.params.id);
-    return reply.send({ success: true, students });
+    const students = await classService.getEnrolledStudents(request.params.id)
+    return reply.send({ success: true, students })
   },
-});
+})
 
 /**
  * POST /submissions
@@ -318,13 +342,14 @@ app.post<{ Body: CreateSubmission }>("/submissions", {
     },
   },
   handler: async (request, reply) => {
-    const submission = await submissionService.submitAssignment(request.body);
-    return reply.status(201).send({ success: true, submission });
+    const submission = await submissionService.submitAssignment(request.body)
+    return reply.status(201).send({ success: true, submission })
   },
-});
+})
 ```
 
 **Endpoint Comment Format:**
+
 ```typescript
 /**
  * {METHOD} {PATH}
@@ -354,6 +379,7 @@ app.post<{ Body: CreateSubmission }>("/submissions", {
 ```
 
 **Endpoint Documentation Checklist:**
+
 - [ ] Endpoint comment block includes method, path, and summary
 - [ ] Tags match the feature domain
 - [ ] Summary is action-oriented and clear
@@ -365,33 +391,41 @@ app.post<{ Body: CreateSubmission }>("/submissions", {
 ### 5.6 Code Formatting & Spacing
 
 **Vertical Spacing:**
+
 - Add blank lines between different logical blocks
 - Add blank lines around control flow (`if`, `for`, `while`, `switch`, `try/catch`)
 - Add blank line before final `return` statement
 - Separate variable declarations from logic
 
+**Variable Declarations:**
+
+- **Single Line (Preferred):** Always write variable declarations/assignments on a single line if they can fit reasonably (< 80-100 chars). Do not break statements after the equals sign (`=`) unnecessarily.
+- **Multi-Line:** Only split variables and assignments across multiple lines if the expression is naturally too long to fit on a single line or if breaking it improves readability.
+
 **Function Signatures:**
+
 - **Single line** (preferred): If signature is short (< 80-100 chars)
 - **Multi-line**: Only if line is too long, has complex types, or many parameters (3+)
 
 **Example:**
+
 ```typescript
 // ✅ Good (simple)
 async function getUser(id: number): Promise<User> {
-  const user = await db.getUser(id);
+  const user = await db.getUser(id)
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error("User not found")
   }
 
-  return user;
+  return user
 }
 
 // ✅ Good (complex/long)
 function createUser(
   name: string,
   email: string,
-  preferences: { theme: string; notifications: boolean }
+  preferences: { theme: string; notifications: boolean },
 ): User {
   // Implementation
 }

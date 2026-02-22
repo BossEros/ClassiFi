@@ -359,4 +359,3 @@ export function ClassCalendarTab({
     </div>
   )
 }
-

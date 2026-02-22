@@ -22,7 +22,6 @@ declare module "fastify" {
   }
 }
 
-
 export const authMiddleware: preHandlerHookHandler = async (
   request: FastifyRequest,
   _reply: FastifyReply,
@@ -33,12 +32,13 @@ export const authMiddleware: preHandlerHookHandler = async (
     throw new UnauthorizedError("Authorization header is required")
   }
 
-  // Extract token from "Bearer <token>" format
+  // Split Bearer and Token
   const parts = authHeader.split(" ")
   if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
     throw new UnauthorizedError("Invalid authorization header format")
   }
 
+  // Extract token
   const token = parts[1]
 
   try {
@@ -49,35 +49,5 @@ export const authMiddleware: preHandlerHookHandler = async (
     request.user = userData
   } catch {
     throw new UnauthorizedError("Invalid or expired token")
-  }
-}
-
-/**
- * Optional auth middleware - doesn't throw if no token,
- * but still verifies if token is present.
- */
-export const optionalAuthMiddleware: preHandlerHookHandler = async (
-  request: FastifyRequest,
-  _reply: FastifyReply,
-) => {
-  const authHeader = request.headers.authorization
-
-  if (!authHeader) {
-    return // No token, continue without user
-  }
-
-  const parts = authHeader.split(" ")
-  if (parts.length !== 2 || parts[0].toLowerCase() !== "bearer") {
-    return // Invalid format, continue without user
-  }
-
-  const token = parts[1]
-
-  try {
-    const authService = container.resolve<AuthService>(DI_TOKENS.services.auth)
-    const userData = await authService.verifyToken(token)
-    request.user = userData
-  } catch {
-    // Token invalid, continue without user
   }
 }

@@ -18,7 +18,16 @@ export interface SelectProps extends Omit<
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
-    { className, options, onChange, placeholder, onFocus, onBlur, disabled, ...props },
+    {
+      className,
+      options,
+      onChange,
+      placeholder,
+      onFocus,
+      onBlur,
+      disabled,
+      ...props
+    },
     ref,
   ) => {
     const [isFocused, setIsFocused] = React.useState(false)
@@ -72,7 +81,9 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         <ChevronDown
           className={cn(
             "pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 transition-all duration-200",
-            isFocused && !disabled ? "rotate-180 text-gray-300" : "text-gray-500",
+            isFocused && !disabled
+              ? "rotate-180 text-gray-300"
+              : "text-gray-500",
             disabled && "opacity-50",
           )}
         />

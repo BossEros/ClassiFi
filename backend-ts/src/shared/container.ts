@@ -96,7 +96,10 @@ container.registerSingleton(
 )
 
 // Register infrastructure adapters as singletons
-container.registerSingleton(DI_TOKENS.adapters.supabaseAuth, SupabaseAuthAdapter)
+container.registerSingleton(
+  DI_TOKENS.adapters.supabaseAuth,
+  SupabaseAuthAdapter,
+)
 
 // Register services as singletons
 container.registerSingleton(DI_TOKENS.services.storage, StorageService)
@@ -125,7 +128,10 @@ container.registerSingleton(
   DI_TOKENS.services.notificationPreference,
   NotificationPreferenceService,
 )
-container.registerSingleton(DI_TOKENS.services.notification, NotificationService)
+container.registerSingleton(
+  DI_TOKENS.services.notification,
+  NotificationService,
+)
 
 // Register code execution services
 container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)

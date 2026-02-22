@@ -566,4 +566,3 @@ describe("SubmissionService", () => {
     })
   })
 })
-

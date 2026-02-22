@@ -12,18 +12,18 @@ import type {
   StudentRank,
 } from "@/shared/types/gradebook"
 
-export type { 
-  PenaltyTier, 
+export type {
+  PenaltyTier,
   LatePenaltyConfig,
-  PenaltyResult, 
-  StudentGradeEntry, 
-  StudentClassGrades, 
-  ClassGradebook, 
-  GradebookStudent, 
-  GradebookAssignment, 
-  GradeEntry, 
-  ClassStatistics, 
-  StudentRank 
+  PenaltyResult,
+  StudentGradeEntry,
+  StudentClassGrades,
+  ClassGradebook,
+  GradebookStudent,
+  GradebookAssignment,
+  GradeEntry,
+  ClassStatistics,
+  StudentRank,
 }
 
 export interface ClassGradebookResponse {
