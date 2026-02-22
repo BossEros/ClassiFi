@@ -3,12 +3,12 @@ import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { Eye, EyeOff, ArrowLeft, GraduationCap, Users } from "lucide-react"
 import { registerUser } from "@/business/services/authService"
-import { validateField } from "@/business/validation/authValidation"
-import type {
-  RegistrationStep,
-  RegistrationStepInfo,
-  UserRole,
-} from "@/business/models/auth/types"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  registerFormSchema,
+  type RegisterFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
+import type { RegistrationStep, RegistrationStepInfo } from "@/shared/types/auth"
 
 interface RegisterFormProps {
   onSuccess?: () => void
@@ -17,17 +17,44 @@ interface RegisterFormProps {
 
 export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("role")
-  const [role, setRole] = useState<UserRole | null>(null)
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    trigger,
+    setValue,
+    clearErrors,
+    formState: { errors },
+  } = useZodForm({
+    schema: registerFormSchema,
+    defaultValues: {
+      role: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    mode: "onSubmit",
+  })
+
+  const roleValue = watch("role")
+  const firstNameValue = watch("firstName")
+  const lastNameValue = watch("lastName")
+  const emailValue = watch("email")
+  const passwordValue = watch("password")
+  const confirmPasswordValue = watch("confirmPassword")
+
+  const firstNameField = register("firstName")
+  const lastNameField = register("lastName")
+  const emailField = register("email")
+  const passwordField = register("password")
+  const confirmPasswordField = register("confirmPassword")
 
   const steps: RegistrationStepInfo[] = [
     { id: "role", label: "Role" },
@@ -36,59 +63,19 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
     { id: "complete", label: "Complete" },
   ]
 
-  const currentStepIndex = steps.findIndex((s) => s.id === currentStep)
+  const currentStepIndex = steps.findIndex((step) => step.id === currentStep)
 
-  const handleNext = () => {
-    setError(null)
-    setFieldErrors({})
-
-    if (currentStep === "role" && role) {
-      setCurrentStep("personal")
-    } else if (currentStep === "personal") {
-      // Validate personal details
-      const errors: Record<string, string> = {}
-      const firstNameError = validateField("firstName", firstName)
-      const lastNameError = validateField("lastName", lastName)
-      const emailError = validateField("email", email)
-
-      if (firstNameError) errors.firstName = firstNameError
-      if (lastNameError) errors.lastName = lastNameError
-      if (emailError) errors.email = emailError
-
-      if (Object.keys(errors).length > 0) {
-        setFieldErrors(errors)
-        return
-      }
-
-      setCurrentStep("credentials")
-    } else if (currentStep === "credentials") {
-      // Validate credentials before submission
-      handleSubmit()
-    }
-  }
-
-  const handleBack = () => {
-    setError(null)
-    setFieldErrors({})
-
-    if (currentStep === "personal") setCurrentStep("role")
-    else if (currentStep === "credentials") setCurrentStep("personal")
-  }
-
-  const handleSubmit = async () => {
-    if (!role) return
-
+  const handleRegisterSubmit = async (formValues: RegisterFormValues) => {
     setIsLoading(true)
     setError(null)
-    setFieldErrors({})
 
     const result = await registerUser({
-      role,
-      firstName,
-      lastName,
-      email,
-      password,
-      confirmPassword,
+      role: formValues.role,
+      firstName: formValues.firstName,
+      lastName: formValues.lastName,
+      email: formValues.email,
+      password: formValues.password,
+      confirmPassword: formValues.confirmPassword,
     })
 
     setIsLoading(false)
@@ -100,27 +87,58 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
     }
   }
 
-  // Handle field blur for real-time validation
-  const handleFieldBlur = (fieldName: string, value: string) => {
-    const additionalData =
-      fieldName === "confirmPassword" ? { password } : undefined
-    const error = validateField(fieldName, value, additionalData)
+  const handleNext = async () => {
+    setError(null)
 
-    if (error) {
-      setFieldErrors((prev) => ({ ...prev, [fieldName]: error }))
-    } else {
-      setFieldErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[fieldName]
-        return newErrors
-      })
+    if (currentStep === "role") {
+      const isRoleStepValid = await trigger("role")
+
+      if (isRoleStepValid) {
+        setCurrentStep("personal")
+      }
+
+      return
+    }
+
+    if (currentStep === "personal") {
+      const isPersonalStepValid = await trigger(["firstName", "lastName", "email"])
+
+      if (isPersonalStepValid) {
+        setCurrentStep("credentials")
+      }
+
+      return
+    }
+
+    if (currentStep === "credentials") {
+      await handleSubmit(handleRegisterSubmit)()
     }
   }
 
-  const canProceed = () => {
-    if (currentStep === "role") return role !== null
-    if (currentStep === "personal") return firstName && lastName && email
-    if (currentStep === "credentials") return password && confirmPassword
+  const handleBack = () => {
+    setError(null)
+    clearErrors()
+
+    if (currentStep === "personal") {
+      setCurrentStep("role")
+    } else if (currentStep === "credentials") {
+      setCurrentStep("personal")
+    }
+  }
+
+  const canProceed = (): boolean => {
+    if (currentStep === "role") {
+      return roleValue.trim().length > 0
+    }
+
+    if (currentStep === "personal") {
+      return Boolean(firstNameValue && lastNameValue && emailValue)
+    }
+
+    if (currentStep === "credentials") {
+      return Boolean(passwordValue && confirmPasswordValue)
+    }
+
     return false
   }
 
@@ -185,9 +203,15 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               type="button"
-              onClick={() => setRole("student")}
+              onClick={() => {
+                setValue("role", "student", {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                  shouldValidate: true,
+                })
+              }}
               className={`p-8 rounded-2xl border-2 transition-all ${
-                role === "student"
+                roleValue === "student"
                   ? "border-teal-500 bg-teal-500/10"
                   : "border-white/10 bg-white/5 hover:bg-white/10"
               }`}
@@ -198,9 +222,15 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
 
             <button
               type="button"
-              onClick={() => setRole("teacher")}
+              onClick={() => {
+                setValue("role", "teacher", {
+                  shouldDirty: true,
+                  shouldTouch: true,
+                  shouldValidate: true,
+                })
+              }}
               className={`p-8 rounded-2xl border-2 transition-all ${
-                role === "teacher"
+                roleValue === "teacher"
                   ? "border-teal-500 bg-teal-500/10"
                   : "border-white/10 bg-white/5 hover:bg-white/10"
               }`}
@@ -210,7 +240,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             </button>
           </div>
 
-          <Button onClick={handleNext} disabled={!canProceed()}>
+          <Button onClick={() => void handleNext()} disabled={!canProceed()}>
             Next
           </Button>
         </div>
@@ -237,22 +267,18 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 id="firstName"
                 type="text"
                 placeholder="Enter your first name..."
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                onBlur={(e) => handleFieldBlur("firstName", e.target.value)}
+                {...firstNameField}
+                onBlur={(event) => {
+                  firstNameField.onBlur(event)
+                  void trigger("firstName")
+                }}
                 required
-                hasError={!!fieldErrors.firstName}
-                aria-describedby={
-                  fieldErrors.firstName ? "firstName-error" : undefined
-                }
+                hasError={!!errors.firstName}
+                aria-describedby={errors.firstName ? "firstName-error" : undefined}
               />
-              {fieldErrors.firstName && (
-                <p
-                  id="firstName-error"
-                  className="text-sm text-red-400"
-                  role="alert"
-                >
-                  {fieldErrors.firstName}
+              {errors.firstName && (
+                <p id="firstName-error" className="text-sm text-red-400" role="alert">
+                  {errors.firstName.message}
                 </p>
               )}
             </div>
@@ -268,22 +294,18 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 id="lastName"
                 type="text"
                 placeholder="Enter your last name..."
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                onBlur={(e) => handleFieldBlur("lastName", e.target.value)}
+                {...lastNameField}
+                onBlur={(event) => {
+                  lastNameField.onBlur(event)
+                  void trigger("lastName")
+                }}
                 required
-                hasError={!!fieldErrors.lastName}
-                aria-describedby={
-                  fieldErrors.lastName ? "lastName-error" : undefined
-                }
+                hasError={!!errors.lastName}
+                aria-describedby={errors.lastName ? "lastName-error" : undefined}
               />
-              {fieldErrors.lastName && (
-                <p
-                  id="lastName-error"
-                  className="text-sm text-red-400"
-                  role="alert"
-                >
-                  {fieldErrors.lastName}
+              {errors.lastName && (
+                <p id="lastName-error" className="text-sm text-red-400" role="alert">
+                  {errors.lastName.message}
                 </p>
               )}
             </div>
@@ -300,21 +322,23 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               id="email"
               type="email"
               placeholder="Enter your email address..."
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={(e) => handleFieldBlur("email", e.target.value)}
+              {...emailField}
+              onBlur={(event) => {
+                emailField.onBlur(event)
+                void trigger("email")
+              }}
               required
-              hasError={!!fieldErrors.email}
-              aria-describedby={fieldErrors.email ? "email-error" : undefined}
+              hasError={!!errors.email}
+              aria-describedby={errors.email ? "email-error" : undefined}
             />
-            {fieldErrors.email && (
+            {errors.email && (
               <p id="email-error" className="text-sm text-red-400" role="alert">
-                {fieldErrors.email}
+                {errors.email.message}
               </p>
             )}
           </div>
 
-          <Button onClick={handleNext} disabled={!canProceed()}>
+          <Button onClick={() => void handleNext()} disabled={!canProceed()}>
             Next
           </Button>
         </div>
@@ -339,15 +363,15 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 id="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Enter your password..."
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={(e) => handleFieldBlur("password", e.target.value)}
+                {...passwordField}
+                onBlur={(event) => {
+                  passwordField.onBlur(event)
+                  void trigger("password")
+                }}
                 className="pr-11"
                 required
-                hasError={!!fieldErrors.password}
-                aria-describedby={
-                  fieldErrors.password ? "password-error" : undefined
-                }
+                hasError={!!errors.password}
+                aria-describedby={errors.password ? "password-error" : undefined}
               />
               <button
                 type="button"
@@ -362,13 +386,9 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 )}
               </button>
             </div>
-            {fieldErrors.password && (
-              <p
-                id="password-error"
-                className="text-sm text-red-400"
-                role="alert"
-              >
-                {fieldErrors.password}
+            {errors.password && (
+              <p id="password-error" className="text-sm text-red-400" role="alert">
+                {errors.password.message}
               </p>
             )}
             <p className="text-xs text-slate-400">
@@ -389,18 +409,16 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 id="confirmPassword"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Enter your password again..."
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onBlur={(e) =>
-                  handleFieldBlur("confirmPassword", e.target.value)
-                }
+                {...confirmPasswordField}
+                onBlur={(event) => {
+                  confirmPasswordField.onBlur(event)
+                  void trigger("confirmPassword")
+                }}
                 className="pr-11"
                 required
-                hasError={!!fieldErrors.confirmPassword}
+                hasError={!!errors.confirmPassword}
                 aria-describedby={
-                  fieldErrors.confirmPassword
-                    ? "confirmPassword-error"
-                    : undefined
+                  errors.confirmPassword ? "confirmPassword-error" : undefined
                 }
               />
               <button
@@ -418,19 +436,19 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 )}
               </button>
             </div>
-            {fieldErrors.confirmPassword && (
+            {errors.confirmPassword && (
               <p
                 id="confirmPassword-error"
                 className="text-sm text-red-400"
                 role="alert"
               >
-                {fieldErrors.confirmPassword}
+                {errors.confirmPassword.message}
               </p>
             )}
           </div>
 
           <Button
-            onClick={handleNext}
+            onClick={() => void handleNext()}
             disabled={!canProceed()}
             isLoading={isLoading}
             className="mt-6"

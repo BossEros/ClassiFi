@@ -4,8 +4,8 @@ Related plan: `implementation_plan.md`
 
 ## Current Status
 
-- Overall progress: `20%`
-- Current phase: `Phase 1 - Auth Flow Migration`
+- Overall progress: `35%`
+- Current phase: `Phase 2 - Class Management Forms`
 - Last updated: `2026-02-22`
 
 ## Execution Checklist
@@ -20,12 +20,12 @@ Related plan: `implementation_plan.md`
 
 ## Phase 1: Auth Flow Migration
 
-- [ ] Migrate `frontend/src/presentation/components/auth/forms/LoginForm.tsx`
-- [ ] Migrate `frontend/src/presentation/components/auth/forms/RegisterForm.tsx`
-- [ ] Migrate `frontend/src/presentation/components/auth/forms/ForgotPasswordForm.tsx`
-- [ ] Migrate `frontend/src/presentation/pages/auth/ResetPasswordPage.tsx`
-- [ ] Add/update auth form tests
-- [ ] Run verification gate (`frontend build` + `frontend tests`)
+- [x] Migrate `frontend/src/presentation/components/auth/forms/LoginForm.tsx`
+- [x] Migrate `frontend/src/presentation/components/auth/forms/RegisterForm.tsx`
+- [x] Migrate `frontend/src/presentation/components/auth/forms/ForgotPasswordForm.tsx`
+- [x] Migrate `frontend/src/presentation/pages/auth/ResetPasswordPage.tsx`
+- [x] Add/update auth form tests
+- [x] Run verification gate (`frontend build` + `frontend tests`)
 
 ## Phase 2: Class Management Forms
 
@@ -71,6 +71,10 @@ Related plan: `implementation_plan.md`
 - [x] 2026-02-22: Phase 0 frontend `npm test -- --run`
 - [x] 2026-02-22: Phase 0 backend `npm run typecheck`
 - [x] 2026-02-22: Phase 0 backend `npm test`
+- [x] 2026-02-22: Phase 1 frontend `npm run build`
+- [x] 2026-02-22: Phase 1 frontend `npm test -- --run`
+- [x] 2026-02-22: Phase 1 backend `npm run typecheck`
+- [x] 2026-02-22: Phase 1 backend `npm test`
 
 ## Notes
 

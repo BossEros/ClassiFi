@@ -3,6 +3,11 @@ import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { Mail, ArrowRight, CheckCircle2 } from "lucide-react"
 import { requestPasswordReset } from "@/business/services/authService"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  forgotPasswordFormSchema,
+  type ForgotPasswordFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
 
 interface ForgotPasswordFormProps {
   onBackToLoginClick?: () => void
@@ -11,17 +16,34 @@ interface ForgotPasswordFormProps {
 export function ForgotPasswordForm({
   onBackToLoginClick,
 }: ForgotPasswordFormProps) {
-  const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSuccess, setIsSuccess] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    watch,
+    trigger,
+    reset,
+    formState: { errors },
+  } = useZodForm({
+    schema: forgotPasswordFormSchema,
+    defaultValues: {
+      email: "",
+    },
+    mode: "onSubmit",
+  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const emailValue = watch("email")
+  const emailField = register("email")
+
+  const handleForgotPasswordSubmit = async (
+    formValues: ForgotPasswordFormValues,
+  ) => {
     setIsLoading(true)
     setError(null)
 
-    const result = await requestPasswordReset({ email })
+    const result = await requestPasswordReset({ email: formValues.email })
 
     setIsLoading(false)
 
@@ -44,7 +66,8 @@ export function ForgotPasswordForm({
           <h3 className="text-xl font-semibold text-white">Check your email</h3>
           <p className="text-gray-400 text-sm leading-relaxed">
             If an account exists with{" "}
-            <span className="text-white font-medium">{email}</span>, you will
+            <span className="text-white font-medium">{emailValue}</span>, you
+            will
             receive password reset instructions shortly.
           </p>
         </div>
@@ -58,7 +81,8 @@ export function ForgotPasswordForm({
             type="button"
             onClick={() => {
               setIsSuccess(false)
-              setEmail("")
+              setError(null)
+              reset({ email: "" })
             }}
             className="w-full mb-3 bg-white/5 hover:bg-white/10 from-transparent to-transparent border border-white/10"
           >
@@ -79,7 +103,11 @@ export function ForgotPasswordForm({
 
   // Form view
   return (
-    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+    <form
+      onSubmit={handleSubmit(handleForgotPasswordSubmit)}
+      className="space-y-5"
+      noValidate
+    >
       {/* Error Message */}
       {error && (
         <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
@@ -107,17 +135,26 @@ export function ForgotPasswordForm({
           </div>
           <Input
             id="email"
-            name="email"
             type="email"
             placeholder="Enter your email address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...emailField}
+            onBlur={(event) => {
+              emailField.onBlur(event)
+              void trigger("email")
+            }}
             className="pl-11"
             required
             aria-required="true"
             disabled={isLoading}
+            hasError={!!errors.email}
+            aria-describedby={errors.email ? "email-error" : undefined}
           />
         </div>
+        {errors.email && (
+          <p id="email-error" className="text-sm text-red-400" role="alert">
+            {errors.email.message}
+          </p>
+        )}
       </div>
 
       {/* Submit Button */}
