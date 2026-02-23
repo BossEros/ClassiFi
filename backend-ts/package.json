@@ -32,7 +32,7 @@
     "@supabase/supabase-js": "^2.93.3",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.36.4",
-    "fastify": "^5.7.2",
+    "fastify": "^5.7.4",
     "fastify-plugin": "^5.1.0",
     "html-to-text": "^9.0.5",
     "nodemailer": "^7.0.13",
