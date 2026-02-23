@@ -30,7 +30,7 @@
     "@fastify/swagger-ui": "^5.2.5",
     "@sendgrid/mail": "^8.1.6",
     "@supabase/supabase-js": "^2.93.3",
-    "dotenv": "^17.2.3",
+    "dotenv": "^17.3.1",
     "drizzle-orm": "^0.36.4",
     "fastify": "^5.7.2",
     "fastify-plugin": "^5.1.0",
