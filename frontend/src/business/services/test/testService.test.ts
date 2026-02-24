@@ -295,5 +295,31 @@ describe("testService", () => {
         testService.getTestResultsForSubmission(mockSubmissionId),
       ).rejects.toThrow("Test results data is missing from the response")
     })
+
+    it("handles empty-success summary for no-test-case assignments", async () => {
+      vi.mocked(
+        assignmentRepository.getTestResultsForSubmissionById,
+      ).mockResolvedValue({
+        data: {
+          success: true,
+          message: "",
+          data: {
+            passed: 0,
+            total: 0,
+            percentage: 100,
+            results: [],
+          },
+        } as any,
+        status: 200,
+      })
+
+      const result =
+        await testService.getTestResultsForSubmission(mockSubmissionId)
+
+      expect(result.passed).toBe(0)
+      expect(result.total).toBe(0)
+      expect(result.percentage).toBe(100)
+      expect(result.results).toEqual([])
+    })
   })
 })

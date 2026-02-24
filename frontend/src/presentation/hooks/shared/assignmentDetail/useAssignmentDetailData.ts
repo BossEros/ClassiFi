@@ -51,6 +51,7 @@ export function useAssignmentDetailData({
 
   useEffect(() => {
     const currentUser = getCurrentUser()
+
     if (!currentUser) {
       navigate("/login")
       return
@@ -76,28 +77,38 @@ export function useAssignmentDetailData({
           assignmentIdNumber,
           currentUserId,
         )
+
         setAssignment(assignmentData)
 
+        // Get submission history for student
         if (currentUser.role === "student") {
+          // Check if the assignment has test cases
+          const hasTestCases = assignmentData.testCases && assignmentData.testCases.length > 0
+
+          // Get submission history
           const historyResponse = await getSubmissionHistory(
             assignmentIdNumber,
             currentUserId,
           )
 
+          // Sort Submissions
           const sortedSubmissions = [...historyResponse.submissions].sort(
             (a, b) => b.submissionNumber - a.submissionNumber,
           )
           setSubmissions(sortedSubmissions)
 
+          // Get latest submission
           const latestSubmission =
             sortedSubmissions.find((submission) => submission.isLatest) ||
             sortedSubmissions[0]
 
-          if (latestSubmission) {
+          // Only fetch test results when the assignment has test cases
+          if (latestSubmission && hasTestCases) {
             try {
               const testResults = await getTestResultsForSubmission(
                 latestSubmission.id,
               )
+
               setSubmissionTestResults(testResults)
             } catch (testResultsError) {
               console.error(
@@ -106,14 +117,18 @@ export function useAssignmentDetailData({
               )
             }
           }
+
           return
         }
 
+        // Get all submissions for teacher and admin
         if (currentUser.role === "teacher" || currentUser.role === "admin") {
+          // Get all submissions
           const allSubmissions = await getAssignmentSubmissions(
             assignmentIdNumber,
             true,
           )
+
           setSubmissions(allSubmissions)
         }
       } catch (requestError) {
@@ -123,6 +138,7 @@ export function useAssignmentDetailData({
           requestError instanceof Error
             ? requestError.message
             : "Failed to load assignment. Please try again."
+
         setError(errorMessage)
       } finally {
         setIsLoading(false)

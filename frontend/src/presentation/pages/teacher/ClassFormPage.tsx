@@ -18,6 +18,7 @@ import {
 import { Input } from "@/presentation/components/ui/Input"
 import { Textarea } from "@/presentation/components/ui/Textarea"
 import { Button } from "@/presentation/components/ui/Button"
+import { Select, type SelectOption } from "@/presentation/components/ui/Select"
 import { useToast } from "@/presentation/context/ToastContext"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
@@ -47,6 +48,11 @@ function getDefaultClassFormValues(): TeacherClassFormValues {
     },
   }
 }
+
+const classScheduleTimeOptions: SelectOption[] = TIME_OPTIONS.map((timeValue) => ({
+  value: timeValue,
+  label: formatTimeDisplay(timeValue),
+}))
 
 export function ClassFormPage() {
   const navigate = useNavigate()
@@ -81,10 +87,10 @@ export function ClassFormPage() {
   const yearLevelField = register("yearLevel", { valueAsNumber: true })
   const semesterField = register("semester", { valueAsNumber: true })
   const academicYearField = register("academicYear")
-  const scheduleStartTimeField = register("schedule.startTime")
-  const scheduleEndTimeField = register("schedule.endTime")
 
   const scheduleDays = watch("schedule.days")
+  const scheduleStartTime = watch("schedule.startTime")
+  const scheduleEndTime = watch("schedule.endTime")
   const classCodeValue = watch("classCode")
 
   // Fetch existing class data when in edit mode
@@ -99,7 +105,10 @@ export function ClassFormPage() {
     const fetchClassData = async () => {
       setIsFetching(true)
       try {
-        const classData = await getClassById(parseInt(classId), parseInt(user.id))
+        const classData = await getClassById(
+          parseInt(classId),
+          parseInt(user.id),
+        )
 
         reset({
           className: classData.className,
@@ -150,6 +159,18 @@ export function ClassFormPage() {
       shouldTouch: true,
       shouldValidate: true,
     })
+  }
+
+  const handleScheduleTimeChange = (
+    fieldName: "schedule.startTime" | "schedule.endTime",
+    fieldValue: string,
+  ) => {
+    setValue(fieldName, fieldValue, {
+      shouldDirty: true,
+      shouldTouch: true,
+      shouldValidate: true,
+    })
+    clearErrors(fieldName)
   }
 
   const userInitials = currentUser
@@ -270,7 +291,7 @@ export function ClassFormPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="className"
-                    className="text-sm font-medium text-white"
+                    className="block text-sm font-medium text-gray-200"
                   >
                     Class Name <span className="text-red-400">*</span>
                   </label>
@@ -280,7 +301,9 @@ export function ClassFormPage() {
                     placeholder="e.g., Introduction to Programming"
                     {...classNameField}
                     disabled={isLoading}
-                    className={errors.className ? "border-red-500/50" : ""}
+                    className={`h-11 bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
+                      errors.className ? "border-red-500/50" : ""
+                    }`}
                   />
                   {errors.className && (
                     <p className="text-xs text-red-400">
@@ -293,7 +316,7 @@ export function ClassFormPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="description"
-                    className="text-sm font-medium text-white"
+                    className="block text-sm font-medium text-gray-200"
                   >
                     Description
                   </label>
@@ -302,13 +325,16 @@ export function ClassFormPage() {
                     placeholder="Brief description of the class..."
                     {...descriptionField}
                     disabled={isLoading}
+                    className={`h-11 bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
+                      errors.description ? "border-red-500/50" : ""
+                    }`}
                     rows={3}
                   />
                 </div>
 
                 {/* Class Code */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-white">
+                  <label className="block text-sm font-medium text-gray-200">
                     Class Code <span className="text-red-400">*</span>
                   </label>
                   <div className="flex gap-2">
@@ -318,11 +344,9 @@ export function ClassFormPage() {
                       value={classCodeValue}
                       placeholder={isEditMode ? "" : "Click Generate"}
                       readOnly
-                      className={`flex-1 bg-white/5 font-mono text-lg tracking-wider uppercase ${
+                      className={`h-11 bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
                         errors.classCode ? "border-red-500/50" : ""
-                      } ${
-                        isEditMode ? "text-gray-400 cursor-not-allowed" : ""
-                      }`}
+                      } ${isEditMode ? "cursor-not-allowed" : ""}`}
                       disabled={isLoading || isEditMode}
                     />
                     {!isEditMode && (
@@ -368,7 +392,7 @@ export function ClassFormPage() {
               <CardContent className="space-y-5">
                 {/* Days */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-white">
+                  <label className="block text-sm font-medium text-gray-200">
                     Days <span className="text-red-400">*</span>
                   </label>
                   <div className="flex flex-wrap gap-2">
@@ -381,8 +405,8 @@ export function ClassFormPage() {
                         title={day.label}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                           scheduleDays.includes(day.value)
-                            ? "bg-teal-500 text-white border-transparent"
-                            : "bg-white/5 text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
+                            ? "bg-teal-500 text-white border-transparent" 
+                            : "bg-[#1A2130] text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                         }`}
                       >
                         {day.short}
@@ -390,47 +414,49 @@ export function ClassFormPage() {
                     ))}
                   </div>
                   {scheduleErrorMessage && (
-                    <p className="text-xs text-red-400">{scheduleErrorMessage}</p>
+                    <p className="text-xs text-red-400">
+                      {scheduleErrorMessage}
+                    </p>
                   )}
                 </div>
 
                 {/* Time */}
                 <div className="space-y-3">
-                  <label className="text-sm font-medium text-white">
+                  <label className="block text-sm font-medium text-gray-200">
                     Time <span className="text-red-400">*</span>
                   </label>
                   <div className="flex items-center gap-3">
-                    <select
-                      {...scheduleStartTimeField}
-                      disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
-                    >
-                      {TIME_OPTIONS.map((time) => (
-                        <option
-                          key={time}
-                          value={time}
-                          className="bg-slate-800 text-white"
-                        >
-                          {formatTimeDisplay(time)}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex-1">
+                      <Select
+                        id="scheduleStartTime"
+                        options={classScheduleTimeOptions}
+                        value={scheduleStartTime}
+                        onChange={(selectedValue) =>
+                          handleScheduleTimeChange(
+                            "schedule.startTime",
+                            selectedValue,
+                          )
+                        }
+                        disabled={isLoading}
+                        className="h-11 py-0 bg-[#1A2130] border-white/10 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 text-white"
+                      />
+                    </div>
                     <span className="text-gray-400 text-sm">to</span>
-                    <select
-                      {...scheduleEndTimeField}
-                      disabled={isLoading}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
-                    >
-                      {TIME_OPTIONS.map((time) => (
-                        <option
-                          key={time}
-                          value={time}
-                          className="bg-slate-800 text-white"
-                        >
-                          {formatTimeDisplay(time)}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="flex-1">
+                      <Select
+                        id="scheduleEndTime"
+                        options={classScheduleTimeOptions}
+                        value={scheduleEndTime}
+                        onChange={(selectedValue) =>
+                          handleScheduleTimeChange(
+                            "schedule.endTime",
+                            selectedValue,
+                          )
+                        }
+                        disabled={isLoading}
+                        className="h-11 py-0 bg-[#1A2130] border-white/10 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 text-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -454,7 +480,7 @@ export function ClassFormPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="yearLevel"
-                    className="text-sm font-medium text-white"
+                    className="text-sm font-medium text-gray-200"
                   >
                     Year Level <span className="text-red-400">*</span>
                   </label>
@@ -462,7 +488,7 @@ export function ClassFormPage() {
                     id="yearLevel"
                     {...yearLevelField}
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
+                    className="w-full px-4 py-2.5 rounded-lg bg-[#1A2130] border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                   >
                     <option value={1} className="bg-slate-800 text-white">
                       1st Year
@@ -483,7 +509,7 @@ export function ClassFormPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="semester"
-                    className="text-sm font-medium text-white"
+                    className="text-sm font-medium text-gray-200"
                   >
                     Semester <span className="text-red-400">*</span>
                   </label>
@@ -491,7 +517,7 @@ export function ClassFormPage() {
                     id="semester"
                     {...semesterField}
                     disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
+                    className="w-full px-4 py-2.5 rounded-lg bg-[#1A2130] border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50"
                   >
                     <option value={1} className="bg-slate-800 text-white">
                       1st Semester
@@ -506,7 +532,7 @@ export function ClassFormPage() {
                 <div className="space-y-2">
                   <label
                     htmlFor="academicYear"
-                    className="text-sm font-medium text-white"
+                    className="text-sm font-medium text-gray-200"
                   >
                     Academic Year <span className="text-red-400">*</span>
                   </label>
@@ -516,7 +542,9 @@ export function ClassFormPage() {
                     placeholder="e.g., 2024-2025"
                     {...academicYearField}
                     disabled={isLoading}
-                    className={errors.academicYear ? "border-red-500/50" : ""}
+                    className={`h-11 bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
+                      errors.academicYear ? "border-red-500/50" : ""
+                    }`}
                   />
                   {errors.academicYear && (
                     <p className="text-xs text-red-400">

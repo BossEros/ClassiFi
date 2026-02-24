@@ -87,6 +87,7 @@ export function useAssignmentSubmissionFlow({
   )
   const [resultsError, setResultsError] = useState<string | null>(null)
 
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (submissionAbortRef.current) {
@@ -99,6 +100,7 @@ export function useAssignmentSubmissionFlow({
     }
   }, [])
 
+  // Handle file selection
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) {
@@ -120,6 +122,7 @@ export function useAssignmentSubmissionFlow({
     setSelectedFile(file)
   }
 
+  // Fetch test results with retry
   const fetchTestResultsWithRetry = async (
     submissionId: number,
     signal: AbortSignal,
@@ -134,10 +137,12 @@ export function useAssignmentSubmissionFlow({
 
       try {
         const testResults = await getTestResultsForSubmission(submissionId)
+
         if (!signal.aborted) {
           setSubmissionTestResults(testResults)
           return true
         }
+
         return false
       } catch (testResultsError) {
         console.error(
@@ -182,6 +187,7 @@ export function useAssignmentSubmissionFlow({
     return false
   }
 
+  // Clear submission form
   const clearSubmissionForm = () => {
     setSelectedFile(null)
     setPreviewResults(null)
@@ -191,28 +197,37 @@ export function useAssignmentSubmissionFlow({
     }
   }
 
+  // Handle form submission
   const handleSubmit = async () => {
+    // Validate form
     if (!selectedFile || !user || !assignmentId || !assignment) {
       return
     }
 
+    // Validate file
     const validationError = validateFile(
       selectedFile,
       assignment.programmingLanguage,
     )
+
+    // Set file error if validation fails
     if (validationError) {
       setFileError(validationError)
       return
     }
 
+    // Try to submit the assignment
     try {
+      // Set loading state
       setIsSubmitting(true)
       setError(null)
       setResultsError(null)
 
+      // Parse IDs
       const assignmentIdNumber = parseInt(assignmentId, 10)
       const userIdNumber = parseInt(user.id, 10)
 
+      // Submit assignment
       const submission = await submitAssignment({
         assignmentId: assignmentIdNumber,
         studentId: userIdNumber,
@@ -220,24 +235,42 @@ export function useAssignmentSubmissionFlow({
         programmingLanguage: assignment.programmingLanguage,
       })
 
+      // Update submissions state
       setSubmissions((previousSubmissions) => [
         submission,
         ...previousSubmissions,
       ])
+
+      const hasTestCases = (assignment?.testCases?.length ?? 0) > 0
+
+      if (!hasTestCases) {
+        clearSubmissionForm()
+        setResultsError(null)
+        setSubmissionTestResults(null)
+        showToast("Assignment submitted successfully!")
+
+        return
+      }
+
+      // Clear submission form
       clearSubmissionForm()
 
+      // Create abort controller for test results
       submissionAbortRef.current = new AbortController()
       const signal = submissionAbortRef.current.signal
 
+      // Clear timeout IDs
       timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
       timeoutIdsRef.current = []
 
+      // Try to fetch test results with retry
       try {
         const didLoadTestResults = await fetchTestResultsWithRetry(
           submission.id,
           signal,
         )
 
+        // Handle test results loading
         if (!didLoadTestResults && !signal.aborted) {
           setResultsError(
             "Failed to load test results after multiple attempts. Please refresh the page.",
@@ -269,6 +302,7 @@ export function useAssignmentSubmissionFlow({
     }
   }
 
+  // Clear selected file
   const clearSelectedFile = () => {
     setSelectedFile(null)
     setFileError(null)
@@ -279,6 +313,7 @@ export function useAssignmentSubmissionFlow({
     }
   }
 
+  // Toggle preview test expand
   const togglePreviewTestExpand = (index: number) => {
     setExpandedPreviewTests((previousExpandedTests) => {
       const nextExpandedTests = new Set(previousExpandedTests)
@@ -291,6 +326,7 @@ export function useAssignmentSubmissionFlow({
     })
   }
 
+  // Toggle submission test expand
   const toggleSubmissionTestExpand = (index: number) => {
     setExpandedSubmissionTests((previousExpandedTests) => {
       const nextExpandedTests = new Set(previousExpandedTests)
@@ -303,6 +339,7 @@ export function useAssignmentSubmissionFlow({
     })
   }
 
+  // Toggle initial test expand
   const toggleInitialTestExpand = (index: number) => {
     setExpandedInitialTests((previousExpandedTests) => {
       const nextExpandedTests = new Set(previousExpandedTests)
@@ -315,6 +352,7 @@ export function useAssignmentSubmissionFlow({
     })
   }
 
+  // Handle run preview tests
   const handleRunPreviewTests = async () => {
     if (!selectedFile || !assignment || !assignmentId) {
       return
@@ -356,6 +394,7 @@ export function useAssignmentSubmissionFlow({
     }
   }
 
+  // Return all the states and functions
   return {
     fileInputRef,
     selectedFile,
