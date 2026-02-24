@@ -10,17 +10,16 @@ import {
   ClassFilters,
   type FilterStatus,
 } from "@/presentation/components/shared/dashboard/ClassFilters"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/studentDashboardService"
-import { useToast } from "@/presentation/context/ToastContext"
-import type { User } from "@/business/models/auth/types"
+import { useToastStore } from "@/shared/store/useToastStore"
 import type { Class } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function StudentClassesPage() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
-  const [user, setUser] = useState<User | null>(null)
+  const showToast = useToastStore((state) => state.showToast)
+  const user = useAuthStore((state) => state.user)
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -33,20 +32,17 @@ export function StudentClassesPage() {
   const [selectedYearLevel, setSelectedYearLevel] = useState("all")
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    if (!user) {
       navigate("/login")
       return
     }
-
-    setUser(currentUser)
 
     // Fetch enrolled classes
     const fetchClasses = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getDashboardData(parseInt(currentUser.id))
+        const data = await getDashboardData(parseInt(user.id))
         // Cast is safe: API returns ISO date strings compatible with ISODateString
         setClasses(data.enrolledClasses as Class[])
       } catch (err) {
@@ -58,7 +54,7 @@ export function StudentClassesPage() {
     }
 
     fetchClasses()
-  }, [navigate])
+  }, [navigate, user])
 
   const handleJoinSuccess = (classInfo: Class) => {
     // Add the new class to the list

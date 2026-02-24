@@ -19,50 +19,31 @@ describe("useGradebook Hooks", () => {
   describe("useClassGradebook", () => {
     const mockClassId = 1
     const mockGradebook = {
-      classId: 1,
       students: [],
       assignments: [],
-      gradeColumns: [],
-    }
-    const mockStats = {
-      classId: 1,
-      classAverage: 85,
-      medianScore: 82,
-      highestScore: 98,
-      lowestScore: 60,
-      standardDeviation: 5,
-      passingRate: 90,
     }
 
-    it("should fetch gradebook and statistics", async () => {
+    it("should fetch gradebook", async () => {
       vi.mocked(gradebookService.getClassGradebook).mockResolvedValue(
         mockGradebook as any,
-      )
-      vi.mocked(gradebookService.getClassStatistics).mockResolvedValue(
-        mockStats as any,
       )
 
       const { result } = renderHook(() => useClassGradebook(mockClassId))
 
       expect(result.current.isLoading).toBe(true)
       expect(result.current.gradebook).toBeNull()
-      expect(result.current.statistics).toBeNull()
 
       await waitFor(() => {
         expect(result.current.isLoading).toBe(false)
       })
 
       expect(result.current.gradebook).toEqual(mockGradebook)
-      expect(result.current.statistics).toEqual(mockStats)
       expect(result.current.error).toBeNull()
     })
 
     it("should handle error during fetch", async () => {
       vi.mocked(gradebookService.getClassGradebook).mockRejectedValue(
         new Error("Fetch failed"),
-      )
-      vi.mocked(gradebookService.getClassStatistics).mockResolvedValue(
-        mockStats as any,
       )
 
       const { result } = renderHook(() => useClassGradebook(mockClassId))

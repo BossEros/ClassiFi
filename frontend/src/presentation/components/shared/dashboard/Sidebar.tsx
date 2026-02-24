@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Home,
@@ -17,8 +17,7 @@ import {
 import { NavItem } from "./NavItem"
 import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
-import { getCurrentUser } from "@/business/services/authService"
-import type { User } from "@/business/models/auth/types"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 
 const teacherNavigationItems = [
   { id: "home", label: "Dashboard", path: "/dashboard", icon: Home },
@@ -97,32 +96,8 @@ export function Sidebar({
   onToggleCollapse,
 }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(() => getCurrentUser())
+  const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
-
-  // Listen for storage changes (when avatar is updated)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "user") {
-        const updatedUser = getCurrentUser()
-        setUser(updatedUser)
-      }
-    }
-
-    // Listen for custom event dispatched within the same tab
-    const handleUserUpdate = () => {
-      const updatedUser = getCurrentUser()
-      setUser(updatedUser)
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-    window.addEventListener("userUpdated", handleUserUpdate)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-      window.removeEventListener("userUpdated", handleUserUpdate)
-    }
-  }, [])
 
   const handleLogout = async () => {
     await logoutUser()

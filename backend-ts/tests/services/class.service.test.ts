@@ -49,6 +49,7 @@ describe("ClassService", () => {
 
     mockSubmissionRepo = {
       getSubmissionsByClass: vi.fn(),
+      getLatestSubmissionCountsByAssignmentIds: vi.fn(),
     } as any
     mockStorageService = {
       deleteSubmissionFiles: vi.fn(),
@@ -202,6 +203,87 @@ describe("ClassService", () => {
         1,
         true,
       )
+    })
+  })
+
+  describe("getClassAssignments", () => {
+    it("should return assignments with submission and student counts", async () => {
+      const classAssignments = [
+        {
+          id: 11,
+          classId: 1,
+          assignmentName: "Intro Quiz",
+          instructions: "Test",
+          instructionsImageUrl: null,
+          programmingLanguage: "python",
+          deadline: null,
+          allowResubmission: true,
+          maxAttempts: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          isActive: true,
+          templateCode: null,
+          totalScore: 100,
+          scheduledDate: null,
+          allowLateSubmissions: false,
+          latePenaltyConfig: null,
+          lastReminderSentAt: null,
+        },
+      ]
+
+      mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
+        classAssignments as any,
+      )
+      mockClassRepo.getStudentCount!.mockResolvedValue(30)
+      mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
+        new Map([[11, 12]]),
+      )
+
+      const result = await classService.getClassAssignments(1)
+
+      expect(result).toHaveLength(1)
+      expect(result[0].submissionCount).toBe(12)
+      expect(result[0].studentCount).toBe(30)
+      expect(
+        mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds,
+      ).toHaveBeenCalledWith([11])
+    })
+
+    it("should default submission count to zero when no submissions exist", async () => {
+      const classAssignments = [
+        {
+          id: 22,
+          classId: 1,
+          assignmentName: "No Submissions Yet",
+          instructions: "Test",
+          instructionsImageUrl: null,
+          programmingLanguage: "python",
+          deadline: null,
+          allowResubmission: true,
+          maxAttempts: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          isActive: true,
+          templateCode: null,
+          totalScore: 100,
+          scheduledDate: null,
+          allowLateSubmissions: false,
+          latePenaltyConfig: null,
+          lastReminderSentAt: null,
+        },
+      ]
+
+      mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
+        classAssignments as any,
+      )
+      mockClassRepo.getStudentCount!.mockResolvedValue(18)
+      mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
+        new Map(),
+      )
+
+      const result = await classService.getClassAssignments(1)
+
+      expect(result).toHaveLength(1)
+      expect(result[0].submissionCount).toBe(0)
+      expect(result[0].studentCount).toBe(18)
     })
   })
 

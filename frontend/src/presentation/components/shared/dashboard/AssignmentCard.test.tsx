@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react"
 import { AssignmentCard } from "./AssignmentCard"
 import { vi, describe, it, expect } from "vitest"
-import type { Assignment } from "@/shared/types/class"
+import type { Assignment } from "@/business/models/dashboard/types"
 
 // Mock child components to isolate AssignmentCard logic
 vi.mock("@/presentation/components/ui/DateBlock", () => ({
@@ -57,7 +57,6 @@ describe("AssignmentCard", () => {
 
     expect(screen.getByText("Test Assignment")).toBeInTheDocument()
     expect(screen.getByTestId("date-block")).toBeInTheDocument()
-    expect(screen.getByTestId("status-badge")).toBeInTheDocument()
     expect(screen.getByTestId("grade-display")).toHaveTextContent("85/100")
   })
 
@@ -66,7 +65,11 @@ describe("AssignmentCard", () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2024-01-01"))
 
-    render(<AssignmentCard {...defaultProps} />)
+    render(
+      <AssignmentCard
+        assignment={{ ...mockAssignment, grade: null, maxGrade: undefined }}
+      />,
+    )
     expect(screen.getByTestId("status-badge")).toHaveTextContent("late")
 
     vi.useRealTimers()
@@ -74,55 +77,47 @@ describe("AssignmentCard", () => {
 
   it("calculates status correctly (submitted)", () => {
     render(
-      <AssignmentCard assignment={{ ...mockAssignment, hasSubmitted: true }} />,
+      <AssignmentCard
+        assignment={{
+          ...mockAssignment,
+          hasSubmitted: true,
+          grade: null,
+          maxGrade: undefined,
+        }}
+      />,
     )
     expect(screen.getByTestId("status-badge")).toHaveTextContent("submitted")
   })
 
-  it("renders teacher actions when isTeacher is true", () => {
-    const onEdit = vi.fn()
-    const onDelete = vi.fn()
-
+  it("does not render teacher submission counts", () => {
     render(
       <AssignmentCard
-        {...defaultProps}
+        assignment={{
+          ...mockAssignment,
+          submissionCount: 12,
+          studentCount: 30,
+        }}
         isTeacher={true}
-        onEdit={onEdit}
-        onDelete={onDelete}
       />,
     )
 
-    expect(screen.getByTitle("Edit Assignment")).toBeInTheDocument()
-    expect(screen.getByTitle("Delete Assignment")).toBeInTheDocument()
+    expect(screen.queryByText("12/30 submitted")).not.toBeInTheDocument()
   })
 
-  it("does not render teacher actions when isTeacher is false", () => {
-    const onEdit = vi.fn()
-    render(
-      <AssignmentCard {...defaultProps} isTeacher={false} onEdit={onEdit} />,
-    )
-
-    expect(screen.queryByTitle("Edit Assignment")).not.toBeInTheDocument()
-  })
-
-  it("calls action handlers", () => {
-    const onEdit = vi.fn()
-    const onDelete = vi.fn()
-
+  it("uses teacher metadata instead of student submitted timestamp", () => {
     render(
       <AssignmentCard
-        {...defaultProps}
+        assignment={{
+          ...mockAssignment,
+          hasSubmitted: true,
+          submittedAt: "2023-12-30T12:00:00.000Z" as any,
+        }}
         isTeacher={true}
-        onEdit={onEdit}
-        onDelete={onDelete}
       />,
     )
 
-    fireEvent.click(screen.getByTitle("Edit Assignment"))
-    expect(onEdit).toHaveBeenCalled()
-
-    fireEvent.click(screen.getByTitle("Delete Assignment"))
-    expect(onDelete).toHaveBeenCalled()
+    expect(screen.queryByText(/Submitted/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Due/)).toBeInTheDocument()
   })
 
   it("calls onClick when card is clicked", () => {

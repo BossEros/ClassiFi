@@ -1,18 +1,18 @@
+import { useAuthStore } from "@/shared/store/useAuthStore";
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, act, waitFor } from "@testing-library/react"
 import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentForm"
-import * as authService from "@/business/services/authService"
+
 import * as classService from "@/business/services/classService"
 import * as assignmentService from "@/business/services/assignmentService"
 import * as testCaseService from "@/business/services/testCaseService"
-import { ToastProvider } from "@/presentation/context/ToastContext"
 import { MemoryRouter } from "react-router-dom"
 import type { User } from "@/shared/types/auth"
 import type { ISODateString } from "@/shared/types/class"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 
 // Mock dependencies
-vi.mock("@/business/services/authService")
+
 vi.mock("@/business/services/classService")
 vi.mock("@/business/services/assignmentService")
 vi.mock("@/business/services/testCaseService")
@@ -62,16 +62,14 @@ function buildFutureLocalDateTimeString(daysAhead = 30): string {
 
 describe("useAssignmentForm", () => {
   const wrapper = ({ children }: { children: React.ReactNode }) => (
-    <ToastProvider>
-      <MemoryRouter>{children}</MemoryRouter>
-    </ToastProvider>
+    <MemoryRouter>{children}</MemoryRouter>
   )
 
   beforeEach(async () => {
     vi.resetAllMocks() // Reset all mocks to clear implementations
 
     // Re-setup global mocks
-    vi.mocked(authService.getCurrentUser).mockReturnValue(mockUser)
+    useAuthStore.setState({ user: mockUser as any, isAuthenticated: true })
     mockParams.classId = "101"
     mockParams.assignmentId = undefined
 

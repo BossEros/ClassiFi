@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
   Card,
@@ -7,11 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function TasksPage() {
-  const [currentUser] = useState(() => getCurrentUser())
+  const currentUser = useAuthStore((state) => state.user)
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()

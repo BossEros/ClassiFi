@@ -1,6 +1,6 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 import type { NavigateFunction } from "react-router-dom"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
   getAssignmentById,
   getAssignmentSubmissions,
@@ -41,6 +41,7 @@ export function useAssignmentDetailData({
   assignmentId,
   navigate,
 }: UseAssignmentDetailDataOptions): UseAssignmentDetailDataResult {
+  const currentUser = useAuthStore((state) => state.user)
   const [user, setUser] = useState<User | null>(null)
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -50,8 +51,6 @@ export function useAssignmentDetailData({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-
     if (!currentUser) {
       navigate("/login")
       return
@@ -146,7 +145,7 @@ export function useAssignmentDetailData({
     }
 
     fetchAssignmentData()
-  }, [assignmentId, navigate])
+  }, [assignmentId, currentUser, navigate])
 
   return {
     user,

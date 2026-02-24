@@ -20,10 +20,9 @@ import {
   CardTitle,
   CardDescription,
 } from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as adminService from "@/business/services/adminService"
 import type { AdminStats, ActivityItem } from "@/business/services/adminService"
-import type { User } from "@/business/models/auth/types"
 import { formatTimeAgo } from "@/presentation/utils/dateUtils"
 
 interface DashboardStat {
@@ -37,7 +36,7 @@ interface DashboardStat {
 
 export function AdminDashboardPage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<User | null>(null)
+  const user = useAuthStore((state) => state.user)
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [activity, setActivity] = useState<ActivityItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -63,18 +62,16 @@ export function AdminDashboardPage() {
   }, [])
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    if (!user) {
       navigate("/login")
       return
     }
-    if (currentUser.role !== "admin") {
+    if (user.role !== "admin") {
       navigate("/dashboard")
       return
     }
-    setUser(currentUser)
     fetchData()
-  }, [navigate, fetchData])
+  }, [user, navigate, fetchData])
 
   // Format stats for display
   const displayStats: DashboardStat[] = stats

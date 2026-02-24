@@ -19,7 +19,7 @@ import {
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { AssignmentSubmissionForm } from "@/presentation/components/shared/assignmentDetail/AssignmentSubmissionForm"
@@ -32,7 +32,7 @@ import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignment
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
   const { assignmentId } = useParams<{ assignmentId: string }>()
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
 
   const {
     user,

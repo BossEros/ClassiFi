@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
   createClass,
   generateClassCode,
@@ -19,7 +19,7 @@ import { Input } from "@/presentation/components/ui/Input"
 import { Textarea } from "@/presentation/components/ui/Textarea"
 import { Button } from "@/presentation/components/ui/Button"
 import { Select, type SelectOption } from "@/presentation/components/ui/Select"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/presentation/utils/dateUtils"
@@ -57,8 +57,8 @@ const classScheduleTimeOptions: SelectOption[] = TIME_OPTIONS.map((timeValue) =>
 export function ClassFormPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
-  const { showToast } = useToast()
-  const currentUser = getCurrentUser()
+  const showToast = useToastStore((state) => state.showToast)
+  const currentUser = useAuthStore((state) => state.user)
 
   // Determine if we're in edit mode
   const isEditMode = !!classId
@@ -99,15 +99,14 @@ export function ClassFormPage() {
       return
     }
 
-    const user = getCurrentUser()
-    if (!user) return
+    if (!currentUser) return
 
     const fetchClassData = async () => {
       setIsFetching(true)
       try {
         const classData = await getClassById(
           parseInt(classId),
-          parseInt(user.id),
+          parseInt(currentUser.id),
         )
 
         reset({
@@ -128,7 +127,7 @@ export function ClassFormPage() {
     }
 
     fetchClassData()
-  }, [isEditMode, classId, reset])
+  }, [classId, currentUser, isEditMode, reset])
 
   const handleGenerateCode = async () => {
     setIsGenerating(true)

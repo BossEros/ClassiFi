@@ -1,4 +1,5 @@
 import * as authRepository from "@/data/repositories/authRepository"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
   validateLoginData,
   validateRegistrationData,
@@ -114,22 +115,6 @@ export async function logoutUser(): Promise<void> {
 }
 
 /**
- * Retrieves the currently logged-in user from local storage.
- *
- * @returns The user object if a user is logged in, or null otherwise.
- */
-export function getCurrentUser(): User | null {
-  const userJson = localStorage.getItem("user")
-  if (!userJson) return null
-
-  try {
-    return JSON.parse(userJson)
-  } catch {
-    return null
-  }
-}
-
-/**
  * Retrieves the authentication token from Supabase session.
  * Uses Supabase's secure session management.
  *
@@ -148,9 +133,7 @@ export async function getAuthToken(): Promise<string | null> {
  * @returns True if the user has local user data, false otherwise.
  */
 export function isAuthenticated(): boolean {
-  const user = getCurrentUser()
-
-  return !!user
+  return useAuthStore.getState().isAuthenticated
 }
 
 /**
@@ -186,8 +169,7 @@ export async function verifySession(): Promise<boolean> {
  * Token is managed by Supabase's secure session storage.
  */
 function persistAuthenticationSession(_token: string, user: User): void {
-  // Token is managed by Supabase session - we only store user data locally
-  localStorage.setItem("user", JSON.stringify(user))
+  useAuthStore.getState().login(user)
 }
 
 /**
@@ -195,7 +177,7 @@ function persistAuthenticationSession(_token: string, user: User): void {
  * Token is managed by Supabase.
  */
 function clearLocalAuthenticationSession(): void {
-  localStorage.removeItem("user")
+  useAuthStore.getState().logout()
 }
 
 /**
@@ -356,7 +338,7 @@ export async function changePassword(
 
   try {
     // Get current user email
-    const currentUser = getCurrentUser()
+    const currentUser = useAuthStore.getState().user
 
     if (!currentUser?.email) {
       return {
@@ -441,7 +423,7 @@ export async function deleteAccount(
 
   try {
     // Get current user email
-    const currentUser = getCurrentUser()
+    const currentUser = useAuthStore.getState().user
 
     if (!currentUser?.email) {
       return {

@@ -9,16 +9,16 @@ import {
   ClassFilters,
   type FilterStatus,
 } from "@/presentation/components/shared/dashboard/ClassFilters"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getAllClasses } from "@/business/services/classService"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import type { Class } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function ClassesPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
   const hasShownDeleteToast = useRef(false)
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -29,7 +29,7 @@ export function ClassesPage() {
   const [status, setStatus] = useState<FilterStatus>("active")
   const [selectedTerm, setSelectedTerm] = useState("all")
   const [selectedYearLevel, setSelectedYearLevel] = useState("all")
-  const [currentUser] = useState(() => getCurrentUser())
+  const currentUser = useAuthStore((state) => state.user)
 
   // Show toast if redirected from class deletion
   useEffect(() => {
@@ -42,7 +42,6 @@ export function ClassesPage() {
   }, [location.state, location.pathname, showToast, navigate])
 
   const fetchData = useCallback(async () => {
-    const currentUser = getCurrentUser()
     if (!currentUser) {
       navigate("/login")
       return
@@ -66,7 +65,7 @@ export function ClassesPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [navigate, status])
+  }, [currentUser, navigate, status])
 
   // Fetch classes when status changes (backend filter)
   useEffect(() => {

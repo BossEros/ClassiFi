@@ -1,15 +1,13 @@
+import { useAuthStore } from "@/shared/store/useAuthStore";
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ClassDetailPage } from "./ClassDetailPage"
-import * as authService from "@/business/services/authService"
 import * as classService from "@/business/services/classService"
-import { ToastProvider } from "@/presentation/context/ToastContext"
 import type { ISODateString, DayOfWeek } from "@/shared/types/class"
 
 // Mock services
-vi.mock("@/business/services/authService")
 vi.mock("@/business/services/classService")
 
 const mockUser = {
@@ -56,14 +54,12 @@ const generateMockStudents = (count: number) => {
 const renderClassDetailPage = () => {
   return render(
     <MemoryRouter initialEntries={["/dashboard/classes/1"]}>
-      <ToastProvider>
-        <Routes>
-          <Route
-            path="/dashboard/classes/:classId"
-            element={<ClassDetailPage />}
-          />
-        </Routes>
-      </ToastProvider>
+      <Routes>
+        <Route
+          path="/dashboard/classes/:classId"
+          element={<ClassDetailPage />}
+        />
+      </Routes>
     </MemoryRouter>,
   )
 }
@@ -71,7 +67,75 @@ const renderClassDetailPage = () => {
 describe("ClassDetailPage - Pagination", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(authService.getCurrentUser).mockReturnValue(mockUser)
+    useAuthStore.setState({ user: mockUser as any, isAuthenticated: true })
+  })
+
+  it("shows teacher timeline filters and hides student status filters", async () => {
+    vi.mocked(classService.getClassDetailData).mockResolvedValue({
+      classInfo: mockClassInfo,
+      assignments: [
+        {
+          id: 1,
+          classId: 1,
+          assignmentName: "Teacher Assignment",
+          deadline: "2099-03-01T12:00:00.000Z" as ISODateString,
+          programmingLanguage: "python",
+        },
+      ] as any,
+      students: [],
+    })
+
+    renderClassDetailPage()
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Class")).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText(/Pending \(/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Submitted \(/)).not.toBeInTheDocument()
+    expect(screen.getByText(/All Assignments \(/)).toBeInTheDocument()
+    expect(screen.getByText(/Current & Upcoming \(/)).toBeInTheDocument()
+    expect(screen.getByText(/Past \(/)).toBeInTheDocument()
+    expect(screen.getByText("Add Assignment")).toBeInTheDocument()
+  })
+
+  it("filters teacher assignments by timeline", async () => {
+    vi.mocked(classService.getClassDetailData).mockResolvedValue({
+      classInfo: mockClassInfo,
+      assignments: [
+        {
+          id: 1,
+          classId: 1,
+          assignmentName: "Current Assignment",
+          deadline: "2099-12-01T12:00:00.000Z" as ISODateString,
+          programmingLanguage: "python",
+        },
+        {
+          id: 2,
+          classId: 1,
+          assignmentName: "Past Assignment",
+          deadline: "2024-01-01T12:00:00.000Z" as ISODateString,
+          programmingLanguage: "python",
+        },
+      ] as any,
+      students: [],
+    })
+
+    renderClassDetailPage()
+
+    await waitFor(() => {
+      expect(screen.getByText("Test Class")).toBeInTheDocument()
+    })
+
+    expect(screen.getByText("CURRENT & UPCOMING")).toBeInTheDocument()
+    expect(screen.getByText("PAST ASSIGNMENTS")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: /Filter by Past/i }))
+
+    await waitFor(() => {
+      expect(screen.queryByText("CURRENT & UPCOMING")).not.toBeInTheDocument()
+      expect(screen.getByText("PAST ASSIGNMENTS")).toBeInTheDocument()
+    })
   })
 
   it("does not show pagination with 10 or fewer students", async () => {

@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react"
 import {
   getClassGradebook,
-  getClassStatistics,
   getStudentGrades,
   getStudentClassGrades,
   getStudentRank,
@@ -9,7 +8,6 @@ import {
   removeGradeOverride,
   downloadGradebookCSV,
   type ClassGradebook,
-  type ClassStatistics,
   type StudentClassGrades,
   type StudentRank,
 } from "@/business/services/gradebookService"
@@ -23,7 +21,6 @@ import {
  */
 export function useClassGradebook(classId: number) {
   const [gradebook, setGradebook] = useState<ClassGradebook | null>(null)
-  const [statistics, setStatistics] = useState<ClassStatistics | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -32,20 +29,14 @@ export function useClassGradebook(classId: number) {
       setIsLoading(true)
       setError(null)
 
-      const [gradebookData, statsData] = await Promise.all([
-        getClassGradebook(classId),
-        getClassStatistics(classId),
-      ])
-
+      const gradebookData = await getClassGradebook(classId)
       setGradebook(gradebookData)
-      setStatistics(statsData)
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load gradebook"
 
       setError(errorMessage)
       setGradebook(null)
-      setStatistics(null)
     } finally {
       setIsLoading(false)
     }
@@ -61,7 +52,6 @@ export function useClassGradebook(classId: number) {
 
   return {
     gradebook,
-    statistics,
     isLoading,
     error,
     refetch: fetchGradebook,

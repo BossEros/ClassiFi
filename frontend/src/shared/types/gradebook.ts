@@ -72,14 +72,6 @@ export interface ClassGradebook {
   students: GradebookStudent[]
 }
 
-/** Class statistics */
-export interface ClassStatistics {
-  classAverage: number | null
-  submissionRate: number
-  totalStudents: number
-  totalAssignments: number
-}
-
 /** Student rank in class */
 export interface StudentRank {
   rank: number | null

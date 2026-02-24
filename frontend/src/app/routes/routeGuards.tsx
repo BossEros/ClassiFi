@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from "react"
 import { Navigate, useNavigate } from "react-router-dom"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { AdminDashboardPage } from "@/presentation/pages/admin/AdminDashboardPage"
 import { AdminClassDetailPage } from "@/presentation/pages/admin/AdminClassDetailPage"
 import { AdminClassesPage } from "@/presentation/pages/admin/AdminClassesPage"
@@ -13,7 +13,7 @@ import { StudentDashboardPage } from "@/presentation/pages/student/StudentDashbo
 import { TeacherDashboardPage } from "@/presentation/pages/teacher/TeacherDashboardPage"
 
 export function RoleBasedDashboard() {
-  const user = getCurrentUser()
+  const user = useAuthStore((state) => state.user)
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -35,7 +35,7 @@ export function RoleBasedDashboard() {
 }
 
 export function RoleBasedClassesPage() {
-  const user = getCurrentUser()
+  const user = useAuthStore((state) => state.user)
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -53,7 +53,7 @@ export function RoleBasedClassesPage() {
 }
 
 export function RoleBasedClassDetailPage() {
-  const user = getCurrentUser()
+  const user = useAuthStore((state) => state.user)
 
   if (!user) {
     return <Navigate to="/login" replace />
@@ -121,7 +121,7 @@ export function EmailConfirmationWrapper() {
 }
 
 export function TeacherOnlyRoute({ children }: { children: ReactNode }) {
-  const user = getCurrentUser()
+  const user = useAuthStore((state) => state.user)
 
   if (!user) {
     return <Navigate to="/login" replace />

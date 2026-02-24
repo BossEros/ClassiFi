@@ -89,62 +89,17 @@ describe("AssignmentSection", () => {
 
   it("passes isTeacher prop to assignment cards", () => {
     const onAssignmentClick = vi.fn()
-    const onEditAssignment = vi.fn()
-    const onDeleteAssignment = vi.fn()
 
     render(
       <AssignmentSection
         title="CURRENT & UPCOMING"
         assignments={mockAssignments}
         onAssignmentClick={onAssignmentClick}
-        onEditAssignment={onEditAssignment}
-        onDeleteAssignment={onDeleteAssignment}
         isTeacher={true}
       />,
     )
 
-    // Teacher actions should be visible
-    const editButtons = screen.getAllByTitle("Edit Assignment")
-    expect(editButtons.length).toBeGreaterThan(0)
-  })
-
-  it("calls onEditAssignment when edit is clicked", async () => {
-    const user = userEvent.setup()
-    const onAssignmentClick = vi.fn()
-    const onEditAssignment = vi.fn()
-
-    render(
-      <AssignmentSection
-        title="CURRENT & UPCOMING"
-        assignments={mockAssignments}
-        onAssignmentClick={onAssignmentClick}
-        onEditAssignment={onEditAssignment}
-        isTeacher={true}
-      />,
-    )
-
-    const editButtons = screen.getAllByTitle("Edit Assignment")
-    await user.click(editButtons[0])
-    expect(onEditAssignment).toHaveBeenCalledWith(mockAssignments[0])
-  })
-
-  it("calls onDeleteAssignment when delete is clicked", async () => {
-    const user = userEvent.setup()
-    const onAssignmentClick = vi.fn()
-    const onDeleteAssignment = vi.fn()
-
-    render(
-      <AssignmentSection
-        title="CURRENT & UPCOMING"
-        assignments={mockAssignments}
-        onAssignmentClick={onAssignmentClick}
-        onDeleteAssignment={onDeleteAssignment}
-        isTeacher={true}
-      />,
-    )
-
-    const deleteButtons = screen.getAllByTitle("Delete Assignment")
-    await user.click(deleteButtons[0])
-    expect(onDeleteAssignment).toHaveBeenCalledWith(mockAssignments[0])
+    expect(screen.getByText("Assignment 1")).toBeInTheDocument()
+    expect(screen.getByText("Assignment 2")).toBeInTheDocument()
   })
 })

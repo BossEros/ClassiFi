@@ -75,25 +75,6 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
   })
 
   /**
-   * GET /classes/:classId/statistics
-   * Get class statistics
-   */
-  app.get("/classes/:classId/statistics", {
-    preHandler: validateParams(ClassIdParamSchema),
-    handler: async (request, reply) => {
-      const { classId } = request.validatedParams as ClassIdParam
-
-      const calculatedStatistics =
-        await gradebookService.getClassStatistics(classId)
-
-      return reply.send({
-        success: true,
-        statistics: calculatedStatistics,
-      })
-    },
-  })
-
-  /**
    * GET /students/:studentId
    * Get student grades
    */

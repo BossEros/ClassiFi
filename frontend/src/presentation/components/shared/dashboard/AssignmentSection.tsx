@@ -6,8 +6,6 @@ interface AssignmentSectionProps {
   title: string
   assignments: Assignment[]
   onAssignmentClick: (assignmentId: number) => void
-  onEditAssignment?: (assignment: Assignment) => void
-  onDeleteAssignment?: (assignment: Assignment) => void
   isTeacher: boolean
   className?: string
 }
@@ -16,8 +14,6 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
   title,
   assignments,
   onAssignmentClick,
-  onEditAssignment,
-  onDeleteAssignment,
   isTeacher,
   className = "",
 }) => {
@@ -36,16 +32,6 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
             key={assignment.id}
             assignment={assignment}
             onClick={() => onAssignmentClick(assignment.id)}
-            onEdit={
-              isTeacher && onEditAssignment
-                ? () => onEditAssignment(assignment)
-                : undefined
-            }
-            onDelete={
-              isTeacher && onDeleteAssignment
-                ? () => onDeleteAssignment(assignment)
-                : undefined
-            }
             isTeacher={isTeacher}
           />
         ))}

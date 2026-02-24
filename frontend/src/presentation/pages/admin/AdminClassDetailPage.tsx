@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Avatar } from "@/presentation/components/ui/Avatar"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import {
   getAdminClassDetailData,
   removeStudentFromClass,
@@ -29,7 +29,7 @@ import { AdminAddStudentModal } from "@/presentation/components/admin/AdminAddSt
 export function AdminClassDetailPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
 
   const [classInfo, setClassInfo] = useState<AdminClass | null>(null)
   const [students, setStudents] = useState<EnrolledStudent[]>([])

@@ -169,16 +169,13 @@ describe("ClassHeader", () => {
   })
 
   it("renders teacher actions when isTeacher is true", () => {
-    const onViewGradebook = vi.fn()
     render(
       <ClassHeader
         {...defaultProps}
         isTeacher={true}
-        onViewGradebook={onViewGradebook}
       />,
     )
 
-    expect(screen.getByText("Gradebook")).toBeInTheDocument()
     expect(screen.queryByText("Leave Class")).not.toBeInTheDocument()
 
     // Check for edit/delete options in dropdown (simplified check since we mocked it)
@@ -197,7 +194,7 @@ describe("ClassHeader", () => {
     )
 
     expect(screen.getByText("Leave Class")).toBeInTheDocument()
-    expect(screen.queryByText("Gradebook")).not.toBeInTheDocument()
+    expect(screen.queryByText("Edit Class")).not.toBeInTheDocument()
   })
 
   it("calls action handlers", () => {

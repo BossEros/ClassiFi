@@ -2,17 +2,11 @@ import React, { type ReactElement } from "react"
 import { render, type RenderOptions } from "@testing-library/react"
 import { BrowserRouter } from "react-router-dom"
 
-import { ToastProvider } from "@/presentation/context/ToastContext"
-
 /**
  * All providers that wrap the app.
  */
 function AllProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <BrowserRouter>
-      <ToastProvider>{children}</ToastProvider>
-    </BrowserRouter>
-  )
+  return <BrowserRouter>{children}</BrowserRouter>
 }
 
 /**

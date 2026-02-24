@@ -6,8 +6,9 @@ import { CustomToolbar } from "./CustomToolbar"
 import { CustomDayView } from "./CustomDayView"
 import { CustomWeekView } from "./CustomWeekView"
 import { EventDetailsModal } from "./EventDetailsModal"
+import { getCalendarMonthEventStyle } from "./eventStyle"
 import { calendarLocalizer } from "@/presentation/constants/calendarConfig"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/business/models/calendar/types"
 import "react-big-calendar/lib/css/react-big-calendar.css"
@@ -57,7 +58,7 @@ export function ClassCalendarTab({
     refetchEvents,
   } = useClassCalendar({ classId, className })
 
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
 
   // ============================================================================
   // Side Effects
@@ -103,11 +104,7 @@ export function ClassCalendarTab({
   // ============================================================================
 
   const eventStyleGetter = (event: CalendarEvent) => ({
-    style: {
-      backgroundColor: event.classInfo.color,
-      borderLeft: `3px solid ${event.classInfo.color}`,
-      color: "white",
-    },
+    style: getCalendarMonthEventStyle(event.classInfo.color),
   })
 
   const dayStyleGetter = (date: Date) => {
