@@ -1,5 +1,4 @@
 import type {
-  ClassStatistics,
   GradeEntry,
   GradebookAssignment,
   GradebookStudent,
@@ -22,7 +21,6 @@ export type {
   GradebookStudent,
   GradebookAssignment,
   GradeEntry,
-  ClassStatistics,
   StudentRank,
 }
 
@@ -35,11 +33,6 @@ export interface ClassGradebookResponse {
 export interface StudentGradesResponse {
   success: boolean
   grades: StudentClassGrades[]
-}
-
-export interface ClassStatisticsResponse {
-  success: boolean
-  statistics: ClassStatistics
 }
 
 export interface StudentRankResponse {

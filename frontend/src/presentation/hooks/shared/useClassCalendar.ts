@@ -2,7 +2,7 @@ import { useMemo } from "react"
 
 import { useCalendar, type UseCalendarReturn } from "./useCalendar"
 import { getClassColor } from "@/business/services/calendarService"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import type { ClassInfo } from "@/business/models/calendar/types"
 
 // ============================================================================
@@ -39,7 +39,7 @@ export function useClassCalendar({
   const calendar = useCalendar()
 
   // Get current user to determine role-based flags
-  const currentUser = getCurrentUser()
+  const currentUser = useAuthStore((state) => state.user)
   const userRole = currentUser?.role
 
   /**

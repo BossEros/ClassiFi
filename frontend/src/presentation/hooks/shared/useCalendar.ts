@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import {
   addMonths,
@@ -9,7 +10,6 @@ import {
 } from "date-fns"
 
 import * as calendarService from "@/business/services/calendarService"
-import * as authService from "@/business/services/authService"
 import type { CalendarEvent, ClassInfo } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/business/models/calendar/types"
 
@@ -76,6 +76,7 @@ export function useCalendar(): UseCalendarReturn {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const currentUser = useAuthStore((state) => state.user)
 
   // Track if this is the initial load to auto-select all classes
   const isInitialLoad = useRef<boolean>(true)
@@ -94,7 +95,7 @@ export function useCalendar(): UseCalendarReturn {
     setError(null)
 
     try {
-      const user = authService.getCurrentUser()
+      const user = currentUser
 
       if (!user) {
         setError("User not authenticated")
@@ -160,7 +161,7 @@ export function useCalendar(): UseCalendarReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [currentDate, currentView, selectedClasses.size])
+  }, [currentDate, currentView, selectedClasses.size, currentUser])
 
   // ============================================================================
   // Computed Values

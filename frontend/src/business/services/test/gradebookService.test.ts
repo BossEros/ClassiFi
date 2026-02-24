@@ -34,30 +34,6 @@ describe("gradebookService", () => {
     })
   })
 
-  describe("getClassStatistics", () => {
-    it("should validate classId and call repository", async () => {
-      const mockStats = {
-        classId: 1,
-        classAverage: 85,
-        medianScore: 82,
-        highestScore: 98,
-        lowestScore: 60,
-        standardDeviation: 5,
-        passingRate: 90,
-      }
-      vi.mocked(gradebookRepository.getStatisticsForClassId).mockResolvedValue(
-        mockStats as any,
-      )
-
-      const result = await gradebookService.getClassStatistics(1)
-
-      expect(result).toEqual(mockStats)
-      expect(gradebookRepository.getStatisticsForClassId).toHaveBeenCalledWith(
-        1,
-      )
-    })
-  })
-
   describe("getStudentGrades", () => {
     it("should validate studentId and call repository", async () => {
       const mockGrades = [{ classId: 1, className: "Math", grades: [] }]

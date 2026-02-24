@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { type ProgrammingLanguage } from "@/business/models/assignment/types"
 import { getAssignmentById } from "@/business/services/assignmentService"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
   createAssignment,
   getClassById,
@@ -18,7 +18,7 @@ import {
 } from "@/business/services/testCaseService"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { PendingTestCase } from "@/presentation/components/teacher/forms/testCases/TestCaseList"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import {
   buildAssignmentPayload,
   normalizeLatePenaltyConfig,
@@ -68,8 +68,8 @@ export function useAssignmentForm() {
     classId: string
     assignmentId?: string
   }>()
-  const { showToast } = useToast()
-  const currentUser = getCurrentUser()
+  const showToast = useToastStore((state) => state.showToast)
+  const currentUser = useAuthStore((state) => state.user)
 
   const isEditMode = !!assignmentId
 
@@ -117,7 +117,7 @@ export function useAssignmentForm() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const user = getCurrentUser()
+      const user = currentUser
 
       if (!user || !classId) {
         return
@@ -175,7 +175,7 @@ export function useAssignmentForm() {
     }
 
     void fetchData()
-  }, [assignmentId, classId, isEditMode, reset])
+  }, [assignmentId, classId, currentUser, isEditMode, reset])
 
   useEffect(() => {
     const fetchAssignmentTestCases = async () => {

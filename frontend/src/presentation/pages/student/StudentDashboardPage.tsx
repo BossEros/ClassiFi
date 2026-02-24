@@ -3,22 +3,16 @@ import { useNavigate } from "react-router-dom"
 import { Grid3x3, FileText, ArrowRight } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/studentDashboardService"
-import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
-import type { User } from "@/business/models/auth/types"
-import type { Class, Task } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
+import type { Class, Task } from "@/business/models/dashboard/types"
 
 export function StudentDashboardPage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<User | null>(null)
+  const user = useAuthStore((state) => state.user)
   const [enrolledClasses, setEnrolledClasses] = useState<Class[]>([])
   const [pendingAssignments, setPendingAssignments] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -42,15 +36,13 @@ export function StudentDashboardPage() {
   }
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    if (!user) {
       navigate("/login")
       return
     }
 
-    setUser(currentUser)
-    fetchDashboardData(parseInt(currentUser.id))
-  }, [navigate])
+    fetchDashboardData(parseInt(user.id))
+  }, [navigate, user])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()

@@ -3,6 +3,8 @@ import {
   filterAssignments,
   groupAssignments,
   calculateFilterCounts,
+  filterTeacherAssignmentsByTimeline,
+  calculateTeacherFilterCounts,
 } from "./assignmentFilters"
 import type { Assignment } from "@/shared/types/class"
 
@@ -142,6 +144,58 @@ describe("assignmentFilters", () => {
       expect(result.all).toBe(0)
       expect(result.pending).toBe(0)
       expect(result.submitted).toBe(0)
+    })
+  })
+
+  describe("filterTeacherAssignmentsByTimeline", () => {
+    it("returns all grouped assignments when filter is 'all'", () => {
+      const assignments = [
+        createAssignment({ id: 1, deadline: "2024-01-20T23:59:59Z" as any }),
+        createAssignment({ id: 2, deadline: "2024-01-10T23:59:59Z" as any }),
+      ]
+
+      const result = filterTeacherAssignmentsByTimeline(assignments, "all")
+      expect(result.current.map((assignment) => assignment.id)).toEqual([1])
+      expect(result.past.map((assignment) => assignment.id)).toEqual([2])
+    })
+
+    it("returns only current assignments when filter is 'current'", () => {
+      const assignments = [
+        createAssignment({ id: 1, deadline: "2024-01-20T23:59:59Z" as any }),
+        createAssignment({ id: 2, deadline: "2024-01-10T23:59:59Z" as any }),
+      ]
+
+      const result = filterTeacherAssignmentsByTimeline(assignments, "current")
+      expect(result.current.map((assignment) => assignment.id)).toEqual([1])
+      expect(result.past).toEqual([])
+    })
+
+    it("returns only past assignments when filter is 'past'", () => {
+      const assignments = [
+        createAssignment({ id: 1, deadline: "2024-01-20T23:59:59Z" as any }),
+        createAssignment({ id: 2, deadline: "2024-01-10T23:59:59Z" as any }),
+      ]
+
+      const result = filterTeacherAssignmentsByTimeline(assignments, "past")
+      expect(result.current).toEqual([])
+      expect(result.past.map((assignment) => assignment.id)).toEqual([2])
+    })
+  })
+
+  describe("calculateTeacherFilterCounts", () => {
+    it("calculates teacher timeline filter counts", () => {
+      const assignments = [
+        createAssignment({ id: 1, deadline: "2024-01-20T23:59:59Z" as any }),
+        createAssignment({ id: 2, deadline: "2024-01-10T23:59:59Z" as any }),
+        createAssignment({ id: 3, deadline: null }),
+      ]
+
+      const result = calculateTeacherFilterCounts(assignments)
+      expect(result).toEqual({
+        all: 3,
+        current: 2,
+        past: 1,
+      })
     })
   })
 })

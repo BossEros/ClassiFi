@@ -22,19 +22,18 @@ import { Avatar } from "@/presentation/components/ui/Avatar"
 import { AdminUserModal } from "@/presentation/components/admin/AdminUserModal"
 import { AdminEditUserModal } from "@/presentation/components/admin/AdminEditUserModal"
 import { AdminDeleteUserModal } from "@/presentation/components/admin/AdminDeleteUserModal"
-import { getCurrentUser } from "@/business/services/authService"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import { useToastStore } from "@/shared/store/useToastStore"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
-import type { User } from "@/business/models/auth/types"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
 
 export function AdminUsersPage() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const showToast = useToastStore((state) => state.showToast)
+  const currentUser = useAuthStore((state) => state.user)
   const [users, setUsers] = useState<AdminUser[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState<
@@ -83,20 +82,18 @@ export function AdminUsersPage() {
   }, [page, limit, debouncedSearch, roleFilter, executeRequest])
 
   useEffect(() => {
-    const user = getCurrentUser()
-    if (!user) {
+    if (!currentUser) {
       navigate("/login")
       return
     }
-    if (user.role !== "admin") {
+    if (currentUser.role !== "admin") {
       navigate("/dashboard")
       return
     }
-    setCurrentUser(user)
-  }, [navigate])
+  }, [currentUser, navigate])
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser?.role === "admin") {
       fetchUsers()
     }
   }, [currentUser, fetchUsers])

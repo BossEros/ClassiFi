@@ -11,16 +11,19 @@ import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { SubmissionCard } from "@/presentation/components/shared/dashboard/SubmissionCard"
-import { Search, Shield, Calendar, Inbox, Loader2 } from "lucide-react"
-import { getCurrentUser } from "@/business/services/authService"
+import { Search, Shield, Calendar, Inbox, Loader2, Edit, Trash2 } from "lucide-react"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
   getAssignmentById,
   getAssignmentSubmissions,
 } from "@/business/services/assignmentService"
+import { deleteAssignment } from "@/business/services/classService"
 import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
 import { formatDeadline } from "@/presentation/utils/dateUtils"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
+import { DeleteAssignmentModal } from "@/presentation/components/teacher/forms/class/DeleteAssignmentModal"
 import type {
   AssignmentDetail,
   Submission,
@@ -29,7 +32,9 @@ import type {
 export function AssignmentSubmissionsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const navigate = useNavigate()
-  const [currentUser] = useState(() => getCurrentUser())
+  const currentUser = useAuthStore((state) => state.user)
+  const canManageAssignment =
+    currentUser?.role === "teacher" || currentUser?.role === "admin"
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
@@ -40,7 +45,9 @@ export function AssignmentSubmissionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const { showToast } = useToast()
+  const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] = useState(false)
+  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
+  const showToast = useToastStore((state) => state.showToast)
 
   // Fetch data on mount
   useEffect(() => {
@@ -55,16 +62,14 @@ export function AssignmentSubmissionsPage() {
         setLoading(true)
         setError(null)
 
-        // Get current user
-        const user = getCurrentUser()
-        if (!user) {
+        if (!currentUser) {
           navigate("/login")
           return
         }
 
         // Fetch assignment details and submissions in parallel
         const [assignmentData, submissionsData] = await Promise.all([
-          getAssignmentById(parseInt(assignmentId), parseInt(user.id)),
+          getAssignmentById(parseInt(assignmentId), parseInt(currentUser.id)),
           getAssignmentSubmissions(parseInt(assignmentId)),
         ])
 
@@ -82,7 +87,7 @@ export function AssignmentSubmissionsPage() {
     }
 
     fetchData()
-  }, [assignmentId, navigate])
+  }, [assignmentId, currentUser, navigate])
 
   // Filter submissions by search query
   useEffect(() => {
@@ -148,6 +153,43 @@ export function AssignmentSubmissionsPage() {
     navigate(`/dashboard/assignments/${assignmentId}`)
   }
 
+  const handleEditAssignment = () => {
+    if (!assignment || !canManageAssignment) {
+      return
+    }
+
+    navigate(
+      `/dashboard/classes/${assignment.classId}/assignments/${assignment.id}/edit`,
+    )
+  }
+
+  const handleDeleteAssignmentClick = () => {
+    if (!canManageAssignment) {
+      return
+    }
+
+    setIsDeleteAssignmentModalOpen(true)
+  }
+
+  const handleConfirmDeleteAssignment = async () => {
+    if (!currentUser || !assignment || !canManageAssignment) {
+      return
+    }
+
+    try {
+      setIsDeletingAssignment(true)
+      await deleteAssignment(assignment.id, parseInt(currentUser.id, 10))
+      showToast("Assignment deleted successfully")
+      navigate(`/dashboard/classes/${assignment.classId}`)
+    } catch (deleteError) {
+      console.error("Failed to delete assignment:", deleteError)
+      showToast("Failed to delete assignment", "error")
+    } finally {
+      setIsDeletingAssignment(false)
+      setIsDeleteAssignmentModalOpen(false)
+    }
+  }
+
   // Loading state
   if (loading) {
     return (
@@ -191,9 +233,33 @@ export function AssignmentSubmissionsPage() {
 
         {/* Assignment Info */}
         <div className="space-y-4">
-          <h1 className="text-3xl font-bold text-white">
-            {assignment.assignmentName}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl font-bold text-white">
+              {assignment.assignmentName}
+            </h1>
+
+            {canManageAssignment && (
+              <DropdownMenu
+                items={[
+                  {
+                    id: "edit-assignment",
+                    label: "Edit Assignment",
+                    icon: Edit,
+                    onClick: handleEditAssignment,
+                  },
+                  {
+                    id: "delete-assignment",
+                    label: "Delete Assignment",
+                    icon: Trash2,
+                    variant: "danger",
+                    onClick: handleDeleteAssignmentClick,
+                  },
+                ]}
+                triggerLabel="Assignment actions"
+                className="text-slate-400 hover:text-white flex-shrink-0"
+              />
+            )}
+          </div>
 
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-fit">
             <Calendar className="w-3.5 h-3.5 text-blue-400" />
@@ -336,6 +402,16 @@ export function AssignmentSubmissionsPage() {
           )}
         </div>
       </div>
+
+      {canManageAssignment && (
+        <DeleteAssignmentModal
+          isOpen={isDeleteAssignmentModalOpen}
+          onClose={() => setIsDeleteAssignmentModalOpen(false)}
+          onConfirm={handleConfirmDeleteAssignment}
+          isDeleting={isDeletingAssignment}
+          assignmentTitle={assignment.assignmentName}
+        />
+      )}
     </DashboardLayout>
   )
 }

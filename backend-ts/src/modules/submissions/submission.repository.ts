@@ -170,6 +170,35 @@ export class SubmissionRepository extends BaseRepository<
     return Number(result[0]?.count ?? 0)
   }
 
+  /**
+   * Get latest submission counts grouped by assignment ID.
+   */
+  async getLatestSubmissionCountsByAssignmentIds(
+    assignmentIds: number[],
+  ): Promise<Map<number, number>> {
+    if (assignmentIds.length === 0) {
+      return new Map()
+    }
+
+    const rows = await this.db
+      .select({
+        assignmentId: submissions.assignmentId,
+        count: sql<number>`count(*)`,
+      })
+      .from(submissions)
+      .where(
+        and(
+          inArray(submissions.assignmentId, assignmentIds),
+          eq(submissions.isLatest, true),
+        ),
+      )
+      .groupBy(submissions.assignmentId)
+
+    return new Map(
+      rows.map((row) => [row.assignmentId, Number(row.count)]),
+    )
+  }
+
   /** Create a new submission */
   async createSubmission(data: {
     assignmentId: number

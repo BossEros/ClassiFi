@@ -198,7 +198,22 @@ export class CodeTestService {
   ): Promise<TestExecutionSummary | null> {
     const resultsWithCases =
       await this.testResultRepo.getWithCasesBySubmissionId(submissionId)
+
     if (resultsWithCases.length === 0) {
+      // Determine if the assignment simply has no test cases
+      const { assignment } = await this.fetchSubmissionData(submissionId)
+      const testCases = await this.testCaseRepo.getByAssignmentId(assignment.id)
+
+      if (testCases.length === 0) {
+        return {
+          submissionId,
+          passed: 0,
+          total: 0,
+          percentage: 100,
+          results: [],
+        }
+      }
+
       return null
     }
 

@@ -186,7 +186,8 @@ Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
 - Feature-specific helper services are colocated with their module (for example, plagiarism helper services under `src/modules/plagiarism` and late penalty logic under `src/modules/assignments`).
 - Feature-specific mappers/guards/helpers are colocated with their module (for example, `src/modules/*/*.mapper.ts`, `src/modules/classes/class.guard.ts`).
-- Route registration imports module entry points from `src/modules/*/index.ts`.
+- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points (for example, auth, classes, assignments, submissions, dashboard, notifications) from `src/modules/*/index.ts`.
+- Internal/shared modules that are not mounted directly as route groups can still be consumed through services without requiring their own route entrypoint.
 - Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
 
 ---
@@ -313,6 +314,10 @@ The programming language is specified at assignment creation and enforced during
 | GET    | `/submissions/assignment/:assignmentId`         | Get all submissions           |
 | GET    | `/submissions/student/:studentId`               | Get student's submissions     |
 
+Authorization notes:
+- Assignment mutation endpoints (`PUT /assignments/:id`, `DELETE /assignments/:id`) are intended for teacher/admin workflows.
+- Student-facing flows should not expose assignment management actions in the UI.
+
 **Assignment Instructions Content**:
 - Assignment create/update supports both text (`instructions`) and an optional image field (`instructionsImageUrl`)
 - Business rule requires at least one instructions surface: text or image
@@ -330,7 +335,6 @@ The programming language is specified at assignment creation and enforced during
 | ------ | ------------------------------------------------------ | ------------------------ |
 | GET    | `/gradebook/classes/:classId`                          | Get class gradebook      |
 | GET    | `/gradebook/classes/:classId/export`                   | Export CSV               |
-| GET    | `/gradebook/classes/:classId/statistics`               | Get class stats          |
 | GET    | `/gradebook/students/:studentId`                       | Get student grades       |
 | GET    | `/gradebook/students/:studentId/classes/:classId`      | Get student class grades |
 | GET    | `/gradebook/students/:studentId/classes/:classId/rank` | Get student rank         |
@@ -860,7 +864,7 @@ class SubmissionService {
 
 ### GradebookService
 
-Manages student grades and statistics:
+Manages student grades and exports:
 
 ```typescript
 class GradebookService {
@@ -871,7 +875,6 @@ class GradebookService {
   getLatePenaltyConfig(assignmentId); // Get late penalty settings
   setLatePenaltyConfig(assignmentId, config); // Update late penalty
   exportGradebookCSV(classId); // Export to CSV
-  getClassStatistics(classId); // Get class-wide statistics
 }
 ```
 
@@ -880,7 +883,6 @@ class GradebookService {
 - Late penalty application with configurable rates
 - Manual grade overrides with audit trail
 - CSV export for external processing
-- Class-wide statistics (average, median, distribution)
 
 ### PlagiarismService
 

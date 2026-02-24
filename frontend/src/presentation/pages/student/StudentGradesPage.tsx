@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -12,8 +12,7 @@ import {
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { LatePenaltyBadge } from "@/presentation/components/teacher/gradebook/LatePenaltyBadge"
 import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
-import { getCurrentUser } from "@/business/services/authService"
-import type { User } from "@/business/models/auth/types"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import type {
   StudentClassGrades,
   StudentGradeEntry,
@@ -22,17 +21,15 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function StudentGradesPage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<User | null>(null)
+  const user = useAuthStore((state) => state.user)
 
   // Load user
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    if (!user) {
       navigate("/login")
       return
     }
-    setUser(currentUser)
-  }, [navigate])
+  }, [navigate, user])
 
   const studentId = user ? parseInt(user.id, 10) : 0
   const { grades, isLoading, error } = useStudentGrades(studentId)

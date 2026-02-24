@@ -6,19 +6,18 @@ import { AdminCreateClassModal } from "@/presentation/components/admin/AdminCrea
 import { AdminDeleteClassModal } from "@/presentation/components/admin/AdminDeleteClassModal"
 import { AdminClassesFilters } from "@/presentation/components/admin/AdminClassesFilters"
 import { AdminClassesTable } from "@/presentation/components/admin/AdminClassesTable"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as adminService from "@/business/services/adminService"
 import type { AdminClass, AdminUser } from "@/business/services/adminService"
-import type { User as AuthUser } from "@/business/models/auth/types"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
 
 export function AdminClassesPage() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+  const showToast = useToastStore((state) => state.showToast)
+  const currentUser = useAuthStore((state) => state.user)
   const [classes, setClasses] = useState<AdminClass[]>([])
   const [teachers, setTeachers] = useState<AdminUser[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -93,21 +92,19 @@ export function AdminClassesPage() {
   }, [])
 
   useEffect(() => {
-    const user = getCurrentUser()
-    if (!user) {
+    if (!currentUser) {
       navigate("/login")
       return
     }
-    if (user.role !== "admin") {
+    if (currentUser.role !== "admin") {
       navigate("/dashboard")
       return
     }
-    setCurrentUser(user)
     fetchTeachers()
-  }, [navigate, fetchTeachers])
+  }, [currentUser, navigate, fetchTeachers])
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser?.role === "admin") {
       fetchClasses()
     }
   }, [currentUser, fetchClasses])

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
@@ -8,12 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function HistoryPage() {
   const navigate = useNavigate()
-  const [currentUser] = useState(() => getCurrentUser())
+  const currentUser = useAuthStore((state) => state.user)
 
   useEffect(() => {
     if (!currentUser) {

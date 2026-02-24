@@ -122,21 +122,6 @@ export const StudentGradesResponseSchema = z.object({
 
 export type StudentGradesResponse = z.infer<typeof StudentGradesResponseSchema>
 
-/** Class statistics response */
-export const ClassStatisticsResponseSchema = z.object({
-  success: z.boolean(),
-  statistics: z.object({
-    classAverage: z.number().nullable(),
-    submissionRate: z.number(),
-    totalStudents: z.number(),
-    totalAssignments: z.number(),
-  }),
-})
-
-export type ClassStatisticsResponse = z.infer<
-  typeof ClassStatisticsResponseSchema
->
-
 /** Student rank response */
 export const StudentRankResponseSchema = z.object({
   success: z.boolean(),

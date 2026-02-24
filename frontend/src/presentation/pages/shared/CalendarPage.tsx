@@ -19,11 +19,12 @@ import {
   CustomWeekView,
   EventDetailsModal,
 } from "@/presentation/components/shared/calendar"
+import { getCalendarMonthEventStyle } from "@/presentation/components/shared/calendar/eventStyle"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { calendarLocalizer } from "@/presentation/constants/calendarConfig"
-import { useToast } from "@/presentation/context/ToastContext"
-import { getCurrentUser } from "@/business/services/authService"
+import { useToastStore } from "@/shared/store/useToastStore"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "./CalendarPage.css"
@@ -41,7 +42,7 @@ import "./CalendarPage.css"
  * @returns The calendar page UI
  */
 export default function CalendarPage() {
-  const user = getCurrentUser()
+  const user = useAuthStore((state) => state.user)
   const userInitials = user
     ? `${user.firstName && user.firstName.length > 0 ? user.firstName[0] : "?"}${user.lastName && user.lastName.length > 0 ? user.lastName[0] : "?"}`.toUpperCase()
     : "?"
@@ -68,7 +69,7 @@ export default function CalendarPage() {
     refetchEvents,
   } = useCalendar()
 
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
 
   /**
    * Show error toast when error state changes.
@@ -129,11 +130,7 @@ export default function CalendarPage() {
    */
   const eventStyleGetter = (event: CalendarEvent) => {
     return {
-      style: {
-        backgroundColor: event.classInfo.color,
-        borderLeft: `3px solid ${event.classInfo.color}`,
-        color: "white",
-      },
+      style: getCalendarMonthEventStyle(event.classInfo.color),
     }
   }
 

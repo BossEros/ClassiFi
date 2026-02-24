@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/teacherDashboardService"
 import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
 import type { User } from "@/business/models/auth/types"
@@ -18,6 +18,7 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function TeacherDashboardPage() {
   const navigate = useNavigate()
+  const currentUser = useAuthStore((state) => state.user)
   const [user, setUser] = useState<User | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
@@ -25,7 +26,6 @@ export function TeacherDashboardPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
     if (!currentUser) {
       navigate("/login")
       return
@@ -55,7 +55,7 @@ export function TeacherDashboardPage() {
     }
 
     fetchData()
-  }, [navigate])
+  }, [currentUser, navigate])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()

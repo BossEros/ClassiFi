@@ -4,8 +4,6 @@ import type {
   ClassGradebookResponse,
   StudentClassGrades,
   StudentGradesResponse,
-  ClassStatistics,
-  ClassStatisticsResponse,
   StudentRank,
   StudentRankResponse,
   LatePenaltyConfig,
@@ -64,20 +62,6 @@ export async function downloadGradebookCSVFileForClassId(
   downloadLinkElement.click()
   document.body.removeChild(downloadLinkElement)
   window.URL.revokeObjectURL(downloadUrl)
-}
-
-export async function getStatisticsForClassId(
-  classId: number,
-): Promise<ClassStatistics> {
-  const apiResponse = await apiClient.get<ClassStatisticsResponse>(
-    `/gradebook/classes/${classId}/statistics`,
-  )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || "Failed to fetch class statistics")
-  }
-
-  return apiResponse.data.statistics
 }
 
 // ============================================================================

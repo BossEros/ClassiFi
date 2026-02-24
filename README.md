@@ -1,185 +1,140 @@
 # ClassiFi
 
-A full-stack web application for classroom management and interaction, built as an undergraduate Computer Science thesis project.
+ClassiFi is a full-stack classroom platform focused on programming assignments, grading workflows, and academic integrity tooling.
 
-## 🚀 Overview
+## Overview
 
-ClassiFi is a modern platform designed to facilitate interaction between instructors and students. It features classroom management, assignment tracking, automated code grading, and plagiarism detection.
+ClassiFi provides role-based experiences for students, teachers, and admins:
 
-### Key Features
+- Students can join classes, view assignments, submit code, and monitor grades.
+- Teachers can manage classes and assignments, review submissions, run plagiarism analysis, and manage grade overrides.
+- Admins can manage users, classes, and system-level operations.
 
-- **Multi-language Support**: Python, Java, and C programming assignments
-- **Automated Testing**: Judge0-powered code execution with configurable test cases
-- **Plagiarism Detection**: Winnowing-based similarity detection with AST parsing
-- **Grade Management**: Automated grading with late penalties and manual overrides
-- **Admin Dashboard**: Comprehensive user and class management
-- **Real-time Feedback**: Instant test results and submission history
-- **Secure Authentication**: Supabase-powered auth with role-based access control
+## Core Capabilities
 
-## 🛠️ Technology Stack
+- Programming assignments with Python, Java, and C support
+- Test-case based evaluation and manual test execution
+- Late submission policy and late-penalty configuration
+- Gradebook with override workflows
+- Plagiarism analysis with student-centric and pairwise views
+- Role-based access control using Supabase authentication
+- Notifications for assignment and grading events
+
+## Architecture
 
 ### Frontend
 
-- **Framework:** React 19 + TypeScript 5.9
-- **Build Tool:** Vite 7
-- **Styling:** Tailwind CSS 4
-- **Architecture:** Clean Architecture (Presentation → Business → Data)
-- **Code Editor:** Monaco Editor 0.55
-- **Testing:** Vitest 4 + Playwright 1.58
+- Stack: React + TypeScript + Vite + Tailwind CSS
+- Pattern: Clean Architecture (`presentation -> business -> data`)
+- Global UI/auth state: Zustand stores (`useAuthStore`, `useToastStore`)
+- Routing: React Router with protected and role-based route wrappers
 
 ### Backend
 
-- **Framework:** Fastify 5 (Node.js/TypeScript)
-- **Database:** PostgreSQL (via Supabase)
-- **ORM:** Drizzle ORM 0.36
-- **Authentication:** Supabase Auth 2.93
-- **Code Execution:** Judge0
-- **Code Analysis:** Tree-Sitter 0.25
-- **Dependency Injection:** tsyringe
-- **Testing:** Vitest 4
+- Stack: Fastify + TypeScript + Drizzle ORM + PostgreSQL
+- Pattern: Controller -> Service -> Repository
+- Layout: Module-first under `backend-ts/src/modules/*`
+- Dependency Injection: `tsyringe`
+- Validation: Zod-based request and environment validation
 
-### Infrastructure
+## Project Structure
 
-- **Database & Auth:** Supabase
-- **File Storage:** Supabase Storage
-- **Code Execution:** Judge0 (self-hosted via Docker)
-- **Deployment:** Vercel (Frontend) + Render (Backend)
+```text
+ClassiFi/
+|-- frontend/
+|   |-- src/
+|   |   |-- app/                  # App shell and route registration
+|   |   |-- presentation/         # UI components/pages/hooks/schemas
+|   |   |-- business/             # Domain models and services
+|   |   |-- data/                 # API clients, repositories, mappers
+|   |   `-- shared/               # Shared constants, store, types, utils
+|   `-- documentation.md
+|
+|-- backend-ts/
+|   |-- src/
+|   |   |-- api/                  # Route aggregator, middleware, plugins
+|   |   |-- modules/              # Feature modules (controller/service/repo)
+|   |   |-- shared/               # Config, DI, DB, errors, logger
+|   |   |-- models/               # Shared model exports
+|   |   `-- services/             # Cross-cutting services/interfaces
+|   `-- documentation.md
+|
+|-- judge0/                       # Local Judge0 setup (optional)
+|-- docs/                         # Deployment and supporting docs
+|-- AGENTS.md                     # Agent development rules
+`-- README.md
+```
 
-## 🏁 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ (LTS recommended)
-- npm or yarn
-- PostgreSQL database (or Supabase account)
-- Judge0 instance (optional, for code execution)
+- Node.js 18+
+- npm
+- Supabase project (Auth/DB/Storage)
+- Optional: Judge0 instance for code execution
 
-### 1. Frontend Setup
+### Frontend
 
 ```bash
 cd frontend
 npm install
 cp .env.example .env
-# Configure environment variables in .env
 npm run dev
-# App runs at http://localhost:5173
 ```
 
-### 2. Backend Setup
+Default dev URL: `http://localhost:5173`
+
+### Backend
 
 ```bash
 cd backend-ts
 npm install
 cp .env.example .env
-# Configure environment variables in .env
 npm run dev
-# Server runs at http://localhost:8001
 ```
 
-### 3. Judge0 Setup (Optional)
+Default API URL: `http://localhost:8001`
 
-For code execution features:
+### Optional Judge0
 
 ```bash
 cd judge0
 docker-compose up -d
-# Judge0 API runs at http://localhost:2358
 ```
 
-## 📂 Project Structure
+Default Judge0 URL: `http://localhost:2358`
 
-```text
-ClassiFi/
-├── frontend/              # React 19 + TypeScript frontend
-│   ├── business/          # Business logic layer
-│   ├── data/              # Data access layer
-│   ├── presentation/      # UI components and pages
-│   │   ├── components/    # Reusable components
-│   │   │   ├── admin/     # Admin management UI
-│   │   │   ├── plagiarism/# Plagiarism detection UI
-│   │   │   ├── gradebook/ # Grade management UI
-│   │   │   └── ui/        # Base UI components
-│   │   └── pages/         # Route pages
-│   └── shared/            # Shared utilities
-│
-├── backend-ts/            # Fastify + TypeScript backend
-│   ├── src/
-│   │   ├── api/           # Controllers, routes, schemas
-│   │   │   └── controllers/
-│   │   │       └── admin/ # Admin-specific controllers
-│   │   ├── lib/           # External libraries
-│   │   │   └── plagiarism/# Plagiarism detection engine
-│   │   ├── models/        # Database models (Drizzle)
-│   │   ├── repositories/  # Data access layer
-│   │   ├── services/      # Business logic
-│   │   │   └── admin/     # Admin services
-│   │   └── shared/        # Shared utilities
-│   └── tests/             # Unit tests
-│
-├── judge0/                # Judge0 Docker configuration
-│   └── docker-compose.yml
-│
-└── docs/                  # Documentation
-    └── DEPLOYMENT.md
-```
-
-## 🚀 Deployment
-
-ClassiFi is configured for automatic deployment:
-
-| Component       | Platform                         | Status              | URL                                    |
-| --------------- | -------------------------------- | ------------------- | -------------------------------------- |
-| Frontend        | [Vercel](https://vercel.com)     | Auto-deploy on push | Production URL from Vercel             |
-| Backend         | [Render](https://render.com)     | Auto-deploy on push | Production URL from Render             |
-| Database & Auth | [Supabase](https://supabase.com) | Managed             | Configured via environment variables   |
-| Judge0          | Self-hosted (Docker)             | Manual deployment   | Requires separate server configuration |
-
-See **[Deployment Guide](./docs/DEPLOYMENT.md)** for detailed setup instructions.
-
-## 📚 Documentation
-
-For more detailed information, please refer to:
-
-- **[Deployment Guide](./docs/DEPLOYMENT.md)** - Deploy to Vercel & Render
-- **[Frontend Documentation](./frontend/documentation.md)** - Architecture, components, and services
-- **[Backend Documentation](./backend-ts/documentation.md)** - API reference, services, and database
-- **[Agent Guidelines](./AGENTS.md)** - Development standards and workflows
-
-## 🧪 Testing
+## Testing and Quality
 
 ### Frontend
+
 ```bash
 cd frontend
-npm run test              # Unit tests (Vitest)
-npm run test:e2e          # E2E tests (Playwright)
+npm run build
+npm test
 ```
 
 ### Backend
+
 ```bash
 cd backend-ts
-npm run test              # Unit tests (Vitest)
-npm run test:coverage     # With coverage report
-npm run typecheck         # TypeScript validation
+npm run typecheck
+npm test
 ```
 
-## 🎨 Code Quality
+## Deployment
 
-Both frontend and backend use:
-- **Prettier 3.8** for code formatting
-- **ESLint 9** for linting
-- **TypeScript 5** for type safety
-- **Vitest 4** for testing
+- Frontend: Vercel
+- Backend: Render
+- Database/Auth/Storage: Supabase
+- Judge0: self-hosted
 
-```bash
-npm run format            # Format code
-npm run format:check      # Check formatting
-npm run lint              # Run linter
-```
+See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for deployment details.
 
-## 👥 Authors
+## Documentation
 
-- **Christian Dave Vilan** - Project Developer
+- [frontend/documentation.md](./frontend/documentation.md)
+- [backend-ts/documentation.md](./backend-ts/documentation.md)
+- [AGENTS.md](./AGENTS.md)
 
-## 📄 License
-
-This project is created for academic purposes as part of an undergraduate Computer Science thesis.

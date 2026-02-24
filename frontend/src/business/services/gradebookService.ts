@@ -2,14 +2,13 @@ import * as gradebookRepository from "@/data/repositories/gradebookRepository"
 import { validateId } from "@/business/validation/commonValidation"
 import type {
   ClassGradebook,
-  ClassStatistics,
   StudentClassGrades,
   StudentRank,
   LatePenaltyConfig,
 } from "@/shared/types/gradebook"
 
 // Re-export types for presentation layer
-export type { ClassGradebook, ClassStatistics, StudentClassGrades, StudentRank }
+export type { ClassGradebook, StudentClassGrades, StudentRank }
 
 // ============================================================================
 // Class Gradebook Functions
@@ -23,16 +22,6 @@ export async function getClassGradebook(
 ): Promise<ClassGradebook> {
   validateId(classId, "class")
   return gradebookRepository.getCompleteGradebookForClassId(classId)
-}
-
-/**
- * Fetches class statistics
- */
-export async function getClassStatistics(
-  classId: number,
-): Promise<ClassStatistics> {
-  validateId(classId, "class")
-  return gradebookRepository.getStatisticsForClassId(classId)
 }
 
 /**

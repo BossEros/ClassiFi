@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-The ClassiFi Frontend is a modern, responsive web application built with **React 19**, **Vite**, and **TypeScript**. It follows a strict **Clean Architecture** pattern to separate concerns between the UI (Presentation), Business Logic (Business), and Data Access (Data) layers. The application is styled using **Tailwind CSS v4** and manages global state via Context and Services.
+The ClassiFi Frontend is a modern, responsive web application built with **React 19**, **Vite**, and **TypeScript**. It follows a strict **Clean Architecture** pattern to separate concerns between the UI (Presentation), Business Logic (Business), and Data Access (Data) layers. The application is styled using **Tailwind CSS v4** and manages global state through lightweight Zustand stores plus feature services.
 
 ## Technology Stack
 
@@ -48,15 +48,15 @@ frontend/
 |   |   |   |-- student/
 |   |   |   |-- teacher/
 |   |   |   `-- ui/
-|   |   |-- context/
 |   |   |-- hooks/
 |   |   |   |-- shared/
 |   |   |   `-- teacher/
 |   |   |-- pages/
-|   |   `-- styles/
+|   |   |-- schemas/
+|   |   `-- utils/
 |   |-- shared/             # Cross-cutting concerns
 |   |   |-- constants/
-|   |   |-- context/
+|   |   |-- store/
 |   |   |-- types/
 |   |   `-- utils/
 |   |-- tests/              # Vitest + Playwright test files and mocks
@@ -90,7 +90,9 @@ frontend/
 ### State Management
 
 - **Local State**: Managed with `useState` and `useReducer` for component-specific logic.
-- **Global State**: Minimal global state. Authentication state is synchronized via `supabaseAuthAdapter`. UI state (like Toasts) is managed via `src/presentation/context/ToastContext.tsx`.
+- **Global State**: Minimal global state with Zustand stores.
+  - Auth state is handled in `src/shared/store/useAuthStore.ts`, persisted in `localStorage`, and synchronized across browser tabs through a `storage` event listener.
+  - Toast state is handled in `src/shared/store/useToastStore.ts` and rendered in `src/app/App.tsx` via `ToastContainer`.
 - **Server State**: Fetched via Services. The app typically fetches fresh data on mount (useEffect) rather than using a heavy global cache, ensuring simplicity.
 
 ---
@@ -107,7 +109,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 3.  **Role-Based Routes**:
     - **Functions**: `RoleBasedDashboard`, `RoleBasedClassesPage`.
     - **Logic**: Conditionally renders `StudentDashboardPage`, `TeacherDashboardPage`, or `AdminDashboardPage` based on `user.role` ('student', 'teacher', 'admin').
-    - **Teacher-Only**: Wrapped in `<TeacherOnlyRoute>` (e.g., creating classes).
+    - **Teacher-Only**: `TeacherOnlyRoute` is applied for class creation (`/dashboard/classes/new`). Other teacher pages are protected by auth, with teacher/admin-only controls gated in-page where needed.
 
 ### Key Routes
 
@@ -133,9 +135,9 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 - **`InstructorInfo`**: Displays instructor name with user icon for class detail views.
 - **`ScheduleInfo`**: Displays class schedule with days and time range.
 - **`ClassCodeBadge`**: Styled badge displaying the class join code.
-- **`AssignmentFilterBar`**: Filter buttons for viewing all, pending, or submitted assignments with counts.
+- **`AssignmentFilterBar`**: Role-aware filter buttons with counts. Student view uses all/pending/submitted; teacher view uses all/current & upcoming/past timeline filters.
 - **`AssignmentSection`**: Groups assignments by time period (current/upcoming vs past) with section headers.
-- **`AssignmentCard`**: Displays assignment information with date block, submission status indicators (CheckCircle/Clock icons), status badge, and grade display. Supports both teacher and student views with appropriate actions.
+- **`AssignmentCard`**: Shared assignment card with role-based content. Student cards show submission/status context and grades. Teacher cards emphasize assignment name + due date and intentionally hide student-only status badges and submission ratio details.
 
 ### Feature Components
 
@@ -152,7 +154,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
     - **`FragmentsTable`**: Detailed view of matching code fragments
     - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Manages student grades and overrides.
-- **`TestResultsPanel`**: Displays test execution results with pass/fail status.
+- **`SubmissionCard`**: Displays student submission metadata and quick access to submission review in assignment submissions pages.
 
 ### Forms
 
@@ -450,8 +452,8 @@ The application uses a strongly-typed system with branded types for enhanced typ
 
 Specialized types for the class detail page redesign:
 
-- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for assignment cards and filtering
-- **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Filter options for assignment list
+- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for student assignment cards and filtering
+- **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Student filter options for assignment list
 - **`ClassTab`**: `'assignment' | 'students' | 'calendar'` - Tab navigation options
 
 ### Type Utilities
@@ -490,15 +492,15 @@ Specialized types for the class detail page redesign:
    - Class code badge is styled with teal colors for easy visibility
 3. **Manage Assignments**:
    - View all assignments organized by current/upcoming and past
-   - Use filters to focus on pending or submitted assignments
-   - Assignment cards show status badges and grades for quick assessment
+   - Use teacher assignment filters: all, current & upcoming, and past
+   - Assignment cards emphasize due date only for teachers
    - Click assignment cards to view submissions and grade student work
-   - Use edit/delete actions on assignment cards for quick management
+   - Edit/delete assignment actions are available from the assignment submissions page dropdown menu (teacher/admin only)
 4. **View Students**:
    - Switch to Students tab to view enrolled students
    - Manage student enrollments
 5. **Create New Assignment**:
-   - Click "Create Assignment" button in the Assignment tab
+   - Click "Add Assignment" button in the Assignment tab
    - Configure assignment details, test cases, deadlines, and late submission policy
 
 ### Teacher: Reviewing Plagiarism Results

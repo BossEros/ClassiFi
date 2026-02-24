@@ -1,3 +1,4 @@
+import { useAuthStore } from "@/shared/store/useAuthStore";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as authService from "@/business/services/authService"
 import * as authRepository from "@/data/repositories/authRepository"
@@ -50,6 +51,7 @@ describe("authService", () => {
   let mockStorage = createMockStorage()
 
   beforeEach(() => {
+    useAuthStore.setState({ user: null, isAuthenticated: false });
     vi.clearAllMocks()
     // Reset the mock storage object each test
     mockStorage = createMockStorage()
@@ -236,33 +238,6 @@ describe("authService", () => {
     })
   })
 
-  describe("getCurrentUser", () => {
-    it("should return user from local storage if present", () => {
-      // Pre-populate localStorage with user
-      window.localStorage.setItem("user", JSON.stringify(mockUser))
-
-      const user = authService.getCurrentUser()
-      // JSON.parse converts dates to strings, so we expect string date
-      expect(user).toEqual({
-        ...mockUser,
-        createdAt: mockUser.createdAt.toISOString(),
-      })
-    })
-
-    it("should return null if no user in local storage", () => {
-      // mockLocalStorage is already empty from beforeEach
-      const user = authService.getCurrentUser()
-      expect(user).toBeNull()
-    })
-
-    it("should return null if user data is invalid json", () => {
-      // Set invalid JSON in localStorage
-      window.localStorage.setItem("user", "invalid-json")
-      const user = authService.getCurrentUser()
-      expect(user).toBeNull()
-    })
-  })
-
   describe("getAuthToken", () => {
     it("should return token from repository session", async () => {
       // Fixed: match getSession return type { session, error }
@@ -423,8 +398,8 @@ describe("authService", () => {
     })
 
     it("should call repository changePassword", async () => {
-      // Pre-populate localStorage with user
-      window.localStorage.setItem("user", JSON.stringify(mockUser))
+      // Pre-populate Zustand store with user
+      useAuthStore.setState({ user: mockUser, isAuthenticated: true })
       // Fixed: match changePassword return type structure
       vi.mocked(
         authRepository.changeAuthenticatedUserPassword,
@@ -461,8 +436,8 @@ describe("authService", () => {
     })
 
     it("should call repository deleteAccount", async () => {
-      // Pre-populate localStorage with user
-      window.localStorage.setItem("user", JSON.stringify(mockUser))
+      // Pre-populate Zustand store with user
+      useAuthStore.setState({ user: mockUser, isAuthenticated: true })
       // Fixed: match deleteAccount return type structure
       vi.mocked(
         authRepository.deleteUserAccountWithVerification,

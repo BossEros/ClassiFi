@@ -80,6 +80,7 @@ export const AssignmentResponseSchema = z.object({
   allowLateSubmissions: z.boolean().optional(),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
   submissionCount: z.number().optional(),
+  studentCount: z.number().optional(),
   hasSubmitted: z.boolean().optional(),
   submittedAt: z.string().nullable().optional(),
   grade: z.number().nullable().optional(),

@@ -29,8 +29,7 @@ import {
   type StudentSummary,
 } from "@/business/services/plagiarismService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
-import { getCurrentUser } from "@/business/services/authService"
-import type { User } from "@/business/models/auth/types"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 
 interface LocationState {
   results: AnalyzeResponse
@@ -80,9 +79,7 @@ function detectLanguage(filename: string): string {
 export function SimilarityResultsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const location = useLocation()
-
-  // User state for topBar
-  const [user, setUser] = useState<User | null>(null)
+  const user = useAuthStore((state) => state.user)
 
   // Results from analysis
   const [results, setResults] = useState<AnalyzeResponse | null>(null)
@@ -109,11 +106,6 @@ export function SimilarityResultsPage() {
   const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
   const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [detailsError, setDetailsError] = useState<string | null>(null)
-
-  // Load user for topBar
-  useEffect(() => {
-    setUser(getCurrentUser())
-  }, [])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()

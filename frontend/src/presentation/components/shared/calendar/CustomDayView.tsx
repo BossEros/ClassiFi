@@ -3,6 +3,7 @@ import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/business/models/calendar/types"
 import { format } from "date-fns"
 import { CustomViewToolbar } from "./CustomViewToolbar"
+import { getCalendarStackedEventStyle } from "./eventStyle"
 import "./CustomDayView.css"
 
 /**
@@ -178,10 +179,9 @@ export function CustomDayView({
                         key={event.id}
                         onClick={() => onSelectEvent(event)}
                         className="event-card"
-                        style={{
-                          backgroundColor: event.classInfo.color,
-                          borderLeftColor: event.classInfo.color,
-                        }}
+                        style={getCalendarStackedEventStyle(
+                          event.classInfo.color,
+                        )}
                         aria-label={`${event.classInfo.name}: ${event.title}`}
                       >
                         <div className="event-content">

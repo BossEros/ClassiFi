@@ -9,7 +9,7 @@ import {
 } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { Avatar } from "@/presentation/components/ui/Avatar"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import type { User } from "@/business/models/auth/types"
 import {
   User as UserIcon,
@@ -29,19 +29,15 @@ import { NotificationPreferences } from "@/presentation/components/shared/settin
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function SettingsPage() {
-  const [user, setUser] = useState<User | null>(null)
+  const currentUser = useAuthStore((state) => state.user)
+  const [user, setUser] = useState<User | null>(currentUser)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
   const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false)
   const [isAvatarUploadOpen, setIsAvatarUploadOpen] = useState(false)
 
   useEffect(() => {
-    const initializeUser = () => {
-      const currentUser = getCurrentUser()
-      setUser(currentUser)
-    }
-
-    initializeUser()
-  }, [])
+    setUser(currentUser)
+  }, [currentUser])
 
   const handleAvatarSuccess = (avatarUrl: string) => {
     // Update user state to reflect new avatar

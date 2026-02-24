@@ -1,6 +1,5 @@
 import React from "react"
-import { LogOut, BookOpen, Trash2, Edit } from "lucide-react"
-import { Button } from "@/presentation/components/ui/Button"
+import { LogOut, Trash2, Edit } from "lucide-react"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import { InstructorInfo } from "./InstructorInfo"
 import { ScheduleInfo } from "./ScheduleInfo"
@@ -36,7 +35,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   onEditClass,
   onDeleteClass,
   onLeaveClass,
-  onViewGradebook,
+  onViewGradebook: _onViewGradebook,
 }) => {
   return (
     <div
@@ -71,15 +70,6 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
         <div className="flex items-center gap-3">
           {isTeacher ? (
             <>
-              <Button
-                variant="secondary"
-                className="gap-2 border-teal-500/30 text-teal-400 hover:bg-teal-500/10 hover:text-teal-300"
-                onClick={onViewGradebook}
-              >
-                <BookOpen className="w-4 h-4" />
-                Gradebook
-              </Button>
-
               <DropdownMenu
                 items={[
                   {

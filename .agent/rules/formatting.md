@@ -15,33 +15,21 @@ To improve readability and visual separation of logic:
 
 ## Function Signatures
 
-- **Single Line (Preferred):** If a function signature (arguments & return type) is short and simple (typically creates a line < 80-100 chars), keep it on a single line.
-- **Multi-Line:** Only break parameters onto multiple lines if:
-  - The line becomes too long.
-  - The parameters include complex inline types or object destructuring.
-  - There are many parameters (3+).
+- **Single Line (Preferred):** Keep function parameters on a single line instead of separating each parameter onto its own line. Do not unnecessarily wrap parameters; only break them if the line becomes unreasonably long (typically > 100 chars). This keeps the code looking clean and organized.
 
 ## Variable Declarations
 
 - **Single Line (Preferred):** Always write variable declarations and assignments on a single line if they can fit reasonably within the line length limit (typically < 80-100 chars). Do not break statements after the equals sign (`=`) unnecessarily.
 - **Multi-Line:** Only split variables and assignments across multiple lines if the expression is naturally too long to fit on a single line or if breaking it improves readability.
 
-## Example
+## Imports
+
+- **Single Line (Preferred):** Keep imports on a single line instead of destructuring each imported element onto its own line. Do not unnecessarily wrap imports; only break them if the line becomes unreasonably long. This keeps the import block looking clean and organized.
+
+## Example (Function Signatures)
 
 ```typescript
-// bad (unnecessary split)
-function getUser(
-  id: number
-): User {
-  ...
-}
-
-// good (simple)
-function getUser(id: number): User {
-  ...
-}
-
-// good (complex/long)
+// bad
 function createUser(
   name: string,
   email: string,
@@ -49,6 +37,29 @@ function createUser(
 ): User {
   ...
 }
+
+// good
+function createUser(name: string, email: string, preferences: { theme: string; notifications: boolean }): User {
+  ...
+}
+```
+
+## Example (Imports)
+
+```typescript
+// bad
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/presentation/components/ui/card"
+
+// good
+import {
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/presentation/components/ui/card"
 ```
 
 ## Example (Vertical Spacing)

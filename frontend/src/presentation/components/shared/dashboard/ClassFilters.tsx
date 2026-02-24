@@ -3,7 +3,6 @@ import {
   Filter,
   Calendar,
   GraduationCap,
-  ChevronDown,
 } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Select } from "@/presentation/components/ui/Select"
@@ -79,7 +78,6 @@ export function ClassFilters({
         {/* Year Level Filter */}
         <div className="min-w-[160px] relative group">
           <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
             value={currentFilters.selectedYearLevel}
             onChange={onYearLevelChange}
@@ -93,7 +91,6 @@ export function ClassFilters({
         {/* Term Filter */}
         <div className="min-w-[180px] relative group">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
             value={currentFilters.selectedTerm}
             onChange={onTermChange}
@@ -107,7 +104,6 @@ export function ClassFilters({
         {/* Status Filter */}
         <div className="min-w-[160px] relative group">
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
             value={currentFilters.status}
             onChange={(value) => onStatusChange(value as FilterStatus)}

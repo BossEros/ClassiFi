@@ -48,7 +48,7 @@ export interface SubmissionGradeDetails {
 /**
  * Gradebook Service
  * Handles all gradebook-related business logic including
- * grade aggregation, overrides, exports, and statistics.
+ * grade aggregation, overrides, and exports.
  */
 @injectable()
 export class GradebookService {
@@ -80,13 +80,6 @@ export class GradebookService {
    */
   async getStudentGrades(studentId: number, classId?: number) {
     return await this.gradebookRepo.getStudentGrades(studentId, classId)
-  }
-
-  /**
-   * Get class statistics.
-   */
-  async getClassStatistics(classId: number) {
-    return await this.gradebookRepo.getClassStatistics(classId)
   }
 
   /**

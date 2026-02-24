@@ -68,55 +68,6 @@ describe("gradebookRepository", () => {
   })
 
   // ============================================================================
-  // getStatisticsForClassId Tests
-  // ============================================================================
-
-  describe("getStatisticsForClassId", () => {
-    const mockStatistics = {
-      averageGrade: 85.5,
-      highestGrade: 100,
-      lowestGrade: 60,
-      submissionRate: 0.95,
-    }
-
-    it("fetches class statistics successfully", async () => {
-      vi.mocked(apiClient.get).mockResolvedValue({
-        data: { success: true, statistics: mockStatistics },
-        status: 200,
-      })
-
-      const result = await gradebookRepository.getStatisticsForClassId(1)
-
-      expect(apiClient.get).toHaveBeenCalledWith(
-        "/gradebook/classes/1/statistics",
-      )
-      expect(result).toEqual(mockStatistics)
-    })
-
-    it("throws error when API fails", async () => {
-      vi.mocked(apiClient.get).mockResolvedValue({
-        error: "Class not found",
-        status: 404,
-      })
-
-      await expect(
-        gradebookRepository.getStatisticsForClassId(999),
-      ).rejects.toThrow("Class not found")
-    })
-
-    it("throws default error when response is unsuccessful", async () => {
-      vi.mocked(apiClient.get).mockResolvedValue({
-        data: { success: false },
-        status: 500,
-      })
-
-      await expect(
-        gradebookRepository.getStatisticsForClassId(1),
-      ).rejects.toThrow("Failed to fetch class statistics")
-    })
-  })
-
-  // ============================================================================
   // getAllGradesForStudentId Tests
   // ============================================================================
 
