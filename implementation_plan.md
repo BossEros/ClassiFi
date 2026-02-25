@@ -326,3 +326,21 @@ Inline selected single-use wrapper components into their direct parent component
 - [x] Run `frontend`: `npm run build`.
 - [x] Delete remaining inlined component files from items `5-10`.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Frontend Component Test Signal Pruning
+
+## Scope
+
+Audit presentation-layer component tests and remove only low-signal coverage while preserving behavior-critical tests.
+
+1. Classify component tests by user-facing behavioral value.
+2. Delete only confirmed low-signal tests with minimal regression impact.
+3. Re-verify frontend build and test suite.
+
+## Execution Checklist
+
+- [ ] Audit `frontend/src/presentation/components/**/*test.tsx` for behavior coverage signal.
+- [x] Audit `frontend/src/presentation/components/**/*test.tsx` for behavior coverage signal.
+- [x] Remove only low-signal component tests.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm test`.

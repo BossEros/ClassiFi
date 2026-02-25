@@ -141,3 +141,11 @@
 - [x] Verify build after deleting components `1-5`
 - [x] Delete remaining inlined components from `5-10` (`ScheduleInfo`, `DateBlock`, `GradeDisplay`, `StatusBadge`, `NavItem`)
 - [x] Run frontend build verification
+
+# Frontend Component Test Signal Pruning
+
+- [x] Audit `frontend/src/presentation/components/**/*test.tsx` and classify by behavior coverage value
+- [x] Remove only confirmed low-signal component tests
+- [x] Run frontend build verification
+- [x] Run frontend test verification
+- [x] Align pre-existing `testService` assertion with current `includeHiddenDetails` default argument for passing verification

@@ -219,7 +219,7 @@ describe("testService", () => {
 
       expect(
         assignmentRepository.getTestResultsForSubmissionById,
-      ).toHaveBeenCalledWith(mockSubmissionId)
+      ).toHaveBeenCalledWith(mockSubmissionId, false)
       expect(result.passed).toBe(2)
       expect(result.total).toBe(3)
       expect(testNormalization.normalizeTestResult).toHaveBeenCalledTimes(3)
