@@ -552,3 +552,24 @@ Centralize scattered frontend unit tests into a single tree under `src/tests/uni
 - [x] Run `frontend`: `npm run build`.
 - [x] Run `frontend`: `npm test -- --run`.
 - [x] Update frontend documentation to codify centralized unit test location.
+
+# Implementation Plan - Cross-Repo Test Policy Sync (Checkpoint 8)
+
+## Scope
+
+Synchronize frontend, backend, and root-level test-location conventions so centralized test structure is enforced and documented consistently:
+
+1. Enforce frontend test TypeScript project scope to `src/tests/**`.
+2. Enforce backend Vitest discovery to `backend-ts/tests/**`.
+3. Update frontend/backend/root documentation to reflect centralized test policy.
+4. Re-verify frontend and backend required quality commands.
+
+## Execution Checklist
+
+- [x] Update frontend test config scope in `tsconfig.test.json`.
+- [x] Update backend Vitest include scope in `backend-ts/vitest.config.ts`.
+- [x] Update documentation in `frontend/documentation.md`, `backend-ts/documentation.md`, and `README.md`.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm test -- --run`.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.

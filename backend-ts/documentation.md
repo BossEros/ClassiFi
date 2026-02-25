@@ -1121,6 +1121,10 @@ npm run test:watch        # Watch mode
 npm run test:coverage     # With coverage report
 ```
 
+Test location policy:
+- Unit and integration tests are centralized under `backend-ts/tests/**`.
+- `vitest.config.ts` discovery is scoped to `tests/**/*.test.ts` to avoid scattered test files inside `src/**`.
+
 High-signal coverage gate:
 - `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `notification-preference.schema`, `notification-preference.service`, `user.service`).
 - This gate ensures login/register payload rules and auth service business paths fail fast on regressions.

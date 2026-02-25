@@ -592,6 +592,7 @@ Frontend form migration follows a standardized pattern:
 ## Testing
 
 - **Unit Tests**: `npm run test` (Vitest). All unit tests must live in `src/tests/unit/**` (not colocated in feature folders).
+- **Unit Test Discovery Policy**: `vitest.config.ts` and `tsconfig.test.json` are intentionally scoped to `src/tests/unit/**/*.test.ts(x)` and `src/tests/**` to keep tests centralized.
 - **E2E Tests**: Playwright (setup in `src/tests/e2e`).
   - Authentication flows
   - Class and assignment creation

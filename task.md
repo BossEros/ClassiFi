@@ -241,3 +241,13 @@
 - [x] Run frontend build verification
 - [x] Run frontend test verification
 - [x] Update frontend documentation to define centralized unit test location convention
+
+# Cross-Repo Test Policy Sync (Checkpoint 8)
+
+- [x] Restrict frontend test TypeScript project includes to `frontend/src/tests/**`
+- [x] Restrict backend Vitest test discovery to `backend-ts/tests/**/*.test.ts`
+- [x] Update `README.md`, `frontend/documentation.md`, and `backend-ts/documentation.md` with centralized test policy
+- [x] Run frontend build verification
+- [x] Run frontend test verification
+- [x] Run backend typecheck verification
+- [x] Run backend test verification
