@@ -1,6 +1,6 @@
 reviews:
   target_branches:
-    - "main"
+    - "development"
   auto_title_placeholder: "@coderabbitai"
   auto_title_instructions: "Write a short, imperative PR title."
   finishing_touches:
