@@ -605,6 +605,6 @@ The project maintains comprehensive test coverage for:
 - E2E workflows (login, class creation, assignment submission)
 
 High-signal coverage gate:
-- `vitest` coverage includes a strict critical-path set (`authService`, `userService`, notification-preference service/repository, auth validation/schema).
+- `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `authValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.

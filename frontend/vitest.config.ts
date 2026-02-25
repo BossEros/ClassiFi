@@ -15,10 +15,13 @@ export default defineConfig({
       reporter: ["text", "html"],
       include: [
         "src/business/services/authService.ts",
+        "src/business/services/calendar/classMappers.ts",
         "src/business/services/userService.ts",
         "src/business/services/notificationPreferenceService.ts",
         "src/business/validation/authValidation.ts",
+        "src/business/validation/submissionFileValidation.ts",
         "src/data/repositories/notificationPreferenceRepository.ts",
+        "src/data/repositories/userRepository.ts",
         "src/presentation/schemas/auth/authSchemas.ts",
       ],
       thresholds: {

@@ -184,3 +184,13 @@
 - [x] Align `Actions` header/cell content to center for visual consistency
 - [x] Run frontend build verification
 - [x] Run frontend test verification
+
+# High-Signal Unit Coverage Expansion (Checkpoint 2)
+
+- [x] Add tests for `submissionFileValidation` behavior-critical branches
+- [x] Add tests for `classMappers` payload guard/mapping behavior
+- [x] Add tests for `userRepository` avatar upload flow and failure handling
+- [x] Harden avatar cleanup logic to skip empty avatar file paths
+- [x] Extend frontend strict coverage gate include set for added modules
+- [x] Run focused frontend coverage verification for strict-gated files
+- [x] Run frontend build verification

@@ -425,3 +425,25 @@ Refine the Student Originality Overview table by removing low-value columns and 
 - [x] Center `Actions` header/cells so header alignment matches button content.
 - [x] Run `frontend`: `npm run build`.
 - [x] Run `frontend`: `npm test`.
+
+# Implementation Plan - High-Signal Unit Coverage Expansion (Checkpoint 2)
+
+## Scope
+
+Expand strict high-signal unit coverage beyond auth-only paths by adding behavior-critical tests in validation, mapping, and repository layers:
+
+1. Add missing tests for submission file validation rules.
+2. Add tests for class payload type-guard and mapping behavior.
+3. Add repository tests for avatar upload flow and error handling.
+4. Enforce `100%` per-file coverage for the newly gated files.
+5. Re-verify frontend coverage and build.
+
+## Execution Checklist
+
+- [x] Add tests for `submissionFileValidation` edge cases and expected acceptance paths.
+- [x] Add tests for `classMappers` type-guard/map behavior.
+- [x] Add tests for `userRepository` avatar upload success/failure/edge paths.
+- [x] Fix unsafe old-avatar deletion edge case (skip empty avatar path removal).
+- [x] Extend frontend `vitest` strict coverage include set for added high-signal files.
+- [x] Run focused frontend coverage for the strict-gated high-signal files.
+- [x] Run `frontend`: `npm run build`.
