@@ -364,9 +364,9 @@ Raise unit-test confidence by prioritizing behavior-critical coverage (business 
 - [x] Add/adjust backend high-signal tests for auth contracts and service branches.
 - [x] Enforce `100%` thresholds on high-signal targets in Vitest configuration.
 - [x] Remove/de-prioritize low-signal component-only tests from coverage goals.
-- [ ] Run `frontend`: `npm run build`.
-- [ ] Run `backend-ts`: `npm run typecheck`.
-- [ ] Run `backend-ts`: `npm test`.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.
 
 # Implementation Plan - Teacher Similarity View Simplification
 

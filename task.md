@@ -157,9 +157,9 @@
 - [x] Add/fix backend high-signal unit tests for auth schema/service contracts
 - [x] Enforce 100% coverage thresholds for high-signal layers only
 - [x] Keep low-signal component-only tests out of required coverage goals
-- [ ] Run frontend build verification
-- [ ] Run backend typecheck verification
-- [ ] Run backend tests verification
+- [x] Run frontend build verification
+- [x] Run backend typecheck verification
+- [x] Run backend tests verification
 
 # Teacher Similarity View Simplification
 

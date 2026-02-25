@@ -18,6 +18,32 @@ describe("authSchemas", () => {
     expect(parseResult.success).toBe(true)
   })
 
+  it("rejects login payload without email", () => {
+    const parseResult = loginFormSchema.safeParse({
+      password: "Password1!",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.path).toEqual(["email"])
+    }
+  })
+
+  it("rejects incorrect login shape that provides password fields only", () => {
+    const parseResult = loginFormSchema.safeParse({
+      password: "Password1!",
+      confirmPassword: "Password1!",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      const issuePaths = parseResult.error.issues.map((issue) => issue.path[0])
+      expect(issuePaths).toContain("email")
+    }
+  })
+
   it("rejects empty login password with existing message", () => {
     const parseResult = loginFormSchema.safeParse({
       email: "teacher@classifi.com",

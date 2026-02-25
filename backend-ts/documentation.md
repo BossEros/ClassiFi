@@ -1121,6 +1121,10 @@ npm run test:watch        # Watch mode
 npm run test:coverage     # With coverage report
 ```
 
+High-signal coverage gate:
+- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical auth contracts (`auth.service`, `auth.schema`).
+- This gate ensures login/register payload rules and auth service business paths fail fast on regressions.
+
 ### Test Factories
 
 ```typescript

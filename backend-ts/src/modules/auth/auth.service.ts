@@ -39,6 +39,8 @@ interface SupabaseUserResult {
   token: string | null
 }
 
+const REGISTERABLE_USER_ROLES = ["student", "teacher"] as const
+
 /**
  * Type guard to check if a value is a valid UserRole.
  * Uses USER_ROLES constant as single source of truth.
@@ -118,7 +120,10 @@ export class AuthService {
    * @throws {InvalidRoleError} If role is invalid
    */
   private validateRegistrationData(role: string): void {
-    if (!isValidUserRole(role)) {
+    if (
+      !isValidUserRole(role) ||
+      !(REGISTERABLE_USER_ROLES as readonly string[]).includes(role)
+    ) {
       throw new InvalidRoleError(role)
     }
   }

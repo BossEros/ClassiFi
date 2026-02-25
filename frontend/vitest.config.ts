@@ -13,6 +13,21 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
+      include: [
+        "src/business/services/authService.ts",
+        "src/business/services/userService.ts",
+        "src/business/services/notificationPreferenceService.ts",
+        "src/business/validation/authValidation.ts",
+        "src/data/repositories/notificationPreferenceRepository.ts",
+        "src/presentation/schemas/auth/authSchemas.ts",
+      ],
+      thresholds: {
+        lines: 100,
+        functions: 100,
+        branches: 100,
+        statements: 100,
+        perFile: true,
+      },
       exclude: [
         "node_modules",
         "dist",
