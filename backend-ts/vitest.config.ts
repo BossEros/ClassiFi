@@ -16,7 +16,10 @@ export default defineConfig({
                 'src/modules/auth/auth.schema.ts',
                 'src/modules/classes/class.schema.ts',
                 'src/modules/classes/class-code.util.ts',
+                'src/modules/notifications/notification-preference.schema.ts',
+                'src/modules/notifications/notification-preference.service.ts',
                 'src/modules/submissions/submission.schema.ts',
+                'src/modules/users/user.service.ts',
             ],
             thresholds: {
                 lines: 100,

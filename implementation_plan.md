@@ -469,3 +469,25 @@ Expand strict backend unit coverage from auth-only contracts to additional behav
 - [x] Run focused backend coverage for the strict-gated files.
 - [x] Run `backend-ts`: `npm run typecheck`.
 - [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Backend High-Signal Coverage Expansion (Checkpoint 4)
+
+## Scope
+
+Expand strict backend coverage into user-account lifecycle and notification-preference behavior:
+
+1. Add user-service tests covering account deletion safety branches.
+2. Add notification-preference service tests for defaults, updates, and enabled-channel resolution.
+3. Add notification-preference schema contract tests.
+4. Extend backend strict coverage gate for these modules.
+5. Re-verify backend typecheck/tests.
+
+## Execution Checklist
+
+- [x] Add tests for `user.service` account deletion and avatar update flows.
+- [x] Add tests for `notification-preference.service` default/update/channel logic.
+- [x] Add tests for `notification-preference.schema` request/response contracts.
+- [x] Extend backend `vitest` strict coverage include set for added high-signal files.
+- [x] Run focused backend coverage for the strict-gated files.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.

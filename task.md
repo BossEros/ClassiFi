@@ -204,3 +204,13 @@
 - [x] Run focused backend coverage verification for strict-gated files
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Backend High-Signal Coverage Expansion (Checkpoint 4)
+
+- [x] Add tests for `user.service` account-deletion and avatar-update behavior
+- [x] Add tests for `notification-preference.service` defaults/updates/channel resolution
+- [x] Add tests for `notification-preference.schema` request/response contracts
+- [x] Extend backend strict coverage gate include set for added modules
+- [x] Run focused backend coverage verification for strict-gated files
+- [x] Run backend typecheck verification
+- [x] Run backend test verification
