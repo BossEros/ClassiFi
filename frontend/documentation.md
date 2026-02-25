@@ -59,7 +59,11 @@ frontend/
 |   |   |-- store/
 |   |   |-- types/
 |   |   `-- utils/
-|   |-- tests/              # Vitest + Playwright test files and mocks
+|   |-- tests/              # Centralized tests, setup, and mocks
+|   |   |-- unit/           # All frontend unit test files (*.test.ts|tsx)
+|   |   |-- e2e/            # Playwright tests
+|   |   |-- mocks/          # Test doubles / MSW handlers
+|   |   `-- setup.ts        # Vitest setup
 |   |-- index.css
 |   `-- main.tsx            # Application Entry Point
 |-- public/
@@ -587,7 +591,7 @@ Frontend form migration follows a standardized pattern:
 
 ## Testing
 
-- **Unit Tests**: `npm run test` (Vitest). Focus on `src/business/services` and utility logic.
+- **Unit Tests**: `npm run test` (Vitest). All unit tests must live in `src/tests/unit/**` (not colocated in feature folders).
 - **E2E Tests**: Playwright (setup in `src/tests/e2e`).
   - Authentication flows
   - Class and assignment creation

@@ -83,7 +83,7 @@ Remove class statistics from the gradebook feature end-to-end and rebalance the 
   - [ ] Remove `classDisplayName` subtitle below `Gradebook`.
   - [ ] Update `GradebookPage` and `ClassDetailPage` props accordingly.
 - [ ] 4. Verification
-  - [ ] Run `frontend`: `npm run build`.
+  - [x] Run `frontend`: `npm run build`.
   - [ ] Run `backend-ts`: `npm run typecheck`.
   - [ ] Run `backend-ts`: `npm test`.
 
@@ -532,3 +532,23 @@ Expand strict frontend coverage from auth-focused files to additional validation
 - [x] Extend frontend `vitest` strict coverage include set for `assignmentValidation`, `classValidation`, and `commonValidation`.
 - [x] Run focused frontend coverage for strict-gated files.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Frontend Unit Test Centralization (Checkpoint 7)
+
+## Scope
+
+Centralize scattered frontend unit tests into a single tree under `src/tests/unit` to match backend test organization and improve maintainability:
+
+1. Move all frontend unit test files from feature folders into `src/tests/unit` with layer-based grouping.
+2. Rewrite moved test imports to stable `@/` aliases so tests continue resolving source modules correctly.
+3. Restrict Vitest discovery to centralized unit test paths.
+4. Re-verify frontend build and unit tests.
+
+## Execution Checklist
+
+- [x] Move frontend unit test files into `src/tests/unit/**`.
+- [x] Rewrite affected relative imports in moved tests to `@/` aliases.
+- [x] Update Vitest `include` patterns to run centralized unit tests only.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm test -- --run`.
+- [x] Update frontend documentation to codify centralized unit test location.

@@ -232,3 +232,12 @@
 - [x] Extend frontend strict coverage gate include set for assignment/class/common validation modules
 - [x] Run focused frontend coverage verification for strict-gated files
 - [x] Run frontend build verification
+
+# Frontend Unit Test Centralization (Checkpoint 7)
+
+- [x] Move scattered frontend unit tests into `frontend/src/tests/unit/**` preserving domain grouping
+- [x] Rewrite moved test file imports from broken relatives to stable `@/` aliases
+- [x] Restrict Vitest discovery to `src/tests/unit/**/*.test.ts(x)`
+- [x] Run frontend build verification
+- [x] Run frontend test verification
+- [x] Update frontend documentation to define centralized unit test location convention
