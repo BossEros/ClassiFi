@@ -224,3 +224,11 @@
 - [x] Run focused backend coverage verification for strict-gated files
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Frontend Validation Contract Expansion (Checkpoint 6)
+
+- [x] Add branch-complete tests for `assignmentValidation`
+- [x] Add branch-complete tests for `classValidation`
+- [x] Extend frontend strict coverage gate include set for assignment/class/common validation modules
+- [x] Run focused frontend coverage verification for strict-gated files
+- [x] Run frontend build verification

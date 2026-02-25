@@ -148,6 +148,10 @@ describe("assignmentValidation", () => {
 
   // ============ validateCreateAssignmentData Tests ============
   describe("validateCreateAssignmentData", () => {
+    type CreateAssignmentInput = Parameters<
+      typeof validateCreateAssignmentData
+    >[0]
+
     beforeEach(() => {
       vi.useFakeTimers()
       vi.setSystemTime(new Date("2024-06-15T12:00:00Z"))
@@ -209,6 +213,17 @@ describe("assignmentValidation", () => {
       expect(result.errors).toHaveLength(0)
     })
 
+    it("should allow image-only instructions when instructions field is omitted", () => {
+      const result = validateCreateAssignmentData({
+        assignmentName: "Lab 1",
+        instructionsImageUrl: "https://example.com/image.png",
+        programmingLanguage: "python",
+      })
+
+      expect(result.isValid).toBe(true)
+      expect(result.errors).toHaveLength(0)
+    })
+
     it("should return error for missing programmingLanguage", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
@@ -247,6 +262,65 @@ describe("assignmentValidation", () => {
         result.errors.find((e) => e.field === "programmingLanguage"),
       ).toBeDefined()
       expect(result.errors.find((e) => e.field === "deadline")).toBeUndefined()
+    })
+
+    it("should return assignmentName error when provided title is invalid", () => {
+      const result = validateCreateAssignmentData({
+        assignmentName: "   ",
+        instructions: "Valid instructions",
+        programmingLanguage: "python",
+      })
+
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContainEqual({
+        field: "assignmentName",
+        message: "Assignment title is required",
+      })
+    })
+
+    it("should return instructions error when instructions are provided but invalid", () => {
+      const result = validateCreateAssignmentData({
+        assignmentName: "Valid title",
+        instructions: "   ",
+        programmingLanguage: "python",
+      })
+
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContainEqual({
+        field: "instructions",
+        message: "Add instructions or upload an image",
+      })
+    })
+
+    it("should return programmingLanguage error when provided language is invalid", () => {
+      const invalidLanguageData = {
+        assignmentName: "Valid title",
+        instructions: "Valid instructions",
+        programmingLanguage: "rust",
+      } as unknown as CreateAssignmentInput
+
+      const result = validateCreateAssignmentData(invalidLanguageData)
+
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContainEqual({
+        field: "programmingLanguage",
+        message: "Invalid programming language. Must be Python, Java, or C",
+      })
+    })
+
+    it("should return deadline error when provided deadline is invalid", () => {
+      const result = validateCreateAssignmentData({
+        assignmentName: "Valid title",
+        instructions: "Valid instructions",
+        programmingLanguage: "python",
+        deadline: "2024-01-01T12:00:00Z",
+      })
+
+      expect(result.isValid).toBe(false)
+      expect(result.errors).toContainEqual({
+        field: "deadline",
+        message: "Deadline must be in the future",
+      })
     })
   })
 

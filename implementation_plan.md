@@ -513,3 +513,22 @@ Expand strict coverage for additional request/response contract files and enforc
 - [x] Run focused backend coverage for strict-gated files.
 - [x] Run `backend-ts`: `npm run typecheck`.
 - [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Frontend Validation Contract Expansion (Checkpoint 6)
+
+## Scope
+
+Expand strict frontend coverage from auth-focused files to additional validation contract modules:
+
+1. Add/adjust tests to fully cover assignment validation branch paths.
+2. Add/adjust tests to fully cover class validation branch paths.
+3. Extend frontend strict coverage include set for assignment/class/common validation modules.
+4. Re-verify frontend strict coverage and build.
+
+## Execution Checklist
+
+- [x] Add branch-complete tests for `assignmentValidation`.
+- [x] Add branch-complete tests for `classValidation`.
+- [x] Extend frontend `vitest` strict coverage include set for `assignmentValidation`, `classValidation`, and `commonValidation`.
+- [x] Run focused frontend coverage for strict-gated files.
+- [x] Run `frontend`: `npm run build`.
