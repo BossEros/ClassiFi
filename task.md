@@ -214,3 +214,13 @@
 - [x] Run focused backend coverage verification for strict-gated files
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Backend Schema Contract Expansion (Checkpoint 5)
+
+- [x] Add tests for `assignment.schema` request/response/param contracts
+- [x] Add tests for `notification.schema` type/response/query/DTO behavior
+- [x] Fix notification query boolean parsing to correctly handle string booleans
+- [x] Extend backend strict coverage gate include set for added schema modules
+- [x] Run focused backend coverage verification for strict-gated files
+- [x] Run backend typecheck verification
+- [x] Run backend test verification

@@ -46,10 +46,26 @@ export const NotificationParamsSchema = z.object({
 export type NotificationParams = z.infer<typeof NotificationParamsSchema>
 
 /** Notification query parameters schema with pagination */
+const QueryBooleanSchema = z.preprocess((value) => {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase()
+
+    if (normalized === "true") {
+      return true
+    }
+
+    if (normalized === "false") {
+      return false
+    }
+  }
+
+  return value
+}, z.boolean())
+
 export const NotificationQueryParamsSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  unreadOnly: z.coerce.boolean().optional(),
+  unreadOnly: QueryBooleanSchema.optional(),
 })
 
 export type NotificationQueryParams = z.infer<

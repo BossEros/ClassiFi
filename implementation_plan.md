@@ -491,3 +491,25 @@ Expand strict backend coverage into user-account lifecycle and notification-pref
 - [x] Run focused backend coverage for the strict-gated files.
 - [x] Run `backend-ts`: `npm run typecheck`.
 - [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Backend Schema Contract Expansion (Checkpoint 5)
+
+## Scope
+
+Expand strict coverage for additional request/response contract files and enforce correct notification query boolean parsing:
+
+1. Add dedicated tests for assignment schema contracts.
+2. Add dedicated tests for notification schema + DTO query parsing.
+3. Fix incorrect boolean coercion for `unreadOnly` query (`"false"` previously parsed as `true`).
+4. Extend strict backend coverage include set for these schema modules.
+5. Re-verify backend typecheck/tests.
+
+## Execution Checklist
+
+- [x] Add tests for `assignment.schema` request/response/param contracts.
+- [x] Add tests for `notification.schema` type/response/query/DTO behavior.
+- [x] Fix notification query boolean parsing to handle string booleans safely.
+- [x] Extend backend `vitest` strict coverage include set for added schema modules.
+- [x] Run focused backend coverage for strict-gated files.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.
