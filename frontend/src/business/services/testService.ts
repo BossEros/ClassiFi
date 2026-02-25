@@ -86,15 +86,20 @@ export async function runTestsPreview(
  * Normalizes legacy array responses and new object responses into a unified structure.
  *
  * @param submissionId - The unique identifier of the submission.
+ * @param includeHiddenDetails - Whether hidden test case details should be returned.
  * @returns A standardized object containing test statistics and detailed results.
  * @throws Error if the results cannot be fetched.
  */
 export async function getTestResultsForSubmission(
   submissionId: number,
+  includeHiddenDetails: boolean = false,
 ): Promise<TestPreviewResult> {
   validateId(submissionId, "submission")
   const resultsResponse =
-    await assignmentRepository.getTestResultsForSubmissionById(submissionId)
+    await assignmentRepository.getTestResultsForSubmissionById(
+      submissionId,
+      includeHiddenDetails,
+    )
 
   if (!resultsResponse.data || !resultsResponse.data.success) {
     throw new Error(

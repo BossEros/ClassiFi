@@ -357,6 +357,10 @@ Authorization notes:
 | POST   | `/submissions/:submissionId/run-tests`          | Trigger manual test run        |
 | GET    | `/code/health`                                  | Check execution service status |
 
+Notes:
+- `GET /submissions/:submissionId/test-results` accepts optional query `includeHiddenDetails=true` for teacher/admin review flows that need hidden test-case input/output details.
+- Hidden detail exposure is enforced server-side: the query flag is honored only when `request.user.role` is `teacher` or `admin`; non-privileged callers are forced to masked hidden-case fields.
+
 ### Plagiarism Detection
 
 The plagiarism detection system uses a custom implementation based on Winnowing algorithm with Tree-Sitter for code parsing. It supports Python, Java, and C languages.
@@ -922,6 +926,7 @@ class CodeTestService {
 - Support for Python, Java, and C
 - Test case execution with input/output validation
 - Detailed error reporting and execution statistics
+- Role-aware hidden test-case detail retrieval for submission review endpoints (teacher/admin only)
 
 ### NotificationService
 

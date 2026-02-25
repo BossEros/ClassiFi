@@ -3,6 +3,7 @@ import { useParams, useLocation } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { BackButton } from "@/presentation/components/ui/BackButton"
+import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
 import {
   AlertTriangle,
   FileCode,
@@ -309,69 +310,37 @@ export function SimilarityResultsPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center">
-                  <Users className="w-5 h-5 text-teal-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Total Pairs</p>
-                  <p className="text-xl font-bold text-white">
-                    {results.summary.totalPairs}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SummaryStatCard
+            label="Total Pairs"
+            value={results.summary.totalPairs}
+            icon={Users}
+            iconContainerClassName="bg-teal-500/20"
+            iconClassName="text-teal-400"
+          />
 
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Suspicious</p>
-                  <p className="text-xl font-bold text-white">
-                    {results.summary.suspiciousPairs}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SummaryStatCard
+            label="Suspicious"
+            value={results.summary.suspiciousPairs}
+            icon={AlertTriangle}
+            iconContainerClassName="bg-red-500/20"
+            iconClassName="text-red-400"
+          />
 
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                  <BarChart3 className="w-5 h-5 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Avg Similarity</p>
-                  <p className="text-xl font-bold text-white">
-                    {(results.summary.averageSimilarity * 100).toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SummaryStatCard
+            label="Avg Similarity"
+            value={`${(results.summary.averageSimilarity * 100).toFixed(1)}%`}
+            icon={BarChart3}
+            iconContainerClassName="bg-blue-500/20"
+            iconClassName="text-blue-400"
+          />
 
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
-                  <FileCode className="w-5 h-5 text-orange-400" />
-                </div>
-                <div>
-                  <p className="text-sm text-slate-300">Max Similarity</p>
-                  <p className="text-xl font-bold text-white">
-                    {(results.summary.maxSimilarity * 100).toFixed(1)}%
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <SummaryStatCard
+            label="Max Similarity"
+            value={`${(results.summary.maxSimilarity * 100).toFixed(1)}%`}
+            icon={FileCode}
+            iconContainerClassName="bg-orange-500/20"
+            iconClassName="text-orange-400"
+          />
         </div>
 
         {/* Student-Centric View */}
