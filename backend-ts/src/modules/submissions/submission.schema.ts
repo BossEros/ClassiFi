@@ -81,6 +81,13 @@ export const HistoryParamsSchema = z.object({
 
 export type HistoryParams = z.infer<typeof HistoryParamsSchema>
 
+/** Test results query schema */
+export const TestResultsQuerySchema = z.object({
+  includeHiddenDetails: z.coerce.boolean().default(false),
+})
+
+export type TestResultsQuery = z.infer<typeof TestResultsQuerySchema>
+
 // ============================================================================
 // Response Schemas (from controller)
 // ============================================================================

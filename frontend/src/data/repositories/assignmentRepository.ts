@@ -242,8 +242,15 @@ export async function getSubmissionFileDownloadUrlById(
 
 export async function getTestResultsForSubmissionById(
   submissionId: number,
+  includeHiddenDetails: boolean = false,
 ): Promise<ApiResponse<TestResultsResponse>> {
-  return await apiClient.get(`/submissions/${submissionId}/test-results`)
+  const includeHiddenDetailsQuery = includeHiddenDetails
+    ? "?includeHiddenDetails=true"
+    : ""
+
+  return await apiClient.get(
+    `/submissions/${submissionId}/test-results${includeHiddenDetailsQuery}`,
+  )
 }
 
 export async function executeTestsForSubmissionById(

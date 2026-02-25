@@ -17,6 +17,7 @@ import type { TestPreviewResult } from "@/business/models/test/types"
 interface UseAssignmentDetailDataOptions {
   assignmentId: string | undefined
   navigate: NavigateFunction
+  selectedSubmissionId?: number | null
 }
 
 interface UseAssignmentDetailDataResult {
@@ -40,6 +41,7 @@ interface UseAssignmentDetailDataResult {
 export function useAssignmentDetailData({
   assignmentId,
   navigate,
+  selectedSubmissionId = null,
 }: UseAssignmentDetailDataOptions): UseAssignmentDetailDataResult {
   const currentUser = useAuthStore((state) => state.user)
   const [user, setUser] = useState<User | null>(null)
@@ -129,6 +131,35 @@ export function useAssignmentDetailData({
           )
 
           setSubmissions(allSubmissions)
+
+          const hasTestCases =
+            (assignmentData.testCases?.length ?? 0) > 0
+
+          if (!hasTestCases || allSubmissions.length === 0) {
+            setSubmissionTestResults(null)
+            return
+          }
+
+          const selectedSubmission =
+            (selectedSubmissionId
+              ? allSubmissions.find(
+                  (submission) => submission.id === selectedSubmissionId,
+                )
+              : undefined) ?? allSubmissions[0]
+
+            try {
+              const teacherSubmissionTestResults = await getTestResultsForSubmission(
+                selectedSubmission.id,
+                true,
+              )
+              setSubmissionTestResults(teacherSubmissionTestResults)
+            } catch (testResultsError) {
+            console.error(
+              "Failed to load test results for teacher-selected submission",
+              testResultsError,
+            )
+            setSubmissionTestResults(null)
+          }
         }
       } catch (requestError) {
         console.error("Failed to fetch assignment data:", requestError)
@@ -145,7 +176,7 @@ export function useAssignmentDetailData({
     }
 
     fetchAssignmentData()
-  }, [assignmentId, currentUser, navigate])
+  }, [assignmentId, currentUser, navigate, selectedSubmissionId])
 
   return {
     user,

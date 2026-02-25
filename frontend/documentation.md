@@ -154,7 +154,10 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
     - **`FragmentsTable`**: Detailed view of matching code fragments
     - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Manages student grades and overrides.
-- **`SubmissionCard`**: Displays student submission metadata and quick access to submission review in assignment submissions pages.
+- **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
+- **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
+- **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
+- **`AssignmentTestResultsCard`**: Displays test details in stacked blocks (`Input`, `Expected`, `Actual`) to preserve output readability; hidden-case details are role-aware (teacher/admin can view, student view remains masked).
 
 ### Forms
 
@@ -495,6 +498,15 @@ Specialized types for the class detail page redesign:
    - Use teacher assignment filters: all, current & upcoming, and past
    - Assignment cards emphasize due date only for teachers
    - Click assignment cards to view submissions and grade student work
+   - In the submissions view, the Instructions card is collapsible from the header chevron to save vertical space
+   - Submission metrics are shown as individual cards (`Total Submissions`, `On Time`, `Late`, `Missing`) with status icons
+   - Submissions are listed in a paginated table (`Student Name`, `Status`, `Grade`, `Action`) with 10 rows per page
+   - Search includes a leading icon and shares the action bar row with `Check Similarities` (left search, right action button)
+   - `View Details` opens assignment review for the selected submission (`submissionId` in URL query)
+   - Teacher assignment review prioritizes selected submission status and test-case results; the teacher submission-history list is removed
+   - Teacher/admin review shows hidden test-case details when present; students still see hidden-case placeholders only
+   - Test result details render vertically (`Input` above `Expected`, `Actual` below) to avoid misleading line-break interpretation
+   - `Check Similarities` is available on the submissions page action bar and is intentionally not shown on the submission detail page
    - Edit/delete assignment actions are available from the assignment submissions page dropdown menu (teacher/admin only)
 4. **View Students**:
    - Switch to Students tab to view enrolled students

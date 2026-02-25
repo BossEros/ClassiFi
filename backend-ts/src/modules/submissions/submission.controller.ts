@@ -18,9 +18,11 @@ import {
 } from "@/modules/classes/class.schema.js"
 import {
   SubmissionIdParamSchema,
+  TestResultsQuerySchema,
   HistoryParamsSchema,
   type SubmissionIdParam,
   type HistoryParams,
+  type TestResultsQuery,
 } from "@/modules/submissions/submission.schema.js"
 import {
   BadRequestError,
@@ -51,6 +53,7 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
   const codeTestService = container.resolve<CodeTestService>(
     DI_TOKENS.services.codeTest,
   )
+  const hiddenDetailAuthorizedRoles = new Set(["teacher", "admin"])
 
   /**
    * POST /
@@ -223,11 +226,22 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    * Get test results for a submission
    */
   app.get("/:submissionId/test-results", {
-    preHandler: validateParams(SubmissionIdParamSchema),
+    preHandler: [
+      validateParams(SubmissionIdParamSchema),
+      validateQuery(TestResultsQuerySchema),
+    ],
     handler: async (request, reply) => {
       const { submissionId } = request.validatedParams as SubmissionIdParam
+      const { includeHiddenDetails } =
+        request.validatedQuery as TestResultsQuery
+      const requesterRole = request.user?.role ?? "student"
+      const shouldIncludeHiddenDetails =
+        includeHiddenDetails && hiddenDetailAuthorizedRoles.has(requesterRole)
 
-      const testResultsData = await codeTestService.getTestResults(submissionId)
+      const testResultsData = await codeTestService.getTestResults(
+        submissionId,
+        shouldIncludeHiddenDetails,
+      )
 
       if (!testResultsData) {
         throw new NotFoundError("No test results found for this submission")

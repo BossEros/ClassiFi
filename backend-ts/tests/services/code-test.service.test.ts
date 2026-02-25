@@ -176,5 +176,89 @@ describe("CodeTestService", () => {
       expect(mockSubmissionRepo.getSubmissionById).not.toHaveBeenCalled()
       expect(mockTestCaseRepo.getByAssignmentId).not.toHaveBeenCalled()
     })
+
+    it("should keep hidden test details masked by default", async () => {
+      const hiddenResults = [
+        {
+          testCaseId: 2,
+          status: "Accepted",
+          executionTime: "0.0030",
+          memoryUsed: 768,
+          actualOutput: "42",
+          errorMessage: null,
+          testCase: {
+            id: 2,
+            name: "Hidden Test",
+            isHidden: true,
+            input: "21",
+            expectedOutput: "42",
+          },
+        },
+      ]
+
+      mockTestResultRepo.getWithCasesBySubmissionId.mockResolvedValue(hiddenResults)
+      mockTestResultRepo.calculateScore.mockResolvedValue({
+        passed: 1,
+        total: 1,
+        percentage: 100,
+      })
+
+      const result = await codeTestService.getTestResults(10)
+
+      expect(result?.results[0]).toEqual({
+        testCaseId: 2,
+        name: "Hidden Test",
+        status: "Accepted",
+        isHidden: true,
+        executionTimeMs: 3,
+        memoryUsedKb: 768,
+        input: undefined,
+        expectedOutput: undefined,
+        actualOutput: undefined,
+        errorMessage: undefined,
+      })
+    })
+
+    it("should include hidden test details when includeHiddenDetails is true", async () => {
+      const hiddenResults = [
+        {
+          testCaseId: 2,
+          status: "Accepted",
+          executionTime: "0.0030",
+          memoryUsed: 768,
+          actualOutput: "42",
+          errorMessage: null,
+          testCase: {
+            id: 2,
+            name: "Hidden Test",
+            isHidden: true,
+            input: "21",
+            expectedOutput: "42",
+          },
+        },
+      ]
+
+      mockTestResultRepo.getWithCasesBySubmissionId.mockResolvedValue(hiddenResults)
+      mockTestResultRepo.calculateScore.mockResolvedValue({
+        passed: 1,
+        total: 1,
+        percentage: 100,
+      })
+
+      const result = await codeTestService.getTestResults(10, true)
+
+      expect(result?.results[0]).toEqual({
+        testCaseId: 2,
+        name: "Hidden Test",
+        status: "Accepted",
+        isHidden: true,
+        executionTimeMs: 3,
+        memoryUsedKb: 768,
+        input: "21",
+        expectedOutput: "42",
+        actualOutput: "42",
+        errorMessage: undefined,
+      })
+    })
   })
 })
