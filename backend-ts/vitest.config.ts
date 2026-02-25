@@ -14,6 +14,9 @@ export default defineConfig({
             include: [
                 'src/modules/auth/auth.service.ts',
                 'src/modules/auth/auth.schema.ts',
+                'src/modules/classes/class.schema.ts',
+                'src/modules/classes/class-code.util.ts',
+                'src/modules/submissions/submission.schema.ts',
             ],
             thresholds: {
                 lines: 100,

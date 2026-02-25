@@ -1122,7 +1122,7 @@ npm run test:coverage     # With coverage report
 ```
 
 High-signal coverage gate:
-- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical auth contracts (`auth.service`, `auth.schema`).
+- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `submission.schema`).
 - This gate ensures login/register payload rules and auth service business paths fail fast on regressions.
 
 ### Test Factories

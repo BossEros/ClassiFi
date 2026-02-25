@@ -447,3 +447,25 @@ Expand strict high-signal unit coverage beyond auth-only paths by adding behavio
 - [x] Extend frontend `vitest` strict coverage include set for added high-signal files.
 - [x] Run focused frontend coverage for the strict-gated high-signal files.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Backend High-Signal Coverage Expansion (Checkpoint 3)
+
+## Scope
+
+Expand strict backend unit coverage from auth-only contracts to additional behavior-critical schema/util modules:
+
+1. Add tests for class schema validation rules and coercion contracts.
+2. Add tests for submission schema response/query/param contracts.
+3. Add tests for unique class-code generation retry behavior.
+4. Extend backend strict coverage gate with these modules.
+5. Re-verify backend typecheck/tests.
+
+## Execution Checklist
+
+- [x] Add tests for `class.schema` validation and coercion behavior.
+- [x] Add tests for `submission.schema` response/query/param behavior.
+- [x] Add tests for `class-code.util` uniqueness/retry behavior.
+- [x] Extend backend `vitest` strict coverage include set for added high-signal files.
+- [x] Run focused backend coverage for the strict-gated files.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.

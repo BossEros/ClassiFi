@@ -194,3 +194,13 @@
 - [x] Extend frontend strict coverage gate include set for added modules
 - [x] Run focused frontend coverage verification for strict-gated files
 - [x] Run frontend build verification
+
+# Backend High-Signal Coverage Expansion (Checkpoint 3)
+
+- [x] Add tests for `class.schema` validation/coercion contracts
+- [x] Add tests for `submission.schema` validation/coercion contracts
+- [x] Add tests for `class-code.util` unique code retry behavior
+- [x] Extend backend strict coverage gate include set for added modules
+- [x] Run focused backend coverage verification for strict-gated files
+- [x] Run backend typecheck verification
+- [x] Run backend test verification
