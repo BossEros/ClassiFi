@@ -599,6 +599,13 @@ Frontend form migration follows a standardized pattern:
   - Submission workflows
   - Smoke tests for critical paths
 
+### Test Organization Rules (Required)
+
+- Keep all unit tests in `src/tests/unit/**` grouped by architecture layer (`business`, `data`, `presentation`, `shared`).
+- Keep Playwright tests in `src/tests/e2e/**`.
+- Keep shared setup and mocks in `src/tests/setup.ts` and `src/tests/mocks/**`.
+- Do not create new `*.test.ts(x)` files inside feature folders (for example `src/presentation/**`, `src/business/**`, `src/data/**`).
+
 ### Test Coverage
 
 The project maintains comprehensive test coverage for:

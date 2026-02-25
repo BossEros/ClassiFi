@@ -1125,6 +1125,13 @@ Test location policy:
 - Unit and integration tests are centralized under `backend-ts/tests/**`.
 - `vitest.config.ts` discovery is scoped to `tests/**/*.test.ts` to avoid scattered test files inside `src/**`.
 
+### Test Organization Rules (Required)
+
+- Keep all backend tests under `backend-ts/tests/**`.
+- Group tests by purpose using existing folders: `api/`, `services/`, `repositories/`, `modules/`, `integration/`, and shared setup/utils.
+- Name tests as `*.test.ts` to match Vitest discovery.
+- Do not add new test files under `backend-ts/src/**`.
+
 High-signal coverage gate:
 - `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `notification-preference.schema`, `notification-preference.service`, `user.service`).
 - This gate ensures login/register payload rules and auth service business paths fail fast on regressions.

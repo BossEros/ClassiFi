@@ -131,6 +131,13 @@ npm test
 
 Unit/integration test location: `backend-ts/tests/**/*.test.ts`
 
+### Test Placement Rules
+
+- Frontend unit tests must stay under `frontend/src/tests/unit/**`.
+- Frontend E2E tests must stay under `frontend/src/tests/e2e/**`.
+- Backend tests must stay under `backend-ts/tests/**` (for example: `api/`, `services/`, `repositories/`, `modules/`, `integration/`).
+- Do not add new test files inside `frontend/src/**` feature folders or `backend-ts/src/**`.
+
 ## Deployment
 
 - Frontend: Vercel
