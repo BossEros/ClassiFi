@@ -4,11 +4,12 @@ import { DashboardLayout } from "@/presentation/components/shared/dashboard/Dash
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
+import { Input } from "@/presentation/components/ui/Input"
 import {
   AlertTriangle,
   FileCode,
   BarChart3,
-  Users,
+  Search,
   Loader2,
   X,
   Layers,
@@ -94,6 +95,7 @@ export function SimilarityResultsPage() {
   const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(
     null,
   )
+  const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [studentPairs, setStudentPairs] = useState<PairResponse[]>([])
   const [isLoadingStudentPairs, setIsLoadingStudentPairs] = useState(false)
   const [studentPairsError, setStudentPairsError] = useState<string | null>(
@@ -305,19 +307,10 @@ export function SimilarityResultsPage() {
           <h1 className="text-3xl font-bold text-white">
             Similarity Analysis Results
           </h1>
-          <p className="text-slate-300">Report ID: {results.reportId}</p>
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <SummaryStatCard
-            label="Total Pairs"
-            value={results.summary.totalPairs}
-            icon={Users}
-            iconContainerClassName="bg-teal-500/20"
-            iconClassName="text-teal-400"
-          />
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SummaryStatCard
             label="Suspicious"
             value={results.summary.suspiciousPairs}
@@ -360,14 +353,30 @@ export function SimilarityResultsPage() {
         {!selectedStudent ? (
           <Card className="bg-white/5 backdrop-blur-sm border-white/10">
             <CardContent className="p-6">
-              <div className="mb-4">
-                <h2 className="text-xl font-bold text-white mb-1">
-                  Student Originality Overview
-                </h2>
-                <p className="text-sm text-slate-400">
-                  Click on a student to view their similarity pairs and compare
-                  code
-                </p>
+              <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-1">
+                    Student Originality Overview
+                  </h2>
+                  <p className="text-sm text-slate-400">
+                    Click on a student to view their similarity pairs and compare
+                    code
+                  </p>
+                </div>
+
+                <div className="w-full sm:max-w-[28rem] relative xl:ml-auto">
+                  <Search
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none z-10"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Search by student name..."
+                    value={studentSearchQuery}
+                    onChange={(event) => setStudentSearchQuery(event.target.value)}
+                    className="pl-11 relative z-0"
+                  />
+                </div>
               </div>
 
               <StudentSummaryTable
@@ -375,6 +384,7 @@ export function SimilarityResultsPage() {
                 onStudentSelect={handleStudentSelect}
                 selectedStudent={selectedStudent}
                 isLoading={isLoadingStudents}
+                searchQuery={studentSearchQuery}
               />
             </CardContent>
           </Card>

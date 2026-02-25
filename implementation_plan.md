@@ -344,3 +344,84 @@ Audit presentation-layer component tests and remove only low-signal coverage whi
 - [x] Remove only low-signal component tests.
 - [x] Run `frontend`: `npm run build`.
 - [x] Run `frontend`: `npm test`.
+
+# Implementation Plan - High-Signal Unit Coverage Hardening
+
+## Scope
+
+Raise unit-test confidence by prioritizing behavior-critical coverage (business logic, validation, service/repository contracts) and avoiding low-signal UI-only assertions.
+
+1. Audit tests for correctness against expected product behavior.
+2. Add missing high-signal tests on critical branches.
+3. Enforce strict coverage thresholds on high-signal layers.
+4. Keep low-signal tests out of the required quality gate.
+5. Re-verify frontend/backend required commands.
+
+## Execution Checklist
+
+- [x] Audit current unit tests for implementation-coupled expectations.
+- [x] Add/adjust frontend high-signal tests for auth and validation branches.
+- [x] Add/adjust backend high-signal tests for auth contracts and service branches.
+- [x] Enforce `100%` thresholds on high-signal targets in Vitest configuration.
+- [x] Remove/de-prioritize low-signal component-only tests from coverage goals.
+- [ ] Run `frontend`: `npm run build`.
+- [ ] Run `backend-ts`: `npm run typecheck`.
+- [ ] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Teacher Similarity View Simplification
+
+## Scope
+
+Refine the teacher similarity analysis view to focus on actionable signals and align search UX with submissions view.
+
+1. Remove `Report ID` from the similarity results header.
+2. Remove the `Total Pairs` summary card.
+3. Make the student originality search bar match the submissions-view search input sizing and styling.
+4. Move the student originality search bar into the card header, right-aligned beside the overview text.
+5. Verify frontend build/tests.
+
+## Execution Checklist
+
+- [x] Remove `Report ID` from `SimilarityResultsPage` header.
+- [x] Remove `Total Pairs` summary card and adjust summary grid layout.
+- [x] Update `StudentSummaryTable` search input to match submissions-view search pattern and placeholder.
+- [x] Move student originality search UI into the overview header area (right side).
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm test`.
+
+# Implementation Plan - Student Originality Pagination Alignment
+
+## Scope
+
+Align student originality table pagination with the teacher submissions table pagination UI and improve header-to-table spacing.
+
+1. Reuse the same pagination UI/behavior pattern used by teacher submissions.
+2. Keep student originality filtering/sorting intact while applying shared pagination.
+3. Add clearer spacing between the originality header/search block and table.
+4. Verify frontend build/tests.
+
+## Execution Checklist
+
+- [x] Extract/introduce shared submissions-style table pagination component.
+- [x] Reuse shared pagination in `AssignmentSubmissionsTable`.
+- [x] Apply shared pagination in `StudentSummaryTable` with submissions-matched page size.
+- [x] Increase spacing between originality header/search block and table.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm test`.
+
+# Implementation Plan - Student Originality Column Cleanup
+
+## Scope
+
+Refine the Student Originality Overview table by removing low-value columns and improving action-column alignment.
+
+1. Remove the `Total Pairs` column.
+2. Keep `Actions` and align its header/cells with button content.
+3. Verify frontend build/tests.
+
+## Execution Checklist
+
+- [x] Remove `Total Pairs` header and row cells in `StudentSummaryTable`.
+- [x] Center `Actions` header/cells so header alignment matches button content.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm test`.

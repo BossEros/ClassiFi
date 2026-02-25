@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from "react"
-import { Search, X } from "lucide-react"
+import React, { useState, useMemo, useEffect } from "react"
 import type { StudentSummary } from "@/business/services/plagiarismService"
 import { OriginalityBadge } from "./OriginalityBadge"
+import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 
 type SortKey = "name" | "originality" | "similarity"
 type SortOrder = "asc" | "desc"
@@ -15,6 +15,8 @@ interface StudentSummaryTableProps {
   selectedStudent?: StudentSummary | null
   /** Loading state */
   isLoading?: boolean
+  /** Optional external search query. */
+  searchQuery?: string
 }
 
 /**
@@ -42,12 +44,16 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
   onStudentSelect,
   selectedStudent,
   isLoading = false,
+  searchQuery = "",
 }) => {
   const [sortKey, setSortKey] = useState<SortKey>("originality")
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc")
   const [currentPage, setCurrentPage] = useState(1)
-  const [searchQuery, setSearchQuery] = useState("")
-  const itemsPerPage = 25
+  const itemsPerPage = 10
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery])
 
   // Filter and sort students
   const filteredStudents = useMemo(() => {
@@ -82,7 +88,7 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
   }, [students, searchQuery, sortKey, sortOrder])
 
   // Pagination
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage)
+  const totalPages = Math.max(1, Math.ceil(filteredStudents.length / itemsPerPage))
   const paginatedStudents = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage
     return filteredStudents.slice(start, start + itemsPerPage)
@@ -98,12 +104,6 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
     }
   }
 
-  // Reset page when search changes
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value)
-    setCurrentPage(1)
-  }
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -114,26 +114,6 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Search bar */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search by student name..."
-          value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full h-10 pl-10 pr-10 rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm text-sm text-white placeholder:text-slate-400 transition-all duration-200 hover:bg-white/10 hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-teal-600/50 focus:border-teal-600/50 focus:bg-white/10"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => handleSearchChange("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
       {/* Table */}
       <div className="overflow-x-auto rounded-xl border border-white/10 bg-black/20 backdrop-blur-md">
         <table className="w-full">
@@ -176,12 +156,9 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
                 Matched With
               </th>
               <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
-                Total Pairs
-              </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
                 Suspicious
               </th>
-              <th className="px-6 py-4 text-right text-sm font-semibold text-slate-300">
+              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
                 Actions
               </th>
             </tr>
@@ -190,7 +167,7 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
             {paginatedStudents.length === 0 ? (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-6 py-12 text-center text-slate-400"
                 >
                   {searchQuery
@@ -227,9 +204,6 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
                     <td className="px-6 py-4 text-sm text-slate-300">
                       {student.highestMatchWith.studentName}
                     </td>
-                    <td className="px-6 py-4 text-center text-sm text-slate-300">
-                      {student.totalPairs}
-                    </td>
                     <td className="px-6 py-4 text-center">
                       <span
                         className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-semibold ${
@@ -241,7 +215,7 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
                         {student.suspiciousPairs}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-center">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -261,48 +235,13 @@ export const StudentSummaryTable: React.FC<StudentSummaryTableProps> = ({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-400">
-            Showing {(currentPage - 1) * itemsPerPage + 1}-
-            {Math.min(currentPage * itemsPerPage, filteredStudents.length)} of{" "}
-            {filteredStudents.length} students
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentPage(1)}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              First
-            </button>
-            <button
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              Previous
-            </button>
-            <span className="px-3 py-1.5 text-slate-300">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              Next
-            </button>
-            <button
-              onClick={() => setCurrentPage(totalPages)}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-            >
-              Last
-            </button>
-          </div>
-        </div>
-      )}
+      <TablePaginationFooter
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredStudents.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+      />
     </div>
   )
 }

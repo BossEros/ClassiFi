@@ -149,3 +149,38 @@
 - [x] Run frontend build verification
 - [x] Run frontend test verification
 - [x] Align pre-existing `testService` assertion with current `includeHiddenDetails` default argument for passing verification
+
+# High-Signal Unit Coverage Hardening
+
+- [x] Audit existing unit tests for expectations that incorrectly follow current implementation bugs
+- [x] Add/fix frontend high-signal unit tests for auth and validation behavior
+- [x] Add/fix backend high-signal unit tests for auth schema/service contracts
+- [x] Enforce 100% coverage thresholds for high-signal layers only
+- [x] Keep low-signal component-only tests out of required coverage goals
+- [ ] Run frontend build verification
+- [ ] Run backend typecheck verification
+- [ ] Run backend tests verification
+
+# Teacher Similarity View Simplification
+
+- [x] Remove `Report ID` from similarity results header
+- [x] Remove `Total Pairs` summary card and rebalance summary layout
+- [x] Match student originality search bar width/style to submissions search input
+- [x] Move student originality search bar into the overview header area (right aligned)
+- [x] Run frontend build verification
+- [x] Run frontend test verification
+
+# Student Originality Pagination Alignment
+
+- [x] Reuse the submissions-style pagination UI for student originality table
+- [x] Match student originality page-size/paging behavior to submissions overview
+- [x] Add additional spacing between originality header/search block and table
+- [x] Run frontend build verification
+- [x] Run frontend test verification
+
+# Student Originality Column Cleanup
+
+- [x] Remove `Total Pairs` column from the Student Originality Overview table
+- [x] Align `Actions` header/cell content to center for visual consistency
+- [x] Run frontend build verification
+- [x] Run frontend test verification
