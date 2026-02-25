@@ -3,7 +3,6 @@ import { X, Check, RefreshCw, Users } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
 import { joinClass } from "@/business/services/studentDashboardService"
-import type { FieldErrors } from "react-hook-form"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
 import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
 import {
@@ -11,6 +10,7 @@ import {
   type JoinClassFormValues,
 } from "@/presentation/schemas/class/classSchemas"
 import type { Class } from "@/business/models/dashboard/types"
+import type { FieldErrors } from "react-hook-form"
 
 interface JoinClassModalProps {
   isOpen: boolean

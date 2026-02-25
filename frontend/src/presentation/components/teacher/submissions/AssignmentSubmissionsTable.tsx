@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react"
+import { AlertCircle, CheckCircle2 } from "lucide-react"
 import type { Submission } from "@/business/models/assignment/types"
 import { isLateSubmission } from "@/presentation/utils/dateUtils"
 import {
@@ -8,6 +8,7 @@ import {
 } from "@/presentation/utils/gradeUtils"
 import { cn } from "@/shared/utils/cn"
 import { Avatar } from "@/presentation/components/ui/Avatar"
+import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 
 interface AssignmentSubmissionsTableProps {
   submissions: Submission[]
@@ -50,16 +51,6 @@ export function AssignmentSubmissionsTable({
   onViewDetails,
 }: AssignmentSubmissionsTableProps) {
   const tableBackgroundColor = "#1E2433"
-  const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
-  const endItem = totalItems === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalItems)
-
-  const handlePreviousPage = () => {
-    onPageChange(Math.max(currentPage - 1, 1))
-  }
-
-  const handleNextPage = () => {
-    onPageChange(Math.min(currentPage + 1, totalPages))
-  }
 
   return (
     <div className="space-y-4">
@@ -155,37 +146,13 @@ export function AssignmentSubmissionsTable({
         </table>
       </div>
 
-      {totalItems > 0 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
-          <span className="text-slate-400 sm:order-1 order-2 sm:text-left text-right">
-            Showing {startItem}-{endItem} of {totalItems} results
-          </span>
-
-          <div className="flex items-center justify-end gap-2 sm:order-2 order-1">
-            <button
-              onClick={handlePreviousPage}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-
-            <span className="px-3 py-1.5 text-slate-300">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-              aria-label="Next page"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      )}
+      <TablePaginationFooter
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        onPageChange={onPageChange}
+      />
     </div>
   )
 }

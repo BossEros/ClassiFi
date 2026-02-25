@@ -79,12 +79,14 @@ export async function uploadUserAvatar(
  */
 async function deleteOldAvatar(avatarUrl: string): Promise<void> {
   try {
-    const urlParts = avatarUrl.split("/avatars/")
+    const [, rawFilePath] = avatarUrl.split("/avatars/")
+    const filePath = rawFilePath?.split("?")[0]
 
-    if (urlParts.length > 1) {
-      const filePath = urlParts[1].split("?")[0] // Remove query params
-      await supabase.storage.from("avatars").remove([filePath])
+    if (!filePath) {
+      return
     }
+
+    await supabase.storage.from("avatars").remove([filePath])
   } catch (error) {
     console.error("Failed to delete old avatar:", error)
     // Continue anyway - not critical

@@ -49,6 +49,7 @@ ClassiFi/
 |   |   |-- presentation/         # UI components/pages/hooks/schemas
 |   |   |-- business/             # Domain models and services
 |   |   |-- data/                 # API clients, repositories, mappers
+|   |   |-- tests/                # Centralized frontend tests (unit/e2e/mocks/setup)
 |   |   `-- shared/               # Shared constants, store, types, utils
 |   `-- documentation.md
 |
@@ -59,6 +60,7 @@ ClassiFi/
 |   |   |-- shared/               # Config, DI, DB, errors, logger
 |   |   |-- models/               # Shared model exports
 |   |   `-- services/             # Cross-cutting services/interfaces
+|   |-- tests/                    # Centralized backend tests (api/services/repos/modules)
 |   `-- documentation.md
 |
 |-- judge0/                       # Local Judge0 setup (optional)
@@ -117,6 +119,8 @@ npm run build
 npm test
 ```
 
+Unit test location: `frontend/src/tests/unit/**/*.test.ts(x)`
+
 ### Backend
 
 ```bash
@@ -124,6 +128,15 @@ cd backend-ts
 npm run typecheck
 npm test
 ```
+
+Unit/integration test location: `backend-ts/tests/**/*.test.ts`
+
+### Test Placement Rules
+
+- Frontend unit tests must stay under `frontend/src/tests/unit/**`.
+- Frontend E2E tests must stay under `frontend/src/tests/e2e/**`.
+- Backend tests must stay under `backend-ts/tests/**` (for example: `api/`, `services/`, `repositories/`, `modules/`, `integration/`).
+- Do not add new test files inside `frontend/src/**` feature folders or `backend-ts/src/**`.
 
 ## Deployment
 

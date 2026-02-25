@@ -2,12 +2,10 @@ import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { cn } from "@/shared/utils/cn"
 import { CheckCircle, Clock } from "lucide-react"
 import type { Assignment } from "@/business/models/dashboard/types"
-import { DateBlock } from "@/presentation/components/ui/DateBlock"
-import { StatusBadge } from "@/presentation/components/ui/StatusBadge"
-import { GradeDisplay } from "@/presentation/components/ui/GradeDisplay"
 import { parseISODate } from "@/shared/types/class"
-import { getAssignmentStatus } from "@/shared/utils/assignmentStatus"
+import { getAssignmentStatus, getStatusLabel } from "@/shared/utils/assignmentStatus"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
+import { formatGrade, getGradePercentage, getGradeColor } from "@/presentation/utils/gradeUtils"
 
 interface AssignmentCardProps {
   assignment: Assignment
@@ -23,6 +21,10 @@ export function AssignmentCard({
   isTeacher = false,
 }: AssignmentCardProps) {
   const deadlineDate = parseISODate(assignment.deadline)
+  const month = deadlineDate
+    ? deadlineDate.toLocaleString("default", { month: "short" }).toUpperCase()
+    : null
+  const day = deadlineDate ? deadlineDate.getDate().toString().padStart(2, "0") : null
 
   // Only show grade if it actually exists (student submitted and was graded)
   const shouldShowGrade =
@@ -31,6 +33,30 @@ export function AssignmentCard({
   const shouldShowStatusBadge = !isTeacher && !shouldShowGrade
   const hasRightSideContent = shouldShowGrade || shouldShowStatusBadge
   const status = shouldShowStatusBadge ? getAssignmentStatus(assignment) : null
+  const gradePercentage = getGradePercentage(
+    displayGrade,
+    assignment.maxGrade || assignment.totalScore || 100,
+  )
+  const gradeColorClass = getGradeColor(gradePercentage)
+  const formattedGrade = formatGrade(
+    displayGrade,
+    assignment.maxGrade || assignment.totalScore || 100,
+  )
+
+  const getStatusStyles = (statusValue: NonNullable<typeof status>): string => {
+    switch (statusValue) {
+      case "pending":
+        return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+      case "not-started":
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30"
+      case "submitted":
+        return "bg-teal-500/20 text-teal-400 border-teal-500/30"
+      case "late":
+        return "bg-red-500/20 text-red-400 border-red-500/30"
+      default:
+        return "bg-gray-500/20 text-gray-400 border-gray-500/30"
+    }
+  }
 
   return (
     <Card
@@ -43,8 +69,13 @@ export function AssignmentCard({
     >
       <CardContent className="p-4 flex items-center gap-4">
         {/* Date Block */}
-        {deadlineDate && (
-          <DateBlock date={deadlineDate} className="flex-shrink-0" />
+        {deadlineDate && month && day && (
+          <div className="flex flex-col items-center justify-center w-16 h-16 bg-slate-900 border border-slate-700 rounded-lg flex-shrink-0">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              {month}
+            </span>
+            <span className="text-2xl font-bold text-teal-400">{day}</span>
+          </div>
         )}
 
         {/* Main Content */}
@@ -93,15 +124,23 @@ export function AssignmentCard({
               <div className="flex items-center gap-3">
                 {shouldShowGrade ? (
                   <div className="flex items-center gap-3">
-                    <GradeDisplay
-                      grade={displayGrade}
-                      maxGrade={
-                        assignment.maxGrade || assignment.totalScore || 100
-                      }
-                    />
+                    <div className="flex flex-col items-end">
+                      <span className={`text-xl font-bold ${gradeColorClass}`}>
+                        {formattedGrade}
+                      </span>
+                      <span className="text-xs text-gray-500 uppercase tracking-wider">
+                        Grade
+                      </span>
+                    </div>
                   </div>
                 ) : status ? (
-                  <StatusBadge status={status} />
+                  <span
+                    role="status"
+                    aria-label={`Assignment status: ${getStatusLabel(status)}`}
+                    className={`inline-flex items-center px-2 py-1 rounded text-sm font-semibold border ${getStatusStyles(status)}`}
+                  >
+                    {getStatusLabel(status)}
+                  </span>
                 ) : null}
               </div>
             )}

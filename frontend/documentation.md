@@ -59,7 +59,11 @@ frontend/
 |   |   |-- store/
 |   |   |-- types/
 |   |   `-- utils/
-|   |-- tests/              # Vitest + Playwright test files and mocks
+|   |-- tests/              # Centralized tests, setup, and mocks
+|   |   |-- unit/           # All frontend unit test files (*.test.ts|tsx)
+|   |   |-- e2e/            # Playwright tests
+|   |   |-- mocks/          # Test doubles / MSW handlers
+|   |   `-- setup.ts        # Vitest setup
 |   |-- index.css
 |   `-- main.tsx            # Application Entry Point
 |-- public/
@@ -587,12 +591,20 @@ Frontend form migration follows a standardized pattern:
 
 ## Testing
 
-- **Unit Tests**: `npm run test` (Vitest). Focus on `src/business/services` and utility logic.
+- **Unit Tests**: `npm run test` (Vitest). All unit tests must live in `src/tests/unit/**` (not colocated in feature folders).
+- **Unit Test Discovery Policy**: `vitest.config.ts` and `tsconfig.test.json` are intentionally scoped to `src/tests/unit/**/*.test.ts(x)` and `src/tests/**` to keep tests centralized.
 - **E2E Tests**: Playwright (setup in `src/tests/e2e`).
   - Authentication flows
   - Class and assignment creation
   - Submission workflows
   - Smoke tests for critical paths
+
+### Test Organization Rules (Required)
+
+- Keep all unit tests in `src/tests/unit/**` grouped by architecture layer (`business`, `data`, `presentation`, `shared`).
+- Keep Playwright tests in `src/tests/e2e/**`.
+- Keep shared setup and mocks in `src/tests/setup.ts` and `src/tests/mocks/**`.
+- Do not create new `*.test.ts(x)` files inside feature folders (for example `src/presentation/**`, `src/business/**`, `src/data/**`).
 
 ### Test Coverage
 
@@ -603,3 +615,8 @@ The project maintains comprehensive test coverage for:
 - Utility functions (date formatting, validation)
 - UI components (Button, Card, Input, Toast)
 - E2E workflows (login, class creation, assignment submission)
+
+High-signal coverage gate:
+- `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
+- Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
+- Low-signal component rendering tests are not part of this strict gate.
