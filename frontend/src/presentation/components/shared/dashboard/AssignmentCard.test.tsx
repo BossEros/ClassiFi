@@ -3,27 +3,6 @@ import { AssignmentCard } from "./AssignmentCard"
 import { vi, describe, it, expect } from "vitest"
 import type { Assignment } from "@/business/models/dashboard/types"
 
-// Mock child components to isolate AssignmentCard logic
-vi.mock("@/presentation/components/ui/DateBlock", () => ({
-  DateBlock: ({ date }: any) => (
-    <div data-testid="date-block">{date.toString()}</div>
-  ),
-}))
-
-vi.mock("@/presentation/components/ui/StatusBadge", () => ({
-  StatusBadge: ({ status }: any) => (
-    <div data-testid="status-badge">{status}</div>
-  ),
-}))
-
-vi.mock("@/presentation/components/ui/GradeDisplay", () => ({
-  GradeDisplay: ({ grade, maxGrade }: any) => (
-    <div data-testid="grade-display">
-      {grade}/{maxGrade}
-    </div>
-  ),
-}))
-
 // Mock Card components
 vi.mock("@/presentation/components/ui/Card", () => ({
   Card: ({ children, onClick, className }: any) => (
@@ -56,8 +35,9 @@ describe("AssignmentCard", () => {
     render(<AssignmentCard {...defaultProps} />)
 
     expect(screen.getByText("Test Assignment")).toBeInTheDocument()
-    expect(screen.getByTestId("date-block")).toBeInTheDocument()
-    expect(screen.getByTestId("grade-display")).toHaveTextContent("85/100")
+    expect(screen.getByText("DEC")).toBeInTheDocument()
+    expect(screen.getByText("31")).toBeInTheDocument()
+    expect(screen.getByText("85/100")).toBeInTheDocument()
   })
 
   it("calculates status correctly (late)", () => {
@@ -70,12 +50,12 @@ describe("AssignmentCard", () => {
         assignment={{ ...mockAssignment, grade: null, maxGrade: undefined }}
       />,
     )
-    expect(screen.getByTestId("status-badge")).toHaveTextContent("late")
+    expect(screen.getByText("Late")).toBeInTheDocument()
 
     vi.useRealTimers()
   })
 
-  it("calculates status correctly (submitted)", () => {
+  it("calculates status correctly (pending)", () => {
     render(
       <AssignmentCard
         assignment={{
@@ -86,7 +66,7 @@ describe("AssignmentCard", () => {
         }}
       />,
     )
-    expect(screen.getByTestId("status-badge")).toHaveTextContent("submitted")
+    expect(screen.getByText("Pending")).toBeInTheDocument()
   })
 
   it("does not render teacher submission counts", () => {
