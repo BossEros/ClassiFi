@@ -13,6 +13,7 @@ import type {
   MatchFragment,
   SimilarityResult,
   Submission,
+  SimilarityReport,
 } from "@/models/index.js"
 import type { TransactionContext } from "@/shared/transaction.js"
 // Note: Error classes are preserved for future use but not imported to avoid TS6192
@@ -51,6 +52,52 @@ export class PlagiarismPersistenceService {
     ])
 
     return { result, fragments, submission1, submission2 }
+  }
+
+  /**
+   * Returns an existing assignment report when it is still current.
+   * A report is considered current when latest-submission count matches and
+   * no latest submission is newer than the report generation time.
+   */
+  async getReusableAssignmentReport(
+    assignmentId: number,
+  ): Promise<AnalyzeResponse | null> {
+    const reusableReportId =
+      await this.getReusableAssignmentReportId(assignmentId)
+
+    if (!reusableReportId) {
+      return null
+    }
+
+    await this.similarityRepo.deleteReportsByAssignmentExcept(
+      assignmentId,
+      reusableReportId,
+    )
+
+    return this.getReport(reusableReportId)
+  }
+
+  /** Returns reusable report ID when the latest report is still current. */
+  async getReusableAssignmentReportId(
+    assignmentId: number,
+  ): Promise<number | null> {
+    const latestReport =
+      await this.similarityRepo.getLatestReportByAssignment(assignmentId)
+
+    if (!latestReport) {
+      return null
+    }
+
+    const latestSubmissions = await this.submissionRepo.getSubmissionsByAssignment(
+      assignmentId,
+      true,
+    )
+
+    if (!this.isReportCurrent(latestReport, latestSubmissions)) {
+      return null
+    }
+
+    return latestReport.id
   }
 
   /** Persist report, results, and fragments to database */
@@ -113,6 +160,11 @@ export class PlagiarismPersistenceService {
         }
       }
 
+      await similarityRepoTx.deleteReportsByAssignmentExcept(
+        assignmentId,
+        dbReport.id,
+      )
+
       return { dbReport, resultIdMap }
     })
   }
@@ -144,6 +196,9 @@ export class PlagiarismPersistenceService {
     const pairs: PlagiarismPairDTO[] = results.map((result) => {
       const submission1 = submissionMap.get(result.submission1Id)
       const submission2 = submissionMap.get(result.submission2Id)
+      const structuralScore = parseFloat(result.structuralScore || "0")
+      const rawHybridScore = parseFloat(result.hybridScore || "0")
+      const hybridScore = rawHybridScore > 0 ? rawHybridScore : structuralScore
 
       return {
         id: result.id,
@@ -151,7 +206,9 @@ export class PlagiarismPersistenceService {
           id: result.submission1Id,
           path: submission1?.submission.filePath || "",
           filename: submission1?.submission.fileName || "Unknown",
-          lineCount: 0,
+          // Pair metrics are tracked in k-grams, so this uses k-gram totals
+          // for consistent normalization in triage-table qualitative signals.
+          lineCount: result.leftTotal,
           studentId: submission1?.submission.studentId?.toString(),
           studentName: submission1?.studentName || "Unknown",
         },
@@ -159,13 +216,13 @@ export class PlagiarismPersistenceService {
           id: result.submission2Id,
           path: submission2?.submission.filePath || "",
           filename: submission2?.submission.fileName || "Unknown",
-          lineCount: 0,
+          lineCount: result.rightTotal,
           studentId: submission2?.submission.studentId?.toString(),
           studentName: submission2?.studentName || "Unknown",
         },
-        structuralScore: parseFloat(result.structuralScore),
+        structuralScore,
         semanticScore: parseFloat(result.semanticScore || "0"),
-        hybridScore: parseFloat(result.hybridScore || "0"),
+        hybridScore,
         overlap: result.overlap,
         longest: result.longestFragment,
       }
@@ -173,6 +230,7 @@ export class PlagiarismPersistenceService {
 
     return {
       reportId: reportId.toString(),
+      isReusedReport: true,
       assignmentId: report.assignmentId,
       summary: {
         totalFiles: report.totalSubmissions,
@@ -209,6 +267,24 @@ export class PlagiarismPersistenceService {
     )
   }
 
+  private isReportCurrent(
+    report: SimilarityReport,
+    latestSubmissions: Submission[],
+  ): boolean {
+    if (report.totalSubmissions !== latestSubmissions.length) {
+      return false
+    }
+
+    const newestLatestSubmissionMs = latestSubmissions.reduce((currentMax, submission) => {
+      const submittedAtMs = new Date(submission.submittedAt).getTime()
+      return Math.max(currentMax, submittedAtMs)
+    }, 0)
+
+    const reportGeneratedAtMs = new Date(report.generatedAt).getTime()
+
+    return newestLatestSubmissionMs <= reportGeneratedAtMs
+  }
+
   /** Prepare results for database insertion */
   private prepareResultsForInsert(
     reportId: number,
@@ -243,7 +319,7 @@ export class PlagiarismPersistenceService {
         submission2Id: sub2,
         structuralScore: pair.similarity.toFixed(4),
         semanticScore: "0",
-        hybridScore: "0",
+        hybridScore: pair.similarity.toFixed(4),
         overlap: pair.overlap,
         longestFragment: pair.longest,
         leftCovered: pair.leftCovered,

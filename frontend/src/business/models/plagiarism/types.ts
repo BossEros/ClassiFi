@@ -20,6 +20,7 @@ export interface PairResponse {
 
 export interface AnalyzeResponse {
   reportId: string
+  isReusedReport: boolean
   summary: {
     totalFiles: number
     totalPairs: number
@@ -29,6 +30,11 @@ export interface AnalyzeResponse {
   }
   pairs: PairResponse[]
   warnings: string[]
+}
+
+export interface AssignmentSimilarityStatusResponse {
+  hasReusableReport: boolean
+  reusableReportId: string | null
 }
 
 export interface ResultDetailsResponse {
@@ -68,19 +74,4 @@ export interface ResultDetailsResponse {
     lineCount: number
     studentName: string
   }
-}
-
-export interface StudentSummary {
-  studentId: number
-  studentName: string
-  submissionId: number
-  originalityScore: number
-  highestSimilarity: number
-  highestMatchWith: {
-    studentId: number
-    studentName: string
-    submissionId: number
-  }
-  totalPairs: number
-  suspiciousPairs: number
 }

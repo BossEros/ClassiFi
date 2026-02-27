@@ -20,6 +20,7 @@ export interface PairResponse {
 
 export interface AnalyzeResponse {
   reportId: string
+  isReusedReport: boolean
   summary: {
     totalFiles: number
     totalPairs: number
@@ -29,6 +30,11 @@ export interface AnalyzeResponse {
   }
   pairs: PairResponse[]
   warnings: string[]
+}
+
+export interface AssignmentSimilarityStatusResponse {
+  hasReusableReport: boolean
+  reusableReportId: string | null
 }
 
 /** Result details response with fragments and file content */
@@ -69,20 +75,4 @@ export interface ResultDetailsResponse {
     lineCount: number
     studentName: string
   }
-}
-
-/** Student-centric plagiarism summary */
-export interface StudentSummary {
-  studentId: number
-  studentName: string
-  submissionId: number
-  originalityScore: number
-  highestSimilarity: number
-  highestMatchWith: {
-    studentId: number
-    studentName: string
-    submissionId: number
-  }
-  totalPairs: number
-  suspiciousPairs: number
 }

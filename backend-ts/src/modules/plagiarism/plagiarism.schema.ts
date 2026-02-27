@@ -130,12 +130,25 @@ export const AnalyzeResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   reportId: z.string(),
+  isReusedReport: z.boolean(),
   summary: SummaryResponseSchema,
   pairs: z.array(PairResponseSchema),
   warnings: z.array(z.string()),
 })
 
 export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>
+
+/** Assignment similarity status response schema */
+export const AssignmentSimilarityStatusResponseSchema = z.object({
+  success: z.literal(true),
+  message: z.string(),
+  hasReusableReport: z.boolean(),
+  reusableReportId: z.string().nullable(),
+})
+
+export type AssignmentSimilarityStatusResponse = z.infer<
+  typeof AssignmentSimilarityStatusResponseSchema
+>
 
 /** Selection schema for fragment positions */
 export const SelectionSchema = z.object({
@@ -228,61 +241,6 @@ export const DeleteReportResponseSchema = z.object({
 })
 
 export type DeleteReportResponse = z.infer<typeof DeleteReportResponseSchema>
-
-// ============================================================================
-// Student Summary Schemas
-// ============================================================================
-
-/** Student match information schema */
-export const StudentMatchSchema = z.object({
-  studentId: z.string(),
-  studentName: z.string(),
-  submissionId: z.number(),
-})
-
-export type StudentMatch = z.infer<typeof StudentMatchSchema>
-
-/** Student summary schema */
-export const StudentSummarySchema = z.object({
-  studentId: z.string(),
-  studentName: z.string(),
-  submissionId: z.number(),
-  originalityScore: z.number().min(0).max(1),
-  highestSimilarity: z.number().min(0).max(1),
-  highestMatchWith: StudentMatchSchema,
-  totalPairs: z.number().int().nonnegative(),
-  suspiciousPairs: z.number().int().nonnegative(),
-})
-
-export type StudentSummary = z.infer<typeof StudentSummarySchema>
-
-/** Student summary response schema */
-export const StudentSummaryResponseSchema = z.object({
-  success: z.literal(true),
-  message: z.string(),
-  students: z.array(StudentSummarySchema),
-})
-
-export type StudentSummaryResponse = z.infer<
-  typeof StudentSummaryResponseSchema
->
-
-/** Student pairs params schema */
-export const StudentPairsParamsSchema = z.object({
-  reportId: z.coerce.number().int().min(1),
-  submissionId: z.coerce.number().int().min(1),
-})
-
-export type StudentPairsParams = z.infer<typeof StudentPairsParamsSchema>
-
-/** Student pairs response schema */
-export const StudentPairsResponseSchema = z.object({
-  success: z.literal(true),
-  message: z.string(),
-  pairs: z.array(PairResponseSchema),
-})
-
-export type StudentPairsResponse = z.infer<typeof StudentPairsResponseSchema>
 
 /** Error response schema */
 export const ErrorResponseSchema = z.object({

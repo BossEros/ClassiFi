@@ -5,6 +5,7 @@ import { cn } from "@/shared/utils/cn"
 interface SummaryStatCardProps {
   label: string
   value: string | number
+  helperText?: string
   icon: ElementType
   className?: string
   iconContainerClassName?: string
@@ -17,6 +18,7 @@ interface SummaryStatCardProps {
  *
  * @param label - The metric label shown above the value.
  * @param value - The metric value shown in emphasized text.
+ * @param helperText - Optional supporting text shown below the value.
  * @param icon - Icon component rendered inside the icon container.
  * @param className - Optional additional classes for the outer card.
  * @param iconContainerClassName - Optional additional classes for the icon container.
@@ -27,6 +29,7 @@ interface SummaryStatCardProps {
 export function SummaryStatCard({
   label,
   value,
+  helperText,
   icon: Icon,
   className,
   iconContainerClassName,
@@ -51,6 +54,9 @@ export function SummaryStatCard({
             <p className={cn("text-xl font-bold text-white", valueClassName)}>
               {value}
             </p>
+            {helperText ? (
+              <p className="text-xs text-slate-400 mt-0.5">{helperText}</p>
+            ) : null}
           </div>
         </div>
       </CardContent>

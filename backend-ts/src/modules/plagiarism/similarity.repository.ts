@@ -1,5 +1,5 @@
 // db is accessed via BaseRepository.db
-import { eq, desc } from "drizzle-orm"
+import { and, desc, eq, ne } from "drizzle-orm"
 import {
   similarityReports,
   type SimilarityReport,
@@ -50,6 +50,38 @@ export class SimilarityRepository extends BaseRepository<
       .from(similarityReports)
       .where(eq(similarityReports.assignmentId, assignmentId))
       .orderBy(desc(similarityReports.generatedAt))
+  }
+
+  /** Get the most recent report for an assignment */
+  async getLatestReportByAssignment(
+    assignmentId: number,
+  ): Promise<SimilarityReport | undefined> {
+    const results = await this.db
+      .select()
+      .from(similarityReports)
+      .where(eq(similarityReports.assignmentId, assignmentId))
+      .orderBy(desc(similarityReports.generatedAt))
+      .limit(1)
+
+    return results[0]
+  }
+
+  /** Delete all reports for an assignment except the specified report. */
+  async deleteReportsByAssignmentExcept(
+    assignmentId: number,
+    keepReportId: number,
+  ): Promise<number> {
+    const deletedReports = await this.db
+      .delete(similarityReports)
+      .where(
+        and(
+          eq(similarityReports.assignmentId, assignmentId),
+          ne(similarityReports.id, keepReportId),
+        ),
+      )
+      .returning({ id: similarityReports.id })
+
+    return deletedReports.length
   }
 
   /** Create similarity results (batch insert) */

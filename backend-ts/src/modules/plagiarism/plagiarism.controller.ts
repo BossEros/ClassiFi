@@ -5,18 +5,14 @@ import { validateParams, validateBody } from "@/api/plugins/zod-validation.js"
 import {
   AnalyzeRequestSchema,
   ReportIdParamSchema,
-  NumericReportIdParamSchema,
   PlagiarismAssignmentIdParamSchema,
   ReportPairParamsSchema,
   ResultIdParamSchema,
-  StudentPairsParamsSchema,
   type AnalyzeRequest,
   type ReportIdParam,
-  type NumericReportIdParam,
   type PlagiarismAssignmentIdParam,
   type ReportPairParams,
   type ResultIdParam,
-  type StudentPairsParams,
 } from "@/modules/plagiarism/plagiarism.schema.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
@@ -77,10 +73,42 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
           authenticatedTeacherId,
         )
 
+      const responseMessage = analysisResult.isReusedReport
+        ? "Existing similarity report loaded successfully"
+        : "Assignment submissions analyzed successfully"
+
       return reply.send({
         success: true,
-        message: "Assignment submissions analyzed successfully",
+        message: responseMessage,
         ...analysisResult,
+      })
+    },
+  })
+
+  /**
+   * GET /analyze/assignment/:assignmentId/status
+   * Get assignment similarity-report review status
+   */
+  app.get("/analyze/assignment/:assignmentId/status", {
+    preHandler: [
+      authMiddleware,
+      validateParams(PlagiarismAssignmentIdParamSchema),
+    ],
+    handler: async (request, reply) => {
+      const { assignmentId } =
+        request.validatedParams as PlagiarismAssignmentIdParam
+
+      if (!request.user?.id) {
+        throw new UnauthorizedError("User authentication required")
+      }
+
+      const similarityStatus =
+        await plagiarismService.getAssignmentSimilarityStatus(assignmentId)
+
+      return reply.send({
+        success: true,
+        message: "Assignment similarity status retrieved successfully",
+        ...similarityStatus,
       })
     },
   })
@@ -163,51 +191,4 @@ export async function plagiarismRoutes(app: FastifyInstance): Promise<void> {
     },
   })
 
-  /**
-   * GET /reports/:reportId/students
-   * Get student-centric summary for a plagiarism report
-   */
-  app.get("/reports/:reportId/students", {
-    preHandler: [authMiddleware, validateParams(NumericReportIdParamSchema)],
-    handler: async (request, reply) => {
-      const { reportId } = request.validatedParams as NumericReportIdParam
-      const userId = request.user!.id
-
-      const students = await plagiarismService.getStudentSummary(
-        reportId,
-        userId,
-      )
-
-      return reply.send({
-        success: true,
-        message: "Student summary retrieved successfully",
-        students,
-      })
-    },
-  })
-
-  /**
-   * GET /reports/:reportId/students/:submissionId/pairs
-   * Get all pairwise comparisons for a specific student
-   */
-  app.get("/reports/:reportId/students/:submissionId/pairs", {
-    preHandler: [authMiddleware, validateParams(StudentPairsParamsSchema)],
-    handler: async (request, reply) => {
-      const { reportId, submissionId } =
-        request.validatedParams as StudentPairsParams
-      const userId = request.user!.id
-
-      const pairs = await plagiarismService.getStudentPairs(
-        reportId,
-        submissionId,
-        userId,
-      )
-
-      return reply.send({
-        success: true,
-        message: "Student pairs retrieved successfully",
-        pairs,
-      })
-    },
-  })
 }

@@ -4,12 +4,7 @@ export { PairCodeDiff } from "./PairCodeDiff"
 export { PairComparison } from "./PairComparison"
 export { SimilarityBadge } from "./SimilarityBadge"
 export { FragmentsTable } from "./FragmentsTable"
-export { PairsTable } from "./PairsTable"
-
-// New student-centric components
-export { OriginalityBadge } from "./OriginalityBadge"
-export { StudentSummaryTable } from "./StudentSummaryTable"
-export { StudentPairsDetail } from "./StudentPairsDetail"
+export { PairwiseTriageTable } from "./PairwiseTriageTable"
 
 // Types
 export type { FileData, CodeRegion, MatchFragment, FilePair } from "./types"

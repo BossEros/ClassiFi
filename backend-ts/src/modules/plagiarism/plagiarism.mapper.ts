@@ -94,7 +94,7 @@ export function toPlagiarismPairDTO(
     },
     structuralScore: pair.similarity,
     semanticScore: 0,
-    hybridScore: 0,
+    hybridScore: pair.similarity,
     overlap: pair.overlap,
     longest: pair.longest,
   }
