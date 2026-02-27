@@ -205,7 +205,7 @@ export function AssignmentTestResultsCard({
                             <div>
                               <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
                                 <span className="w-1 h-1 rounded-full bg-gray-500"></span>
-                                Expected
+                                Expected Output
                               </p>
                               <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
                                 <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
@@ -223,7 +223,7 @@ export function AssignmentTestResultsCard({
                                     isAccepted ? "bg-green-500" : "bg-red-500"
                                   }`}
                                 ></span>
-                                Actual
+                                Actual Output
                               </p>
                               <div
                                 className={`p-3 rounded-lg border max-h-60 overflow-y-auto custom-scrollbar ${
