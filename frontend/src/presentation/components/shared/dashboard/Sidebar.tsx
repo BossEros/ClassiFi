@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useState } from "react"
+import { NavLink, useNavigate } from "react-router-dom"
 import {
   Home,
   Grid3x3,
@@ -14,11 +14,10 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react"
-import { NavItem } from "./NavItem"
 import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
-import { getCurrentUser } from "@/business/services/authService"
-import type { User } from "@/business/models/auth/types"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import type { NavigationItem } from "@/business/models/dashboard/types"
 
 const teacherNavigationItems = [
   { id: "home", label: "Dashboard", path: "/dashboard", icon: Home },
@@ -92,37 +91,52 @@ interface SidebarProps {
   onToggleCollapse?: () => void
 }
 
+interface SidebarNavItemProps {
+  item: NavigationItem
+  onClick?: () => void
+  isCollapsed?: boolean
+}
+
+function SidebarNavItem({
+  item,
+  onClick,
+  isCollapsed = false,
+}: SidebarNavItemProps) {
+  const Icon = item.icon
+  const isHomeRoute = item.path === "/dashboard"
+
+  return (
+    <NavLink
+      to={item.path}
+      onClick={onClick}
+      end={isHomeRoute}
+      className={({ isActive }) =>
+        cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+          "text-gray-300 hover:text-white hover:bg-white/10 text-sm font-medium",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
+          isActive &&
+            "bg-gradient-to-r from-teal-600/20 to-teal-500/20 text-white border-l-4 border-teal-500 shadow-lg shadow-teal-500/10",
+          isCollapsed && "lg:justify-center lg:px-2",
+        )
+      }
+      title={isCollapsed ? item.label : undefined}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className={cn("font-medium", isCollapsed && "lg:hidden")}>
+        {item.label}
+      </span>
+    </NavLink>
+  )
+}
+
 export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
 }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [user, setUser] = useState<User | null>(() => getCurrentUser())
+  const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
-
-  // Listen for storage changes (when avatar is updated)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "user") {
-        const updatedUser = getCurrentUser()
-        setUser(updatedUser)
-      }
-    }
-
-    // Listen for custom event dispatched within the same tab
-    const handleUserUpdate = () => {
-      const updatedUser = getCurrentUser()
-      setUser(updatedUser)
-    }
-
-    window.addEventListener("storage", handleStorageChange)
-    window.addEventListener("userUpdated", handleUserUpdate)
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange)
-      window.removeEventListener("userUpdated", handleUserUpdate)
-    }
-  }, [])
 
   const handleLogout = async () => {
     await logoutUser()
@@ -185,7 +199,7 @@ export function Sidebar({
               ? adminNavigationItems
               : teacherNavigationItems
           ).map((item) => (
-            <NavItem
+            <SidebarNavItem
               key={item.id}
               item={item}
               onClick={() => setIsMobileOpen(false)}
@@ -196,7 +210,7 @@ export function Sidebar({
 
         {/* Bottom Section - Settings & Logout */}
         <div className="p-3 border-t border-white/10 space-y-1.5">
-          <NavItem
+          <SidebarNavItem
             item={{
               id: "settings",
               label: "Settings",

@@ -60,69 +60,19 @@ export function CustomEventComponent({
     }
   }
 
-  /**
-   * Returns submission count text for teacher view.
-   */
-  const getSubmissionText = () => {
-    if (
-      event.assignment.submittedCount !== undefined &&
-      event.assignment.totalStudents !== undefined
-    ) {
-      return `${event.assignment.submittedCount}/${event.assignment.totalStudents}`
-    }
-
-    return null
-  }
-
-  /**
-   * Extracts course code from class name when available.
-   */
-  const getCourseCode = (): string | null => {
-    if (!event.classInfo.name) {
-      return null
-    }
-
-    const codeMatch = event.classInfo.name.match(/^([A-Z]+[-\s]?\d+)/i)
-
-    if (codeMatch) {
-      return codeMatch[1].toUpperCase().replace(/\s+/g, "")
-    }
-
-    const firstWord = event.classInfo.name.split(" ")[0]
-
-    if (firstWord && firstWord.length <= 8 && /^[A-Z0-9]+$/i.test(firstWord)) {
-      return firstWord.toUpperCase()
-    }
-
-    return null
-  }
-
-  const courseCode = getCourseCode()
-  const submissionText = getSubmissionText()
-
   return (
     <div
       className="h-full min-w-0 text-xs overflow-hidden"
       role="button"
       tabIndex={0}
-      aria-label={`${event.classInfo.name || ""} - ${title}`}
+      aria-label={title}
     >
       <div className="flex items-center gap-1.5 min-w-0">
         {getStatusIcon()}
         <span className="truncate font-semibold text-white text-[11px] leading-tight">
-          {courseCode && <span className="font-bold">{courseCode}</span>}
-          {courseCode && " "}
           {title}
         </span>
       </div>
-
-      {submissionText && (
-        <div className="flex items-center gap-1 mt-1">
-          <span className="text-[10px] text-white/80 font-medium">
-            {submissionText}
-          </span>
-        </div>
-      )}
     </div>
   )
 }

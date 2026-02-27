@@ -2,6 +2,7 @@ import type { Assignment } from "@/shared/types/class"
 import { getAssignmentStatus } from "./assignmentStatus"
 
 export type AssignmentFilter = "all" | "pending" | "submitted"
+export type TeacherAssignmentFilter = "all" | "current" | "past"
 
 /**
  * Filters assignments based on the selected filter type.
@@ -74,6 +75,33 @@ export function groupAssignments(assignments: Assignment[]): {
 }
 
 /**
+ * Filters teacher assignments by timeline while preserving grouped sections.
+ *
+ * @param assignments - Array of assignments to filter
+ * @param filter - Teacher timeline filter
+ * @returns Grouped assignments matching the selected timeline filter
+ */
+export function filterTeacherAssignmentsByTimeline(
+  assignments: Assignment[],
+  filter: TeacherAssignmentFilter,
+): {
+  current: Assignment[]
+  past: Assignment[]
+} {
+  const groupedAssignments = groupAssignments(assignments)
+
+  if (filter === "current") {
+    return { current: groupedAssignments.current, past: [] }
+  }
+
+  if (filter === "past") {
+    return { current: [], past: groupedAssignments.past }
+  }
+
+  return groupedAssignments
+}
+
+/**
  * Calculates counts for each filter category.
  *
  * @param assignments - Array of assignments to count
@@ -95,4 +123,24 @@ export function calculateFilterCounts(assignments: Assignment[]): {
   }).length
 
   return { all, pending, submitted }
+}
+
+/**
+ * Calculates counts for teacher timeline filter categories.
+ *
+ * @param assignments - Array of assignments to count
+ * @returns Object with counts for all, current/upcoming, and past assignments
+ */
+export function calculateTeacherFilterCounts(assignments: Assignment[]): {
+  all: number
+  current: number
+  past: number
+} {
+  const groupedAssignments = groupAssignments(assignments)
+
+  return {
+    all: assignments.length,
+    current: groupedAssignments.current.length,
+    past: groupedAssignments.past.length,
+  }
 }

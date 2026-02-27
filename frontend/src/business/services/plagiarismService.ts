@@ -2,18 +2,18 @@ import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
 import { validateId } from "@/business/validation/commonValidation"
 import type {
   AnalyzeResponse,
+  AssignmentSimilarityStatusResponse,
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
-  StudentSummary,
 } from "@/business/models/plagiarism/types"
 
 export type {
   AnalyzeResponse,
+  AssignmentSimilarityStatusResponse,
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
-  StudentSummary,
 }
 
 /**
@@ -46,6 +46,32 @@ export async function analyzeAssignmentSubmissions(
 }
 
 /**
+ * Retrieves assignment similarity status for review workflow labeling.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @returns Similarity status indicating whether an existing report can be reviewed.
+ * @throws Error if the status cannot be fetched.
+ */
+export async function getAssignmentSimilarityStatus(
+  assignmentId: number,
+): Promise<AssignmentSimilarityStatusResponse> {
+  validateId(assignmentId, "assignment")
+
+  const statusResponse =
+    await plagiarismRepository.getAssignmentSimilarityStatus(assignmentId)
+
+  if (statusResponse.error) {
+    throw new Error(statusResponse.error)
+  }
+
+  if (!statusResponse.data) {
+    throw new Error("Failed to fetch assignment similarity status")
+  }
+
+  return statusResponse.data
+}
+
+/**
  * Retrieves detailed comparison results for a specific pair of submissions.
  * Includes code fragments, matched lines, and full file contents for side-by-side comparison.
  *
@@ -72,68 +98,4 @@ export async function getResultDetails(
   }
 
   return detailsResponse.data
-}
-
-/**
- * Retrieves student-centric summary with originality scores for a report.
- * Validates the report ID before making the API call.
- *
- * @param reportId - The unique identifier of the plagiarism report.
- * @returns Array of student summaries with originality metrics.
- * @throws Error if the report cannot be fetched or validation fails.
- */
-export async function getStudentSummary(
-  reportId: string,
-): Promise<StudentSummary[]> {
-  if (!reportId || reportId.trim() === "") {
-    throw new Error("Report ID is required")
-  }
-
-  const response =
-    await plagiarismRepository.getStudentSummaryForReport(reportId)
-
-  if (response.error) {
-    throw new Error(response.error)
-  }
-
-  if (!response.data) {
-    throw new Error("Failed to fetch student summary")
-  }
-
-  return response.data
-}
-
-/**
- * Retrieves all pairwise comparisons involving a specific student's submission.
- * Validates inputs before making the API call.
- *
- * @param reportId - The unique identifier of the plagiarism report.
- * @param submissionId - The unique identifier of the student's submission.
- * @returns Array of pairs involving the specified student.
- * @throws Error if the pairs cannot be fetched or validation fails.
- */
-export async function getStudentPairs(
-  reportId: string,
-  submissionId: number,
-): Promise<PairResponse[]> {
-  if (!reportId || reportId.trim() === "") {
-    throw new Error("Report ID is required")
-  }
-
-  validateId(submissionId, "submission")
-
-  const response = await plagiarismRepository.getStudentPairs(
-    reportId,
-    submissionId,
-  )
-
-  if (response.error) {
-    throw new Error(response.error)
-  }
-
-  if (!response.data) {
-    throw new Error("Failed to fetch student pairs")
-  }
-
-  return response.data
 }

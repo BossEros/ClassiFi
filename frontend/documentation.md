@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-The ClassiFi Frontend is a modern, responsive web application built with **React 19**, **Vite**, and **TypeScript**. It follows a strict **Clean Architecture** pattern to separate concerns between the UI (Presentation), Business Logic (Business), and Data Access (Data) layers. The application is styled using **Tailwind CSS v4** and manages global state via Context and Services.
+The ClassiFi Frontend is a modern, responsive web application built with **React 19**, **Vite**, and **TypeScript**. It follows a strict **Clean Architecture** pattern to separate concerns between the UI (Presentation), Business Logic (Business), and Data Access (Data) layers. The application is styled using **Tailwind CSS v4** and manages global state through lightweight Zustand stores plus feature services.
 
 ## Technology Stack
 
@@ -48,18 +48,22 @@ frontend/
 |   |   |   |-- student/
 |   |   |   |-- teacher/
 |   |   |   `-- ui/
-|   |   |-- context/
 |   |   |-- hooks/
 |   |   |   |-- shared/
 |   |   |   `-- teacher/
 |   |   |-- pages/
-|   |   `-- styles/
+|   |   |-- schemas/
+|   |   `-- utils/
 |   |-- shared/             # Cross-cutting concerns
 |   |   |-- constants/
-|   |   |-- context/
+|   |   |-- store/
 |   |   |-- types/
 |   |   `-- utils/
-|   |-- tests/              # Vitest + Playwright test files and mocks
+|   |-- tests/              # Centralized tests, setup, and mocks
+|   |   |-- unit/           # All frontend unit test files (*.test.ts|tsx)
+|   |   |-- e2e/            # Playwright tests
+|   |   |-- mocks/          # Test doubles / MSW handlers
+|   |   `-- setup.ts        # Vitest setup
 |   |-- index.css
 |   `-- main.tsx            # Application Entry Point
 |-- public/
@@ -90,7 +94,9 @@ frontend/
 ### State Management
 
 - **Local State**: Managed with `useState` and `useReducer` for component-specific logic.
-- **Global State**: Minimal global state. Authentication state is synchronized via `supabaseAuthAdapter`. UI state (like Toasts) is managed via `src/presentation/context/ToastContext.tsx`.
+- **Global State**: Minimal global state with Zustand stores.
+  - Auth state is handled in `src/shared/store/useAuthStore.ts`, persisted in `localStorage`, and synchronized across browser tabs through a `storage` event listener.
+  - Toast state is handled in `src/shared/store/useToastStore.ts` and rendered in `src/app/App.tsx` via `ToastContainer`.
 - **Server State**: Fetched via Services. The app typically fetches fresh data on mount (useEffect) rather than using a heavy global cache, ensuring simplicity.
 
 ---
@@ -107,7 +113,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 3.  **Role-Based Routes**:
     - **Functions**: `RoleBasedDashboard`, `RoleBasedClassesPage`.
     - **Logic**: Conditionally renders `StudentDashboardPage`, `TeacherDashboardPage`, or `AdminDashboardPage` based on `user.role` ('student', 'teacher', 'admin').
-    - **Teacher-Only**: Wrapped in `<TeacherOnlyRoute>` (e.g., creating classes).
+    - **Teacher-Only**: `TeacherOnlyRoute` is applied for class creation (`/dashboard/classes/new`). Other teacher pages are protected by auth, with teacher/admin-only controls gated in-page where needed.
 
 ### Key Routes
 
@@ -130,29 +136,28 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 - **`ClassCard`**: Displays class information in list view with code pattern background, instructor avatar, student count, term info, and archived status. Used in classes list pages.
 - **`ClassHeader`**: Displays class information including name, instructor, schedule, and optional description with action buttons (teachers: Gradebook button and Edit/Delete dropdown; students: Leave Class dropdown).
 - **`ClassTabs`**: Tab navigation for Assignment, Students, and Calendar views with keyboard accessibility.
+- **`CustomEventComponent`**: Month-view calendar event content renderer that shows assignment title (with status icon) in a compact single-line card.
 - **`InstructorInfo`**: Displays instructor name with user icon for class detail views.
 - **`ScheduleInfo`**: Displays class schedule with days and time range.
 - **`ClassCodeBadge`**: Styled badge displaying the class join code.
-- **`AssignmentFilterBar`**: Filter buttons for viewing all, pending, or submitted assignments with counts.
+- **`AssignmentFilterBar`**: Role-aware filter buttons with counts. Student view uses all/pending/submitted; teacher view uses all/current & upcoming/past timeline filters.
 - **`AssignmentSection`**: Groups assignments by time period (current/upcoming vs past) with section headers.
-- **`AssignmentCard`**: Displays assignment information with date block, submission status indicators (CheckCircle/Clock icons), status badge, and grade display. Supports both teacher and student views with appropriate actions.
+- **`AssignmentCard`**: Shared assignment card with role-based content. Student cards show submission/status context and grades. Teacher cards emphasize assignment name + due date and intentionally hide student-only status badges and submission ratio details.
 
 ### Feature Components
 
 - **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks with syntax highlighting for Python, Java, and C.
-- **`PlagiarismReport`**: Visualizes similarity analysis results with two complementary views:
-  - **Student-Centric View Components**:
-    - **`OriginalityBadge`**: Color-coded badge (red/yellow/green) displaying originality percentage with tooltip
-    - **`StudentSummaryTable`**: Sortable, searchable table of all students with originality scores, highest matches, and suspicious pair counts
-    - **`StudentPairsDetail`**: Detailed view of all similarity pairs for a selected student with summary statistics
-  - **Pairwise View Components**:
-    - **`PairsTable`**: Lists file pairs with similarity scores
-    - **`PairComparison`**: Side-by-side code editor with match highlighting
-    - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
-    - **`FragmentsTable`**: Detailed view of matching code fragments
-    - **`SimilarityBadge`**: Visual indicator for similarity percentage
+- **`PlagiarismReport`**: Visualizes similarity analysis results with a pairwise-triage-first workflow:
+  - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination
+  - **`PairComparison`**: Side-by-side code editor with match highlighting
+  - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
+  - **`FragmentsTable`**: Detailed view of matching code fragments
+  - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Manages student grades and overrides.
-- **`TestResultsPanel`**: Displays test execution results with pass/fail status.
+- **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
+- **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
+- **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
+- **`AssignmentTestResultsCard`**: Displays test details in stacked blocks (`Input`, `Expected`, `Actual`) to preserve output readability; hidden-case details are role-aware (teacher/admin can view, student view remains masked).
 
 ### Forms
 
@@ -222,7 +227,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                |
 | **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
 | **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                   |
-| **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
+| **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, assignment-level similarity analysis, pairwise code comparison |
 | **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
 | **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
 | **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                   |
@@ -278,36 +283,13 @@ Language-specific features:
 
 ### Plagiarism Detection
 
-The plagiarism detection system provides two complementary views for analyzing code similarity:
+The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly with fewer clicks:
 
-#### Student-Centric View (Default)
-
-The student-centric view focuses on individual student originality scores, making it easy to identify students who may need attention:
-
-- **Originality Scores**: Each student receives an originality score calculated as `1 - max_similarity`, where max_similarity is the highest similarity score across all pairs involving that student
-- **Color-Coded Badges**: Visual indicators for quick assessment
-  - Red (<30%): Low originality, requires immediate attention
-  - Yellow (30-60%): Moderate originality, may warrant review
-  - Green (>60%): High originality, likely original work
-- **Student Summary Table**: Sortable table showing all students with their originality scores, highest matches, and suspicious pair counts
-- **Drill-Down Details**: Click any student to view all their similarity pairs and detailed comparisons
-- **Search and Filter**: Quickly find specific students by name
-- **Pagination**: Handles large classes efficiently (25 students per page)
-
-#### Pairwise Comparison View
-
-The traditional pairwise view provides detailed code comparison capabilities:
-
-- **Side-by-side comparison**: View matched code fragments in parallel editors
-- **Synchronized scrolling**: Navigate through matches seamlessly
-- **Fragment highlighting**: Visual indicators for matching code regions
-- **Similarity metrics**: Percentage similarity, overlap, and longest match
-- **Interactive navigation**: Click fragments to jump to specific matches
-- **Export capabilities**: Download reports for record-keeping
-
-#### View Toggle
-
-Teachers can seamlessly switch between the student-centric view and pairwise view using the toggle at the top of the plagiarism results page. Both views share the same code comparison panel, ensuring a consistent experience when examining specific matches.
+- **Class-level summary cards**: Suspicious pairs, average similarity, and maximum similarity.
+- **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
+- **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
+- **Fast triage controls**: Search by student, sortable `Similarity` plus qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
+- **Details on demand**: `Compare Code` opens side-by-side match/diff inspection with fragment context.
 
 ### Toast Notifications
 
@@ -450,8 +432,8 @@ The application uses a strongly-typed system with branded types for enhanced typ
 
 Specialized types for the class detail page redesign:
 
-- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for assignment cards and filtering
-- **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Filter options for assignment list
+- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for student assignment cards and filtering
+- **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Student filter options for assignment list
 - **`ClassTab`**: `'assignment' | 'students' | 'calendar'` - Tab navigation options
 
 ### Type Utilities
@@ -490,39 +472,40 @@ Specialized types for the class detail page redesign:
    - Class code badge is styled with teal colors for easy visibility
 3. **Manage Assignments**:
    - View all assignments organized by current/upcoming and past
-   - Use filters to focus on pending or submitted assignments
-   - Assignment cards show status badges and grades for quick assessment
+   - Use teacher assignment filters: all, current & upcoming, and past
+   - Assignment cards emphasize due date only for teachers
    - Click assignment cards to view submissions and grade student work
-   - Use edit/delete actions on assignment cards for quick management
+   - In the submissions view, the Instructions card is collapsible from the header chevron to save vertical space
+   - Submission metrics are shown as individual cards (`Total Submissions`, `On Time`, `Late`, `Missing`) with status icons
+   - Submissions are listed in a paginated table (`Student Name`, `Status`, `Grade`, `Action`) with 10 rows per page
+   - Search includes a leading icon and shares the action bar row with the similarity action button (left search, right action button)
+   - Clicking a submissions table row or the `View Details` action opens assignment review for the selected submission (`submissionId` in URL query)
+   - Teacher assignment review prioritizes selected submission status and test-case results; the teacher submission-history list is removed
+   - Teacher/admin review shows hidden test-case details when present; students still see hidden-case placeholders only
+   - Test result details render vertically (`Input` above `Expected`, `Actual` below) to avoid misleading line-break interpretation
+   - The similarity action button shows `Check Similarities` when a fresh run is needed and `Review Similarities` when a reusable report already exists
+   - The analysis-complete toast is shown only when a new analysis is performed (not when reviewing a reused report)
+   - Edit/delete assignment actions are available from the assignment submissions page dropdown menu (teacher/admin only)
 4. **View Students**:
    - Switch to Students tab to view enrolled students
    - Manage student enrollments
 5. **Create New Assignment**:
-   - Click "Create Assignment" button in the Assignment tab
+   - Click "Add Assignment" button in the Assignment tab
    - Configure assignment details, test cases, deadlines, and late submission policy
 
 ### Teacher: Reviewing Plagiarism Results
 
 1. **Navigate to Results**: From the assignment submissions page, click "View Plagiarism Report"
-2. **Review Student Originality** (Default View):
-   - View the student summary table showing all students with originality scores
-   - Identify students with low originality (red badges) for immediate attention
-   - Use search to find specific students
-   - Sort by originality score, similarity, or student name
-3. **Investigate Specific Students**:
-   - Click on a student row to view all their similarity pairs
-   - Review summary statistics (total pairs, suspicious pairs, highest match)
-   - Click on any pair to view side-by-side code comparison
-4. **Compare Code**:
+2. **Triage Pairwise Results** (Default View):
+   - Review direct `Student A vs Student B` pair rows sorted by highest similarity.
+   - Start with the default `85% and above` threshold, then relax/tighten as needed.
+   - Use student-name search and sorting to prioritize suspicious pairs quickly.
+3. **Compare Code**:
    - View matched code fragments highlighted in both files
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches
    - Toggle between "Match" and "Diff" views for different perspectives
-5. **Switch to Pairwise View** (Optional):
-   - Click the "Pairs" toggle to view traditional pairwise comparison
-   - Search and sort pairs by similarity score
-   - All code comparison features remain available
-6. **Take Action**:
+4. **Take Action**:
    - Document findings for academic integrity review
    - Contact students as needed
    - Export report for record-keeping
@@ -573,12 +556,20 @@ Frontend form migration follows a standardized pattern:
 
 ## Testing
 
-- **Unit Tests**: `npm run test` (Vitest). Focus on `src/business/services` and utility logic.
+- **Unit Tests**: `npm run test` (Vitest). All unit tests must live in `src/tests/unit/**` (not colocated in feature folders).
+- **Unit Test Discovery Policy**: `vitest.config.ts` and `tsconfig.test.json` are intentionally scoped to `src/tests/unit/**/*.test.ts(x)` and `src/tests/**` to keep tests centralized.
 - **E2E Tests**: Playwright (setup in `src/tests/e2e`).
   - Authentication flows
   - Class and assignment creation
   - Submission workflows
   - Smoke tests for critical paths
+
+### Test Organization Rules (Required)
+
+- Keep all unit tests in `src/tests/unit/**` grouped by architecture layer (`business`, `data`, `presentation`, `shared`).
+- Keep Playwright tests in `src/tests/e2e/**`.
+- Keep shared setup and mocks in `src/tests/setup.ts` and `src/tests/mocks/**`.
+- Do not create new `*.test.ts(x)` files inside feature folders (for example `src/presentation/**`, `src/business/**`, `src/data/**`).
 
 ### Test Coverage
 
@@ -589,3 +580,8 @@ The project maintains comprehensive test coverage for:
 - Utility functions (date formatting, validation)
 - UI components (Button, Card, Input, Toast)
 - E2E workflows (login, class creation, assignment submission)
+
+High-signal coverage gate:
+- `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
+- Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
+- Low-signal component rendering tests are not part of this strict gate.

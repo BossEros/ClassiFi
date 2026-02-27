@@ -113,7 +113,6 @@ export type {
   Notification,
   NewNotification,
 } from "@/modules/notifications/notification.model.js"
-// Note: For type-safe notifications with discriminated metadata, use TypedNotification from "@/modules/notifications/notification.guard.js"
 
 // Notification Delivery model
 export {

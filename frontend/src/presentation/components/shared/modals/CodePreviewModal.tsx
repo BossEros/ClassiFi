@@ -1,7 +1,7 @@
 import Editor from "@monaco-editor/react"
 import { X, Copy, Check } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
 import { useState, useEffect } from "react"
 
@@ -20,7 +20,7 @@ export function CodePreviewModal({
   fileName,
   language = "plaintext",
 }: CodePreviewModalProps) {
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
   const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {

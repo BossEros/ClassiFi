@@ -1,5 +1,5 @@
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as userRepository from "@/data/repositories/userRepository"
-import { getCurrentUser } from "./authService"
 
 export interface UploadAvatarRequest {
   file: File
@@ -22,7 +22,7 @@ export interface UploadAvatarResponse {
 export async function uploadAvatar(
   request: UploadAvatarRequest,
 ): Promise<UploadAvatarResponse> {
-  const user = getCurrentUser()
+  const user = useAuthStore.getState().user
 
   if (!user) {
     return {
@@ -40,8 +40,7 @@ export async function uploadAvatar(
 
     // Update local user data
     const updatedUser = { ...user, avatarUrl }
-    localStorage.setItem("user", JSON.stringify(updatedUser))
-    window.dispatchEvent(new Event("userUpdated"))
+    useAuthStore.getState().login(updatedUser)
 
     return {
       success: true,

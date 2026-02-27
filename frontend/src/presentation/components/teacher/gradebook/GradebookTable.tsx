@@ -58,7 +58,7 @@ export function GradebookTable({
       <table className="w-full min-w-[800px]">
         <thead className="sticky top-0 z-10">
           <tr className="bg-gray-800/80 backdrop-blur-sm border-b border-white/10">
-            <th className="sticky left-0 z-20 bg-gray-800/95 backdrop-blur-sm px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider min-w-[200px]">
+            <th className="sticky left-0 z-20 bg-gray-800/95 backdrop-blur-sm px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[180px] min-w-[180px] max-w-[180px]">
               Student
             </th>
             {assignments.map((assignment) => (
@@ -93,12 +93,11 @@ export function GradebookTable({
                 key={student.id}
                 className="hover:bg-white/5 transition-colors"
               >
-                <td className="sticky left-0 z-10 bg-gray-900/95 backdrop-blur-sm px-4 py-3 whitespace-nowrap border-r border-white/5">
+                <td className="sticky left-0 z-10 bg-gray-900/95 backdrop-blur-sm px-4 py-3 border-r border-white/5 w-[180px] min-w-[180px] max-w-[180px]">
                   <div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-white truncate" title={student.name}>
                       {student.name}
                     </p>
-                    <p className="text-xs text-gray-500">{student.email}</p>
                   </div>
                 </td>
                 {assignments.map((assignment) => {

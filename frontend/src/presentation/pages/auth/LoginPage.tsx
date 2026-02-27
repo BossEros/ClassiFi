@@ -1,13 +1,13 @@
 import { LoginForm } from "@/presentation/components/auth/forms/LoginForm"
 import { useNavigate } from "react-router-dom"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 
 export function LoginPage() {
   const navigate = useNavigate()
 
   const handleLoginSuccess = () => {
-    // Get the logged-in user to check their role
-    const user = getCurrentUser()
+    // Read latest auth state without calling React hooks in an event callback
+    const user = useAuthStore.getState().user
 
     if (user) {
       // Redirect teachers to the teacher dashboard

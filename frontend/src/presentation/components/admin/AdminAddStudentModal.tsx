@@ -4,7 +4,7 @@ import {
   getAllUsers,
   addStudentToClass,
 } from "@/business/services/adminService"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import type {
   AdminUser,
@@ -26,7 +26,7 @@ export function AdminAddStudentModal({
   classId,
   existingStudents,
 }: AdminAddStudentModalProps) {
-  const { showToast } = useToast()
+  const showToast = useToastStore((state) => state.showToast)
   const [searchQuery, setSearchQuery] = useState("")
   const [students, setStudents] = useState<AdminUser[]>([])
   const [isLoading, setIsLoading] = useState(false)

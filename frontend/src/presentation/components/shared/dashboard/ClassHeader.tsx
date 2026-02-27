@@ -1,9 +1,7 @@
 import React from "react"
-import { LogOut, BookOpen, Trash2, Edit } from "lucide-react"
-import { Button } from "@/presentation/components/ui/Button"
+import { LogOut, Trash2, Edit, User, Clock } from "lucide-react"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
-import { InstructorInfo } from "./InstructorInfo"
-import { ScheduleInfo } from "./ScheduleInfo"
+import { convertToSingleLetterAbbr, formatTimeRange } from "@/presentation/constants/schedule.constants"
 
 import type { DayOfWeek } from "@/shared/types/class"
 
@@ -22,7 +20,6 @@ interface ClassHeaderProps {
   onEditClass?: () => void
   onDeleteClass?: () => void
   onLeaveClass?: () => void
-  onViewGradebook?: () => void
 }
 
 export const ClassHeader: React.FC<ClassHeaderProps> = ({
@@ -36,8 +33,12 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   onEditClass,
   onDeleteClass,
   onLeaveClass,
-  onViewGradebook,
 }) => {
+  const dayAbbreviations = convertToSingleLetterAbbr(schedule.days)
+  const daysText = dayAbbreviations.join("")
+  const timeText = formatTimeRange(schedule.startTime, schedule.endTime)
+  const scheduleText = `${daysText} ${timeText}`
+
   return (
     <div
       className={`p-6 bg-slate-900 border border-white/5 rounded-xl ${className}`}
@@ -52,12 +53,18 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-            <InstructorInfo instructorName={instructorName} />
-            <ScheduleInfo
-              days={schedule.days}
-              startTime={schedule.startTime}
-              endTime={schedule.endTime}
-            />
+            <div className="flex items-center gap-2">
+              <User className="w-4 h-4 text-slate-400" />
+              <span className="text-sm text-slate-300">{instructorName}</span>
+            </div>
+            {schedule.days.length > 0 &&
+              schedule.startTime &&
+              schedule.endTime && (
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-slate-400" />
+                  <span className="text-sm text-slate-300">{scheduleText}</span>
+                </div>
+              )}
           </div>
 
           {description && (
@@ -71,15 +78,6 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
         <div className="flex items-center gap-3">
           {isTeacher ? (
             <>
-              <Button
-                variant="secondary"
-                className="gap-2 border-teal-500/30 text-teal-400 hover:bg-teal-500/10 hover:text-teal-300"
-                onClick={onViewGradebook}
-              >
-                <BookOpen className="w-4 h-4" />
-                Gradebook
-              </Button>
-
               <DropdownMenu
                 items={[
                   {

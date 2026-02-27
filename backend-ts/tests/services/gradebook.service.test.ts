@@ -20,7 +20,6 @@ describe("GradebookService", () => {
     mockGradebookRepo = {
       getClassGradebook: vi.fn(),
       getStudentGrades: vi.fn(),
-      getClassStatistics: vi.fn(),
       getStudentRank: vi.fn(),
     }
 
@@ -122,27 +121,6 @@ describe("GradebookService", () => {
       await gradebookService.getStudentGrades(1, 5)
 
       expect(mockGradebookRepo.getStudentGrades).toHaveBeenCalledWith(1, 5)
-    })
-  })
-
-  // ============================================
-  // getClassStatistics Tests
-  // ============================================
-  describe("getClassStatistics", () => {
-    it("should return class statistics from repository", async () => {
-      const mockStats = {
-        classAverage: 85.5,
-        submissionRate: 90,
-        totalStudents: 30,
-        totalAssignments: 5,
-      }
-
-      mockGradebookRepo.getClassStatistics.mockResolvedValue(mockStats)
-
-      const result = await gradebookService.getClassStatistics(1)
-
-      expect(result).toEqual(mockStats)
-      expect(mockGradebookRepo.getClassStatistics).toHaveBeenCalledWith(1)
     })
   })
 

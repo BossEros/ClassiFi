@@ -3,37 +3,30 @@ import { useNavigate } from "react-router-dom"
 import { FileText, Calendar } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getStudentSubmissions } from "@/business/services/assignmentService"
-import type { User } from "@/business/models/auth/types"
 import type { Submission } from "@/business/models/assignment/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function AssignmentsPage() {
   const navigate = useNavigate()
-  const [user, setUser] = useState<User | null>(null)
+  const user = useAuthStore((state) => state.user)
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    if (!user) {
       navigate("/login")
       return
     }
-
-    setUser(currentUser)
 
     // Fetch all student submissions
     const fetchSubmissions = async () => {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getStudentSubmissions(
-          parseInt(currentUser.id),
-          false,
-        ) // Get all submissions, not just latest
+        const data = await getStudentSubmissions(parseInt(user.id), false) // Get all submissions, not just latest
         setSubmissions(data)
       } catch (err) {
         console.error("Failed to fetch submissions:", err)
@@ -44,7 +37,7 @@ export function AssignmentsPage() {
     }
 
     fetchSubmissions()
-  }, [navigate])
+  }, [navigate, user])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()

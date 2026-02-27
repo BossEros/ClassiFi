@@ -7,10 +7,9 @@ import { Button } from "@/presentation/components/ui/Button"
 import * as notificationService from "@/business/services/notificationService"
 import type { Notification } from "@/business/models/notification/types"
 import { NotificationCard } from "@/presentation/components/shared/notifications/NotificationCard"
-import { useToast } from "@/presentation/context/ToastContext"
-import { getCurrentUser } from "@/business/services/authService"
+import { useToastStore } from "@/shared/store/useToastStore"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
-import type { User } from "@/business/models/auth/types"
 
 /**
  * Notifications page component.
@@ -18,8 +17,8 @@ import type { User } from "@/business/models/auth/types"
  */
 export function NotificationsPage() {
   const navigate = useNavigate()
-  const { showToast } = useToast()
-  const [user, setUser] = useState<User | null>(null)
+  const showToast = useToastStore((state) => state.showToast)
+  const user = useAuthStore((state) => state.user)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -28,13 +27,11 @@ export function NotificationsPage() {
   const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    if (!user) {
       navigate("/login")
       return
     }
-    setUser(currentUser)
-  }, [navigate])
+  }, [navigate, user])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()

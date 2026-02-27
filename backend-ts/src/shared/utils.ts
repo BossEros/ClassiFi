@@ -45,32 +45,6 @@ export function parseNumericParam(value: string, paramName: string): number {
 }
 
 /**
- * Format a full name from first and last name.
- *
- * @param firstName - First name
- * @param lastName - Last name
- * @returns Formatted full name
- */
-export function formatFullName(firstName: string, lastName: string): string {
-  return `${firstName} ${lastName}`.trim()
-}
-
-/**
- * Compute fullName for objects with firstName and lastName.
- *
- * @param obj - Object with firstName and lastName properties
- * @returns The original object with fullName added
- */
-export function addFullName<T extends { firstName: string; lastName: string }>(
-  obj: T,
-): T & { fullName: string } {
-  return {
-    ...obj,
-    fullName: formatFullName(obj.firstName, obj.lastName),
-  }
-}
-
-/**
  * Parse and validate a date string.
  * Throws a BadRequestError if the date is invalid.
  *

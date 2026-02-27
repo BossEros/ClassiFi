@@ -12,6 +12,7 @@ interface AssignmentTestResultsCardProps {
   previewResults: TestPreviewResult | null
   submissionTestResults: TestPreviewResult | null
   assignmentTestCases?: AssignmentTestCase[]
+  showHiddenCases?: boolean
   expandedPreviewTests: Set<number>
   expandedSubmissionTests: Set<number>
   expandedInitialTests: Set<number>
@@ -72,6 +73,7 @@ export function AssignmentTestResultsCard({
   previewResults,
   submissionTestResults,
   assignmentTestCases,
+  showHiddenCases = false,
   expandedPreviewTests,
   expandedSubmissionTests,
   expandedInitialTests,
@@ -97,9 +99,9 @@ export function AssignmentTestResultsCard({
       ? onTogglePreviewTestExpand
       : onToggleSubmissionTestExpand
     const resultCount = activeResults.results.length
-    const hiddenCount = activeResults.results.filter(
-      (result) => result.isHidden,
-    ).length
+    const hiddenCount = showHiddenCases
+      ? 0
+      : activeResults.results.filter((result) => result.isHidden).length
 
     return (
       <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
@@ -123,7 +125,7 @@ export function AssignmentTestResultsCard({
           <div className="space-y-3">
             {activeResults.results
               .map((result, index) => ({ ...result, originalIndex: index }))
-              .filter((result) => !result.isHidden)
+              .filter((result) => showHiddenCases || !result.isHidden)
               .map(({ originalIndex, ...result }) => {
                 const isAccepted = result.status === "Accepted"
                 const isExpanded = expandedSet.has(originalIndex)
@@ -152,6 +154,11 @@ export function AssignmentTestResultsCard({
                             <span className="text-sm font-medium text-gray-200">
                               {result.name}
                             </span>
+                            {showHiddenCases && result.isHidden && (
+                              <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                Hidden
+                              </span>
+                            )}
                           </div>
                           <span
                             className={`text-xs ${
@@ -193,12 +200,12 @@ export function AssignmentTestResultsCard({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-4">
                           {result.expectedOutput && (
                             <div>
                               <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-500 mb-1.5 flex items-center gap-1.5">
                                 <span className="w-1 h-1 rounded-full bg-gray-500"></span>
-                                Expected
+                                Expected Output
                               </p>
                               <div className="p-3 bg-black/40 rounded-lg border border-white/5 max-h-60 overflow-y-auto custom-scrollbar">
                                 <pre className="text-xs text-gray-300 font-mono whitespace-pre-wrap">
@@ -216,7 +223,7 @@ export function AssignmentTestResultsCard({
                                     isAccepted ? "bg-green-500" : "bg-red-500"
                                   }`}
                                 ></span>
-                                Actual
+                                Actual Output
                               </p>
                               <div
                                 className={`p-3 rounded-lg border max-h-60 overflow-y-auto custom-scrollbar ${
@@ -271,9 +278,9 @@ export function AssignmentTestResultsCard({
   }
 
   const resultCount = assignmentTestCases.length
-  const hiddenCount = assignmentTestCases.filter(
-    (testCase) => testCase.isHidden,
-  ).length
+  const hiddenCount = showHiddenCases
+    ? 0
+    : assignmentTestCases.filter((testCase) => testCase.isHidden).length
 
   return (
     <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
@@ -290,7 +297,7 @@ export function AssignmentTestResultsCard({
         <div className="space-y-3">
           {assignmentTestCases
             .map((testCase, index) => ({ ...testCase, originalIndex: index }))
-            .filter((testCase) => !testCase.isHidden)
+            .filter((testCase) => showHiddenCases || !testCase.isHidden)
             .map(({ originalIndex, ...testCase }) => {
               const isExpanded = expandedInitialTests.has(originalIndex)
 
@@ -311,6 +318,11 @@ export function AssignmentTestResultsCard({
                         <span className="text-sm font-medium text-gray-200">
                           {testCase.name}
                         </span>
+                        {showHiddenCases && testCase.isHidden && (
+                          <span className="text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                            Hidden
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

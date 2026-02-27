@@ -186,7 +186,8 @@ Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
 - Feature-specific helper services are colocated with their module (for example, plagiarism helper services under `src/modules/plagiarism` and late penalty logic under `src/modules/assignments`).
 - Feature-specific mappers/guards/helpers are colocated with their module (for example, `src/modules/*/*.mapper.ts`, `src/modules/classes/class.guard.ts`).
-- Route registration imports module entry points from `src/modules/*/index.ts`.
+- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points (for example, auth, classes, assignments, submissions, dashboard, notifications) from `src/modules/*/index.ts`.
+- Internal/shared modules that are not mounted directly as route groups can still be consumed through services without requiring their own route entrypoint.
 - Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
 
 ---
@@ -313,6 +314,10 @@ The programming language is specified at assignment creation and enforced during
 | GET    | `/submissions/assignment/:assignmentId`         | Get all submissions           |
 | GET    | `/submissions/student/:studentId`               | Get student's submissions     |
 
+Authorization notes:
+- Assignment mutation endpoints (`PUT /assignments/:id`, `DELETE /assignments/:id`) are intended for teacher/admin workflows.
+- Student-facing flows should not expose assignment management actions in the UI.
+
 **Assignment Instructions Content**:
 - Assignment create/update supports both text (`instructions`) and an optional image field (`instructionsImageUrl`)
 - Business rule requires at least one instructions surface: text or image
@@ -330,7 +335,6 @@ The programming language is specified at assignment creation and enforced during
 | ------ | ------------------------------------------------------ | ------------------------ |
 | GET    | `/gradebook/classes/:classId`                          | Get class gradebook      |
 | GET    | `/gradebook/classes/:classId/export`                   | Export CSV               |
-| GET    | `/gradebook/classes/:classId/statistics`               | Get class stats          |
 | GET    | `/gradebook/students/:studentId`                       | Get student grades       |
 | GET    | `/gradebook/students/:studentId/classes/:classId`      | Get student class grades |
 | GET    | `/gradebook/students/:studentId/classes/:classId/rank` | Get student rank         |
@@ -353,6 +357,10 @@ The programming language is specified at assignment creation and enforced during
 | POST   | `/submissions/:submissionId/run-tests`          | Trigger manual test run        |
 | GET    | `/code/health`                                  | Check execution service status |
 
+Notes:
+- `GET /submissions/:submissionId/test-results` accepts optional query `includeHiddenDetails=true` for teacher/admin review flows that need hidden test-case input/output details.
+- Hidden detail exposure is enforced server-side: the query flag is honored only when `request.user.role` is `teacher` or `admin`; non-privileged callers are forced to masked hidden-case fields.
+
 ### Plagiarism Detection
 
 The plagiarism detection system uses a custom implementation based on Winnowing algorithm with Tree-Sitter for code parsing. It supports Python, Java, and C languages.
@@ -362,8 +370,6 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 | POST   | `/plagiarism/analyze`                                         | Analyze files                  |
 | POST   | `/plagiarism/analyze/assignment/:assignmentId`                | Analyze full assignment        |
 | GET    | `/plagiarism/reports/:reportId`                               | Get report details             |
-| GET    | `/plagiarism/reports/:reportId/students`                      | Get student originality summary|
-| GET    | `/plagiarism/reports/:reportId/students/:submissionId/pairs`  | Get student's pairs            |
 | DELETE | `/plagiarism/reports/:reportId`                               | Delete report                  |
 | GET    | `/plagiarism/reports/:reportId/pairs/:pairId`                 | Get match pair details         |
 | GET    | `/plagiarism/results/:resultId/details`                       | Get result details             |
@@ -377,71 +383,15 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 - Fragment-level match detection with line/column positions
 - Similarity scoring and overlap metrics
 
-**Student-Centric Analysis**:
+**Pairwise-First Analysis**:
 
-The plagiarism system provides a student-centric view that calculates originality scores:
+The plagiarism API now focuses on assignment-level pairwise results for triage workflows:
 
-- **Originality Score**: Calculated as `1 - max_similarity` where max_similarity is the highest similarity score across all pairs involving the student
-- **Color Coding**: Red (<30%), Yellow (30-60%), Green (>60%)
-- **Use Case**: Quickly identify students with potential plagiarism concerns
-
-**Example Response** (`GET /plagiarism/reports/:reportId/students`):
-```json
-{
-  "success": true,
-  "message": "Student summary retrieved successfully",
-  "students": [
-    {
-      "studentId": 123,
-      "studentName": "John Doe",
-      "submissionId": 456,
-      "originalityScore": 0.25,
-      "highestSimilarity": 0.75,
-      "highestMatchWith": {
-        "studentId": 789,
-        "studentName": "Jane Smith",
-        "submissionId": 101
-      },
-      "totalPairs": 5,
-      "suspiciousPairs": 2
-    }
-  ]
-}
-```
-
-**Example Response** (`GET /plagiarism/reports/:reportId/students/:submissionId/pairs`):
-```json
-{
-  "success": true,
-  "message": "Student pairs retrieved successfully",
-  "pairs": [
-    {
-      "id": 1,
-      "leftFile": {
-        "id": 456,
-        "path": "submission.py",
-        "filename": "submission.py",
-        "lineCount": 50,
-        "studentId": "123",
-        "studentName": "John Doe"
-      },
-      "rightFile": {
-        "id": 101,
-        "path": "submission.py",
-        "filename": "submission.py",
-        "lineCount": 48,
-        "studentId": "789",
-        "studentName": "Jane Smith"
-      },
-      "structuralScore": 0.75,
-      "semanticScore": 0,
-      "hybridScore": 0,
-      "overlap": 35,
-      "longest": 12
-    }
-  ]
-}
-```
+- Pair rows include both students, similarity score, overlap, and longest match.
+- Clients can sort/filter pair results to prioritize high-risk comparisons.
+- Detailed fragment/code inspection remains available through result-detail endpoints.
+- `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
+- The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
 
 ### Notifications
 
@@ -860,7 +810,7 @@ class SubmissionService {
 
 ### GradebookService
 
-Manages student grades and statistics:
+Manages student grades and exports:
 
 ```typescript
 class GradebookService {
@@ -871,7 +821,6 @@ class GradebookService {
   getLatePenaltyConfig(assignmentId); // Get late penalty settings
   setLatePenaltyConfig(assignmentId, config); // Update late penalty
   exportGradebookCSV(classId); // Export to CSV
-  getClassStatistics(classId); // Get class-wide statistics
 }
 ```
 
@@ -880,7 +829,6 @@ class GradebookService {
 - Late penalty application with configurable rates
 - Manual grade overrides with audit trail
 - CSV export for external processing
-- Class-wide statistics (average, median, distribution)
 
 ### PlagiarismService
 
@@ -920,6 +868,7 @@ class CodeTestService {
 - Support for Python, Java, and C
 - Test case execution with input/output validation
 - Detailed error reporting and execution statistics
+- Role-aware hidden test-case detail retrieval for submission review endpoints (teacher/admin only)
 
 ### NotificationService
 
@@ -1113,6 +1062,21 @@ npm run test              # Run all tests
 npm run test:watch        # Watch mode
 npm run test:coverage     # With coverage report
 ```
+
+Test location policy:
+- Unit and integration tests are centralized under `backend-ts/tests/**`.
+- `vitest.config.ts` discovery is scoped to `tests/**/*.test.ts` to avoid scattered test files inside `src/**`.
+
+### Test Organization Rules (Required)
+
+- Keep all backend tests under `backend-ts/tests/**`.
+- Group tests by purpose using existing folders: `api/`, `services/`, `repositories/`, `modules/`, `integration/`, and shared setup/utils.
+- Name tests as `*.test.ts` to match Vitest discovery.
+- Do not add new test files under `backend-ts/src/**`.
+
+High-signal coverage gate:
+- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `notification-preference.schema`, `notification-preference.service`, `user.service`).
+- This gate ensures login/register payload rules and auth service business paths fail fast on regressions.
 
 ### Test Factories
 

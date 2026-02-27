@@ -192,13 +192,33 @@ export class CodeTestService {
 
   /**
    * Get test results for a submission (previously run).
+   *
+   * @param submissionId - The submission identifier.
+   * @param includeHiddenDetails - Whether hidden test case details should be included.
+   * @returns The test execution summary, or null when no persisted results exist.
    */
   async getTestResults(
     submissionId: number,
+    includeHiddenDetails: boolean = false,
   ): Promise<TestExecutionSummary | null> {
     const resultsWithCases =
       await this.testResultRepo.getWithCasesBySubmissionId(submissionId)
+
     if (resultsWithCases.length === 0) {
+      // Determine if the assignment simply has no test cases
+      const { assignment } = await this.fetchSubmissionData(submissionId)
+      const testCases = await this.testCaseRepo.getByAssignmentId(assignment.id)
+
+      if (testCases.length === 0) {
+        return {
+          submissionId,
+          passed: 0,
+          total: 0,
+          percentage: 100,
+          results: [],
+        }
+      }
+
       return null
     }
 
@@ -212,14 +232,19 @@ export class CodeTestService {
       isHidden: r.testCase.isHidden,
       executionTimeMs: r.executionTime ? parseFloat(r.executionTime) * 1000 : 0,
       memoryUsedKb: r.memoryUsed ?? 0,
-      // Only include details for non-hidden tests
-      ...(r.testCase.isHidden
-        ? {}
-        : {
+      // Include hidden case details only when explicitly requested.
+      ...(!r.testCase.isHidden || includeHiddenDetails
+        ? {
             input: r.testCase.input,
             expectedOutput: r.testCase.expectedOutput,
             actualOutput: r.actualOutput ?? undefined,
             errorMessage: r.errorMessage ?? undefined,
+          }
+        : {
+            input: undefined,
+            expectedOutput: undefined,
+            actualOutput: undefined,
+            errorMessage: undefined,
           }),
     }))
 

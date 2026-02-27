@@ -9,13 +9,13 @@ import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignmen
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
 import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
-  const currentUser = getCurrentUser()
+  const currentUser = useAuthStore((state) => state.user)
   const {
     formMethods,
     // State
@@ -124,6 +124,7 @@ export function AssignmentFormPage() {
                 onUpdatePendingTestCase={handleUpdatePendingTestCase}
                 onDeleteTestCase={handleDeleteTestCase}
                 onDeletePendingTestCase={handleDeletePendingTestCase}
+                handleInputChange={handleInputChange}
               />
             </div>
 

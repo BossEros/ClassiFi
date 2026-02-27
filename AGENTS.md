@@ -404,8 +404,11 @@ app.post<{ Body: CreateSubmission }>("/submissions", {
 
 **Function Signatures:**
 
-- **Single line** (preferred): If signature is short (< 80-100 chars)
-- **Multi-line**: Only if line is too long, has complex types, or many parameters (3+)
+- **Single line (Preferred)**: Keep function parameters on a single line instead of separating each parameter onto its own line. Do not unnecessarily wrap parameters; only break them if the line becomes unreasonably long.
+
+**Imports:**
+
+- **Single line** (preferred): Keep imports on a single line instead of separating each imported element onto its own line. Do not unnecessarily wrap imports; only break them if the line becomes unreasonably long. This keeps the import block looking clean and organized.
 
 **Example:**
 

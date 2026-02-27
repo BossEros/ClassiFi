@@ -12,10 +12,10 @@ import {
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import type { CalendarEvent } from "@/business/models/calendar/types"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { formatCalendarDate } from "@/business/services/calendarService"
 import { sendReminderToNonSubmitters } from "@/business/services/assignmentService"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 
 export interface EventDetailsModalProps {
   isOpen: boolean
@@ -40,8 +40,8 @@ export function EventDetailsModal({
   event,
 }: EventDetailsModalProps) {
   const navigate = useNavigate()
-  const currentUser = getCurrentUser()
-  const { showToast } = useToast()
+  const currentUser = useAuthStore((state) => state.user)
+  const showToast = useToastStore((state) => state.showToast)
   const [isSendingReminder, setIsSendingReminder] = useState(false)
 
   // Close modal on Escape key

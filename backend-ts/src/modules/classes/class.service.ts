@@ -253,12 +253,23 @@ export class ClassService {
     await this.classRepo.deleteClass(classId)
   }
 
-  /** Get all assignments for a class (delegates to AssignmentRepository) */
+  /** Get all assignments for a class with class-level submission aggregates. */
   async getClassAssignments(classId: number): Promise<AssignmentDTO[]> {
-    const assignments =
-      await this.assignmentRepo.getAssignmentsByClassId(classId)
+    const assignments = await this.assignmentRepo.getAssignmentsByClassId(classId)
+    const studentCount = await this.classRepo.getStudentCount(classId)
+    const assignmentIds = assignments.map((assignment) => assignment.id)
+    const submissionCountsByAssignment =
+      await this.submissionRepo.getLatestSubmissionCountsByAssignmentIds(
+        assignmentIds,
+      )
 
-    return assignments.map((a) => toAssignmentDTO(a))
+    return assignments.map((assignment) =>
+      toAssignmentDTO(assignment, {
+        submissionCount:
+          submissionCountsByAssignment.get(assignment.id) ?? 0,
+        studentCount,
+      }),
+    )
   }
 
   /**

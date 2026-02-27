@@ -1,4 +1,5 @@
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { cn } from "@/shared/utils/cn"
 import { Edit2, X, RotateCcw } from "lucide-react"
 import type { FieldErrors } from "react-hook-form"
@@ -155,7 +156,9 @@ export function GradeOverrideModal({
 
   if (!isOpen) return null
 
-  return (
+  if (typeof document === "undefined") return null
+
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -165,7 +168,8 @@ export function GradeOverrideModal({
       <div
         ref={modalRef}
         className={cn(
-          "relative w-full max-w-md mx-4 p-6",
+          "relative w-[calc(100%-2rem)] max-w-[560px] sm:min-w-[420px] mx-4 p-6",
+          "flex-shrink-0",
           "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
           "shadow-xl shadow-black/20",
           "animate-in fade-in-0 zoom-in-95 duration-200",
@@ -236,6 +240,7 @@ export function GradeOverrideModal({
               disabled={isSubmitting}
               className={cn(
                 "w-full px-4 py-3 rounded-xl",
+                "appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
                 "bg-white/5 border border-white/10",
                 "text-white placeholder-gray-500",
                 "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
@@ -325,6 +330,7 @@ export function GradeOverrideModal({
           )}
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

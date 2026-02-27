@@ -10,6 +10,7 @@ import {
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/business/models/calendar/types"
 import { CustomViewToolbar } from "./CustomViewToolbar"
+import { getCalendarStackedEventStyle } from "./eventStyle"
 import "./CustomWeekView.css"
 
 /**
@@ -255,10 +256,9 @@ export function CustomWeekView({
                               key={event.id}
                               onClick={() => onSelectEvent(event)}
                               className="week-event-card"
-                              style={{
-                                backgroundColor: event.classInfo.color,
-                                borderLeftColor: event.classInfo.color,
-                              }}
+                              style={getCalendarStackedEventStyle(
+                                event.classInfo.color,
+                              )}
                               title={`${event.classInfo.name}: ${event.title}`}
                               aria-label={`${event.classInfo.name}: ${event.title}`}
                             >

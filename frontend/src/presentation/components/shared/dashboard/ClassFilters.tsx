@@ -3,7 +3,6 @@ import {
   Filter,
   Calendar,
   GraduationCap,
-  ChevronDown,
 } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Select } from "@/presentation/components/ui/Select"
@@ -61,17 +60,17 @@ export function ClassFilters({
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6 p-1">
       {/* Search Bar */}
-      <div className="flex-1 relative group">
-        <div className="absolute inset-0 bg-purple-500/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <Input
-            placeholder="Search classes by name or code..."
-            value={currentFilters.searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-12 h-11 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 focus:ring-purple-500/20 hover:bg-white/10 transition-all rounded-xl"
-          />
-        </div>
+      <div className="flex-1 relative">
+        <Search
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none z-10"
+          aria-hidden="true"
+        />
+        <Input
+          placeholder="Search classes by name or code..."
+          value={currentFilters.searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="pl-12 h-11"
+        />
       </div>
 
       {/* Filters Group */}
@@ -79,7 +78,6 @@ export function ClassFilters({
         {/* Year Level Filter */}
         <div className="min-w-[160px] relative group">
           <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
             value={currentFilters.selectedYearLevel}
             onChange={onYearLevelChange}
@@ -93,7 +91,6 @@ export function ClassFilters({
         {/* Term Filter */}
         <div className="min-w-[180px] relative group">
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
             value={currentFilters.selectedTerm}
             onChange={onTermChange}
@@ -107,7 +104,6 @@ export function ClassFilters({
         {/* Status Filter */}
         <div className="min-w-[160px] relative group">
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
           <Select
             value={currentFilters.status}
             onChange={(value) => onStatusChange(value as FilterStatus)}

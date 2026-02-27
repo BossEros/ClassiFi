@@ -7,8 +7,6 @@ import {
   Fragment,
 } from "@/lib/plagiarism/index.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import { ClassRepository } from "@/modules/classes/class.repository.js"
-import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
@@ -29,7 +27,6 @@ import {
   InsufficientFilesError,
   UnsupportedLanguageError,
   LanguageRequiredError,
-  UnauthorizedAccessError,
 } from "@/shared/errors.js"
 import type { MatchFragment } from "@/models/index.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -55,6 +52,7 @@ export interface AnalyzeRequest {
 /** Response for analyze endpoint */
 export interface AnalyzeResponse {
   reportId: string
+  isReusedReport: boolean
   assignmentId?: number
   summary: PlagiarismSummaryDTO
   pairs: PlagiarismPairDTO[]
@@ -67,6 +65,12 @@ export interface PairDetailsResponse {
   fragments: PlagiarismFragmentDTO[]
   leftCode: string
   rightCode: string
+}
+
+/** Status response for assignment similarity review availability */
+export interface AssignmentSimilarityStatusResponse {
+  hasReusableReport: boolean
+  reusableReportId: string | null
 }
 
 /** Detailed result with file contents and fragments */
@@ -94,36 +98,6 @@ export interface ResultDetailsResponse {
   }
 }
 
-/** Student summary with originality metrics */
-export interface StudentSummary {
-  studentId: string
-  studentName: string
-  submissionId: number
-  originalityScore: number
-  highestSimilarity: number
-  highestMatchWith: {
-    studentId: string
-    studentName: string
-    submissionId: number
-  }
-  totalPairs: number
-  suspiciousPairs: number
-}
-
-/** Internal student map entry for building summaries */
-interface StudentMapEntry {
-  studentId: string
-  studentName: string
-  submissionId: number
-  maxSimilarity: number
-  highestMatchWith: {
-    studentId: string
-    studentName: string
-    submissionId: number
-  } | null
-  pairs: PlagiarismPairDTO[]
-}
-
 /**
  * Business logic for plagiarism detection operations.
  * Refactored to use dedicated services for persistence and file operations.
@@ -148,10 +122,6 @@ export class PlagiarismService {
   constructor(
     @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject(DI_TOKENS.repositories.class)
-    private classRepo: ClassRepository,
-    @inject(DI_TOKENS.repositories.enrollment)
-    private enrollmentRepo: EnrollmentRepository,
     @inject(DI_TOKENS.services.plagiarismDetectorFactory)
     private detectorFactory: PlagiarismDetectorFactory,
     @inject(DI_TOKENS.services.plagiarismSubmissionFile)
@@ -224,6 +194,7 @@ export class PlagiarismService {
 
     return {
       reportId,
+      isReusedReport: false,
       summary: {
         totalFiles: summary.totalFiles,
         totalPairs: summary.totalPairs,
@@ -287,7 +258,7 @@ export class PlagiarismService {
           },
           structuralScore: parseFloat(details.result.structuralScore),
           semanticScore: 0,
-          hybridScore: 0,
+          hybridScore: parseFloat(details.result.structuralScore),
           overlap: details.result.overlap,
           longest: details.result.longestFragment,
         },
@@ -320,6 +291,7 @@ export class PlagiarismService {
 
     return {
       reportId,
+      isReusedReport: true,
       summary: {
         totalFiles: summary.totalFiles,
         totalPairs: summary.totalPairs,
@@ -415,10 +387,18 @@ export class PlagiarismService {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Step 2: Fetch and download submission files
+    // Step 2: Reuse latest report when no new/latest submissions were added.
+    const reusableAssignmentReport =
+      await this.persistenceService.getReusableAssignmentReport(assignmentId)
+
+    if (reusableAssignmentReport) {
+      return reusableAssignmentReport
+    }
+
+    // Step 3: Fetch and download submission files
     const files = await this.fileService.fetchSubmissionFiles(assignmentId)
 
-    // Step 3: Create ignored file from template code
+    // Step 4: Create ignored file from template code
     const language = this.getLanguage(assignment.programmingLanguage)
     let ignoredFile: File | undefined
     if (assignment.templateCode) {
@@ -428,12 +408,12 @@ export class PlagiarismService {
       )
     }
 
-    // Step 4: Run plagiarism analysis
+    // Step 5: Run plagiarism analysis
     const detector = this.detectorFactory.create({ language })
     const report = await detector.analyze(files, ignoredFile)
     const pairs = report.getPairs()
 
-    // Step 5: Persist report to database
+    // Step 6: Persist report to database
     const { dbReport, resultIdMap } =
       await this.persistenceService.persistReport(
         assignmentId,
@@ -442,7 +422,7 @@ export class PlagiarismService {
         pairs,
       )
 
-    // Step 6: Build and return response
+    // Step 7: Build and return response
     return this.buildAssignmentAnalysisResponse(
       dbReport.id,
       report,
@@ -451,262 +431,28 @@ export class PlagiarismService {
     )
   }
 
-  /**
-   * Calculates per-student originality scores from pairwise similarity results.
-   * Originality is computed as 1 - max_similarity, where max_similarity is the
-   * highest similarity score across all pairs involving the student.
-   *
-   * @param reportId - The unique identifier of the plagiarism report.
-   * @param userId - The ID of the authenticated user requesting access.
-   * @returns Array of student summaries sorted by originality (lowest first).
-   * @throws PlagiarismReportNotFoundError if report doesn't exist.
-   * @throws UnauthorizedAccessError if user doesn't have access to the report.
-   */
-  async getStudentSummary(
-    reportId: number,
-    userId: number,
-  ): Promise<StudentSummary[]> {
-    const report = await this.fetchAndValidateReport(reportId, userId)
-
-    const studentMap =
-      report.pairs.length === 0
-        ? await this.buildStudentMapWithoutPairs(reportId)
-        : this.buildStudentMapFromPairs(report.pairs)
-
-    const summaries = this.createStudentSummaries(studentMap)
-
-    return this.sortByOriginality(summaries)
-  }
-
-  /**
-   * Fetch report and validate user access.
-   */
-  private async fetchAndValidateReport(reportId: number, userId: number) {
-    const report = await this.persistenceService.getReport(reportId)
-
-    if (!report) {
-      throw new PlagiarismReportNotFoundError(reportId.toString())
-    }
-
-    if (report.assignmentId) {
-      await this.verifyReportAccess(report.assignmentId, userId)
-    }
-
-    return report
-  }
-
-  /**
-   * Build student map when no pairs exist (all students have 100% originality).
-   */
-  private async buildStudentMapWithoutPairs(
-    reportId: number,
-  ): Promise<Map<number, StudentMapEntry>> {
-    const studentMap = new Map<number, StudentMapEntry>()
-    const submissions =
-      await this.persistenceService.getReportSubmissions(reportId)
-
-    for (const { submission, studentName } of submissions) {
-      const studentId =
-        submission.studentId != null
-          ? submission.studentId.toString()
-          : "unknown"
-
-      studentMap.set(submission.id, {
-        studentId,
-        studentName,
-        submissionId: submission.id,
-        maxSimilarity: 0,
-        highestMatchWith: null,
-        pairs: [],
-      })
-    }
-
-    return studentMap
-  }
-
-  /**
-   * Build student map from plagiarism pairs.
-   */
-  private buildStudentMapFromPairs(
-    pairs: PlagiarismPairDTO[],
-  ): Map<number, StudentMapEntry> {
-    const studentMap = new Map<number, StudentMapEntry>()
-
-    for (const pair of pairs) {
-      this.validatePairStudentIds(pair)
-      this.processStudentFromPair(studentMap, pair, "left")
-      this.processStudentFromPair(studentMap, pair, "right")
-    }
-
-    return studentMap
-  }
-
-  /**
-   * Validate that pair has required student IDs.
-   */
-  private validatePairStudentIds(pair: PlagiarismPairDTO): void {
-    if (!pair.leftFile.studentId || !pair.rightFile.studentId) {
-      throw new Error(
-        `Missing studentId in pair ${pair.id}. Left: ${pair.leftFile.studentId}, Right: ${pair.rightFile.studentId}`,
-      )
-    }
-  }
-
-  /**
-   * Process a student from a plagiarism pair (left or right side).
-   */
-  private processStudentFromPair(
-    studentMap: Map<number, StudentMapEntry>,
-    pair: PlagiarismPairDTO,
-    side: "left" | "right",
-  ): void {
-    const currentFile = side === "left" ? pair.leftFile : pair.rightFile
-    const otherFile = side === "left" ? pair.rightFile : pair.leftFile
-    const submissionId = currentFile.id
-
-    if (!studentMap.has(submissionId)) {
-      studentMap.set(submissionId, {
-        studentId: currentFile.studentId!,
-        studentName: currentFile.studentName || "Unknown",
-        submissionId,
-        maxSimilarity: 0,
-        highestMatchWith: null,
-        pairs: [],
-      })
-    }
-
-    const student = studentMap.get(submissionId)!
-    student.pairs.push(pair)
-
-    if (pair.structuralScore > student.maxSimilarity) {
-      student.maxSimilarity = pair.structuralScore
-      student.highestMatchWith = {
-        studentId: otherFile.studentId!,
-        studentName: otherFile.studentName || "Unknown",
-        submissionId: otherFile.id,
-      }
-    }
-  }
-
-  /**
-   * Create student summaries from student map.
-   */
-  private createStudentSummaries(
-    studentMap: Map<number, StudentMapEntry>,
-  ): StudentSummary[] {
-    const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
-
-    return Array.from(studentMap.values()).map((student) => ({
-      studentId: student.studentId,
-      studentName: student.studentName,
-      submissionId: student.submissionId,
-      originalityScore: 1 - student.maxSimilarity,
-      highestSimilarity: student.maxSimilarity,
-      highestMatchWith: student.highestMatchWith || {
-        studentId: "0",
-        studentName: "None",
-        submissionId: 0,
-      },
-      totalPairs: student.pairs.length,
-      suspiciousPairs: student.pairs.filter(
-        (p) => p.structuralScore >= threshold,
-      ).length,
-    }))
-  }
-
-  /**
-   * Sort summaries by originality (ascending) to show concerning students first.
-   */
-  private sortByOriginality(summaries: StudentSummary[]): StudentSummary[] {
-    return summaries.sort((a, b) => a.originalityScore - b.originalityScore)
-  }
-
-  /**
-   * Retrieves all pairwise comparisons involving a specific student's submission.
-   * Results are sorted by similarity score in descending order.
-   *
-   * @param reportId - The unique identifier of the plagiarism report.
-   * @param submissionId - The unique identifier of the student's submission.
-   * @param userId - The ID of the authenticated user requesting access.
-   * @returns Array of pairs involving the specified submission.
-   * @throws PlagiarismReportNotFoundError if report doesn't exist.
-   * @throws UnauthorizedAccessError if user doesn't have access to the report.
-   */
-  async getStudentPairs(
-    reportId: number,
-    submissionId: number,
-    userId: number,
-  ): Promise<PlagiarismPairDTO[]> {
-    // Fetch report from database
-    const report = await this.persistenceService.getReport(reportId)
-    if (!report) {
-      throw new PlagiarismReportNotFoundError(reportId.toString())
-    }
-
-    // Verify user has access to this report
-    if (report.assignmentId) {
-      await this.verifyReportAccess(report.assignmentId, userId)
-    }
-
-    // Filter pairs involving the specified submission
-    const studentPairs = report.pairs.filter(
-      (pair) =>
-        pair.leftFile.id === submissionId || pair.rightFile.id === submissionId,
-    )
-
-    // Sort by similarity (descending) to show highest matches first
-    studentPairs.sort((a, b) => b.structuralScore - a.structuralScore)
-
-    return studentPairs
-  }
-
-  // ========================================================================
-  // Private Helper Methods
-  // ========================================================================
-
-  /**
-   * Verifies that a user has access to a plagiarism report.
-   * Teachers can access reports for assignments in their classes.
-   * Students can access reports for assignments in classes they're enrolled in.
-   *
-   * @param assignmentId - The assignment ID associated with the report.
-   * @param userId - The ID of the user requesting access.
-   * @throws AssignmentNotFoundError if assignment doesn't exist.
-   * @throws UnauthorizedAccessError if user doesn't have access.
-   */
-  private async verifyReportAccess(
+  /** Get assignment similarity status for review button labeling. */
+  async getAssignmentSimilarityStatus(
     assignmentId: number,
-    userId: number,
-  ): Promise<void> {
-    // Get assignment to find the class
+  ): Promise<AssignmentSimilarityStatusResponse> {
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Get class to check teacher
-    const classData = await this.classRepo.getClassById(assignment.classId)
-    if (!classData) {
-      throw new UnauthorizedAccessError("plagiarism report")
-    }
+    const reusableReportId =
+      await this.persistenceService.getReusableAssignmentReportId(assignmentId)
 
-    // Check if user is the teacher
-    if (classData.teacherId === userId) {
-      return // Teacher has access
+    return {
+      hasReusableReport: reusableReportId !== null,
+      reusableReportId:
+        reusableReportId !== null ? reusableReportId.toString() : null,
     }
-
-    // Check if user is enrolled as a student
-    const isEnrolled = await this.enrollmentRepo.isEnrolled(
-      userId,
-      assignment.classId,
-    )
-    if (isEnrolled) {
-      return // Enrolled student has access
-    }
-
-    // User is neither teacher nor enrolled student
-    throw new UnauthorizedAccessError("plagiarism report")
   }
+
+  // ========================================================================
+  // Private Helper Methods
+  // ========================================================================
 
   private cleanupExpiredReports() {
     const now = Date.now()
@@ -780,6 +526,7 @@ export class PlagiarismService {
   ): AnalyzeResponse {
     return {
       reportId: reportId.toString(),
+      isReusedReport: false,
       summary: {
         totalFiles: report.files.length,
         totalPairs: pairs.length,
@@ -812,7 +559,9 @@ export class PlagiarismService {
             id: leftSubId,
             path: p.leftFile.path,
             filename: p.leftFile.filename,
-            lineCount: p.leftFile.lineCount,
+            // Pair metrics are computed in k-grams; expose comparable totals
+            // for consistent qualitative normalization in the triage table.
+            lineCount: p.leftTotal,
             studentId: p.leftFile.info?.studentId,
             studentName: p.leftFile.info?.studentName,
           },
@@ -820,13 +569,13 @@ export class PlagiarismService {
             id: rightSubId,
             path: p.rightFile.path,
             filename: p.rightFile.filename,
-            lineCount: p.rightFile.lineCount,
+            lineCount: p.rightTotal,
             studentId: p.rightFile.info?.studentId,
             studentName: p.rightFile.info?.studentName,
           },
           structuralScore: p.similarity,
           semanticScore: 0,
-          hybridScore: 0,
+          hybridScore: p.similarity,
           overlap: p.overlap,
           longest: p.longest,
         }

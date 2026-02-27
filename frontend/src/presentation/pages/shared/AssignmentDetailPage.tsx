@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   FileCode,
   Clock,
@@ -19,12 +19,11 @@ import {
 import { Button } from "@/presentation/components/ui/Button"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { CodePreviewModal } from "@/presentation/components/shared/modals/CodePreviewModal"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { AssignmentSubmissionForm } from "@/presentation/components/shared/assignmentDetail/AssignmentSubmissionForm"
 import { AssignmentTestResultsCard } from "@/presentation/components/shared/assignmentDetail/AssignmentTestResultsCard"
-import { TeacherSubmissionListCard } from "@/presentation/components/shared/assignmentDetail/TeacherSubmissionListCard"
 import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData"
 import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow"
 import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview"
@@ -32,7 +31,16 @@ import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignment
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
   const { assignmentId } = useParams<{ assignmentId: string }>()
-  const { showToast } = useToast()
+  const [searchParams] = useSearchParams()
+  const showToast = useToastStore((state) => state.showToast)
+  const selectedSubmissionIdValue = searchParams.get("submissionId")
+  const parsedSelectedSubmissionId = selectedSubmissionIdValue
+    ? Number(selectedSubmissionIdValue)
+    : NaN
+  const selectedSubmissionId =
+    Number.isFinite(parsedSelectedSubmissionId) && parsedSelectedSubmissionId > 0
+      ? parsedSelectedSubmissionId
+      : null
 
   const {
     user,
@@ -47,6 +55,7 @@ export function AssignmentDetailPage() {
   } = useAssignmentDetailData({
     assignmentId,
     navigate,
+    selectedSubmissionId,
   })
 
   const {
@@ -109,6 +118,12 @@ export function AssignmentDetailPage() {
 
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
   const latestSubmission = submissions[0]
+  const activeSubmission =
+    isTeacher && selectedSubmissionId !== null
+      ? submissions.find(
+          (submission) => submission.id === selectedSubmissionId,
+        ) ?? latestSubmission
+      : latestSubmission
   const hasSubmitted = submissions.length > 0
   const canResubmit = tempAssignment.allowResubmission || !hasSubmitted
 
@@ -208,7 +223,7 @@ export function AssignmentDetailPage() {
               </div>
 
               {/* Teacher Actions */}
-              {isTeacher && (
+              {isTeacher && selectedSubmissionId === null && (
                 <Button
                   onClick={() =>
                     showToast("Checking for similarities...", "info")
@@ -311,21 +326,23 @@ export function AssignmentDetailPage() {
                       </div>
                       <div className="pt-4 border-t border-white/10">
                         <p className="text-sm text-gray-400 mb-1">
-                          Latest Submission:
+                          {isTeacher && selectedSubmissionId !== null
+                            ? "Selected Submission:"
+                            : "Latest Submission:"}
                         </p>
                         <p className="text-gray-300 font-mono text-sm">
-                          {latestSubmission?.fileName}
+                          {activeSubmission?.fileName}
                         </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {latestSubmission?.submittedAt &&
-                            formatDateTime(latestSubmission.submittedAt)}
+                          {activeSubmission?.submittedAt &&
+                            formatDateTime(activeSubmission.submittedAt)}
                         </p>
                         <div className="flex gap-2 mt-3">
                           <Button
                             onClick={() =>
-                              latestSubmission &&
+                              activeSubmission &&
                               openSubmissionPreview(
-                                latestSubmission.id,
+                                activeSubmission.id,
                                 submissions,
                               )
                             }
@@ -341,8 +358,8 @@ export function AssignmentDetailPage() {
                           </Button>
                           <Button
                             onClick={() =>
-                              latestSubmission &&
-                              downloadSubmissionFile(latestSubmission.id)
+                              activeSubmission &&
+                              downloadSubmissionFile(activeSubmission.id)
                             }
                             className="flex-1 h-8 text-xs bg-white/5 border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
                           >
@@ -355,23 +372,23 @@ export function AssignmentDetailPage() {
                       {/* Score / Grade Display */}
                       <div className="pt-4 border-t border-white/10">
                         <p className="text-sm text-gray-400 mb-1">Score:</p>
-                        {latestSubmission?.grade !== undefined &&
-                        latestSubmission?.grade !== null ? (
+                        {activeSubmission?.grade !== undefined &&
+                        activeSubmission?.grade !== null ? (
                           <div className="flex items-baseline gap-1">
                             <span
                               className={`text-2xl font-bold ${
-                                latestSubmission.grade /
+                                activeSubmission.grade /
                                   (assignment?.totalScore || 100) >=
                                 0.75
                                   ? "text-green-400"
-                                  : latestSubmission.grade /
+                                  : activeSubmission.grade /
                                         (assignment?.totalScore || 100) >=
                                       0.5
                                     ? "text-yellow-400"
                                     : "text-red-400"
                               }`}
                             >
-                              {latestSubmission.grade}
+                              {activeSubmission.grade}
                             </span>
                             <span className="text-sm text-gray-500">
                               / {assignment?.totalScore || 100}
@@ -404,20 +421,13 @@ export function AssignmentDetailPage() {
                 previewResults={previewResults}
                 submissionTestResults={submissionTestResults}
                 assignmentTestCases={assignment?.testCases}
+                showHiddenCases={isTeacher}
                 expandedPreviewTests={expandedPreviewTests}
                 expandedSubmissionTests={expandedSubmissionTests}
                 expandedInitialTests={expandedInitialTests}
                 onTogglePreviewTestExpand={togglePreviewTestExpand}
                 onToggleSubmissionTestExpand={toggleSubmissionTestExpand}
                 onToggleInitialTestExpand={toggleInitialTestExpand}
-              />
-
-              <TeacherSubmissionListCard
-                isTeacher={isTeacher}
-                submissions={submissions}
-                onPreviewSubmission={(submissionId) =>
-                  openSubmissionPreview(submissionId, submissions)
-                }
               />
             </div>
           </div>

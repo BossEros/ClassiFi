@@ -1,12 +1,12 @@
 import { Navigate } from "react-router-dom"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const user = getCurrentUser()
+  const user = useAuthStore((state) => state.user)
 
   if (!user) {
     return <Navigate to="/login" replace />

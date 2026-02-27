@@ -2,24 +2,23 @@ import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { ClipboardList, BarChart3 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { GradebookContent } from "@/presentation/components/teacher/gradebook/GradebookContent"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { ClassHeader } from "@/presentation/components/shared/dashboard/ClassHeader"
 import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs"
 import { ClassCalendarTab } from "@/presentation/components/shared/calendar"
 import { DeleteClassModal } from "@/presentation/components/teacher/forms/class/DeleteClassModal"
 import { LeaveClassModal } from "@/presentation/components/shared/forms/LeaveClassModal"
-import { DeleteAssignmentModal } from "@/presentation/components/teacher/forms/class/DeleteAssignmentModal"
 import { RemoveStudentModal } from "@/presentation/components/teacher/forms/class/RemoveStudentModal"
 import { AssignmentsTabContent } from "@/presentation/components/teacher/classDetail/AssignmentsTabContent"
 import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent"
-import { getCurrentUser } from "@/business/services/authService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import type { ClassTab } from "@/shared/types/class"
 import {
   getClassDetailData,
   deleteClass,
-  deleteAssignment,
 } from "@/business/services/classService"
-import { useToast } from "@/presentation/context/ToastContext"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import type { User } from "@/business/models/auth/types"
 import type {
@@ -27,11 +26,16 @@ import type {
   Assignment,
   EnrolledStudent,
 } from "@/business/models/dashboard/types"
-import type { AssignmentFilter } from "@/shared/utils/assignmentFilters"
+import type {
+  AssignmentFilter,
+  TeacherAssignmentFilter,
+} from "@/shared/utils/assignmentFilters"
 import {
   filterAssignments,
-  groupAssignments,
   calculateFilterCounts,
+  filterTeacherAssignmentsByTimeline,
+  calculateTeacherFilterCounts,
+  groupAssignments,
 } from "@/shared/utils/assignmentFilters"
 import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers"
 
@@ -46,7 +50,9 @@ const STUDENT_GRID_TEMPLATE = "400px 1fr 150px 60px"
 export function ClassDetailPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
-  const { showToast } = useToast()
+  const parsedClassId = classId ? parseInt(classId, 10) : 0
+  const currentUser = useAuthStore((state) => state.user)
+  const showToast = useToastStore((state) => state.showToast)
 
   const [user, setUser] = useState<User | null>(null)
   const [classInfo, setClassInfo] = useState<Class | null>(null)
@@ -55,26 +61,18 @@ export function ClassDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ClassTab>("assignments")
-  const [assignmentFilter, setAssignmentFilter] =
-    useState<AssignmentFilter>("all")
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>("all")
+  const [teacherAssignmentFilter, setTeacherAssignmentFilter] =
+    useState<TeacherAssignmentFilter>("all")
   const [currentStudentPage, setCurrentStudentPage] = useState(1)
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
 
-  // Assignment management state
-  const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] =
-    useState(false)
-  const [assignmentToDelete, setAssignmentToDelete] =
-    useState<Assignment | null>(null)
-  const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
-
   // Student management state
-  const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] =
-    useState(false)
-  const [studentToRemove, setStudentToRemove] =
-    useState<EnrolledStudent | null>(null)
+  const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] = useState(false)
+  const [studentToRemove, setStudentToRemove] = useState<EnrolledStudent | null>(null)
 
   // Check if user is a teacher or student
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
@@ -87,12 +85,23 @@ export function ClassDetailPage() {
   )
 
   const groupedAssignments = useMemo(
-    () => groupAssignments(filteredAssignments),
-    [filteredAssignments],
+    () =>
+      isTeacher
+        ? filterTeacherAssignmentsByTimeline(
+            assignments,
+            teacherAssignmentFilter,
+          )
+        : groupAssignments(filteredAssignments),
+    [isTeacher, assignments, teacherAssignmentFilter, filteredAssignments],
   )
 
   const filterCounts = useMemo(
     () => calculateFilterCounts(assignments),
+    [assignments],
+  )
+
+  const teacherFilterCounts = useMemo(
+    () => calculateTeacherFilterCounts(assignments),
     [assignments],
   )
 
@@ -114,7 +123,6 @@ export function ClassDetailPage() {
   }, [filteredStudents, currentStudentPage])
 
   useEffect(() => {
-    const currentUser = getCurrentUser()
     if (!currentUser) {
       navigate("/login")
       return
@@ -154,7 +162,7 @@ export function ClassDetailPage() {
     }
 
     fetchClassData()
-  }, [navigate, classId])
+  }, [navigate, classId, currentUser])
 
   const handleRemoveStudentClick = (student: EnrolledStudent) => {
     setStudentToRemove(student)
@@ -226,41 +234,8 @@ export function ClassDetailPage() {
     navigate("/dashboard")
   }
 
-  const handleEditAssignment = (assignment: Assignment) => {
-    navigate(`/dashboard/classes/${classId}/assignments/${assignment.id}/edit`)
-  }
-
-  const handleDeleteAssignmentClick = (assignment: Assignment) => {
-    setAssignmentToDelete(assignment)
-    setIsDeleteAssignmentModalOpen(true)
-  }
-
-  const handleConfirmDeleteAssignment = async () => {
-    if (!user || !assignmentToDelete) return
-
-    try {
-      setIsDeletingAssignment(true)
-      await deleteAssignment(assignmentToDelete.id, parseInt(user.id))
-
-      // Remove from list
-      setAssignments(assignments.filter((a) => a.id !== assignmentToDelete.id))
-      showToast("Assignment deleted successfully")
-      setIsDeleteAssignmentModalOpen(false)
-      setAssignmentToDelete(null)
-    } catch (err) {
-      console.error("Failed to delete assignment:", err)
-      showToast("Failed to delete assignment", "error")
-    } finally {
-      setIsDeletingAssignment(false)
-    }
-  }
-
   const handleEditClass = () => {
     navigate(`/dashboard/classes/${classId}/edit`)
-  }
-
-  const handleViewGradebook = () => {
-    navigate(`/dashboard/classes/${classId}/gradebook`)
   }
 
   const userInitials = user
@@ -321,7 +296,6 @@ export function ClassDetailPage() {
             onEditClass={handleEditClass}
             onDeleteClass={() => setIsDeleteModalOpen(true)}
             onLeaveClass={() => setIsLeaveModalOpen(true)}
-            onViewGradebook={handleViewGradebook}
           />
 
           {/* Error Message */}
@@ -339,17 +313,17 @@ export function ClassDetailPage() {
                 <AssignmentsTabContent
                   assignments={assignments}
                   groupedAssignments={groupedAssignments}
-                  filteredAssignments={filteredAssignments}
                   assignmentFilter={assignmentFilter}
                   filterCounts={filterCounts}
+                  teacherAssignmentFilter={teacherAssignmentFilter}
+                  teacherFilterCounts={teacherFilterCounts}
                   isTeacher={isTeacher}
                   onFilterChange={setAssignmentFilter}
+                  onTeacherFilterChange={setTeacherAssignmentFilter}
                   onCreateAssignment={() =>
                     navigate(`/dashboard/classes/${classId}/assignments/new`)
                   }
                   onAssignmentClick={handleAssignmentClick}
-                  onEditAssignment={handleEditAssignment}
-                  onDeleteAssignment={handleDeleteAssignmentClick}
                 />
               )}
 
@@ -382,22 +356,21 @@ export function ClassDetailPage() {
                 />
               )}
 
-              {/* TO-DO: Grades Tab (Placeholder) */}
-              {activeTab === "grades" && (
-                <div className="py-12 text-center">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                    <BarChart3 className="w-8 h-8 text-gray-500" />
+              {activeTab === "grades" &&
+                (isTeacher ? (
+                  <GradebookContent
+                    classId={parsedClassId}
+                    classCode={classInfo?.classCode}
+                  />
+                ) : (
+                  <div className="py-12 text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
+                      <BarChart3 className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <p className="text-gray-300 font-medium mb-1">Grades Coming Soon</p>
+                    <p className="text-sm text-gray-500">Your grades will be displayed here.</p>
                   </div>
-                  <p className="text-gray-300 font-medium mb-1">
-                    Grades Coming Soon
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {isStudent
-                      ? "Your grades will be displayed here."
-                      : "Student grades will be displayed here."}
-                  </p>
-                </div>
-              )}
+                ))}
             </ClassTabs>
           </div>
 
@@ -410,18 +383,6 @@ export function ClassDetailPage() {
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={handleDeleteClass}
                 isDeleting={isDeleting}
-              />
-
-              {/* Delete Assignment Modal */}
-              <DeleteAssignmentModal
-                isOpen={isDeleteAssignmentModalOpen}
-                onClose={() => {
-                  setIsDeleteAssignmentModalOpen(false)
-                  setAssignmentToDelete(null)
-                }}
-                onConfirm={handleConfirmDeleteAssignment}
-                isDeleting={isDeletingAssignment}
-                assignmentTitle={assignmentToDelete?.assignmentName}
               />
 
               {/* Remove Student Modal */}

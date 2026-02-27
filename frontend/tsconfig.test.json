@@ -9,12 +9,6 @@
       "node"
     ]
   },
-  "include": [
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
-    "src/tests/**/*"
-  ],
+  "include": ["src/tests/**/*.ts", "src/tests/**/*.tsx"],
   "exclude": []
 }

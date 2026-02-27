@@ -8,7 +8,8 @@
  */
 import { http, HttpResponse } from "msw"
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"
 
 export const handlers = [
   // ============================================================================
@@ -168,6 +169,12 @@ export const handlers = [
     return HttpResponse.json({
       success: true,
       message: "Account deleted",
+    })
+  }),
+
+  http.get(`${API_BASE}/notifications/unread-count`, async () => {
+    return HttpResponse.json({
+      unreadCount: 0,
     })
   }),
 

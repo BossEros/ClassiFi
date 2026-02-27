@@ -8,6 +8,7 @@ import {
   InvalidCredentialsError,
   UserNotFoundError,
   EmailNotVerifiedError,
+  InvalidRoleError,
 } from "../../src/shared/errors.js"
 
 // Mock the UserRepository class but preserve USER_ROLES constant
@@ -125,6 +126,20 @@ describe("AuthService", () => {
       expect(mockAuthAdapter.signUp).not.toHaveBeenCalled()
     })
 
+    it("should throw InvalidRoleError for unsupported roles", async () => {
+      const invalidRoleRegistration = {
+        ...validRegistration,
+        role: "admin",
+      } as unknown as Parameters<AuthService["registerUser"]>[0]
+
+      await expect(
+        authService.registerUser(invalidRoleRegistration),
+      ).rejects.toThrow(InvalidRoleError)
+
+      expect(mockUserRepo.checkEmailExists).not.toHaveBeenCalled()
+      expect(mockAuthAdapter.signUp).not.toHaveBeenCalled()
+    })
+
     it("should throw error when Supabase signup fails", async () => {
       mockUserRepo.checkEmailExists.mockResolvedValue(false)
       mockAuthAdapter.signUp.mockRejectedValue(
@@ -179,6 +194,25 @@ describe("AuthService", () => {
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
         "Database insert failed",
+      )
+    })
+
+    it("should map unique-email database violation to UserAlreadyExistsError", async () => {
+      mockUserRepo.checkEmailExists.mockResolvedValue(false)
+      mockUserRepo.createUser.mockRejectedValue({
+        code: "23505",
+        constraint: "users_email_unique",
+      })
+      mockAuthAdapter.signUp.mockResolvedValue({
+        user: { id: "supabase-unique-email" },
+        token: "token",
+      })
+
+      await expect(authService.registerUser(validRegistration)).rejects.toThrow(
+        UserAlreadyExistsError,
+      )
+      expect(mockAuthAdapter.deleteUser).toHaveBeenCalledWith(
+        "supabase-unique-email",
       )
     })
 

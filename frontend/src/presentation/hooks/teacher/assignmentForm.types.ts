@@ -1,20 +1,10 @@
-import type { ProgrammingLanguage } from "@/business/models/assignment/types"
-import type { LatePenaltyConfig } from "@/shared/types/gradebook"
+import type { AssignmentFormValues } from "@/presentation/schemas/assignment/assignmentSchemas"
 
-export interface AssignmentFormData {
-  assignmentName: string
-  instructions: string
-  instructionsImageUrl: string | null
-  programmingLanguage: ProgrammingLanguage | ""
-  deadline: string
-  allowResubmission: boolean
-  maxAttempts: number | null
-  templateCode: string
-  totalScore: number | null
-  scheduledDate: string | null
-  allowLateSubmissions: boolean
-  latePenaltyConfig: LatePenaltyConfig
-}
+/**
+ * Runtime form data type alias derived from the Zod schema.
+ * Use AssignmentFormValues (the Zod-inferred type) as the single source of truth.
+ */
+export type AssignmentFormData = AssignmentFormValues
 
 export interface FormErrors {
   assignmentName?: string

@@ -6,16 +6,23 @@ interface BackButtonProps {
   to?: string | number
   label?: string
   className?: string
+  onClick?: () => void
 }
 
 export function BackButton({
   to = -1,
   label = "Back",
   className,
+  onClick,
 }: BackButtonProps) {
   const navigate = useNavigate()
 
   const handleBack = () => {
+    if (onClick) {
+      onClick()
+      return
+    }
+
     if (typeof to === "number") {
       navigate(to as number)
     } else {

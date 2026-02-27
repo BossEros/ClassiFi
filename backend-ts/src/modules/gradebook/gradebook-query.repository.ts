@@ -104,14 +104,6 @@ export interface StudentClassGrades {
   assignments: StudentAssignmentGrade[]
 }
 
-/** Class statistics for gradebook */
-export interface ClassStatistics {
-  classAverage: number | null
-  submissionRate: number
-  totalStudents: number
-  totalAssignments: number
-}
-
 /** Student rank in class */
 export interface StudentRank {
   rank: number
@@ -406,75 +398,6 @@ export class GradebookRepository {
         }),
       }
     })
-  }
-
-  /**
-   * Get class statistics for gradebook.
-   */
-  async getClassStatistics(classId: number): Promise<ClassStatistics> {
-    // Count enrolled students
-    const studentCountResult = await this.db
-      .select({ count: sql<number>`count(*)` })
-      .from(enrollments)
-      .where(eq(enrollments.classId, classId))
-    const totalStudents = Number(studentCountResult[0]?.count ?? 0)
-
-    // Count active assignments
-    const assignmentCountResult = await this.db
-      .select({ count: sql<number>`count(*)` })
-      .from(assignments)
-      .where(
-        and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
-      )
-    const totalAssignments = Number(assignmentCountResult[0]?.count ?? 0)
-
-    if (totalStudents === 0 || totalAssignments === 0) {
-      return {
-        classAverage: null,
-        submissionRate: 0,
-        totalStudents,
-        totalAssignments,
-      }
-    }
-
-    // Get assignment IDs for this class
-    const classAssignments = await this.db
-      .select({ id: assignments.id, totalScore: assignments.totalScore })
-      .from(assignments)
-      .where(
-        and(eq(assignments.classId, classId), eq(assignments.isActive, true)),
-      )
-
-    const assignmentIds = classAssignments.map((a) => a.id)
-
-    // Count submissions and get average
-    const statsResult = await this.db
-      .select({
-        submissionCount: sql<number>`count(DISTINCT ${submissions.studentId} || '-' || ${submissions.assignmentId})`,
-        avgGrade: sql<number>`avg(${submissions.grade})`,
-      })
-      .from(submissions)
-      .where(
-        and(
-          eq(submissions.isLatest, true),
-          isNotNull(submissions.grade),
-          inArray(submissions.assignmentId, assignmentIds),
-        ),
-      )
-
-    const submissionCount = Number(statsResult[0]?.submissionCount ?? 0)
-    const avgGrade = statsResult[0]?.avgGrade
-
-    const expectedSubmissions = totalStudents * totalAssignments
-    const submissionRate =
-      expectedSubmissions > 0 ? submissionCount / expectedSubmissions : 0
-
-    return {
-      classAverage: avgGrade !== null ? Math.round(avgGrade * 100) / 100 : null,
-      submissionRate: Math.round(submissionRate * 100),
-      totalStudents,
-      totalAssignments,
-    }
   }
 
   /**

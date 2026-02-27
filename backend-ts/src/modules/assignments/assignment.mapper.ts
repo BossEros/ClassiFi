@@ -21,6 +21,7 @@ export interface AssignmentDTO {
   allowLateSubmissions: boolean
   latePenaltyConfig: Assignment["latePenaltyConfig"] | null
   submissionCount?: number
+  studentCount?: number
   hasSubmitted?: boolean
   submittedAt?: string | null
   grade?: number | null
@@ -33,6 +34,7 @@ export function toAssignmentDTO(
   assignment: Assignment,
   extras?: {
     submissionCount?: number
+    studentCount?: number
     hasSubmitted?: boolean
     submittedAt?: string | null
     grade?: number | null
