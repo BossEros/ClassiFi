@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/shared/types/auth"
 
 interface AuthState {
   user: User | null

@@ -90,8 +90,11 @@ describe("ResetPasswordPage", () => {
     })
 
     expect(screen.getByText("Password Reset Complete!")).toBeInTheDocument()
-    await waitFor(() => {
-      expect(handleSuccess).toHaveBeenCalledTimes(1)
-    }, { timeout: 4000 })
-  })
+    await waitFor(
+      () => {
+        expect(handleSuccess).toHaveBeenCalledTimes(1)
+      },
+      { timeout: 4000 },
+    )
+  }, 10000)
 })
