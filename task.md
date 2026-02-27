@@ -251,3 +251,88 @@
 - [x] Run frontend test verification
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Similarity Student View Personalization
+
+- [x] Update similarity page back-button behavior to return to students overview when a student is selected
+- [x] Change student-view heading to `Similarity Analysis Result - {Student Name}`
+- [x] Show student-level summary cards (suspicious pairs, average similarity, max similarity) in student view
+- [x] Remove student header summary card above pairwise comparisons and keep only pairwise comparison table card
+- [x] Update frontend documentation for student-view behavior
+- [x] Run frontend build verification
+
+# Similarity Pairwise-Triage Primary Flow
+
+- [x] Add pairwise triage table component with search, similarity threshold, sortable columns, and pagination
+- [x] Refactor similarity results page to pairwise-first flow and remove student-drilldown state
+- [x] Keep compare-code panel and pair-details fetch flow intact
+- [x] Remove obsolete student-centric plagiarism components/exports
+- [x] Update frontend documentation to describe the pairwise-first review workflow
+- [x] Run frontend build verification
+
+# Teacher Submissions Row Click Consistency
+
+- [x] Make teacher submission table rows open submission details on click
+- [x] Keep `View Details` button behavior and prevent double-trigger from row click
+- [x] Update frontend documentation for row-click interaction
+- [x] Run frontend build verification
+
+# Similarity Pairwise Metric Clarity
+
+- [x] Rename pairwise columns to `Total Shared Chunks` and `Longest Continuous Shared Block`
+- [x] Add plain-language hover tooltips for both pairwise columns
+- [x] Replace numeric overlap/longest cells with normalized qualitative badges (`Low`, `Medium`, `High`)
+- [x] Keep overlap/longest sorting based on normalized values for fair length-aware comparison
+- [x] Update frontend documentation for revised pairwise column behavior
+- [x] Run frontend build verification
+
+# Calendar Month Event Card Simplification
+
+- [x] Remove class-name prefix from month-view event card text
+- [x] Remove submitted/total ratio line from month-view event card content
+- [x] Keep assignment title as the only text line in month-view event cards
+- [x] Update frontend documentation for simplified month-view event cards
+- [x] Run frontend build verification
+
+# Classes Search Bar Hover Simplification
+
+- [x] Remove classes-view search bar hover glow/gradient layer
+- [x] Align classes search input styling with standard search input behavior
+- [x] Run frontend build verification
+
+# Plagiarism Assignment Report Reuse
+
+- [x] Add latest-report lookup for assignment in similarity repository
+- [x] Reuse existing assignment report when submissions have not changed since report generation
+- [x] Keep new report creation when latest submissions changed
+- [x] Update plagiarism service tests for report reuse path
+- [x] Update backend documentation for deduplicated report behavior
+- [x] Run backend typecheck verification
+- [x] Run backend test verification
+
+# Similarity Review Label + Reusable Report Status
+
+- [x] Add backend endpoint to expose reusable assignment similarity report status
+- [x] Add frontend plagiarism repository/service method for assignment similarity status
+- [x] Update teacher submissions button label to `Review Similarities` when reusable report exists
+- [x] Keep fallback label `Check Similarities` when no reusable report exists
+- [x] Run frontend build verification
+- [x] Run backend typecheck verification
+- [x] Run backend test verification
+
+# Similarity Toast + Latest-Only Report Retention
+
+- [x] Add backend `isReusedReport` response flag for assignment similarity analyze flow
+- [x] Show analysis toast only when a new analysis runs (suppress when report is reused)
+- [x] Add backend cleanup to keep only latest similarity report per assignment
+- [x] Prune old reports on both new report creation and reusable-report review path
+- [x] Update backend/frontend documentation for revised behavior
+- [x] Run frontend build verification
+- [x] Run backend typecheck verification
+- [x] Run backend test verification
+
+# Similarity Results Transition UX Fix
+
+- [x] Remove first-render empty-state flash by hydrating similarity results from navigation state synchronously
+- [x] Preserve state sync for route-state updates after initial mount
+- [x] Run frontend build verification

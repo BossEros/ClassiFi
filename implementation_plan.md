@@ -573,3 +573,150 @@ Synchronize frontend, backend, and root-level test-location conventions so centr
 - [x] Run `frontend`: `npm test -- --run`.
 - [x] Run `backend-ts`: `npm run typecheck`.
 - [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Similarity Pairwise Triage First Flow
+
+## Scope
+
+Shift teacher similarity review from student-drilldown-first to pairwise-triage-first for lower-friction investigation:
+
+1. Replace student-level overview/drilldown UI with a single assignment-level pairwise triage table.
+2. Preserve existing code comparison detail panel (`Compare Code`) and detail fetch flow.
+3. Keep class-level summary stat cards and warnings at top-level.
+4. Remove no-longer-used student-centric presentation components and exports.
+5. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Add a dedicated pairwise triage table component:
+  - [x] Search by student name
+  - [x] Similarity threshold filter (default high-similarity)
+  - [x] Sortable similarity/overlap/longest columns
+  - [x] Pagination + compare action
+- [x] Refactor `SimilarityResultsPage`:
+  - [x] Remove student summary/pairs state and API calls from page flow
+  - [x] Render class-level metrics + pairwise triage as primary surface
+  - [x] Keep existing code comparison panel behavior
+- [x] Remove obsolete student-centric table/detail components and index exports
+- [x] Update `task.md` tracking and frontend documentation for the new flow
+- [x] Run `frontend`: `npm run build`
+
+# Implementation Plan - Pairwise Metric Clarity and Qualitative Signals
+
+## Scope
+
+Improve teacher readability in pairwise plagiarism triage by replacing technical metric labels and raw counts with clear language and qualitative severity signals.
+
+1. Rename `Overlap` to `Total Shared Chunks`.
+2. Rename `Longest Match` to `Longest Continuous Shared Block`.
+3. Add plain-language hover tooltips explaining both columns.
+4. Replace raw numeric cells with normalized qualitative badges (`Low`, `Medium`, `High`), computed behind the scenes to keep comparisons fair across short and long submissions.
+5. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Update `PairwiseTriageTable` column labels to teacher-friendly names.
+- [x] Add hover tooltips with plain-language definitions for both columns.
+- [x] Add normalization helpers and qualitative signal-level mapping.
+- [x] Replace numeric overlap/longest values with qualitative badges.
+- [x] Keep sorting behavior aligned with normalized signal calculations.
+- [x] Update `frontend/documentation.md` for the revised pairwise columns.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Calendar Month Event Card Simplification
+
+## Scope
+
+Simplify month-view calendar event cards for both teacher and student flows:
+
+1. Remove class-name/course-code prefix from event cards.
+2. Remove teacher submission ratio (`submitted/total`) line from event cards.
+3. Keep assignment title as the primary text (plus existing status icon).
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Update `CustomEventComponent` to render assignment title only.
+- [x] Remove submission ratio rendering from month-view event card content.
+- [x] Keep status icon rendering unchanged.
+- [x] Update `frontend/documentation.md` for simplified month-view event card content.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Plagiarism Report Reuse (Deduplicate Assignment Checks)
+
+## Scope
+
+Prevent duplicate similarity report creation when teachers repeatedly click `Check Similarities` for the same assignment.
+
+1. Check for latest assignment report before running a new analysis.
+2. Reuse the existing report if no newer/latest submissions were added since report generation.
+3. Only create a new report when submissions changed.
+4. Verify backend type safety and test suite.
+
+## Execution Checklist
+
+- [x] Add repository support for fetching the latest report by assignment.
+- [x] Add persistence-layer logic to determine whether an existing report is still current.
+- [x] Reuse current report in `PlagiarismService.analyzeAssignmentSubmissions` when eligible.
+- [x] Update plagiarism service unit tests for report-reuse behavior.
+- [x] Update backend documentation to describe deduplicated assignment analysis checks.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Similarity Review Label + Report Status Endpoint
+
+## Scope
+
+Improve teacher submissions UX by surfacing whether a reusable similarity report already exists:
+
+1. Add an assignment-level status endpoint for reusable similarity report availability.
+2. Update the submissions action button label to `Review Similarities` when a reusable report exists.
+3. Keep `Check Similarities` when no reusable report exists.
+4. Verify frontend and backend required checks.
+
+## Execution Checklist
+
+- [x] Add backend service/controller/schema support for assignment similarity status lookup.
+- [x] Add frontend repository/service types and API call for similarity status.
+- [x] Wire status fetch in `AssignmentSubmissionsPage` and toggle button label.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Reused-Report Toast Suppression + Latest-Only Retention
+
+## Scope
+
+Align teacher UX and persistence policy for similarity analysis:
+
+1. Show analysis-complete toast only when a new analysis is actually executed.
+2. Suppress analysis toast when an existing report is reused (`Review Similarities` flow).
+3. Keep only the latest similarity report per assignment by pruning older reports.
+4. Verify frontend/backend required checks.
+
+## Execution Checklist
+
+- [x] Add `isReusedReport` flag to plagiarism analyze responses.
+- [x] Use `isReusedReport` in teacher submissions page to conditionally show toast.
+- [x] Add repository cleanup method to delete old reports per assignment while keeping latest.
+- [x] Enforce cleanup when creating a new report and when reusing an existing report.
+- [x] Update relevant docs/tests for the new behavior.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Similarity Page Transition Flicker Fix
+
+## Scope
+
+Smooth the handoff from submissions to similarity results by removing the initial empty-state render flash.
+
+1. Initialize similarity results from navigation state synchronously on first render.
+2. Preserve existing state-sync behavior for subsequent location-state updates.
+3. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Initialize `results` and `filteredPairCount` from `location.state` in `SimilarityResultsPage`.
+- [x] Keep `useEffect` synchronization for navigation-state updates.
+- [x] Run `frontend`: `npm run build`.
