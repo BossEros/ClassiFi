@@ -20,7 +20,6 @@ interface ClassHeaderProps {
   onEditClass?: () => void
   onDeleteClass?: () => void
   onLeaveClass?: () => void
-  onViewGradebook?: () => void
 }
 
 export const ClassHeader: React.FC<ClassHeaderProps> = ({
@@ -34,7 +33,6 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   onEditClass,
   onDeleteClass,
   onLeaveClass,
-  onViewGradebook: _onViewGradebook,
 }) => {
   const dayAbbreviations = convertToSingleLetterAbbr(schedule.days)
   const daysText = dayAbbreviations.join("")

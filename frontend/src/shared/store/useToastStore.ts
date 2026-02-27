@@ -1,5 +1,6 @@
 import { create } from "zustand"
-import type { ToastVariant } from "@/presentation/components/ui/Toast"
+
+type ToastVariant = "success" | "error" | "info"
 
 export interface Toast {
   id: string

@@ -238,10 +238,6 @@ export function ClassDetailPage() {
     navigate(`/dashboard/classes/${classId}/edit`)
   }
 
-  const handleViewGradebook = () => {
-    setActiveTab("grades")
-  }
-
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : "?"
@@ -300,7 +296,6 @@ export function ClassDetailPage() {
             onEditClass={handleEditClass}
             onDeleteClass={() => setIsDeleteModalOpen(true)}
             onLeaveClass={() => setIsLeaveModalOpen(true)}
-            onViewGradebook={handleViewGradebook}
           />
 
           {/* Error Message */}

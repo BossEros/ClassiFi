@@ -9,7 +9,19 @@ process.env.TZ = "UTC"
 
 // Start MSW server before all tests
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: "warn" })
+  server.listen({
+    onUnhandledRequest(request, print) {
+      const requestUrl = new URL(request.url)
+      const isSubmissionUploadRequest =
+        request.method === "POST" && requestUrl.pathname === "/api/v1/submissions"
+
+      if (isSubmissionUploadRequest) {
+        return
+      }
+
+      print.warning()
+    },
+  })
 })
 
 // Reset handlers and cleanup DOM between tests

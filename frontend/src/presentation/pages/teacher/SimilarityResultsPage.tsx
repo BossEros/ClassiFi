@@ -4,12 +4,10 @@ import { DashboardLayout } from "@/presentation/components/shared/dashboard/Dash
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { BackButton } from "@/presentation/components/ui/BackButton"
 import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
-import { Input } from "@/presentation/components/ui/Input"
 import {
   AlertTriangle,
   FileCode,
   BarChart3,
-  Search,
   Loader2,
   X,
   Layers,
@@ -18,17 +16,13 @@ import {
 import {
   PairComparison,
   PairCodeDiff,
-  StudentSummaryTable,
-  StudentPairsDetail,
+  PairwiseTriageTable,
   type FilePair,
 } from "@/presentation/components/teacher/plagiarism"
 import {
   getResultDetails,
-  getStudentSummary,
-  getStudentPairs,
   type AnalyzeResponse,
   type PairResponse,
-  type StudentSummary,
 } from "@/business/services/plagiarismService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
@@ -44,7 +38,7 @@ type CodeViewMode = "match" | "diff"
  * Detect the syntax highlighting language from a filename extension.
  */
 function detectLanguage(filename: string): string {
-  const ext = filename.split(".").pop()?.toLowerCase() || ""
+  const extension = filename.split(".").pop()?.toLowerCase() || ""
   const extensionMap: Record<string, string> = {
     java: "java",
     py: "python",
@@ -65,50 +59,32 @@ function detectLanguage(filename: string): string {
     scala: "scala",
   }
 
-  return extensionMap[ext] || "plaintext"
+  return extensionMap[extension] || "plaintext"
 }
 
 /**
- * Displays plagiarism detection results for an assignment with detailed similarity analysis.
+ * Displays assignment-level similarity analysis with pairwise triage as the primary workflow.
  *
- * Renders a comprehensive view of similarity detection results including student summary tables,
- * pair comparisons, and detailed code diff views. Supports filtering, sorting, and navigation
- * between different views of the plagiarism analysis data.
- *
- * @param assignmentId - The assignment ID extracted from the URL route parameter (string), used to identify which assignment's similarity results to display.
- * @returns A JSX.Element rendering the similarity results page with student summaries, pair comparisons, and code diff views.
+ * @returns Similarity results page with summary metrics, pairwise triage table, and code comparison panel.
  */
 export function SimilarityResultsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
+  const locationState = location.state as LocationState | null
 
-  // Results from analysis
-  const [results, setResults] = useState<AnalyzeResponse | null>(null)
-
-  // Student-centric view state
-  const [studentSummaries, setStudentSummaries] = useState<StudentSummary[]>([])
-  const [isLoadingStudents, setIsLoadingStudents] = useState(false)
-  const [studentSummaryError, setStudentSummaryError] = useState<string | null>(
-    null,
+  const [results, setResults] = useState<AnalyzeResponse | null>(
+    () => locationState?.results ?? null,
   )
-  const [selectedStudent, setSelectedStudent] = useState<StudentSummary | null>(
-    null,
-  )
-  const [studentSearchQuery, setStudentSearchQuery] = useState("")
-  const [studentPairs, setStudentPairs] = useState<PairResponse[]>([])
-  const [isLoadingStudentPairs, setIsLoadingStudentPairs] = useState(false)
-  const [studentPairsError, setStudentPairsError] = useState<string | null>(
-    null,
-  )
-
-  // Code comparison state
   const [selectedPair, setSelectedPair] = useState<PairResponse | null>(null)
-
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
   const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
   const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [detailsError, setDetailsError] = useState<string | null>(null)
+  const [filteredPairCount, setFilteredPairCount] = useState(
+    () => locationState?.results?.pairs.length ?? 0,
+  )
+  const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(75)
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -116,93 +92,13 @@ export function SimilarityResultsPage() {
 
   const topBar = useTopBar({ user, userInitials })
 
-  // Load results from location state
   useEffect(() => {
-    const state = location.state as LocationState | null
-
-    if (state?.results) {
-      setResults(state.results)
+    if (locationState?.results) {
+      setResults(locationState.results)
+      setFilteredPairCount(locationState.results.pairs.length)
     }
-  }, [location.state])
+  }, [locationState])
 
-  // Load student summaries when results are available
-  useEffect(() => {
-    if (!results?.reportId) return
-
-    const loadStudentSummaries = async () => {
-      setIsLoadingStudents(true)
-      setStudentSummaryError(null)
-
-      try {
-        const summaries = await getStudentSummary(results.reportId)
-        setStudentSummaries(summaries)
-      } catch (error) {
-        console.error("Failed to load student summaries:", error)
-        setStudentSummaryError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load student summaries",
-        )
-      } finally {
-        setIsLoadingStudents(false)
-      }
-    }
-
-    loadStudentSummaries()
-  }, [results?.reportId])
-
-  // Load student pairs when a student is selected
-  useEffect(() => {
-    if (!results?.reportId || !selectedStudent) return
-
-    const loadStudentPairs = async () => {
-      setIsLoadingStudentPairs(true)
-      setStudentPairsError(null)
-
-      try {
-        const pairs = await getStudentPairs(
-          results.reportId,
-          selectedStudent.submissionId,
-        )
-        setStudentPairs(pairs)
-      } catch (error) {
-        console.error("Failed to load student pairs:", error)
-        setStudentPairsError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load student pairs",
-        )
-        setStudentPairs([])
-      } finally {
-        setIsLoadingStudentPairs(false)
-      }
-    }
-
-    loadStudentPairs()
-  }, [results?.reportId, selectedStudent])
-
-  // Handle selecting a student from the summary table
-  const handleStudentSelect = (student: StudentSummary) => {
-    setSelectedStudent(student)
-    setStudentPairs([])
-    setStudentPairsError(null)
-    // Clear any existing code comparison
-    setSelectedPair(null)
-    setPairDetails(null)
-    setDetailsError(null)
-  }
-
-  // Handle going back from student details to summary
-  const handleBackToStudents = () => {
-    setSelectedStudent(null)
-    setStudentPairs([])
-    setStudentPairsError(null)
-    setSelectedPair(null)
-    setPairDetails(null)
-    setDetailsError(null)
-  }
-
-  // Handle viewing pair details with code comparison
   const handleViewDetails = async (pair: PairResponse) => {
     setSelectedPair(pair)
     setIsLoadingDetails(true)
@@ -212,7 +108,6 @@ export function SimilarityResultsPage() {
     try {
       const details = await getResultDetails(pair.id)
 
-      // Convert to FilePair format for PairComparison component
       const filePair: FilePair = {
         id: details.result.id,
         leftFile: {
@@ -232,11 +127,11 @@ export function SimilarityResultsPage() {
         similarity: parseFloat(details.result.structuralScore),
         overlap: details.result.overlap,
         longest: details.result.longestFragment,
-        fragments: details.fragments.map((f, i) => ({
-          id: f.id || i,
-          leftSelection: f.leftSelection,
-          rightSelection: f.rightSelection,
-          length: f.length,
+        fragments: details.fragments.map((fragment, index) => ({
+          id: fragment.id || index,
+          leftSelection: fragment.leftSelection,
+          rightSelection: fragment.rightSelection,
+          length: fragment.length,
         })),
       }
 
@@ -260,14 +155,12 @@ export function SimilarityResultsPage() {
     setDetailsError(null)
   }
 
-  // Compute language for code highlighting based on filenames
   const detectedLanguage = useMemo(() => {
     if (!pairDetails) return "plaintext"
 
     return detectLanguage(pairDetails.leftFile.filename)
   }, [pairDetails])
 
-  // No results state
   if (!results) {
     return (
       <DashboardLayout topBar={topBar}>
@@ -296,24 +189,26 @@ export function SimilarityResultsPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="space-y-6 max-w-[1600px]">
-        {/* Back Button */}
         <BackButton
           to={`/dashboard/assignments/${assignmentId}/submissions`}
           label="Back to Submissions"
         />
 
-        {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold text-white">
             Similarity Analysis Results
           </h1>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <SummaryStatCard
             label="Suspicious"
-            value={results.summary.suspiciousPairs}
+            value={filteredPairCount}
+            helperText={
+              minimumSimilarityPercent === 0
+                ? undefined
+                : `of ${results.pairs.length} total pairs`
+            }
             icon={AlertTriangle}
             iconContainerClassName="bg-red-500/20"
             iconClassName="text-red-400"
@@ -336,87 +231,21 @@ export function SimilarityResultsPage() {
           />
         </div>
 
-        {/* Student-Centric View */}
-        {/* Error State */}
-        {studentSummaryError && (
-          <Card className="bg-red-500/10 border-red-500/20">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-                <p className="text-red-400">{studentSummaryError}</p>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Student Summary Table or Detail View */}
-        {!selectedStudent ? (
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardContent className="p-6">
-              <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-white mb-1">
-                    Student Originality Overview
-                  </h2>
-                  <p className="text-sm text-slate-400">
-                    Click on a student to view their similarity pairs and compare
-                    code
-                  </p>
-                </div>
-
-                <div className="w-full sm:max-w-[28rem] relative xl:ml-auto">
-                  <Search
-                    className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none z-10"
-                    aria-hidden="true"
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Search by student name..."
-                    value={studentSearchQuery}
-                    onChange={(event) => setStudentSearchQuery(event.target.value)}
-                    className="pl-11 relative z-0"
-                  />
-                </div>
-              </div>
-
-              <StudentSummaryTable
-                students={studentSummaries}
-                onStudentSelect={handleStudentSelect}
-                selectedStudent={selectedStudent}
-                isLoading={isLoadingStudents}
-                searchQuery={studentSearchQuery}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <>
-            {/* Student Pairs Error State */}
-            {studentPairsError && (
-              <Card className="bg-red-500/10 border-red-500/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="w-5 h-5 text-red-400" />
-                    <p className="text-red-400">{studentPairsError}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <StudentPairsDetail
-              student={selectedStudent}
-              pairs={studentPairs}
+        <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+          <CardContent className="p-6">
+            <PairwiseTriageTable
+              pairs={results.pairs}
               onPairSelect={handleViewDetails}
-              onBack={handleBackToStudents}
-              isLoading={isLoadingStudentPairs}
+              onFilteredCountChange={setFilteredPairCount}
+              onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
+              selectedPairId={selectedPair?.id ?? null}
             />
-          </>
-        )}
+          </CardContent>
+        </Card>
 
-        {/* Code Comparison Panel (shared between both views) */}
         {selectedPair && (
           <Card className="bg-white/5 backdrop-blur-sm border-white/10">
             <CardContent className="p-6">
-              {/* Header row with title and close button */}
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-white">
                   Code Comparison: {selectedPair.leftFile.studentName} vs{" "}
@@ -433,7 +262,6 @@ export function SimilarityResultsPage() {
                 </button>
               </div>
 
-              {/* View mode toggle - separate row */}
               <div className="flex justify-center mb-6">
                 <div className="flex bg-black/20 backdrop-blur-md border border-white/5 rounded-xl p-1 gap-1">
                   <button
@@ -497,14 +325,13 @@ export function SimilarityResultsPage() {
           </Card>
         )}
 
-        {/* Warnings */}
         {results.warnings.length > 0 && (
           <Card className="bg-yellow-500/10 border-yellow-500/20">
             <CardContent className="p-4">
               <h3 className="font-medium text-yellow-400 mb-2">Warnings</h3>
               <ul className="list-disc list-inside text-sm text-yellow-300">
-                {results.warnings.map((warning, i) => (
-                  <li key={i}>{warning}</li>
+                {results.warnings.map((warning, index) => (
+                  <li key={index}>{warning}</li>
                 ))}
               </ul>
             </CardContent>

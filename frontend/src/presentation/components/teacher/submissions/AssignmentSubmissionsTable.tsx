@@ -88,7 +88,8 @@ export function AssignmentSubmissionsTable({
               return (
                 <tr
                   key={submission.id}
-                  className="border-b border-white/5 transition-all duration-200 hover:bg-white/5"
+                  className="border-b border-white/5 transition-all duration-200 hover:bg-white/5 cursor-pointer"
+                  onClick={() => onViewDetails(submission)}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -133,7 +134,10 @@ export function AssignmentSubmissionsTable({
 
                   <td className="px-6 py-4 text-center">
                     <button
-                      onClick={() => onViewDetails(submission)}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onViewDetails(submission)
+                      }}
                       className="px-3 py-1.5 text-xs font-medium text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-all duration-200"
                     >
                       View Details

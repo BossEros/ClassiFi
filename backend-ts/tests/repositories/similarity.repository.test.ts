@@ -15,8 +15,10 @@ vi.mock("../../src/shared/database.js", () => ({
 
 // Mock drizzle-orm
 vi.mock("drizzle-orm", () => ({
+  and: vi.fn((...conditions) => ({ conditions, type: "and" })),
   eq: vi.fn((field, value) => ({ field, value, type: "eq" })),
   desc: vi.fn((field) => ({ field, type: "desc" })),
+  ne: vi.fn((field, value) => ({ field, value, type: "ne" })),
   sql: vi.fn((strings, ...values) => ({ type: "sql", strings, values })),
 }))
 
@@ -164,6 +166,31 @@ describe("SimilarityRepository", () => {
       const result = await similarityRepo.getReportsByAssignment(999)
 
       expect(result).toHaveLength(0)
+    })
+  })
+
+  // ============ getLatestReportByAssignment Tests ============
+  describe("getLatestReportByAssignment Logic", () => {
+    it("should return the latest report when available", async () => {
+      const latestReport = {
+        id: 5,
+        assignmentId: 1,
+        generatedAt: new Date("2026-02-20"),
+      }
+      const limitMock = vi.fn().mockResolvedValue([latestReport])
+      const orderByMock = vi.fn().mockReturnValue({ limit: limitMock })
+      const whereMock = vi.fn().mockReturnValue({ orderBy: orderByMock })
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock })
+      const selectMock = vi.fn().mockReturnValue({ from: fromMock })
+      mockDb.select = selectMock
+
+      const { SimilarityRepository } =
+        await import("../../src/modules/plagiarism/similarity.repository.js")
+      const similarityRepo = new SimilarityRepository()
+
+      const result = await similarityRepo.getLatestReportByAssignment(1)
+
+      expect(result?.id).toBe(5)
     })
   })
 
@@ -361,6 +388,27 @@ describe("SimilarityRepository", () => {
       const result = await similarityRepo.deleteReport(999)
 
       expect(result).toBe(false)
+    })
+  })
+
+  // ============ deleteReportsByAssignmentExcept Tests ============
+  describe("deleteReportsByAssignmentExcept Logic", () => {
+    it("should delete old reports and return deleted count", async () => {
+      const returningMock = vi.fn().mockResolvedValue([{ id: 1 }, { id: 2 }])
+      const whereMock = vi.fn().mockReturnValue({ returning: returningMock })
+      const deleteMock = vi.fn().mockReturnValue({ where: whereMock })
+      mockDb.delete = deleteMock
+
+      const { SimilarityRepository } =
+        await import("../../src/modules/plagiarism/similarity.repository.js")
+      const similarityRepo = new SimilarityRepository()
+
+      const deletedCount = await similarityRepo.deleteReportsByAssignmentExcept(
+        10,
+        99,
+      )
+
+      expect(deletedCount).toBe(2)
     })
   })
 })

@@ -30,7 +30,10 @@ import {
   getAssignmentSubmissions,
 } from "@/business/services/assignmentService"
 import { deleteAssignment, getClassStudents } from "@/business/services/classService"
-import { analyzeAssignmentSubmissions } from "@/business/services/plagiarismService"
+import {
+  analyzeAssignmentSubmissions,
+  getAssignmentSimilarityStatus,
+} from "@/business/services/plagiarismService"
 import { formatDeadline } from "@/presentation/utils/dateUtils"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
@@ -64,6 +67,8 @@ export function AssignmentSubmissionsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [hasReusableSimilarityReport, setHasReusableSimilarityReport] =
+    useState(false)
   const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] = useState(false)
   const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
   const showToast = useToastStore((state) => state.showToast)
@@ -112,6 +117,19 @@ export function AssignmentSubmissionsPage() {
         setFilteredSubmissions(submissionsData)
         setClassStudentCount(enrolledStudentsCount)
         setStudentAvatarUrlById(avatarUrlMapByStudentId)
+
+        try {
+          const similarityStatus = await getAssignmentSimilarityStatus(
+            parseInt(assignmentId, 10),
+          )
+          setHasReusableSimilarityReport(similarityStatus.hasReusableReport)
+        } catch (similarityStatusError) {
+          console.error(
+            "Failed to fetch assignment similarity status:",
+            similarityStatusError,
+          )
+          setHasReusableSimilarityReport(false)
+        }
       } catch (err) {
         console.error("Error fetching assignment data:", err)
         const errorMessage =
@@ -178,10 +196,15 @@ export function AssignmentSubmissionsPage() {
     try {
       setIsAnalyzing(true)
       const results = await analyzeAssignmentSubmissions(parseInt(assignmentId))
-      showToast(
-        `Analysis complete! Found ${results.summary.suspiciousPairs} suspicious pairs.`,
-        results.summary.suspiciousPairs > 0 ? "info" : "success",
-      )
+
+      if (!results.isReusedReport) {
+        showToast(
+          `Analysis complete! Found ${results.summary.suspiciousPairs} suspicious pairs.`,
+          results.summary.suspiciousPairs > 0 ? "info" : "success",
+        )
+      }
+
+      setHasReusableSimilarityReport(true)
       // Navigate to results page with the analysis data
       navigate(`/dashboard/assignments/${assignmentId}/similarity`, {
         state: { results },
@@ -405,7 +428,11 @@ export function AssignmentSubmissionsPage() {
             ) : (
               <>
                 <Shield className="w-4 h-4" />
-                <span>Check Similarities</span>
+                <span>
+                  {hasReusableSimilarityReport
+                    ? "Review Similarities"
+                    : "Check Similarities"}
+                </span>
               </>
             )}
           </Button>

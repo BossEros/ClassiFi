@@ -23,6 +23,7 @@ describe("plagiarismRepository", () => {
   describe("analyzePlagiarismForAllSubmissionsInAssignment", () => {
     const mockAnalyzeResponse = {
       reportId: "report-123",
+      isReusedReport: false,
       summary: {
         totalFiles: 10,
         totalPairs: 5,

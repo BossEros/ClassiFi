@@ -136,6 +136,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 - **`ClassCard`**: Displays class information in list view with code pattern background, instructor avatar, student count, term info, and archived status. Used in classes list pages.
 - **`ClassHeader`**: Displays class information including name, instructor, schedule, and optional description with action buttons (teachers: Gradebook button and Edit/Delete dropdown; students: Leave Class dropdown).
 - **`ClassTabs`**: Tab navigation for Assignment, Students, and Calendar views with keyboard accessibility.
+- **`CustomEventComponent`**: Month-view calendar event content renderer that shows assignment title (with status icon) in a compact single-line card.
 - **`InstructorInfo`**: Displays instructor name with user icon for class detail views.
 - **`ScheduleInfo`**: Displays class schedule with days and time range.
 - **`ClassCodeBadge`**: Styled badge displaying the class join code.
@@ -146,17 +147,12 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 ### Feature Components
 
 - **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks with syntax highlighting for Python, Java, and C.
-- **`PlagiarismReport`**: Visualizes similarity analysis results with two complementary views:
-  - **Student-Centric View Components**:
-    - **`OriginalityBadge`**: Color-coded badge (red/yellow/green) displaying originality percentage with tooltip
-    - **`StudentSummaryTable`**: Sortable, searchable table of all students with originality scores, highest matches, and suspicious pair counts
-    - **`StudentPairsDetail`**: Detailed view of all similarity pairs for a selected student with summary statistics
-  - **Pairwise View Components**:
-    - **`PairsTable`**: Lists file pairs with similarity scores
-    - **`PairComparison`**: Side-by-side code editor with match highlighting
-    - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
-    - **`FragmentsTable`**: Detailed view of matching code fragments
-    - **`SimilarityBadge`**: Visual indicator for similarity percentage
+- **`PlagiarismReport`**: Visualizes similarity analysis results with a pairwise-triage-first workflow:
+  - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination
+  - **`PairComparison`**: Side-by-side code editor with match highlighting
+  - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
+  - **`FragmentsTable`**: Detailed view of matching code fragments
+  - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Manages student grades and overrides.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
@@ -231,7 +227,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                |
 | **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
 | **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                   |
-| **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, similarity analysis, student originality scoring |
+| **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, assignment-level similarity analysis, pairwise code comparison |
 | **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
 | **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
 | **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                   |
@@ -287,36 +283,13 @@ Language-specific features:
 
 ### Plagiarism Detection
 
-The plagiarism detection system provides two complementary views for analyzing code similarity:
+The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly with fewer clicks:
 
-#### Student-Centric View (Default)
-
-The student-centric view focuses on individual student originality scores, making it easy to identify students who may need attention:
-
-- **Originality Scores**: Each student receives an originality score calculated as `1 - max_similarity`, where max_similarity is the highest similarity score across all pairs involving that student
-- **Color-Coded Badges**: Visual indicators for quick assessment
-  - Red (<30%): Low originality, requires immediate attention
-  - Yellow (30-60%): Moderate originality, may warrant review
-  - Green (>60%): High originality, likely original work
-- **Student Summary Table**: Sortable table showing all students with their originality scores, highest matches, and suspicious pair counts
-- **Drill-Down Details**: Click any student to view all their similarity pairs and detailed comparisons
-- **Search and Filter**: Quickly find specific students by name
-- **Pagination**: Handles large classes efficiently (25 students per page)
-
-#### Pairwise Comparison View
-
-The traditional pairwise view provides detailed code comparison capabilities:
-
-- **Side-by-side comparison**: View matched code fragments in parallel editors
-- **Synchronized scrolling**: Navigate through matches seamlessly
-- **Fragment highlighting**: Visual indicators for matching code regions
-- **Similarity metrics**: Percentage similarity, overlap, and longest match
-- **Interactive navigation**: Click fragments to jump to specific matches
-- **Export capabilities**: Download reports for record-keeping
-
-#### View Toggle
-
-Teachers can seamlessly switch between the student-centric view and pairwise view using the toggle at the top of the plagiarism results page. Both views share the same code comparison panel, ensuring a consistent experience when examining specific matches.
+- **Class-level summary cards**: Suspicious pairs, average similarity, and maximum similarity.
+- **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
+- **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
+- **Fast triage controls**: Search by student, sortable `Similarity` plus qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
+- **Details on demand**: `Compare Code` opens side-by-side match/diff inspection with fragment context.
 
 ### Toast Notifications
 
@@ -505,12 +478,13 @@ Specialized types for the class detail page redesign:
    - In the submissions view, the Instructions card is collapsible from the header chevron to save vertical space
    - Submission metrics are shown as individual cards (`Total Submissions`, `On Time`, `Late`, `Missing`) with status icons
    - Submissions are listed in a paginated table (`Student Name`, `Status`, `Grade`, `Action`) with 10 rows per page
-   - Search includes a leading icon and shares the action bar row with `Check Similarities` (left search, right action button)
-   - `View Details` opens assignment review for the selected submission (`submissionId` in URL query)
+   - Search includes a leading icon and shares the action bar row with the similarity action button (left search, right action button)
+   - Clicking a submissions table row or the `View Details` action opens assignment review for the selected submission (`submissionId` in URL query)
    - Teacher assignment review prioritizes selected submission status and test-case results; the teacher submission-history list is removed
    - Teacher/admin review shows hidden test-case details when present; students still see hidden-case placeholders only
    - Test result details render vertically (`Input` above `Expected`, `Actual` below) to avoid misleading line-break interpretation
-   - `Check Similarities` is available on the submissions page action bar and is intentionally not shown on the submission detail page
+   - The similarity action button shows `Check Similarities` when a fresh run is needed and `Review Similarities` when a reusable report already exists
+   - The analysis-complete toast is shown only when a new analysis is performed (not when reviewing a reused report)
    - Edit/delete assignment actions are available from the assignment submissions page dropdown menu (teacher/admin only)
 4. **View Students**:
    - Switch to Students tab to view enrolled students
@@ -522,25 +496,16 @@ Specialized types for the class detail page redesign:
 ### Teacher: Reviewing Plagiarism Results
 
 1. **Navigate to Results**: From the assignment submissions page, click "View Plagiarism Report"
-2. **Review Student Originality** (Default View):
-   - View the student summary table showing all students with originality scores
-   - Identify students with low originality (red badges) for immediate attention
-   - Use search to find specific students
-   - Sort by originality score, similarity, or student name
-3. **Investigate Specific Students**:
-   - Click on a student row to view all their similarity pairs
-   - Review summary statistics (total pairs, suspicious pairs, highest match)
-   - Click on any pair to view side-by-side code comparison
-4. **Compare Code**:
+2. **Triage Pairwise Results** (Default View):
+   - Review direct `Student A vs Student B` pair rows sorted by highest similarity.
+   - Start with the default `85% and above` threshold, then relax/tighten as needed.
+   - Use student-name search and sorting to prioritize suspicious pairs quickly.
+3. **Compare Code**:
    - View matched code fragments highlighted in both files
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches
    - Toggle between "Match" and "Diff" views for different perspectives
-5. **Switch to Pairwise View** (Optional):
-   - Click the "Pairs" toggle to view traditional pairwise comparison
-   - Search and sort pairs by similarity score
-   - All code comparison features remain available
-6. **Take Action**:
+4. **Take Action**:
    - Document findings for academic integrity review
    - Contact students as needed
    - Export report for record-keeping
