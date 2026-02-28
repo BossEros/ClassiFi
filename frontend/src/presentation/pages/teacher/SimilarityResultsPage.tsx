@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useParams, useLocation } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
@@ -85,6 +85,8 @@ export function SimilarityResultsPage() {
     () => locationState?.results?.pairs.length ?? 0,
   )
   const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(75)
+  const [comparisonScrollToken, setComparisonScrollToken] = useState(0)
+  const comparisonSectionRef = useRef<HTMLDivElement | null>(null)
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -99,8 +101,20 @@ export function SimilarityResultsPage() {
     }
   }, [locationState])
 
+  useEffect(() => {
+    if (comparisonScrollToken === 0) {
+      return
+    }
+
+    comparisonSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    })
+  }, [comparisonScrollToken])
+
   const handleViewDetails = async (pair: PairResponse) => {
     setSelectedPair(pair)
+    setComparisonScrollToken((previousToken) => previousToken + 1)
     setIsLoadingDetails(true)
     setDetailsError(null)
     setPairDetails(null)
@@ -244,85 +258,87 @@ export function SimilarityResultsPage() {
         </Card>
 
         {selectedPair && (
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">
-                  Code Comparison: {selectedPair.leftFile.studentName} vs{" "}
-                  {selectedPair.rightFile.studentName}
-                </h2>
-                <button
-                  onClick={handleCloseDetails}
-                  className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 hover:border-teal-500/40 transition-colors duration-200 backdrop-blur-sm"
-                >
-                  <X className="w-4 h-4 text-teal-200 group-hover:text-white transition-colors" />
-                  <span className="text-sm font-medium text-teal-200 group-hover:text-white transition-colors">
-                    Close
-                  </span>
-                </button>
-              </div>
-
-              <div className="flex justify-center mb-6">
-                <div className="flex bg-black/20 backdrop-blur-md border border-white/5 rounded-xl p-1 gap-1">
+          <div ref={comparisonSectionRef} className="scroll-mt-24">
+            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white">
+                    Code Comparison: {selectedPair.leftFile.studentName} vs{" "}
+                    {selectedPair.rightFile.studentName}
+                  </h2>
                   <button
-                    onClick={() => setCodeViewMode("match")}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                      codeViewMode === "match"
-                        ? "bg-teal-600 text-white border border-teal-500/40"
-                        : "text-slate-300 hover:text-white hover:bg-white/5"
-                    }`}
+                    onClick={handleCloseDetails}
+                    className="group flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 hover:border-teal-500/40 transition-colors duration-200 backdrop-blur-sm"
                   >
-                    <Layers className="w-4 h-4" />
-                    Match View
-                  </button>
-                  <button
-                    onClick={() => setCodeViewMode("diff")}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                      codeViewMode === "diff"
-                        ? "bg-teal-600 text-white border border-teal-500/40"
-                        : "text-slate-300 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <GitCompare className="w-4 h-4" />
-                    Diff View
+                    <X className="w-4 h-4 text-teal-200 group-hover:text-white transition-colors" />
+                    <span className="text-sm font-medium text-teal-200 group-hover:text-white transition-colors">
+                      Close
+                    </span>
                   </button>
                 </div>
-              </div>
 
-              {isLoadingDetails && (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
-                  <span className="ml-3 text-slate-300">
-                    Loading code comparison...
-                  </span>
+                <div className="flex justify-center mb-6">
+                  <div className="flex bg-black/20 backdrop-blur-md border border-white/5 rounded-xl p-1 gap-1">
+                    <button
+                      onClick={() => setCodeViewMode("match")}
+                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                        codeViewMode === "match"
+                          ? "bg-teal-600 text-white border border-teal-500/40"
+                          : "text-slate-300 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <Layers className="w-4 h-4" />
+                      Match View
+                    </button>
+                    <button
+                      onClick={() => setCodeViewMode("diff")}
+                      className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                        codeViewMode === "diff"
+                          ? "bg-teal-600 text-white border border-teal-500/40"
+                          : "text-slate-300 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <GitCompare className="w-4 h-4" />
+                      Diff View
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              {detailsError && (
-                <div className="text-center py-8">
-                  <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
-                  <p className="text-red-400">{detailsError}</p>
-                </div>
-              )}
+                {isLoadingDetails && (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-teal-400" />
+                    <span className="ml-3 text-slate-300">
+                      Loading code comparison...
+                    </span>
+                  </div>
+                )}
 
-              {pairDetails && codeViewMode === "match" && (
-                <PairComparison
-                  pair={pairDetails}
-                  language={detectedLanguage}
-                  editorHeight={500}
-                />
-              )}
+                {detailsError && (
+                  <div className="text-center py-8">
+                    <AlertTriangle className="w-8 h-8 text-red-400 mx-auto mb-2" />
+                    <p className="text-red-400">{detailsError}</p>
+                  </div>
+                )}
 
-              {pairDetails && codeViewMode === "diff" && (
-                <PairCodeDiff
-                  leftFile={pairDetails.leftFile}
-                  rightFile={pairDetails.rightFile}
-                  language={detectedLanguage}
-                  height={500}
-                />
-              )}
-            </CardContent>
-          </Card>
+                {pairDetails && codeViewMode === "match" && (
+                  <PairComparison
+                    pair={pairDetails}
+                    language={detectedLanguage}
+                    editorHeight={480}
+                  />
+                )}
+
+                {pairDetails && codeViewMode === "diff" && (
+                  <PairCodeDiff
+                    leftFile={pairDetails.leftFile}
+                    rightFile={pairDetails.rightFile}
+                    language={detectedLanguage}
+                    height={480}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {results.warnings.length > 0 && (
