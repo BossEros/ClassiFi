@@ -1,7 +1,8 @@
 import { useMemo } from "react"
+import { format } from "date-fns"
+import { AlertTriangle, CheckCircle2, Circle, Clock3 } from "lucide-react"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/business/models/calendar/types"
-import { format } from "date-fns"
 import { CustomViewToolbar } from "./CustomViewToolbar"
 import { getCalendarStackedEventStyle } from "./eventStyle"
 import "./CustomDayView.css"
@@ -41,14 +42,14 @@ interface CustomDayViewProps {
 }
 
 /**
- * Custom Day View with Stacked Events
+ * Custom Day View with stacked events.
  *
  * Groups events by their start time and stacks them vertically.
  * Each time slot expands to fit all events at that time.
  * Uses the shared CustomViewToolbar for navigation and view switching.
  *
- * This is a custom implementation that replaces react-big-calendar's
- * default time grid for better handling of multiple events at the same time.
+ * This replaces react-big-calendar's default time grid to better handle
+ * multiple events at the same start time.
  */
 export function CustomDayView({
   date,
@@ -59,20 +60,17 @@ export function CustomDayView({
   currentView,
 }: CustomDayViewProps) {
   /**
-   * Group events by their start time (hour:minute)
+   * Group events by start time (hour:minute).
    */
   const timeSlots = useMemo(() => {
-    // Create a map of time -> events
     const slotMap = new Map<string, CalendarEvent[]>()
 
     events.forEach((event) => {
       const startTime = event.timing.start
-      // Round to the nearest 30-minute slot (0 or 30)
       const slotMinute =
         startTime.getMinutes() < LAYOUT.MINUTES_PER_SLOT
           ? 0
           : LAYOUT.MINUTES_PER_SLOT
-
       const timeKey = `${startTime.getHours()}:${slotMinute}`
 
       if (!slotMap.has(timeKey)) {
@@ -82,15 +80,12 @@ export function CustomDayView({
       slotMap.get(timeKey)!.push(event)
     })
 
-    // Convert to array and sort by time
     const slots: TimeSlot[] = []
 
-    // Generate all time slots from 00:00 to 23:30 (30-minute intervals)
     for (let hour = 0; hour < LAYOUT.HOURS_PER_DAY; hour++) {
       for (let minute = 0; minute < 60; minute += LAYOUT.MINUTES_PER_SLOT) {
         const timeKey = `${hour}:${minute}`
         const slotEvents = slotMap.get(timeKey) || []
-
         const slotTime = new Date(date)
         slotTime.setHours(hour, minute, 0, 0)
 
@@ -106,9 +101,6 @@ export function CustomDayView({
     return slots
   }, [events, date])
 
-  /**
-   * Calculate the height for a time slot based on number of events
-   */
   const getSlotHeight = (eventCount: number): number => {
     if (eventCount === 0) return LAYOUT.EMPTY_SLOT_HEIGHT
 
@@ -118,24 +110,16 @@ export function CustomDayView({
     )
   }
 
-  /**
-   * Format time for display
-   */
   const formatTime = (hour: number, minute: number): string => {
-    const d = new Date()
-    d.setHours(hour, minute)
-
-    return format(d, "h:mm a")
+    const time = new Date()
+    time.setHours(hour, minute)
+    return format(time, "h:mm a")
   }
 
-  /**
-   * Format the date label for the toolbar
-   */
   const dateLabel = format(date, "MMMM d, yyyy")
 
   return (
     <div className="custom-day-view">
-      {/* Shared Toolbar */}
       <CustomViewToolbar
         label={dateLabel}
         onNavigate={onNavigate}
@@ -145,7 +129,6 @@ export function CustomDayView({
         labelMinWidth="200px"
       />
 
-      {/* Time Grid */}
       <div className="day-view-grid">
         {timeSlots.map((slot, index) => {
           const slotHeight = getSlotHeight(slot.events.length)
@@ -157,7 +140,6 @@ export function CustomDayView({
               className="time-slot-row"
               style={{ minHeight: `${slotHeight}px` }}
             >
-              {/* Time Label */}
               <div className="time-label">
                 {isHourMark && (
                   <span className="text-sm text-slate-400 font-medium">
@@ -166,12 +148,9 @@ export function CustomDayView({
                 )}
               </div>
 
-              {/* Events Column */}
               <div className="events-column">
-                {/* Horizontal line */}
                 <div className="time-line" />
 
-                {/* Stacked Events */}
                 {slot.events.length > 0 && (
                   <div className="events-stack">
                     {slot.events.map((event) => (
@@ -189,15 +168,29 @@ export function CustomDayView({
                             {event.classInfo.name}
                           </div>
                           <div className="event-title">{event.title}</div>
-                          {event.assignment.status && (
-                            <div className="event-status">
-                              {event.assignment.status === "submitted" &&
-                                "✓ Submitted"}
-                              {event.assignment.status === "pending" &&
-                                "⏳ Pending"}
-                              {event.assignment.status === "late" && "⚠ Late"}
-                              {event.assignment.status === "not-started" &&
-                                "○ Not Started"}
+
+                          {event.assignment.status === "submitted" && (
+                            <div className="event-status flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 shrink-0" />
+                              <span>Submitted</span>
+                            </div>
+                          )}
+                          {event.assignment.status === "pending" && (
+                            <div className="event-status flex items-center gap-1">
+                              <Clock3 className="w-3 h-3 shrink-0" />
+                              <span>Pending</span>
+                            </div>
+                          )}
+                          {event.assignment.status === "late" && (
+                            <div className="event-status flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 shrink-0" />
+                              <span>Late</span>
+                            </div>
+                          )}
+                          {event.assignment.status === "not-started" && (
+                            <div className="event-status flex items-center gap-1">
+                              <Circle className="w-3 h-3 shrink-0" />
+                              <span>Not Started</span>
                             </div>
                           )}
                         </div>

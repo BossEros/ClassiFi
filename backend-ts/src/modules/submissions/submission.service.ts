@@ -20,6 +20,7 @@ import {
   type ProgrammingLanguage,
 } from "@/shared/constants.js"
 import {
+  BadRequestError,
   AssignmentNotFoundError,
   AssignmentInactiveError,
   DeadlinePassedError,
@@ -34,8 +35,13 @@ import {
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import type { NotificationService } from "@/modules/notifications/notification.service.js"
+import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
+import { settings } from "@/shared/config.js"
 
 const logger = createLogger("SubmissionService")
+const MAX_TEACHER_NAME_LENGTH = 100
+const MAX_FEEDBACK_LENGTH = 5000
 
 /**
  * Business logic for submission-related operations.
@@ -58,6 +64,10 @@ export class SubmissionService {
     private codeTestService: CodeTestService,
     @inject(DI_TOKENS.services.latePenalty)
     private latePenaltyService: LatePenaltyService,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
+    @inject(DI_TOKENS.services.plagiarismAutoAnalysis)
+    private plagiarismAutoAnalysisService: PlagiarismAutoAnalysisService,
   ) {}
 
   /**
@@ -116,6 +126,7 @@ export class SubmissionService {
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
       submission.id,
     )
+    await this.triggerAutomaticSimilarityAnalysis(assignmentId)
 
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
@@ -256,6 +267,92 @@ export class SubmissionService {
       3600,
       { download: submission.fileName },
     )
+  }
+
+  /**
+   * Save teacher feedback on a submission, notifying the student via IN_APP and EMAIL.
+   * If feedback already exists it is overwritten (one feedback per submission).
+   *
+   * @param submissionId - The submission to attach feedback to.
+   * @param teacherName - Full name of the teacher for the notification message.
+   * @param feedback - The feedback text.
+   * @returns The updated submission DTO.
+   */
+  async saveTeacherFeedback(
+    submissionId: number,
+    teacherName: string,
+    feedback: string,
+  ): Promise<SubmissionDTO> {
+    const submission = await this.submissionRepo.getSubmissionById(submissionId)
+
+    if (!submission) {
+      throw new SubmissionNotFoundError(submissionId)
+    }
+
+    const assignment = await this.assignmentRepo.getAssignmentById(
+      submission.assignmentId,
+    )
+
+    if (!assignment) {
+      throw new AssignmentNotFoundError(submission.assignmentId)
+    }
+
+    const normalizedTeacherName = teacherName.trim()
+    const normalizedFeedback = feedback.trim()
+
+    if (normalizedTeacherName.length === 0) {
+      throw new BadRequestError("Teacher name cannot be empty")
+    }
+
+    if (normalizedTeacherName.length > MAX_TEACHER_NAME_LENGTH) {
+      throw new BadRequestError(
+        `Teacher name cannot exceed ${MAX_TEACHER_NAME_LENGTH} characters`,
+      )
+    }
+
+    if (normalizedFeedback.length === 0) {
+      throw new BadRequestError("Feedback cannot be empty")
+    }
+
+    if (normalizedFeedback.length > MAX_FEEDBACK_LENGTH) {
+      throw new BadRequestError(
+        `Feedback cannot exceed ${MAX_FEEDBACK_LENGTH} characters`,
+      )
+    }
+
+    const updated = await this.submissionRepo.saveTeacherFeedback(
+      submissionId,
+      normalizedFeedback,
+    )
+
+    if (!updated) {
+      throw new SubmissionNotFoundError(submissionId)
+    }
+
+    const submissionUrl = `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`
+
+    void Promise.resolve(
+      this.notificationService.createNotification(
+        submission.studentId,
+        "SUBMISSION_FEEDBACK_GIVEN",
+        {
+          submissionId,
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          teacherName: normalizedTeacherName,
+          submissionUrl,
+        },
+      ),
+    )
+      .catch((error) => {
+        logger.error("Failed to send submission feedback notification", {
+          submissionId,
+          studentId: submission.studentId,
+          error,
+        })
+      })
+
+    return toSubmissionDTO(updated)
   }
 
   /**
@@ -490,6 +587,24 @@ export class SubmissionService {
           err,
         )
       }
+    }
+  }
+
+  /**
+   * Schedules non-blocking automatic similarity analysis after a successful submission.
+   */
+  private async triggerAutomaticSimilarityAnalysis(
+    assignmentId: number,
+  ): Promise<void> {
+    try {
+      await this.plagiarismAutoAnalysisService.scheduleFromSubmission(
+        assignmentId,
+      )
+    } catch (error) {
+      logger.error("Failed to schedule automatic similarity analysis", {
+        assignmentId,
+        error,
+      })
     }
   }
 }

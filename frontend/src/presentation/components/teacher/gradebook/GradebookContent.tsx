@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Download, BarChart3, RefreshCw } from "lucide-react"
 import {
   Card,
@@ -7,26 +6,15 @@ import {
 } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { GradebookTable } from "@/presentation/components/teacher/gradebook/GradebookTable"
-import { GradeOverrideModal } from "@/presentation/components/teacher/gradebook/GradeOverrideModal"
 import {
   useClassGradebook,
-  useGradeOverride,
   useGradebookExport,
 } from "@/presentation/hooks/teacher/useGradebook"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { GradeEntry, GradebookStudent } from "@/shared/types/gradebook"
 
 interface GradebookContentProps {
   classId: number
   classCode?: string
-}
-
-interface OverrideTarget {
-  submissionId: number
-  studentName: string
-  assignmentName: string
-  currentGrade: number | null
-  totalScore: number
 }
 
 /**
@@ -37,10 +25,6 @@ export function GradebookContent({
   classCode,
 }: GradebookContentProps) {
   const showToast = useToastStore((state) => state.showToast)
-  const [overrideTarget, setOverrideTarget] = useState<OverrideTarget | null>(
-    null,
-  )
-  const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false)
 
   const {
     gradebook,
@@ -49,55 +33,7 @@ export function GradebookContent({
     refetch,
   } = useClassGradebook(classId)
 
-  const { override, removeOverride, isOverriding } = useGradeOverride(() => {
-    refetch()
-    setIsOverrideModalOpen(false)
-    setOverrideTarget(null)
-    showToast("Grade updated successfully")
-  })
-
   const { exportCSV, isExporting } = useGradebookExport()
-
-  const handleGradeClick = (
-    student: GradebookStudent,
-    grade: GradeEntry,
-    assignmentName: string,
-    totalScore: number,
-  ) => {
-    if (!grade.submissionId) return
-
-    setOverrideTarget({
-      submissionId: grade.submissionId,
-      studentName: student.name,
-      assignmentName,
-      currentGrade: grade.grade,
-      totalScore,
-    })
-    setIsOverrideModalOpen(true)
-  }
-
-  const handleOverrideSubmit = async (
-    newGrade: number,
-    feedback: string | null,
-  ) => {
-    if (!overrideTarget) return
-
-    try {
-      await override(overrideTarget.submissionId, newGrade, feedback)
-    } catch {
-      showToast("Failed to update grade", "error")
-    }
-  }
-
-  const handleRemoveOverride = async () => {
-    if (!overrideTarget) return
-
-    try {
-      await removeOverride(overrideTarget.submissionId)
-    } catch {
-      showToast("Failed to remove override", "error")
-    }
-  }
 
   const handleExport = async () => {
     try {
@@ -126,7 +62,9 @@ export function GradebookContent({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
             <BarChart3 className="w-8 h-8 text-red-400" />
           </div>
-          <p className="text-gray-300 font-medium mb-2">Error Loading Gradebook</p>
+          <p className="text-gray-300 font-medium mb-2">
+            Error Loading Gradebook
+          </p>
           <p className="text-sm text-gray-500 mb-4">{gradebookError}</p>
           <Button onClick={refetch} className="w-auto">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -171,16 +109,13 @@ export function GradebookContent({
       <Card>
         <CardHeader>
           <h2 className="text-lg font-semibold text-white">Student Grades</h2>
-          <p className="text-sm text-gray-400">
-            Click on a grade to override it manually
-          </p>
+          <p className="text-sm text-gray-400">Read-only grade overview</p>
         </CardHeader>
         <CardContent className="p-0">
           {gradebook && gradebook.students.length > 0 ? (
             <GradebookTable
               assignments={gradebook.assignments}
               students={gradebook.students}
-              onGradeClick={handleGradeClick}
             />
           ) : (
             <div className="py-12 text-center">
@@ -189,23 +124,6 @@ export function GradebookContent({
           )}
         </CardContent>
       </Card>
-
-      {overrideTarget && (
-        <GradeOverrideModal
-          isOpen={isOverrideModalOpen}
-          onClose={() => {
-            setIsOverrideModalOpen(false)
-            setOverrideTarget(null)
-          }}
-          onSubmit={handleOverrideSubmit}
-          onRemoveOverride={handleRemoveOverride}
-          isSubmitting={isOverriding}
-          studentName={overrideTarget.studentName}
-          assignmentName={overrideTarget.assignmentName}
-          currentGrade={overrideTarget.currentGrade}
-          totalScore={overrideTarget.totalScore}
-        />
-      )}
     </>
   )
 }

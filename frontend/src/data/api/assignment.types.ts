@@ -149,6 +149,11 @@ export interface SubmissionDTO {
   submittedAt: string | Date
   isLatest: boolean
   grade?: number | null
+  isGradeOverridden?: boolean
+  overrideReason?: string | null
+  overriddenAt?: string | Date | null
+  teacherFeedback?: string | null
+  feedbackGivenAt?: string | Date | null
   assignmentName?: string
   studentName?: string
 }

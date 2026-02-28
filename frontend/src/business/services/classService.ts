@@ -128,14 +128,20 @@ export async function getClassById(
  * Fetches all assignments created within a specific class.
  *
  * @param classId - The unique identifier of the class.
+ * @param studentId - Optional student ID to include student-specific submission fields.
  * @returns An array of assignment objects.
  */
 export async function getClassAssignments(
   classId: number,
+  studentId?: number,
 ): Promise<Assignment[]> {
   validateId(classId, "class")
 
-  return await classRepository.getAllAssignmentsForClassId(classId)
+  if (studentId !== undefined) {
+    validateId(studentId, "student")
+  }
+
+  return await classRepository.getAllAssignmentsForClassId(classId, studentId)
 }
 
 /**
@@ -173,18 +179,24 @@ export async function getClassStudents(
  *
  * @param classId - The unique identifier of the class.
  * @param teacherId - Optional teacher ID for authorization.
+ * @param studentId - Optional student ID to fetch student-specific assignment submission state.
  * @returns An aggregated object containing all class details.
  */
 export async function getClassDetailData(
   classId: number,
   teacherId?: number,
+  studentId?: number,
 ): Promise<ClassDetailData> {
   validateId(classId, "class")
+
+  if (studentId !== undefined) {
+    validateId(studentId, "student")
+  }
 
   // Fetch all data in parallel for better performance
   const [classInfo, assignments, students] = await Promise.all([
     classRepository.getClassDetailsById(classId, teacherId),
-    classRepository.getAllAssignmentsForClassId(classId),
+    classRepository.getAllAssignmentsForClassId(classId, studentId),
     classRepository.getAllEnrolledStudentsForClassId(classId),
   ])
 

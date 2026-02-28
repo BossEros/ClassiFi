@@ -277,6 +277,24 @@ export async function sendReminderToNonSubmitters(
 }
 
 /**
+ * Saves teacher feedback for a submission.
+ *
+ * @param submissionId - The submission ID
+ * @param feedback - The feedback content
+ * @returns API response with the updated submission
+ */
+export async function saveSubmissionFeedback(
+  submissionId: number,
+  feedback: string,
+): Promise<
+  ApiResponse<{ success: boolean; message: string; data: SubmissionDTO }>
+> {
+  return await apiClient.patch(`/submissions/${submissionId}/feedback`, {
+    feedback,
+  })
+}
+
+/**
  * Uploads an assignment instructions image to Supabase Storage and returns its public URL.
  */
 export async function uploadAssignmentInstructionsImage(

@@ -256,7 +256,7 @@ export class GradebookService {
     return {
       grade: submission.grade,
       isOverridden: submission.isGradeOverridden,
-      feedback: submission.overrideFeedback,
+      feedback: submission.overrideReason,
       overriddenAt: submission.overriddenAt,
       testsPassed: testSummary?.passed ?? 0,
       testsTotal: testSummary?.total ?? 0,

@@ -13,17 +13,9 @@ export function getAssignmentStatus(assignment: Assignment): AssignmentStatus {
   const deadline = assignment.deadline ? new Date(assignment.deadline) : null
   const hasSubmitted = assignment.hasSubmitted
   const hasGrade = assignment.grade !== null && assignment.grade !== undefined
-  const submittedAt = assignment.submittedAt
-    ? new Date(assignment.submittedAt)
-    : null
 
   // Not submitted and past deadline
   if (deadline && !hasSubmitted && deadline < now) {
-    return "late"
-  }
-
-  // Submitted after deadline
-  if (deadline && hasSubmitted && submittedAt && submittedAt > deadline) {
     return "late"
   }
 

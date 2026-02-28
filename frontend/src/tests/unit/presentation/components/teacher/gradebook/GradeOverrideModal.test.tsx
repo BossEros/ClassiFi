@@ -20,11 +20,13 @@ describe("GradeOverrideModal", () => {
       />,
     )
 
-    await user.type(screen.getByLabelText("New Grade (0 - 50)"), "51")
-    await user.click(screen.getByRole("button", { name: "Save Grade" }))
+    await user.type(screen.getByLabelText(/New Grade/i), "51")
+    await user.click(screen.getByRole("button", { name: "Confirm Override" }))
 
     await waitFor(() => {
-      expect(screen.getByText("Grade must be between 0 and 50")).toBeInTheDocument()
+      expect(
+        screen.getByText("Grade must be between 0 and 50"),
+      ).toBeInTheDocument()
     })
 
     expect(onSubmit).not.toHaveBeenCalled()
@@ -46,13 +48,13 @@ describe("GradeOverrideModal", () => {
       />,
     )
 
-    await user.type(screen.getByLabelText("New Grade (0 - 100)"), "89.5")
+    await user.type(screen.getByLabelText(/New Grade/i), "89.5")
     await user.type(
-      screen.getByLabelText("Feedback (optional)"),
+      screen.getByLabelText(/Feedback/i),
       "  Great progress  ",
     )
 
-    await user.click(screen.getByRole("button", { name: "Save Grade" }))
+    await user.click(screen.getByRole("button", { name: "Confirm Override" }))
 
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(89.5, "Great progress")

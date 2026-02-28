@@ -169,18 +169,27 @@ describe("ClassHeader", () => {
   })
 
   it("renders teacher actions when isTeacher is true", () => {
-    render(
-      <ClassHeader
-        {...defaultProps}
-        isTeacher={true}
-      />,
-    )
+    render(<ClassHeader {...defaultProps} isTeacher={true} />)
 
     expect(screen.queryByText("Leave Class")).not.toBeInTheDocument()
 
     // Check for edit/delete options in dropdown (simplified check since we mocked it)
     expect(screen.getByText("Edit Class")).toBeInTheDocument()
     expect(screen.getByText("Delete Class")).toBeInTheDocument()
+  })
+
+  it("renders copy class code button with explicit semantics", () => {
+    render(
+      <ClassHeader
+        {...defaultProps}
+        isTeacher={true}
+        classCode="ABC123"
+      />,
+    )
+
+    const copyButton = screen.getByLabelText("Copy class code")
+    expect(copyButton).toBeInTheDocument()
+    expect(copyButton).toHaveAttribute("type", "button")
   })
 
   it("renders student actions when isTeacher is false", () => {

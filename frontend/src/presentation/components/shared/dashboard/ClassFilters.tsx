@@ -1,9 +1,4 @@
-import {
-  Search,
-  Filter,
-  Calendar,
-  GraduationCap,
-} from "lucide-react"
+import { Search, Filter, Calendar, GraduationCap } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Select } from "@/presentation/components/ui/Select"
 

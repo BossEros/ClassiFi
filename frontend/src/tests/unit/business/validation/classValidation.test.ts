@@ -186,9 +186,13 @@ describe("classValidation", () => {
       expect(validateSchedule({ ...validSchedule, endTime: "10:0" })).toBe(
         "Invalid time format for endTime",
       )
-      expect(validateSchedule({ ...validSchedule, startTime: "10:00", endTime: "09:59" })).toBe(
-        "Schedule end time must be after start time",
-      )
+      expect(
+        validateSchedule({
+          ...validSchedule,
+          startTime: "10:00",
+          endTime: "09:59",
+        }),
+      ).toBe("Schedule end time must be after start time")
     })
   })
 
@@ -269,7 +273,9 @@ describe("classValidation", () => {
       expect(result.errors.find((e) => e.field === "classCode")).toBeDefined()
       expect(result.errors.find((e) => e.field === "yearLevel")).toBeDefined()
       expect(result.errors.find((e) => e.field === "semester")).toBeDefined()
-      expect(result.errors.find((e) => e.field === "academicYear")).toBeDefined()
+      expect(
+        result.errors.find((e) => e.field === "academicYear"),
+      ).toBeDefined()
       expect(result.errors.find((e) => e.field === "schedule")).toBeDefined()
     })
   })

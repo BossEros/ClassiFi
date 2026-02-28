@@ -79,9 +79,8 @@ export const AssignmentFilterBar: React.FC<AssignmentFilterBarProps> = (
     { id: "submitted", label: "Submitted", count: props.counts.submitted },
   ] as const
 
-  const filters: Array<{ id: AssignmentFilter; label: string; count: number }> = [
-    ...studentFilters,
-  ]
+  const filters: Array<{ id: AssignmentFilter; label: string; count: number }> =
+    [...studentFilters]
 
   return (
     <div className={`flex flex-wrap gap-3 ${className}`}>

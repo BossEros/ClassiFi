@@ -96,11 +96,23 @@ export async function getClassDetailsById(
   return apiResponse.data.class
 }
 
+/**
+ * Retrieves all assignments for a class, optionally filtered by student.
+ *
+ * @param {number} classId - The class identifier.
+ * @param {number} [studentId] - Optional student identifier to filter assignments.
+ * @returns {Promise<Assignment[]>} A promise resolving to an array of Assignment objects.
+ */
 export async function getAllAssignmentsForClassId(
   classId: number,
+  studentId?: number,
 ): Promise<Assignment[]> {
+  const assignmentApiUrl =
+    studentId !== undefined
+      ? `/classes/${classId}/assignments?studentId=${studentId}`
+      : `/classes/${classId}/assignments`
   const apiResponse = await apiClient.get<AssignmentListResponse>(
-    `/classes/${classId}/assignments`,
+    assignmentApiUrl,
   )
 
   if (apiResponse.error || !apiResponse.data?.success) {

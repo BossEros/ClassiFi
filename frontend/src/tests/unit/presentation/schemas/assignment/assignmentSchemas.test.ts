@@ -30,7 +30,9 @@ function buildValidAssignmentData() {
 
 describe("assignmentFormSchema", () => {
   it("accepts valid assignment form data", () => {
-    const parsedResult = assignmentFormSchema.safeParse(buildValidAssignmentData())
+    const parsedResult = assignmentFormSchema.safeParse(
+      buildValidAssignmentData(),
+    )
 
     expect(parsedResult.success).toBe(true)
   })

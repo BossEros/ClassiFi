@@ -84,7 +84,7 @@ export function useAssignmentDetailData({
         // Get submission history for student
         if (currentUser.role === "student") {
           // Check if the assignment has test cases
-          const hasTestCases = assignmentData.testCases && assignmentData.testCases.length > 0
+          const hasTestCases = (assignmentData?.testCases?.length ?? 0) > 0
 
           // Get submission history
           const historyResponse = await getSubmissionHistory(
@@ -132,8 +132,7 @@ export function useAssignmentDetailData({
 
           setSubmissions(allSubmissions)
 
-          const hasTestCases =
-            (assignmentData.testCases?.length ?? 0) > 0
+          const hasTestCases = (assignmentData.testCases?.length ?? 0) > 0
 
           if (!hasTestCases || allSubmissions.length === 0) {
             setSubmissionTestResults(null)
@@ -147,13 +146,11 @@ export function useAssignmentDetailData({
                 )
               : undefined) ?? allSubmissions[0]
 
-            try {
-              const teacherSubmissionTestResults = await getTestResultsForSubmission(
-                selectedSubmission.id,
-                true,
-              )
-              setSubmissionTestResults(teacherSubmissionTestResults)
-            } catch (testResultsError) {
+          try {
+            const teacherSubmissionTestResults =
+              await getTestResultsForSubmission(selectedSubmission.id, true)
+            setSubmissionTestResults(teacherSubmissionTestResults)
+          } catch (testResultsError) {
             console.error(
               "Failed to load test results for teacher-selected submission",
               testResultsError,

@@ -1,6 +1,10 @@
 import React, { useRef, useEffect } from "react"
 import * as monaco from "monaco-editor"
 import type { FileData } from "./types"
+import {
+  CLASSIFI_PLAGIARISM_DARK_THEME,
+  ensurePlagiarismMonacoDarkTheme,
+} from "./monacoDarkTheme"
 
 interface PairCodeDiffProps {
   /** Left file (original) */
@@ -19,14 +23,14 @@ interface PairCodeDiffProps {
  *
  * Shows a side-by-side diff view highlighting:
  * - Added lines (green)
- * - Removed lines (red)
+ * - Removed lines (red)  
  * - Unchanged lines (normal)
  */
 export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   leftFile,
   rightFile,
   language = "java",
-  height = 500,
+  height = 480,
 }) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
@@ -38,14 +42,18 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
     const originalModel = monaco.editor.createModel(leftFile.content, language)
     const modifiedModel = monaco.editor.createModel(rightFile.content, language)
 
+    ensurePlagiarismMonacoDarkTheme()
+
     // Create diff editor and capture it locally for cleanup
     const editor = monaco.editor.createDiffEditor(editorRef.current, {
       enableSplitViewResizing: true,
       readOnly: true,
       automaticLayout: true,
       renderLineHighlight: "none",
+      renderOverviewRuler: false,
+      renderIndicators: false,
       contextmenu: false,
-      theme: "vs-dark",
+      theme: CLASSIFI_PLAGIARISM_DARK_THEME,
       scrollBeyondLastLine: false,
       minimap: { enabled: false },
       renderSideBySide: true,
@@ -128,6 +136,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
           height: typeof height === "number" ? `${height}px` : height,
           borderRadius: "0 0 6px 6px",
           overflow: "hidden",
+          backgroundColor: "#0f172a",
         }}
       />
     </div>

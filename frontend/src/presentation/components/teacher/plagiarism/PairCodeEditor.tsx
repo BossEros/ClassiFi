@@ -2,6 +2,10 @@ import React, { useRef, useEffect, useCallback } from "react"
 import * as monaco from "monaco-editor"
 import type { FileData, MatchFragment, CodeRegion } from "./types"
 import { MATCH_COLORS } from "./types"
+import {
+  CLASSIFI_PLAGIARISM_DARK_THEME,
+  ensurePlagiarismMonacoDarkTheme,
+} from "./monacoDarkTheme"
 
 interface PairCodeEditorProps {
   /** Which side of the comparison (left or right file) */
@@ -48,7 +52,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   onFragmentSelect,
   onFragmentHover,
   language = "java",
-  height = "500px",
+  height = "480px",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -228,18 +232,14 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
     for (const sel of selections) {
       let className = "plagiarism-match"
-      let color: string = MATCH_COLORS.match
 
       if (sel.fragment === "ignored") {
         className = "plagiarism-match-ignored"
-        color = MATCH_COLORS.matchIgnored
       } else {
         if (areFragmentsEqual(sel.fragment, selectedFragment)) {
           className = "plagiarism-match-selected"
-          color = MATCH_COLORS.matchSelected
         } else if (areFragmentsEqual(sel.fragment, hoveredFragment)) {
           className = "plagiarism-match-hover"
-          color = MATCH_COLORS.matchHover
         }
       }
 
@@ -248,10 +248,6 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         options: {
           className,
           isWholeLine: sel.isWholeLine,
-          overviewRuler: {
-            color,
-            position: monaco.editor.OverviewRulerLane.Full,
-          },
         },
       })
     }
@@ -283,9 +279,12 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   useEffect(() => {
     if (!containerRef.current) return
 
+    ensurePlagiarismMonacoDarkTheme()
+
     editorRef.current = monaco.editor.create(containerRef.current, {
       value: file.content,
       language,
+      theme: CLASSIFI_PLAGIARISM_DARK_THEME,
       readOnly: true,
       automaticLayout: true,
       smoothScrolling: true,
@@ -442,6 +441,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         style={{
           flex: 1,
           minHeight: typeof height === "number" ? `${height}px` : height,
+          backgroundColor: "#0f172a",
         }}
       />
 

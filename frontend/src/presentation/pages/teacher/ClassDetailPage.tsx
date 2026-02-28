@@ -61,7 +61,8 @@ export function ClassDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ClassTab>("assignments")
-  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>("all")
+  const [assignmentFilter, setAssignmentFilter] =
+    useState<AssignmentFilter>("all")
   const [teacherAssignmentFilter, setTeacherAssignmentFilter] =
     useState<TeacherAssignmentFilter>("all")
   const [currentStudentPage, setCurrentStudentPage] = useState(1)
@@ -71,8 +72,10 @@ export function ClassDetailPage() {
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false)
 
   // Student management state
-  const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] = useState(false)
-  const [studentToRemove, setStudentToRemove] = useState<EnrolledStudent | null>(null)
+  const [isRemoveStudentModalOpen, setIsRemoveStudentModalOpen] =
+    useState(false)
+  const [studentToRemove, setStudentToRemove] =
+    useState<EnrolledStudent | null>(null)
 
   // Check if user is a teacher or student
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
@@ -145,9 +148,11 @@ export function ClassDetailPage() {
         // Only pass teacherId if user is actually a teacher
         const isTeacher =
           currentUser.role === "teacher" || currentUser.role === "admin"
+        const isStudent = currentUser.role === "student"
         const data = await getClassDetailData(
           parseInt(classId),
           isTeacher ? parseInt(currentUser.id) : undefined,
+          isStudent ? parseInt(currentUser.id) : undefined,
         )
 
         setClassInfo(data.classInfo)
@@ -285,6 +290,7 @@ export function ClassDetailPage() {
             className="mb-6"
             classNameTitle={classInfo?.className || ""}
             instructorName={classInfo?.teacherName || "Unknown"}
+            classCode={classInfo?.classCode}
             description={classInfo?.description || undefined}
             schedule={{
               days: classInfo?.schedule?.days || [],
@@ -367,8 +373,12 @@ export function ClassDetailPage() {
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
                       <BarChart3 className="w-8 h-8 text-gray-500" />
                     </div>
-                    <p className="text-gray-300 font-medium mb-1">Grades Coming Soon</p>
-                    <p className="text-sm text-gray-500">Your grades will be displayed here.</p>
+                    <p className="text-gray-300 font-medium mb-1">
+                      Grades Coming Soon
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Your grades will be displayed here.
+                    </p>
                   </div>
                 ))}
             </ClassTabs>

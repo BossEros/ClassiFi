@@ -11,9 +11,14 @@ export interface Submission {
   submissionNumber: number
   submittedAt: string
   isLatest: boolean
+  grade?: number | null
+  teacherFeedback?: string | null
+  feedbackGivenAt?: string | null
+  isGradeOverridden?: boolean
+  overrideReason?: string | null
+  overriddenAt?: string | null
   assignmentName?: string
   studentName?: string
-  grade?: number
 }
 
 export interface SubmissionWithAssignment extends Submission {

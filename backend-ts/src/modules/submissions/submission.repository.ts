@@ -14,6 +14,13 @@ export interface SubmissionWithStudent {
   studentName: string
 }
 
+/** Latest submission snapshot per assignment for automation workflows. */
+export interface AssignmentLatestSubmissionSnapshot {
+  assignmentId: number
+  latestSubmissionCount: number
+  latestSubmittedAt: Date
+}
+
 /**
  * Repository for submission-related database operations.
  */
@@ -107,8 +114,10 @@ export class SubmissionRepository extends BaseRepository<
         isLate: submissions.isLate,
         penaltyApplied: submissions.penaltyApplied,
         isGradeOverridden: submissions.isGradeOverridden,
-        overrideFeedback: submissions.overrideFeedback,
+        overrideReason: submissions.overrideReason,
         overriddenAt: submissions.overriddenAt,
+        teacherFeedback: submissions.teacherFeedback,
+        feedbackGivenAt: submissions.feedbackGivenAt,
       })
       .from(submissions)
       .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
@@ -194,9 +203,42 @@ export class SubmissionRepository extends BaseRepository<
       )
       .groupBy(submissions.assignmentId)
 
-    return new Map(
-      rows.map((row) => [row.assignmentId, Number(row.count)]),
-    )
+    return new Map(rows.map((row) => [row.assignmentId, Number(row.count)]))
+  }
+
+  /**
+   * Returns latest-submission snapshots grouped by assignment for assignments
+   * that meet the minimum latest-submission count.
+   */
+  async getLatestSubmissionSnapshots(
+    minLatestSubmissions: number,
+  ): Promise<AssignmentLatestSubmissionSnapshot[]> {
+    const rows = await this.db
+      .select({
+        assignmentId: submissions.assignmentId,
+        latestSubmissionCount: sql<number>`count(*)`,
+        latestSubmittedAt: sql<string | null>`max(${submissions.submittedAt})`,
+      })
+      .from(submissions)
+      .where(eq(submissions.isLatest, true))
+      .groupBy(submissions.assignmentId)
+      .having(sql`count(*) >= ${minLatestSubmissions}`)
+
+    const snapshots: AssignmentLatestSubmissionSnapshot[] = []
+
+    for (const row of rows) {
+      if (!row.latestSubmittedAt) {
+        continue
+      }
+
+      snapshots.push({
+        assignmentId: row.assignmentId,
+        latestSubmissionCount: Number(row.latestSubmissionCount),
+        latestSubmittedAt: new Date(row.latestSubmittedAt),
+      })
+    }
+
+    return snapshots
   }
 
   /** Create a new submission */
@@ -343,19 +385,19 @@ export class SubmissionRepository extends BaseRepository<
 
   /**
    * Set a grade override for a submission.
-   * Updates the grade, marks it as overridden, and optionally adds feedback.
+   * Updates the grade, marks it as overridden, and optionally records the reason.
    */
   async setGradeOverride(
     submissionId: number,
     grade: number,
-    feedback: string | null,
+    reason: string | null,
   ): Promise<void> {
     await this.db
       .update(submissions)
       .set({
         grade,
         isGradeOverridden: true,
-        overrideFeedback: feedback,
+        overrideReason: reason,
         overriddenAt: new Date(),
       })
       .where(eq(submissions.id, submissionId))
@@ -363,16 +405,33 @@ export class SubmissionRepository extends BaseRepository<
 
   /**
    * Remove a grade override from a submission.
-   * Clears the override flag and feedback. The grade should be recalculated separately.
+   * Clears the override flag and reason. The grade should be recalculated separately.
    */
   async removeGradeOverride(submissionId: number): Promise<void> {
     await this.db
       .update(submissions)
       .set({
         isGradeOverridden: false,
-        overrideFeedback: null,
+        overrideReason: null,
         overriddenAt: null,
       })
       .where(eq(submissions.id, submissionId))
+  }
+
+  /**
+   * Save (upsert) teacher feedback on a submission.
+   * Creates the feedback if none exists, or replaces it if it does.
+   * Sets feedbackGivenAt to now on every save.
+   */
+  async saveTeacherFeedback(
+    submissionId: number,
+    feedback: string,
+  ): Promise<Submission | undefined> {
+    await this.db
+      .update(submissions)
+      .set({ teacherFeedback: feedback, feedbackGivenAt: new Date() })
+      .where(eq(submissions.id, submissionId))
+
+    return this.findById(submissionId)
   }
 }

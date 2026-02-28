@@ -26,7 +26,8 @@ export function TablePaginationFooter({
   onPageChange,
 }: TablePaginationFooterProps) {
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
-  const endItem = totalItems === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalItems)
+  const endItem =
+    totalItems === 0 ? 0 : Math.min(currentPage * itemsPerPage, totalItems)
 
   const handlePreviousPage = () => {
     onPageChange(Math.max(currentPage - 1, 1))
@@ -72,4 +73,3 @@ export function TablePaginationFooter({
     </div>
   )
 }
-

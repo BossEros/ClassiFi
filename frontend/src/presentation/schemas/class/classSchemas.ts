@@ -169,10 +169,7 @@ export const joinClassFormSchema = z.object({
       return
     }
 
-    if (
-      normalizedClassCode.length < 6 ||
-      normalizedClassCode.length > 8
-    ) {
+    if (normalizedClassCode.length < 6 || normalizedClassCode.length > 8) {
       context.addIssue({
         code: "custom",
         message: "Class code must be 6-8 characters",
@@ -198,7 +195,9 @@ export const adminClassFormSchema = z
       .superRefine((scheduleDaysValue, context) => {
         const hasInvalidDay = scheduleDaysValue.some(
           (scheduleDayValue) =>
-            !DAY_ABBREVIATIONS.includes(scheduleDayValue as (typeof DAY_ABBREVIATIONS)[number]),
+            !DAY_ABBREVIATIONS.includes(
+              scheduleDayValue as (typeof DAY_ABBREVIATIONS)[number],
+            ),
         )
 
         if (hasInvalidDay) {

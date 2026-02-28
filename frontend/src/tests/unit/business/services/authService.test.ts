@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/shared/store/useAuthStore";
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as authService from "@/business/services/authService"
 import * as authRepository from "@/data/repositories/authRepository"
@@ -52,7 +52,7 @@ describe("authService", () => {
   let mockStorage = createMockStorage()
 
   beforeEach(() => {
-    useAuthStore.setState({ user: null, isAuthenticated: false });
+    useAuthStore.setState({ user: null, isAuthenticated: false })
     vi.clearAllMocks()
     // Reset the mock storage object each test
     mockStorage = createMockStorage()
@@ -454,7 +454,9 @@ describe("authService", () => {
 
       expect(result.success).toBe(false)
       expect(result.message).toBe("Password must be at least 8 characters long")
-      expect(authRepository.resetUserPasswordWithNewValue).not.toHaveBeenCalled()
+      expect(
+        authRepository.resetUserPasswordWithNewValue,
+      ).not.toHaveBeenCalled()
     })
 
     it("should handle invalid link/session error from repository", async () => {
@@ -638,7 +640,9 @@ describe("authService", () => {
       expect(result.message).toBe(
         "Password must contain at least one uppercase letter",
       )
-      expect(authRepository.changeAuthenticatedUserPassword).not.toHaveBeenCalled()
+      expect(
+        authRepository.changeAuthenticatedUserPassword,
+      ).not.toHaveBeenCalled()
     })
 
     it("should return mismatch error when passwords differ", async () => {
@@ -650,7 +654,9 @@ describe("authService", () => {
 
       expect(result.success).toBe(false)
       expect(result.message).toBe("Passwords do not match")
-      expect(authRepository.changeAuthenticatedUserPassword).not.toHaveBeenCalled()
+      expect(
+        authRepository.changeAuthenticatedUserPassword,
+      ).not.toHaveBeenCalled()
     })
 
     it("should return current-password error when sign in verification fails", async () => {
@@ -715,9 +721,9 @@ describe("authService", () => {
 
     it("should return fallback message for non-error throwables", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
-      vi.mocked(authRepository.changeAuthenticatedUserPassword).mockRejectedValue(
-        "unexpected",
-      )
+      vi.mocked(
+        authRepository.changeAuthenticatedUserPassword,
+      ).mockRejectedValue("unexpected")
 
       const result = await authService.changePassword(request)
 
@@ -737,14 +743,16 @@ describe("authService", () => {
       const result = await authService.changePassword(request)
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Failed to change password. Please try again.")
+      expect(result.message).toBe(
+        "Failed to change password. Please try again.",
+      )
     })
 
     it("should return thrown error message for Error instances", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
-      vi.mocked(authRepository.changeAuthenticatedUserPassword).mockRejectedValue(
-        new Error("Change password unavailable"),
-      )
+      vi.mocked(
+        authRepository.changeAuthenticatedUserPassword,
+      ).mockRejectedValue(new Error("Change password unavailable"))
 
       const result = await authService.changePassword(request)
 
@@ -795,7 +803,9 @@ describe("authService", () => {
 
       expect(result.success).toBe(false)
       expect(result.message).toBe("Password is required to delete your account")
-      expect(authRepository.deleteUserAccountWithVerification).not.toHaveBeenCalled()
+      expect(
+        authRepository.deleteUserAccountWithVerification,
+      ).not.toHaveBeenCalled()
     })
 
     it("should reject deletion when user is not logged in", async () => {
@@ -804,8 +814,12 @@ describe("authService", () => {
       const result = await authService.deleteAccount(request)
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("You must be logged in to delete your account")
-      expect(authRepository.deleteUserAccountWithVerification).not.toHaveBeenCalled()
+      expect(result.message).toBe(
+        "You must be logged in to delete your account",
+      )
+      expect(
+        authRepository.deleteUserAccountWithVerification,
+      ).not.toHaveBeenCalled()
     })
 
     it("should return password error when account verification fails", async () => {
@@ -841,9 +855,9 @@ describe("authService", () => {
 
     it("should return fallback message for non-error throwables", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
-      vi.mocked(authRepository.deleteUserAccountWithVerification).mockRejectedValue(
-        "unexpected",
-      )
+      vi.mocked(
+        authRepository.deleteUserAccountWithVerification,
+      ).mockRejectedValue("unexpected")
 
       const result = await authService.deleteAccount(request)
 
@@ -853,9 +867,9 @@ describe("authService", () => {
 
     it("should return thrown error message for Error instances", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
-      vi.mocked(authRepository.deleteUserAccountWithVerification).mockRejectedValue(
-        new Error("Deletion unavailable"),
-      )
+      vi.mocked(
+        authRepository.deleteUserAccountWithVerification,
+      ).mockRejectedValue(new Error("Deletion unavailable"))
 
       const result = await authService.deleteAccount(request)
 
@@ -870,9 +884,9 @@ describe("authService", () => {
         success: true,
         message: "Reset session ready",
       }
-      vi.mocked(authRepository.initializePasswordResetFlowFromUrl).mockResolvedValue(
-        resetFlowResponse,
-      )
+      vi.mocked(
+        authRepository.initializePasswordResetFlowFromUrl,
+      ).mockResolvedValue(resetFlowResponse)
 
       const result = await authService.initializeResetFlow()
 
@@ -880,9 +894,9 @@ describe("authService", () => {
     })
 
     it("should return fallback message for non-error throwables", async () => {
-      vi.mocked(authRepository.initializePasswordResetFlowFromUrl).mockRejectedValue(
-        "unexpected",
-      )
+      vi.mocked(
+        authRepository.initializePasswordResetFlowFromUrl,
+      ).mockRejectedValue("unexpected")
 
       const result = await authService.initializeResetFlow()
 
@@ -891,9 +905,9 @@ describe("authService", () => {
     })
 
     it("should return thrown error message for Error instances", async () => {
-      vi.mocked(authRepository.initializePasswordResetFlowFromUrl).mockRejectedValue(
-        new Error("Reset flow init failed"),
-      )
+      vi.mocked(
+        authRepository.initializePasswordResetFlowFromUrl,
+      ).mockRejectedValue(new Error("Reset flow init failed"))
 
       const result = await authService.initializeResetFlow()
 

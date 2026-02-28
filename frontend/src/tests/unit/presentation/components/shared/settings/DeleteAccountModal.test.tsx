@@ -8,9 +8,8 @@ const mockNavigate = vi.fn()
 
 vi.mock("@/business/services/authService")
 vi.mock("react-router-dom", async () => {
-  const actual = await vi.importActual<typeof import("react-router-dom")>(
-    "react-router-dom",
-  )
+  const actual =
+    await vi.importActual<typeof import("react-router-dom")>("react-router-dom")
 
   return {
     ...actual,
@@ -29,9 +28,14 @@ describe("DeleteAccountModal", () => {
     render(<DeleteAccountModal isOpen={true} onClose={vi.fn()} />)
 
     await user.click(screen.getByRole("button", { name: "Continue" }))
-    await user.type(screen.getByPlaceholderText("Enter your password"), "Pass1!")
+    await user.type(
+      screen.getByPlaceholderText("Enter your password"),
+      "Pass1!",
+    )
 
-    const deleteButton = screen.getByRole("button", { name: "Delete My Account" })
+    const deleteButton = screen.getByRole("button", {
+      name: "Delete My Account",
+    })
     const formElement = deleteButton.closest("form")
 
     expect(formElement).not.toBeNull()
@@ -46,44 +50,42 @@ describe("DeleteAccountModal", () => {
     expect(authService.deleteAccount).not.toHaveBeenCalled()
   })
 
-  it(
-    "submits valid values, shows success state, and redirects",
-    async () => {
-      const user = userEvent.setup()
+  it("submits valid values, shows success state, and redirects", async () => {
+    const user = userEvent.setup()
 
-      vi.mocked(authService.deleteAccount).mockResolvedValue({
-        success: true,
-        message: "Your account has been permanently deleted.",
+    vi.mocked(authService.deleteAccount).mockResolvedValue({
+      success: true,
+      message: "Your account has been permanently deleted.",
+    })
+
+    render(<DeleteAccountModal isOpen={true} onClose={vi.fn()} />)
+
+    await user.click(screen.getByRole("button", { name: "Continue" }))
+    await user.type(
+      screen.getByPlaceholderText("Enter your password"),
+      "Pass1!Word",
+    )
+    await user.type(screen.getByPlaceholderText("DELETE"), "delete")
+    await user.click(screen.getByRole("button", { name: "Delete My Account" }))
+
+    await waitFor(() => {
+      expect(authService.deleteAccount).toHaveBeenCalledWith({
+        password: "Pass1!Word",
+        confirmation: "DELETE",
       })
+    })
 
-      render(<DeleteAccountModal isOpen={true} onClose={vi.fn()} />)
-
-      await user.click(screen.getByRole("button", { name: "Continue" }))
-      await user.type(
-        screen.getByPlaceholderText("Enter your password"),
-        "Pass1!Word",
-      )
-      await user.type(screen.getByPlaceholderText("DELETE"), "delete")
-      await user.click(screen.getByRole("button", { name: "Delete My Account" }))
-
-      await waitFor(() => {
-        expect(authService.deleteAccount).toHaveBeenCalledWith({
-          password: "Pass1!Word",
-          confirmation: "DELETE",
-        })
-      })
-
+    await waitFor(() => {
       expect(screen.getByText("Account Deleted")).toBeInTheDocument()
+    })
 
-      await waitFor(
-        () => {
-          expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true })
-        },
-        { timeout: 4500 },
-      )
-    },
-    10000,
-  )
+    await waitFor(
+      () => {
+        expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true })
+      },
+      { timeout: 4500 },
+    )
+  }, 10000)
 
   it("shows service error message when deletion fails", async () => {
     const user = userEvent.setup()

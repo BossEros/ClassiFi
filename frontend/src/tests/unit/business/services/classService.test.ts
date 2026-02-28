@@ -232,6 +232,21 @@ describe("classService", () => {
 
       expect(classRepository.getAllAssignmentsForClassId).toHaveBeenCalledWith(
         1,
+        undefined,
+      )
+      expect(result).toHaveLength(1)
+    })
+
+    it("passes studentId when provided", async () => {
+      vi.mocked(classRepository.getAllAssignmentsForClassId).mockResolvedValue([
+        mockAssignment,
+      ])
+
+      const result = await classService.getClassAssignments(1, 7)
+
+      expect(classRepository.getAllAssignmentsForClassId).toHaveBeenCalledWith(
+        1,
+        7,
       )
       expect(result).toHaveLength(1)
     })
@@ -298,11 +313,45 @@ describe("classService", () => {
       expect(result.assignments).toHaveLength(1)
       expect(result.students).toHaveLength(1)
       expect(result.students[0].fullName).toBe("John Doe")
+      expect(classRepository.getClassDetailsById).toHaveBeenCalledWith(
+        1,
+        undefined,
+      )
+      expect(classRepository.getAllAssignmentsForClassId).toHaveBeenCalledWith(
+        1,
+        undefined,
+      )
+    })
+
+    it("passes studentId to assignment query when provided", async () => {
+      vi.mocked(classRepository.getClassDetailsById).mockResolvedValue(
+        mockClass,
+      )
+      vi.mocked(classRepository.getAllAssignmentsForClassId).mockResolvedValue([
+        mockAssignment,
+      ])
+      vi.mocked(
+        classRepository.getAllEnrolledStudentsForClassId,
+      ).mockResolvedValue([mockStudent])
+
+      const result = await classService.getClassDetailData(1, undefined, 7)
+
+      expect(classRepository.getAllAssignmentsForClassId).toHaveBeenCalledWith(
+        1,
+        7,
+      )
+      expect(result.assignments).toHaveLength(1)
     })
 
     it("throws error for invalid class ID", async () => {
       await expect(classService.getClassDetailData(0)).rejects.toThrow(
         "Invalid class ID",
+      )
+    })
+
+    it("throws error for invalid student ID", async () => {
+      await expect(classService.getClassDetailData(1, undefined, 0)).rejects.toThrow(
+        "Invalid student ID",
       )
     })
   })

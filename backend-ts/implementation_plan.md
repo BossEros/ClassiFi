@@ -1,38 +1,67 @@
-# Implementation Plan: Shared Layer Decomposition
+# Implementation Plan: Automatic Similarity Analysis (No New Tables)
 
 ## Goal
-Reduce mixed concerns in `src/shared` by colocating feature-specific mappers/guards/helpers inside their owning modules while keeping true infrastructure concerns in `src/shared`.
+Automatically trigger assignment similarity analysis after successful student submissions without introducing a queue table or other schema changes.
 
-## Scope
-- Replace `src/shared/mappers.ts` with module-local mapper files:
-  - `src/modules/users/user.mapper.ts`
-  - `src/modules/classes/class.mapper.ts`
-  - `src/modules/assignments/assignment.mapper.ts`
-  - `src/modules/submissions/submission.mapper.ts`
-  - `src/modules/dashboard/dashboard.mapper.ts`
-  - `src/modules/plagiarism/plagiarism.mapper.ts`
-  - `src/modules/gradebook/gradebook.mapper.ts`
-- Replace `src/shared/guards.ts` with:
-  - `src/modules/classes/class.guard.ts`
-  - `src/modules/notifications/notification.guard.ts`
-- Move feature helpers out of `src/shared/utils.ts`:
-  - `generateUniqueClassCode` -> `src/modules/classes/class-code.util.ts`
-  - `formatAssignmentDueDate` -> `src/modules/assignments/assignment-deadline.util.ts`
-- Update all import sites in source and tests.
-- Keep infrastructure files in `src/shared` unchanged (`config`, `database`, `logger`, `container`, `di/tokens`, `transaction`, `supabase`, etc.).
+## Constraints
+- Keep existing Controller-Service-Repository architecture.
+- Reuse existing plagiarism analysis and report reuse logic.
+- No new database tables or migrations.
+- Submission flow must remain successful even when scheduling/analysis fails.
 
-## Non-Goals
-- No business logic or API behavior changes.
-- No DI token key renames.
-- No database schema changes.
+## Approach
+1. Add an in-memory automation service in the plagiarism module:
+- debounced scheduling per assignment on submission events
+- single in-progress guard with one pending rerun flag
+- periodic reconciliation cycle that checks existing submissions/reports
 
-## Steps
-1. Create module-local mapper, guard, and helper files.
-2. Update imports in services/controllers/repositories/tests.
-3. Delete obsolete shared files (`mappers.ts`, `guards.ts`).
-4. Update architecture documentation for the new boundary.
-5. Run backend verification (`npm run typecheck`, `npm test`) and fix regressions.
+2. Integrate scheduling from `SubmissionService` after successful submission creation and grading flow.
+
+3. Reuse existing data sources only:
+- `submissions` (latest submissions)
+- `similarity_reports` (latest report freshness)
+
+4. Start/stop automation lifecycle from `buildApp` and Fastify `onClose`.
+
+## Implementation Steps
+1. Extend config with automation flags (enabled, debounce, reconciliation interval, min submissions).
+2. Add submission repository helper for latest submission snapshots by assignment.
+3. Implement `PlagiarismAutoAnalysisService` under `src/modules/plagiarism`.
+4. Register new service in DI tokens and container.
+5. Wire service startup/shutdown in `src/app.ts`.
+6. Invoke scheduler from `SubmissionService.submitAssignment` with fail-safe error handling.
+7. Add/adjust service unit tests.
+8. Update backend documentation with automated similarity behavior and config.
+9. Verify with `npm run typecheck` and `npm test`.
 
 ## Risks and Mitigation
-- Risk: missing import rewires after file split.
-- Mitigation: run grep checks for stale paths and execute full typecheck + test suite.
+- Risk: in-memory timers are lost on restart.
+- Mitigation: reconciliation cycle catches stale/missing reports and re-triggers analysis.
+
+- Risk: duplicate runs when submissions are frequent.
+- Mitigation: per-assignment debounce + in-progress coalescing with single rerun flag.
+
+- Risk: slower submission if analysis is in critical path.
+- Mitigation: scheduling only, analysis remains asynchronous and non-blocking for submit response.
+
+---
+
+# Implementation Plan: Decouple Feedback Save From Notification Delivery
+
+## Goal
+Ensure `saveTeacherFeedback` returns success once feedback persistence succeeds, even if downstream notification delivery fails.
+
+## Constraints
+- Keep Controller-Service-Repository boundaries intact.
+- Preserve existing notification payload content.
+- Match resilience behavior already used by grade override flow.
+
+## Approach
+1. Keep feedback write as the critical path (`submissionRepo.saveTeacherFeedback`).
+2. Send feedback notification as best-effort async work.
+3. Catch and log notification errors without rethrowing.
+4. Add service unit test to assert notification failures do not fail save.
+
+## Verification
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.

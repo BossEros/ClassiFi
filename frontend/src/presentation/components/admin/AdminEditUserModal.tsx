@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react"
-import { X, Mail, Shield, Loader2, Power, CheckCircle } from "lucide-react"
+import {
+  X,
+  Mail,
+  Shield,
+  Loader2,
+  Power,
+  CheckCircle,
+  ChevronDown,
+} from "lucide-react"
 import type { FieldErrors } from "react-hook-form"
 import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
@@ -33,13 +41,7 @@ export function AdminEditUserModal({
 }: AdminEditUserModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-  } = useZodForm({
+  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
     schema: adminEditUserFormSchema,
     defaultValues: INITIAL_EDIT_FORM_VALUES,
     mode: "onSubmit",
@@ -166,7 +168,9 @@ export function AdminEditUserModal({
       }
     } catch (submitError) {
       setError(
-        submitError instanceof Error ? submitError.message : "Failed to update user",
+        submitError instanceof Error
+          ? submitError.message
+          : "Failed to update user",
       )
     } finally {
       setIsLoading(false)
@@ -323,19 +327,7 @@ export function AdminEditUserModal({
                     </option>
                   </select>
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg
-                      className="w-4 h-4 text-gray-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
                   </div>
                 </div>
               </div>

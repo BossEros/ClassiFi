@@ -32,6 +32,7 @@ describe("Submission Controller", () => {
       getStudentSubmissions: vi.fn(),
       getSubmissionDownloadUrl: vi.fn(),
       getSubmissionContent: vi.fn(),
+      saveTeacherFeedback: vi.fn(),
     }
 
     mockCodeTestService = {
@@ -66,6 +67,7 @@ describe("Submission Controller", () => {
     mockApp = {
       post: vi.fn(),
       get: vi.fn(),
+      patch: vi.fn(),
     } as unknown as FastifyInstance
   })
 
@@ -78,6 +80,20 @@ describe("Submission Controller", () => {
 
     if (!routeCall) {
       throw new Error("Test-results route was not registered")
+    }
+
+    return (routeCall[1] as { handler: (req: FastifyRequest, rep: FastifyReply) => Promise<void> }).handler
+  }
+
+  const getFeedbackHandler = async () => {
+    await submissionRoutes(mockApp)
+
+    const routeCall = vi
+      .mocked(mockApp.patch)
+      .mock.calls.find((call) => call[0] === "/:submissionId/feedback")
+
+    if (!routeCall) {
+      throw new Error("Feedback route was not registered")
     }
 
     return (routeCall[1] as { handler: (req: FastifyRequest, rep: FastifyReply) => Promise<void> }).handler
@@ -114,5 +130,89 @@ describe("Submission Controller", () => {
     await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
     expect(mockCodeTestService.getTestResults).toHaveBeenCalledWith(10, true)
+  })
+
+  it("rejects feedback save for non-teacher/non-admin users", async () => {
+    mockRequest.user = {
+      id: 1,
+      role: "student",
+      firstName: "Student",
+      lastName: "User",
+    }
+    mockRequest.validatedBody = { feedback: "Looks good" }
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockReply.status).toHaveBeenCalledWith(403)
+    expect(mockReply.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Only teachers or admins can leave feedback.",
+    })
+    expect(mockSubmissionService.saveTeacherFeedback).not.toHaveBeenCalled()
+  })
+
+  it("returns 400 for whitespace-only feedback", async () => {
+    mockRequest.user = {
+      id: 2,
+      role: "teacher",
+      firstName: "Jane",
+      lastName: "Doe",
+    }
+    mockRequest.validatedBody = { feedback: "   \n\t  " }
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockReply.status).toHaveBeenCalledWith(400)
+    expect(mockReply.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Feedback cannot be empty.",
+    })
+    expect(mockSubmissionService.saveTeacherFeedback).not.toHaveBeenCalled()
+  })
+
+  it("trims validated feedback body before saving", async () => {
+    mockRequest.user = {
+      id: 2,
+      role: "teacher",
+      firstName: "Jane",
+      lastName: "Doe",
+    }
+    mockRequest.validatedBody = { feedback: "  Looks good  " }
+
+    vi.mocked(mockSubmissionService.saveTeacherFeedback).mockResolvedValue({
+      id: 10,
+    })
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockSubmissionService.saveTeacherFeedback).toHaveBeenCalledWith(
+      10,
+      "Jane Doe",
+      "Looks good",
+    )
+  })
+
+  it("falls back to Unknown Teacher when name fields are missing", async () => {
+    mockRequest.user = {
+      id: 2,
+      role: "teacher",
+    }
+    mockRequest.validatedBody = { feedback: "Looks good" }
+
+    vi.mocked(mockSubmissionService.saveTeacherFeedback).mockResolvedValue({
+      id: 10,
+    })
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockSubmissionService.saveTeacherFeedback).toHaveBeenCalledWith(
+      10,
+      "Unknown Teacher",
+      "Looks good",
+    )
   })
 })

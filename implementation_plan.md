@@ -720,3 +720,121 @@ Smooth the handoff from submissions to similarity results by removing the initia
 - [x] Initialize `results` and `filteredPairCount` from `location.state` in `SimilarityResultsPage`.
 - [x] Keep `useEffect` synchronization for navigation-state updates.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Teacher Submission Detail Override Action
+
+## Scope
+
+Restore the missing override-grade action in teacher submission detail view while reusing existing gradebook override UX primitives.
+
+1. Add teacher-only override action in assignment detail submission status card.
+2. Reuse existing grade override modal + hook for submit/remove flows.
+3. Ensure submission mapping carries feedback/override metadata used by detail view state updates.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Add/track task checklist entries for this fix.
+- [x] Wire override modal state/handlers into `AssignmentDetailPage`.
+- [x] Render `Override Score` action in teacher submission detail panel.
+- [x] Add remove-override path when submission is currently overridden.
+- [x] Replace local `any` callback typing with a concrete `Submission` type.
+- [x] Map submission feedback/override fields in frontend DTO mapper.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Remove Gradebook Override Capability
+
+## Scope
+
+Remove grade override interactions from the teacher gradebook UI so overrides are only done from submission detail view.
+
+1. Remove gradebook modal/hook wiring for override actions.
+2. Convert gradebook table cells to read-only grade display.
+3. Update frontend docs to reflect the new gradebook behavior.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Remove override modal state/handlers from `GradebookContent`.
+- [x] Remove `onGradeClick` plumbing from `GradebookTable`.
+- [x] Make `GradeCell` non-interactive/read-only.
+- [x] Update `frontend/documentation.md` gradebook component behavior notes.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Settings Avatar Immediate Refresh Fix
+
+## Scope
+
+Ensure profile-picture updates render immediately across the app without requiring logout/login:
+
+1. Fix avatar URL cache behavior after upload.
+2. Keep existing service/store architecture unchanged.
+3. Update affected frontend unit tests.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Return and persist a cache-busted avatar URL from `userRepository.uploadUserAvatar`.
+- [x] Keep old-avatar cleanup and backend persistence flow intact.
+- [x] Update `userRepository` tests for cache-busted URL behavior.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Frontend Icon Policy Standardization
+
+## Scope
+
+Enforce a strict frontend icon policy for consistency:
+
+1. Use `lucide-react` only for frontend UI icons.
+2. Replace inline SVG icon exceptions with Lucide equivalents.
+3. Standardize icon usage by removing ad-hoc per-instance style overrides.
+4. Add lint guardrails to prevent icon drift.
+5. Verify frontend build and lint.
+
+## Execution Checklist
+
+- [x] Replace remaining inline SVG icon usage in presentation components with Lucide icons.
+- [x] Normalize icon usage by removing inconsistent `strokeWidth` overrides.
+- [x] Add ESLint restrictions for disallowed frontend icon-library imports.
+- [x] Add ESLint restriction to block inline `<svg>` in presentation components for UI icons.
+- [x] Run `frontend`: `npm run build`.
+- [x] Run `frontend`: `npm run lint`.
+
+# Implementation Plan - Student Assignment Status Consistency Fix
+
+## Scope
+
+Fix student class-overview status inconsistencies where submitted assignments appeared as `not-started` and late-submitted work displayed as `late` instead of submitted-state labels.
+
+1. Ensure student class-detail assignment requests include `studentId` so backend returns student-specific submission fields.
+2. Adjust status precedence so submitted work is never labeled `late`.
+3. Align student filter buckets so pending = needs submission, submitted = already submitted.
+4. Verify with targeted unit tests and frontend build.
+
+## Execution Checklist
+
+- [x] Thread optional `studentId` through class repository/service assignment fetch methods.
+- [x] Pass logged-in student ID from class-detail page when viewer role is student.
+- [x] Update assignment status/filter utility logic for submitted-vs-late handling.
+- [x] Update targeted unit tests (`assignmentStatus`, `assignmentFilters`, `classRepository`, `classService`).
+- [x] Run `frontend`: targeted `vitest` suite for touched modules.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Similarity Comparison Auto-Scroll
+
+## Scope
+
+Improve teacher similarity-review usability by automatically scrolling to the code comparison panel after selecting a pair from the pairwise table.
+
+1. Add a dedicated scroll anchor for the comparison section.
+2. Trigger smooth scroll whenever a pair is selected (including repeated selections).
+3. Add a focused unit test for row-selection auto-scroll behavior.
+4. Verify with targeted tests and frontend build.
+
+## Execution Checklist
+
+- [x] Add comparison-section ref/anchor in `SimilarityResultsPage`.
+- [x] Trigger scroll on every pair-selection action.
+- [x] Add/update `SimilarityResultsPage` unit test for `scrollIntoView`.
+- [x] Run `frontend`: targeted `vitest` for updated page test.
+- [x] Run `frontend`: `npm run build`.

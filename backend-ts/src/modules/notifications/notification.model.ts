@@ -18,6 +18,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "CLASS_ANNOUNCEMENT",
   "DEADLINE_REMINDER",
   "ENROLLMENT_CONFIRMED",
+  "SUBMISSION_FEEDBACK_GIVEN",
 ])
 
 export const notificationChannelEnum = pgEnum("notification_channel", [

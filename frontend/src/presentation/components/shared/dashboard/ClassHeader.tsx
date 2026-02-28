@@ -1,7 +1,11 @@
-import React from "react"
-import { LogOut, Trash2, Edit, User, Clock } from "lucide-react"
+import React, { useState } from "react"
+import { LogOut, Trash2, Edit, User, Clock, Copy, Check } from "lucide-react"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
-import { convertToSingleLetterAbbr, formatTimeRange } from "@/presentation/constants/schedule.constants"
+import { useToastStore } from "@/shared/store/useToastStore"
+import {
+  convertToSingleLetterAbbr,
+  formatTimeRange,
+} from "@/presentation/constants/schedule.constants"
 
 import type { DayOfWeek } from "@/shared/types/class"
 
@@ -9,6 +13,7 @@ interface ClassHeaderProps {
   className?: string
   classNameTitle: string
   instructorName: string
+  classCode?: string
   description?: string
   schedule: {
     days: DayOfWeek[]
@@ -26,6 +31,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   className = "",
   classNameTitle,
   instructorName,
+  classCode,
   description,
   schedule,
   // studentCount, // Unused for now, but part of interface
@@ -34,6 +40,22 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   onDeleteClass,
   onLeaveClass,
 }) => {
+  const [hasCopied, setHasCopied] = useState(false)
+  const showToast = useToastStore((state) => state.showToast)
+
+  const handleCopyCode = async () => {
+    if (!classCode) return
+
+    try {
+      await navigator.clipboard.writeText(classCode)
+      setHasCopied(true)
+      setTimeout(() => setHasCopied(false), 2000)
+    } catch (error) {
+      console.error("Failed to copy class code:", error)
+      showToast("Failed to copy class code", "error")
+    }
+  }
+
   const dayAbbreviations = convertToSingleLetterAbbr(schedule.days)
   const daysText = dayAbbreviations.join("")
   const timeText = formatTimeRange(schedule.startTime, schedule.endTime)
@@ -46,10 +68,33 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
         {/* Left Side: Class Info */}
         <div className="flex flex-col gap-4 flex-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center flex-wrap gap-3">
             <h1 className="text-3xl font-bold text-white tracking-tight">
               {classNameTitle}
             </h1>
+            {isTeacher && classCode && (
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 md:ml-2">
+                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Class Code:
+                </span>
+                <span className="text-sm font-mono text-teal-400 font-bold tracking-wider">
+                  {classCode}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Copy class code"
+                  onClick={handleCopyCode}
+                  className="ml-1 text-slate-400 hover:text-teal-400 transition-colors p-1 rounded-md hover:bg-white/10"
+                  title="Copy Class Code"
+                >
+                  {hasCopied ? (
+                    <Check className="w-4 h-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">

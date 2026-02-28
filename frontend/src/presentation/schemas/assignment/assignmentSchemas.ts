@@ -55,7 +55,9 @@ function validateProgrammingLanguageValue(
     return "Programming language is required"
   }
 
-  if (!supportedProgrammingLanguages.has(programmingLanguageValue.toLowerCase())) {
+  if (
+    !supportedProgrammingLanguages.has(programmingLanguageValue.toLowerCase())
+  ) {
     return "Invalid programming language. Must be Python, Java, or C"
   }
 

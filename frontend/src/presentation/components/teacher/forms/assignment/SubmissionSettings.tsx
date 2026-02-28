@@ -7,9 +7,7 @@ import {
   CardTitle,
 } from "@/presentation/components/ui/Card"
 import { Input } from "@/presentation/components/ui/Input"
-import {
-  type AssignmentFormValues,
-} from "@/presentation/schemas/assignment/assignmentSchemas"
+import { type AssignmentFormValues } from "@/presentation/schemas/assignment/assignmentSchemas"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 
 interface SubmissionSettingsProps {
@@ -92,7 +90,9 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
                   type="number"
                   inputMode="numeric"
                   value={maxAttempts ?? ""}
-                  onChange={(event) => handleMaxAttemptsChange(event.target.value)}
+                  onChange={(event) =>
+                    handleMaxAttemptsChange(event.target.value)
+                  }
                   disabled={isLoading}
                   placeholder="Unlimited"
                   className={`h-10 w-full bg-[#1A2130] border-white/10 px-3 text-center text-white placeholder-gray-500 rounded-lg transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${

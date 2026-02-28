@@ -46,6 +46,31 @@ const EnvSchema = z
       .default("60")
       .transform(Number)
       .refine((v) => v > 0, "TEST_EXECUTION_TIMEOUT_SECONDS must be positive"),
+    AUTO_SIMILARITY_ENABLED: z
+      .string()
+      .default("true")
+      .transform((v) => v === "true" || v === "True"),
+    AUTO_SIMILARITY_DEBOUNCE_MS: z
+      .string()
+      .default("45000")
+      .transform(Number)
+      .refine((v) => v >= 0, "AUTO_SIMILARITY_DEBOUNCE_MS must be >= 0"),
+    AUTO_SIMILARITY_RECONCILIATION_INTERVAL_MS: z
+      .string()
+      .default("180000")
+      .transform(Number)
+      .refine(
+        (v) => v > 0,
+        "AUTO_SIMILARITY_RECONCILIATION_INTERVAL_MS must be positive",
+      ),
+    AUTO_SIMILARITY_MIN_LATEST_SUBMISSIONS: z
+      .string()
+      .default("2")
+      .transform(Number)
+      .refine(
+        (v) => Number.isInteger(v) && v >= 2,
+        "AUTO_SIMILARITY_MIN_LATEST_SUBMISSIONS must be an integer >= 2",
+      ),
 
     // Email Configuration (SendGrid - Primary)
     SENDGRID_API_KEY: z
@@ -135,6 +160,12 @@ export const settings = {
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,
+  autoSimilarityEnabled: env.AUTO_SIMILARITY_ENABLED,
+  autoSimilarityDebounceMs: env.AUTO_SIMILARITY_DEBOUNCE_MS,
+  autoSimilarityReconciliationIntervalMs:
+    env.AUTO_SIMILARITY_RECONCILIATION_INTERVAL_MS,
+  autoSimilarityMinLatestSubmissions:
+    env.AUTO_SIMILARITY_MIN_LATEST_SUBMISSIONS,
 
   // Email (SendGrid - Primary)
   sendgridApiKey: env.SENDGRID_API_KEY,

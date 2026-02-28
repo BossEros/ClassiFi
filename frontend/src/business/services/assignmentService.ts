@@ -244,3 +244,36 @@ export async function sendReminderToNonSubmitters(
 
   return response.data
 }
+
+/**
+ * Saves teacher feedback for a submission
+ *
+ * @param submissionId - ID of the submission
+ * @param feedback - Teacher's feedback
+ * @returns Updated submission
+ */
+export async function saveSubmissionFeedback(
+  submissionId: number,
+  feedback: string,
+): Promise<Submission> {
+  validateId(submissionId, "submission")
+
+  if (!feedback || feedback.trim().length === 0) {
+    throw new Error("Feedback cannot be empty")
+  }
+
+  const response = await assignmentRepository.saveSubmissionFeedback(
+    submissionId,
+    feedback.trim(),
+  )
+
+  if (response.error) {
+    throw new Error(response.error)
+  }
+
+  if (!response.data || !response.data.success || !response.data.data) {
+    throw new Error("Failed to save feedback")
+  }
+
+  return response.data.data as unknown as Submission
+}
