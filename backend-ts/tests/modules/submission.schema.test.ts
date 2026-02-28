@@ -24,6 +24,11 @@ describe("Submission Schemas", () => {
     submittedAt: "2025-01-01T00:00:00.000Z",
     isLatest: true,
     grade: 95,
+    isGradeOverridden: false,
+    overrideReason: null,
+    overriddenAt: null,
+    teacherFeedback: null,
+    feedbackGivenAt: null,
   }
 
   describe("SubmissionResponseSchema", () => {

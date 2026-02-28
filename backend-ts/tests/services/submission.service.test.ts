@@ -48,6 +48,8 @@ describe("SubmissionService", () => {
   let mockStorageService: any
   let mockCodeTestService: any
   let mockLatePenaltyService: any
+  let mockNotificationService: any
+  let mockPlagiarismAutoAnalysisService: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -107,6 +109,14 @@ describe("SubmissionService", () => {
       setAssignmentPenaltyConfig: vi.fn(),
     }
 
+    mockNotificationService = {
+      createNotification: vi.fn(),
+    }
+
+    mockPlagiarismAutoAnalysisService = {
+      scheduleFromSubmission: vi.fn(),
+    }
+
     submissionService = new SubmissionService(
       mockSubmissionRepo,
       mockAssignmentRepo,
@@ -115,6 +125,8 @@ describe("SubmissionService", () => {
       mockStorageService,
       mockCodeTestService,
       mockLatePenaltyService,
+      mockNotificationService,
+      mockPlagiarismAutoAnalysisService,
     )
   })
 
@@ -156,6 +168,32 @@ describe("SubmissionService", () => {
       expect(mockCodeTestService.runTestsForSubmission).toHaveBeenCalledWith(
         mockSubmission.id,
       )
+      expect(
+        mockPlagiarismAutoAnalysisService.scheduleFromSubmission,
+      ).toHaveBeenCalledWith(1)
+    })
+
+    it("should not fail submission when auto similarity scheduling fails", async () => {
+      const assignment = createMockAssignment({
+        id: 1,
+        isActive: true,
+        deadline: futureDeadline,
+        programmingLanguage: "python",
+        allowResubmission: true,
+      })
+      const mockSubmission = createMockSubmission({ id: 1 })
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
+      mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
+      mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission)
+      mockPlagiarismAutoAnalysisService.scheduleFromSubmission.mockRejectedValue(
+        new Error("scheduler failed"),
+      )
+
+      await expect(
+        submissionService.submitAssignment(1, 1, validFile),
+      ).resolves.toBeDefined()
     })
 
     it("should throw AssignmentNotFoundError when assignment does not exist", async () => {

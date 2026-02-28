@@ -66,6 +66,7 @@ describe("Submission Controller", () => {
     mockApp = {
       post: vi.fn(),
       get: vi.fn(),
+      patch: vi.fn(),
     } as unknown as FastifyInstance
   })
 
