@@ -31,7 +31,9 @@ describe("ResetPasswordPage", () => {
       expect(screen.getByText("Invalid Reset Link")).toBeInTheDocument()
     })
 
-    expect(screen.getByText("Invalid or expired reset link.")).toBeInTheDocument()
+    expect(
+      screen.getByText("Invalid or expired reset link."),
+    ).toBeInTheDocument()
   })
 
   it("shows schema validation errors on submit", async () => {

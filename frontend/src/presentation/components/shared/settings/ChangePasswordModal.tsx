@@ -335,7 +335,8 @@ export function ChangePasswordModal({
                     "text-white placeholder-gray-500",
                     "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
                     "transition-all duration-200",
-                    hasPasswordMismatch && "border-red-500/50 focus:ring-red-500",
+                    hasPasswordMismatch &&
+                      "border-red-500/50 focus:ring-red-500",
                   )}
                   placeholder="Confirm new password"
                   disabled={isSubmitting}

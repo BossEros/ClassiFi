@@ -11,12 +11,15 @@ export function createGradeOverrideFormSchema(totalScore: number) {
       .refine((gradeValue) => !Number.isNaN(parseGradeValue(gradeValue)), {
         message: "Please enter a valid grade",
       })
-      .refine((gradeValue) => {
-        const parsedGrade = parseGradeValue(gradeValue)
-        return parsedGrade >= 0 && parsedGrade <= totalScore
-      }, {
-        message: `Grade must be between 0 and ${totalScore}`,
-      }),
+      .refine(
+        (gradeValue) => {
+          const parsedGrade = parseGradeValue(gradeValue)
+          return parsedGrade >= 0 && parsedGrade <= totalScore
+        },
+        {
+          message: `Grade must be between 0 and ${totalScore}`,
+        },
+      ),
     feedback: z.string(),
   })
 }

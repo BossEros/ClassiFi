@@ -591,3 +591,44 @@ export function enrollmentConfirmedEmailTemplate(data: {
 
   return baseEmailTemplate(content, "#10b981")
 }
+
+/**
+ * Generates an HTML email template for submission feedback notifications.
+ *
+ * @param data - Feedback notification data
+ * @param data.assignmentTitle - The title of the assignment
+ * @param data.teacherName - The name of the teacher who left feedback
+ * @param data.submissionUrl - The URL to view the submission and feedback
+ * @returns The generated HTML email string
+ */
+export function submissionFeedbackGivenEmailTemplate(data: {
+  assignmentTitle: string
+  teacherName: string
+  submissionUrl: string
+}): string {
+  const content = `
+    <h1>💬 Your Teacher Left Feedback</h1>
+    <p><strong>${escapeHtml(data.teacherName)}</strong> has left feedback on your submission for <strong>${escapeHtml(data.assignmentTitle)}</strong>.</p>
+
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Assignment</span>
+        <span class="info-value">${escapeHtml(data.assignmentTitle)}</span>
+      </div>
+      <div class="info-card-row" style="border-bottom: none;">
+        <span class="info-label">From</span>
+        <span class="info-value">👨‍🏫 ${escapeHtml(data.teacherName)}</span>
+      </div>
+    </div>
+
+    <center>
+      <a href="${escapeHtml(data.submissionUrl)}" class="button">View Feedback</a>
+    </center>
+
+    <div class="alert alert-info">
+      <strong>💡 Tip:</strong> Feedback from your teacher can help you improve your understanding. Make sure to read it carefully and apply the suggestions in future submissions.
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#0d9488")
+}

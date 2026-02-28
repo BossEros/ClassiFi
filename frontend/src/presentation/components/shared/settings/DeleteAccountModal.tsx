@@ -34,13 +34,7 @@ export function DeleteAccountModal({
   onClose,
 }: DeleteAccountModalProps) {
   const navigate = useNavigate()
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-  } = useZodForm({
+  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
     schema: deleteAccountFormSchema,
     defaultValues: INITIAL_DELETE_ACCOUNT_VALUES,
     mode: "onSubmit",
@@ -400,4 +394,3 @@ export function DeleteAccountModal({
     </div>
   )
 }
-

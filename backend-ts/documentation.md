@@ -239,6 +239,21 @@ TEST_EXECUTION_TIMEOUT_SECONDS=90
 
 *Note: The timeout value in the error message reflects the configured `TEST_EXECUTION_TIMEOUT_SECONDS` environment variable (default: 60 seconds).*
 
+### Automatic Similarity Analysis
+
+Similarity checks can run automatically after submission without requiring a manual button press.
+This flow uses in-memory scheduling plus periodic reconciliation and does not require new database tables.
+
+- **`AUTO_SIMILARITY_ENABLED`** (default: `true`) enables/disables automation.
+- **`AUTO_SIMILARITY_DEBOUNCE_MS`** (default: `45000`) debounces repeated submissions per assignment.
+- **`AUTO_SIMILARITY_RECONCILIATION_INTERVAL_MS`** (default: `180000`) controls the safety-net scan interval.
+- **`AUTO_SIMILARITY_MIN_LATEST_SUBMISSIONS`** (default: `2`) minimum latest submissions required before analysis runs.
+
+**Behavior**:
+- Submission success is not blocked by similarity scheduling failures.
+- Rapid submission bursts for the same assignment are coalesced into one run.
+- Reconciliation re-triggers analysis if reports are stale or missing after restarts.
+
 ### Programming Language Support
 
 ClassiFi supports three programming languages for assignments and code execution:
@@ -392,6 +407,7 @@ The plagiarism API now focuses on assignment-level pairwise results for triage w
 - Detailed fragment/code inspection remains available through result-detail endpoints.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
 - The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
+- Automatic similarity scheduling runs after successful submissions (when at least two latest submissions exist) and keeps manual analyze endpoint support for explicit teacher-initiated checks.
 
 ### Notifications
 

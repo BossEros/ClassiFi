@@ -48,6 +48,8 @@ describe("SubmissionService", () => {
   let mockStorageService: any
   let mockCodeTestService: any
   let mockLatePenaltyService: any
+  let mockNotificationService: any
+  let mockPlagiarismAutoAnalysisService: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -60,6 +62,7 @@ describe("SubmissionService", () => {
       getSubmissionsWithStudentInfo: vi.fn(),
       getSubmissionsByStudent: vi.fn(),
       getSubmissionById: vi.fn(),
+      saveTeacherFeedback: vi.fn(),
       updateGrade: vi.fn(),
       delete: vi.fn(),
     }
@@ -107,6 +110,14 @@ describe("SubmissionService", () => {
       setAssignmentPenaltyConfig: vi.fn(),
     }
 
+    mockNotificationService = {
+      createNotification: vi.fn(),
+    }
+
+    mockPlagiarismAutoAnalysisService = {
+      scheduleFromSubmission: vi.fn(),
+    }
+
     submissionService = new SubmissionService(
       mockSubmissionRepo,
       mockAssignmentRepo,
@@ -115,6 +126,8 @@ describe("SubmissionService", () => {
       mockStorageService,
       mockCodeTestService,
       mockLatePenaltyService,
+      mockNotificationService,
+      mockPlagiarismAutoAnalysisService,
     )
   })
 
@@ -156,6 +169,32 @@ describe("SubmissionService", () => {
       expect(mockCodeTestService.runTestsForSubmission).toHaveBeenCalledWith(
         mockSubmission.id,
       )
+      expect(
+        mockPlagiarismAutoAnalysisService.scheduleFromSubmission,
+      ).toHaveBeenCalledWith(1)
+    })
+
+    it("should not fail submission when auto similarity scheduling fails", async () => {
+      const assignment = createMockAssignment({
+        id: 1,
+        isActive: true,
+        deadline: futureDeadline,
+        programmingLanguage: "python",
+        allowResubmission: true,
+      })
+      const mockSubmission = createMockSubmission({ id: 1 })
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
+      mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
+      mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission)
+      mockPlagiarismAutoAnalysisService.scheduleFromSubmission.mockRejectedValue(
+        new Error("scheduler failed"),
+      )
+
+      await expect(
+        submissionService.submitAssignment(1, 1, validFile),
+      ).resolves.toBeDefined()
     })
 
     it("should throw AssignmentNotFoundError when assignment does not exist", async () => {
@@ -562,6 +601,47 @@ describe("SubmissionService", () => {
         "submissions",
         "test/path",
         3600,
+      )
+    })
+  })
+
+  describe("saveTeacherFeedback", () => {
+    it("uses dashboard assignment URL for feedback notification", async () => {
+      const submission = createMockSubmission({
+        id: 5,
+        assignmentId: 10,
+        studentId: 20,
+      })
+      const assignment = createMockAssignment({
+        id: 10,
+        assignmentName: "Array Practice",
+      })
+      const updatedSubmission = createMockSubmission({
+        id: 5,
+        assignmentId: 10,
+        studentId: 20,
+        teacherFeedback: "Great work",
+      })
+
+      mockSubmissionRepo.getSubmissionById.mockResolvedValue(submission)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockSubmissionRepo.saveTeacherFeedback.mockResolvedValue(updatedSubmission)
+
+      const result = await submissionService.saveTeacherFeedback(
+        5,
+        "Teacher Name",
+        "Great work",
+      )
+
+      expect(result.id).toBe(5)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        20,
+        "SUBMISSION_FEEDBACK_GIVEN",
+        expect.objectContaining({
+          submissionUrl: expect.stringContaining(
+            "/dashboard/assignments/10",
+          ),
+        }),
       )
     })
   })

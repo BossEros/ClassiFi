@@ -39,8 +39,12 @@ export const submissions = pgTable(
 
     // Grade Override Tracking
     isGradeOverridden: boolean("is_grade_overridden").default(false).notNull(),
-    overrideFeedback: text("override_feedback"), // Teacher's feedback (nullable)
+    overrideReason: text("override_reason"), // Optional reason for grade override (nullable)
     overriddenAt: timestamp("overridden_at", { withTimezone: true }), // When override occurred
+
+    // Teacher Feedback (independent of grade override)
+    teacherFeedback: text("teacher_feedback"), // Teacher's feedback visible to student (nullable)
+    feedbackGivenAt: timestamp("feedback_given_at", { withTimezone: true }), // When feedback was last set
   },
   (table) => [
     unique("uq_assignment_student_submission").on(

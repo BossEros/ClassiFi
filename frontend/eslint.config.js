@@ -43,7 +43,34 @@ export default tseslint.config(
               message:
                 "Presentation layer must not import data-layer modules directly. Use business services/models.",
             },
+            {
+              group: [
+                "react-icons",
+                "react-icons/*",
+                "@heroicons/react",
+                "@heroicons/react/*",
+                "@mui/icons-material",
+                "@mui/icons-material/*",
+                "@tabler/icons-react",
+                "@tabler/icons-react/*",
+                "phosphor-react",
+                "@phosphor-icons/react",
+                "@fortawesome/*",
+                "react-feather",
+                "@radix-ui/react-icons",
+              ],
+              message:
+                "Use lucide-react for frontend UI icons to keep iconography consistent.",
+            },
           ],
+        },
+      ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXOpeningElement[name.name='svg']",
+          message:
+            "Use lucide-react icon components instead of inline <svg> for UI icons in presentation code.",
         },
       ],
     },

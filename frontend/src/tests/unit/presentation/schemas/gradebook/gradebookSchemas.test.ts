@@ -24,7 +24,9 @@ describe("gradebookSchemas", () => {
     expect(parseResult.success).toBe(false)
 
     if (!parseResult.success) {
-      expect(parseResult.error.issues[0]?.message).toBe("Please enter a valid grade")
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Please enter a valid grade",
+      )
     }
   })
 
@@ -39,7 +41,9 @@ describe("gradebookSchemas", () => {
     expect(parseResult.success).toBe(false)
 
     if (!parseResult.success) {
-      expect(parseResult.error.issues[0]?.message).toBe("Grade must be between 0 and 50")
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Grade must be between 0 and 50",
+      )
     }
   })
 })

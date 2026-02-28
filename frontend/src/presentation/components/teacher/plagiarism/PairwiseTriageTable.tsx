@@ -47,7 +47,10 @@ const SortIndicator: React.FC<{
   )
 }
 
-function getPairStudentNames(pair: PairResponse): { left: string; right: string } {
+function getPairStudentNames(pair: PairResponse): {
+  left: string
+  right: string
+} {
   return {
     left: pair.leftFile.studentName?.trim() || "Unknown Student",
     right: pair.rightFile.studentName?.trim() || "Unknown Student",
@@ -154,7 +157,10 @@ interface QualitativeSignalBadgeProps {
   tooltipText: string
 }
 
-function QualitativeSignalBadge({ level, tooltipText }: QualitativeSignalBadgeProps) {
+function QualitativeSignalBadge({
+  level,
+  tooltipText,
+}: QualitativeSignalBadgeProps) {
   return (
     <span
       title={tooltipText}
@@ -199,11 +205,13 @@ export function PairwiseTriageTable({
           break
         case "overlap":
           comparisonValue =
-            getNormalizedOverlapRatio(leftPair) - getNormalizedOverlapRatio(rightPair)
+            getNormalizedOverlapRatio(leftPair) -
+            getNormalizedOverlapRatio(rightPair)
           break
         case "longest":
           comparisonValue =
-            getNormalizedLongestRatio(leftPair) - getNormalizedLongestRatio(rightPair)
+            getNormalizedLongestRatio(leftPair) -
+            getNormalizedLongestRatio(rightPair)
           break
       }
 
@@ -227,7 +235,10 @@ export function PairwiseTriageTable({
     onMinimumSimilarityPercentChange(minimumSimilarityPercent)
   }, [minimumSimilarityPercent, onMinimumSimilarityPercentChange])
 
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedPairs.length / itemsPerPage))
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredAndSortedPairs.length / itemsPerPage),
+  )
 
   const effectiveCurrentPage = Math.min(currentPage, totalPages)
 
@@ -250,9 +261,12 @@ export function PairwiseTriageTable({
     <div className="space-y-8">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white mb-1">Pairwise Comparison</h2>
+          <h2 className="text-xl font-bold text-white mb-1">
+            Pairwise Comparison
+          </h2>
           <p className="text-sm text-slate-400">
-            Review high-similarity student pairs and open code comparison details.
+            Review high-similarity student pairs and open code comparison
+            details.
           </p>
         </div>
 
@@ -343,7 +357,10 @@ export function PairwiseTriageTable({
               <tbody>
                 {paginatedPairs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-slate-400">
+                    <td
+                      colSpan={5}
+                      className="px-6 py-12 text-center text-slate-400"
+                    >
                       No pairs match the current filters.
                     </td>
                   </tr>
@@ -352,8 +369,12 @@ export function PairwiseTriageTable({
                     const pairStudentNames = getPairStudentNames(pair)
                     const similarity = getPairSimilarityRatio(pair)
                     const isSelectedPair = pair.id === selectedPairId
-                    const overlapSignalLevel = getSignalLevel(getNormalizedOverlapRatio(pair))
-                    const longestSignalLevel = getSignalLevel(getNormalizedLongestRatio(pair))
+                    const overlapSignalLevel = getSignalLevel(
+                      getNormalizedOverlapRatio(pair),
+                    )
+                    const longestSignalLevel = getSignalLevel(
+                      getNormalizedLongestRatio(pair),
+                    )
 
                     return (
                       <tr

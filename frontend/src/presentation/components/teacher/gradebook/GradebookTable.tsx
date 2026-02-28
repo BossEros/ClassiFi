@@ -8,19 +8,9 @@ import { GradeCell } from "@/presentation/components/teacher/gradebook/GradeCell
 interface GradebookTableProps {
   assignments: GradebookAssignment[]
   students: GradebookStudent[]
-  onGradeClick: (
-    student: GradebookStudent,
-    grade: GradeEntry,
-    assignmentName: string,
-    totalScore: number,
-  ) => void
 }
 
-export function GradebookTable({
-  assignments,
-  students,
-  onGradeClick,
-}: GradebookTableProps) {
+export function GradebookTable({ assignments, students }: GradebookTableProps) {
   // Calculate averages for each student
   const calculateStudentAverage = (grades: GradeEntry[]) => {
     const validGrades = grades.filter((g) => g.grade !== null)
@@ -95,7 +85,10 @@ export function GradebookTable({
               >
                 <td className="sticky left-0 z-10 bg-gray-900/95 backdrop-blur-sm px-4 py-3 border-r border-white/5 w-[180px] min-w-[180px] max-w-[180px]">
                   <div>
-                    <p className="text-sm font-medium text-white truncate" title={student.name}>
+                    <p
+                      className="text-sm font-medium text-white truncate"
+                      title={student.name}
+                    >
                       {student.name}
                     </p>
                   </div>
@@ -110,16 +103,6 @@ export function GradebookTable({
                       <GradeCell
                         grade={grade ?? null}
                         totalScore={assignment.totalScore}
-                        onClick={() => {
-                          if (grade) {
-                            onGradeClick(
-                              student,
-                              grade,
-                              assignment.name,
-                              assignment.totalScore,
-                            )
-                          }
-                        }}
                       />
                     </td>
                   )
@@ -132,7 +115,7 @@ export function GradebookTable({
                       {average}%
                     </span>
                   ) : (
-                    <span className="text-gray-500 text-sm">—</span>
+                    <span className="text-gray-500 text-sm">-</span>
                   )}
                 </td>
               </tr>

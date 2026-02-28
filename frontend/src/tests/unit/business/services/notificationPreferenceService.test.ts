@@ -37,13 +37,15 @@ describe("notificationPreferenceService", () => {
   })
 
   it("gets notification preferences from repository", async () => {
-    vi.mocked(notificationPreferenceRepository.getPreferences).mockResolvedValue([
-      mockPreference,
-    ])
+    vi.mocked(
+      notificationPreferenceRepository.getPreferences,
+    ).mockResolvedValue([mockPreference])
 
     const result = await notificationPreferenceService.getPreferences()
 
-    expect(notificationPreferenceRepository.getPreferences).toHaveBeenCalledTimes(1)
+    expect(
+      notificationPreferenceRepository.getPreferences,
+    ).toHaveBeenCalledTimes(1)
     expect(result).toEqual([mockPreference])
   })
 
@@ -54,9 +56,9 @@ describe("notificationPreferenceService", () => {
       inAppEnabled: true,
     }
 
-    vi.mocked(notificationPreferenceRepository.updatePreference).mockResolvedValue(
-      updatedPreference,
-    )
+    vi.mocked(
+      notificationPreferenceRepository.updatePreference,
+    ).mockResolvedValue(updatedPreference)
 
     const result = await notificationPreferenceService.updatePreference(
       "ASSIGNMENT_CREATED",
@@ -64,7 +66,9 @@ describe("notificationPreferenceService", () => {
       true,
     )
 
-    expect(notificationPreferenceRepository.updatePreference).toHaveBeenCalledWith({
+    expect(
+      notificationPreferenceRepository.updatePreference,
+    ).toHaveBeenCalledWith({
       notificationType: "ASSIGNMENT_CREATED",
       emailEnabled: false,
       inAppEnabled: true,

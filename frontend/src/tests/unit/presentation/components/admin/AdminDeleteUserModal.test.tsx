@@ -43,7 +43,9 @@ describe("AdminDeleteUserModal", () => {
     fireEvent.submit(formElement as HTMLFormElement)
 
     await waitFor(() => {
-      expect(screen.getByText("Please type DELETE to confirm")).toBeInTheDocument()
+      expect(
+        screen.getByText("Please type DELETE to confirm"),
+      ).toBeInTheDocument()
     })
 
     expect(onConfirm).not.toHaveBeenCalled()
@@ -75,7 +77,9 @@ describe("AdminDeleteUserModal", () => {
 
   it("shows onConfirm error and keeps modal open", async () => {
     const user = userEvent.setup()
-    const onConfirm = vi.fn().mockRejectedValue(new Error("Failed to delete user"))
+    const onConfirm = vi
+      .fn()
+      .mockRejectedValue(new Error("Failed to delete user"))
     const onClose = vi.fn()
 
     render(

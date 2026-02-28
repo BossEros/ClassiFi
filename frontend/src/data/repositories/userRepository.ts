@@ -8,7 +8,7 @@ import { apiClient } from "@/data/api/apiClient"
  * @param userId - The ID of the user uploading the avatar.
  * @param file - The image file to upload.
  * @param currentAvatarUrl - Optional URL of the current avatar to delete.
- * @returns The public URL of the uploaded avatar.
+ * @returns The cache-busted public URL of the uploaded avatar.
  * @throws Error if upload fails or storage is not configured.
  */
 export async function uploadUserAvatar(
@@ -64,11 +64,12 @@ export async function uploadUserAvatar(
   const {
     data: { publicUrl },
   } = supabase.storage.from("avatars").getPublicUrl(fileName)
+  const cacheBustedAvatarUrl = appendCacheBustVersion(publicUrl)
 
   // Persist to backend database
-  await persistAvatarUrlToBackend(publicUrl)
+  await persistAvatarUrlToBackend(cacheBustedAvatarUrl)
 
-  return publicUrl
+  return cacheBustedAvatarUrl
 }
 
 /**
@@ -106,4 +107,16 @@ async function persistAvatarUrlToBackend(avatarUrl: string): Promise<void> {
     console.error("Failed to persist avatar URL to backend:", error)
     // Continue anyway - localStorage will still work
   }
+}
+
+/**
+ * Appends a cache-busting version query parameter to an avatar URL.
+ * Ensures browsers fetch the latest uploaded image immediately.
+ *
+ * @param avatarUrl - The base avatar URL from Supabase Storage.
+ * @returns The URL with a version query parameter.
+ */
+function appendCacheBustVersion(avatarUrl: string): string {
+  const querySeparator = avatarUrl.includes("?") ? "&" : "?"
+  return `${avatarUrl}${querySeparator}v=${Date.now()}`
 }

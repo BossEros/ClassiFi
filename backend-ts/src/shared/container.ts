@@ -48,6 +48,7 @@ import { AdminEnrollmentService } from "@/modules/admin/admin-enrollment.service
 import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
+import { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 // Register repositories as singletons
@@ -162,6 +163,10 @@ container.registerSingleton(
 container.registerSingleton(
   DI_TOKENS.services.plagiarismPersistence,
   PlagiarismPersistenceService,
+)
+container.registerSingleton(
+  DI_TOKENS.services.plagiarismAutoAnalysis,
+  PlagiarismAutoAnalysisService,
 )
 
 export { container }

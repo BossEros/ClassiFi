@@ -88,7 +88,10 @@ describe("AdminCreateClassModal", () => {
       "Programming 1",
     )
 
-    await user.selectOptions(screen.getByDisplayValue("Select a teacher..."), "1")
+    await user.selectOptions(
+      screen.getByDisplayValue("Select a teacher..."),
+      "1",
+    )
     await user.click(screen.getByRole("button", { name: "Mon" }))
     await user.click(screen.getByRole("button", { name: "Wed" }))
 

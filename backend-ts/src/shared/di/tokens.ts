@@ -46,5 +46,6 @@ export const DI_TOKENS = {
     plagiarismDetectorFactory: "PlagiarismDetectorFactory",
     plagiarismSubmissionFile: "PlagiarismSubmissionFileService",
     plagiarismPersistence: "PlagiarismPersistenceService",
+    plagiarismAutoAnalysis: "PlagiarismAutoAnalysisService",
   },
 } as const

@@ -51,14 +51,32 @@ export interface FilePair {
  * Colors for highlighting matches.
  */
 export const MATCH_COLORS = {
-  /** Normal match background */
-  match: "rgba(60, 115, 168, 0.2)",
-  /** Hovering over a match */
-  matchHover: "rgba(60, 115, 168, 0.3)",
-  /** Selected match */
-  matchSelected: "rgba(26, 188, 156, 0.5)",
-  /** Ignored/template code */
-  matchIgnored: "rgba(220, 220, 220, 1)",
+  /**
+   * Normal match background.
+   * A soft, highly transparent cool blue. Easy on the eyes, clearly indicates a region of interest
+   * without feeling alarming or heavy.
+   */
+  match: "rgba(56, 189, 248, 0.18)",
+
+  /**
+   * Hovering over a match.
+   * Modest opacity bump to give clear interactive feedback without jarring the eyes.
+   */
+  matchHover: "rgba(56, 189, 248, 0.22)",
+
+  /**
+   * Selected match.
+   * A stronger, solid blue to firmly anchor the user's focus on the active fragment
+   * while keeping the syntax colors beneath completely readable.
+   */
+  matchSelected: "rgba(56, 189, 248, 0.34)",
+
+  /**
+   * Ignored/template code.
+   * A very faint, nearly invisible wash. Opaque gray completely ruins syntax highlighting.
+   * This extremely faint transparency marks the area while perfectly preserving readability.
+   */
+  matchIgnored: "rgba(255, 255, 255, 0.03)",
 } as const
 
 /**

@@ -2,7 +2,11 @@ import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { SubmissionService } from "@/modules/submissions/submission.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
-import { validateParams, validateQuery } from "@/api/plugins/zod-validation.js"
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "@/api/plugins/zod-validation.js"
 import { parsePositiveInt } from "@/shared/utils.js"
 import {
   LatestOnlyQuerySchema,
@@ -20,6 +24,8 @@ import {
   SubmissionIdParamSchema,
   TestResultsQuerySchema,
   HistoryParamsSchema,
+  SaveFeedbackBodySchema,
+  type SaveFeedbackBody,
   type SubmissionIdParam,
   type HistoryParams,
   type TestResultsQuery,
@@ -311,6 +317,46 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
           clearTimeout(timeoutId)
         }
       }
+    },
+  })
+
+  /**
+   * PATCH /:submissionId/feedback
+   * Save (or update) teacher feedback on a submission.
+   * Accessible by teachers and admins only.
+   */
+  app.patch("/:submissionId/feedback", {
+    preHandler: [
+      validateParams(SubmissionIdParamSchema),
+      validateBody(SaveFeedbackBodySchema),
+    ],
+    handler: async (request, reply) => {
+      const requesterRole = request.user?.role ?? "student"
+
+      if (requesterRole !== "teacher" && requesterRole !== "admin") {
+        return reply.status(403).send({
+          success: false,
+          message: "Only teachers can leave feedback.",
+        })
+      }
+
+      const { submissionId } = request.validatedParams as SubmissionIdParam
+      const body = request.validatedBody as SaveFeedbackBody
+
+      const user = request.user!
+      const teacherName = `${user.firstName} ${user.lastName}`.trim()
+
+      const updated = await submissionService.saveTeacherFeedback(
+        submissionId,
+        teacherName,
+        body.feedback,
+      )
+
+      return reply.send({
+        success: true,
+        message: "Feedback saved.",
+        data: updated,
+      })
     },
   })
 }

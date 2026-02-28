@@ -98,9 +98,14 @@ export async function getClassDetailsById(
 
 export async function getAllAssignmentsForClassId(
   classId: number,
+  studentId?: number,
 ): Promise<Assignment[]> {
+  const assignmentApiUrl =
+    studentId !== undefined
+      ? `/classes/${classId}/assignments?studentId=${studentId}`
+      : `/classes/${classId}/assignments`
   const apiResponse = await apiClient.get<AssignmentListResponse>(
-    `/classes/${classId}/assignments`,
+    assignmentApiUrl,
   )
 
   if (apiResponse.error || !apiResponse.data?.success) {

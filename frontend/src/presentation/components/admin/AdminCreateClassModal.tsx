@@ -70,13 +70,7 @@ export function AdminCreateClassModal({
 }: AdminCreateClassModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-  } = useZodForm({
+  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
     schema: adminClassFormSchema,
     defaultValues: getDefaultFormData(),
     mode: "onSubmit",

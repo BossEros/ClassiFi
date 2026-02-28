@@ -80,7 +80,7 @@ export interface StudentSubmissionInfo {
   assignmentId: number
   grade: number | null
   isGradeOverridden: boolean
-  overrideFeedback: string | null
+  overrideReason: string | null
   submittedAt: Date | null
 }
 
@@ -336,7 +336,7 @@ export class GradebookRepository {
         assignmentId: submissions.assignmentId,
         grade: submissions.grade,
         isGradeOverridden: submissions.isGradeOverridden,
-        overrideFeedback: submissions.overrideFeedback,
+        overrideReason: submissions.overrideReason,
         submittedAt: submissions.submittedAt,
       })
       .from(submissions)
@@ -392,7 +392,7 @@ export class GradebookRepository {
             deadline: a.deadline,
             grade: sub?.grade ?? null,
             isOverridden: sub?.isGradeOverridden ?? false,
-            feedback: sub?.overrideFeedback ?? null,
+            feedback: sub?.overrideReason ?? null,
             submittedAt: sub?.submittedAt ?? null,
           }
         }),

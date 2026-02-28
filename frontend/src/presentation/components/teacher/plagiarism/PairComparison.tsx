@@ -22,7 +22,7 @@ interface PairComparisonProps {
 export const PairComparison: React.FC<PairComparisonProps> = ({
   pair,
   language = "java",
-  editorHeight = 500,
+  editorHeight = 480,
 }) => {
   const [selectedFragment, setSelectedFragment] =
     useState<MatchFragment | null>(null)

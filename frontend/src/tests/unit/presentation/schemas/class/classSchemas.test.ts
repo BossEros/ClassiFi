@@ -131,8 +131,16 @@ describe("classSchemas", () => {
       })
 
       expect(parseResult.success).toBe(false)
-      expect(parseResult.error?.issues.some((issue) => issue.message === "Please select a teacher")).toBe(true)
-      expect(parseResult.error?.issues.some((issue) => issue.message === "At least one schedule day is required")).toBe(true)
+      expect(
+        parseResult.error?.issues.some(
+          (issue) => issue.message === "Please select a teacher",
+        ),
+      ).toBe(true)
+      expect(
+        parseResult.error?.issues.some(
+          (issue) => issue.message === "At least one schedule day is required",
+        ),
+      ).toBe(true)
     })
   })
 })

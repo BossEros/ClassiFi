@@ -33,7 +33,7 @@ export function useTopBar({ user, userInitials, onProfileClick }: TopBarProps) {
           className={`flex items-center ${isCollapsed ? "lg:gap-0" : "gap-3"}`}
         >
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <BookOpen className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <BookOpen className="w-5 h-5 text-white" />
           </div>
           <h1
             className={`text-xl font-bold text-white tracking-tight transition-all duration-300 ${isCollapsed ? "lg:opacity-0 lg:w-0 lg:overflow-hidden lg:ml-0" : "opacity-100"}`}

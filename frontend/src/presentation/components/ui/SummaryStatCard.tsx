@@ -37,7 +37,9 @@ export function SummaryStatCard({
   valueClassName,
 }: SummaryStatCardProps) {
   return (
-    <Card className={cn("bg-white/5 backdrop-blur-sm border-white/10", className)}>
+    <Card
+      className={cn("bg-white/5 backdrop-blur-sm border-white/10", className)}
+    >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <div

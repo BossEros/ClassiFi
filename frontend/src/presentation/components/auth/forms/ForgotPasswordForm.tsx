@@ -67,8 +67,7 @@ export function ForgotPasswordForm({
           <p className="text-gray-400 text-sm leading-relaxed">
             If an account exists with{" "}
             <span className="text-white font-medium">{emailValue}</span>, you
-            will
-            receive password reset instructions shortly.
+            will receive password reset instructions shortly.
           </p>
         </div>
 

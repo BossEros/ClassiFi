@@ -33,49 +33,48 @@ describe("ChangePasswordModal", () => {
     expect(authService.changePassword).not.toHaveBeenCalled()
   })
 
-  it(
-    "submits valid values and triggers delayed success callbacks",
-    async () => {
-      const user = userEvent.setup()
-      const onClose = vi.fn()
-      const onSuccess = vi.fn()
+  it("submits valid values and triggers delayed success callbacks", async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    const onSuccess = vi.fn()
 
-      vi.mocked(authService.changePassword).mockResolvedValue({
-        success: true,
-        message: "Password changed successfully.",
+    vi.mocked(authService.changePassword).mockResolvedValue({
+      success: true,
+      message: "Password changed successfully.",
+    })
+
+    render(
+      <ChangePasswordModal
+        isOpen={true}
+        onClose={onClose}
+        onSuccess={onSuccess}
+      />,
+    )
+
+    const passwordInputs = screen.getAllByPlaceholderText(/password/i)
+
+    await user.type(passwordInputs[0], "OldPassword1!")
+    await user.type(passwordInputs[1], "NewPassword1!")
+    await user.type(passwordInputs[2], "NewPassword1!")
+
+    await user.click(screen.getByRole("button", { name: "Change Password" }))
+
+    await waitFor(() => {
+      expect(authService.changePassword).toHaveBeenCalledWith({
+        currentPassword: "OldPassword1!",
+        newPassword: "NewPassword1!",
+        confirmPassword: "NewPassword1!",
       })
+    })
 
-      render(
-        <ChangePasswordModal
-          isOpen={true}
-          onClose={onClose}
-          onSuccess={onSuccess}
-        />,
-      )
+    expect(screen.getByText("Password Changed!")).toBeInTheDocument()
 
-      const passwordInputs = screen.getAllByPlaceholderText(/password/i)
-
-      await user.type(passwordInputs[0], "OldPassword1!")
-      await user.type(passwordInputs[1], "NewPassword1!")
-      await user.type(passwordInputs[2], "NewPassword1!")
-
-      await user.click(screen.getByRole("button", { name: "Change Password" }))
-
-      await waitFor(() => {
-        expect(authService.changePassword).toHaveBeenCalledWith({
-          currentPassword: "OldPassword1!",
-          newPassword: "NewPassword1!",
-          confirmPassword: "NewPassword1!",
-        })
-      })
-
-      expect(screen.getByText("Password Changed!")).toBeInTheDocument()
-
-      await waitFor(() => {
+    await waitFor(
+      () => {
         expect(onSuccess).toHaveBeenCalledTimes(1)
         expect(onClose).toHaveBeenCalledTimes(1)
-      }, { timeout: 4000 })
-    },
-    10000,
-  )
+      },
+      { timeout: 4000 },
+    )
+  }, 10000)
 })

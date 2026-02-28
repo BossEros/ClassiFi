@@ -169,12 +169,7 @@ describe("ClassHeader", () => {
   })
 
   it("renders teacher actions when isTeacher is true", () => {
-    render(
-      <ClassHeader
-        {...defaultProps}
-        isTeacher={true}
-      />,
-    )
+    render(<ClassHeader {...defaultProps} isTeacher={true} />)
 
     expect(screen.queryByText("Leave Class")).not.toBeInTheDocument()
 
