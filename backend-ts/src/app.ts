@@ -6,10 +6,18 @@ import { settings } from "@/shared/config.js"
 import { errorHandler } from "@/api/middlewares/error-handler.js"
 import { apiV1Routes } from "@/api/routes/v1/index.js"
 import { setupSwagger } from "@/api/plugins/swagger.js"
-import "@/shared/container.js"
+import { container } from "@/shared/container.js"
 import zodValidationPlugin from "@/api/plugins/zod-validation.js"
+import { DI_TOKENS } from "@/shared/di/tokens.js"
+import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
 
 export async function buildApp(): Promise<FastifyInstance> {
+  const plagiarismAutoAnalysisService = container.resolve<PlagiarismAutoAnalysisService>(
+    DI_TOKENS.services.plagiarismAutoAnalysis,
+  )
+
+  plagiarismAutoAnalysisService.start()
+
   const app = Fastify({
     logger: settings.debug,
     requestTimeout: (settings.testExecutionTimeoutSeconds + 5) * 1000,
@@ -56,6 +64,9 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // Register API v1 routes
   await app.register(apiV1Routes, { prefix: `${settings.apiPrefix}/v1` })
+  app.addHook("onClose", async () => {
+    plagiarismAutoAnalysisService.stop()
+  })
 
   return app
 }
