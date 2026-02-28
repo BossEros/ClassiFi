@@ -75,7 +75,9 @@ describe("DeleteAccountModal", () => {
       })
     })
 
-    expect(screen.getByText("Account Deleted")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Account Deleted")).toBeInTheDocument()
+    })
 
     await waitFor(
       () => {

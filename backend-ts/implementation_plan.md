@@ -43,3 +43,25 @@ Automatically trigger assignment similarity analysis after successful student su
 
 - Risk: slower submission if analysis is in critical path.
 - Mitigation: scheduling only, analysis remains asynchronous and non-blocking for submit response.
+
+---
+
+# Implementation Plan: Decouple Feedback Save From Notification Delivery
+
+## Goal
+Ensure `saveTeacherFeedback` returns success once feedback persistence succeeds, even if downstream notification delivery fails.
+
+## Constraints
+- Keep Controller-Service-Repository boundaries intact.
+- Preserve existing notification payload content.
+- Match resilience behavior already used by grade override flow.
+
+## Approach
+1. Keep feedback write as the critical path (`submissionRepo.saveTeacherFeedback`).
+2. Send feedback notification as best-effort async work.
+3. Catch and log notification errors without rethrowing.
+4. Add service unit test to assert notification failures do not fail save.
+
+## Verification
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.

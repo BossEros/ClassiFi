@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { LogOut, Trash2, Edit, User, Clock, Copy, Check } from "lucide-react"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
+import { useToastStore } from "@/shared/store/useToastStore"
 import {
   convertToSingleLetterAbbr,
   formatTimeRange,
@@ -40,12 +41,19 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   onLeaveClass,
 }) => {
   const [hasCopied, setHasCopied] = useState(false)
+  const showToast = useToastStore((state) => state.showToast)
 
-  const handleCopyCode = () => {
+  const handleCopyCode = async () => {
     if (!classCode) return
-    navigator.clipboard.writeText(classCode)
-    setHasCopied(true)
-    setTimeout(() => setHasCopied(false), 2000)
+
+    try {
+      await navigator.clipboard.writeText(classCode)
+      setHasCopied(true)
+      setTimeout(() => setHasCopied(false), 2000)
+    } catch (error) {
+      console.error("Failed to copy class code:", error)
+      showToast("Failed to copy class code", "error")
+    }
   }
 
   const dayAbbreviations = convertToSingleLetterAbbr(schedule.days)

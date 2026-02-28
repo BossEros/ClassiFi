@@ -76,6 +76,7 @@ export function TeacherFeedbackCard({
           <textarea
             value={feedback}
             onChange={(e) => setFeedback(e.target.value)}
+            maxLength={2000}
             placeholder="Add your feedback for this submission..."
             className="w-full min-h-[120px] bg-black/20 border border-white/10 rounded-lg p-3 text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none focus:border-blue-500/50 resize-y"
             disabled={isSaving}
