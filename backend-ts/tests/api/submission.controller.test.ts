@@ -132,14 +132,54 @@ describe("Submission Controller", () => {
     expect(mockCodeTestService.getTestResults).toHaveBeenCalledWith(10, true)
   })
 
-  it("uses validated feedback body for teacher feedback save", async () => {
+  it("rejects feedback save for non-teacher/non-admin users", async () => {
+    mockRequest.user = {
+      id: 1,
+      role: "student",
+      firstName: "Student",
+      lastName: "User",
+    }
+    mockRequest.validatedBody = { feedback: "Looks good" }
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockReply.status).toHaveBeenCalledWith(403)
+    expect(mockReply.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Only teachers or admins can leave feedback.",
+    })
+    expect(mockSubmissionService.saveTeacherFeedback).not.toHaveBeenCalled()
+  })
+
+  it("returns 400 for whitespace-only feedback", async () => {
     mockRequest.user = {
       id: 2,
       role: "teacher",
       firstName: "Jane",
       lastName: "Doe",
     }
-    mockRequest.validatedBody = { feedback: "Looks good" }
+    mockRequest.validatedBody = { feedback: "   \n\t  " }
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockReply.status).toHaveBeenCalledWith(400)
+    expect(mockReply.send).toHaveBeenCalledWith({
+      success: false,
+      message: "Feedback cannot be empty.",
+    })
+    expect(mockSubmissionService.saveTeacherFeedback).not.toHaveBeenCalled()
+  })
+
+  it("trims validated feedback body before saving", async () => {
+    mockRequest.user = {
+      id: 2,
+      role: "teacher",
+      firstName: "Jane",
+      lastName: "Doe",
+    }
+    mockRequest.validatedBody = { feedback: "  Looks good  " }
 
     vi.mocked(mockSubmissionService.saveTeacherFeedback).mockResolvedValue({
       id: 10,

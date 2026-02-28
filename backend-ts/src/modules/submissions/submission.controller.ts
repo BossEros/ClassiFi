@@ -336,12 +336,20 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       if (requesterRole !== "teacher" && requesterRole !== "admin") {
         return reply.status(403).send({
           success: false,
-          message: "Only teachers can leave feedback.",
+          message: "Only teachers or admins can leave feedback.",
         })
       }
 
       const { submissionId } = request.validatedParams as SubmissionIdParam
       const body = request.validatedBody as SaveFeedbackBody
+      const normalizedFeedback = body.feedback.trim()
+
+      if (normalizedFeedback.length === 0) {
+        return reply.status(400).send({
+          success: false,
+          message: "Feedback cannot be empty.",
+        })
+      }
 
       const user = request.user!
       const teacherName = `${user.firstName} ${user.lastName}`.trim()
@@ -349,7 +357,7 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       const updated = await submissionService.saveTeacherFeedback(
         submissionId,
         teacherName,
-        body.feedback,
+        normalizedFeedback,
       )
 
       return reply.send({

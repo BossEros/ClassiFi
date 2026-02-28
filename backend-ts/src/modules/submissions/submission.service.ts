@@ -20,6 +20,7 @@ import {
   type ProgrammingLanguage,
 } from "@/shared/constants.js"
 import {
+  BadRequestError,
   AssignmentNotFoundError,
   AssignmentInactiveError,
   DeadlinePassedError,
@@ -39,6 +40,8 @@ import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiar
 import { settings } from "@/shared/config.js"
 
 const logger = createLogger("SubmissionService")
+const MAX_TEACHER_NAME_LENGTH = 100
+const MAX_FEEDBACK_LENGTH = 5000
 
 /**
  * Business logic for submission-related operations.
@@ -294,9 +297,32 @@ export class SubmissionService {
       throw new AssignmentNotFoundError(submission.assignmentId)
     }
 
+    const normalizedTeacherName = teacherName.trim()
+    const normalizedFeedback = feedback.trim()
+
+    if (normalizedTeacherName.length === 0) {
+      throw new BadRequestError("Teacher name cannot be empty")
+    }
+
+    if (normalizedTeacherName.length > MAX_TEACHER_NAME_LENGTH) {
+      throw new BadRequestError(
+        `Teacher name cannot exceed ${MAX_TEACHER_NAME_LENGTH} characters`,
+      )
+    }
+
+    if (normalizedFeedback.length === 0) {
+      throw new BadRequestError("Feedback cannot be empty")
+    }
+
+    if (normalizedFeedback.length > MAX_FEEDBACK_LENGTH) {
+      throw new BadRequestError(
+        `Feedback cannot exceed ${MAX_FEEDBACK_LENGTH} characters`,
+      )
+    }
+
     const updated = await this.submissionRepo.saveTeacherFeedback(
       submissionId,
-      feedback,
+      normalizedFeedback,
     )
 
     if (!updated) {
@@ -305,17 +331,26 @@ export class SubmissionService {
 
     const submissionUrl = `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`
 
-    await this.notificationService.createNotification(
-      submission.studentId,
-      "SUBMISSION_FEEDBACK_GIVEN",
-      {
-        submissionId,
-        assignmentId: assignment.id,
-        assignmentTitle: assignment.assignmentName,
-        teacherName,
-        submissionUrl,
-      },
+    void Promise.resolve(
+      this.notificationService.createNotification(
+        submission.studentId,
+        "SUBMISSION_FEEDBACK_GIVEN",
+        {
+          submissionId,
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          teacherName: normalizedTeacherName,
+          submissionUrl,
+        },
+      ),
     )
+      .catch((error) => {
+        logger.error("Failed to send submission feedback notification", {
+          submissionId,
+          studentId: submission.studentId,
+          error,
+        })
+      })
 
     return toSubmissionDTO(updated)
   }
