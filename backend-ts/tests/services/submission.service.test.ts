@@ -62,6 +62,7 @@ describe("SubmissionService", () => {
       getSubmissionsWithStudentInfo: vi.fn(),
       getSubmissionsByStudent: vi.fn(),
       getSubmissionById: vi.fn(),
+      saveTeacherFeedback: vi.fn(),
       updateGrade: vi.fn(),
       delete: vi.fn(),
     }
@@ -600,6 +601,47 @@ describe("SubmissionService", () => {
         "submissions",
         "test/path",
         3600,
+      )
+    })
+  })
+
+  describe("saveTeacherFeedback", () => {
+    it("uses dashboard assignment URL for feedback notification", async () => {
+      const submission = createMockSubmission({
+        id: 5,
+        assignmentId: 10,
+        studentId: 20,
+      })
+      const assignment = createMockAssignment({
+        id: 10,
+        assignmentName: "Array Practice",
+      })
+      const updatedSubmission = createMockSubmission({
+        id: 5,
+        assignmentId: 10,
+        studentId: 20,
+        teacherFeedback: "Great work",
+      })
+
+      mockSubmissionRepo.getSubmissionById.mockResolvedValue(submission)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockSubmissionRepo.saveTeacherFeedback.mockResolvedValue(updatedSubmission)
+
+      const result = await submissionService.saveTeacherFeedback(
+        5,
+        "Teacher Name",
+        "Great work",
+      )
+
+      expect(result.id).toBe(5)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        20,
+        "SUBMISSION_FEEDBACK_GIVEN",
+        expect.objectContaining({
+          submissionUrl: expect.stringContaining(
+            "/dashboard/assignments/10",
+          ),
+        }),
       )
     })
   })

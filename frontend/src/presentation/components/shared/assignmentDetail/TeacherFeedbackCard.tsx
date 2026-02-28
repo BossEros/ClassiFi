@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { MessageSquare, Save, RefreshCw } from "lucide-react"
 import {
   Card,
@@ -29,6 +29,10 @@ export function TeacherFeedbackCard({
   const [isSaving, setIsSaving] = useState(false)
   const showToast = useToastStore((state) => state.showToast)
   const isDirty = feedback !== (initialFeedback || "")
+
+  useEffect(() => {
+    setFeedback(initialFeedback || "")
+  }, [initialFeedback, submissionId])
 
   const handleSave = async () => {
     if (!feedback.trim()) {

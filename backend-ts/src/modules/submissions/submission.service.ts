@@ -303,7 +303,7 @@ export class SubmissionService {
       throw new SubmissionNotFoundError(submissionId)
     }
 
-    const submissionUrl = `${settings.frontendUrl}/assignments/${assignment.id}`
+    const submissionUrl = `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`
 
     await this.notificationService.createNotification(
       submission.studentId,

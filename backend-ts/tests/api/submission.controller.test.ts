@@ -32,6 +32,7 @@ describe("Submission Controller", () => {
       getStudentSubmissions: vi.fn(),
       getSubmissionDownloadUrl: vi.fn(),
       getSubmissionContent: vi.fn(),
+      saveTeacherFeedback: vi.fn(),
     }
 
     mockCodeTestService = {
@@ -84,6 +85,20 @@ describe("Submission Controller", () => {
     return (routeCall[1] as { handler: (req: FastifyRequest, rep: FastifyReply) => Promise<void> }).handler
   }
 
+  const getFeedbackHandler = async () => {
+    await submissionRoutes(mockApp)
+
+    const routeCall = vi
+      .mocked(mockApp.patch)
+      .mock.calls.find((call) => call[0] === "/:submissionId/feedback")
+
+    if (!routeCall) {
+      throw new Error("Feedback route was not registered")
+    }
+
+    return (routeCall[1] as { handler: (req: FastifyRequest, rep: FastifyReply) => Promise<void> }).handler
+  }
+
   it("forces includeHiddenDetails to false for student users", async () => {
     vi.mocked(mockCodeTestService.getTestResults).mockResolvedValue({
       submissionId: 10,
@@ -115,5 +130,28 @@ describe("Submission Controller", () => {
     await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
     expect(mockCodeTestService.getTestResults).toHaveBeenCalledWith(10, true)
+  })
+
+  it("uses validated feedback body for teacher feedback save", async () => {
+    mockRequest.user = {
+      id: 2,
+      role: "teacher",
+      firstName: "Jane",
+      lastName: "Doe",
+    }
+    mockRequest.validatedBody = { feedback: "Looks good" }
+
+    vi.mocked(mockSubmissionService.saveTeacherFeedback).mockResolvedValue({
+      id: 10,
+    })
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockSubmissionService.saveTeacherFeedback).toHaveBeenCalledWith(
+      10,
+      "Jane Doe",
+      "Looks good",
+    )
   })
 })
