@@ -81,6 +81,8 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
                   {classCode}
                 </span>
                 <button
+                  type="button"
+                  aria-label="Copy class code"
                   onClick={handleCopyCode}
                   className="ml-1 text-slate-400 hover:text-teal-400 transition-colors p-1 rounded-md hover:bg-white/10"
                   title="Copy Class Code"

@@ -351,8 +351,18 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
         })
       }
 
-      const user = request.user!
-      const teacherName = `${user.firstName} ${user.lastName}`.trim()
+      const userRecord = (request.user ?? {}) as Record<string, unknown>
+      const firstName =
+        typeof userRecord.firstName === "string" ? userRecord.firstName : ""
+      const lastName =
+        typeof userRecord.lastName === "string" ? userRecord.lastName : ""
+      const displayName =
+        typeof userRecord.displayName === "string" ? userRecord.displayName : ""
+      const username =
+        typeof userRecord.username === "string" ? userRecord.username : ""
+      const fullName = `${firstName} ${lastName}`.trim()
+      const teacherName =
+        fullName || displayName.trim() || username.trim() || "Unknown Teacher"
 
       const updated = await submissionService.saveTeacherFeedback(
         submissionId,
