@@ -178,6 +178,20 @@ describe("ClassHeader", () => {
     expect(screen.getByText("Delete Class")).toBeInTheDocument()
   })
 
+  it("renders copy class code button with explicit semantics", () => {
+    render(
+      <ClassHeader
+        {...defaultProps}
+        isTeacher={true}
+        classCode="ABC123"
+      />,
+    )
+
+    const copyButton = screen.getByLabelText("Copy class code")
+    expect(copyButton).toBeInTheDocument()
+    expect(copyButton).toHaveAttribute("type", "button")
+  })
+
   it("renders student actions when isTeacher is false", () => {
     const onLeaveClass = vi.fn()
     render(

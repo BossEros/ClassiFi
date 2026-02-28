@@ -194,4 +194,25 @@ describe("Submission Controller", () => {
       "Looks good",
     )
   })
+
+  it("falls back to Unknown Teacher when name fields are missing", async () => {
+    mockRequest.user = {
+      id: 2,
+      role: "teacher",
+    }
+    mockRequest.validatedBody = { feedback: "Looks good" }
+
+    vi.mocked(mockSubmissionService.saveTeacherFeedback).mockResolvedValue({
+      id: 10,
+    })
+
+    const handler = await getFeedbackHandler()
+    await handler(mockRequest as FastifyRequest, mockReply as FastifyReply)
+
+    expect(mockSubmissionService.saveTeacherFeedback).toHaveBeenCalledWith(
+      10,
+      "Unknown Teacher",
+      "Looks good",
+    )
+  })
 })
