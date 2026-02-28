@@ -292,6 +292,20 @@ describe("classRepository", () => {
       expect(result).toEqual([])
     })
 
+    it("includes studentId query parameter when provided", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: { success: true, assignments: mockAssignments },
+        status: 200,
+      })
+
+      const result = await classRepository.getAllAssignmentsForClassId(1, 25)
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/classes/1/assignments?studentId=25",
+      )
+      expect(result).toEqual(mockAssignments)
+    })
+
     it("throws error when API fails", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         error: "Server error",

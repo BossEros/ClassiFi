@@ -2,6 +2,7 @@ import type { NotificationType } from "@/modules/notifications/notification.sche
 import {
   assignmentCreatedEmailTemplate,
   submissionGradedEmailTemplate,
+  submissionFeedbackGivenEmailTemplate,
   classAnnouncementEmailTemplate,
   deadlineReminderEmailTemplate,
   enrollmentConfirmedEmailTemplate,
@@ -28,6 +29,15 @@ export interface SubmissionGradedPayload {
   assignmentTitle: string
   grade: number
   maxGrade: number
+  submissionUrl: string
+}
+
+/** Payload for SUBMISSION_FEEDBACK_GIVEN notification */
+export interface SubmissionFeedbackGivenPayload {
+  submissionId: number
+  assignmentId: number
+  assignmentTitle: string
+  teacherName: string
   submissionUrl: string
 }
 
@@ -62,6 +72,7 @@ export interface EnrollmentConfirmedPayload {
 export type NotificationDataByType = {
   ASSIGNMENT_CREATED: AssignmentCreatedPayload
   SUBMISSION_GRADED: SubmissionGradedPayload
+  SUBMISSION_FEEDBACK_GIVEN: SubmissionFeedbackGivenPayload
   CLASS_ANNOUNCEMENT: ClassAnnouncementPayload
   DEADLINE_REMINDER: DeadlineReminderPayload
   ENROLLMENT_CONFIRMED: EnrollmentConfirmedPayload
@@ -153,6 +164,22 @@ export const NOTIFICATION_TYPES: {
       assignmentTitle: data.assignmentTitle,
       grade: data.grade,
       maxGrade: data.maxGrade,
+      submissionUrl: data.submissionUrl,
+    }),
+  },
+
+  SUBMISSION_FEEDBACK_GIVEN: {
+    type: "SUBMISSION_FEEDBACK_GIVEN",
+    titleTemplate: () => "New Feedback on Your Submission",
+    messageTemplate: (data) =>
+      `${data.teacherName} left feedback on your submission for "${data.assignmentTitle}".`,
+    emailTemplate: (data) => submissionFeedbackGivenEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      submissionId: data.submissionId,
+      assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
+      teacherName: data.teacherName,
       submissionUrl: data.submissionUrl,
     }),
   },

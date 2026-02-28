@@ -1,6 +1,9 @@
 import { z } from "zod"
 import { VALID_ROLES, type UserRole } from "@/shared/types/auth"
-import { emailSchema, strongPasswordSchema } from "@/presentation/schemas/shared/commonSchemas"
+import {
+  emailSchema,
+  strongPasswordSchema,
+} from "@/presentation/schemas/shared/commonSchemas"
 
 function isValidUserRole(roleValue: string): roleValue is UserRole {
   return (VALID_ROLES as readonly string[]).includes(roleValue)
@@ -38,6 +41,10 @@ export const adminDeleteUserFormSchema = z.object({
   }),
 })
 
-export type AdminCreateUserFormValues = z.infer<typeof adminCreateUserFormSchema>
+export type AdminCreateUserFormValues = z.infer<
+  typeof adminCreateUserFormSchema
+>
 export type AdminEditUserFormValues = z.infer<typeof adminEditUserFormSchema>
-export type AdminDeleteUserFormValues = z.infer<typeof adminDeleteUserFormSchema>
+export type AdminDeleteUserFormValues = z.infer<
+  typeof adminDeleteUserFormSchema
+>

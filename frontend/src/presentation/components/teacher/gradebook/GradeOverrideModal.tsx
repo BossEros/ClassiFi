@@ -34,12 +34,7 @@ export function GradeOverrideModal({
   totalScore,
 }: GradeOverrideModalProps) {
   const [error, setError] = React.useState<string | null>(null)
-  const {
-    register,
-    handleSubmit,
-    watch,
-    reset,
-  } = useZodForm({
+  const { register, handleSubmit, watch, reset } = useZodForm({
     schema: createGradeOverrideFormSchema(totalScore),
     defaultValues: {
       grade: currentGrade?.toString() ?? "",
@@ -118,7 +113,9 @@ export function GradeOverrideModal({
 
     setTimeout(() => {
       if (modalRef.current) {
-        const gradeInput = modalRef.current.querySelector("#grade") as HTMLElement
+        const gradeInput = modalRef.current.querySelector(
+          "#grade",
+        ) as HTMLElement
 
         if (gradeInput) {
           gradeInput.focus()
@@ -168,10 +165,10 @@ export function GradeOverrideModal({
       <div
         ref={modalRef}
         className={cn(
-          "relative w-[calc(100%-2rem)] max-w-[560px] sm:min-w-[420px] mx-4 p-6",
+          "relative w-[calc(100%-2rem)] max-w-[480px] sm:min-w-[420px] mx-4 p-6 sm:p-8",
           "flex-shrink-0",
-          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
-          "shadow-xl shadow-black/20",
+          "rounded-2xl border border-white/10 bg-slate-900/95 backdrop-blur-md",
+          "shadow-2xl shadow-black/50",
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
         role="dialog"
@@ -182,81 +179,95 @@ export function GradeOverrideModal({
           onClick={onClose}
           disabled={isSubmitting}
           className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
+            "absolute top-4 right-4 p-2 rounded-xl",
+            "text-slate-400 hover:text-white hover:bg-white/10",
             "transition-colors duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500",
             "disabled:opacity-50 disabled:cursor-not-allowed",
           )}
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-teal-500/20 flex items-center justify-center">
-            <Edit2 className="w-8 h-8 text-teal-400" />
+        <div className="flex justify-center mb-5">
+          <div className="w-14 h-14 rounded-full bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+            <Edit2 className="w-6 h-6 text-teal-400" />
           </div>
         </div>
 
         <h2
           id="grade-override-modal-title"
-          className="text-xl font-semibold text-white text-center mb-2"
+          className="text-xl font-semibold text-white text-center mb-1"
         >
           Override Grade
         </h2>
 
         <div className="text-center mb-6">
-          <p className="text-gray-400">
-            <span className="text-white font-medium">{studentName}</span>
+          <p className="text-slate-300">
+            For <span className="text-white font-medium">{studentName}</span>
           </p>
-          <p className="text-sm text-gray-500">{assignmentName}</p>
+          <p className="text-sm text-slate-400 mt-1">{assignmentName}</p>
         </div>
 
         <form
           onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
-          className="space-y-4"
+          className="space-y-5"
           noValidate
         >
           <div>
             <label
               htmlFor="grade"
-              className="block text-sm font-medium text-gray-400 mb-2"
+              className="flex justify-between items-center text-sm font-medium text-slate-300 mb-2"
             >
-              New Grade (0 - {totalScore})
+              <span>New Grade</span>
+              <span className="text-slate-500 text-xs font-normal">
+                Max: {totalScore}
+              </span>
             </label>
-            <input
-              type="number"
-              id="grade"
-              step="0.01"
-              inputMode="decimal"
-              {...gradeField}
-              value={grade}
-              onChange={(event) => {
-                gradeField.onChange(event)
-                if (error) setError(null)
-              }}
-              min={0}
-              max={totalScore}
-              disabled={isSubmitting}
-              className={cn(
-                "w-full px-4 py-3 rounded-xl",
-                "appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
-                "bg-white/5 border border-white/10",
-                "text-white placeholder-gray-500",
-                "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-                "transition-all duration-200",
-              )}
-              placeholder={`Enter grade (max ${totalScore})`}
-            />
+            <div className="relative">
+              <input
+                type="number"
+                id="grade"
+                step="0.01"
+                inputMode="decimal"
+                {...gradeField}
+                value={grade}
+                onChange={(event) => {
+                  gradeField.onChange(event)
+                  if (error) setError(null)
+                }}
+                min={0}
+                max={totalScore}
+                disabled={isSubmitting}
+                className={cn(
+                  "w-full px-4 py-2.5 rounded-xl text-base",
+                  "appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+                  "bg-slate-950/50 border border-white/10",
+                  "text-white placeholder-slate-500",
+                  "focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "transition-all duration-200",
+                  error &&
+                    "border-red-500/50 focus:border-red-500 focus:ring-red-500/20",
+                )}
+                placeholder="0.00"
+              />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                <span className="text-slate-600 font-medium">/</span>
+                <span className="text-slate-500 font-medium">{totalScore}</span>
+              </div>
+            </div>
           </div>
 
           <div>
             <label
               htmlFor="feedback"
-              className="block text-sm font-medium text-gray-400 mb-2"
+              className="flex justify-between items-center text-sm font-medium text-slate-300 mb-2"
             >
-              Feedback (optional)
+              <span>Feedback</span>
+              <span className="text-slate-500 text-xs font-normal">
+                Optional
+              </span>
             </label>
             <textarea
               id="feedback"
@@ -270,17 +281,23 @@ export function GradeOverrideModal({
               rows={3}
               className={cn(
                 "w-full px-4 py-3 rounded-xl resize-none",
-                "bg-white/5 border border-white/10",
-                "text-white placeholder-gray-500",
-                "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
+                "bg-slate-950/50 border border-white/10",
+                "text-white placeholder-slate-500 text-sm",
+                "focus:outline-none focus:ring-2 focus:ring-teal-500/50 focus:border-teal-500",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
                 "transition-all duration-200",
               )}
-              placeholder="Add a note about this grade change..."
+              placeholder="Explain the reason for this grade override..."
             />
           </div>
 
-          {error && <p className="text-sm text-red-400 text-center">{error}</p>}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-sm font-medium text-red-400 text-center">
+                {error}
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3 pt-2">
             <button
@@ -288,10 +305,10 @@ export function GradeOverrideModal({
               onClick={onClose}
               disabled={isSubmitting}
               className={cn(
-                "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                "border border-white/20 text-white",
-                "hover:bg-white/10 transition-colors duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                "flex-1 px-4 py-2.5 rounded-xl text-sm font-medium",
+                "text-slate-300 border border-white/10 bg-transparent",
+                "hover:text-white hover:bg-white/5 transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
               )}
             >
@@ -301,32 +318,36 @@ export function GradeOverrideModal({
               type="submit"
               disabled={isSubmitting}
               className={cn(
-                "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                "bg-teal-600 text-white",
-                "hover:bg-teal-700 transition-colors duration-200",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "flex-1 px-4 py-2.5 rounded-xl text-sm font-medium",
+                "bg-teal-600 text-white shadow-lg shadow-teal-500/20",
+                "hover:bg-teal-500 hover:shadow-teal-500/30",
+                "transition-all duration-200 active:scale-[0.98]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
+                "disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none",
               )}
             >
-              {isSubmitting ? "Saving..." : "Save Grade"}
+              {isSubmitting ? "Saving..." : "Confirm Override"}
             </button>
           </div>
 
           {onRemoveOverride && currentGrade !== null && (
-            <button
-              type="button"
-              onClick={onRemoveOverride}
-              disabled={isSubmitting}
-              className={cn(
-                "w-full flex items-center justify-center gap-2 px-4 py-2 text-sm",
-                "text-gray-400 hover:text-white",
-                "transition-colors duration-200",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
-              )}
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset to auto-calculated grade
-            </button>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={onRemoveOverride}
+                disabled={isSubmitting}
+                className={cn(
+                  "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium",
+                  "text-slate-400 hover:text-red-400 hover:bg-red-500/10",
+                  "transition-all duration-200",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400",
+                )}
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset to Auto-Calculated Grade
+              </button>
+            </div>
           )}
         </form>
       </div>

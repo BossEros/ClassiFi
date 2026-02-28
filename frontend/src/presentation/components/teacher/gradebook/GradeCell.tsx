@@ -4,40 +4,35 @@ import { X, Edit2 } from "lucide-react"
 interface GradeCellProps {
   grade: GradeEntry | null
   totalScore: number
-  onClick: () => void
 }
 
-export function GradeCell({ grade, totalScore, onClick }: GradeCellProps) {
-  // No submission
+export function GradeCell({ grade, totalScore }: GradeCellProps) {
   if (!grade || !grade.submissionId) {
     return (
       <span className="inline-flex items-center justify-center w-12 h-8 rounded text-xs text-gray-500">
-        —
+        -
       </span>
     )
   }
 
-  // Submitted but not graded yet
   if (grade.grade === null) {
     return (
-      <button
-        onClick={onClick}
-        className="inline-flex items-center justify-center w-12 h-8 rounded bg-gray-700/50 text-gray-400 text-xs hover:bg-gray-700 transition-colors"
-        title="Not graded yet - Click to override"
+      <span
+        className="inline-flex items-center justify-center w-12 h-8 rounded bg-gray-700/50 text-gray-400 text-xs"
+        title="Not graded yet"
       >
         <X className="w-3 h-3" />
-      </button>
+      </span>
     )
   }
 
-  // Calculate percentage for color coding
   const percentage = totalScore > 0 ? (grade.grade / totalScore) * 100 : 0
   const colorClass = getGradeColorClass(percentage)
+
   return (
-    <button
-      onClick={onClick}
-      className={`group relative inline-flex items-center justify-center min-w-[48px] h-8 px-2 rounded text-sm font-medium transition-all ${colorClass} hover:ring-2 hover:ring-white/20`}
-      title={`${grade.grade}/${totalScore} (${Math.round(percentage)}%) - Click to modify`}
+    <span
+      className={`inline-flex items-center justify-center min-w-[48px] h-8 px-2 rounded text-sm font-medium ${colorClass}`}
+      title={`${grade.grade}/${totalScore} (${Math.round(percentage)}%)`}
     >
       <span>{grade.grade}</span>
       {grade.isOverridden && (
@@ -45,12 +40,7 @@ export function GradeCell({ grade, totalScore, onClick }: GradeCellProps) {
           <Edit2 className="w-3 h-3 text-yellow-400" />
         </span>
       )}
-
-      {/* Hover overlay */}
-      <span className="absolute inset-0 flex items-center justify-center bg-black/60 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-        <Edit2 className="w-4 h-4 text-white" />
-      </span>
-    </button>
+    </span>
   )
 }
 

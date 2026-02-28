@@ -49,10 +49,12 @@ function getDefaultClassFormValues(): TeacherClassFormValues {
   }
 }
 
-const classScheduleTimeOptions: SelectOption[] = TIME_OPTIONS.map((timeValue) => ({
-  value: timeValue,
-  label: formatTimeDisplay(timeValue),
-}))
+const classScheduleTimeOptions: SelectOption[] = TIME_OPTIONS.map(
+  (timeValue) => ({
+    value: timeValue,
+    label: formatTimeDisplay(timeValue),
+  }),
+)
 
 export function ClassFormPage() {
   const navigate = useNavigate()
@@ -404,7 +406,7 @@ export function ClassFormPage() {
                         title={day.label}
                         className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                           scheduleDays.includes(day.value)
-                            ? "bg-teal-500 text-white border-transparent" 
+                            ? "bg-teal-500 text-white border-transparent"
                             : "bg-[#1A2130] text-gray-400 border border-white/10 hover:bg-white/10 hover:text-white"
                         }`}
                       >

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest"
-import { getGradePercentage, getGradeColor, formatGrade } from "@/presentation/utils/gradeUtils"
+import {
+  getGradePercentage,
+  getGradeColor,
+  formatGrade,
+} from "@/presentation/utils/gradeUtils"
 
 describe("gradeUtils", () => {
   describe("getGradePercentage", () => {

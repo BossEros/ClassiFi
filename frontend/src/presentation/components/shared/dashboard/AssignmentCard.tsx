@@ -3,9 +3,16 @@ import { cn } from "@/shared/utils/cn"
 import { CheckCircle, Clock } from "lucide-react"
 import type { Assignment } from "@/business/models/dashboard/types"
 import { parseISODate } from "@/shared/types/class"
-import { getAssignmentStatus, getStatusLabel } from "@/shared/utils/assignmentStatus"
+import {
+  getAssignmentStatus,
+  getStatusLabel,
+} from "@/shared/utils/assignmentStatus"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
-import { formatGrade, getGradePercentage, getGradeColor } from "@/presentation/utils/gradeUtils"
+import {
+  formatGrade,
+  getGradePercentage,
+  getGradeColor,
+} from "@/presentation/utils/gradeUtils"
 
 interface AssignmentCardProps {
   assignment: Assignment
@@ -24,7 +31,9 @@ export function AssignmentCard({
   const month = deadlineDate
     ? deadlineDate.toLocaleString("default", { month: "short" }).toUpperCase()
     : null
-  const day = deadlineDate ? deadlineDate.getDate().toString().padStart(2, "0") : null
+  const day = deadlineDate
+    ? deadlineDate.getDate().toString().padStart(2, "0")
+    : null
 
   // Only show grade if it actually exists (student submitted and was graded)
   const shouldShowGrade =
@@ -150,4 +159,3 @@ export function AssignmentCard({
     </Card>
   )
 }
-  

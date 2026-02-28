@@ -39,7 +39,9 @@ describe("userService.uploadAvatar", () => {
   it("uploads avatar and updates the auth store user", async () => {
     const uploadedAvatarUrl = "https://cdn.classifi.com/avatars/user-1.png"
     useAuthStore.setState({ user: mockUser, isAuthenticated: true })
-    vi.mocked(userRepository.uploadUserAvatar).mockResolvedValue(uploadedAvatarUrl)
+    vi.mocked(userRepository.uploadUserAvatar).mockResolvedValue(
+      uploadedAvatarUrl,
+    )
 
     const result = await uploadAvatar({
       file: mockAvatarFile,

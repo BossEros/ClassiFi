@@ -31,7 +31,7 @@ describe("assignmentStatus", () => {
       expect(getAssignmentStatus(assignment)).toBe("late")
     })
 
-    it("returns 'late' when submitted after deadline", () => {
+    it("returns 'pending' when submitted after deadline but not graded", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
@@ -43,7 +43,23 @@ describe("assignmentStatus", () => {
         maxGrade: 100,
       }
 
-      expect(getAssignmentStatus(assignment)).toBe("late")
+      expect(getAssignmentStatus(assignment)).toBe("pending")
+    })
+
+    it("returns 'submitted' when graded after deadline", () => {
+      const assignment: Assignment = {
+        id: 1,
+        classId: 1,
+        assignmentName: "Test",
+        deadline: "2024-01-10T23:59:59Z" as any,
+        programmingLanguage: "python",
+        hasSubmitted: true,
+        submittedAt: "2024-01-12T10:00:00Z" as any,
+        grade: 95,
+        maxGrade: 100,
+      }
+
+      expect(getAssignmentStatus(assignment)).toBe("submitted")
     })
 
     it("returns 'submitted' when submitted and graded", () => {

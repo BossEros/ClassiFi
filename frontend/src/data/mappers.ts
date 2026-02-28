@@ -28,6 +28,17 @@ export function mapSubmission(sub: SubmissionDTO): Submission {
         : sub.submittedAt.toISOString(),
     isLatest: sub.isLatest,
     grade: sub.grade ?? undefined,
+    isGradeOverridden: sub.isGradeOverridden ?? false,
+    overrideReason: sub.overrideReason ?? null,
+    overriddenAt:
+      typeof sub.overriddenAt === "string"
+        ? sub.overriddenAt
+        : (sub.overriddenAt?.toISOString() ?? null),
+    teacherFeedback: sub.teacherFeedback ?? null,
+    feedbackGivenAt:
+      typeof sub.feedbackGivenAt === "string"
+        ? sub.feedbackGivenAt
+        : (sub.feedbackGivenAt?.toISOString() ?? null),
   }
 }
 

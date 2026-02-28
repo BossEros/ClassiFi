@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom"
 import { Grid3x3, FileText, ArrowRight } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
-import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
@@ -77,7 +82,7 @@ export function StudentDashboardPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                  <Grid3x3 className="w-5 h-5 text-white" strokeWidth={2.5} />
+                  <Grid3x3 className="w-5 h-5 text-white" />
                 </div>
                 <CardTitle className="text-xl">My Classes</CardTitle>
               </div>
@@ -129,7 +134,7 @@ export function StudentDashboardPage() {
           <CardHeader className="pb-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <FileText className="w-5 h-5 text-white" strokeWidth={2.5} />
+                <FileText className="w-5 h-5 text-white" />
               </div>
               <CardTitle className="text-xl">Upcoming Deadlines</CardTitle>
             </div>

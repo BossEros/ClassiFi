@@ -53,7 +53,9 @@ describe("authSchemas", () => {
     expect(parseResult.success).toBe(false)
 
     if (!parseResult.success) {
-      expect(parseResult.error.issues[0]?.message).toBe("Password cannot be empty")
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Password cannot be empty",
+      )
     }
   })
 
@@ -80,7 +82,9 @@ describe("authSchemas", () => {
     expect(parseResult.success).toBe(false)
 
     if (!parseResult.success) {
-      expect(parseResult.error.issues[0]?.message).toBe("Passwords do not match")
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Passwords do not match",
+      )
       expect(parseResult.error.issues[0]?.path).toEqual(["confirmPassword"])
     }
   })
@@ -105,7 +109,9 @@ describe("authSchemas", () => {
     expect(parseResult.success).toBe(false)
 
     if (!parseResult.success) {
-      expect(parseResult.error.issues[0]?.message).toBe("Passwords do not match")
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Passwords do not match",
+      )
       expect(parseResult.error.issues[0]?.path).toEqual(["confirmPassword"])
     }
   })

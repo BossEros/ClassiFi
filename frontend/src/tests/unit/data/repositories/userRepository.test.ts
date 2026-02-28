@@ -2,19 +2,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { uploadUserAvatar } from "@/data/repositories/userRepository"
 import { apiClient } from "@/data/api/apiClient"
 
-const {
-  mockStorageFrom,
-  mockUpload,
-  mockGetPublicUrl,
-  mockRemove,
-  mockPatch,
-} = vi.hoisted(() => ({
-  mockStorageFrom: vi.fn(),
-  mockUpload: vi.fn(),
-  mockGetPublicUrl: vi.fn(),
-  mockRemove: vi.fn(),
-  mockPatch: vi.fn(),
-}))
+const { mockStorageFrom, mockUpload, mockGetPublicUrl, mockRemove, mockPatch } =
+  vi.hoisted(() => ({
+    mockStorageFrom: vi.fn(),
+    mockUpload: vi.fn(),
+    mockGetPublicUrl: vi.fn(),
+    mockRemove: vi.fn(),
+    mockPatch: vi.fn(),
+  }))
 
 vi.mock("@/data/api/supabaseClient", () => ({
   supabase: {
@@ -31,11 +26,14 @@ vi.mock("@/data/api/apiClient", () => ({
 }))
 
 describe("userRepository.uploadUserAvatar", () => {
+  const fixedTimestampMs = 1735689600000
   const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  const dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(fixedTimestampMs)
 
   beforeEach(() => {
     vi.clearAllMocks()
     errorSpy.mockClear()
+    dateNowSpy.mockReturnValue(fixedTimestampMs)
 
     mockStorageFrom.mockReturnValue({
       upload: mockUpload,
@@ -68,9 +66,11 @@ describe("userRepository.uploadUserAvatar", () => {
     })
     expect(mockGetPublicUrl).toHaveBeenCalledWith("user-1.png")
     expect(apiClient.patch).toHaveBeenCalledWith("/user/me/avatar", {
-      avatarUrl: "https://cdn.classifi.com/avatars/user-1.png",
+      avatarUrl: `https://cdn.classifi.com/avatars/user-1.png?v=${fixedTimestampMs}`,
     })
-    expect(result).toBe("https://cdn.classifi.com/avatars/user-1.png")
+    expect(result).toBe(
+      `https://cdn.classifi.com/avatars/user-1.png?v=${fixedTimestampMs}`,
+    )
   })
 
   it("derives file extension from MIME type when filename has no extension", async () => {
@@ -100,7 +100,11 @@ describe("userRepository.uploadUserAvatar", () => {
   it("does not attempt old-avatar deletion for non-avatar URLs", async () => {
     const file = new File(["binary"], "avatar.png", { type: "image/png" })
 
-    await uploadUserAvatar("user-1", file, "https://cdn.classifi.com/profile.png")
+    await uploadUserAvatar(
+      "user-1",
+      file,
+      "https://cdn.classifi.com/profile.png",
+    )
 
     expect(mockRemove).not.toHaveBeenCalled()
   })
@@ -128,7 +132,9 @@ describe("userRepository.uploadUserAvatar", () => {
     )
 
     expect(errorSpy).toHaveBeenCalled()
-    expect(result).toBe("https://cdn.classifi.com/avatars/user-1.png")
+    expect(result).toBe(
+      `https://cdn.classifi.com/avatars/user-1.png?v=${fixedTimestampMs}`,
+    )
   })
 
   it("maps bucket/not-found upload errors to configured-storage message", async () => {
@@ -171,6 +177,8 @@ describe("userRepository.uploadUserAvatar", () => {
     const result = await uploadUserAvatar("user-1", file)
 
     expect(errorSpy).toHaveBeenCalled()
-    expect(result).toBe("https://cdn.classifi.com/avatars/user-1.png")
+    expect(result).toBe(
+      `https://cdn.classifi.com/avatars/user-1.png?v=${fixedTimestampMs}`,
+    )
   })
 })

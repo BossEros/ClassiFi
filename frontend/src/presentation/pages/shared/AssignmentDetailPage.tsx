@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   FileCode,
@@ -27,6 +28,11 @@ import { AssignmentTestResultsCard } from "@/presentation/components/shared/assi
 import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData"
 import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow"
 import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview"
+import { TeacherFeedbackCard } from "@/presentation/components/shared/assignmentDetail/TeacherFeedbackCard"
+import { SubmissionFeedbackCard } from "@/presentation/components/shared/assignmentDetail/SubmissionFeedbackCard"
+import { GradeOverrideModal } from "@/presentation/components/teacher/gradebook/GradeOverrideModal"
+import { useGradeOverride } from "@/presentation/hooks/teacher/useGradebook"
+import type { Submission } from "@/business/models/assignment/types"
 
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
@@ -38,7 +44,8 @@ export function AssignmentDetailPage() {
     ? Number(selectedSubmissionIdValue)
     : NaN
   const selectedSubmissionId =
-    Number.isFinite(parsedSelectedSubmissionId) && parsedSelectedSubmissionId > 0
+    Number.isFinite(parsedSelectedSubmissionId) &&
+    parsedSelectedSubmissionId > 0
       ? parsedSelectedSubmissionId
       : null
 
@@ -85,6 +92,8 @@ export function AssignmentDetailPage() {
     setSubmissionTestResults,
     showToast,
   })
+  const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false)
+  const { override, removeOverride, isOverriding } = useGradeOverride()
 
   const {
     showPreview,
@@ -120,9 +129,9 @@ export function AssignmentDetailPage() {
   const latestSubmission = submissions[0]
   const activeSubmission =
     isTeacher && selectedSubmissionId !== null
-      ? submissions.find(
+      ? (submissions.find(
           (submission) => submission.id === selectedSubmissionId,
-        ) ?? latestSubmission
+        ) ?? latestSubmission)
       : latestSubmission
   const hasSubmitted = submissions.length > 0
   const canResubmit = tempAssignment.allowResubmission || !hasSubmitted
@@ -136,6 +145,108 @@ export function AssignmentDetailPage() {
   const handleClearFile = () => {
     clearPreviewFileName()
     clearSelectedFile()
+  }
+
+  const updateSubmissionInState = (updatedSubmission: Submission) => {
+    setSubmissions((prev) =>
+      prev.map((sub) =>
+        sub.id === updatedSubmission.id
+          ? { ...sub, ...updatedSubmission }
+          : sub,
+      ),
+    )
+  }
+
+  const handleFeedbackSaved = (updatedSubmission: Submission) => {
+    updateSubmissionInState(updatedSubmission)
+  }
+
+  const handleOpenOverrideModal = () => {
+    if (!activeSubmission) {
+      return
+    }
+
+    setIsOverrideModalOpen(true)
+  }
+
+  const handleCloseOverrideModal = () => {
+    if (isOverriding) {
+      return
+    }
+
+    setIsOverrideModalOpen(false)
+  }
+
+  const handleOverrideSubmit = async (
+    overriddenGradeValue: number,
+    overrideFeedbackText: string | null,
+  ) => {
+    if (!activeSubmission) {
+      return
+    }
+
+    try {
+      await override(
+        activeSubmission.id,
+        overriddenGradeValue,
+        overrideFeedbackText,
+      )
+
+      updateSubmissionInState({
+        ...activeSubmission,
+        grade: overriddenGradeValue,
+        isGradeOverridden: true,
+        overrideReason: overrideFeedbackText,
+        overriddenAt: new Date().toISOString(),
+      })
+
+      showToast("Score overridden successfully", "success")
+      setIsOverrideModalOpen(false)
+    } catch (overrideError) {
+      showToast(
+        overrideError instanceof Error
+          ? overrideError.message
+          : "Failed to override score",
+        "error",
+      )
+    }
+  }
+
+  const handleRemoveOverride = async () => {
+    if (!activeSubmission) {
+      return
+    }
+
+    const assignmentTotalScore = assignment?.totalScore || 100
+    const calculatedAutoGrade =
+      submissionTestResults && submissionTestResults.total > 0
+        ? Math.floor(
+            (submissionTestResults.passed / submissionTestResults.total) *
+              assignmentTotalScore,
+          )
+        : 0
+
+    try {
+      await removeOverride(activeSubmission.id)
+
+      updateSubmissionInState({
+        ...activeSubmission,
+        grade: calculatedAutoGrade,
+        isGradeOverridden: false,
+        overrideReason: null,
+        overriddenAt: null,
+      })
+
+      showToast("Score override removed", "success")
+      setIsOverrideModalOpen(false)
+    } catch (removeOverrideError) {
+      showToast(
+        removeOverrideError instanceof Error
+          ? removeOverrideError.message
+          : "Failed to remove score override",
+        "error",
+      )
+    }
   }
 
   return (
@@ -398,6 +509,22 @@ export function AssignmentDetailPage() {
                           <p className="text-gray-500 italic">Not graded yet</p>
                         )}
                       </div>
+
+                      {isTeacher && (
+                        <div className="pt-4 border-t border-white/10 space-y-2">
+                          <Button
+                            onClick={handleOpenOverrideModal}
+                            className="w-full h-9 text-xs bg-blue-600 hover:bg-blue-700"
+                          >
+                            Override Score
+                          </Button>
+                          {activeSubmission?.isGradeOverridden && (
+                            <p className="text-xs text-blue-300">
+                              Score has a manual override
+                            </p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
@@ -429,6 +556,24 @@ export function AssignmentDetailPage() {
                 onToggleSubmissionTestExpand={toggleSubmissionTestExpand}
                 onToggleInitialTestExpand={toggleInitialTestExpand}
               />
+
+              {/* Feedback Section */}
+              {activeSubmission && isTeacher && (
+                <TeacherFeedbackCard
+                  submissionId={activeSubmission.id}
+                  initialFeedback={activeSubmission.teacherFeedback ?? null}
+                  feedbackGivenAt={activeSubmission.feedbackGivenAt ?? null}
+                  onFeedbackSaved={handleFeedbackSaved}
+                />
+              )}
+              {activeSubmission &&
+                !isTeacher &&
+                activeSubmission.teacherFeedback && (
+                  <SubmissionFeedbackCard
+                    feedback={activeSubmission.teacherFeedback}
+                    feedbackGivenAt={activeSubmission.feedbackGivenAt ?? null}
+                  />
+                )}
             </div>
           </div>
         </>
@@ -444,6 +589,24 @@ export function AssignmentDetailPage() {
         }
         language={previewLanguage}
       />
+
+      {activeSubmission && isTeacher && (
+        <GradeOverrideModal
+          isOpen={isOverrideModalOpen}
+          onClose={handleCloseOverrideModal}
+          onSubmit={handleOverrideSubmit}
+          onRemoveOverride={
+            activeSubmission.isGradeOverridden
+              ? handleRemoveOverride
+              : undefined
+          }
+          isSubmitting={isOverriding}
+          studentName={activeSubmission.studentName || "Student"}
+          assignmentName={tempAssignment.assignmentName}
+          currentGrade={activeSubmission.grade ?? null}
+          totalScore={assignment?.totalScore || 100}
+        />
+      )}
     </DashboardLayout>
   )
 }

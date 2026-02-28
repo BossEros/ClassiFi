@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import {
-  Card,
-  CardContent,
-} from "@/presentation/components/ui/Card"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { Input } from "@/presentation/components/ui/Input"
 import { BackButton } from "@/presentation/components/ui/BackButton"
@@ -29,7 +26,10 @@ import {
   getAssignmentById,
   getAssignmentSubmissions,
 } from "@/business/services/assignmentService"
-import { deleteAssignment, getClassStudents } from "@/business/services/classService"
+import {
+  deleteAssignment,
+  getClassStudents,
+} from "@/business/services/classService"
 import {
   analyzeAssignmentSubmissions,
   getAssignmentSimilarityStatus,
@@ -58,7 +58,9 @@ export function AssignmentSubmissionsPage() {
   const [filteredSubmissions, setFilteredSubmissions] = useState<Submission[]>(
     [],
   )
-  const [classStudentCount, setClassStudentCount] = useState<number | null>(null)
+  const [classStudentCount, setClassStudentCount] = useState<number | null>(
+    null,
+  )
   const [studentAvatarUrlById, setStudentAvatarUrlById] = useState<
     Record<number, string | null>
   >({})
@@ -69,7 +71,8 @@ export function AssignmentSubmissionsPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [hasReusableSimilarityReport, setHasReusableSimilarityReport] =
     useState(false)
-  const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] = useState(false)
+  const [isDeleteAssignmentModalOpen, setIsDeleteAssignmentModalOpen] =
+    useState(false)
   const [isDeletingAssignment, setIsDeletingAssignment] = useState(false)
   const showToast = useToastStore((state) => state.showToast)
 
@@ -109,7 +112,10 @@ export function AssignmentSubmissionsPage() {
             return accumulator
           }, {})
         } catch (classStudentsError) {
-          console.error("Failed to fetch class students for missing count:", classStudentsError)
+          console.error(
+            "Failed to fetch class students for missing count:",
+            classStudentsError,
+          )
         }
 
         setAssignment(assignmentData)
@@ -471,7 +477,9 @@ export function AssignmentSubmissionsPage() {
           ) : (
             <AssignmentSubmissionsTable
               submissions={paginatedSubmissions}
-              deadline={assignment.deadline ? new Date(assignment.deadline) : null}
+              deadline={
+                assignment.deadline ? new Date(assignment.deadline) : null
+              }
               maxGrade={assignment.totalScore ?? 100}
               studentAvatarUrlById={studentAvatarUrlById}
               currentPage={currentSubmissionPage}

@@ -12,6 +12,11 @@ export const SubmissionResponseSchema = z.object({
   submittedAt: z.string(),
   isLatest: z.boolean(),
   grade: z.number().nullable(),
+  isGradeOverridden: z.boolean(),
+  overrideReason: z.string().nullable(),
+  overriddenAt: z.string().nullable(),
+  teacherFeedback: z.string().nullable(),
+  feedbackGivenAt: z.string().nullable(),
   studentName: z.string().optional(),
   assignmentName: z.string().optional(),
 })
@@ -112,3 +117,17 @@ export const SubmissionContentResponseSchema = z.object({
 export type SubmissionContentResponse = z.infer<
   typeof SubmissionContentResponseSchema
 >
+
+// ============================================================================
+// Feedback Body Schema
+// ============================================================================
+
+/** Request body for saving teacher feedback on a submission */
+export const SaveFeedbackBodySchema = z.object({
+  feedback: z
+    .string()
+    .min(1, "Feedback cannot be empty")
+    .max(2000, "Feedback cannot exceed 2000 characters"),
+})
+
+export type SaveFeedbackBody = z.infer<typeof SaveFeedbackBodySchema>

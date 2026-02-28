@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/shared/store/useAuthStore";
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
@@ -130,7 +130,9 @@ describe("ClassDetailPage - Pagination", () => {
     expect(screen.getByText("CURRENT & UPCOMING")).toBeInTheDocument()
     expect(screen.getByText("PAST ASSIGNMENTS")).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("button", { name: /Filter by Past/i }))
+    await userEvent.click(
+      screen.getByRole("button", { name: /Filter by Past/i }),
+    )
 
     await waitFor(() => {
       expect(screen.queryByText("CURRENT & UPCOMING")).not.toBeInTheDocument()

@@ -24,7 +24,9 @@ describe("GradeOverrideModal", () => {
     await user.click(screen.getByRole("button", { name: "Save Grade" }))
 
     await waitFor(() => {
-      expect(screen.getByText("Grade must be between 0 and 50")).toBeInTheDocument()
+      expect(
+        screen.getByText("Grade must be between 0 and 50"),
+      ).toBeInTheDocument()
     })
 
     expect(onSubmit).not.toHaveBeenCalled()

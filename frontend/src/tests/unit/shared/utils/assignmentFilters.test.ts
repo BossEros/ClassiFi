@@ -44,10 +44,14 @@ describe("assignmentFilters", () => {
       expect(result).toEqual(assignments)
     })
 
-    it("filters pending and not-started assignments", () => {
+    it("filters not-started and overdue-not-submitted assignments", () => {
       const assignments = [
         createAssignment({ id: 1, hasSubmitted: false }), // not-started
-        createAssignment({ id: 2, hasSubmitted: true }), // pending
+        createAssignment({
+          id: 2,
+          hasSubmitted: false,
+          deadline: "2024-01-10T23:59:59Z" as any,
+        }), // late (not submitted)
         createAssignment({ id: 3, hasSubmitted: true, grade: 95 }), // submitted
       ]
 
@@ -56,16 +60,17 @@ describe("assignmentFilters", () => {
       expect(result.map((a) => a.id)).toEqual([1, 2])
     })
 
-    it("filters submitted and late assignments", () => {
+    it("filters all submitted assignments regardless of grading state", () => {
       const assignments = [
         createAssignment({ id: 1, hasSubmitted: false }), // not-started
-        createAssignment({ id: 2, hasSubmitted: true, grade: 95 }), // submitted
+        createAssignment({ id: 2, hasSubmitted: true }), // pending review
         createAssignment({
           id: 3,
           hasSubmitted: true,
+          grade: 90,
           deadline: "2024-01-10T23:59:59Z" as any,
           submittedAt: "2024-01-12T10:00:00Z" as any,
-        }), // late
+        }), // submitted and graded
       ]
 
       const result = filterAssignments(assignments, "submitted")
@@ -120,15 +125,14 @@ describe("assignmentFilters", () => {
   describe("calculateFilterCounts", () => {
     it("calculates correct counts for all categories", () => {
       const assignments = [
-        createAssignment({ id: 1, hasSubmitted: false }), // not-started (pending)
-        createAssignment({ id: 2, hasSubmitted: true }), // pending
-        createAssignment({ id: 3, hasSubmitted: true, grade: 95 }), // submitted
+        createAssignment({ id: 1, hasSubmitted: false }), // not-started (pending bucket)
+        createAssignment({ id: 2, hasSubmitted: true }), // pending review (submitted bucket)
+        createAssignment({ id: 3, hasSubmitted: true, grade: 95 }), // submitted (submitted bucket)
         createAssignment({
           id: 4,
-          hasSubmitted: true,
+          hasSubmitted: false,
           deadline: "2024-01-10T23:59:59Z" as any,
-          submittedAt: "2024-01-12T10:00:00Z" as any,
-        }), // late (submitted)
+        }), // late not submitted (pending bucket)
       ]
 
       const result = calculateFilterCounts(assignments)

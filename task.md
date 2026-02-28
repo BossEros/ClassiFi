@@ -331,8 +331,62 @@
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
 
+# Settings Avatar Immediate Refresh Fix
+
+- [x] Investigate why profile picture updates only appear after logout/login
+- [x] Implement immediate avatar refresh after upload confirmation
+- [x] Update affected frontend unit tests
+- [x] Run frontend build verification
+
+# Frontend Icon Policy Standardization
+
+- [x] Replace inline SVG icon usage with `lucide-react` equivalents
+- [x] Standardize icon usage by removing inconsistent stroke overrides
+- [x] Add lint guardrails for icon-library and inline-SVG policy
+- [x] Run frontend build verification
+- [x] Run frontend lint verification
+
 # Similarity Results Transition UX Fix
 
 - [x] Remove first-render empty-state flash by hydrating similarity results from navigation state synchronously
 - [x] Preserve state sync for route-state updates after initial mount
 - [x] Run frontend build verification
+
+# Teacher Submission Detail Override Action
+
+- [x] Add override-score action button in teacher submission detail view
+- [x] Reuse existing grade override modal and hook for submit/remove logic
+- [x] Update assignment detail local submission state after override changes
+- [x] Replace `any` callback typing with concrete `Submission` type
+- [x] Map submission feedback/override fields in frontend mapper
+- [x] Run frontend build verification
+
+# Remove Gradebook Override Capability
+
+- [x] Remove grade override interaction from gradebook content
+- [x] Convert gradebook cells to read-only display
+- [x] Update frontend docs for gradebook behavior
+- [x] Run frontend build verification
+
+# Student Assignment Status Consistency Fix
+
+- [x] Pass `studentId` when fetching class assignments for student class detail
+- [x] Update assignment status precedence so submitted work is not labeled `late`
+- [x] Update targeted unit tests for repository/service/status/filter behavior
+- [x] Run frontend build verification
+- [x] Run targeted frontend test verification
+
+# Similarity Comparison Auto-Scroll
+
+- [x] Add auto-scroll behavior when a teacher selects a pair in the pairwise table
+- [x] Ensure auto-scroll triggers for repeated pair selections and first-time open
+- [x] Add/Update targeted unit test coverage for auto-scroll interaction
+- [x] Run frontend build verification
+
+# Automatic Similarity Analysis Queue - Design
+
+- [x] Inspect current submission -> plagiarism workflow and existing queue patterns
+- [x] Research queue implementation references via MCP (pg-boss, BullMQ, PostgreSQL locking)
+- [x] Define exact trigger rules for automatic similarity analysis
+- [x] Define job lifecycle, deduplication, retries, failure policy, and observability model
+- [x] Define implementation blueprint (modules, DB schema, API/status changes, rollout)

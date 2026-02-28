@@ -8,6 +8,7 @@ import { z } from "zod"
 export const NotificationTypeSchema = z.enum([
   "ASSIGNMENT_CREATED",
   "SUBMISSION_GRADED",
+  "SUBMISSION_FEEDBACK_GIVEN",
   "CLASS_ANNOUNCEMENT",
   "DEADLINE_REMINDER",
   "ENROLLMENT_CONFIRMED",

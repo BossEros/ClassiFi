@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/shared/store/useAuthStore";
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { renderHook, act, waitFor } from "@testing-library/react"
 import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentForm"

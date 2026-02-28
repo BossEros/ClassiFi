@@ -93,7 +93,10 @@ describe("JoinClassModal", () => {
     await user.click(screen.getByRole("button", { name: "Join Class" }))
 
     await waitFor(() => {
-      expect(studentDashboardService.joinClass).toHaveBeenCalledWith(10, "ABC123")
+      expect(studentDashboardService.joinClass).toHaveBeenCalledWith(
+        10,
+        "ABC123",
+      )
     })
 
     expect(onSuccess).toHaveBeenCalledTimes(1)

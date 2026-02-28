@@ -1,7 +1,15 @@
 import { useState } from "react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Button } from "@/presentation/components/ui/Button"
-import { Eye, EyeOff, ArrowLeft, GraduationCap, Users } from "lucide-react"
+import {
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  ArrowRight,
+  GraduationCap,
+  Users,
+  Check,
+} from "lucide-react"
 import { registerUser } from "@/business/services/authService"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
 import {
@@ -255,9 +263,16 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             </button>
           </div>
 
-          <Button onClick={() => void handleNext()} disabled={!canProceed()}>
-            Next
-          </Button>
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={() => void handleNext()}
+              disabled={!canProceed()}
+              className="px-8 flex items-center gap-2 transition-transform hover:translate-x-1"
+            >
+              Next
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -365,9 +380,16 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             )}
           </div>
 
-          <Button onClick={() => void handleNext()} disabled={!canProceed()}>
-            Next
-          </Button>
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={() => void handleNext()}
+              disabled={!canProceed()}
+              className="px-8 flex items-center gap-2 transition-transform hover:translate-x-1"
+            >
+              Next
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -480,14 +502,17 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             )}
           </div>
 
-          <Button
-            onClick={() => void handleNext()}
-            disabled={!canProceed()}
-            isLoading={isLoading}
-            className="mt-6"
-          >
-            {isLoading ? "Creating Account..." : "Create My Account"}
-          </Button>
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={() => void handleNext()}
+              disabled={!canProceed()}
+              isLoading={isLoading}
+              className="px-8 flex items-center gap-2 transition-transform hover:translate-x-1"
+            >
+              {isLoading ? "Creating Account..." : "Create My Account"}
+              {!isLoading && <ArrowRight className="w-4 h-4" />}
+            </Button>
+          </div>
 
           <p className="text-center text-xs text-slate-400">
             By submitting this form, I agree to the{" "}
@@ -504,19 +529,7 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
         <div className="space-y-8 text-center py-8">
           <div>
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 mb-6">
-              <svg
-                className="w-10 h-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <Check className="w-10 h-10 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2">
               Account Creation Complete
@@ -526,7 +539,9 @@ export function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             </p>
           </div>
 
-          <Button onClick={onSuccess}>Proceed to Login</Button>
+          <div className="flex justify-center">
+            <Button onClick={onSuccess}>Proceed to Login</Button>
+          </div>
         </div>
       )}
     </div>

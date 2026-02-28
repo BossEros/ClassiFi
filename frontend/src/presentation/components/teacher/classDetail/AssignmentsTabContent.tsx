@@ -117,10 +117,6 @@ export function AssignmentsTabContent({
               <p className="text-sm text-gray-500 mb-4">
                 Create your first assignment to get started.
               </p>
-              <Button onClick={onCreateAssignment} className="w-auto">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Assignment
-              </Button>
             </>
           ) : (
             <p className="text-sm text-gray-500">

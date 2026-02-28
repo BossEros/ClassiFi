@@ -23,11 +23,11 @@ export function filterAssignments(
     const status = getAssignmentStatus(assignment)
 
     if (filter === "pending") {
-      return status === "pending" || status === "not-started"
+      return status === "not-started" || status === "late"
     }
 
     if (filter === "submitted") {
-      return status === "submitted" || status === "late"
+      return status === "pending" || status === "submitted"
     }
 
     return false
@@ -115,11 +115,11 @@ export function calculateFilterCounts(assignments: Assignment[]): {
   const all = assignments.length
   const pending = assignments.filter((a) => {
     const status = getAssignmentStatus(a)
-    return status === "pending" || status === "not-started"
+    return status === "not-started" || status === "late"
   }).length
   const submitted = assignments.filter((a) => {
     const status = getAssignmentStatus(a)
-    return status === "submitted" || status === "late"
+    return status === "pending" || status === "submitted"
   }).length
 
   return { all, pending, submitted }

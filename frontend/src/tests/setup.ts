@@ -13,7 +13,8 @@ beforeAll(() => {
     onUnhandledRequest(request, print) {
       const requestUrl = new URL(request.url)
       const isSubmissionUploadRequest =
-        request.method === "POST" && requestUrl.pathname === "/api/v1/submissions"
+        request.method === "POST" &&
+        requestUrl.pathname === "/api/v1/submissions"
 
       if (isSubmissionUploadRequest) {
         return

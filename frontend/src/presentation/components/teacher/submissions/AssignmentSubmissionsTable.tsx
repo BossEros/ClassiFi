@@ -79,7 +79,10 @@ export function AssignmentSubmissionsTable({
           <tbody>
             {submissions.map((submission) => {
               const isLate = isLateSubmission(submission.submittedAt, deadline)
-              const submissionGradePercentage = getGradePercentage(submission.grade, maxGrade)
+              const submissionGradePercentage = getGradePercentage(
+                submission.grade,
+                maxGrade,
+              )
               const submissionGradeClass =
                 submission.grade === null || submission.grade === undefined
                   ? "text-slate-400"
@@ -94,7 +97,10 @@ export function AssignmentSubmissionsTable({
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <Avatar
-                        src={studentAvatarUrlById[submission.studentId] ?? undefined}
+                        src={
+                          studentAvatarUrlById[submission.studentId] ??
+                          undefined
+                        }
                         alt={submission.studentName || "Unknown Student"}
                         fallback={(submission.studentName || "Unknown Student")
                           .split(" ")
@@ -128,7 +134,12 @@ export function AssignmentSubmissionsTable({
                     </span>
                   </td>
 
-                  <td className={cn("px-6 py-4 text-center text-sm font-semibold", submissionGradeClass)}>
+                  <td
+                    className={cn(
+                      "px-6 py-4 text-center text-sm font-semibold",
+                      submissionGradeClass,
+                    )}
+                  >
                     {formatGrade(submission.grade, maxGrade)}
                   </td>
 

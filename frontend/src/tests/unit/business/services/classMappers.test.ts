@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { isValidClass, mapToClassArray } from "@/business/services/calendar/classMappers"
+import {
+  isValidClass,
+  mapToClassArray,
+} from "@/business/services/calendar/classMappers"
 import type { Class } from "@/business/models/dashboard/types"
 
 describe("classMappers", () => {

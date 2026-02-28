@@ -153,7 +153,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
   - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
   - **`FragmentsTable`**: Detailed view of matching code fragments
   - **`SimilarityBadge`**: Visual indicator for similarity percentage
-- **`GradebookTable`**: Manages student grades and overrides.
+- **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
 - **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
@@ -174,9 +174,10 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 - **`AdminDeleteUserModal`**: Admin delete-user confirmation flow uses `react-hook-form` + Zod confirmation schema.
 - **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
 - **`DeleteAccountModal`**: Account deletion confirmation flow uses `react-hook-form` + Zod schema for password + destructive confirmation.
-- **`GradeOverrideModal`**: Grade override input uses `react-hook-form` + dynamic Zod schema with assignment-score bounds.
+- **`GradeOverrideModal`**: Shared grade-override input (used from teacher submission detail view) with `react-hook-form` + dynamic Zod schema and assignment-score bounds.
 
 Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:
+
 - `auth/` for authentication forms
 - `class/` for class management forms
 - `assignment/` for assignment authoring forms
@@ -186,6 +187,7 @@ Frontend form validation schemas are colocated in `src/presentation/schemas/*` b
 ### RHF + Zod Form Pattern (Standard)
 
 All new or refactored Presentation-layer forms should follow this pattern:
+
 - Define a feature-local Zod schema in `src/presentation/schemas/<feature>/...`.
 - Infer form types from schema using `z.infer<typeof schema>`.
 - Use `useZodForm` to wire `react-hook-form` and `zodResolver` consistently.
@@ -193,6 +195,7 @@ All new or refactored Presentation-layer forms should follow this pattern:
 - Keep submit handlers delegating to Business services, preserving Clean Architecture boundaries.
 
 Reference implementations:
+
 - `src/presentation/components/auth/forms/LoginForm.tsx`
 - `src/presentation/pages/teacher/AssignmentFormPage.tsx`
 - `src/presentation/components/admin/AdminUserModal.tsx`
@@ -220,20 +223,20 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ### Available Services
 
-| Service                     | Location                                           | Purpose                                                                |
-| --------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
-| **authService**             | `src/business/services/authService.ts`             | User authentication, registration, password management                 |
-| **assignmentService**       | `src/business/services/assignmentService.ts`       | Assignment submission, file validation                                 |
-| **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                |
-| **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export               |
-| **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                   |
+| Service                     | Location                                           | Purpose                                                                              |
+| --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **authService**             | `src/business/services/authService.ts`             | User authentication, registration, password management                               |
+| **assignmentService**       | `src/business/services/assignmentService.ts`       | Assignment submission, file validation                                               |
+| **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                              |
+| **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export                             |
+| **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                                 |
 | **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, assignment-level similarity analysis, pairwise code comparison |
-| **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                     |
-| **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                     |
-| **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                   |
-| **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                             |
-| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, analytics)                          |
-| **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, account deletion)              |
+| **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                                   |
+| **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                                   |
+| **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                                 |
+| **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                                           |
+| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, analytics)                                        |
+| **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, account deletion)                            |
 
 ### Service Guidelines
 
@@ -289,7 +292,7 @@ The plagiarism detection workflow is pairwise-triage-first so teachers can revie
 - **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
 - **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
 - **Fast triage controls**: Search by student, sortable `Similarity` plus qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
-- **Details on demand**: `Compare Code` opens side-by-side match/diff inspection with fragment context.
+- **Details on demand**: `Compare Code` (or row click) opens side-by-side match/diff inspection with fragment context and auto-scrolls to the comparison panel.
 
 ### Toast Notifications
 
@@ -432,7 +435,7 @@ The application uses a strongly-typed system with branded types for enhanced typ
 
 Specialized types for the class detail page redesign:
 
-- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Status for student assignment cards and filtering
+- **`AssignmentStatus`**: `'pending' | 'not-started' | 'submitted' | 'late'` - Card status for student assignment cards (`late` means missed deadline without submission; submitted items stay `pending`/`submitted`)
 - **`AssignmentFilter`**: `'all' | 'pending' | 'submitted'` - Student filter options for assignment list
 - **`ClassTab`**: `'assignment' | 'students' | 'calendar'` - Tab navigation options
 
@@ -449,11 +452,11 @@ Specialized types for the class detail page redesign:
 2. **View Assignment Organization**:
    - Assignments are automatically grouped into "Current & Upcoming" and "Past Assignments"
    - Each assignment card shows the deadline date, title, programming language, and status
-   - Status badges indicate: pending (yellow), not-started (gray), submitted (teal), or late (red)
+   - Status badges indicate: pending (yellow, submitted but awaiting grade), not-started (gray), submitted (teal), or late (red, missed deadline with no submission)
 3. **Filter Assignments**:
    - Click "All Assignments" to view all assignments
-   - Click "Pending" to view ungraded submissions and not-yet-started assignments
-   - Click "Submitted" to view graded assignments and late submissions
+   - Click "Pending" to view tasks that still need submission (not-started + missed)
+   - Click "Submitted" to view assignments already submitted (graded and pending review)
    - Filter counts update dynamically based on assignment status
 4. **View Assignment Details**:
    - Click on any assignment card to navigate to the assignment detail page
@@ -469,6 +472,7 @@ Specialized types for the class detail page redesign:
 2. **View Class Information**:
    - Class header displays instructor name, schedule (days and time), and class code
    - Access quick actions: View Gradebook, Edit Class, Delete Class
+   - Gradebook provides a read-only grade overview and CSV export (no inline grade override actions)
    - Class code badge is styled with teal colors for easy visibility
 3. **Manage Assignments**:
    - View all assignments organized by current/upcoming and past
@@ -481,6 +485,7 @@ Specialized types for the class detail page redesign:
    - Search includes a leading icon and shares the action bar row with the similarity action button (left search, right action button)
    - Clicking a submissions table row or the `View Details` action opens assignment review for the selected submission (`submissionId` in URL query)
    - Teacher assignment review prioritizes selected submission status and test-case results; the teacher submission-history list is removed
+   - Teacher assignment review includes an `Override Score` action in the submission status card (uses the shared grade override modal and supports removing an existing override)
    - Teacher/admin review shows hidden test-case details when present; students still see hidden-case placeholders only
    - Test result details render vertically (`Input` above `Expected`, `Actual` below) to avoid misleading line-break interpretation
    - The similarity action button shows `Check Similarities` when a fresh run is needed and `Review Similarities` when a reusable report already exists
@@ -532,6 +537,10 @@ Specialized types for the class detail page redesign:
 - Use **Tailwind CSS** utility classes.
 - Avoid arbitrary values (e.g., `w-[123px]`); use theme spacing.
 - Common UI components (`Button`, `Card`) are in `src/presentation/components/ui`.
+- UI icon policy:
+  - Use `lucide-react` only for frontend UI icons.
+  - Do not use inline `<svg>` for UI icons in Presentation components.
+  - Keep icon stroke style consistent by avoiding ad-hoc per-instance `strokeWidth` overrides unless intentionally required.
 
 ### Form Validation Standard (RHF + Zod)
 
@@ -582,6 +591,7 @@ The project maintains comprehensive test coverage for:
 - E2E workflows (login, class creation, assignment submission)
 
 High-signal coverage gate:
+
 - `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
