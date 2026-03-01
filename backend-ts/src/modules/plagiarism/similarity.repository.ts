@@ -1,5 +1,5 @@
 // db is accessed via BaseRepository.db
-import { and, desc, eq, ne } from "drizzle-orm"
+import { and, desc, eq, ne, sql } from "drizzle-orm"
 import {
   similarityReports,
   type SimilarityReport,
@@ -29,8 +29,22 @@ export class SimilarityRepository extends BaseRepository<
   SimilarityReport,
   NewSimilarityReport
 > {
+  private static readonly REPORT_LOCK_NAMESPACE = 44121
+
   constructor() {
     super(similarityReports)
+  }
+
+  /**
+   * Acquire a transaction-scoped advisory lock for assignment report writes.
+   *
+   * This prevents concurrent analysis transactions (for the same assignment)
+   * from inserting multiple reports before old-report pruning runs.
+   */
+  async acquireAssignmentReportLock(assignmentId: number): Promise<void> {
+    await this.db.execute(
+      sql`SELECT pg_advisory_xact_lock(${SimilarityRepository.REPORT_LOCK_NAMESPACE}, ${assignmentId})`,
+    )
   }
 
   /** Create a new similarity report */
