@@ -65,3 +65,25 @@ Ensure `saveTeacherFeedback` returns success once feedback persistence succeeds,
 ## Verification
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Semantic Score Zero Investigation + Duplicate Report Race Guard
+
+## Scope
+
+Investigate why semantic scores are `0` for some similarity results and harden report generation consistency when concurrent analyses occur.
+
+1. Improve semantic-sidecar reliability in backend client calls (timeout/retry behavior and observability).
+2. Prevent concurrent assignment report writes from leaving multiple reports for the same assignment.
+3. Add regression-focused backend unit coverage.
+4. Re-run required backend verification commands.
+
+## Execution Checklist
+
+- [x] Add semantic client resilience settings (timeout and retries) to config.
+- [x] Update `SemanticSimilarityClient` to retry transient failures before falling back to `0`.
+- [x] Add assignment-scoped DB transaction lock before report persistence/delete-old flow.
+- [x] Add/adjust tests for semantic client behavior and assignment lock usage.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.

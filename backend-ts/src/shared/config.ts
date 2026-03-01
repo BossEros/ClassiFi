@@ -44,11 +44,27 @@ const EnvSchema = z
     SEMANTIC_SERVICE_URL: z.string().url().default("http://localhost:8002"),
     SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS: z
       .string()
-      .default("4")
+      .default("2")
       .transform(Number)
       .refine(
         (v) => Number.isInteger(v) && v > 0,
         "SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS must be a positive integer",
+      ),
+    SEMANTIC_SIMILARITY_TIMEOUT_MS: z
+      .string()
+      .default("10000")
+      .transform(Number)
+      .refine(
+        (v) => Number.isInteger(v) && v > 0,
+        "SEMANTIC_SIMILARITY_TIMEOUT_MS must be a positive integer",
+      ),
+    SEMANTIC_SIMILARITY_MAX_RETRIES: z
+      .string()
+      .default("1")
+      .transform(Number)
+      .refine(
+        (v) => Number.isInteger(v) && v >= 0,
+        "SEMANTIC_SIMILARITY_MAX_RETRIES must be an integer >= 0",
       ),
 
     // Test Execution Timeout (in seconds)
@@ -173,6 +189,8 @@ export const settings = {
   semanticServiceUrl: env.SEMANTIC_SERVICE_URL,
   semanticSimilarityMaxConcurrentRequests:
     env.SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS,
+  semanticSimilarityTimeoutMs: env.SEMANTIC_SIMILARITY_TIMEOUT_MS,
+  semanticSimilarityMaxRetries: env.SEMANTIC_SIMILARITY_MAX_RETRIES,
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,

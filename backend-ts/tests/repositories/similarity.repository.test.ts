@@ -10,6 +10,7 @@ vi.mock("../../src/shared/database.js", () => ({
     insert: vi.fn(),
     select: vi.fn(),
     delete: vi.fn(),
+    execute: vi.fn(),
   },
 }))
 
@@ -91,6 +92,22 @@ describe("SimilarityRepository", () => {
 
       expect(result.id).toBe(1)
       expect(result.assignmentId).toBe(1)
+    })
+  })
+
+  // ============ acquireAssignmentReportLock Tests ============
+  describe("acquireAssignmentReportLock Logic", () => {
+    it("should acquire a transaction-scoped assignment lock", async () => {
+      const executeMock = vi.fn().mockResolvedValue(undefined)
+      mockDb.execute = executeMock
+
+      const { SimilarityRepository } =
+        await import("../../src/modules/plagiarism/similarity.repository.js")
+      const similarityRepo = new SimilarityRepository()
+
+      await similarityRepo.acquireAssignmentReportLock(42)
+
+      expect(executeMock).toHaveBeenCalledTimes(1)
     })
   })
 
