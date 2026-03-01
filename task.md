@@ -443,3 +443,12 @@
 - [x] Update auto-analysis unit tests to validate teacher resolution behavior
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Semantic Similarity Throttling
+
+- [x] Replace unbounded semantic `Promise.all` fan-out with bounded concurrency workers
+- [x] Add configurable semantic max-concurrency setting in backend config
+- [x] Add plagiarism service test that validates bounded max in-flight semantic requests
+- [x] Update backend `.env.example` and backend documentation
+- [x] Run backend typecheck verification
+- [x] Run backend test verification

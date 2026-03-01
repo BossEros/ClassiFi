@@ -74,6 +74,7 @@ describe("PlagiarismService", () => {
   let mockPersistenceService: any
   let mockFileService: any
   let mockDetectorFactory: any
+  let mockSemanticClient: any
 
   beforeEach(() => {
     mockAssignmentRepo = {
@@ -100,6 +101,11 @@ describe("PlagiarismService", () => {
       create: vi.fn().mockReturnValue(mockDetector),
     }
 
+    mockSemanticClient = {
+      getSemanticScore: vi.fn().mockResolvedValue(0),
+      healthCheck: vi.fn(),
+    }
+
     // Reset legacy store
     ;(PlagiarismService as any).prototype.legacyReportsStore = new Map()
 
@@ -108,6 +114,7 @@ describe("PlagiarismService", () => {
       mockDetectorFactory,
       mockFileService,
       mockPersistenceService,
+      mockSemanticClient,
     )
   })
 
@@ -259,6 +266,70 @@ describe("PlagiarismService", () => {
       expect(mockFileService.fetchSubmissionFiles).not.toHaveBeenCalled()
       expect(mockDetectorFactory.create).not.toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).not.toHaveBeenCalled()
+    })
+
+    it("throttles semantic similarity requests with bounded concurrency", async () => {
+      const assignment = createMockAssignment({ programmingLanguage: "python" })
+      const mockFiles = [
+        { path: "p1", content: "c1", info: {} },
+        { path: "p2", content: "c2", info: {} },
+      ]
+      const buildPair = (
+        leftSubmissionId: number,
+        rightSubmissionId: number,
+      ) => ({
+        id: leftSubmissionId * 10 + rightSubmissionId,
+        similarity: 0.8,
+        overlap: 20,
+        longest: 8,
+        leftCovered: 40,
+        rightCovered: 45,
+        leftTotal: 80,
+        rightTotal: 90,
+        leftFile: {
+          path: `left-${leftSubmissionId}.py`,
+          filename: `left-${leftSubmissionId}.py`,
+          content: `print(${leftSubmissionId})`,
+          lineCount: 1,
+          info: { submissionId: leftSubmissionId.toString() },
+        },
+        rightFile: {
+          path: `right-${rightSubmissionId}.py`,
+          filename: `right-${rightSubmissionId}.py`,
+          content: `print(${rightSubmissionId})`,
+          lineCount: 1,
+          info: { submissionId: rightSubmissionId.toString() },
+        },
+        buildFragments: () => [],
+      })
+      const pairCount = 12
+      const throttlingReport = {
+        files: Array.from({ length: pairCount }, (_, index) => ({
+          path: `file-${index + 1}.py`,
+        })),
+        getPairs: () =>
+          Array.from({ length: pairCount }, (_, index) =>
+            buildPair(index + 1, index + 101),
+          ),
+      }
+      let inFlightRequests = 0
+      let maxInFlightRequests = 0
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
+      mockDetector.analyze.mockResolvedValueOnce(throttlingReport)
+      mockSemanticClient.getSemanticScore.mockImplementation(async () => {
+        inFlightRequests += 1
+        maxInFlightRequests = Math.max(maxInFlightRequests, inFlightRequests)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        inFlightRequests -= 1
+        return 0.6
+      })
+
+      await plagiarismService.analyzeAssignmentSubmissions(1, 1)
+
+      expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(pairCount)
+      expect(maxInFlightRequests).toBeLessThanOrEqual(4)
     })
 
     // Note: Logic for insufficient files/submissions is now largely inside

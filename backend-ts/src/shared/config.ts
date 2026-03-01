@@ -42,6 +42,14 @@ const EnvSchema = z
 
     // Semantic Similarity Service (GraphCodeBERT sidecar)
     SEMANTIC_SERVICE_URL: z.string().url().default("http://localhost:8002"),
+    SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS: z
+      .string()
+      .default("4")
+      .transform(Number)
+      .refine(
+        (v) => Number.isInteger(v) && v > 0,
+        "SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS must be a positive integer",
+      ),
 
     // Test Execution Timeout (in seconds)
     TEST_EXECUTION_TIMEOUT_SECONDS: z
@@ -163,6 +171,8 @@ export const settings = {
 
   // Semantic Similarity Service
   semanticServiceUrl: env.SEMANTIC_SERVICE_URL,
+  semanticSimilarityMaxConcurrentRequests:
+    env.SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS,
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,

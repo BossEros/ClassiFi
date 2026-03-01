@@ -4,7 +4,7 @@ import { createLogger } from "@/shared/logger.js"
 
 /** Response shape from the semantic similarity microservice */
 interface SemanticSimilarityResponse {
-  score: number
+  score?: number | string | null
 }
 
 const logger = createLogger("SemanticSimilarityClient")
@@ -49,8 +49,16 @@ export class SemanticSimilarityClient {
       }
 
       const data = (await response.json()) as SemanticSimilarityResponse
+      const parsedScore =
+        typeof data?.score === "string"
+          ? Number.parseFloat(data.score)
+          : Number(data?.score)
 
-      return data.score
+      if (!Number.isFinite(parsedScore)) {
+        return 0
+      }
+
+      return Math.min(1, Math.max(0, parsedScore))
     } catch (error) {
       logger.warn(
         "Semantic service unavailable — falling back to semanticScore 0",

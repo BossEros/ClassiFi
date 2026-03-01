@@ -31,6 +31,7 @@ import {
 } from "@/shared/errors.js"
 import type { MatchFragment } from "@/models/index.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { settings } from "@/shared/config.js"
 
 /** Request body for analyzing files */
 export interface AnalyzeRequest {
@@ -595,7 +596,7 @@ export class PlagiarismService {
   }
 
   /**
-   * Compute semantic similarity scores for all pairs concurrently.
+   * Compute semantic similarity scores for all pairs with bounded concurrency.
    *
    * Runs for all supported languages (Python, Java, C).
    * Any individual pair failure is absorbed by the client (returns 0).
@@ -605,26 +606,64 @@ export class PlagiarismService {
     _language: LanguageName,
   ): Promise<Map<string, number>> {
     const scores = new Map<string, number>()
+    const pairRequests: Array<{
+      key: string
+      leftContent: string
+      rightContent: string
+    }> = []
+    const queuedPairKeys = new Set<string>()
+
+    for (const pair of pairs) {
+      const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0")
+      const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0")
+
+      if (!leftSubId || !rightSubId) {
+        continue
+      }
+
+      const [sub1, sub2] =
+        leftSubId < rightSubId
+          ? [leftSubId, rightSubId]
+          : [rightSubId, leftSubId]
+      const key = `${sub1}-${sub2}`
+
+      if (queuedPairKeys.has(key)) {
+        continue
+      }
+
+      queuedPairKeys.add(key)
+      pairRequests.push({
+        key,
+        leftContent: pair.leftFile.content,
+        rightContent: pair.rightFile.content,
+      })
+    }
+
+    if (pairRequests.length === 0) {
+      return scores
+    }
+
+    const maxConcurrency = Math.max(
+      1,
+      settings.semanticSimilarityMaxConcurrentRequests ?? 4,
+    )
+    const workerCount = Math.min(maxConcurrency, pairRequests.length)
+    let nextRequestIndex = 0
 
     await Promise.all(
-      pairs.map(async (pair) => {
-        const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0")
-        const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0")
+      Array.from({ length: workerCount }, async () => {
+        while (nextRequestIndex < pairRequests.length) {
+          const requestIndex = nextRequestIndex
+          nextRequestIndex += 1
+          const request = pairRequests[requestIndex]
 
-        if (!leftSubId || !rightSubId) return
+          const score = await this.semanticClient.getSemanticScore(
+            request.leftContent,
+            request.rightContent,
+          )
 
-        const [sub1, sub2] =
-          leftSubId < rightSubId
-            ? [leftSubId, rightSubId]
-            : [rightSubId, leftSubId]
-        const key = `${sub1}-${sub2}`
-
-        const score = await this.semanticClient.getSemanticScore(
-          pair.leftFile.content,
-          pair.rightFile.content,
-        )
-
-        scores.set(key, score)
+          scores.set(request.key, score)
+        }
       }),
     )
 
