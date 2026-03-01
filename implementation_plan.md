@@ -838,3 +838,142 @@ Improve teacher similarity-review usability by automatically scrolling to the co
 - [x] Add/update `SimilarityResultsPage` unit test for `scrollIntoView`.
 - [x] Run `frontend`: targeted `vitest` for updated page test.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Admin Create Class Full-Page Flow
+
+## Scope
+
+Replace admin class creation modal with a dedicated full-page form that matches teacher create-class UX, while adding teacher search-and-select assignment.
+
+1. Add a dedicated `AdminClassFormPage` with teacher-like layout and schedule/academic sections.
+2. Add searchable teacher assignment UI (name/email/id) and bind selected teacher to form validation.
+3. Route admin create action to the new page and keep edit modal flow intact.
+4. Verify frontend build and update frontend documentation routes.
+
+## Execution Checklist
+
+- [x] Add `adminClassPageFormSchema` and type for page-level admin class creation.
+- [x] Create `AdminClassFormPage` mirroring teacher form styling with teacher search-and-select.
+- [x] Add admin route `/dashboard/admin/classes/new`.
+- [x] Rewire admin classes `Create Class` CTA to navigate to the new route.
+- [x] Keep admin class edit modal behavior unchanged.
+- [x] Run `frontend`: `npm run build`.
+- [x] Update `frontend/documentation.md` route notes.
+
+# Implementation Plan - Admin Top Bar Consistency
+
+## Scope
+
+Apply the shared dashboard top navigation bar to all admin pages so admin UI matches teacher/student layout consistency.
+
+1. Add `useTopBar` wiring to every admin page that renders `DashboardLayout`.
+2. Ensure loading/error branches in admin pages also render with the same top bar.
+3. Convert `AdminEnrollmentsPage` to use `DashboardLayout` with top bar and retain existing content.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Wire `useTopBar` into `AdminDashboardPage`.
+- [x] Wire `useTopBar` into `AdminUsersPage`.
+- [x] Wire `useTopBar` into `AdminClassesPage`.
+- [x] Wire `useTopBar` into `AdminClassDetailPage` including loading/error branches.
+- [x] Refactor `AdminEnrollmentsPage` to use `DashboardLayout` + admin auth guard + top bar.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Admin Class Form Modal Removal (Create/Edit Page Unification)
+
+## Scope
+
+Replace admin class edit modal with route-based full-page flow (same pattern as teacher), and remove legacy admin class create/edit modal implementation.
+
+1. Extend `AdminClassFormPage` to support both create and edit modes.
+2. Add admin edit route and navigate table `Edit Class` action to that route.
+3. Remove modal usage from `AdminClassesPage` and delete modal component/test files.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Add edit mode behavior in `AdminClassFormPage` using route params + prefilled class data.
+- [x] Add admin edit route: `/dashboard/admin/classes/:classId/edit`.
+- [x] Rewire class table `Edit Class` action to navigate to admin edit page.
+- [x] Remove `AdminCreateClassModal` usage from `AdminClassesPage`.
+- [x] Delete legacy `AdminCreateClassModal` component and its unit test file.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Admin Class Archive/Restore Action Consistency
+
+## Scope
+
+Ensure admin class action menu supports both directions of status management:
+
+1. Keep archiving behavior for active classes.
+2. Add restore behavior for archived classes.
+3. Use clear user-facing labels that match behavior.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Add admin business service method to restore archived classes via existing update contract.
+- [x] Update admin class actions menu to conditionally show `Archive Class` or `Restore Class`.
+- [x] Wire restore handler in `AdminClassesPage` with success/error toasts and refresh.
+- [x] Update class-management helper text to include restore behavior.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Admin Class Detail UX Simplification
+
+## Scope
+
+Refine the admin class detail page into a single, clean student-management view:
+
+1. Remove Students/Assignments tabs and remove assignment content from this page.
+2. Improve class header readability and spacing for class metadata.
+3. Widen and restyle the student search bar to match admin search UX.
+4. Fix action visibility so remove-student control is visible without row hover.
+5. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Remove tab state/UI and assignment panel from admin class detail page.
+- [x] Redesign class header layout for clearer information hierarchy.
+- [x] Restyle and widen student search block.
+- [x] Make remove-student action icon visible by default.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Automatic Similarity Report Teacher Attribution
+
+## Scope
+
+Ensure automatically generated similarity reports are attributed to a class teacher instead of storing `teacher_id` as `null`.
+
+1. Add a repository helper to resolve class teacher by assignment ID.
+2. Add persistence fallback to resolve `teacherId` when callers do not provide it.
+3. Update auto-analysis tests to verify teacher resolution is passed into analysis.
+4. Verify backend typecheck and tests.
+
+## Execution Checklist
+
+- [x] Add `SimilarityRepository.getTeacherIdByAssignment`.
+- [x] Use fallback teacher resolution in plagiarism report persistence.
+- [x] Update `PlagiarismAutoAnalysisService` tests for class teacher resolution.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Semantic Similarity Throttling
+
+## Scope
+
+Prevent semantic-sidecar overload by replacing unbounded pairwise fan-out with bounded concurrency during assignment similarity analysis.
+
+1. Add bounded concurrency execution in plagiarism semantic scoring.
+2. Add a configurable environment setting for semantic max in-flight requests.
+3. Add unit coverage validating concurrency cap behavior.
+4. Update backend environment/docs and re-run required backend verification.
+
+## Execution Checklist
+
+- [x] Replace `Promise.all` fan-out in semantic scoring with a bounded worker pool.
+- [x] Add `SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS` config support.
+- [x] Add/adjust plagiarism service unit tests for bounded semantic concurrency.
+- [x] Update backend env example and backend documentation.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.

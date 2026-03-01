@@ -24,6 +24,7 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as adminService from "@/business/services/adminService"
 import type { AdminStats, ActivityItem } from "@/business/services/adminService"
 import { formatTimeAgo } from "@/presentation/utils/dateUtils"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 interface DashboardStat {
   label: string
@@ -111,8 +112,14 @@ export function AdminDashboardPage() {
       ]
     : []
 
+  const userInitials = user
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       {/* Page Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

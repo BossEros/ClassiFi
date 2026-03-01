@@ -29,6 +29,7 @@ import type { AdminUser } from "@/business/services/adminService"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function AdminUsersPage() {
   const navigate = useNavigate()
@@ -149,8 +150,14 @@ export function AdminUsersPage() {
     }
   }
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

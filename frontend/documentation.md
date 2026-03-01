@@ -113,7 +113,7 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 3.  **Role-Based Routes**:
     - **Functions**: `RoleBasedDashboard`, `RoleBasedClassesPage`.
     - **Logic**: Conditionally renders `StudentDashboardPage`, `TeacherDashboardPage`, or `AdminDashboardPage` based on `user.role` ('student', 'teacher', 'admin').
-    - **Teacher-Only**: `TeacherOnlyRoute` is applied for class creation (`/dashboard/classes/new`). Other teacher pages are protected by auth, with teacher/admin-only controls gated in-page where needed.
+    - **Teacher-Only**: `TeacherOnlyRoute` is applied for teacher class creation (`/dashboard/classes/new`). Other teacher pages are protected by auth, with teacher/admin-only controls gated in-page where needed.
 
 ### Key Routes
 
@@ -122,8 +122,15 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 | `/dashboard`                 | `RoleBasedDashboard`       | Main landing page after login.     |
 | `/dashboard/classes`         | `RoleBasedClassesPage`     | List of enrolled/teaching classes. |
 | `/dashboard/classes/:id`     | `RoleBasedClassDetailPage` | detailed view of a class.          |
+| `/dashboard/admin/classes/new` | `AdminClassFormPage`     | Admin class creation page.         |
+| `/dashboard/admin/classes/:classId/edit` | `AdminClassFormPage` | Admin class edit page.             |
 | `/dashboard/assignments/:id` | `AssignmentDetailPage`     | IDE and submission interface.      |
 | `/dashboard/users`           | `AdminUsersPage`           | User management (Admin only).      |
+
+Admin class detail behavior:
+- `AdminClassDetailPage` is a student-management focused view.
+- Admins can review class metadata, search enrolled students, enroll new students, and remove students.
+- Assignment-list tabs are intentionally not shown in this admin detail view.
 
 ---
 

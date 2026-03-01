@@ -1,10 +1,34 @@
-import { GraduationCap, Construction } from "lucide-react"
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { Construction, GraduationCap } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export default function AdminEnrollmentsPage() {
+  const navigate = useNavigate()
+  const currentUser = useAuthStore((state) => state.user)
+
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/login")
+      return
+    }
+
+    if (currentUser.role !== "admin") {
+      navigate("/dashboard")
+    }
+  }, [currentUser, navigate])
+
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+    <DashboardLayout topBar={topBar}>
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 border border-violet-500/30">
             <GraduationCap className="w-8 h-8 text-violet-400" />
@@ -19,7 +43,6 @@ export default function AdminEnrollmentsPage() {
           </div>
         </div>
 
-        {/* Under Construction Card */}
         <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-12 text-center">
           <div className="inline-flex p-4 rounded-full bg-amber-500/10 border border-amber-500/30 mb-6">
             <Construction className="w-12 h-12 text-amber-400" />
@@ -44,12 +67,11 @@ export default function AdminEnrollmentsPage() {
           </div>
         </div>
 
-        {/* Tip */}
         <p className="text-center text-slate-500 text-sm mt-6">
           Tip: You can manage enrollments for individual classes from the Class
           Detail page.
         </p>
       </div>
-    </div>
+    </DashboardLayout>
   )
 }

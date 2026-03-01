@@ -5,12 +5,14 @@ import {
   ChevronRight,
   Loader2,
   MoreVertical,
+  RotateCcw,
   Search,
   Trash2,
   User,
   Users,
 } from "lucide-react"
 import type { MouseEvent } from "react"
+import { createPortal } from "react-dom"
 import type { AdminClass } from "@/business/services/adminService"
 
 interface DropdownPosition {
@@ -32,6 +34,7 @@ interface AdminClassesTableProps {
   onNextPage: () => void
   onEditClass: (selectedClass: AdminClass) => void
   onArchiveClass: (classId: number) => void
+  onRestoreClass: (classId: number) => void
   onRequestDeleteClass: (selectedClass: AdminClass) => void
   onCloseDropdown: () => void
 }
@@ -71,12 +74,27 @@ export function AdminClassesTable({
   onNextPage,
   onEditClass,
   onArchiveClass,
+  onRestoreClass,
   onRequestDeleteClass,
   onCloseDropdown,
 }: AdminClassesTableProps) {
   const activeClass = activeDropdown
     ? (classes.find((item) => item.id === activeDropdown.id) ?? null)
     : null
+
+  const dropdownWidthPx = 224
+  const dropdownVerticalOffsetPx = 8
+  const viewportPaddingPx = 8
+  const maxLeftPx =
+    typeof window !== "undefined"
+      ? Math.max(viewportPaddingPx, window.innerWidth - dropdownWidthPx - viewportPaddingPx)
+      : activeDropdown?.x ?? 0
+  const safeLeftPx = activeDropdown
+    ? Math.min(Math.max(activeDropdown.x, viewportPaddingPx), maxLeftPx)
+    : 0
+  const safeTopPx = activeDropdown
+    ? Math.max(activeDropdown.y, dropdownVerticalOffsetPx)
+    : 0
 
   return (
     <div className="relative rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden">
@@ -198,6 +216,7 @@ export function AdminClassesTable({
                   <td className="px-6 py-5 text-right">
                     <div className="relative inline-block">
                       <button
+                        data-admin-class-dropdown-trigger="true"
                         onClick={(event) =>
                           onDropdownClick(event, selectedClass.id)
                         }
@@ -267,52 +286,67 @@ export function AdminClassesTable({
         </div>
       )}
 
-      {activeDropdown && activeClass && (
-        <div
-          className="fixed w-56 bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-[100] overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5"
-          style={{
-            left: activeDropdown.x,
-            top: activeDropdown.y,
-          }}
-          onClick={(event) => event.stopPropagation()}
-        >
-          <div className="p-1.5 space-y-1">
-            <button
-              onClick={() => {
-                onEditClass(activeClass)
-                onCloseDropdown()
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
-            >
-              <BookOpen className="w-4 h-4 text-blue-400" />
-              Edit Class
-            </button>
-
-            {activeClass.isActive && (
+      {activeDropdown &&
+        activeClass &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            data-admin-class-dropdown-menu="true"
+            className="fixed w-56 bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-[11000] overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5"
+            style={{
+              left: safeLeftPx,
+              top: safeTopPx,
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="p-1.5 space-y-1">
               <button
-                onClick={() => onArchiveClass(activeClass.id)}
+                onClick={() => {
+                  onEditClass(activeClass)
+                  onCloseDropdown()
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
               >
-                <Archive className="w-4 h-4 text-yellow-500" />
-                Archive Class
+                <BookOpen className="w-4 h-4 text-blue-400" />
+                Edit Class
               </button>
-            )}
 
-            <div className="h-[1px] bg-white/5 mx-2" />
+              {activeClass.isActive && (
+                <button
+                  onClick={() => onArchiveClass(activeClass.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
+                >
+                  <Archive className="w-4 h-4 text-yellow-500" />
+                  Archive Class
+                </button>
+              )}
 
-            <button
-              onClick={() => {
-                onRequestDeleteClass(activeClass)
-                onCloseDropdown()
-              }}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-all group/delete"
-            >
-              <Trash2 className="w-4 h-4 group-hover/delete:animate-bounce" />
-              Delete Class
-            </button>
-          </div>
-        </div>
-      )}
+              {!activeClass.isActive && (
+                <button
+                  onClick={() => onRestoreClass(activeClass.id)}
+                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
+                >
+                  <RotateCcw className="w-4 h-4 text-emerald-400" />
+                  Restore Class
+                </button>
+              )}
+
+              <div className="h-[1px] bg-white/5 mx-2" />
+
+              <button
+                onClick={() => {
+                  onRequestDeleteClass(activeClass)
+                  onCloseDropdown()
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-all group/delete"
+              >
+                <Trash2 className="w-4 h-4 group-hover/delete:animate-bounce" />
+                Delete Class
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }

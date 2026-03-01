@@ -10,6 +10,7 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
+import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import {
   PLAGIARISM_CONFIG,
   PLAGIARISM_LANGUAGE_MAP,
@@ -30,6 +31,7 @@ import {
 } from "@/shared/errors.js"
 import type { MatchFragment } from "@/models/index.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { settings } from "@/shared/config.js"
 
 /** Request body for analyzing files */
 export interface AnalyzeRequest {
@@ -128,6 +130,8 @@ export class PlagiarismService {
     private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.plagiarismPersistence)
     private persistenceService: PlagiarismPersistenceService,
+    @inject(DI_TOKENS.services.semanticSimilarityClient)
+    private semanticClient: SemanticSimilarityClient,
   ) {
     // Run cleanup every hour and store the interval ID for cleanup
     this.cleanupIntervalId = setInterval(
@@ -408,10 +412,15 @@ export class PlagiarismService {
       )
     }
 
-    // Step 5: Run plagiarism analysis
+    // Step 5: Run structural plagiarism analysis
     const detector = this.detectorFactory.create({ language })
     const report = await detector.analyze(files, ignoredFile)
     const pairs = report.getPairs()
+
+    // Step 5.5: Run semantic analysis via GraphCodeBERT sidecar
+    // Only executed for Python — the model was fine-tuned on Python data.
+    // Returns an empty map (fast-path) for other languages, preserving semanticScore: 0.
+    const semanticScores = await this.computeSemanticScores(pairs, language)
 
     // Step 6: Persist report to database
     const { dbReport, resultIdMap } =
@@ -420,6 +429,7 @@ export class PlagiarismService {
         teacherId,
         report,
         pairs,
+        semanticScores,
       )
 
     // Step 7: Build and return response
@@ -428,6 +438,7 @@ export class PlagiarismService {
       report,
       pairs,
       resultIdMap,
+      semanticScores,
     )
   }
 
@@ -523,6 +534,7 @@ export class PlagiarismService {
     report: Report,
     pairs: Pair[],
     resultIdMap: Map<string, number>,
+    semanticScores: Map<string, number>,
   ): AnalyzeResponse {
     return {
       reportId: reportId.toString(),
@@ -552,6 +564,7 @@ export class PlagiarismService {
             : [rightSubId, leftSubId]
         const key = `${sub1}-${sub2}`
         const resultId = resultIdMap.get(key) ?? 0
+        const semanticScore = semanticScores.get(key) ?? 0
 
         return {
           id: resultId,
@@ -559,8 +572,6 @@ export class PlagiarismService {
             id: leftSubId,
             path: p.leftFile.path,
             filename: p.leftFile.filename,
-            // Pair metrics are computed in k-grams; expose comparable totals
-            // for consistent qualitative normalization in the triage table.
             lineCount: p.leftTotal,
             studentId: p.leftFile.info?.studentId,
             studentName: p.leftFile.info?.studentName,
@@ -574,13 +585,88 @@ export class PlagiarismService {
             studentName: p.rightFile.info?.studentName,
           },
           structuralScore: p.similarity,
-          semanticScore: 0,
-          hybridScore: p.similarity,
+          semanticScore,
+          hybridScore: 0.5 * p.similarity + 0.5 * semanticScore,
           overlap: p.overlap,
           longest: p.longest,
         }
       }),
       warnings: [],
     }
+  }
+
+  /**
+   * Compute semantic similarity scores for all pairs with bounded concurrency.
+   *
+   * Runs for all supported languages (Python, Java, C).
+   * Any individual pair failure is absorbed by the client (returns 0).
+   */
+  private async computeSemanticScores(
+    pairs: Pair[],
+    _language: LanguageName,
+  ): Promise<Map<string, number>> {
+    const scores = new Map<string, number>()
+    const pairRequests: Array<{
+      key: string
+      leftContent: string
+      rightContent: string
+    }> = []
+    const queuedPairKeys = new Set<string>()
+
+    for (const pair of pairs) {
+      const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0")
+      const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0")
+
+      if (!leftSubId || !rightSubId) {
+        continue
+      }
+
+      const [sub1, sub2] =
+        leftSubId < rightSubId
+          ? [leftSubId, rightSubId]
+          : [rightSubId, leftSubId]
+      const key = `${sub1}-${sub2}`
+
+      if (queuedPairKeys.has(key)) {
+        continue
+      }
+
+      queuedPairKeys.add(key)
+      pairRequests.push({
+        key,
+        leftContent: pair.leftFile.content,
+        rightContent: pair.rightFile.content,
+      })
+    }
+
+    if (pairRequests.length === 0) {
+      return scores
+    }
+
+    const maxConcurrency = Math.max(
+      1,
+      settings.semanticSimilarityMaxConcurrentRequests ?? 4,
+    )
+    const workerCount = Math.min(maxConcurrency, pairRequests.length)
+    let nextRequestIndex = 0
+
+    await Promise.all(
+      Array.from({ length: workerCount }, async () => {
+        while (nextRequestIndex < pairRequests.length) {
+          const requestIndex = nextRequestIndex
+          nextRequestIndex += 1
+          const request = pairRequests[requestIndex]
+
+          const score = await this.semanticClient.getSemanticScore(
+            request.leftContent,
+            request.rightContent,
+          )
+
+          scores.set(request.key, score)
+        }
+      }),
+    )
+
+    return scores
   }
 }

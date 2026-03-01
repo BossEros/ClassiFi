@@ -5,6 +5,8 @@ import {
   type SimilarityReport,
   type NewSimilarityReport,
 } from "@/modules/plagiarism/similarity-report.model.js"
+import { assignments } from "@/modules/assignments/assignment.model.js"
+import { classes } from "@/modules/classes/class.model.js"
 import {
   similarityResults,
   type SimilarityResult,
@@ -64,6 +66,21 @@ export class SimilarityRepository extends BaseRepository<
       .limit(1)
 
     return results[0]
+  }
+
+  /**
+   * Resolve the teacher assigned to an assignment's class.
+   * Returns undefined when assignment or class cannot be found.
+   */
+  async getTeacherIdByAssignment(assignmentId: number): Promise<number | undefined> {
+    const results = await this.db
+      .select({ teacherId: classes.teacherId })
+      .from(assignments)
+      .innerJoin(classes, eq(assignments.classId, classes.id))
+      .where(eq(assignments.id, assignmentId))
+      .limit(1)
+
+    return results[0]?.teacherId
   }
 
   /** Delete all reports for an assignment except the specified report. */

@@ -7,6 +7,7 @@ describe("PlagiarismAutoAnalysisService", () => {
   let mockAssignmentRepo: any
   let mockSubmissionRepo: any
   let mockSimilarityRepo: any
+  let mockClassRepo: any
   let mockPlagiarismService: any
   let originalAutoSimilarityEnabled: boolean
   let originalAutoSimilarityDebounceMs: number
@@ -29,7 +30,9 @@ describe("PlagiarismAutoAnalysisService", () => {
     settings.autoSimilarityMinLatestSubmissions = 2
 
     mockAssignmentRepo = {
-      getAssignmentById: vi.fn().mockResolvedValue({ id: 1, isActive: true }),
+      getAssignmentById: vi
+        .fn()
+        .mockResolvedValue({ id: 1, classId: 11, isActive: true }),
     }
 
     mockSubmissionRepo = {
@@ -44,6 +47,10 @@ describe("PlagiarismAutoAnalysisService", () => {
       getLatestReportByAssignment: vi.fn().mockResolvedValue(undefined),
     }
 
+    mockClassRepo = {
+      getClassById: vi.fn().mockResolvedValue({ id: 11, teacherId: 101 }),
+    }
+
     mockPlagiarismService = {
       analyzeAssignmentSubmissions: vi.fn().mockResolvedValue(undefined),
     }
@@ -52,6 +59,7 @@ describe("PlagiarismAutoAnalysisService", () => {
       mockAssignmentRepo,
       mockSubmissionRepo,
       mockSimilarityRepo,
+      mockClassRepo,
       mockPlagiarismService,
     )
   })
@@ -83,7 +91,11 @@ describe("PlagiarismAutoAnalysisService", () => {
     expect(
       mockPlagiarismService.analyzeAssignmentSubmissions,
     ).toHaveBeenCalledTimes(1)
-    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(1)
+    expect(mockClassRepo.getClassById).toHaveBeenCalledWith(11)
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      101,
+    )
   })
 
   it("queues one rerun when a trigger happens while analysis is in progress", async () => {
@@ -130,9 +142,11 @@ describe("PlagiarismAutoAnalysisService", () => {
     expect(mockSubmissionRepo.getLatestSubmissionSnapshots).toHaveBeenCalledWith(
       2,
     )
-    expect(
-      mockPlagiarismService.analyzeAssignmentSubmissions,
-    ).toHaveBeenCalledWith(1)
+    expect(mockClassRepo.getClassById).toHaveBeenCalledWith(11)
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      101,
+    )
   })
 
   it("skips reconciliation-triggered scheduling when latest report is current", async () => {
@@ -155,5 +169,43 @@ describe("PlagiarismAutoAnalysisService", () => {
     expect(
       mockPlagiarismService.analyzeAssignmentSubmissions,
     ).not.toHaveBeenCalled()
+  })
+
+  it("passes undefined teacher ID when assignment class cannot be resolved", async () => {
+    mockClassRepo.getClassById.mockResolvedValue(undefined)
+
+    await service.scheduleFromSubmission(1)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      undefined,
+    )
+  })
+
+  it("continues analysis with undefined teacher ID when class lookup throws", async () => {
+    mockClassRepo.getClassById.mockRejectedValueOnce(new Error("class lookup failed"))
+
+    await service.scheduleFromSubmission(1)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      undefined,
+    )
+  })
+
+  it("continues analysis with undefined teacher ID when assignment lookup throws in teacher resolution", async () => {
+    mockAssignmentRepo.getAssignmentById
+      .mockResolvedValueOnce({ id: 1, classId: 11, isActive: true })
+      .mockRejectedValueOnce(new Error("assignment lookup failed"))
+
+    await service.scheduleFromSubmission(1)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      undefined,
+    )
   })
 })
