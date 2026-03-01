@@ -1,0 +1,10 @@
+# Never commit the model weights — they are too large for git (480 MB)
+model/model.bin
+model/*.bin
+model/*.pt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.env

@@ -390,6 +390,26 @@ export async function archiveClass(classId: number): Promise<AdminClass> {
 }
 
 /**
+ * Restores an archived class, making it active again.
+ *
+ * @param classId - The unique identifier of the class to restore.
+ * @returns The restored class object.
+ */
+export async function restoreClass(classId: number): Promise<AdminClass> {
+  validateId(classId, "class")
+
+  const response = await adminRepository.updateClassDetailsById(classId, {
+    isActive: true,
+  })
+
+  if (!response.class) {
+    throw new Error(`restoreClass: failed to restore class ${classId}`)
+  }
+
+  return response.class
+}
+
+/**
  * Retrieves a list of all users with the 'teacher' role.
  *
  * @returns An array of teacher user objects.

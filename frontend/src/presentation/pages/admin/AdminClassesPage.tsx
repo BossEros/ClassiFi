@@ -1,25 +1,24 @@
-import { useEffect, useState, useCallback, type MouseEvent } from "react"
+import { useEffect, useState, useCallback, type MouseEvent as ReactMouseEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { RefreshCw, XCircle, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import { AdminCreateClassModal } from "@/presentation/components/admin/AdminCreateClassModal"
 import { AdminDeleteClassModal } from "@/presentation/components/admin/AdminDeleteClassModal"
 import { AdminClassesFilters } from "@/presentation/components/admin/AdminClassesFilters"
 import { AdminClassesTable } from "@/presentation/components/admin/AdminClassesTable"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as adminService from "@/business/services/adminService"
-import type { AdminClass, AdminUser } from "@/business/services/adminService"
+import type { AdminClass } from "@/business/services/adminService"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 
 export function AdminClassesPage() {
   const navigate = useNavigate()
   const showToast = useToastStore((state) => state.showToast)
   const currentUser = useAuthStore((state) => state.user)
   const [classes, setClasses] = useState<AdminClass[]>([])
-  const [teachers, setTeachers] = useState<AdminUser[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "archived"
@@ -37,8 +36,6 @@ export function AdminClassesPage() {
   } | null>(null)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
   const [deletingClass, setDeletingClass] = useState<AdminClass | null>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [classToEdit, setClassToEdit] = useState<AdminClass | null>(null)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
 
   const limit = 20
@@ -81,16 +78,6 @@ export function AdminClassesPage() {
     executeRequest,
   ])
 
-  // Fetch teachers
-  const fetchTeachers = useCallback(async () => {
-    try {
-      const response = await adminService.getAllTeachers()
-      setTeachers(response)
-    } catch (err) {
-      console.error("Failed to load teachers:", err)
-    }
-  }, [])
-
   useEffect(() => {
     if (!currentUser) {
       navigate("/login")
@@ -100,8 +87,7 @@ export function AdminClassesPage() {
       navigate("/dashboard")
       return
     }
-    fetchTeachers()
-  }, [currentUser, navigate, fetchTeachers])
+  }, [currentUser, navigate])
 
   useEffect(() => {
     if (currentUser?.role === "admin") {
@@ -109,7 +95,16 @@ export function AdminClassesPage() {
     }
   }, [currentUser, fetchClasses])
 
-  const handleClickOutside = useCallback(() => {
+  const handleClickOutside = useCallback((event: MouseEvent) => {
+    const clickTarget = event.target as HTMLElement | null
+
+    if (
+      clickTarget?.closest("[data-admin-class-dropdown-trigger]") ||
+      clickTarget?.closest("[data-admin-class-dropdown-menu]")
+    ) {
+      return
+    }
+
     setActiveDropdown(null)
   }, [])
 
@@ -130,12 +125,26 @@ export function AdminClassesPage() {
     }
   }
 
-  const handleEditClass = (cls: AdminClass) => {
-    setClassToEdit(cls)
-    setShowCreateModal(true)
+  const handleRestoreClass = async (classId: number) => {
+    try {
+      setActionLoading(classId)
+      await adminService.restoreClass(classId)
+      await fetchClasses()
+      showToast("Class restored successfully", "success")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to restore class")
+      showToast("Failed to restore class", "error")
+    } finally {
+      setActionLoading(null)
+      setActiveDropdown(null)
+    }
   }
 
-  const handleDropdownClick = (e: MouseEvent, classId: number) => {
+  const handleEditClass = (selectedClass: AdminClass) => {
+    navigate(`/dashboard/admin/classes/${selectedClass.id}/edit`)
+  }
+
+  const handleDropdownClick = (e: ReactMouseEvent, classId: number) => {
     e.stopPropagation()
     if (activeDropdown?.id === classId) {
       setActiveDropdown(null)
@@ -169,8 +178,14 @@ export function AdminClassesPage() {
     }
   }
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({ user: currentUser, userInitials })
+
   return (
-    <DashboardLayout>
+    <DashboardLayout topBar={topBar}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -179,7 +194,8 @@ export function AdminClassesPage() {
               Class Management
             </h1>
             <p className="text-gray-400 mt-1 text-sm">
-              Manage all classes, reassign teachers, and archive classes.{" "}
+              Manage all classes, reassign teachers, and archive or restore
+              classes.{" "}
               <span className="text-gray-500">({total} classes)</span>
             </p>
           </div>
@@ -194,7 +210,7 @@ export function AdminClassesPage() {
               />
             </button>
             <button
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => navigate("/dashboard/admin/classes/new")}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 border border-blue-500/40 transition-colors font-medium text-sm"
             >
               <Plus className="w-4 h-4" />
@@ -248,30 +264,11 @@ export function AdminClassesPage() {
           onNextPage={() => setPage((prev) => Math.min(totalPages, prev + 1))}
           onEditClass={handleEditClass}
           onArchiveClass={handleArchiveClass}
+          onRestoreClass={handleRestoreClass}
           onRequestDeleteClass={setDeletingClass}
           onCloseDropdown={() => setActiveDropdown(null)}
         />
         {/* Modals */}
-
-        <AdminCreateClassModal
-          isOpen={showCreateModal}
-          onClose={() => {
-            setShowCreateModal(false)
-            setClassToEdit(null)
-          }}
-          onSuccess={() => {
-            fetchClasses()
-            showToast(
-              classToEdit
-                ? "Class updated successfully"
-                : "Class created successfully",
-              "success",
-            )
-          }}
-          teachers={teachers}
-          classToEdit={classToEdit}
-        />
-
         <AdminDeleteClassModal
           isOpen={!!deletingClass}
           onClose={() => setDeletingClass(null)}
