@@ -19,6 +19,7 @@ vi.mock("drizzle-orm", () => ({
   eq: vi.fn((field, value) => ({ field, value, type: "eq" })),
   desc: vi.fn((field) => ({ field, type: "desc" })),
   ne: vi.fn((field, value) => ({ field, value, type: "ne" })),
+  relations: vi.fn(() => ({})),
   sql: vi.fn((strings, ...values) => ({ type: "sql", strings, values })),
 }))
 

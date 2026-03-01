@@ -390,3 +390,56 @@
 - [x] Define exact trigger rules for automatic similarity analysis
 - [x] Define job lifecycle, deduplication, retries, failure policy, and observability model
 - [x] Define implementation blueprint (modules, DB schema, API/status changes, rollout)
+
+# Admin Create Class Full-Page Flow
+
+- [x] Add dedicated admin class create page with teacher-style layout
+- [x] Add searchable teacher selection (name, email, user ID)
+- [x] Add admin-only route for create class page
+- [x] Route admin classes create button to the new full-page flow
+- [x] Keep admin class edit modal flow intact
+- [x] Run frontend build verification
+- [x] Update frontend documentation for the new admin create route
+
+# Admin Top Bar Consistency
+
+- [x] Add shared dashboard top bar to Admin Dashboard page
+- [x] Add shared dashboard top bar to Admin User Management page
+- [x] Add shared dashboard top bar to Admin Class Management page
+- [x] Add shared dashboard top bar to Admin Class Detail page (all states)
+- [x] Refactor Admin Enrollments page to use DashboardLayout + top bar
+- [x] Run frontend build verification
+
+# Admin Class Form Modal Removal (Create/Edit Page Unification)
+
+- [x] Convert AdminClassFormPage into create/edit route-based flow
+- [x] Add admin edit class route and wire table edit action to navigate
+- [x] Remove AdminCreateClassModal usage from AdminClassesPage
+- [x] Delete AdminCreateClassModal component file
+- [x] Delete AdminCreateClassModal unit test file
+- [x] Run frontend build verification
+
+# Admin Class Archive/Restore Action Consistency
+
+- [x] Add restore action support in admin class service for archived classes
+- [x] Show `Restore Class` in admin class table actions when a class is archived
+- [x] Keep `Archive Class` action for active classes
+- [x] Wire restore handler in admin class management page and refresh list after action
+- [x] Run frontend build verification
+
+# Admin Class Detail UX Simplification
+
+- [x] Remove students/assignments tab switch and assignment content from admin class detail
+- [x] Keep a single students-focused content area with class info + student list
+- [x] Improve class header spacing and metadata readability
+- [x] Widen and restyle student search bar to match admin UX
+- [x] Fix remove action visibility in student table actions column
+- [x] Run frontend build verification
+
+# Automatic Similarity Report Teacher Attribution
+
+- [x] Add repository helper to resolve class teacher by assignment ID
+- [x] Add persistence fallback so missing report `teacherId` uses class teacher
+- [x] Update auto-analysis unit tests to validate teacher resolution behavior
+- [x] Run backend typecheck verification
+- [x] Run backend test verification

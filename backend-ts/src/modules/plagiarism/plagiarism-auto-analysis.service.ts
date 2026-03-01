@@ -5,6 +5,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import type { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import type { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
+import type { ClassRepository } from "@/modules/classes/class.repository.js"
 import type { PlagiarismService } from "@/modules/plagiarism/plagiarism.service.js"
 
 type AutoAnalysisTrigger = "submission" | "reconciliation" | "rerun"
@@ -31,6 +32,8 @@ export class PlagiarismAutoAnalysisService {
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.repositories.similarity)
     private similarityRepo: SimilarityRepository,
+    @inject(DI_TOKENS.repositories.class)
+    private classRepo: ClassRepository,
     @inject(DI_TOKENS.services.plagiarism)
     private plagiarismService: PlagiarismService,
   ) {}
@@ -170,7 +173,12 @@ export class PlagiarismAutoAnalysisService {
         return
       }
 
-      await this.plagiarismService.analyzeAssignmentSubmissions(assignmentId)
+      const teacherId = await this.resolveTeacherIdForAssignment(assignmentId)
+
+      await this.plagiarismService.analyzeAssignmentSubmissions(
+        assignmentId,
+        teacherId,
+      )
       logger.info("Automatic similarity analysis completed", {
         assignmentId,
         trigger,
@@ -191,16 +199,16 @@ export class PlagiarismAutoAnalysisService {
     }
   }
 
-  private async shouldAnalyzeAssignment(assignmentId: number): Promise<boolean> {
+  private async shouldAnalyzeAssignment(
+    assignmentId: number,
+  ): Promise<boolean> {
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment || !assignment.isActive) {
       return false
     }
 
-    const latestSubmissions = await this.submissionRepo.getSubmissionsByAssignment(
-      assignmentId,
-      true,
-    )
+    const latestSubmissions =
+      await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
     if (
       latestSubmissions.length < settings.autoSimilarityMinLatestSubmissions
     ) {
@@ -213,9 +221,8 @@ export class PlagiarismAutoAnalysisService {
       0,
     )
 
-    const latestReport = await this.similarityRepo.getLatestReportByAssignment(
-      assignmentId,
-    )
+    const latestReport =
+      await this.similarityRepo.getLatestReportByAssignment(assignmentId)
     if (!latestReport) {
       return true
     }
@@ -232,9 +239,8 @@ export class PlagiarismAutoAnalysisService {
     latestSubmissionCount: number,
     latestSubmittedAt: Date,
   ): Promise<boolean> {
-    const latestReport = await this.similarityRepo.getLatestReportByAssignment(
-      assignmentId,
-    )
+    const latestReport =
+      await this.similarityRepo.getLatestReportByAssignment(assignmentId)
 
     if (!latestReport) {
       return false
@@ -244,6 +250,27 @@ export class PlagiarismAutoAnalysisService {
       return false
     }
 
-    return new Date(latestReport.generatedAt).getTime() >= latestSubmittedAt.getTime()
+    return (
+      new Date(latestReport.generatedAt).getTime() >=
+      latestSubmittedAt.getTime()
+    )
+  }
+
+  /**
+   * Resolves the teacher ID for an assignment by looking up its parent class.
+   * Returns undefined if the assignment or class cannot be found.
+   */
+  private async resolveTeacherIdForAssignment(
+    assignmentId: number,
+  ): Promise<number | undefined> {
+    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+
+    if (!assignment) {
+      return undefined
+    }
+
+    const classData = await this.classRepo.getClassById(assignment.classId)
+
+    return classData?.teacherId
   }
 }

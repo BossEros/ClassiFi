@@ -47,5 +47,6 @@ export const DI_TOKENS = {
     plagiarismSubmissionFile: "PlagiarismSubmissionFileService",
     plagiarismPersistence: "PlagiarismPersistenceService",
     plagiarismAutoAnalysis: "PlagiarismAutoAnalysisService",
+    semanticSimilarityClient: "SemanticSimilarityClient",
   },
 } as const

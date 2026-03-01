@@ -199,7 +199,7 @@ describe("PlagiarismService", () => {
 
       expect(result).toBeDefined()
       expect(result.reportId).toBeDefined()
-      expect(result.pairs[0].hybridScore).toBe(0.8)
+      expect(result.pairs[0].hybridScore).toBe(0.4)
       expect(mockPersistenceService.getReusableAssignmentReport).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).toHaveBeenCalledWith(1)
       expect(mockDetectorFactory.create).toHaveBeenCalled()

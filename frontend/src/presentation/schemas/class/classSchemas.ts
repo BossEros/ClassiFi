@@ -233,6 +233,20 @@ export const adminClassFormSchema = z
     }
   })
 
+/**
+ * Admin class form page schema for full-page class creation.
+ */
+export const adminClassPageFormSchema = z.object({
+  className: classNameSchema,
+  description: descriptionSchema,
+  teacherId: z.string().min(1, "Please select a teacher"),
+  yearLevel: yearLevelSchema,
+  semester: semesterSchema,
+  academicYear: academicYearSchema,
+  schedule: classScheduleSchema,
+})
+
 export type TeacherClassFormValues = z.infer<typeof teacherClassFormSchema>
 export type JoinClassFormValues = z.infer<typeof joinClassFormSchema>
 export type AdminClassFormValues = z.infer<typeof adminClassFormSchema>
+export type AdminClassPageFormValues = z.infer<typeof adminClassPageFormSchema>

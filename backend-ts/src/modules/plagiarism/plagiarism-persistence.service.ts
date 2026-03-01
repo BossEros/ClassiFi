@@ -88,10 +88,8 @@ export class PlagiarismPersistenceService {
       return null
     }
 
-    const latestSubmissions = await this.submissionRepo.getSubmissionsByAssignment(
-      assignmentId,
-      true,
-    )
+    const latestSubmissions =
+      await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
 
     if (!this.isReportCurrent(latestReport, latestSubmissions)) {
       return null
@@ -106,6 +104,7 @@ export class PlagiarismPersistenceService {
     teacherId: number | undefined,
     report: Report,
     pairs: Pair[],
+    semanticScores: Map<string, number>,
   ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
     return await db.transaction(async (tx) => {
       // Use transaction-aware repository
@@ -113,10 +112,15 @@ export class PlagiarismPersistenceService {
         tx as unknown as TransactionContext,
       )
 
+      const resolvedTeacherId =
+        teacherId ??
+        (await similarityRepoTx.getTeacherIdByAssignment(assignmentId)) ??
+        null
+
       // Create report
       const dbReport = await similarityRepoTx.createReport({
         assignmentId,
-        teacherId: teacherId ?? null,
+        teacherId: resolvedTeacherId,
         totalSubmissions: report.files.length,
         totalComparisons: pairs.length,
         flaggedPairs: pairs.filter(
@@ -134,7 +138,7 @@ export class PlagiarismPersistenceService {
 
       // Prepare results for batch insert
       const { resultsToInsert, pairMap, swappedMap } =
-        this.prepareResultsForInsert(dbReport.id, pairs)
+        this.prepareResultsForInsert(dbReport.id, pairs, semanticScores)
 
       // Batch insert results and fragments
       const resultIdMap = new Map<string, number>()
@@ -155,6 +159,7 @@ export class PlagiarismPersistenceService {
           pairMap,
           swappedMap,
         )
+
         if (fragmentsToInsert.length > 0) {
           await similarityRepoTx.createFragments(fragmentsToInsert)
         }
@@ -275,10 +280,13 @@ export class PlagiarismPersistenceService {
       return false
     }
 
-    const newestLatestSubmissionMs = latestSubmissions.reduce((currentMax, submission) => {
-      const submittedAtMs = new Date(submission.submittedAt).getTime()
-      return Math.max(currentMax, submittedAtMs)
-    }, 0)
+    const newestLatestSubmissionMs = latestSubmissions.reduce(
+      (currentMax, submission) => {
+        const submittedAtMs = new Date(submission.submittedAt).getTime()
+        return Math.max(currentMax, submittedAtMs)
+      },
+      0,
+    )
 
     const reportGeneratedAtMs = new Date(report.generatedAt).getTime()
 
@@ -289,6 +297,7 @@ export class PlagiarismPersistenceService {
   private prepareResultsForInsert(
     reportId: number,
     pairs: Pair[],
+    semanticScores: Map<string, number>,
   ): {
     resultsToInsert: NewSimilarityResult[]
     pairMap: Map<string, Pair>
@@ -313,13 +322,15 @@ export class PlagiarismPersistenceService {
       pairMap.set(key, pair)
       swappedMap.set(key, needsSwap)
 
+      const semanticScore = semanticScores.get(key) ?? 0
+
       resultsToInsert.push({
         reportId,
         submission1Id: sub1,
         submission2Id: sub2,
         structuralScore: pair.similarity.toFixed(4),
-        semanticScore: "0",
-        hybridScore: pair.similarity.toFixed(4),
+        semanticScore: semanticScore.toFixed(4),
+        hybridScore: this.computeHybrid(pair.similarity, semanticScore),
         overlap: pair.overlap,
         longestFragment: pair.longest,
         leftCovered: pair.leftCovered,
@@ -331,6 +342,15 @@ export class PlagiarismPersistenceService {
     }
 
     return { resultsToInsert, pairMap, swappedMap }
+  }
+
+  /**
+   * Compute the hybrid score as an equal-weighted average of structural
+   * and semantic scores.  Returns a 4-decimal fixed-point string ready
+   * for the numeric(5,4) database column.
+   */
+  private computeHybrid(structural: number, semantic: number): string {
+    return (0.5 * structural + 0.5 * semantic).toFixed(4)
   }
 
   /** Prepare fragments for database insertion */
