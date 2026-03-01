@@ -182,4 +182,30 @@ describe("PlagiarismAutoAnalysisService", () => {
       undefined,
     )
   })
+
+  it("continues analysis with undefined teacher ID when class lookup throws", async () => {
+    mockClassRepo.getClassById.mockRejectedValueOnce(new Error("class lookup failed"))
+
+    await service.scheduleFromSubmission(1)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      undefined,
+    )
+  })
+
+  it("continues analysis with undefined teacher ID when assignment lookup throws in teacher resolution", async () => {
+    mockAssignmentRepo.getAssignmentById
+      .mockResolvedValueOnce({ id: 1, classId: 11, isActive: true })
+      .mockRejectedValueOnce(new Error("assignment lookup failed"))
+
+    await service.scheduleFromSubmission(1)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(mockPlagiarismService.analyzeAssignmentSubmissions).toHaveBeenCalledWith(
+      1,
+      undefined,
+    )
+  })
 })

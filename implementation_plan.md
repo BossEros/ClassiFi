@@ -957,3 +957,23 @@ Ensure automatically generated similarity reports are attributed to a class teac
 - [x] Update `PlagiarismAutoAnalysisService` tests for class teacher resolution.
 - [x] Run `backend-ts`: `npm run typecheck`.
 - [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Semantic Similarity Throttling
+
+## Scope
+
+Prevent semantic-sidecar overload by replacing unbounded pairwise fan-out with bounded concurrency during assignment similarity analysis.
+
+1. Add bounded concurrency execution in plagiarism semantic scoring.
+2. Add a configurable environment setting for semantic max in-flight requests.
+3. Add unit coverage validating concurrency cap behavior.
+4. Update backend environment/docs and re-run required backend verification.
+
+## Execution Checklist
+
+- [x] Replace `Promise.all` fan-out in semantic scoring with a bounded worker pool.
+- [x] Add `SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS` config support.
+- [x] Add/adjust plagiarism service unit tests for bounded semantic concurrency.
+- [x] Update backend env example and backend documentation.
+- [x] Run `backend-ts`: `npm run typecheck`.
+- [x] Run `backend-ts`: `npm test`.

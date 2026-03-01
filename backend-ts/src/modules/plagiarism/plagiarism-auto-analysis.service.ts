@@ -263,14 +263,20 @@ export class PlagiarismAutoAnalysisService {
   private async resolveTeacherIdForAssignment(
     assignmentId: number,
   ): Promise<number | undefined> {
-    const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
+    try {
+      const assignment = await this.assignmentRepo.getAssignmentById(
+        assignmentId,
+      )
 
-    if (!assignment) {
+      if (!assignment) {
+        return undefined
+      }
+
+      const classData = await this.classRepo.getClassById(assignment.classId)
+
+      return classData?.teacherId
+    } catch {
       return undefined
     }
-
-    const classData = await this.classRepo.getClassById(assignment.classId)
-
-    return classData?.teacherId
   }
 }
