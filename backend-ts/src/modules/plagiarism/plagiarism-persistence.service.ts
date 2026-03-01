@@ -112,6 +112,8 @@ export class PlagiarismPersistenceService {
         tx as unknown as TransactionContext,
       )
 
+      await similarityRepoTx.acquireAssignmentReportLock(assignmentId)
+
       const resolvedTeacherId =
         teacherId ??
         (await similarityRepoTx.getTeacherIdByAssignment(assignmentId)) ??

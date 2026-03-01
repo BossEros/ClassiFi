@@ -45,3 +45,12 @@
 - [x] Add service unit tests for trim/empty/max-length validation paths
 - [x] Run `npm run typecheck`
 - [x] Run `npm test`
+
+# Semantic Score Zero + Duplicate Similarity Report Investigation
+
+- [x] Inspect plagiarism semantic-scoring pipeline and report persistence flow
+- [x] Add semantic client timeout/retry hardening to reduce false `0` semantic scores
+- [x] Add assignment-level DB lock during report persistence to avoid concurrent duplicate reports
+- [x] Add/update backend unit tests for semantic client and repository lock behavior
+- [x] Run backend typecheck verification
+- [x] Run backend tests verification

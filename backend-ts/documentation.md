@@ -248,12 +248,15 @@ This flow uses in-memory scheduling plus periodic reconciliation and does not re
 - **`AUTO_SIMILARITY_DEBOUNCE_MS`** (default: `45000`) debounces repeated submissions per assignment.
 - **`AUTO_SIMILARITY_RECONCILIATION_INTERVAL_MS`** (default: `180000`) controls the safety-net scan interval.
 - **`AUTO_SIMILARITY_MIN_LATEST_SUBMISSIONS`** (default: `2`) minimum latest submissions required before analysis runs.
-- **`SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS`** (default: `4`) caps semantic sidecar requests in flight per assignment analysis to prevent timeout-heavy fan-out.
+- **`SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS`** (default: `2`) caps semantic sidecar requests in flight per assignment analysis to prevent timeout-heavy fan-out.
+- **`SEMANTIC_SIMILARITY_TIMEOUT_MS`** (default: `10000`) sets per-request semantic sidecar timeout.
+- **`SEMANTIC_SIMILARITY_MAX_RETRIES`** (default: `1`) retries transient semantic failures (timeouts/5xx/429) before using fallback `semanticScore=0`.
 
 **Behavior**:
 - Submission success is not blocked by similarity scheduling failures.
 - Rapid submission bursts for the same assignment are coalesced into one run.
 - Reconciliation re-triggers analysis if reports are stale or missing after restarts.
+- Assignment report persistence acquires an assignment-scoped transaction lock to prevent duplicate latest reports during concurrent analysis runs.
 
 ### Programming Language Support
 
