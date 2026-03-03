@@ -11,7 +11,6 @@ export {
   CalendarViewToggle,
   type CalendarViewToggleProps,
 } from "./CalendarViewToggle"
-export { CalendarFilters, type CalendarFiltersProps } from "./CalendarFilters"
 
 // Modal Components
 export {

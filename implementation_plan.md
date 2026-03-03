@@ -1,3 +1,36 @@
+# Auth Session Handling Hardening Plan
+
+## Goal
+Prevent unnecessary forced logout by handling transient `401` responses with a token refresh + one retry before redirecting to login.
+
+## Scope
+- `frontend/src/data/api/apiClient.ts`
+- `frontend/src/main.tsx`
+- `task.md`
+
+## Execution Steps
+1. Create and maintain a checklist in `task.md`.
+2. Update API client unauthorized flow:
+   - On first `401`, attempt `supabase.auth.refreshSession()`.
+   - Retry the original request once when refresh succeeds.
+   - Redirect to `/login?expired=true` only when refresh/retry fails.
+3. Add startup session/store synchronization:
+   - During app bootstrap, read current Supabase session.
+   - Clear stale local auth user state if no active session is present.
+4. Run frontend verification:
+   - `npm run build`
+5. If verification fails, fix and re-run until passing.
+
+## Risks and Mitigations
+- Risk: Infinite retry loop on repeated `401`.
+  - Mitigation: Guard with a single retry flag.
+- Risk: Stale local auth store surviving browser refresh.
+  - Mitigation: Explicit startup sync against Supabase session.
+
+## Deliverables
+- Hardened `401` handling with silent refresh + single retry.
+- Startup auth state synchronization between Supabase session and local store.
+- Successful frontend build.
 # Implementation Plan - Calendar Event Contrast Update
 
 ## Scope
@@ -977,3 +1010,24 @@ Prevent semantic-sidecar overload by replacing unbounded pairwise fan-out with b
 - [x] Update backend env example and backend documentation.
 - [x] Run `backend-ts`: `npm run typecheck`.
 - [x] Run `backend-ts`: `npm test`.
+
+# Implementation Plan - Frontend Single-Use Component Inlining (Next Pass)
+
+## Scope
+
+Continue reducing low-reuse component file count by inlining page-specific components that are only imported once and unlikely to be reused across screens.
+
+1. Inline submissions page-only components into `AssignmentSubmissionsPage`.
+2. Inline assignment-detail feedback components into `AssignmentDetailPage`.
+3. Remove obsolete component files and stale tests referencing deleted files.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Inline `CollapsibleInstructions` into `AssignmentSubmissionsPage`.
+- [x] Inline `AssignmentSubmissionsTable` into `AssignmentSubmissionsPage`.
+- [x] Inline `TeacherFeedbackCard` into `AssignmentDetailPage`.
+- [x] Inline `SubmissionFeedbackCard` into `AssignmentDetailPage`.
+- [x] Delete inlined component files and obsolete unit test import target.
+- [x] Run `frontend`: `npm run build`.
+

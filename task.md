@@ -1,3 +1,9 @@
+# Task Checklist: Auth Session Hardening
+
+- [x] Update API `401` flow to refresh session and retry once before redirecting
+- [x] Add startup sync between Supabase session and local auth store
+- [x] Run `npm run build` in `frontend`
+- [x] Fix issues (if any) and re-run verification
 # Calendar Event Contrast Update
 
 - [x] Add reusable dark event color style helper for calendar cards
@@ -452,3 +458,13 @@
 - [x] Update backend `.env.example` and backend documentation
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Frontend Single-Use Component Inlining (Next Pass)
+
+- [x] Inline `CollapsibleInstructions` into `AssignmentSubmissionsPage`
+- [x] Inline `AssignmentSubmissionsTable` into `AssignmentSubmissionsPage`
+- [x] Inline `TeacherFeedbackCard` into `AssignmentDetailPage`
+- [x] Inline `SubmissionFeedbackCard` into `AssignmentDetailPage`
+- [x] Delete now-inlined component files and obsolete component test
+- [x] Run frontend build verification
+

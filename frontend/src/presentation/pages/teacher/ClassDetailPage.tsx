@@ -1,43 +1,448 @@
-import { useEffect, useState, useMemo } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import { ClipboardList, BarChart3 } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import { GradebookContent } from "@/presentation/components/teacher/gradebook/GradebookContent"
-import { BackButton } from "@/presentation/components/ui/BackButton"
-import { ClassHeader } from "@/presentation/components/shared/dashboard/ClassHeader"
-import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs"
-import { ClassCalendarTab } from "@/presentation/components/shared/calendar"
-import { DeleteClassModal } from "@/presentation/components/teacher/forms/class/DeleteClassModal"
-import { LeaveClassModal } from "@/presentation/components/shared/forms/LeaveClassModal"
-import { RemoveStudentModal } from "@/presentation/components/teacher/forms/class/RemoveStudentModal"
-import { AssignmentsTabContent } from "@/presentation/components/teacher/classDetail/AssignmentsTabContent"
-import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent"
-import { useAuthStore } from "@/shared/store/useAuthStore"
-import type { ClassTab } from "@/shared/types/class"
-import {
-  getClassDetailData,
-  deleteClass,
-} from "@/business/services/classService"
-import { useToastStore } from "@/shared/store/useToastStore"
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
-import type { User } from "@/business/models/auth/types"
-import type {
-  Class,
-  Assignment,
-  EnrolledStudent,
-} from "@/business/models/dashboard/types"
-import type {
-  AssignmentFilter,
-  TeacherAssignmentFilter,
-} from "@/shared/utils/assignmentFilters"
-import {
-  filterAssignments,
-  calculateFilterCounts,
-  filterTeacherAssignmentsByTimeline,
-  calculateTeacherFilterCounts,
-  groupAssignments,
-} from "@/shared/utils/assignmentFilters"
-import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers"
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ClipboardList, BarChart3 } from "lucide-react";
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
+import { GradebookContent } from "@/presentation/components/teacher/gradebook/GradebookContent";
+import { BackButton } from "@/presentation/components/ui/BackButton";
+import { ClassHeader } from "@/presentation/components/shared/dashboard/ClassHeader";
+import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs";
+import { ClassCalendarTab } from "@/presentation/components/shared/calendar";
+import { AssignmentsTabContent } from "@/presentation/components/teacher/classDetail/AssignmentsTabContent";
+import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent";
+import { useAuthStore } from "@/shared/store/useAuthStore";
+import type { ClassTab } from "@/shared/types/class";
+import { getClassDetailData, deleteClass } from "@/business/services/classService";
+import { useToastStore } from "@/shared/store/useToastStore";
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
+import type { User } from "@/business/models/auth/types";
+import type { Class, Assignment, EnrolledStudent } from "@/business/models/dashboard/types";
+import type { AssignmentFilter, TeacherAssignmentFilter } from "@/shared/utils/assignmentFilters";
+import { filterAssignments, calculateFilterCounts, filterTeacherAssignmentsByTimeline, calculateTeacherFilterCounts, groupAssignments } from "@/shared/utils/assignmentFilters";
+import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers";
+import { X, LogOut, AlertTriangle, RefreshCw } from "lucide-react";
+import { Button } from "@/presentation/components/ui/Button";
+import { leaveClass } from "@/business/services/studentDashboardService";
+import * as React from "react";
+import { cn } from "@/shared/utils/cn";
+import { Trash2 } from "lucide-react";
+import { removeStudent } from "@/business/services/classService";
+
+// Inlined from src/presentation/components/teacher/forms/class/DeleteClassModal.tsx
+interface DeleteClassModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  className?: string
+  isDeleting?: boolean
+}
+
+
+
+function DeleteClassModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  className,
+  isDeleting = false,
+}: DeleteClassModalProps) {
+  // Close on escape key
+  React.useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isDeleting) {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape)
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden"
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, onClose, isDeleting])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[10000] grid place-items-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!isDeleting ? onClose : undefined}
+      />
+
+      {/* Modal */}
+      <div
+        className={cn(
+          "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
+          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
+          "shadow-xl shadow-black/20",
+          "animate-in fade-in-0 zoom-in-95 duration-200",
+          className,
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-modal-title"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          disabled={isDeleting}
+          className={cn(
+            "absolute top-4 right-4 p-1 rounded-lg",
+            "text-gray-400 hover:text-white hover:bg-white/10",
+            "transition-colors duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+          )}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Warning icon */}
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-red-400" />
+          </div>
+        </div>
+
+        {/* Title */}
+        <h2
+          id="delete-modal-title"
+          className="text-xl font-semibold text-white text-center mb-2"
+        >
+          Delete Class
+        </h2>
+
+        {/* Description */}
+        <p className="text-gray-400 text-center mb-6">
+          Are you sure you want to delete this class? This action cannot be
+          undone. All assignments and student enrollments will be removed.
+        </p>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className={cn(
+              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+              "border border-white/20 text-white",
+              "hover:bg-white/10 transition-colors duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className={cn(
+              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+              "bg-red-500 text-white",
+              "hover:bg-red-600 transition-colors duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
+          >
+            {isDeleting ? "Deleting..." : "Delete Class"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Inlined from src/presentation/components/teacher/forms/class/RemoveStudentModal.tsx
+interface RemoveStudentModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  classId: number
+  teacherId: number
+  studentId: number
+  studentName: string
+}
+
+
+
+function RemoveStudentModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  classId,
+  teacherId,
+  studentId,
+  studentName,
+}: RemoveStudentModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleConfirm = async () => {
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      await removeStudent(classId, studentId, teacherId)
+      onSuccess()
+      onClose()
+    } catch (error) {
+      console.error("Failed to remove student:", error)
+      setError("Failed to remove student. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[10000] grid place-items-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-[448px] min-w-[320px] mx-auto bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10 flex-shrink-0">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-red-500/20">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Remove Student</h2>
+              <p className="text-sm text-gray-400 mt-0.5">
+                This action cannot be undone
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            aria-label="Close"
+            disabled={isSubmitting}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4">
+          {/* Error Message */}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Warning Message */}
+          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <p className="text-sm text-yellow-200">
+              Are you sure you want to remove{" "}
+              <span className="font-semibold text-white">{studentName}</span>{" "}
+              from this class?
+            </p>
+            <ul className="mt-3 space-y-2 text-xs text-gray-400">
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-500 mt-0.5">•</span>
+                <span>
+                  The student will lose access to all class assignments
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-500 mt-0.5">•</span>
+                <span>
+                  Their submissions will be preserved but they cannot submit new
+                  work
+                </span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirm}
+              disabled={isSubmitting}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isSubmitting ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4 mr-2" />
+              )}
+              Remove Student
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Inlined from src/presentation/components/shared/forms/LeaveClassModal.tsx
+interface LeaveClassModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+  studentId: number
+  classId: number
+  className: string
+}
+
+
+
+function LeaveClassModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  studentId,
+  classId,
+  className,
+}: LeaveClassModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const handleConfirm = async () => {
+    setError(null)
+    setIsSubmitting(true)
+
+    try {
+      const response = await leaveClass(studentId, classId)
+
+      if (!response.success) {
+        setError(response.message || "Failed to leave class")
+        return
+      }
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      console.error("Failed to leave class:", err)
+      setError("Failed to leave class. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-[448px] min-w-[320px] flex-shrink-0 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-red-500/20">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Leave Class</h2>
+              <p className="text-sm text-gray-400 mt-0.5">
+                This action cannot be undone
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            aria-label="Close"
+            disabled={isSubmitting}
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 space-y-4 w-full">
+          {/* Error Message */}
+          {error && (
+            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {/* Warning Message */}
+          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+            <p className="text-sm text-yellow-200">
+              Are you sure you want to leave{" "}
+              <span className="font-semibold text-white">{className}</span>?
+            </p>
+            <ul className="mt-3 space-y-2 text-xs text-gray-400">
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-500 mt-0.5">•</span>
+                <span>
+                  You will lose access to all class assignments and materials
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-500 mt-0.5">•</span>
+                <span>
+                  Your submissions will still be visible to your teacher
+                </span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-yellow-500 mt-0.5">•</span>
+                <span>You will need a new class code to rejoin later</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirm}
+              disabled={isSubmitting}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isSubmitting ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <LogOut className="w-4 h-4 mr-2" />
+              )}
+              Leave Class
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const STUDENTS_PER_PAGE = 10
 const STUDENT_GRID_TEMPLATE = "400px 1fr 150px 60px"

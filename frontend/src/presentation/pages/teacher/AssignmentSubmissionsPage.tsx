@@ -1,48 +1,392 @@
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import { Card, CardContent } from "@/presentation/components/ui/Card"
-import { Button } from "@/presentation/components/ui/Button"
-import { Input } from "@/presentation/components/ui/Input"
-import { BackButton } from "@/presentation/components/ui/BackButton"
-import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
-import { CollapsibleInstructions } from "@/presentation/components/shared/assignmentDetail/CollapsibleInstructions"
-import { AssignmentSubmissionsTable } from "@/presentation/components/teacher/submissions/AssignmentSubmissionsTable"
-import {
-  Search,
-  Shield,
-  Calendar,
-  Inbox,
-  Loader2,
-  Edit,
-  Trash2,
-  Users,
-  CheckCircle2,
-  Clock3,
-  UserX,
-} from "lucide-react"
-import { useAuthStore } from "@/shared/store/useAuthStore"
-import {
-  getAssignmentById,
-  getAssignmentSubmissions,
-} from "@/business/services/assignmentService"
-import {
-  deleteAssignment,
-  getClassStudents,
-} from "@/business/services/classService"
-import {
-  analyzeAssignmentSubmissions,
-  getAssignmentSimilarityStatus,
-} from "@/business/services/plagiarismService"
-import { formatDeadline } from "@/presentation/utils/dateUtils"
-import { useToastStore } from "@/shared/store/useToastStore"
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
-import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
-import { DeleteAssignmentModal } from "@/presentation/components/teacher/forms/class/DeleteAssignmentModal"
-import type {
-  AssignmentDetail,
-  Submission,
-} from "@/business/models/assignment/types"
+import { useState, useEffect, useId } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
+import { Card, CardContent } from "@/presentation/components/ui/Card";
+import { Button } from "@/presentation/components/ui/Button";
+import { Input } from "@/presentation/components/ui/Input";
+import { BackButton } from "@/presentation/components/ui/BackButton";
+import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard";
+import { Search, Shield, Calendar, Inbox, Loader2, Edit, Trash2, Users, CheckCircle2, Clock3, UserX, AlertCircle, FileText, ChevronDown } from "lucide-react";
+import { useAuthStore } from "@/shared/store/useAuthStore";
+import { getAssignmentById, getAssignmentSubmissions } from "@/business/services/assignmentService";
+import { deleteAssignment, getClassStudents } from "@/business/services/classService";
+import { analyzeAssignmentSubmissions, getAssignmentSimilarityStatus } from "@/business/services/plagiarismService";
+import { formatDeadline, isLateSubmission } from "@/presentation/utils/dateUtils";
+import { useToastStore } from "@/shared/store/useToastStore";
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
+import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu";
+import type { AssignmentDetail, Submission } from "@/business/models/assignment/types";
+import * as React from "react";
+import { cn } from "@/shared/utils/cn";
+import { AlertTriangle, X } from "lucide-react";
+import { formatGrade, getGradeColor, getGradePercentage } from "@/presentation/utils/gradeUtils";
+import { Avatar } from "@/presentation/components/ui/Avatar";
+import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter";
+
+// Inlined from src/presentation/components/teacher/forms/class/DeleteAssignmentModal.tsx
+interface DeleteAssignmentModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void
+  className?: string
+  isDeleting?: boolean
+  assignmentTitle?: string
+}
+
+
+
+function DeleteAssignmentModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  className,
+  isDeleting = false,
+  assignmentTitle = "this assignment",
+}: DeleteAssignmentModalProps) {
+  // Close on escape key
+  React.useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isDeleting) {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape)
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = "hidden"
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, onClose, isDeleting])
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[10000] grid place-items-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!isDeleting ? onClose : undefined}
+      />
+
+      {/* Modal */}
+      <div
+        className={cn(
+          "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
+          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
+          "shadow-xl shadow-black/20",
+          "animate-in fade-in-0 zoom-in-95 duration-200",
+          className,
+        )}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-assignment-modal-title"
+      >
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          disabled={isDeleting}
+          className={cn(
+            "absolute top-4 right-4 p-1 rounded-lg",
+            "text-gray-400 hover:text-white hover:bg-white/10",
+            "transition-colors duration-200",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+            "disabled:opacity-50 disabled:cursor-not-allowed",
+          )}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Warning icon */}
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-red-400" />
+          </div>
+        </div>
+
+        {/* Title */}
+        <h2
+          id="delete-assignment-modal-title"
+          className="text-xl font-semibold text-white text-center mb-2"
+        >
+          Delete Assignment
+        </h2>
+
+        {/* Description */}
+        <p className="text-gray-400 text-center mb-6">
+          Are you sure you want to delete{" "}
+          <span className="text-white font-medium">{assignmentTitle}</span>?
+          This action cannot be undone. All student submissions for this
+          assignment will be permanently removed.
+        </p>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isDeleting}
+            className={cn(
+              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+              "border border-white/20 text-white",
+              "hover:bg-white/10 transition-colors duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className={cn(
+              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+              "bg-red-500 text-white",
+              "hover:bg-red-600 transition-colors duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+            )}
+          >
+            {isDeleting ? "Deleting..." : "Delete Assignment"}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface CollapsibleInstructionsProps {
+  instructions: string
+  instructionsImageUrl?: string | null
+  assignmentName: string
+  defaultExpanded?: boolean
+}
+
+function CollapsibleInstructions({
+  instructions,
+  instructionsImageUrl,
+  assignmentName,
+  defaultExpanded = false,
+}: CollapsibleInstructionsProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+  const instructionsPanelId = useId()
+
+  const normalizedInstructions = instructions.trim()
+  const canExpand =
+    normalizedInstructions.length > 0 || Boolean(instructionsImageUrl)
+
+  const handleToggleExpanded = () => {
+    if (!canExpand) {
+      return
+    }
+
+    setIsExpanded((previousValue) => !previousValue)
+  }
+
+  return (
+    <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+      <div className="px-6 py-5">
+        <button
+          type="button"
+          onClick={handleToggleExpanded}
+          disabled={!canExpand}
+          aria-expanded={isExpanded}
+          aria-controls={instructionsPanelId}
+          className={cn(
+            "w-full flex items-center justify-between gap-4 text-left",
+            canExpand ? "cursor-pointer" : "cursor-default",
+          )}
+        >
+          <div className="flex items-center gap-2.5">
+            <FileText className="h-4 w-4 text-slate-300" />
+            <h2 className="text-lg font-semibold text-white">Instructions</h2>
+          </div>
+          {canExpand && (
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 text-slate-300 transition-transform duration-200",
+                isExpanded && "rotate-180",
+              )}
+            />
+          )}
+        </button>
+      </div>
+      {isExpanded && (
+        <CardContent id={instructionsPanelId}>
+          <div className="space-y-4">
+            {normalizedInstructions ? (
+              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+                {normalizedInstructions}
+              </p>
+            ) : (
+              <p className="text-gray-400 text-sm">No instructions provided.</p>
+            )}
+
+            {instructionsImageUrl && (
+              <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
+                <img
+                  src={instructionsImageUrl}
+                  alt={`${assignmentName} instructions`}
+                  className="w-full max-h-[28rem] object-contain bg-black/30"
+                />
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  )
+}
+
+interface AssignmentSubmissionsTableProps {
+  submissions: Submission[]
+  deadline: Date | null
+  maxGrade?: number
+  studentAvatarUrlById: Record<number, string | null>
+  currentPage: number
+  totalPages: number
+  totalItems: number
+  itemsPerPage: number
+  onPageChange: (page: number) => void
+  onViewDetails: (submission: Submission) => void
+}
+
+function AssignmentSubmissionsTable({
+  submissions,
+  deadline,
+  maxGrade = 100,
+  studentAvatarUrlById,
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  onViewDetails,
+}: AssignmentSubmissionsTableProps) {
+  const tableBackgroundColor = "#1E2433"
+
+  return (
+    <div className="space-y-4">
+      <div
+        className="overflow-x-auto rounded-xl border border-white/10 backdrop-blur-md"
+        style={{ backgroundColor: tableBackgroundColor }}
+      >
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/10">
+              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">
+                Student Name
+              </th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+                Status
+              </th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+                Grade
+              </th>
+              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+                Action
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {submissions.map((submission) => {
+              const isLate = isLateSubmission(submission.submittedAt, deadline)
+              const submissionGradePercentage = getGradePercentage(
+                submission.grade,
+                maxGrade,
+              )
+              const submissionGradeClass =
+                submission.grade === null || submission.grade === undefined
+                  ? "text-slate-400"
+                  : getGradeColor(submissionGradePercentage)
+
+              return (
+                <tr
+                  key={submission.id}
+                  className="border-b border-white/5 transition-all duration-200 hover:bg-white/5 cursor-pointer"
+                  onClick={() => onViewDetails(submission)}
+                >
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar
+                        src={
+                          studentAvatarUrlById[submission.studentId] ??
+                          undefined
+                        }
+                        alt={submission.studentName || "Unknown Student"}
+                        fallback={(submission.studentName || "Unknown Student")
+                          .split(" ")
+                          .map((namePart) => namePart[0])
+                          .join("")
+                          .toUpperCase()
+                          .slice(0, 2)}
+                        size="sm"
+                      />
+                      <span className="text-sm text-white font-medium">
+                        {submission.studentName || "Unknown Student"}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td className="px-6 py-4 text-center">
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                        isLate
+                          ? "bg-yellow-500/20 text-yellow-400"
+                          : "bg-green-500/20 text-green-400",
+                      )}
+                    >
+                      {isLate ? (
+                        <AlertCircle className="h-3.5 w-3.5" />
+                      ) : (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      )}
+                      <span>{isLate ? "Late" : "On Time"}</span>
+                    </span>
+                  </td>
+
+                  <td
+                    className={cn(
+                      "px-6 py-4 text-center text-sm font-semibold",
+                      submissionGradeClass,
+                    )}
+                  >
+                    {formatGrade(submission.grade, maxGrade)}
+                  </td>
+
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onViewDetails(submission)
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <TablePaginationFooter
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        onPageChange={onPageChange}
+      />
+    </div>
+  )
+}
 
 const SUBMISSIONS_PER_PAGE = 10
 

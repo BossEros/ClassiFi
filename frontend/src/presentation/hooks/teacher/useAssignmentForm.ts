@@ -17,7 +17,6 @@ import {
   updateTestCase,
 } from "@/business/services/testCaseService"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
-import type { PendingTestCase } from "@/presentation/components/teacher/forms/testCases/TestCaseList"
 import { useToastStore } from "@/shared/store/useToastStore"
 import {
   buildAssignmentPayload,
@@ -26,6 +25,7 @@ import {
 import type {
   AssignmentFormData,
   FormErrors,
+  PendingTestCase,
 } from "@/presentation/hooks/teacher/assignmentForm.types"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
 import {
