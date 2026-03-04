@@ -66,38 +66,39 @@ Explicitly excluded for this initiative.
 
 ## Traceability
 
-Which phases cover which requirements. To be finalized in roadmap creation.
+Which phases cover which requirements.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| THM-01 | TBD | Pending |
-| THM-02 | TBD | Pending |
-| THM-03 | TBD | Pending |
-| THM-04 | TBD | Pending |
-| THM-05 | TBD | Pending |
-| VIS-01 | TBD | Pending |
-| VIS-02 | TBD | Pending |
-| VIS-03 | TBD | Pending |
-| VIS-04 | TBD | Pending |
-| A11Y-01 | TBD | Pending |
-| A11Y-02 | TBD | Pending |
-| A11Y-03 | TBD | Pending |
-| A11Y-04 | TBD | Pending |
-| COV-01 | TBD | Pending |
-| COV-02 | TBD | Pending |
-| COV-03 | TBD | Pending |
-| COV-04 | TBD | Pending |
-| COV-05 | TBD | Pending |
-| QLT-01 | TBD | Pending |
-| QLT-02 | TBD | Pending |
-| QLT-03 | TBD | Pending |
-| QLT-04 | TBD | Pending |
+| THM-01 | Phase 5 | Pending |
+| THM-02 | Phase 1 | Pending |
+| THM-03 | Phase 1 | Pending |
+| THM-04 | Phase 1 | Pending |
+| THM-05 | Phase 2 | Pending |
+| VIS-01 | Phase 2 | Pending |
+| VIS-02 | Phase 2 | Pending |
+| VIS-03 | Phase 2 | Pending |
+| VIS-04 | Phase 4 | Pending |
+| A11Y-01 | Phase 3 | Pending |
+| A11Y-02 | Phase 3 | Pending |
+| A11Y-03 | Phase 3 | Pending |
+| A11Y-04 | Phase 3 | Pending |
+| COV-01 | Phase 3 | Pending |
+| COV-02 | Phase 4 | Pending |
+| COV-03 | Phase 4 | Pending |
+| COV-04 | Phase 4 | Pending |
+| COV-05 | Phase 4 | Pending |
+| QLT-01 | Phase 5 | Pending |
+| QLT-02 | Phase 2 | Pending |
+| QLT-03 | Phase 5 | Pending |
+| QLT-04 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22 ⚠️
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after initial definition*
+*Last updated: 2026-03-04 after roadmap mapping*
+
