@@ -11,6 +11,7 @@ import { calendarLocalizer } from "@/presentation/constants/calendarConfig"
 import { useToastStore } from "@/shared/store/useToastStore"
 import type { CalendarEvent } from "@/business/models/calendar/types"
 import type { CalendarView } from "@/business/models/calendar/types"
+import { calendarTheme } from "@/presentation/constants/calendarTheme"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "@/presentation/pages/shared/CalendarPage.css"
 
@@ -193,17 +194,17 @@ export function ClassCalendarTab({
     <div className="flex flex-col" style={{ minHeight: "600px" }}>
       {/* Error State */}
       {error && (
-        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start justify-between">
+        <div className={`mb-4 p-4 ${calendarTheme.errorSurface} flex items-start justify-between`}>
           <div className="flex-1">
-            <p className="text-red-400 text-sm font-medium mb-1">
+            <p className="text-rose-700 text-sm font-medium mb-1">
               Failed to load calendar events
             </p>
-            <p className="text-red-400/70 text-xs">{error}</p>
+            <p className="text-rose-600 text-xs">{error}</p>
           </div>
 
           <button
             onClick={refetchEvents}
-            className="ml-4 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-colors"
+            className="ml-4 px-3 py-1.5 text-xs font-medium text-rose-700 hover:text-rose-800 border border-rose-300 hover:border-rose-400 rounded-lg transition-colors"
           >
             Retry
           </button>
@@ -212,19 +213,19 @@ export function ClassCalendarTab({
 
       {/* Loading State */}
       {isLoading && (
-        <div className="relative flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden min-h-[500px]">
+        <div className={`relative flex-1 ${calendarTheme.surface} overflow-hidden min-h-[500px]`}>
           {/* Skeleton Toolbar */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
-              <div className="w-32 h-5 rounded bg-slate-800 animate-pulse" />
-              <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
+              <div className="w-8 h-8 rounded-lg bg-slate-200 animate-pulse" />
+              <div className="w-32 h-5 rounded bg-slate-200 animate-pulse" />
+              <div className="w-8 h-8 rounded-lg bg-slate-200 animate-pulse" />
             </div>
 
             <div className="flex gap-2">
-              <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
-              <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
-              <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
+              <div className="w-16 h-8 rounded-lg bg-slate-200 animate-pulse" />
+              <div className="w-16 h-8 rounded-lg bg-slate-200 animate-pulse" />
+              <div className="w-16 h-8 rounded-lg bg-slate-200 animate-pulse" />
             </div>
           </div>
 
@@ -233,8 +234,8 @@ export function ClassCalendarTab({
             <div className="grid grid-cols-7 gap-2 mb-4">
               {[...Array(7)].map((_, i) => (
                 <div key={i} className="text-center">
-                  <div className="w-8 h-3 mx-auto rounded bg-slate-800 animate-pulse mb-2" />
-                  <div className="w-6 h-6 mx-auto rounded-full bg-slate-800 animate-pulse" />
+                  <div className="w-8 h-3 mx-auto rounded bg-slate-200 animate-pulse mb-2" />
+                  <div className="w-6 h-6 mx-auto rounded-full bg-slate-200 animate-pulse" />
                 </div>
               ))}
             </div>
@@ -245,10 +246,10 @@ export function ClassCalendarTab({
                   {[...Array(7)].map((_, colIndex) => (
                     <div
                       key={colIndex}
-                      className="h-20 rounded-lg bg-slate-800/50 border border-white/5 p-2"
+                      className="h-20 rounded-lg bg-slate-100 border border-slate-200 p-2"
                     >
                       {(rowIndex + colIndex) % 3 === 0 && (
-                        <div className="w-full h-4 rounded bg-slate-700/50 animate-pulse" />
+                        <div className="w-full h-4 rounded bg-slate-200 animate-pulse" />
                       )}
                     </div>
                   ))}
@@ -258,10 +259,10 @@ export function ClassCalendarTab({
           </div>
 
           {/* Centered Loading Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
-            <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-slate-800/90 border border-white/10 shadow-xl">
+          <div className={`absolute inset-0 flex items-center justify-center ${calendarTheme.loadingOverlay}`}>
+            <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-white border border-slate-200 shadow-xl">
               <div className="relative">
-                <div className="w-12 h-12 rounded-full border-4 border-teal-500/20 border-t-teal-500 animate-spin" />
+                <div className="w-12 h-12 rounded-full border-4 border-teal-200 border-t-teal-600 animate-spin" />
                 <div
                   className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-b-teal-400/50 animate-spin"
                   style={{
@@ -272,8 +273,10 @@ export function ClassCalendarTab({
               </div>
 
               <div className="text-center">
-                <p className="text-white font-medium text-sm">Loading Events</p>
-                <p className="text-slate-400 text-xs mt-1">
+                <p className="text-slate-900 font-medium text-sm">
+                  Loading Events
+                </p>
+                <p className="text-slate-500 text-xs mt-1">
                   Fetching class calendar...
                 </p>
               </div>
@@ -284,7 +287,7 @@ export function ClassCalendarTab({
 
       {/* Calendar */}
       {!isLoading && (
-        <div className="flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden calendar-container relative">
+        <div className={`flex-1 ${calendarTheme.surface} overflow-hidden calendar-container relative`}>
           {currentView === "day" ? (
             <CustomDayView
               date={currentDate}
@@ -340,7 +343,7 @@ export function ClassCalendarTab({
       {/* Empty State (when loaded but no events) */}
       {!isLoading && !error && filteredEvents.length === 0 && (
         <div className="py-8 text-center">
-          <p className="text-slate-400 text-sm">{emptyStateCopy.title}</p>
+          <p className="text-slate-600 text-sm">{emptyStateCopy.title}</p>
           <p className="text-slate-500 text-xs mt-1">
             {emptyStateCopy.subtitle}
           </p>

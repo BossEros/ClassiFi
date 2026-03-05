@@ -14,6 +14,7 @@ import "./CalendarPage.css";
 import { Filter, Check, ChevronDown } from "lucide-react";
 import type { ClassInfo } from "@/business/models/calendar/types";
 import { useState, useRef } from "react";
+import { calendarTheme } from "@/presentation/constants/calendarTheme";
 
 // Inlined from src/presentation/components/shared/calendar/CalendarFilters.tsx
 interface CalendarFiltersProps {
@@ -103,30 +104,30 @@ function CalendarFilters({
       {/* Dropdown Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-white/10 rounded-lg transition-colors"
+        className="flex items-center gap-2 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors shadow-sm"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
         aria-label="Filter by class"
       >
-        <Filter className="w-4 h-4 text-slate-400" />
-        <span className="text-sm text-white font-medium">
+        <Filter className="w-4 h-4 text-slate-500" />
+        <span className="text-sm text-slate-700 font-medium">
           {getFilterLabel()}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
         />
       </button>
 
       {/* Dropdown Panel */}
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-2 w-72 p-4 bg-slate-900 border border-white/10 rounded-xl shadow-xl z-50"
+          className="absolute right-0 top-full mt-2 w-72 p-4 bg-white border border-slate-200 rounded-xl shadow-xl z-50"
           role="listbox"
           aria-label="Class filter options"
         >
           {/* Header with Actions */}
-          <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
-            <span className="text-xs text-slate-400 uppercase tracking-wide font-medium">
+          <div className="flex items-center justify-between mb-3 pb-3 border-b border-slate-200">
+            <span className="text-xs text-slate-500 uppercase tracking-wide font-medium">
               Filter by Class
             </span>
             <div className="flex gap-2">
@@ -134,20 +135,20 @@ function CalendarFilters({
                 onClick={onSelectAll}
                 className={`text-xs font-medium transition-colors ${
                   allSelected
-                    ? "text-slate-500 cursor-default"
-                    : "text-blue-400 hover:text-blue-300"
+                    ? "text-slate-400 cursor-default"
+                    : "text-teal-700 hover:text-teal-800"
                 }`}
                 disabled={allSelected}
               >
                 All
               </button>
-              <span className="text-slate-600">|</span>
+              <span className="text-slate-300">|</span>
               <button
                 onClick={onDeselectAll}
                 className={`text-xs font-medium transition-colors ${
                   selectedCount === 0
-                    ? "text-slate-500 cursor-default"
-                    : "text-blue-400 hover:text-blue-300"
+                    ? "text-slate-400 cursor-default"
+                    : "text-teal-700 hover:text-teal-800"
                 }`}
                 disabled={selectedCount === 0}
               >
@@ -169,7 +170,7 @@ function CalendarFilters({
                 return (
                   <label
                     key={classInfo.id}
-                    className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group"
+                    className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-100 cursor-pointer transition-colors group"
                     role="option"
                     aria-selected={isChecked}
                   >
@@ -185,8 +186,8 @@ function CalendarFilters({
                       <div
                         className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
                           isChecked
-                            ? "bg-blue-600 border-blue-600"
-                            : "bg-transparent border-slate-500 group-hover:border-slate-400"
+                            ? "bg-teal-600 border-teal-600"
+                            : "bg-transparent border-slate-400 group-hover:border-slate-500"
                         }`}
                       >
                         {isChecked && <Check className="w-3 h-3 text-white" />}
@@ -201,7 +202,7 @@ function CalendarFilters({
                     />
 
                     {/* Class Name */}
-                    <span className="text-sm text-white flex-1 truncate">
+                    <span className="text-sm text-slate-700 flex-1 truncate">
                       {classInfo.name}
                     </span>
                   </label>
@@ -404,15 +405,15 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout className="p-0" topBar={topBar}>
-      <div className="h-full flex flex-col -m-6 lg:-m-8">
+      <div className="h-full flex flex-col -m-6 lg:-m-8 bg-slate-50">
         {/* Page Header */}
         <div className="px-6 lg:px-8 pt-6 pb-4">
           {/* Row 1: Title and Subtitle */}
           <div className="mb-4">
-            <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">
+            <h1 className={calendarTheme.pageTitle}>
               Academic Calendar
             </h1>
-            <p className="text-sm lg:text-base text-slate-400 mt-1">
+            <p className={calendarTheme.pageSubtitle}>
               Manage your schedules, deadlines and exams across all courses
             </p>
           </div>
@@ -434,16 +435,16 @@ export default function CalendarPage() {
           <div className="h-full min-h-0">
             {/* Error State */}
             {error && (
-              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start justify-between">
+              <div className={`mb-4 p-4 ${calendarTheme.errorSurface} flex items-start justify-between`}>
                 <div className="flex-1">
-                  <p className="text-red-400 text-sm font-medium mb-1">
+                  <p className="text-rose-700 text-sm font-medium mb-1">
                     Failed to load calendar events
                   </p>
-                  <p className="text-red-400/70 text-xs">{error}</p>
+                  <p className="text-rose-600 text-xs">{error}</p>
                 </div>
                 <button
                   onClick={refetchEvents}
-                  className="ml-4 px-3 py-1.5 text-xs font-medium text-red-400 hover:text-red-300 border border-red-500/30 hover:border-red-500/50 rounded-lg transition-colors"
+                  className="ml-4 px-3 py-1.5 text-xs font-medium text-rose-700 hover:text-rose-800 border border-rose-300 hover:border-rose-400 rounded-lg transition-colors"
                 >
                   Retry
                 </button>
@@ -452,18 +453,18 @@ export default function CalendarPage() {
 
             {/* Loading State - Skeleton Loader */}
             {isLoading && (
-              <div className="relative flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden">
+              <div className={`relative flex-1 ${calendarTheme.surface} overflow-hidden`}>
                 {/* Skeleton Toolbar */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
-                    <div className="w-32 h-5 rounded bg-slate-800 animate-pulse" />
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                    <div className="w-8 h-8 rounded-lg bg-slate-200 animate-pulse" />
+                    <div className="w-32 h-5 rounded bg-slate-200 animate-pulse" />
+                    <div className="w-8 h-8 rounded-lg bg-slate-200 animate-pulse" />
                   </div>
                   <div className="flex gap-2">
-                    <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
-                    <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
-                    <div className="w-16 h-8 rounded-lg bg-slate-800 animate-pulse" />
+                    <div className="w-16 h-8 rounded-lg bg-slate-200 animate-pulse" />
+                    <div className="w-16 h-8 rounded-lg bg-slate-200 animate-pulse" />
+                    <div className="w-16 h-8 rounded-lg bg-slate-200 animate-pulse" />
                   </div>
                 </div>
 
@@ -472,11 +473,11 @@ export default function CalendarPage() {
                   {/* Day Headers */}
                   <div className="grid grid-cols-7 gap-2 mb-4">
                     {[...Array(7)].map((_, i) => (
-                      <div key={i} className="text-center">
-                        <div className="w-8 h-3 mx-auto rounded bg-slate-800 animate-pulse mb-2" />
-                        <div className="w-6 h-6 mx-auto rounded-full bg-slate-800 animate-pulse" />
-                      </div>
-                    ))}
+                        <div key={i} className="text-center">
+                          <div className="w-8 h-3 mx-auto rounded bg-slate-200 animate-pulse mb-2" />
+                          <div className="w-6 h-6 mx-auto rounded-full bg-slate-200 animate-pulse" />
+                        </div>
+                      ))}
                   </div>
 
                   {/* Calendar Grid Rows */}
@@ -486,16 +487,16 @@ export default function CalendarPage() {
                         {[...Array(7)].map((_, colIndex) => (
                           <div
                             key={colIndex}
-                            className="h-24 rounded-lg bg-slate-800/50 border border-white/5 p-2"
+                            className="h-24 rounded-lg bg-slate-100 border border-slate-200 p-2"
                           >
                             {/* Random event skeleton */}
                             {(rowIndex + colIndex) % 3 === 0 && (
-                              <div className="w-full h-5 rounded bg-slate-700/50 animate-pulse" />
+                              <div className="w-full h-5 rounded bg-slate-200 animate-pulse" />
                             )}
                             {(rowIndex + colIndex) % 4 === 1 && (
                               <div className="space-y-1">
-                                <div className="w-full h-5 rounded bg-slate-700/50 animate-pulse" />
-                                <div className="w-3/4 h-5 rounded bg-slate-700/50 animate-pulse" />
+                                <div className="w-full h-5 rounded bg-slate-200 animate-pulse" />
+                                <div className="w-3/4 h-5 rounded bg-slate-200 animate-pulse" />
                               </div>
                             )}
                           </div>
@@ -506,10 +507,10 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Centered Loading Indicator Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
-                  <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-slate-800/90 border border-white/10 shadow-xl">
+                <div className={`absolute inset-0 flex items-center justify-center ${calendarTheme.loadingOverlay}`}>
+                  <div className="flex flex-col items-center gap-4 p-6 rounded-2xl bg-white border border-slate-200 shadow-xl">
                     <div className="relative">
-                      <div className="w-12 h-12 rounded-full border-4 border-teal-500/20 border-t-teal-500 animate-spin" />
+                      <div className="w-12 h-12 rounded-full border-4 border-teal-200 border-t-teal-600 animate-spin" />
                       <div
                         className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-b-teal-400/50 animate-spin"
                         style={{
@@ -519,10 +520,10 @@ export default function CalendarPage() {
                       />
                     </div>
                     <div className="text-center">
-                      <p className="text-white font-medium text-sm">
+                      <p className="text-slate-900 font-medium text-sm">
                         Loading Events
                       </p>
-                      <p className="text-slate-400 text-xs mt-1">
+                      <p className="text-slate-500 text-xs mt-1">
                         Fetching your calendar...
                       </p>
                     </div>
@@ -533,7 +534,7 @@ export default function CalendarPage() {
 
             {/* Calendar */}
             {!isLoading && (
-              <div className="flex-1 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden calendar-container relative">
+              <div className={`flex-1 ${calendarTheme.surface} overflow-hidden calendar-container relative`}>
                 {/* Use CustomDayView for day view, CustomWeekView for week view, standard Calendar for month */}
                 {currentView === "day" ? (
                   <CustomDayView
