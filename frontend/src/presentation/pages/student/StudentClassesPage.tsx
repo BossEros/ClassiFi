@@ -18,6 +18,7 @@ import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
 import { joinClassFormSchema, type JoinClassFormValues } from "@/presentation/schemas/class/classSchemas";
 import type { FieldErrors } from "react-hook-form";
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
 // Inlined from src/presentation/components/student/forms/JoinClassModal.tsx
 interface JoinClassModalProps {
@@ -319,8 +320,8 @@ export function StudentClassesPage() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">My Classes</h1>
-            <p className="text-slate-400 text-base">
+            <h1 className={dashboardTheme.pageTitle}>My Classes</h1>
+            <p className={dashboardTheme.pageSubtitle}>
               View and manage your enrolled courses
             </p>
           </div>
@@ -353,41 +354,45 @@ export function StudentClassesPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-400">
-          <div className="w-1 h-full bg-red-500 rounded-full" />
-          <p className="text-sm font-medium">{error}</p>
+        <div className={dashboardTheme.errorSurface}>
+          <div className="h-full w-1 rounded-full bg-rose-500" />
+          <p className="text-sm font-medium text-rose-700">{error}</p>
         </div>
       )}
 
       {/* Classes Grid */}
-      <Card className="border-none bg-transparent shadow-none backdrop-blur-none p-0">
+      <Card className="border-none bg-transparent p-0 shadow-none backdrop-blur-none">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-20 text-center">
-              <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto mb-6"></div>
-              <p className="text-slate-300 animate-pulse">
+              <div
+                className={`mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-4 ${dashboardTheme.spinnerTrack} ${dashboardTheme.spinnerHead}`}
+              ></div>
+              <p className={`${dashboardTheme.loadingText} animate-pulse`}>
                 Loading your classes...
               </p>
             </div>
           ) : filteredClasses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {filteredClasses.map((classItem) => (
+              {filteredClasses.map((classItem, classIndex) => (
                 <ClassCard
                   key={classItem.id}
                   classItem={classItem}
+                  variant="dashboard"
+                  accentIndex={classIndex}
                   onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
                 />
               ))}
             </div>
           ) : (
-            <div className="w-full py-20 px-6 text-center bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                <Grid3x3 className="w-10 h-10 text-slate-500" />
+            <div className={dashboardTheme.emptySurface}>
+              <div className={dashboardTheme.emptyIconSurface}>
+                <Grid3x3 className="h-10 w-10 text-slate-500" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="mb-2 text-xl font-semibold text-slate-800">
                 No classes found
               </h3>
-              <p className="text-slate-300 max-w-sm min-w-[200px] mx-auto mb-8 whitespace-normal break-words">
+              <p className="mx-auto mb-8 max-w-sm min-w-[200px] whitespace-normal break-words text-slate-500">
                 {searchQuery || status !== "active"
                   ? "We couldn't find any classes matching your current filters. Try adjusting them."
                   : "You haven't enrolled in any classes yet."}

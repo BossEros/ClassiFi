@@ -1,19 +1,29 @@
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Grid3x3, FileText, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/presentation/components/ui/Card"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
 import type { Class, Task } from "@/business/models/dashboard/types"
+
+function getDeadlineBadgeClass(deadlineStatus: string): string {
+  if (deadlineStatus === "Overdue") {
+    return "border-rose-300 bg-rose-100 text-rose-700"
+  }
+
+  if (deadlineStatus === "Due today" || deadlineStatus === "Due tomorrow") {
+    return "border-amber-300 bg-amber-100 text-amber-700"
+  }
+
+  if (deadlineStatus.startsWith("Due in")) {
+    return "border-blue-300 bg-blue-100 text-blue-700"
+  }
+
+  return "border-slate-300 bg-slate-100 text-slate-600"
+}
 
 export function StudentDashboardPage() {
   const navigate = useNavigate()
@@ -29,11 +39,10 @@ export function StudentDashboardPage() {
       setError(null)
 
       const data = await getDashboardData(studentId)
-      // Cast is safe: API returns ISO date strings compatible with ISODateString
       setEnrolledClasses(data.enrolledClasses as Class[])
       setPendingAssignments(data.pendingAssignments as Task[])
-    } catch (err) {
-      console.error("Failed to fetch dashboard data:", err)
+    } catch (fetchError) {
+      console.error("Failed to fetch dashboard data:", fetchError)
       setError("Failed to load dashboard data. Please try refreshing the page.")
     } finally {
       setIsLoading(false)
@@ -54,152 +63,159 @@ export function StudentDashboardPage() {
     : "?"
 
   const topBar = useTopBar({ user, userInitials })
+  const displayedClasses = enrolledClasses.slice(0, 3)
 
   return (
     <DashboardLayout topBar={topBar}>
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-          Welcome back, {user?.firstName}!
+      <div className="mb-10">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+          Welcome back, {user?.firstName || "Student"}
         </h1>
-        <p className="text-slate-400 text-base">
-          Here's what's happening with your courses today.
+        <p className="mt-2 text-base text-slate-500">
+          Here is your quick overview and pending tasks for today.
         </p>
       </div>
 
-      {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-          <p className="text-red-400 text-sm font-medium">{error}</p>
+        <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4">
+          <p className="text-sm font-medium text-rose-600">{error}</p>
         </div>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* My Classes Panel */}
-        <Card className="lg:col-span-2 h-fit">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                  <Grid3x3 className="w-5 h-5 text-white" />
-                </div>
-                <CardTitle className="text-xl">My Classes</CardTitle>
-              </div>
-              <button
-                onClick={() => navigate("/dashboard/classes")}
-                className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors group"
-              >
-                View All
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </button>
+      <section className="mb-12">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight text-slate-800 md:text-lg">
+            My Classes
+          </h2>
+          <button
+            onClick={() => navigate("/dashboard/classes")}
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-teal-600 transition-colors hover:text-teal-700"
+          >
+            View all
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={`student-class-skeleton-${index}`}
+                className="h-36 animate-pulse rounded-2xl border border-slate-200 bg-white"
+              />
+            ))}
+          </div>
+        ) : displayedClasses.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {displayedClasses.map((classItem, classIndex) => (
+              <ClassCard
+                key={classItem.id}
+                classItem={classItem}
+                variant="dashboard"
+                accentIndex={classIndex}
+                onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+            <p className="text-base font-semibold text-slate-700">No classes yet</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Join a class from the classes page to get started.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight text-slate-800 md:text-lg">
+            To-Do
+          </h2>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          {isLoading ? (
+            <div className="p-8 text-center text-sm text-slate-500">
+              Loading assignments...
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="py-12 text-center">
-                <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-400">Loading dashboard...</p>
-              </div>
-            ) : enrolledClasses.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {enrolledClasses.map((classItem) => (
-                  <ClassCard
-                    key={classItem.id}
-                    classItem={classItem}
-                    onClick={() =>
-                      navigate(`/dashboard/classes/${classItem.id}`)
-                    }
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <Grid3x3 className="w-8 h-8 text-slate-500" />
-                </div>
-                <p className="text-slate-300 font-semibold text-sm mb-1.5">
-                  No classes yet
-                </p>
-                <p className="text-xs text-slate-500">
-                  Join a class from the "My Classes" page.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+          ) : pendingAssignments.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px]">
+                <thead className="bg-slate-100 text-left">
+                  <tr>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Assignment Name
+                    </th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Class
+                    </th>
+                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Deadline
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingAssignments.map((assignment) => {
+                    const deadlineStatus = getDeadlineStatus(assignment.deadline)
+                    const deadlineBadgeClass = getDeadlineBadgeClass(deadlineStatus)
 
-        {/* Pending Assignments Panel */}
-        <Card className="lg:col-span-1">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <FileText className="w-5 h-5 text-white" />
-              </div>
-              <CardTitle className="text-xl">Upcoming Deadlines</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="py-12 text-center">
-                <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-slate-400">Loading...</p>
-              </div>
-            ) : pendingAssignments.length > 0 ? (
-              <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {pendingAssignments.map((assignment) => {
-                  const status = assignment.deadline
-                    ? getDeadlineStatus(new Date(assignment.deadline))
-                    : "No deadline"
-
-                  const statusColorClass =
-                    status === "Overdue"
-                      ? "text-red-400"
-                      : status === "Due today"
-                        ? "text-teal-400"
-                        : "text-slate-400"
-
-                  return (
-                    <div
-                      key={assignment.id}
-                      onClick={() =>
-                        navigate(`/dashboard/assignments/${assignment.id}`)
-                      }
-                      className="min-h-24 p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all cursor-pointer flex flex-col"
-                    >
-                      <h4 className="text-sm font-medium text-white mb-3 truncate">
-                        {assignment.assignmentName}
-                      </h4>
-                      <div className="mt-auto flex items-center justify-between gap-3">
-                        <span className="flex-1 text-xs text-slate-400 truncate">
+                    return (
+                      <tr
+                        key={assignment.id}
+                        className="border-t border-slate-200 transition-colors hover:bg-slate-50/70"
+                      >
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {assignment.assignmentName}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              Status: {deadlineStatus}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-xs font-semibold text-slate-700">
                           {assignment.className || "Unknown class"}
-                        </span>
-                        <span
-                          className={`shrink-0 text-xs font-medium ${statusColorClass}`}
-                        >
-                          {status}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="py-12 text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-slate-500" />
-                </div>
-                <p className="text-slate-300 font-semibold text-sm mb-1.5">
-                  All caught up!
-                </p>
-                <p className="text-xs text-slate-500">
-                  New assignments will appear here when assigned.
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${deadlineBadgeClass}`}
+                          >
+                            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                            {deadlineStatus}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() =>
+                              navigate(`/dashboard/assignments/${assignment.id}`)
+                            }
+                            className="inline-flex items-center gap-2 rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-600"
+                          >
+                            Open
+                            <ArrowRight className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <p className="text-base font-semibold text-slate-700">All caught up!</p>
+              <p className="mt-1 text-sm text-slate-500">
+                New assignments will appear here when available.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
     </DashboardLayout>
   )
 }

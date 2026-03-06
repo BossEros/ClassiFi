@@ -74,6 +74,14 @@ function getPairSimilarityRatio(pair: PairResponse): number {
   return normalizeSimilarityToRatio(pair.structuralScore)
 }
 
+function getPairStructuralSimilarityRatio(pair: PairResponse): number {
+  return normalizeSimilarityToRatio(pair.structuralScore)
+}
+
+function getPairSemanticSimilarityRatio(pair: PairResponse): number {
+  return normalizeSimilarityToRatio(pair.semanticScore)
+}
+
 function getSafeLineCount(lineCount: number): number {
   if (!Number.isFinite(lineCount) || lineCount <= 0) {
     return 1
@@ -301,13 +309,19 @@ export function PairwiseTriageTable({
                     className="px-6 py-4 text-center text-sm font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none"
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <span>Similarity</span>
+                      <span>Overall Similarity</span>
                       <SortIndicator
                         column="similarity"
                         currentSort={sortKey}
                         sortOrder={sortOrder}
                       />
                     </span>
+                  </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+                    Structural Similarity
+                  </th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+                    Semantic Similarity
                   </th>
                   <th
                     onClick={() => handleSort("overlap")}
@@ -358,7 +372,7 @@ export function PairwiseTriageTable({
                 {paginatedPairs.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={7}
                       className="px-6 py-12 text-center text-slate-400"
                     >
                       No pairs match the current filters.
@@ -367,7 +381,11 @@ export function PairwiseTriageTable({
                 ) : (
                   paginatedPairs.map((pair) => {
                     const pairStudentNames = getPairStudentNames(pair)
-                    const similarity = getPairSimilarityRatio(pair)
+                    const overallSimilarity = getPairSimilarityRatio(pair)
+                    const structuralSimilarity =
+                      getPairStructuralSimilarityRatio(pair)
+                    const semanticSimilarity =
+                      getPairSemanticSimilarityRatio(pair)
                     const isSelectedPair = pair.id === selectedPairId
                     const overlapSignalLevel = getSignalLevel(
                       getNormalizedOverlapRatio(pair),
@@ -392,7 +410,25 @@ export function PairwiseTriageTable({
                         <td className="px-6 py-4 text-center">
                           <div className="flex justify-center">
                             <SimilarityBadge
-                              similarity={similarity}
+                              similarity={overallSimilarity}
+                              size="small"
+                              showLabel={false}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center">
+                            <SimilarityBadge
+                              similarity={structuralSimilarity}
+                              size="small"
+                              showLabel={false}
+                            />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center">
+                            <SimilarityBadge
+                              similarity={semanticSimilarity}
                               size="small"
                               showLabel={false}
                             />

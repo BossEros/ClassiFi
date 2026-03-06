@@ -298,7 +298,7 @@ The plagiarism detection workflow is pairwise-triage-first so teachers can revie
 - **Class-level summary cards**: Suspicious pairs, average similarity, and maximum similarity.
 - **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
 - **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
-- **Fast triage controls**: Search by student, sortable `Similarity` plus qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
+- **Fast triage controls**: Search by student, sortable `Overall Similarity` plus per-pair `Structural Similarity` and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
 - **Details on demand**: `Compare Code` (or row click) opens side-by-side match/diff inspection with fragment context and auto-scrolls to the comparison panel.
 
 ### Toast Notifications

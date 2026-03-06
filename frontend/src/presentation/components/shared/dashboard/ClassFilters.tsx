@@ -1,6 +1,7 @@
 import { Search, Filter, Calendar, GraduationCap } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Select } from "@/presentation/components/ui/Select"
+import { classFiltersTheme } from "@/presentation/constants/dashboardTheme"
 
 export type FilterStatus = "active" | "archived" | "all"
 
@@ -57,14 +58,14 @@ export function ClassFilters({
       {/* Search Bar */}
       <div className="flex-1 relative">
         <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 pointer-events-none z-10"
+          className={`absolute left-4 top-1/2 z-10 h-5 w-5 -translate-y-1/2 pointer-events-none ${classFiltersTheme.searchIcon}`}
           aria-hidden="true"
         />
         <Input
           placeholder="Search classes by name or code..."
           value={currentFilters.searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-12 h-11"
+          className={`pl-12 ${classFiltersTheme.searchInput}`}
         />
       </div>
 
@@ -72,12 +73,14 @@ export function ClassFilters({
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Year Level Filter */}
         <div className="min-w-[160px] relative group">
-          <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
+          <GraduationCap
+            className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${classFiltersTheme.selectIcon}`}
+          />
           <Select
             value={currentFilters.selectedYearLevel}
             onChange={onYearLevelChange}
             options={yearLevelOptions}
-            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`appearance-none cursor-pointer pl-9 pr-10 transition-all disabled:cursor-not-allowed disabled:opacity-50 ${classFiltersTheme.select} ${classFiltersTheme.selectOption}`}
             disabled={yearLevels.length === 0}
             placeholder={yearLevels.length === 0 ? "No levels" : "Year Level"}
           />
@@ -85,12 +88,14 @@ export function ClassFilters({
 
         {/* Term Filter */}
         <div className="min-w-[180px] relative group">
-          <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
+          <Calendar
+            className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${classFiltersTheme.selectIcon}`}
+          />
           <Select
             value={currentFilters.selectedTerm}
             onChange={onTermChange}
             options={termOptions}
-            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`appearance-none cursor-pointer pl-9 pr-10 transition-all disabled:cursor-not-allowed disabled:opacity-50 ${classFiltersTheme.select} ${classFiltersTheme.selectOption}`}
             disabled={terms.length === 0}
             placeholder={terms.length === 0 ? "No terms" : "Select Term"}
           />
@@ -98,12 +103,14 @@ export function ClassFilters({
 
         {/* Status Filter */}
         <div className="min-w-[160px] relative group">
-          <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-hover:text-purple-400 transition-colors z-10 pointer-events-none" />
+          <Filter
+            className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${classFiltersTheme.selectIcon}`}
+          />
           <Select
             value={currentFilters.status}
             onChange={(value) => onStatusChange(value as FilterStatus)}
             options={statusOptions}
-            className="appearance-none pl-9 pr-10 h-11 bg-white/5 border-white/10 text-white hover:bg-white/10 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all rounded-xl cursor-pointer"
+            className={`appearance-none cursor-pointer pl-9 pr-10 transition-all ${classFiltersTheme.select} ${classFiltersTheme.selectOption}`}
           />
         </div>
       </div>

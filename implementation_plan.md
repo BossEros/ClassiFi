@@ -1031,3 +1031,86 @@ Continue reducing low-reuse component file count by inlining page-specific compo
 - [x] Delete inlined component files and obsolete unit test import target.
 - [x] Run `frontend`: `npm run build`.
 
+# Implementation Plan - Teacher Similarity Column Breakdown
+
+## Scope
+
+Enhance the teacher pairwise triage table in similarity results:
+
+1. Rename `Similarity` to `Overall Similarity`.
+2. Add `Structural Similarity` and `Semantic Similarity` columns immediately after `Overall Similarity`.
+3. Render the correct score source per column (`hybridScore`, `structuralScore`, `semanticScore`) using existing similarity formatting.
+4. Verify frontend build and sync frontend documentation.
+
+## Execution Checklist
+
+- [x] Update `PairwiseTriageTable` headers and row cells for 3 similarity score columns.
+- [x] Keep sort/filter behavior using overall similarity as primary signal.
+- [x] Update empty-state table `colSpan` for new column count.
+- [x] Run `frontend`: `npm run build`.
+- [x] Update `frontend/documentation.md` for revised pairwise column definitions.
+
+# Implementation Plan - Teacher Dashboard and Topbar Visual Formatting
+
+## Scope
+
+Align teacher main dashboard and topbar visuals with the provided mock while preserving existing architecture and class-card shape constraints.
+
+1. Keep class card container shape but add a dashboard-specific visual variant.
+2. Refactor teacher dashboard main content layout:
+   - Recent Classes row with light cards and view-all action.
+   - To-Check table section styled like the reference.
+3. Update shared topbar styling to match the light dashboard treatment.
+4. Exclude sidebar changes.
+5. Verify with frontend build.
+
+## Execution Checklist
+
+- [x] Add dashboard variant to shared `ClassCard` for teacher dashboard usage.
+- [x] Restyle `TeacherDashboardPage` headings, section wrappers, and to-check table.
+- [x] Ensure assignment-name column does not render avatars.
+- [x] Restyle topbar and notification trigger for light-mode appearance.
+- [x] Run `frontend`: `npm run build`.
+# Implementation Plan - Light Classes Pages + Shared UI Theme Tokens
+
+## Scope
+
+Align classes pages to the same light dashboard visual language and introduce a central source of truth for color/text styling tokens.
+
+1. Create shared UI theme token constants for dashboard/class surfaces and filter controls.
+2. Apply the shared tokens to teacher classes page.
+3. Apply the shared tokens to student classes page.
+4. Update class filters to use the shared light token set.
+5. Verify frontend build.
+
+## Execution Checklist
+
+- [ ] Add `dashboardTheme` and `classFiltersTheme` constants.
+- [ ] Convert teacher classes page to light dashboard palette.
+- [ ] Convert student classes page to light dashboard palette.
+- [ ] Update `ClassFilters` control styles to consume shared theme constants.
+- [ ] Run `frontend`: `npm run build`.
+# Implementation Plan - Academic Calendar Light Mode Conversion
+
+## Scope
+
+Convert calendar experience from dark surfaces to the shared light dashboard visual language, including page shell, calendar grid, toolbars, modals, and related interaction elements.
+
+1. Introduce centralized calendar theme tokens for consistent colors/typography.
+2. Update calendar page and inline filter dropdown to light surfaces.
+3. Update shared calendar components (toolbars, event component, day/week views, event style mapping).
+4. Convert event details modal to light mode.
+5. Update calendar CSS files (`CalendarPage.css`, `CustomDayView.css`, `CustomWeekView.css`) for light grid/backgrounds.
+6. Apply same light conversion to class detail calendar tab flow.
+7. Verify frontend build.
+
+## Execution Checklist
+
+- [ ] Add shared calendar theme constants.
+- [ ] Convert `CalendarPage` shell, filters, loading/error states, and containers to light mode.
+- [ ] Convert `ClassCalendarTab` shell, loading/error states, and containers to light mode.
+- [ ] Convert `CustomToolbar` and `CustomViewToolbar` to light mode.
+- [ ] Convert `CustomEventComponent` and `eventStyle` to light-mode event cards.
+- [ ] Convert `EventDetailsModal` to light mode.
+- [ ] Update `CalendarPage.css`, `CustomDayView.css`, and `CustomWeekView.css` for light theme.
+- [ ] Run `frontend`: `npm run build`.

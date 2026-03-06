@@ -442,6 +442,13 @@
 - [x] Fix remove action visibility in student table actions column
 - [x] Run frontend build verification
 
+# Sidebar Branding Consolidation
+
+- [x] Move ClassiFi logo/title into `Sidebar` component above navigation items
+- [x] Remove `topBar.sidebar` from shared top bar hook/layout contract
+- [x] Keep `topBar.main` behavior unchanged
+- [x] Run frontend build verification
+
 # Automatic Similarity Report Teacher Attribution
 
 - [x] Add repository helper to resolve class teacher by assignment ID
@@ -468,3 +475,34 @@
 - [x] Delete now-inlined component files and obsolete component test
 - [x] Run frontend build verification
 
+# Teacher Similarity Table Score Columns
+
+- [x] Rename `Similarity` column to `Overall Similarity`
+- [x] Add `Structural Similarity` and `Semantic Similarity` columns after overall similarity
+- [x] Render appropriate pair scores for each similarity column
+- [x] Run frontend build verification
+- [x] Update frontend documentation for revised similarity columns
+
+# Teacher Dashboard + Topbar Format Refresh
+
+- [x] Add dashboard-specific visual variant for class cards while keeping current card shape
+- [x] Reformat teacher main dashboard sections (`Recent Classes`, `To-Check`) to reference layout
+- [x] Keep assignment-name column free of avatars/icons that look like profile avatars
+- [x] Restyle topbar to match the light reference style
+- [x] Run frontend build verification
+# Classes Page Light Theme + Shared UI Tokens
+
+- [ ] Create a central shared theme token file for dashboard/class page colors and font-color roles
+- [ ] Apply light-mode styling to teacher classes page using shared tokens
+- [ ] Apply light-mode styling to student classes page using shared tokens
+- [ ] Update class filter control styling to use shared token classes
+- [ ] Run frontend build verification
+# Academic Calendar Light Mode Conversion
+
+- [x] Create centralized calendar color/text theme tokens
+- [x] Convert shared calendar page to light mode (header, filters, grid shell, states)
+- [x] Convert class detail calendar tab to light mode
+- [x] Convert calendar toolbars and event cards to light visual system
+- [x] Convert event details modal to light mode
+- [x] Update calendar CSS files to light backgrounds/borders/text
+- [x] Run frontend build verification
