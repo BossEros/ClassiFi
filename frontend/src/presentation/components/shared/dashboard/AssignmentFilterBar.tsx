@@ -14,6 +14,7 @@ interface StudentAssignmentFilterBarProps {
     submitted: number
   }
   className?: string
+  variant?: "dark" | "light"
 }
 
 interface TeacherAssignmentFilterBarProps {
@@ -26,6 +27,7 @@ interface TeacherAssignmentFilterBarProps {
     past: number
   }
   className?: string
+  variant?: "dark" | "light"
 }
 
 type AssignmentFilterBarProps =
@@ -36,6 +38,7 @@ export const AssignmentFilterBar: React.FC<AssignmentFilterBarProps> = (
   props,
 ) => {
   const className = props.className ?? ""
+  const variant = props.variant ?? "dark"
 
   if (props.mode === "teacher") {
     const filters: Array<{
@@ -60,10 +63,14 @@ export const AssignmentFilterBar: React.FC<AssignmentFilterBarProps> = (
             onClick={() => props.onFilterChange(filter.id)}
             aria-pressed={props.activeFilter === filter.id}
             aria-label={`Filter by ${filter.label}`}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
               props.activeFilter === filter.id
-                ? "bg-teal-500/20 text-teal-400 border border-teal-500/30"
-                : "bg-transparent text-gray-400 border border-white/10 hover:bg-white/5 hover:text-gray-300"
+                ? variant === "light"
+                  ? "border border-teal-600 bg-teal-600 text-white shadow-sm"
+                  : "bg-teal-500/20 text-teal-400 border border-teal-500/30"
+                : variant === "light"
+                  ? "border border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800"
+                  : "bg-transparent text-gray-400 border border-white/10 hover:bg-white/5 hover:text-gray-300"
             }`}
           >
             {filter.label} ({filter.count})
@@ -90,10 +97,14 @@ export const AssignmentFilterBar: React.FC<AssignmentFilterBarProps> = (
           onClick={() => props.onFilterChange(filter.id)}
           aria-pressed={props.activeFilter === filter.id}
           aria-label={`Filter by ${filter.label}`}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
             props.activeFilter === filter.id
-              ? "bg-teal-500/20 text-teal-400 border border-teal-500/30"
-              : "bg-transparent text-gray-400 border border-white/10 hover:bg-white/5 hover:text-gray-300"
+              ? variant === "light"
+                ? "border border-teal-600 bg-teal-600 text-white shadow-sm"
+                : "bg-teal-500/20 text-teal-400 border border-teal-500/30"
+              : variant === "light"
+                ? "border border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800"
+                : "bg-transparent text-gray-400 border border-white/10 hover:bg-white/5 hover:text-gray-300"
           }`}
         >
           {filter.label} ({filter.count})

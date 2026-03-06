@@ -158,9 +158,9 @@ Admin class detail behavior:
   - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination
   - **`PairComparison`**: Side-by-side code editor with match highlighting
   - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
-  - **`FragmentsTable`**: Detailed view of matching code fragments
   - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
+- **`StudentClassGradesContent`**: Student-only class grades tab that shows personal class average, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
 - **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
@@ -298,7 +298,7 @@ The plagiarism detection workflow is pairwise-triage-first so teachers can revie
 - **Class-level summary cards**: Suspicious pairs, average similarity, and maximum similarity.
 - **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
 - **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
-- **Fast triage controls**: Search by student, sortable `Similarity` plus qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
+- **Fast triage controls**: Search by student, sortable `Overall Similarity` plus per-pair `Structural Similarity` and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
 - **Details on demand**: `Compare Code` (or row click) opens side-by-side match/diff inspection with fragment context and auto-scrolls to the comparison panel.
 
 ### Toast Notifications
@@ -469,9 +469,13 @@ Specialized types for the class detail page redesign:
    - Click on any assignment card to navigate to the assignment detail page
    - View grades directly on assignment cards for graded work (displayed as "95/100" format)
 5. **Switch Tabs**:
-   - Use the tab navigation to switch between Assignment, Students, and Calendar views
+   - Use the tab navigation to switch between Assignment, Students, Calendar, and Grades views
    - Filter selections persist when switching between tabs
    - Keyboard navigation supported (arrow keys + Enter)
+6. **Review Grades in Class Context**:
+   - Open the `Grades` tab to see a personal performance view for the current class
+   - Summary cards show class average, graded assignments, pending review, and not-submitted counts
+   - Assignment rows show score, percentage, submission timing, late penalties, adjusted grades, and teacher feedback when available
 
 ### Teacher: Managing Class Assignments
 
@@ -602,3 +606,4 @@ High-signal coverage gate:
 - `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
+

@@ -17,16 +17,16 @@ const variantStyles: Record<
   { bg: string; icon: React.ReactNode }
 > = {
   success: {
-    bg: "bg-green-500/20 border-green-500/30",
-    icon: <CheckCircle className="w-5 h-5 text-green-400" />,
+    bg: "bg-emerald-50 border-emerald-200",
+    icon: <CheckCircle className="w-5 h-5 text-emerald-600" />,
   },
   error: {
-    bg: "bg-red-500/20 border-red-500/30",
-    icon: <AlertCircle className="w-5 h-5 text-red-400" />,
+    bg: "bg-rose-50 border-rose-200",
+    icon: <AlertCircle className="w-5 h-5 text-rose-600" />,
   },
   info: {
-    bg: "bg-blue-500/20 border-blue-500/30",
-    icon: <Info className="w-5 h-5 text-blue-400" />,
+    bg: "bg-sky-50 border-sky-200",
+    icon: <Info className="w-5 h-5 text-sky-600" />,
   },
 }
 
@@ -86,7 +86,7 @@ export function Toast({
   return (
     <div
       className={cn(
-        "flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-xl",
+        "flex items-center gap-3 px-4 py-3 rounded-xl border bg-white shadow-lg",
         "transition-all duration-300 ease-out min-w-[320px] max-w-md w-full",
         styles.bg,
         isVisible && !isLeaving
@@ -99,15 +99,15 @@ export function Toast({
       onMouseLeave={() => setIsPaused(false)}
     >
       <div className="flex-shrink-0">{styles.icon}</div>
-      <p className="text-sm text-white font-medium flex-1 break-words">
+      <p className="text-sm text-slate-800 font-medium flex-1 break-words">
         {message}
       </p>
       <button
         onClick={handleDismiss}
-        className="p-1 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
+        className="p-1 rounded-lg hover:bg-slate-100 transition-colors flex-shrink-0"
         aria-label="Dismiss"
       >
-        <X className="w-4 h-4 text-gray-400" />
+        <X className="w-4 h-4 text-slate-500" />
       </button>
     </div>
   )

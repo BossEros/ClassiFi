@@ -83,26 +83,26 @@ export function EventDetailsModal({
     const statusConfig = {
       "not-started": {
         label: "Not Started",
-        bgColor: "bg-slate-500/15",
-        textColor: "text-slate-300",
+        bgColor: "bg-slate-200",
+        textColor: "text-slate-600",
         icon: Clock,
       },
       pending: {
         label: "Pending Review",
-        bgColor: "bg-amber-500/15",
-        textColor: "text-amber-300",
+        bgColor: "bg-amber-100",
+        textColor: "text-amber-700",
         icon: Clock,
       },
       submitted: {
         label: "Submitted",
-        bgColor: "bg-emerald-500/15",
-        textColor: "text-emerald-300",
+        bgColor: "bg-emerald-100",
+        textColor: "text-emerald-700",
         icon: CheckCircle,
       },
       late: {
         label: "Late Submission",
-        bgColor: "bg-rose-500/15",
-        textColor: "text-rose-300",
+        bgColor: "bg-rose-100",
+        textColor: "text-rose-700",
         icon: AlertCircle,
       },
     }
@@ -164,29 +164,29 @@ export function EventDetailsModal({
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+        className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal Content */}
-      <div className="relative z-10 w-full max-w-lg sm:min-w-96 overflow-hidden rounded-2xl border border-slate-700/70 bg-slate-900/95 shadow-[0_24px_80px_rgba(2,6,23,0.72)] animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative z-10 w-full max-w-lg sm:min-w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.18)] animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="px-6 pt-6 pb-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               {/* Class Badge */}
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-800/80 px-2.5 py-1">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1">
                 <div
-                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full ring-1 ring-white/30"
+                  className="h-2.5 w-2.5 flex-shrink-0 rounded-full ring-1 ring-slate-300"
                   style={{ backgroundColor: classColor }}
                 />
-                <span className="truncate text-xs font-medium uppercase tracking-wider text-slate-300">
+                <span className="truncate text-xs font-medium uppercase tracking-wider text-slate-600">
                   {event.classInfo.name}
                 </span>
               </div>
 
               {/* Title */}
-              <h3 className="text-xl font-semibold text-white leading-tight">
+              <h3 className="text-xl font-semibold text-slate-900 leading-tight">
                 {event.title}
               </h3>
             </div>
@@ -194,7 +194,7 @@ export function EventDetailsModal({
             {/* Close Button */}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors flex-shrink-0"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors flex-shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
@@ -202,12 +202,12 @@ export function EventDetailsModal({
         </div>
 
         {/* Divider */}
-        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="mx-6 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
 
         {/* Content */}
         <div className="px-6 py-5 space-y-4">
           {/* Deadline Card */}
-          <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
+          <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
             <div
               className="p-2.5 rounded-lg"
               style={{ backgroundColor: `${classColor}20` }}
@@ -218,7 +218,7 @@ export function EventDetailsModal({
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-0.5">
                 Deadline
               </p>
-              <p className="text-sm font-medium text-white">
+              <p className="text-sm font-medium text-slate-800">
                 {formattedDeadline}
               </p>
             </div>
@@ -226,7 +226,7 @@ export function EventDetailsModal({
 
           {/* Student-specific: Status */}
           {isStudent && statusConfig && (
-            <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
               <div className={`p-2.5 rounded-lg ${statusConfig.bgColor}`}>
                 <StatusIcon className={`w-5 h-5 ${statusConfig.textColor}`} />
               </div>
@@ -245,16 +245,16 @@ export function EventDetailsModal({
           {isStudent &&
             event.assignment.grade !== undefined &&
             event.assignment.grade !== null && (
-              <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
-                <div className="p-2.5 rounded-lg bg-emerald-500/15">
-                  <CheckCircle className="w-5 h-5 text-emerald-400" />
+              <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+                <div className="p-2.5 rounded-lg bg-emerald-100">
+                  <CheckCircle className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div className="flex-1">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-0.5">
                     Grade
                   </p>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-xl font-bold text-white">
+                    <span className="text-xl font-bold text-slate-900">
                       {event.assignment.grade}
                     </span>
                     <span className="text-sm text-slate-500">/ 100</span>
@@ -265,16 +265,16 @@ export function EventDetailsModal({
 
           {/* Teacher-specific: Submissions */}
           {isTeacher && (
-            <div className="flex items-center gap-4 rounded-xl border border-slate-700/70 bg-slate-800/50 p-3.5">
-              <div className="p-2.5 rounded-lg bg-blue-500/15">
-                <Users className="w-5 h-5 text-blue-400" />
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 p-3.5">
+              <div className="p-2.5 rounded-lg bg-blue-100">
+                <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex-1">
                 <p className="text-xs font-medium text-slate-500 uppercase tracking-wide mb-0.5">
                   Submissions
                 </p>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-xl font-bold text-white">
+                  <span className="text-xl font-bold text-slate-900">
                     {event.assignment.submittedCount ?? 0}
                   </span>
                   <span className="text-sm text-slate-500">/</span>
@@ -289,13 +289,13 @@ export function EventDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="space-y-3 border-t border-white/5 px-6 pb-6 pt-4">
+        <div className="space-y-3 border-t border-slate-200 px-6 pb-6 pt-4">
           {/* Teacher: Send Reminder Button */}
           {isTeacher && (
             <button
               onClick={handleSendReminder}
               disabled={isSendingReminder}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-600/70 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Bell className="w-4 h-4" />
               <span>
@@ -309,7 +309,7 @@ export function EventDetailsModal({
           {/* View Assignment/Submissions Button */}
           <button
             onClick={handleNavigateToAssignment}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-blue-500/40 bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-teal-600 bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-300 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
           >
             <span>{isStudent ? "View Assignment" : "View Submissions"}</span>
             <ExternalLink className="w-4 h-4" />

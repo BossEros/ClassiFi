@@ -13,6 +13,7 @@ import type {
   LatePenaltyConfig as LatePenaltyConfigType,
   PenaltyTier,
 } from "@/shared/types/gradebook"
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface LatePenaltyConfigProps {
   enabled: boolean
@@ -167,22 +168,20 @@ export function LatePenaltyConfig({
     sortedPreviewTiers[sortedPreviewTiers.length - 1]?.hoursLate ?? 0
 
   return (
-    <Card className="border-white/10">
-      <CardHeader className="pb-4">
+    <Card className={assignmentFormTheme.sectionCard}>
+      <CardHeader className={`${assignmentFormTheme.sectionHeader} pb-4`}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-orange-500/20">
-            <Clock className="w-4 h-4 text-orange-400" />
-          </div>
+          <Clock className="w-5 h-5 text-amber-700" />
           <div>
-            <CardTitle>Late Submissions</CardTitle>
+            <CardTitle className="text-slate-900">Late Submissions</CardTitle>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4 pt-0">
-        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div>
-            <p className="text-sm font-medium text-gray-200">
+            <p className="text-sm font-medium text-slate-700">
               Allow late submissions
             </p>
           </div>
@@ -198,8 +197,8 @@ export function LatePenaltyConfig({
             <div
               className={cn(
                 "w-11 h-6 rounded-full transition-colors duration-200",
-                "bg-gray-700 peer-checked:bg-orange-500",
-                "peer-focus:ring-2 peer-focus:ring-orange-500/50",
+                "bg-slate-300 peer-checked:bg-amber-500",
+                "peer-focus:ring-2 peer-focus:ring-amber-500/30",
                 "after:content-[''] after:absolute after:top-0.5 after:left-0.5",
                 "after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-lg",
                 "after:transition-transform peer-checked:after:translate-x-5",
@@ -213,7 +212,7 @@ export function LatePenaltyConfig({
           <>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-200 mb-2">
+                <label className="mb-2 block text-sm font-medium text-slate-700">
                   Reject After (hours)
                 </label>
                 <Input
@@ -228,9 +227,9 @@ export function LatePenaltyConfig({
                   min={1}
                   placeholder="Never"
                   disabled={disabled}
-                  className="h-11 text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50"
+                  className="h-11 rounded-xl border border-slate-300 bg-slate-50 text-sm text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 hover:border-slate-400 hover:bg-white focus:border-teal-500/60 focus:bg-white focus:ring-teal-500/20"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-slate-500">
                   Leave empty to always accept
                 </p>
               </div>
@@ -238,13 +237,13 @@ export function LatePenaltyConfig({
 
             <div>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-gray-200">
+                <label className="text-sm font-medium text-slate-700">
                   Penalty Tiers
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowPreview(!showPreview)}
-                  className="text-xs text-orange-400 hover:text-orange-300"
+                  className="cursor-pointer text-xs font-medium text-amber-700 hover:text-amber-800"
                 >
                   {showPreview ? "Hide Preview" : "Show Preview"}
                 </button>
@@ -254,11 +253,11 @@ export function LatePenaltyConfig({
                 {config.tiers.map((tier) => (
                   <div
                     key={tier.id}
-                    className="flex items-center gap-2 p-2 rounded-lg bg-white/5 border border-white/10"
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2"
                   >
                     <div className="flex-1 grid grid-cols-2 gap-2">
                       <div>
-                        <label className="block text-xs text-gray-300 mb-2">
+                        <label className="mb-2 block text-xs font-medium text-slate-500">
                           Up To (hours late)
                         </label>
                         <Input
@@ -280,12 +279,12 @@ export function LatePenaltyConfig({
                           }
                           min={1}
                           disabled={disabled}
-                          className="h-8 text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50"
+                          className="h-8 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 hover:border-slate-400 focus:border-teal-500/60 focus:ring-teal-500/20"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs text-gray-300 mb-2">
+                        <label className="mb-2 block text-xs font-medium text-slate-500">
                           Penalty (%)
                         </label>
                         <Input
@@ -308,7 +307,7 @@ export function LatePenaltyConfig({
                           min={0}
                           max={100}
                           disabled={disabled}
-                          className="h-8 text-sm bg-[#1A2130] border-white/10 text-white placeholder:text-gray-500 rounded-xl transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50"
+                          className="h-8 rounded-xl border border-slate-300 bg-white text-sm text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 hover:border-slate-400 focus:border-teal-500/60 focus:ring-teal-500/20"
                         />
                       </div>
                     </div>
@@ -333,7 +332,7 @@ export function LatePenaltyConfig({
                 type="button"
                 onClick={handleAddTier}
                 disabled={disabled || config.tiers.length >= 5}
-                className="w-full mt-2 h-9 bg-white/5 hover:bg-white/10 text-white text-sm"
+                className="mt-2 h-9 w-full border border-dashed border-slate-300 bg-white text-sm text-slate-700 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
               >
                 <Plus className="w-4 h-4 mr-1" />
                 Add Tier
@@ -341,20 +340,20 @@ export function LatePenaltyConfig({
             </div>
 
             {showPreview && (
-              <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
                 <div className="flex items-start gap-2 mb-2">
-                  <AlertTriangle className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
                   <div>
-                    <p className="text-sm font-medium text-orange-400">
+                    <p className="text-sm font-medium text-amber-800">
                       Penalty Preview
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="mt-1 text-xs text-amber-700">
                       Based on your configuration:
                     </p>
                   </div>
                 </div>
 
-                <ul className="text-xs text-gray-300 space-y-1 ml-6">
+                <ul className="ml-6 space-y-1 text-xs text-slate-700">
                   {sortedPreviewTiers.map((tier, index) => {
                     const previousHours =
                       index === 0 ? 0 : sortedPreviewTiers[index - 1].hoursLate
@@ -368,7 +367,7 @@ export function LatePenaltyConfig({
                   })}
                   {config.rejectAfterHours != null &&
                     config.rejectAfterHours >= highestPreviewTierHours && (
-                      <li className="text-red-400">
+                      <li className="text-rose-700">
                         After {config.rejectAfterHours}h: Rejected
                       </li>
                     )}
