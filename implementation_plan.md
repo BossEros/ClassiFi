@@ -1114,3 +1114,21 @@ Convert calendar experience from dark surfaces to the shared light dashboard vis
 - [ ] Convert `EventDetailsModal` to light mode.
 - [ ] Update `CalendarPage.css`, `CustomDayView.css`, and `CustomWeekView.css` for light theme.
 - [ ] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Auth Palette Rebalance
+
+## Scope
+
+Rework login and registration visual balance to reduce eye strain while keeping brand continuity with the sidebar.
+
+1. Introduce shared auth theme tokens for page background, card surface, and field treatments.
+2. Apply the softer palette to login page content and actions.
+3. Apply the same palette to registration flow steps and controls.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Add shared auth theme constants for balanced dark/light auth surfaces.
+- [x] Update `LoginPage` to use the new card/input/background palette.
+- [x] Update `RegisterPage` to use the same palette across all steps.
+- [x] Run `frontend`: `npm run build`.

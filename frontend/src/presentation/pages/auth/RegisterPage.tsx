@@ -7,6 +7,7 @@ import { registerUser } from "@/business/services/authService";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { registerFormSchema, type RegisterFormValues } from "@/presentation/schemas/auth/authSchemas";
 import type { RegistrationStep, RegistrationStepInfo } from "@/shared/types/auth";
+import { authTheme } from "@/presentation/constants/authTheme";
 
 // Inlined from src/presentation/components/auth/forms/RegisterForm.tsx
 interface RegisterFormProps {
@@ -17,6 +18,9 @@ interface RegisterFormProps {
 
 
 function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
+  const authInputClassName =
+    authTheme.input
+
   const [currentStep, setCurrentStep] = useState<RegistrationStep>("role")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -161,7 +165,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       {currentStep !== "complete" && (
         <button
           onClick={currentStep === "role" ? onBackToLogin : handleBack}
-          className="flex items-center text-gray-400 hover:text-white transition-colors"
+          className={authTheme.backButton}
         >
           <ArrowLeft className="w-5 h-5 mr-2" />
           Back
@@ -182,7 +186,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                     : index === steps.length - 1
                       ? "text-right"
                       : "text-center"
-                } ${index <= currentStepIndex ? "text-white font-medium" : "text-gray-400"}`}
+                } ${index <= currentStepIndex ? "font-medium text-[#13211E]" : "text-[#6A817A]"}`}
               >
                 {step.label}
               </div>
@@ -190,9 +194,9 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
           </div>
 
           {/* Progress Bar */}
-          <div className="relative h-1.5 bg-gray-700 rounded-full">
+          <div className={authTheme.progressTrack}>
             <div
-              className="absolute h-full bg-gradient-to-r from-teal-600 to-teal-500 rounded-full transition-all duration-500 ease-out"
+              className={authTheme.progressFill}
               style={{ width: `${(currentStepIndex / 3) * 100}%` }}
             ></div>
           </div>
@@ -201,7 +205,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
 
       {/* Error Message */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+        <div className={authTheme.errorAlert}>
           {error}
         </div>
       )}
@@ -210,7 +214,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       {currentStep === "role" && (
         <div className="space-y-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-white">Choose Your Role</h1>
+            <h1 className="text-3xl font-bold text-[#13211E]">Choose Your Role</h1>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -223,14 +227,14 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   shouldValidate: true,
                 })
               }}
-              className={`p-8 rounded-2xl border-2 transition-all ${
+              className={`${authTheme.roleCardBase} ${
                 roleValue === "student"
-                  ? "border-teal-500 bg-teal-500/10"
-                  : "border-white/10 bg-white/5 hover:bg-white/10"
+                  ? authTheme.roleCardSelected
+                  : authTheme.roleCardDefault
               }`}
             >
-              <GraduationCap className="w-12 h-12 mx-auto mb-4 text-white" />
-              <p className="text-white font-medium">I am a student</p>
+              <GraduationCap className="w-12 h-12 mx-auto mb-4 text-teal-700" />
+              <p className="font-medium text-[#13211E]">I am a student</p>
             </button>
 
             <button
@@ -242,14 +246,14 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   shouldValidate: true,
                 })
               }}
-              className={`p-8 rounded-2xl border-2 transition-all ${
+              className={`${authTheme.roleCardBase} ${
                 roleValue === "teacher"
-                  ? "border-teal-500 bg-teal-500/10"
-                  : "border-white/10 bg-white/5 hover:bg-white/10"
+                  ? authTheme.roleCardSelected
+                  : authTheme.roleCardDefault
               }`}
             >
-              <Users className="w-12 h-12 mx-auto mb-4 text-white" />
-              <p className="text-white font-medium">I am a teacher</p>
+              <Users className="w-12 h-12 mx-auto mb-4 text-teal-700" />
+              <p className="font-medium text-[#13211E]">I am a teacher</p>
             </button>
           </div>
 
@@ -270,7 +274,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       {currentStep === "personal" && (
         <div className="space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-white">
+            <h1 className="text-3xl font-bold text-[#13211E]">
               Enter Your Personal Details
             </h1>
           </div>
@@ -279,7 +283,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             <div className="space-y-2">
               <label
                 htmlFor="firstName"
-                className="block text-sm font-medium text-slate-300"
+                className={authTheme.label}
               >
                 First Name
               </label>
@@ -292,6 +296,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   firstNameField.onBlur(event)
                   void trigger("firstName")
                 }}
+                className={authInputClassName}
                 required
                 hasError={!!errors.firstName}
                 aria-describedby={
@@ -301,7 +306,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               {errors.firstName && (
                 <p
                   id="firstName-error"
-                  className="text-sm text-red-400"
+                  className="text-sm text-rose-600"
                   role="alert"
                 >
                   {errors.firstName.message}
@@ -312,7 +317,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             <div className="space-y-2">
               <label
                 htmlFor="lastName"
-                className="block text-sm font-medium text-slate-300"
+                className={authTheme.label}
               >
                 Last Name
               </label>
@@ -325,6 +330,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   lastNameField.onBlur(event)
                   void trigger("lastName")
                 }}
+                className={authInputClassName}
                 required
                 hasError={!!errors.lastName}
                 aria-describedby={
@@ -334,7 +340,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               {errors.lastName && (
                 <p
                   id="lastName-error"
-                  className="text-sm text-red-400"
+                  className="text-sm text-rose-600"
                   role="alert"
                 >
                   {errors.lastName.message}
@@ -346,7 +352,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
           <div className="space-y-2">
             <label
               htmlFor="email"
-              className="block text-sm font-medium text-slate-300"
+              className={authTheme.label}
             >
               Email Address
             </label>
@@ -359,12 +365,13 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                 emailField.onBlur(event)
                 void trigger("email")
               }}
+              className={authInputClassName}
               required
               hasError={!!errors.email}
               aria-describedby={errors.email ? "email-error" : undefined}
             />
             {errors.email && (
-              <p id="email-error" className="text-sm text-red-400" role="alert">
+              <p id="email-error" className="text-sm text-rose-600" role="alert">
                 {errors.email.message}
               </p>
             )}
@@ -387,13 +394,13 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       {currentStep === "credentials" && (
         <div className="space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-white">Set Your Password</h1>
+            <h1 className="text-3xl font-bold text-[#13211E]">Set Your Password</h1>
           </div>
 
           <div className="space-y-2">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-slate-300"
+              className={authTheme.label}
             >
               Password
             </label>
@@ -407,7 +414,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   passwordField.onBlur(event)
                   void trigger("password")
                 }}
-                className="pr-11"
+                className={`${authInputClassName} ${authTheme.inputWithTrailingIcon}`}
                 required
                 hasError={!!errors.password}
                 aria-describedby={
@@ -417,7 +424,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${authTheme.inputIcon} hover:text-[#13211E]`}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -430,13 +437,13 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             {errors.password && (
               <p
                 id="password-error"
-                className="text-sm text-red-400"
+                className="text-sm text-rose-600"
                 role="alert"
               >
                 {errors.password.message}
               </p>
             )}
-            <p className="text-xs text-slate-400">
+            <p className={authTheme.helperText}>
               Must be 8+ characters with uppercase, lowercase, number, and
               special character
             </p>
@@ -445,7 +452,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
           <div className="space-y-2">
             <label
               htmlFor="confirmPassword"
-              className="block text-sm font-medium text-slate-300"
+              className={authTheme.label}
             >
               Confirm Password
             </label>
@@ -459,7 +466,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   confirmPasswordField.onBlur(event)
                   void trigger("confirmPassword")
                 }}
-                className="pr-11"
+                className={`${authInputClassName} ${authTheme.inputWithTrailingIcon}`}
                 required
                 hasError={!!errors.confirmPassword}
                 aria-describedby={
@@ -469,7 +476,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors"
+                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${authTheme.inputIcon} hover:text-[#13211E]`}
                 aria-label={
                   showConfirmPassword ? "Hide password" : "Show password"
                 }
@@ -484,7 +491,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             {errors.confirmPassword && (
               <p
                 id="confirmPassword-error"
-                className="text-sm text-red-400"
+                className="text-sm text-rose-600"
                 role="alert"
               >
                 {errors.confirmPassword.message}
@@ -504,9 +511,9 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
             </Button>
           </div>
 
-          <p className="text-center text-xs text-slate-400">
+          <p className="text-center text-xs text-[#5F746E]">
             By submitting this form, I agree to the{" "}
-            <a href="#" className="text-teal-400 hover:text-teal-300">
+            <a href="#" className={authTheme.link}>
               Terms and Conditions
             </a>{" "}
             of ClassiFi.
@@ -518,13 +525,13 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
       {currentStep === "complete" && (
         <div className="space-y-8 text-center py-8">
           <div>
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-teal-500 to-teal-600 mb-6">
+            <div className="mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-teal-600 to-teal-500">
               <Check className="w-10 h-10 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
+            <h1 className="mb-2 text-3xl font-bold text-[#13211E]">
               Account Creation Complete
             </h1>
-            <p className="text-gray-400">
+            <p className="text-[#5F746E]">
               Click the button to proceed to the login page.
             </p>
           </div>
@@ -549,16 +556,16 @@ export function RegisterPage() {
     navigate("/login")
   }
   return (
-    <div className="min-h-screen w-full grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-6 md:p-8">
+    <div className={authTheme.pageShell}>
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div className={authTheme.backgroundOrbPrimary}></div>
+        <div className={authTheme.backgroundOrbSecondary}></div>
       </div>
 
       {/* Registration Card */}
-      <div className="w-full max-w-[672px] min-w-[320px] relative">
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-6 sm:p-8 md:p-10">
+      <div className={`${authTheme.cardWrapper} ${authTheme.registerCardWidth}`}>
+        <div className={authTheme.cardSurface}>
           <RegisterForm
             onBackToLogin={handleBackToLogin}
             onSuccess={handleRegisterSuccess}

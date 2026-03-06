@@ -506,3 +506,10 @@
 - [x] Convert event details modal to light mode
 - [x] Update calendar CSS files to light backgrounds/borders/text
 - [x] Run frontend build verification
+
+# Auth Palette Rebalance
+
+- [x] Add a shared auth theme token file for balanced page/card/input colors
+- [x] Apply the softer auth palette to the login page
+- [x] Apply the same palette to the registration flow
+- [x] Run frontend build verification

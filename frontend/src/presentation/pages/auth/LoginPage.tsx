@@ -7,6 +7,7 @@ import { Eye, EyeOff, Lock, Mail, ArrowRight } from "lucide-react";
 import { loginUser } from "@/business/services/authService";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { loginFormSchema, type LoginFormValues } from "@/presentation/schemas/auth/authSchemas";
+import { authTheme } from "@/presentation/constants/authTheme";
 
 // Inlined from src/presentation/components/auth/forms/LoginForm.tsx
 interface LoginFormProps {
@@ -22,6 +23,9 @@ function LoginForm({
   onRegisterClick,
   onForgotPasswordClick,
 }: LoginFormProps) {
+  const authInputClassName =
+    `${authTheme.input} ${authTheme.inputWithLeadingIcon}`
+
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,7 +68,7 @@ function LoginForm({
     <form onSubmit={handleSubmit(handleLogin)} className="space-y-5" noValidate>
       {/* Error Message */}
       {error && (
-        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+        <div className={authTheme.errorAlert}>
           {error}
         </div>
       )}
@@ -73,12 +77,12 @@ function LoginForm({
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-slate-300"
+          className={authTheme.label}
         >
           Email
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
             <Mail className="w-5 h-5" />
           </div>
           <Input
@@ -90,7 +94,7 @@ function LoginForm({
               emailField.onBlur(event)
               void trigger("email")
             }}
-            className="pl-11"
+            className={authInputClassName}
             required
             aria-required="true"
             disabled={isLoading}
@@ -99,7 +103,7 @@ function LoginForm({
           />
         </div>
         {errors.email && (
-          <p id="email-error" className="text-sm text-red-400" role="alert">
+          <p id="email-error" className="text-sm text-rose-600" role="alert">
             {errors.email.message}
           </p>
         )}
@@ -110,21 +114,21 @@ function LoginForm({
         <div className="flex items-center justify-between">
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-slate-300"
+            className={authTheme.label}
           >
             Password
           </label>
           <button
             type="button"
             onClick={onForgotPasswordClick}
-            className="text-xs text-teal-400 hover:text-teal-300 transition-colors font-medium cursor-pointer"
+            className={`cursor-pointer text-xs ${authTheme.subtleLink}`}
             tabIndex={-1}
           >
             Forgot password?
           </button>
         </div>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
             <Lock className="w-5 h-5" />
           </div>
           <Input
@@ -135,7 +139,7 @@ function LoginForm({
             onBlur={(event) => {
               passwordField.onBlur(event)
             }}
-            className="pl-11 pr-11"
+            className={`${authInputClassName} ${authTheme.inputWithTrailingIcon}`}
             required
             aria-required="true"
             disabled={isLoading}
@@ -145,7 +149,7 @@ function LoginForm({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors focus:outline-none focus:text-slate-300"
+            className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors focus:outline-none ${authTheme.inputIcon} hover:text-[#13211E] focus:text-[#13211E]`}
             aria-label={showPassword ? "Hide password" : "Show password"}
             tabIndex={-1}
             disabled={isLoading}
@@ -158,7 +162,7 @@ function LoginForm({
           </button>
         </div>
         {errors.password && (
-          <p id="password-error" className="text-sm text-red-400" role="alert">
+          <p id="password-error" className="text-sm text-rose-600" role="alert">
             {errors.password.message}
           </p>
         )}
@@ -177,16 +181,16 @@ function LoginForm({
       </Button>
 
       {/* Divider */}
-      <div className="border-t border-white/10"></div>
+      <div className={authTheme.divider}></div>
 
       {/* Sign Up Link */}
       <div className="text-center">
-        <p className="text-sm text-slate-400">
+        <p className={authTheme.mutedText}>
           Don't have an account?{" "}
           <button
             type="button"
             onClick={onRegisterClick}
-            className="text-teal-400 hover:text-teal-300 transition-colors font-semibold hover:underline cursor-pointer"
+            className={`cursor-pointer ${authTheme.link}`}
           >
             Create account
           </button>
@@ -228,26 +232,26 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full grid place-items-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-900 p-6 md:p-8">
+    <div className={authTheme.pageShell}>
       {/* Background decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl"></div>
+        <div className={authTheme.backgroundOrbPrimary}></div>
+        <div className={authTheme.backgroundOrbSecondary}></div>
       </div>
 
       {/* Login Card */}
-      <div className="w-full max-w-[448px] min-w-[320px] relative">
-        <div className="bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 p-6 sm:p-8 md:p-10">
+      <div className={`${authTheme.cardWrapper} ${authTheme.loginCardWidth}`}>
+        <div className={authTheme.cardSurface}>
           <div className="space-y-6 md:space-y-8">
             {/* Header */}
             <div className="text-center space-y-3">
-              <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
+              <h1 className={authTheme.cardTitle}>
                 Welcome to{" "}
-                <span className="bg-gradient-to-r from-teal-400 to-teal-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-teal-700 to-teal-600 bg-clip-text text-transparent">
                   ClassiFi
                 </span>
               </h1>
-              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+              <p className={authTheme.cardSubtitle}>
                 Sign in to your account to continue
               </p>
             </div>
@@ -262,7 +266,7 @@ export function LoginPage() {
         </div>
 
         {/* Footer Text */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className={authTheme.footerText}>
           By continuing, you agree to our Terms of Service and Privacy Policy
         </p>
       </div>
