@@ -14,6 +14,7 @@ interface TopBarProps {
   userInitials: string
   onProfileClick?: () => void
   breadcrumbItems?: TopBarBreadcrumbItem[]
+  showProfileButton?: boolean
 }
 
 function getRoleLabel(user: User | null): string {
@@ -31,6 +32,7 @@ function getRoleLabel(user: User | null): string {
  * @param userInitials - The user's initials for avatar fallback.
  * @param onProfileClick - Optional custom handler for profile button click. Defaults to navigating to settings.
  * @param breadcrumbItems - Optional breadcrumb items displayed on the left side of top bar.
+ * @param showProfileButton - Whether to render the profile/settings shortcut in the top bar.
  * @returns An object containing the main top bar JSX element.
  */
 export function useTopBar({
@@ -38,6 +40,7 @@ export function useTopBar({
   userInitials,
   onProfileClick,
   breadcrumbItems,
+  showProfileButton = true,
 }: TopBarProps) {
   const navigate = useNavigate()
 
@@ -92,32 +95,37 @@ export function useTopBar({
           </div>
 
           <div className="flex items-center gap-4">
-          <NotificationBadge />
+            <NotificationBadge />
 
-          <div className="h-8 w-px bg-slate-200" />
+            {showProfileButton ? <div className="h-8 w-px bg-slate-200" /> : null}
 
-          <button
-            onClick={handleProfileClick}
-            className="cursor-pointer flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-100"
-          >
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-semibold text-slate-800">
-                {user ? `${user.firstName} ${user.lastName}` : "User"}
-              </p>
-              <p className="text-xs text-slate-500">{getRoleLabel(user)}</p>
-            </div>
+            {showProfileButton ? (
+              <button
+                onClick={handleProfileClick}
+                className="cursor-pointer flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors hover:bg-slate-100"
+              >
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-semibold text-slate-800">
+                    {user ? `${user.firstName} ${user.lastName}` : "User"}
+                  </p>
+                  <p className="text-xs text-slate-500">{getRoleLabel(user)}</p>
+                </div>
 
-            <Avatar
-              size="sm"
-              src={user?.avatarUrl}
-              fallback={userInitials}
-              alt={user ? `${user.firstName} ${user.lastName}` : "User"}
-              className="border border-slate-200"
-            />
-          </button>
+                <Avatar
+                  size="sm"
+                  src={user?.avatarUrl}
+                  fallback={userInitials}
+                  alt={user ? `${user.firstName} ${user.lastName}` : "User"}
+                  className="border border-slate-200"
+                />
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
     ),
   }
 }
+
+
+

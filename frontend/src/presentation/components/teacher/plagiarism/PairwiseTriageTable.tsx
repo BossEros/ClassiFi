@@ -5,7 +5,12 @@ import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 
-type SortKey = "similarity" | "overlap" | "longest"
+type SortKey =
+  | "similarity"
+  | "structuralSimilarity"
+  | "semanticSimilarity"
+  | "overlap"
+  | "longest"
 type SortOrder = "asc" | "desc"
 type SignalLevel = "low" | "medium" | "high"
 
@@ -41,9 +46,9 @@ const SortIndicator: React.FC<{
   if (currentSort !== column) return null
 
   return sortOrder === "desc" ? (
-    <ArrowDown className="inline h-4 w-4 text-teal-400" aria-hidden="true" />
+    <ArrowDown className="inline h-4 w-4 text-teal-600" aria-hidden="true" />
   ) : (
-    <ArrowUp className="inline h-4 w-4 text-teal-400" aria-hidden="true" />
+    <ArrowUp className="inline h-4 w-4 text-teal-600" aria-hidden="true" />
   )
 }
 
@@ -140,11 +145,11 @@ function getSignalLabel(level: SignalLevel): string {
 function getSignalBadgeClassName(level: SignalLevel): string {
   switch (level) {
     case "high":
-      return "bg-red-500/20 text-red-300"
+      return "border border-rose-200 bg-rose-50 text-rose-700"
     case "medium":
-      return "bg-amber-500/20 text-amber-300"
+      return "border border-amber-200 bg-amber-50 text-amber-700"
     default:
-      return "bg-emerald-500/20 text-emerald-300"
+      return "border border-emerald-200 bg-emerald-50 text-emerald-700"
   }
 }
 
@@ -211,6 +216,16 @@ export function PairwiseTriageTable({
           comparisonValue =
             getPairSimilarityRatio(leftPair) - getPairSimilarityRatio(rightPair)
           break
+        case "structuralSimilarity":
+          comparisonValue =
+            getPairStructuralSimilarityRatio(leftPair) -
+            getPairStructuralSimilarityRatio(rightPair)
+          break
+        case "semanticSimilarity":
+          comparisonValue =
+            getPairSemanticSimilarityRatio(leftPair) -
+            getPairSemanticSimilarityRatio(rightPair)
+          break
         case "overlap":
           comparisonValue =
             getNormalizedOverlapRatio(leftPair) -
@@ -269,10 +284,10 @@ export function PairwiseTriageTable({
     <div className="space-y-8">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h2 className="text-xl font-bold text-white mb-1">
+          <h2 className="mb-1 text-xl font-semibold text-slate-900">
             Pairwise Comparison
           </h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-slate-500">
             Review high-similarity student pairs and open code comparison
             details.
           </p>
@@ -283,6 +298,7 @@ export function PairwiseTriageTable({
             aria-label="Minimum similarity threshold"
             options={similarityThresholdOptions}
             value={String(minimumSimilarityPercent)}
+            variant="light"
             onChange={(selectedValue) => {
               setMinimumSimilarityPercent(Number(selectedValue))
               setCurrentPage(1)
@@ -293,20 +309,20 @@ export function PairwiseTriageTable({
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-slate-400">Loading pairs...</div>
+          <div className="text-slate-500">Loading pairs...</div>
         </div>
       ) : (
         <div className="space-y-6">
-          <div className="overflow-x-auto rounded-xl border border-white/10 bg-[#2A2F3E] backdrop-blur-md">
+          <div className="overflow-x-auto rounded-2xl border border-slate-300 bg-white shadow-md shadow-slate-200/80">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-white/10">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">
+                <tr className="border-b border-slate-300 bg-slate-200/85">
+                  <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                     Student Pair
                   </th>
                   <th
                     onClick={() => handleSort("similarity")}
-                    className="px-6 py-4 text-center text-sm font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none"
+                    className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>Overall Similarity</span>
@@ -317,22 +333,42 @@ export function PairwiseTriageTable({
                       />
                     </span>
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
-                    Structural Similarity
+                  <th
+                    onClick={() => handleSort("structuralSimilarity")}
+                    className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <span>Structural Similarity</span>
+                      <SortIndicator
+                        column="structuralSimilarity"
+                        currentSort={sortKey}
+                        sortOrder={sortOrder}
+                      />
+                    </span>
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
-                    Semantic Similarity
+                  <th
+                    onClick={() => handleSort("semanticSimilarity")}
+                    className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <span>Semantic Similarity</span>
+                      <SortIndicator
+                        column="semanticSimilarity"
+                        currentSort={sortKey}
+                        sortOrder={sortOrder}
+                      />
+                    </span>
                   </th>
                   <th
                     onClick={() => handleSort("overlap")}
-                    className="px-6 py-4 text-center text-sm font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none"
+                    className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>Total Shared Chunks</span>
                       <span
                         title={getTotalSharedChunksTooltipText()}
                         aria-label={getTotalSharedChunksTooltipText()}
-                        className="text-slate-400"
+                        className="text-slate-500"
                       >
                         <CircleHelp className="h-3.5 w-3.5" />
                       </span>
@@ -345,14 +381,14 @@ export function PairwiseTriageTable({
                   </th>
                   <th
                     onClick={() => handleSort("longest")}
-                    className="px-6 py-4 text-center text-sm font-semibold text-slate-300 cursor-pointer hover:text-white transition-colors select-none"
+                    className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>Longest Continuous Shared Block</span>
                       <span
                         title={getLongestContinuousSharedBlockTooltipText()}
                         aria-label={getLongestContinuousSharedBlockTooltipText()}
-                        className="text-slate-400"
+                        className="text-slate-500"
                       >
                         <CircleHelp className="h-3.5 w-3.5" />
                       </span>
@@ -363,7 +399,7 @@ export function PairwiseTriageTable({
                       />
                     </span>
                   </th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+                  <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                     Actions
                   </th>
                 </tr>
@@ -373,7 +409,7 @@ export function PairwiseTriageTable({
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-6 py-12 text-center text-slate-400"
+                      className="px-6 py-12 text-center text-slate-500"
                     >
                       No pairs match the current filters.
                     </td>
@@ -397,13 +433,15 @@ export function PairwiseTriageTable({
                     return (
                       <tr
                         key={pair.id}
-                        className={`border-b border-white/5 transition-all duration-200 cursor-pointer ${
-                          isSelectedPair ? "bg-teal-500/10" : "hover:bg-white/5"
+                        className={`cursor-pointer border-b border-slate-100 transition-colors duration-200 ${
+                          isSelectedPair
+                            ? "bg-teal-50 ring-inset"
+                            : "hover:bg-slate-50/80"
                         }`}
                         onClick={() => onPairSelect(pair)}
                       >
                         <td className="px-6 py-4">
-                          <div className="text-sm text-white font-medium">
+                          <div className="text-sm font-medium text-slate-900">
                             {pairStudentNames.left} vs {pairStudentNames.right}
                           </div>
                         </td>
@@ -434,7 +472,7 @@ export function PairwiseTriageTable({
                             />
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center text-sm text-slate-300">
+                        <td className="px-6 py-4 text-center text-sm text-slate-600">
                           <QualitativeSignalBadge
                             level={overlapSignalLevel}
                             tooltipText={getSignalBadgeTooltip(
@@ -443,7 +481,7 @@ export function PairwiseTriageTable({
                             )}
                           />
                         </td>
-                        <td className="px-6 py-4 text-center text-sm text-slate-300">
+                        <td className="px-6 py-4 text-center text-sm text-slate-600">
                           <QualitativeSignalBadge
                             level={longestSignalLevel}
                             tooltipText={getSignalBadgeTooltip(
@@ -458,7 +496,7 @@ export function PairwiseTriageTable({
                               event.stopPropagation()
                               onPairSelect(pair)
                             }}
-                            className="px-3 py-1.5 text-xs font-medium text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                            className="inline-flex items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
                           >
                             Compare Code
                           </button>
@@ -476,6 +514,7 @@ export function PairwiseTriageTable({
             totalPages={totalPages}
             totalItems={filteredAndSortedPairs.length}
             itemsPerPage={itemsPerPage}
+            variant="light"
             onPageChange={(nextPage) =>
               setCurrentPage(Math.min(nextPage, totalPages))
             }

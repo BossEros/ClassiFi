@@ -1,27 +1,59 @@
-import { useState, useEffect, useId } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
-import { Card, CardContent } from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
-import { Input } from "@/presentation/components/ui/Input";
-import { BackButton } from "@/presentation/components/ui/BackButton";
-import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard";
-import { Search, Shield, Calendar, Inbox, Loader2, Edit, Trash2, Users, CheckCircle2, Clock3, UserX, AlertCircle, FileText, ChevronDown } from "lucide-react";
-import { useAuthStore } from "@/shared/store/useAuthStore";
-import { getAssignmentById, getAssignmentSubmissions } from "@/business/services/assignmentService";
-import { deleteAssignment, getClassStudents } from "@/business/services/classService";
-import { analyzeAssignmentSubmissions, getAssignmentSimilarityStatus } from "@/business/services/plagiarismService";
-import { formatDeadline, isLateSubmission } from "@/presentation/utils/dateUtils";
-import { useToastStore } from "@/shared/store/useToastStore";
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
-import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu";
-import type { AssignmentDetail, Submission } from "@/business/models/assignment/types";
-import * as React from "react";
-import { cn } from "@/shared/utils/cn";
-import { AlertTriangle, X } from "lucide-react";
-import { formatGrade, getGradeColor, getGradePercentage } from "@/presentation/utils/gradeUtils";
-import { Avatar } from "@/presentation/components/ui/Avatar";
-import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter";
+import { useState, useEffect, useId } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { Input } from "@/presentation/components/ui/Input"
+import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
+import {
+  Search,
+  Shield,
+  Calendar,
+  Inbox,
+  Loader2,
+  Edit,
+  Trash2,
+  Users,
+  CheckCircle2,
+  Clock3,
+  UserX,
+  AlertCircle,
+  ScrollText,
+  ChevronDown,
+} from "lucide-react"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import {
+  getAssignmentById,
+  getAssignmentSubmissions,
+} from "@/business/services/assignmentService"
+import {
+  deleteAssignment,
+  getClassStudents,
+} from "@/business/services/classService"
+import {
+  analyzeAssignmentSubmissions,
+  getAssignmentSimilarityStatus,
+} from "@/business/services/plagiarismService"
+import {
+  formatDeadline,
+  isLateSubmission,
+} from "@/presentation/utils/dateUtils"
+import { useToastStore } from "@/shared/store/useToastStore"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
+import type {
+  AssignmentDetail,
+  Submission,
+} from "@/business/models/assignment/types"
+import * as React from "react"
+import { cn } from "@/shared/utils/cn"
+import { AlertTriangle, X } from "lucide-react"
+import {
+  formatGrade,
+  getGradePercentage,
+} from "@/presentation/utils/gradeUtils"
+import { Avatar } from "@/presentation/components/ui/Avatar"
+import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 
 // Inlined from src/presentation/components/teacher/forms/class/DeleteAssignmentModal.tsx
 interface DeleteAssignmentModalProps {
@@ -32,8 +64,6 @@ interface DeleteAssignmentModalProps {
   isDeleting?: boolean
   assignmentTitle?: string
 }
-
-
 
 function DeleteAssignmentModal({
   isOpen,
@@ -77,7 +107,7 @@ function DeleteAssignmentModal({
       <div
         className={cn(
           "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
-          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
+          "rounded-2xl border border-slate-200 bg-white",
           "shadow-xl shadow-black/20",
           "animate-in fade-in-0 zoom-in-95 duration-200",
           className,
@@ -91,8 +121,8 @@ function DeleteAssignmentModal({
           onClick={onClose}
           disabled={isDeleting}
           className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
+            "absolute top-4 right-4 rounded-lg p-1",
+            "text-slate-400 hover:bg-slate-100 hover:text-slate-900",
             "transition-colors duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
             "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -103,23 +133,23 @@ function DeleteAssignmentModal({
 
         {/* Warning icon */}
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-400" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-50">
+            <AlertTriangle className="w-8 h-8 text-rose-500" />
           </div>
         </div>
 
         {/* Title */}
         <h2
           id="delete-assignment-modal-title"
-          className="text-xl font-semibold text-white text-center mb-2"
+          className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
           Delete Assignment
         </h2>
 
         {/* Description */}
-        <p className="text-gray-400 text-center mb-6">
+        <p className="mb-6 text-center text-slate-500">
           Are you sure you want to delete{" "}
-          <span className="text-white font-medium">{assignmentTitle}</span>?
+          <span className="font-medium text-slate-900">{assignmentTitle}</span>?
           This action cannot be undone. All student submissions for this
           assignment will be permanently removed.
         </p>
@@ -130,9 +160,8 @@ function DeleteAssignmentModal({
             onClick={onClose}
             disabled={isDeleting}
             className={cn(
-              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-              "border border-white/20 text-white",
-              "hover:bg-white/10 transition-colors duration-200",
+              "flex flex-1 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700",
+              "hover:bg-slate-50 transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
               "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
@@ -143,8 +172,7 @@ function DeleteAssignmentModal({
             onClick={onConfirm}
             disabled={isDeleting}
             className={cn(
-              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-              "bg-red-500 text-white",
+              "flex flex-1 items-center justify-center rounded-xl bg-red-500 px-4 py-3 text-sm font-semibold text-white",
               "hover:bg-red-600 transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -187,7 +215,7 @@ function CollapsibleInstructions({
   }
 
   return (
-    <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+    <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/70">
       <div className="px-6 py-5">
         <button
           type="button"
@@ -201,13 +229,15 @@ function CollapsibleInstructions({
           )}
         >
           <div className="flex items-center gap-2.5">
-            <FileText className="h-4 w-4 text-slate-300" />
-            <h2 className="text-lg font-semibold text-white">Instructions</h2>
+            <ScrollText className="h-4 w-4 text-blue-700" />
+            <h2 className="text-lg font-semibold text-slate-900">
+              Instructions
+            </h2>
           </div>
           {canExpand && (
             <ChevronDown
               className={cn(
-                "h-4 w-4 text-slate-300 transition-transform duration-200",
+                "h-4 w-4 text-slate-400 transition-transform duration-200",
                 isExpanded && "rotate-180",
               )}
             />
@@ -218,19 +248,21 @@ function CollapsibleInstructions({
         <CardContent id={instructionsPanelId}>
           <div className="space-y-4">
             {normalizedInstructions ? (
-              <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+              <p className="whitespace-pre-wrap break-words text-base leading-7 text-slate-600">
                 {normalizedInstructions}
               </p>
             ) : (
-              <p className="text-gray-400 text-sm">No instructions provided.</p>
+              <p className="text-sm text-slate-400">
+                No instructions provided.
+              </p>
             )}
 
             {instructionsImageUrl && (
-              <div className="rounded-xl overflow-hidden border border-white/10 bg-black/20">
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
                 <img
                   src={instructionsImageUrl}
                   alt={`${assignmentName} instructions`}
-                  className="w-full max-h-[28rem] object-contain bg-black/30"
+                  className="max-h-[28rem] w-full object-contain bg-slate-50"
                 />
               </div>
             )}
@@ -254,6 +286,14 @@ interface AssignmentSubmissionsTableProps {
   onViewDetails: (submission: Submission) => void
 }
 
+function getSubmissionGradeTextClass(percentage: number): string {
+  if (percentage >= 90) return "text-emerald-700"
+  if (percentage >= 80) return "text-teal-700"
+  if (percentage >= 70) return "text-amber-700"
+  if (percentage >= 60) return "text-orange-700"
+  return "text-rose-700"
+}
+
 function AssignmentSubmissionsTable({
   submissions,
   deadline,
@@ -266,27 +306,22 @@ function AssignmentSubmissionsTable({
   onPageChange,
   onViewDetails,
 }: AssignmentSubmissionsTableProps) {
-  const tableBackgroundColor = "#1E2433"
-
   return (
     <div className="space-y-4">
-      <div
-        className="overflow-x-auto rounded-xl border border-white/10 backdrop-blur-md"
-        style={{ backgroundColor: tableBackgroundColor }}
-      >
+      <div className="overflow-x-auto rounded-2xl border border-slate-300 bg-white shadow-md shadow-slate-200/80">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="px-6 py-4 text-left text-sm font-semibold text-slate-300">
+            <tr className="border-b border-slate-300 bg-slate-200/85">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Student Name
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+              <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Status
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+              <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Grade
               </th>
-              <th className="px-6 py-4 text-center text-sm font-semibold text-slate-300">
+              <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Action
               </th>
             </tr>
@@ -302,12 +337,12 @@ function AssignmentSubmissionsTable({
               const submissionGradeClass =
                 submission.grade === null || submission.grade === undefined
                   ? "text-slate-400"
-                  : getGradeColor(submissionGradePercentage)
+                  : getSubmissionGradeTextClass(submissionGradePercentage)
 
               return (
                 <tr
                   key={submission.id}
-                  className="border-b border-white/5 transition-all duration-200 hover:bg-white/5 cursor-pointer"
+                  className="cursor-pointer border-b border-slate-100 transition-colors duration-200 hover:bg-slate-50/80"
                   onClick={() => onViewDetails(submission)}
                 >
                   <td className="px-6 py-4">
@@ -325,8 +360,9 @@ function AssignmentSubmissionsTable({
                           .toUpperCase()
                           .slice(0, 2)}
                         size="sm"
+                        className="border border-slate-200"
                       />
-                      <span className="text-sm text-white font-medium">
+                      <span className="text-sm font-medium text-slate-900">
                         {submission.studentName || "Unknown Student"}
                       </span>
                     </div>
@@ -337,8 +373,8 @@ function AssignmentSubmissionsTable({
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
                         isLate
-                          ? "bg-yellow-500/20 text-yellow-400"
-                          : "bg-green-500/20 text-green-400",
+                          ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                          : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
                       )}
                     >
                       {isLate ? (
@@ -365,7 +401,7 @@ function AssignmentSubmissionsTable({
                         event.stopPropagation()
                         onViewDetails(submission)
                       }}
-                      className="px-3 py-1.5 text-xs font-medium text-teal-400 hover:text-teal-300 hover:bg-teal-500/10 rounded-lg transition-all duration-200"
+                      className="inline-flex items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
                     >
                       View Details
                     </button>
@@ -383,6 +419,7 @@ function AssignmentSubmissionsTable({
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
         onPageChange={onPageChange}
+        variant="light"
       />
     </div>
   )
@@ -537,7 +574,24 @@ export function AssignmentSubmissionsPage() {
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
     : "?"
 
-  const topBar = useTopBar({ user: currentUser, userInitials })
+  const breadcrumbItems = [
+    { label: "Classes", to: "/dashboard/classes" },
+    ...(assignment
+      ? [
+          {
+            label: assignment.className || "Class Overview",
+            to: `/dashboard/classes/${assignment.classId}`,
+          },
+          { label: assignment.assignmentName || "Submission Overview" },
+        ]
+      : [{ label: "Submission Overview" }]),
+  ]
+
+  const topBar = useTopBar({
+    user: currentUser,
+    userInitials,
+    breadcrumbItems,
+  })
 
   // Handle Check Similarities button
   const handleCheckSimilarities = async () => {
@@ -627,8 +681,8 @@ export function AssignmentSubmissionsPage() {
       <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center h-96">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto"></div>
-            <p className="text-slate-300">Loading assignment submissions...</p>
+            <div className="mx-auto h-16 w-16 animate-spin rounded-full border-4 border-slate-200 border-t-teal-500"></div>
+            <p className="text-slate-500">Loading assignment submissions...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -639,13 +693,19 @@ export function AssignmentSubmissionsPage() {
   if (error || !assignment) {
     return (
       <DashboardLayout topBar={topBar}>
-        <Card className="bg-red-500/10 border-red-500/20">
+        <Card className="border-rose-200 bg-rose-50/80 shadow-sm">
           <CardContent className="p-6">
-            <div className="flex items-center gap-3 text-red-400">
-              <Inbox className="w-5 h-5" />
+            <div className="flex items-center gap-3 text-rose-700">
+              <Inbox className="h-5 w-5" />
               <p className="font-medium">{error || "Assignment not found"}</p>
             </div>
-            <BackButton to={-1} label="Go Back" className="mt-4" />
+            <Button
+              type="button"
+              onClick={() => navigate("/dashboard/classes")}
+              className="mt-4 w-auto border border-slate-300 bg-white px-4 text-slate-700 hover:bg-slate-50"
+            >
+              Go to Classes
+            </Button>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -655,51 +715,44 @@ export function AssignmentSubmissionsPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="space-y-6 max-w-[1600px]">
-        {/* Header Section */}
-        {/* Back Button */}
-        <BackButton
-          to={assignment ? `/dashboard/classes/${assignment.classId}` : -1}
-          label="Back to Class"
-        />
-
-        {/* Assignment Info */}
-        <div className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold text-white">
+        <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-3">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
               {assignment.assignmentName}
             </h1>
 
-            {canManageAssignment && (
-              <DropdownMenu
-                items={[
-                  {
-                    id: "edit-assignment",
-                    label: "Edit Assignment",
-                    icon: Edit,
-                    onClick: handleEditAssignment,
-                  },
-                  {
-                    id: "delete-assignment",
-                    label: "Delete Assignment",
-                    icon: Trash2,
-                    variant: "danger",
-                    onClick: handleDeleteAssignmentClick,
-                  },
-                ]}
-                triggerLabel="Assignment actions"
-                className="text-slate-400 hover:text-white flex-shrink-0"
-              />
-            )}
+            <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-800 shadow-sm">
+              <Calendar className="h-4 w-4 text-blue-700" />
+              <span>
+                {assignment.deadline
+                  ? `Due ${formatDeadline(assignment.deadline)}`
+                  : "No deadline"}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 w-fit">
-            <Calendar className="w-3.5 h-3.5 text-blue-400" />
-            <span className="text-xs font-medium text-blue-100">
-              {assignment.deadline
-                ? `Due ${formatDeadline(assignment.deadline)}`
-                : "No deadline"}
-            </span>
-          </div>
+          {canManageAssignment && (
+            <DropdownMenu
+              items={[
+                {
+                  id: "edit-assignment",
+                  label: "Edit Assignment",
+                  icon: Edit,
+                  onClick: handleEditAssignment,
+                },
+                {
+                  id: "delete-assignment",
+                  label: "Delete Assignment",
+                  icon: Trash2,
+                  variant: "danger",
+                  onClick: handleDeleteAssignmentClick,
+                },
+              ]}
+              triggerLabel="Assignment actions"
+              variant="light"
+              className="flex-shrink-0 self-start"
+            />
+          )}
         </div>
 
         <CollapsibleInstructions
@@ -709,43 +762,49 @@ export function AssignmentSubmissionsPage() {
           defaultExpanded={true}
         />
 
-        <div className="h-px w-full bg-white/10" />
-
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <SummaryStatCard
             label="Total Submissions"
             value={totalSubmissions}
             icon={Users}
-            iconContainerClassName="bg-blue-500/20"
-            iconClassName="text-blue-400"
+            variant="light"
+            className="border-slate-300 shadow-md shadow-slate-200/70"
+            iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
+            iconClassName="text-sky-600"
           />
 
           <SummaryStatCard
             label="On Time"
             value={onTimeCount}
             icon={CheckCircle2}
-            iconContainerClassName="bg-green-500/20"
-            iconClassName="text-green-400"
-            valueClassName="text-green-400"
+            variant="light"
+            className="border-slate-300 shadow-md shadow-slate-200/70"
+            iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
+            iconClassName="text-emerald-600"
+            valueClassName="text-emerald-700"
           />
 
           <SummaryStatCard
             label="Late"
             value={lateCount}
             icon={Clock3}
-            iconContainerClassName="bg-yellow-500/20"
-            iconClassName="text-yellow-400"
-            valueClassName="text-yellow-400"
+            variant="light"
+            className="border-slate-300 shadow-md shadow-slate-200/70"
+            iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
+            iconClassName="text-amber-600"
+            valueClassName="text-amber-700"
           />
 
           <SummaryStatCard
             label="Missing"
             value={missingCount ?? "N/A"}
             icon={UserX}
-            iconContainerClassName="bg-red-500/20"
-            iconClassName="text-red-400"
-            valueClassName="text-red-400"
+            variant="light"
+            className="border-slate-300 shadow-md shadow-slate-200/70"
+            iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
+            iconClassName="text-rose-600"
+            valueClassName="text-rose-700"
           />
         </div>
 
@@ -753,7 +812,7 @@ export function AssignmentSubmissionsPage() {
         <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center sm:justify-between">
           <div className="w-full sm:max-w-[28rem] relative">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none z-10"
+              className="pointer-events-none absolute left-4 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400"
               aria-hidden="true"
             />
             <Input
@@ -761,14 +820,14 @@ export function AssignmentSubmissionsPage() {
               placeholder="Search by student name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 relative z-0"
+              className="relative z-0 border-slate-400 bg-white pl-11 text-slate-900 placeholder:text-slate-400 shadow-md shadow-slate-200/70 hover:border-slate-500 hover:bg-white focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/15 disabled:hover:bg-white"
             />
           </div>
 
           <Button
             onClick={handleCheckSimilarities}
             disabled={totalSubmissions < 2 || isAnalyzing}
-            className="flex items-center justify-center gap-2 sm:ml-auto"
+            className="flex items-center justify-center gap-2 bg-teal-600 text-white shadow-sm hover:bg-teal-700 sm:ml-auto"
           >
             {isAnalyzing ? (
               <>
@@ -792,26 +851,29 @@ export function AssignmentSubmissionsPage() {
         <div className="mt-8">
           {filteredSubmissions.length === 0 ? (
             // Empty State
-            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+            <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/70">
               <CardContent className="p-12">
                 <div className="w-full text-center space-y-4 flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mx-auto">
-                    <Inbox className="w-8 h-8 text-gray-500" />
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-slate-200 bg-slate-50">
+                    <Inbox className="h-8 w-8 text-slate-400" />
                   </div>
                   <div className="space-y-2 w-full max-w-[36rem]">
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-lg font-semibold text-slate-900">
                       {searchQuery
                         ? "No matching submissions"
                         : "No submissions yet"}
                     </h3>
-                    <p className="block w-full text-sm text-gray-400 leading-relaxed text-center whitespace-normal break-normal">
+                    <p className="block w-full whitespace-normal break-normal text-center text-sm leading-relaxed text-slate-500">
                       {searchQuery
                         ? `No submissions found matching "${searchQuery}"`
                         : "Students haven't submitted their work yet. Check back later."}
                     </p>
                   </div>
                   {searchQuery && (
-                    <Button onClick={() => setSearchQuery("")} className="mt-4">
+                    <Button
+                      onClick={() => setSearchQuery("")}
+                      className="mt-4 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                    >
                       Clear Search
                     </Button>
                   )}

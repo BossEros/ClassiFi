@@ -27,9 +27,4 @@ export interface FormErrors {
   general?: string
 }
 
-export type AssignmentFormInputChangeHandler = <
-  K extends keyof AssignmentFormData,
->(
-  field: K,
-  value: AssignmentFormData[K],
-) => void
+

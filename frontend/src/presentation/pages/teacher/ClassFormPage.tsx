@@ -633,6 +633,4 @@ export function ClassFormPage() {
   )
 }
 
-// Export with both names for backwards compatibility
-export { ClassFormPage as CreateClassPage }
-export default ClassFormPage
+

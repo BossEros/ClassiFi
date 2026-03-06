@@ -1,30 +1,73 @@
-import { useState, useEffect } from "react";
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
-import { Avatar } from "@/presentation/components/ui/Avatar";
-import { useAuthStore } from "@/shared/store/useAuthStore";
-import type { User } from "@/business/models/auth/types";
-import { User as UserIcon, Lock, Mail, Bell, Camera, Trash2, AlertTriangle } from "lucide-react";
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
-import * as React from "react";
-import { cn } from "@/shared/utils/cn";
-import { X, Upload, AlertCircle, CheckCircle, Image as ImageIcon } from "lucide-react";
-import { uploadAvatar } from "@/business/services/userService";
-import { validateImageFile, FILE_VALIDATION } from "@/presentation/utils/imageValidation";
-import { Eye, EyeOff } from "lucide-react";
-import { changePassword } from "@/business/services/authService";
-import type { ChangePasswordRequest } from "@/business/models/auth/types";
-import type { FieldErrors } from "react-hook-form";
-import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
-import { changePasswordFormSchema, type ChangePasswordFormValues } from "@/presentation/schemas/auth/authSchemas";
-import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
-import { deleteAccount } from "@/business/services/authService";
-import { useNavigate } from "react-router-dom";
-import { deleteAccountFormSchema, type DeleteAccountFormValues } from "@/presentation/schemas/auth/authSchemas";
-import { Toggle } from "@/presentation/components/ui/Toggle";
-import { notificationPreferenceService } from "@/business/services/notificationPreferenceService";
-import type { NotificationPreference, NotificationType } from "@/business/models/notification/preference.types";
+import { useState, useEffect } from "react"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { Avatar } from "@/presentation/components/ui/Avatar"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import type { User } from "@/business/models/auth/types"
+import {
+  User as UserIcon,
+  Lock,
+  Mail,
+  Bell,
+  Camera,
+  Trash2,
+  AlertTriangle,
+} from "lucide-react"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import * as React from "react"
+import { cn } from "@/shared/utils/cn"
+import {
+  X,
+  Upload,
+  AlertCircle,
+  CheckCircle,
+  Image as ImageIcon,
+} from "lucide-react"
+import { uploadAvatar } from "@/business/services/userService"
+import {
+  validateImageFile,
+  FILE_VALIDATION,
+} from "@/presentation/utils/imageValidation"
+import { Eye, EyeOff } from "lucide-react"
+import { changePassword } from "@/business/services/authService"
+import type { ChangePasswordRequest } from "@/business/models/auth/types"
+import type { FieldErrors } from "react-hook-form"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import {
+  changePasswordFormSchema,
+  type ChangePasswordFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
+import { deleteAccount } from "@/business/services/authService"
+import { useNavigate } from "react-router-dom"
+import {
+  deleteAccountFormSchema,
+  type DeleteAccountFormValues,
+} from "@/presentation/schemas/auth/authSchemas"
+import { Toggle } from "@/presentation/components/ui/Toggle"
+import { notificationPreferenceService } from "@/business/services/notificationPreferenceService"
+import type {
+  NotificationPreference,
+  NotificationType,
+} from "@/business/models/notification/preference.types"
+
+const LIGHT_SURFACE_CARD_CLASSES =
+  "border-slate-300 bg-white shadow-md shadow-slate-200/70"
+const LIGHT_MODAL_SHELL_CLASSES =
+  "rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-300/30"
+const LIGHT_MODAL_CLOSE_BUTTON_CLASSES =
+  "absolute right-4 top-4 rounded-lg p-1 text-slate-400 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
+const LIGHT_MODAL_SECONDARY_BUTTON_CLASSES =
+  "flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm shadow-slate-200/60 transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50"
+const LIGHT_INPUT_BASE_CLASSES =
+  "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm shadow-slate-200/60 transition-all duration-200 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
 
 // Inlined from src/presentation/components/shared/settings/AvatarUploadModal.tsx
 interface AvatarUploadModalProps {
@@ -33,8 +76,6 @@ interface AvatarUploadModalProps {
   onSuccess?: (avatarUrl: string) => void
   currentAvatarUrl?: string
 }
-
-
 
 function AvatarUploadModal({
   isOpen,
@@ -178,8 +219,7 @@ function AvatarUploadModal({
       <div
         className={cn(
           "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[540px] mx-4 p-6 shrink-0",
-          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
-          "shadow-xl shadow-black/20",
+          LIGHT_MODAL_SHELL_CLASSES,
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
         role="dialog"
@@ -190,13 +230,7 @@ function AvatarUploadModal({
         <button
           onClick={onClose}
           disabled={isUploading}
-          className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
-            "transition-colors duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-          )}
+          className={LIGHT_MODAL_CLOSE_BUTTON_CLASSES}
         >
           <X className="w-5 h-5" />
         </button>
@@ -206,13 +240,13 @@ function AvatarUploadModal({
           <div
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center",
-              success ? "bg-green-500/20" : "bg-teal-500/20",
+              success ? "bg-emerald-50" : "bg-teal-50",
             )}
           >
             {success ? (
-              <CheckCircle className="w-8 h-8 text-green-400 shrink-0" />
+              <CheckCircle className="w-8 h-8 text-emerald-600 shrink-0" />
             ) : (
-              <Camera className="w-8 h-8 text-teal-400 shrink-0" />
+              <Camera className="w-8 h-8 text-teal-600 shrink-0" />
             )}
           </div>
         </div>
@@ -220,13 +254,13 @@ function AvatarUploadModal({
         {/* Title */}
         <h2
           id="avatar-upload-title"
-          className="text-xl font-semibold text-white text-center mb-2"
+          className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
           {success ? "Avatar Updated!" : "Change Profile Picture"}
         </h2>
 
         {/* Description */}
-        <p className="text-gray-400 text-center mb-6 text-sm w-full">
+        <p className="mb-6 w-full text-center text-sm text-slate-500">
           {success
             ? "Your profile picture has been updated."
             : "Upload a new profile picture. Max file size is 5MB."}
@@ -236,9 +270,9 @@ function AvatarUploadModal({
           <div className="space-y-4">
             {/* Error message */}
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 w-full">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                <p className="text-sm text-red-400 flex-1">{error}</p>
+              <div className="flex w-full items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <p className="flex-1 text-sm text-rose-700">{error}</p>
               </div>
             )}
 
@@ -256,8 +290,8 @@ function AvatarUploadModal({
                   onClick={handleRemoveSelected}
                   className={cn(
                     "absolute top-0 right-1/2 translate-x-[4.5rem] p-1 rounded-full",
-                    "bg-slate-800 border border-white/10 text-gray-400",
-                    "hover:text-white hover:bg-slate-700",
+                    "border border-slate-200 bg-white text-slate-500 shadow-sm shadow-slate-200/60",
+                    "hover:bg-slate-100 hover:text-slate-700",
                     "transition-colors duration-200",
                   )}
                 >
@@ -274,8 +308,8 @@ function AvatarUploadModal({
                   "border-2 border-dashed rounded-xl p-8 text-center cursor-pointer w-full flex flex-col items-center",
                   "transition-all duration-200",
                   isDragging
-                    ? "border-teal-500 bg-teal-500/10"
-                    : "border-white/20 hover:border-teal-500/50 hover:bg-white/5",
+                    ? "border-teal-500 bg-teal-50"
+                    : "border-slate-300 bg-slate-50 hover:border-teal-400 hover:bg-teal-50/70",
                 )}
               >
                 <input
@@ -287,7 +321,7 @@ function AvatarUploadModal({
                 />
 
                 {currentAvatarUrl ? (
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full overflow-hidden border-2 border-white/10">
+                  <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-slate-200">
                     <img
                       src={currentAvatarUrl}
                       alt="Current avatar"
@@ -295,19 +329,19 @@ function AvatarUploadModal({
                     />
                   </div>
                 ) : (
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center border-2 border-white/10">
-                    <ImageIcon className="w-8 h-8 text-gray-500" />
+                  <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full border-2 border-slate-200 bg-white">
+                    <ImageIcon className="h-8 w-8 text-slate-400" />
                   </div>
                 )}
 
-                <div className="flex flex-col items-center justify-center gap-2 mb-2 w-full">
-                  <Upload className="w-5 h-5 text-teal-400 shrink-0" />
-                  <span className="text-white font-medium block w-full">
+                <div className="mb-2 flex w-full flex-col items-center justify-center gap-2">
+                  <Upload className="h-5 w-5 shrink-0 text-teal-600" />
+                  <span className="block w-full font-medium text-slate-800">
                     {isDragging ? "Drop image here" : "Click or drag to upload"}
                   </span>
                 </div>
-                <p className="text-xs text-gray-500">
-                  JPEG, PNG, GIF, or WebP • Max 5MB
+                <p className="text-xs text-slate-500">
+                  JPEG, PNG, GIF, or WebP | Max 5MB
                 </p>
               </div>
             )}
@@ -317,13 +351,7 @@ function AvatarUploadModal({
               <button
                 onClick={onClose}
                 disabled={isUploading}
-                className={cn(
-                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "border border-white/20 text-white",
-                  "hover:bg-white/10 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                )}
+                className={LIGHT_MODAL_SECONDARY_BUTTON_CLASSES}
               >
                 Cancel
               </button>
@@ -332,10 +360,10 @@ function AvatarUploadModal({
                 disabled={!selectedFile || isUploading}
                 className={cn(
                   "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "bg-teal-600 text-white border border-teal-500/40",
+                  "border border-teal-600 bg-teal-600 text-white",
                   "hover:bg-teal-700",
                   "transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
               >
@@ -356,15 +384,11 @@ interface ChangePasswordModalProps {
   onSuccess?: () => void
 }
 
-
-
 const INITIAL_FORM_STATE: ChangePasswordRequest = {
   currentPassword: "",
   newPassword: "",
   confirmPassword: "",
 }
-
-
 
 export function ChangePasswordModal({
   isOpen,
@@ -490,8 +514,7 @@ export function ChangePasswordModal({
       <div
         className={cn(
           "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[480px] mx-4 p-6 shrink-0",
-          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
-          "shadow-xl shadow-black/20",
+          LIGHT_MODAL_SHELL_CLASSES,
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
         role="dialog"
@@ -501,13 +524,7 @@ export function ChangePasswordModal({
         <button
           onClick={onClose}
           disabled={isSubmitting}
-          className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
-            "transition-colors duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
-          )}
+          className={LIGHT_MODAL_CLOSE_BUTTON_CLASSES}
         >
           <X className="w-5 h-5" />
         </button>
@@ -516,25 +533,25 @@ export function ChangePasswordModal({
           <div
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center",
-              success ? "bg-green-500/20" : "bg-blue-500/20",
+              success ? "bg-emerald-50" : "bg-sky-50",
             )}
           >
             {success ? (
-              <CheckCircle className="w-8 h-8 text-green-400 shrink-0" />
+              <CheckCircle className="w-8 h-8 text-emerald-600 shrink-0" />
             ) : (
-              <Lock className="w-8 h-8 text-blue-400 shrink-0" />
+              <Lock className="w-8 h-8 text-sky-600 shrink-0" />
             )}
           </div>
         </div>
 
         <h2
           id="change-password-title"
-          className="text-xl font-semibold text-white text-center mb-2"
+          className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
           {success ? "Password Changed!" : "Change Password"}
         </h2>
 
-        <p className="text-gray-400 text-center mb-6 text-sm w-full">
+        <p className="mb-6 w-full text-center text-sm text-slate-500">
           {success
             ? "Your password has been updated successfully."
             : "Enter your current password and choose a new one."}
@@ -547,14 +564,14 @@ export function ChangePasswordModal({
             noValidate
           >
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 w-full">
-                <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                <p className="text-sm text-red-400 flex-1">{error}</p>
+              <div className="flex w-full items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                <p className="flex-1 text-sm text-rose-700">{error}</p>
               </div>
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-slate-700">
                 Current Password
               </label>
               <div className="relative">
@@ -566,13 +583,7 @@ export function ChangePasswordModal({
                     currentPasswordField.onChange(event)
                     setError(null)
                   }}
-                  className={cn(
-                    "w-full px-4 py-3 pr-12 rounded-lg",
-                    "bg-black/20 border border-white/10",
-                    "text-white placeholder-gray-500",
-                    "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
-                    "transition-all duration-200",
-                  )}
+                  className={cn(LIGHT_INPUT_BASE_CLASSES, "pr-12")}
                   placeholder="Enter current password"
                   disabled={isSubmitting}
                   required
@@ -580,7 +591,7 @@ export function ChangePasswordModal({
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
                 >
                   {showCurrentPassword ? (
                     <EyeOff className="w-5 h-5 shrink-0" />
@@ -592,7 +603,7 @@ export function ChangePasswordModal({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-slate-700">
                 New Password
               </label>
               <div className="relative">
@@ -604,13 +615,7 @@ export function ChangePasswordModal({
                     newPasswordField.onChange(event)
                     setError(null)
                   }}
-                  className={cn(
-                    "w-full px-4 py-3 pr-12 rounded-lg",
-                    "bg-black/20 border border-white/10",
-                    "text-white placeholder-gray-500",
-                    "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
-                    "transition-all duration-200",
-                  )}
+                  className={cn(LIGHT_INPUT_BASE_CLASSES, "pr-12")}
                   placeholder="Enter new password"
                   disabled={isSubmitting}
                   required
@@ -618,7 +623,7 @@ export function ChangePasswordModal({
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
                 >
                   {showNewPassword ? (
                     <EyeOff className="w-5 h-5 shrink-0" />
@@ -629,7 +634,7 @@ export function ChangePasswordModal({
               </div>
               {newPasswordValue && (
                 <div className="space-y-1">
-                  <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200">
                     <div
                       className={cn(
                         "h-full transition-all duration-300",
@@ -638,18 +643,18 @@ export function ChangePasswordModal({
                       style={{ width: passwordStrength.width }}
                     />
                   </div>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-500">
                     Password strength:{" "}
                     <span
                       className={cn(
                         passwordStrength.color === "bg-red-500" &&
-                          "text-red-400",
+                          "text-rose-500",
                         passwordStrength.color === "bg-orange-500" &&
                           "text-orange-400",
                         passwordStrength.color === "bg-yellow-500" &&
                           "text-yellow-400",
                         passwordStrength.color === "bg-green-500" &&
-                          "text-green-400",
+                          "text-emerald-600",
                       )}
                     >
                       {passwordStrength.label}
@@ -660,7 +665,7 @@ export function ChangePasswordModal({
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-slate-700">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -673,13 +678,10 @@ export function ChangePasswordModal({
                     setError(null)
                   }}
                   className={cn(
-                    "w-full px-4 py-3 pr-12 rounded-lg",
-                    "bg-black/20 border border-white/10",
-                    "text-white placeholder-gray-500",
-                    "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-transparent",
-                    "transition-all duration-200",
+                    LIGHT_INPUT_BASE_CLASSES,
+                    "pr-12",
                     hasPasswordMismatch &&
-                      "border-red-500/50 focus:ring-red-500",
+                      "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20",
                   )}
                   placeholder="Confirm new password"
                   disabled={isSubmitting}
@@ -688,7 +690,7 @@ export function ChangePasswordModal({
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="w-5 h-5 shrink-0" />
@@ -698,7 +700,7 @@ export function ChangePasswordModal({
                 </button>
               </div>
               {hasPasswordMismatch && (
-                <p className="text-xs text-red-400">Passwords do not match</p>
+                <p className="text-xs text-rose-600">Passwords do not match</p>
               )}
             </div>
 
@@ -707,13 +709,7 @@ export function ChangePasswordModal({
                 type="button"
                 onClick={onClose}
                 disabled={isSubmitting}
-                className={cn(
-                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "border border-white/20 text-white",
-                  "hover:bg-white/10 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                )}
+                className={LIGHT_MODAL_SECONDARY_BUTTON_CLASSES}
               >
                 Cancel
               </button>
@@ -722,10 +718,10 @@ export function ChangePasswordModal({
                 disabled={isSubmitting || hasPasswordMismatch}
                 className={cn(
                   "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "bg-teal-600 text-white border border-teal-500/40",
+                  "border border-teal-600 bg-teal-600 text-white",
                   "hover:bg-teal-700",
                   "transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                 )}
               >
@@ -745,14 +741,10 @@ interface DeleteAccountModalProps {
   onClose: () => void
 }
 
-
-
 const INITIAL_DELETE_ACCOUNT_VALUES: DeleteAccountFormValues = {
   password: "",
   confirmation: "",
 }
-
-
 
 export function DeleteAccountModal({
   isOpen,
@@ -858,8 +850,7 @@ export function DeleteAccountModal({
       <div
         className={cn(
           "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[480px] mx-4 p-6 shrink-0",
-          "rounded-xl border border-red-500/20 bg-slate-900/95 backdrop-blur-sm",
-          "shadow-xl shadow-red-500/10",
+          "rounded-2xl border border-rose-200 bg-white shadow-2xl shadow-rose-200/50",
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
         role="dialog"
@@ -871,11 +862,8 @@ export function DeleteAccountModal({
           onClick={onClose}
           disabled={isDeleting}
           className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
-            "transition-colors duration-200",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
-            "disabled:opacity-50 disabled:cursor-not-allowed",
+            LIGHT_MODAL_CLOSE_BUTTON_CLASSES,
+            "focus-visible:ring-rose-500",
           )}
         >
           <X className="w-5 h-5" />
@@ -886,15 +874,15 @@ export function DeleteAccountModal({
           <div
             className={cn(
               "w-16 h-16 rounded-full flex items-center justify-center",
-              step === "success" ? "bg-green-500/20" : "bg-red-500/20",
+              step === "success" ? "bg-emerald-50" : "bg-rose-50",
             )}
           >
             {step === "warning" ? (
-              <AlertTriangle className="w-8 h-8 text-red-400 shrink-0" />
+              <AlertTriangle className="w-8 h-8 text-rose-600 shrink-0" />
             ) : step === "confirm" ? (
-              <Trash2 className="w-8 h-8 text-red-400 shrink-0" />
+              <Trash2 className="w-8 h-8 text-rose-600 shrink-0" />
             ) : (
-              <CheckCircle className="w-8 h-8 text-green-400 shrink-0" />
+              <CheckCircle className="w-8 h-8 text-emerald-600 shrink-0" />
             )}
           </div>
         </div>
@@ -903,8 +891,8 @@ export function DeleteAccountModal({
         <h2
           id="delete-account-title"
           className={cn(
-            "text-xl font-semibold text-center mb-2",
-            step === "success" ? "text-green-400" : "text-white",
+            "mb-2 text-center text-xl font-semibold",
+            step === "success" ? "text-emerald-700" : "text-slate-900",
           )}
         >
           {step === "warning"
@@ -917,34 +905,34 @@ export function DeleteAccountModal({
         {step === "warning" ? (
           <>
             {/* Warning content */}
-            <p className="text-gray-400 text-center mb-4 text-sm w-full">
+            <p className="mb-4 w-full text-center text-sm text-slate-600">
               {/* Permanent and irreversible text */}
               This action is{" "}
-              <span className="text-red-400 font-semibold">
+              <span className="font-semibold text-rose-700">
                 permanent and irreversible
               </span>
               .
             </p>
 
-            <div className="space-y-3 mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-gray-300">
+            <div className="mb-6 space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-sm text-slate-700">
                 Deleting your account will permanently remove:
               </p>
-              <ul className="text-sm text-gray-400 space-y-2">
+              <ul className="space-y-2 text-sm text-slate-600">
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5 shrink-0">&bull;</span>
+                  <span className="mt-0.5 shrink-0 text-rose-600">&bull;</span>
                   <span className="flex-1 min-w-0">
                     Your profile and personal information
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5 shrink-0">&bull;</span>
+                  <span className="mt-0.5 shrink-0 text-rose-600">&bull;</span>
                   <span className="flex-1 min-w-0">
                     All your submissions and assignment
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5 shrink-0">&bull;</span>
+                  <span className="mt-0.5 shrink-0 text-rose-600">&bull;</span>
                   <span className="flex-1 min-w-0">
                     Your enrollments in all classes
                   </span>
@@ -956,12 +944,7 @@ export function DeleteAccountModal({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
-                className={cn(
-                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "border border-white/20 text-white",
-                  "hover:bg-white/10 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-                )}
+                className={LIGHT_MODAL_SECONDARY_BUTTON_CLASSES}
               >
                 Cancel
               </button>
@@ -969,9 +952,9 @@ export function DeleteAccountModal({
                 onClick={handleContinue}
                 className={cn(
                   "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "bg-red-500/20 border border-red-500/30 text-red-400",
-                  "hover:bg-red-500/30 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                  "border border-rose-200 bg-rose-100 text-rose-700",
+                  "hover:bg-rose-200 transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                 )}
               >
                 Continue
@@ -981,9 +964,9 @@ export function DeleteAccountModal({
         ) : step === "confirm" ? (
           <>
             {/* Confirmation form */}
-            <p className="text-gray-400 text-center mb-6 text-sm">
+            <p className="mb-6 text-center text-sm text-slate-600">
               Please confirm your decision by entering your password and typing{" "}
-              <span className="text-red-400 font-mono font-semibold">
+              <span className="font-mono font-semibold text-rose-700">
                 DELETE
               </span>
               .
@@ -996,15 +979,15 @@ export function DeleteAccountModal({
             >
               {/* Error message */}
               {error && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 w-full">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                  <p className="text-sm text-red-400 flex-1">{error}</p>
+                <div className="flex w-full items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-3">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                  <p className="flex-1 text-sm text-rose-700">{error}</p>
                 </div>
               )}
 
               {/* Password */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">
+                <label className="text-sm font-medium text-slate-700">
                   Your Password
                 </label>
                 <div className="relative">
@@ -1017,11 +1000,8 @@ export function DeleteAccountModal({
                       setError(null)
                     }}
                     className={cn(
-                      "w-full px-4 py-3 pr-12 rounded-lg",
-                      "bg-black/20 border border-white/10",
-                      "text-white placeholder-gray-500",
-                      "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
-                      "transition-all duration-200",
+                      LIGHT_INPUT_BASE_CLASSES,
+                      "pr-12 focus:border-rose-500 focus:ring-rose-500/20",
                     )}
                     placeholder="Enter your password"
                     disabled={isDeleting}
@@ -1029,7 +1009,7 @@ export function DeleteAccountModal({
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-700"
                     tabIndex={-1}
                   >
                     {showPassword ? (
@@ -1043,9 +1023,9 @@ export function DeleteAccountModal({
 
               {/* Type DELETE */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">
-                  Type <span className="text-red-400 font-mono">DELETE</span> to
-                  confirm
+                <label className="text-sm font-medium text-slate-700">
+                  Type <span className="font-mono text-rose-700">DELETE</span>{" "}
+                  to confirm
                 </label>
                 <input
                   type="text"
@@ -1059,12 +1039,9 @@ export function DeleteAccountModal({
                     setError(null)
                   }}
                   className={cn(
-                    "w-full px-4 py-3 rounded-lg font-mono",
-                    "bg-black/20 border border-white/10",
-                    "text-white placeholder-gray-500",
-                    "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
-                    "transition-all duration-200",
-                    confirmationValue === "DELETE" && "border-red-500/50",
+                    LIGHT_INPUT_BASE_CLASSES,
+                    "font-mono focus:border-rose-500 focus:ring-rose-500/20",
+                    confirmationValue === "DELETE" && "border-rose-400",
                   )}
                   placeholder="DELETE"
                   disabled={isDeleting}
@@ -1077,13 +1054,7 @@ export function DeleteAccountModal({
                   onClick={() => setStep("warning")}
                   disabled={isDeleting}
                   type="button"
-                  className={cn(
-                    "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                    "border border-white/20 text-white",
-                    "hover:bg-white/10 transition-colors duration-200",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                  )}
+                  className={LIGHT_MODAL_SECONDARY_BUTTON_CLASSES}
                 >
                   Back
                 </button>
@@ -1094,7 +1065,7 @@ export function DeleteAccountModal({
                     "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
                     "bg-red-600 text-white",
                     "hover:bg-red-700 transition-colors duration-200",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
                 >
@@ -1106,11 +1077,11 @@ export function DeleteAccountModal({
         ) : (
           <>
             {/* Success message */}
-            <p className="text-gray-400 text-center mb-6 text-sm">
+            <p className="mb-6 text-center text-sm text-slate-600">
               Your account has been permanently deleted. All your data has been
               removed.
             </p>
-            <p className="text-gray-500 text-center text-xs">
+            <p className="text-center text-xs text-slate-500">
               Redirecting to home page...
             </p>
           </>
@@ -1198,10 +1169,10 @@ function NotificationPreferences() {
         {[1, 2, 3].map((i) => (
           <div
             key={i}
-            className="p-4 rounded-lg bg-white/5 border border-white/5 animate-pulse"
+            className="animate-pulse rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60"
           >
-            <div className="h-4 bg-white/10 rounded w-1/3 mb-2"></div>
-            <div className="h-3 bg-white/10 rounded w-2/3"></div>
+            <div className="mb-2 h-4 w-1/3 rounded bg-slate-200"></div>
+            <div className="h-3 w-2/3 rounded bg-slate-200"></div>
           </div>
         ))}
       </div>
@@ -1222,19 +1193,19 @@ function NotificationPreferences() {
         return (
           <div
             key={preference.notificationType}
-            className="p-4 rounded-lg bg-white/5 border border-white/5"
+            className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60"
           >
             <div className="mb-3">
-              <h4 className="text-sm font-medium text-white">{label}</h4>
-              <p className="text-xs text-slate-400 mt-1">{description}</p>
+              <h4 className="text-sm font-medium text-slate-900">{label}</h4>
+              <p className="mt-1 text-xs text-slate-500">{description}</p>
             </div>
 
             <div className="space-y-3">
               {/* Email Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-300">Email</span>
+                  <Mail className="h-4 w-4 text-slate-500" />
+                  <span className="text-sm text-slate-700">Email</span>
                 </div>
                 <Toggle
                   enabled={preference.emailEnabled}
@@ -1248,14 +1219,15 @@ function NotificationPreferences() {
                   disabled={updating.has(
                     `${preference.notificationType}-emailEnabled`,
                   )}
+                  variant="light"
                 />
               </div>
 
               {/* In-App Toggle */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-300">In-App</span>
+                  <Bell className="h-4 w-4 text-slate-500" />
+                  <span className="text-sm text-slate-700">In-App</span>
                 </div>
                 <Toggle
                   enabled={preference.inAppEnabled}
@@ -1269,6 +1241,7 @@ function NotificationPreferences() {
                   disabled={updating.has(
                     `${preference.notificationType}-inAppEnabled`,
                   )}
+                  variant="light"
                 />
               </div>
             </div>
@@ -1307,7 +1280,7 @@ export function SettingsPage() {
   const topBar = useTopBar({
     user,
     userInitials,
-    onProfileClick: () => {}, // No-op since we're already on settings page
+    showProfileButton: false,
   })
 
   if (!user) return null
@@ -1317,23 +1290,25 @@ export function SettingsPage() {
       <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-slate-400 text-base">
+          <h1 className="mb-2 text-3xl font-bold text-slate-900">Settings</h1>
+          <p className="text-base text-slate-500">
             Manage your account preferences and security
           </p>
         </div>
 
         {/* Profile Card */}
-        <Card className="border-white/10 bg-slate-900/50 backdrop-blur-xl">
+        <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-slate-900">
               <UserIcon className="w-5 h-5 text-teal-400" />
               Profile Information
             </CardTitle>
-            <CardDescription>Your personal account details</CardDescription>
+            <CardDescription className="text-slate-500">
+              Your personal account details
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex items-center gap-6 p-4 rounded-xl bg-white/5 border border-white/5">
+            <div className="flex items-center gap-6 rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm shadow-slate-200/60">
               {/* Clickable Avatar with Edit Overlay */}
               <div
                 className="relative group cursor-pointer"
@@ -1351,11 +1326,11 @@ export function SettingsPage() {
                 </div>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-xl font-semibold text-slate-900">
                   {user.firstName} {user.lastName}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-300 text-xs font-medium capitalize">
+                  <span className="rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-xs font-medium capitalize text-teal-700">
                     {user.role}
                   </span>
                 </div>
@@ -1364,27 +1339,27 @@ export function SettingsPage() {
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
+                <label className="text-sm font-medium text-slate-600">
                   First Name
                 </label>
-                <div className="p-3 rounded-lg bg-black/20 border border-white/10 text-slate-200">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 shadow-sm shadow-slate-200/60">
                   {user.firstName}
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200">
+                <label className="text-sm font-medium text-slate-600">
                   Last Name
                 </label>
-                <div className="p-3 rounded-lg bg-black/20 border border-white/10 text-slate-200">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 shadow-sm shadow-slate-200/60">
                   {user.lastName}
                 </div>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-slate-300" />
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                  <Mail className="w-4 h-4 text-slate-500" />
                   Email Address
                 </label>
-                <div className="p-3 rounded-lg bg-black/20 border border-white/10 text-slate-200">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700 shadow-sm shadow-slate-200/60">
                   {user.email}
                 </div>
               </div>
@@ -1394,26 +1369,30 @@ export function SettingsPage() {
 
         {/* Security & Notifications Row */}
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="border-white/10 bg-slate-900/50 backdrop-blur-xl">
+          <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5 text-blue-400" />
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Lock className="w-5 h-5 text-sky-500" />
                 Security
               </CardTitle>
-              <CardDescription>Password and authentication</CardDescription>
+              <CardDescription className="text-slate-500">
+                Password and authentication
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white">Password</p>
-                    <p className="text-xs text-slate-300 truncate">
+                    <p className="text-sm font-medium text-slate-900">
+                      Password
+                    </p>
+                    <p className="truncate text-xs text-slate-500">
                       Change your password
                     </p>
                   </div>
                   <Button
                     onClick={() => setIsChangePasswordOpen(true)}
-                    className="w-auto h-8 px-3 text-xs border border-white/10 bg-transparent hover:bg-white/10 shrink-0"
+                    className="h-9 w-auto shrink-0 border border-slate-300 bg-white px-4 text-xs text-slate-700 shadow-sm shadow-slate-200/60 hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-offset-white"
                   >
                     Change
                   </Button>
@@ -1422,13 +1401,13 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-white/10 bg-slate-900/50 backdrop-blur-xl">
+          <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-yellow-400" />
+              <CardTitle className="flex items-center gap-2 text-slate-900">
+                <Bell className="w-5 h-5 text-amber-500" />
                 Notifications
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-slate-500">
                 Manage how you receive notifications
               </CardDescription>
             </CardHeader>
@@ -1439,28 +1418,30 @@ export function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <Card className="border-red-500/20 bg-slate-900/50 backdrop-blur-xl">
+        <Card className="rounded-2xl border-rose-200 bg-white shadow-md shadow-rose-100/70">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-400">
+            <CardTitle className="flex items-center gap-2 text-rose-700">
               <AlertTriangle className="w-5 h-5" />
               Danger Zone
             </CardTitle>
-            <CardDescription>Irreversible actions</CardDescription>
+            <CardDescription className="text-rose-500">
+              Irreversible actions
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/5 border border-red-500/20">
+            <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100/60">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white flex items-center gap-2">
-                  <Trash2 className="w-4 h-4 text-red-400 shrink-0" />
+                <p className="flex items-center gap-2 text-sm font-medium text-slate-900">
+                  <Trash2 className="w-4 h-4 shrink-0 text-rose-600" />
                   <span className="truncate">Delete Account</span>
                 </p>
-                <p className="text-xs text-slate-300 mt-1">
+                <p className="mt-1 text-xs text-slate-600">
                   Permanently delete your account and all data
                 </p>
               </div>
               <Button
                 onClick={() => setIsDeleteAccountOpen(true)}
-                className="w-auto h-9 px-4 text-xs bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 hover:text-red-300 shrink-0"
+                className="h-9 w-auto shrink-0 border border-rose-600 bg-rose-600 px-4 text-xs text-white hover:bg-rose-700 focus-visible:ring-rose-500 focus-visible:ring-offset-white"
               >
                 Delete Account
               </Button>
@@ -1490,3 +1471,4 @@ export function SettingsPage() {
     </DashboardLayout>
   )
 }
+

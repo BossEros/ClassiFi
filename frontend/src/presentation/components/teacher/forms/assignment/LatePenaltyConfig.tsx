@@ -13,6 +13,7 @@ import type {
   LatePenaltyConfig as LatePenaltyConfigType,
   PenaltyTier,
 } from "@/shared/types/gradebook"
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface LatePenaltyConfigProps {
   enabled: boolean
@@ -167,8 +168,8 @@ export function LatePenaltyConfig({
     sortedPreviewTiers[sortedPreviewTiers.length - 1]?.hoursLate ?? 0
 
   return (
-    <Card className="border border-slate-200 bg-white shadow-sm">
-      <CardHeader className="pb-4">
+    <Card className={assignmentFormTheme.sectionCard}>
+      <CardHeader className={`${assignmentFormTheme.sectionHeader} pb-4`}>
         <div className="flex items-center gap-3">
           <Clock className="w-5 h-5 text-amber-700" />
           <div>

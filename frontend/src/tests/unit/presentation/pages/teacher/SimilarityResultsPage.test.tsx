@@ -5,6 +5,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import type { ReactNode } from "react"
 import { SimilarityResultsPage } from "@/presentation/pages/teacher/SimilarityResultsPage"
 import { getResultDetails } from "@/business/services/plagiarismService"
+import { getAssignmentById } from "@/business/services/assignmentService"
 
 const mockData = vi.hoisted(() => {
   const pair = {
@@ -68,11 +69,27 @@ const mockData = vi.hoisted(() => {
     },
   }
 
-  return { pair, results, details }
+  const assignment = {
+    id: 1,
+    classId: 10,
+    className: "Algorithms",
+    assignmentName: "Similarity Review",
+    instructions: "Review for similarity",
+    programmingLanguage: "python" as const,
+    deadline: null,
+    allowResubmission: false,
+    isActive: true,
+  }
+
+  return { pair, results, details, assignment }
 })
 
 vi.mock("@/business/services/plagiarismService", () => ({
   getResultDetails: vi.fn(),
+}))
+
+vi.mock("@/business/services/assignmentService", () => ({
+  getAssignmentById: vi.fn().mockResolvedValue(mockData.assignment),
 }))
 
 vi.mock("@/shared/store/useAuthStore", () => ({
@@ -92,7 +109,9 @@ vi.mock("@/presentation/components/shared/dashboard/TopBar", () => ({
 }))
 
 vi.mock("@/presentation/components/shared/dashboard/DashboardLayout", () => ({
-  DashboardLayout: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DashboardLayout: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
 }))
 
 vi.mock("@/presentation/components/ui/BackButton", () => ({
@@ -100,7 +119,13 @@ vi.mock("@/presentation/components/ui/BackButton", () => ({
 }))
 
 vi.mock("@/presentation/components/ui/SummaryStatCard", () => ({
-  SummaryStatCard: ({ label, value }: { label: string; value: string | number }) => (
+  SummaryStatCard: ({
+    label,
+    value,
+  }: {
+    label: string
+    value: string | number
+  }) => (
     <div>
       {label}: {value}
     </div>
@@ -109,9 +134,7 @@ vi.mock("@/presentation/components/ui/SummaryStatCard", () => ({
 
 vi.mock("@/presentation/components/ui/Card", () => ({
   Card: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  CardContent: ({ children }: { children: ReactNode }) => (
-    <div>{children}</div>
-  ),
+  CardContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }))
 
 vi.mock("@/presentation/components/teacher/plagiarism", () => ({
@@ -119,7 +142,9 @@ vi.mock("@/presentation/components/teacher/plagiarism", () => ({
     onPairSelect,
   }: {
     onPairSelect: (pair: typeof mockData.pair) => void
-  }) => <button onClick={() => onPairSelect(mockData.pair)}>Select Pair</button>,
+  }) => (
+    <button onClick={() => onPairSelect(mockData.pair)}>Select Pair</button>
+  ),
   PairComparison: () => <div>Pair Comparison</div>,
   PairCodeDiff: () => <div>Pair Diff</div>,
 }))
@@ -130,6 +155,7 @@ describe("SimilarityResultsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     scrollIntoViewMock.mockReset()
+    vi.mocked(getAssignmentById).mockResolvedValue(mockData.assignment)
 
     Object.defineProperty(window.HTMLElement.prototype, "scrollIntoView", {
       configurable: true,

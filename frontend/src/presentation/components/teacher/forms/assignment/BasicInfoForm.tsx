@@ -25,6 +25,7 @@ import { useEffect } from "react";
 import { Eye, Terminal } from "lucide-react";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { testCaseFormSchema, type TestCaseFormValues } from "@/presentation/schemas/assignment/assignmentSchemas";
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme";
 
 // Inlined from src/presentation/components/teacher/forms/testCases/TestCaseList.tsx
 // Inlined from src/presentation/components/teacher/forms/testCases/DeleteTestCaseModal.tsx
@@ -913,8 +914,8 @@ export function BasicInfoForm({
   )
 
   return (
-    <Card className="border border-slate-200 bg-white shadow-sm">
-      <CardHeader>
+    <Card className={assignmentFormTheme.sectionCard}>
+      <CardHeader className={assignmentFormTheme.sectionHeader}>
         <div className="flex items-center gap-3">
           <FileCode className="h-5 w-5 text-teal-700" />
           <CardTitle className="text-slate-900">Basic Information</CardTitle>
@@ -970,7 +971,7 @@ export function BasicInfoForm({
                   handleInputChange("instructions", event.target.value)
                 }
                 disabled={isLoading}
-                className="min-h-[140px] w-full resize-y rounded-none border-0 bg-transparent px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 shadow-none ring-0 transition-none hover:bg-transparent focus:border-0 focus:bg-transparent focus:ring-0 focus:outline-none"
+                className="min-h-[140px] w-full resize-y rounded-t-xl rounded-b-none border-0 bg-transparent px-4 py-3 text-sm leading-relaxed text-slate-800 placeholder:text-slate-400 shadow-none ring-0 transition-none hover:bg-transparent focus:border-0 focus:bg-transparent focus:ring-0 focus:outline-none"
                 rows={6}
               />
 

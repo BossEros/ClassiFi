@@ -1,3 +1,205 @@
+# Implementation Plan - ClassiFi One-Page App Summary PDF
+
+## Goal
+
+Create a single-page PDF that summarizes the ClassiFi application using only repository evidence, with a clean layout that stays within one printed page.
+
+## Scope
+
+- `implementation_plan.md`
+- `task.md`
+- `frontend/scripts/generate_classifi_app_summary_pdf.mjs`
+- `output/pdf/classifi-app-summary.pdf`
+- `tmp/pdfs/classifi-app-summary.png`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Gather repo evidence:
+   - Use `README.md`, `frontend/documentation.md`, `backend-ts/documentation.md`, package scripts, and entry-point files to extract the requested summary content.
+3. Generate artifact:
+   - Create a scripted one-page HTML layout and export it to PDF.
+   - Capture a screenshot for visual verification.
+4. Verify:
+   - Confirm the generated PDF is one page.
+   - Review the screenshot for overflow or legibility issues and regenerate if needed.
+
+## Risks and Mitigations
+
+- Risk: Content could overflow past one page.
+  - Mitigation: Use a compact two-column layout, controlled font sizes, and screenshot verification before delivery.
+- Risk: Python-based PDF tooling is unavailable in this environment.
+  - Mitigation: Use Playwright with local Edge to print a browser-rendered page to PDF.
+
+## Deliverables
+
+- One-page app summary PDF under `output/pdf/`
+- Verification screenshot under `tmp/pdfs/`
+# Implementation Plan - Settings Page Light Mode Alignment
+
+## Goal
+
+Bring the shared settings page into the same light-mode system used by the updated submission overview and similarity analysis pages while preserving all current account-management behavior.
+
+## Scope
+
+- `frontend/src/presentation/pages/shared/SettingsPage.tsx`
+- `frontend/src/presentation/components/ui/Toggle.tsx`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Extend the shared toggle:
+   - Add an opt-in light variant for settings notification controls.
+   - Keep the current dark variant as the default to avoid regressions.
+3. Refactor the settings experience:
+   - Add top-bar breadcrumb context for the settings page.
+   - Convert the page shell, cards, read-only fields, and action rows to the light visual language.
+   - Convert the avatar, password, and delete-account modals to matching light surfaces and form controls.
+4. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Risks and Mitigations
+
+- Risk: Shared toggle styling could regress existing dark surfaces.
+  - Mitigation: Use an explicit light variant prop and preserve current defaults.
+- Risk: Large inlined modal refactors could create inconsistent states or missed surfaces.
+  - Mitigation: Convert each modal shell, form control, and action row systematically using the same light tokens.
+
+## Deliverables
+
+- Light-mode settings page with breadcrumb-aligned header and stronger card hierarchy.
+- Light-mode avatar, password, and delete-account modals consistent with the rest of the teacher/shared white-mode UI.
+- Successful frontend build verification.
+
+# Implementation Plan - Similarity Analysis Column Sorting
+
+## Goal
+
+Allow teachers to sort pairwise plagiarism results by structural similarity and semantic similarity, matching the existing overall similarity sorting behavior.
+
+## Scope
+
+- `frontend/src/presentation/components/teacher/plagiarism/PairwiseTriageTable.tsx`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Extend pairwise sort model:
+   - Add `structuralSimilarity` and `semanticSimilarity` sort keys.
+   - Reuse existing ascending/descending toggle behavior.
+3. Update table headers:
+   - Make structural and semantic similarity headers clickable.
+   - Show the current sort indicator on those columns.
+4. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Deliverables
+
+- Sortable structural similarity column.
+- Sortable semantic similarity column.
+- Successful frontend build verification.
+
+# Implementation Plan - Similarity Analysis Results Light Mode Alignment
+
+## Goal
+
+Bring the teacher similarity analysis results experience into the same light-mode system as the submission overview while preserving all plagiarism-review behavior.
+
+## Scope
+
+- `frontend/src/presentation/pages/teacher/SimilarityResultsPage.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/PairwiseTriageTable.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/PairComparison.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/PairCodeDiff.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/PairCodeEditor.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/monacoDarkTheme.ts`
+- `frontend/src/presentation/components/ui/Select.tsx`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Refactor page navigation + shell:
+   - Replace the in-page back button with top-bar breadcrumbs.
+   - Align empty/error/loading states and summary cards with the light teacher pages.
+3. Convert the triage table and controls:
+   - Apply the same stronger card/table/header contrast used on the submission overview.
+   - Light-align the threshold select, action buttons, and pagination.
+4. Refine the comparison section:
+   - Make the comparison card, toggle controls, helper text, and close action fit the light system.
+   - Light-align Monaco comparison headers and editor chrome while preserving readability.
+5. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Risks and Mitigations
+
+- Risk: Monaco theme changes could reduce code readability.
+  - Mitigation: Use a dedicated light theme with explicit editor and diff colors instead of generic defaults.
+- Risk: Shared `Select` updates could regress dark-mode usage elsewhere.
+  - Mitigation: Add an opt-in light variant and keep dark as the default.
+
+## Deliverables
+
+- Breadcrumb-driven similarity results navigation.
+- Light-mode similarity summary, pairwise table, and comparison panel.
+- Readable light-themed review chrome around plagiarism comparison tools.
+- Successful frontend build verification.
+
+# Implementation Plan - Teacher Submission Overview Light Mode Alignment
+
+## Goal
+
+Bring the teacher submission overview page in line with the existing light-mode dashboard patterns without changing behavior or backend logic.
+
+## Scope
+
+- `frontend/src/presentation/pages/teacher/AssignmentSubmissionsPage.tsx`
+- `frontend/src/presentation/components/ui/SummaryStatCard.tsx`
+- `frontend/src/presentation/components/ui/DropdownMenu.tsx`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Refactor page navigation + hierarchy:
+   - Replace the in-page back button with top-bar breadcrumbs.
+   - Align the page header with the light-mode teacher pages.
+3. Convert the submission overview UI to light mode:
+   - Update loading/error/empty states, instructions card, table, search, action row, and delete modal.
+   - Keep current behavior and data flow unchanged.
+4. Refine stats and dropdown presentation:
+   - Support light-mode summary stat cards.
+   - Use plain colored icons without colored icon backgrounds on this page.
+   - Increase dropdown width so `Delete Assignment` remains on one line.
+5. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Risks and Mitigations
+
+- Risk: Shared component tweaks could regress dark-mode pages.
+  - Mitigation: Keep new shared props opt-in with current dark defaults unchanged.
+- Risk: Light-mode overrides on shared dark inputs/buttons could become inconsistent.
+  - Mitigation: Reuse the same light styling patterns already present in other teacher pages.
+
+## Deliverables
+
+- Breadcrumb-based submission overview navigation in the top bar.
+- Light-mode teacher submission overview with readable status/metric treatments.
+- Wider action dropdown with single-line destructive label.
+- Successful frontend build verification.
+
 # Auth Session Handling Hardening Plan
 
 ## Goal
@@ -39,7 +241,7 @@ Improve calendar event readability by replacing bright event backgrounds with da
 
 1. Add a reusable style helper for calendar event cards.
 2. Apply the helper to month, week, and day event renderers.
-3. Verify with frontend build.
+3. Verify with frontend build: npm run build.
 
 ## Execution Checklist
 
@@ -1359,3 +1561,168 @@ Replace the student class-detail grades placeholder with a personal performance 
 - [x] Replace the student `Grades Coming Soon` placeholder in `ClassDetailPage`.
 - [x] Update `frontend/documentation.md` for the new student grades-tab behavior.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Assignment Form Card Emphasis
+
+## Scope
+
+Increase the visual separation of the teacher assignment authoring sections so major cards read clearly against the page background.
+
+1. Add a shared visual treatment for assignment-form section cards.
+2. Apply it to `Basic Information`, `Submission Settings`, `Late Submissions`, and the action card.
+3. Preserve existing form behavior and input density.
+4. Verify with a frontend build.
+
+## Execution Checklist
+
+- [x] Add shared section-card styling for the teacher assignment form.
+- [x] Apply the stronger card treatment to the three major form sections.
+- [x] Apply the same elevated treatment to the create/save and cancel action card.
+- [x] Run `frontend`: `npm run build`.
+
+
+# Implementation Plan - Admin Dashboard Light Mode
+
+## Goal
+
+Apply the same light dashboard visual system used by the similarity analysis results and other white-mode pages to the admin dashboard without changing behavior or data flow.
+
+## Scope
+
+- `frontend/src/presentation/pages/admin/AdminDashboardPage.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Refactor the admin dashboard shell:
+   - Convert the header, refresh action, loading state, and error state to the light palette.
+3. Convert dashboard content:
+   - Rework summary cards, recent activity, and quick actions to use white surfaces, slate text, and light hover states consistent with the existing white-mode pages.
+4. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Deliverables
+
+- Light-mode admin dashboard page aligned with the existing white-mode dashboard system.
+- Successful frontend build verification.
+
+# Implementation Plan - Admin Users Page Light Mode
+
+## Goal
+
+Apply the same light dashboard visual system used by the teacher similarity analysis results to the admin users page, with special focus on the table shell, header-row color, and surrounding controls.
+
+## Scope
+
+- `frontend/src/presentation/pages/admin/AdminUsersPage.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Refactor the admin users shell:
+   - Convert the page header, refresh action, add-user action, and filter controls to the light palette.
+3. Convert the users table system:
+   - Match the table container and header-row styling to the similarity results table.
+   - Align rows, badges, empty state, pagination, and action dropdown with the same white-mode color system.
+4. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Deliverables
+
+- Light-mode admin users page aligned with the existing white-mode table system.
+- Successful frontend build verification.
+
+# Implementation Plan - Admin Users Page Light Mode Follow-up
+
+## Goal
+Complete the light-mode pass for the admin users management flow by aligning all admin modals and removing the visible outer filter wrapper around search and role controls.
+
+## Execution Steps
+
+1. Convert the delete, edit, and create user modals to the same white-mode surface system.
+2. Remove the visible filter wrapper while keeping the search and role controls individually styled.
+3. Verify with frontend build: npm run build.
+pm run build.
+
+
+
+# Implementation Plan - Admin Users Page Interaction Polish
+
+## Goal
+Improve admin users page control affordance by making the search and role controls pop more, increasing hover-state clarity in dropdowns, and adding explicit pointer cursors to key clickable actions.
+
+## Execution Steps
+
+1. Increase elevation and border contrast on the search input and role filter trigger.
+2. Strengthen hover styles for role filter choices and row action dropdown items.
+3. Add pointer cursors to prominent clickable controls and verify with frontend build.
+
+
+# Implementation Plan - Admin Classes Page Light Mode Alignment
+
+## Goal
+Apply the same applicable admin users management UI refinements to the admin class management list page: light-mode surfaces, stronger control elevation, clearer hover states, improved dropdown affordance, and aligned destructive modal styling.
+
+## Execution Steps
+
+1. Convert the class management header, error state, and primary actions to the light admin control system.
+2. Restyle the class filters and table shell to match the admin users and teacher light-mode table treatment.
+3. Align the row action dropdown and delete-class modal with the same hover, cursor, and light-surface patterns used on admin users.
+4. Verify with frontend build: npm run build.
+
+
+# Implementation Plan - Admin Refresh And Divider Consistency
+
+## Goal
+Reduce redundant dashboard card copy, improve row separation clarity where it felt too subtle, and standardize the refresh control across the admin dashboard, users, and classes pages.
+
+## Execution Steps
+
+1. Remove the redundant helper text beneath the admin dashboard stat cards.
+2. Strengthen visible row separators in recent activity and the admin users table.
+3. Replace the icon-only refresh controls on admin users and classes with the same labeled refresh button used on the admin dashboard.
+4. Verify with frontend build: npm run build.
+
+
+# Implementation Plan - Admin User Modal Polish
+
+## Goal
+Refine the admin user create, edit, and delete modals by removing the outer glow, improving form label hierarchy, fixing placeholder presentation, and making button icons/cursor affordances consistent with the rest of the admin interface.
+
+## Execution Steps
+
+1. Remove the colored modal glow and keep the dialog containers clean and natural.
+2. Increase field-label emphasis over placeholder text in the create and edit forms.
+3. Standardize button icon placement, cursor-pointer affordances, and destructive delete-flow button treatment.
+4. Verify with frontend build: npm run build.
+
+
+# Implementation Plan - Admin Delete Class Modal Polish
+
+# Implementation Plan - Admin Table Separator And Class Academic Info Polish
+
+# Implementation Plan - Admin Dashboard Stat Icon And Quick Actions Spacing Polish
+
+# Implementation Plan - Admin Class Detail Top Bar And Light Mode
+
+# Implementation Plan - Admin Enrollment Management Light Mode
+
+# Implementation Plan - Frontend Dead Code Audit And Cleanup
+
+## Goal
+Audit the frontend after the dark-to-light refactor and remove only the code that is provably unused, with special attention to old theme artifacts, stale UI components, and orphaned barrel exports.
+
+## Execution Steps
+
+1. Scan frontend files and imports to identify zero-inbound modules and barrel-only leftovers.
+2. Confirm each candidate with direct reference searches before deleting anything.
+3. Remove the confirmed dead files and trim unused exports from still-live modules.
+4. Verify with frontend build: npm run build.

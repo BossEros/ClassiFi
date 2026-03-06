@@ -78,9 +78,9 @@ export function DropdownMenu({
         <div
           className={cn(
             "absolute right-0 top-full mt-2 z-50",
-            "min-w-[160px] overflow-hidden py-1",
+            "min-w-[192px] overflow-hidden py-1",
             variant === "light"
-              ? "rounded-lg border border-slate-200 bg-white"
+              ? "rounded-xl border border-slate-200 bg-white"
               : "rounded-lg border border-white/10 bg-slate-900/95 backdrop-blur-sm",
             "shadow-lg shadow-black/20",
             "animate-in fade-in-0 zoom-in-95 duration-150",
@@ -98,7 +98,7 @@ export function DropdownMenu({
                   setIsOpen(false)
                 }}
                 className={cn(
-                  "flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-sm text-left font-medium",
+                  "flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-sm font-medium whitespace-nowrap",
                   "transition-colors duration-150",
                   item.variant === "danger"
                     ? variant === "light"

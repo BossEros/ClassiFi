@@ -9,6 +9,7 @@ import {
 import { Input } from "@/presentation/components/ui/Input"
 import { type AssignmentFormValues } from "@/presentation/schemas/assignment/assignmentSchemas"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface SubmissionSettingsProps {
   isLoading: boolean
@@ -42,8 +43,8 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
   }
 
   return (
-    <Card className="border border-slate-200 bg-white shadow-sm">
-      <CardHeader>
+    <Card className={assignmentFormTheme.sectionCard}>
+      <CardHeader className={assignmentFormTheme.sectionHeader}>
         <div className="flex items-center gap-3">
           <RotateCcw className="h-5 w-5 text-teal-700" />
           <CardTitle className="text-slate-900">Submission Settings</CardTitle>

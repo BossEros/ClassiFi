@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Users, Calendar, Clock, BookOpen, Search, Trash2, UserPlus, Mail, CheckCircle, XCircle, FileText } from "lucide-react";
+import { Users, Calendar, Clock, BookOpen, Search, Trash2, UserPlus, Mail, CheckCircle, XCircle, FileText, RefreshCw } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { Avatar } from "@/presentation/components/ui/Avatar";
 import { useToastStore } from "@/shared/store/useToastStore";
+import { useAuthStore } from "@/shared/store/useAuthStore";
 import { getAdminClassDetailData, removeStudentFromClass, type AdminClass, type EnrolledStudent, type ClassAssignment } from "@/business/services/adminService";
 import { X, Loader2 } from "lucide-react";
 import { getAllUsers, addStudentToClass } from "@/business/services/adminService";
@@ -205,6 +207,8 @@ export function AdminClassDetailPage() {
   const navigate = useNavigate()
   const { classId } = useParams<{ classId: string }>()
   const showToast = useToastStore((state) => state.showToast)
+  const currentUser = useAuthStore((state) => state.user)
+  const parsedClassId = classId ? Number.parseInt(classId, 10) : null
 
   const [classInfo, setClassInfo] = useState<AdminClass | null>(null)
   const [students, setStudents] = useState<EnrolledStudent[]>([])
@@ -216,44 +220,63 @@ export function AdminClassDetailPage() {
   )
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Action states
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
   const [studentToRemove, setStudentToRemove] =
     useState<EnrolledStudent | null>(null)
 
   const fetchClassData = useCallback(async () => {
-    if (!classId) return
+    if (parsedClassId === null || Number.isNaN(parsedClassId)) {
+      setError("Class not found")
+      setIsLoading(false)
+      return
+    }
 
     try {
       setIsLoading(true)
       setError(null)
-      const data = await getAdminClassDetailData(parseInt(classId))
+
+      const data = await getAdminClassDetailData(parsedClassId)
       setClassInfo(data.classInfo)
       setStudents(data.students)
       setAssignments(data.assignments)
-    } catch (err) {
-      console.error("Failed to fetch class details:", err)
+    } catch (requestError) {
+      console.error("Failed to fetch class details:", requestError)
       setError("Failed to load class details")
     } finally {
       setIsLoading(false)
     }
-  }, [classId])
+  }, [parsedClassId])
 
   useEffect(() => {
-    fetchClassData()
-  }, [fetchClassData])
+    if (!currentUser) {
+      navigate("/login")
+      return
+    }
+
+    if (currentUser.role !== "admin") {
+      navigate("/dashboard")
+      return
+    }
+
+    void fetchClassData()
+  }, [currentUser, navigate, fetchClassData])
 
   const handleRemoveStudent = async (studentId: number) => {
-    if (!classId) return
+    if (parsedClassId === null || Number.isNaN(parsedClassId)) {
+      return
+    }
+
     try {
       setActionLoading(studentId)
-      await removeStudentFromClass(parseInt(classId), studentId)
-      setStudents((prev) => prev.filter((s) => s.id !== studentId))
+      await removeStudentFromClass(parsedClassId, studentId)
+      setStudents((previousStudents) =>
+        previousStudents.filter((student) => student.id !== studentId),
+      )
       showToast("Student removed from class", "success")
       setStudentToRemove(null)
-    } catch (err) {
-      console.error("Failed to remove student:", err)
+    } catch (requestError) {
+      console.error("Failed to remove student:", requestError)
       showToast("Failed to remove student", "error")
     } finally {
       setActionLoading(null)
@@ -267,15 +290,39 @@ export function AdminClassDetailPage() {
       student.email.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
+  const userInitials = currentUser
+    ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
+    : "?"
+
+  const topBar = useTopBar({
+    user: currentUser,
+    userInitials,
+    breadcrumbItems: [
+      { label: "Classes", to: "/dashboard/classes" },
+      { label: classInfo?.className || "Class Overview" },
+    ],
+  })
+
+  const classTeacherInitials = classInfo?.teacherName
+    ? classInfo.teacherName
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((namePart) => namePart[0])
+        .join("")
+        .toUpperCase()
+    : "CL"
+
+  const semesterLabel =
+    classInfo?.semester === 1 ? "1st Semester" : "2nd Semester"
+
   if (isLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
-            <p className="text-gray-400 font-medium">
-              Loading class details...
-            </p>
+      <DashboardLayout topBar={topBar}>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-slate-500">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-teal-500" />
+            <p className="text-sm font-medium">Loading class details...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -284,304 +331,328 @@ export function AdminClassDetailPage() {
 
   if (error || !classInfo) {
     return (
-      <DashboardLayout>
-        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-          <div className="p-4 rounded-full bg-red-500/10 text-red-400">
-            <XCircle className="w-8 h-8" />
-          </div>
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-white mb-2">
+      <DashboardLayout topBar={topBar}>
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="w-full max-w-md rounded-3xl border border-rose-200 bg-white p-8 text-center shadow-md shadow-slate-200/80">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-500">
+              <XCircle className="h-7 w-7" />
+            </div>
+            <h2 className="text-xl font-semibold text-slate-900">
               Error Loading Class
             </h2>
-            <p className="text-gray-400">{error || "Class not found"}</p>
+            <p className="mt-2 text-sm text-slate-500">
+              {error || "Class not found"}
+            </p>
+            <button
+              onClick={fetchClassData}
+              className="mt-6 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </button>
           </div>
-          <button
-            onClick={() => navigate("/dashboard/classes")}
-            className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
-          >
-            Go Back to Classes
-          </button>
         </div>
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6 max-w-7xl mx-auto">
-        {/* Header Section */}
-        <div className="flex flex-col gap-6">
-          <button
-            onClick={() => navigate("/dashboard/classes")}
-            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors w-fit group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Classes
-          </button>
-
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-900/50 border border-white/10 relative overflow-hidden group">
-            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    {classInfo.isActive ? (
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium uppercase tracking-wider flex items-center gap-1.5">
-                        <CheckCircle className="w-3 h-3" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="px-2.5 py-1 rounded-lg bg-gray-500/10 border border-gray-500/20 text-gray-400 text-xs font-medium uppercase tracking-wider">
-                        Archived
-                      </span>
-                    )}
-                  </div>
-                  <h1 className="text-3xl font-bold text-white tracking-tight">
-                    {classInfo.className}
-                  </h1>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <Avatar
-                      src={undefined}
-                      fallback={classInfo.teacherName[0]}
-                      className="w-5 h-5 border border-white/10"
-                    />
-                    <span className="text-gray-300">
-                      {classInfo.teacherName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500" />
-                    <span>
-                      A.Y. {classInfo.academicYear} â€¢{" "}
-                      {classInfo.semester === 1 ? "1st" : "2nd"} Sem
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-gray-500" />
-                    <span>{students.length} Students Enrolled</span>
-                  </div>
-                </div>
+    <DashboardLayout topBar={topBar}>
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/80">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                {classInfo.isActive ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                    <CheckCircle className="h-3.5 w-3.5" />
+                    Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center rounded-xl border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                    Archived
+                  </span>
+                )}
               </div>
 
-              <button
-                onClick={() => setShowAddStudentModal(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-500 border border-blue-500/40 transition-colors font-medium whitespace-nowrap"
-              >
-                <UserPlus className="w-4 h-4" />
-                Enroll Student
-              </button>
+              <div>
+                <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+                  {classInfo.className}
+                </h1>
+                <p className="mt-2 text-sm text-slate-500">
+                  Review enrolled students and assignment activity for this class.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500">
+                <div className="flex items-center gap-3">
+                  <Avatar
+                    src={undefined}
+                    fallback={classTeacherInitials}
+                    size="sm"
+                    className="ring-2 ring-transparent"
+                  />
+                  <span className="font-medium text-slate-700">
+                    {classInfo.teacherName}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-sky-600" />
+                  <span>
+                    {semesterLabel} • A.Y. {classInfo.academicYear}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-teal-600" />
+                  <span>{students.length} Students Enrolled</span>
+                </div>
+              </div>
             </div>
+
+            <button
+              onClick={() => setShowAddStudentModal(true)}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700"
+            >
+              <UserPlus className="h-4 w-4" />
+              Enroll Student
+            </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-900/50 border border-white/5 w-fit">
+        <div className="inline-flex items-center gap-1 rounded-2xl border border-slate-300 bg-white p-1 shadow-sm shadow-slate-200/70">
           <button
             onClick={() => setActiveTab("students")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
               activeTab === "students"
-                ? "bg-white/10 text-white shadow-sm"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
-            <Users className="w-4 h-4" />
+            <Users className="h-4 w-4" />
             Students
-            <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white/10 text-xs">
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-xs ${
+                activeTab === "students"
+                  ? "bg-white/15 text-white"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
               {students.length}
             </span>
           </button>
           <button
             onClick={() => setActiveTab("assignments")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            className={`inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all ${
               activeTab === "assignments"
-                ? "bg-white/10 text-white shadow-sm"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                ? "bg-slate-900 text-white shadow-sm"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="h-4 w-4" />
             Assignments
-            <span className="ml-1 px-1.5 py-0.5 rounded-md bg-white/10 text-xs">
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-xs ${
+                activeTab === "assignments"
+                  ? "bg-white/15 text-white"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
               {assignments.length}
             </span>
           </button>
         </div>
 
-        {/* Content */}
         <div className="space-y-4">
-          {/* Search and Filters (Only for Students tab) */}
-          {activeTab === "students" && (
-            <div className="flex items-center justify-between gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-                <input
-                  type="text"
-                  placeholder="Search students..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-900/50 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                />
+          {activeTab === "students" ? (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div className="relative w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search students..."
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    className="w-full rounded-xl border border-slate-400 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-md shadow-slate-200/70 transition-all hover:border-slate-500 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                  />
+                </div>
               </div>
-            </div>
-          )}
 
-          {/* Students List */}
-          {activeTab === "students" && (
-            <div className="bg-slate-900/40 border border-white/10 rounded-2xl overflow-hidden backdrop-blur-sm">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/[0.02]">
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Student
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      Enrolled On
-                    </th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {filteredStudents.length > 0 ? (
-                    filteredStudents.map((student) => (
-                      <tr
-                        key={student.id}
-                        className="group hover:bg-white/[0.02] transition-colors"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar
-                              src={student.avatarUrl ?? undefined}
-                              fallback={`${student.firstName[0]}${student.lastName[0]}`}
-                            />
-                            <span className="text-sm font-medium text-white">
-                              {student.firstName} {student.lastName}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <Mail className="w-3.5 h-3.5" />
-                            {student.email}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <Clock className="w-3.5 h-3.5" />
-                            {new Date(student.enrolledAt).toLocaleDateString()}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          {studentToRemove?.id === student.id ? (
-                            <div className="flex items-center justify-end gap-2 animate-in fade-in duration-200">
-                              <span className="text-xs text-red-400 mr-2">
-                                Confirm removal?
-                              </span>
-                              <button
-                                onClick={() => handleRemoveStudent(student.id)}
-                                className="px-2 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/30"
-                              >
-                                Yes
-                              </button>
-                              <button
-                                onClick={() => setStudentToRemove(null)}
-                                className="px-2 py-1 bg-white/5 text-gray-400 rounded-lg text-xs font-medium hover:bg-white/10"
-                              >
-                                No
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => setStudentToRemove(student)}
-                              disabled={actionLoading === student.id}
-                              className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                              title="Remove student"
-                            >
-                              {actionLoading === student.id ? (
-                                <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
-                              )}
-                            </button>
-                          )}
-                        </td>
+              <div className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-md shadow-slate-200/80">
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-slate-300 bg-slate-200/85">
+                        <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                          Student
+                        </th>
+                        <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                          Email
+                        </th>
+                        <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                          Enrolled On
+                        </th>
+                        <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                          Actions
+                        </th>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-12 text-center text-gray-500"
-                      >
-                        <p>No students found matching your search.</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Assignments List */}
-          {activeTab === "assignments" && (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {assignments.length > 0 ? (
-                assignments.map((assignment) => (
-                  <div
-                    key={assignment.id}
-                    className="p-4 rounded-xl bg-slate-900/40 border border-white/10 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="p-2 rounded-lg bg-blue-500/10 text-blue-400">
-                        <FileText className="w-5 h-5" />
-                      </div>
-                      {assignment.deadline && (
-                        <span
-                          className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${
-                            new Date(assignment.deadline) < new Date()
-                              ? "bg-red-500/10 text-red-400 border-red-500/20"
-                              : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                          }`}
-                        >
-                          {new Date(assignment.deadline) < new Date()
-                            ? "Past Due"
-                            : "Active"}
-                        </span>
+                    </thead>
+                    <tbody className="divide-y divide-slate-300/70">
+                      {filteredStudents.length > 0 ? (
+                        filteredStudents.map((student) => (
+                          <tr
+                            key={student.id}
+                            className="group transition-colors duration-200 hover:bg-slate-50"
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar
+                                  src={student.avatarUrl ?? undefined}
+                                  fallback={`${student.firstName[0]}${student.lastName[0]}`}
+                                  size="sm"
+                                  className="ring-2 ring-transparent transition-all group-hover:ring-teal-100"
+                                />
+                                <span className="text-sm font-medium text-slate-900 transition-colors group-hover:text-teal-700">
+                                  {student.firstName} {student.lastName}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <Mail className="h-3.5 w-3.5 text-slate-400" />
+                                <span>{student.email}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                <span>{new Date(student.enrolledAt).toLocaleDateString()}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              {studentToRemove?.id === student.id ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  <span className="mr-2 text-xs font-medium text-rose-600">
+                                    Confirm removal?
+                                  </span>
+                                  <button
+                                    onClick={() => handleRemoveStudent(student.id)}
+                                    className="inline-flex cursor-pointer items-center rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rose-700"
+                                  >
+                                    Yes
+                                  </button>
+                                  <button
+                                    onClick={() => setStudentToRemove(null)}
+                                    className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                                  >
+                                    No
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setStudentToRemove(student)}
+                                  disabled={actionLoading === student.id}
+                                  className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-transparent p-2 text-slate-400 transition-all hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-60"
+                                  title="Remove student"
+                                >
+                                  {actionLoading === student.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            className="px-6 py-14 text-center text-slate-500"
+                          >
+                            <div className="flex flex-col items-center gap-3">
+                              <div className="rounded-full bg-slate-100 p-4">
+                                <Search className="h-8 w-8 opacity-40" />
+                              </div>
+                              <p className="text-lg font-medium text-slate-700">
+                                No students found
+                              </p>
+                              <p className="text-sm">
+                                No students match the current search.
+                              </p>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </div>
-                    <h3 className="font-semibold text-white mb-1 line-clamp-1">
-                      {assignment.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-4 h-10">
-                      {assignment.instructions}
-                    </p>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {assignments.length > 0 ? (
+                assignments.map((assignment) => {
+                  const isPastDue = assignment.deadline
+                    ? new Date(assignment.deadline) < new Date()
+                    : false
 
-                    <div className="flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-white/5">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" />
-                        <span>{assignment.submissionCount} submissions</span>
+                  return (
+                    <div
+                      key={assignment.id}
+                      className="rounded-3xl border border-slate-300 bg-white p-5 shadow-sm shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:shadow-slate-200/80"
+                    >
+                      <div className="mb-4 flex items-start justify-between gap-3">
+                        <FileText className="h-6 w-6 shrink-0 text-sky-600" />
+                        {assignment.deadline ? (
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+                              isPastDue
+                                ? "border-rose-200 bg-rose-50 text-rose-700"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            }`}
+                          >
+                            {isPastDue ? "Past Due" : "Active"}
+                          </span>
+                        ) : null}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>
-                          {assignment.deadline
-                            ? new Date(assignment.deadline).toLocaleDateString()
-                            : "No Deadline"}
-                        </span>
+
+                      <h3 className="line-clamp-1 text-base font-semibold text-slate-900">
+                        {assignment.title}
+                      </h3>
+                      <p className="mt-2 line-clamp-2 min-h-[2.75rem] text-sm leading-6 text-slate-500">
+                        {assignment.instructions}
+                      </p>
+
+                      <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4 text-xs text-slate-500">
+                        <div className="flex items-center gap-1.5">
+                          <Users className="h-3.5 w-3.5 text-teal-600" />
+                          <span>{assignment.submissionCount} submissions</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-sky-600" />
+                          <span>
+                            {assignment.deadline
+                              ? new Date(assignment.deadline).toLocaleDateString()
+                              : "No Deadline"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  )
+                })
               ) : (
-                <div className="col-span-full py-12 text-center text-gray-500 bg-slate-900/20 rounded-xl border border-white/5 border-dashed">
-                  <BookOpen className="w-10 h-10 opacity-20 mx-auto mb-3" />
-                  <p>No assignments created for this class yet.</p>
+                <div className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-14 text-center text-slate-500 shadow-sm shadow-slate-200/70">
+                  <BookOpen className="mx-auto mb-4 h-10 w-10 text-slate-300" />
+                  <p className="text-lg font-medium text-slate-700">
+                    No assignments yet
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Assignments created for this class will appear here.
+                  </p>
                 </div>
               )}
             </div>
@@ -592,7 +663,7 @@ export function AdminClassDetailPage() {
           isOpen={showAddStudentModal}
           onClose={() => setShowAddStudentModal(false)}
           onSuccess={fetchClassData}
-          classId={parseInt(classId!)}
+          classId={parsedClassId ?? 0}
           existingStudents={students}
         />
       </div>

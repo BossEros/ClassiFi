@@ -7,6 +7,7 @@ interface SummaryStatCardProps {
   value: string | number
   helperText?: string
   icon: ElementType
+  variant?: "dark" | "light"
   className?: string
   iconContainerClassName?: string
   iconClassName?: string
@@ -20,6 +21,7 @@ interface SummaryStatCardProps {
  * @param value - The metric value shown in emphasized text.
  * @param helperText - Optional supporting text shown below the value.
  * @param icon - Icon component rendered inside the icon container.
+ * @param variant - Visual theme variant for dark or light dashboard surfaces.
  * @param className - Optional additional classes for the outer card.
  * @param iconContainerClassName - Optional additional classes for the icon container.
  * @param iconClassName - Optional additional classes for the icon component.
@@ -31,20 +33,28 @@ export function SummaryStatCard({
   value,
   helperText,
   icon: Icon,
+  variant = "dark",
   className,
   iconContainerClassName,
   iconClassName,
   valueClassName,
 }: SummaryStatCardProps) {
+  const isLight = variant === "light"
+
   return (
     <Card
-      className={cn("bg-white/5 backdrop-blur-sm border-white/10", className)}
+      className={cn(
+        isLight
+          ? "border-slate-200 bg-white shadow-sm"
+          : "border-white/10 bg-white/5 backdrop-blur-sm",
+        className,
+      )}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              "w-10 h-10 rounded-lg flex items-center justify-center",
+              "flex h-10 w-10 items-center justify-center rounded-lg",
               iconContainerClassName,
             )}
           >
@@ -52,12 +62,32 @@ export function SummaryStatCard({
           </div>
 
           <div>
-            <p className="text-sm text-slate-300">{label}</p>
-            <p className={cn("text-xl font-bold text-white", valueClassName)}>
+            <p
+              className={cn(
+                "text-sm",
+                isLight ? "text-slate-500" : "text-slate-300",
+              )}
+            >
+              {label}
+            </p>
+            <p
+              className={cn(
+                "text-xl font-bold",
+                isLight ? "text-slate-900" : "text-white",
+                valueClassName,
+              )}
+            >
               {value}
             </p>
             {helperText ? (
-              <p className="text-xs text-slate-400 mt-0.5">{helperText}</p>
+              <p
+                className={cn(
+                  "mt-0.5 text-xs",
+                  isLight ? "text-slate-400" : "text-slate-400",
+                )}
+              >
+                {helperText}
+              </p>
             ) : null}
           </div>
         </div>

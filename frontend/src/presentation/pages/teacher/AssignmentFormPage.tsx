@@ -12,6 +12,7 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
@@ -147,7 +148,7 @@ export function AssignmentFormPage() {
                 disabled={isLoading || !hasDeadlineConfigured}
               />
 
-              <Card className="border border-slate-200 bg-white shadow-sm">
+              <Card className={assignmentFormTheme.actionCard}>
                 <CardContent className="p-6 space-y-3">
                   <Button
                     type="submit"
@@ -180,4 +181,4 @@ export function AssignmentFormPage() {
   )
 }
 
-export default AssignmentFormPage
+

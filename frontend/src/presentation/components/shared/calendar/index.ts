@@ -3,14 +3,8 @@
  *
  * This module exports all calendar-related components for the ClassiFi application.
  * Components are designed for use with React Big Calendar and follow ClassiFi's
- * dark theme design system.
+ * shared calendar design system.
  */
-
-// Control Components
-export {
-  CalendarViewToggle,
-  type CalendarViewToggleProps,
-} from "./CalendarViewToggle"
 
 // Modal Components
 export {
@@ -29,7 +23,4 @@ export { CustomEventComponent } from "./CustomEventComponent"
 export { CustomToolbar } from "./CustomToolbar"
 export { CustomDayView } from "./CustomDayView"
 export { CustomWeekView } from "./CustomWeekView"
-export {
-  CustomViewToolbar,
-  type CustomViewToolbarProps,
-} from "./CustomViewToolbar"
+export { CustomViewToolbar } from "./CustomViewToolbar"

@@ -4,7 +4,8 @@ import type { FileData, MatchFragment, CodeRegion } from "./types"
 import { MATCH_COLORS } from "./types"
 import {
   CLASSIFI_PLAGIARISM_DARK_THEME,
-  ensurePlagiarismMonacoDarkTheme,
+  CLASSIFI_PLAGIARISM_LIGHT_THEME,
+  ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
 
 interface PairCodeEditorProps {
@@ -28,6 +29,8 @@ interface PairCodeEditorProps {
   language?: string
   /** Editor height */
   height?: string | number
+  /** Visual theme variant for comparison chrome. */
+  variant?: "dark" | "light"
 }
 
 /**
@@ -53,10 +56,12 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   onFragmentHover,
   language = "java",
   height = "480px",
+  variant = "dark",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
   const decorationsRef = useRef<string[]>([])
+  const isLight = variant === "light"
 
   // Sort fragments by start position (same as Dolos)
   const sortedFragments = [...fragments].sort((a, b) => {
@@ -279,12 +284,14 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   useEffect(() => {
     if (!containerRef.current) return
 
-    ensurePlagiarismMonacoDarkTheme()
+    ensurePlagiarismMonacoThemes()
 
     editorRef.current = monaco.editor.create(containerRef.current, {
       value: file.content,
       language,
-      theme: CLASSIFI_PLAGIARISM_DARK_THEME,
+      theme: isLight
+        ? CLASSIFI_PLAGIARISM_LIGHT_THEME
+        : CLASSIFI_PLAGIARISM_DARK_THEME,
       readOnly: true,
       automaticLayout: true,
       smoothScrolling: true,
@@ -298,7 +305,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     return () => {
       editorRef.current?.dispose()
     }
-  }, [file.content, language])
+  }, [file.content, isLight, language])
 
   // Register event handlers (runs when handlers or dependencies change)
   useEffect(() => {
@@ -422,15 +429,23 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       <div
         style={{
           padding: "8px 12px",
-          backgroundColor: "rgba(255, 255, 255, 0.08)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+          backgroundColor: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.08)",
+          borderBottom: isLight
+            ? "1px solid #cbd5e1"
+            : "1px solid rgba(255, 255, 255, 0.1)",
           fontSize: "14px",
           fontWeight: 500,
-          color: "#fff",
+          color: isLight ? "#0f172a" : "#fff",
         }}
       >
         {file.filename}
-        <span style={{ marginLeft: "8px", color: "#9ca3af", fontWeight: 400 }}>
+        <span
+          style={{
+            marginLeft: "8px",
+            color: isLight ? "#64748b" : "#9ca3af",
+            fontWeight: 400,
+          }}
+        >
           ({file.lineCount} lines)
         </span>
       </div>
@@ -441,7 +456,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         style={{
           flex: 1,
           minHeight: typeof height === "number" ? `${height}px` : height,
-          backgroundColor: "#0f172a",
+          backgroundColor: isLight ? "#ffffff" : "#0f172a",
         }}
       />
 

@@ -110,16 +110,16 @@ function AdminClassesFilters({
   })
 
   return (
-    <div className="relative z-50 p-1 rounded-2xl bg-slate-900/50 backdrop-blur-md border border-white/5">
-      <div className="flex flex-col md:flex-row gap-4 p-3">
+    <div className="relative z-50">
+      <div className="flex flex-col gap-4 md:flex-row">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search classes by name or code..."
             value={searchQuery}
             onChange={(event) => onSearchQueryChange(event.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-black/20 border border-white/5 rounded-xl text-white text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-transparent transition-all"
+            className="w-full rounded-xl border border-slate-400 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-md shadow-slate-200/70 transition-all hover:border-slate-500 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
           />
         </div>
 
@@ -132,7 +132,7 @@ function AdminClassesFilters({
               setShowSemesterDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white transition-all min-w-[140px] justify-between text-sm"
+            className="cursor-pointer flex min-w-[140px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
           >
             <div className="flex items-center gap-2">
               <span className="capitalize">
@@ -140,14 +140,14 @@ function AdminClassesFilters({
               </span>
             </div>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-gray-500 transition-transform ${
+              className={`h-3.5 w-3.5 text-slate-500 transition-transform ${
                 showYearDropdown ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {showYearDropdown && (
-            <div className="absolute top-full right-0 mt-1 min-w-[140px] w-full bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5">
+            <div className="absolute top-full right-0 z-50 mt-2 w-full min-w-[140px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200">
               <div className="p-1.5 space-y-0.5">
                 {[
                   { value: "all", label: "All Years" },
@@ -162,17 +162,17 @@ function AdminClassesFilters({
                       onYearLevelFilterChange(option.value as number | "all")
                       setShowYearDropdown(false)
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all border border-transparent ${
+                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
                       yearLevelFilter === option.value
-                        ? "bg-purple-500/10 text-purple-400 border-purple-500/10"
-                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                        ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
+                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                     }`}
                   >
                     <span className="capitalize font-medium">
                       {option.label}
                     </span>
                     {yearLevelFilter === option.value && (
-                      <CheckCircle className="w-3.5 h-3.5 text-purple-400" />
+                      <CheckCircle className="h-3.5 w-3.5 text-teal-600" />
                     )}
                   </button>
                 ))}
@@ -190,7 +190,7 @@ function AdminClassesFilters({
               setShowYearDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white transition-all min-w-[150px] justify-between text-sm"
+            className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
           >
             <div className="flex items-center gap-2">
               <span className="capitalize">
@@ -198,14 +198,14 @@ function AdminClassesFilters({
               </span>
             </div>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-gray-500 transition-transform ${
+              className={`h-3.5 w-3.5 text-slate-500 transition-transform ${
                 showSemesterDropdown ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {showSemesterDropdown && (
-            <div className="absolute top-full right-0 mt-1 min-w-[150px] w-full bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5">
+            <div className="absolute top-full right-0 z-50 mt-2 w-full min-w-[150px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200">
               <div className="p-1.5 space-y-0.5">
                 {[
                   { value: "all", label: "All Semesters" },
@@ -218,17 +218,17 @@ function AdminClassesFilters({
                       onSemesterFilterChange(option.value as number | "all")
                       setShowSemesterDropdown(false)
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all border border-transparent ${
+                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
                       semesterFilter === option.value
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/10"
-                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                        ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
+                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                     }`}
                   >
                     <span className="capitalize font-medium">
                       {option.label}
                     </span>
                     {semesterFilter === option.value && (
-                      <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <CheckCircle className="h-3.5 w-3.5 text-teal-600" />
                     )}
                   </button>
                 ))}
@@ -246,7 +246,7 @@ function AdminClassesFilters({
               setShowYearDropdown(false)
               setShowSemesterDropdown(false)
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white transition-all min-w-[150px] justify-between text-sm"
+            className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
           >
             <div className="flex items-center gap-2">
               <span className="capitalize">
@@ -254,14 +254,14 @@ function AdminClassesFilters({
               </span>
             </div>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-gray-500 transition-transform ${
+              className={`h-3.5 w-3.5 text-slate-500 transition-transform ${
                 showAcademicYearDropdown ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {showAcademicYearDropdown && (
-            <div className="absolute top-full right-0 mt-1 min-w-[150px] w-full bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5">
+            <div className="absolute top-full right-0 z-50 mt-2 w-full min-w-[150px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200">
               <div className="p-1.5 space-y-0.5">
                 {academicYearOptions.map((option) => (
                   <button
@@ -270,17 +270,17 @@ function AdminClassesFilters({
                       onAcademicYearFilterChange(option.value)
                       setShowAcademicYearDropdown(false)
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all border border-transparent ${
+                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
                       academicYearFilter === option.value
-                        ? "bg-orange-500/10 text-orange-400 border-orange-500/10"
-                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                        ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
+                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                     }`}
                   >
                     <span className="capitalize font-medium">
                       {option.label}
                     </span>
                     {academicYearFilter === option.value && (
-                      <CheckCircle className="w-3.5 h-3.5 text-orange-400" />
+                      <CheckCircle className="h-3.5 w-3.5 text-teal-600" />
                     )}
                   </button>
                 ))}
@@ -298,23 +298,23 @@ function AdminClassesFilters({
               setShowSemesterDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-black/20 border border-white/10 text-gray-300 hover:bg-white/5 hover:text-white transition-all min-w-[150px] justify-between text-sm"
+            className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
           >
             <div className="flex items-center gap-2">
-              <Filter className="w-3.5 h-3.5 text-gray-400" />
+              <Filter className="h-3.5 w-3.5 text-slate-400" />
               <span className="capitalize">
                 {statusFilter === "all" ? "All Status" : statusFilter}
               </span>
             </div>
             <ChevronDown
-              className={`w-3.5 h-3.5 text-gray-500 transition-transform ${
+              className={`h-3.5 w-3.5 text-slate-500 transition-transform ${
                 showStatusDropdown ? "rotate-180" : ""
               }`}
             />
           </button>
 
           {showStatusDropdown && (
-            <div className="absolute top-full right-0 mt-1 min-w-[160px] w-full bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5">
+            <div className="absolute top-full right-0 z-50 mt-2 w-full min-w-[160px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200">
               <div className="p-1.5 space-y-0.5">
                 {(["all", "active", "archived"] as const).map((status) => (
                   <button
@@ -323,17 +323,17 @@ function AdminClassesFilters({
                       onStatusFilterChange(status)
                       setShowStatusDropdown(false)
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg transition-all border border-transparent ${
+                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
                       statusFilter === status
-                        ? "bg-blue-500/10 text-blue-400 border-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]"
-                        : "text-gray-400 hover:bg-white/5 hover:text-white"
+                        ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
+                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                     }`}
                   >
                     <span className="capitalize font-medium">
                       {status === "all" ? "All Status" : status}
                     </span>
                     {statusFilter === status && (
-                      <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
+                      <CheckCircle className="h-3.5 w-3.5 text-teal-600" />
                     )}
                   </button>
                 ))}
@@ -377,8 +377,8 @@ interface AdminClassesTableProps {
 
 function getStatusBadgeStyle(isActive: boolean): string {
   return isActive
-    ? "bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_10px_rgba(34,197,94,0.1)]"
-    : "bg-gray-500/10 text-gray-400 border-gray-500/20"
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : "border-slate-200 bg-slate-100 text-slate-600"
 }
 
 
@@ -437,57 +437,55 @@ function AdminClassesTable({
     : 0
 
   return (
-    <div className="relative rounded-2xl border border-white/10 bg-slate-900/40 backdrop-blur-md overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-blue-500/50 to-transparent opacity-50" />
-
-      <div className="overflow-x-auto">
+    <div className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-md shadow-slate-200/80">
+           <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-white/5 bg-white/[0.02]">
-              <th className="px-6 py-5 text-xs font-semibold text-gray-400 uppercase tracking-wider w-[35%]">
+            <tr className="border-b border-slate-300 bg-slate-200/85">
+              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[35%]">
                 Class Details
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-gray-400 uppercase tracking-wider w-[20%]">
+              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[20%]">
                 Teacher
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-gray-400 uppercase tracking-wider w-[20%]">
+              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[20%]">
                 Academic Info
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-gray-400 uppercase tracking-wider w-[10%]">
+              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[10%]">
                 Students
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-gray-400 uppercase tracking-wider w-[10%]">
+              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[10%]">
                 Status
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right w-[5%]">
+              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] text-right w-[5%]">
                 Actions
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-slate-300/70">
             {isLoading ? (
               [...Array(5)].map((_, index) => (
                 <tr key={index} className="animate-pulse">
                   <td className="px-6 py-5">
                     <div className="space-y-2">
-                      <div className="h-4 w-32 bg-white/5 rounded" />
-                      <div className="h-3 w-48 bg-white/5 rounded" />
+                      <div className="h-4 w-32 bg-slate-100 rounded" />
+                      <div className="h-3 w-48 bg-slate-100 rounded" />
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <div className="h-4 w-24 bg-white/5 rounded" />
+                    <div className="h-4 w-24 bg-slate-100 rounded" />
                   </td>
                   <td className="px-6 py-5">
-                    <div className="h-4 w-32 bg-white/5 rounded" />
+                    <div className="h-4 w-32 bg-slate-100 rounded" />
                   </td>
                   <td className="px-6 py-5">
-                    <div className="h-4 w-12 bg-white/5 rounded" />
+                    <div className="h-4 w-12 bg-slate-100 rounded" />
                   </td>
                   <td className="px-6 py-5">
-                    <div className="h-6 w-16 bg-white/5 rounded-full" />
+                    <div className="h-6 w-16 bg-slate-100 rounded-full" />
                   </td>
                   <td className="px-6 py-5">
-                    <div className="h-8 w-8 ml-auto bg-white/5 rounded" />
+                    <div className="h-8 w-8 ml-auto bg-slate-100 rounded" />
                   </td>
                 </tr>
               ))
@@ -496,12 +494,12 @@ function AdminClassesTable({
                 <tr
                   key={selectedClass.id}
                   onClick={() => onRowClick(selectedClass.id)}
-                  className="group hover:bg-white/[0.02] transition-colors duration-200 cursor-pointer"
+                  className="group cursor-pointer transition-colors duration-200 hover:bg-slate-50/80"
                 >
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium text-white group-hover:text-blue-400 transition-colors">
+                        <p className="text-sm font-medium text-slate-900 transition-colors group-hover:text-teal-700">
                           {selectedClass.className}
                         </p>
                       </div>
@@ -509,11 +507,11 @@ function AdminClassesTable({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center border border-white/5 text-gray-400 shrink-0">
-                        <User className="w-4 h-4 text-blue-400" />
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-500">
+                        <User className="h-4 w-4 text-teal-600" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-sm text-gray-300 font-medium">
+                        <span className="text-sm font-medium text-slate-700">
                           {selectedClass.teacherName}
                         </span>
                       </div>
@@ -522,26 +520,22 @@ function AdminClassesTable({
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-medium text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/10">
-                          {selectedClass.yearLevel}
-                          {getOrdinalSuffix(selectedClass.yearLevel)} Year
-                        </span>
-                        <span className="text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/10">
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                           {selectedClass.semester}
                           {getOrdinalSuffix(selectedClass.semester)} Sem
                         </span>
                       </div>
-                      <p className="text-[11px] text-gray-500 pl-1">
+                      <p className="pl-1 text-[11px] text-slate-500">
                         A.Y. {selectedClass.academicYear}
                       </p>
                     </div>
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-lg bg-white/5 border border-white/5">
-                        <Users className="w-3.5 h-3.5 text-gray-400" />
+                      <div className="rounded-lg border border-slate-200 bg-slate-100 p-1.5">
+                        <Users className="h-3.5 w-3.5 text-teal-600" />
                       </div>
-                      <span className="text-sm text-gray-300 font-medium">
+                      <span className="text-sm font-medium text-slate-700">
                         {selectedClass.studentCount}
                       </span>
                     </div>
@@ -561,9 +555,9 @@ function AdminClassesTable({
                           onDropdownClick(event, selectedClass.id)
                         }
                         disabled={actionLoading === selectedClass.id}
-                        className={`p-2 rounded-xl bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white transition-colors ${
+                        className={`cursor-pointer rounded-xl border border-slate-300 bg-white p-2 text-slate-500 shadow-sm shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-800 hover:shadow-md ${
                           activeDropdown?.id === selectedClass.id
-                            ? "bg-white/10 text-white ring-1 ring-white/10"
+                            ? "border-slate-400 bg-slate-100 text-slate-800 shadow-md"
                             : ""
                         }`}
                       >
@@ -581,13 +575,13 @@ function AdminClassesTable({
               <tr>
                 <td
                   colSpan={6}
-                  className="px-6 py-16 text-center text-gray-500"
+                  className="px-6 py-16 text-center text-slate-500"
                 >
                   <div className="flex flex-col items-center gap-3">
-                    <div className="p-4 rounded-full bg-white/5">
+                    <div className="rounded-full bg-slate-100 p-4">
                       <Search className="w-8 h-8 opacity-40" />
                     </div>
-                    <p className="text-lg font-medium text-gray-400">
+                    <p className="text-lg font-medium text-slate-700">
                       No classes found
                     </p>
                     <p className="text-sm">
@@ -602,23 +596,23 @@ function AdminClassesTable({
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-white/5 bg-white/[0.01]">
-          <p className="text-sm text-gray-500">
-            Page <span className="font-medium text-white">{page}</span> of{" "}
-            <span className="font-medium text-white">{totalPages}</span>
+        <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-6 py-4">
+          <p className="text-sm text-slate-500">
+            Page <span className="font-medium text-slate-900">{page}</span> of{" "}
+            <span className="font-medium text-slate-900">{totalPages}</span>
           </p>
           <div className="flex gap-2">
             <button
               onClick={onPreviousPage}
               disabled={page === 1}
-              className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={onNextPage}
               disabled={page === totalPages}
-              className="p-2 rounded-lg border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="rounded-lg border border-slate-300 bg-white p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -632,7 +626,7 @@ function AdminClassesTable({
         createPortal(
           <div
             data-admin-class-dropdown-menu="true"
-            className="fixed w-56 bg-[#0B1120] backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl z-[11000] overflow-hidden animate-in fade-in zoom-in-95 duration-200 ring-1 ring-white/5"
+            className="fixed z-[11000] w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200"
             style={{
               left: safeLeftPx,
               top: safeTopPx,
@@ -645,18 +639,18 @@ function AdminClassesTable({
                   onEditClass(activeClass)
                   onCloseDropdown()
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
+                className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition-all duration-150 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
               >
-                <BookOpen className="w-4 h-4 text-blue-400" />
+                <BookOpen className="h-4 w-4 text-teal-600" />
                 Edit Class
               </button>
 
               {activeClass.isActive && (
                 <button
                   onClick={() => onArchiveClass(activeClass.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition-all duration-150 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                 >
-                  <Archive className="w-4 h-4 text-yellow-500" />
+                  <Archive className="h-4 w-4 text-amber-600" />
                   Archive Class
                 </button>
               )}
@@ -664,21 +658,21 @@ function AdminClassesTable({
               {!activeClass.isActive && (
                 <button
                   onClick={() => onRestoreClass(activeClass.id)}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-300 hover:bg-white/10 hover:text-white rounded-lg transition-all"
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition-all duration-150 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                 >
-                  <RotateCcw className="w-4 h-4 text-emerald-400" />
+                  <RotateCcw className="h-4 w-4 text-emerald-600" />
                   Restore Class
                 </button>
               )}
 
-              <div className="h-[1px] bg-white/5 mx-2" />
+              <div className="mx-2 h-px bg-slate-100" />
 
               <button
                 onClick={() => {
                   onRequestDeleteClass(activeClass)
                   onCloseDropdown()
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 hover:text-red-300 rounded-lg transition-all group/delete"
+                className="group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm"
               >
                 <Trash2 className="w-4 h-4 group-hover/delete:animate-bounce" />
                 Delete Class
@@ -774,8 +768,8 @@ function AdminDeleteClassModal({
       <div
         className={cn(
           "relative w-full max-w-md min-w-[500px] mx-4 p-6",
-          "rounded-xl border border-red-500/20 bg-slate-900/95 backdrop-blur-sm",
-          "shadow-xl shadow-red-500/10",
+          "rounded-3xl border border-rose-200 bg-white",
+          "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
         role="dialog"
@@ -787,8 +781,8 @@ function AdminDeleteClassModal({
           onClick={onClose}
           disabled={isDeleting}
           className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
+            "absolute top-4 right-4 cursor-pointer rounded-lg p-1",
+            "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
             "transition-colors duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
             "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -799,11 +793,11 @@ function AdminDeleteClassModal({
 
         {/* Icon */}
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-red-500/20">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
             {step === "warning" ? (
-              <AlertTriangle className="w-8 h-8 text-red-400" />
+              <AlertTriangle className="h-8 w-8 text-rose-600" />
             ) : (
-              <Trash2 className="w-8 h-8 text-red-400" />
+              <Trash2 className="h-8 w-8 text-rose-600" />
             )}
           </div>
         </div>
@@ -811,7 +805,7 @@ function AdminDeleteClassModal({
         {/* Title */}
         <h2
           id="delete-class-title"
-          className="text-xl font-semibold text-center mb-2 text-white"
+          className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
           {step === "warning" ? "Delete Class?" : "Confirm Deletion"}
         </h2>
@@ -820,40 +814,40 @@ function AdminDeleteClassModal({
           <>
             {/* Class info */}
             <div className="text-center mb-4">
-              <p className="text-gray-400 text-sm">
+              <p className="text-sm text-slate-500">
                 You are about to delete{" "}
-                <span className="text-white font-medium">
+                <span className="font-medium text-slate-900">
                   {classData.className}
                 </span>
               </p>
-              <p className="text-gray-500 text-xs mt-1 font-mono">
+              <p className="mt-1 text-xs font-mono text-slate-400">
                 Code: {classData.classCode}
               </p>
             </div>
 
-            <div className="space-y-3 mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-gray-300">
+            <div className="mb-6 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-sm text-slate-600">
                 This action is{" "}
-                <span className="text-red-400 font-semibold">
+                <span className="font-semibold text-rose-700">
                   permanent and irreversible
                 </span>
                 . Deleting this class will remove:
               </p>
-              <ul className="text-sm text-gray-400 space-y-2">
+              <ul className="space-y-2 text-sm text-slate-600">
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
                   All class information and settings
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
                   All assignments and their submissions
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
                   All student enrollments ({classData.studentCount} students)
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-red-400 mt-0.5">•</span>
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
                   All plagiarism reports and analysis data
                 </li>
               </ul>
@@ -863,24 +857,28 @@ function AdminDeleteClassModal({
             <div className="flex gap-3">
               <button
                 onClick={onClose}
+                type="button"
                 className={cn(
-                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "border border-white/20 text-white",
-                  "hover:bg-white/10 transition-colors duration-200",
+                  "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
+                  "border border-slate-300 bg-white text-slate-700",
+                  "hover:bg-slate-100 transition-colors duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                 )}
               >
+                <X className="h-4 w-4" />
                 Cancel
               </button>
               <button
                 onClick={handleContinue}
+                type="button"
                 className={cn(
-                  "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                  "bg-red-500/20 border border-red-500/30 text-red-400",
-                  "hover:bg-red-500/30 transition-colors duration-200",
+                  "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
+                  "bg-red-600 text-white",
+                  "hover:bg-red-700 transition-colors duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
                 )}
               >
+                <AlertTriangle className="h-4 w-4" />
                 Continue
               </button>
             </div>
@@ -888,9 +886,9 @@ function AdminDeleteClassModal({
         ) : (
           <>
             {/* Confirmation form */}
-            <p className="text-gray-400 text-center mb-6 text-sm">
+            <p className="mb-6 text-center text-sm text-slate-500">
               To confirm deletion, please type{" "}
-              <span className="text-red-400 font-mono font-semibold">
+              <span className="font-mono font-semibold text-rose-700">
                 DELETE
               </span>{" "}
               below.
@@ -899,32 +897,32 @@ function AdminDeleteClassModal({
             <div className="space-y-4">
               {/* Error message */}
               {error && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                  <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
-                  <p className="text-sm text-red-400">{error}</p>
+                <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                  <p className="text-sm text-rose-700">{error}</p>
                 </div>
               )}
 
               {/* Type DELETE */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-300">
-                  Type <span className="text-red-400 font-mono">DELETE</span> to
+                <label className="text-sm font-medium text-slate-600">
+                  Type <span className="font-mono text-rose-700">DELETE</span> to
                   confirm
                 </label>
                 <input
                   type="text"
                   value={confirmation}
-                  onChange={(e) => {
-                    setConfirmation(e.target.value.toUpperCase())
+                  onChange={(event) => {
+                    setConfirmation(event.target.value.toUpperCase())
                     setError(null)
                   }}
                   className={cn(
                     "w-full px-4 py-3 rounded-lg font-mono",
-                    "bg-black/20 border border-white/10",
-                    "text-white placeholder-gray-500",
+                    "border border-slate-300 bg-white",
+                    "text-slate-900 placeholder-slate-300",
                     "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
                     "transition-all duration-200",
-                    confirmation === "DELETE" && "border-red-500/50",
+                    confirmation === "DELETE" && "border-rose-400",
                   )}
                   placeholder="DELETE"
                   disabled={isDeleting}
@@ -937,21 +935,23 @@ function AdminDeleteClassModal({
                 <button
                   onClick={() => setStep("warning")}
                   disabled={isDeleting}
+                  type="button"
                   className={cn(
-                    "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-                    "border border-white/20 text-white",
-                    "hover:bg-white/10 transition-colors duration-200",
+                    "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
+                    "border border-slate-300 bg-white text-slate-700",
+                    "hover:bg-slate-100 transition-colors duration-200",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
                 >
+                  <ChevronLeft className="h-4 w-4" />
                   Back
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={isConfirmDisabled}
                   className={cn(
-                    "flex-1 px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2",
+                    "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
                     "bg-red-600 text-white",
                     "hover:bg-red-700 transition-colors duration-200",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
@@ -1155,28 +1155,26 @@ export function AdminClassesPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
               Class Management
             </h1>
-            <p className="text-gray-400 mt-1 text-sm">
+            <p className="mt-1 text-sm text-slate-500">
               Manage all classes, reassign teachers, and archive or restore
               classes.{" "}
-              <span className="text-gray-500">({total} classes)</span>
+              <span className="text-slate-400">({total} classes)</span>
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchClasses}
               disabled={isLoading}
-              className="p-2.5 rounded-xl bg-slate-800/50 border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-all disabled:opacity-50"
-            >
-              <RefreshCw
-                className={`w-5 h-5 ${isLoading ? "animate-spin" : ""}`}
-              />
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
             </button>
             <button
               onClick={() => navigate("/dashboard/admin/classes/new")}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-500 border border-blue-500/40 transition-colors font-medium text-sm"
+              className="cursor-pointer flex items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-4 py-2 text-sm font-medium text-white shadow-md shadow-teal-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700"
             >
               <Plus className="w-4 h-4" />
               <span>Create Class</span>
@@ -1185,7 +1183,7 @@ export function AdminClassesPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
             <XCircle className="w-5 h-5" />
             {error}
           </div>
@@ -1244,3 +1242,11 @@ export function AdminClassesPage() {
     </DashboardLayout>
   )
 }
+
+
+
+
+
+
+
+
