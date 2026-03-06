@@ -9,6 +9,8 @@ interface PairComparisonProps {
   language?: string
   /** Height of each code editor */
   editorHeight?: string | number
+  /** Visual theme variant for comparison chrome. */
+  variant?: "dark" | "light"
 }
 /**
  * Side-by-side code comparison view with highlighted matching fragments.
@@ -23,12 +25,14 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
   pair,
   language = "java",
   editorHeight = 480,
+  variant = "dark",
 }) => {
   const [selectedFragment, setSelectedFragment] =
     useState<MatchFragment | null>(null)
   const [hoveredFragment, setHoveredFragment] = useState<MatchFragment | null>(
     null,
   )
+  const isLight = variant === "light"
 
   return (
     <div
@@ -50,9 +54,11 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
         {/* Left editor */}
         <div
           style={{
-            backgroundColor: "rgba(255, 255, 255, 0.02)",
+            backgroundColor: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.02)",
             borderRadius: "8px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: isLight
+              ? "1px solid #cbd5e1"
+              : "1px solid rgba(255, 255, 255, 0.1)",
             overflow: "hidden",
           }}
         >
@@ -66,15 +72,18 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             onFragmentHover={setHoveredFragment}
             language={language}
             height={editorHeight}
+            variant={variant}
           />
         </div>
 
         {/* Right editor */}
         <div
           style={{
-            backgroundColor: "rgba(255, 255, 255, 0.02)",
+            backgroundColor: isLight ? "#ffffff" : "rgba(255, 255, 255, 0.02)",
             borderRadius: "8px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            border: isLight
+              ? "1px solid #cbd5e1"
+              : "1px solid rgba(255, 255, 255, 0.1)",
             overflow: "hidden",
           }}
         >
@@ -88,23 +97,25 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             onFragmentHover={setHoveredFragment}
             language={language}
             height={editorHeight}
+            variant={variant}
           />
         </div>
       </div>
 
-      {/* Keyboard shortcuts hint - dark theme */}
       <div
         style={{
           padding: "8px 12px",
-          backgroundColor: "rgba(255, 255, 255, 0.05)",
+          backgroundColor: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.05)",
           borderRadius: "6px",
           fontSize: "13px",
-          color: "#9ca3af",
+          color: isLight ? "#64748b" : "#9ca3af",
+          border: isLight ? "1px solid #e2e8f0" : undefined,
         }}
       >
-        <strong style={{ color: "#fff" }}>Tip:</strong> Matching code fragments
-        are highlighted in blue. Click on highlighted code to select a fragment.
-        Both editors will scroll to show the matching region.
+        <strong style={{ color: isLight ? "#0f172a" : "#fff" }}>Tip:</strong>{" "}
+        Matching code fragments are highlighted in blue. Click on highlighted
+        code to select a fragment. Both editors will scroll to show the matching
+        region.
       </div>
     </div>
   )

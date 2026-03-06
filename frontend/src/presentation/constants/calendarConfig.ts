@@ -8,7 +8,6 @@
 import { dateFnsLocalizer } from "react-big-calendar"
 import { format, parse, startOfWeek, getDay } from "date-fns"
 import { enUS } from "date-fns/locale"
-import type { CalendarView } from "@/business/models/calendar/types"
 
 /**
  * Date-fns localizer configuration for React Big Calendar.
@@ -50,25 +49,4 @@ export const calendarLocalizer = dateFnsLocalizer({
   },
 })
 
-/**
- * Default calendar configuration options.
- */
-export const defaultCalendarConfig = {
-  /** Default view to display */
-  defaultView: "month" as CalendarView,
 
-  /** Available views */
-  views: ["month", "week", "day"] as CalendarView[],
-
-  /** Start of week (0 = Sunday) */
-  startOfWeek: 0,
-
-  /** Enable popup on event click */
-  popup: false,
-
-  /** Enable selection of date ranges */
-  selectable: false,
-
-  /** Show all-day row */
-  showAllDay: false,
-}

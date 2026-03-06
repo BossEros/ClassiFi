@@ -1,3 +1,55 @@
+# Frontend Unit Test Fixes
+
+- [x] Update toast variant assertions to match the current light-theme tokens
+- [x] Replace ambiguous class-detail text queries with stable heading assertions
+- [x] Run targeted frontend tests for the touched suites
+- [x] Run frontend build verification
+
+# Review Findings Fixes
+
+- [x] Preserve `submissionId` in the assignment detail breadcrumb for teacher review flows
+- [x] Restore year-level identification in admin class list rows
+
+- [x] Run frontend build verification
+# ClassiFi One-Page App Summary PDF
+
+- [x] Gather repo evidence for app description, personas, features, architecture, and run steps
+- [x] Generate a single-page PDF summary with a clean, scannable layout
+- [x] Capture a screenshot and verify the PDF stays on one page with no visible overflow
+# Settings Page Light Mode Alignment
+
+- [x] Add breadcrumb-driven settings page header that matches the current light-mode top bar pattern
+- [x] Convert the settings page cards, profile fields, and notification rows to the light visual system
+- [x] Convert the inlined settings modals to light mode without changing behavior
+- [x] Run frontend build verification
+
+# Similarity Analysis Column Sorting
+
+- [x] Add ascending/descending sorting support for structural similarity in the pairwise triage table
+- [x] Add ascending/descending sorting support for semantic similarity in the pairwise triage table
+- [x] Run frontend build verification
+
+# Similarity Analysis Results Light Mode Alignment
+
+- [x] Add breadcrumb navigation to the similarity results top bar and remove the in-page back button
+- [x] Convert the similarity results page and pairwise triage table to the existing light-mode system
+- [x] Strengthen comparison panel hierarchy and align code-comparison chrome with the light visual language
+- [x] Run frontend build verification
+
+# Teacher Submission Overview Light Mode Alignment
+
+- [x] Add breadcrumb navigation to the top bar and remove the in-page `Back to Class` button
+- [x] Convert the teacher submission overview page and its local elements to the existing light-mode system
+- [x] Update submission metric cards to use clean colored icons without colored icon backgrounds
+- [x] Widen the assignment actions dropdown so `Delete Assignment` stays on one line
+- [x] Run frontend build verification
+
+# Task Checklist: Auth Session Hardening
+
+- [x] Update API `401` flow to refresh session and retry once before redirecting
+- [x] Add startup sync between Supabase session and local auth store
+- [x] Run `npm run build` in `frontend`
+- [x] Fix issues (if any) and re-run verification
 # Calendar Event Contrast Update
 
 - [x] Add reusable dark event color style helper for calendar cards
@@ -436,6 +488,13 @@
 - [x] Fix remove action visibility in student table actions column
 - [x] Run frontend build verification
 
+# Sidebar Branding Consolidation
+
+- [x] Move ClassiFi logo/title into `Sidebar` component above navigation items
+- [x] Remove `topBar.sidebar` from shared top bar hook/layout contract
+- [x] Keep `topBar.main` behavior unchanged
+- [x] Run frontend build verification
+
 # Automatic Similarity Report Teacher Attribution
 
 - [x] Add repository helper to resolve class teacher by assignment ID
@@ -452,3 +511,224 @@
 - [x] Update backend `.env.example` and backend documentation
 - [x] Run backend typecheck verification
 - [x] Run backend test verification
+
+# Frontend Single-Use Component Inlining (Next Pass)
+
+- [x] Inline `CollapsibleInstructions` into `AssignmentSubmissionsPage`
+- [x] Inline `AssignmentSubmissionsTable` into `AssignmentSubmissionsPage`
+- [x] Inline `TeacherFeedbackCard` into `AssignmentDetailPage`
+- [x] Inline `SubmissionFeedbackCard` into `AssignmentDetailPage`
+- [x] Delete now-inlined component files and obsolete component test
+- [x] Run frontend build verification
+
+# Teacher Similarity Table Score Columns
+
+- [x] Rename `Similarity` column to `Overall Similarity`
+- [x] Add `Structural Similarity` and `Semantic Similarity` columns after overall similarity
+- [x] Render appropriate pair scores for each similarity column
+- [x] Run frontend build verification
+- [x] Update frontend documentation for revised similarity columns
+
+# Teacher Dashboard + Topbar Format Refresh
+
+- [x] Add dashboard-specific visual variant for class cards while keeping current card shape
+- [x] Reformat teacher main dashboard sections (`Recent Classes`, `To-Check`) to reference layout
+- [x] Keep assignment-name column free of avatars/icons that look like profile avatars
+- [x] Restyle topbar to match the light reference style
+- [x] Run frontend build verification
+# Classes Page Light Theme + Shared UI Tokens
+
+- [ ] Create a central shared theme token file for dashboard/class page colors and font-color roles
+- [ ] Apply light-mode styling to teacher classes page using shared tokens
+- [ ] Apply light-mode styling to student classes page using shared tokens
+- [ ] Update class filter control styling to use shared token classes
+- [x] Run frontend build verification
+# Academic Calendar Light Mode Conversion
+
+- [x] Create centralized calendar color/text theme tokens
+- [x] Convert shared calendar page to light mode (header, filters, grid shell, states)
+- [x] Convert class detail calendar tab to light mode
+- [x] Convert calendar toolbars and event cards to light visual system
+- [x] Convert event details modal to light mode
+- [x] Update calendar CSS files to light backgrounds/borders/text
+- [x] Run frontend build verification
+
+# Auth Palette Rebalance
+
+- [x] Add a shared auth theme token file for balanced page/card/input colors
+- [x] Apply the softer auth palette to the login page
+- [x] Apply the same palette to the registration flow
+- [x] Run frontend build verification
+
+# Auth Visual Polish Follow-Up
+
+- [x] Fix auth field icon visibility where the icon is being visually buried
+- [x] Make the selected registration role card more prominent
+- [x] Apply the shared auth palette to forgot password
+- [x] Apply the shared auth palette to reset password and its success/error states
+- [x] Run frontend build verification
+
+# Student Class Overview Light Mode
+
+- [x] Add student light-mode variants to the shared class-detail UI pieces
+- [x] Convert the student class overview shell and states to light mode
+- [x] Convert the student leave-class modal to the same light palette
+- [x] Run frontend build verification
+
+# Teacher Class Overview Light Mode
+
+- [x] Convert remaining teacher-only class-detail modals and surfaces to the shared light system
+- [x] Add light-mode support to the gradebook tab content
+- [x] Verify the teacher class overview build path still passes
+
+# Class Overview Layout Refresh
+
+- [x] Replace the in-page back button with breadcrumb navigation in the top bar
+- [x] Reformat the class overview header to the cleaner plain layout
+- [x] Restyle the tabs and remove the central wrapper around tab content
+- [x] Run frontend build verification
+
+# Class Overview Tab Clarity Polish
+
+- [x] Make the class overview tabs read more clearly as interactive controls
+- [x] Add an explicit assignments header row above the filters
+- [x] Increase assignment card visibility against the page background
+- [x] Run frontend build verification
+
+# Class Overview Content Polish
+
+- [x] Make assignments, enrolled students, and gradebook section headings use a consistent scale
+- [x] Make the selected assignment filter state more obvious
+- [x] Improve visibility of the student search field and role badge
+- [x] Make the remove-student icon read as destructive
+- [x] Run frontend build verification
+
+# Gradebook Contrast Polish
+
+- [x] Improve score badge contrast in the light-mode gradebook
+- [x] Improve average badge contrast in the light-mode gradebook
+- [x] Run frontend build verification
+
+# Class Header Information Hierarchy Polish
+
+- [x] Make the class title the primary anchor and keep actions on the same row
+- [x] Move schedule closer to the title and de-emphasize secondary metadata
+- [x] Make the accent bar span the full header height
+- [x] Run frontend build verification
+
+# Assignment Overview Light Mode
+
+- [x] Replace the in-page back button with top-bar breadcrumb navigation
+- [x] Convert the assignment overview page shell and content to light mode
+- [x] Add light-mode support to the assignment overview components and modals it uses
+- [x] Run frontend build verification
+
+# Assignment Overview UI Polish
+
+- [x] Remove the redundant class-name line from the assignment overview body
+- [x] Strengthen metadata pill contrast and add a total-score pill
+- [x] Add icons to the instructions, submission status, and submit assignment headings
+- [x] Refine the no-submission and hidden-case icon treatments
+- [x] Run frontend build verification
+
+# Create Assignment Light Mode
+
+- [x] Replace the create/edit assignment back button with clickable breadcrumbs in the top bar
+- [x] Convert the create/edit assignment page shell and action area to light mode
+- [x] Convert assignment form sections, toggles, template code, test cases, and local modals to light mode
+- [x] Replace required-field asterisks with explicit optional labels where appropriate
+- [x] Run frontend build verification
+
+# Student Class Grades Tab
+
+- [x] Add a student-focused grades tab component scoped to the current class
+- [x] Reuse current-class student grades data via `useStudentGrades(studentId, classId)`
+- [x] Show summary metrics without any class ranking
+- [x] Show assignment rows with score, feedback, late penalty, and adjusted markers
+- [x] Replace the student grades placeholder in class detail
+- [x] Update frontend documentation
+- [x] Run frontend build verification
+
+# Assignment Form Card Emphasis
+
+- [x] Add shared section-card styling for the teacher assignment form
+- [x] Apply the stronger card treatment to `Basic Information`, `Submission Settings`, and `Late Submissions`
+- [x] Apply the same elevated treatment to the action card with `Create Assignment` and `Cancel`
+- [x] Run frontend build verification
+
+# Settings Topbar Action Removal
+
+- [x] Make the topbar profile/settings shortcut optional
+- [x] Hide the shortcut on the settings page
+- [x] Run frontend build verification
+
+
+
+
+
+# Admin Dashboard Light Mode
+
+- [x] Convert the admin dashboard header, refresh action, and request states to the white-mode palette
+- [x] Convert the admin summary cards, recent activity panel, and quick actions to the same light dashboard system
+- [x] Run frontend build verification
+
+
+# Admin Users Page Light Mode
+
+- [x] Convert the admin users page header, filter bar, and action controls to the white-mode palette
+- [x] Match the users table container and header row to the similarity results light-mode styling
+- [x] Convert row states, dropdown, empty state, and pagination to the same light visual system
+- [x] Run frontend build verification
+
+
+
+
+# Admin Users Page Light Mode Follow-up
+
+- [x] Extend the create, edit, and delete modals to the same light visual system
+- [x] Remove the visible filter wrapper so search and role controls appear standalone
+
+
+# Admin Users Page Interaction Polish
+
+- [x] Increase search and role control elevation to match the stronger light-mode control treatment
+- [x] Strengthen hover visibility for the role filter and row action dropdown items
+- [x] Add pointer cursors to key clickable admin users page controls
+
+
+# Admin Classes Page Light Mode Alignment
+
+- [x] Apply the admin users light-mode header, actions, and error-state treatment to admin class management
+- [x] Convert the class filters, table shell, header row, dropdowns, and delete modal to the same light visual system where applicable
+- [x] Carry over the stronger hover states and pointer cursors for applicable class management controls
+
+
+# Admin Refresh And Divider Consistency
+
+- [x] Remove redundant helper text from the admin dashboard summary cards
+- [x] Increase divider visibility in recent activity and the admin users table rows
+- [x] Standardize the admin users and classes refresh buttons to match the admin dashboard refresh button
+
+
+# Admin User Modal Polish
+
+- [x] Remove the unnatural glow from the create, edit, and delete user modal containers
+- [x] Strengthen field label hierarchy and soften placeholder emphasis in the create and edit user forms
+- [x] Align modal button icons, cursor affordances, and destructive delete-flow styling with the admin button conventions
+
+
+# Admin Delete Class Modal Polish
+
+# Admin Table Separator And Class Academic Info Polish
+
+# Admin Dashboard Stat Icon And Quick Actions Spacing Polish
+
+# Admin Class Detail Top Bar And Light Mode
+
+# Admin Enrollment Management Light Mode
+
+# Frontend Dead Code Audit And Cleanup
+
+- [x] Scan the frontend source tree for files and exports with no runtime consumers after the light-mode refactor.
+- [x] Remove only the confirmed dead frontend files, orphaned barrel exports, and stale dark-mode leftovers.
+- [ ] Verify the cleanup with a frontend production build.

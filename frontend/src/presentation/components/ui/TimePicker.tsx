@@ -12,6 +12,7 @@ interface TimePickerProps {
   error?: string
   disabled?: boolean
   triggerStyle?: React.CSSProperties
+  variant?: "dark" | "light"
 }
 
 export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
@@ -25,6 +26,7 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       error,
       disabled,
       triggerStyle,
+      variant = "dark",
     },
     ref,
   ) => {
@@ -138,12 +140,16 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
       return options
     }, [])
 
+    const isLight = variant === "light"
+
     return (
       <div className="w-full space-y-2">
         {label && (
           <label
             className={cn(
-              "text-sm font-medium text-gray-300 flex items-center gap-2",
+              isLight
+                ? "flex items-center gap-2 text-sm font-medium text-slate-700"
+                : "text-sm font-medium text-gray-300 flex items-center gap-2",
               labelClassName,
             )}
           >
@@ -156,18 +162,27 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
           <Popover
             isOpen={isOpen && !disabled}
             onOpenChange={(open) => !disabled && setIsOpen(open)}
-            className="w-[150px] p-2 max-h-[300px] overflow-y-auto"
+            className={cn(
+              "max-h-[300px] w-[150px] overflow-y-auto p-2",
+              isLight && "border-slate-200 bg-white shadow-xl shadow-slate-200/60",
+            )}
             trigger={
               <div
                 style={triggerStyle}
                 className={cn(
                   "flex items-center justify-between w-full h-11 px-4 rounded-xl border transition-all duration-200 group relative",
                   disabled
-                    ? "bg-white/5 border-white/5 cursor-not-allowed opacity-50"
-                    : "bg-black/20 border-white/10 hover:bg-black/20 hover:border-white/20",
+                    ? isLight
+                      ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60"
+                      : "bg-white/5 border-white/5 cursor-not-allowed opacity-50"
+                    : isLight
+                      ? "border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-white"
+                      : "bg-black/20 border-white/10 hover:bg-black/20 hover:border-white/20",
                   isOpen &&
                     !disabled &&
-                    "bg-black/20 border-blue-500/50 ring-2 ring-blue-500/20",
+                    (isLight
+                      ? "border-teal-500/60 bg-white ring-2 ring-teal-500/20"
+                      : "bg-black/20 border-blue-500/50 ring-2 ring-blue-500/20"),
                   error && "border-red-500/50",
                 )}
               >
@@ -176,8 +191,12 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                     className={cn(
                       "w-4 h-4 shrink-0 transition-colors pointer-events-none",
                       value
-                        ? "text-blue-400"
-                        : "text-gray-500 group-hover:text-gray-400",
+                        ? isLight
+                          ? "text-teal-600"
+                          : "text-blue-400"
+                        : isLight
+                          ? "text-slate-500 group-hover:text-slate-600"
+                          : "text-gray-500 group-hover:text-gray-400",
                     )}
                   />
 
@@ -191,8 +210,8 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                     disabled={disabled}
                     placeholder="Pick a time..."
                     className={cn(
-                      "bg-transparent border-none outline-none text-sm w-full placeholder:text-gray-500",
-                      "text-white",
+                      "w-full border-none bg-transparent text-sm outline-none placeholder:text-gray-500",
+                      isLight ? "text-slate-800" : "text-white",
                     )}
                     onClick={() => {
                       // Don't toggle open purely on input click to allow typing
@@ -211,18 +230,24 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                         onChange(null)
                         setInputValue("")
                       }}
-                      className="p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors cursor-pointer"
+                      className={cn(
+                        "cursor-pointer rounded-full p-1 transition-colors",
+                        isLight
+                          ? "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          : "text-gray-400 hover:bg-white/10 hover:text-white",
+                      )}
                       title="Clear time"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   ) : (
                     <ChevronDown
-                      className={cn(
-                        "w-4 h-4 text-gray-500 transition-transform duration-200",
-                        isOpen && !disabled && "rotate-180",
-                        disabled && "opacity-50",
-                      )}
+                    className={cn(
+                      "h-4 w-4 transition-transform duration-200",
+                      isLight ? "text-slate-500" : "text-gray-500",
+                      isOpen && !disabled && "rotate-180",
+                      disabled && "opacity-50",
+                    )}
                     />
                   )}
                 </div>
@@ -241,8 +266,12 @@ export const TimePicker = React.forwardRef<HTMLInputElement, TimePickerProps>(
                     className={cn(
                       "w-full px-3 py-2 text-sm text-left rounded-lg transition-colors",
                       value === option.value
-                        ? "bg-blue-600 text-white"
-                        : "text-gray-300 hover:bg-white/10",
+                        ? isLight
+                          ? "bg-teal-600 text-white"
+                          : "bg-blue-600 text-white"
+                        : isLight
+                          ? "text-slate-700 hover:bg-slate-100"
+                          : "text-gray-300 hover:bg-white/10",
                     )}
                   >
                     {option.label}

@@ -14,12 +14,14 @@ interface DropdownMenuProps {
   items: DropdownMenuItem[]
   className?: string
   triggerLabel?: string
+  variant?: "dark" | "light"
 }
 
 export function DropdownMenu({
   items,
   className,
   triggerLabel = "Actions",
+  variant = "dark",
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = React.useState(false)
   const menuRef = React.useRef<HTMLDivElement>(null)
@@ -54,23 +56,32 @@ export function DropdownMenu({
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "p-2 rounded-lg transition-colors duration-200",
-          "hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2",
-          "focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
-          isOpen && "bg-white/10",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2",
+          variant === "light"
+            ? "hover:bg-slate-100 focus-visible:ring-offset-white"
+            : "hover:bg-white/10 focus-visible:ring-offset-slate-900",
+          isOpen && (variant === "light" ? "bg-slate-100" : "bg-white/10"),
         )}
         aria-haspopup="menu"
         aria-expanded={isOpen}
         aria-label={triggerLabel}
       >
-        <MoreVertical className="w-5 h-5 text-gray-400" />
+        <MoreVertical
+          className={cn(
+            "w-5 h-5",
+            variant === "light" ? "text-slate-500" : "text-gray-400",
+          )}
+        />
       </button>
 
       {isOpen && (
         <div
           className={cn(
             "absolute right-0 top-full mt-2 z-50",
-            "min-w-[160px] py-1",
-            "rounded-lg border border-white/10 bg-slate-900/95 backdrop-blur-sm",
+            "min-w-[192px] overflow-hidden py-1",
+            variant === "light"
+              ? "rounded-xl border border-slate-200 bg-white"
+              : "rounded-lg border border-white/10 bg-slate-900/95 backdrop-blur-sm",
             "shadow-lg shadow-black/20",
             "animate-in fade-in-0 zoom-in-95 duration-150",
           )}
@@ -87,11 +98,15 @@ export function DropdownMenu({
                   setIsOpen(false)
                 }}
                 className={cn(
-                  "flex items-center gap-2 w-full px-3 py-2 text-sm text-left",
+                  "flex w-full cursor-pointer items-center gap-2.5 px-3 py-2 text-left text-sm font-medium whitespace-nowrap",
                   "transition-colors duration-150",
                   item.variant === "danger"
-                    ? "text-red-400 hover:bg-red-500/10"
-                    : "text-gray-300 hover:bg-white/10",
+                    ? variant === "light"
+                      ? "text-red-600 hover:bg-rose-100 hover:text-red-700"
+                      : "text-red-400 hover:bg-red-500/10"
+                    : variant === "light"
+                      ? "text-slate-700 hover:bg-slate-200 hover:text-slate-900"
+                      : "text-gray-300 hover:bg-white/10",
                 )}
                 role="menuitem"
               >

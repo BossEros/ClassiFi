@@ -6,6 +6,16 @@ import type { AssignmentFormValues } from "@/presentation/schemas/assignment/ass
  */
 export type AssignmentFormData = AssignmentFormValues
 
+export interface PendingTestCase {
+  tempId: string
+  name: string
+  input: string
+  expectedOutput: string
+  isHidden: boolean
+  timeLimit: number
+  sortOrder: number
+}
+
 export interface FormErrors {
   assignmentName?: string
   instructions?: string
@@ -17,9 +27,4 @@ export interface FormErrors {
   general?: string
 }
 
-export type AssignmentFormInputChangeHandler = <
-  K extends keyof AssignmentFormData,
->(
-  field: K,
-  value: AssignmentFormData[K],
-) => void
+

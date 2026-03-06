@@ -2,7 +2,7 @@ import { useState } from "react"
 import { NavLink, useNavigate } from "react-router-dom"
 import {
   Home,
-  Grid3x3,
+  BookOpen,
   Menu,
   X,
   LogOut,
@@ -11,8 +11,8 @@ import {
   GraduationCap,
   Calendar,
   Bell,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
@@ -25,7 +25,7 @@ const teacherNavigationItems = [
     id: "classes",
     label: "Classes",
     path: "/dashboard/classes",
-    icon: Grid3x3,
+    icon: BookOpen,
   },
   {
     id: "calendar",
@@ -47,7 +47,7 @@ const studentNavigationItems = [
     id: "classes",
     label: "Classes",
     path: "/dashboard/classes",
-    icon: Grid3x3,
+    icon: BookOpen,
   },
   {
     id: "calendar",
@@ -70,7 +70,7 @@ const adminNavigationItems = [
     id: "classes",
     label: "Classes",
     path: "/dashboard/classes",
-    icon: Grid3x3,
+    icon: BookOpen,
   },
   {
     id: "enrollments",
@@ -112,11 +112,11 @@ function SidebarNavItem({
       end={isHomeRoute}
       className={({ isActive }) =>
         cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
+          "flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200",
           "text-gray-300 hover:text-white hover:bg-white/10 text-sm font-medium",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
           isActive &&
-            "bg-gradient-to-r from-teal-600/20 to-teal-500/20 text-white border-l-4 border-teal-500 shadow-lg shadow-teal-500/10",
+          "bg-white/20 text-white shadow-md shadow-black/20",
           isCollapsed && "lg:justify-center lg:px-2",
         )
       }
@@ -162,34 +162,60 @@ export function Sidebar({
       <aside
         className={cn(
           "fixed lg:static inset-y-0 left-0 z-40",
-          "h-full bg-slate-900/95 backdrop-blur-xl",
+          "h-full bg-[#11211F] backdrop-blur-xl",
           "flex flex-col relative",
           "transform transition-all duration-300 ease-in-out lg:transform-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           isCollapsed ? "lg:w-16" : "w-56",
         )}
       >
-        {/* Desktop Toggle Button */}
-        {onToggleCollapse && (
-          <button
-            onClick={onToggleCollapse}
-            className={cn(
-              "hidden lg:flex absolute -right-3 top-6 z-50",
-              "w-6 h-6 items-center justify-center",
-              "rounded-full bg-slate-800 border border-white/20",
-              "text-gray-400 hover:text-white hover:bg-slate-700",
-              "transition-all duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-            )}
-            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4" />
-            )}
-          </button>
-        )}
+        <div
+          className={cn(
+            "h-16 bg-[#11211F] backdrop-blur-xl border-b border-white/10 flex items-center justify-center shrink-0 transition-all duration-300",
+            isCollapsed ? "px-2" : "px-4",
+          )}
+        >
+          {isCollapsed ? (
+            onToggleCollapse ? (
+              <button
+                onClick={onToggleCollapse}
+                className={cn(
+                  "hidden lg:flex w-full items-center justify-center px-2 py-2.5 text-slate-300 hover:text-white transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                )}
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                <PanelLeftOpen className="w-5 h-5" />
+              </button>
+            ) : null
+          ) : (
+            <div className="flex items-center justify-between w-full gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <img
+                  src="/logo-white.png"
+                  alt="ClassiFi logo"
+                  className="w-8.5 h-8.5 object-contain"
+                />
+                <h1 className="text-xl font-bold text-white tracking-tight whitespace-nowrap">
+                  ClassiFi
+                </h1>
+              </div>
+
+              {onToggleCollapse && (
+                <button
+                  onClick={onToggleCollapse}
+                  className={cn(
+                    "hidden lg:flex shrink-0 items-center justify-center text-slate-300 hover:text-white transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                  )}
+                  aria-label="Collapse sidebar"
+                >
+                  <PanelLeftClose className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
@@ -223,7 +249,7 @@ export function Sidebar({
           <button
             onClick={handleLogout}
             className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
               isCollapsed && "lg:justify-center lg:px-2",
             )}
             title={isCollapsed ? "Sign Out" : undefined}

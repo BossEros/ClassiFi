@@ -1,4 +1,4 @@
-import { RefreshCw } from "lucide-react"
+import { RotateCcw } from "lucide-react"
 import { useFormContext } from "react-hook-form"
 import {
   Card,
@@ -9,6 +9,7 @@ import {
 import { Input } from "@/presentation/components/ui/Input"
 import { type AssignmentFormValues } from "@/presentation/schemas/assignment/assignmentSchemas"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface SubmissionSettingsProps {
   isLoading: boolean
@@ -42,20 +43,18 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className={assignmentFormTheme.sectionCard}>
+      <CardHeader className={assignmentFormTheme.sectionHeader}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/20">
-            <RefreshCw className="w-5 h-5 text-emerald-300" />
-          </div>
-          <CardTitle>Submission Settings</CardTitle>
+          <RotateCcw className="h-5 w-5 text-teal-700" />
+          <CardTitle className="text-slate-900">Submission Settings</CardTitle>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-5">
-        <div className="flex items-center justify-between rounded-xl border border-white/10 bg-black/20 p-3">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div>
-            <p className="text-sm font-medium text-gray-200">
+            <p className="text-sm font-medium text-slate-700">
               Allow students to resubmit
             </p>
           </div>
@@ -70,7 +69,7 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
               disabled={isLoading}
               className="sr-only peer"
             />
-            <div className="w-11 h-6 rounded-full bg-gray-700 peer-checked:bg-emerald-500 peer-focus:ring-2 peer-focus:ring-emerald-500/50 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:w-5 after:h-5 after:rounded-full after:bg-white after:shadow-lg after:transition-transform peer-checked:after:translate-x-5" />
+            <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-teal-600 peer-focus:ring-2 peer-focus:ring-teal-500/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
           </label>
         </div>
 
@@ -79,7 +78,7 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
             <div className="flex items-center justify-between gap-3">
               <label
                 htmlFor="maxAttempts"
-                className="block pl-3 text-sm font-medium text-white"
+                className="block pl-3 text-sm font-medium text-slate-700"
               >
                 Max Attempts
               </label>
@@ -95,8 +94,10 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
                   }
                   disabled={isLoading}
                   placeholder="Unlimited"
-                  className={`h-10 w-full bg-[#1A2130] border-white/10 px-3 text-center text-white placeholder-gray-500 rounded-lg transition-all duration-200 hover:bg-[#1A2130] hover:border-white/20 focus:bg-[#1A2130] focus:ring-blue-500/20 focus:border-blue-500/50 ${
-                    maxAttemptsError ? "border-red-500/50" : ""
+                  className={`h-10 w-full rounded-lg border px-3 text-center text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 hover:border-slate-400 focus:border-teal-500/60 focus:ring-teal-500/20 ${
+                    maxAttemptsError
+                      ? "border-rose-400 bg-rose-50/50"
+                      : "border-slate-300 bg-white"
                   }`}
                   min={1}
                   max={99}
@@ -105,10 +106,10 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
             </div>
 
             {maxAttemptsError && (
-              <p className="text-xs text-red-400">{maxAttemptsError}</p>
+              <p className="text-xs text-rose-600">{maxAttemptsError}</p>
             )}
 
-            <p className="pl-3 text-xs text-gray-500">
+            <p className="pl-3 text-xs text-slate-500">
               Leave empty for unlimited attempts.
             </p>
           </div>

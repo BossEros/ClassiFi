@@ -41,7 +41,7 @@ describe("Toast", () => {
     it("renders success variant by default", () => {
       render(<Toast id="1" message="Success" onDismiss={vi.fn()} />)
       const toast = screen.getByRole("status")
-      expect(toast.className).toContain("bg-green")
+      expect(toast.className).toContain("bg-emerald-50")
     })
 
     it("renders error variant", () => {
@@ -49,13 +49,13 @@ describe("Toast", () => {
         <Toast id="1" message="Error" variant="error" onDismiss={vi.fn()} />,
       )
       const toast = screen.getByRole("alert")
-      expect(toast.className).toContain("bg-red")
+      expect(toast.className).toContain("bg-rose-50")
     })
 
     it("renders info variant", () => {
       render(<Toast id="1" message="Info" variant="info" onDismiss={vi.fn()} />)
       const toast = screen.getByRole("status")
-      expect(toast.className).toContain("bg-blue")
+      expect(toast.className).toContain("bg-sky-50")
     })
   })
 
@@ -213,8 +213,8 @@ describe("ToastContainer", () => {
     const successToast = screen.getByText("Success").closest("div")
     const errorToast = screen.getByText("Error").closest("div")
 
-    expect(successToast?.className).toContain("bg-green")
-    expect(errorToast?.className).toContain("bg-red")
+    expect(successToast?.className).toContain("bg-emerald-50")
+    expect(errorToast?.className).toContain("bg-rose-50")
   })
 
   beforeEach(() => {

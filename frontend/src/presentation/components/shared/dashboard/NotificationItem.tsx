@@ -60,36 +60,47 @@ export function NotificationItem({
 
   return (
     <div
-      className={`p-4 border-b border-white/5 hover:bg-white/5 cursor-pointer transition-colors ${
-        !notification.isRead ? "bg-blue-500/10" : ""
+      className={`relative cursor-pointer border-b border-slate-100 p-4 transition-colors hover:bg-slate-50 ${
+        !notification.isRead ? "bg-teal-50/80" : "bg-white"
       }`}
       onClick={handleClick}
     >
+      {!notification.isRead && (
+        <span
+          className="absolute left-0 top-0 h-full w-1 bg-teal-600"
+          aria-hidden="true"
+        />
+      )}
+
       <div className="flex items-start gap-3">
         <div
-          className={`p-2 rounded-full shrink-0 ${
+          className={`shrink-0 rounded-full p-2 ${
             !notification.isRead
-              ? "bg-blue-500/20 text-blue-400"
-              : "bg-slate-700 text-slate-400"
+              ? "bg-teal-100 text-teal-700"
+              : "bg-slate-100 text-slate-500"
           }`}
         >
-          <Icon className="w-5 h-5" />
+          <Icon className="h-5 w-5" />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <p
             className={`text-sm font-medium ${
-              !notification.isRead ? "text-white" : "text-slate-300"
+              !notification.isRead ? "text-slate-900" : "text-slate-700"
             }`}
           >
             {notification.title}
           </p>
-          <p className="text-sm text-slate-400 mt-1 line-clamp-2">
+          <p
+            className={`mt-1 line-clamp-2 text-sm ${
+              !notification.isRead ? "text-slate-700" : "text-slate-500"
+            }`}
+          >
             {notification.message}
           </p>
-          <p className="text-xs text-slate-500 mt-1">{timeAgo}</p>
+          <p className="mt-1 text-xs text-slate-500">{timeAgo}</p>
         </div>
         {!notification.isRead && (
-          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 shrink-0"></div>
+          <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-teal-600"></div>
         )}
       </div>
     </div>
