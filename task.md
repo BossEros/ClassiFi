@@ -569,3 +569,36 @@
 - [x] Move schedule closer to the title and de-emphasize secondary metadata
 - [x] Make the accent bar span the full header height
 - [x] Run frontend build verification
+
+# Assignment Overview Light Mode
+
+- [x] Replace the in-page back button with top-bar breadcrumb navigation
+- [x] Convert the assignment overview page shell and content to light mode
+- [x] Add light-mode support to the assignment overview components and modals it uses
+- [x] Run frontend build verification
+
+# Assignment Overview UI Polish
+
+- [x] Remove the redundant class-name line from the assignment overview body
+- [x] Strengthen metadata pill contrast and add a total-score pill
+- [x] Add icons to the instructions, submission status, and submit assignment headings
+- [x] Refine the no-submission and hidden-case icon treatments
+- [x] Run frontend build verification
+
+# Create Assignment Light Mode
+
+- [x] Replace the create/edit assignment back button with clickable breadcrumbs in the top bar
+- [x] Convert the create/edit assignment page shell and action area to light mode
+- [x] Convert assignment form sections, toggles, template code, test cases, and local modals to light mode
+- [x] Replace required-field asterisks with explicit optional labels where appropriate
+- [x] Run frontend build verification
+
+# Student Class Grades Tab
+
+- [x] Add a student-focused grades tab component scoped to the current class
+- [x] Reuse current-class student grades data via `useStudentGrades(studentId, classId)`
+- [x] Show summary metrics without any class ranking
+- [x] Show assignment rows with score, feedback, late penalty, and adjusted markers
+- [x] Replace the student grades placeholder in class detail
+- [x] Update frontend documentation
+- [x] Run frontend build verification

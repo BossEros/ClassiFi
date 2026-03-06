@@ -18,8 +18,8 @@ interface ClassHeaderProps {
   instructorAvatarUrl?: string | null
   classCode?: string
   description?: string
-  yearLevel?: number
   semester?: number
+  academicYear?: string
   schedule: {
     days: DayOfWeek[]
     startTime: string
@@ -40,8 +40,8 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   instructorAvatarUrl,
   classCode,
   description,
-  yearLevel,
   semester,
+  academicYear,
   schedule,
   // studentCount, // Unused for now, but part of interface
   isTeacher,
@@ -71,7 +71,9 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   const scheduleText = `${daysText} ${timeText}`
   const isLight = variant === "light"
   const academicTermText =
-    yearLevel && semester ? `Year ${yearLevel} / Sem ${semester}` : null
+    semester && academicYear
+      ? `${semester === 1 ? "1st Semester" : "2nd Semester"} ${academicYear}`
+      : academicYear || null
   const instructorInitials = instructorName
     .split(" ")
     .map((namePart) => namePart[0])
@@ -170,12 +172,6 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
               ) : null}
 
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                {academicTermText ? (
-                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
-                    {academicTermText}
-                  </span>
-                ) : null}
-
                 {!isTeacher ? (
                   <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600">
                     <Avatar
@@ -187,6 +183,12 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
                     />
                     <span>{instructorName}</span>
                   </div>
+                ) : null}
+
+                {academicTermText ? (
+                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                    {academicTermText}
+                  </span>
                 ) : null}
               </div>
             </div>
@@ -295,5 +297,3 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
     </div>
   )
 }
-
-

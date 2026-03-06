@@ -161,6 +161,7 @@ Admin class detail behavior:
   - **`FragmentsTable`**: Detailed view of matching code fragments
   - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
+- **`StudentClassGradesContent`**: Student-only class grades tab that shows personal class average, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
 - **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
@@ -469,9 +470,13 @@ Specialized types for the class detail page redesign:
    - Click on any assignment card to navigate to the assignment detail page
    - View grades directly on assignment cards for graded work (displayed as "95/100" format)
 5. **Switch Tabs**:
-   - Use the tab navigation to switch between Assignment, Students, and Calendar views
+   - Use the tab navigation to switch between Assignment, Students, Calendar, and Grades views
    - Filter selections persist when switching between tabs
    - Keyboard navigation supported (arrow keys + Enter)
+6. **Review Grades in Class Context**:
+   - Open the `Grades` tab to see a personal performance view for the current class
+   - Summary cards show class average, graded assignments, pending review, and not-submitted counts
+   - Assignment rows show score, percentage, submission timing, late penalties, adjusted grades, and teacher feedback when available
 
 ### Teacher: Managing Class Assignments
 

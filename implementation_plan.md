@@ -1281,3 +1281,81 @@ Refine the class header to better match common LMS information hierarchy pattern
 - [x] Make the accent bar span the full height of the header.
 - [x] Keep copy-code and action behavior unchanged.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Assignment Overview Light Mode
+
+## Scope
+
+Convert the shared assignment overview page to the same light visual system used across the dashboard while preserving the existing teacher and student behavior.
+
+1. Replace the in-page back button with top-bar breadcrumbs (`Classes > Class > Assignment`).
+2. Convert the assignment overview shell, header, states, and supporting surfaces to light mode.
+3. Add light-mode support to assignment-specific cards and modals used on the page without changing logic.
+4. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Wire assignment detail breadcrumbs through the shared top bar.
+- [x] Convert `AssignmentDetailPage` shell and panels to the light visual system.
+- [x] Add light-mode support to assignment overview components and modals.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Assignment Overview UI Polish
+
+## Scope
+
+Polish the light-mode assignment overview for clarity and readability without changing any behavior.
+
+1. Remove the redundant class-name line from the assignment overview body.
+2. Strengthen assignment metadata pills and add a total-score pill.
+3. Add clearer section icons for instructions, submission status, and submit assignment.
+4. Improve the visibility of the empty-state and hidden-case icons.
+5. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Remove the redundant class-name line from the assignment overview body.
+- [x] Strengthen metadata pill contrast and add total-score metadata.
+- [x] Add icons to section headers in the assignment overview flow.
+- [x] Refine the no-submission and hidden-case icon treatments.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Create Assignment Light Mode
+
+## Scope
+
+Convert the teacher create/edit assignment page and its local form components to the shared light dashboard system without changing any behavior.
+
+1. Replace the in-page back button with clickable top-bar breadcrumbs.
+2. Convert the create/edit assignment page shell, error banner, and action area to light mode.
+3. Convert the assignment form sections, toggles, template-code area, test-case section, and related modals to light mode.
+4. Remove required-field asterisks in this flow and label optional fields explicitly instead.
+5. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Wire create/edit assignment breadcrumbs through the shared top bar.
+- [x] Convert `AssignmentFormPage` shell and actions to the light visual system.
+- [x] Convert assignment form section components and local modals to light mode.
+- [x] Replace required asterisks with explicit optional labels where appropriate.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Student Class Grades Tab
+
+## Scope
+
+Replace the student class-detail grades placeholder with a personal performance view rather than the teacher gradebook matrix.
+
+1. Add a student-focused grades tab component scoped to the current class.
+2. Reuse the existing student gradebook hook and data model for current-class grades.
+3. Show summary metrics and assignment-level grade details without any class ranking.
+4. Update frontend documentation and verify with a frontend build.
+
+## Execution Checklist
+
+- [x] Add a reusable student class grades tab component for the class overview page.
+- [x] Render class average, graded count, pending review count, and not-submitted count.
+- [x] Show assignment rows with score, feedback, late-penalty, and adjusted-state context.
+- [x] Replace the student `Grades Coming Soon` placeholder in `ClassDetailPage`.
+- [x] Update `frontend/documentation.md` for the new student grades-tab behavior.
+- [x] Run `frontend`: `npm run build`.

@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ClipboardList, BarChart3 } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { GradebookContent } from "@/presentation/components/teacher/gradebook/GradebookContent";
+import { StudentClassGradesContent } from "@/presentation/components/student/grades/StudentClassGradesContent";
 import { BackButton } from "@/presentation/components/ui/BackButton";
 import { ClassHeader } from "@/presentation/components/shared/dashboard/ClassHeader";
 import { ClassTabs } from "@/presentation/components/shared/dashboard/ClassTabs";
@@ -713,8 +714,8 @@ export function ClassDetailPage() {
             instructorName={classInfo?.teacherName || "Unknown"}
             classCode={classInfo?.classCode}
             description={classInfo?.description || undefined}
-            yearLevel={classInfo?.yearLevel}
             semester={classInfo?.semester}
+            academicYear={classInfo?.academicYear}
             schedule={{
               days: classInfo?.schedule?.days || [],
               startTime: classInfo?.schedule?.startTime || "",
@@ -802,19 +803,11 @@ export function ClassDetailPage() {
                   variant={isLightClassView ? "light" : "dark"}
                 />
               ) : (
-                <div className="py-12 text-center">
-                  <div
-                    className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLightClassView ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}
-                  >
-                    <BarChart3 className={`w-8 h-8 ${isLightClassView ? "text-slate-400" : "text-gray-500"}`} />
-                  </div>
-                  <p className={`mb-1 font-medium ${isLightClassView ? "text-slate-900" : "text-gray-300"}`}>
-                    Grades Coming Soon
-                  </p>
-                  <p className={`text-sm ${isLightClassView ? "text-slate-500" : "text-gray-500"}`}>
-                    Your grades will be displayed here.
-                  </p>
-                </div>
+                <StudentClassGradesContent
+                  classId={parsedClassId}
+                  studentId={user ? parseInt(user.id, 10) : 0}
+                  variant={isLightClassView ? "light" : "dark"}
+                />
               ))}
           </ClassTabs>
 

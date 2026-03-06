@@ -24,6 +24,7 @@ interface DatePickerProps {
   minDate?: Date
   disabled?: boolean
   triggerStyle?: React.CSSProperties
+  variant?: "dark" | "light"
 }
 
 export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
@@ -38,6 +39,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
       minDate,
       disabled,
       triggerStyle,
+      variant = "dark",
     },
     ref,
   ) => {
@@ -140,12 +142,16 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
       }
     }
 
+    const isLight = variant === "light"
+
     return (
       <div ref={ref} className="w-full space-y-2">
         {label && (
           <label
             className={cn(
-              "text-sm font-medium text-gray-300 flex items-center gap-2",
+              isLight
+                ? "flex items-center gap-2 text-sm font-medium text-slate-700"
+                : "text-sm font-medium text-gray-300 flex items-center gap-2",
               labelClassName,
             )}
           >
@@ -157,7 +163,10 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
         <Popover
           isOpen={isOpen && !disabled}
           onOpenChange={handleOpenChange}
-          className="w-[320px] p-4"
+          className={cn(
+            "w-[320px] p-4",
+            isLight && "border-slate-200 bg-white shadow-xl shadow-slate-200/60",
+          )}
           trigger={
             <div className="relative flex items-center w-full">
               <button
@@ -168,12 +177,18 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                 className={cn(
                   "flex items-center justify-between w-full h-11 px-4 rounded-xl border transition-all duration-200 group text-left",
                   disabled
-                    ? "bg-white/5 border-white/5 cursor-not-allowed opacity-50"
+                    ? isLight
+                      ? "cursor-not-allowed border-slate-200 bg-slate-100 opacity-60"
+                      : "bg-white/5 border-white/5 cursor-not-allowed opacity-50"
                     : "cursor-pointer",
                   !disabled &&
-                    (isOpen
-                      ? "bg-black/20 border-blue-500/50 ring-2 ring-blue-500/20"
-                      : "bg-black/20 border-white/10 hover:bg-black/20 hover:border-white/20"),
+                    (isLight
+                      ? isOpen
+                        ? "border-teal-500/60 bg-white ring-2 ring-teal-500/20"
+                        : "border-slate-300 bg-slate-50 hover:border-slate-400 hover:bg-white"
+                      : isOpen
+                        ? "bg-black/20 border-blue-500/50 ring-2 ring-blue-500/20"
+                        : "bg-black/20 border-white/10 hover:bg-black/20 hover:border-white/20"),
                   error && "border-red-500/50",
                 )}
               >
@@ -182,14 +197,24 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                     className={cn(
                       "w-4 h-4 shrink-0 transition-colors",
                       value
-                        ? "text-blue-400"
-                        : "text-gray-500 group-hover:text-gray-400",
+                        ? isLight
+                          ? "text-teal-600"
+                          : "text-blue-400"
+                        : isLight
+                          ? "text-slate-500 group-hover:text-slate-600"
+                          : "text-gray-500 group-hover:text-gray-400",
                     )}
                   />
                   <span
                     className={cn(
                       "text-sm truncate",
-                      value ? "text-white" : "text-gray-500",
+                      value
+                        ? isLight
+                          ? "text-slate-800"
+                          : "text-white"
+                        : isLight
+                          ? "text-slate-500"
+                          : "text-gray-500",
                     )}
                   >
                     {value && validatedDateObj
@@ -216,7 +241,12 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                   type="button"
                   onClick={clearDate}
                   aria-label="Clear date"
-                  className="absolute right-3 p-1 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors z-10"
+                  className={cn(
+                    "absolute right-3 z-10 rounded-full p-1 transition-colors",
+                    isLight
+                      ? "text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      : "text-gray-400 hover:bg-white/10 hover:text-white",
+                  )}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -230,17 +260,27 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                 <button
                   type="button"
                   onClick={handlePrevMonth}
-                  className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  className={cn(
+                    "rounded-lg p-1 transition-colors",
+                    isLight
+                      ? "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      : "text-gray-400 hover:bg-white/10 hover:text-white",
+                  )}
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <span className="text-sm font-semibold text-white">
+                <span className={cn("text-sm font-semibold", isLight ? "text-slate-900" : "text-white")}>
                   {MONTH_NAMES[viewMonth]} {viewYear}
                 </span>
                 <button
                   type="button"
                   onClick={handleNextMonth}
-                  className="p-1 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                  className={cn(
+                    "rounded-lg p-1 transition-colors",
+                    isLight
+                      ? "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                      : "text-gray-400 hover:bg-white/10 hover:text-white",
+                  )}
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -251,7 +291,7 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                 {DAY_NAMES_SHORT.map((day) => (
                   <div
                     key={day}
-                    className="text-xs font-medium text-gray-500 py-1"
+                    className={cn("py-1 text-xs font-medium", isLight ? "text-slate-500" : "text-gray-500")}
                   >
                     {day}
                   </div>
@@ -272,12 +312,21 @@ export const DatePicker = React.forwardRef<HTMLDivElement, DatePickerProps>(
                       className={cn(
                         "h-8 w-8 text-sm rounded-lg flex items-center justify-center transition-all",
                         isSelectedDay
-                          ? "bg-blue-600 text-white border border-blue-500/40 font-semibold"
+                          ? isLight
+                            ? "border border-teal-500/40 bg-teal-600 font-semibold text-white"
+                            : "bg-blue-600 text-white border border-blue-500/40 font-semibold"
                           : isTodayDay
-                            ? "bg-white/10 text-blue-400 font-medium"
-                            : "text-gray-300 hover:bg-white/5",
+                            ? isLight
+                              ? "bg-teal-50 font-medium text-teal-700"
+                              : "bg-white/10 text-blue-400 font-medium"
+                            : isLight
+                              ? "text-slate-700 hover:bg-slate-100"
+                              : "text-gray-300 hover:bg-white/5",
                         disabledDay &&
-                          "opacity-30 cursor-not-allowed hover:bg-transparent text-gray-500",
+                          cn(
+                            "cursor-not-allowed opacity-30 hover:bg-transparent",
+                            isLight ? "text-slate-400" : "text-gray-500",
+                          ),
                       )}
                     >
                       {day}
