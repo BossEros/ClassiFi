@@ -1,10 +1,16 @@
+# Frontend Unit Test Fixes
+
+- [x] Update toast variant assertions to match the current light-theme tokens
+- [x] Replace ambiguous class-detail text queries with stable heading assertions
+- [x] Run targeted frontend tests for the touched suites
+- [x] Run frontend build verification
+
 # Review Findings Fixes
 
 - [x] Preserve `submissionId` in the assignment detail breadcrumb for teacher review flows
 - [x] Restore year-level identification in admin class list rows
 
 - [x] Run frontend build verification
-
 # ClassiFi One-Page App Summary PDF
 
 - [x] Gather repo evidence for app description, personas, features, architecture, and run steps

@@ -1,3 +1,39 @@
+# Implementation Plan - Frontend Unit Test Fixes
+
+## Goal
+
+Restore the failing frontend unit tests by aligning assertions with the current light-mode UI and page structure.
+
+## Scope
+
+- `frontend/src/tests/unit/presentation/components/ui/Toast.test.tsx`
+- `frontend/src/tests/unit/presentation/pages/teacher/ClassDetailPage.pagination.test.tsx`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Fix toast expectations:
+   - Update variant assertions to match the current toast color tokens.
+3. Fix class detail pagination expectations:
+   - Replace ambiguous class-name text queries with a stable heading-based assertion.
+4. Verify:
+   - Run targeted frontend tests for the touched files.
+   - Run `frontend`: `npm run build`.
+
+## Risks and Mitigations
+
+- Risk: Tests could be weakened by over-broad queries.
+  - Mitigation: Assert against accessible roles and current design tokens only.
+- Risk: Other frontend tests may still fail after these updates.
+  - Mitigation: Re-run the targeted suites first, then verify with the full frontend test command if needed.
+
+## Deliverables
+
+- Passing toast unit tests with current UI expectations.
+- Passing class-detail pagination tests with stable queries.
+- Successful frontend verification.
 # Implementation Plan - Review Findings Fixes
 
 ## Goal
