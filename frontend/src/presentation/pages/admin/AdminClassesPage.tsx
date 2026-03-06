@@ -520,6 +520,10 @@ function AdminClassesTable({
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+                          {selectedClass.yearLevel}
+                          {getOrdinalSuffix(selectedClass.yearLevel)} Year
+                        </span>
                         <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                           {selectedClass.semester}
                           {getOrdinalSuffix(selectedClass.semester)} Sem

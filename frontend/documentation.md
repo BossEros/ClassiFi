@@ -158,7 +158,6 @@ Admin class detail behavior:
   - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination
   - **`PairComparison`**: Side-by-side code editor with match highlighting
   - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
-  - **`FragmentsTable`**: Detailed view of matching code fragments
   - **`SimilarityBadge`**: Visual indicator for similarity percentage
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal class average, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
@@ -607,3 +606,4 @@ High-signal coverage gate:
 - `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
+

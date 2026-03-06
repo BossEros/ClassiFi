@@ -420,6 +420,9 @@ export function AssignmentDetailPage() {
       : null
 
   const userInitials = user ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase() : "?"
+  const assignmentDetailPath = assignmentId
+    ? `/dashboard/assignments/${assignmentId}${selectedSubmissionId !== null ? `?submissionId=${selectedSubmissionId}` : ""}`
+    : undefined
 
   const breadcrumbItems = [
     { label: "Classes", to: "/dashboard/classes" },
@@ -428,7 +431,7 @@ export function AssignmentDetailPage() {
       : []),
     {
       label: assignment?.assignmentName || "Assignment Overview",
-      to: assignmentId ? `/dashboard/assignments/${assignmentId}` : undefined,
+      to: assignmentDetailPath,
     },
   ]
 

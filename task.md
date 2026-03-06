@@ -1,3 +1,10 @@
+# Review Findings Fixes
+
+- [x] Preserve `submissionId` in the assignment detail breadcrumb for teacher review flows
+- [x] Restore year-level identification in admin class list rows
+
+- [x] Run frontend build verification
+
 # ClassiFi One-Page App Summary PDF
 
 - [x] Gather repo evidence for app description, personas, features, architecture, and run steps

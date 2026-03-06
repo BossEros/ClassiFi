@@ -1,3 +1,39 @@
+# Implementation Plan - Review Findings Fixes
+
+## Goal
+
+Address the two accepted review findings without changing unrelated behavior.
+
+## Scope
+
+- `frontend/src/presentation/pages/shared/AssignmentDetailPage.tsx`
+- `frontend/src/presentation/pages/admin/AdminClassesPage.tsx`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Restore teacher review continuity:
+   - Preserve `submissionId` in the assignment-detail breadcrumb destination when a teacher is reviewing a selected submission.
+3. Restore admin class row identification:
+   - Re-add the year-level badge in the admin classes table so same-named classes remain distinguishable.
+4. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Risks and Mitigations
+
+- Risk: Breadcrumb changes could alter non-teacher assignment navigation.
+  - Mitigation: Only append the query string when a valid `submissionId` is present.
+- Risk: Reintroducing row metadata could drift from the updated light styling.
+  - Mitigation: Reuse the existing badge pattern already present in the table.
+
+## Deliverables
+
+- Teacher assignment-detail breadcrumb that preserves the reviewed submission context.
+- Admin classes table rows that include year-level identification again.
+- Successful frontend build verification.
 # Implementation Plan - ClassiFi One-Page App Summary PDF
 
 ## Goal
