@@ -79,7 +79,7 @@ function DeleteClassModal({
       <div
         className={cn(
           "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
-          "rounded-xl border border-white/10 bg-slate-900/95 backdrop-blur-sm",
+          "rounded-xl border border-slate-200 bg-white",
           "shadow-xl shadow-black/20",
           "animate-in fade-in-0 zoom-in-95 duration-200",
           className,
@@ -94,7 +94,7 @@ function DeleteClassModal({
           disabled={isDeleting}
           className={cn(
             "absolute top-4 right-4 p-1 rounded-lg",
-            "text-gray-400 hover:text-white hover:bg-white/10",
+            "text-slate-400 hover:text-slate-900 hover:bg-slate-100",
             "transition-colors duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
             "disabled:opacity-50 disabled:cursor-not-allowed",
@@ -105,21 +105,21 @@ function DeleteClassModal({
 
         {/* Warning icon */}
         <div className="flex justify-center mb-4">
-          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-400" />
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-50">
+            <AlertTriangle className="w-8 h-8 text-rose-500" />
           </div>
         </div>
 
         {/* Title */}
         <h2
           id="delete-modal-title"
-          className="text-xl font-semibold text-white text-center mb-2"
+          className="text-xl font-semibold text-slate-900 text-center mb-2"
         >
           Delete Class
         </h2>
 
         {/* Description */}
-        <p className="text-gray-400 text-center mb-6">
+        <p className="text-slate-500 text-center mb-6">
           Are you sure you want to delete this class? This action cannot be
           undone. All assignments and student enrollments will be removed.
         </p>
@@ -131,8 +131,8 @@ function DeleteClassModal({
             disabled={isDeleting}
             className={cn(
               "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
-              "border border-white/20 text-white",
-              "hover:bg-white/10 transition-colors duration-200",
+              "border border-slate-300 bg-white text-slate-700",
+              "hover:bg-slate-50 transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
               "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
@@ -210,23 +210,23 @@ function RemoveStudentModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-[448px] min-w-[320px] mx-auto bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10 flex-shrink-0">
+      <div className="relative z-10 mx-auto w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between border-b border-slate-200 p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-500/20">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
+            <div className="rounded-lg bg-rose-50 p-2">
+              <AlertTriangle className="w-5 h-5 text-rose-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Remove Student</h2>
-              <p className="text-sm text-gray-400 mt-0.5">
+              <h2 className="text-xl font-bold text-slate-900">Remove Student</h2>
+              <p className="mt-0.5 text-sm text-slate-500">
                 This action cannot be undone
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
             aria-label="Close"
             disabled={isSubmitting}
           >
@@ -238,27 +238,27 @@ function RemoveStudentModal({
         <div className="p-6 space-y-4">
           {/* Error Message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+              <p className="text-sm text-rose-700">{error}</p>
             </div>
           )}
 
           {/* Warning Message */}
-          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-            <p className="text-sm text-yellow-200">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm text-slate-700">
               Are you sure you want to remove{" "}
-              <span className="font-semibold text-white">{studentName}</span>{" "}
+              <span className="font-semibold text-slate-900">{studentName}</span>{" "}
               from this class?
             </p>
-            <ul className="mt-3 space-y-2 text-xs text-gray-400">
+            <ul className="mt-3 space-y-2 text-xs text-slate-600">
               <li className="flex items-start gap-2">
-                <span className="text-yellow-500 mt-0.5">•</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   The student will lose access to all class assignments
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-yellow-500 mt-0.5">•</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   Their submissions will be preserved but they cannot submit new
                   work
@@ -273,7 +273,7 @@ function RemoveStudentModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              className="flex-1 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -354,23 +354,23 @@ function LeaveClassModal({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-[448px] min-w-[320px] flex-shrink-0 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10">
+      <div className="relative z-10 w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between border-b border-slate-200 p-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-red-500/20">
-              <AlertTriangle className="w-5 h-5 text-red-400" />
+            <div className="rounded-lg bg-rose-50 p-2">
+              <AlertTriangle className="w-5 h-5 text-rose-500" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Leave Class</h2>
-              <p className="text-sm text-gray-400 mt-0.5">
+              <h2 className="text-xl font-bold text-slate-900">Leave Class</h2>
+              <p className="mt-0.5 text-sm text-slate-500">
                 This action cannot be undone
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-900"
             aria-label="Close"
             disabled={isSubmitting}
           >
@@ -382,32 +382,32 @@ function LeaveClassModal({
         <div className="p-6 space-y-4 w-full">
           {/* Error Message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+              <p className="text-sm text-rose-700">{error}</p>
             </div>
           )}
 
           {/* Warning Message */}
-          <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
-            <p className="text-sm text-yellow-200">
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p className="text-sm text-amber-700">
               Are you sure you want to leave{" "}
-              <span className="font-semibold text-white">{className}</span>?
+              <span className="font-semibold text-slate-900">{className}</span>?
             </p>
-            <ul className="mt-3 space-y-2 text-xs text-gray-400">
+            <ul className="mt-3 space-y-2 text-xs text-slate-500">
               <li className="flex items-start gap-2">
-                <span className="text-yellow-500 mt-0.5">•</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   You will lose access to all class assignments and materials
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-yellow-500 mt-0.5">•</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   Your submissions will still be visible to your teacher
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="text-yellow-500 mt-0.5">•</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>You will need a new class code to rejoin later</span>
               </li>
             </ul>
@@ -419,7 +419,7 @@ function LeaveClassModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              className="flex-1 border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -485,6 +485,7 @@ export function ClassDetailPage() {
   // Check if user is a teacher or student
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
   const isStudent = user?.role === "student"
+  const isLightClassView = true
 
   // Derived state for filtered and grouped assignments
   const filteredAssignments = useMemo(
@@ -660,25 +661,29 @@ export function ClassDetailPage() {
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading class...</p>
+            <div
+              className={`mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 ${isLightClassView ? "border-slate-200 border-t-teal-500" : "border-white/30 border-t-white"}`}
+            ></div>
+            <p className={isLightClassView ? "text-slate-500" : "text-gray-400"}>Loading class...</p>
           </div>
         </div>
       ) : error && !classInfo ? (
         /* Error State */
         <div className="flex items-center justify-center py-20">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-              <ClipboardList className="w-8 h-8 text-red-400" />
+            <div
+              className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLightClassView ? "border border-rose-200 bg-rose-50" : "bg-red-500/20"}`}
+            >
+              <ClipboardList className={`w-8 h-8 ${isLightClassView ? "text-rose-500" : "text-red-400"}`} />
             </div>
-            <p className="text-gray-300 font-medium mb-2">
+            <p className={`mb-2 font-medium ${isLightClassView ? "text-slate-900" : "text-gray-300"}`}>
               Error Loading Class
             </p>
-            <p className="text-sm text-gray-500 mb-4">{error}</p>
+            <p className={`mb-4 text-sm ${isLightClassView ? "text-slate-500" : "text-gray-500"}`}>{error}</p>
             <BackButton
               to={isStudent ? "/dashboard" : "/dashboard/classes"}
               label={`Back to ${isStudent ? "Dashboard" : "Classes"}`}
-              className="mx-auto"
+              className={isLightClassView ? "mx-auto -ml-0 text-slate-500 hover:bg-slate-100 hover:text-slate-900" : "mx-auto"}
             />
           </div>
         </div>
@@ -687,7 +692,14 @@ export function ClassDetailPage() {
         <>
           {/* Back Button */}
           <div className="mb-6">
-            <BackButton to={isStudent ? "/dashboard" : "/dashboard/classes"} />
+            <BackButton
+              to={isStudent ? "/dashboard" : "/dashboard/classes"}
+              className={
+                isLightClassView
+                  ? "-ml-0 mb-0 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                  : ""
+              }
+            />
           </div>
 
           {/* Class Header */}
@@ -704,6 +716,7 @@ export function ClassDetailPage() {
             }}
             studentCount={classInfo?.studentCount || 0}
             isTeacher={isTeacher}
+            variant={isLightClassView ? "light" : "dark"}
             onEditClass={handleEditClass}
             onDeleteClass={() => setIsDeleteModalOpen(true)}
             onLeaveClass={() => setIsLeaveModalOpen(true)}
@@ -711,14 +724,22 @@ export function ClassDetailPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <p className="text-red-400 text-sm">{error}</p>
+            <div
+              className={`mb-6 rounded-lg border p-4 ${isLightClassView ? "border-rose-200 bg-rose-50" : "border-red-500/20 bg-red-500/10"}`}
+            >
+              <p className={`text-sm ${isLightClassView ? "text-rose-700" : "text-red-400"}`}>{error}</p>
             </div>
           )}
 
           {/* Tabs and Content */}
-          <div className="bg-slate-900 border border-white/10 rounded-lg p-6">
-            <ClassTabs activeTab={activeTab} onTabChange={handleTabChange}>
+          <div
+            className={`rounded-2xl border p-6 ${isLightClassView ? "border-slate-200 bg-white shadow-sm" : "border-white/10 bg-slate-900"}`}
+          >
+            <ClassTabs
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              variant={isLightClassView ? "light" : "dark"}
+            >
               {/* Assignments Tab */}
               {activeTab === "assignments" && (
                 <AssignmentsTabContent
@@ -735,6 +756,7 @@ export function ClassDetailPage() {
                     navigate(`/dashboard/classes/${classId}/assignments/new`)
                   }
                   onAssignmentClick={handleAssignmentClick}
+                  variant={isLightClassView ? "light" : "dark"}
                 />
               )}
 
@@ -756,6 +778,7 @@ export function ClassDetailPage() {
                   }}
                   onRemoveStudent={handleRemoveStudentClick}
                   onStudentPageChange={handleStudentPageChange}
+                  variant={isLightClassView ? "light" : "dark"}
                 />
               )}
 
@@ -772,16 +795,19 @@ export function ClassDetailPage() {
                   <GradebookContent
                     classId={parsedClassId}
                     classCode={classInfo?.classCode}
+                    variant={isLightClassView ? "light" : "dark"}
                   />
                 ) : (
                   <div className="py-12 text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-                      <BarChart3 className="w-8 h-8 text-gray-500" />
+                    <div
+                      className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLightClassView ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}
+                    >
+                      <BarChart3 className={`w-8 h-8 ${isLightClassView ? "text-slate-400" : "text-gray-500"}`} />
                     </div>
-                    <p className="text-gray-300 font-medium mb-1">
+                    <p className={`mb-1 font-medium ${isLightClassView ? "text-slate-900" : "text-gray-300"}`}>
                       Grades Coming Soon
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className={`text-sm ${isLightClassView ? "text-slate-500" : "text-gray-500"}`}>
                       Your grades will be displayed here.
                     </p>
                   </div>
@@ -840,3 +866,4 @@ export function ClassDetailPage() {
     </DashboardLayout>
   )
 }
+

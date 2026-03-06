@@ -8,6 +8,7 @@ interface AssignmentSectionProps {
   onAssignmentClick: (assignmentId: number) => void
   isTeacher: boolean
   className?: string
+  variant?: "dark" | "light"
 }
 
 export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
@@ -16,6 +17,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
   onAssignmentClick,
   isTeacher,
   className = "",
+  variant = "dark",
 }) => {
   if (assignments.length === 0) {
     return null
@@ -23,7 +25,9 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+      <h3
+        className={`text-sm font-semibold uppercase tracking-wider ${variant === "light" ? "text-slate-500" : "text-slate-300"}`}
+      >
         {title}
       </h3>
       <div className="space-y-3">
@@ -33,6 +37,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
             assignment={assignment}
             onClick={() => onAssignmentClick(assignment.id)}
             isTeacher={isTeacher}
+            variant={variant}
           />
         ))}
       </div>

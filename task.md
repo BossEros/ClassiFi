@@ -521,3 +521,16 @@
 - [x] Apply the shared auth palette to forgot password
 - [x] Apply the shared auth palette to reset password and its success/error states
 - [x] Run frontend build verification
+
+# Student Class Overview Light Mode
+
+- [x] Add student light-mode variants to the shared class-detail UI pieces
+- [x] Convert the student class overview shell and states to light mode
+- [x] Convert the student leave-class modal to the same light palette
+- [x] Run frontend build verification
+
+# Teacher Class Overview Light Mode
+
+- [x] Convert remaining teacher-only class-detail modals and surfaces to the shared light system
+- [x] Add light-mode support to the gradebook tab content
+- [x] Verify the teacher class overview build path still passes

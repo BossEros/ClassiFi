@@ -1151,3 +1151,39 @@ Refine auth usability after the palette pass.
 - [x] Apply shared auth palette to forgot password page.
 - [x] Apply shared auth palette to reset password page and state screens.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Student Class Overview Light Mode
+
+## Scope
+
+Convert the student-facing class overview page to the shared light dashboard visual system while preserving existing behavior.
+
+1. Identify the shared class-detail components currently forcing dark surfaces.
+2. Add student-only light variants for header, tabs, assignment list, student list, pagination, and leave-class modal.
+3. Wire the student class-detail route to use the light variants without changing teacher behavior.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Add student light-mode styling support to shared class-detail components.
+- [x] Update `ClassDetailPage` student view shell, states, and leave modal to light mode.
+- [x] Keep teacher class-detail visuals unchanged.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Teacher Class Overview Light Mode
+
+## Scope
+
+Extend the shared class-detail light visual system to the teacher-facing class overview so both roles use the same palette and interaction surfaces without changing behavior.
+
+1. Convert the remaining teacher-only class-detail shells and modals to the light system.
+2. Add light-mode support to the gradebook tab so teacher-specific content matches the rest of the page.
+3. Keep the dedicated gradebook page on its existing default styling unless a light variant is explicitly passed.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Convert teacher-only class-detail modals and page shell remnants to light mode.
+- [x] Add light-mode styling support to `GradebookContent`.
+- [x] Wire teacher class-detail tabs to the shared light variant.
+- [x] Run `frontend`: `npm run build`.

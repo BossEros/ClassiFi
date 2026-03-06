@@ -7,6 +7,7 @@ interface ClassTabsProps {
   onTabChange: (tab: ClassTab) => void
   children: React.ReactNode
   className?: string
+  variant?: "dark" | "light"
 }
 
 export const ClassTabs: React.FC<ClassTabsProps> = ({
@@ -14,6 +15,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
   onTabChange,
   children,
   className = "",
+  variant = "dark",
 }) => {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -48,7 +50,10 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
   return (
     <div className={className}>
       {/* Tab Bar */}
-      <div role="tablist" className="flex gap-2 border-b border-white/10 mb-6">
+      <div
+        role="tablist"
+        className={`mb-6 flex gap-2 border-b ${variant === "light" ? "border-slate-200" : "border-white/10"}`}
+      >
         {tabs.map((tab, index) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
@@ -68,8 +73,12 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
               onKeyDown={(e) => handleKeyDown(e, tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
                 isActive
-                  ? "text-teal-400 border-teal-500"
-                  : "text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600"
+                  ? variant === "light"
+                    ? "border-teal-600 text-teal-700"
+                    : "text-teal-400 border-teal-500"
+                  : variant === "light"
+                    ? "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
+                    : "text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600"
               }`}
             >
               <Icon className="w-4 h-4" />

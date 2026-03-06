@@ -11,16 +11,19 @@ import { X, Edit2 } from "lucide-react";
 interface GradeCellProps {
   grade: GradeEntry | null
   totalScore: number
+  variant?: "dark" | "light"
 }
 
 
 
 
 
-function GradeCell({ grade, totalScore }: GradeCellProps) {
+function GradeCell({ grade, totalScore, variant = "dark" }: GradeCellProps) {
   if (!grade || !grade.submissionId) {
     return (
-      <span className="inline-flex items-center justify-center w-12 h-8 rounded text-xs text-gray-500">
+      <span
+        className={`inline-flex h-8 w-12 items-center justify-center rounded text-xs ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
+      >
         -
       </span>
     )
@@ -29,7 +32,7 @@ function GradeCell({ grade, totalScore }: GradeCellProps) {
   if (grade.grade === null) {
     return (
       <span
-        className="inline-flex items-center justify-center w-12 h-8 rounded bg-gray-700/50 text-gray-400 text-xs"
+        className={`inline-flex h-8 w-12 items-center justify-center rounded text-xs ${variant === "light" ? "bg-slate-100 text-slate-500" : "bg-gray-700/50 text-gray-400"}`}
         title="Not graded yet"
       >
         <X className="w-3 h-3" />
@@ -48,7 +51,9 @@ function GradeCell({ grade, totalScore }: GradeCellProps) {
       <span>{grade.grade}</span>
       {grade.isOverridden && (
         <span className="ml-1" title="Manually overridden">
-          <Edit2 className="w-3 h-3 text-yellow-400" />
+          <Edit2
+            className={`h-3 w-3 ${variant === "light" ? "text-amber-500" : "text-yellow-400"}`}
+          />
         </span>
       )}
     </span>
@@ -72,11 +77,16 @@ function getGradeColorClass(percentage: number): string {
 interface GradebookTableProps {
   assignments: GradebookAssignment[]
   students: GradebookStudent[]
+  variant?: "dark" | "light"
 }
 
 
 
-function GradebookTable({ assignments, students }: GradebookTableProps) {
+function GradebookTable({
+  assignments,
+  students,
+  variant = "dark",
+}: GradebookTableProps) {
   // Calculate averages for each student
   const calculateStudentAverage = (grades: GradeEntry[]) => {
     const validGrades = grades.filter((g) => g.grade !== null)
@@ -103,7 +113,9 @@ function GradebookTable({ assignments, students }: GradebookTableProps) {
 
   if (assignments.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-400">
+      <div
+        className={`p-8 text-center ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+      >
         <p>No assignments created yet</p>
       </div>
     )
@@ -113,14 +125,18 @@ function GradebookTable({ assignments, students }: GradebookTableProps) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[800px]">
         <thead className="sticky top-0 z-10">
-          <tr className="bg-gray-800/80 backdrop-blur-sm border-b border-white/10">
-            <th className="sticky left-0 z-20 bg-gray-800/95 backdrop-blur-sm px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider w-[180px] min-w-[180px] max-w-[180px]">
+          <tr
+            className={`border-b ${variant === "light" ? "border-slate-200 bg-slate-100/95" : "border-white/10 bg-gray-800/80 backdrop-blur-sm"}`}
+          >
+            <th
+              className={`sticky left-0 z-20 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-slate-100/95 text-slate-500" : "bg-gray-800/95 backdrop-blur-sm text-gray-400"}`}
+            >
               Student
             </th>
             {assignments.map((assignment) => (
               <th
                 key={assignment.id}
-                className="px-3 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider min-w-[100px]"
+                className={`px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] min-w-[100px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
               >
                 <div className="flex flex-col items-center gap-1">
                   <span
@@ -129,30 +145,38 @@ function GradebookTable({ assignments, students }: GradebookTableProps) {
                   >
                     {assignment.name}
                   </span>
-                  <span className="text-gray-500 font-normal normal-case">
+                  <span
+                    className={`font-normal normal-case ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
+                  >
                     /{assignment.totalScore}
                   </span>
                 </div>
               </th>
             ))}
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-400 uppercase tracking-wider min-w-[80px]">
+            <th
+              className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] min-w-[80px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+            >
               Average
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
+        <tbody
+          className={variant === "light" ? "divide-y divide-slate-200" : "divide-y divide-white/5"}
+        >
           {students.map((student) => {
             const average = calculateStudentAverage(student.grades)
 
             return (
               <tr
                 key={student.id}
-                className="hover:bg-white/5 transition-colors"
+                className={`transition-colors ${variant === "light" ? "hover:bg-slate-50" : "hover:bg-white/5"}`}
               >
-                <td className="sticky left-0 z-10 bg-gray-900/95 backdrop-blur-sm px-4 py-3 border-r border-white/5 w-[180px] min-w-[180px] max-w-[180px]">
+                <td
+                  className={`sticky left-0 z-10 px-4 py-3 w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-white" : "border-r border-white/5 bg-gray-900/95 backdrop-blur-sm"}`}
+                >
                   <div>
                     <p
-                      className="text-sm font-medium text-white truncate"
+                      className={`truncate text-sm font-medium ${variant === "light" ? "text-slate-800" : "text-white"}`}
                       title={student.name}
                     >
                       {student.name}
@@ -169,6 +193,7 @@ function GradebookTable({ assignments, students }: GradebookTableProps) {
                       <GradeCell
                         grade={grade ?? null}
                         totalScore={assignment.totalScore}
+                        variant={variant}
                       />
                     </td>
                   )
@@ -181,7 +206,11 @@ function GradebookTable({ assignments, students }: GradebookTableProps) {
                       {average}%
                     </span>
                   ) : (
-                    <span className="text-gray-500 text-sm">-</span>
+                    <span
+                      className={`text-sm ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
+                    >
+                      -
+                    </span>
                   )}
                 </td>
               </tr>
@@ -205,6 +234,7 @@ function getAverageColorClass(average: number): string {
 interface GradebookContentProps {
   classId: number
   classCode?: string
+  variant?: "dark" | "light"
 }
 
 /**
@@ -213,6 +243,7 @@ interface GradebookContentProps {
 export function GradebookContent({
   classId,
   classCode,
+  variant = "dark",
 }: GradebookContentProps) {
   const showToast = useToastStore((state) => state.showToast)
 
@@ -238,8 +269,12 @@ export function GradebookContent({
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading gradebook...</p>
+          <div
+            className={`mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 ${variant === "light" ? "border-slate-200 border-t-teal-600" : "border-white/30 border-t-white"}`}
+          ></div>
+          <p className={variant === "light" ? "text-slate-500" : "text-gray-400"}>
+            Loading gradebook...
+          </p>
         </div>
       </div>
     )
@@ -249,13 +284,23 @@ export function GradebookContent({
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-            <BarChart3 className="w-8 h-8 text-red-400" />
+          <div
+            className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${variant === "light" ? "bg-rose-50" : "bg-red-500/20"}`}
+          >
+            <BarChart3
+              className={`h-8 w-8 ${variant === "light" ? "text-rose-500" : "text-red-400"}`}
+            />
           </div>
-          <p className="text-gray-300 font-medium mb-2">
+          <p
+            className={`mb-2 font-medium ${variant === "light" ? "text-slate-800" : "text-gray-300"}`}
+          >
             Error Loading Gradebook
           </p>
-          <p className="text-sm text-gray-500 mb-4">{gradebookError}</p>
+          <p
+            className={`mb-4 text-sm ${variant === "light" ? "text-slate-500" : "text-gray-500"}`}
+          >
+            {gradebookError}
+          </p>
           <Button onClick={refetch} className="w-auto">
             <RefreshCw className="w-4 h-4 mr-2" />
             Try Again
@@ -269,13 +314,17 @@ export function GradebookContent({
     <>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-xl font-bold text-white">Gradebook</h2>
+          <h2
+            className={`text-xl font-bold ${variant === "light" ? "text-slate-900" : "text-white"}`}
+          >
+            Gradebook
+          </h2>
         </div>
 
         <div className="flex items-center gap-3">
           <Button
             onClick={refetch}
-            className="w-auto px-4 h-10 bg-white/10 hover:bg-white/20"
+            className={`h-10 w-auto px-4 ${variant === "light" ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" : "bg-white/10 hover:bg-white/20"}`}
             disabled={gradebookLoading}
           >
             <RefreshCw
@@ -296,20 +345,37 @@ export function GradebookContent({
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-white">Student Grades</h2>
-          <p className="text-sm text-gray-400">Read-only grade overview</p>
+      <Card
+        className={
+          variant === "light"
+            ? "border-slate-200 bg-white shadow-sm backdrop-blur-0"
+            : undefined
+        }
+      >
+        <CardHeader className={variant === "light" ? "border-b border-slate-200" : undefined}>
+          <h2
+            className={`text-lg font-semibold ${variant === "light" ? "text-slate-900" : "text-white"}`}
+          >
+            Student Grades
+          </h2>
+          <p
+            className={`text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+          >
+            Read-only grade overview
+          </p>
         </CardHeader>
         <CardContent className="p-0">
           {gradebook && gradebook.students.length > 0 ? (
             <GradebookTable
               assignments={gradebook.assignments}
               students={gradebook.students}
+              variant={variant}
             />
           ) : (
             <div className="py-12 text-center">
-              <p className="text-gray-400">No students enrolled yet</p>
+              <p className={variant === "light" ? "text-slate-500" : "text-gray-400"}>
+                No students enrolled yet
+              </p>
             </div>
           )}
         </CardContent>

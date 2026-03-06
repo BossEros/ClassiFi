@@ -11,6 +11,7 @@ import type { DayOfWeek } from "@/shared/types/class"
 
 interface ClassHeaderProps {
   className?: string
+  variant?: "dark" | "light"
   classNameTitle: string
   instructorName: string
   classCode?: string
@@ -29,6 +30,7 @@ interface ClassHeaderProps {
 
 export const ClassHeader: React.FC<ClassHeaderProps> = ({
   className = "",
+  variant = "dark",
   classNameTitle,
   instructorName,
   classCode,
@@ -60,35 +62,36 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
   const daysText = dayAbbreviations.join("")
   const timeText = formatTimeRange(schedule.startTime, schedule.endTime)
   const scheduleText = `${daysText} ${timeText}`
+  const isLight = variant === "light"
 
   return (
     <div
-      className={`p-6 bg-slate-900 border border-white/5 rounded-xl ${className}`}
+      className={`rounded-2xl border p-6 ${isLight ? "border-slate-200 bg-white shadow-sm" : "border-white/5 bg-slate-900"} ${className}`}
     >
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
         {/* Left Side: Class Info */}
         <div className="flex flex-col gap-4 flex-1">
           <div className="flex items-center flex-wrap gap-3">
-            <h1 className="text-3xl font-bold text-white tracking-tight">
+            <h1 className={`text-3xl font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
               {classNameTitle}
             </h1>
             {isTeacher && classCode && (
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 md:ml-2">
-                <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+              <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 md:ml-2 ${isLight ? "border-teal-100 bg-teal-50" : "border-white/10 bg-white/5"}`}>
+                <span className={`text-xs font-medium uppercase tracking-wider ${isLight ? "text-slate-500" : "text-slate-400"}`}>
                   Class Code:
                 </span>
-                <span className="text-sm font-mono text-teal-400 font-bold tracking-wider">
+                <span className={`text-sm font-mono font-bold tracking-wider ${isLight ? "text-teal-700" : "text-teal-400"}`}>
                   {classCode}
                 </span>
                 <button
                   type="button"
                   aria-label="Copy class code"
                   onClick={handleCopyCode}
-                  className="ml-1 text-slate-400 hover:text-teal-400 transition-colors p-1 rounded-md hover:bg-white/10"
+                  className={`ml-1 rounded-md p-1 transition-colors ${isLight ? "text-slate-500 hover:bg-white hover:text-teal-700" : "text-slate-400 hover:bg-white/10 hover:text-teal-400"}`}
                   title="Copy Class Code"
                 >
                   {hasCopied ? (
-                    <Check className="w-4 h-4 text-emerald-400" />
+                    <Check className={`w-4 h-4 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
@@ -99,21 +102,21 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
 
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
             <div className="flex items-center gap-2">
-              <User className="w-4 h-4 text-slate-400" />
-              <span className="text-sm text-slate-300">{instructorName}</span>
+              <User className={`w-4 h-4 ${isLight ? "text-slate-500" : "text-slate-400"}`} />
+              <span className={`text-sm ${isLight ? "text-slate-600" : "text-slate-300"}`}>{instructorName}</span>
             </div>
             {schedule.days.length > 0 &&
               schedule.startTime &&
               schedule.endTime && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-slate-400" />
-                  <span className="text-sm text-slate-300">{scheduleText}</span>
+                  <Clock className={`w-4 h-4 ${isLight ? "text-slate-500" : "text-slate-400"}`} />
+                  <span className={`text-sm ${isLight ? "text-slate-600" : "text-slate-300"}`}>{scheduleText}</span>
                 </div>
               )}
           </div>
 
           {description && (
-            <p className="text-gray-400 text-sm whitespace-pre-wrap break-words leading-relaxed mt-2">
+            <p className={`mt-2 whitespace-pre-wrap break-words text-sm leading-relaxed ${isLight ? "text-slate-500" : "text-gray-400"}`}>
               {description}
             </p>
           )}
@@ -140,7 +143,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
                   },
                 ]}
                 triggerLabel="Class actions"
-                className="text-slate-400 hover:text-white"
+                className={isLight ? "text-slate-500 hover:text-slate-900" : "text-slate-400 hover:text-white"}
               />
             </>
           ) : (
@@ -155,7 +158,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
                 },
               ]}
               triggerLabel="Class actions"
-              className="text-slate-400 hover:text-white"
+              className={isLight ? "text-slate-500 hover:text-slate-900" : "text-slate-400 hover:text-white"}
             />
           )}
         </div>

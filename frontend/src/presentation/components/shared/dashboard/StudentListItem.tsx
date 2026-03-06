@@ -10,6 +10,7 @@ interface StudentListItemProps {
   isLast?: boolean
   className?: string
   gridTemplate?: string
+  variant?: "dark" | "light"
 }
 
 /**
@@ -30,6 +31,7 @@ export function StudentListItem({
   isLast = false,
   className,
   gridTemplate = "400px 1fr 150px 60px",
+  variant = "dark",
 }: StudentListItemProps) {
   // Generate initials from first and last name
   const initials =
@@ -42,8 +44,9 @@ export function StudentListItem({
       className={cn(
         "grid gap-4 items-center px-6 py-4",
         "transition-all duration-200",
-        "hover:bg-white/5",
-        !isLast && "border-b border-white/5",
+        variant === "light" ? "hover:bg-slate-50" : "hover:bg-white/5",
+        !isLast &&
+          (variant === "light" ? "border-b border-slate-100" : "border-b border-white/5"),
         onClick && "cursor-pointer",
         className,
       )}
@@ -57,19 +60,19 @@ export function StudentListItem({
           alt={student.fullName}
           size="md"
         />
-        <h4 className="text-sm font-semibold text-white whitespace-nowrap">
+        <h4 className={`whitespace-nowrap text-sm font-semibold ${variant === "light" ? "text-slate-900" : "text-white"}`}>
           {student.fullName}
         </h4>
       </div>
 
       {/* Email Address */}
       <div className="min-w-0">
-        <p className="text-sm text-gray-400 truncate">{student.email}</p>
+        <p className={`truncate text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}>{student.email}</p>
       </div>
 
       {/* Role Badge */}
       <div>
-        <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-teal-500/20 text-teal-400 border border-teal-500/30">
+        <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${variant === "light" ? "border border-teal-200 bg-teal-50 text-teal-700" : "border border-teal-500/30 bg-teal-500/20 text-teal-400"}`}>
           Student
         </span>
       </div>
@@ -82,7 +85,7 @@ export function StudentListItem({
               e.stopPropagation()
               onRemove()
             }}
-            className="p-2 rounded-lg hover:bg-red-500/20 text-gray-400 hover:text-red-400 transition-colors"
+            className={`rounded-lg p-2 transition-colors ${variant === "light" ? "text-slate-400 hover:bg-rose-50 hover:text-rose-600" : "text-gray-400 hover:bg-red-500/20 hover:text-red-400"}`}
             title="Remove student"
           >
             <Trash2 className="w-4 h-4" />

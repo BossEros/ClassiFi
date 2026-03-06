@@ -8,6 +8,7 @@ export interface PaginationProps {
   itemsPerPage: number
   onPageChange: (page: number) => void
   className?: string
+  variant?: "dark" | "light"
 }
 
 /**
@@ -28,6 +29,7 @@ export function Pagination({
   itemsPerPage,
   onPageChange,
   className,
+  variant = "dark",
 }: PaginationProps) {
   // Calculate the range of items being displayed
   const startItem = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1
@@ -110,7 +112,7 @@ export function Pagination({
   return (
     <div
       className={cn(
-        "flex flex-col items-center gap-4 pt-4 border-t border-white/10",
+        `flex flex-col items-center gap-4 pt-4 border-t ${variant === "light" ? "border-slate-200" : "border-white/10"}`,
         className,
       )}
     >
@@ -124,10 +126,12 @@ export function Pagination({
           aria-disabled={totalPages === 0 || currentPage === 1}
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-            "border border-white/10",
+            variant === "light" ? "border border-slate-200" : "border border-white/10",
             totalPages === 0 || currentPage === 1
-              ? "opacity-50 cursor-not-allowed text-gray-500"
-              : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white",
+              ? "cursor-not-allowed opacity-50 text-slate-400"
+              : variant === "light"
+                ? "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white",
           )}
         >
           <ChevronLeft className="w-4 h-4" />
@@ -141,7 +145,7 @@ export function Pagination({
               return (
                 <span
                   key={`ellipsis-${index}`}
-                  className="px-2 text-gray-500 select-none"
+                  className={`select-none px-2 ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
                   aria-hidden="true"
                 >
                   ...
@@ -163,7 +167,9 @@ export function Pagination({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                   isActive
                     ? "bg-teal-600 text-white border border-teal-500/40"
-                    : "text-gray-400 hover:bg-white/5 hover:text-white",
+                    : variant === "light"
+                      ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                      : "text-gray-400 hover:bg-white/5 hover:text-white",
                 )}
               >
                 {pageNum}
@@ -180,10 +186,12 @@ export function Pagination({
           aria-disabled={totalPages === 0 || currentPage === totalPages}
           className={cn(
             "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-            "border border-white/10",
+            variant === "light" ? "border border-slate-200" : "border border-white/10",
             totalPages === 0 || currentPage === totalPages
-              ? "opacity-50 cursor-not-allowed text-gray-500"
-              : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white",
+              ? "cursor-not-allowed opacity-50 text-slate-400"
+              : variant === "light"
+                ? "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                : "bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white",
           )}
         >
           <span className="hidden sm:inline">Next</span>
@@ -192,7 +200,7 @@ export function Pagination({
       </div>
 
       {/* Count Display */}
-      <div className="text-sm text-gray-400">
+      <div className={`text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}>
         Showing {startItem}-{endItem} of {totalItems} students
       </div>
     </div>
