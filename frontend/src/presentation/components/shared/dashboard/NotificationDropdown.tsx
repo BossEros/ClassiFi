@@ -21,12 +21,12 @@ export function NotificationDropdown({
 }: NotificationDropdownProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadNotifications()
 
-    // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
       if (
         dropdownRef.current &&
@@ -45,10 +45,12 @@ export function NotificationDropdown({
 
   const loadNotifications = async () => {
     try {
+      setLoadError(null)
       const response = await notificationService.getNotifications(1, 5)
       setNotifications(response.notifications)
     } catch (error) {
       console.error("Failed to load notifications:", error)
+      setLoadError("Failed to load notifications.")
     } finally {
       setLoading(false)
     }
@@ -89,14 +91,14 @@ export function NotificationDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 mt-2 w-96 bg-slate-800 rounded-lg shadow-xl border border-white/10 z-[9999]"
+      className="absolute right-0 mt-2 w-96 rounded-lg border border-slate-300 bg-white shadow-2xl z-[9999]"
     >
-      <div className="p-4 border-b border-white/10 flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-white">Notifications</h3>
+      <div className="flex items-center justify-between border-b border-slate-200 p-4">
+        <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>
         {notifications.length > 0 && (
           <button
             onClick={handleMarkAllReadClick}
-            className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            className="text-sm text-teal-700 hover:text-teal-800 transition-colors"
           >
             Mark all read
           </button>
@@ -105,9 +107,38 @@ export function NotificationDropdown({
 
       <div className="max-h-96 overflow-y-auto">
         {loading ? (
-          <div className="p-4 text-center text-slate-400">Loading...</div>
+          <div className="p-3 space-y-2">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="rounded-lg border border-slate-200 bg-white p-3 animate-pulse"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-full bg-slate-200 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-3/4 rounded bg-slate-200" />
+                    <div className="h-3 w-full rounded bg-slate-100" />
+                    <div className="h-3 w-1/3 rounded bg-slate-100" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : loadError ? (
+          <div className="p-4 text-center">
+            <p className="text-sm text-rose-700 mb-3">{loadError}</p>
+            <button
+              onClick={() => {
+                setLoading(true)
+                loadNotifications()
+              }}
+              className="text-xs font-medium px-3 py-1.5 rounded-md border border-rose-300 text-rose-700 hover:bg-rose-50 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         ) : notifications.length === 0 ? (
-          <div className="p-8 text-center text-slate-400">
+          <div className="p-8 text-center text-slate-500">
             <p>No notifications yet</p>
           </div>
         ) : (
@@ -123,10 +154,10 @@ export function NotificationDropdown({
       </div>
 
       {notifications.length > 0 && (
-        <div className="p-3 border-t border-white/10 text-center">
+        <div className="border-t border-slate-200 p-3 text-center">
           <Link
             to="/dashboard/notifications"
-            className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+            className="text-sm font-medium text-teal-700 hover:text-teal-800 transition-colors"
             onClick={onClose}
           >
             View all notifications

@@ -1,23 +1,55 @@
-import { useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/presentation/components/ui/Card"
-import { BackButton } from "@/presentation/components/ui/BackButton"
-import { LatePenaltyBadge } from "@/presentation/components/teacher/gradebook/LatePenaltyBadge"
-import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
-import { useAuthStore } from "@/shared/store/useAuthStore"
-import type {
-  StudentClassGrades,
-  StudentGradeEntry,
-} from "@/shared/types/gradebook"
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react";
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/presentation/components/ui/Card";
+import { BackButton } from "@/presentation/components/ui/BackButton";
+import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook";
+import { useAuthStore } from "@/shared/store/useAuthStore";
+import type { StudentClassGrades, StudentGradeEntry } from "@/shared/types/gradebook";
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
+import { Clock } from "lucide-react";
+import { cn } from "@/shared/utils/cn";
+
+// Inlined from src/presentation/components/teacher/gradebook/LatePenaltyBadge.tsx
+interface LatePenaltyBadgeProps {
+  penaltyPercent: number
+  small?: boolean
+  className?: string
+}
+
+
+
+function LatePenaltyBadge({
+  penaltyPercent,
+  small = false,
+  className,
+}: LatePenaltyBadgeProps) {
+  if (penaltyPercent <= 0) return null
+
+  const isRejected = penaltyPercent >= 100
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full font-medium text-xs",
+        small ? "px-1.5 py-0.5" : "px-2 py-1",
+        isRejected
+          ? "bg-red-500/20 text-red-400"
+          : "bg-orange-500/20 text-orange-400",
+        className,
+      )}
+      title={
+        isRejected
+          ? "Late submission rejected"
+          : `${penaltyPercent}% late penalty applied`
+      }
+    >
+      <Clock className={cn(small ? "w-2.5 h-2.5" : "w-3 h-3")} />
+      {isRejected ? "Rejected" : `-${penaltyPercent}%`}
+    </span>
+  )
+}
 
 export function StudentGradesPage() {
   const navigate = useNavigate()

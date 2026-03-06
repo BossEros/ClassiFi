@@ -1,20 +1,212 @@
-import { useEffect, useState, useMemo } from "react"
-import { useNavigate } from "react-router-dom"
-import { Grid3x3, Plus } from "lucide-react"
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
-import { Card, CardContent } from "@/presentation/components/ui/Card"
-import { Button } from "@/presentation/components/ui/Button"
-import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
-import { JoinClassModal } from "@/presentation/components/student/forms/JoinClassModal"
-import {
-  ClassFilters,
-  type FilterStatus,
-} from "@/presentation/components/shared/dashboard/ClassFilters"
-import { useAuthStore } from "@/shared/store/useAuthStore"
-import { getDashboardData } from "@/business/services/studentDashboardService"
-import { useToastStore } from "@/shared/store/useToastStore"
-import type { Class } from "@/business/models/dashboard/types"
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Grid3x3, Plus } from "lucide-react";
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
+import { Card, CardContent } from "@/presentation/components/ui/Card";
+import { Button } from "@/presentation/components/ui/Button";
+import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard";
+import { ClassFilters, type FilterStatus } from "@/presentation/components/shared/dashboard/ClassFilters";
+import { useAuthStore } from "@/shared/store/useAuthStore";
+import { getDashboardData } from "@/business/services/studentDashboardService";
+import { useToastStore } from "@/shared/store/useToastStore";
+import type { Class } from "@/business/models/dashboard/types";
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
+import { X, Check, RefreshCw, Users } from "lucide-react";
+import { Input } from "@/presentation/components/ui/Input";
+import { joinClass } from "@/business/services/studentDashboardService";
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
+import { joinClassFormSchema, type JoinClassFormValues } from "@/presentation/schemas/class/classSchemas";
+import type { FieldErrors } from "react-hook-form";
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
+
+// Inlined from src/presentation/components/student/forms/JoinClassModal.tsx
+interface JoinClassModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (classInfo: Class) => void
+  studentId: number
+}
+
+
+
+function JoinClassModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  studentId,
+}: JoinClassModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { register, handleSubmit, watch, setValue, reset } = useZodForm({
+    schema: joinClassFormSchema,
+    defaultValues: {
+      classCode: "",
+    },
+    mode: "onSubmit",
+  })
+
+  const classCodeValue = watch("classCode")
+  const classCodeField = register("classCode")
+
+  // Reset form when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      reset({ classCode: "" })
+      setError(null)
+    }
+  }, [isOpen, reset])
+
+  const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Convert to uppercase and remove spaces
+    const value = e.target.value.toUpperCase().replace(/\s/g, "")
+    setValue("classCode", value, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+    if (error) setError(null)
+  }
+
+  const handleJoinClassSubmit = async (formValues: JoinClassFormValues) => {
+    setError(null)
+
+    const trimmedCode = formValues.classCode.trim()
+
+    setIsSubmitting(true)
+    try {
+      const response = await joinClass(studentId, trimmedCode)
+
+      if (!response.success) {
+        setError(response.message)
+        return
+      }
+
+      if (response.classInfo) {
+        // Cast is safe: API returns ISO date strings compatible with ISODateString
+        onSuccess(response.classInfo as Class)
+      }
+      onClose()
+    } catch {
+      setError("Failed to join class. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleJoinClassInvalid = (
+    validationErrors: FieldErrors<JoinClassFormValues>,
+  ) => {
+    const trimmedCode = classCodeValue.trim()
+    void trimmedCode // satisfy unused var while keeping it trimmed before call per instruction
+
+    const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
+
+    if (firstErrorMessage) {
+      setError(firstErrorMessage)
+    }
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative z-10 w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-teal-100">
+              <Users className="w-5 h-5 text-teal-700" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">Join Class</h2>
+              <p className="mt-0.5 text-sm text-slate-500">
+                Enter the code provided by your teacher
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form
+          onSubmit={handleSubmit(handleJoinClassSubmit, handleJoinClassInvalid)}
+          className="space-y-6 w-full"
+        >
+          {/* Error Message */}
+          {error && (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+              <p className="text-sm text-rose-700">{error}</p>
+            </div>
+          )}
+
+          {/* Class Code Input */}
+          <div className="space-y-3 w-full">
+            <label
+              htmlFor="classCode"
+              className="block text-sm font-medium text-slate-700"
+            >
+              Class Code
+            </label>
+            <Input
+              id="classCode"
+              type="text"
+              placeholder="Enter class code (e.g., ABC123)"
+              {...classCodeField}
+              value={classCodeValue}
+              onChange={handleClassCodeChange}
+              disabled={isSubmitting}
+              maxLength={8}
+              className={`h-12 border border-slate-300 bg-white text-center text-lg font-mono tracking-widest uppercase text-slate-800 placeholder:text-slate-400 shadow-sm hover:border-slate-400 focus:border-teal-500/60 focus:ring-2 focus:ring-teal-500/20 ${error ? "border-rose-400" : ""}`}
+              autoFocus
+              required
+            />
+            <p className="mt-1 text-xs text-slate-500">
+              Ask your teacher for the class code. It's usually 6-8 characters.
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="button"
+              onClick={onClose}
+              disabled={isSubmitting}
+              className="flex-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !classCodeValue.trim()}
+              className="flex-1 rounded-md bg-teal-600 text-white border border-teal-600 hover:bg-teal-500"
+            >
+              {isSubmitting ? (
+                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Check className="w-4 h-4 mr-2" />
+              )}
+              Join Class
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 export function StudentClassesPage() {
   const navigate = useNavigate()
@@ -128,8 +320,8 @@ export function StudentClassesPage() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">My Classes</h1>
-            <p className="text-slate-400 text-base">
+            <h1 className={dashboardTheme.pageTitle}>My Classes</h1>
+            <p className={dashboardTheme.pageSubtitle}>
               View and manage your enrolled courses
             </p>
           </div>
@@ -162,41 +354,45 @@ export function StudentClassesPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 text-red-400">
-          <div className="w-1 h-full bg-red-500 rounded-full" />
-          <p className="text-sm font-medium">{error}</p>
+        <div className={dashboardTheme.errorSurface}>
+          <div className="h-full w-1 rounded-full bg-rose-500" />
+          <p className="text-sm font-medium text-rose-700">{error}</p>
         </div>
       )}
 
       {/* Classes Grid */}
-      <Card className="border-none bg-transparent shadow-none backdrop-blur-none p-0">
+      <Card className="border-none bg-transparent p-0 shadow-none backdrop-blur-none">
         <CardContent className="p-0">
           {isLoading ? (
             <div className="py-20 text-center">
-              <div className="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mx-auto mb-6"></div>
-              <p className="text-slate-300 animate-pulse">
+              <div
+                className={`mx-auto mb-6 h-16 w-16 animate-spin rounded-full border-4 ${dashboardTheme.spinnerTrack} ${dashboardTheme.spinnerHead}`}
+              ></div>
+              <p className={`${dashboardTheme.loadingText} animate-pulse`}>
                 Loading your classes...
               </p>
             </div>
           ) : filteredClasses.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              {filteredClasses.map((classItem) => (
+              {filteredClasses.map((classItem, classIndex) => (
                 <ClassCard
                   key={classItem.id}
                   classItem={classItem}
+                  variant="dashboard"
+                  accentIndex={classIndex}
                   onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
                 />
               ))}
             </div>
           ) : (
-            <div className="w-full py-20 px-6 text-center bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
-                <Grid3x3 className="w-10 h-10 text-slate-500" />
+            <div className={dashboardTheme.emptySurface}>
+              <div className={dashboardTheme.emptyIconSurface}>
+                <Grid3x3 className="h-10 w-10 text-slate-500" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
+              <h3 className="mb-2 text-xl font-semibold text-slate-800">
                 No classes found
               </h3>
-              <p className="text-slate-300 max-w-sm min-w-[200px] mx-auto mb-8 whitespace-normal break-words">
+              <p className="mx-auto mb-8 max-w-sm min-w-[200px] whitespace-normal break-words text-slate-500">
                 {searchQuery || status !== "active"
                   ? "We couldn't find any classes matching your current filters. Try adjusting them."
                   : "You haven't enrolled in any classes yet."}

@@ -3,7 +3,8 @@ import * as monaco from "monaco-editor"
 import type { FileData } from "./types"
 import {
   CLASSIFI_PLAGIARISM_DARK_THEME,
-  ensurePlagiarismMonacoDarkTheme,
+  CLASSIFI_PLAGIARISM_LIGHT_THEME,
+  ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
 
 interface PairCodeDiffProps {
@@ -15,6 +16,8 @@ interface PairCodeDiffProps {
   language?: string
   /** Height of the diff editor */
   height?: string | number
+  /** Visual theme variant for comparison chrome. */
+  variant?: "dark" | "light"
 }
 
 /**
@@ -23,7 +26,7 @@ interface PairCodeDiffProps {
  *
  * Shows a side-by-side diff view highlighting:
  * - Added lines (green)
- * - Removed lines (red)  
+ * - Removed lines (red)
  * - Unchanged lines (normal)
  */
 export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
@@ -31,9 +34,11 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   rightFile,
   language = "java",
   height = 480,
+  variant = "dark",
 }) => {
   const editorRef = useRef<HTMLDivElement>(null)
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
+  const isLight = variant === "light"
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -42,7 +47,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
     const originalModel = monaco.editor.createModel(leftFile.content, language)
     const modifiedModel = monaco.editor.createModel(rightFile.content, language)
 
-    ensurePlagiarismMonacoDarkTheme()
+    ensurePlagiarismMonacoThemes()
 
     // Create diff editor and capture it locally for cleanup
     const editor = monaco.editor.createDiffEditor(editorRef.current, {
@@ -53,7 +58,9 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       renderOverviewRuler: false,
       renderIndicators: false,
       contextmenu: false,
-      theme: CLASSIFI_PLAGIARISM_DARK_THEME,
+      theme: isLight
+        ? CLASSIFI_PLAGIARISM_LIGHT_THEME
+        : CLASSIFI_PLAGIARISM_DARK_THEME,
       scrollBeyondLastLine: false,
       minimap: { enabled: false },
       renderSideBySide: true,
@@ -74,7 +81,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       modifiedModel.dispose()
       editor.dispose()
     }
-  }, [leftFile.content, rightFile.content, language])
+  }, [isLight, leftFile.content, rightFile.content, language])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -88,17 +95,23 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
         <div
           style={{
             padding: "8px 12px",
-            backgroundColor: "rgba(255, 255, 255, 0.08)",
+            backgroundColor: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.08)",
             borderRadius: "6px 0 0 0",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+            borderBottom: isLight
+              ? "1px solid #cbd5e1"
+              : "1px solid rgba(255, 255, 255, 0.1)",
             fontSize: "14px",
             fontWeight: 500,
-            color: "#fff",
+            color: isLight ? "#0f172a" : "#fff",
           }}
         >
           {leftFile.filename}
           <span
-            style={{ marginLeft: "8px", color: "#9ca3af", fontWeight: 400 }}
+            style={{
+              marginLeft: "8px",
+              color: isLight ? "#64748b" : "#9ca3af",
+              fontWeight: 400,
+            }}
           >
             ({leftFile.lineCount} lines)
           </span>
@@ -106,23 +119,29 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
         {/* Center divider */}
         <div
           style={{
-            backgroundColor: "rgba(255, 255, 255, 0.2)",
+            backgroundColor: isLight ? "#cbd5e1" : "rgba(255, 255, 255, 0.2)",
           }}
         />
         <div
           style={{
             padding: "8px 12px",
-            backgroundColor: "rgba(255, 255, 255, 0.08)",
+            backgroundColor: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.08)",
             borderRadius: "0 6px 0 0",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+            borderBottom: isLight
+              ? "1px solid #cbd5e1"
+              : "1px solid rgba(255, 255, 255, 0.1)",
             fontSize: "14px",
             fontWeight: 500,
-            color: "#fff",
+            color: isLight ? "#0f172a" : "#fff",
           }}
         >
           {rightFile.filename}
           <span
-            style={{ marginLeft: "8px", color: "#9ca3af", fontWeight: 400 }}
+            style={{
+              marginLeft: "8px",
+              color: isLight ? "#64748b" : "#9ca3af",
+              fontWeight: 400,
+            }}
           >
             ({rightFile.lineCount} lines)
           </span>
@@ -136,7 +155,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
           height: typeof height === "number" ? `${height}px` : height,
           borderRadius: "0 0 6px 6px",
           overflow: "hidden",
-          backgroundColor: "#0f172a",
+          backgroundColor: isLight ? "#ffffff" : "#0f172a",
         }}
       />
     </div>

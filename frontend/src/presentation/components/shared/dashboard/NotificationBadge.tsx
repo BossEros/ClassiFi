@@ -54,11 +54,11 @@ export function NotificationBadge() {
     <div className="relative z-[9999]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg hover:bg-white/10 transition-colors"
+        className="relative cursor-pointer rounded-lg p-2 transition-colors hover:bg-slate-100"
         aria-label="Notifications"
         disabled={isLoading}
       >
-        <Bell className="w-5 h-5 text-slate-300" />
+        <Bell className="h-5 w-5 text-slate-600" />
         {unreadCount > 0 && (
           <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[20px]">
             {displayCount}

@@ -2,6 +2,7 @@ import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
 import { AssignmentSection } from "@/presentation/components/shared/dashboard/AssignmentSection"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type { Assignment } from "@/business/models/dashboard/types"
 import type {
   AssignmentFilter,
@@ -31,6 +32,7 @@ interface AssignmentsTabContentProps {
   onTeacherFilterChange: (filter: TeacherAssignmentFilter) => void
   onCreateAssignment: () => void
   onAssignmentClick: (assignmentId: number) => void
+  variant?: "dark" | "light"
 }
 
 export function AssignmentsTabContent({
@@ -45,7 +47,9 @@ export function AssignmentsTabContent({
   onTeacherFilterChange,
   onCreateAssignment,
   onAssignmentClick,
+  variant = "dark",
 }: AssignmentsTabContentProps) {
+  const isLight = variant === "light"
   const hasVisibleAssignments =
     groupedAssignments.current.length > 0 || groupedAssignments.past.length > 0
   const shouldShowNoFilterResultsState =
@@ -53,41 +57,49 @@ export function AssignmentsTabContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="space-y-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <h2 className={isLight ? dashboardTheme.sectionTitle : "text-lg font-semibold tracking-tight text-white"}>
+            Assignments
+          </h2>
+          {isTeacher ? (
+            <Button
+              onClick={onCreateAssignment}
+              className="w-full sm:ml-auto sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Assignment
+            </Button>
+          ) : null}
+        </div>
+
         {isTeacher ? (
           <AssignmentFilterBar
             mode="teacher"
             activeFilter={teacherAssignmentFilter}
             onFilterChange={onTeacherFilterChange}
             counts={teacherFilterCounts}
+            variant={variant}
           />
         ) : (
           <AssignmentFilterBar
             activeFilter={assignmentFilter}
             onFilterChange={onFilterChange}
             counts={filterCounts}
+            variant={variant}
           />
         )}
-        {isTeacher ? (
-          <Button
-            onClick={onCreateAssignment}
-            className="w-full sm:w-auto sm:ml-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Assignment
-          </Button>
-        ) : null}
       </div>
 
       {shouldShowNoFilterResultsState ? (
         <div className="py-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-            <ClipboardList className="w-8 h-8 text-gray-500" />
+          <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}>
+            <ClipboardList className={`w-8 h-8 ${isLight ? "text-slate-400" : "text-gray-500"}`} />
           </div>
-          <p className="text-gray-300 font-medium mb-1">
+          <p className={`mb-1 font-medium ${isLight ? "text-slate-800" : "text-gray-300"}`}>
             No assignments match this filter
           </p>
-          <p className="text-sm text-gray-500">
+          <p className={`text-sm ${isLight ? "text-slate-500" : "text-gray-500"}`}>
             Try selecting a different filter to see more assignments.
           </p>
         </div>
@@ -98,28 +110,30 @@ export function AssignmentsTabContent({
             assignments={groupedAssignments.current}
             onAssignmentClick={onAssignmentClick}
             isTeacher={isTeacher}
+            variant={variant}
           />
           <AssignmentSection
             title="PAST ASSIGNMENTS"
             assignments={groupedAssignments.past}
             onAssignmentClick={onAssignmentClick}
             isTeacher={isTeacher}
+            variant={variant}
           />
         </div>
       ) : (
         <div className="py-12 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center">
-            <ClipboardList className="w-8 h-8 text-gray-500" />
+          <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}>
+            <ClipboardList className={`w-8 h-8 ${isLight ? "text-slate-400" : "text-gray-500"}`} />
           </div>
-          <p className="text-gray-300 font-medium mb-1">No assignments yet</p>
+          <p className={`mb-1 font-medium ${isLight ? "text-slate-800" : "text-gray-300"}`}>No assignments yet</p>
           {isTeacher ? (
             <>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className={`mb-4 text-sm ${isLight ? "text-slate-500" : "text-gray-500"}`}>
                 Create your first assignment to get started.
               </p>
             </>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className={`text-sm ${isLight ? "text-slate-500" : "text-gray-500"}`}>
               Your teacher hasn't created any assignments yet.
             </p>
           )}

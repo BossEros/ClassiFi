@@ -42,7 +42,7 @@ export function normalizeLatePenaltyConfig(
   }
 }
 
-export interface AssignmentPayload {
+interface AssignmentPayload {
   teacherId: number
   assignmentName: string
   instructions: string
@@ -85,3 +85,4 @@ export function buildAssignmentPayload(
       : null,
   }
 }
+

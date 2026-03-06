@@ -1,9 +1,8 @@
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import { RefreshCw, Check, X } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
-import { BackButton } from "@/presentation/components/ui/BackButton"
 import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentForm"
 import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignment/BasicInfoForm"
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
@@ -12,9 +11,12 @@ import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
+import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
+  const { classId } = useParams<{ classId: string }>()
   const currentUser = useAuthStore((state) => state.user)
   const {
     formMethods,
@@ -53,7 +55,17 @@ export function AssignmentFormPage() {
     : "?"
   const hasDeadlineConfigured = formData.deadline.trim().length > 0
 
-  const topBar = useTopBar({ user: currentUser, userInitials })
+  const topBar = useTopBar({
+    user: currentUser,
+    userInitials,
+    breadcrumbItems: [
+      { label: "Classes", to: "/dashboard/classes" },
+      ...(className && classId
+        ? [{ label: className, to: `/dashboard/classes/${classId}` }]
+        : []),
+      { label: isEditMode ? "Edit Assignment" : "Create Assignment" },
+    ],
+  })
 
   // Show loading state while fetching data
   if (isFetching) {
@@ -61,8 +73,8 @@ export function AssignmentFormPage() {
       <DashboardLayout topBar={topBar}>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-400">Loading assignment data...</p>
+            <div className="w-12 h-12 border-4 border-slate-200 border-t-teal-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-slate-500">Loading assignment data...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -71,39 +83,32 @@ export function AssignmentFormPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      {/* Page Header */}
       <div className="mb-8">
-        <BackButton />
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight">
-                {isEditMode ? "Edit Assignment" : "Create Assignment for"}
-                {className && (
-                  <span className="text-teal-400"> {className}</span>
-                )}
-              </h1>
-            </div>
-          </div>
+        <div className="mb-2">
+          <h1 className={dashboardTheme.pageTitle}>
+            {isEditMode ? "Edit Assignment" : "Create Assignment"}
+          </h1>
         </div>
-        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent mt-4"></div>
+        <p className={dashboardTheme.pageSubtitle}>
+          {isEditMode
+            ? "Update the assignment details, submission rules, and test cases."
+            : className
+              ? `Set up a new assignment for ${className}.`
+              : "Set up a new assignment for this class."}
+        </p>
+        <div className={`${dashboardTheme.divider} mt-4`}></div>
       </div>
 
-      {/* Error Banner */}
       {errors.general && (
-        <div className="mb-8 p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-3">
-          <div className="p-2 rounded-full bg-red-500/20">
-            <X className="w-4 h-4 text-red-400" />
-          </div>
-          <p className="text-sm text-red-400 font-medium">{errors.general}</p>
+        <div className={dashboardTheme.errorSurface}>
+          <X className="h-4 w-4 shrink-0" />
+          <p className="text-sm">{errors.general}</p>
         </div>
       )}
 
-      {/* Form Content */}
       <FormProvider {...formMethods}>
         <form onSubmit={handleSubmit} noValidate>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Basic Information */}
             <div className="lg:col-span-2 space-y-6">
               <BasicInfoForm
                 isLoading={isLoading}
@@ -128,11 +133,9 @@ export function AssignmentFormPage() {
               />
             </div>
 
-            {/* Right Column - Submission Settings & Actions */}
             <div className="space-y-6">
               <SubmissionSettings isLoading={isLoading} />
 
-              {/* Late Submission Policy */}
               <LatePenaltyConfig
                 enabled={formData.allowLateSubmissions}
                 config={formData.latePenaltyConfig}
@@ -145,13 +148,12 @@ export function AssignmentFormPage() {
                 disabled={isLoading || !hasDeadlineConfigured}
               />
 
-              {/* Action Buttons Card */}
-              <Card>
+              <Card className={assignmentFormTheme.actionCard}>
                 <CardContent className="p-6 space-y-3">
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl border border-teal-500/40 font-medium"
+                    className="w-full h-11 bg-teal-600 hover:bg-teal-700 text-white rounded-xl border border-teal-500/40 font-medium shadow-sm"
                   >
                     {isLoading ? (
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
@@ -164,7 +166,7 @@ export function AssignmentFormPage() {
                     type="button"
                     onClick={() => navigate(-1)}
                     disabled={isLoading}
-                    className="w-full h-11 bg-white/5 hover:bg-white/10 text-gray-200 hover:text-white border border-white/10 rounded-xl transition-all"
+                    className="w-full h-11 rounded-xl border border-slate-300 bg-white text-slate-700 transition-all hover:bg-slate-50 hover:text-slate-900 hover:border-slate-400"
                   >
                     <X className="w-4 h-4 mr-2" />
                     Cancel
@@ -179,4 +181,4 @@ export function AssignmentFormPage() {
   )
 }
 
-export default AssignmentFormPage
+
