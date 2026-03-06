@@ -93,7 +93,7 @@ function DeleteClassModal({
           onClick={onClose}
           disabled={isDeleting}
           className={cn(
-            "absolute top-4 right-4 p-1 rounded-lg",
+            "absolute top-4 right-4 cursor-pointer rounded-lg p-1",
             "text-slate-400 hover:text-slate-900 hover:bg-slate-100",
             "transition-colors duration-200",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
@@ -130,26 +130,32 @@ function DeleteClassModal({
             onClick={onClose}
             disabled={isDeleting}
             className={cn(
-              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+              "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
               "border border-slate-300 bg-white text-slate-700",
               "hover:bg-slate-50 transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
               "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >
+            <X className="h-4 w-4" />
             Cancel
           </button>
           <button
             onClick={onConfirm}
             disabled={isDeleting}
             className={cn(
-              "flex-1 px-4 py-3 rounded-xl text-sm font-semibold",
+              "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
               "bg-red-500 text-white",
               "hover:bg-red-600 transition-colors duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
             )}
           >
+            {isDeleting ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
             {isDeleting ? "Deleting..." : "Delete Class"}
           </button>
         </div>
@@ -653,7 +659,17 @@ export function ClassDetailPage() {
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : "?"
 
-  const topBar = useTopBar({ user, userInitials })
+  const topBar = useTopBar({
+    user,
+    userInitials,
+    breadcrumbItems: [
+      { label: "Classes", to: "/dashboard/classes" },
+      {
+        label: classInfo?.className || "Class Overview",
+        to: classInfo ? `/dashboard/classes/${classInfo.id}` : undefined,
+      },
+    ],
+  })
 
   return (
     <DashboardLayout topBar={topBar}>
@@ -690,25 +706,15 @@ export function ClassDetailPage() {
       ) : (
         /* Main Content */
         <>
-          {/* Back Button */}
-          <div className="mb-6">
-            <BackButton
-              to={isStudent ? "/dashboard" : "/dashboard/classes"}
-              className={
-                isLightClassView
-                  ? "-ml-0 mb-0 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
-                  : ""
-              }
-            />
-          </div>
-
           {/* Class Header */}
           <ClassHeader
-            className="mb-6"
+            className="mb-8"
             classNameTitle={classInfo?.className || ""}
             instructorName={classInfo?.teacherName || "Unknown"}
             classCode={classInfo?.classCode}
             description={classInfo?.description || undefined}
+            yearLevel={classInfo?.yearLevel}
+            semester={classInfo?.semester}
             schedule={{
               days: classInfo?.schedule?.days || [],
               startTime: classInfo?.schedule?.startTime || "",
@@ -732,88 +738,85 @@ export function ClassDetailPage() {
           )}
 
           {/* Tabs and Content */}
-          <div
-            className={`rounded-2xl border p-6 ${isLightClassView ? "border-slate-200 bg-white shadow-sm" : "border-white/10 bg-slate-900"}`}
+          <ClassTabs
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            variant={isLightClassView ? "light" : "dark"}
+            showIcons={!isLightClassView}
           >
-            <ClassTabs
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              variant={isLightClassView ? "light" : "dark"}
-            >
-              {/* Assignments Tab */}
-              {activeTab === "assignments" && (
-                <AssignmentsTabContent
-                  assignments={assignments}
-                  groupedAssignments={groupedAssignments}
-                  assignmentFilter={assignmentFilter}
-                  filterCounts={filterCounts}
-                  teacherAssignmentFilter={teacherAssignmentFilter}
-                  teacherFilterCounts={teacherFilterCounts}
-                  isTeacher={isTeacher}
-                  onFilterChange={setAssignmentFilter}
-                  onTeacherFilterChange={setTeacherAssignmentFilter}
-                  onCreateAssignment={() =>
-                    navigate(`/dashboard/classes/${classId}/assignments/new`)
-                  }
-                  onAssignmentClick={handleAssignmentClick}
-                  variant={isLightClassView ? "light" : "dark"}
-                />
-              )}
+            {/* Assignments Tab */}
+            {activeTab === "assignments" && (
+              <AssignmentsTabContent
+                assignments={assignments}
+                groupedAssignments={groupedAssignments}
+                assignmentFilter={assignmentFilter}
+                filterCounts={filterCounts}
+                teacherAssignmentFilter={teacherAssignmentFilter}
+                teacherFilterCounts={teacherFilterCounts}
+                isTeacher={isTeacher}
+                onFilterChange={setAssignmentFilter}
+                onTeacherFilterChange={setTeacherAssignmentFilter}
+                onCreateAssignment={() =>
+                  navigate(`/dashboard/classes/${classId}/assignments/new`)
+                }
+                onAssignmentClick={handleAssignmentClick}
+                variant={isLightClassView ? "light" : "dark"}
+              />
+            )}
 
-              {/* Students Tab */}
-              {activeTab === "students" && (
-                <StudentsTabContent
-                  students={students}
-                  filteredStudents={filteredStudents}
-                  paginatedStudents={paginatedStudents}
-                  isTeacher={isTeacher}
+            {/* Students Tab */}
+            {activeTab === "students" && (
+              <StudentsTabContent
+                students={students}
+                filteredStudents={filteredStudents}
+                paginatedStudents={paginatedStudents}
+                isTeacher={isTeacher}
+                classCode={classInfo?.classCode}
+                studentSearchQuery={studentSearchQuery}
+                currentStudentPage={currentStudentPage}
+                totalStudentPages={totalStudentPages}
+                studentGridTemplate={STUDENT_GRID_TEMPLATE}
+                onStudentSearchQueryChange={(value) => {
+                  setStudentSearchQuery(value)
+                  setCurrentStudentPage(1)
+                }}
+                onRemoveStudent={handleRemoveStudentClick}
+                onStudentPageChange={handleStudentPageChange}
+                variant={isLightClassView ? "light" : "dark"}
+              />
+            )}
+
+            {/* Calendar Tab */}
+            {activeTab === "calendar" && classInfo && (
+              <ClassCalendarTab
+                classId={classInfo.id}
+                className={classInfo.className}
+              />
+            )}
+
+            {activeTab === "grades" &&
+              (isTeacher ? (
+                <GradebookContent
+                  classId={parsedClassId}
                   classCode={classInfo?.classCode}
-                  studentSearchQuery={studentSearchQuery}
-                  currentStudentPage={currentStudentPage}
-                  totalStudentPages={totalStudentPages}
-                  studentGridTemplate={STUDENT_GRID_TEMPLATE}
-                  onStudentSearchQueryChange={(value) => {
-                    setStudentSearchQuery(value)
-                    setCurrentStudentPage(1)
-                  }}
-                  onRemoveStudent={handleRemoveStudentClick}
-                  onStudentPageChange={handleStudentPageChange}
                   variant={isLightClassView ? "light" : "dark"}
                 />
-              )}
-
-              {/* Calendar Tab */}
-              {activeTab === "calendar" && classInfo && (
-                <ClassCalendarTab
-                  classId={classInfo.id}
-                  className={classInfo.className}
-                />
-              )}
-
-              {activeTab === "grades" &&
-                (isTeacher ? (
-                  <GradebookContent
-                    classId={parsedClassId}
-                    classCode={classInfo?.classCode}
-                    variant={isLightClassView ? "light" : "dark"}
-                  />
-                ) : (
-                  <div className="py-12 text-center">
-                    <div
-                      className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLightClassView ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}
-                    >
-                      <BarChart3 className={`w-8 h-8 ${isLightClassView ? "text-slate-400" : "text-gray-500"}`} />
-                    </div>
-                    <p className={`mb-1 font-medium ${isLightClassView ? "text-slate-900" : "text-gray-300"}`}>
-                      Grades Coming Soon
-                    </p>
-                    <p className={`text-sm ${isLightClassView ? "text-slate-500" : "text-gray-500"}`}>
-                      Your grades will be displayed here.
-                    </p>
+              ) : (
+                <div className="py-12 text-center">
+                  <div
+                    className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLightClassView ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}
+                  >
+                    <BarChart3 className={`w-8 h-8 ${isLightClassView ? "text-slate-400" : "text-gray-500"}`} />
                   </div>
-                ))}
-            </ClassTabs>
-          </div>
+                  <p className={`mb-1 font-medium ${isLightClassView ? "text-slate-900" : "text-gray-300"}`}>
+                    Grades Coming Soon
+                  </p>
+                  <p className={`text-sm ${isLightClassView ? "text-slate-500" : "text-gray-500"}`}>
+                    Your grades will be displayed here.
+                  </p>
+                </div>
+              ))}
+          </ClassTabs>
 
           {/* Teacher Modals */}
           {isTeacher && (

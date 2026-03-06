@@ -1,6 +1,7 @@
 import { Search, Users } from "lucide-react"
 import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type { EnrolledStudent } from "@/business/models/dashboard/types"
 
 interface StudentsTabContentProps {
@@ -56,7 +57,9 @@ export function StudentsTabContent({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <h2 className={`text-xl font-bold ${isLight ? "text-slate-900" : "text-white"}`}>Enrolled Students</h2>
+          <h2 className={isLight ? dashboardTheme.sectionTitle : "text-lg font-semibold tracking-tight text-white"}>
+            Enrolled Students
+          </h2>
           <span className={`rounded-full px-3 py-1 text-sm font-medium ${isLight ? "border border-slate-200 bg-slate-100 text-slate-600" : "bg-white/10 text-gray-300"}`}>
             {students.length}
           </span>
@@ -72,7 +75,7 @@ export function StudentsTabContent({
             placeholder="Search students..."
             value={studentSearchQuery}
             onChange={(event) => onStudentSearchQueryChange(event.target.value)}
-            className={`h-10 w-64 rounded-lg border pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2 focus:border-transparent ${isLight ? "border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 focus:ring-teal-500/20" : "border-white/10 bg-white/5 text-white placeholder-gray-500 focus:ring-teal-500"}`}
+            className={`h-10 w-64 rounded-lg border pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2 focus:border-transparent ${isLight ? "border-slate-300 bg-slate-50 text-slate-800 shadow-sm placeholder:text-slate-400 hover:border-slate-400 hover:bg-white focus:ring-teal-500/20" : "border-white/10 bg-white/5 text-white placeholder-gray-500 focus:ring-teal-500"}`}
           />
           <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isLight ? "text-slate-400" : "text-gray-500"}`} />
         </div>

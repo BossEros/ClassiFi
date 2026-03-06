@@ -90,7 +90,7 @@ export function AssignmentCard({
       onClick={onClick}
       className={cn(
         variant === "light"
-          ? "w-full border-slate-200 bg-white shadow-sm transition-all duration-200 hover:border-teal-200 hover:bg-slate-50 hover:shadow-md"
+          ? "w-full border-slate-300 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-teal-300 hover:bg-white hover:shadow-[0_12px_24px_rgba(15,23,42,0.08)]"
           : "w-full group transition-all duration-200 hover:border-teal-500/30 bg-slate-800/50 border-white/5",
         className,
       )}
@@ -101,7 +101,7 @@ export function AssignmentCard({
           <div
             className={`flex h-16 w-16 flex-shrink-0 flex-col items-center justify-center rounded-lg border ${
               variant === "light"
-                ? "border-slate-200 bg-slate-50"
+                ? "border-slate-300 bg-slate-100"
                 : "border-slate-700 bg-slate-900"
             }`}
           >

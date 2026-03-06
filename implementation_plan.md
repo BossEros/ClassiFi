@@ -1187,3 +1187,97 @@ Extend the shared class-detail light visual system to the teacher-facing class o
 - [x] Add light-mode styling support to `GradebookContent`.
 - [x] Wire teacher class-detail tabs to the shared light variant.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Class Overview Layout Refresh
+
+## Scope
+
+Refactor the class overview page layout to match the provided reference while preserving all existing behavior and shared data flow.
+
+1. Replace the in-page back button with shared top-bar breadcrumbs (`Classes > Class Name`).
+2. Reformat the light-mode class header into a plain overview section without a visible outer card.
+3. Restyle the class-detail tabs to the compact segmented control used in the reference.
+4. Remove the central wrapper around tabs/content so each tab panel sits as its own section.
+5. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Update the top bar breadcrumb wiring for class detail.
+- [x] Refactor `ClassHeader` light variant to the plain overview layout.
+- [x] Restyle `ClassTabs` light variant to the segmented layout.
+- [x] Remove the central tab/content wrapper from `ClassDetailPage`.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Class Overview Tab Clarity Polish
+
+## Scope
+
+Improve tab affordance and assignment visibility in the class overview without changing behavior.
+
+1. Make the segmented tabs read clearly as interactive controls with stronger selected state and separators.
+2. Rework the assignments panel hierarchy so the title and primary action share the top row, with filters below.
+3. Increase assignment card contrast against the page background.
+4. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Restyle light-mode `ClassTabs` for stronger affordance and separation.
+- [x] Update `AssignmentsTabContent` header hierarchy.
+- [x] Strengthen `AssignmentCard` light-mode contrast.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Class Overview Content Polish
+
+## Scope
+
+Polish clarity within the class overview content panels without changing behavior.
+
+1. Normalize section heading scale between Assignments, Enrolled Students, and Gradebook.
+2. Strengthen the selected state for assignment filter buttons.
+3. Improve visibility of the student search field and role badge.
+4. Emphasize the destructive remove-student action visually.
+5. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Normalize section heading styling across assignments, students, and grades.
+- [x] Strengthen active filter button styling in `AssignmentFilterBar`.
+- [x] Improve student search input and role badge visibility.
+- [x] Make the remove-student action read as destructive.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Gradebook Contrast Polish
+
+## Scope
+
+Improve grade readability in the light-mode gradebook by refining score badge colors without changing any grade logic or behavior.
+
+1. Update light-mode grade badge colors for stronger text/background contrast.
+2. Apply the same readability treatment to average badges.
+3. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Refine light-mode `GradeCell` badge colors.
+- [x] Refine light-mode average badge colors.
+- [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Class Header Information Hierarchy Polish
+
+## Scope
+
+Refine the class header to better match common LMS information hierarchy patterns while preserving the same data and behavior.
+
+1. Promote the class title as the primary anchor.
+2. Keep the class actions on the same row as the title.
+3. Move the schedule directly below the title as high-frequency context.
+4. Push class code, year/semester, and instructor into a quieter secondary metadata row.
+5. Extend the accent bar to span the full header height.
+6. Verify the frontend build.
+
+## Execution Checklist
+
+- [x] Restructure the light-mode `ClassHeader` content hierarchy.
+- [x] Make the accent bar span the full height of the header.
+- [x] Keep copy-code and action behavior unchanged.
+- [x] Run `frontend`: `npm run build`.

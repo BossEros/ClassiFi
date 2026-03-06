@@ -8,6 +8,7 @@ interface ClassTabsProps {
   children: React.ReactNode
   className?: string
   variant?: "dark" | "light"
+  showIcons?: boolean
 }
 
 export const ClassTabs: React.FC<ClassTabsProps> = ({
@@ -16,6 +17,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
   children,
   className = "",
   variant = "dark",
+  showIcons = true,
 }) => {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
 
@@ -52,11 +54,12 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
       {/* Tab Bar */}
       <div
         role="tablist"
-        className={`mb-6 flex gap-2 border-b ${variant === "light" ? "border-slate-200" : "border-white/10"}`}
+        className={`mb-8 flex ${variant === "light" ? "inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm" : "gap-2 border-b border-white/10"}`}
       >
         {tabs.map((tab, index) => {
           const Icon = tab.icon
           const isActive = activeTab === tab.id
+          const isLast = index === tabs.length - 1
 
           return (
             <button
@@ -71,17 +74,17 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
               tabIndex={isActive ? 0 : -1}
               onClick={() => onTabChange(tab.id)}
               onKeyDown={(e) => handleKeyDown(e, tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-medium transition-colors ${
                 isActive
                   ? variant === "light"
-                    ? "border-teal-600 text-teal-700"
-                    : "text-teal-400 border-teal-500"
+                    ? "bg-teal-600 text-white"
+                    : "border-b-2 border-teal-500 text-teal-400"
                   : variant === "light"
-                    ? "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-700"
-                    : "text-gray-400 border-transparent hover:text-gray-300 hover:border-gray-600"
+                    ? `text-slate-600 hover:bg-slate-50 hover:text-slate-900 ${!isLast ? "border-r border-slate-200" : ""}`
+                    : "border-b-2 border-transparent text-gray-400 hover:border-gray-600 hover:text-gray-300"
               }`}
             >
-              <Icon className="w-4 h-4" />
+              {showIcons ? <Icon className="w-4 h-4" /> : null}
               {tab.label}
             </button>
           )

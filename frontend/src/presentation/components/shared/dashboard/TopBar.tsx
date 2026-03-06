@@ -54,17 +54,22 @@ export function useTopBar({
                 {breadcrumbItems.map((breadcrumbItem, breadcrumbIndex) => {
                   const isLastBreadcrumb =
                     breadcrumbIndex === breadcrumbItems.length - 1
+                  const isClickable = Boolean(breadcrumbItem.to)
 
                   return (
                     <div
                       key={`${breadcrumbItem.label}-${breadcrumbIndex}`}
                       className="flex items-center gap-1.5 min-w-0"
                     >
-                      {breadcrumbItem.to && !isLastBreadcrumb ? (
+                      {isClickable ? (
                         <button
                           type="button"
                           onClick={() => navigate(breadcrumbItem.to!)}
-                          className="cursor-pointer truncate text-slate-600 hover:text-slate-900 transition-colors"
+                          className={`cursor-pointer truncate transition-colors ${
+                            isLastBreadcrumb
+                              ? "font-medium text-slate-900 hover:text-teal-700"
+                              : "text-slate-600 hover:text-slate-900"
+                          }`}
                         >
                           {breadcrumbItem.label}
                         </button>

@@ -72,7 +72,7 @@ export function StudentListItem({
 
       {/* Role Badge */}
       <div>
-        <span className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${variant === "light" ? "border border-teal-200 bg-teal-50 text-teal-700" : "border border-teal-500/30 bg-teal-500/20 text-teal-400"}`}>
+        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${variant === "light" ? "border border-sky-200 bg-sky-50 text-sky-700" : "border border-teal-500/30 bg-teal-500/20 text-teal-400"}`}>
           Student
         </span>
       </div>
@@ -85,7 +85,7 @@ export function StudentListItem({
               e.stopPropagation()
               onRemove()
             }}
-            className={`rounded-lg p-2 transition-colors ${variant === "light" ? "text-slate-400 hover:bg-rose-50 hover:text-rose-600" : "text-gray-400 hover:bg-red-500/20 hover:text-red-400"}`}
+            className={`rounded-lg p-2 transition-colors ${variant === "light" ? "text-rose-500 hover:bg-rose-50 hover:text-rose-600" : "text-gray-400 hover:bg-red-500/20 hover:text-red-400"}`}
             title="Remove student"
           >
             <Trash2 className="w-4 h-4" />

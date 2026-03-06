@@ -534,3 +534,38 @@
 - [x] Convert remaining teacher-only class-detail modals and surfaces to the shared light system
 - [x] Add light-mode support to the gradebook tab content
 - [x] Verify the teacher class overview build path still passes
+
+# Class Overview Layout Refresh
+
+- [x] Replace the in-page back button with breadcrumb navigation in the top bar
+- [x] Reformat the class overview header to the cleaner plain layout
+- [x] Restyle the tabs and remove the central wrapper around tab content
+- [x] Run frontend build verification
+
+# Class Overview Tab Clarity Polish
+
+- [x] Make the class overview tabs read more clearly as interactive controls
+- [x] Add an explicit assignments header row above the filters
+- [x] Increase assignment card visibility against the page background
+- [x] Run frontend build verification
+
+# Class Overview Content Polish
+
+- [x] Make assignments, enrolled students, and gradebook section headings use a consistent scale
+- [x] Make the selected assignment filter state more obvious
+- [x] Improve visibility of the student search field and role badge
+- [x] Make the remove-student icon read as destructive
+- [x] Run frontend build verification
+
+# Gradebook Contrast Polish
+
+- [x] Improve score badge contrast in the light-mode gradebook
+- [x] Improve average badge contrast in the light-mode gradebook
+- [x] Run frontend build verification
+
+# Class Header Information Hierarchy Polish
+
+- [x] Make the class title the primary anchor and keep actions on the same row
+- [x] Move schedule closer to the title and de-emphasize secondary metadata
+- [x] Make the accent bar span the full header height
+- [x] Run frontend build verification

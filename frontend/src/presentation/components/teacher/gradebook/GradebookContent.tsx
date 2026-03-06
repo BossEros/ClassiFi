@@ -5,6 +5,7 @@ import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teac
 import { useToastStore } from "@/shared/store/useToastStore";
 import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/shared/types/gradebook";
 import { X, Edit2 } from "lucide-react";
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
 // Inlined from src/presentation/components/teacher/gradebook/GradebookTable.tsx
 // Inlined from src/presentation/components/teacher/gradebook/GradeCell.tsx
@@ -41,7 +42,7 @@ function GradeCell({ grade, totalScore, variant = "dark" }: GradeCellProps) {
   }
 
   const percentage = totalScore > 0 ? (grade.grade / totalScore) * 100 : 0
-  const colorClass = getGradeColorClass(percentage)
+  const colorClass = getGradeColorClass(percentage, variant)
 
   return (
     <span
@@ -64,7 +65,18 @@ function GradeCell({ grade, totalScore, variant = "dark" }: GradeCellProps) {
 
 
 
-function getGradeColorClass(percentage: number): string {
+function getGradeColorClass(
+  percentage: number,
+  variant: "dark" | "light",
+): string {
+  if (variant === "light") {
+    if (percentage >= 90) return "border border-emerald-200 bg-emerald-50 text-emerald-800"
+    if (percentage >= 75) return "border border-sky-200 bg-sky-50 text-sky-800"
+    if (percentage >= 60) return "border border-amber-200 bg-amber-50 text-amber-800"
+    if (percentage >= 40) return "border border-orange-200 bg-orange-50 text-orange-800"
+    return "border border-rose-200 bg-rose-50 text-rose-800"
+  }
+
   if (percentage >= 90) return "bg-green-500/20 text-green-400"
   if (percentage >= 75) return "bg-blue-500/20 text-blue-400"
   if (percentage >= 60) return "bg-yellow-500/20 text-yellow-400"
@@ -201,7 +213,7 @@ function GradebookTable({
                 <td className="px-4 py-3 text-center">
                   {average !== null ? (
                     <span
-                      className={`inline-flex items-center justify-center w-12 h-8 rounded text-sm font-medium ${getAverageColorClass(average)}`}
+                      className={`inline-flex items-center justify-center w-12 h-8 rounded text-sm font-medium ${getAverageColorClass(average, variant)}`}
                     >
                       {average}%
                     </span>
@@ -224,7 +236,17 @@ function GradebookTable({
 
 
 
-function getAverageColorClass(average: number): string {
+function getAverageColorClass(
+  average: number,
+  variant: "dark" | "light",
+): string {
+  if (variant === "light") {
+    if (average >= 90) return "border border-emerald-200 bg-emerald-50 text-emerald-800"
+    if (average >= 75) return "border border-sky-200 bg-sky-50 text-sky-800"
+    if (average >= 60) return "border border-amber-200 bg-amber-50 text-amber-800"
+    return "border border-rose-200 bg-rose-50 text-rose-800"
+  }
+
   if (average >= 90) return "bg-green-500/20 text-green-400"
   if (average >= 75) return "bg-blue-500/20 text-blue-400"
   if (average >= 60) return "bg-yellow-500/20 text-yellow-400"
@@ -315,7 +337,7 @@ export function GradebookContent({
       <div className="flex items-center justify-between mb-4">
         <div>
           <h2
-            className={`text-xl font-bold ${variant === "light" ? "text-slate-900" : "text-white"}`}
+            className={variant === "light" ? dashboardTheme.sectionTitle : "text-lg font-semibold tracking-tight text-white"}
           >
             Gradebook
           </h2>

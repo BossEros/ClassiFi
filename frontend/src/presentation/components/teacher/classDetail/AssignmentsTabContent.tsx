@@ -2,6 +2,7 @@ import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
 import { AssignmentSection } from "@/presentation/components/shared/dashboard/AssignmentSection"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type { Assignment } from "@/business/models/dashboard/types"
 import type {
   AssignmentFilter,
@@ -56,7 +57,22 @@ export function AssignmentsTabContent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="space-y-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <h2 className={isLight ? dashboardTheme.sectionTitle : "text-lg font-semibold tracking-tight text-white"}>
+            Assignments
+          </h2>
+          {isTeacher ? (
+            <Button
+              onClick={onCreateAssignment}
+              className="w-full sm:ml-auto sm:w-auto"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Assignment
+            </Button>
+          ) : null}
+        </div>
+
         {isTeacher ? (
           <AssignmentFilterBar
             mode="teacher"
@@ -73,15 +89,6 @@ export function AssignmentsTabContent({
             variant={variant}
           />
         )}
-        {isTeacher ? (
-          <Button
-            onClick={onCreateAssignment}
-            className="w-full sm:w-auto sm:ml-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Assignment
-          </Button>
-        ) : null}
       </div>
 
       {shouldShowNoFilterResultsState ? (
