@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Input } from "@/presentation/components/ui/Input";
 import { Button } from "@/presentation/components/ui/Button";
-import { Eye, EyeOff, ArrowLeft, ArrowRight, GraduationCap, Users, Check } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, ArrowRight, GraduationCap, Users, Check, CheckCircle2 } from "lucide-react";
 import { registerUser } from "@/business/services/authService";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { registerFormSchema, type RegisterFormValues } from "@/presentation/schemas/auth/authSchemas";
@@ -233,7 +233,23 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   : authTheme.roleCardDefault
               }`}
             >
-              <GraduationCap className="w-12 h-12 mx-auto mb-4 text-teal-700" />
+              {roleValue === "student" && (
+                <span className={authTheme.selectedBadge}>
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                  Selected
+                </span>
+              )}
+              <div
+                className={`${authTheme.roleIconShell} ${
+                  roleValue === "student" ? authTheme.roleIconShellSelected : ""
+                }`}
+              >
+                <GraduationCap
+                  className={`relative z-10 h-8 w-8 ${
+                    roleValue === "student" ? "text-teal-700" : "text-[#35514A]"
+                  }`}
+                />
+              </div>
               <p className="font-medium text-[#13211E]">I am a student</p>
             </button>
 
@@ -252,7 +268,23 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
                   : authTheme.roleCardDefault
               }`}
             >
-              <Users className="w-12 h-12 mx-auto mb-4 text-teal-700" />
+              {roleValue === "teacher" && (
+                <span className={authTheme.selectedBadge}>
+                  <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                  Selected
+                </span>
+              )}
+              <div
+                className={`${authTheme.roleIconShell} ${
+                  roleValue === "teacher" ? authTheme.roleIconShellSelected : ""
+                }`}
+              >
+                <Users
+                  className={`relative z-10 h-8 w-8 ${
+                    roleValue === "teacher" ? "text-teal-700" : "text-[#35514A]"
+                  }`}
+                />
+              </div>
               <p className="font-medium text-[#13211E]">I am a teacher</p>
             </button>
           </div>

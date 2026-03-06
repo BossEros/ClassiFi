@@ -1132,3 +1132,22 @@ Rework login and registration visual balance to reduce eye strain while keeping 
 - [x] Update `LoginPage` to use the new card/input/background palette.
 - [x] Update `RegisterPage` to use the same palette across all steps.
 - [x] Run `frontend`: `npm run build`.
+
+# Implementation Plan - Auth Visual Polish Follow-Up
+
+## Scope
+
+Refine auth usability after the palette pass.
+
+1. Fix leading field icon visibility in auth forms.
+2. Make selected registration role cards more obvious and readable.
+3. Convert forgot/reset password pages to the same shared auth palette.
+4. Verify frontend build.
+
+## Execution Checklist
+
+- [x] Fix email/password icon visibility in auth forms.
+- [x] Increase selected-state clarity in registration role cards.
+- [x] Apply shared auth palette to forgot password page.
+- [x] Apply shared auth palette to reset password page and state screens.
+- [x] Run `frontend`: `npm run build`.

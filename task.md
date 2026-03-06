@@ -513,3 +513,11 @@
 - [x] Apply the softer auth palette to the login page
 - [x] Apply the same palette to the registration flow
 - [x] Run frontend build verification
+
+# Auth Visual Polish Follow-Up
+
+- [x] Fix auth field icon visibility where the icon is being visually buried
+- [x] Make the selected registration role card more prominent
+- [x] Apply the shared auth palette to forgot password
+- [x] Apply the shared auth palette to reset password and its success/error states
+- [x] Run frontend build verification
