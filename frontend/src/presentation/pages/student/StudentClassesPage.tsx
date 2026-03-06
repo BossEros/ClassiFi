@@ -112,28 +112,28 @@ function JoinClassModal({
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
         onClick={onClose}
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-[448px] min-w-[320px] flex-shrink-0 bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl z-10 p-6">
+      <div className="relative z-10 w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-teal-500/20">
-              <Users className="w-5 h-5 text-teal-400" />
+            <div className="p-2 rounded-lg bg-teal-100">
+              <Users className="w-5 h-5 text-teal-700" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Join Class</h2>
-              <p className="text-sm text-gray-400 mt-0.5">
+              <h2 className="text-xl font-bold text-slate-900">Join Class</h2>
+              <p className="mt-0.5 text-sm text-slate-500">
                 Enter the code provided by your teacher
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -147,8 +147,8 @@ function JoinClassModal({
         >
           {/* Error Message */}
           {error && (
-            <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-              <p className="text-sm text-red-400">{error}</p>
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+              <p className="text-sm text-rose-700">{error}</p>
             </div>
           )}
 
@@ -156,7 +156,7 @@ function JoinClassModal({
           <div className="space-y-3 w-full">
             <label
               htmlFor="classCode"
-              className="block text-sm font-medium text-white"
+              className="block text-sm font-medium text-slate-700"
             >
               Class Code
             </label>
@@ -169,11 +169,11 @@ function JoinClassModal({
               onChange={handleClassCodeChange}
               disabled={isSubmitting}
               maxLength={8}
-              className={`text-center text-lg font-mono tracking-widest uppercase ${error ? "border-red-500/50" : ""}`}
+              className={`h-12 border border-slate-300 bg-white text-center text-lg font-mono tracking-widest uppercase text-slate-800 placeholder:text-slate-400 shadow-sm hover:border-slate-400 focus:border-teal-500/60 focus:ring-2 focus:ring-teal-500/20 ${error ? "border-rose-400" : ""}`}
               autoFocus
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="mt-1 text-xs text-slate-500">
               Ask your teacher for the class code. It's usually 6-8 characters.
             </p>
           </div>
@@ -184,7 +184,7 @@ function JoinClassModal({
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/20"
+              className="flex-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
@@ -192,7 +192,7 @@ function JoinClassModal({
             <Button
               type="submit"
               disabled={isSubmitting || !classCodeValue.trim()}
-              className="flex-1"
+              className="flex-1 rounded-md bg-teal-600 text-white border border-teal-600 hover:bg-teal-500"
             >
               {isSubmitting ? (
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />

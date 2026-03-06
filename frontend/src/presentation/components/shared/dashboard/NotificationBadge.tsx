@@ -54,7 +54,7 @@ export function NotificationBadge() {
     <div className="relative z-[9999]">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative rounded-lg p-2 transition-colors hover:bg-slate-100"
+        className="relative cursor-pointer rounded-lg p-2 transition-colors hover:bg-slate-100"
         aria-label="Notifications"
         disabled={isLoading}
       >
