@@ -144,12 +144,12 @@ function getSignalBadgeClassName(level: SignalLevel): string {
   }
 }
 
-function getTotalSharedChunksTooltipText(): string {
-  return "Total Shared Chunks shows how much shared code appears across both submissions combined. Higher levels indicate more shared material overall."
+function getTotalOverlapTooltipText(): string {
+  return "Total Overlap shows the raw overlap value stored for the pair, alongside a normalized signal level that makes short and long submissions easier to compare fairly."
 }
 
-function getLongestContinuousSharedBlockTooltipText(): string {
-  return "Longest Continuous Shared Block shows the size of the largest uninterrupted shared section between two submissions. Higher levels indicate a longer direct copied block."
+function getLongestFragmentTooltipText(): string {
+  return "Longest Fragment shows the raw longest matched fragment for the pair, alongside a normalized signal level that highlights unusually large uninterrupted matches."
 }
 
 function getSignalBadgeTooltip(metricName: string, level: SignalLevel): string {
@@ -365,10 +365,10 @@ export function PairwiseTriageTable({
                     className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <span>Total Shared Chunks</span>
+                      <span>Total Overlap</span>
                       <span
-                        title={getTotalSharedChunksTooltipText()}
-                        aria-label={getTotalSharedChunksTooltipText()}
+                        title={getTotalOverlapTooltipText()}
+                        aria-label={getTotalOverlapTooltipText()}
                         className="text-slate-500"
                       >
                         <CircleHelp className="h-3.5 w-3.5" />
@@ -385,10 +385,10 @@ export function PairwiseTriageTable({
                     className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <span>Longest Continuous Shared Block</span>
+                      <span>Longest Fragment</span>
                       <span
-                        title={getLongestContinuousSharedBlockTooltipText()}
-                        aria-label={getLongestContinuousSharedBlockTooltipText()}
+                        title={getLongestFragmentTooltipText()}
+                        aria-label={getLongestFragmentTooltipText()}
                         className="text-slate-500"
                       >
                         <CircleHelp className="h-3.5 w-3.5" />
@@ -477,7 +477,7 @@ export function PairwiseTriageTable({
                           <QualitativeSignalBadge
                             level={overlapSignalLevel}
                             tooltipText={getSignalBadgeTooltip(
-                              "Total Shared Chunks",
+                              "Total Overlap",
                               overlapSignalLevel,
                             )}
                           />
@@ -486,7 +486,7 @@ export function PairwiseTriageTable({
                           <QualitativeSignalBadge
                             level={longestSignalLevel}
                             tooltipText={getSignalBadgeTooltip(
-                              "Longest Continuous Shared Block",
+                              "Longest Fragment",
                               longestSignalLevel,
                             )}
                           />
