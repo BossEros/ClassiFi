@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+﻿import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
 import { apiClient } from "@/data/api/apiClient"
@@ -31,6 +31,20 @@ describe("plagiarismRepository", () => {
         averageSimilarity: 45.5,
         maxSimilarity: 85.0,
       },
+      submissions: [
+        {
+          id: 1,
+          path: "/submissions/1/solution.py",
+          filename: "solution.py",
+          lineCount: 50,
+        },
+        {
+          id: 2,
+          path: "/submissions/2/solution.py",
+          filename: "solution.py",
+          lineCount: 48,
+        },
+      ],
       pairs: [
         {
           id: 1,
@@ -195,3 +209,5 @@ describe("plagiarismRepository", () => {
     })
   })
 })
+
+

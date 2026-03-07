@@ -1,3 +1,29 @@
+﻿# Similarity Graph Singleton Support + UI Simplification
+
+- [x] Extend plagiarism analysis responses with analyzed submissions so true singleton nodes can be rendered
+- [x] Update graph utilities to derive nodes from full submission lists instead of pairs only
+- [x] Fix the graph empty-state width so empty-threshold messaging stays horizontal and readable
+- [x] Remove the separate Similarity Clusters panel and dead exports/components tied only to it
+- [x] Rename the graph toggle to `Allow Singleton` and keep the right-rail controls aligned
+- [x] Update targeted frontend/backend tests and run verification
+# Similarity Graph View
+
+- [x] Add graph data utility that derives nodes, edges, and visible singletons from the current threshold
+- [x] Lift similarity threshold state so the graph and pairwise table use the same control value
+- [x] Add native React graph view with hover tooltip, selected-node details, and cluster-aware layout
+- [x] Add `Display singletons` toggle and resettable draggable threshold slider
+- [x] Integrate graph actions with the existing code-comparison workflow
+- [x] Add/update targeted frontend unit tests for graph behavior
+- [x] Update frontend documentation for the graph workflow
+- [x] Run frontend build verification
+# Similarity Clustering Feature
+
+- [x] Add frontend clustering utility that derives connected submission groups from pairwise similarity results
+- [x] Add teacher similarity clusters panel and wire it into the similarity results page
+- [x] Keep pairwise filtering and clustering threshold state synchronized
+- [x] Add/update targeted frontend unit tests for clustering behavior
+- [x] Update frontend documentation for the new clustering workflow
+- [x] Run frontend build verification
 # Frontend Unit Test Fixes
 
 - [x] Update toast variant assertions to match the current light-theme tokens
@@ -732,3 +758,7 @@
 - [x] Scan the frontend source tree for files and exports with no runtime consumers after the light-mode refactor.
 - [x] Remove only the confirmed dead frontend files, orphaned barrel exports, and stale dark-mode leftovers.
 - [ ] Verify the cleanup with a frontend production build.
+
+
+
+

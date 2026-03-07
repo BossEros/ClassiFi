@@ -1,4 +1,4 @@
-# ClassiFi Backend (TypeScript)
+﻿# ClassiFi Backend (TypeScript)
 
 A TypeScript/Fastify backend implementation for the ClassiFi platform, following the controller-service-repository pattern.
 
@@ -404,8 +404,9 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 
 **Pairwise-First Analysis**:
 
-The plagiarism API now focuses on assignment-level pairwise results for triage workflows:
+The plagiarism API now focuses on assignment-level review workflows:
 
+- Report responses include `submissions` plus pair rows so the frontend can render true singleton nodes alongside suspicious links.
 - Pair rows include both students, similarity score, overlap, and longest match.
 - Clients can sort/filter pair results to prioritize high-risk comparisons.
 - Detailed fragment/code inspection remains available through result-detail endpoints.
@@ -414,7 +415,6 @@ The plagiarism API now focuses on assignment-level pairwise results for triage w
 - Automatic similarity scheduling runs after successful submissions (when at least two latest submissions exist) and keeps manual analyze endpoint support for explicit teacher-initiated checks.
 
 ### Notifications
-
 The notification system provides real-time updates to users about important events in the platform. It supports in-app notifications with optional email delivery.
 
 | Method | Endpoint                      | Description                    |
@@ -604,32 +604,32 @@ Notifications are queued for email delivery with:
 ### Entity Relationship Diagram
 
 ```
-┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
-│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
-└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
-     │                 │                   │                     │
-     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
-     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
-     │            └──────────┘         └────┬────┘         └────────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityReport │
-     │                             └────────┬────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityResult │◄───────┐
-     │                             └────────┬────────┘        │
-     │                                      │           ┌─────┴────────┐
-     │                                      └──────────►│MatchFragment │
-     │                                                  └──────────────┘
-     │
-     │            ┌──────────────┐
-     └───────────►│ Notification │
-                  └──────┬───────┘
-                         │
-                  ┌──────▼──────────────────┐
-                  │ NotificationDelivery    │
-                  └─────────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  User   â”‚â—„â”€â”€â”€â”€â”€â”€â”¤  Class  â”‚â—„â”€â”€â”€â”€â”€â”€â”¤  Assignment  â”‚â—„â”€â”€â”€â”€â”€â”¤  TestCase  â”‚
+â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
+     â”‚                 â”‚                   â”‚                     â”‚
+     â”‚            â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”         â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”         â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”
+     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚Enrollmentâ”‚         â”‚Submissionâ”‚â—„â”€â”€â”€â”€â”€â”€â”€â”¤ TestResult â”‚
+     â”‚            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+     â”‚                                      â”‚
+     â”‚                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
+     â”‚                             â”‚SimilarityReport â”‚
+     â”‚                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+     â”‚                                      â”‚
+     â”‚                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
+     â”‚                             â”‚SimilarityResult â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”
+     â”‚                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜        â”‚
+     â”‚                                      â”‚           â”Œâ”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
+     â”‚                                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚MatchFragment â”‚
+     â”‚                                                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+     â”‚
+     â”‚            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚ Notification â”‚
+                  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
+                         â”‚
+                  â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                  â”‚ NotificationDelivery    â”‚
+                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ### User Model
@@ -1302,3 +1302,5 @@ npm run typecheck
 ## License
 
 MIT
+
+

@@ -456,7 +456,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${authTheme.inputIcon} hover:text-[#13211E]`}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${authTheme.inputIconInteractive} hover:text-[#13211E]`}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
@@ -508,7 +508,7 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${authTheme.inputIcon} hover:text-[#13211E]`}
+                className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors ${authTheme.inputIconInteractive} hover:text-[#13211E]`}
                 aria-label={
                   showConfirmPassword ? "Hide password" : "Show password"
                 }

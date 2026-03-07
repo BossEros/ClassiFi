@@ -28,6 +28,7 @@ export interface AnalyzeResponse {
     averageSimilarity: number
     maxSimilarity: number
   }
+  submissions: FileResponse[]
   pairs: PairResponse[]
   warnings: string[]
 }
@@ -76,3 +77,4 @@ export interface ResultDetailsResponse {
     studentName: string
   }
 }
+

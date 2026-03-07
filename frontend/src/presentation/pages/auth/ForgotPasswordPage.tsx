@@ -135,7 +135,7 @@ function ForgotPasswordForm({
           Email address
         </label>
         <div className="relative">
-          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
+          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconNonInteractive}`}>
             <Mail className="w-5 h-5" />
           </div>
           <Input

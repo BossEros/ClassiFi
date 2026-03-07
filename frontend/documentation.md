@@ -1,4 +1,4 @@
-# ClassiFi Frontend Documentation
+﻿# ClassiFi Frontend Documentation
 
 ## Project Overview
 
@@ -293,16 +293,20 @@ Language-specific features:
 
 ### Plagiarism Detection
 
-The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly with fewer clicks:
+The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly while still seeing Dolos-style graph relationships:
 
-- **Class-level summary cards**: Suspicious pairs, average similarity, and maximum similarity.
-- **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
-- **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
-- **Fast triage controls**: Search by student, sortable `Overall Similarity` plus per-pair `Structural Similarity` and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
+- **Assignment-level summary cards**: Suspicious pairs, analyzed submissions, and maximum similarity.
+- **Similarity graph view**: A native React SVG graph that derives nodes from the analyzed-submission list and edges from the active pair results.
+- **Shared draggable threshold**: The `Threshold >= X%` slider drives the graph and pairwise table together so review surfaces never drift out of sync.
+- **Singleton visibility toggle**: `Allow Singleton` lets teachers reveal isolated submissions, including true zero-pair submissions returned by the backend.
+- **Hover and selection details**: Hovering a node shows quick similarity context; clicking a node or cluster opens richer details and shortcut actions for review.
+- **Edge-driven review**: Clicking a graph edge jumps directly into pairwise code comparison for that specific submission pair.
+- **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review and reuses the shared threshold from the graph view.
+- **Default high-similarity filter**: Starts at `75%` to reduce noise in larger classes.
+- **Fast triage controls**: Sortable `Overall Similarity`, `Structural Similarity`, and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
 - **Details on demand**: `Compare Code` (or row click) opens side-by-side match/diff inspection with fragment context and auto-scrolls to the comparison panel.
 
 ### Toast Notifications
-
 Enhanced toast system with:
 
 - **Pause on hover**: Prevents auto-dismiss when user is reading
@@ -606,4 +610,7 @@ High-signal coverage gate:
 - `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
+
+
+
 
