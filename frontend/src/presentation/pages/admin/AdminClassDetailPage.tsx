@@ -1,14 +1,52 @@
-import { useEffect, useState, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Users, Calendar, Clock, Search, Trash2, UserPlus, Mail, CheckCircle, XCircle, RefreshCw, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
-import { Avatar } from "@/presentation/components/ui/Avatar";
-import { useToastStore } from "@/shared/store/useToastStore";
-import { useAuthStore } from "@/shared/store/useAuthStore";
-import { getAdminClassDetailData, removeStudentFromClass, type AdminClass, type EnrolledStudent } from "@/business/services/adminService";
-import { getAllUsers, addStudentToClass } from "@/business/services/adminService";
-import type { AdminUser } from "@/business/services/adminService";
+import { useEffect, useState, useCallback, type MouseEvent as ReactMouseEvent } from "react"
+import { createPortal } from "react-dom"
+import { useNavigate, useParams } from "react-router-dom"
+import {
+  AlertCircle,
+  AlertTriangle,
+  Archive,
+  BookOpen,
+  Calendar,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Loader2,
+  Mail,
+  MoreVertical,
+  RefreshCw,
+  RotateCcw,
+  Search,
+  Trash2,
+  UserPlus,
+  Users,
+  X,
+  XCircle,
+} from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
+import { Avatar } from "@/presentation/components/ui/Avatar"
+import { useToastStore } from "@/shared/store/useToastStore"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import {
+  addStudentToClass,
+  archiveClass,
+  deleteClass,
+  getAdminClassDetailData,
+  getAllUsers,
+  removeStudentFromClass,
+  restoreClass,
+  type AdminClass,
+  type AdminUser,
+  type EnrolledStudent,
+} from "@/business/services/adminService"
+
+interface AdminClassActionDropdownPosition {
+  id: number
+  x: number
+  y: number
+}
 
 // Inlined from src/presentation/components/admin/AdminAddStudentModal.tsx
 interface AdminAddStudentModalProps {
@@ -18,8 +56,6 @@ interface AdminAddStudentModalProps {
   classId: number
   existingStudents: EnrolledStudent[]
 }
-
-
 
 function AdminAddStudentModal({
   isOpen,
@@ -60,21 +96,20 @@ function AdminAddStudentModal({
           status: "active",
         })
 
-        // Filter out already enrolled students
-        const enrolledIds = new Set(existingStudents.map((s) => s.id))
+        const enrolledStudentIds = new Set(existingStudents.map((student) => student.id))
         const availableStudents = response.data.filter(
-          (s) => !enrolledIds.has(s.id),
+          (student) => !enrolledStudentIds.has(student.id),
         )
 
         setStudents(availableStudents)
-      } catch (error) {
-        console.error("Failed to fetch students:", error)
+      } catch (requestError) {
+        console.error("Failed to fetch students:", requestError)
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchStudents()
+    void fetchStudents()
   }, [isOpen, debouncedSearch, existingStudents])
 
   const handleAddStudent = async (student: AdminUser) => {
@@ -85,59 +120,59 @@ function AdminAddStudentModal({
         `Successfully enrolled ${student.firstName} ${student.lastName}`,
         "success",
       )
-      onSuccess() // Refresh parent
-      // Remove from local list
-      setStudents((prev) => prev.filter((s) => s.id !== student.id))
-    } catch (error) {
-      console.error("Failed to enroll student:", error)
+      onSuccess()
+      setStudents((previousStudents) =>
+        previousStudents.filter((availableStudent) => availableStudent.id !== student.id),
+      )
+    } catch (requestError) {
+      console.error("Failed to enroll student:", requestError)
       showToast("Failed to enroll student", "error")
     } finally {
       setIsSubmitting(null)
     }
   }
 
-  if (!isOpen) return null
+  if (!isOpen) {
+    return null
+  }
 
   return (
-    <div className="fixed inset-0 z-[10000] grid place-items-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200 sm:p-6">
       <div
-        className="w-full max-w-lg min-w-[320px] mx-auto bg-[#0B1120] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 flex-shrink-0"
-        onClick={(e) => e.stopPropagation()}
+        className="mx-auto flex max-h-[85vh] min-w-[320px] w-full max-w-lg flex-shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl animate-in zoom-in-95 duration-200"
+        onClick={(event) => event.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-white">Enroll Student</h2>
             <p className="text-sm text-gray-400">Add a student to this class</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-colors shrink-0"
+            className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Search */}
-        <div className="p-4 border-b border-white/10 bg-slate-900/50 shrink-0">
+        <div className="shrink-0 border-b border-white/10 bg-slate-900/50 p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <input
               type="text"
               placeholder="Search students by name or email..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-black/20 border border-white/10 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-transparent transition-all"
+              onChange={(event) => setSearchQuery(event.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-black/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/40"
               autoFocus
             />
           </div>
         </div>
 
-        {/* List */}
-        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 gap-3 text-gray-500">
-              <Loader2 className="w-8 h-8 animate-spin" />
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
+              <Loader2 className="h-8 w-8 animate-spin" />
               <p className="text-sm">Loading available students...</p>
             </div>
           ) : students.length > 0 ? (
@@ -145,32 +180,30 @@ function AdminAddStudentModal({
               {students.map((student) => (
                 <div
                   key={student.id}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all group"
+                  className="group flex items-center justify-between rounded-xl border border-transparent p-3 transition-all hover:border-white/5 hover:bg-white/5"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex min-w-0 items-center gap-3">
                     <Avatar
                       src={student.avatarUrl ?? undefined}
                       fallback={`${student.firstName[0]}${student.lastName[0]}`}
-                      className="w-10 h-10 border border-white/10"
+                      className="h-10 w-10 border border-white/10"
                     />
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-white truncate">
+                      <p className="truncate text-sm font-medium text-white">
                         {student.firstName} {student.lastName}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {student.email}
-                      </p>
+                      <p className="truncate text-xs text-gray-500">{student.email}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => handleAddStudent(student)}
                     disabled={isSubmitting === student.id}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 text-xs font-medium hover:text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:shadow-[0_0_10px_rgba(59,130,246,0.2)] shrink-0"
+                    className="shrink-0 flex items-center gap-2 rounded-lg bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-400 transition-all hover:bg-blue-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 group-hover:shadow-[0_0_10px_rgba(59,130,246,0.2)]"
                   >
                     {isSubmitting === student.id ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <UserPlus className="w-3.5 h-3.5" />
+                      <UserPlus className="h-3.5 w-3.5" />
                     )}
                     Enroll
                   </button>
@@ -178,9 +211,9 @@ function AdminAddStudentModal({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 gap-2 text-gray-500">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-2">
-                <Search className="w-6 h-6 opacity-40" />
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-500">
+              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
+                <Search className="h-6 w-6 opacity-40" />
               </div>
               <p className="text-sm font-medium">No students found</p>
               <p className="text-xs text-gray-600">Try adjusting your search</p>
@@ -188,15 +221,252 @@ function AdminAddStudentModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-white/10 bg-slate-900/50 flex justify-end shrink-0">
+        <div className="flex justify-end border-t border-white/10 bg-slate-900/50 px-6 py-4 shrink-0">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="rounded-xl px-4 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
           >
             Close
           </button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+interface AdminDeleteClassModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => Promise<void>
+  classData: AdminClass | null
+}
+
+function AdminDeleteClassModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  classData,
+}: AdminDeleteClassModalProps) {
+  const [confirmationValue, setConfirmationValue] = useState("")
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [modalStep, setModalStep] = useState<"warning" | "confirm">("warning")
+
+  useEffect(() => {
+    if (!isOpen) {
+      setConfirmationValue("")
+      setErrorMessage(null)
+      setModalStep("warning")
+      setIsDeleting(false)
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isDeleting) {
+        onClose()
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape)
+      document.body.style.overflow = "hidden"
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape)
+      document.body.style.overflow = "unset"
+    }
+  }, [isOpen, isDeleting, onClose])
+
+  const handleDelete = async () => {
+    setErrorMessage(null)
+    setIsDeleting(true)
+
+    try {
+      await onConfirm()
+      onClose()
+    } catch (requestError) {
+      setErrorMessage(
+        requestError instanceof Error ? requestError.message : "Failed to delete class",
+      )
+      setIsDeleting(false)
+    }
+  }
+
+  const isDeleteConfirmationDisabled =
+    confirmationValue !== "DELETE" || isDeleting
+
+  if (!isOpen || !classData) {
+    return null
+  }
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!isDeleting ? onClose : undefined}
+      />
+
+      <div
+        className="relative mx-4 w-full max-w-md min-w-[500px] rounded-3xl border border-rose-200 bg-white p-6 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-class-title"
+      >
+        <button
+          onClick={onClose}
+          disabled={isDeleting}
+          className="absolute right-4 top-4 cursor-pointer rounded-lg p-1 text-slate-400 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="mb-4 flex justify-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
+            {modalStep === "warning" ? (
+              <AlertTriangle className="h-8 w-8 text-rose-600" />
+            ) : (
+              <Trash2 className="h-8 w-8 text-rose-600" />
+            )}
+          </div>
+        </div>
+
+        <h2
+          id="delete-class-title"
+          className="mb-2 text-center text-xl font-semibold text-slate-900"
+        >
+          {modalStep === "warning" ? "Delete Class?" : "Confirm Deletion"}
+        </h2>
+
+        {modalStep === "warning" ? (
+          <>
+            <div className="mb-4 text-center">
+              <p className="text-sm text-slate-500">
+                You are about to delete {" "}
+                <span className="font-medium text-slate-900">{classData.className}</span>
+              </p>
+              <p className="mt-1 text-xs font-mono text-slate-400">
+                Code: {classData.classCode}
+              </p>
+            </div>
+
+            <div className="mb-6 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+              <p className="text-sm text-slate-600">
+                This action is {" "}
+                <span className="font-semibold text-rose-700">
+                  permanent and irreversible
+                </span>
+                . Deleting this class will remove:
+              </p>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
+                  All class information and settings
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
+                  All assignments and their submissions
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
+                  All student enrollments ({classData.studentCount} students)
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="mt-0.5 text-rose-500">&bull;</span>
+                  All plagiarism reports and analysis data
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                type="button"
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </button>
+              <button
+                onClick={() => setModalStep("confirm")}
+                type="button"
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+              >
+                <AlertTriangle className="h-4 w-4" />
+                Continue
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mb-6 text-center text-sm text-slate-500">
+              To confirm deletion, please type {" "}
+              <span className="font-mono font-semibold text-rose-700">DELETE</span>{" "}
+              below.
+            </p>
+
+            <div className="space-y-4">
+              {errorMessage ? (
+                <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+                  <p className="text-sm text-rose-700">{errorMessage}</p>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-600">
+                  Type <span className="font-mono text-rose-700">DELETE</span> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={confirmationValue}
+                  onChange={(event) => {
+                    setConfirmationValue(event.target.value.toUpperCase())
+                    setErrorMessage(null)
+                  }}
+                  className={`w-full rounded-lg border bg-white px-4 py-3 font-mono text-slate-900 placeholder-slate-300 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-500 ${
+                    confirmationValue === "DELETE"
+                      ? "border-rose-400"
+                      : "border-slate-300"
+                  }`}
+                  placeholder="DELETE"
+                  disabled={isDeleting}
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setModalStep("warning")}
+                  disabled={isDeleting}
+                  type="button"
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleteConfirmationDisabled}
+                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Delete Class
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -212,32 +482,35 @@ export function AdminClassDetailPage() {
   const [classInfo, setClassInfo] = useState<AdminClass | null>(null)
   const [students, setStudents] = useState<EnrolledStudent[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-
   const [showAddStudentModal, setShowAddStudentModal] = useState(false)
-  const [actionLoading, setActionLoading] = useState<number | null>(null)
-  const [studentToRemove, setStudentToRemove] =
+  const [studentActionLoadingId, setStudentActionLoadingId] = useState<number | null>(null)
+  const [classActionLoadingId, setClassActionLoadingId] = useState<number | null>(null)
+  const [studentPendingRemoval, setStudentPendingRemoval] =
     useState<EnrolledStudent | null>(null)
+  const [classPendingDeletion, setClassPendingDeletion] = useState<AdminClass | null>(null)
+  const [activeClassActionsMenu, setActiveClassActionsMenu] =
+    useState<AdminClassActionDropdownPosition | null>(null)
 
   const fetchClassData = useCallback(async () => {
     if (parsedClassId === null || Number.isNaN(parsedClassId)) {
-      setError("Class not found")
+      setErrorMessage("Class not found")
       setIsLoading(false)
       return
     }
 
     try {
       setIsLoading(true)
-      setError(null)
+      setErrorMessage(null)
 
       const data = await getAdminClassDetailData(parsedClassId)
       setClassInfo(data.classInfo)
       setStudents(data.students)
     } catch (requestError) {
       console.error("Failed to fetch class details:", requestError)
-      setError("Failed to load class details")
+      setErrorMessage("Failed to load class details")
     } finally {
       setIsLoading(false)
     }
@@ -257,33 +530,140 @@ export function AdminClassDetailPage() {
     void fetchClassData()
   }, [currentUser, navigate, fetchClassData])
 
+  const handleClassActionsDocumentClick = useCallback((event: MouseEvent) => {
+    const clickTarget = event.target as HTMLElement | null
+
+    if (
+      clickTarget?.closest("[data-admin-class-dropdown-trigger]") ||
+      clickTarget?.closest("[data-admin-class-dropdown-menu]")
+    ) {
+      return
+    }
+
+    setActiveClassActionsMenu(null)
+  }, [])
+
+  useDocumentClick(handleClassActionsDocumentClick)
+
+  const handleEditClass = useCallback(() => {
+    if (!classInfo) {
+      return
+    }
+
+    navigate(`/dashboard/admin/classes/${classInfo.id}/edit`)
+  }, [classInfo, navigate])
+
+  const handleClassActionsClick = useCallback(
+    (event: ReactMouseEvent<HTMLButtonElement>) => {
+      if (!classInfo) {
+        return
+      }
+
+      event.stopPropagation()
+
+      if (activeClassActionsMenu?.id === classInfo.id) {
+        setActiveClassActionsMenu(null)
+        return
+      }
+
+      const triggerBounds = event.currentTarget.getBoundingClientRect()
+      setActiveClassActionsMenu({
+        id: classInfo.id,
+        x: triggerBounds.left - 224 + triggerBounds.width,
+        y: triggerBounds.bottom + 8,
+      })
+    },
+    [activeClassActionsMenu, classInfo],
+  )
+
+  const handleArchiveClass = useCallback(async () => {
+    if (!classInfo) {
+      return
+    }
+
+    try {
+      setClassActionLoadingId(classInfo.id)
+      await archiveClass(classInfo.id)
+      await fetchClassData()
+      showToast("Class archived successfully", "success")
+    } catch (requestError) {
+      console.error("Failed to archive class:", requestError)
+      showToast("Failed to archive class", "error")
+    } finally {
+      setClassActionLoadingId(null)
+      setActiveClassActionsMenu(null)
+    }
+  }, [classInfo, fetchClassData, showToast])
+
+  const handleRestoreClass = useCallback(async () => {
+    if (!classInfo) {
+      return
+    }
+
+    try {
+      setClassActionLoadingId(classInfo.id)
+      await restoreClass(classInfo.id)
+      await fetchClassData()
+      showToast("Class restored successfully", "success")
+    } catch (requestError) {
+      console.error("Failed to restore class:", requestError)
+      showToast("Failed to restore class", "error")
+    } finally {
+      setClassActionLoadingId(null)
+      setActiveClassActionsMenu(null)
+    }
+  }, [classInfo, fetchClassData, showToast])
+
+  const handleDeleteClass = useCallback(async () => {
+    if (!classPendingDeletion) {
+      return
+    }
+
+    try {
+      setClassActionLoadingId(classPendingDeletion.id)
+      await deleteClass(classPendingDeletion.id)
+      showToast("Class deleted successfully", "success")
+      navigate("/dashboard/classes")
+    } catch (requestError) {
+      console.error("Failed to delete class:", requestError)
+      throw requestError
+    } finally {
+      setClassActionLoadingId(null)
+      setActiveClassActionsMenu(null)
+      setClassPendingDeletion(null)
+    }
+  }, [classPendingDeletion, navigate, showToast])
+
   const handleRemoveStudent = async (studentId: number) => {
     if (parsedClassId === null || Number.isNaN(parsedClassId)) {
       return
     }
 
     try {
-      setActionLoading(studentId)
+      setStudentActionLoadingId(studentId)
       await removeStudentFromClass(parsedClassId, studentId)
       setStudents((previousStudents) =>
         previousStudents.filter((student) => student.id !== studentId),
       )
       showToast("Student removed from class", "success")
-      setStudentToRemove(null)
+      setStudentPendingRemoval(null)
     } catch (requestError) {
       console.error("Failed to remove student:", requestError)
       showToast("Failed to remove student", "error")
     } finally {
-      setActionLoading(null)
+      setStudentActionLoadingId(null)
     }
   }
 
-  const filteredStudents = students.filter(
-    (student) =>
-      student.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const filteredStudents = students.filter((student) => {
+    const normalizedSearchQuery = searchQuery.toLowerCase()
+
+    return (
+      student.firstName.toLowerCase().includes(normalizedSearchQuery) ||
+      student.lastName.toLowerCase().includes(normalizedSearchQuery) ||
+      student.email.toLowerCase().includes(normalizedSearchQuery)
+    )
+  })
 
   const studentsPerPage = 10
   const totalFilteredStudents = filteredStudents.length
@@ -330,6 +710,26 @@ export function AdminClassDetailPage() {
   const semesterLabel =
     classInfo?.semester === 1 ? "1st Semester" : "2nd Semester"
 
+  const dropdownWidthPx = 224
+  const dropdownVerticalOffsetPx = 8
+  const viewportPaddingPx = 8
+  const maxLeftPx =
+    typeof window !== "undefined"
+      ? Math.max(
+          viewportPaddingPx,
+          window.innerWidth - dropdownWidthPx - viewportPaddingPx,
+        )
+      : activeClassActionsMenu?.x ?? 0
+  const safeDropdownLeftPx = activeClassActionsMenu
+    ? Math.min(
+        Math.max(activeClassActionsMenu.x, viewportPaddingPx),
+        maxLeftPx,
+      )
+    : 0
+  const safeDropdownTopPx = activeClassActionsMenu
+    ? Math.max(activeClassActionsMenu.y, dropdownVerticalOffsetPx)
+    : 0
+
   if (isLoading) {
     return (
       <DashboardLayout topBar={topBar}>
@@ -343,7 +743,7 @@ export function AdminClassDetailPage() {
     )
   }
 
-  if (error || !classInfo) {
+  if (errorMessage || !classInfo) {
     return (
       <DashboardLayout topBar={topBar}>
         <div className="flex min-h-[60vh] items-center justify-center">
@@ -351,11 +751,9 @@ export function AdminClassDetailPage() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-500">
               <XCircle className="h-7 w-7" />
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">
-              Error Loading Class
-            </h2>
+            <h2 className="text-xl font-semibold text-slate-900">Error Loading Class</h2>
             <p className="mt-2 text-sm text-slate-500">
-              {error || "Class not found"}
+              {errorMessage || "Class not found"}
             </p>
             <button
               onClick={fetchClassData}
@@ -373,64 +771,95 @@ export function AdminClassDetailPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/80">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                {classInfo.isActive ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                    <CheckCircle className="h-3.5 w-3.5" />
-                    Active
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-xl border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
-                    Archived
-                  </span>
-                )}
+        <div className="relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/80">
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-teal-500 via-sky-500 to-transparent" />
+
+          <div className="relative flex flex-col gap-6">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 flex-1 space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  {classInfo.isActive ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                      <CheckCircle className="h-3.5 w-3.5" />
+                      Active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-xl border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                      Archived
+                    </span>
+                  )}
+
+                  <div className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    <span>Class Code</span>
+                    <span className="font-mono text-sm tracking-[0.18em] text-slate-900">
+                      {classInfo.classCode}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+                    {classInfo.className}
+                  </h1>
+                  {classInfo.description ? (
+                    <p className="max-w-3xl whitespace-pre-wrap break-words text-sm leading-7 text-slate-600">
+                      {classInfo.description}
+                    </p>
+                  ) : null}
+                </div>
               </div>
 
-              <div>
-                <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-                  {classInfo.className}
-                </h1>
-                <p className="mt-2 text-sm text-slate-500">
-                  Review and manage enrolled students for this class.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-slate-500">
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    src={undefined}
-                    fallback={classTeacherInitials}
-                    size="sm"
-                    className="ring-2 ring-transparent"
-                  />
-                  <span className="font-medium text-slate-700">
-                    {classInfo.teacherName}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-sky-600" />
-                  <span>
-                    {semesterLabel} &bull; A.Y. {classInfo.academicYear}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-teal-600" />
-                  <span>{students.length} Students Enrolled</span>
-                </div>
+              <div className="flex justify-end lg:pl-6">
+                <button
+                  type="button"
+                  data-admin-class-dropdown-trigger="true"
+                  onClick={handleClassActionsClick}
+                  disabled={classActionLoadingId === classInfo.id}
+                  className={`inline-flex cursor-pointer items-center justify-center rounded-xl border border-slate-300 bg-white p-2 text-slate-500 shadow-sm shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-100 hover:text-slate-800 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 ${
+                    activeClassActionsMenu?.id === classInfo.id
+                      ? "border-slate-400 bg-slate-100 text-slate-800 shadow-md"
+                      : ""
+                  }`}
+                  aria-label="Class actions"
+                  aria-haspopup="menu"
+                  aria-expanded={activeClassActionsMenu?.id === classInfo.id}
+                >
+                  {classActionLoadingId === classInfo.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MoreVertical className="h-4 w-4" />
+                  )}
+                </button>
               </div>
             </div>
 
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex min-w-0 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+                <Avatar
+                  src={classInfo.teacherAvatarUrl ?? undefined}
+                  fallback={classTeacherInitials}
+                  size="sm"
+                  className="ring-2 ring-white"
+                />
+                <span className="truncate">{classInfo.teacherName}</span>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+                <Calendar className="h-4 w-4 text-sky-600" />
+                <span>{semesterLabel} - A.Y. {classInfo.academicYear}</span>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+                <Users className="h-4 w-4 text-teal-600" />
+                <span>{students.length} students</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative w-full sm:max-w-md">
+          <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="relative w-full min-w-0 md:flex-1 md:max-w-2xl">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -443,7 +872,7 @@ export function AdminClassDetailPage() {
 
             <button
               onClick={() => setShowAddStudentModal(true)}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 sm:shrink-0"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 md:shrink-0"
             >
               <UserPlus className="h-4 w-4" />
               Enroll Student
@@ -502,7 +931,7 @@ export function AdminClassDetailPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {studentToRemove?.id === student.id ? (
+                          {studentPendingRemoval?.id === student.id ? (
                             <div className="flex items-center justify-end gap-2">
                               <span className="mr-2 text-xs font-medium text-rose-600">
                                 Confirm removal?
@@ -514,7 +943,7 @@ export function AdminClassDetailPage() {
                                 Yes
                               </button>
                               <button
-                                onClick={() => setStudentToRemove(null)}
+                                onClick={() => setStudentPendingRemoval(null)}
                                 className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
                               >
                                 No
@@ -522,12 +951,12 @@ export function AdminClassDetailPage() {
                             </div>
                           ) : (
                             <button
-                              onClick={() => setStudentToRemove(student)}
-                              disabled={actionLoading === student.id}
+                              onClick={() => setStudentPendingRemoval(student)}
+                              disabled={studentActionLoadingId === student.id}
                               className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-rose-200 bg-rose-50 p-2 text-rose-600 transition-all hover:bg-rose-100 hover:text-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                               title="Remove student"
                             >
-                              {actionLoading === student.id ? (
+                              {studentActionLoadingId === student.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Trash2 className="h-4 w-4" />
@@ -539,20 +968,13 @@ export function AdminClassDetailPage() {
                     ))
                   ) : (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-14 text-center text-slate-500"
-                      >
+                      <td colSpan={4} className="px-6 py-14 text-center text-slate-500">
                         <div className="flex flex-col items-center gap-3">
                           <div className="rounded-full bg-slate-100 p-4">
                             <Search className="h-8 w-8 opacity-40" />
                           </div>
-                          <p className="text-lg font-medium text-slate-700">
-                            No students found
-                          </p>
-                          <p className="text-sm">
-                            No students match the current search.
-                          </p>
+                          <p className="text-lg font-medium text-slate-700">No students found</p>
+                          <p className="text-sm">No students match the current search.</p>
                         </div>
                       </td>
                     </tr>
@@ -560,10 +982,11 @@ export function AdminClassDetailPage() {
                 </tbody>
               </table>
             </div>
-            {totalFilteredStudents > 0 && (
+
+            {totalFilteredStudents > 0 ? (
               <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-6 py-4">
                 <p className="text-sm text-slate-500">
-                  Page <span className="font-medium text-slate-900">{currentPage}</span> of{" "}
+                  Page <span className="font-medium text-slate-900">{currentPage}</span> of {" "}
                   <span className="font-medium text-slate-900">{totalStudentPages}</span>
                 </p>
                 <div className="flex gap-2">
@@ -591,10 +1014,69 @@ export function AdminClassDetailPage() {
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
-
         </div>
+
+        {activeClassActionsMenu &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            data-admin-class-dropdown-menu="true"
+            className="fixed z-[11000] w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              left: safeDropdownLeftPx,
+              top: safeDropdownTopPx,
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="space-y-1 p-1.5">
+              <button
+                onClick={() => {
+                  handleEditClass()
+                  setActiveClassActionsMenu(null)
+                }}
+                className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition-all duration-150 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
+              >
+                <BookOpen className="h-4 w-4 text-teal-600" />
+                Edit Class
+              </button>
+
+              {classInfo.isActive ? (
+                <button
+                  onClick={handleArchiveClass}
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition-all duration-150 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
+                >
+                  <Archive className="h-4 w-4 text-amber-600" />
+                  Archive Class
+                </button>
+              ) : (
+                <button
+                  onClick={handleRestoreClass}
+                  className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-700 transition-all duration-150 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
+                >
+                  <RotateCcw className="h-4 w-4 text-emerald-600" />
+                  Restore Class
+                </button>
+              )}
+
+              <div className="mx-2 h-px bg-slate-100" />
+
+              <button
+                onClick={() => {
+                  setClassPendingDeletion(classInfo)
+                  setActiveClassActionsMenu(null)
+                }}
+                className="group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm"
+              >
+                <Trash2 className="h-4 w-4 group-hover/delete:animate-bounce" />
+                Delete Class
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+
         <AdminAddStudentModal
           isOpen={showAddStudentModal}
           onClose={() => setShowAddStudentModal(false)}
@@ -602,13 +1084,16 @@ export function AdminClassDetailPage() {
           classId={parsedClassId ?? 0}
           existingStudents={students}
         />
+        <AdminDeleteClassModal
+          isOpen={classPendingDeletion !== null}
+          onClose={() => setClassPendingDeletion(null)}
+          onConfirm={handleDeleteClass}
+          classData={classPendingDeletion}
+        />
       </div>
     </DashboardLayout>
   )
 }
-
-
-
 
 
 

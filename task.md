@@ -1,4 +1,10 @@
-﻿# Similarity Graph Singleton Support + UI Simplification
+# Milestone v1.1 Admin Enrollment Management Initialization
+
+- [x] Reconstruct `.planning/PROJECT.md`, `.planning/STATE.md`, and `.planning/MILESTONES.md` from brownfield repo evidence
+- [ ] Run milestone research for admin enrollment management
+- [ ] Define `.planning/REQUIREMENTS.md`
+- [ ] Create `.planning/ROADMAP.md`
+# Similarity Graph Singleton Support + UI Simplification
 
 - [x] Extend plagiarism analysis responses with analyzed submissions so true singleton nodes can be rendered
 - [x] Update graph utilities to derive nodes from full submission lists instead of pairs only
@@ -761,4 +767,33 @@
 
 
 
+
+
+
+# Admin Class Detail Students-Only Follow-Up
+
+- [x] Remove students/assignments tab UI and assignment content from admin class detail
+- [x] Keep a single students table view
+- [x] Widen student search bar and update placeholder copy
+- [x] Move Enroll Student button beside the search bar
+- [x] Make remove-student action icon red by default
+- [x] Run frontend build verification
+
+
+
+# Admin Search Width + Hover Visibility Polish
+
+- [x] Remove class-detail search width cap so the input expands in the toolbar row
+- [x] Align user-management search placeholder color with class-management search placeholder color
+- [x] Strengthen admin table row hover background visibility
+- [x] Run frontend build verification
+
+
+
+# Admin Class Detail Header Refresh
+
+- [x] Replace the admin class detail helper copy with a cleaner header that uses the class description and keeps the current class metadata visible
+- [x] Reuse the admin class-management three-dot action menu in the class detail header
+- [x] Fix the student search toolbar layout so the input width is readable beside the enroll action
+- [x] Run frontend build verification
 

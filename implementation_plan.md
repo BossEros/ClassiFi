@@ -1,4 +1,33 @@
-﻿# Implementation Plan - Similarity Graph Singleton Support + UI Simplification
+# Implementation Plan - Milestone v1.1 Admin Enrollment Management Initialization
+
+## Goal
+
+Rebuild the planning baseline for ClassiFi and define a focused v1.1 milestone for hardening admin enrollment management.
+
+## Scope
+
+- `.planning/PROJECT.md`
+- `.planning/STATE.md`
+- `.planning/MILESTONES.md`
+- `.planning/research/*`
+- `.planning/REQUIREMENTS.md`
+- `.planning/ROADMAP.md`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Reconstruct the brownfield planning baseline from repository documentation and existing admin enrollment code.
+2. Run research focused on admin enrollment-management patterns, integration points, and pitfalls.
+3. Define milestone requirements for the hardened admin enrollment workflow.
+4. Generate a milestone roadmap with phase coverage and next-step guidance.
+
+## Deliverables
+
+- Recreated planning artifacts for the current branch
+- Research-backed milestone requirements
+- Roadmap for v1.1 admin enrollment management
+# Implementation Plan - Similarity Graph Singleton Support + UI Simplification
 
 ## Goal
 
@@ -1950,3 +1979,54 @@ Audit the frontend after the dark-to-light refactor and remove only the code tha
 
 
 
+
+
+# Implementation Plan - Admin Class Detail Students-Only Follow-Up
+
+## Goal
+Align the admin class detail page to a students-only workflow and remove assignment-focused UI from that view.
+
+## Scope
+- frontend/src/presentation/pages/admin/AdminClassDetailPage.tsx
+- task.md
+
+## Execution Steps
+1. Remove the Students/Assignments tab switch and assignment card area from admin class detail.
+2. Keep a single students table with a wider search field and clearer placeholder text.
+3. Position the Enroll Student action beside the search input.
+4. Make student removal icon styling red by default to emphasize destructive intent.
+5. Verify with frontend build.
+
+
+# Implementation Plan - Admin Search Width + Placeholder + Hover Visibility Polish
+
+## Goal
+Resolve admin table usability inconsistencies by widening class-detail search, aligning placeholder tone, and increasing row-hover visibility.
+
+## Scope
+- frontend/src/presentation/pages/admin/AdminClassDetailPage.tsx
+- frontend/src/presentation/pages/admin/AdminUsersPage.tsx
+- frontend/src/presentation/pages/admin/AdminClassesPage.tsx
+
+## Execution Steps
+1. Remove class-detail search max-width cap so the input expands with available row space.
+2. Match users search placeholder tone with class-management search placeholder tone.
+3. Increase row-hover contrast on admin class, user, and class-detail student tables.
+4. Run frontend build verification.
+
+
+# Implementation Plan - Admin Class Detail Header Refresh
+
+## Goal
+Refine the admin class detail header so it presents class information more cleanly, reuses the existing admin class actions menu, and fixes the student-search width issue without changing the page workflow.
+
+## Scope
+- `frontend/src/presentation/pages/admin/AdminClassDetailPage.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+1. Replace the current helper-copy header with a cleaner class overview that uses the class description and keeps the current class metadata visible.
+2. Reuse the same admin class action menu pattern from the admin classes table for the header three-dot control.
+3. Investigate the search-width constraint and adjust the toolbar layout so the search input remains readable beside the enroll action.
+4. Verify with a frontend production build.
