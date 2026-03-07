@@ -27,6 +27,69 @@ Rebuild the planning baseline for ClassiFi and define a focused v1.1 milestone f
 - Recreated planning artifacts for the current branch
 - Research-backed milestone requirements
 - Roadmap for v1.1 admin enrollment management
+
+# Implementation Plan - Admin Enrollment Management Workspace
+
+## Goal
+
+Replace the temporary admin enrollment page with a production-ready enrollment workspace that gives admins cross-class visibility, safe enrollment actions, and clear operational audit context without overbuilding a full SIS.
+
+## Scope
+
+- `frontend/src/presentation/pages/admin/AdminEnrollmentsPage.tsx`
+- `frontend/src/business/services/adminService.ts`
+- `frontend/src/data/repositories/adminRepository.ts`
+- `frontend/src/business/models/admin/types.ts`
+- `frontend/src/data/api/admin.types.ts`
+- `frontend/src/tests/unit/**` (new or updated admin enrollment coverage)
+- `backend-ts/src/modules/admin/admin.controller.ts`
+- `backend-ts/src/modules/admin/admin-enrollment.controller.ts`
+- `backend-ts/src/modules/admin/admin-enrollment.service.ts`
+- `backend-ts/src/modules/admin/admin.schema.ts`
+- `backend-ts/src/modules/enrollments/enrollment.repository.ts`
+- `backend-ts/tests/**` (new or updated admin enrollment coverage)
+- `frontend/documentation.md`
+- `backend-ts/documentation.md`
+- `task.md`
+
+## Design Constraints
+
+- Follow the existing frontend Clean Architecture and backend controller-service-repository boundaries.
+- Reuse the current class-level enrollment actions where they still fit instead of duplicating business rules.
+- Apply SRP by separating list/query concerns from mutation concerns.
+- Apply DRY by centralizing enrollment validation and reusable filtering/mapping helpers.
+- Apply YAGNI by deferring waitlist automation, CSV import, and approval queues until the core admin workflow is dependable.
+
+## Execution Phases
+
+1. Backend enrollment registry foundation
+   - Add a paginated admin enrollment listing contract with search and filters for student, class, teacher, academic year, semester, and active status.
+   - Reuse existing enrollment repository primitives where possible and add focused query helpers only where missing.
+   - Add a safe transfer workflow for moving a student between classes with backend validation guards.
+2. Frontend enrollment workspace
+   - Replace the placeholder page with a searchable registry table and action toolbar.
+   - Add manual enroll, remove, and transfer flows with clear empty, loading, and error states.
+   - Keep the first page version focused on cross-class oversight rather than duplicating the full class detail roster view.
+3. Auditability and UX hardening
+   - Surface enrollment timestamps and action context that help admins understand who is enrolled where.
+   - Add destructive confirmations and user-safe error messages for every mutation path.
+4. Verification and documentation
+   - Add targeted backend and frontend tests for filters, mutations, and validation failures.
+   - Update frontend/backend documentation for the new admin enrollment workflow.
+   - Run `frontend: npm run build`, `backend-ts: npm run typecheck`, and `backend-ts: npm test`.
+
+## Checkpoints
+
+- Checkpoint 1: planning artifacts updated and committed
+- Checkpoint 2: backend admin enrollment API/query layer committed
+- Checkpoint 3: frontend admin enrollment workspace committed
+- Checkpoint 4: tests, docs, and verification committed
+
+## Deliverables
+
+- A functional admin enrollment management page with cross-class enrollment visibility
+- Backend support for enrollment listing and student transfer operations
+- Focused validation, safe destructive actions, and targeted test coverage
 # Implementation Plan - Similarity Graph Singleton Support + UI Simplification
 
 ## Goal
@@ -2030,3 +2093,4 @@ Refine the admin class detail header so it presents class information more clean
 2. Reuse the same admin class action menu pattern from the admin classes table for the header three-dot control.
 3. Investigate the search-width constraint and adjust the toolbar layout so the search input remains readable beside the enroll action.
 4. Verify with a frontend production build.
+
