@@ -12,10 +12,11 @@ import { useRequestState } from "@/presentation/hooks/shared/useRequestState";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { useMemo } from "react";
 import { CheckCircle, ChevronDown, Filter, Search } from "lucide-react";
-import { Archive, BookOpen, ChevronLeft, ChevronRight, Loader2, MoreVertical, RotateCcw, Trash2, User, Users } from "lucide-react";
+import { Archive, BookOpen, ChevronLeft, ChevronRight, Loader2, MoreVertical, RotateCcw, Trash2, Users2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import * as React from "react";
 import { cn } from "@/shared/utils/cn";
+import { Avatar } from "@/presentation/components/ui/Avatar";
 import { AlertTriangle, X, AlertCircle } from "lucide-react";
 
 // Inlined from src/presentation/components/admin/AdminClassesFilters.tsx
@@ -360,6 +361,7 @@ interface AdminClassesTableProps {
   isLoading: boolean
   page: number
   totalPages: number
+  totalClasses: number
   activeDropdown: DropdownPosition | null
   actionLoading: number | null
   onRowClick: (classId: number) => void
@@ -401,11 +403,32 @@ function getOrdinalSuffix(value: number): string {
 
 
 
+
+function getTeacherInitials(teacherName: string): string {
+  const trimmedTeacherName = teacherName.trim()
+
+  if (!trimmedTeacherName) {
+    return "?"
+  }
+
+  const teacherNameParts = trimmedTeacherName.split(/\s+/)
+
+  if (teacherNameParts.length === 1) {
+    return teacherNameParts[0].slice(0, 2).toUpperCase()
+  }
+
+  const firstInitial = teacherNameParts[0]?.[0] ?? ""
+  const lastInitial = teacherNameParts[teacherNameParts.length - 1]?.[0] ?? ""
+
+  return `${firstInitial}${lastInitial}`.toUpperCase()
+}
+
 function AdminClassesTable({
   classes,
   isLoading,
   page,
   totalPages,
+  totalClasses,
   activeDropdown,
   actionLoading,
   onRowClick,
@@ -494,7 +517,7 @@ function AdminClassesTable({
                 <tr
                   key={selectedClass.id}
                   onClick={() => onRowClick(selectedClass.id)}
-                  className="group cursor-pointer transition-colors duration-200 hover:bg-slate-50/80"
+                  className="group cursor-pointer transition-colors duration-200 hover:bg-slate-100"
                 >
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
@@ -507,9 +530,12 @@ function AdminClassesTable({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-500">
-                        <User className="h-4 w-4 text-teal-600" />
-                      </div>
+                      <Avatar
+                        fallback={getTeacherInitials(selectedClass.teacherName)}
+                        src={selectedClass.teacherAvatarUrl ?? undefined}
+                        size="sm"
+                        className="ring-2 ring-transparent transition-all group-hover:ring-teal-100"
+                      />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-700">
                           {selectedClass.teacherName}
@@ -536,9 +562,7 @@ function AdminClassesTable({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2">
-                      <div className="rounded-lg border border-slate-200 bg-slate-100 p-1.5">
-                        <Users className="h-3.5 w-3.5 text-teal-600" />
-                      </div>
+                      <Users2 className="h-4 w-4 text-cyan-600" strokeWidth={2.35} />
                       <span className="text-sm font-medium text-slate-700">
                         {selectedClass.studentCount}
                       </span>
@@ -599,7 +623,7 @@ function AdminClassesTable({
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {totalClasses > 0 && (
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-6 py-4">
           <p className="text-sm text-slate-500">
             Page <span className="font-medium text-slate-900">{page}</span> of{" "}
@@ -1007,7 +1031,7 @@ export function AdminClassesPage() {
   const [deletingClass, setDeletingClass] = useState<AdminClass | null>(null)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
 
-  const limit = 20
+  const limit = 10
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300)
 
@@ -1155,14 +1179,14 @@ export function AdminClassesPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
               Class Management
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-500">
               Manage all classes, reassign teachers, and archive or restore
               classes.{" "}
               <span className="text-slate-400">({total} classes)</span>
@@ -1223,6 +1247,7 @@ export function AdminClassesPage() {
           isLoading={isLoading}
           page={page}
           totalPages={totalPages}
+          totalClasses={total}
           activeDropdown={activeDropdown}
           actionLoading={actionLoading}
           onRowClick={(classId) => navigate(`/dashboard/classes/${classId}`)}
@@ -1246,6 +1271,8 @@ export function AdminClassesPage() {
     </DashboardLayout>
   )
 }
+
+
 
 
 

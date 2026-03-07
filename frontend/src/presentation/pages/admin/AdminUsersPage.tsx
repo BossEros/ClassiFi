@@ -1065,7 +1065,7 @@ export function AdminUsersPage() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
 
-  const limit = 20
+  const limit = 10
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300)
 
@@ -1216,7 +1216,7 @@ export function AdminUsersPage() {
                 placeholder="Search users..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-slate-400 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-300 shadow-md shadow-slate-200/70 transition-all hover:border-slate-500 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                className="w-full rounded-xl border border-slate-400 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-md shadow-slate-200/70 transition-all hover:border-slate-500 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
               />
             </div>
 
@@ -1329,7 +1329,7 @@ export function AdminUsersPage() {
                   users.map((user) => (
                     <tr
                       key={user.id}
-                      className="group transition-colors duration-200 hover:bg-slate-50"
+                      className="group transition-colors duration-200 hover:bg-slate-100"
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -1422,7 +1422,7 @@ export function AdminUsersPage() {
           </div>
 
           {/* Pagination */}
-          {totalPages > 1 && (
+          {total > 0 && (
             <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-6 py-4">
               <p className="text-sm text-slate-500">
                 Page <span className="font-medium text-slate-900">{page}</span> of{" "}
@@ -1534,6 +1534,7 @@ export function AdminUsersPage() {
     </DashboardLayout>
   )
 }
+
 
 
 

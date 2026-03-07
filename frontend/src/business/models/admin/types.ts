@@ -42,6 +42,7 @@ export interface AdminClass {
   studentCount: number
   createdAt: string
   teacherName: string
+  teacherAvatarUrl?: string | null
 }
 
 export interface CreateClassData {

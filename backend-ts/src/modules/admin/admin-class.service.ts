@@ -22,6 +22,11 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
  * Admin service for class oversight operations.
  * Follows SRP - handles only admin class-related concerns.
  */
+type ClassWithTeacherDTO = ClassDTO & {
+  teacherName: string
+  teacherAvatarUrl: string | null
+}
+
 @injectable()
 export class AdminClassService {
   constructor(
@@ -38,7 +43,7 @@ export class AdminClassService {
    */
   async getAllClasses(
     options: ClassFilterOptions,
-  ): Promise<PaginatedResult<ClassDTO & { teacherName: string }>> {
+  ): Promise<PaginatedResult<ClassWithTeacherDTO>> {
     const {
       page,
       limit,
@@ -67,6 +72,7 @@ export class AdminClassService {
       data: result.data.map((row) => ({
         ...toClassDTO(row, { studentCount: row.studentCount }),
         teacherName: row.teacherName || "Unknown",
+        teacherAvatarUrl: row.teacherAvatarUrl ?? null,
       })),
     }
   }
@@ -75,9 +81,7 @@ export class AdminClassService {
    * Get a single class by ID with full details.
    * Delegates to ClassRepository for clean separation.
    */
-  async getClassById(
-    classId: number,
-  ): Promise<ClassDTO & { teacherName: string }> {
+  async getClassById(classId: number): Promise<ClassWithTeacherDTO> {
     const result = await this.classRepo.getClassWithTeacher(classId)
 
     if (!result) {
@@ -89,6 +93,7 @@ export class AdminClassService {
     return {
       ...toClassDTO(result, { studentCount }),
       teacherName: result.teacherName || "Unknown",
+      teacherAvatarUrl: result.teacherAvatarUrl ?? null,
     }
   }
 
@@ -180,7 +185,7 @@ export class AdminClassService {
   async reassignClassTeacher(
     classId: number,
     newTeacherId: number,
-  ): Promise<ClassDTO & { teacherName: string }> {
+  ): Promise<ClassWithTeacherDTO> {
     await this.updateClass(classId, { teacherId: newTeacherId })
     return this.getClassById(classId)
   }
@@ -189,9 +194,7 @@ export class AdminClassService {
    * Archive a class (soft delete).
    * Returns the updated class with full details including teacher name.
    */
-  async archiveClass(
-    classId: number,
-  ): Promise<ClassDTO & { teacherName: string }> {
+  async archiveClass(classId: number): Promise<ClassWithTeacherDTO> {
     await this.updateClass(classId, { isActive: false })
     return this.getClassById(classId)
   }

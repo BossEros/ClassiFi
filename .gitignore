@@ -198,3 +198,7 @@ judge0/postgres-data/
 frontend/lint-errors.txt
 frontend/remaining-errors.txt
 frontend/test_output.txt
+
+# Local scratch/vendor folders
+Dulles-main/
+dolos-main/

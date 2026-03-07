@@ -325,6 +325,7 @@ export const ClassDTOSchema = z.object({
  */
 export const ClassWithTeacherDTOSchema = ClassDTOSchema.extend({
   teacherName: z.string(),
+  teacherAvatarUrl: z.string().nullable(),
 })
 
 /**
