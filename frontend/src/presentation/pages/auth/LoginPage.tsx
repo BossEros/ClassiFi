@@ -82,7 +82,7 @@ function LoginForm({
           Email
         </label>
         <div className="relative">
-          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
+          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconNonInteractive}`}>
             <Mail className="w-5 h-5" />
           </div>
           <Input
@@ -128,7 +128,7 @@ function LoginForm({
           </button>
         </div>
         <div className="relative">
-          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
+          <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconNonInteractive}`}>
             <Lock className="w-5 h-5" />
           </div>
           <Input
@@ -149,7 +149,7 @@ function LoginForm({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors focus:outline-none ${authTheme.inputIcon} hover:text-[#13211E] focus:text-[#13211E]`}
+            className={`absolute right-3 top-1/2 -translate-y-1/2 transition-colors focus:outline-none ${authTheme.inputIconInteractive} hover:text-[#13211E] focus:text-[#13211E]`}
             aria-label={showPassword ? "Hide password" : "Show password"}
             tabIndex={-1}
             disabled={isLoading}

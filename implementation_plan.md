@@ -1,3 +1,151 @@
+﻿# Implementation Plan - Similarity Graph Singleton Support + UI Simplification
+
+## Goal
+
+Support true singleton nodes in the plagiarism graph by returning all analyzed submissions from the backend, while simplifying the page down to the graph-first workflow the teacher actually needs.
+
+## Scope
+
+- `backend-ts/src/modules/plagiarism/plagiarism.service.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism-persistence.service.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism.schema.ts`
+- `frontend/src/business/models/plagiarism/types.ts`
+- `frontend/src/data/api/plagiarism.types.ts`
+- `frontend/src/presentation/utils/plagiarismGraphUtils.ts`
+- `frontend/src/presentation/components/teacher/plagiarism/SimilarityGraphView.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/index.ts`
+- `frontend/src/presentation/pages/teacher/SimilarityResultsPage.tsx`
+- `frontend/src/tests/unit/presentation/utils/plagiarismGraphUtils.test.ts`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `frontend/src/tests/unit/business/services/plagiarismService.test.ts`
+- `frontend/src/tests/unit/data/repositories/plagiarismRepository.test.ts`
+- `frontend/documentation.md`
+- `backend-ts/documentation.md`
+- `task.md`
+
+## Execution Steps
+
+1. Extend the plagiarism response contract:
+   - Return analyzed `submissions` together with `pairs` for both fresh and reused reports.
+2. Update graph derivation:
+   - Build graph nodes from the full submission list so truly isolated submissions can appear as singleton nodes.
+3. Simplify the similarity page:
+   - Remove the separate cluster panel.
+   - Keep the graph, right-rail controls, and pairwise table as the only primary surfaces.
+4. Fix layout polish:
+   - Keep the threshold card and selection details aligned.
+   - Prevent the empty-state message from collapsing into a narrow vertical stack.
+5. Verify and document:
+   - Run backend `npm run typecheck` and `npm test`.
+   - Run targeted frontend Vitest suites and `npm run build`.
+   - Update frontend/backend docs.
+
+## Deliverables
+
+- Backend plagiarism responses that expose all analyzed submissions for graph rendering.
+- A simplified React similarity page with graph-first review and true singleton support.
+- Updated tests and passing verification.
+# Implementation Plan - Similarity Graph View
+
+## Goal
+
+Add a native React similarity graph view that behaves like the Dolos graph workflow while fitting ClassiFi's current frontend architecture and improving threshold usability.
+
+## Scope
+
+- `frontend/src/presentation/utils/plagiarismGraphUtils.ts`
+- `frontend/src/presentation/utils/plagiarismClusterUtils.ts`
+- `frontend/src/presentation/components/teacher/plagiarism/SimilarityGraphView.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/SimilarityThresholdSlider.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/PairwiseTriageTable.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/index.ts`
+- `frontend/src/presentation/pages/teacher/SimilarityResultsPage.tsx`
+- `frontend/src/tests/unit/presentation/utils/plagiarismGraphUtils.test.ts`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `frontend/documentation.md`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Add graph data utilities:
+   - Derive graph nodes, edges, and cluster membership from current pair data and threshold state.
+   - Keep singleton visibility configurable.
+3. Add shared threshold control:
+   - Replace isolated threshold ownership with a page-level slider state that can be reused by graph and table views.
+4. Build the React graph view:
+   - Render an SVG-based graph with responsive layout, hover tooltip, node selection, and cluster summary details.
+   - Add `Display singletons` toggle and reset action.
+5. Integrate the graph into the teacher similarity page:
+   - Keep cluster table and pairwise table intact.
+   - Ensure graph interactions can drive code-comparison review through the strongest related pair.
+6. Verify and document:
+   - Run targeted frontend tests.
+   - Run `frontend`: `npm run build`.
+   - Update `frontend/documentation.md` for the graph workflow.
+
+## Risks and Mitigations
+
+- Risk: Graph rendering could become noisy for larger classes.
+  - Mitigation: Use deterministic cluster-aware layout, singleton toggle, and hover/select states.
+- Risk: Threshold controls could drift between graph and pairwise table.
+  - Mitigation: Use one lifted threshold state for all similarity review surfaces.
+- Risk: Directly copying Dolos Vue graph code would create maintenance debt.
+  - Mitigation: Reimplement the behavior natively in React and use Dolos only as the product reference.
+
+## Deliverables
+
+- Native React similarity graph with draggable threshold, singleton toggle, hover/select behavior, and integration into current teacher review flow.
+- Targeted tests and successful frontend build verification.
+# Implementation Plan - Similarity Clustering Feature
+
+## Goal
+
+Add the Dolos-style similarity clustering feature to the ClassiFi teacher plagiarism review flow by deriving connected submission clusters from existing pairwise similarity results.
+
+## Scope
+
+- `frontend/src/presentation/utils/plagiarismClusterUtils.ts`
+- `frontend/src/presentation/components/teacher/plagiarism/SimilarityClustersPanel.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/PairwiseTriageTable.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/index.ts`
+- `frontend/src/presentation/pages/teacher/SimilarityResultsPage.tsx`
+- `frontend/src/tests/unit/presentation/utils/plagiarismClusterUtils.test.ts`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `frontend/documentation.md`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Add clustering derivation utilities:
+   - Reuse the existing pairwise similarity result data.
+   - Compute connected clusters using the current overall similarity threshold.
+3. Add cluster review UI:
+   - Show cluster count in the summary cards.
+   - Add a cluster panel that lists grouped submissions and lets teachers jump into the strongest pair in a cluster.
+4. Keep pairwise review aligned:
+   - Reuse the pairwise threshold control so clustering and pair filtering stay in sync.
+5. Verify:
+   - Run targeted frontend tests for the new utility and updated page.
+   - Run `frontend`: `npm run build`.
+6. Document:
+   - Update `frontend/documentation.md` to describe the cluster workflow.
+
+## Risks and Mitigations
+
+- Risk: Cluster grouping could diverge from the visible pair filter threshold.
+  - Mitigation: Drive both from the same minimum similarity state.
+- Risk: Large classes could make cluster rows noisy.
+  - Mitigation: Sort clusters by size/strength and keep the first action focused on the strongest pair.
+
+## Deliverables
+
+- Dolos-style similarity clustering derived from existing ClassiFi pair results.
+- Cluster summary and review UI in the teacher similarity results page.
+- Targeted tests and successful frontend build verification.
 # Implementation Plan - Frontend Unit Test Fixes
 
 ## Goal
@@ -1798,3 +1946,7 @@ Audit the frontend after the dark-to-light refactor and remove only the code tha
 2. Confirm each candidate with direct reference searches before deleting anything.
 3. Remove the confirmed dead files and trim unused exports from still-live modules.
 4. Verify with frontend build: npm run build.
+
+
+
+

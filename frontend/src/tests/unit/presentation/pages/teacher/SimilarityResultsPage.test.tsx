@@ -41,6 +41,17 @@ const mockData = vi.hoisted(() => {
       averageSimilarity: 0.89,
       maxSimilarity: 0.9,
     },
+    submissions: [
+      pair.leftFile,
+      pair.rightFile,
+      {
+        id: 13,
+        path: "student-c.py",
+        filename: "student-c.py",
+        lineCount: 8,
+        studentName: "Student C",
+      },
+    ],
     pairs: [pair],
     warnings: [],
   }
@@ -145,6 +156,17 @@ vi.mock("@/presentation/components/teacher/plagiarism", () => ({
   }) => (
     <button onClick={() => onPairSelect(mockData.pair)}>Select Pair</button>
   ),
+  SimilarityGraphView: ({
+    minimumSimilarityPercent,
+    submissions,
+  }: {
+    minimumSimilarityPercent: number
+    submissions: Array<{ id: number }>
+  }) => (
+    <div>
+      Similarity Graph: {minimumSimilarityPercent}% / {submissions.length} submissions
+    </div>
+  ),
   PairComparison: () => <div>Pair Comparison</div>,
   PairCodeDiff: () => <div>Pair Diff</div>,
 }))
@@ -155,12 +177,67 @@ describe("SimilarityResultsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     scrollIntoViewMock.mockReset()
-    vi.mocked(getAssignmentById).mockResolvedValue(mockData.assignment)
+    vi.mocked(getAssignmentById).mockImplementation(() => new Promise(() => {}))
 
     Object.defineProperty(window.HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
       value: scrollIntoViewMock,
     })
+  })
+
+  it("renders the graph with submission-aware summary cards", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/dashboard/assignments/1/similarity",
+            state: { results: mockData.results },
+          },
+        ]}
+      >
+        <Routes>
+          <Route
+            path="/dashboard/assignments/:assignmentId/similarity"
+            element={<SimilarityResultsPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText("Submissions: 3")).toBeInTheDocument()
+    expect(screen.getByText("Average Similarity: 89.0%")).toBeInTheDocument()
+    expect(screen.getByText("Max Similarity: 90.0%")).toBeInTheDocument()
+    expect(
+      screen.getByText("Similarity Graph: 75% / 3 submissions"),
+    ).toBeInTheDocument()
+  })
+
+  it("renders the average similarity card before the max similarity card", async () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/dashboard/assignments/1/similarity",
+            state: { results: mockData.results },
+          },
+        ]}
+      >
+        <Routes>
+          <Route
+            path="/dashboard/assignments/:assignmentId/similarity"
+            element={<SimilarityResultsPage />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    const averageSimilarityCard = screen.getByText("Average Similarity: 89.0%")
+    const maxSimilarityCard = screen.getByText("Max Similarity: 90.0%")
+    const averageCardPosition = averageSimilarityCard.compareDocumentPosition(
+      maxSimilarityCard,
+    )
+
+    expect(averageCardPosition & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it("auto-scrolls to comparison section when a pair is selected", async () => {
@@ -194,3 +271,4 @@ describe("SimilarityResultsPage", () => {
     expect(screen.getByText(/Code Comparison:/)).toBeInTheDocument()
   })
 })
+

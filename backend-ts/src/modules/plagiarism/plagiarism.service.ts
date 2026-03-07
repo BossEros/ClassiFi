@@ -1,4 +1,4 @@
-import { inject, injectable } from "tsyringe"
+﻿import { inject, injectable } from "tsyringe"
 import {
   File,
   LanguageName,
@@ -16,6 +16,7 @@ import {
   PLAGIARISM_LANGUAGE_MAP,
   toPlagiarismPairDTO,
   toPlagiarismFragmentDTO,
+  type PlagiarismFileDTO,
   type PlagiarismPairDTO,
   type PlagiarismFragmentDTO,
   type PlagiarismSummaryDTO,
@@ -57,6 +58,7 @@ export interface AnalyzeResponse {
   isReusedReport: boolean
   assignmentId?: number
   summary: PlagiarismSummaryDTO
+  submissions: PlagiarismFileDTO[]
   pairs: PlagiarismPairDTO[]
   warnings: string[]
 }
@@ -106,19 +108,16 @@ export interface ResultDetailsResponse {
  */
 @injectable()
 export class PlagiarismService {
-  private static readonly LEGACY_REPORT_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+  private static readonly LEGACY_REPORT_TTL_MS = 24 * 60 * 60 * 1000
   private static readonly MAX_LEGACY_REPORTS = 100
 
   /**
    * In-memory storage for ad-hoc reports (not tied to assignment submissions).
-   * Kept for 'analyzeFiles' endpoint which might not persist to DB.
+   * Kept for analyzeFiles flows that do not persist to the database.
    */
-  private legacyReportsStore = new Map<
-    string,
-    { report: Report; createdAt: Date }
-  >()
+  private legacyReportsStore = new Map<string, { report: Report; createdAt: Date }>()
 
-  /** Interval ID for cleanup timer - stored to allow cleanup in dispose() */
+  /** Interval ID for cleanup timer - stored to allow cleanup in dispose(). */
   private cleanupIntervalId: ReturnType<typeof setInterval> | null = null
 
   constructor(
@@ -133,7 +132,6 @@ export class PlagiarismService {
     @inject(DI_TOKENS.services.semanticSimilarityClient)
     private semanticClient: SemanticSimilarityClient,
   ) {
-    // Run cleanup every hour and store the interval ID for cleanup
     this.cleanupIntervalId = setInterval(
       () => this.cleanupExpiredReports(),
       60 * 60 * 1000,
@@ -149,49 +147,37 @@ export class PlagiarismService {
       clearInterval(this.cleanupIntervalId)
       this.cleanupIntervalId = null
     }
+
     this.legacyReportsStore.clear()
   }
 
-  // ========================================================================
-  // Public Methods
-  // ========================================================================
-
-  /** Analyze files for plagiarism (Ad-hoc analysis) */
+  /** Analyze files for plagiarism (ad-hoc analysis). */
   async analyzeFiles(request: AnalyzeRequest): Promise<AnalyzeResponse> {
-    // Validate request
     this.validateAnalyzeRequest(request)
 
-    // Create detector using factory
     const detector = this.detectorFactory.create({
       language: request.language,
       kgramLength: request.kgramLength,
     })
 
-    // Convert to File objects
     const files = request.files.map(
-      (f) =>
-        new File(f.path, f.content, {
-          studentId: f.studentId,
-          studentName: f.studentName,
+      (file) =>
+        new File(file.path, file.content, {
+          studentId: file.studentId,
+          studentName: file.studentName,
         }),
     )
 
-    // Optional template file
     const ignoredFile = request.templateFile
       ? new File(request.templateFile.path, request.templateFile.content)
       : undefined
 
-    // Run analysis
     const report = await detector.analyze(files, ignoredFile)
 
-    // For ad-hoc analysis, we might still use in-memory store if it doesn't map to DB schema
-    // Or we could persist it if we want ad-hoc history.
-    // For now, preserving legacy behavior of generating a temporary ID.
     this.cleanupExpiredReports()
     const reportId = this.generateReportId()
     this.legacyReportsStore.set(reportId, { report, createdAt: new Date() })
 
-    // Build response
     const threshold = request.threshold ?? PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
     const summary = report.getSummary()
     const pairs = report.getPairs()
@@ -202,45 +188,46 @@ export class PlagiarismService {
       summary: {
         totalFiles: summary.totalFiles,
         totalPairs: summary.totalPairs,
-        suspiciousPairs: pairs.filter((p) => p.similarity >= threshold).length,
+        suspiciousPairs: pairs.filter((pair) => pair.similarity >= threshold)
+          .length,
         averageSimilarity: summary.averageSimilarity,
         maxSimilarity: summary.maxSimilarity,
       },
+      submissions: this.mapReportFilesToDTOs(report.files),
       pairs: pairs.map((pair) => toPlagiarismPairDTO(pair)),
       warnings: summary.warnings,
     }
   }
 
-  /** Get pair details with fragments */
+  /** Get pair details with fragments. */
   async getPairDetails(
     reportId: string,
     pairId: number,
   ): Promise<PairDetailsResponse> {
-    // Check for ad-hoc report first (legacy)
     const legacyStored = this.legacyReportsStore.get(reportId)
 
     if (legacyStored) {
       const pairs = legacyStored.report.getPairs()
-      const pair = pairs.find((p: Pair) => p.id === pairId)
+      const pair = pairs.find((storedPair: Pair) => storedPair.id === pairId)
+
       if (!pair) {
         throw new PlagiarismPairNotFoundError(pairId)
       }
+
       const fragments = legacyStored.report.getFragments(pair)
+
       return {
         pair: toPlagiarismPairDTO(pair),
-        fragments: fragments.map((f: Fragment, i: number) =>
-          toPlagiarismFragmentDTO(f, i),
+        fragments: fragments.map((fragment: Fragment, index: number) =>
+          toPlagiarismFragmentDTO(fragment, index),
         ),
         leftCode: pair.leftFile.content,
         rightCode: pair.rightFile.content,
       }
     }
 
-    // Try to handle as DB report
     const numericReportId = parseInt(reportId, 10)
-    if (!isNaN(numericReportId)) {
-      // Delegate to getResultDetails for DB-backed reports
-      // pairId corresponds to the resultId in the database
+    if (!Number.isNaN(numericReportId)) {
       const details = await this.getResultDetails(pairId)
 
       return {
@@ -275,22 +262,20 @@ export class PlagiarismService {
     throw new PlagiarismReportNotFoundError(reportId)
   }
 
-  /** Get report by ID */
+  /** Get report by ID. */
   async getReport(reportId: string): Promise<AnalyzeResponse | null> {
-    // Try to parse as numeric ID (database report)
-    const numericId = parseInt(reportId, 10)
-    if (!isNaN(numericId)) {
-      return this.persistenceService.getReport(numericId)
+    const numericReportId = parseInt(reportId, 10)
+    if (!Number.isNaN(numericReportId)) {
+      return this.persistenceService.getReport(numericReportId)
     }
 
-    // Fall back to in-memory for string-based ad-hoc reports
-    const stored = this.legacyReportsStore.get(reportId)
-    if (!stored) {
+    const storedReport = this.legacyReportsStore.get(reportId)
+    if (!storedReport) {
       return null
     }
 
-    const summary = stored.report.getSummary()
-    const pairs = stored.report.getPairs()
+    const summary = storedReport.report.getSummary()
+    const pairs = storedReport.report.getPairs()
     const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
 
     return {
@@ -299,39 +284,38 @@ export class PlagiarismService {
       summary: {
         totalFiles: summary.totalFiles,
         totalPairs: summary.totalPairs,
-        suspiciousPairs: pairs.filter((p: Pair) => p.similarity >= threshold)
-          .length,
+        suspiciousPairs: pairs.filter(
+          (pair: Pair) => pair.similarity >= threshold,
+        ).length,
         averageSimilarity: summary.averageSimilarity,
         maxSimilarity: summary.maxSimilarity,
       },
+      submissions: this.mapReportFilesToDTOs(storedReport.report.files),
       pairs: pairs.map((pair: Pair) => toPlagiarismPairDTO(pair)),
       warnings: summary.warnings,
     }
   }
 
-  /** Delete a report */
+  /** Delete a report. */
   async deleteReport(reportId: string): Promise<boolean> {
-    // Try to parse as numeric ID (database report)
-    const numericId = parseInt(reportId, 10)
-    if (!isNaN(numericId)) {
-      return this.persistenceService.deleteReport(numericId)
+    const numericReportId = parseInt(reportId, 10)
+    if (!Number.isNaN(numericReportId)) {
+      return this.persistenceService.deleteReport(numericReportId)
     }
 
-    // Fall back to in-memory for string-based ad-hoc reports
     return this.legacyReportsStore.delete(reportId)
   }
 
-  /** Get result details from database with fragments and file content */
+  /** Get result details from database with fragments and file content. */
   async getResultDetails(resultId: number): Promise<ResultDetailsResponse> {
-    const data = await this.persistenceService.getResultData(resultId)
+    const resultData = await this.persistenceService.getResultData(resultId)
 
-    if (!data || !data.submission1 || !data.submission2) {
+    if (!resultData || !resultData.submission1 || !resultData.submission2) {
       throw new PlagiarismResultNotFoundError(resultId)
     }
 
-    const { result, fragments, submission1, submission2 } = data
+    const { result, fragments, submission1, submission2 } = resultData
 
-    // Download file content using File Service
     const [leftContent, rightContent] =
       await this.fileService.downloadSubmissionFiles(
         submission1.submission.filePath,
@@ -347,21 +331,21 @@ export class PlagiarismService {
         overlap: result.overlap,
         longestFragment: result.longestFragment,
       },
-      fragments: fragments.map((f: MatchFragment) => ({
-        id: f.id,
+      fragments: fragments.map((fragment: MatchFragment) => ({
+        id: fragment.id,
         leftSelection: {
-          startRow: f.leftStartRow,
-          startCol: f.leftStartCol,
-          endRow: f.leftEndRow,
-          endCol: f.leftEndCol,
+          startRow: fragment.leftStartRow,
+          startCol: fragment.leftStartCol,
+          endRow: fragment.leftEndRow,
+          endCol: fragment.leftEndCol,
         },
         rightSelection: {
-          startRow: f.rightStartRow,
-          startCol: f.rightStartCol,
-          endRow: f.rightEndRow,
-          endCol: f.rightEndCol,
+          startRow: fragment.rightStartRow,
+          startCol: fragment.rightStartCol,
+          endRow: fragment.rightEndRow,
+          endCol: fragment.rightEndCol,
         },
-        length: f.length,
+        length: fragment.length,
       })),
       leftFile: {
         filename: submission1.submission.fileName,
@@ -378,20 +362,16 @@ export class PlagiarismService {
     }
   }
 
-  /**
-   * Analyze all submissions for an assignment.
-   */
+  /** Analyze all submissions for an assignment. */
   async analyzeAssignmentSubmissions(
     assignmentId: number,
     teacherId?: number,
   ): Promise<AnalyzeResponse> {
-    // Step 1: Validate and fetch assignment
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Step 2: Reuse latest report when no new/latest submissions were added.
     const reusableAssignmentReport =
       await this.persistenceService.getReusableAssignmentReport(assignmentId)
 
@@ -399,12 +379,11 @@ export class PlagiarismService {
       return reusableAssignmentReport
     }
 
-    // Step 3: Fetch and download submission files
     const files = await this.fileService.fetchSubmissionFiles(assignmentId)
 
-    // Step 4: Create ignored file from template code
     const language = this.getLanguage(assignment.programmingLanguage)
     let ignoredFile: File | undefined
+
     if (assignment.templateCode) {
       ignoredFile = new File(
         `template.${this.getFileExtension(language)}`,
@@ -412,27 +391,20 @@ export class PlagiarismService {
       )
     }
 
-    // Step 5: Run structural plagiarism analysis
     const detector = this.detectorFactory.create({ language })
     const report = await detector.analyze(files, ignoredFile)
     const pairs = report.getPairs()
 
-    // Step 5.5: Run semantic analysis via GraphCodeBERT sidecar
-    // Only executed for Python — the model was fine-tuned on Python data.
-    // Returns an empty map (fast-path) for other languages, preserving semanticScore: 0.
     const semanticScores = await this.computeSemanticScores(pairs, language)
 
-    // Step 6: Persist report to database
-    const { dbReport, resultIdMap } =
-      await this.persistenceService.persistReport(
-        assignmentId,
-        teacherId,
-        report,
-        pairs,
-        semanticScores,
-      )
+    const { dbReport, resultIdMap } = await this.persistenceService.persistReport(
+      assignmentId,
+      teacherId,
+      report,
+      pairs,
+      semanticScores,
+    )
 
-    // Step 7: Build and return response
     return this.buildAssignmentAnalysisResponse(
       dbReport.id,
       report,
@@ -461,33 +433,26 @@ export class PlagiarismService {
     }
   }
 
-  // ========================================================================
-  // Private Helper Methods
-  // ========================================================================
+  private cleanupExpiredReports(): void {
+    const currentTimestampMs = Date.now()
 
-  private cleanupExpiredReports() {
-    const now = Date.now()
-
-    // Remove expired entries
-    for (const [id, data] of this.legacyReportsStore.entries()) {
-      if (
-        now - data.createdAt.getTime() >
-        PlagiarismService.LEGACY_REPORT_TTL_MS
-      ) {
-        this.legacyReportsStore.delete(id)
+    for (const [reportId, reportData] of this.legacyReportsStore.entries()) {
+      const reportAgeMs = currentTimestampMs - reportData.createdAt.getTime()
+      if (reportAgeMs > PlagiarismService.LEGACY_REPORT_TTL_MS) {
+        this.legacyReportsStore.delete(reportId)
       }
     }
 
-    // Enforce max size (LRU-like: remove oldest if still too big)
     if (this.legacyReportsStore.size > PlagiarismService.MAX_LEGACY_REPORTS) {
       const sortedEntries = Array.from(this.legacyReportsStore.entries()).sort(
-        (a, b) => a[1].createdAt.getTime() - b[1].createdAt.getTime(),
+        (leftEntry, rightEntry) =>
+          leftEntry[1].createdAt.getTime() - rightEntry[1].createdAt.getTime(),
       )
 
-      const toRemove =
+      const reportCountToRemove =
         this.legacyReportsStore.size - PlagiarismService.MAX_LEGACY_REPORTS
-      for (let i = 0; i < toRemove; i++) {
-        this.legacyReportsStore.delete(sortedEntries[i][0])
+      for (let index = 0; index < reportCountToRemove; index += 1) {
+        this.legacyReportsStore.delete(sortedEntries[index][0])
       }
     }
   }
@@ -508,6 +473,17 @@ export class PlagiarismService {
     }
   }
 
+  private mapReportFilesToDTOs(files: File[]): PlagiarismFileDTO[] {
+    return files.map((file) => ({
+      id: parseInt(file.info?.submissionId || String(file.id), 10),
+      path: file.path,
+      filename: file.filename,
+      lineCount: file.lineCount,
+      studentId: file.info?.studentId,
+      studentName: file.info?.studentName,
+    }))
+  }
+
   private generateReportId(): string {
     return `report_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   }
@@ -517,6 +493,7 @@ export class PlagiarismService {
     if (!language) {
       throw new UnsupportedLanguageError(programmingLanguage)
     }
+
     return language
   }
 
@@ -526,6 +503,7 @@ export class PlagiarismService {
       java: "java",
       c: "c",
     }
+
     return extensionMap[language] || "txt"
   }
 
@@ -543,52 +521,61 @@ export class PlagiarismService {
         totalFiles: report.files.length,
         totalPairs: pairs.length,
         suspiciousPairs: pairs.filter(
-          (p: Pair) => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
+          (pair: Pair) => pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
         ).length,
         averageSimilarity: parseFloat(
           (
-            pairs.reduce((sum: number, p: Pair) => sum + p.similarity, 0) /
-            Math.max(1, pairs.length)
+            pairs.reduce(
+              (sum: number, pair: Pair) => sum + pair.similarity,
+              0,
+            ) / Math.max(1, pairs.length)
           ).toFixed(4),
         ),
         maxSimilarity: parseFloat(
-          Math.max(...pairs.map((p: Pair) => p.similarity), 0).toFixed(4),
+          Math.max(...pairs.map((pair: Pair) => pair.similarity), 0).toFixed(4),
         ),
       },
-      pairs: pairs.map((p: Pair) => {
-        const leftSubId = parseInt(p.leftFile.info?.submissionId || "0")
-        const rightSubId = parseInt(p.rightFile.info?.submissionId || "0")
-        const [sub1, sub2] =
-          leftSubId < rightSubId
-            ? [leftSubId, rightSubId]
-            : [rightSubId, leftSubId]
-        const key = `${sub1}-${sub2}`
-        const resultId = resultIdMap.get(key) ?? 0
-        const semanticScore = semanticScores.get(key) ?? 0
+      submissions: this.mapReportFilesToDTOs(report.files),
+      pairs: pairs.map((pair: Pair) => {
+        const leftSubmissionId = parseInt(
+          pair.leftFile.info?.submissionId || "0",
+          10,
+        )
+        const rightSubmissionId = parseInt(
+          pair.rightFile.info?.submissionId || "0",
+          10,
+        )
+        const [firstSubmissionId, secondSubmissionId] =
+          leftSubmissionId < rightSubmissionId
+            ? [leftSubmissionId, rightSubmissionId]
+            : [rightSubmissionId, leftSubmissionId]
+        const pairKey = `${firstSubmissionId}-${secondSubmissionId}`
+        const resultId = resultIdMap.get(pairKey) ?? 0
+        const semanticScore = semanticScores.get(pairKey) ?? 0
 
         return {
           id: resultId,
           leftFile: {
-            id: leftSubId,
-            path: p.leftFile.path,
-            filename: p.leftFile.filename,
-            lineCount: p.leftTotal,
-            studentId: p.leftFile.info?.studentId,
-            studentName: p.leftFile.info?.studentName,
+            id: leftSubmissionId,
+            path: pair.leftFile.path,
+            filename: pair.leftFile.filename,
+            lineCount: pair.leftTotal,
+            studentId: pair.leftFile.info?.studentId,
+            studentName: pair.leftFile.info?.studentName,
           },
           rightFile: {
-            id: rightSubId,
-            path: p.rightFile.path,
-            filename: p.rightFile.filename,
-            lineCount: p.rightTotal,
-            studentId: p.rightFile.info?.studentId,
-            studentName: p.rightFile.info?.studentName,
+            id: rightSubmissionId,
+            path: pair.rightFile.path,
+            filename: pair.rightFile.filename,
+            lineCount: pair.rightTotal,
+            studentId: pair.rightFile.info?.studentId,
+            studentName: pair.rightFile.info?.studentName,
           },
-          structuralScore: p.similarity,
+          structuralScore: pair.similarity,
           semanticScore,
-          hybridScore: 0.5 * p.similarity + 0.5 * semanticScore,
-          overlap: p.overlap,
-          longest: p.longest,
+          hybridScore: 0.5 * pair.similarity + 0.5 * semanticScore,
+          overlap: pair.overlap,
+          longest: pair.longest,
         }
       }),
       warnings: [],
@@ -597,16 +584,14 @@ export class PlagiarismService {
 
   /**
    * Compute semantic similarity scores for all pairs with bounded concurrency.
-   *
-   * Runs for all supported languages (Python, Java, C).
-   * Any individual pair failure is absorbed by the client (returns 0).
+   * Runs for all supported languages. Any individual pair failure is absorbed by the client.
    */
   private async computeSemanticScores(
     pairs: Pair[],
     _language: LanguageName,
   ): Promise<Map<string, number>> {
-    const scores = new Map<string, number>()
-    const pairRequests: Array<{
+    const semanticScores = new Map<string, number>()
+    const queuedRequests: Array<{
       key: string
       leftContent: string
       rightContent: string
@@ -614,59 +599,59 @@ export class PlagiarismService {
     const queuedPairKeys = new Set<string>()
 
     for (const pair of pairs) {
-      const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0")
-      const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0")
+      const leftSubmissionId = parseInt(pair.leftFile.info?.submissionId || "0")
+      const rightSubmissionId = parseInt(pair.rightFile.info?.submissionId || "0")
 
-      if (!leftSubId || !rightSubId) {
+      if (!leftSubmissionId || !rightSubmissionId) {
         continue
       }
 
-      const [sub1, sub2] =
-        leftSubId < rightSubId
-          ? [leftSubId, rightSubId]
-          : [rightSubId, leftSubId]
-      const key = `${sub1}-${sub2}`
+      const [firstSubmissionId, secondSubmissionId] =
+        leftSubmissionId < rightSubmissionId
+          ? [leftSubmissionId, rightSubmissionId]
+          : [rightSubmissionId, leftSubmissionId]
+      const pairKey = `${firstSubmissionId}-${secondSubmissionId}`
 
-      if (queuedPairKeys.has(key)) {
+      if (queuedPairKeys.has(pairKey)) {
         continue
       }
 
-      queuedPairKeys.add(key)
-      pairRequests.push({
-        key,
+      queuedPairKeys.add(pairKey)
+      queuedRequests.push({
+        key: pairKey,
         leftContent: pair.leftFile.content,
         rightContent: pair.rightFile.content,
       })
     }
 
-    if (pairRequests.length === 0) {
-      return scores
+    if (queuedRequests.length === 0) {
+      return semanticScores
     }
 
     const maxConcurrency = Math.max(
       1,
       settings.semanticSimilarityMaxConcurrentRequests ?? 4,
     )
-    const workerCount = Math.min(maxConcurrency, pairRequests.length)
+    const workerCount = Math.min(maxConcurrency, queuedRequests.length)
     let nextRequestIndex = 0
 
     await Promise.all(
       Array.from({ length: workerCount }, async () => {
-        while (nextRequestIndex < pairRequests.length) {
+        while (nextRequestIndex < queuedRequests.length) {
           const requestIndex = nextRequestIndex
           nextRequestIndex += 1
-          const request = pairRequests[requestIndex]
+          const queuedRequest = queuedRequests[requestIndex]
 
-          const score = await this.semanticClient.getSemanticScore(
-            request.leftContent,
-            request.rightContent,
+          const semanticScore = await this.semanticClient.getSemanticScore(
+            queuedRequest.leftContent,
+            queuedRequest.rightContent,
           )
 
-          scores.set(request.key, score)
+          semanticScores.set(queuedRequest.key, semanticScore)
         }
       }),
     )
 
-    return scores
+    return semanticScores
   }
 }

@@ -4,6 +4,10 @@ import type { PairResponse } from "@/business/services/plagiarismService"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
+import {
+  getPairOverallSimilarityRatio,
+  normalizeSimilarityToRatio,
+} from "@/presentation/utils/plagiarismClusterUtils"
 
 type SortKey =
   | "similarity"
@@ -23,6 +27,10 @@ interface PairwiseTriageTableProps {
   onFilteredCountChange?: (count: number) => void
   /** Optional callback triggered when minimum similarity threshold changes. */
   onMinimumSimilarityPercentChange?: (minimumSimilarityPercent: number) => void
+  /** Optional externally controlled minimum similarity threshold. */
+  minimumSimilarityPercent?: number
+  /** Controls whether the local threshold dropdown is shown. */
+  showThresholdControl?: boolean
   /** Optional loading state while pair data is fetched. */
   isLoading?: boolean
   /** Optional selected pair id for row highlighting. */
@@ -60,23 +68,6 @@ function getPairStudentNames(pair: PairResponse): {
     left: pair.leftFile.studentName?.trim() || "Unknown Student",
     right: pair.rightFile.studentName?.trim() || "Unknown Student",
   }
-}
-
-function normalizeSimilarityToRatio(similarity: number): number {
-  if (!Number.isFinite(similarity) || similarity <= 0) {
-    return 0
-  }
-
-  return similarity > 1 ? similarity / 100 : similarity
-}
-
-function getPairSimilarityRatio(pair: PairResponse): number {
-  const hybridSimilarity = normalizeSimilarityToRatio(pair.hybridScore)
-  if (hybridSimilarity > 0) {
-    return hybridSimilarity
-  }
-
-  return normalizeSimilarityToRatio(pair.structuralScore)
 }
 
 function getPairStructuralSimilarityRatio(pair: PairResponse): number {
@@ -153,12 +144,12 @@ function getSignalBadgeClassName(level: SignalLevel): string {
   }
 }
 
-function getTotalSharedChunksTooltipText(): string {
-  return "Total Shared Chunks shows how much shared code appears across both submissions combined. Higher levels indicate more shared material overall."
+function getTotalOverlapTooltipText(): string {
+  return "Total Overlap shows the raw overlap value stored for the pair, alongside a normalized signal level that makes short and long submissions easier to compare fairly."
 }
 
-function getLongestContinuousSharedBlockTooltipText(): string {
-  return "Longest Continuous Shared Block shows the size of the largest uninterrupted shared section between two submissions. Higher levels indicate a longer direct copied block."
+function getLongestFragmentTooltipText(): string {
+  return "Longest Fragment shows the raw longest matched fragment for the pair, alongside a normalized signal level that highlights unusually large uninterrupted matches."
 }
 
 function getSignalBadgeTooltip(metricName: string, level: SignalLevel): string {
@@ -193,19 +184,25 @@ export function PairwiseTriageTable({
   onPairSelect,
   onFilteredCountChange,
   onMinimumSimilarityPercentChange,
+  minimumSimilarityPercent,
+  showThresholdControl = true,
   isLoading = false,
   selectedPairId,
 }: PairwiseTriageTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("similarity")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
-  const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(75)
+  const [internalMinimumSimilarityPercent, setInternalMinimumSimilarityPercent] =
+    useState(75)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+  const isControlledThreshold = typeof minimumSimilarityPercent === "number"
+  const effectiveMinimumSimilarityPercent =
+    minimumSimilarityPercent ?? internalMinimumSimilarityPercent
 
   const filteredAndSortedPairs = useMemo(() => {
     const filteredPairs = pairs.filter((pair) => {
-      const pairSimilarityPercent = getPairSimilarityRatio(pair) * 100
-      return pairSimilarityPercent >= minimumSimilarityPercent
+      const pairSimilarityPercent = getPairOverallSimilarityRatio(pair) * 100
+      return pairSimilarityPercent >= effectiveMinimumSimilarityPercent
     })
 
     return [...filteredPairs].sort((leftPair, rightPair) => {
@@ -214,7 +211,8 @@ export function PairwiseTriageTable({
       switch (sortKey) {
         case "similarity":
           comparisonValue =
-            getPairSimilarityRatio(leftPair) - getPairSimilarityRatio(rightPair)
+            getPairOverallSimilarityRatio(leftPair) -
+            getPairOverallSimilarityRatio(rightPair)
           break
         case "structuralSimilarity":
           comparisonValue =
@@ -240,7 +238,7 @@ export function PairwiseTriageTable({
 
       return sortOrder === "desc" ? -comparisonValue : comparisonValue
     })
-  }, [pairs, minimumSimilarityPercent, sortKey, sortOrder])
+  }, [effectiveMinimumSimilarityPercent, pairs, sortKey, sortOrder])
 
   useEffect(() => {
     if (!onFilteredCountChange) {
@@ -251,12 +249,12 @@ export function PairwiseTriageTable({
   }, [filteredAndSortedPairs.length, onFilteredCountChange])
 
   useEffect(() => {
-    if (!onMinimumSimilarityPercentChange) {
+    if (!onMinimumSimilarityPercentChange || isControlledThreshold) {
       return
     }
 
-    onMinimumSimilarityPercentChange(minimumSimilarityPercent)
-  }, [minimumSimilarityPercent, onMinimumSimilarityPercentChange])
+    onMinimumSimilarityPercentChange(effectiveMinimumSimilarityPercent)
+  }, [effectiveMinimumSimilarityPercent, isControlledThreshold, onMinimumSimilarityPercentChange])
 
   const totalPages = Math.max(
     1,
@@ -288,23 +286,26 @@ export function PairwiseTriageTable({
             Pairwise Comparison
           </h2>
           <p className="text-sm text-slate-500">
-            Review high-similarity student pairs and open code comparison
-            details.
+            {showThresholdControl
+              ? "Review high-similarity student pairs and open code comparison details."
+              : `Review high-similarity student pairs using the shared ${effectiveMinimumSimilarityPercent}% graph threshold.`}
           </p>
         </div>
 
-        <div className="w-full sm:w-52 xl:w-52">
-          <Select
-            aria-label="Minimum similarity threshold"
-            options={similarityThresholdOptions}
-            value={String(minimumSimilarityPercent)}
-            variant="light"
-            onChange={(selectedValue) => {
-              setMinimumSimilarityPercent(Number(selectedValue))
-              setCurrentPage(1)
-            }}
-          />
-        </div>
+        {showThresholdControl && (
+          <div className="w-full sm:w-52 xl:w-52">
+            <Select
+              aria-label="Minimum similarity threshold"
+              options={similarityThresholdOptions}
+              value={String(effectiveMinimumSimilarityPercent)}
+              variant="light"
+              onChange={(selectedValue) => {
+                setInternalMinimumSimilarityPercent(Number(selectedValue))
+                setCurrentPage(1)
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {isLoading ? (
@@ -364,10 +365,10 @@ export function PairwiseTriageTable({
                     className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <span>Total Shared Chunks</span>
+                      <span>Total Overlap</span>
                       <span
-                        title={getTotalSharedChunksTooltipText()}
-                        aria-label={getTotalSharedChunksTooltipText()}
+                        title={getTotalOverlapTooltipText()}
+                        aria-label={getTotalOverlapTooltipText()}
                         className="text-slate-500"
                       >
                         <CircleHelp className="h-3.5 w-3.5" />
@@ -384,10 +385,10 @@ export function PairwiseTriageTable({
                     className="cursor-pointer select-none px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
                   >
                     <span className="inline-flex items-center gap-1.5">
-                      <span>Longest Continuous Shared Block</span>
+                      <span>Longest Fragment</span>
                       <span
-                        title={getLongestContinuousSharedBlockTooltipText()}
-                        aria-label={getLongestContinuousSharedBlockTooltipText()}
+                        title={getLongestFragmentTooltipText()}
+                        aria-label={getLongestFragmentTooltipText()}
                         className="text-slate-500"
                       >
                         <CircleHelp className="h-3.5 w-3.5" />
@@ -417,7 +418,7 @@ export function PairwiseTriageTable({
                 ) : (
                   paginatedPairs.map((pair) => {
                     const pairStudentNames = getPairStudentNames(pair)
-                    const overallSimilarity = getPairSimilarityRatio(pair)
+                    const overallSimilarity = getPairOverallSimilarityRatio(pair)
                     const structuralSimilarity =
                       getPairStructuralSimilarityRatio(pair)
                     const semanticSimilarity =
@@ -476,7 +477,7 @@ export function PairwiseTriageTable({
                           <QualitativeSignalBadge
                             level={overlapSignalLevel}
                             tooltipText={getSignalBadgeTooltip(
-                              "Total Shared Chunks",
+                              "Total Overlap",
                               overlapSignalLevel,
                             )}
                           />
@@ -485,7 +486,7 @@ export function PairwiseTriageTable({
                           <QualitativeSignalBadge
                             level={longestSignalLevel}
                             tooltipText={getSignalBadgeTooltip(
-                              "Longest Continuous Shared Block",
+                              "Longest Fragment",
                               longestSignalLevel,
                             )}
                           />
