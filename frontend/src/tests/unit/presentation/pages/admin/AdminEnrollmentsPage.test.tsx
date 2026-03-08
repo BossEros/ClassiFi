@@ -1,7 +1,7 @@
-import type { ReactNode } from "react"
+﻿import type { ReactNode } from "react"
 import { MemoryRouter } from "react-router-dom"
 import { describe, it, expect, vi, beforeEach } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import AdminEnrollmentsPage from "@/presentation/pages/admin/AdminEnrollmentsPage"
 import * as adminService from "@/business/services/adminService"
@@ -54,6 +54,50 @@ const mockEnrollmentRecord = {
   enrolledAt: "2025-06-01T00:00:00Z",
 }
 
+const mockStudentOption = {
+  id: 11,
+  email: "alexa@example.com",
+  firstName: "Alexa",
+  lastName: "Santos",
+  role: "student" as const,
+  avatarUrl: null,
+  isActive: true,
+  createdAt: "2025-01-01T00:00:00Z",
+}
+
+const mockClassOptions = [
+  {
+    id: 2,
+    className: "Algorithms",
+    classCode: "ALG101",
+    teacherId: 7,
+    yearLevel: 2,
+    semester: 1,
+    academicYear: "2025-2026",
+    schedule: { days: ["monday" as const], startTime: "09:00", endTime: "10:00" },
+    description: null,
+    isActive: true,
+    studentCount: 20,
+    createdAt: "2025-01-01T00:00:00Z",
+    teacherName: "Prof. Ada",
+  },
+  {
+    id: 3,
+    className: "Data Structures",
+    classCode: "DS201",
+    teacherId: 8,
+    yearLevel: 2,
+    semester: 1,
+    academicYear: "2025-2026",
+    schedule: { days: ["tuesday" as const], startTime: "10:00", endTime: "11:00" },
+    description: null,
+    isActive: true,
+    studentCount: 18,
+    createdAt: "2025-01-01T00:00:00Z",
+    teacherName: "Prof. Turing",
+  },
+]
+
 function renderAdminEnrollmentsPage() {
   return render(
     <MemoryRouter>
@@ -76,38 +120,7 @@ describe("AdminEnrollmentsPage", () => {
     })
     vi.mocked(adminService.getAllClasses).mockResolvedValue({
       success: true,
-      data: [
-        {
-          id: 2,
-          className: "Algorithms",
-          classCode: "ALG101",
-          teacherId: 7,
-          yearLevel: 2,
-          semester: 1,
-          academicYear: "2025-2026",
-          schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },
-          description: null,
-          isActive: true,
-          studentCount: 20,
-          createdAt: "2025-01-01T00:00:00Z",
-          teacherName: "Prof. Ada",
-        },
-        {
-          id: 3,
-          className: "Data Structures",
-          classCode: "DS201",
-          teacherId: 8,
-          yearLevel: 2,
-          semester: 1,
-          academicYear: "2025-2026",
-          schedule: { days: ["tuesday"], startTime: "10:00", endTime: "11:00" },
-          description: null,
-          isActive: true,
-          studentCount: 18,
-          createdAt: "2025-01-01T00:00:00Z",
-          teacherName: "Prof. Turing",
-        },
-      ],
+      data: mockClassOptions,
       total: 2,
       page: 1,
       limit: 8,
@@ -118,11 +131,11 @@ describe("AdminEnrollmentsPage", () => {
     vi.mocked(adminService.addStudentToClass).mockResolvedValue(undefined)
     vi.mocked(adminService.getAllUsers).mockResolvedValue({
       success: true,
-      data: [],
-      total: 0,
+      data: [mockStudentOption],
+      total: 1,
       page: 1,
       limit: 8,
-      totalPages: 0,
+      totalPages: 1,
     })
   })
 
@@ -136,7 +149,31 @@ describe("AdminEnrollmentsPage", () => {
     expect(screen.getByText("Jane Doe")).toBeInTheDocument()
     expect(screen.getByText("Algorithms")).toBeInTheDocument()
     expect(screen.getByText("Prof. Ada")).toBeInTheDocument()
-    expect(screen.getByText("Operational")).toBeInTheDocument()
+    expect(screen.getByText("Active Enrollment")).toBeInTheDocument()
+  })
+
+  it("enrolls a selected student into a selected class", async () => {
+    const user = userEvent.setup()
+    renderAdminEnrollmentsPage()
+
+    await waitFor(() => {
+      expect(screen.getByText("Jane Doe")).toBeInTheDocument()
+    })
+
+    await user.click(screen.getByRole("button", { name: /^Enroll Student$/i }))
+
+    const enrollmentDialog = await screen.findByRole("dialog", { name: /Manual Enrollment/i })
+
+    expect(within(enrollmentDialog).getByText("Select Student")).toBeInTheDocument()
+    expect(within(enrollmentDialog).getByText("Select Class")).toBeInTheDocument()
+
+    await user.click(within(enrollmentDialog).getByRole("button", { name: /Select student Alexa Santos/i }))
+    await user.click(within(enrollmentDialog).getByRole("button", { name: /Select class Algorithms/i }))
+    await user.click(within(enrollmentDialog).getByRole("button", { name: /^Enroll Student$/i }))
+
+    await waitFor(() => {
+      expect(adminService.addStudentToClass).toHaveBeenCalledWith(2, 11)
+    })
   })
 
   it("transfers a student to another class from the page workflow", async () => {
@@ -149,12 +186,12 @@ describe("AdminEnrollmentsPage", () => {
 
     await user.click(screen.getByRole("button", { name: /Transfer/i }))
 
-    await waitFor(() => {
-      expect(screen.getByText("Select destination class")).toBeInTheDocument()
-    })
+    const transferDialog = await screen.findByRole("dialog", { name: /Transfer Enrollment/i })
 
-    await user.click(screen.getByRole("button", { name: /Data Structures/i }))
-    await user.click(screen.getByRole("button", { name: /^Transfer Student$/i }))
+    expect(within(transferDialog).getByText("Select Destination Class")).toBeInTheDocument()
+
+    await user.click(within(transferDialog).getByRole("button", { name: /Select destination class Data Structures/i }))
+    await user.click(within(transferDialog).getByRole("button", { name: /^Transfer Student$/i }))
 
     await waitFor(() => {
       expect(adminService.transferStudent).toHaveBeenCalledWith({

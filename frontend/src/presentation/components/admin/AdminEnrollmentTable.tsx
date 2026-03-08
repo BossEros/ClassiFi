@@ -1,4 +1,4 @@
-import { Avatar } from "@/presentation/components/ui/Avatar"
+﻿import { Avatar } from "@/presentation/components/ui/Avatar"
 import type { AdminEnrollmentRecord } from "@/business/services/adminService"
 import {
   ArrowRightLeft,
@@ -66,7 +66,7 @@ function getEnrollmentStatusBadge(enrollment: AdminEnrollmentRecord): {
   }
 
   return {
-    label: "Operational",
+    label: "Active Enrollment",
     className: "border-emerald-200 bg-emerald-50 text-emerald-700",
     Icon: UserRoundCheck,
   }
@@ -155,6 +155,7 @@ export function AdminEnrollmentTable({
                       <button
                         type="button"
                         onClick={() => onOpenClassDetail(enrollment.classId)}
+                        aria-label={`Open class ${enrollment.className} details`}
                         className="group/class flex cursor-pointer items-start gap-2 text-left"
                       >
                         <div>
@@ -273,3 +274,6 @@ export function AdminEnrollmentTable({
     </div>
   )
 }
+
+
+
