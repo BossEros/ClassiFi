@@ -1,4 +1,4 @@
-﻿# ClassiFi Backend (TypeScript)
+# ClassiFi Backend (TypeScript)
 
 A TypeScript/Fastify backend implementation for the ClassiFi platform, following the controller-service-repository pattern.
 
@@ -589,6 +589,7 @@ Notifications are queued for email delivery with:
 | POST   | `/admin/classes/:id/students`            | Enroll student     |
 | DELETE | `/admin/classes/:id/students/:studentId` | Remove student     |
 | GET    | `/admin/enrollments`                     | List enrollments   |
+| POST   | `/admin/enrollments/transfer`            | Transfer student   |
 
 #### Analytics
 
@@ -604,32 +605,32 @@ Notifications are queued for email delivery with:
 ### Entity Relationship Diagram
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  User   â”‚â—„â”€â”€â”€â”€â”€â”€â”¤  Class  â”‚â—„â”€â”€â”€â”€â”€â”€â”¤  Assignment  â”‚â—„â”€â”€â”€â”€â”€â”¤  TestCase  â”‚
-â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
-     â”‚                 â”‚                   â”‚                     â”‚
-     â”‚            â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”         â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”         â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”
-     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚Enrollmentâ”‚         â”‚Submissionâ”‚â—„â”€â”€â”€â”€â”€â”€â”€â”¤ TestResult â”‚
-     â”‚            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-     â”‚                                      â”‚
-     â”‚                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                             â”‚SimilarityReport â”‚
-     â”‚                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-     â”‚                                      â”‚
-     â”‚                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                             â”‚SimilarityResult â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜        â”‚
-     â”‚                                      â”‚           â”Œâ”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚MatchFragment â”‚
-     â”‚                                                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-     â”‚
-     â”‚            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚ Notification â”‚
-                  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
-                         â”‚
-                  â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                  â”‚ NotificationDelivery    â”‚
-                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
+│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
+└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
+     │                 │                   │                     │
+     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
+     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
+     │            └──────────┘         └────┬────┘         └────────────┘
+     │                                      │
+     │                             ┌────────▼────────┐
+     │                             │SimilarityReport │
+     │                             └────────┬────────┘
+     │                                      │
+     │                             ┌────────▼────────┐
+     │                             │SimilarityResult │◄───────┐
+     │                             └────────┬────────┘        │
+     │                                      │           ┌─────┴────────┐
+     │                                      └──────────►│MatchFragment │
+     │                                                  └──────────────┘
+     │
+     │            ┌──────────────┐
+     └───────────►│ Notification │
+                  └──────┬───────┘
+                         │
+                  ┌──────▼──────────────────┐
+                  │ NotificationDelivery    │
+                  └─────────────────────────┘
 ```
 
 ### User Model
@@ -744,6 +745,7 @@ class AdminEnrollmentService {
   enrollStudent(classId, studentId); // Add student to class
   removeStudent(classId, studentId); // Remove student from class
   getAllEnrollments(filters); // List all enrollments
+  transferStudent(data); // Move student between classes
 }
 ```
 
@@ -1302,5 +1304,7 @@ npm run typecheck
 ## License
 
 MIT
+
+
 
 

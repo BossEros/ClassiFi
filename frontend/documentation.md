@@ -1,4 +1,4 @@
-﻿# ClassiFi Frontend Documentation
+# ClassiFi Frontend Documentation
 
 ## Project Overview
 
@@ -126,11 +126,17 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 | `/dashboard/admin/classes/:classId/edit` | `AdminClassFormPage` | Admin class edit page.             |
 | `/dashboard/assignments/:id` | `AssignmentDetailPage`     | IDE and submission interface.      |
 | `/dashboard/users`           | `AdminUsersPage`           | User management (Admin only).      |
+| `/dashboard/enrollments`     | `AdminEnrollmentsPage`     | Cross-class enrollment workspace.  |
 
 Admin class detail behavior:
 - `AdminClassDetailPage` is a student-management focused view.
 - Admins can review class metadata, search enrolled students, enroll new students, and remove students.
 - Assignment-list tabs are intentionally not shown in this admin detail view.
+
+Admin enrollment workspace behavior:
+- `AdminEnrollmentsPage` provides a cross-class enrollment registry for admins.
+- Admins can search by student, class, or teacher and filter by class status, year level, semester, and academic year.
+- The page supports manual enrollment, student transfer between active classes, and direct removal with confirmation modals.
 
 ---
 
@@ -242,7 +248,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                                   |
 | **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                                 |
 | **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                                           |
-| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, analytics)                                        |
+| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, classes, enrollments, analytics)                   |
 | **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, account deletion)                            |
 
 ### Service Guidelines
@@ -610,6 +616,8 @@ High-signal coverage gate:
 - `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
+
+
 
 
 

@@ -790,4 +790,80 @@ describe("adminRepository", () => {
       ).rejects.toThrow("Student not enrolled in class")
     })
   })
+  describe("getAllEnrollmentsWithPaginationAndFilters", () => {
+    const mockEnrollmentRecord = {
+      id: 1,
+      studentId: 10,
+      studentFirstName: "Jane",
+      studentLastName: "Doe",
+      studentEmail: "jane@example.com",
+      studentAvatarUrl: null,
+      studentIsActive: true,
+      classId: 2,
+      className: "Algorithms",
+      classCode: "ALG101",
+      classIsActive: true,
+      teacherId: 7,
+      teacherName: "Prof. Ada",
+      teacherAvatarUrl: null,
+      yearLevel: 2,
+      semester: 1,
+      academicYear: "2025-2026",
+      enrolledAt: "2025-06-01T00:00:00Z",
+    }
+
+    it("fetches enrollment records with filters", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: {
+          success: true,
+          data: [mockEnrollmentRecord],
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        },
+        status: 200,
+      })
+
+      const result = await adminRepository.getAllEnrollmentsWithPaginationAndFilters({
+        pageNumber: 1,
+        itemsPerPage: 10,
+        searchQuery: "jane",
+        enrollmentStatus: "active",
+        yearLevel: 2,
+        semesterNumber: 1,
+        academicYear: "2025-2026",
+      })
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/admin/enrollments?page=1&limit=10&search=jane&status=active&yearLevel=2&semester=1&academicYear=2025-2026",
+      )
+      expect(result.data).toEqual([mockEnrollmentRecord])
+    })
+  })
+
+  describe("transferStudentBetweenClasses", () => {
+    it("posts the transfer payload", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: { success: true, message: "Student transferred" },
+        status: 200,
+      })
+
+      const result = await adminRepository.transferStudentBetweenClasses({
+        studentId: 10,
+        fromClassId: 2,
+        toClassId: 3,
+      })
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/admin/enrollments/transfer",
+        {
+          studentId: 10,
+          fromClassId: 2,
+          toClassId: 3,
+        },
+      )
+      expect(result.success).toBe(true)
+    })
+  })
 })

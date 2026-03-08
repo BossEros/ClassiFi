@@ -14,11 +14,11 @@
 - [x] Add frontend admin enrollment page toolbar, filters, and registry table
 - [x] Add frontend enroll, remove, and transfer flows with clear confirmations and request states
 - [x] Add targeted backend tests for admin enrollment listing and transfer behavior
-- [ ] Add targeted frontend tests for admin enrollment page states and actions
-- [ ] Update frontend and backend documentation for the admin enrollment workspace
+- [x] Add targeted frontend tests for admin enrollment page states and actions
+- [x] Update frontend and backend documentation for the admin enrollment workspace
 - [x] Run `npm run build` in `frontend`
 - [x] Run `npm run typecheck` in `backend-ts`
-- [ ] Run `npm test` in `backend-ts`
+- [x] Run `npm test` in `backend-ts`
 # Similarity Graph Singleton Support + UI Simplification
 
 - [x] Extend plagiarism analysis responses with analyzed submissions so true singleton nodes can be rendered
@@ -811,6 +811,8 @@
 - [x] Reuse the admin class-management three-dot action menu in the class detail header
 - [x] Fix the student search toolbar layout so the input width is readable beside the enroll action
 - [x] Run frontend build verification
+
+
 
 
 
