@@ -9,15 +9,15 @@
 
 - [x] Review `AGENTS.md`, `frontend/documentation.md`, and `backend-ts/documentation.md` for architecture and workflow constraints
 - [x] Reuse the existing root `implementation_plan.md` and `task.md` for this milestone slice
-- [ ] Add backend enrollment registry query support with admin filters and pagination
-- [ ] Add backend transfer-student workflow with validation and safe error handling
+- [x] Add backend enrollment registry query support with admin filters and pagination
+- [x] Add backend transfer-student workflow with validation and safe error handling
 - [ ] Add frontend admin enrollment page toolbar, filters, and registry table
 - [ ] Add frontend enroll, remove, and transfer flows with clear confirmations and request states
-- [ ] Add targeted backend tests for admin enrollment listing and transfer behavior
+- [x] Add targeted backend tests for admin enrollment listing and transfer behavior
 - [ ] Add targeted frontend tests for admin enrollment page states and actions
 - [ ] Update frontend and backend documentation for the admin enrollment workspace
 - [ ] Run `npm run build` in `frontend`
-- [ ] Run `npm run typecheck` in `backend-ts`
+- [x] Run `npm run typecheck` in `backend-ts`
 - [ ] Run `npm test` in `backend-ts`
 # Similarity Graph Singleton Support + UI Simplification
 
@@ -811,5 +811,6 @@
 - [x] Reuse the admin class-management three-dot action menu in the class detail header
 - [x] Fix the student search toolbar layout so the input width is readable beside the enroll action
 - [x] Run frontend build verification
+
 
 

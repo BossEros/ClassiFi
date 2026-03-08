@@ -231,6 +231,22 @@ export const ClassFilterQuerySchema = PaginationQuerySchema.extend({
 export type ClassFilterQuery = z.infer<typeof ClassFilterQuerySchema>
 
 /**
+ * Query parameters for filtering and paginating enrollment records.
+ * Used by the GET /admin/enrollments endpoint.
+ */
+export const EnrollmentFilterQuerySchema = PaginationQuerySchema.extend({
+  search: z.string().optional(),
+  classId: z.coerce.number().int().positive().optional(),
+  teacherId: z.coerce.number().int().positive().optional(),
+  studentId: z.coerce.number().int().positive().optional(),
+  status: z.enum(["active", "archived", "all"]).default("all"),
+  yearLevel: z.coerce.number().int().min(1).max(MAX_YEAR_LEVEL).optional(),
+  semester: z.coerce.number().int().min(1).max(MAX_SEMESTER).optional(),
+  academicYear: z.string().optional(),
+})
+export type EnrollmentFilterQuery = z.infer<typeof EnrollmentFilterQuerySchema>
+
+/**
  * Path parameters for class-specific endpoints.
  * Contains the class ID as a positive integer.
  */
@@ -299,6 +315,60 @@ export const EnrollStudentBodySchema = z.object({
   studentId: z.number().int().positive(),
 })
 export type EnrollStudentBody = z.infer<typeof EnrollStudentBodySchema>
+
+/**
+ * Admin enrollment list item schema.
+ * Represents a single enrollment row in the standalone admin enrollment workspace.
+ */
+export const AdminEnrollmentListItemSchema = z.object({
+  id: z.number(),
+  studentId: z.number(),
+  studentFirstName: z.string(),
+  studentLastName: z.string(),
+  studentEmail: z.string(),
+  studentAvatarUrl: z.string().nullable(),
+  studentIsActive: z.boolean(),
+  classId: z.number(),
+  className: z.string(),
+  classCode: z.string(),
+  classIsActive: z.boolean(),
+  teacherId: z.number(),
+  teacherName: z.string(),
+  teacherAvatarUrl: z.string().nullable(),
+  yearLevel: z.number(),
+  semester: z.number(),
+  academicYear: z.string(),
+  enrolledAt: z.string(),
+})
+
+/**
+ * Request body schema for transferring a student between classes.
+ * Used by POST /admin/enrollments/transfer endpoint.
+ */
+export const TransferStudentBodySchema = z
+  .object({
+    studentId: z.number().int().positive(),
+    fromClassId: z.number().int().positive(),
+    toClassId: z.number().int().positive(),
+  })
+  .refine((value) => value.fromClassId !== value.toClassId, {
+    message: "Source and destination classes must be different",
+    path: ["toClassId"],
+  })
+export type TransferStudentBody = z.infer<typeof TransferStudentBodySchema>
+
+/**
+ * Response schema for paginated enrollment lists.
+ * Includes pagination metadata and enrollment data array.
+ */
+export const PaginatedEnrollmentsResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(AdminEnrollmentListItemSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+})
 
 /**
  * Class data transfer object schema.
@@ -371,3 +441,4 @@ export const ClassAssignmentsResponseSchema = z.object({
   success: z.boolean(),
   assignments: z.array(ClassAssignmentItemSchema),
 })
+
