@@ -10,6 +10,8 @@ import type {
   UpdateClassData,
   EnrolledStudent,
   ClassAssignment,
+  AdminEnrollmentRecord,
+  TransferStudentData,
 } from "@/business/models/admin/types"
 import { validateId } from "@/business/validation/commonValidation"
 import {
@@ -29,6 +31,8 @@ export type {
   UpdateClassData,
   EnrolledStudent,
   ClassAssignment,
+  AdminEnrollmentRecord,
+  TransferStudentData,
 }
 
 // ============ User Management ============
@@ -242,6 +246,57 @@ export async function getRecentActivity(
   return response.activity
 }
 
+// ============ Enrollment Management ============
+/**
+ * Retrieves a paginated list of enrollment records across all classes.
+ *
+ * @param options - Filtering options including search, status, year level, semester, and academic year.
+ * @returns A paginated response object containing enrollment rows and metadata.
+ */
+export async function getAllEnrollments(
+  options: {
+    page?: number
+    limit?: number
+    search?: string
+    classId?: number
+    teacherId?: number
+    studentId?: number
+    status?: string
+    yearLevel?: number
+    semester?: number
+    academicYear?: string
+  } = {},
+): Promise<PaginatedResponse<AdminEnrollmentRecord>> {
+  return await adminRepository.getAllEnrollmentsWithPaginationAndFilters({
+    pageNumber: options.page,
+    itemsPerPage: options.limit,
+    searchQuery: options.search,
+    classId: options.classId,
+    teacherId: options.teacherId,
+    studentId: options.studentId,
+    enrollmentStatus: options.status,
+    yearLevel: options.yearLevel,
+    semesterNumber: options.semester,
+    academicYear: options.academicYear,
+  })
+}
+/**
+ * Transfers a student from one class to another.
+ *
+ * @param data - Transfer payload with the student, source class, and destination class IDs.
+ * @returns A promise that resolves when the transfer completes.
+ */
+export async function transferStudent(
+  data: TransferStudentData,
+): Promise<void> {
+  validateId(data.studentId, "student")
+  validateId(data.fromClassId, "source class")
+  validateId(data.toClassId, "destination class")
+  if (data.fromClassId === data.toClassId) {
+    throw new Error("Source and destination classes must be different")
+  }
+  await adminRepository.transferStudentBetweenClasses(data)
+}
 // ============ Class Management ============
 
 /**
@@ -528,3 +583,6 @@ export async function getAdminClassDetailData(classId: number): Promise<{
     students,
   }
 }
+
+
+
