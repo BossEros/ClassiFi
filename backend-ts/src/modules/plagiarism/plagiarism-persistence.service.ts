@@ -1,4 +1,4 @@
-﻿import { inject, injectable } from "tsyringe"
+import { inject, injectable } from "tsyringe"
 import { db } from "@/shared/database.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import {
@@ -109,7 +109,7 @@ export class PlagiarismPersistenceService {
     report: Report,
     pairs: Pair[],
     semanticScores: Map<string, number>,
-  ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
+  ): Promise<{ dbReport: { id: number; generatedAt: Date }; resultIdMap: Map<string, number> }> {
     return await db.transaction(async (transaction) => {
       const similarityRepositoryWithContext = this.similarityRepo.withContext(
         transaction as unknown as TransactionContext,
@@ -239,6 +239,7 @@ export class PlagiarismPersistenceService {
     return {
       reportId: reportId.toString(),
       isReusedReport: true,
+      generatedAt: report.generatedAt.toISOString(),
       assignmentId: report.assignmentId,
       summary: {
         totalFiles: report.totalSubmissions,
@@ -431,3 +432,4 @@ export class PlagiarismPersistenceService {
     return fragmentsToInsert
   }
 }
+

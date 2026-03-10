@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as plagiarismService from "@/business/services/plagiarismService"
 import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
@@ -23,6 +23,7 @@ describe("plagiarismService", () => {
     const mockAnalysisResponse: AnalyzeResponse = {
       reportId: "report-123",
       isReusedReport: false,
+      generatedAt: "2026-03-10T10:00:00.000Z",
       summary: {
         totalFiles: 10,
         totalPairs: 5,
@@ -226,6 +227,7 @@ describe("plagiarismService", () => {
     })
   })
 })
+
 
 
 

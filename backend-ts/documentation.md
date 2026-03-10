@@ -407,8 +407,9 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 The plagiarism API now focuses on assignment-level review workflows:
 
 - Report responses include `submissions` plus pair rows so the frontend can render true singleton nodes alongside suspicious links.
+- Assignment-level analyze/report responses also include `generatedAt`, allowing the frontend to stamp exported evidence PDFs with both report-generation time and download time.
 - Pair rows include both students, similarity score, overlap, and longest match.
-- Clients can sort/filter pair results to prioritize high-risk comparisons.
+- Clients can sort/filter pair results to prioritize high-risk comparisons and generate threshold-aware class or pairwise PDF evidence on the frontend without needing a server-side PDF endpoint.
 - Detailed fragment/code inspection remains available through result-detail endpoints.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
 - The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
@@ -871,6 +872,7 @@ class PlagiarismService {
 - Implements Winnowing algorithm for fingerprint generation
 - Stores match fragments with precise line/column positions
 - Calculates similarity, overlap, and longest match metrics
+- Returns reusable report metadata (`reportId`, `generatedAt`, submissions, pairs) needed by the frontend evidence-export workflow
 - Supports Python, Java, and C programming languages
 
 ### CodeTestService
@@ -1304,6 +1306,7 @@ npm run typecheck
 ## License
 
 MIT
+
 
 
 

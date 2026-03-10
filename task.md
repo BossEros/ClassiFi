@@ -818,3 +818,23 @@
 
 
 
+
+# Similarity PDF Export
+
+- [x] Add a reusable frontend PDF document layer for plagiarism evidence exports
+- [x] Add threshold-aware class report download from the teacher similarity results page
+- [x] Add pairwise evidence report download for the selected comparison
+- [x] Extend plagiarism analyze/report responses with `generatedAt`
+- [x] Add/update frontend and backend tests for the new export workflow
+- [x] Update frontend/backend documentation and root progress tracking
+
+# Similarity PDF Institutional Refresh
+
+- [x] Refresh the PDF header and section/card styling to a more professional ClassiFi-branded look
+- [x] Replace visible generated/download metadata with a single Report Generated timestamp entry
+- [x] Rework class-report table cells to use badge-style color treatments with aligned headers/body widths
+- [x] Update targeted PDF/page tests for metadata and badge mapping behavior
+- [x] Run frontend test verification
+- [x] Run frontend build verification
+
+

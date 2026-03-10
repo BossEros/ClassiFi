@@ -1,4 +1,4 @@
-﻿import { inject, injectable } from "tsyringe"
+import { inject, injectable } from "tsyringe"
 import {
   File,
   LanguageName,
@@ -56,6 +56,7 @@ export interface AnalyzeRequest {
 export interface AnalyzeResponse {
   reportId: string
   isReusedReport: boolean
+  generatedAt: string
   assignmentId?: number
   summary: PlagiarismSummaryDTO
   submissions: PlagiarismFileDTO[]
@@ -175,8 +176,9 @@ export class PlagiarismService {
     const report = await detector.analyze(files, ignoredFile)
 
     this.cleanupExpiredReports()
+    const createdAt = new Date()
     const reportId = this.generateReportId()
-    this.legacyReportsStore.set(reportId, { report, createdAt: new Date() })
+    this.legacyReportsStore.set(reportId, { report, createdAt })
 
     const threshold = request.threshold ?? PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
     const summary = report.getSummary()
@@ -185,6 +187,7 @@ export class PlagiarismService {
     return {
       reportId,
       isReusedReport: false,
+      generatedAt: createdAt.toISOString(),
       summary: {
         totalFiles: summary.totalFiles,
         totalPairs: summary.totalPairs,
@@ -281,6 +284,7 @@ export class PlagiarismService {
     return {
       reportId,
       isReusedReport: true,
+      generatedAt: storedReport.createdAt.toISOString(),
       summary: {
         totalFiles: summary.totalFiles,
         totalPairs: summary.totalPairs,
@@ -397,16 +401,17 @@ export class PlagiarismService {
 
     const semanticScores = await this.computeSemanticScores(pairs, language)
 
-    const { dbReport, resultIdMap } = await this.persistenceService.persistReport(
-      assignmentId,
-      teacherId,
-      report,
-      pairs,
-      semanticScores,
-    )
+    const { dbReport, resultIdMap } =
+      await this.persistenceService.persistReport(
+        assignmentId,
+        teacherId,
+        report,
+        pairs,
+        semanticScores,
+      )
 
     return this.buildAssignmentAnalysisResponse(
-      dbReport.id,
+      dbReport,
       report,
       pairs,
       resultIdMap,
@@ -508,15 +513,16 @@ export class PlagiarismService {
   }
 
   private buildAssignmentAnalysisResponse(
-    reportId: number,
+    dbReport: { id: number; generatedAt: Date },
     report: Report,
     pairs: Pair[],
     resultIdMap: Map<string, number>,
     semanticScores: Map<string, number>,
   ): AnalyzeResponse {
     return {
-      reportId: reportId.toString(),
+      reportId: dbReport.id.toString(),
       isReusedReport: false,
+      generatedAt: dbReport.generatedAt.toISOString(),
       summary: {
         totalFiles: report.files.length,
         totalPairs: pairs.length,
@@ -655,3 +661,4 @@ export class PlagiarismService {
     return semanticScores
   }
 }
+

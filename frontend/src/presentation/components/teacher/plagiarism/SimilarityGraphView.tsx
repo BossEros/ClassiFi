@@ -1,5 +1,8 @@
 ﻿import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react"
-import type { FileResponse, PairResponse } from "@/business/services/plagiarismService"
+import type {
+  FileResponse,
+  PairResponse,
+} from "@/business/services/plagiarismService"
 import {
   buildSimilarityGraphData,
   layoutSimilarityGraph,
@@ -24,6 +27,8 @@ interface SimilarityGraphViewProps {
   onReviewPair: (pair: PairResponse) => void
   /** Optional selected pair identifier from the comparison panel. */
   selectedPairId?: number | null
+  /** Notifies the parent whenever the singleton toggle changes. */
+  onShowSingletonsChange?: (showSingletons: boolean) => void
 }
 
 interface GraphTooltipState {
@@ -45,16 +50,25 @@ export function SimilarityGraphView({
   onMinimumSimilarityPercentChange,
   onReviewPair,
   selectedPairId = null,
+  onShowSingletonsChange,
 }: SimilarityGraphViewProps) {
   const graphContainerRef = useRef<HTMLDivElement | null>(null)
-  const [containerSize, setContainerSize] = useState({ width: 960, height: 560 })
+  const [containerSize, setContainerSize] = useState({
+    width: 960,
+    height: 560,
+  })
   const [showSingletons, setShowSingletons] = useState(true)
   const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null)
-  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(null)
-  const [tooltipState, setTooltipState] = useState<GraphTooltipState | null>(null)
+  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(
+    null,
+  )
+  const [tooltipState, setTooltipState] = useState<GraphTooltipState | null>(
+    null,
+  )
 
   const graphData = useMemo(
-    () => buildSimilarityGraphData(submissions, pairs, minimumSimilarityPercent),
+    () =>
+      buildSimilarityGraphData(submissions, pairs, minimumSimilarityPercent),
     [minimumSimilarityPercent, pairs, submissions],
   )
   const graphLayout = useMemo(
@@ -79,19 +93,25 @@ export function SimilarityGraphView({
     () =>
       graphLayout.edges.filter(
         (edge) =>
-          visibleNodeById.has(edge.sourceId) && visibleNodeById.has(edge.targetId),
+          visibleNodeById.has(edge.sourceId) &&
+          visibleNodeById.has(edge.targetId),
       ),
     [graphLayout.edges, visibleNodeById],
   )
   const selectedNode =
-    selectedNodeId !== null ? visibleNodeById.get(selectedNodeId) ?? null : null
+    selectedNodeId !== null
+      ? (visibleNodeById.get(selectedNodeId) ?? null)
+      : null
   const selectedCluster =
     selectedClusterId !== null
-      ? graphLayout.clusters.find((cluster) => cluster.clusterId === selectedClusterId) ??
-        null
+      ? (graphLayout.clusters.find(
+          (cluster) => cluster.clusterId === selectedClusterId,
+        ) ?? null)
       : null
   const hoveredNode =
-    tooltipState !== null ? visibleNodeById.get(tooltipState.nodeId) ?? null : null
+    tooltipState !== null
+      ? (visibleNodeById.get(tooltipState.nodeId) ?? null)
+      : null
 
   useEffect(() => {
     const container = graphContainerRef.current
@@ -123,7 +143,9 @@ export function SimilarityGraphView({
       return
     }
 
-    const selectedEdge = graphData.edges.find((edge) => edge.edgeId === selectedPairId)
+    const selectedEdge = graphData.edges.find(
+      (edge) => edge.edgeId === selectedPairId,
+    )
     if (!selectedEdge) {
       return
     }
@@ -141,7 +163,9 @@ export function SimilarityGraphView({
   useEffect(() => {
     if (
       selectedClusterId !== null &&
-      !graphLayout.clusters.some((cluster) => cluster.clusterId === selectedClusterId)
+      !graphLayout.clusters.some(
+        (cluster) => cluster.clusterId === selectedClusterId,
+      )
     ) {
       setSelectedClusterId(null)
     }
@@ -153,7 +177,10 @@ export function SimilarityGraphView({
     setTooltipState(null)
   }
 
-  const handleNodeSelect = (node: { submissionId: number; clusterId: number | null }) => {
+  const handleNodeSelect = (node: {
+    submissionId: number
+    clusterId: number | null
+  }) => {
     setSelectedNodeId(node.submissionId)
     setSelectedClusterId(node.clusterId)
   }
@@ -237,7 +264,8 @@ export function SimilarityGraphView({
                   />
 
                   {graphLayout.clusters.map((cluster) => {
-                    const isSelectedCluster = cluster.clusterId === selectedClusterId
+                    const isSelectedCluster =
+                      cluster.clusterId === selectedClusterId
                     return (
                       <circle
                         key={cluster.clusterId}
@@ -268,13 +296,16 @@ export function SimilarityGraphView({
 
                     const isSelectedEdge = edge.edgeId === selectedPairId
                     const isClusterSelected =
-                      edge.clusterId !== null && edge.clusterId === selectedClusterId
+                      edge.clusterId !== null &&
+                      edge.clusterId === selectedClusterId
                     const strokeOpacity = isSelectedEdge
                       ? 0.95
                       : isClusterSelected
                         ? 0.78
                         : 0.42
-                    const strokeWidth = isSelectedEdge ? 7 : 2 + edge.similarity * 5
+                    const strokeWidth = isSelectedEdge
+                      ? 7
+                      : 2 + edge.similarity * 5
 
                     return (
                       <line
@@ -299,7 +330,8 @@ export function SimilarityGraphView({
                   {visibleNodes.map((node) => {
                     const isSelectedNode = node.submissionId === selectedNodeId
                     const isNodeInSelectedCluster =
-                      selectedClusterId !== null && node.clusterId === selectedClusterId
+                      selectedClusterId !== null &&
+                      node.clusterId === selectedClusterId
 
                     return (
                       <g key={node.submissionId}>
@@ -309,7 +341,13 @@ export function SimilarityGraphView({
                           r={node.radius + (isSelectedNode ? 4 : 0)}
                           fill={node.color}
                           stroke={isSelectedNode ? "#0f172a" : "#ffffff"}
-                          strokeWidth={isSelectedNode ? 3 : isNodeInSelectedCluster ? 2.5 : 2}
+                          strokeWidth={
+                            isSelectedNode
+                              ? 3
+                              : isNodeInSelectedCluster
+                                ? 2.5
+                                : 2
+                          }
                           className="cursor-pointer transition-all duration-200"
                           onClick={(event) => {
                             event.stopPropagation()
@@ -338,14 +376,19 @@ export function SimilarityGraphView({
                   <div
                     className="pointer-events-none absolute z-10 w-72 rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-xl shadow-slate-300/70 backdrop-blur-sm"
                     style={{
-                      left: Math.min(tooltipState.x + 18, Math.max(24, containerSize.width - 304)),
+                      left: Math.min(
+                        tooltipState.x + 18,
+                        Math.max(24, containerSize.width - 304),
+                      ),
                       top: Math.max(24, tooltipState.y - 36),
                     }}
                   >
                     <p className="text-sm font-semibold text-slate-900">
                       {hoveredNode.studentName}
                     </p>
-                    <p className="text-xs text-slate-500">{hoveredNode.filename}</p>
+                    <p className="text-xs text-slate-500">
+                      {hoveredNode.filename}
+                    </p>
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
                       <span>Visible links</span>
                       <span className="font-semibold text-slate-900">
@@ -355,7 +398,10 @@ export function SimilarityGraphView({
                     <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                       <span>Strongest visible match</span>
                       <span className="font-semibold text-slate-900">
-                        {(hoveredNode.strongestVisibleSimilarity * 100).toFixed(0)}%
+                        {(hoveredNode.strongestVisibleSimilarity * 100).toFixed(
+                          0,
+                        )}
+                        %
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
@@ -377,7 +423,9 @@ export function SimilarityGraphView({
               minimumSimilarityPercent={minimumSimilarityPercent}
               min={SIMILARITY_GRAPH_MIN_THRESHOLD_PERCENT}
               max={SIMILARITY_GRAPH_MAX_THRESHOLD_PERCENT}
-              onMinimumSimilarityPercentChange={onMinimumSimilarityPercentChange}
+              onMinimumSimilarityPercentChange={
+                onMinimumSimilarityPercentChange
+              }
             />
 
             <label className="inline-flex cursor-pointer items-center gap-3">
@@ -388,7 +436,11 @@ export function SimilarityGraphView({
                 <input
                   type="checkbox"
                   checked={showSingletons}
-                  onChange={(event) => setShowSingletons(event.target.checked)}
+                  onChange={(event) => {
+                    const next = event.target.checked
+                    setShowSingletons(next)
+                    onShowSingletonsChange?.(next)
+                  }}
                   className="peer sr-only"
                 />
                 <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-teal-600 peer-focus:ring-2 peer-focus:ring-teal-500/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
@@ -413,7 +465,9 @@ export function SimilarityGraphView({
                   <h4 className="mt-1 text-lg font-semibold text-slate-900">
                     {selectedNode.studentName}
                   </h4>
-                  <p className="text-sm text-slate-500">{selectedNode.filename}</p>
+                  <p className="text-sm text-slate-500">
+                    {selectedNode.filename}
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -429,7 +483,9 @@ export function SimilarityGraphView({
 
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Strongest visible match</span>
+                    <span className="text-sm text-slate-600">
+                      Strongest visible match
+                    </span>
                     <SimilarityBadge
                       similarity={selectedNode.strongestVisibleSimilarity}
                       size="small"
@@ -437,7 +493,9 @@ export function SimilarityGraphView({
                     />
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Highest recorded match</span>
+                    <span className="text-sm text-slate-600">
+                      Highest recorded match
+                    </span>
                     <SimilarityBadge
                       similarity={selectedNode.strongestSimilarity}
                       size="small"
@@ -456,7 +514,8 @@ export function SimilarityGraphView({
                   </button>
                 ) : (
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    No pair is available to review for this node at the current threshold.
+                    No pair is available to review for this node at the current
+                    threshold.
                   </div>
                 )}
               </div>
@@ -470,7 +529,8 @@ export function SimilarityGraphView({
                     {selectedCluster.label}
                   </h4>
                   <p className="text-sm text-slate-500">
-                    {selectedCluster.submissionCount} submissions, {selectedCluster.pairCount} qualifying links
+                    {selectedCluster.submissionCount} submissions,{" "}
+                    {selectedCluster.pairCount} qualifying links
                   </p>
                 </div>
 
@@ -515,7 +575,9 @@ export function SimilarityGraphView({
               </div>
             ) : (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                Select a node or cluster to inspect the submissions behind the graph. The graph stays synchronized with the active similarity threshold.
+                Select a node or cluster to inspect the submissions behind the
+                graph. The graph stays synchronized with the active similarity
+                threshold.
               </div>
             )}
           </div>
@@ -542,4 +604,3 @@ function SelectionMetricCard({ label, value }: SelectionMetricCardProps) {
 }
 
 export default SimilarityGraphView
-

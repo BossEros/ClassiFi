@@ -7,12 +7,13 @@ import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
 import {
   AlertTriangle,
   BarChart3,
+  Download,
   FileCode,
-  Loader2,
-  X,
-  Layers,
   GitCompare,
+  Layers,
+  Loader2,
   Users,
+  X,
 } from "lucide-react"
 import {
   PairComparison,
@@ -22,6 +23,14 @@ import {
   type FilePair,
 } from "@/presentation/components/teacher/plagiarism"
 import {
+  buildClassSimilarityReportData,
+  buildPairSimilarityReportData,
+  ClassSimilarityReportDocument,
+  downloadSimilarityReportDocument,
+  PairSimilarityReportDocument,
+  toFileNameSegment,
+} from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
+import {
   getResultDetails,
   type AnalyzeResponse,
   type PairResponse,
@@ -29,8 +38,8 @@ import {
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
+import { useToastStore } from "@/shared/store/useToastStore"
 import type { AssignmentDetail } from "@/business/models/assignment/types"
-
 
 interface LocationState {
   results: AnalyzeResponse
@@ -67,16 +76,34 @@ function detectLanguage(filename: string): string {
   return extensionMap[extension] || "plaintext"
 }
 
+function buildClassReportFileName(
+  assignmentName: string | undefined,
+  minimumSimilarityPercent: number,
+): string {
+  return `${toFileNameSegment(assignmentName || "assignment")}-similarity-threshold-${minimumSimilarityPercent}.pdf`
+}
+
+function buildPairReportFileName(
+  assignmentName: string | undefined,
+  pair: PairResponse,
+): string {
+  const leftStudentName = pair.leftFile.studentName || "student-a"
+  const rightStudentName = pair.rightFile.studentName || "student-b"
+
+  return `${toFileNameSegment(assignmentName || "assignment")}-${toFileNameSegment(leftStudentName)}-vs-${toFileNameSegment(rightStudentName)}.pdf`
+}
+
 /**
  * Displays assignment-level similarity analysis with graph and pairwise triage workflows.
  *
- * @returns Similarity results page with summary metrics, graph, pairwise triage table, and code comparison panel.
+ * @returns Similarity results page with summary metrics, graph, pairwise triage table, code comparison panel, and PDF export actions.
  */
 export function SimilarityResultsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
   const user = useAuthStore((state) => state.user)
+  const showToast = useToastStore((state) => state.showToast)
   const locationState = location.state as LocationState | null
 
   const [results, setResults] = useState<AnalyzeResponse | null>(
@@ -91,10 +118,13 @@ export function SimilarityResultsPage() {
     () => locationState?.results?.pairs.length ?? 0,
   )
   const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(75)
+  const [showSingletons, setShowSingletons] = useState(true)
   const [comparisonScrollToken, setComparisonScrollToken] = useState(0)
+  const [isDownloadingClassReport, setIsDownloadingClassReport] =
+    useState(false)
+  const [isDownloadingPairReport, setIsDownloadingPairReport] = useState(false)
   const comparisonSectionRef = useRef<HTMLDivElement | null>(null)
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
-
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -189,6 +219,70 @@ export function SimilarityResultsPage() {
     }
   }
 
+  const handleDownloadClassReport = async () => {
+    if (!results) {
+      return
+    }
+
+    try {
+      setIsDownloadingClassReport(true)
+      const reportData = buildClassSimilarityReportData({
+        assignment,
+        teacher: user,
+        results,
+        minimumSimilarityPercent,
+        showSingletons,
+      })
+
+      await downloadSimilarityReportDocument({
+        document: <ClassSimilarityReportDocument data={reportData} />,
+        fileName: buildClassReportFileName(
+          assignment?.assignmentName,
+          minimumSimilarityPercent,
+        ),
+      })
+
+      showToast("Class similarity report downloaded successfully")
+    } catch (error) {
+      console.error("Failed to download class similarity report:", error)
+      showToast("Failed to download class similarity report", "error")
+    } finally {
+      setIsDownloadingClassReport(false)
+    }
+  }
+
+  const handleDownloadPairReport = async () => {
+    if (!results || !selectedPair || !pairDetails) {
+      return
+    }
+
+    try {
+      setIsDownloadingPairReport(true)
+      const reportData = buildPairSimilarityReportData({
+        assignment,
+        teacher: user,
+        results,
+        selectedPair,
+        pairDetails,
+        minimumSimilarityPercent,
+      })
+
+      await downloadSimilarityReportDocument({
+        document: <PairSimilarityReportDocument data={reportData} />,
+        fileName: buildPairReportFileName(
+          assignment?.assignmentName,
+          selectedPair,
+        ),
+      })
+
+      showToast("Pairwise similarity report downloaded successfully")
+    } catch (error) {
+      console.error("Failed to download pairwise similarity report:", error)
+      showToast("Failed to download pairwise similarity report", "error")
+    } finally {
+      setIsDownloadingPairReport(false)
+    }
+  }
 
   const handleCloseDetails = () => {
     setSelectedPair(null)
@@ -257,10 +351,34 @@ export function SimilarityResultsPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="max-w-[1600px] space-y-6">
-        <div className="border-b border-slate-200 pb-6">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-            Similarity Analysis Results
-          </h1>
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+              Similarity Analysis Results
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Export the threshold-filtered class overview or the selected
+              pairwise evidence report.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleDownloadClassReport}
+            disabled={isDownloadingClassReport}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isDownloadingClassReport ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            <span>
+              {isDownloadingClassReport
+                ? "Preparing Class PDF..."
+                : "Download Class Report"}
+            </span>
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -316,10 +434,10 @@ export function SimilarityResultsPage() {
                 void handleViewDetails(pair)
               }}
               selectedPairId={selectedPair?.id ?? null}
+              onShowSingletonsChange={setShowSingletons}
             />
           </CardContent>
         </Card>
-
 
         <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
           <CardContent className="p-6">
@@ -338,20 +456,45 @@ export function SimilarityResultsPage() {
           <div ref={comparisonSectionRef} className="scroll-mt-24">
             <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
               <CardContent className="p-6">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <h2 className="text-xl font-semibold text-slate-900">
                     Code Comparison: {selectedPair.leftFile.studentName} vs{" "}
                     {selectedPair.rightFile.studentName}
                   </h2>
-                  <button
-                    onClick={handleCloseDetails}
-                    className="group flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    <X className="h-4 w-4 transition-colors" />
-                    <span className="text-sm font-medium transition-colors">
-                      Close
-                    </span>
-                  </button>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleDownloadPairReport}
+                      disabled={
+                        isLoadingDetails ||
+                        !pairDetails ||
+                        isDownloadingPairReport
+                      }
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isDownloadingPairReport ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                      <span>
+                        {isDownloadingPairReport
+                          ? "Preparing Pair PDF..."
+                          : "Download Pair Report"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCloseDetails}
+                      className="group flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900"
+                    >
+                      <X className="h-4 w-4 transition-colors" />
+                      <span className="text-sm font-medium transition-colors">
+                        Close
+                      </span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mb-6 flex justify-center">
@@ -436,16 +579,3 @@ export function SimilarityResultsPage() {
     </DashboardLayout>
   )
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

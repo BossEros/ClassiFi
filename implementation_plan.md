@@ -2094,3 +2094,99 @@ Refine the admin class detail header so it presents class information more clean
 3. Investigate the search-width constraint and adjust the toolbar layout so the search input remains readable beside the enroll action.
 4. Verify with a frontend production build.
 
+
+# Implementation Plan - Similarity PDF Export
+
+## Why This Matters
+
+Teachers need downloadable plagiarism evidence that matches the exact review state they used when making an academic-integrity decision. The exported report must be threshold-aware for class-wide review and detailed enough for pairwise evidence when a specific student-vs-student comparison becomes actionable.
+
+## Evidence Context
+
+- The similarity results page is the default class-level plagiarism overview for an assignment.
+- Teachers may need a class-wide report for all suspicious pairs at or above the active threshold.
+- Teachers may also need a standalone pairwise evidence packet for a selected comparison, including fragment locations and full source appendices.
+- Structural Similarity must appear before Semantic Similarity everywhere in the export output.
+
+## Scope
+
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `frontend/src/presentation/pages/teacher/SimilarityResultsPage.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.tsx`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `frontend/src/tests/unit/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.test.ts`
+- `frontend/src/tests/unit/business/services/plagiarismService.test.ts`
+- `frontend/src/tests/unit/data/repositories/plagiarismRepository.test.ts`
+- `frontend/src/business/models/plagiarism/types.ts`
+- `frontend/src/data/api/plagiarism.types.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism.service.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism-persistence.service.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism.schema.ts`
+- `backend-ts/tests/services/plagiarism.service.test.ts`
+- `frontend/documentation.md`
+- `backend-ts/documentation.md`
+- `implementation_plan.md`
+- `task.md`
+
+## Milestones
+
+- [x] Add frontend PDF generation support with `@react-pdf/renderer`
+- [x] Build reusable class-report and pair-report PDF view-model/document helpers
+- [x] Add `Download Class Report` and `Download Pair Report` actions to the teacher similarity results page
+- [x] Keep class export threshold-aware using overall similarity (`hybridScore` fallback to structural score)
+- [x] Keep pair export tied to the currently selected comparison and fetched fragment/code details
+- [x] Enrich plagiarism analyze/report responses with `generatedAt`
+- [x] Add focused frontend builder/page tests and update existing plagiarism service/repository tests
+- [x] Update backend plagiarism service tests for the new response metadata
+- [x] Update architecture and workflow documentation
+
+## Verification
+
+- [x] `frontend`: `npm run build`
+- [x] `frontend`: `npm test -- --run src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx src/tests/unit/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.test.ts src/tests/unit/business/services/plagiarismService.test.ts src/tests/unit/data/repositories/plagiarismRepository.test.ts`
+- [x] `backend-ts`: `npm run typecheck`
+- [x] `backend-ts`: `npm test`
+
+## Final Rollout Notes
+
+- Class-report exports only include pairs that meet the active threshold at download time.
+- Pair-report exports are generated from the selected comparison, not re-filtered by the page threshold once the teacher opens that pair.
+- The exported class graph is a static PDF-safe rendering derived from the existing graph utilities and intentionally excludes singleton-only nodes to keep the evidence focused.
+- Both export types include report-generation metadata so teachers can preserve the context of the underlying analysis.
+
+# Implementation Plan - Similarity PDF Institutional Refresh
+
+## Goal
+
+Make the plagiarism evidence PDFs feel more professional and institutional by improving the branded header, metadata presentation, and class-report table styling while preserving the current export behavior.
+
+## Scope
+
+- `frontend/src/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.tsx`
+- `frontend/src/presentation/utils/plagiarismSignalUtils.ts`
+- `frontend/src/tests/unit/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.test.ts`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Refresh the PDF visual system:
+   - Add a more formal ClassiFi-branded header and stronger section/card hierarchy.
+2. Simplify metadata wording:
+   - Remove the original backend-generated timestamp from the visible metadata.
+   - Keep the download timestamp and relabel it to `Report Generated`.
+3. Rework the class-report table:
+   - Replace plain text metric cells with badge-style visual treatments aligned to the UI severity colors.
+   - Use shared width definitions and explicit cell wrappers so headers and body content stay aligned.
+4. Verify:
+   - Run focused frontend PDF/page tests.
+   - Run `frontend`: `npm run build`.
+
+## Deliverables
+
+- Institutional ClassiFi-branded similarity PDFs.
+- Metadata wording aligned with the requested terminology.
+- Class-report table values rendered with badge-style color emphasis and improved alignment.
+- Passing targeted frontend tests and build verification.
