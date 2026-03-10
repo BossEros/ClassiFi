@@ -1,69 +1,165 @@
-# ClassiFi Testing Map (Observed)
+# Testing Patterns
 
-## 1) Test Frameworks in Use
-- Backend unit/integration tests use Vitest with Node environment: `backend-ts/vitest.config.ts`.
-- Frontend unit tests use Vitest + jsdom + Testing Library: `frontend/vitest.config.ts` and `frontend/src/tests/setup.ts`.
-- Frontend API-level mocks are handled with MSW (`frontend/src/tests/mocks/server.ts`, `frontend/src/tests/mocks/handlers.ts`).
-- Frontend E2E tests use Playwright in Chromium project config: `frontend/playwright.config.ts`.
+**Analysis Date:** 2026-03-08
 
-## 2) Test Directory Structure
-- Backend test discovery is centralized to `tests/**/*.test.ts` via `backend-ts/vitest.config.ts`.
-- Backend suites are grouped by concern: `backend-ts/tests/services`, `backend-ts/tests/repositories`, `backend-ts/tests/api`, `backend-ts/tests/modules`, `backend-ts/tests/integration`.
-- Frontend unit tests are centralized in `frontend/src/tests/unit/**` by layer (`business`, `data`, `presentation`, `shared`).
+## Test Framework
+
+**Runner:**
+- Frontend: Vitest (`frontend/vitest.config.ts`) with `jsdom` environment.
+- Backend: Vitest (`backend-ts/vitest.config.ts`) with `node` environment.
+- E2E: Playwright (`frontend/playwright.config.ts`).
+
+**Assertion Library:**
+- Vitest built-in `expect` in both frontend and backend.
+- Frontend also uses `@testing-library/jest-dom` matchers via `frontend/src/tests/setup.ts`.
+
+**Run Commands:**
+```bash
+# Frontend (frontend/package.json)
+npm test
+npm run test:coverage
+npm run build
+
+# Backend (backend-ts/package.json)
+npm test
+npm run test:coverage
+npm run typecheck
+
+# Frontend E2E
+npx playwright test
+```
+
+## Test File Organization
+
+**Location:**
+- Frontend unit tests live under `frontend/src/tests/unit/**`.
 - Frontend E2E tests live under `frontend/src/tests/e2e/**`.
-- Shared frontend test helpers are in `frontend/src/tests/utils/render.tsx` and `frontend/src/tests/utils/factories.ts`.
+- Backend tests live under `backend-ts/tests/**` split by concern (`services`, `repositories`, `api`, `modules`, `integration`, `shared`).
 
-## 3) Execution Commands (Current)
-- Backend:
-- `cd backend-ts && npm run typecheck`
-- `cd backend-ts && npm test`
-- `cd backend-ts && npm run test:coverage`
-- Frontend:
-- `cd frontend && npm run build`
-- `cd frontend && npm test`
-- `cd frontend && npm run test:coverage`
-- `cd frontend && npx playwright test`
+**Naming:**
+- Unit/integration tests use `*.test.ts` and `*.test.tsx`.
+- No separate suffix for most integration tests; they are grouped by folder (`backend-ts/tests/integration/*`).
+- E2E files also use `.spec.ts`/`.test.ts` style (`frontend/src/tests/e2e/smoke.spec.ts`).
 
-## 4) Coverage and Quality Gates
-- Backend Vitest enforces per-file 100% thresholds on critical files listed in `backend-ts/vitest.config.ts` (e.g. `auth.service.ts`, `class.schema.ts`, `submission.schema.ts`).
-- Frontend Vitest enforces per-file 100% thresholds on selected critical service/validation/repository/schema files in `frontend/vitest.config.ts`.
-- Both stacks use `coverage.provider = "v8"` and fail when thresholded files regress.
+**Current distribution (observed):**
+- Frontend unit: 68 files.
+- Frontend e2e: 5 files.
+- Backend total: 41 files.
+- Backend services: 18 files.
+- Backend repositories: 9 files.
+- Backend API controller tests: 2 files.
 
-## 5) Backend Test Patterns
-- Unit tests instantiate services directly with mocked dependencies rather than container bootstrapping, e.g. `backend-ts/tests/services/auth.service.test.ts`.
-- `vi.mock(...)` is used to stub modules/classes and preserve selected exports when needed (see USER_ROLES preservation in `backend-ts/tests/services/auth.service.test.ts`).
-- Controller tests mock tsyringe `container.resolve` and capture registered Fastify handlers from mocked `app.get/post/patch`, e.g. `backend-ts/tests/api/submission.controller.test.ts`.
-- Schema tests validate both success/failure paths with `safeParse` and coercion behavior, e.g. `backend-ts/tests/modules/class.schema.test.ts`.
-- Factory builders provide typed defaults with override hooks in `backend-ts/tests/utils/factories.ts`.
+## Test Structure
 
-## 6) Frontend Test Patterns
-- Global setup starts/stops MSW and clears test state (`cleanup`, `server.resetHandlers`, `vi.clearAllMocks`, `localStorage.clear`) in `frontend/src/tests/setup.ts`.
-- `render` helper wraps UI with shared providers (currently `BrowserRouter`) in `frontend/src/tests/utils/render.tsx`.
-- Service tests mock repositories and validation modules (`vi.mock("@/data/repositories/...")`) and assert behavior around success/failure contracts, e.g. `frontend/src/tests/unit/business/services/authService.test.ts`.
-- Repository tests mock `apiClient` and assert endpoint strings + normalized throw behavior, e.g. `frontend/src/tests/unit/data/repositories/classRepository.test.ts`.
-- Component tests rely on Testing Library interactions/assertions (`screen`, `fireEvent`) and semantic roles, e.g. `frontend/src/tests/unit/presentation/components/ui/Button.test.tsx`.
+**Suite Organization:**
+- Standard Vitest hierarchy: `describe` -> nested `describe` -> `it`.
+- Clear scenario names focusing on expected behavior and error conditions.
+- Common lifecycle usage:
+  - `beforeEach` for test setup and mocks.
+  - `afterEach` for cleanup/reset.
 
-## 7) Mocking and Isolation Conventions
-- Backend commonly mocks external adapters (Supabase, container) and tests pure service/controller logic in isolation.
-- Frontend commonly mocks network with MSW for integration-like behavior and directly mocks modules for unit-focused behavior.
-- Environment defaults are seeded in setup files (`backend-ts/tests/setup.ts`, `frontend/src/tests/setup.ts`) to reduce per-test boilerplate.
-- Store state is reset between tests (`useAuthStore.setState(...)` in service tests and `localStorage.clear()` in setup).
+**Patterns:**
+- Arrange/Act/Assert is commonly followed, sometimes with explicit comments in complex tests.
+- Frontend tests often render through `MemoryRouter` when route context is required.
+- Backend tests instantiate services directly with mocked dependencies or intercept DI container resolution.
 
-## 8) E2E Coverage (Frontend)
-- Playwright is configured for local dev server boot (`command: "npm run dev"`) and base URL `http://localhost:5173` in `frontend/playwright.config.ts`.
-- Current suites cover auth/classes/assignments/smoke flows under `frontend/src/tests/e2e/`.
-- E2E retries/workers are environment-sensitive (CI vs local) in `frontend/playwright.config.ts`.
+## Mocking
 
-## 9) Current Testing Gaps and Risks
-- Backend has no true end-to-end HTTP+DB suite with a real Fastify app + real test database transaction isolation; most tests are mocked/unit-level (`backend-ts/tests/api` and `backend-ts/tests/services`).
-- Backend integration coverage exists but is narrow (`backend-ts/tests/integration/notification-flow.test.ts`, `email-fallback.test.ts`), so cross-module regressions can slip.
-- Frontend heavy mock usage in service/repository tests can miss real contract drift against backend response shape (many assertions rely on mocked `success/data` envelopes).
-- Frontend auth pages currently contain inlined form implementations in page files (`frontend/src/presentation/pages/auth/LoginPage.tsx`, `RegisterPage.tsx`, `ForgotPasswordPage.tsx`), which increases UI test maintenance and weakens component-level reuse.
-- Playwright config only defines Chromium project; cross-browser regressions (Firefox/WebKit) are not actively covered (`frontend/playwright.config.ts`).
+**Framework:**
+- Vitest mocking APIs: `vi.mock`, `vi.fn`, `vi.mocked`, `vi.clearAllMocks`, `vi.resetAllMocks`.
 
-## 10) Practical Testing Guidance for Future Changes
-- Add schema tests whenever backend Zod schemas change (`backend-ts/tests/modules/*.schema.test.ts` pattern).
-- For backend route logic, follow handler-extraction pattern from `backend-ts/tests/api/submission.controller.test.ts`.
-- For frontend API behavior changes, pair repository tests (`frontend/src/tests/unit/data/repositories/*`) with service tests (`frontend/src/tests/unit/business/services/*`).
-- Prefer MSW handlers for realistic network paths before adding bespoke per-test fetch mocks (`frontend/src/tests/mocks/handlers.ts`).
-- Keep tests in centralized test trees only (no new `*.test.ts(x)` under feature source folders).
+**Frontend mocking patterns:**
+- Network-layer mocking with MSW (`frontend/src/tests/mocks/server.ts`, `frontend/src/tests/mocks/handlers.ts`).
+- Module mocking for business services, stores, or heavy presentation components (`vi.mock("@/business/services/..." )`).
+- Browser API mocks in setup (`localStorage`, `matchMedia`) via `frontend/src/tests/setup.ts`.
+
+**Backend mocking patterns:**
+- Module mocks for repositories/adapters/config (`vi.mock("../../src/..." )`).
+- Container-based mocking for controller tests (mocking `tsyringe.container.resolve`).
+- Drizzle/database mocks for repository logic tests.
+
+**What is usually mocked:**
+- External HTTP/network boundaries.
+- Supabase/auth adapters.
+- Database and ORM query layers.
+- DI container and middleware in controller-unit tests.
+
+**What is usually not mocked:**
+- Pure mapping and utility logic.
+- Zod schema validation in schema-specific tests (tested directly).
+
+## Fixtures and Factories
+
+**Shared factories:**
+- Frontend: `frontend/src/tests/utils/factories.ts` provides typed factory helpers (`createMockUser`, `createMockClass`, etc.).
+- Backend: `backend-ts/tests/utils/factories.ts` provides model-aligned factories.
+
+**Pattern:**
+- Factories return valid defaults and support per-test overrides (`overrides?: Partial<T>`).
+- Large tests keep inline scenario-specific objects when behavior needs explicit readability.
+
+## Coverage
+
+**Enforcement style:**
+- Both frontend and backend use strict per-file thresholds (`lines/functions/branches/statements = 100`, `perFile: true`) for selected include lists.
+- Coverage is intentionally targeted to critical modules rather than blanket entire-source enforcement.
+
+**Frontend coverage config (`frontend/vitest.config.ts`):**
+- Provider: `v8`.
+- Reporters: `text`, `html`.
+- Includes selected business/data/schema files.
+- Excludes test setup/mocks and build artifacts.
+
+**Backend coverage config (`backend-ts/vitest.config.ts`):**
+- Provider: `v8`.
+- Reporters: `text`, `html`, `lcov`.
+- `all: true` with selected include list for key modules/schemas/services.
+- Excludes tests, dist, and barrel index files.
+
+## Test Types
+
+**Unit Tests:**
+- Dominant test type in both apps.
+- Frontend: services, hooks, utilities, pages/components via Testing Library.
+- Backend: services, repositories, schemas, and some controllers with mocked app/reply objects.
+
+**Integration Tests:**
+- Present in backend (`backend-ts/tests/integration/*`) for cross-module behavior (for example notification flow).
+- Frontend has practical integration-style unit tests that combine routing + mocked services.
+
+**E2E Tests:**
+- Playwright-based in frontend (`frontend/src/tests/e2e/smoke.spec.ts`).
+- Uses real login flows and role-based browser contexts.
+- Environment-driven credentials are required (`TEST_TEACHER_EMAIL`, `TEST_STUDENT_EMAIL`, etc.).
+
+## Common Patterns
+
+**Async testing:**
+- `async/await` is standard.
+- Promise rejection checks use `await expect(promise).rejects.toThrow(...)`.
+- UI async state uses Testing Library `waitFor` with assertions.
+
+**Error-path testing:**
+- Strong emphasis on invalid-input and failure behavior in both service tests and UI tests.
+- Common pattern: verify fallback/error message and ensure downstream calls were skipped when validation fails.
+
+**State isolation:**
+- Frontend setup clears DOM, mocks, handlers, and `localStorage` between tests.
+- Backend suites commonly reset/clear mocks per test and clear DI container instances after integration tests.
+
+**Snapshot testing:**
+- Snapshot testing is not a dominant pattern; explicit assertions are preferred.
+
+## Practical Add-Test Checklist
+
+- Place tests in the existing tree (`frontend/src/tests/unit`, `backend-ts/tests/...`) with `*.test.ts(x)` naming.
+- Reuse factory helpers before creating new ad-hoc mock builders.
+- Mock at architectural boundaries (API/DB/adapters), not pure logic.
+- Cover both success and failure paths.
+- Keep assertions behavior-focused and role-aware for UI flows.
+- Run required verification commands after changes (`frontend: npm run build`; `backend-ts: npm run typecheck && npm test`).
+
+---
+
+*Testing analysis: 2026-03-08*
+*Update when test patterns change*

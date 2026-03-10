@@ -318,4 +318,71 @@ describe("adminService", () => {
       expect(result.students[0].fullName).toBe("John Doe") // Verify transformation happened via getClassStudents
     })
   })
+  describe("getAllEnrollments", () => {
+    it("maps filter options to repository request parameters", async () => {
+      vi.mocked(adminRepository.getAllEnrollmentsWithPaginationAndFilters).mockResolvedValue({
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      })
+
+      await adminService.getAllEnrollments({
+        page: 1,
+        limit: 10,
+        search: "jane",
+        status: "active",
+        yearLevel: 2,
+        semester: 1,
+        academicYear: "2025-2026",
+      })
+
+      expect(adminRepository.getAllEnrollmentsWithPaginationAndFilters).toHaveBeenCalledWith({
+        pageNumber: 1,
+        itemsPerPage: 10,
+        searchQuery: "jane",
+        classId: undefined,
+        teacherId: undefined,
+        studentId: undefined,
+        enrollmentStatus: "active",
+        yearLevel: 2,
+        semesterNumber: 1,
+        academicYear: "2025-2026",
+      })
+    })
+  })
+
+  describe("transferStudent", () => {
+    it("delegates valid transfers to the repository", async () => {
+      vi.mocked(adminRepository.transferStudentBetweenClasses).mockResolvedValue({
+        success: true,
+      })
+
+      await adminService.transferStudent({
+        studentId: 10,
+        fromClassId: 2,
+        toClassId: 3,
+      })
+
+      expect(adminRepository.transferStudentBetweenClasses).toHaveBeenCalledWith({
+        studentId: 10,
+        fromClassId: 2,
+        toClassId: 3,
+      })
+    })
+
+    it("rejects transfers to the same class", async () => {
+      await expect(
+        adminService.transferStudent({
+          studentId: 10,
+          fromClassId: 2,
+          toClassId: 2,
+        }),
+      ).rejects.toThrow("Source and destination classes must be different")
+
+      expect(adminRepository.transferStudentBetweenClasses).not.toHaveBeenCalled()
+    })
+  })
 })

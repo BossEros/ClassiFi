@@ -4,10 +4,13 @@ import type { PairResponse } from "@/business/services/plagiarismService"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
+import { getPairOverallSimilarityRatio, normalizeSimilarityToRatio } from "@/presentation/utils/plagiarismClusterUtils"
 import {
-  getPairOverallSimilarityRatio,
-  normalizeSimilarityToRatio,
-} from "@/presentation/utils/plagiarismClusterUtils"
+  getNormalizedLongestRatio,
+  getNormalizedOverlapRatio,
+  getSignalLevel,
+  type SimilaritySignalLevel,
+} from "@/presentation/utils/plagiarismSignalUtils"
 
 type SortKey =
   | "similarity"
@@ -16,7 +19,6 @@ type SortKey =
   | "overlap"
   | "longest"
 type SortOrder = "asc" | "desc"
-type SignalLevel = "low" | "medium" | "high"
 
 interface PairwiseTriageTableProps {
   /** Pairwise similarity results for the assignment. */
@@ -78,51 +80,7 @@ function getPairSemanticSimilarityRatio(pair: PairResponse): number {
   return normalizeSimilarityToRatio(pair.semanticScore)
 }
 
-function getSafeLineCount(lineCount: number): number {
-  if (!Number.isFinite(lineCount) || lineCount <= 0) {
-    return 1
-  }
-
-  return lineCount
-}
-
-function clampToUnitRange(value: number): number {
-  if (!Number.isFinite(value) || value <= 0) {
-    return 0
-  }
-
-  return Math.min(value, 1)
-}
-
-function getNormalizedOverlapRatio(pair: PairResponse): number {
-  const leftLineCount = getSafeLineCount(pair.leftFile.lineCount)
-  const rightLineCount = getSafeLineCount(pair.rightFile.lineCount)
-  const combinedLength = leftLineCount + rightLineCount
-
-  return clampToUnitRange(pair.overlap / combinedLength)
-}
-
-function getNormalizedLongestRatio(pair: PairResponse): number {
-  const leftLineCount = getSafeLineCount(pair.leftFile.lineCount)
-  const rightLineCount = getSafeLineCount(pair.rightFile.lineCount)
-  const shorterSubmissionLength = Math.min(leftLineCount, rightLineCount)
-
-  return clampToUnitRange(pair.longest / shorterSubmissionLength)
-}
-
-function getSignalLevel(value: number): SignalLevel {
-  if (value >= 0.5) {
-    return "high"
-  }
-
-  if (value >= 0.2) {
-    return "medium"
-  }
-
-  return "low"
-}
-
-function getSignalLabel(level: SignalLevel): string {
+function getSignalLabel(level: SimilaritySignalLevel): string {
   switch (level) {
     case "high":
       return "High"
@@ -133,7 +91,7 @@ function getSignalLabel(level: SignalLevel): string {
   }
 }
 
-function getSignalBadgeClassName(level: SignalLevel): string {
+function getSignalBadgeClassName(level: SimilaritySignalLevel): string {
   switch (level) {
     case "high":
       return "border border-rose-200 bg-rose-50 text-rose-700"
@@ -152,12 +110,15 @@ function getLongestFragmentTooltipText(): string {
   return "Longest Fragment shows the raw longest matched fragment for the pair, alongside a normalized signal level that highlights unusually large uninterrupted matches."
 }
 
-function getSignalBadgeTooltip(metricName: string, level: SignalLevel): string {
+function getSignalBadgeTooltip(
+  metricName: string,
+  level: SimilaritySignalLevel,
+): string {
   return `${metricName}: ${getSignalLabel(level)}. This level is computed behind the scenes using length-aware normalization so short and long submissions are compared more fairly.`
 }
 
 interface QualitativeSignalBadgeProps {
-  level: SignalLevel
+  level: SimilaritySignalLevel
   tooltipText: string
 }
 
@@ -527,3 +488,6 @@ export function PairwiseTriageTable({
 }
 
 export default PairwiseTriageTable
+
+
+

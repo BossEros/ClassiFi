@@ -1,4 +1,4 @@
-﻿# ClassiFi Backend (TypeScript)
+# ClassiFi Backend (TypeScript)
 
 A TypeScript/Fastify backend implementation for the ClassiFi platform, following the controller-service-repository pattern.
 
@@ -407,8 +407,9 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 The plagiarism API now focuses on assignment-level review workflows:
 
 - Report responses include `submissions` plus pair rows so the frontend can render true singleton nodes alongside suspicious links.
+- Assignment-level analyze/report responses also include `generatedAt`, allowing the frontend to stamp exported evidence PDFs with both report-generation time and download time.
 - Pair rows include both students, similarity score, overlap, and longest match.
-- Clients can sort/filter pair results to prioritize high-risk comparisons.
+- Clients can sort/filter pair results to prioritize high-risk comparisons and generate threshold-aware class or pairwise PDF evidence on the frontend without needing a server-side PDF endpoint.
 - Detailed fragment/code inspection remains available through result-detail endpoints.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
 - The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
@@ -589,6 +590,7 @@ Notifications are queued for email delivery with:
 | POST   | `/admin/classes/:id/students`            | Enroll student     |
 | DELETE | `/admin/classes/:id/students/:studentId` | Remove student     |
 | GET    | `/admin/enrollments`                     | List enrollments   |
+| POST   | `/admin/enrollments/transfer`            | Transfer student   |
 
 #### Analytics
 
@@ -604,32 +606,32 @@ Notifications are queued for email delivery with:
 ### Entity Relationship Diagram
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”       â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”      â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  User   â”‚â—„â”€â”€â”€â”€â”€â”€â”¤  Class  â”‚â—„â”€â”€â”€â”€â”€â”€â”¤  Assignment  â”‚â—„â”€â”€â”€â”€â”€â”¤  TestCase  â”‚
-â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜       â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜      â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”˜
-     â”‚                 â”‚                   â”‚                     â”‚
-     â”‚            â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”         â”Œâ”€â”€â”€â”€â–¼â”€â”€â”€â”€â”         â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”
-     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚Enrollmentâ”‚         â”‚Submissionâ”‚â—„â”€â”€â”€â”€â”€â”€â”€â”¤ TestResult â”‚
-     â”‚            â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”˜         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-     â”‚                                      â”‚
-     â”‚                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                             â”‚SimilarityReport â”‚
-     â”‚                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-     â”‚                                      â”‚
-     â”‚                             â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                             â”‚SimilarityResult â”‚â—„â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                             â””â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”˜        â”‚
-     â”‚                                      â”‚           â”Œâ”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â”‚                                      â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚MatchFragment â”‚
-     â”‚                                                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-     â”‚
-     â”‚            â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–ºâ”‚ Notification â”‚
-                  â””â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”˜
-                         â”‚
-                  â”Œâ”€â”€â”€â”€â”€â”€â–¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-                  â”‚ NotificationDelivery    â”‚
-                  â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
+│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
+└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
+     │                 │                   │                     │
+     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
+     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
+     │            └──────────┘         └────┬────┘         └────────────┘
+     │                                      │
+     │                             ┌────────▼────────┐
+     │                             │SimilarityReport │
+     │                             └────────┬────────┘
+     │                                      │
+     │                             ┌────────▼────────┐
+     │                             │SimilarityResult │◄───────┐
+     │                             └────────┬────────┘        │
+     │                                      │           ┌─────┴────────┐
+     │                                      └──────────►│MatchFragment │
+     │                                                  └──────────────┘
+     │
+     │            ┌──────────────┐
+     └───────────►│ Notification │
+                  └──────┬───────┘
+                         │
+                  ┌──────▼──────────────────┐
+                  │ NotificationDelivery    │
+                  └─────────────────────────┘
 ```
 
 ### User Model
@@ -744,6 +746,7 @@ class AdminEnrollmentService {
   enrollStudent(classId, studentId); // Add student to class
   removeStudent(classId, studentId); // Remove student from class
   getAllEnrollments(filters); // List all enrollments
+  transferStudent(data); // Move student between classes
 }
 ```
 
@@ -869,6 +872,7 @@ class PlagiarismService {
 - Implements Winnowing algorithm for fingerprint generation
 - Stores match fragments with precise line/column positions
 - Calculates similarity, overlap, and longest match metrics
+- Returns reusable report metadata (`reportId`, `generatedAt`, submissions, pairs) needed by the frontend evidence-export workflow
 - Supports Python, Java, and C programming languages
 
 ### CodeTestService
@@ -1302,5 +1306,8 @@ npm run typecheck
 ## License
 
 MIT
+
+
+
 
 

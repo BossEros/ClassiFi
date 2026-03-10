@@ -84,7 +84,7 @@ describe("PlagiarismService", () => {
     mockPersistenceService = {
       getReusableAssignmentReport: vi.fn().mockResolvedValue(null),
       persistReport: vi.fn().mockResolvedValue({
-        dbReport: { id: 1 },
+        dbReport: { id: 1, generatedAt: new Date("2026-03-10T10:00:00.000Z") },
         resultIdMap: new Map(),
       }),
       getReport: vi.fn(),
@@ -218,6 +218,7 @@ describe("PlagiarismService", () => {
       const assignment = createMockAssignment({ programmingLanguage: "python" })
       const reusableReport = {
         reportId: "99",
+        generatedAt: "2026-03-10T10:00:00.000Z",
         summary: {
           totalFiles: 2,
           totalPairs: 1,
@@ -349,3 +350,4 @@ describe("PlagiarismService", () => {
   })
 
 })
+

@@ -21,6 +21,7 @@ export interface PairResponse {
 export interface AnalyzeResponse {
   reportId: string
   isReusedReport: boolean
+  generatedAt: string
   summary: {
     totalFiles: number
     totalPairs: number
@@ -77,4 +78,5 @@ export interface ResultDetailsResponse {
     studentName: string
   }
 }
+
 

@@ -1,4 +1,25 @@
-﻿# Similarity Graph Singleton Support + UI Simplification
+# Milestone v1.1 Admin Enrollment Management Initialization
+
+- [x] Reconstruct `.planning/PROJECT.md`, `.planning/STATE.md`, and `.planning/MILESTONES.md` from brownfield repo evidence
+- [ ] Run milestone research for admin enrollment management
+- [ ] Define `.planning/REQUIREMENTS.md`
+- [ ] Create `.planning/ROADMAP.md`
+
+# Admin Enrollment Management Workspace
+
+- [x] Review `AGENTS.md`, `frontend/documentation.md`, and `backend-ts/documentation.md` for architecture and workflow constraints
+- [x] Reuse the existing root `implementation_plan.md` and `task.md` for this milestone slice
+- [x] Add backend enrollment registry query support with admin filters and pagination
+- [x] Add backend transfer-student workflow with validation and safe error handling
+- [x] Add frontend admin enrollment page toolbar, filters, and registry table
+- [x] Add frontend enroll, remove, and transfer flows with clear confirmations and request states
+- [x] Add targeted backend tests for admin enrollment listing and transfer behavior
+- [x] Add targeted frontend tests for admin enrollment page states and actions
+- [x] Update frontend and backend documentation for the admin enrollment workspace
+- [x] Run `npm run build` in `frontend`
+- [x] Run `npm run typecheck` in `backend-ts`
+- [x] Run `npm test` in `backend-ts`
+# Similarity Graph Singleton Support + UI Simplification
 
 - [x] Extend plagiarism analysis responses with analyzed submissions so true singleton nodes can be rendered
 - [x] Update graph utilities to derive nodes from full submission lists instead of pairs only
@@ -760,5 +781,60 @@
 - [ ] Verify the cleanup with a frontend production build.
 
 
+
+
+
+
+# Admin Class Detail Students-Only Follow-Up
+
+- [x] Remove students/assignments tab UI and assignment content from admin class detail
+- [x] Keep a single students table view
+- [x] Widen student search bar and update placeholder copy
+- [x] Move Enroll Student button beside the search bar
+- [x] Make remove-student action icon red by default
+- [x] Run frontend build verification
+
+
+
+# Admin Search Width + Hover Visibility Polish
+
+- [x] Remove class-detail search width cap so the input expands in the toolbar row
+- [x] Align user-management search placeholder color with class-management search placeholder color
+- [x] Strengthen admin table row hover background visibility
+- [x] Run frontend build verification
+
+
+
+# Admin Class Detail Header Refresh
+
+- [x] Replace the admin class detail helper copy with a cleaner header that uses the class description and keeps the current class metadata visible
+- [x] Reuse the admin class-management three-dot action menu in the class detail header
+- [x] Fix the student search toolbar layout so the input width is readable beside the enroll action
+- [x] Run frontend build verification
+
+
+
+
+
+
+
+
+# Similarity PDF Export
+
+- [x] Add a reusable frontend PDF document layer for plagiarism evidence exports
+- [x] Add threshold-aware class report download from the teacher similarity results page
+- [x] Add pairwise evidence report download for the selected comparison
+- [x] Extend plagiarism analyze/report responses with `generatedAt`
+- [x] Add/update frontend and backend tests for the new export workflow
+- [x] Update frontend/backend documentation and root progress tracking
+
+# Similarity PDF Institutional Refresh
+
+- [x] Refresh the PDF header and section/card styling to a more professional ClassiFi-branded look
+- [x] Replace visible generated/download metadata with a single Report Generated timestamp entry
+- [x] Rework class-report table cells to use badge-style color treatments with aligned headers/body widths
+- [x] Update targeted PDF/page tests for metadata and badge mapping behavior
+- [x] Run frontend test verification
+- [x] Run frontend build verification
 
 

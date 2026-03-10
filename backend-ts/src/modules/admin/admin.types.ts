@@ -64,6 +64,46 @@ export interface UpdateClassData {
   teacherId?: number
 }
 
+// ============ Enrollment Types ============
+
+export interface EnrollmentFilterOptions extends PaginationOptions {
+  search?: string
+  classId?: number
+  teacherId?: number
+  studentId?: number
+  status?: "active" | "archived" | "all"
+  yearLevel?: number
+  semester?: number
+  academicYear?: string
+}
+
+export interface AdminEnrollmentListItem {
+  id: number
+  studentId: number
+  studentFirstName: string
+  studentLastName: string
+  studentEmail: string
+  studentAvatarUrl: string | null
+  studentIsActive: boolean
+  classId: number
+  className: string
+  classCode: string
+  classIsActive: boolean
+  teacherId: number
+  teacherName: string
+  teacherAvatarUrl: string | null
+  yearLevel: number
+  semester: number
+  academicYear: string
+  enrolledAt: string
+}
+
+export interface TransferStudentData {
+  studentId: number
+  fromClassId: number
+  toClassId: number
+}
+
 // ============ Analytics Types ============
 
 export interface AdminStats {

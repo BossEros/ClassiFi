@@ -14,6 +14,7 @@ export interface ClassDTO {
   isActive: boolean
   studentCount?: number
   teacherName?: string
+  teacherAvatarUrl?: string | null
   assignmentCount?: number
 }
 
@@ -22,6 +23,7 @@ export function toClassDTO(
   extras?: {
     studentCount?: number
     teacherName?: string
+    teacherAvatarUrl?: string | null
     assignmentCount?: number
   },
 ): ClassDTO {

@@ -1,4 +1,96 @@
-﻿# Implementation Plan - Similarity Graph Singleton Support + UI Simplification
+# Implementation Plan - Milestone v1.1 Admin Enrollment Management Initialization
+
+## Goal
+
+Rebuild the planning baseline for ClassiFi and define a focused v1.1 milestone for hardening admin enrollment management.
+
+## Scope
+
+- `.planning/PROJECT.md`
+- `.planning/STATE.md`
+- `.planning/MILESTONES.md`
+- `.planning/research/*`
+- `.planning/REQUIREMENTS.md`
+- `.planning/ROADMAP.md`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Reconstruct the brownfield planning baseline from repository documentation and existing admin enrollment code.
+2. Run research focused on admin enrollment-management patterns, integration points, and pitfalls.
+3. Define milestone requirements for the hardened admin enrollment workflow.
+4. Generate a milestone roadmap with phase coverage and next-step guidance.
+
+## Deliverables
+
+- Recreated planning artifacts for the current branch
+- Research-backed milestone requirements
+- Roadmap for v1.1 admin enrollment management
+
+# Implementation Plan - Admin Enrollment Management Workspace
+
+## Goal
+
+Replace the temporary admin enrollment page with a production-ready enrollment workspace that gives admins cross-class visibility, safe enrollment actions, and clear operational audit context without overbuilding a full SIS.
+
+## Scope
+
+- `frontend/src/presentation/pages/admin/AdminEnrollmentsPage.tsx`
+- `frontend/src/business/services/adminService.ts`
+- `frontend/src/data/repositories/adminRepository.ts`
+- `frontend/src/business/models/admin/types.ts`
+- `frontend/src/data/api/admin.types.ts`
+- `frontend/src/tests/unit/**` (new or updated admin enrollment coverage)
+- `backend-ts/src/modules/admin/admin.controller.ts`
+- `backend-ts/src/modules/admin/admin-enrollment.controller.ts`
+- `backend-ts/src/modules/admin/admin-enrollment.service.ts`
+- `backend-ts/src/modules/admin/admin.schema.ts`
+- `backend-ts/src/modules/enrollments/enrollment.repository.ts`
+- `backend-ts/tests/**` (new or updated admin enrollment coverage)
+- `frontend/documentation.md`
+- `backend-ts/documentation.md`
+- `task.md`
+
+## Design Constraints
+
+- Follow the existing frontend Clean Architecture and backend controller-service-repository boundaries.
+- Reuse the current class-level enrollment actions where they still fit instead of duplicating business rules.
+- Apply SRP by separating list/query concerns from mutation concerns.
+- Apply DRY by centralizing enrollment validation and reusable filtering/mapping helpers.
+- Apply YAGNI by deferring waitlist automation, CSV import, and approval queues until the core admin workflow is dependable.
+
+## Execution Phases
+
+1. Backend enrollment registry foundation
+   - Add a paginated admin enrollment listing contract with search and filters for student, class, teacher, academic year, semester, and active status.
+   - Reuse existing enrollment repository primitives where possible and add focused query helpers only where missing.
+   - Add a safe transfer workflow for moving a student between classes with backend validation guards.
+2. Frontend enrollment workspace
+   - Replace the placeholder page with a searchable registry table and action toolbar.
+   - Add manual enroll, remove, and transfer flows with clear empty, loading, and error states.
+   - Keep the first page version focused on cross-class oversight rather than duplicating the full class detail roster view.
+3. Auditability and UX hardening
+   - Surface enrollment timestamps and action context that help admins understand who is enrolled where.
+   - Add destructive confirmations and user-safe error messages for every mutation path.
+4. Verification and documentation
+   - Add targeted backend and frontend tests for filters, mutations, and validation failures.
+   - Update frontend/backend documentation for the new admin enrollment workflow.
+   - Run `frontend: npm run build`, `backend-ts: npm run typecheck`, and `backend-ts: npm test`.
+
+## Checkpoints
+
+- Checkpoint 1: planning artifacts updated and committed
+- Checkpoint 2: backend admin enrollment API/query layer committed
+- Checkpoint 3: frontend admin enrollment workspace committed
+- Checkpoint 4: tests, docs, and verification committed
+
+## Deliverables
+
+- A functional admin enrollment management page with cross-class enrollment visibility
+- Backend support for enrollment listing and student transfer operations
+- Focused validation, safe destructive actions, and targeted test coverage
+# Implementation Plan - Similarity Graph Singleton Support + UI Simplification
 
 ## Goal
 
@@ -1950,3 +2042,151 @@ Audit the frontend after the dark-to-light refactor and remove only the code tha
 
 
 
+
+
+# Implementation Plan - Admin Class Detail Students-Only Follow-Up
+
+## Goal
+Align the admin class detail page to a students-only workflow and remove assignment-focused UI from that view.
+
+## Scope
+- frontend/src/presentation/pages/admin/AdminClassDetailPage.tsx
+- task.md
+
+## Execution Steps
+1. Remove the Students/Assignments tab switch and assignment card area from admin class detail.
+2. Keep a single students table with a wider search field and clearer placeholder text.
+3. Position the Enroll Student action beside the search input.
+4. Make student removal icon styling red by default to emphasize destructive intent.
+5. Verify with frontend build.
+
+
+# Implementation Plan - Admin Search Width + Placeholder + Hover Visibility Polish
+
+## Goal
+Resolve admin table usability inconsistencies by widening class-detail search, aligning placeholder tone, and increasing row-hover visibility.
+
+## Scope
+- frontend/src/presentation/pages/admin/AdminClassDetailPage.tsx
+- frontend/src/presentation/pages/admin/AdminUsersPage.tsx
+- frontend/src/presentation/pages/admin/AdminClassesPage.tsx
+
+## Execution Steps
+1. Remove class-detail search max-width cap so the input expands with available row space.
+2. Match users search placeholder tone with class-management search placeholder tone.
+3. Increase row-hover contrast on admin class, user, and class-detail student tables.
+4. Run frontend build verification.
+
+
+# Implementation Plan - Admin Class Detail Header Refresh
+
+## Goal
+Refine the admin class detail header so it presents class information more cleanly, reuses the existing admin class actions menu, and fixes the student-search width issue without changing the page workflow.
+
+## Scope
+- `frontend/src/presentation/pages/admin/AdminClassDetailPage.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+1. Replace the current helper-copy header with a cleaner class overview that uses the class description and keeps the current class metadata visible.
+2. Reuse the same admin class action menu pattern from the admin classes table for the header three-dot control.
+3. Investigate the search-width constraint and adjust the toolbar layout so the search input remains readable beside the enroll action.
+4. Verify with a frontend production build.
+
+
+# Implementation Plan - Similarity PDF Export
+
+## Why This Matters
+
+Teachers need downloadable plagiarism evidence that matches the exact review state they used when making an academic-integrity decision. The exported report must be threshold-aware for class-wide review and detailed enough for pairwise evidence when a specific student-vs-student comparison becomes actionable.
+
+## Evidence Context
+
+- The similarity results page is the default class-level plagiarism overview for an assignment.
+- Teachers may need a class-wide report for all suspicious pairs at or above the active threshold.
+- Teachers may also need a standalone pairwise evidence packet for a selected comparison, including fragment locations and full source appendices.
+- Structural Similarity must appear before Semantic Similarity everywhere in the export output.
+
+## Scope
+
+- `frontend/package.json`
+- `frontend/package-lock.json`
+- `frontend/src/presentation/pages/teacher/SimilarityResultsPage.tsx`
+- `frontend/src/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.tsx`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `frontend/src/tests/unit/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.test.ts`
+- `frontend/src/tests/unit/business/services/plagiarismService.test.ts`
+- `frontend/src/tests/unit/data/repositories/plagiarismRepository.test.ts`
+- `frontend/src/business/models/plagiarism/types.ts`
+- `frontend/src/data/api/plagiarism.types.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism.service.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism-persistence.service.ts`
+- `backend-ts/src/modules/plagiarism/plagiarism.schema.ts`
+- `backend-ts/tests/services/plagiarism.service.test.ts`
+- `frontend/documentation.md`
+- `backend-ts/documentation.md`
+- `implementation_plan.md`
+- `task.md`
+
+## Milestones
+
+- [x] Add frontend PDF generation support with `@react-pdf/renderer`
+- [x] Build reusable class-report and pair-report PDF view-model/document helpers
+- [x] Add `Download Class Report` and `Download Pair Report` actions to the teacher similarity results page
+- [x] Keep class export threshold-aware using overall similarity (`hybridScore` fallback to structural score)
+- [x] Keep pair export tied to the currently selected comparison and fetched fragment/code details
+- [x] Enrich plagiarism analyze/report responses with `generatedAt`
+- [x] Add focused frontend builder/page tests and update existing plagiarism service/repository tests
+- [x] Update backend plagiarism service tests for the new response metadata
+- [x] Update architecture and workflow documentation
+
+## Verification
+
+- [x] `frontend`: `npm run build`
+- [x] `frontend`: `npm test -- --run src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx src/tests/unit/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.test.ts src/tests/unit/business/services/plagiarismService.test.ts src/tests/unit/data/repositories/plagiarismRepository.test.ts`
+- [x] `backend-ts`: `npm run typecheck`
+- [x] `backend-ts`: `npm test`
+
+## Final Rollout Notes
+
+- Class-report exports only include pairs that meet the active threshold at download time.
+- Pair-report exports are generated from the selected comparison, not re-filtered by the page threshold once the teacher opens that pair.
+- The exported class graph is a static PDF-safe rendering derived from the existing graph utilities and intentionally excludes singleton-only nodes to keep the evidence focused.
+- Both export types include report-generation metadata so teachers can preserve the context of the underlying analysis.
+
+# Implementation Plan - Similarity PDF Institutional Refresh
+
+## Goal
+
+Make the plagiarism evidence PDFs feel more professional and institutional by improving the branded header, metadata presentation, and class-report table styling while preserving the current export behavior.
+
+## Scope
+
+- `frontend/src/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.tsx`
+- `frontend/src/presentation/utils/plagiarismSignalUtils.ts`
+- `frontend/src/tests/unit/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.test.ts`
+- `frontend/src/tests/unit/presentation/pages/teacher/SimilarityResultsPage.test.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Refresh the PDF visual system:
+   - Add a more formal ClassiFi-branded header and stronger section/card hierarchy.
+2. Simplify metadata wording:
+   - Remove the original backend-generated timestamp from the visible metadata.
+   - Keep the download timestamp and relabel it to `Report Generated`.
+3. Rework the class-report table:
+   - Replace plain text metric cells with badge-style visual treatments aligned to the UI severity colors.
+   - Use shared width definitions and explicit cell wrappers so headers and body content stay aligned.
+4. Verify:
+   - Run focused frontend PDF/page tests.
+   - Run `frontend`: `npm run build`.
+
+## Deliverables
+
+- Institutional ClassiFi-branded similarity PDFs.
+- Metadata wording aligned with the requested terminology.
+- Class-report table values rendered with badge-style color emphasis and improved alignment.
+- Passing targeted frontend tests and build verification.

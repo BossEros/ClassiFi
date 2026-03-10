@@ -14,6 +14,8 @@ import type {
   AdminStudentsResponse,
   AdminAssignmentsResponse,
   AdminTeachersResponse,
+  AdminEnrollmentRecord,
+  TransferStudentData,
 } from "@/data/api/admin.types"
 
 // ============ User Management ============
@@ -322,6 +324,69 @@ export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
   return apiResponse.data!
 }
 
+// ============ Enrollment Management ============
+
+export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
+  pageNumber?: number
+  itemsPerPage?: number
+  searchQuery?: string
+  classId?: number
+  teacherId?: number
+  studentId?: number
+  enrollmentStatus?: string
+  yearLevel?: number
+  semesterNumber?: number
+  academicYear?: string
+}): Promise<PaginatedResponse<AdminEnrollmentRecord>> {
+  const urlQueryParams = new URLSearchParams()
+
+  if (filterOptions.pageNumber)
+    urlQueryParams.set("page", filterOptions.pageNumber.toString())
+  if (filterOptions.itemsPerPage)
+    urlQueryParams.set("limit", filterOptions.itemsPerPage.toString())
+  if (filterOptions.searchQuery)
+    urlQueryParams.set("search", filterOptions.searchQuery)
+  if (filterOptions.classId)
+    urlQueryParams.set("classId", filterOptions.classId.toString())
+  if (filterOptions.teacherId)
+    urlQueryParams.set("teacherId", filterOptions.teacherId.toString())
+  if (filterOptions.studentId)
+    urlQueryParams.set("studentId", filterOptions.studentId.toString())
+  if (filterOptions.enrollmentStatus)
+    urlQueryParams.set("status", filterOptions.enrollmentStatus)
+  if (filterOptions.yearLevel)
+    urlQueryParams.set("yearLevel", filterOptions.yearLevel.toString())
+  if (filterOptions.semesterNumber)
+    urlQueryParams.set("semester", filterOptions.semesterNumber.toString())
+  if (filterOptions.academicYear)
+    urlQueryParams.set("academicYear", filterOptions.academicYear)
+
+  const apiResponse = await apiClient.get<PaginatedResponse<AdminEnrollmentRecord>>(
+    `/admin/enrollments?${urlQueryParams.toString()}`,
+  )
+
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error)
+  }
+
+  return apiResponse.data!
+}
+
+export async function transferStudentBetweenClasses(
+  transferStudentData: TransferStudentData,
+): Promise<AdminResponse> {
+  const apiResponse = await apiClient.post<AdminResponse>(
+    "/admin/enrollments/transfer",
+    transferStudentData,
+  )
+
+  if (apiResponse.error) {
+    throw new Error(apiResponse.error)
+  }
+
+  return apiResponse.data!
+}
+
 // ============ Class Enrollment Management ============
 
 export async function getEnrolledStudentsInClassById(
@@ -382,3 +447,6 @@ export async function unenrollStudentFromClassById(
 
   return apiResponse.data!
 }
+
+
+

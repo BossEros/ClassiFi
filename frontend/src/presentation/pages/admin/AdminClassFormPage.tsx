@@ -365,7 +365,7 @@ export function AdminClassFormPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6 flex flex-col">
-            <Card className="relative z-50 border border-slate-200 bg-white shadow-sm">
+            <Card className="relative z-50 border-slate-300 bg-white shadow-md shadow-slate-200/80">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <ClipboardList className="w-6 h-6 text-teal-700" />
@@ -568,7 +568,7 @@ export function AdminClassFormPage() {
               </CardContent>
             </Card>
 
-            <Card className="relative z-0 border border-slate-200 bg-white shadow-sm">
+            <Card className="relative z-0 border-slate-300 bg-white shadow-md shadow-slate-200/80">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <AlarmClock className="w-6 h-6 text-emerald-700" />
@@ -648,7 +648,7 @@ export function AdminClassFormPage() {
           </div>
 
           <div className="space-y-6">
-            <Card className="border border-slate-200 bg-white shadow-sm">
+            <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
               <CardHeader>
                 <div className="flex items-center gap-3">
                   <GraduationCap className="w-6 h-6 text-sky-700" />
@@ -735,7 +735,7 @@ export function AdminClassFormPage() {
               </CardContent>
             </Card>
 
-            <Card className="border border-slate-200 bg-white shadow-sm">
+            <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
               <CardContent className="p-6 space-y-3">
                 <Button
                   type="submit"
@@ -770,3 +770,4 @@ export function AdminClassFormPage() {
 }
 
 export default AdminClassFormPage
+

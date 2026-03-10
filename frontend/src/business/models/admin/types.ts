@@ -42,6 +42,7 @@ export interface AdminClass {
   studentCount: number
   createdAt: string
   teacherName: string
+  teacherAvatarUrl?: string | null
 }
 
 export interface CreateClassData {
@@ -72,6 +73,33 @@ export interface ClassAssignment {
   deadline: string | null
   createdAt: string
   submissionCount: number
+}
+
+export interface AdminEnrollmentRecord {
+  id: number
+  studentId: number
+  studentFirstName: string
+  studentLastName: string
+  studentEmail: string
+  studentAvatarUrl: string | null
+  studentIsActive: boolean
+  classId: number
+  className: string
+  classCode: string
+  classIsActive: boolean
+  teacherId: number
+  teacherName: string
+  teacherAvatarUrl: string | null
+  yearLevel: number
+  semester: number
+  academicYear: string
+  enrolledAt: string
+}
+
+export interface TransferStudentData {
+  studentId: number
+  fromClassId: number
+  toClassId: number
 }
 
 export interface AdminStats {
@@ -129,6 +157,14 @@ export interface AdminStudentsResponse extends AdminResponse {
 
 export interface AdminAssignmentsResponse extends AdminResponse {
   assignments?: ClassAssignment[]
+}
+
+export interface AdminEnrollmentResponse extends AdminResponse {
+  enrollment?: AdminEnrollmentRecord
+}
+
+export interface AdminEnrollmentsResponse extends AdminResponse {
+  enrollments?: AdminEnrollmentRecord[]
 }
 
 export interface PaginatedResponse<T> extends AdminResponse {
