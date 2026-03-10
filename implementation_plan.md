@@ -2190,3 +2190,34 @@ Make the plagiarism evidence PDFs feel more professional and institutional by im
 - Metadata wording aligned with the requested terminology.
 - Class-report table values rendered with badge-style color emphasis and improved alignment.
 - Passing targeted frontend tests and build verification.
+# Implementation Plan - Dashboard Content Expansion On Sidebar Collapse
+
+## Goal
+
+Let the shared dashboard content area reclaim horizontal space on desktop when the sidebar is collapsed, while keeping the current open-sidebar reading width and preserving mobile behavior.
+
+## Scope
+
+- `frontend/src/presentation/components/shared/dashboard/DashboardLayout.tsx`
+- `implementation_plan.md`
+- `task.md`
+
+## Execution Steps
+
+1. Update local tracking:
+   - Add a focused checklist entry in `task.md`.
+2. Refine the shared dashboard shell:
+   - Keep the current centered `max-w-7xl` layout when the sidebar is expanded.
+   - On desktop collapsed state, widen the content wrapper and left-align it so the freed sidebar space is visibly reclaimed.
+3. Preserve current behavior boundaries:
+   - Do not change mobile drawer behavior.
+   - Do not introduce page-specific overrides or new layout abstractions unless needed.
+4. Verify:
+   - Run `frontend`: `npm run build`
+   - Fix any issues and re-run until passing.
+
+## Deliverables
+
+- Shared desktop dashboard layout that expands and shifts left when the sidebar is collapsed.
+- No behavior change for mobile navigation.
+- Successful frontend build verification.

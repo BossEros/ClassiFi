@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Sidebar } from "./Sidebar"
 import { cn } from "@/shared/utils/cn"
 
@@ -52,7 +52,16 @@ export function DashboardLayout({
         <main
           className={cn("flex-1 min-w-0 overflow-y-auto", "h-full", className)}
         >
-          <div className="p-6 lg:p-8 max-w-7xl mx-auto w-full">{children}</div>
+          <div
+            className={cn(
+              "w-full p-6 transition-[max-width,margin] duration-300 lg:p-8",
+              isCollapsed
+                ? "lg:mr-auto lg:max-w-screen-2xl lg:mx-0"
+                : "max-w-7xl mx-auto",
+            )}
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

@@ -838,3 +838,10 @@
 - [x] Run frontend build verification
 
 
+
+# Dashboard Content Expansion On Sidebar Collapse
+
+- [x] Update the shared dashboard shell so desktop main content expands left and gains width when the sidebar is collapsed
+- [x] Keep the open-sidebar desktop layout unchanged and preserve the current mobile behavior
+- [x] Run frontend build verification
+
