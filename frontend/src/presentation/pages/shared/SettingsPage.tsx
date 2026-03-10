@@ -1280,7 +1280,6 @@ export function SettingsPage() {
   const topBar = useTopBar({
     user,
     userInitials,
-    showProfileButton: false,
   })
 
   if (!user) return null
@@ -1471,4 +1470,5 @@ export function SettingsPage() {
     </DashboardLayout>
   )
 }
+
 
