@@ -1,56 +1,92 @@
-# ClassiFi Technology Stack
+# Technology Stack
 
-## Repository Shape
-- Monorepo-style layout with primary apps in `frontend/`, `backend-ts/`, `semantic-service/`, and `judge0/`.
-- Root deployment blueprint is defined in `render.yaml`.
-- High-level architecture references are in `frontend/documentation.md` and `backend-ts/documentation.md`.
+**Analysis Date:** 2026-03-08
 
-## Languages and Runtimes
-- Frontend language/runtime: TypeScript + React running in browser, bundled by Vite (`frontend/package.json`, `frontend/vite.config.ts`).
-- Backend language/runtime: TypeScript on Node.js 20.x (`backend-ts/package.json`, `backend-ts/tsconfig.json`).
-- Semantic sidecar language/runtime: Python 3.11 + FastAPI/Uvicorn (`semantic-service/Dockerfile`, `semantic-service/main.py`).
-- Code execution stack runtime: Judge0 containers + Redis + Postgres (`judge0/docker-compose.yml`, `judge0/judge0.conf.template`).
+## Languages
 
-## Frontend Frameworks and Major Dependencies
-- UI framework: `react` and `react-dom` v19 (`frontend/package.json`).
-- Router: `react-router-dom` (`frontend/package.json`).
-- Styling: Tailwind CSS v4 via Vite plugin `@tailwindcss/vite` (`frontend/package.json`, `frontend/vite.config.ts`).
-- Forms/validation: `react-hook-form`, `@hookform/resolvers`, `zod` (`frontend/package.json`).
-- State management: `zustand` (`frontend/package.json`).
-- Supabase SDK: `@supabase/supabase-js` (`frontend/package.json`, `frontend/src/data/api/supabaseClient.ts`).
-- Editor and calendars: `@monaco-editor/react`, `monaco-editor`, `react-big-calendar` (`frontend/package.json`).
-- Frontend API transport uses native `fetch` through centralized client in `frontend/src/data/api/apiClient.ts`.
+**Primary:**
+- TypeScript - Main application language for frontend (`frontend/src/**`) and backend (`backend-ts/src/**`).
+- Python - Semantic similarity microservice (`semantic-service/main.py`, `semantic-service/app/**`).
 
-## Backend Frameworks and Major Dependencies
-- HTTP framework: `fastify` with `@fastify/cors`, `@fastify/multipart` (`backend-ts/package.json`, `backend-ts/src/app.ts`).
-- API docs: `@fastify/swagger` + `@fastify/swagger-ui` (`backend-ts/package.json`, `backend-ts/src/api/plugins/swagger.ts`).
-- Validation: `zod` + `zod-to-json-schema` (`backend-ts/package.json`).
-- ORM/database: `drizzle-orm` with `postgres` driver (`backend-ts/package.json`, `backend-ts/src/shared/database.ts`).
-- Dependency injection: `tsyringe` + decorators metadata (`backend-ts/package.json`, `backend-ts/src/shared/container.ts`, `backend-ts/tsconfig.json`).
-- Logging: `pino` wrapped by internal logger (`backend-ts/package.json`, `backend-ts/src/shared/logger.ts`).
-- External service SDKs: `@supabase/supabase-js`, `@sendgrid/mail`, `nodemailer` (`backend-ts/package.json`).
-- Plagiarism parsing libs: `tree-sitter`, `tree-sitter-python`, `tree-sitter-java`, `tree-sitter-c` (`backend-ts/package.json`).
+**Secondary:**
+- JavaScript - Tooling/config and generated lockfile context (`frontend/eslint.config.js`, `.github/workflows/*.yml`).
+- SQL - PostgreSQL schema/migrations via Drizzle and Supabase-backed Postgres (`backend-ts/src/models/*.model.ts`, `backend-ts/drizzle/**`).
+- YAML - CI/CD and deployment configuration (`.github/workflows/*.yml`, `render.yaml`, `judge0/docker-compose.yml`, `semantic-service/docker-compose.yml`).
+- Shell/PowerShell - Operational scripts and commands in workflow/docs.
 
-## Semantic Service Stack
-- API framework: `fastapi` and `uvicorn` (`semantic-service/requirements.txt`, `semantic-service/main.py`).
-- ML stack: `transformers`, `torch` (CPU build) (`semantic-service/requirements.txt`, `semantic-service/Dockerfile`).
-- Runtime model orchestration and inference code live in `semantic-service/app/predictor.py` and `semantic-service/app/config.py`.
+## Runtime
 
-## Testing and Quality Tooling
-- Frontend unit tests: Vitest + jsdom (`frontend/vitest.config.ts`, `frontend/package.json`).
-- Frontend E2E tests: Playwright (`frontend/playwright.config.ts`, `frontend/package.json`).
-- Backend tests: Vitest in Node environment (`backend-ts/vitest.config.ts`, `backend-ts/package.json`).
-- Linting: ESLint configurations in `frontend/eslint.config.js` and `backend-ts/eslint.config.js`.
-- Formatting: Prettier base config in `.prettierrc`; package scripts in both `frontend/package.json` and `backend-ts/package.json`.
+**Environment:**
+- Node.js 20.x - Backend runtime pinned via `backend-ts/package.json` `engines.node`.
+- Browser runtime - Frontend React SPA built by Vite (`frontend`).
+- Python 3.11 - Semantic service runtime (`semantic-service/Dockerfile`).
+- Docker Compose runtime - Optional self-hosted sidecars (`judge0/`, `semantic-service/docker-compose.yml`).
 
-## Configuration Locations (Practical Map)
-- Frontend env and app endpoints: `frontend/.env.example`.
-- Frontend TypeScript configs: `frontend/tsconfig.json`, `frontend/tsconfig.app.json`, `frontend/tsconfig.node.json`, `frontend/tsconfig.test.json`.
-- Frontend bundler config: `frontend/vite.config.ts`.
-- Backend env validation and typed settings: `backend-ts/src/shared/config.ts`.
-- Backend sample env: `backend-ts/.env.example`.
-- Backend server/app bootstrap: `backend-ts/src/server.ts`, `backend-ts/src/app.ts`.
-- Backend DB generation config: `backend-ts/drizzle.config.ts` (targets output `./drizzle`, currently config-defined).
-- Judge0 infra config: `judge0/docker-compose.yml`, `judge0/judge0.conf.template`.
-- Semantic sidecar infra config: `semantic-service/docker-compose.yml`, `semantic-service/Dockerfile`.
-- Cloud deployment blueprint: `render.yaml`.
+**Package Manager:**
+- npm - Frontend and backend dependency/runtime management (`frontend/package-lock.json`, `backend-ts/package-lock.json`).
+- pip - Semantic service Python dependencies (`semantic-service/requirements.txt`).
+- Lockfiles: `frontend/package-lock.json`, `backend-ts/package-lock.json` present.
+
+## Frameworks
+
+**Core:**
+- React 19 + React Router 7 - Frontend UI and routing (`frontend/package.json`).
+- Vite 7 - Frontend bundler/dev server (`frontend/package.json`, `frontend/vite.config.ts`).
+- Fastify 5 - Backend HTTP framework (`backend-ts/package.json`, `backend-ts/src/app.ts`).
+- Drizzle ORM + postgres client - Data access layer (`backend-ts/package.json`, `backend-ts/src/shared/database.ts`).
+- FastAPI + Uvicorn - Semantic similarity service API (`semantic-service/requirements.txt`, `semantic-service/main.py`).
+
+**Testing:**
+- Vitest 4 - Unit/integration tests for frontend and backend (`frontend/package.json`, `backend-ts/package.json`).
+- Playwright 1.58 - Frontend E2E/browser tests (`frontend/package.json`, `frontend/playwright.config.ts`).
+
+**Build/Dev:**
+- TypeScript 5.x - Typed compilation and checking (`frontend/tsconfig*.json`, `backend-ts/tsconfig.json`).
+- tsx + tsc-alias - Backend dev runtime and post-build path alias rewrite (`backend-ts/package.json`).
+- drizzle-kit - Schema generation/migration tooling (`backend-ts/package.json`, `backend-ts/drizzle.config.ts`).
+- Tailwind CSS v4 - Frontend styling (`frontend/package.json`).
+
+## Key Dependencies
+
+**Critical:**
+- `@supabase/supabase-js` - Shared auth/storage integration in frontend and backend.
+- `fastify` + `@fastify/*` - Core backend transport, multipart uploads, CORS, docs.
+- `drizzle-orm` + `postgres` - Backend persistence layer to PostgreSQL.
+- `tsyringe` - Dependency injection in backend services/controllers.
+- `zod` + `zod-to-json-schema` - Runtime validation and OpenAPI-compatible schema generation.
+- `@monaco-editor/react` + `monaco-editor` - In-browser coding interface.
+
+**Infrastructure:**
+- `@sendgrid/mail` + `nodemailer` - Email delivery with primary/fallback model.
+- `tree-sitter` + language grammars (`tree-sitter-python`, `tree-sitter-java`, `tree-sitter-c`) - Structural plagiarism tokenization pipeline.
+- `transformers` + `torch` - Semantic similarity inference in Python sidecar.
+
+## Configuration
+
+**Environment:**
+- Backend centralized env validation via Zod (`backend-ts/src/shared/config.ts`) and `.env.example`.
+- Frontend env usage through Vite (`frontend/.env.example`, `import.meta.env`).
+- Semantic service loads env via Pydantic settings (`semantic-service/app/config.py`).
+
+**Build:**
+- Frontend: `frontend/vite.config.ts`, `frontend/tsconfig*.json`, `frontend/vercel.json`.
+- Backend: `backend-ts/tsconfig.json`, `backend-ts/drizzle.config.ts`, `backend-ts/vitest.config.ts`.
+- Infra: `render.yaml`, `.github/workflows/ci.yml`, `.github/workflows/codeql.yml`.
+
+## Platform Requirements
+
+**Development:**
+- Node.js 20+ and npm for frontend/backend.
+- Python 3.11 + pip for semantic service development.
+- Docker/Docker Compose for optional local Judge0 + Redis/Postgres sidecar stack and semantic sidecar containerization.
+
+**Production:**
+- Frontend deployment target: Vercel (`frontend/vercel.json`, CI deploy hook support).
+- Backend deployment target: Render Web Service (`render.yaml`).
+- Managed Postgres/Auth/Storage dependency: Supabase.
+- Optional external runtime dependencies: self-hosted Judge0 API and semantic similarity service endpoint.
+
+---
+
+*Stack analysis: 2026-03-08*
+*Update after major dependency changes*

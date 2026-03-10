@@ -202,3 +202,5 @@ frontend/test_output.txt
 # Local scratch/vendor folders
 Dulles-main/
 dolos-main/
+
+.planning/
