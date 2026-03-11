@@ -129,7 +129,6 @@ test.describe("Class Management", () => {
       ).toBeVisible()
     })
   })
-
   test.describe("As a Student", () => {
     test.beforeEach(async ({ page }) => {
       // Mock auth session
@@ -154,19 +153,6 @@ test.describe("Class Management", () => {
     })
 
     test("should successfully join a class with code", async ({ page }) => {
-      // Mock join class API
-      await page.route("**/api/v1/student/dashboard/join", async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            success: true,
-            message: "Successfully joined class",
-            classInfo: mockClass,
-          }),
-        })
-      })
-
       // Mock refreshed dashboard
       await page.route("**/api/v1/student/dashboard/*", async (route) => {
         await route.fulfill({
@@ -176,6 +162,19 @@ test.describe("Class Management", () => {
             success: true,
             recentClasses: [mockClass],
             pendingTasks: [],
+          }),
+        })
+      })
+
+      // Mock join class API (registered last so it wins over wildcard route)
+      await page.route("**/api/v1/student/dashboard/join", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            message: "Successfully joined class",
+            classInfo: mockClass,
           }),
         })
       })

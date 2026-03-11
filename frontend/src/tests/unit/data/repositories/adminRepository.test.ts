@@ -813,7 +813,7 @@ describe("adminRepository", () => {
         data: {
           success: true,
           data: [mockEnrollmentRecord],
-          total: 1,
+          totalCount: 1,
           page: 1,
           limit: 10,
           totalPages: 1,

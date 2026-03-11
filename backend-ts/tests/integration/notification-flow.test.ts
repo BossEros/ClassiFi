@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest"
 import { container } from "tsyringe"
 import { NotificationService } from "../../src/modules/notifications/notification.service.js"
+import { GradebookService } from "../../src/modules/gradebook/gradebook.service.js"
 import { NotificationRepository } from "../../src/modules/notifications/notification.repository.js"
-import { NotificationDeliveryRepository } from "../../src/modules/notifications/notification-delivery.repository.js"
 import { AssignmentService } from "../../src/modules/assignments/assignment.service.js"
 import { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import { ClassRepository } from "../../src/modules/classes/class.repository.js"
@@ -11,10 +11,7 @@ import { SubmissionRepository } from "../../src/modules/submissions/submission.r
 import { TestCaseRepository } from "../../src/repositories/test-case.repository.js"
 import { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
 import { LatePenaltyService } from "../../src/modules/assignments/late-penalty.service.js"
-import type {
-  Notification,
-  NotificationDelivery,
-} from "../../src/models/index.js"
+import type { Notification } from "../../src/models/index.js"
 
 /**
  * Integration tests for the complete notification flow.
@@ -23,8 +20,8 @@ import type {
 describe("Notification Flow Integration Tests", () => {
   let notificationService: NotificationService
   let notificationRepo: NotificationRepository
-  let deliveryRepo: NotificationDeliveryRepository
   let assignmentService: AssignmentService
+  let gradebookService: GradebookService
 
   // Mock repositories
   let mockAssignmentRepo: AssignmentRepository
@@ -34,6 +31,10 @@ describe("Notification Flow Integration Tests", () => {
   let mockTestCaseRepo: TestCaseRepository
   let mockTestResultRepo: TestResultRepository
   let mockLatePenaltyService: LatePenaltyService
+  let mockQueueService: {
+    enqueueDelivery: ReturnType<typeof vi.fn>
+    processDelivery: ReturnType<typeof vi.fn>
+  }
 
   beforeEach(() => {
     // Clear all mocks
@@ -72,6 +73,7 @@ describe("Notification Flow Integration Tests", () => {
       getSubmissionsByAssignmentId: vi.fn(),
       getSubmissionsByStudentId: vi.fn(),
       getLatestSubmission: vi.fn(),
+      setGradeOverride: vi.fn(),
     } as any
 
     mockTestCaseRepo = {} as any
@@ -99,7 +101,7 @@ describe("Notification Flow Integration Tests", () => {
     } as any
 
     // Create mock queue service
-    const mockQueueService = {
+    mockQueueService = {
       enqueueDelivery: vi.fn().mockResolvedValue(undefined),
       processDelivery: vi.fn().mockResolvedValue(undefined),
     } as any
@@ -146,8 +148,15 @@ describe("Notification Flow Integration Tests", () => {
 
     // Store references
     notificationRepo = mockNotificationRepo
-    deliveryRepo = mockDeliveryRepo
     assignmentService = container.resolve(AssignmentService)
+    gradebookService = new GradebookService(
+      {} as any,
+      mockSubmissionRepo,
+      mockAssignmentRepo,
+      mockLatePenaltyService,
+      mockTestResultRepo,
+      notificationService,
+    )
   })
 
   afterEach(() => {
@@ -369,20 +378,20 @@ describe("Notification Flow Integration Tests", () => {
       // Arrange
       const studentId = 10
       const assignmentId = 1
+      const submissionId = 1
 
       const mockNotification: Notification = {
         id: 1,
         userId: studentId,
         type: "SUBMISSION_GRADED",
-        title: "Assignment Graded: Test Assignment",
-        message: "Your submission has been graded",
+        title: "Assignment Graded",
+        message: 'Your submission for "Test Assignment" has been graded. Score: 85/100',
         metadata: {
           assignmentId,
           assignmentTitle: "Test Assignment",
-          submissionId: 1,
+          submissionId,
           grade: 85,
-          totalScore: 100,
-          feedback: "Good work!",
+          maxGrade: 100,
           submissionUrl: "http://localhost:5173/dashboard/assignments/1",
         },
         isRead: false,
@@ -390,31 +399,72 @@ describe("Notification Flow Integration Tests", () => {
         createdAt: new Date(),
       }
 
-      // Mock repository responses
+      vi.mocked(mockSubmissionRepo.getSubmissionById).mockResolvedValue({
+        id: submissionId,
+        assignmentId,
+        studentId,
+        fileName: "solution.py",
+        filePath: "submissions/1/10/1_solution.py",
+        fileSize: 123,
+        submissionNumber: 1,
+        submittedAt: new Date(),
+        isLatest: true,
+        grade: 80,
+        isLate: false,
+        penaltyApplied: 0,
+        isGradeOverridden: false,
+        overrideReason: null,
+        overriddenAt: null,
+        teacherFeedback: null,
+        feedbackGivenAt: null,
+      } as any)
+      vi.mocked(mockAssignmentRepo.getAssignmentById).mockResolvedValue({
+        id: assignmentId,
+        classId: 1,
+        assignmentName: "Test Assignment",
+        instructions: "Test instructions",
+        instructionsImageUrl: null,
+        programmingLanguage: "python",
+        deadline: null,
+        allowResubmission: true,
+        maxAttempts: null,
+        createdAt: new Date(),
+        isActive: true,
+        templateCode: null,
+        totalScore: 100,
+        scheduledDate: null,
+        allowLateSubmissions: false,
+        latePenaltyConfig: null,
+        lastReminderSentAt: null,
+      } as any)
+      vi.mocked(mockSubmissionRepo.setGradeOverride).mockResolvedValue(undefined)
       vi.mocked(notificationRepo.create).mockResolvedValue(mockNotification)
 
-      // Act - Test notification creation directly
-      const result = await notificationRepo.create({
-        userId: studentId,
-        type: "SUBMISSION_GRADED",
-        title: "Assignment Graded: Test Assignment",
-        message: "Your submission has been graded",
-        metadata: {
-          assignmentId,
-          assignmentTitle: "Test Assignment",
-          submissionId: 1,
-          grade: 85,
-          totalScore: 100,
-          feedback: "Good work!",
-          submissionUrl: "http://localhost:5173/dashboard/assignments/1",
-        },
-      })
+      // Act
+      await gradebookService.overrideGrade(submissionId, 85, "Good work!")
+
+      // Wait for asynchronous notification creation in GradebookService
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       // Assert
-      expect(result).toBeDefined()
-      expect(result.userId).toBe(studentId)
-      expect(result.type).toBe("SUBMISSION_GRADED")
-      expect(notificationRepo.create).toHaveBeenCalled()
+      expect(mockSubmissionRepo.setGradeOverride).toHaveBeenCalledWith(
+        submissionId,
+        85,
+        "Good work!",
+      )
+      expect(notificationRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: studentId,
+          type: "SUBMISSION_GRADED",
+          metadata: expect.objectContaining({
+            assignmentId,
+            assignmentTitle: "Test Assignment",
+            submissionId,
+            grade: 85,
+            maxGrade: 100,
+          }),
+        }),
+      )
     })
   })
 
@@ -422,8 +472,7 @@ describe("Notification Flow Integration Tests", () => {
     it("should queue email delivery when notification is created", async () => {
       // Arrange
       const userId = 1
-      const notificationType = "ASSIGNMENT_CREATED"
-      const metadata = {
+      const payload = {
         assignmentId: 1,
         assignmentTitle: "Test Assignment",
         className: "Test Class",
@@ -435,52 +484,45 @@ describe("Notification Flow Integration Tests", () => {
       const mockNotification: Notification = {
         id: 1,
         userId,
-        type: notificationType,
-        title: "New Assignment: Test Assignment",
-        message: "A new assignment has been posted",
-        metadata,
+        type: "ASSIGNMENT_CREATED",
+        title: "Test Class: New Assignment Posted",
+        message:
+          'Your teacher has posted a new assignment "Test Assignment" in Test Class, due on 12/31/2024.',
+        metadata: payload,
         isRead: false,
         readAt: null,
         createdAt: new Date(),
       }
 
-      const mockDelivery: NotificationDelivery = {
-        id: 1,
-        notificationId: 1,
-        channel: "EMAIL",
-        status: "PENDING",
-        retryCount: 0,
-        createdAt: new Date(),
-        sentAt: null,
-        failedAt: null,
-        errorMessage: null,
-      }
-
       vi.mocked(notificationRepo.create).mockResolvedValue(mockNotification)
-      vi.mocked(deliveryRepo.create).mockResolvedValue(mockDelivery)
 
-      // Act - Test delivery creation directly
-      const notification = await notificationRepo.create({
+      // Act
+      const notification = await notificationService.createNotification(
         userId,
-        type: notificationType,
-        title: "New Assignment: Test Assignment",
-        message: "A new assignment has been posted",
-        metadata,
-      })
-
-      const delivery = await deliveryRepo.create({
-        notificationId: notification.id,
-        channel: "EMAIL",
-        status: "PENDING",
-        retryCount: 0,
-      })
+        "ASSIGNMENT_CREATED",
+        payload,
+      )
 
       // Assert
       expect(notification).toBeDefined()
-      expect(delivery).toBeDefined()
-      expect(delivery.notificationId).toBe(notification.id)
-      expect(delivery.channel).toBe("EMAIL")
-      expect(delivery.status).toBe("PENDING")
+      expect(notification.id).toBe(1)
+      expect(notificationRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId,
+          type: "ASSIGNMENT_CREATED",
+          metadata: payload,
+        }),
+      )
+      expect(mockQueueService.enqueueDelivery).toHaveBeenCalledWith(
+        1,
+        "EMAIL",
+        payload,
+      )
+      expect(mockQueueService.enqueueDelivery).toHaveBeenCalledWith(
+        1,
+        "IN_APP",
+        payload,
+      )
     })
   })
 

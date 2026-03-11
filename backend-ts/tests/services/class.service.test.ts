@@ -8,9 +8,11 @@ import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { StorageService } from "../../src/services/storage.service.js"
 import {
+  BadRequestError,
   ClassNotFoundError,
-  NotClassOwnerError,
   InvalidRoleError,
+  NotClassOwnerError,
+  StudentNotInClassError,
 } from "../../src/shared/errors.js"
 import {
   createMockClass,
@@ -41,7 +43,11 @@ describe("ClassService", () => {
     mockAssignmentRepo = {
       getAssignmentsByClassId: vi.fn(),
     } as any
-    mockEnrollmentRepo = {} as any
+    mockEnrollmentRepo = {
+      isEnrolled: vi.fn(),
+      unenrollStudent: vi.fn(),
+      getEnrolledStudentsWithInfo: vi.fn(),
+    } as any
 
     mockUserRepo = {
       getUserById: vi.fn(),
@@ -50,6 +56,7 @@ describe("ClassService", () => {
     mockSubmissionRepo = {
       getSubmissionsByClass: vi.fn(),
       getLatestSubmissionCountsByAssignmentIds: vi.fn(),
+      getLatestSubmissionsByStudentAndAssignmentIds: vi.fn(),
     } as any
     mockStorageService = {
       deleteSubmissionFiles: vi.fn(),
@@ -79,7 +86,8 @@ describe("ClassService", () => {
       const result = await classService.createClass({
         teacherId: teacher.id,
         className: newClass.className,
-        classCode: "ABC12345",
+        classCode: "ABC12345",
+
         semester: newClass.semester,
         academicYear: newClass.academicYear,
         schedule: newClass.schedule,
@@ -98,7 +106,8 @@ describe("ClassService", () => {
         classService.createClass({
           teacherId: 999,
           className: "Test Class",
-          classCode: "ABCDEFGH",
+          classCode: "ABCDEFGH",
+
           semester: 1,
           academicYear: "2024-2025",
           schedule: { days: ["monday"], startTime: "10:00", endTime: "11:00" },
@@ -114,7 +123,8 @@ describe("ClassService", () => {
         classService.createClass({
           teacherId: student.id,
           className: "Test",
-          classCode: "ABCDEFGH",
+          classCode: "ABCDEFGH",
+
           semester: 1,
           academicYear: "2024",
           schedule: {
@@ -284,6 +294,139 @@ describe("ClassService", () => {
     })
   })
 
+  describe("getClassAssignmentsForStudent", () => {
+    it("should enrich class assignments with student submission metadata", async () => {
+      const classAssignments = [
+        {
+          id: 11,
+          classId: 1,
+          assignmentName: "Intro Quiz",
+          instructions: "Test",
+          instructionsImageUrl: null,
+          programmingLanguage: "python",
+          deadline: null,
+          allowResubmission: true,
+          maxAttempts: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          isActive: true,
+          templateCode: null,
+          totalScore: 100,
+          scheduledDate: null,
+          allowLateSubmissions: false,
+          latePenaltyConfig: null,
+          lastReminderSentAt: null,
+        },
+      ]
+
+      const latestSubmission = {
+        id: 1001,
+        assignmentId: 11,
+        studentId: 99,
+        fileName: "solution.py",
+        filePath: "submissions/11/99/1_solution.py",
+        fileSize: 200,
+        submissionNumber: 1,
+        submittedAt: new Date("2026-01-02T10:00:00.000Z"),
+        isLatest: true,
+        grade: 91,
+        isLate: false,
+        penaltyApplied: 0,
+        isGradeOverridden: false,
+        overrideReason: null,
+        overriddenAt: null,
+        teacherFeedback: null,
+        feedbackGivenAt: null,
+      }
+
+      mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
+        classAssignments as any,
+      )
+      mockClassRepo.getStudentCount!.mockResolvedValue(30)
+      mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
+        new Map([[11, 12]]),
+      )
+      mockSubmissionRepo.getLatestSubmissionsByStudentAndAssignmentIds!.mockResolvedValue(
+        new Map([[11, latestSubmission as any]]),
+      )
+      mockEnrollmentRepo.isEnrolled!.mockResolvedValue(true)
+
+      const result = await classService.getClassAssignmentsForStudent(1, 99)
+
+      expect(result).toHaveLength(1)
+      expect(result[0].submissionCount).toBe(12)
+      expect(result[0].studentCount).toBe(30)
+      expect(result[0].hasSubmitted).toBe(true)
+      expect(result[0].submittedAt).toBe("2026-01-02T10:00:00.000Z")
+      expect(result[0].grade).toBe(91)
+      expect(
+        mockSubmissionRepo.getLatestSubmissionsByStudentAndAssignmentIds,
+      ).toHaveBeenCalledWith(99, [11])
+    })
+
+    it("should set default student fields when no latest submission exists", async () => {
+      const classAssignments = [
+        {
+          id: 22,
+          classId: 1,
+          assignmentName: "No Submission Yet",
+          instructions: "Test",
+          instructionsImageUrl: null,
+          programmingLanguage: "python",
+          deadline: null,
+          allowResubmission: true,
+          maxAttempts: null,
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+          isActive: true,
+          templateCode: null,
+          totalScore: 100,
+          scheduledDate: null,
+          allowLateSubmissions: false,
+          latePenaltyConfig: null,
+          lastReminderSentAt: null,
+        },
+      ]
+
+      mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
+        classAssignments as any,
+      )
+      mockClassRepo.getStudentCount!.mockResolvedValue(18)
+      mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
+        new Map(),
+      )
+      mockSubmissionRepo.getLatestSubmissionsByStudentAndAssignmentIds!.mockResolvedValue(
+        new Map(),
+      )
+      mockEnrollmentRepo.isEnrolled!.mockResolvedValue(true)
+
+      const result = await classService.getClassAssignmentsForStudent(1, 77)
+
+      expect(result).toHaveLength(1)
+      expect(result[0].hasSubmitted).toBe(false)
+      expect(result[0].submittedAt).toBeNull()
+      expect(result[0].grade).toBeNull()
+      expect(
+        mockSubmissionRepo.getLatestSubmissionsByStudentAndAssignmentIds,
+      ).toHaveBeenCalledWith(77, [22])
+    })
+
+
+    it("should throw BadRequestError when student ID is not positive", async () => {
+      await expect(classService.getClassAssignmentsForStudent(1, 0)).rejects.toThrow(
+        BadRequestError,
+      )
+      expect(mockEnrollmentRepo.isEnrolled).not.toHaveBeenCalled()
+    })
+
+    it("should throw StudentNotInClassError when student is not enrolled", async () => {
+      mockEnrollmentRepo.isEnrolled!.mockResolvedValue(false)
+
+      await expect(classService.getClassAssignmentsForStudent(1, 55)).rejects.toThrow(
+        StudentNotInClassError,
+      )
+      expect(mockAssignmentRepo.getAssignmentsByClassId).not.toHaveBeenCalled()
+    })
+  })
+
   describe("updateClass", () => {
     it("should update class successfully", async () => {
       const existingClass = createMockClass({ teacherId: 1 })
@@ -351,3 +494,8 @@ describe("ClassService", () => {
     })
   })
 })
+
+
+
+
+

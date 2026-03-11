@@ -852,7 +852,7 @@
 - [x] Inventory current `yearLevel` usage across frontend, backend, and tests
 - [ ] Remove backend class/admin/enrollment/dashboard contracts that expose `yearLevel`
 - [ ] Remove frontend class/admin models, forms, filters, and displays that use `yearLevel`
-- [ ] Update or add database migration artifacts if needed for `classes.year_level`
+- [x] Update or add database migration artifacts if needed for `classes.year_level`
 - [ ] Update affected frontend and backend tests
 - [ ] Update frontend and backend documentation
 - [ ] Run `npm run build` in `frontend`

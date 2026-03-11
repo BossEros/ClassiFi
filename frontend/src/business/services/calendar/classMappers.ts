@@ -1,4 +1,4 @@
-﻿import type { Class } from "@/business/models/dashboard/types"
+import type { Class } from "@/business/models/dashboard/types"
 
 /**
  * Type guard to validate Class-like response objects.

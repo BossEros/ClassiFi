@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as adminService from "@/business/services/adminService"
 import * as adminRepository from "@/data/repositories/adminRepository"
 import * as authValidation from "@/business/validation/authValidation"
-import type { AdminUser, AdminClass } from "@/data/api/admin.types"
+import type { AdminUser, AdminClass, CreateClassData } from "@/data/api/admin.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/adminRepository")
@@ -208,9 +208,8 @@ describe("adminService", () => {
   })
 
   describe("createClass", () => {
-    const classData = {
-      name: "Math 101",
-      code: "MATH101",
+    const classData: CreateClassData = {
+      className: "Math 101",
       teacherId: 2,
       semester: 1,
       academicYear: "2024-2025",
@@ -224,7 +223,7 @@ describe("adminService", () => {
         class: newClass as any,
       })
 
-      const result = await adminService.createClass(classData as any)
+      const result = await adminService.createClass(classData)
 
       expect(adminRepository.createNewClass).toHaveBeenCalledWith(classData)
       expect(result).toEqual(newClass)
@@ -236,7 +235,7 @@ describe("adminService", () => {
         class: null as any,
       })
 
-      await expect(adminService.createClass(classData as any)).rejects.toThrow(
+      await expect(adminService.createClass(classData)).rejects.toThrow(
         "createClass: failed to create class",
       )
     })

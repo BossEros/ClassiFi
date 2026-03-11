@@ -1,4 +1,4 @@
-﻿import { inject, injectable } from "tsyringe"
+import { inject, injectable } from "tsyringe"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
@@ -258,9 +258,40 @@ export class ClassService {
   /** Get all assignments for a class when requested in a student context. */
   async getClassAssignmentsForStudent(
     classId: number,
-    _studentId: number,
+    studentId: number,
   ): Promise<AssignmentDTO[]> {
-    return await this.getClassAssignments(classId)
+    if (!Number.isInteger(classId) || classId <= 0) {
+      throw new BadRequestError("Invalid class ID")
+    }
+
+    if (!Number.isInteger(studentId) || studentId <= 0) {
+      throw new BadRequestError("Invalid student ID")
+    }
+
+    const isStudentInClass = await this.enrollmentRepo.isEnrolled(studentId, classId)
+
+    if (!isStudentInClass) {
+      throw new StudentNotInClassError()
+    }
+
+    const classAssignments = await this.getClassAssignments(classId)
+    const assignmentIds = classAssignments.map((assignment) => assignment.id)
+    const latestSubmissionByAssignmentId =
+      await this.submissionRepo.getLatestSubmissionsByStudentAndAssignmentIds(
+        studentId,
+        assignmentIds,
+      )
+
+    return classAssignments.map((assignment) => {
+      const latestSubmission = latestSubmissionByAssignmentId.get(assignment.id)
+
+      return {
+        ...assignment,
+        hasSubmitted: !!latestSubmission,
+        submittedAt: latestSubmission?.submittedAt?.toISOString() ?? null,
+        grade: latestSubmission?.grade ?? null,
+      }
+    })
   }
 
   /** Get all students in a class. */
@@ -309,3 +340,4 @@ export class ClassService {
     }
   }
 }
+

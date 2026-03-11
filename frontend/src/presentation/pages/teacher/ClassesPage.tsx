@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState, useCallback } from "react"
+import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Grid3x3, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -82,6 +82,10 @@ export function ClassesPage() {
   const filteredClasses = useMemo(() => {
     return classes.filter((classRecord) => {
       if (status === "archived" && classRecord.isActive) {
+        return false
+      }
+
+      if (status !== "archived" && !classRecord.isActive) {
         return false
       }
 

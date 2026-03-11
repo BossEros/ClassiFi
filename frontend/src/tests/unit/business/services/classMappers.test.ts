@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   isValidClass,
   mapToClassArray,
@@ -29,6 +29,11 @@ describe("classMappers", () => {
   beforeEach(() => {
     warnSpy.mockClear()
     logSpy.mockClear()
+  })
+
+  afterAll(() => {
+    warnSpy.mockRestore()
+    logSpy.mockRestore()
   })
 
   it("returns false for null and warns", () => {
