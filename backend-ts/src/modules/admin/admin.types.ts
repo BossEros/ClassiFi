@@ -1,4 +1,4 @@
-import type { UserRole } from "@/modules/users/user.repository.js"
+﻿import type { UserRole } from "@/modules/users/user.repository.js"
 import type { ClassSchedule } from "@/models/index.js"
 
 // ============ Pagination Types ============
@@ -38,7 +38,6 @@ export interface ClassFilterOptions extends PaginationOptions {
   search?: string
   teacherId?: number
   status?: "active" | "archived" | "all"
-  yearLevel?: number
   semester?: number
   academicYear?: string
 }
@@ -46,7 +45,6 @@ export interface ClassFilterOptions extends PaginationOptions {
 export interface CreateClassData {
   teacherId: number
   className: string
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: ClassSchedule
@@ -57,7 +55,6 @@ export interface UpdateClassData {
   className?: string
   description?: string | null
   isActive?: boolean
-  yearLevel?: number
   semester?: number
   academicYear?: string
   schedule?: ClassSchedule
@@ -72,7 +69,6 @@ export interface EnrollmentFilterOptions extends PaginationOptions {
   teacherId?: number
   studentId?: number
   status?: "active" | "archived" | "all"
-  yearLevel?: number
   semester?: number
   academicYear?: string
 }
@@ -92,7 +88,6 @@ export interface AdminEnrollmentListItem {
   teacherId: number
   teacherName: string
   teacherAvatarUrl: string | null
-  yearLevel: number
   semester: number
   academicYear: string
   enrolledAt: string
@@ -129,3 +124,5 @@ export interface ActivityItem {
   target: string
   timestamp: Date
 }
+
+

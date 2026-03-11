@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/presentation/components/ui/Card"
+﻿import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { cn } from "@/shared/utils/cn"
 import { Clock3, Users } from "lucide-react"
 import type { Class } from "@/business/models/dashboard/types"
@@ -144,19 +144,19 @@ export function ClassCard({
       variant="interactive"
       onClick={onClick}
       className={cn(
-        "w-full overflow-hidden group relative border-white/10 bg-slate-800/50 backdrop-blur-md hover:border-white/20 transition-all duration-300",
+        "group relative w-full overflow-hidden border-white/10 bg-slate-800/50 backdrop-blur-md transition-all duration-300 hover:border-white/20",
         isArchived && "opacity-75 grayscale hover:grayscale-0",
         className,
       )}
     >
       <div className="relative h-32 overflow-hidden bg-gradient-to-br from-slate-700/50 to-slate-800/50">
-        <pre className="absolute inset-0 p-4 text-xs font-mono leading-relaxed text-slate-400/30 pointer-events-none select-none">
+        <pre className="pointer-events-none absolute inset-0 select-none p-4 text-xs font-mono leading-relaxed text-slate-400/30">
           {codePattern}
         </pre>
         <div className="absolute inset-0 bg-gradient-to-t from-slate-800/90 to-transparent" />
 
         {isArchived && (
-          <div className="absolute top-3 right-3">
+          <div className="absolute right-3 top-3">
             <span className="inline-flex items-center rounded-full border border-slate-500/30 bg-slate-500/30 px-2.5 py-1 text-xs font-medium text-slate-300 backdrop-blur-sm">
               Archived
             </span>
@@ -170,14 +170,6 @@ export function ClassCard({
         </h3>
 
         <div className="mb-3 flex flex-wrap items-center gap-1 text-xs text-slate-400">
-          {classItem.yearLevel && (
-            <>
-              <span>Year {classItem.yearLevel}</span>
-              {(classItem.academicYear || classItem.semester) && (
-                <span className="mx-1">|</span>
-              )}
-            </>
-          )}
           {classItem.academicYear && <span>{classItem.academicYear}</span>}
           {classItem.academicYear && classItem.semester && (
             <span className="mx-1">|</span>

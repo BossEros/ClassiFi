@@ -5,7 +5,6 @@ import {
   validateClassDescription,
   validateClassCode,
   validateClassJoinCode,
-  validateYearLevel,
   validateSemester,
   validateAcademicYear,
   validateSchedule,
@@ -14,7 +13,6 @@ import {
 } from "@/business/validation/classValidation"
 
 describe("classValidation", () => {
-  // ============ validateClassName Tests ============
   describe("validateClassName", () => {
     it("should return null for valid class name", () => {
       expect(validateClassName("Introduction to Programming")).toBeNull()
@@ -49,7 +47,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateClassDescription Tests ============
   describe("validateClassDescription", () => {
     it("should return null for valid description", () => {
       expect(
@@ -78,7 +75,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateClassCode Tests ============
   describe("validateClassCode", () => {
     it("returns null for non-empty class code", () => {
       expect(validateClassCode("ABC123")).toBeNull()
@@ -90,7 +86,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateClassJoinCode Tests ============
   describe("validateClassJoinCode", () => {
     it("returns null for valid 6-8 char alphanumeric join code", () => {
       expect(validateClassJoinCode("ABC123")).toBeNull()
@@ -111,20 +106,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateYearLevel Tests ============
-  describe("validateYearLevel", () => {
-    it("returns null for valid year levels", () => {
-      expect(validateYearLevel(1)).toBeNull()
-      expect(validateYearLevel(4)).toBeNull()
-    })
-
-    it("returns error for invalid year levels", () => {
-      expect(validateYearLevel(0)).toBe("Year level must be 1, 2, 3, or 4")
-      expect(validateYearLevel(5)).toBe("Year level must be 1, 2, 3, or 4")
-    })
-  })
-
-  // ============ validateSemester Tests ============
   describe("validateSemester", () => {
     it("returns null for valid semesters", () => {
       expect(validateSemester(1)).toBeNull()
@@ -137,7 +118,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateAcademicYear Tests ============
   describe("validateAcademicYear", () => {
     it("returns null for valid academic year", () => {
       expect(validateAcademicYear("2024-2025")).toBeNull()
@@ -154,7 +134,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateSchedule Tests ============
   describe("validateSchedule", () => {
     const validSchedule: Schedule = {
       days: ["monday"],
@@ -196,7 +175,6 @@ describe("classValidation", () => {
     })
   })
 
-  // ============ validateCreateClassData Tests ============
   describe("validateCreateClassData", () => {
     type CreateClassInput = Parameters<typeof validateCreateClassData>[0]
 
@@ -224,7 +202,6 @@ describe("classValidation", () => {
         className: "Data Structures",
         description: "Learn data structures",
         classCode: "ABC123",
-        yearLevel: 1,
         semester: 1,
         academicYear: "2024-2025",
         schedule: {
@@ -245,7 +222,7 @@ describe("classValidation", () => {
       })
 
       expect(result.isValid).toBe(false)
-      expect(result.errors.find((e) => e.field === "className")?.message).toBe(
+      expect(result.errors.find((error) => error.field === "className")?.message).toBe(
         "Class name is required",
       )
     })
@@ -255,7 +232,6 @@ describe("classValidation", () => {
         className: "",
         description: "A".repeat(1001),
         classCode: "",
-        yearLevel: 5,
         semester: 3,
         academicYear: "2024-2026",
         schedule: {
@@ -268,19 +244,15 @@ describe("classValidation", () => {
       const result = validateCreateClassData(invalidData)
 
       expect(result.isValid).toBe(false)
-      expect(result.errors.find((e) => e.field === "className")).toBeDefined()
-      expect(result.errors.find((e) => e.field === "description")).toBeDefined()
-      expect(result.errors.find((e) => e.field === "classCode")).toBeDefined()
-      expect(result.errors.find((e) => e.field === "yearLevel")).toBeDefined()
-      expect(result.errors.find((e) => e.field === "semester")).toBeDefined()
-      expect(
-        result.errors.find((e) => e.field === "academicYear"),
-      ).toBeDefined()
-      expect(result.errors.find((e) => e.field === "schedule")).toBeDefined()
+      expect(result.errors.find((error) => error.field === "className")).toBeDefined()
+      expect(result.errors.find((error) => error.field === "description")).toBeDefined()
+      expect(result.errors.find((error) => error.field === "classCode")).toBeDefined()
+      expect(result.errors.find((error) => error.field === "semester")).toBeDefined()
+      expect(result.errors.find((error) => error.field === "academicYear")).toBeDefined()
+      expect(result.errors.find((error) => error.field === "schedule")).toBeDefined()
     })
   })
 
-  // ============ validateClassField Tests ============
   describe("validateClassField", () => {
     it("should validate className field", () => {
       expect(validateClassField("className", "")).toBe("Class name is required")
@@ -299,10 +271,7 @@ describe("classValidation", () => {
       expect(validateClassField("classCode", "ABC123")).toBeNull()
     })
 
-    it("should validate year level, semester, and academic year fields", () => {
-      expect(validateClassField("yearLevel", 5)).toBe(
-        "Year level must be 1, 2, 3, or 4",
-      )
+    it("should validate semester and academic year fields", () => {
       expect(validateClassField("semester", 3)).toBe("Semester must be 1 or 2")
       expect(validateClassField("academicYear", "2024-2026")).toBe(
         "End year must be exactly one year after start year",

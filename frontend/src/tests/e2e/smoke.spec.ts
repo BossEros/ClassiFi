@@ -217,7 +217,6 @@ test.describe.serial("Smoke Tests - Critical User Flows", () => {
     // Select schedule
     await page.getByRole("button", { name: "Mon" }).click()
     await page.getByRole("button", { name: "Wed" }).click()
-    await page.selectOption("#yearLevel", "1")
     await page.selectOption("#semester", "1")
     const currentYear = new Date().getFullYear()
     await page.fill("#academicYear", `${currentYear}-${currentYear + 1}`)

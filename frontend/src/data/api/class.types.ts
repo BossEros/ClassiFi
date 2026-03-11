@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   Schedule,
   Class,
   Assignment,
@@ -15,7 +15,6 @@ interface ClassBase {
   isActive: boolean
   createdAt: string
   teacherName?: string
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: Schedule
@@ -50,7 +49,6 @@ export interface CreateClassRequest {
   className: string
   description?: string
   classCode: string
-  yearLevel: 1 | 2 | 3 | 4
   semester: 1 | 2
   academicYear: string
   schedule: Schedule
@@ -61,7 +59,6 @@ export interface UpdateClassRequest {
   className?: string
   description?: string
   isActive?: boolean
-  yearLevel?: 1 | 2 | 3 | 4
   semester?: 1 | 2
   academicYear?: string
   schedule?: Schedule
@@ -124,3 +121,5 @@ export interface GenerateCodeResponse {
   message?: string
   code: string
 }
+
+

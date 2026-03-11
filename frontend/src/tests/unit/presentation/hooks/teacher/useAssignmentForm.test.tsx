@@ -81,8 +81,7 @@ describe("useAssignmentForm", () => {
       teacherId: 1,
       description: "Desc",
       isActive: true,
-      createdAt: new Date().toISOString() as ISODateString,
-      yearLevel: 10,
+      createdAt: new Date().toISOString() as ISODateString,
       semester: 1,
       academicYear: "2023-2024",
       schedule: {
@@ -111,27 +110,29 @@ describe("useAssignmentForm", () => {
 
     it("should fetch assignment data in edit mode", async () => {
       mockParams.assignmentId = "202"
-      const mockAssignment = {
+      const mockAssignment: Awaited<
+        ReturnType<typeof assignmentService.getAssignmentById>
+      > = {
         id: 202,
         classId: 101,
-        teacherId: 1,
+        className: "Test Class",
         assignmentName: "Existing Assignment",
         instructions: "Existing Instructions",
         programmingLanguage: "python",
-        deadline: new Date("2024-12-31T23:59:00Z"),
+        deadline: new Date("2024-12-31T23:59:00Z").toISOString(),
         allowResubmission: true,
         maxAttempts: 3,
         templateCode: "print('Hello')",
         totalScore: 100,
-        createdAt: new Date(),
-        status: "published",
+        createdAt: new Date().toISOString(),
+        isActive: true,
         scheduledDate: null,
         allowLateSubmissions: true,
         latePenaltyConfig: DEFAULT_LATE_PENALTY_CONFIG,
       }
 
       vi.mocked(assignmentService.getAssignmentById).mockResolvedValue(
-        mockAssignment as any,
+        mockAssignment,
       )
       vi.mocked(testCaseService.getTestCases).mockResolvedValue([])
 
@@ -212,7 +213,7 @@ describe("useAssignmentForm", () => {
         result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("totalScore", 100)
-        result.current.handleInputChange("scheduledDate", "2026-01-01")
+        result.current.handleInputChange("scheduledDate", buildFutureLocalDateTimeString(30).slice(0, 10))
       })
 
       await act(async () => {

@@ -1,4 +1,4 @@
-import { z } from "zod"
+﻿import { z } from "zod"
 import { DAY_ABBREVIATIONS } from "@/presentation/constants/schedule.constants"
 import type { DayOfWeek } from "@/shared/types/class"
 
@@ -72,44 +72,30 @@ const classNameSchema = z.string().superRefine((classNameValue, context) => {
   }
 })
 
-const descriptionSchema = z
-  .string()
-  .superRefine((descriptionValue, context) => {
-    const descriptionError = validateDescriptionValue(descriptionValue)
+const descriptionSchema = z.string().superRefine((descriptionValue, context) => {
+  const descriptionError = validateDescriptionValue(descriptionValue)
 
-    if (descriptionError) {
-      context.addIssue({
-        code: "custom",
-        message: descriptionError,
-      })
-    }
-  })
+  if (descriptionError) {
+    context.addIssue({
+      code: "custom",
+      message: descriptionError,
+    })
+  }
+})
 
-const academicYearSchema = z
-  .string()
-  .superRefine((academicYearValue, context) => {
-    const academicYearError = validateAcademicYearValue(academicYearValue)
+const academicYearSchema = z.string().superRefine((academicYearValue, context) => {
+  const academicYearError = validateAcademicYearValue(academicYearValue)
 
-    if (academicYearError) {
-      context.addIssue({
-        code: "custom",
-        message: academicYearError,
-      })
-    }
-  })
-
-const yearLevelSchema = z.union([
-  z.literal(1),
-  z.literal(2),
-  z.literal(3),
-  z.literal(4),
-])
+  if (academicYearError) {
+    context.addIssue({
+      code: "custom",
+      message: academicYearError,
+    })
+  }
+})
 
 const semesterSchema = z.union([z.literal(1), z.literal(2)])
 
-/**
- * Class schedule schema for teacher class form and other class flows.
- */
 export const classScheduleSchema = z
   .object({
     days: z.array(z.enum(dayOfWeekValues)).min(1, {
@@ -141,22 +127,15 @@ export const classScheduleSchema = z
     }
   })
 
-/**
- * Teacher class form schema for create/edit class page.
- */
 export const teacherClassFormSchema = z.object({
   className: classNameSchema,
   description: descriptionSchema,
   classCode: z.string().min(1, "Class code is required"),
-  yearLevel: yearLevelSchema,
   semester: semesterSchema,
   academicYear: academicYearSchema,
   schedule: classScheduleSchema,
 })
 
-/**
- * Join class modal schema.
- */
 export const joinClassFormSchema = z.object({
   classCode: z.string().superRefine((classCodeValue, context) => {
     const normalizedClassCode = classCodeValue.trim()
@@ -178,15 +157,11 @@ export const joinClassFormSchema = z.object({
   }),
 })
 
-/**
- * Admin create/edit class modal schema.
- */
 export const adminClassFormSchema = z
   .object({
     className: classNameSchema,
     description: descriptionSchema,
     teacherId: z.string().min(1, "Please select a teacher"),
-    yearLevel: yearLevelSchema,
     semester: semesterSchema,
     academicYear: academicYearSchema,
     scheduleDays: z
@@ -233,14 +208,10 @@ export const adminClassFormSchema = z
     }
   })
 
-/**
- * Admin class form page schema for full-page class creation.
- */
 export const adminClassPageFormSchema = z.object({
   className: classNameSchema,
   description: descriptionSchema,
   teacherId: z.string().min(1, "Please select a teacher"),
-  yearLevel: yearLevelSchema,
   semester: semesterSchema,
   academicYear: academicYearSchema,
   schedule: classScheduleSchema,

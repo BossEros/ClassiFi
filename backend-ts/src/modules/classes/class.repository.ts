@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
+﻿import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
 import {
   classes,
   enrollments,
@@ -112,7 +112,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -163,7 +162,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -193,7 +191,6 @@ export class ClassRepository extends BaseRepository<
         teacherId: data.teacherId,
         className: data.className,
         classCode: data.classCode,
-        yearLevel: data.yearLevel,
         semester: data.semester,
         academicYear: data.academicYear,
         schedule: data.schedule,
@@ -257,7 +254,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -307,7 +303,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -355,7 +350,6 @@ export class ClassRepository extends BaseRepository<
       search,
       teacherId,
       status,
-      yearLevel,
       semester,
       academicYear,
     } = options
@@ -383,11 +377,6 @@ export class ClassRepository extends BaseRepository<
     } else if (status === "archived") {
       conditions.push(eq(classes.isActive, false))
     }
-
-    if (yearLevel) {
-      conditions.push(eq(classes.yearLevel, yearLevel))
-    }
-
     if (semester) {
       conditions.push(eq(classes.semester, semester))
     }
@@ -423,7 +412,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -473,7 +461,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -537,3 +524,5 @@ export class ClassRepository extends BaseRepository<
     }))
   }
 }
+
+

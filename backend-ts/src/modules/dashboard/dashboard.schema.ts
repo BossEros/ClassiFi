@@ -1,4 +1,4 @@
-import { z } from "zod"
+﻿import { z } from "zod"
 import { ClassScheduleSchema } from "@/api/schemas/common.schema.js"
 
 /** Dashboard class response */
@@ -13,7 +13,6 @@ export const DashboardClassResponseSchema = z.object({
   teacherName: z.string().optional(),
   createdAt: z.string(),
   isActive: z.boolean(),
-  yearLevel: z.number(),
   semester: z.number(),
   academicYear: z.string(),
   schedule: ClassScheduleSchema,
@@ -162,3 +161,5 @@ export const JoinClassResponseSchema = z.object({
 })
 
 export type JoinClassResponse = z.infer<typeof JoinClassResponseSchema>
+
+

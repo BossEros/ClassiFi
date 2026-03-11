@@ -161,6 +161,33 @@ export class SubmissionRepository extends BaseRepository<
     return results[0]
   }
 
+  /**
+   * Get latest submissions for one student across multiple assignments.
+   */
+  async getLatestSubmissionsByStudentAndAssignmentIds(
+    studentId: number,
+    assignmentIds: number[],
+  ): Promise<Map<number, Submission>> {
+    if (assignmentIds.length === 0) {
+      return new Map()
+    }
+
+    const latestSubmissions = await this.db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.studentId, studentId),
+          inArray(submissions.assignmentId, assignmentIds),
+          eq(submissions.isLatest, true),
+        ),
+      )
+
+    return new Map(
+      latestSubmissions.map((submission) => [submission.assignmentId, submission]),
+    )
+  }
+
   /** Get submission count for a student-assignment pair */
   async getSubmissionCount(
     assignmentId: number,

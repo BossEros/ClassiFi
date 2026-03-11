@@ -31,8 +31,7 @@ describe("classRepository", () => {
       teacherId: 1,
       className: "Test Class",
       classCode: "TEST123",
-      description: "A test class",
-      yearLevel: 1 as const,
+      description: "A test class",
       semester: 1 as const,
       academicYear: "2024-2025",
       schedule: {
@@ -49,8 +48,7 @@ describe("classRepository", () => {
       classCode: "TEST123",
       description: "A test class",
       isActive: true,
-      createdAt: toISO(new Date()),
-      yearLevel: 1,
+      createdAt: toISO(new Date()),
       semester: 1,
       academicYear: "2024-2025",
       schedule: {

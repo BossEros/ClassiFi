@@ -66,7 +66,6 @@ export interface Class {
   teacherName?: string
   studentCount?: number
   assignmentCount?: number
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: Schedule
@@ -136,3 +135,5 @@ export type AssignmentFilter = "all" | "pending" | "submitted"
  * Class detail page tab options
  */
 export type ClassTab = "assignments" | "students" | "calendar" | "grades"
+
+

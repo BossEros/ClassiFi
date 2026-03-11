@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react"
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react"
 import type {
   FileResponse,
   PairResponse,
@@ -98,14 +98,35 @@ export function SimilarityGraphView({
       ),
     [graphLayout.edges, visibleNodeById],
   )
+  const selectedPairEdge = useMemo(() => {
+    if (selectedPairId === null) {
+      return null
+    }
+
+    return (
+      graphData.edges.find((edge) => edge.edgeId === selectedPairId) ?? null
+    )
+  }, [graphData.edges, selectedPairId])
+  const effectiveSelectedNodeId =
+    selectedNodeId !== null && visibleNodeById.has(selectedNodeId)
+      ? selectedNodeId
+      : null
+  const effectiveSelectedClusterId =
+    selectedPairEdge?.clusterId ??
+    (selectedClusterId !== null &&
+    graphLayout.clusters.some(
+      (cluster) => cluster.clusterId === selectedClusterId,
+    )
+      ? selectedClusterId
+      : null)
   const selectedNode =
-    selectedNodeId !== null
-      ? (visibleNodeById.get(selectedNodeId) ?? null)
+    effectiveSelectedNodeId !== null
+      ? (visibleNodeById.get(effectiveSelectedNodeId) ?? null)
       : null
   const selectedCluster =
-    selectedClusterId !== null
+    effectiveSelectedClusterId !== null
       ? (graphLayout.clusters.find(
-          (cluster) => cluster.clusterId === selectedClusterId,
+          (cluster) => cluster.clusterId === effectiveSelectedClusterId,
         ) ?? null)
       : null
   const hoveredNode =
@@ -138,38 +159,6 @@ export function SimilarityGraphView({
     }
   }, [])
 
-  useEffect(() => {
-    if (selectedPairId === null) {
-      return
-    }
-
-    const selectedEdge = graphData.edges.find(
-      (edge) => edge.edgeId === selectedPairId,
-    )
-    if (!selectedEdge) {
-      return
-    }
-
-    setSelectedClusterId(selectedEdge.clusterId)
-    setSelectedNodeId(null)
-  }, [graphData.edges, selectedPairId])
-
-  useEffect(() => {
-    if (selectedNodeId !== null && !visibleNodeById.has(selectedNodeId)) {
-      setSelectedNodeId(null)
-    }
-  }, [selectedNodeId, visibleNodeById])
-
-  useEffect(() => {
-    if (
-      selectedClusterId !== null &&
-      !graphLayout.clusters.some(
-        (cluster) => cluster.clusterId === selectedClusterId,
-      )
-    ) {
-      setSelectedClusterId(null)
-    }
-  }, [graphLayout.clusters, selectedClusterId])
 
   const handleCanvasReset = () => {
     setSelectedNodeId(null)
@@ -250,6 +239,7 @@ export function SimilarityGraphView({
               </div>
             ) : (
               <>
+                {/* eslint-disable-next-line no-restricted-syntax */}
                 <svg
                   viewBox={`0 0 ${graphLayout.width} ${graphLayout.height}`}
                   className="h-full w-full"
@@ -265,7 +255,7 @@ export function SimilarityGraphView({
 
                   {graphLayout.clusters.map((cluster) => {
                     const isSelectedCluster =
-                      cluster.clusterId === selectedClusterId
+                      cluster.clusterId === effectiveSelectedClusterId
                     return (
                       <circle
                         key={cluster.clusterId}
@@ -297,7 +287,7 @@ export function SimilarityGraphView({
                     const isSelectedEdge = edge.edgeId === selectedPairId
                     const isClusterSelected =
                       edge.clusterId !== null &&
-                      edge.clusterId === selectedClusterId
+                      edge.clusterId === effectiveSelectedClusterId
                     const strokeOpacity = isSelectedEdge
                       ? 0.95
                       : isClusterSelected
@@ -330,8 +320,8 @@ export function SimilarityGraphView({
                   {visibleNodes.map((node) => {
                     const isSelectedNode = node.submissionId === selectedNodeId
                     const isNodeInSelectedCluster =
-                      selectedClusterId !== null &&
-                      node.clusterId === selectedClusterId
+                      effectiveSelectedClusterId !== null &&
+                      node.clusterId === effectiveSelectedClusterId
 
                     return (
                       <g key={node.submissionId}>
@@ -604,3 +594,6 @@ function SelectionMetricCard({ label, value }: SelectionMetricCardProps) {
 }
 
 export default SimilarityGraphView
+
+
+

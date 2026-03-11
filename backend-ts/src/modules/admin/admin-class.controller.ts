@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify"
+﻿import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AdminClassService } from "@/modules/admin/admin-class.service.js"
 import { adminMiddleware } from "@/api/middlewares/admin.middleware.js"
@@ -32,9 +32,7 @@ function mapUpdateClassDtoToServiceData(dto: UpdateClass): UpdateClassData {
   return {
     className: dto.className,
     description: dto.description,
-    isActive: dto.isActive,
-    yearLevel: dto.yearLevel,
-    semester: dto.semester,
+    isActive: dto.isActive,    semester: dto.semester,
     academicYear: dto.academicYear,
     schedule: dto.schedule,
     teacherId: dto.teacherId,
@@ -207,3 +205,4 @@ export async function adminClassRoutes(app: FastifyInstance): Promise<void> {
     },
   })
 }
+

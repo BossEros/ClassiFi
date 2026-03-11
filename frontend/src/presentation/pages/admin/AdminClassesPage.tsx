@@ -25,35 +25,15 @@ type StatusFilter = "all" | "active" | "archived"
 interface AdminClassesFiltersProps {
   searchQuery: string
   statusFilter: StatusFilter
-  yearLevelFilter: number | "all"
   semesterFilter: number | "all"
   academicYearFilter: string
   onSearchQueryChange: (query: string) => void
   onStatusFilterChange: (status: StatusFilter) => void
-  onYearLevelFilterChange: (yearLevel: number | "all") => void
   onSemesterFilterChange: (semester: number | "all") => void
   onAcademicYearFilterChange: (academicYear: string) => void
 }
 
-function getYearLabel(yearLevel: number | "all"): string {
-  if (yearLevel === "all") {
-    return "All Years"
-  }
 
-  if (yearLevel === 1) {
-    return "1st Year"
-  }
-
-  if (yearLevel === 2) {
-    return "2nd Year"
-  }
-
-  if (yearLevel === 3) {
-    return "3rd Year"
-  }
-
-  return "4th Year"
-}
 
 function getSemesterLabel(semester: number | "all"): string {
   if (semester === "all") {
@@ -72,17 +52,14 @@ function getSemesterLabel(semester: number | "all"): string {
 function AdminClassesFilters({
   searchQuery,
   statusFilter,
-  yearLevelFilter,
   semesterFilter,
   academicYearFilter,
   onSearchQueryChange,
-  onStatusFilterChange,
-  onYearLevelFilterChange,
+  onStatusFilterChange,
   onSemesterFilterChange,
   onAcademicYearFilterChange,
 }: AdminClassesFiltersProps) {
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
-  const [showYearDropdown, setShowYearDropdown] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showSemesterDropdown, setShowSemesterDropdown] = useState(false)
   const [showAcademicYearDropdown, setShowAcademicYearDropdown] =
     useState(false)
@@ -104,8 +81,7 @@ function AdminClassesFilters({
   }, [])
 
   useDocumentClick(() => {
-    setShowStatusDropdown(false)
-    setShowYearDropdown(false)
+    setShowStatusDropdown(false)
     setShowSemesterDropdown(false)
     setShowAcademicYearDropdown(false)
   })
@@ -128,67 +104,8 @@ function AdminClassesFilters({
           <button
             onClick={(event) => {
               event.stopPropagation()
-              setShowYearDropdown(!showYearDropdown)
-              setShowStatusDropdown(false)
-              setShowSemesterDropdown(false)
-              setShowAcademicYearDropdown(false)
-            }}
-            className="cursor-pointer flex min-w-[140px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
-          >
-            <div className="flex items-center gap-2">
-              <span className="capitalize">
-                {getYearLabel(yearLevelFilter)}
-              </span>
-            </div>
-            <ChevronDown
-              className={`h-3.5 w-3.5 text-slate-500 transition-transform ${
-                showYearDropdown ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {showYearDropdown && (
-            <div className="absolute top-full right-0 z-50 mt-2 w-full min-w-[140px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200">
-              <div className="p-1.5 space-y-0.5">
-                {[
-                  { value: "all", label: "All Years" },
-                  { value: 1, label: "1st Year" },
-                  { value: 2, label: "2nd Year" },
-                  { value: 3, label: "3rd Year" },
-                  { value: 4, label: "4th Year" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      onYearLevelFilterChange(option.value as number | "all")
-                      setShowYearDropdown(false)
-                    }}
-                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
-                      yearLevelFilter === option.value
-                        ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
-                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
-                    }`}
-                  >
-                    <span className="capitalize font-medium">
-                      {option.label}
-                    </span>
-                    {yearLevelFilter === option.value && (
-                      <CheckCircle className="h-3.5 w-3.5 text-teal-600" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          <button
-            onClick={(event) => {
-              event.stopPropagation()
               setShowSemesterDropdown(!showSemesterDropdown)
-              setShowStatusDropdown(false)
-              setShowYearDropdown(false)
+              setShowStatusDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
             className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -243,8 +160,7 @@ function AdminClassesFilters({
             onClick={(event) => {
               event.stopPropagation()
               setShowAcademicYearDropdown(!showAcademicYearDropdown)
-              setShowStatusDropdown(false)
-              setShowYearDropdown(false)
+              setShowStatusDropdown(false)
               setShowSemesterDropdown(false)
             }}
             className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -294,8 +210,7 @@ function AdminClassesFilters({
           <button
             onClick={(event) => {
               event.stopPropagation()
-              setShowStatusDropdown(!showStatusDropdown)
-              setShowYearDropdown(false)
+              setShowStatusDropdown(!showStatusDropdown)
               setShowSemesterDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
@@ -546,10 +461,6 @@ function AdminClassesTable({
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-                          {selectedClass.yearLevel}
-                          {getOrdinalSuffix(selectedClass.yearLevel)} Year
-                        </span>
                         <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                           {selectedClass.semester}
                           {getOrdinalSuffix(selectedClass.semester)} Sem
@@ -1016,7 +927,6 @@ export function AdminClassesPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "archived"
   >("all")
-  const [yearLevelFilter, setYearLevelFilter] = useState<number | "all">("all")
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all")
   const [academicYearFilter, setAcademicYearFilter] = useState<string>("all")
   const [page, setPage] = useState(1)
@@ -1048,7 +958,6 @@ export function AdminClassesPage() {
           limit,
           search: debouncedSearch || undefined,
           status: statusFilter,
-          yearLevel: yearLevelFilter === "all" ? undefined : yearLevelFilter,
           semester: semesterFilter === "all" ? undefined : semesterFilter,
           academicYear:
             academicYearFilter === "all" ? undefined : academicYearFilter,
@@ -1065,7 +974,6 @@ export function AdminClassesPage() {
     limit,
     debouncedSearch,
     statusFilter,
-    yearLevelFilter,
     semesterFilter,
     academicYearFilter,
     executeRequest,
@@ -1220,16 +1128,11 @@ export function AdminClassesPage() {
         <AdminClassesFilters
           searchQuery={searchQuery}
           statusFilter={statusFilter}
-          yearLevelFilter={yearLevelFilter}
           semesterFilter={semesterFilter}
           academicYearFilter={academicYearFilter}
           onSearchQueryChange={setSearchQuery}
           onStatusFilterChange={(status) => {
             setStatusFilter(status)
-            setPage(1)
-          }}
-          onYearLevelFilterChange={(yearLevel) => {
-            setYearLevelFilter(yearLevel)
             setPage(1)
           }}
           onSemesterFilterChange={(semester) => {

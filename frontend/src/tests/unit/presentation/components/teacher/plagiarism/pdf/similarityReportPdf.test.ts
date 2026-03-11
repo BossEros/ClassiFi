@@ -177,12 +177,13 @@ describe("similarityReportPdf", () => {
       teacher: mockTeacher,
       results: mockResults,
       minimumSimilarityPercent: 90,
+      showSingletons: false,
       downloadedAt: new Date("2026-03-10T11:00:00.000Z"),
     })
 
     expect(reportData.filteredPairRows).toHaveLength(2)
     expect(
-      reportData.summaryMetrics.find((metric) => metric.label === "Suspicious")
+      reportData.summaryMetrics.find((metric) => metric.label === "Suspicious Pairs")
         ?.value,
     ).toBe("2")
     expect(
@@ -211,6 +212,7 @@ describe("similarityReportPdf", () => {
       teacher: mockTeacher,
       results: mockResults,
       minimumSimilarityPercent: 90,
+      showSingletons: false,
       downloadedAt: new Date("2026-03-10T11:00:00.000Z"),
     })
 
@@ -230,6 +232,7 @@ describe("similarityReportPdf", () => {
       teacher: mockTeacher,
       results: mockResults,
       minimumSimilarityPercent: 98,
+      showSingletons: false,
       downloadedAt: new Date("2026-03-10T11:00:00.000Z"),
     })
 
@@ -258,8 +261,8 @@ describe("similarityReportPdf", () => {
     expect(reportData.fragmentRows).toEqual([
       {
         fragmentLabel: "Fragment 1",
-        leftRange: "L1-2",
-        rightRange: "L3-4",
+        leftRange: "Lines 2\u20133",
+        rightRange: "Lines 4\u20135",
         length: "2",
       },
     ])
@@ -283,4 +286,5 @@ describe("similarityReportPdf", () => {
     )
   })
 })
+
 

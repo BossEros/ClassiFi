@@ -40,8 +40,7 @@ describe("adminRepository", () => {
     teacherId: 1,
     teacherName: "Prof. Smith",
     studentCount: 30,
-    isActive: true,
-    yearLevel: 1,
+    isActive: true,
     semester: 1,
     academicYear: "2024-2025",
     createdAt: "2024-01-01T00:00:00Z",
@@ -430,14 +429,13 @@ describe("adminRepository", () => {
         itemsPerPage: 10,
         searchQuery: "intro",
         teacherId: 1,
-        classStatus: "active",
-        yearLevel: 1,
+        classStatus: "active",
         semesterNumber: 1,
         academicYear: "2024-2025",
       })
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        "/admin/classes?page=1&limit=10&search=intro&teacherId=1&status=active&yearLevel=1&semester=1&academicYear=2024-2025",
+        "/admin/classes?page=1&limit=10&search=intro&teacherId=1&status=active&semester=1&academicYear=2024-2025",
       )
     })
 
@@ -483,8 +481,7 @@ describe("adminRepository", () => {
       className: "New Class",
       classCode: "NEW101",
       teacherId: 1,
-      description: "A new class",
-      yearLevel: 1,
+      description: "A new class",
       semester: 1,
       academicYear: "2024-2025",
       schedule: {
@@ -805,8 +802,7 @@ describe("adminRepository", () => {
       classIsActive: true,
       teacherId: 7,
       teacherName: "Prof. Ada",
-      teacherAvatarUrl: null,
-      yearLevel: 2,
+      teacherAvatarUrl: null,
       semester: 1,
       academicYear: "2025-2026",
       enrolledAt: "2025-06-01T00:00:00Z",
@@ -817,7 +813,7 @@ describe("adminRepository", () => {
         data: {
           success: true,
           data: [mockEnrollmentRecord],
-          total: 1,
+          totalCount: 1,
           page: 1,
           limit: 10,
           totalPages: 1,
@@ -829,14 +825,13 @@ describe("adminRepository", () => {
         pageNumber: 1,
         itemsPerPage: 10,
         searchQuery: "jane",
-        enrollmentStatus: "active",
-        yearLevel: 2,
+        enrollmentStatus: "active",
         semesterNumber: 1,
         academicYear: "2025-2026",
       })
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        "/admin/enrollments?page=1&limit=10&search=jane&status=active&yearLevel=2&semester=1&academicYear=2025-2026",
+        "/admin/enrollments?page=1&limit=10&search=jane&status=active&semester=1&academicYear=2025-2026",
       )
       expect(result.data).toEqual([mockEnrollmentRecord])
     })

@@ -43,7 +43,6 @@ function getDefaultClassFormValues(): AdminClassPageFormValues {
     className: "",
     description: "",
     teacherId: "",
-    yearLevel: 1,
     semester: 1,
     academicYear: getCurrentAcademicYear(),
     schedule: {
@@ -97,7 +96,6 @@ export function AdminClassFormPage() {
   const classNameField = register("className")
   const descriptionField = register("description")
   const teacherIdField = register("teacherId")
-  const yearLevelField = register("yearLevel", { valueAsNumber: true })
   const semesterField = register("semester", { valueAsNumber: true })
   const academicYearField = register("academicYear")
 
@@ -134,7 +132,6 @@ export function AdminClassFormPage() {
             className: classData.className,
             description: classData.description ?? "",
             teacherId: classData.teacherId.toString(),
-            yearLevel: classData.yearLevel as 1 | 2 | 3 | 4,
             semester: classData.semester as 1 | 2,
             academicYear: classData.academicYear,
             schedule: classData.schedule,
@@ -252,7 +249,6 @@ export function AdminClassFormPage() {
         teacherId: Number(formValues.teacherId),
         className: formValues.className.trim(),
         description: formValues.description.trim() || undefined,
-        yearLevel: formValues.yearLevel,
         semester: formValues.semester,
         academicYear: formValues.academicYear,
         schedule: formValues.schedule,
@@ -299,7 +295,6 @@ export function AdminClassFormPage() {
   const validationErrorMessages = [
     errors.className?.message,
     errors.teacherId?.message,
-    errors.yearLevel?.message,
     errors.semester?.message,
     errors.academicYear?.message,
     scheduleErrorMessage,
@@ -656,33 +651,6 @@ export function AdminClassFormPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="yearLevel"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Year Level
-                  </label>
-                  <select
-                    id="yearLevel"
-                    {...yearLevelField}
-                    disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-400 shadow-sm text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
-                  >
-                    <option value={1} className="bg-white text-slate-700">
-                      1st Year
-                    </option>
-                    <option value={2} className="bg-white text-slate-700">
-                      2nd Year
-                    </option>
-                    <option value={3} className="bg-white text-slate-700">
-                      3rd Year
-                    </option>
-                    <option value={4} className="bg-white text-slate-700">
-                      4th Year
-                    </option>
-                  </select>
-                </div>
 
                 <div className="space-y-2">
                   <label

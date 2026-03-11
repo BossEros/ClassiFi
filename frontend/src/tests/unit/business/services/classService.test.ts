@@ -28,8 +28,7 @@ describe("classService", () => {
     classCode: "TEST123",
     description: "A test class",
     isActive: true,
-    createdAt: toISO(new Date()),
-    yearLevel: 1,
+    createdAt: toISO(new Date()),
     semester: 1,
     academicYear: "2024-2025",
     schedule: {
@@ -66,8 +65,7 @@ describe("classService", () => {
       teacherId: 1,
       className: "New Class",
       classCode: "NEW123",
-      description: "A new class",
-      yearLevel: 1 as const,
+      description: "A new class",
       semester: 1 as const,
       academicYear: "2024-2025",
       schedule: {
@@ -114,18 +112,7 @@ describe("classService", () => {
       await expect(classService.createClass(invalidRequest)).rejects.toThrow(
         "Description must not exceed 1000 characters",
       )
-    })
-
-    it("throws error for invalid year level", async () => {
-      const invalidRequest = {
-        ...validCreateRequest,
-        yearLevel: 0 as unknown as 1 | 2 | 3 | 4,
-      }
-
-      await expect(classService.createClass(invalidRequest)).rejects.toThrow(
-        "Year level must be 1, 2, 3, or 4",
-      )
-    })
+    })
   })
 
   // ============================================================================

@@ -1,4 +1,4 @@
-import type { CreateClassRequest } from "@/business/models/class/types"
+﻿import type { CreateClassRequest } from "@/business/models/class/types"
 import type { Schedule } from "@/shared/types/class"
 import type { ValidationError, ValidationResult } from "@/shared/types/auth"
 
@@ -85,22 +85,6 @@ export const validateClassJoinCode = (classCode: string): string | null => {
 
   if (!codeRegex.test(trimmedCode)) {
     return "Invalid class code format. Please enter a 6-8 character alphanumeric code."
-  }
-
-  return null
-}
-
-/**
- * Validates year level.
- * Requirements:
- * - Must be 1, 2, 3, or 4
- *
- * @param yearLevel - The year level to validate.
- * @returns An error message string if invalid, otherwise null.
- */
-export const validateYearLevel = (yearLevel: number): string | null => {
-  if (![1, 2, 3, 4].includes(yearLevel)) {
-    return "Year level must be 1, 2, 3, or 4"
   }
 
   return null
@@ -233,14 +217,6 @@ export const validateCreateClassData = (
       errors.push({ field: "classCode", message: classCodeError })
     }
   }
-
-  if (data.yearLevel !== undefined) {
-    const yearLevelError = validateYearLevel(data.yearLevel)
-    if (yearLevelError) {
-      errors.push({ field: "yearLevel", message: yearLevelError })
-    }
-  }
-
   if (data.semester !== undefined) {
     const semesterError = validateSemester(data.semester)
     if (semesterError) {
@@ -289,10 +265,6 @@ export const validateClassField = (
 
     case "classCode":
       return validateClassCode(value as string)
-
-    case "yearLevel":
-      return validateYearLevel(value as number)
-
     case "semester":
       return validateSemester(value as number)
 
@@ -306,3 +278,5 @@ export const validateClassField = (
       return null
   }
 }
+
+

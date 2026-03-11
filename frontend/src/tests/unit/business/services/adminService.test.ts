@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as adminService from "@/business/services/adminService"
 import * as adminRepository from "@/data/repositories/adminRepository"
 import * as authValidation from "@/business/validation/authValidation"
-import type { AdminUser, AdminClass } from "@/data/api/admin.types"
+import type { AdminUser, AdminClass, CreateClassData } from "@/data/api/admin.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/adminRepository")
@@ -27,8 +27,7 @@ const createMockAdminClass = (overrides?: Partial<AdminClass>): AdminClass => ({
   className: "Test Class",
   classCode: "ABC1234",
   teacherId: 2,
-  teacherName: "Teacher User",
-  yearLevel: 10,
+  teacherName: "Teacher User",
   semester: 1,
   academicYear: "2024-2025",
   schedule: {
@@ -209,11 +208,9 @@ describe("adminService", () => {
   })
 
   describe("createClass", () => {
-    const classData = {
-      name: "Math 101",
-      code: "MATH101",
-      teacherId: 2,
-      yearLevel: 10,
+    const classData: CreateClassData = {
+      className: "Math 101",
+      teacherId: 2,
       semester: 1,
       academicYear: "2024-2025",
       schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },
@@ -226,7 +223,7 @@ describe("adminService", () => {
         class: newClass as any,
       })
 
-      const result = await adminService.createClass(classData as any)
+      const result = await adminService.createClass(classData)
 
       expect(adminRepository.createNewClass).toHaveBeenCalledWith(classData)
       expect(result).toEqual(newClass)
@@ -238,7 +235,7 @@ describe("adminService", () => {
         class: null as any,
       })
 
-      await expect(adminService.createClass(classData as any)).rejects.toThrow(
+      await expect(adminService.createClass(classData)).rejects.toThrow(
         "createClass: failed to create class",
       )
     })
@@ -333,8 +330,7 @@ describe("adminService", () => {
         page: 1,
         limit: 10,
         search: "jane",
-        status: "active",
-        yearLevel: 2,
+        status: "active",
         semester: 1,
         academicYear: "2025-2026",
       })
@@ -346,8 +342,7 @@ describe("adminService", () => {
         classId: undefined,
         teacherId: undefined,
         studentId: undefined,
-        enrollmentStatus: "active",
-        yearLevel: 2,
+        enrollmentStatus: "active",
         semesterNumber: 1,
         academicYear: "2025-2026",
       })

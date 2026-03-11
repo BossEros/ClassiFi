@@ -1,11 +1,10 @@
-import type { ClassSchedule } from "@/models/index.js"
+﻿import type { ClassSchedule } from "@/models/index.js"
 
 /** DTO for ClassService.createClass */
 export interface CreateClassServiceDTO {
   teacherId: number
   className: string
   classCode: string
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: ClassSchedule
@@ -35,8 +34,9 @@ export interface UpdateClassServiceDTO {
   className?: string
   description?: string | null
   isActive?: boolean
-  yearLevel?: number
   semester?: number
   academicYear?: string
   schedule?: ClassSchedule
 }
+
+

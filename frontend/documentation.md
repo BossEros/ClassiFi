@@ -135,7 +135,7 @@ Admin class detail behavior:
 
 Admin enrollment workspace behavior:
 - `AdminEnrollmentsPage` provides a cross-class enrollment registry for admins.
-- Admins can search by student, class, or teacher and filter by class status, year level, semester, and academic year.
+- Admins can search by student, class, or teacher and filter by class status, semester, and academic year.
 - The page supports manual enrollment, student transfer between active classes, and direct removal with confirmation modals.
 
 ---

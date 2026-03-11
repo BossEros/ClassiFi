@@ -1,4 +1,4 @@
-import * as classRepository from "@/data/repositories/classRepository"
+﻿import * as classRepository from "@/data/repositories/classRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import {
   validateCreateAssignmentData,
@@ -8,7 +8,6 @@ import {
   validateClassName,
   validateClassDescription,
   validateClassCode,
-  validateYearLevel,
   validateSemester,
   validateAcademicYear,
   validateSchedule,
@@ -66,10 +65,6 @@ export async function createClass(
 
   const classCodeError = validateClassCode(createClassData.classCode)
   if (classCodeError) throw new Error(classCodeError)
-
-  const yearLevelError = validateYearLevel(createClassData.yearLevel)
-  if (yearLevelError) throw new Error(yearLevelError)
-
   const semesterError = validateSemester(createClassData.semester)
   if (semesterError) throw new Error(semesterError)
 
@@ -443,3 +438,5 @@ export async function removeStudent(
     teacherId,
   )
 }
+
+

@@ -1,4 +1,4 @@
-import type { UserRole } from "@/shared/types/auth"
+﻿import type { UserRole } from "@/shared/types/auth"
 import type { DayOfWeek, EnrolledStudent } from "@/shared/types/class"
 
 export type { EnrolledStudent }
@@ -33,7 +33,6 @@ export interface AdminClass {
   className: string
   classCode: string
   teacherId: number
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: AdminClassSchedule
@@ -48,7 +47,6 @@ export interface AdminClass {
 export interface CreateClassData {
   teacherId: number
   className: string
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: AdminClassSchedule
@@ -59,7 +57,6 @@ export interface UpdateClassData {
   className?: string
   description?: string | null
   isActive?: boolean
-  yearLevel?: number
   semester?: number
   academicYear?: string
   schedule?: AdminClassSchedule
@@ -90,7 +87,6 @@ export interface AdminEnrollmentRecord {
   teacherId: number
   teacherName: string
   teacherAvatarUrl: string | null
-  yearLevel: number
   semester: number
   academicYear: string
   enrolledAt: string
