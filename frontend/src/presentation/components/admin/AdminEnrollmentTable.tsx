@@ -1,4 +1,4 @@
-﻿import { Avatar } from "@/presentation/components/ui/Avatar"
+import { Avatar } from "@/presentation/components/ui/Avatar"
 import type { AdminEnrollmentRecord } from "@/business/services/adminService"
 import {
   ArrowRightLeft,
@@ -177,7 +177,7 @@ export function AdminEnrollmentTable({
                       <div className="space-y-1 text-xs text-slate-600">
                         <div className="flex items-center gap-1.5">
                           <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
-                          <span>{enrollment.yearLevel}{getOrdinalSuffix(enrollment.yearLevel)} Year</span>
+                          <span>Academic Year</span>
                         </div>
                         <p>{enrollment.semester}{getOrdinalSuffix(enrollment.semester)} Semester</p>
                         <p>{enrollment.academicYear}</p>

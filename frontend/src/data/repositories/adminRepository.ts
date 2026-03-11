@@ -1,4 +1,4 @@
-import { apiClient } from "@/data/api/apiClient"
+﻿import { apiClient } from "@/data/api/apiClient"
 import type {
   AdminUser,
   AdminClass,
@@ -190,7 +190,6 @@ export async function getAllClassesWithPaginationAndFilters(filterOptions: {
   searchQuery?: string
   teacherId?: number
   classStatus?: string
-  yearLevel?: number
   semesterNumber?: number
   academicYear?: string
 }): Promise<PaginatedResponse<AdminClass>> {
@@ -206,8 +205,6 @@ export async function getAllClassesWithPaginationAndFilters(filterOptions: {
     urlQueryParams.set("teacherId", filterOptions.teacherId.toString())
   if (filterOptions.classStatus)
     urlQueryParams.set("status", filterOptions.classStatus)
-  if (filterOptions.yearLevel)
-    urlQueryParams.set("yearLevel", filterOptions.yearLevel.toString())
   if (filterOptions.semesterNumber)
     urlQueryParams.set("semester", filterOptions.semesterNumber.toString())
   if (filterOptions.academicYear)
@@ -334,7 +331,6 @@ export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
   teacherId?: number
   studentId?: number
   enrollmentStatus?: string
-  yearLevel?: number
   semesterNumber?: number
   academicYear?: string
 }): Promise<PaginatedResponse<AdminEnrollmentRecord>> {
@@ -354,8 +350,6 @@ export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
     urlQueryParams.set("studentId", filterOptions.studentId.toString())
   if (filterOptions.enrollmentStatus)
     urlQueryParams.set("status", filterOptions.enrollmentStatus)
-  if (filterOptions.yearLevel)
-    urlQueryParams.set("yearLevel", filterOptions.yearLevel.toString())
   if (filterOptions.semesterNumber)
     urlQueryParams.set("semester", filterOptions.semesterNumber.toString())
   if (filterOptions.academicYear)
@@ -447,6 +441,10 @@ export async function unenrollStudentFromClassById(
 
   return apiResponse.data!
 }
+
+
+
+
 
 
 

@@ -29,7 +29,6 @@ export default function AdminEnrollmentsPage() {
   const [enrollments, setEnrollments] = useState<AdminEnrollmentRecord[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<EnrollmentStatusFilter>("all")
-  const [yearLevelFilter, setYearLevelFilter] = useState<number | "all">("all")
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all")
   const [academicYearFilter, setAcademicYearFilter] = useState("all")
   const [page, setPage] = useState(1)
@@ -61,7 +60,6 @@ export default function AdminEnrollmentsPage() {
     debouncedSearchQuery,
     semesterFilter,
     statusFilter,
-    yearLevelFilter,
   ])
 
   const fetchEnrollments = useCallback(async () => {
@@ -72,7 +70,6 @@ export default function AdminEnrollmentsPage() {
           limit: ENROLLMENT_PAGE_LIMIT,
           search: debouncedSearchQuery || undefined,
           status: statusFilter,
-          yearLevel: yearLevelFilter === "all" ? undefined : yearLevelFilter,
           semester: semesterFilter === "all" ? undefined : semesterFilter,
           academicYear:
             academicYearFilter === "all" ? undefined : academicYearFilter,
@@ -91,7 +88,6 @@ export default function AdminEnrollmentsPage() {
     page,
     semesterFilter,
     statusFilter,
-    yearLevelFilter,
   ])
 
   useEffect(() => {
@@ -227,12 +223,10 @@ export default function AdminEnrollmentsPage() {
         <AdminEnrollmentFilters
           searchQuery={searchQuery}
           statusFilter={statusFilter}
-          yearLevelFilter={yearLevelFilter}
           semesterFilter={semesterFilter}
           academicYearFilter={academicYearFilter}
           onSearchQueryChange={setSearchQuery}
           onStatusFilterChange={setStatusFilter}
-          onYearLevelFilterChange={setYearLevelFilter}
           onSemesterFilterChange={setSemesterFilter}
           onAcademicYearFilterChange={setAcademicYearFilter}
         />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+﻿import { useMemo, useState } from "react"
 import { CheckCircle, ChevronDown, Filter, Search } from "lucide-react"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 
@@ -7,23 +7,12 @@ export type EnrollmentStatusFilter = "all" | "active" | "archived"
 interface AdminEnrollmentFiltersProps {
   searchQuery: string
   statusFilter: EnrollmentStatusFilter
-  yearLevelFilter: number | "all"
   semesterFilter: number | "all"
   academicYearFilter: string
   onSearchQueryChange: (query: string) => void
   onStatusFilterChange: (status: EnrollmentStatusFilter) => void
-  onYearLevelFilterChange: (yearLevel: number | "all") => void
   onSemesterFilterChange: (semester: number | "all") => void
   onAcademicYearFilterChange: (academicYear: string) => void
-}
-
-function getYearLabel(yearLevel: number | "all"): string {
-  if (yearLevel === "all") return "All Years"
-  if (yearLevel === 1) return "1st Year"
-  if (yearLevel === 2) return "2nd Year"
-  if (yearLevel === 3) return "3rd Year"
-
-  return "4th Year"
 }
 
 function getSemesterLabel(semester: number | "all"): string {
@@ -36,17 +25,14 @@ function getSemesterLabel(semester: number | "all"): string {
 export function AdminEnrollmentFilters({
   searchQuery,
   statusFilter,
-  yearLevelFilter,
   semesterFilter,
   academicYearFilter,
   onSearchQueryChange,
   onStatusFilterChange,
-  onYearLevelFilterChange,
   onSemesterFilterChange,
   onAcademicYearFilterChange,
 }: AdminEnrollmentFiltersProps) {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
-  const [showYearDropdown, setShowYearDropdown] = useState(false)
   const [showSemesterDropdown, setShowSemesterDropdown] = useState(false)
   const [showAcademicYearDropdown, setShowAcademicYearDropdown] = useState(false)
 
@@ -69,7 +55,6 @@ export function AdminEnrollmentFilters({
 
   useDocumentClick(() => {
     setShowStatusDropdown(false)
-    setShowYearDropdown(false)
     setShowSemesterDropdown(false)
     setShowAcademicYearDropdown(false)
   })
@@ -94,57 +79,8 @@ export function AdminEnrollmentFilters({
               type="button"
               onClick={(event) => {
                 event.stopPropagation()
-                setShowYearDropdown(!showYearDropdown)
-                setShowStatusDropdown(false)
-                setShowSemesterDropdown(false)
-                setShowAcademicYearDropdown(false)
-              }}
-              className="flex min-w-[140px] cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
-            >
-              <span>{getYearLabel(yearLevelFilter)}</span>
-              <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform ${showYearDropdown ? "rotate-180" : ""}`} />
-            </button>
-
-            {showYearDropdown && (
-              <div className="absolute right-0 top-full mt-2 w-full min-w-[140px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80">
-                <div className="space-y-0.5 p-1.5">
-                  {[
-                    { value: "all", label: "All Years" },
-                    { value: 1, label: "1st Year" },
-                    { value: 2, label: "2nd Year" },
-                    { value: 3, label: "3rd Year" },
-                    { value: 4, label: "4th Year" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        onYearLevelFilterChange(option.value as number | "all")
-                        setShowYearDropdown(false)
-                      }}
-                      className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
-                        yearLevelFilter === option.value
-                          ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
-                          : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
-                      }`}
-                    >
-                      <span className="font-medium">{option.label}</span>
-                      {yearLevelFilter === option.value && <CheckCircle className="h-3.5 w-3.5 text-teal-600" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={(event) => {
-                event.stopPropagation()
                 setShowSemesterDropdown(!showSemesterDropdown)
                 setShowStatusDropdown(false)
-                setShowYearDropdown(false)
                 setShowAcademicYearDropdown(false)
               }}
               className="flex min-w-[150px] cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -190,7 +126,6 @@ export function AdminEnrollmentFilters({
                 event.stopPropagation()
                 setShowAcademicYearDropdown(!showAcademicYearDropdown)
                 setShowStatusDropdown(false)
-                setShowYearDropdown(false)
                 setShowSemesterDropdown(false)
               }}
               className="flex min-w-[150px] cursor-pointer items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -231,7 +166,6 @@ export function AdminEnrollmentFilters({
               onClick={(event) => {
                 event.stopPropagation()
                 setShowStatusDropdown(!showStatusDropdown)
-                setShowYearDropdown(false)
                 setShowSemesterDropdown(false)
                 setShowAcademicYearDropdown(false)
               }}
@@ -239,7 +173,9 @@ export function AdminEnrollmentFilters({
             >
               <div className="flex items-center gap-2">
                 <Filter className="h-3.5 w-3.5 text-slate-400" />
-                <span>{statusFilter === "all" ? "All Status" : statusFilter}</span>
+                <span className="capitalize">
+                  {statusFilter === "all" ? "All Status" : statusFilter}
+                </span>
               </div>
               <ChevronDown className={`h-3.5 w-3.5 text-slate-500 transition-transform ${showStatusDropdown ? "rotate-180" : ""}`} />
             </button>
@@ -261,7 +197,9 @@ export function AdminEnrollmentFilters({
                           : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
                       }`}
                     >
-                      <span className="font-medium capitalize">{status === "all" ? "All Status" : status}</span>
+                      <span className="capitalize font-medium">
+                        {status === "all" ? "All Status" : status}
+                      </span>
                       {statusFilter === status && <CheckCircle className="h-3.5 w-3.5 text-teal-600" />}
                     </button>
                   ))}

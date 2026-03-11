@@ -16,8 +16,7 @@ describe("classMappers", () => {
     classCode: "PROG101",
     description: "Intro class",
     isActive: true,
-    createdAt: "2025-01-01T00:00:00.000Z" as Class["createdAt"],
-    yearLevel: 1,
+    createdAt: "2025-01-01T00:00:00.000Z" as Class["createdAt"],
     semester: 1,
     academicYear: "2025-2026",
     schedule: {

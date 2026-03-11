@@ -1,4 +1,4 @@
-import type { Class, ClassSchedule } from "@/models/index.js"
+﻿import type { Class, ClassSchedule } from "@/models/index.js"
 
 export interface ClassDTO {
   id: number
@@ -6,7 +6,6 @@ export interface ClassDTO {
   className: string
   classCode: string
   description: string | null
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: ClassSchedule
@@ -33,7 +32,6 @@ export function toClassDTO(
     className: classData.className,
     classCode: classData.classCode,
     description: classData.description,
-    yearLevel: classData.yearLevel,
     semester: classData.semester,
     academicYear: classData.academicYear,
     schedule: classData.schedule,
@@ -42,3 +40,5 @@ export function toClassDTO(
     ...extras,
   }
 }
+
+

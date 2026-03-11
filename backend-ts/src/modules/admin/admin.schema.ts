@@ -1,4 +1,4 @@
-import { z } from "zod"
+﻿import { z } from "zod"
 import {
   ClassScheduleSchema,
   DayOfWeekEnum,
@@ -14,7 +14,6 @@ export { ClassScheduleSchema, DayOfWeekEnum }
 // ============================================================================
 
 const MIN_PASSWORD_LENGTH = 8
-const MAX_YEAR_LEVEL = 12
 const MAX_SEMESTER = 3
 
 // ============================================================================
@@ -213,9 +212,7 @@ export type ActivityQuery = z.infer<typeof ActivityQuerySchema>
  *
  * @property search - Optional text search across class fields
  * @property teacherId - Filter by specific teacher
- * @property status - Filter by active/archived status (default: "all")
- * @property yearLevel - Filter by year level (1-4)
- * @property semester - Filter by semester (1-2)
+ * @property status - Filter by active/archived status (default: "all") * @property semester - Filter by semester (1-2)
  * @property academicYear - Filter by academic year
  * @property page - Page number for pagination (default: 1)
  * @property limit - Items per page (default: 20, max: 100)
@@ -223,9 +220,7 @@ export type ActivityQuery = z.infer<typeof ActivityQuerySchema>
 export const ClassFilterQuerySchema = PaginationQuerySchema.extend({
   search: z.string().optional(),
   teacherId: z.coerce.number().int().positive().optional(),
-  status: z.enum(["active", "archived", "all"]).default("all"),
-  yearLevel: z.coerce.number().int().min(1).max(4).optional(),
-  semester: z.coerce.number().int().min(1).max(2).optional(),
+  status: z.enum(["active", "archived", "all"]).default("all"),  semester: z.coerce.number().int().min(1).max(2).optional(),
   academicYear: z.string().optional(),
 })
 export type ClassFilterQuery = z.infer<typeof ClassFilterQuerySchema>
@@ -239,9 +234,7 @@ export const EnrollmentFilterQuerySchema = PaginationQuerySchema.extend({
   classId: z.coerce.number().int().positive().optional(),
   teacherId: z.coerce.number().int().positive().optional(),
   studentId: z.coerce.number().int().positive().optional(),
-  status: z.enum(["active", "archived", "all"]).default("all"),
-  yearLevel: z.coerce.number().int().min(1).max(MAX_YEAR_LEVEL).optional(),
-  semester: z.coerce.number().int().min(1).max(MAX_SEMESTER).optional(),
+  status: z.enum(["active", "archived", "all"]).default("all"),  semester: z.coerce.number().int().min(1).max(MAX_SEMESTER).optional(),
   academicYear: z.string().optional(),
 })
 export type EnrollmentFilterQuery = z.infer<typeof EnrollmentFilterQuerySchema>
@@ -261,9 +254,7 @@ export type ClassParams = z.infer<typeof ClassParamsSchema>
  */
 export const CreateClassSchema = z.object({
   teacherId: z.number().int().positive(),
-  className: z.string().min(1, "Class name is required"),
-  yearLevel: z.number().int().min(1).max(MAX_YEAR_LEVEL),
-  semester: z.number().int().min(1).max(MAX_SEMESTER),
+  className: z.string().min(1, "Class name is required"),  semester: z.number().int().min(1).max(MAX_SEMESTER),
   academicYear: z.string().min(1, "Academic year is required"),
   schedule: ClassScheduleSchema,
   description: z.string().optional(),
@@ -277,9 +268,7 @@ export type CreateClass = z.infer<typeof CreateClassSchema>
 export const UpdateClassSchema = z.object({
   className: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
-  isActive: z.boolean().optional(),
-  yearLevel: z.number().int().min(1).max(MAX_YEAR_LEVEL).optional(),
-  semester: z.number().int().min(1).max(MAX_SEMESTER).optional(),
+  isActive: z.boolean().optional(),  semester: z.number().int().min(1).max(MAX_SEMESTER).optional(),
   academicYear: z.string().optional(),
   schedule: ClassScheduleSchema.optional(),
   teacherId: z.number().int().positive().optional(),
@@ -335,7 +324,6 @@ export const AdminEnrollmentListItemSchema = z.object({
   teacherId: z.number(),
   teacherName: z.string(),
   teacherAvatarUrl: z.string().nullable(),
-  yearLevel: z.number(),
   semester: z.number(),
   academicYear: z.string(),
   enrolledAt: z.string(),
@@ -379,7 +367,6 @@ export const ClassDTOSchema = z.object({
   className: z.string(),
   classCode: z.string(),
   teacherId: z.number(),
-  yearLevel: z.number(),
   semester: z.number(),
   academicYear: z.string(),
   schedule: ClassScheduleSchema,
@@ -441,4 +428,5 @@ export const ClassAssignmentsResponseSchema = z.object({
   success: z.boolean(),
   assignments: z.array(ClassAssignmentItemSchema),
 })
+
 

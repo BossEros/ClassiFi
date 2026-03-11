@@ -46,7 +46,6 @@ function getDefaultClassFormValues(): TeacherClassFormValues {
     className: "",
     description: "",
     classCode: "",
-    yearLevel: 1,
     semester: 1,
     academicYear: getCurrentAcademicYear(),
     schedule: {
@@ -94,7 +93,6 @@ export function ClassFormPage() {
   const classNameField = register("className")
   const descriptionField = register("description")
   const classCodeField = register("classCode")
-  const yearLevelField = register("yearLevel", { valueAsNumber: true })
   const semesterField = register("semester", { valueAsNumber: true })
   const academicYearField = register("academicYear")
 
@@ -123,7 +121,6 @@ export function ClassFormPage() {
           className: classData.className,
           description: classData.description || "",
           classCode: classData.classCode,
-          yearLevel: classData.yearLevel as 1 | 2 | 3 | 4,
           semester: classData.semester as 1 | 2,
           academicYear: classData.academicYear,
           schedule: classData.schedule,
@@ -211,7 +208,6 @@ export function ClassFormPage() {
           teacherId: parseInt(currentUser.id),
           className: formValues.className.trim(),
           description: formValues.description.trim() || undefined,
-          yearLevel: formValues.yearLevel,
           semester: formValues.semester,
           academicYear: formValues.academicYear,
           schedule: formValues.schedule,
@@ -225,7 +221,7 @@ export function ClassFormPage() {
           className: formValues.className.trim(),
           description: formValues.description.trim() || undefined,
           classCode: formValues.classCode,
-          yearLevel: formValues.yearLevel,
+
           semester: formValues.semester,
           academicYear: formValues.academicYear,
           schedule: formValues.schedule,
@@ -250,7 +246,6 @@ export function ClassFormPage() {
   const validationErrorMessages = [
     errors.className?.message,
     errors.classCode?.message,
-    errors.yearLevel?.message,
     errors.semester?.message,
     errors.academicYear?.message,
     scheduleErrorMessage,
@@ -516,34 +511,6 @@ export function ClassFormPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
-                {/* Year Level */}
-                <div className="space-y-2">
-                  <label
-                    htmlFor="yearLevel"
-                    className="text-sm font-medium text-slate-700"
-                  >
-                    Year Level
-                  </label>
-                  <select
-                    id="yearLevel"
-                    {...yearLevelField}
-                    disabled={isLoading}
-                    className="w-full px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-400 shadow-sm text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600"
-                  >
-                    <option value={1} className="bg-white text-slate-700">
-                      1st Year
-                    </option>
-                    <option value={2} className="bg-white text-slate-700">
-                      2nd Year
-                    </option>
-                    <option value={3} className="bg-white text-slate-700">
-                      3rd Year
-                    </option>
-                    <option value={4} className="bg-white text-slate-700">
-                      4th Year
-                    </option>
-                  </select>
-                </div>
 
                 {/* Semester */}
                 <div className="space-y-2">

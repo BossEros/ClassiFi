@@ -11,8 +11,7 @@ describe("classSchemas", () => {
       const parseResult = teacherClassFormSchema.safeParse({
         className: "Introduction to Programming",
         description: "Core programming concepts",
-        classCode: "ABC123",
-        yearLevel: 1,
+        classCode: "ABC123",
         semester: 1,
         academicYear: "2025-2026",
         schedule: {
@@ -29,8 +28,7 @@ describe("classSchemas", () => {
       const parseResult = teacherClassFormSchema.safeParse({
         className: "Data Structures",
         description: "",
-        classCode: "DEF456",
-        yearLevel: 2,
+        classCode: "DEF456",
         semester: 1,
         academicYear: "2025-2026",
         schedule: {
@@ -50,8 +48,7 @@ describe("classSchemas", () => {
       const parseResult = teacherClassFormSchema.safeParse({
         className: "Algorithms",
         description: "",
-        classCode: "GHI789",
-        yearLevel: 3,
+        classCode: "GHI789",
         semester: 2,
         academicYear: "2025-2027",
         schedule: {
@@ -105,8 +102,7 @@ describe("classSchemas", () => {
       const parseResult = adminClassFormSchema.safeParse({
         className: "Operating Systems",
         description: "OS concepts",
-        teacherId: "10",
-        yearLevel: 4,
+        teacherId: "10",
         semester: 2,
         academicYear: "2025-2026",
         scheduleDays: ["Mon", "Wed"],
@@ -121,8 +117,7 @@ describe("classSchemas", () => {
       const parseResult = adminClassFormSchema.safeParse({
         className: "Networks",
         description: "",
-        teacherId: "",
-        yearLevel: 2,
+        teacherId: "",
         semester: 1,
         academicYear: "2025-2026",
         scheduleDays: [],

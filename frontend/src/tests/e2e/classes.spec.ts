@@ -25,8 +25,7 @@ test.describe("Class Management", () => {
     id: 1,
     className: "Introduction to Computer Science",
     classCode: "CS101X",
-    teacherId: 1,
-    yearLevel: 1,
+    teacherId: 1,
     semester: 1,
     academicYear: "2024-2025",
     isActive: true,
@@ -104,7 +103,6 @@ test.describe("Class Management", () => {
       await page.getByRole("button", { name: "Wed" }).click()
 
       // Set Academic Period
-      await page.locator("#yearLevel").selectOption("1")
       await page.locator("#semester").selectOption("1")
       await page.locator("#academicYear").fill("2024-2025")
 

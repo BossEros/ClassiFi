@@ -845,3 +845,16 @@
 - [x] Keep the open-sidebar desktop layout unchanged and preserve the current mobile behavior
 - [x] Run frontend build verification
 
+
+# College Class Year-Level Removal
+
+- [x] Review `AGENTS.md`, `frontend/documentation.md`, and `backend-ts/documentation.md`
+- [x] Inventory current `yearLevel` usage across frontend, backend, and tests
+- [ ] Remove backend class/admin/enrollment/dashboard contracts that expose `yearLevel`
+- [ ] Remove frontend class/admin models, forms, filters, and displays that use `yearLevel`
+- [ ] Update or add database migration artifacts if needed for `classes.year_level`
+- [ ] Update affected frontend and backend tests
+- [ ] Update frontend and backend documentation
+- [ ] Run `npm run build` in `frontend`
+- [ ] Run `npm run typecheck` in `backend-ts`
+- [ ] Run `npm test` in `backend-ts`

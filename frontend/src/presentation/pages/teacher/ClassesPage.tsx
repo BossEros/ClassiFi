@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo, useCallback } from "react"
+﻿import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Grid3x3, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -24,20 +24,15 @@ export function ClassesPage() {
   const [classes, setClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("")
   const [status, setStatus] = useState<FilterStatus>("active")
   const [selectedTerm, setSelectedTerm] = useState("all")
-  const [selectedYearLevel, setSelectedYearLevel] = useState("all")
   const currentUser = useAuthStore((state) => state.user)
 
-  // Show toast if redirected from class deletion
   useEffect(() => {
     if (location.state?.deleted && !hasShownDeleteToast.current) {
       hasShownDeleteToast.current = true
       showToast("Class deleted successfully")
-      // Clear state to prevent showing again on refresh
       navigate(location.pathname, { replace: true })
     }
   }, [location.state, location.pathname, showToast, navigate])
@@ -52,84 +47,70 @@ export function ClassesPage() {
       setIsLoading(true)
       setError(null)
 
-      const activeOnlyParam = status === "active"
-
       const allClasses = await getAllClasses(
         parseInt(currentUser.id),
-        activeOnlyParam,
+        status === "active",
       )
 
       setClasses(allClasses)
-    } catch (err) {
-      console.error("Failed to fetch classes:", err)
+    } catch (error) {
+      console.error("Failed to fetch classes:", error)
       setError("Failed to load classes. Please try refreshing the page.")
     } finally {
       setIsLoading(false)
     }
   }, [currentUser, navigate, status])
 
-  // Fetch classes when status changes (backend filter)
   useEffect(() => {
     fetchData()
   }, [fetchData])
 
-  // Extract unique terms from classes for the dropdown
   const terms = useMemo(() => {
     const uniqueTerms = new Set<string>()
-    classes.forEach((c) => {
-      if (c.academicYear && c.semester) {
-        uniqueTerms.add(`${c.academicYear} - Semester ${c.semester}`)
+
+    classes.forEach((classRecord) => {
+      if (classRecord.academicYear && classRecord.semester) {
+        uniqueTerms.add(
+          `${classRecord.academicYear} - Semester ${classRecord.semester}`,
+        )
       }
     })
-    return Array.from(uniqueTerms).sort().reverse() // Newest first
+
+    return Array.from(uniqueTerms).sort().reverse()
   }, [classes])
 
-  // Extract unique year levels from classes
-  const yearLevels = useMemo(() => {
-    const uniqueLevels = new Set<string>(["1", "2", "3", "4"]) // Default year levels
-    classes.forEach((c) => {
-      if (c.yearLevel) {
-        uniqueLevels.add(c.yearLevel.toString())
-      }
-    })
-    return Array.from(uniqueLevels).sort() // Low to High
-  }, [classes])
-
-  // Client-side filtering for Search, Term, and Year Level (and strictly archived status)
   const filteredClasses = useMemo(() => {
-    return classes.filter((c) => {
-      // 1. Status Filter (Refinement)
-      // Since backend 'activeOnly=false' returns ALL, we need to manually filter if 'archived' is selected
-      if (status === "archived" && c.isActive) return false
+    return classes.filter((classRecord) => {
+      if (status === "archived" && classRecord.isActive) {
+        return false
+      }
 
-      // 2. Term Filter
       if (selectedTerm !== "all") {
-        const termString = `${c.academicYear} - Semester ${c.semester}`
-        if (termString !== selectedTerm) return false
+        const termLabel = `${classRecord.academicYear} - Semester ${classRecord.semester}`
+
+        if (termLabel !== selectedTerm) {
+          return false
+        }
       }
 
-      // 3. Year Level Filter
-      if (selectedYearLevel !== "all") {
-        if (c.yearLevel.toString() !== selectedYearLevel) return false
-      }
-
-      // 4. Search Filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const matchName = c.className.toLowerCase().includes(query)
-        const matchCode = c.classCode.toLowerCase().includes(query)
-        if (!matchName && !matchCode) return false
+        const normalizedQuery = searchQuery.toLowerCase()
+        const matchesName = classRecord.className.toLowerCase().includes(normalizedQuery)
+        const matchesCode = classRecord.classCode.toLowerCase().includes(normalizedQuery)
+
+        if (!matchesName && !matchesCode) {
+          return false
+        }
       }
 
       return true
     })
-  }, [classes, status, selectedTerm, selectedYearLevel, searchQuery])
+  }, [classes, searchQuery, selectedTerm, status])
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
     status !== "active" ||
-    selectedTerm !== "all" ||
-    selectedYearLevel !== "all"
+    selectedTerm !== "all"
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
@@ -139,47 +120,39 @@ export function ClassesPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      {/* Page Header */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className={dashboardTheme.pageTitle}>
-              Classes
-            </h1>
+            <h1 className={dashboardTheme.pageTitle}>Classes</h1>
             <p className={dashboardTheme.pageSubtitle}>
               Manage your courses and students
             </p>
           </div>
           <Button
             onClick={() => navigate("/dashboard/classes/new")}
-            className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white border border-teal-500/40"
+            className="w-full border border-teal-500/40 bg-teal-600 px-6 text-white hover:bg-teal-700 md:w-auto"
             disabled={isLoading}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Create New Class
           </Button>
         </div>
 
-        {/* Filters */}
         <ClassFilters
           onSearchChange={setSearchQuery}
           onStatusChange={setStatus}
           onTermChange={setSelectedTerm}
-          onYearLevelChange={setSelectedYearLevel}
           currentFilters={{
             searchQuery,
             status,
             selectedTerm,
-            selectedYearLevel,
           }}
           terms={terms}
-          yearLevels={yearLevels}
         />
 
         <div className={`mb-8 ${dashboardTheme.divider}`}></div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className={dashboardTheme.errorSurface}>
           <div className="h-full w-1 rounded-full bg-rose-500" />
@@ -187,7 +160,6 @@ export function ClassesPage() {
         </div>
       )}
 
-      {/* Classes Grid */}
       <Card className="border-none bg-transparent p-0 shadow-none backdrop-blur-none">
         <CardContent className="p-0">
           {isLoading ? (
@@ -200,7 +172,7 @@ export function ClassesPage() {
               </p>
             </div>
           ) : filteredClasses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 md:grid-cols-2 lg:grid-cols-3">
               {filteredClasses.map((classItem, classIndex) => (
                 <ClassCard
                   key={classItem.id}
@@ -227,9 +199,9 @@ export function ClassesPage() {
               {!hasActiveFilters && (
                 <Button
                   onClick={() => navigate("/dashboard/classes/new")}
-                  className="w-auto bg-teal-600 hover:bg-teal-700 border border-teal-500/40"
+                  className="w-auto border border-teal-500/40 bg-teal-600 hover:bg-teal-700"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Create a Class
                 </Button>
               )}

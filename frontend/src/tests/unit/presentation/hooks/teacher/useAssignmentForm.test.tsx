@@ -81,8 +81,7 @@ describe("useAssignmentForm", () => {
       teacherId: 1,
       description: "Desc",
       isActive: true,
-      createdAt: new Date().toISOString() as ISODateString,
-      yearLevel: 10,
+      createdAt: new Date().toISOString() as ISODateString,
       semester: 1,
       academicYear: "2023-2024",
       schedule: {

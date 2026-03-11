@@ -1,4 +1,4 @@
-// db is accessed via BaseRepository.db
+﻿// db is accessed via BaseRepository.db
 import {
   eq,
   and,
@@ -47,7 +47,6 @@ export interface AdminEnrollmentListItemRow {
   teacherId: number
   teacherName: string
   teacherAvatarUrl: string | null
-  yearLevel: number
   semester: number
   academicYear: string
   enrolledAt: Date
@@ -185,7 +184,6 @@ export class EnrollmentRepository extends BaseRepository<
       teacherId,
       studentId,
       status,
-      yearLevel,
       semester,
       academicYear,
     } = options
@@ -224,11 +222,6 @@ export class EnrollmentRepository extends BaseRepository<
     } else if (status === "archived") {
       conditions.push(eq(classes.isActive, false))
     }
-
-    if (yearLevel !== undefined) {
-      conditions.push(eq(classes.yearLevel, yearLevel))
-    }
-
     if (semester !== undefined) {
       conditions.push(eq(classes.semester, semester))
     }
@@ -265,7 +258,6 @@ export class EnrollmentRepository extends BaseRepository<
         teacherId: teacherUsers.id,
         teacherName: sql<string>`CONCAT(${teacherUsers.firstName}, ' ', ${teacherUsers.lastName})`,
         teacherAvatarUrl: teacherUsers.avatarUrl,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         enrolledAt: enrollments.enrolledAt,
@@ -293,5 +285,6 @@ export class EnrollmentRepository extends BaseRepository<
     }
   }
 }
+
 
 

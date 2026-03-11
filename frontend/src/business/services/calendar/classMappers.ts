@@ -1,4 +1,4 @@
-import type { Class } from "@/business/models/dashboard/types"
+﻿import type { Class } from "@/business/models/dashboard/types"
 
 /**
  * Type guard to validate Class-like response objects.
@@ -24,7 +24,6 @@ export function isValidClass(value: unknown): value is Class {
       typeof candidate.description === "string",
     isActive: typeof candidate.isActive === "boolean",
     createdAt: typeof candidate.createdAt === "string",
-    yearLevel: typeof candidate.yearLevel === "number",
     semester: typeof candidate.semester === "number",
     academicYear: typeof candidate.academicYear === "string",
     schedule:

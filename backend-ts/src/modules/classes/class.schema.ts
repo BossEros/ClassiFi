@@ -1,4 +1,4 @@
-import { z } from "zod"
+﻿import { z } from "zod"
 
 // ============================================================================
 // Shared Schemas
@@ -69,7 +69,6 @@ export const CreateClassRequestSchema = z.object({
   className: z.string().min(1).max(100),
   description: z.string().max(1000).optional(),
   classCode: z.string().length(8),
-  yearLevel: z.number().int().min(1).max(4),
   semester: z.number().int().min(1).max(2),
   academicYear: AcademicYearSchema,
   schedule: ScheduleSchema,
@@ -83,7 +82,6 @@ export const UpdateClassRequestSchema = z.object({
   className: z.string().min(1).max(100).optional(),
   description: z.string().max(1000).optional().nullable(),
   isActive: z.boolean().optional(),
-  yearLevel: z.number().int().min(1).max(4).optional(),
   semester: z.number().int().min(1).max(2).optional(),
   academicYear: AcademicYearSchema.optional(),
   schedule: ScheduleSchema.optional(),
@@ -155,7 +153,6 @@ export const ClassResponseSchema = z.object({
   className: z.string(),
   classCode: z.string(),
   description: z.string().nullable(),
-  yearLevel: z.number(),
   semester: z.number(),
   academicYear: z.string(),
   schedule: ScheduleSchema,
@@ -246,3 +243,5 @@ export const ClassStudentParamsSchema = z.object({
 })
 
 export type ClassStudentParams = z.infer<typeof ClassStudentParamsSchema>
+
+

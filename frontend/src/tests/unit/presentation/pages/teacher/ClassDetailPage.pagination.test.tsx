@@ -27,8 +27,7 @@ const mockClassInfo = {
   isActive: true,
   createdAt: new Date().toISOString() as ISODateString,
   teacherName: "Test Teacher",
-  studentCount: 25,
-  yearLevel: 1,
+  studentCount: 25,
   semester: 1,
   academicYear: "2024-2025",
   schedule: {

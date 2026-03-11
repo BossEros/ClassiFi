@@ -79,8 +79,7 @@ describe("ClassService", () => {
       const result = await classService.createClass({
         teacherId: teacher.id,
         className: newClass.className,
-        classCode: "ABC12345",
-        yearLevel: newClass.yearLevel,
+        classCode: "ABC12345",
         semester: newClass.semester,
         academicYear: newClass.academicYear,
         schedule: newClass.schedule,
@@ -99,8 +98,7 @@ describe("ClassService", () => {
         classService.createClass({
           teacherId: 999,
           className: "Test Class",
-          classCode: "ABCDEFGH",
-          yearLevel: 1,
+          classCode: "ABCDEFGH",
           semester: 1,
           academicYear: "2024-2025",
           schedule: { days: ["monday"], startTime: "10:00", endTime: "11:00" },
@@ -116,8 +114,7 @@ describe("ClassService", () => {
         classService.createClass({
           teacherId: student.id,
           className: "Test",
-          classCode: "ABCDEFGH",
-          yearLevel: 1,
+          classCode: "ABCDEFGH",
           semester: 1,
           academicYear: "2024",
           schedule: {

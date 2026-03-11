@@ -37,7 +37,6 @@ export function createMockClass(overrides: Partial<Class> = {}): Class {
     className: "Test Class",
     classCode: "ABC123",
     description: "A test class description",
-    yearLevel: 1,
     semester: 1,
     academicYear: "2024-2025",
     schedule: {

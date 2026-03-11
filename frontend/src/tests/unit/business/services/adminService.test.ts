@@ -27,8 +27,7 @@ const createMockAdminClass = (overrides?: Partial<AdminClass>): AdminClass => ({
   className: "Test Class",
   classCode: "ABC1234",
   teacherId: 2,
-  teacherName: "Teacher User",
-  yearLevel: 10,
+  teacherName: "Teacher User",
   semester: 1,
   academicYear: "2024-2025",
   schedule: {
@@ -212,8 +211,7 @@ describe("adminService", () => {
     const classData = {
       name: "Math 101",
       code: "MATH101",
-      teacherId: 2,
-      yearLevel: 10,
+      teacherId: 2,
       semester: 1,
       academicYear: "2024-2025",
       schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },
@@ -333,8 +331,7 @@ describe("adminService", () => {
         page: 1,
         limit: 10,
         search: "jane",
-        status: "active",
-        yearLevel: 2,
+        status: "active",
         semester: 1,
         academicYear: "2025-2026",
       })
@@ -346,8 +343,7 @@ describe("adminService", () => {
         classId: undefined,
         teacherId: undefined,
         studentId: undefined,
-        enrollmentStatus: "active",
-        yearLevel: 2,
+        enrollmentStatus: "active",
         semesterNumber: 1,
         academicYear: "2025-2026",
       })

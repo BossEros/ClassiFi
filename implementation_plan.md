@@ -2221,3 +2221,55 @@ Let the shared dashboard content area reclaim horizontal space on desktop when t
 - Shared desktop dashboard layout that expands and shifts left when the sidebar is collapsed.
 - No behavior change for mobile navigation.
 - Successful frontend build verification.
+# Implementation Plan - College Class Year-Level Removal
+
+## Goal
+
+Remove `yearLevel` as a first-class class concept across the frontend and backend so class creation, class display, and admin filtering match college workflows where classes are not inherently tied to a fixed student year.
+
+## Scope
+
+- `frontend/src/business/models/class/types.ts`
+- `frontend/src/business/models/admin/types.ts`
+- `frontend/src/business/services/classService.ts`
+- `frontend/src/business/services/adminService.ts`
+- `frontend/src/business/validation/classValidation.ts`
+- `frontend/src/data/api/class.types.ts`
+- `frontend/src/data/api/admin.types.ts`
+- `frontend/src/presentation/schemas/class/classSchemas.ts`
+- `frontend/src/presentation/pages/teacher/ClassFormPage.tsx`
+- `frontend/src/presentation/pages/admin/AdminClassFormPage.tsx`
+- `frontend/src/presentation/pages/teacher/ClassesPage.tsx`
+- `frontend/src/presentation/pages/student/StudentClassesPage.tsx`
+- `frontend/src/presentation/pages/admin/AdminClassesPage.tsx`
+- `frontend/src/presentation/pages/admin/AdminEnrollmentsPage.tsx`
+- `frontend/src/presentation/components/shared/dashboard/ClassFilters.tsx`
+- `frontend/src/presentation/components/shared/dashboard/ClassCard.tsx`
+- `frontend/src/presentation/components/admin/AdminEnrollmentFilters.tsx`
+- `frontend/src/presentation/components/admin/AdminEnrollmentTable.tsx`
+- `frontend/src/shared/types/class.ts`
+- `backend-ts/src/modules/classes/*`
+- `backend-ts/src/modules/admin/*`
+- `backend-ts/src/modules/dashboard/*`
+- `backend-ts/src/modules/enrollments/enrollment.repository.ts`
+- `backend-ts/src/modules/classes/class.model.ts`
+- `backend-ts/drizzle/*` (if migration artifact is needed)
+- Affected frontend/backend tests
+- `frontend/documentation.md`
+- `backend-ts/documentation.md`
+- `task.md`
+
+## Execution Steps
+
+1. Remove `yearLevel` from frontend and backend DTOs, schemas, services, and view models that define class contracts.
+2. Remove `yearLevel` UI controls and filters from teacher, student, and admin class-management flows.
+3. Remove admin enrollment filtering/display logic that depends on class year level.
+4. Update the persistence model and add a migration artifact if required for the `classes.year_level` column.
+5. Update affected tests, run verification, and fix any regressions before closing the task.
+
+## Deliverables
+
+- Class creation and editing flows without `yearLevel`
+- Class listing and admin enrollment filtering without year-level controls
+- Backend contracts aligned with the new class model
+- Updated docs and passing verification
