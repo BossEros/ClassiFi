@@ -183,7 +183,7 @@ describe("similarityReportPdf", () => {
 
     expect(reportData.filteredPairRows).toHaveLength(2)
     expect(
-      reportData.summaryMetrics.find((metric) => metric.label === "Suspicious")
+      reportData.summaryMetrics.find((metric) => metric.label === "Suspicious Pairs")
         ?.value,
     ).toBe("2")
     expect(
@@ -261,8 +261,8 @@ describe("similarityReportPdf", () => {
     expect(reportData.fragmentRows).toEqual([
       {
         fragmentLabel: "Fragment 1",
-        leftRange: "L1-2",
-        rightRange: "L3-4",
+        leftRange: "Lines 2\u20133",
+        rightRange: "Lines 4\u20135",
         length: "2",
       },
     ])
@@ -286,3 +286,5 @@ describe("similarityReportPdf", () => {
     )
   })
 })
+
+
