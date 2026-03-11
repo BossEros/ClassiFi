@@ -235,14 +235,12 @@ function AdminAddStudentModal({
 }
 
 interface AdminDeleteClassModalProps {
-  isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
   classData: AdminClass | null
 }
 
 function AdminDeleteClassModal({
-  isOpen,
   onClose,
   onConfirm,
   classData,
@@ -252,14 +250,6 @@ function AdminDeleteClassModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [modalStep, setModalStep] = useState<"warning" | "confirm">("warning")
 
-  useEffect(() => {
-    if (!isOpen) {
-      setConfirmationValue("")
-      setErrorMessage(null)
-      setModalStep("warning")
-      setIsDeleting(false)
-    }
-  }, [isOpen])
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -268,16 +258,14 @@ function AdminDeleteClassModal({
       }
     }
 
-    if (isOpen) {
       document.addEventListener("keydown", handleEscape)
       document.body.style.overflow = "hidden"
-    }
 
     return () => {
       document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = "unset"
     }
-  }, [isOpen, isDeleting, onClose])
+  }, [isDeleting, onClose])
 
   const handleDelete = async () => {
     setErrorMessage(null)
@@ -297,7 +285,7 @@ function AdminDeleteClassModal({
   const isDeleteConfirmationDisabled =
     confirmationValue !== "DELETE" || isDeleting
 
-  if (!isOpen || !classData) {
+  if (!classData) {
     return null
   }
 
@@ -1084,16 +1072,18 @@ export function AdminClassDetailPage() {
           classId={parsedClassId ?? 0}
           existingStudents={students}
         />
-        <AdminDeleteClassModal
-          isOpen={classPendingDeletion !== null}
-          onClose={() => setClassPendingDeletion(null)}
-          onConfirm={handleDeleteClass}
-          classData={classPendingDeletion}
-        />
+        {classPendingDeletion && (
+          <AdminDeleteClassModal
+            onClose={() => setClassPendingDeletion(null)}
+            onConfirm={handleDeleteClass}
+            classData={classPendingDeletion}
+          />
+        )}
       </div>
     </DashboardLayout>
   )
 }
+
 
 
 
