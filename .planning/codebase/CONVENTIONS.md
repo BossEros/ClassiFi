@@ -1,58 +1,117 @@
-# ClassiFi Code Conventions (Observed)
+# Coding Conventions
 
-## 1) Architecture and Layer Boundaries
-- Backend follows controller -> service -> repository separation under `backend-ts/src/modules/*`.
-- Route handlers are thin and delegate business logic to services, e.g. `backend-ts/src/modules/auth/auth.controller.ts`.
-- Service classes are the orchestration layer with injected dependencies, e.g. `backend-ts/src/modules/submissions/submission.service.ts`.
-- Data access and query logic stay in repositories (not controllers), e.g. `backend-ts/src/modules/classes/class.repository.ts`.
-- Frontend follows Presentation -> Business -> Data layers, e.g. `frontend/src/presentation/pages/auth/LoginPage.tsx` -> `frontend/src/business/services/authService.ts` -> `frontend/src/data/repositories/authRepository.ts`.
-- UI components/pages do not call `apiClient` directly in normal flow; repositories do, e.g. `frontend/src/data/repositories/classRepository.ts`.
+**Analysis Date:** 2026-03-08
 
-## 2) Module and File Organization
-- Backend feature files are colocated per module (`*.controller.ts`, `*.service.ts`, `*.repository.ts`, `*.schema.ts`, `*.mapper.ts`), see `backend-ts/src/modules/classes/`.
-- Backend DI bindings are centralized through tokens in `backend-ts/src/shared/container.ts` and `backend-ts/src/shared/di/tokens.ts`.
-- Frontend separates schemas/hooks/utils/types by layer and feature, e.g. `frontend/src/presentation/schemas/auth/authSchemas.ts` and `frontend/src/presentation/hooks/shared/useZodForm.ts`.
-- Shared utilities are explicit and reused, e.g. `frontend/src/presentation/utils/formErrorMap.ts` and `backend-ts/src/shared/utils.ts`.
+## Naming Patterns
 
-## 3) Naming Conventions
-- Functions are verb-first and specific (`loginUser`, `getClassAssignmentsForStudent`, `validateRegistrationData`) in `frontend/src/business/services/authService.ts` and `backend-ts/src/modules/classes/class.service.ts`.
-- Variables are often descriptive and domain-scoped (`parsedClassId`, `normalizedFeedback`, `shouldIncludeHiddenDetails`) in `backend-ts/src/modules/submissions/submission.controller.ts`.
-- DTO and response naming uses intent suffixes (`CreateClassRequestSchema`, `SubmissionDTO`, `AuthResult`) in `backend-ts/src/modules/classes/class.schema.ts` and `backend-ts/src/modules/auth/auth.service.ts`.
-- Boolean naming uses `is/has/should` patterns (`isAuthenticated`, `shouldReturnLatestOnly`) in `frontend/src/shared/store/useAuthStore.ts` and `backend-ts/src/modules/submissions/submission.controller.ts`.
+**Files:**
+- Frontend uses PascalCase for pages/components (`frontend/src/presentation/pages/auth/LoginPage.tsx`, `frontend/src/presentation/components/ui/Button.tsx`).
+- Frontend hooks and utilities use camelCase (`frontend/src/presentation/hooks/shared/useZodForm.ts`, `frontend/src/shared/utils/assignmentFilters.ts`).
+- Backend feature files are mostly kebab-case or dotted feature names (`backend-ts/src/modules/plagiarism/plagiarism-auto-analysis.service.ts`, `backend-ts/src/modules/classes/class.controller.ts`).
+- Tests consistently use `*.test.ts` or `*.test.tsx` in dedicated test trees (`frontend/src/tests/unit/**`, `backend-ts/tests/**`).
 
-## 4) TypeScript and Typing Patterns
-- Strong typing is used at module boundaries with `type`/`interface` exports, e.g. `frontend/src/presentation/schemas/auth/authSchemas.ts`.
-- Zod schemas pair with inferred TS types (`z.infer`) in both stacks, e.g. `backend-ts/src/modules/classes/class.schema.ts`.
-- Backend request typing often uses `request.validatedBody/validatedQuery/validatedParams` from custom plugin in `backend-ts/src/api/plugins/zod-validation.ts`.
-- Fastify request augmentation is used for authenticated user context in `backend-ts/src/api/middlewares/auth.middleware.ts`.
-- DI classes use `@injectable()` and constructor injection via tokens, e.g. `backend-ts/src/modules/users/user.service.ts`.
+**Functions:**
+- camelCase for functions and methods across frontend/backend (`loginUser`, `getClassAssignmentsForStudent`, `sanitizeUserFacingErrorMessage`).
+- Event handlers and UI callbacks follow `handle*` naming (`handleLoginSuccess`, `handleRegisterSubmit`, `handleNext`).
+- Async functions do not use special prefixes; async intent is inferred from `async/await`.
 
-## 5) Validation Conventions
-- Backend validates request payloads with pre-handlers (`validateBody`, `validateParams`, `validateQuery`) in controllers like `backend-ts/src/modules/class` and `backend-ts/src/modules/submissions/submission.controller.ts`.
-- Backend schemas use coercion/refinement for URL/query and cross-field rules (`z.coerce.number()`, `.refine`) in `backend-ts/src/modules/classes/class.schema.ts`.
-- Frontend uses dual validation style:
-- UI schemas with Zod + RHF for form UX (`frontend/src/presentation/schemas/auth/authSchemas.ts` + `frontend/src/presentation/hooks/shared/useZodForm.ts`).
-- Business-level guard functions returning messages or throwing errors (`frontend/src/business/validation/authValidation.ts`, `frontend/src/business/validation/commonValidation.ts`).
+**Variables:**
+- camelCase for local variables and parameters (`parsedClassId`, `shouldFilterActiveOnly`, `validationResult`).
+- UPPER_SNAKE_CASE for constants (`API_BASE_URL`, `ASSIGNMENT_INSTRUCTIONS_IMAGE_MAX_SIZE_BYTES`).
+- Descriptive names are preferred over abbreviations (`userRegistrationData`, `submissionCountsByAssignment`).
 
-## 6) Error Handling and Logging
-- Backend favors domain-specific error classes extending `ApiError` in `backend-ts/src/shared/errors.ts`.
-- Global Fastify error handling standardizes output shape `{ success: false, message, error? }` in `backend-ts/src/api/middlewares/error-handler.ts`.
-- Services log operational failures and continue where cleanup is best-effort, e.g. file cleanup in `backend-ts/src/modules/classes/class.service.ts` and `backend-ts/src/modules/users/user.service.ts`.
-- Frontend services/repositories normalize failures to user-safe messages and `Error` throws, e.g. `frontend/src/data/api/apiClient.ts` and `frontend/src/business/services/assignmentService.ts`.
+**Types:**
+- Interfaces and type aliases use PascalCase (`ApiRequestConfig`, `ValidatedRequest`, `CreateClassServiceDTO`).
+- Domain DTO/model suffixes are common in backend (`*DTO`, `*RequestSchema`, `*ParamSchema`).
+- `import type` is widely used to keep type-only imports explicit.
 
-## 7) Response and API Shape Conventions
-- Successful API responses commonly include `success`, `message`, and a named payload key (`class`, `submissions`, `data`) in backend controllers (example: `backend-ts/src/modules/submissions/submission.controller.ts`).
-- Validation failures return `success: false`, top-level message, and field-level list in `backend-ts/src/api/plugins/zod-validation.ts`.
-- Frontend repository methods usually validate `apiResponse.error`, `data.success`, and required payload before returning typed entities in `frontend/src/data/repositories/classRepository.ts`.
+## Code Style
 
-## 8) Formatting and Style Observations
-- Most backend code follows no-semicolon style with grouped import blocks and short JSDoc docblocks, e.g. `backend-ts/src/modules/auth/auth.service.ts`.
-- Frontend style is mostly no-semicolon in shared/business/data layers (e.g. `frontend/src/data/api/apiClient.ts`), but some auth pages currently use semicolons/inlined component comments (e.g. `frontend/src/presentation/pages/auth/LoginPage.tsx`).
-- Comments are pragmatic and purpose-driven (intent, constraints, or edge cases), e.g. timeout race explanation in `backend-ts/src/modules/submissions/submission.controller.ts`.
+**Formatting:**
+- Prettier is configured at repo root (`.prettierrc`) with: 2 spaces, `printWidth: 80`, double quotes, trailing commas, and no semicolons.
+- TypeScript strict mode is enabled in both apps (`frontend/tsconfig.json`, `backend-ts/tsconfig.json`).
+- Current codebase has mixed punctuation in legacy/touched files (many files follow no-semicolon style, but some still contain semicolons). New code should follow `.prettierrc`.
 
-## 9) Practical Rules To Follow When Editing
-- Keep business logic in services; keep controllers/pages thin (`backend-ts/src/modules/*/*.service.ts`, `frontend/src/business/services/*`).
-- Add/extend Zod schemas close to feature modules (`backend-ts/src/modules/*/*.schema.ts`, `frontend/src/presentation/schemas/*`).
-- Reuse existing utility helpers before adding new ones (`frontend/src/presentation/utils/formErrorMap.ts`, `frontend/src/business/validation/commonValidation.ts`).
-- Throw/use domain errors on backend instead of ad-hoc strings (`backend-ts/src/shared/errors.ts`).
-- Use existing response envelopes and naming patterns in new route handlers (`backend-ts/src/modules/*/*.controller.ts`).
+**Linting:**
+- ESLint flat config is used in both apps (`frontend/eslint.config.js`, `backend-ts/eslint.config.js`).
+- Frontend lint rules enforce architecture boundaries (presentation cannot import `@/data/*`; shared cannot import presentation/business).
+- Backend lint rules enforce stricter type safety (`no-explicit-any` error by default, with narrow file/test exceptions).
+
+## Import Organization
+
+**Order:**
+1. External packages
+2. Internal alias imports (`@/...`)
+3. Relative imports (when needed)
+4. Type imports (`import type`) where applicable
+
+**Grouping:**
+- No strict alphabetical import ordering rule is enforced globally.
+- Files typically group imports by domain concern (framework, shared utils, feature modules).
+
+**Path Aliases:**
+- Frontend: `@/* -> ./src/*` (`frontend/tsconfig.app.json`, `frontend/vitest.config.ts`).
+- Backend: `@/* -> ./src/*` plus additional scoped aliases (`@api/*`, `@services/*`, `@repositories/*`, `@models/*`, `@shared/*` in `backend-ts/tsconfig.json`).
+
+## Error Handling
+
+**Frontend patterns:**
+- Service/repository layers normalize errors and return typed failure responses instead of always throwing (`frontend/src/business/services/authService.ts`, `frontend/src/data/api/apiClient.ts`, `frontend/src/data/api/errorMapping.ts`).
+- UI layers typically use `try/catch` around async calls and surface user-safe messages (`frontend/src/presentation/pages/auth/RegisterPage.tsx`).
+- API errors are sanitized before display (`sanitizeUserFacingErrorMessage`).
+
+**Backend patterns:**
+- Domain-specific custom errors extend `ApiError` with HTTP codes (`backend-ts/src/shared/errors.ts`).
+- Controllers/services throw typed errors; global Fastify handler centralizes response formatting (`backend-ts/src/api/middlewares/error-handler.ts`).
+- Request validation uses Zod pre-handlers that return structured 400 responses (`backend-ts/src/api/plugins/zod-validation.ts`).
+
+**Guideline to follow:**
+- Throw typed errors in backend domain/service boundaries.
+- Return user-facing normalized error payloads in frontend business/data boundaries.
+- Avoid leaking internal stack traces outside development mode.
+
+## Logging
+
+**Backend:**
+- Uses `pino` through an adapter (`backend-ts/src/shared/logger.ts`).
+- Standard levels: `debug`, `info`, `warn`, `error`.
+- Logging is structured and scoped via `createLogger("ScopeName")`.
+
+**Frontend:**
+- No centralized logger; occasional `console.warn/error` remains in UI/data flows (`frontend/src/data/api/apiClient.ts`, some page-level catch blocks).
+- Preferred pattern for new code is to keep user-facing errors handled in UI and avoid noisy console logging unless diagnostic context is required.
+
+## Comments and Documentation
+
+**Patterns observed:**
+- Many exported functions/classes include JSDoc-style comments, especially in services, helpers, and controllers.
+- Route handlers often include endpoint comments in `METHOD /path` format (`backend-ts/src/modules/*/*.controller.ts`).
+- Tests and test utilities use section comments to structure factories/fixtures and scenarios (`frontend/src/tests/utils/factories.ts`, `backend-ts/tests/utils/factories.ts`).
+
+**Guideline to follow:**
+- Keep comments focused on intent and business rules.
+- Prefer self-documenting names and concise JSDoc on exported/public APIs.
+
+## Function Design
+
+**Common patterns:**
+- Guard clauses for validation before main logic (both frontend business services and backend services).
+- Layered delegation:
+  - Frontend presentation -> business services -> repositories/API.
+  - Backend controller -> service -> repository.
+- Mapping functions (`to*DTO`, mapper utilities) are used to isolate transport/domain transformations.
+
+## Module Design
+
+**Frontend module style:**
+- Clean Architecture layering is actively enforced by lint and folder structure (`presentation`, `business`, `data`, `shared`).
+- Reusable hooks/utilities live in shared feature folders (`frontend/src/presentation/hooks/shared`, `frontend/src/shared/utils`).
+
+**Backend module style:**
+- Feature-first modules under `backend-ts/src/modules/*` with colocated controller/service/repository/schema/mapper files.
+- DI tokens + `tsyringe` container are used for dependency wiring (`backend-ts/src/shared/di/tokens.ts`, route controllers resolving services via container).
+
+---
+
+*Convention analysis: 2026-03-08*
+*Update when patterns change*

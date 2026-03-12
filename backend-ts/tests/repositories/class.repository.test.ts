@@ -178,7 +178,6 @@ describe("ClassRepository", () => {
         teacherId: 1,
         className: "Test Class",
         classCode: "ABC123",
-        yearLevel: 1,
         semester: 1,
         academicYear: "2024-2025",
         schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },

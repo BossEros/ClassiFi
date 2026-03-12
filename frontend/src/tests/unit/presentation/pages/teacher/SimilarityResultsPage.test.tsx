@@ -6,6 +6,25 @@ import type { ReactNode } from "react"
 import { SimilarityResultsPage } from "@/presentation/pages/teacher/SimilarityResultsPage"
 import { getResultDetails } from "@/business/services/plagiarismService"
 import { getAssignmentById } from "@/business/services/assignmentService"
+import * as similarityReportPdf from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
+
+function createDeferredPromise<T>() {
+  let resolvePromise!: (value: T) => void
+  let rejectPromise!: (reason?: unknown) => void
+
+  const promise = new Promise<T>((resolve, reject) => {
+    resolvePromise = resolve
+    rejectPromise = reject
+  })
+
+  return {
+    promise,
+    resolve: resolvePromise,
+    reject: rejectPromise,
+  }
+}
+
+const mockShowToast = vi.fn()
 
 const mockData = vi.hoisted(() => {
   const pair = {
@@ -34,6 +53,7 @@ const mockData = vi.hoisted(() => {
   const results = {
     reportId: "report-1",
     isReusedReport: false,
+    generatedAt: "2026-03-10T10:00:00.000Z",
     summary: {
       totalFiles: 2,
       totalPairs: 1,
@@ -41,6 +61,17 @@ const mockData = vi.hoisted(() => {
       averageSimilarity: 0.89,
       maxSimilarity: 0.9,
     },
+    submissions: [
+      pair.leftFile,
+      pair.rightFile,
+      {
+        id: 13,
+        path: "student-c.py",
+        filename: "student-c.py",
+        lineCount: 8,
+        studentName: "Student C",
+      },
+    ],
     pairs: [pair],
     warnings: [],
   }
@@ -54,7 +85,24 @@ const mockData = vi.hoisted(() => {
       overlap: 40,
       longestFragment: 15,
     },
-    fragments: [],
+    fragments: [
+      {
+        id: 1,
+        leftSelection: {
+          startRow: 1,
+          startCol: 0,
+          endRow: 3,
+          endCol: 10,
+        },
+        rightSelection: {
+          startRow: 2,
+          startCol: 0,
+          endRow: 4,
+          endCol: 10,
+        },
+        length: 3,
+      },
+    ],
     leftFile: {
       filename: "student-a.py",
       content: "print('A')",
@@ -89,7 +137,7 @@ vi.mock("@/business/services/plagiarismService", () => ({
 }))
 
 vi.mock("@/business/services/assignmentService", () => ({
-  getAssignmentById: vi.fn().mockResolvedValue(mockData.assignment),
+  getAssignmentById: vi.fn(),
 }))
 
 vi.mock("@/shared/store/useAuthStore", () => ({
@@ -102,6 +150,11 @@ vi.mock("@/shared/store/useAuthStore", () => ({
         role: "teacher",
       },
     }),
+}))
+
+vi.mock("@/shared/store/useToastStore", () => ({
+  useToastStore: (selector: (state: { showToast: typeof mockShowToast }) => unknown) =>
+    selector({ showToast: mockShowToast }),
 }))
 
 vi.mock("@/presentation/components/shared/dashboard/TopBar", () => ({
@@ -145,9 +198,57 @@ vi.mock("@/presentation/components/teacher/plagiarism", () => ({
   }) => (
     <button onClick={() => onPairSelect(mockData.pair)}>Select Pair</button>
   ),
+  SimilarityGraphView: ({
+    minimumSimilarityPercent,
+    submissions,
+  }: {
+    minimumSimilarityPercent: number
+    submissions: Array<{ id: number }>
+  }) => (
+    <div>
+      Similarity Graph: {minimumSimilarityPercent}% / {submissions.length} submissions
+    </div>
+  ),
   PairComparison: () => <div>Pair Comparison</div>,
   PairCodeDiff: () => <div>Pair Diff</div>,
 }))
+
+vi.mock(
+  "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf",
+  () => ({
+    buildClassSimilarityReportData: vi.fn(() => ({ title: "Class Report" })),
+    buildPairSimilarityReportData: vi.fn(() => ({ title: "Pair Report" })),
+    downloadSimilarityReportDocument: vi.fn().mockResolvedValue(undefined),
+    ClassSimilarityReportDocument: () => <div>Class PDF Document</div>,
+    PairSimilarityReportDocument: () => <div>Pair PDF Document</div>,
+    toFileNameSegment: (value: string) =>
+      value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "report",
+  }),
+)
+
+function renderSimilarityResultsPage() {
+  return render(
+    <MemoryRouter
+      initialEntries={[
+        {
+          pathname: "/dashboard/assignments/1/similarity",
+          state: { results: mockData.results },
+        },
+      ]}
+    >
+      <Routes>
+        <Route
+          path="/dashboard/assignments/:assignmentId/similarity"
+          element={<SimilarityResultsPage />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
 
 describe("SimilarityResultsPage", () => {
   const scrollIntoViewMock = vi.fn()
@@ -155,7 +256,8 @@ describe("SimilarityResultsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     scrollIntoViewMock.mockReset()
-    vi.mocked(getAssignmentById).mockResolvedValue(mockData.assignment)
+    mockShowToast.mockReset()
+    vi.mocked(getAssignmentById).mockImplementation(() => new Promise(() => {}))
 
     Object.defineProperty(window.HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
@@ -163,26 +265,36 @@ describe("SimilarityResultsPage", () => {
     })
   })
 
+  it("renders the graph with submission-aware summary cards and class download action", async () => {
+    renderSimilarityResultsPage()
+
+    expect(screen.getByText("Submissions: 3")).toBeInTheDocument()
+    expect(screen.getByText("Average Similarity: 89.0%")).toBeInTheDocument()
+    expect(screen.getByText("Max Similarity: 90.0%")).toBeInTheDocument()
+    expect(
+      screen.getByText("Similarity Graph: 75% / 3 submissions"),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Download Class Report" }),
+    ).toBeInTheDocument()
+  })
+
+  it("renders the average similarity card before the max similarity card", async () => {
+    renderSimilarityResultsPage()
+
+    const averageSimilarityCard = screen.getByText("Average Similarity: 89.0%")
+    const maxSimilarityCard = screen.getByText("Max Similarity: 90.0%")
+    const averageCardPosition = averageSimilarityCard.compareDocumentPosition(
+      maxSimilarityCard,
+    )
+
+    expect(averageCardPosition & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it("auto-scrolls to comparison section when a pair is selected", async () => {
     vi.mocked(getResultDetails).mockResolvedValue(mockData.details)
 
-    render(
-      <MemoryRouter
-        initialEntries={[
-          {
-            pathname: "/dashboard/assignments/1/similarity",
-            state: { results: mockData.results },
-          },
-        ]}
-      >
-        <Routes>
-          <Route
-            path="/dashboard/assignments/:assignmentId/similarity"
-            element={<SimilarityResultsPage />}
-          />
-        </Routes>
-      </MemoryRouter>,
-    )
+    renderSimilarityResultsPage()
 
     await userEvent.click(screen.getByRole("button", { name: "Select Pair" }))
 
@@ -193,4 +305,100 @@ describe("SimilarityResultsPage", () => {
 
     expect(screen.getByText(/Code Comparison:/)).toBeInTheDocument()
   })
+
+  it("keeps the pair download button disabled while details are loading and enables it after details resolve", async () => {
+    const deferredDetails = createDeferredPromise<typeof mockData.details>()
+    vi.mocked(getResultDetails).mockReturnValue(deferredDetails.promise)
+
+    renderSimilarityResultsPage()
+
+    await userEvent.click(screen.getByRole("button", { name: "Select Pair" }))
+
+    const pairDownloadButton = await screen.findByRole("button", {
+      name: "Download Pair Report",
+    })
+
+    expect(pairDownloadButton).toBeDisabled()
+
+    deferredDetails.resolve(mockData.details)
+
+    await waitFor(() => {
+      expect(pairDownloadButton).toBeEnabled()
+    })
+  })
+
+  it("uses the active threshold and selected pair context for both PDF downloads", async () => {
+    vi.mocked(getResultDetails).mockResolvedValue(mockData.details)
+    vi.mocked(getAssignmentById).mockResolvedValue(mockData.assignment)
+    const buildClassSimilarityReportDataMock = vi.mocked(
+      similarityReportPdf.buildClassSimilarityReportData,
+    )
+    const buildPairSimilarityReportDataMock = vi.mocked(
+      similarityReportPdf.buildPairSimilarityReportData,
+    )
+    const downloadSimilarityReportDocumentMock = vi.mocked(
+      similarityReportPdf.downloadSimilarityReportDocument,
+    )
+
+    renderSimilarityResultsPage()
+
+    await waitFor(() => {
+      expect(getAssignmentById).toHaveBeenCalledWith(1, 1)
+    })
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Download Class Report" }),
+    )
+
+    await waitFor(() => {
+      expect(buildClassSimilarityReportDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          results: mockData.results,
+          minimumSimilarityPercent: 75,
+          assignment: mockData.assignment,
+        }),
+      )
+      expect(downloadSimilarityReportDocumentMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fileName: "similarity-review-similarity-threshold-75.pdf",
+        }),
+      )
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Select Pair" }))
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Download Pair Report" })).toBeEnabled()
+    })
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Download Pair Report" }),
+    )
+
+    await waitFor(() => {
+      expect(buildPairSimilarityReportDataMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          results: mockData.results,
+          selectedPair: mockData.pair,
+          minimumSimilarityPercent: 75,
+          assignment: mockData.assignment,
+        }),
+      )
+      expect(downloadSimilarityReportDocumentMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fileName: "similarity-review-student-a-vs-student-b.pdf",
+        }),
+      )
+    })
+
+    expect(mockShowToast).toHaveBeenCalledWith(
+      "Class similarity report downloaded successfully",
+    )
+    expect(mockShowToast).toHaveBeenCalledWith(
+      "Pairwise similarity report downloaded successfully",
+    )
+  })
 })
+
+
+

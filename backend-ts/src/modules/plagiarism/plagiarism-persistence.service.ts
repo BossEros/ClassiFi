@@ -1,10 +1,14 @@
 import { inject, injectable } from "tsyringe"
 import { db } from "@/shared/database.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
-import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import {
+  SubmissionRepository,
+  type SubmissionWithStudent,
+} from "@/modules/submissions/submission.repository.js"
 import { Report, Pair } from "@/lib/plagiarism/index.js"
 import {
   PLAGIARISM_CONFIG,
+  type PlagiarismFileDTO,
   type PlagiarismPairDTO,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
 import type {
@@ -16,8 +20,6 @@ import type {
   SimilarityReport,
 } from "@/models/index.js"
 import type { TransactionContext } from "@/shared/transaction.js"
-// Note: Error classes are preserved for future use but not imported to avoid TS6192
-// import { PlagiarismResultNotFoundError, PlagiarismReportNotFoundError, PlagiarismPairNotFoundError } from "@/shared/errors.js";
 import type { AnalyzeResponse } from "@/modules/plagiarism/plagiarism.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -30,7 +32,7 @@ export class PlagiarismPersistenceService {
     private submissionRepo: SubmissionRepository,
   ) {}
 
-  /** Get result with fragments and related submission info */
+  /** Get result with fragments and related submission info. */
   async getResultData(resultId: number): Promise<{
     result: SimilarityResult
     fragments: MatchFragment[]
@@ -41,10 +43,12 @@ export class PlagiarismPersistenceService {
       ReturnType<SubmissionRepository["getSubmissionWithStudent"]>
     >
   } | null> {
-    const data = await this.similarityRepo.getResultWithFragments(resultId)
-    if (!data) return null
+    const resultData = await this.similarityRepo.getResultWithFragments(resultId)
+    if (!resultData) {
+      return null
+    }
 
-    const { result, fragments } = data
+    const { result, fragments } = resultData
 
     const [submission1, submission2] = await Promise.all([
       this.submissionRepo.getSubmissionWithStudent(result.submission1Id),
@@ -56,7 +60,7 @@ export class PlagiarismPersistenceService {
 
   /**
    * Returns an existing assignment report when it is still current.
-   * A report is considered current when latest-submission count matches and
+   * A report is current when latest-submission count matches and
    * no latest submission is newer than the report generation time.
    */
   async getReusableAssignmentReport(
@@ -98,64 +102,59 @@ export class PlagiarismPersistenceService {
     return latestReport.id
   }
 
-  /** Persist report, results, and fragments to database */
+  /** Persist report, results, and fragments to database. */
   async persistReport(
     assignmentId: number,
     teacherId: number | undefined,
     report: Report,
     pairs: Pair[],
     semanticScores: Map<string, number>,
-  ): Promise<{ dbReport: { id: number }; resultIdMap: Map<string, number> }> {
-    return await db.transaction(async (tx) => {
-      // Use transaction-aware repository
-      const similarityRepoTx = this.similarityRepo.withContext(
-        tx as unknown as TransactionContext,
+  ): Promise<{ dbReport: { id: number; generatedAt: Date }; resultIdMap: Map<string, number> }> {
+    return await db.transaction(async (transaction) => {
+      const similarityRepositoryWithContext = this.similarityRepo.withContext(
+        transaction as unknown as TransactionContext,
       )
 
-      await similarityRepoTx.acquireAssignmentReportLock(assignmentId)
+      await similarityRepositoryWithContext.acquireAssignmentReportLock(
+        assignmentId,
+      )
 
       const resolvedTeacherId =
         teacherId ??
-        (await similarityRepoTx.getTeacherIdByAssignment(assignmentId)) ??
+        (await similarityRepositoryWithContext.getTeacherIdByAssignment(
+          assignmentId,
+        )) ??
         null
 
-      // Create report
-      const dbReport = await similarityRepoTx.createReport({
+      const dbReport = await similarityRepositoryWithContext.createReport({
         assignmentId,
         teacherId: resolvedTeacherId,
         totalSubmissions: report.files.length,
         totalComparisons: pairs.length,
         flaggedPairs: pairs.filter(
-          (p) => p.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
+          (pair) => pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
         ).length,
         averageSimilarity: (
-          pairs.reduce((sum, p) => sum + p.similarity, 0) /
+          pairs.reduce((sum, pair) => sum + pair.similarity, 0) /
           Math.max(1, pairs.length)
         ).toFixed(4),
-        highestSimilarity: Math.max(
-          ...pairs.map((p) => p.similarity),
-          0,
-        ).toFixed(4),
+        highestSimilarity: Math.max(...pairs.map((pair) => pair.similarity), 0).toFixed(4),
       })
 
-      // Prepare results for batch insert
       const { resultsToInsert, pairMap, swappedMap } =
         this.prepareResultsForInsert(dbReport.id, pairs, semanticScores)
 
-      // Batch insert results and fragments
       const resultIdMap = new Map<string, number>()
 
       if (resultsToInsert.length > 0) {
         const insertedResults =
-          await similarityRepoTx.createResults(resultsToInsert)
+          await similarityRepositoryWithContext.createResults(resultsToInsert)
 
-        // Build result ID map
-        for (const result of insertedResults) {
-          const key = `${result.submission1Id}-${result.submission2Id}`
-          resultIdMap.set(key, result.id)
+        for (const insertedResult of insertedResults) {
+          const pairKey = `${insertedResult.submission1Id}-${insertedResult.submission2Id}`
+          resultIdMap.set(pairKey, insertedResult.id)
         }
 
-        // Prepare and insert fragments
         const fragmentsToInsert = this.prepareFragmentsForInsert(
           insertedResults,
           pairMap,
@@ -163,11 +162,11 @@ export class PlagiarismPersistenceService {
         )
 
         if (fragmentsToInsert.length > 0) {
-          await similarityRepoTx.createFragments(fragmentsToInsert)
+          await similarityRepositoryWithContext.createFragments(fragmentsToInsert)
         }
       }
 
-      await similarityRepoTx.deleteReportsByAssignmentExcept(
+      await similarityRepositoryWithContext.deleteReportsByAssignmentExcept(
         assignmentId,
         dbReport.id,
       )
@@ -176,7 +175,7 @@ export class PlagiarismPersistenceService {
     })
   }
 
-  /** Get report from database and reconstruct response */
+  /** Get report from database and reconstruct the API response. */
   async getReport(reportId: number): Promise<AnalyzeResponse | null> {
     const report = await this.similarityRepo.getReportById(reportId)
     if (!report) {
@@ -185,24 +184,25 @@ export class PlagiarismPersistenceService {
 
     const results = await this.similarityRepo.getResultsByReport(reportId)
 
-    // Collect all unique submission IDs
     const submissionIds = new Set<number>()
     for (const result of results) {
       submissionIds.add(result.submission1Id)
       submissionIds.add(result.submission2Id)
     }
 
-    // Batch fetch submissions
-    const submissions =
-      await this.submissionRepo.getBatchSubmissionsWithStudents(
-        Array.from(submissionIds),
-      )
-    const submissionMap = new Map(submissions.map((s) => [s.submission.id, s]))
+    const pairSubmissions = await this.submissionRepo.getBatchSubmissionsWithStudents(
+      Array.from(submissionIds),
+    )
+    const submissionMap = new Map(
+      pairSubmissions.map((submissionWithStudent) => [
+        submissionWithStudent.submission.id,
+        submissionWithStudent,
+      ]),
+    )
 
-    // Build pairs using memory map
     const pairs: PlagiarismPairDTO[] = results.map((result) => {
-      const submission1 = submissionMap.get(result.submission1Id)
-      const submission2 = submissionMap.get(result.submission2Id)
+      const leftSubmission = submissionMap.get(result.submission1Id)
+      const rightSubmission = submissionMap.get(result.submission2Id)
       const structuralScore = parseFloat(result.structuralScore || "0")
       const rawHybridScore = parseFloat(result.hybridScore || "0")
       const hybridScore = rawHybridScore > 0 ? rawHybridScore : structuralScore
@@ -211,21 +211,19 @@ export class PlagiarismPersistenceService {
         id: result.id,
         leftFile: {
           id: result.submission1Id,
-          path: submission1?.submission.filePath || "",
-          filename: submission1?.submission.fileName || "Unknown",
-          // Pair metrics are tracked in k-grams, so this uses k-gram totals
-          // for consistent normalization in triage-table qualitative signals.
+          path: leftSubmission?.submission.filePath || "",
+          filename: leftSubmission?.submission.fileName || "Unknown",
           lineCount: result.leftTotal,
-          studentId: submission1?.submission.studentId?.toString(),
-          studentName: submission1?.studentName || "Unknown",
+          studentId: leftSubmission?.submission.studentId?.toString(),
+          studentName: leftSubmission?.studentName || "Unknown",
         },
         rightFile: {
           id: result.submission2Id,
-          path: submission2?.submission.filePath || "",
-          filename: submission2?.submission.fileName || "Unknown",
+          path: rightSubmission?.submission.filePath || "",
+          filename: rightSubmission?.submission.fileName || "Unknown",
           lineCount: result.rightTotal,
-          studentId: submission2?.submission.studentId?.toString(),
-          studentName: submission2?.studentName || "Unknown",
+          studentId: rightSubmission?.submission.studentId?.toString(),
+          studentName: rightSubmission?.studentName || "Unknown",
         },
         structuralScore,
         semanticScore: parseFloat(result.semanticScore || "0"),
@@ -235,9 +233,13 @@ export class PlagiarismPersistenceService {
       }
     })
 
+    const reportSubmissions = await this.getReportSubmissions(reportId)
+    const submissionDTOs = this.mapSubmissionsToDTOs(reportSubmissions)
+
     return {
       reportId: reportId.toString(),
       isReusedReport: true,
+      generatedAt: report.generatedAt.toISOString(),
       assignmentId: report.assignmentId,
       summary: {
         totalFiles: report.totalSubmissions,
@@ -246,17 +248,18 @@ export class PlagiarismPersistenceService {
         averageSimilarity: parseFloat(report.averageSimilarity || "0"),
         maxSimilarity: parseFloat(report.highestSimilarity || "0"),
       },
+      submissions: submissionDTOs,
       pairs,
       warnings: [],
     }
   }
 
-  /** Delete a report */
+  /** Delete a report. */
   async deleteReport(reportId: number): Promise<boolean> {
     return this.similarityRepo.deleteReport(reportId)
   }
 
-  /** Get all submissions for a report's assignment */
+  /** Get all submissions for a report's assignment. */
   async getReportSubmissions(reportId: number): Promise<
     Array<{
       submission: Submission
@@ -272,6 +275,19 @@ export class PlagiarismPersistenceService {
       report.assignmentId,
       true,
     )
+  }
+
+  private mapSubmissionsToDTOs(
+    submissionsWithInfo: SubmissionWithStudent[],
+  ): PlagiarismFileDTO[] {
+    return submissionsWithInfo.map(({ submission, studentName }) => ({
+      id: submission.id,
+      path: submission.filePath,
+      filename: submission.fileName,
+      lineCount: 0,
+      studentId: submission.studentId.toString(),
+      studentName,
+    }))
   }
 
   private isReportCurrent(
@@ -295,7 +311,7 @@ export class PlagiarismPersistenceService {
     return newestLatestSubmissionMs <= reportGeneratedAtMs
   }
 
-  /** Prepare results for database insertion */
+  /** Prepare results for database insertion. */
   private prepareResultsForInsert(
     reportId: number,
     pairs: Pair[],
@@ -310,26 +326,28 @@ export class PlagiarismPersistenceService {
     const swappedMap = new Map<string, boolean>()
 
     for (const pair of pairs) {
-      const leftSubId = parseInt(pair.leftFile.info?.submissionId || "0")
-      const rightSubId = parseInt(pair.rightFile.info?.submissionId || "0")
+      const leftSubmissionId = parseInt(pair.leftFile.info?.submissionId || "0")
+      const rightSubmissionId = parseInt(pair.rightFile.info?.submissionId || "0")
 
-      if (!leftSubId || !rightSubId) continue
+      if (!leftSubmissionId || !rightSubmissionId) {
+        continue
+      }
 
-      const needsSwap = leftSubId > rightSubId
-      const [sub1, sub2] = needsSwap
-        ? [rightSubId, leftSubId]
-        : [leftSubId, rightSubId]
+      const needsSwap = leftSubmissionId > rightSubmissionId
+      const [firstSubmissionId, secondSubmissionId] = needsSwap
+        ? [rightSubmissionId, leftSubmissionId]
+        : [leftSubmissionId, rightSubmissionId]
 
-      const key = `${sub1}-${sub2}`
-      pairMap.set(key, pair)
-      swappedMap.set(key, needsSwap)
+      const pairKey = `${firstSubmissionId}-${secondSubmissionId}`
+      pairMap.set(pairKey, pair)
+      swappedMap.set(pairKey, needsSwap)
 
-      const semanticScore = semanticScores.get(key) ?? 0
+      const semanticScore = semanticScores.get(pairKey) ?? 0
 
       resultsToInsert.push({
         reportId,
-        submission1Id: sub1,
-        submission2Id: sub2,
+        submission1Id: firstSubmissionId,
+        submission2Id: secondSubmissionId,
         structuralScore: pair.similarity.toFixed(4),
         semanticScore: semanticScore.toFixed(4),
         hybridScore: this.computeHybrid(pair.similarity, semanticScore),
@@ -348,14 +366,14 @@ export class PlagiarismPersistenceService {
 
   /**
    * Compute the hybrid score as an equal-weighted average of structural
-   * and semantic scores.  Returns a 4-decimal fixed-point string ready
+   * and semantic scores. Returns a 4-decimal fixed-point string ready
    * for the numeric(5,4) database column.
    */
   private computeHybrid(structural: number, semantic: number): string {
     return (0.5 * structural + 0.5 * semantic).toFixed(4)
   }
 
-  /** Prepare fragments for database insertion */
+  /** Prepare fragments for database insertion. */
   private prepareFragmentsForInsert(
     insertedResults: {
       id: number
@@ -367,46 +385,51 @@ export class PlagiarismPersistenceService {
   ): NewMatchFragment[] {
     const fragmentsToInsert: NewMatchFragment[] = []
 
-    for (const result of insertedResults) {
-      const key = `${result.submission1Id}-${result.submission2Id}`
-      const pair = pairMap.get(key)
-      const swapped = swappedMap.get(key) || false
+    for (const insertedResult of insertedResults) {
+      const pairKey = `${insertedResult.submission1Id}-${insertedResult.submission2Id}`
+      const pair = pairMap.get(pairKey)
+      const swapped = swappedMap.get(pairKey) || false
 
-      if (pair) {
-        const fragments = pair.buildFragments()
+      if (!pair) {
+        continue
+      }
 
-        for (const frag of fragments) {
-          if (swapped) {
-            fragmentsToInsert.push({
-              similarityResultId: result.id,
-              leftStartRow: frag.rightSelection.startRow,
-              leftStartCol: frag.rightSelection.startCol,
-              leftEndRow: frag.rightSelection.endRow,
-              leftEndCol: frag.rightSelection.endCol,
-              rightStartRow: frag.leftSelection.startRow,
-              rightStartCol: frag.leftSelection.startCol,
-              rightEndRow: frag.leftSelection.endRow,
-              rightEndCol: frag.leftSelection.endCol,
-              length: frag.length,
-            })
-          } else {
-            fragmentsToInsert.push({
-              similarityResultId: result.id,
-              leftStartRow: frag.leftSelection.startRow,
-              leftStartCol: frag.leftSelection.startCol,
-              leftEndRow: frag.leftSelection.endRow,
-              leftEndCol: frag.leftSelection.endCol,
-              rightStartRow: frag.rightSelection.startRow,
-              rightStartCol: frag.rightSelection.startCol,
-              rightEndRow: frag.rightSelection.endRow,
-              rightEndCol: frag.rightSelection.endCol,
-              length: frag.length,
-            })
-          }
+      const fragments = pair.buildFragments()
+
+      for (const fragment of fragments) {
+        if (swapped) {
+          fragmentsToInsert.push({
+            similarityResultId: insertedResult.id,
+            leftStartRow: fragment.rightSelection.startRow,
+            leftStartCol: fragment.rightSelection.startCol,
+            leftEndRow: fragment.rightSelection.endRow,
+            leftEndCol: fragment.rightSelection.endCol,
+            rightStartRow: fragment.leftSelection.startRow,
+            rightStartCol: fragment.leftSelection.startCol,
+            rightEndRow: fragment.leftSelection.endRow,
+            rightEndCol: fragment.leftSelection.endCol,
+            length: fragment.length,
+          })
+
+          continue
         }
+
+        fragmentsToInsert.push({
+          similarityResultId: insertedResult.id,
+          leftStartRow: fragment.leftSelection.startRow,
+          leftStartCol: fragment.leftSelection.startCol,
+          leftEndRow: fragment.leftSelection.endRow,
+          leftEndCol: fragment.leftSelection.endCol,
+          rightStartRow: fragment.rightSelection.startRow,
+          rightStartCol: fragment.rightSelection.startCol,
+          rightEndRow: fragment.rightSelection.endRow,
+          rightEndCol: fragment.rightSelection.endCol,
+          length: fragment.length,
+        })
       }
     }
 
     return fragmentsToInsert
   }
 }
+

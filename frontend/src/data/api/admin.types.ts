@@ -1,4 +1,4 @@
-import type { DayOfWeek, EnrolledStudent } from "@/shared/types/class"
+﻿import type { DayOfWeek, EnrolledStudent } from "@/shared/types/class"
 import type { UserRole } from "@/shared/types/auth"
 
 export interface AdminUser {
@@ -31,7 +31,6 @@ export interface AdminClass {
   className: string
   classCode: string
   teacherId: number
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: AdminClassSchedule
@@ -40,12 +39,12 @@ export interface AdminClass {
   studentCount: number
   createdAt: string
   teacherName: string
+  teacherAvatarUrl?: string | null
 }
 
 export interface CreateClassData {
   teacherId: number
   className: string
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: AdminClassSchedule
@@ -56,7 +55,6 @@ export interface UpdateClassData {
   className?: string
   description?: string | null
   isActive?: boolean
-  yearLevel?: number
   semester?: number
   academicYear?: string
   schedule?: AdminClassSchedule
@@ -70,6 +68,32 @@ export interface ClassAssignment {
   deadline: string | null
   createdAt: string
   submissionCount: number
+}
+
+export interface AdminEnrollmentRecord {
+  id: number
+  studentId: number
+  studentFirstName: string
+  studentLastName: string
+  studentEmail: string
+  studentAvatarUrl: string | null
+  studentIsActive: boolean
+  classId: number
+  className: string
+  classCode: string
+  classIsActive: boolean
+  teacherId: number
+  teacherName: string
+  teacherAvatarUrl: string | null
+  semester: number
+  academicYear: string
+  enrolledAt: string
+}
+
+export interface TransferStudentData {
+  studentId: number
+  fromClassId: number
+  toClassId: number
 }
 
 export interface AdminStats {
@@ -127,6 +151,14 @@ export interface AdminStudentsResponse extends AdminResponse {
 
 export interface AdminAssignmentsResponse extends AdminResponse {
   assignments?: ClassAssignment[]
+}
+
+export interface AdminEnrollmentResponse extends AdminResponse {
+  enrollment?: AdminEnrollmentRecord
+}
+
+export interface AdminEnrollmentsResponse extends AdminResponse {
+  enrollments?: AdminEnrollmentRecord[]
 }
 
 export interface PaginatedResponse<T> extends AdminResponse {

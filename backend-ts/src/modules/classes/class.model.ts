@@ -1,4 +1,4 @@
-import {
+﻿import {
   pgTable,
   serial,
   integer,
@@ -37,7 +37,6 @@ export const classes = pgTable("classes", {
   className: varchar("class_name", { length: 100 }).notNull(),
   classCode: varchar("class_code", { length: 20 }).unique().notNull(),
   description: text("description"),
-  yearLevel: integer("year_level").notNull(), // 1-4
   semester: integer("semester").notNull(), // 1 or 2
   academicYear: varchar("academic_year", { length: 9 }).notNull(), // e.g., "2024-2025"
   schedule: jsonb("schedule").$type<ClassSchedule>().notNull(),

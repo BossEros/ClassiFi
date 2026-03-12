@@ -1,4 +1,4 @@
-import type { UserRole } from "@/modules/users/user.repository.js"
+﻿import type { UserRole } from "@/modules/users/user.repository.js"
 import type { ClassSchedule } from "@/models/index.js"
 
 // ============ Pagination Types ============
@@ -38,7 +38,6 @@ export interface ClassFilterOptions extends PaginationOptions {
   search?: string
   teacherId?: number
   status?: "active" | "archived" | "all"
-  yearLevel?: number
   semester?: number
   academicYear?: string
 }
@@ -46,7 +45,6 @@ export interface ClassFilterOptions extends PaginationOptions {
 export interface CreateClassData {
   teacherId: number
   className: string
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: ClassSchedule
@@ -57,11 +55,48 @@ export interface UpdateClassData {
   className?: string
   description?: string | null
   isActive?: boolean
-  yearLevel?: number
   semester?: number
   academicYear?: string
   schedule?: ClassSchedule
   teacherId?: number
+}
+
+// ============ Enrollment Types ============
+
+export interface EnrollmentFilterOptions extends PaginationOptions {
+  search?: string
+  classId?: number
+  teacherId?: number
+  studentId?: number
+  status?: "active" | "archived" | "all"
+  semester?: number
+  academicYear?: string
+}
+
+export interface AdminEnrollmentListItem {
+  id: number
+  studentId: number
+  studentFirstName: string
+  studentLastName: string
+  studentEmail: string
+  studentAvatarUrl: string | null
+  studentIsActive: boolean
+  classId: number
+  className: string
+  classCode: string
+  classIsActive: boolean
+  teacherId: number
+  teacherName: string
+  teacherAvatarUrl: string | null
+  semester: number
+  academicYear: string
+  enrolledAt: string
+}
+
+export interface TransferStudentData {
+  studentId: number
+  fromClassId: number
+  toClassId: number
 }
 
 // ============ Analytics Types ============
@@ -89,3 +124,5 @@ export interface ActivityItem {
   target: string
   timestamp: Date
 }
+
+

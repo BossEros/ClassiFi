@@ -131,7 +131,9 @@ export const AnalyzeResponseSchema = z.object({
   message: z.string(),
   reportId: z.string(),
   isReusedReport: z.boolean(),
+  generatedAt: z.string(),
   summary: SummaryResponseSchema,
+  submissions: z.array(FileResponseSchema),
   pairs: z.array(PairResponseSchema),
   warnings: z.array(z.string()),
 })
@@ -187,7 +189,9 @@ export const GetReportResponseSchema = z.object({
   success: z.literal(true),
   message: z.string(),
   reportId: z.string(),
+  generatedAt: z.string(),
   summary: SummaryResponseSchema,
+  submissions: z.array(FileResponseSchema),
   pairs: z.array(PairResponseSchema),
   warnings: z.array(z.string()),
 })
@@ -248,3 +252,5 @@ export const ErrorResponseSchema = z.object({
 })
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
+
+

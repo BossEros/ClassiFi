@@ -20,8 +20,10 @@ export const authTheme = {
     "border border-[#B8C8C2] bg-[#EDF3F1] text-[#13211E] placeholder:text-[#6F8680] shadow-sm transition-all duration-200 hover:border-[#9FB3AC] focus:border-teal-600 focus:ring-teal-500/20",
   inputWithLeadingIcon: "pl-11",
   inputWithTrailingIcon: "pr-11",
-  inputIcon:
+  inputIconNonInteractive:
     "pointer-events-none z-10 text-[#48615A] transition-colors duration-200",
+  inputIconInteractive:
+    "z-10 text-[#48615A] transition-colors duration-200",
   helperText: "text-xs text-[#6A817A]",
   mutedText: "text-sm text-[#5F746E]",
   footerText: "mt-6 text-center text-xs text-slate-300/80",

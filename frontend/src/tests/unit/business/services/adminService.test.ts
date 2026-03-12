@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as adminService from "@/business/services/adminService"
 import * as adminRepository from "@/data/repositories/adminRepository"
 import * as authValidation from "@/business/validation/authValidation"
-import type { AdminUser, AdminClass } from "@/data/api/admin.types"
+import type { AdminUser, AdminClass, CreateClassData } from "@/data/api/admin.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/adminRepository")
@@ -27,8 +27,7 @@ const createMockAdminClass = (overrides?: Partial<AdminClass>): AdminClass => ({
   className: "Test Class",
   classCode: "ABC1234",
   teacherId: 2,
-  teacherName: "Teacher User",
-  yearLevel: 10,
+  teacherName: "Teacher User",
   semester: 1,
   academicYear: "2024-2025",
   schedule: {
@@ -209,11 +208,9 @@ describe("adminService", () => {
   })
 
   describe("createClass", () => {
-    const classData = {
-      name: "Math 101",
-      code: "MATH101",
-      teacherId: 2,
-      yearLevel: 10,
+    const classData: CreateClassData = {
+      className: "Math 101",
+      teacherId: 2,
       semester: 1,
       academicYear: "2024-2025",
       schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },
@@ -226,7 +223,7 @@ describe("adminService", () => {
         class: newClass as any,
       })
 
-      const result = await adminService.createClass(classData as any)
+      const result = await adminService.createClass(classData)
 
       expect(adminRepository.createNewClass).toHaveBeenCalledWith(classData)
       expect(result).toEqual(newClass)
@@ -238,7 +235,7 @@ describe("adminService", () => {
         class: null as any,
       })
 
-      await expect(adminService.createClass(classData as any)).rejects.toThrow(
+      await expect(adminService.createClass(classData)).rejects.toThrow(
         "createClass: failed to create class",
       )
     })
@@ -316,6 +313,71 @@ describe("adminService", () => {
       expect(result.assignments).toEqual(mockAssignments)
       expect(result.students).toHaveLength(1)
       expect(result.students[0].fullName).toBe("John Doe") // Verify transformation happened via getClassStudents
+    })
+  })
+  describe("getAllEnrollments", () => {
+    it("maps filter options to repository request parameters", async () => {
+      vi.mocked(adminRepository.getAllEnrollmentsWithPaginationAndFilters).mockResolvedValue({
+        success: true,
+        data: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 0,
+      })
+
+      await adminService.getAllEnrollments({
+        page: 1,
+        limit: 10,
+        search: "jane",
+        status: "active",
+        semester: 1,
+        academicYear: "2025-2026",
+      })
+
+      expect(adminRepository.getAllEnrollmentsWithPaginationAndFilters).toHaveBeenCalledWith({
+        pageNumber: 1,
+        itemsPerPage: 10,
+        searchQuery: "jane",
+        classId: undefined,
+        teacherId: undefined,
+        studentId: undefined,
+        enrollmentStatus: "active",
+        semesterNumber: 1,
+        academicYear: "2025-2026",
+      })
+    })
+  })
+
+  describe("transferStudent", () => {
+    it("delegates valid transfers to the repository", async () => {
+      vi.mocked(adminRepository.transferStudentBetweenClasses).mockResolvedValue({
+        success: true,
+      })
+
+      await adminService.transferStudent({
+        studentId: 10,
+        fromClassId: 2,
+        toClassId: 3,
+      })
+
+      expect(adminRepository.transferStudentBetweenClasses).toHaveBeenCalledWith({
+        studentId: 10,
+        fromClassId: 2,
+        toClassId: 3,
+      })
+    })
+
+    it("rejects transfers to the same class", async () => {
+      await expect(
+        adminService.transferStudent({
+          studentId: 10,
+          fromClassId: 2,
+          toClassId: 2,
+        }),
+      ).rejects.toThrow("Source and destination classes must be different")
+
+      expect(adminRepository.transferStudentBetweenClasses).not.toHaveBeenCalled()
     })
   })
 })

@@ -3,13 +3,27 @@ import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
-import { UserNotFoundError, ClassNotFoundError } from "@/shared/errors.js"
+import {
+  UserNotFoundError,
+  ClassNotFoundError,
+  InvalidRoleError,
+  AlreadyEnrolledError,
+  BadRequestError,
+  ClassInactiveError,
+  StudentNotInClassError,
+} from "@/shared/errors.js"
+import type {
+  EnrollmentFilterOptions,
+  PaginatedResult,
+  AdminEnrollmentListItem,
+  TransferStudentData,
+} from "@/modules/admin/admin.types.js"
+import { withTransaction } from "@/shared/transaction.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
  * Admin service for class enrollment management.
  * Follows SRP - handles only admin enrollment-related concerns.
- * Uses repositories for all database access (DIP).
  */
 @injectable()
 export class AdminEnrollmentService {
@@ -27,10 +41,7 @@ export class AdminEnrollmentService {
   async getClassStudents(
     classId: number,
   ): Promise<Array<UserDTO & { enrolledAt: string }>> {
-    const classExists = await this.classRepo.getClassById(classId)
-    if (!classExists) {
-      throw new ClassNotFoundError(classId)
-    }
+    await this.getValidatedClass(classId)
 
     const enrolledStudents =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(classId)
@@ -42,28 +53,35 @@ export class AdminEnrollmentService {
   }
 
   /**
+   * List enrollments across classes with admin filters.
+   */
+  async getAllEnrollments(
+    options: EnrollmentFilterOptions,
+  ): Promise<PaginatedResult<AdminEnrollmentListItem>> {
+    const { status, ...remainingOptions } = options
+    const normalizedStatus = status === "all" ? undefined : status
+    const result = await this.enrollmentRepo.getAllEnrollmentsFiltered({
+      ...remainingOptions,
+      status: normalizedStatus,
+    })
+
+    return {
+      ...result,
+      data: result.data.map((row) => ({
+        ...row,
+        teacherName: row.teacherName.trim(),
+        enrolledAt: row.enrolledAt.toISOString(),
+      })),
+    }
+  }
+
+  /**
    * Add a student to a class (admin-initiated enrollment).
    */
   async addStudentToClass(classId: number, studentId: number): Promise<void> {
-    const classExists = await this.classRepo.getClassById(classId)
-    if (!classExists) {
-      throw new ClassNotFoundError(classId)
-    }
-
-    const student = await this.userRepo.getUserById(studentId)
-    if (!student) {
-      throw new UserNotFoundError(studentId)
-    }
-
-    if (student.role !== "student") {
-      throw new Error("Only students can be enrolled in classes")
-    }
-
-    // Check if already enrolled
-    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
-    if (isEnrolled) {
-      throw new Error("Student is already enrolled in this class")
-    }
+    await this.getValidatedClass(classId, { requireActive: true })
+    await this.getValidatedStudent(studentId, { requireActive: true })
+    await this.assertStudentNotEnrolled(studentId, classId)
 
     await this.enrollmentRepo.enrollStudent(studentId, classId)
   }
@@ -75,16 +93,120 @@ export class AdminEnrollmentService {
     classId: number,
     studentId: number,
   ): Promise<void> {
-    const classExists = await this.classRepo.getClassById(classId)
-    if (!classExists) {
+    await this.getValidatedClass(classId)
+    await this.assertStudentIsEnrolled(studentId, classId)
+
+    await this.enrollmentRepo.unenrollStudent(studentId, classId)
+  }
+
+  /**
+   * Transfer a student from one class to another.
+   */
+  async transferStudent(data: TransferStudentData): Promise<void> {
+    const { studentId, fromClassId, toClassId } = data
+
+    if (fromClassId === toClassId) {
+      throw new BadRequestError(
+        "Source and destination classes must be different",
+      )
+    }
+
+    await Promise.all([
+      this.getValidatedClass(fromClassId),
+      this.getValidatedClass(toClassId, { requireActive: true }),
+      this.getValidatedStudent(studentId, { requireActive: true }),
+      this.assertStudentIsEnrolled(studentId, fromClassId),
+      this.assertStudentNotEnrolled(studentId, toClassId),
+    ])
+
+    await withTransaction(async (transactionContext) => {
+      const enrollmentRepositoryWithContext = this.enrollmentRepo.withContext(
+        transactionContext,
+      )
+
+      const wasRemoved =
+        await enrollmentRepositoryWithContext.unenrollStudent(
+          studentId,
+          fromClassId,
+        )
+
+      if (!wasRemoved) {
+        throw new StudentNotInClassError()
+      }
+
+      await enrollmentRepositoryWithContext.enrollStudent(studentId, toClassId)
+    })
+  }
+
+  /**
+   * Validate that a class exists and optionally remains active for new enrollments.
+   */
+  private async getValidatedClass(
+    classId: number,
+    options: { requireActive?: boolean } = {},
+  ) {
+    const existingClass = await this.classRepo.getClassById(classId)
+
+    if (!existingClass) {
       throw new ClassNotFoundError(classId)
     }
 
-    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
-    if (!isEnrolled) {
-      throw new Error("Student is not enrolled in this class")
+    if (options.requireActive && !existingClass.isActive) {
+      throw new ClassInactiveError()
     }
 
-    await this.enrollmentRepo.unenrollStudent(studentId, classId)
+    return existingClass
+  }
+
+  /**
+   * Validate that a student exists, has the student role, and can be enrolled when required.
+   */
+  private async getValidatedStudent(
+    studentId: number,
+    options: { requireActive?: boolean } = {},
+  ) {
+    const student = await this.userRepo.getUserById(studentId)
+
+    if (!student) {
+      throw new UserNotFoundError(studentId)
+    }
+
+    if (student.role !== "student") {
+      throw new InvalidRoleError("student")
+    }
+
+    if (options.requireActive && !student.isActive) {
+      throw new BadRequestError("Inactive students cannot be enrolled in classes")
+    }
+
+    return student
+  }
+
+  /**
+   * Ensure a student is already enrolled in the target class.
+   */
+  private async assertStudentIsEnrolled(
+    studentId: number,
+    classId: number,
+  ): Promise<void> {
+    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
+
+    if (!isEnrolled) {
+      throw new StudentNotInClassError()
+    }
+  }
+
+  /**
+   * Ensure a student is not already enrolled in the target class.
+   */
+  private async assertStudentNotEnrolled(
+    studentId: number,
+    classId: number,
+  ): Promise<void> {
+    const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
+
+    if (isEnrolled) {
+      throw new AlreadyEnrolledError()
+    }
   }
 }

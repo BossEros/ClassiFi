@@ -21,6 +21,7 @@ export interface PairResponse {
 export interface AnalyzeResponse {
   reportId: string
   isReusedReport: boolean
+  generatedAt: string
   summary: {
     totalFiles: number
     totalPairs: number
@@ -28,6 +29,7 @@ export interface AnalyzeResponse {
     averageSimilarity: number
     maxSimilarity: number
   }
+  submissions: FileResponse[]
   pairs: PairResponse[]
   warnings: string[]
 }
@@ -75,3 +77,5 @@ export interface ResultDetailsResponse {
     studentName: string
   }
 }
+
+

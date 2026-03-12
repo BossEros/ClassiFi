@@ -85,8 +85,7 @@ export type Database = {
           is_active: boolean
           schedule: Json
           semester: number
-          teacher_id: number
-          year_level: number
+          teacher_id: number
         }
         Insert: {
           academic_year: string
@@ -98,8 +97,7 @@ export type Database = {
           is_active?: boolean
           schedule: Json
           semester: number
-          teacher_id: number
-          year_level: number
+          teacher_id: number
         }
         Update: {
           academic_year?: string
@@ -111,8 +109,7 @@ export type Database = {
           is_active?: boolean
           schedule?: Json
           semester?: number
-          teacher_id?: number
-          year_level?: number
+          teacher_id?: number
         }
         Relationships: [
           {

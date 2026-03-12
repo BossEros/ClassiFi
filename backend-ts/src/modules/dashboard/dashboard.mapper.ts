@@ -1,4 +1,4 @@
-import type { Class, ClassSchedule } from "@/models/index.js"
+﻿import type { Class, ClassSchedule } from "@/models/index.js"
 
 export interface DashboardClassDTO {
   id: number
@@ -11,7 +11,6 @@ export interface DashboardClassDTO {
   teacherName?: string
   createdAt: string
   isActive: boolean
-  yearLevel: number
   semester: number
   academicYear: string
   schedule: ClassSchedule
@@ -31,7 +30,6 @@ export function toDashboardClassDTO(
     className: classData.className,
     classCode: classData.classCode,
     description: classData.description,
-    yearLevel: classData.yearLevel,
     semester: classData.semester,
     academicYear: classData.academicYear,
     schedule: classData.schedule,
@@ -60,3 +58,5 @@ export interface PendingTaskDTO {
   submissionCount: number
   totalStudents: number
 }
+
+

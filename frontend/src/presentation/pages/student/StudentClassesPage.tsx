@@ -1,34 +1,38 @@
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import { Grid3x3, Plus } from "lucide-react";
-import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
-import { Card, CardContent } from "@/presentation/components/ui/Card";
-import { Button } from "@/presentation/components/ui/Button";
-import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard";
-import { ClassFilters, type FilterStatus } from "@/presentation/components/shared/dashboard/ClassFilters";
-import { useAuthStore } from "@/shared/store/useAuthStore";
-import { getDashboardData } from "@/business/services/studentDashboardService";
-import { useToastStore } from "@/shared/store/useToastStore";
-import type { Class } from "@/business/models/dashboard/types";
-import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
-import { X, Check, RefreshCw, Users } from "lucide-react";
-import { Input } from "@/presentation/components/ui/Input";
-import { joinClass } from "@/business/services/studentDashboardService";
-import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
-import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
-import { joinClassFormSchema, type JoinClassFormValues } from "@/presentation/schemas/class/classSchemas";
-import type { FieldErrors } from "react-hook-form";
-import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
+﻿import { useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Check, Grid3x3, Plus, RefreshCw, Users, X } from "lucide-react"
+import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Button } from "@/presentation/components/ui/Button"
+import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
+import {
+  ClassFilters,
+  type FilterStatus,
+} from "@/presentation/components/shared/dashboard/ClassFilters"
+import { useAuthStore } from "@/shared/store/useAuthStore"
+import {
+  getDashboardData,
+  joinClass,
+} from "@/business/services/studentDashboardService"
+import { useToastStore } from "@/shared/store/useToastStore"
+import type { Class } from "@/business/models/dashboard/types"
+import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { Input } from "@/presentation/components/ui/Input"
+import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
+import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap"
+import {
+  joinClassFormSchema,
+  type JoinClassFormValues,
+} from "@/presentation/schemas/class/classSchemas"
+import type { FieldErrors } from "react-hook-form"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
-// Inlined from src/presentation/components/student/forms/JoinClassModal.tsx
 interface JoinClassModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess: (classInfo: Class) => void
   studentId: number
 }
-
-
 
 function JoinClassModal({
   isOpen,
@@ -49,7 +53,6 @@ function JoinClassModal({
   const classCodeValue = watch("classCode")
   const classCodeField = register("classCode")
 
-  // Reset form when modal opens/closes
   useEffect(() => {
     if (!isOpen) {
       reset({ classCode: "" })
@@ -57,10 +60,9 @@ function JoinClassModal({
     }
   }, [isOpen, reset])
 
-  const handleClassCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Convert to uppercase and remove spaces
-    const value = e.target.value.toUpperCase().replace(/\s/g, "")
-    setValue("classCode", value, {
+  const handleClassCodeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value.toUpperCase().replace(/\s/g, "")
+    setValue("classCode", nextValue, {
       shouldDirty: true,
       shouldTouch: true,
     })
@@ -69,12 +71,10 @@ function JoinClassModal({
 
   const handleJoinClassSubmit = async (formValues: JoinClassFormValues) => {
     setError(null)
-
-    const trimmedCode = formValues.classCode.trim()
-
     setIsSubmitting(true)
+
     try {
-      const response = await joinClass(studentId, trimmedCode)
+      const response = await joinClass(studentId, formValues.classCode.trim())
 
       if (!response.success) {
         setError(response.message)
@@ -82,9 +82,9 @@ function JoinClassModal({
       }
 
       if (response.classInfo) {
-        // Cast is safe: API returns ISO date strings compatible with ISODateString
         onSuccess(response.classInfo as Class)
       }
+
       onClose()
     } catch {
       setError("Failed to join class. Please try again.")
@@ -96,9 +96,6 @@ function JoinClassModal({
   const handleJoinClassInvalid = (
     validationErrors: FieldErrors<JoinClassFormValues>,
   ) => {
-    const trimmedCode = classCodeValue.trim()
-    void trimmedCode // satisfy unused var while keeping it trimmed before call per instruction
-
     const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
     if (firstErrorMessage) {
@@ -110,19 +107,16 @@ function JoinClassModal({
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-      {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/45 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
       <div className="relative z-10 w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-teal-100">
-              <Users className="w-5 h-5 text-teal-700" />
+            <div className="rounded-lg bg-teal-100 p-2">
+              <Users className="h-5 w-5 text-teal-700" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-slate-900">Join Class</h2>
@@ -136,28 +130,22 @@ function JoinClassModal({
             className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit(handleJoinClassSubmit, handleJoinClassInvalid)}
-          className="space-y-6 w-full"
+          className="w-full space-y-6"
         >
-          {/* Error Message */}
           {error && (
             <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
               <p className="text-sm text-rose-700">{error}</p>
             </div>
           )}
 
-          {/* Class Code Input */}
-          <div className="space-y-3 w-full">
-            <label
-              htmlFor="classCode"
-              className="block text-sm font-medium text-slate-700"
-            >
+          <div className="w-full space-y-3">
+            <label htmlFor="classCode" className="block text-sm font-medium text-slate-700">
               Class Code
             </label>
             <Input
@@ -178,7 +166,6 @@ function JoinClassModal({
             </p>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-4">
             <Button
               type="button"
@@ -186,18 +173,18 @@ function JoinClassModal({
               disabled={isSubmitting}
               className="flex-1 rounded-md border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
             >
-              <X className="w-4 h-4 mr-2" />
+              <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !classCodeValue.trim()}
-              className="flex-1 rounded-md bg-teal-600 text-white border border-teal-600 hover:bg-teal-500"
+              className="flex-1 rounded-md border border-teal-600 bg-teal-600 text-white hover:bg-teal-500"
             >
               {isSubmitting ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Check className="w-4 h-4 mr-2" />
+                <Check className="mr-2 h-4 w-4" />
               )}
               Join Class
             </Button>
@@ -216,12 +203,9 @@ export function StudentClassesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
-
-  // Filter States
   const [searchQuery, setSearchQuery] = useState("")
   const [status, setStatus] = useState<FilterStatus>("active")
   const [selectedTerm, setSelectedTerm] = useState("all")
-  const [selectedYearLevel, setSelectedYearLevel] = useState("all")
 
   useEffect(() => {
     if (!user) {
@@ -229,16 +213,14 @@ export function StudentClassesPage() {
       return
     }
 
-    // Fetch enrolled classes
     const fetchClasses = async () => {
       try {
         setIsLoading(true)
         setError(null)
         const data = await getDashboardData(parseInt(user.id))
-        // Cast is safe: API returns ISO date strings compatible with ISODateString
         setClasses(data.enrolledClasses as Class[])
-      } catch (err) {
-        console.error("Failed to fetch classes:", err)
+      } catch (error) {
+        console.error("Failed to fetch classes:", error)
         setError("Failed to load classes. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
@@ -249,64 +231,50 @@ export function StudentClassesPage() {
   }, [navigate, user])
 
   const handleJoinSuccess = (classInfo: Class) => {
-    // Add the new class to the list
-    setClasses((prev) => [classInfo, ...prev])
+    setClasses((previousClasses) => [classInfo, ...previousClasses])
     showToast(`Successfully joined ${classInfo.className}!`, "success")
   }
 
-  // Extract unique terms from classes for the dropdown
   const terms = useMemo(() => {
     const uniqueTerms = new Set<string>()
-    classes.forEach((c) => {
-      if (c.academicYear && c.semester) {
-        uniqueTerms.add(`${c.academicYear} - Semester ${c.semester}`)
+
+    classes.forEach((classRecord) => {
+      if (classRecord.academicYear && classRecord.semester) {
+        uniqueTerms.add(
+          `${classRecord.academicYear} - Semester ${classRecord.semester}`,
+        )
       }
     })
-    return Array.from(uniqueTerms).sort().reverse() // Newest first
+
+    return Array.from(uniqueTerms).sort().reverse()
   }, [classes])
 
-  // Extract unique year levels from classes
-  const yearLevels = useMemo(() => {
-    const uniqueLevels = new Set<string>(["1", "2", "3", "4"]) // Default year levels
-    classes.forEach((c) => {
-      if (c.yearLevel !== undefined && c.yearLevel !== null) {
-        uniqueLevels.add(c.yearLevel.toString())
-      }
-    })
-    return Array.from(uniqueLevels).sort() // Low to High
-  }, [classes])
-
-  // Client-side filtering logic
   const filteredClasses = useMemo(() => {
-    return classes.filter((c) => {
-      // 1. Status Filter
-      if (status === "archived" && c.isActive) return false
-      if (status === "active" && !c.isActive) return false // Students might have inactive classes if archived by teacher?
-      // Assuming 'active' implies showing only active classes by default
+    return classes.filter((classRecord) => {
+      if (status === "archived" && classRecord.isActive) return false
+      if (status === "active" && !classRecord.isActive) return false
 
-      // 2. Term Filter
       if (selectedTerm !== "all") {
-        const termString = `${c.academicYear} - Semester ${c.semester}`
-        if (termString !== selectedTerm) return false
-      }
+        const termLabel = `${classRecord.academicYear} - Semester ${classRecord.semester}`
 
-      // 3. Year Level Filter
-      if (selectedYearLevel !== "all") {
-        if (!c.yearLevel || c.yearLevel.toString() !== selectedYearLevel)
+        if (termLabel !== selectedTerm) {
           return false
+        }
       }
 
-      // 4. Search Filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const matchName = c.className.toLowerCase().includes(query)
-        const matchCode = c.classCode.toLowerCase().includes(query)
-        if (!matchName && !matchCode) return false
+        const normalizedQuery = searchQuery.toLowerCase()
+        const matchesName = classRecord.className.toLowerCase().includes(normalizedQuery)
+        const matchesCode = classRecord.classCode.toLowerCase().includes(normalizedQuery)
+
+        if (!matchesName && !matchesCode) {
+          return false
+        }
       }
 
       return true
     })
-  }, [classes, status, selectedTerm, selectedYearLevel, searchQuery])
+  }, [classes, searchQuery, selectedTerm, status])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -316,9 +284,8 @@ export function StudentClassesPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      {/* Page Header */}
       <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <h1 className={dashboardTheme.pageTitle}>My Classes</h1>
             <p className={dashboardTheme.pageSubtitle}>
@@ -327,32 +294,27 @@ export function StudentClassesPage() {
           </div>
           <Button
             onClick={() => setIsJoinModalOpen(true)}
-            className="w-full md:w-auto px-6 bg-teal-600 hover:bg-teal-700 text-white border border-teal-500/40"
+            className="w-full border border-teal-500/40 bg-teal-600 px-6 text-white hover:bg-teal-700 md:w-auto"
             disabled={isLoading}
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Join a Class
           </Button>
         </div>
 
-        {/* Filters */}
         <ClassFilters
           onSearchChange={setSearchQuery}
           onStatusChange={setStatus}
           onTermChange={setSelectedTerm}
-          onYearLevelChange={setSelectedYearLevel}
           currentFilters={{
             searchQuery,
             status,
             selectedTerm,
-            selectedYearLevel,
           }}
           terms={terms}
-          yearLevels={yearLevels}
         />
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className={dashboardTheme.errorSurface}>
           <div className="h-full w-1 rounded-full bg-rose-500" />
@@ -360,7 +322,6 @@ export function StudentClassesPage() {
         </div>
       )}
 
-      {/* Classes Grid */}
       <Card className="border-none bg-transparent p-0 shadow-none backdrop-blur-none">
         <CardContent className="p-0">
           {isLoading ? (
@@ -373,7 +334,7 @@ export function StudentClassesPage() {
               </p>
             </div>
           ) : filteredClasses.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 md:grid-cols-2 lg:grid-cols-3">
               {filteredClasses.map((classItem, classIndex) => (
                 <ClassCard
                   key={classItem.id}
@@ -402,7 +363,6 @@ export function StudentClassesPage() {
         </CardContent>
       </Card>
 
-      {/* Join Class Modal */}
       {user && (
         <JoinClassModal
           isOpen={isJoinModalOpen}

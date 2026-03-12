@@ -40,8 +40,7 @@ describe("adminRepository", () => {
     teacherId: 1,
     teacherName: "Prof. Smith",
     studentCount: 30,
-    isActive: true,
-    yearLevel: 1,
+    isActive: true,
     semester: 1,
     academicYear: "2024-2025",
     createdAt: "2024-01-01T00:00:00Z",
@@ -430,14 +429,13 @@ describe("adminRepository", () => {
         itemsPerPage: 10,
         searchQuery: "intro",
         teacherId: 1,
-        classStatus: "active",
-        yearLevel: 1,
+        classStatus: "active",
         semesterNumber: 1,
         academicYear: "2024-2025",
       })
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        "/admin/classes?page=1&limit=10&search=intro&teacherId=1&status=active&yearLevel=1&semester=1&academicYear=2024-2025",
+        "/admin/classes?page=1&limit=10&search=intro&teacherId=1&status=active&semester=1&academicYear=2024-2025",
       )
     })
 
@@ -483,8 +481,7 @@ describe("adminRepository", () => {
       className: "New Class",
       classCode: "NEW101",
       teacherId: 1,
-      description: "A new class",
-      yearLevel: 1,
+      description: "A new class",
       semester: 1,
       academicYear: "2024-2025",
       schedule: {
@@ -788,6 +785,80 @@ describe("adminRepository", () => {
       await expect(
         adminRepository.unenrollStudentFromClassById(1, 999),
       ).rejects.toThrow("Student not enrolled in class")
+    })
+  })
+  describe("getAllEnrollmentsWithPaginationAndFilters", () => {
+    const mockEnrollmentRecord = {
+      id: 1,
+      studentId: 10,
+      studentFirstName: "Jane",
+      studentLastName: "Doe",
+      studentEmail: "jane@example.com",
+      studentAvatarUrl: null,
+      studentIsActive: true,
+      classId: 2,
+      className: "Algorithms",
+      classCode: "ALG101",
+      classIsActive: true,
+      teacherId: 7,
+      teacherName: "Prof. Ada",
+      teacherAvatarUrl: null,
+      semester: 1,
+      academicYear: "2025-2026",
+      enrolledAt: "2025-06-01T00:00:00Z",
+    }
+
+    it("fetches enrollment records with filters", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: {
+          success: true,
+          data: [mockEnrollmentRecord],
+          totalCount: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        },
+        status: 200,
+      })
+
+      const result = await adminRepository.getAllEnrollmentsWithPaginationAndFilters({
+        pageNumber: 1,
+        itemsPerPage: 10,
+        searchQuery: "jane",
+        enrollmentStatus: "active",
+        semesterNumber: 1,
+        academicYear: "2025-2026",
+      })
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/admin/enrollments?page=1&limit=10&search=jane&status=active&semester=1&academicYear=2025-2026",
+      )
+      expect(result.data).toEqual([mockEnrollmentRecord])
+    })
+  })
+
+  describe("transferStudentBetweenClasses", () => {
+    it("posts the transfer payload", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: { success: true, message: "Student transferred" },
+        status: 200,
+      })
+
+      const result = await adminRepository.transferStudentBetweenClasses({
+        studentId: 10,
+        fromClassId: 2,
+        toClassId: 3,
+      })
+
+      expect(apiClient.post).toHaveBeenCalledWith(
+        "/admin/enrollments/transfer",
+        {
+          studentId: 10,
+          fromClassId: 2,
+          toClassId: 3,
+        },
+      )
+      expect(result.success).toBe(true)
     })
   })
 })

@@ -1,4 +1,4 @@
-import { z } from "zod"
+﻿import { z } from "zod"
 import {
   ClassScheduleSchema,
   DayOfWeekEnum,
@@ -14,7 +14,6 @@ export { ClassScheduleSchema, DayOfWeekEnum }
 // ============================================================================
 
 const MIN_PASSWORD_LENGTH = 8
-const MAX_YEAR_LEVEL = 12
 const MAX_SEMESTER = 3
 
 // ============================================================================
@@ -213,9 +212,7 @@ export type ActivityQuery = z.infer<typeof ActivityQuerySchema>
  *
  * @property search - Optional text search across class fields
  * @property teacherId - Filter by specific teacher
- * @property status - Filter by active/archived status (default: "all")
- * @property yearLevel - Filter by year level (1-4)
- * @property semester - Filter by semester (1-2)
+ * @property status - Filter by active/archived status (default: "all") * @property semester - Filter by semester (1-2)
  * @property academicYear - Filter by academic year
  * @property page - Page number for pagination (default: 1)
  * @property limit - Items per page (default: 20, max: 100)
@@ -223,12 +220,24 @@ export type ActivityQuery = z.infer<typeof ActivityQuerySchema>
 export const ClassFilterQuerySchema = PaginationQuerySchema.extend({
   search: z.string().optional(),
   teacherId: z.coerce.number().int().positive().optional(),
-  status: z.enum(["active", "archived", "all"]).default("all"),
-  yearLevel: z.coerce.number().int().min(1).max(4).optional(),
-  semester: z.coerce.number().int().min(1).max(2).optional(),
+  status: z.enum(["active", "archived", "all"]).default("all"),  semester: z.coerce.number().int().min(1).max(2).optional(),
   academicYear: z.string().optional(),
 })
 export type ClassFilterQuery = z.infer<typeof ClassFilterQuerySchema>
+
+/**
+ * Query parameters for filtering and paginating enrollment records.
+ * Used by the GET /admin/enrollments endpoint.
+ */
+export const EnrollmentFilterQuerySchema = PaginationQuerySchema.extend({
+  search: z.string().optional(),
+  classId: z.coerce.number().int().positive().optional(),
+  teacherId: z.coerce.number().int().positive().optional(),
+  studentId: z.coerce.number().int().positive().optional(),
+  status: z.enum(["active", "archived", "all"]).default("all"),  semester: z.coerce.number().int().min(1).max(MAX_SEMESTER).optional(),
+  academicYear: z.string().optional(),
+})
+export type EnrollmentFilterQuery = z.infer<typeof EnrollmentFilterQuerySchema>
 
 /**
  * Path parameters for class-specific endpoints.
@@ -245,9 +254,7 @@ export type ClassParams = z.infer<typeof ClassParamsSchema>
  */
 export const CreateClassSchema = z.object({
   teacherId: z.number().int().positive(),
-  className: z.string().min(1, "Class name is required"),
-  yearLevel: z.number().int().min(1).max(MAX_YEAR_LEVEL),
-  semester: z.number().int().min(1).max(MAX_SEMESTER),
+  className: z.string().min(1, "Class name is required"),  semester: z.number().int().min(1).max(MAX_SEMESTER),
   academicYear: z.string().min(1, "Academic year is required"),
   schedule: ClassScheduleSchema,
   description: z.string().optional(),
@@ -261,9 +268,7 @@ export type CreateClass = z.infer<typeof CreateClassSchema>
 export const UpdateClassSchema = z.object({
   className: z.string().min(1).optional(),
   description: z.string().nullable().optional(),
-  isActive: z.boolean().optional(),
-  yearLevel: z.number().int().min(1).max(MAX_YEAR_LEVEL).optional(),
-  semester: z.number().int().min(1).max(MAX_SEMESTER).optional(),
+  isActive: z.boolean().optional(),  semester: z.number().int().min(1).max(MAX_SEMESTER).optional(),
   academicYear: z.string().optional(),
   schedule: ClassScheduleSchema.optional(),
   teacherId: z.number().int().positive().optional(),
@@ -301,6 +306,59 @@ export const EnrollStudentBodySchema = z.object({
 export type EnrollStudentBody = z.infer<typeof EnrollStudentBodySchema>
 
 /**
+ * Admin enrollment list item schema.
+ * Represents a single enrollment row in the standalone admin enrollment workspace.
+ */
+export const AdminEnrollmentListItemSchema = z.object({
+  id: z.number(),
+  studentId: z.number(),
+  studentFirstName: z.string(),
+  studentLastName: z.string(),
+  studentEmail: z.string(),
+  studentAvatarUrl: z.string().nullable(),
+  studentIsActive: z.boolean(),
+  classId: z.number(),
+  className: z.string(),
+  classCode: z.string(),
+  classIsActive: z.boolean(),
+  teacherId: z.number(),
+  teacherName: z.string(),
+  teacherAvatarUrl: z.string().nullable(),
+  semester: z.number(),
+  academicYear: z.string(),
+  enrolledAt: z.string(),
+})
+
+/**
+ * Request body schema for transferring a student between classes.
+ * Used by POST /admin/enrollments/transfer endpoint.
+ */
+export const TransferStudentBodySchema = z
+  .object({
+    studentId: z.number().int().positive(),
+    fromClassId: z.number().int().positive(),
+    toClassId: z.number().int().positive(),
+  })
+  .refine((value) => value.fromClassId !== value.toClassId, {
+    message: "Source and destination classes must be different",
+    path: ["toClassId"],
+  })
+export type TransferStudentBody = z.infer<typeof TransferStudentBodySchema>
+
+/**
+ * Response schema for paginated enrollment lists.
+ * Includes pagination metadata and enrollment data array.
+ */
+export const PaginatedEnrollmentsResponseSchema = z.object({
+  success: z.boolean(),
+  data: z.array(AdminEnrollmentListItemSchema),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+})
+
+/**
  * Class data transfer object schema.
  * Represents class information without teacher details.
  */
@@ -309,7 +367,6 @@ export const ClassDTOSchema = z.object({
   className: z.string(),
   classCode: z.string(),
   teacherId: z.number(),
-  yearLevel: z.number(),
   semester: z.number(),
   academicYear: z.string(),
   schedule: ClassScheduleSchema,
@@ -325,6 +382,7 @@ export const ClassDTOSchema = z.object({
  */
 export const ClassWithTeacherDTOSchema = ClassDTOSchema.extend({
   teacherName: z.string(),
+  teacherAvatarUrl: z.string().nullable(),
 })
 
 /**
@@ -370,3 +428,5 @@ export const ClassAssignmentsResponseSchema = z.object({
   success: z.boolean(),
   assignments: z.array(ClassAssignmentItemSchema),
 })
+
+

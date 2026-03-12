@@ -126,11 +126,17 @@ Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/rou
 | `/dashboard/admin/classes/:classId/edit` | `AdminClassFormPage` | Admin class edit page.             |
 | `/dashboard/assignments/:id` | `AssignmentDetailPage`     | IDE and submission interface.      |
 | `/dashboard/users`           | `AdminUsersPage`           | User management (Admin only).      |
+| `/dashboard/enrollments`     | `AdminEnrollmentsPage`     | Cross-class enrollment workspace.  |
 
 Admin class detail behavior:
 - `AdminClassDetailPage` is a student-management focused view.
 - Admins can review class metadata, search enrolled students, enroll new students, and remove students.
 - Assignment-list tabs are intentionally not shown in this admin detail view.
+
+Admin enrollment workspace behavior:
+- `AdminEnrollmentsPage` provides a cross-class enrollment registry for admins.
+- Admins can search by student, class, or teacher and filter by class status, semester, and academic year.
+- The page supports manual enrollment, student transfer between active classes, and direct removal with confirmation modals.
 
 ---
 
@@ -159,6 +165,7 @@ Admin class detail behavior:
   - **`PairComparison`**: Side-by-side code editor with match highlighting
   - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
   - **`SimilarityBadge`**: Visual indicator for similarity percentage
+- **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal class average, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
@@ -242,7 +249,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                                   |
 | **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                                 |
 | **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                                           |
-| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, analytics)                                        |
+| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, classes, enrollments, analytics)                   |
 | **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, account deletion)                            |
 
 ### Service Guidelines
@@ -293,16 +300,23 @@ Language-specific features:
 
 ### Plagiarism Detection
 
-The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly with fewer clicks:
+The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly while still seeing Dolos-style graph relationships:
 
-- **Class-level summary cards**: Suspicious pairs, average similarity, and maximum similarity.
-- **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review.
-- **Default high-similarity filter**: Starts at `75% and above` to reduce noise in larger classes.
-- **Fast triage controls**: Search by student, sortable `Overall Similarity` plus per-pair `Structural Similarity` and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
+- **Assignment-level summary cards**: Suspicious pairs, analyzed submissions, and maximum similarity.
+- **Similarity graph view**: A native React SVG graph that derives nodes from the analyzed-submission list and edges from the active pair results.
+- **Shared draggable threshold**: The `Threshold >= X%` slider drives the graph and pairwise table together so review surfaces never drift out of sync.
+- **Singleton visibility toggle**: `Allow Singleton` lets teachers reveal isolated submissions, including true zero-pair submissions returned by the backend.
+- **Hover and selection details**: Hovering a node shows quick similarity context; clicking a node or cluster opens richer details and shortcut actions for review.
+- **Edge-driven review**: Clicking a graph edge jumps directly into pairwise code comparison for that specific submission pair.
+- **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review and reuses the shared threshold from the graph view.
+- **Default high-similarity filter**: Starts at `75%` to reduce noise in larger classes.
+- **Fast triage controls**: Sortable `Overall Similarity`, `Structural Similarity`, and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
 - **Details on demand**: `Compare Code` (or row click) opens side-by-side match/diff inspection with fragment context and auto-scrolls to the comparison panel.
+- **Class PDF export**: `Download Class Report` exports the active threshold view only, including summary metrics, a static graph, and the threshold-qualified pair table.
+- **Pairwise evidence PDF**: `Download Pair Report` exports the selected comparison with overall, structural, and semantic metrics, fragment evidence rows, and full source-code appendices.
+- **Evidence timestamps**: Export metadata shows both the original report generation time and the actual download time so the PDF can be used as a teacher-facing evidence artifact.
 
 ### Toast Notifications
-
 Enhanced toast system with:
 
 - **Pause on hover**: Prevents auto-dismiss when user is reading
@@ -521,10 +535,13 @@ Specialized types for the class detail page redesign:
    - Use synchronized scrolling to navigate through matches
    - Click on fragments in the table to jump to specific matches
    - Toggle between "Match" and "Diff" views for different perspectives
-4. **Take Action**:
+4. **Export Evidence**:
+   - Use `Download Class Report` to export the active threshold view for the whole class; only pairs at or above the current threshold are included.
+   - Use `Download Pair Report` inside the comparison panel when a specific `Student A vs Student B` review needs standalone evidence.
+5. **Take Action**:
    - Document findings for academic integrity review
    - Contact students as needed
-   - Export report for record-keeping
+   - Attach the exported PDF evidence to the case record when needed
 
 ---
 
@@ -606,4 +623,12 @@ High-signal coverage gate:
 - `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
+
+
+
+
+
+
+
+
 

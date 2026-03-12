@@ -12,10 +12,11 @@ import { useRequestState } from "@/presentation/hooks/shared/useRequestState";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { useMemo } from "react";
 import { CheckCircle, ChevronDown, Filter, Search } from "lucide-react";
-import { Archive, BookOpen, ChevronLeft, ChevronRight, Loader2, MoreVertical, RotateCcw, Trash2, User, Users } from "lucide-react";
+import { Archive, BookOpen, ChevronLeft, ChevronRight, Loader2, MoreVertical, RotateCcw, Trash2, Users2 } from "lucide-react";
 import { createPortal } from "react-dom";
 import * as React from "react";
 import { cn } from "@/shared/utils/cn";
+import { Avatar } from "@/presentation/components/ui/Avatar";
 import { AlertTriangle, X, AlertCircle } from "lucide-react";
 
 // Inlined from src/presentation/components/admin/AdminClassesFilters.tsx
@@ -24,35 +25,15 @@ type StatusFilter = "all" | "active" | "archived"
 interface AdminClassesFiltersProps {
   searchQuery: string
   statusFilter: StatusFilter
-  yearLevelFilter: number | "all"
   semesterFilter: number | "all"
   academicYearFilter: string
   onSearchQueryChange: (query: string) => void
   onStatusFilterChange: (status: StatusFilter) => void
-  onYearLevelFilterChange: (yearLevel: number | "all") => void
   onSemesterFilterChange: (semester: number | "all") => void
   onAcademicYearFilterChange: (academicYear: string) => void
 }
 
-function getYearLabel(yearLevel: number | "all"): string {
-  if (yearLevel === "all") {
-    return "All Years"
-  }
 
-  if (yearLevel === 1) {
-    return "1st Year"
-  }
-
-  if (yearLevel === 2) {
-    return "2nd Year"
-  }
-
-  if (yearLevel === 3) {
-    return "3rd Year"
-  }
-
-  return "4th Year"
-}
 
 function getSemesterLabel(semester: number | "all"): string {
   if (semester === "all") {
@@ -71,17 +52,14 @@ function getSemesterLabel(semester: number | "all"): string {
 function AdminClassesFilters({
   searchQuery,
   statusFilter,
-  yearLevelFilter,
   semesterFilter,
   academicYearFilter,
   onSearchQueryChange,
-  onStatusFilterChange,
-  onYearLevelFilterChange,
+  onStatusFilterChange,
   onSemesterFilterChange,
   onAcademicYearFilterChange,
 }: AdminClassesFiltersProps) {
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
-  const [showYearDropdown, setShowYearDropdown] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showSemesterDropdown, setShowSemesterDropdown] = useState(false)
   const [showAcademicYearDropdown, setShowAcademicYearDropdown] =
     useState(false)
@@ -103,8 +81,7 @@ function AdminClassesFilters({
   }, [])
 
   useDocumentClick(() => {
-    setShowStatusDropdown(false)
-    setShowYearDropdown(false)
+    setShowStatusDropdown(false)
     setShowSemesterDropdown(false)
     setShowAcademicYearDropdown(false)
   })
@@ -127,67 +104,8 @@ function AdminClassesFilters({
           <button
             onClick={(event) => {
               event.stopPropagation()
-              setShowYearDropdown(!showYearDropdown)
-              setShowStatusDropdown(false)
-              setShowSemesterDropdown(false)
-              setShowAcademicYearDropdown(false)
-            }}
-            className="cursor-pointer flex min-w-[140px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
-          >
-            <div className="flex items-center gap-2">
-              <span className="capitalize">
-                {getYearLabel(yearLevelFilter)}
-              </span>
-            </div>
-            <ChevronDown
-              className={`h-3.5 w-3.5 text-slate-500 transition-transform ${
-                showYearDropdown ? "rotate-180" : ""
-              }`}
-            />
-          </button>
-
-          {showYearDropdown && (
-            <div className="absolute top-full right-0 z-50 mt-2 w-full min-w-[140px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200">
-              <div className="p-1.5 space-y-0.5">
-                {[
-                  { value: "all", label: "All Years" },
-                  { value: 1, label: "1st Year" },
-                  { value: 2, label: "2nd Year" },
-                  { value: 3, label: "3rd Year" },
-                  { value: 4, label: "4th Year" },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => {
-                      onYearLevelFilterChange(option.value as number | "all")
-                      setShowYearDropdown(false)
-                    }}
-                    className={`flex w-full cursor-pointer items-center justify-between rounded-lg border px-3 py-2 text-sm transition-all duration-150 ${
-                      yearLevelFilter === option.value
-                        ? "border-teal-200 bg-teal-50 text-teal-700 shadow-sm"
-                        : "border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-100 hover:text-slate-900 hover:shadow-sm"
-                    }`}
-                  >
-                    <span className="capitalize font-medium">
-                      {option.label}
-                    </span>
-                    {yearLevelFilter === option.value && (
-                      <CheckCircle className="h-3.5 w-3.5 text-teal-600" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          <button
-            onClick={(event) => {
-              event.stopPropagation()
               setShowSemesterDropdown(!showSemesterDropdown)
-              setShowStatusDropdown(false)
-              setShowYearDropdown(false)
+              setShowStatusDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
             className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -242,8 +160,7 @@ function AdminClassesFilters({
             onClick={(event) => {
               event.stopPropagation()
               setShowAcademicYearDropdown(!showAcademicYearDropdown)
-              setShowStatusDropdown(false)
-              setShowYearDropdown(false)
+              setShowStatusDropdown(false)
               setShowSemesterDropdown(false)
             }}
             className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -293,8 +210,7 @@ function AdminClassesFilters({
           <button
             onClick={(event) => {
               event.stopPropagation()
-              setShowStatusDropdown(!showStatusDropdown)
-              setShowYearDropdown(false)
+              setShowStatusDropdown(!showStatusDropdown)
               setShowSemesterDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
@@ -360,6 +276,7 @@ interface AdminClassesTableProps {
   isLoading: boolean
   page: number
   totalPages: number
+  totalClasses: number
   activeDropdown: DropdownPosition | null
   actionLoading: number | null
   onRowClick: (classId: number) => void
@@ -401,11 +318,32 @@ function getOrdinalSuffix(value: number): string {
 
 
 
+
+function getTeacherInitials(teacherName: string): string {
+  const trimmedTeacherName = teacherName.trim()
+
+  if (!trimmedTeacherName) {
+    return "?"
+  }
+
+  const teacherNameParts = trimmedTeacherName.split(/\s+/)
+
+  if (teacherNameParts.length === 1) {
+    return teacherNameParts[0].slice(0, 2).toUpperCase()
+  }
+
+  const firstInitial = teacherNameParts[0]?.[0] ?? ""
+  const lastInitial = teacherNameParts[teacherNameParts.length - 1]?.[0] ?? ""
+
+  return `${firstInitial}${lastInitial}`.toUpperCase()
+}
+
 function AdminClassesTable({
   classes,
   isLoading,
   page,
   totalPages,
+  totalClasses,
   activeDropdown,
   actionLoading,
   onRowClick,
@@ -494,7 +432,7 @@ function AdminClassesTable({
                 <tr
                   key={selectedClass.id}
                   onClick={() => onRowClick(selectedClass.id)}
-                  className="group cursor-pointer transition-colors duration-200 hover:bg-slate-50/80"
+                  className="group cursor-pointer transition-colors duration-200 hover:bg-slate-100"
                 >
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
@@ -507,9 +445,12 @@ function AdminClassesTable({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-500">
-                        <User className="h-4 w-4 text-teal-600" />
-                      </div>
+                      <Avatar
+                        fallback={getTeacherInitials(selectedClass.teacherName)}
+                        src={selectedClass.teacherAvatarUrl ?? undefined}
+                        size="sm"
+                        className="ring-2 ring-transparent transition-all group-hover:ring-teal-100"
+                      />
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-700">
                           {selectedClass.teacherName}
@@ -520,10 +461,6 @@ function AdminClassesTable({
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-                          {selectedClass.yearLevel}
-                          {getOrdinalSuffix(selectedClass.yearLevel)} Year
-                        </span>
                         <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
                           {selectedClass.semester}
                           {getOrdinalSuffix(selectedClass.semester)} Sem
@@ -536,9 +473,7 @@ function AdminClassesTable({
                   </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-2">
-                      <div className="rounded-lg border border-slate-200 bg-slate-100 p-1.5">
-                        <Users className="h-3.5 w-3.5 text-teal-600" />
-                      </div>
+                      <Users2 className="h-4 w-4 text-cyan-600" strokeWidth={2.35} />
                       <span className="text-sm font-medium text-slate-700">
                         {selectedClass.studentCount}
                       </span>
@@ -599,7 +534,7 @@ function AdminClassesTable({
         </table>
       </div>
 
-      {totalPages > 1 && (
+      {totalClasses > 0 && (
         <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/80 px-6 py-4">
           <p className="text-sm text-slate-500">
             Page <span className="font-medium text-slate-900">{page}</span> of{" "}
@@ -992,7 +927,6 @@ export function AdminClassesPage() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "archived"
   >("all")
-  const [yearLevelFilter, setYearLevelFilter] = useState<number | "all">("all")
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all")
   const [academicYearFilter, setAcademicYearFilter] = useState<string>("all")
   const [page, setPage] = useState(1)
@@ -1007,7 +941,7 @@ export function AdminClassesPage() {
   const [deletingClass, setDeletingClass] = useState<AdminClass | null>(null)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
 
-  const limit = 20
+  const limit = 10
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300)
 
@@ -1024,7 +958,6 @@ export function AdminClassesPage() {
           limit,
           search: debouncedSearch || undefined,
           status: statusFilter,
-          yearLevel: yearLevelFilter === "all" ? undefined : yearLevelFilter,
           semester: semesterFilter === "all" ? undefined : semesterFilter,
           academicYear:
             academicYearFilter === "all" ? undefined : academicYearFilter,
@@ -1041,7 +974,6 @@ export function AdminClassesPage() {
     limit,
     debouncedSearch,
     statusFilter,
-    yearLevelFilter,
     semesterFilter,
     academicYearFilter,
     executeRequest,
@@ -1155,14 +1087,14 @@ export function AdminClassesPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      <div className="space-y-6">
+      <div className="space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
               Class Management
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-500">
               Manage all classes, reassign teachers, and archive or restore
               classes.{" "}
               <span className="text-slate-400">({total} classes)</span>
@@ -1196,16 +1128,11 @@ export function AdminClassesPage() {
         <AdminClassesFilters
           searchQuery={searchQuery}
           statusFilter={statusFilter}
-          yearLevelFilter={yearLevelFilter}
           semesterFilter={semesterFilter}
           academicYearFilter={academicYearFilter}
           onSearchQueryChange={setSearchQuery}
           onStatusFilterChange={(status) => {
             setStatusFilter(status)
-            setPage(1)
-          }}
-          onYearLevelFilterChange={(yearLevel) => {
-            setYearLevelFilter(yearLevel)
             setPage(1)
           }}
           onSemesterFilterChange={(semester) => {
@@ -1223,6 +1150,7 @@ export function AdminClassesPage() {
           isLoading={isLoading}
           page={page}
           totalPages={totalPages}
+          totalClasses={total}
           activeDropdown={activeDropdown}
           actionLoading={actionLoading}
           onRowClick={(classId) => navigate(`/dashboard/classes/${classId}`)}
@@ -1246,6 +1174,8 @@ export function AdminClassesPage() {
     </DashboardLayout>
   )
 }
+
+
 
 
 

@@ -249,7 +249,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                 New Password
               </label>
               <div className="relative">
-                <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
+                <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconNonInteractive}`}>
                   <Lock className="w-5 h-5" />
                 </div>
                 <Input
@@ -272,7 +272,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon} hover:text-[#13211E]`}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconInteractive} hover:text-[#13211E]`}
                   aria-label={
                     showNewPassword ? "Hide password" : "Show password"
                   }
@@ -304,7 +304,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                 Confirm New Password
               </label>
               <div className="relative">
-                <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon}`}>
+                <div className={`absolute left-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconNonInteractive}`}>
                   <Lock className="w-5 h-5" />
                 </div>
                 <Input
@@ -327,7 +327,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${authTheme.inputIcon} hover:text-[#13211E]`}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${authTheme.inputIconInteractive} hover:text-[#13211E]`}
                   aria-label={
                     showConfirmPassword ? "Hide password" : "Show password"
                   }

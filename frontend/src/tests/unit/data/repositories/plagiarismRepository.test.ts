@@ -24,6 +24,7 @@ describe("plagiarismRepository", () => {
     const mockAnalyzeResponse = {
       reportId: "report-123",
       isReusedReport: false,
+      generatedAt: "2026-03-10T10:00:00.000Z",
       summary: {
         totalFiles: 10,
         totalPairs: 5,
@@ -31,6 +32,20 @@ describe("plagiarismRepository", () => {
         averageSimilarity: 45.5,
         maxSimilarity: 85.0,
       },
+      submissions: [
+        {
+          id: 1,
+          path: "/submissions/1/solution.py",
+          filename: "solution.py",
+          lineCount: 50,
+        },
+        {
+          id: 2,
+          path: "/submissions/2/solution.py",
+          filename: "solution.py",
+          lineCount: 48,
+        },
+      ],
       pairs: [
         {
           id: 1,
@@ -195,3 +210,6 @@ describe("plagiarismRepository", () => {
     })
   })
 })
+
+
+

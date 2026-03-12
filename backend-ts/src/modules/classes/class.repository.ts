@@ -1,4 +1,4 @@
-import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
+﻿import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
 import {
   classes,
   enrollments,
@@ -112,7 +112,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -163,7 +162,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -193,7 +191,6 @@ export class ClassRepository extends BaseRepository<
         teacherId: data.teacherId,
         className: data.className,
         classCode: data.classCode,
-        yearLevel: data.yearLevel,
         semester: data.semester,
         academicYear: data.academicYear,
         schedule: data.schedule,
@@ -257,7 +254,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -307,7 +303,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -341,7 +336,13 @@ export class ClassRepository extends BaseRepository<
   async getAllClassesFiltered(
     options: ClassFilterOptions,
   ): Promise<
-    PaginatedResult<Class & { studentCount: number; teacherName?: string }>
+    PaginatedResult<
+      Class & {
+        studentCount: number
+        teacherName?: string
+        teacherAvatarUrl?: string | null
+      }
+    >
   > {
     const {
       page,
@@ -349,7 +350,6 @@ export class ClassRepository extends BaseRepository<
       search,
       teacherId,
       status,
-      yearLevel,
       semester,
       academicYear,
     } = options
@@ -377,11 +377,6 @@ export class ClassRepository extends BaseRepository<
     } else if (status === "archived") {
       conditions.push(eq(classes.isActive, false))
     }
-
-    if (yearLevel) {
-      conditions.push(eq(classes.yearLevel, yearLevel))
-    }
-
     if (semester) {
       conditions.push(eq(classes.semester, semester))
     }
@@ -417,7 +412,6 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -425,6 +419,7 @@ export class ClassRepository extends BaseRepository<
         isActive: classes.isActive,
         studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
         teacherName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        teacherAvatarUrl: users.avatarUrl,
       })
       .from(classes)
       .leftJoin(
@@ -441,6 +436,7 @@ export class ClassRepository extends BaseRepository<
       data: data.map((r) => ({
         ...r,
         studentCount: Number(r.studentCount),
+        teacherAvatarUrl: r.teacherAvatarUrl ?? null,
       })),
       total,
       page,
@@ -455,7 +451,9 @@ export class ClassRepository extends BaseRepository<
    */
   async getClassWithTeacher(
     classId: number,
-  ): Promise<(Class & { teacherName: string }) | undefined> {
+  ): Promise<
+    (Class & { teacherName: string; teacherAvatarUrl?: string | null }) | undefined
+  > {
     const results = await this.db
       .select({
         id: classes.id,
@@ -463,20 +461,22 @@ export class ClassRepository extends BaseRepository<
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
         createdAt: classes.createdAt,
         isActive: classes.isActive,
         teacherName: sql<string>`COALESCE(CONCAT(${users.firstName}, ' ', ${users.lastName}), 'Unknown')`,
+        teacherAvatarUrl: users.avatarUrl,
       })
       .from(classes)
       .leftJoin(users, eq(classes.teacherId, users.id))
       .where(eq(classes.id, classId))
       .limit(1)
 
-    return results[0] as (Class & { teacherName: string }) | undefined
+    return results[0] as
+      | (Class & { teacherName: string; teacherAvatarUrl?: string | null })
+      | undefined
   }
 
   /**
@@ -524,3 +524,5 @@ export class ClassRepository extends BaseRepository<
     }))
   }
 }
+
+

@@ -1,3 +1,50 @@
+# Milestone v1.1 Admin Enrollment Management Initialization
+
+- [x] Reconstruct `.planning/PROJECT.md`, `.planning/STATE.md`, and `.planning/MILESTONES.md` from brownfield repo evidence
+- [ ] Run milestone research for admin enrollment management
+- [ ] Define `.planning/REQUIREMENTS.md`
+- [ ] Create `.planning/ROADMAP.md`
+
+# Admin Enrollment Management Workspace
+
+- [x] Review `AGENTS.md`, `frontend/documentation.md`, and `backend-ts/documentation.md` for architecture and workflow constraints
+- [x] Reuse the existing root `implementation_plan.md` and `task.md` for this milestone slice
+- [x] Add backend enrollment registry query support with admin filters and pagination
+- [x] Add backend transfer-student workflow with validation and safe error handling
+- [x] Add frontend admin enrollment page toolbar, filters, and registry table
+- [x] Add frontend enroll, remove, and transfer flows with clear confirmations and request states
+- [x] Add targeted backend tests for admin enrollment listing and transfer behavior
+- [x] Add targeted frontend tests for admin enrollment page states and actions
+- [x] Update frontend and backend documentation for the admin enrollment workspace
+- [x] Run `npm run build` in `frontend`
+- [x] Run `npm run typecheck` in `backend-ts`
+- [x] Run `npm test` in `backend-ts`
+# Similarity Graph Singleton Support + UI Simplification
+
+- [x] Extend plagiarism analysis responses with analyzed submissions so true singleton nodes can be rendered
+- [x] Update graph utilities to derive nodes from full submission lists instead of pairs only
+- [x] Fix the graph empty-state width so empty-threshold messaging stays horizontal and readable
+- [x] Remove the separate Similarity Clusters panel and dead exports/components tied only to it
+- [x] Rename the graph toggle to `Allow Singleton` and keep the right-rail controls aligned
+- [x] Update targeted frontend/backend tests and run verification
+# Similarity Graph View
+
+- [x] Add graph data utility that derives nodes, edges, and visible singletons from the current threshold
+- [x] Lift similarity threshold state so the graph and pairwise table use the same control value
+- [x] Add native React graph view with hover tooltip, selected-node details, and cluster-aware layout
+- [x] Add `Display singletons` toggle and resettable draggable threshold slider
+- [x] Integrate graph actions with the existing code-comparison workflow
+- [x] Add/update targeted frontend unit tests for graph behavior
+- [x] Update frontend documentation for the graph workflow
+- [x] Run frontend build verification
+# Similarity Clustering Feature
+
+- [x] Add frontend clustering utility that derives connected submission groups from pairwise similarity results
+- [x] Add teacher similarity clusters panel and wire it into the similarity results page
+- [x] Keep pairwise filtering and clustering threshold state synchronized
+- [x] Add/update targeted frontend unit tests for clustering behavior
+- [x] Update frontend documentation for the new clustering workflow
+- [x] Run frontend build verification
 # Frontend Unit Test Fixes
 
 - [x] Update toast variant assertions to match the current light-theme tokens
@@ -732,3 +779,82 @@
 - [x] Scan the frontend source tree for files and exports with no runtime consumers after the light-mode refactor.
 - [x] Remove only the confirmed dead frontend files, orphaned barrel exports, and stale dark-mode leftovers.
 - [ ] Verify the cleanup with a frontend production build.
+
+
+
+
+
+
+# Admin Class Detail Students-Only Follow-Up
+
+- [x] Remove students/assignments tab UI and assignment content from admin class detail
+- [x] Keep a single students table view
+- [x] Widen student search bar and update placeholder copy
+- [x] Move Enroll Student button beside the search bar
+- [x] Make remove-student action icon red by default
+- [x] Run frontend build verification
+
+
+
+# Admin Search Width + Hover Visibility Polish
+
+- [x] Remove class-detail search width cap so the input expands in the toolbar row
+- [x] Align user-management search placeholder color with class-management search placeholder color
+- [x] Strengthen admin table row hover background visibility
+- [x] Run frontend build verification
+
+
+
+# Admin Class Detail Header Refresh
+
+- [x] Replace the admin class detail helper copy with a cleaner header that uses the class description and keeps the current class metadata visible
+- [x] Reuse the admin class-management three-dot action menu in the class detail header
+- [x] Fix the student search toolbar layout so the input width is readable beside the enroll action
+- [x] Run frontend build verification
+
+
+
+
+
+
+
+
+# Similarity PDF Export
+
+- [x] Add a reusable frontend PDF document layer for plagiarism evidence exports
+- [x] Add threshold-aware class report download from the teacher similarity results page
+- [x] Add pairwise evidence report download for the selected comparison
+- [x] Extend plagiarism analyze/report responses with `generatedAt`
+- [x] Add/update frontend and backend tests for the new export workflow
+- [x] Update frontend/backend documentation and root progress tracking
+
+# Similarity PDF Institutional Refresh
+
+- [x] Refresh the PDF header and section/card styling to a more professional ClassiFi-branded look
+- [x] Replace visible generated/download metadata with a single Report Generated timestamp entry
+- [x] Rework class-report table cells to use badge-style color treatments with aligned headers/body widths
+- [x] Update targeted PDF/page tests for metadata and badge mapping behavior
+- [x] Run frontend test verification
+- [x] Run frontend build verification
+
+
+
+# Dashboard Content Expansion On Sidebar Collapse
+
+- [x] Update the shared dashboard shell so desktop main content expands left and gains width when the sidebar is collapsed
+- [x] Keep the open-sidebar desktop layout unchanged and preserve the current mobile behavior
+- [x] Run frontend build verification
+
+
+# College Class Year-Level Removal
+
+- [x] Review `AGENTS.md`, `frontend/documentation.md`, and `backend-ts/documentation.md`
+- [x] Inventory current `yearLevel` usage across frontend, backend, and tests
+- [ ] Remove backend class/admin/enrollment/dashboard contracts that expose `yearLevel`
+- [ ] Remove frontend class/admin models, forms, filters, and displays that use `yearLevel`
+- [x] Update or add database migration artifacts if needed for `classes.year_level`
+- [ ] Update affected frontend and backend tests
+- [ ] Update frontend and backend documentation
+- [ ] Run `npm run build` in `frontend`
+- [ ] Run `npm run typecheck` in `backend-ts`
+- [ ] Run `npm test` in `backend-ts`

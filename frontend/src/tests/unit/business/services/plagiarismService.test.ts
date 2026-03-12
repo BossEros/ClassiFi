@@ -23,6 +23,7 @@ describe("plagiarismService", () => {
     const mockAnalysisResponse: AnalyzeResponse = {
       reportId: "report-123",
       isReusedReport: false,
+      generatedAt: "2026-03-10T10:00:00.000Z",
       summary: {
         totalFiles: 10,
         totalPairs: 5,
@@ -30,6 +31,24 @@ describe("plagiarismService", () => {
         averageSimilarity: 45.5,
         maxSimilarity: 85.0,
       },
+      submissions: [
+        {
+          id: 1,
+          path: "/submissions/1/solution.py",
+          filename: "solution.py",
+          lineCount: 50,
+          studentId: "student-1",
+          studentName: "John Doe",
+        },
+        {
+          id: 2,
+          path: "/submissions/2/solution.py",
+          filename: "solution.py",
+          lineCount: 48,
+          studentId: "student-2",
+          studentName: "Jane Smith",
+        },
+      ],
       pairs: [
         {
           id: 1,
@@ -208,3 +227,7 @@ describe("plagiarismService", () => {
     })
   })
 })
+
+
+
+

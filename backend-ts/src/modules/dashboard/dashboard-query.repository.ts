@@ -1,4 +1,4 @@
-import { injectable } from "tsyringe"
+﻿import { injectable } from "tsyringe"
 import { and, desc, eq, gt, isNull, sql } from "drizzle-orm"
 import {
   assignments,
@@ -137,7 +137,6 @@ export class DashboardQueryRepository implements DashboardQueryReadRepository {
         className: classes.className,
         classCode: classes.classCode,
         description: classes.description,
-        yearLevel: classes.yearLevel,
         semester: classes.semester,
         academicYear: classes.academicYear,
         schedule: classes.schedule,
@@ -166,3 +165,4 @@ export class DashboardQueryRepository implements DashboardQueryReadRepository {
     }))
   }
 }
+
