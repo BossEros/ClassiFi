@@ -247,7 +247,10 @@ export function LoginPage() {
             <div className="text-center space-y-3">
               <h1 className={authTheme.cardTitle}>
                 Welcome to{" "}
-                <span className="bg-gradient-to-r from-teal-700 to-teal-600 bg-clip-text text-transparent">
+                <span
+                  className="bg-gradient-to-r from-teal-700 to-teal-600 bg-clip-text text-transparent"
+                  style={{ fontFamily: '"Expletus Sans", system-ui, sans-serif' }}
+                >
                   ClassiFi
                 </span>
               </h1>
