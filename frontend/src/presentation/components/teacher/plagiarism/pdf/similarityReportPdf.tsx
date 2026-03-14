@@ -184,6 +184,7 @@ export function PairSimilarityReportDocument({
             rightFileName={data.rightFileName}
             rightCode={data.rightCode}
             rightHighlightRanges={data.rightFragmentRanges}
+            fragments={data.fragments}
           />
         </View>
 

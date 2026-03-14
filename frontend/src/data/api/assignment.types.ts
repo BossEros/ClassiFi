@@ -29,6 +29,7 @@ export interface AssignmentDetail {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
+  moduleId?: number | null
 }
 
 export interface SubmitAssignmentRequest {
@@ -53,6 +54,7 @@ export interface CreateAssignmentRequest {
   scheduledDate?: Date | string | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  moduleId?: number | null
 }
 
 export interface UpdateAssignmentRequest {

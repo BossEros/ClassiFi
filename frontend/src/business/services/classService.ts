@@ -286,6 +286,7 @@ export async function createAssignment(
         : null,
       allowLateSubmissions: createAssignmentData.allowLateSubmissions,
       latePenaltyConfig: createAssignmentData.latePenaltyConfig,
+      moduleId: createAssignmentData.moduleId ?? null,
     },
   )
 }

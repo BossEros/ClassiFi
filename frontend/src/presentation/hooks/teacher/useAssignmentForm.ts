@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { type ProgrammingLanguage } from "@/business/models/assignment/types"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
@@ -59,6 +59,7 @@ function buildDefaultFormValues(): AssignmentFormValues {
     scheduledDate: null,
     allowLateSubmissions: false,
     latePenaltyConfig: normalizeLatePenaltyConfig(DEFAULT_LATE_PENALTY_CONFIG),
+    moduleId: null,
   }
 }
 
@@ -68,6 +69,8 @@ export function useAssignmentForm() {
     classId: string
     assignmentId?: string
   }>()
+  const [searchParams] = useSearchParams()
+  const moduleIdParam = searchParams.get("moduleId")
   const showToast = useToastStore((state) => state.showToast)
   const currentUser = useAuthStore((state) => state.user)
 
@@ -163,6 +166,7 @@ export function useAssignmentForm() {
               latePenaltyConfig: normalizeLatePenaltyConfig(
                 assignment.latePenaltyConfig,
               ),
+              moduleId: assignment.moduleId ?? null,
             })
             setShowTemplateCode(!!assignment.templateCode)
           }
@@ -176,6 +180,17 @@ export function useAssignmentForm() {
 
     void fetchData()
   }, [assignmentId, classId, currentUser, isEditMode, reset])
+
+  // Set moduleId from query param when creating a new assignment
+  useEffect(() => {
+    if (!isEditMode && moduleIdParam) {
+      const parsedModuleId = parseInt(moduleIdParam, 10)
+
+      if (!Number.isNaN(parsedModuleId) && parsedModuleId > 0) {
+        setValue("moduleId", parsedModuleId, { shouldDirty: true })
+      }
+    }
+  }, [isEditMode, moduleIdParam, setValue])
 
   useEffect(() => {
     const fetchAssignmentTestCases = async () => {
@@ -446,6 +461,7 @@ export function useAssignmentForm() {
     isLoading,
     isFetching,
     className,
+    classId,
     testCases,
     pendingTestCases,
     isLoadingTestCases,

@@ -1,8 +1,10 @@
-import { useNavigate, useParams } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { RefreshCw, Check, X } from "lucide-react"
+import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
+import { Select } from "@/presentation/components/ui/Select"
 import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentForm"
 import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignment/BasicInfoForm"
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
@@ -13,10 +15,11 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
+import { getModulesByClassId } from "@/business/services/moduleService"
+import type { Module } from "@/shared/types/class"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
-  const { classId } = useParams<{ classId: string }>()
   const currentUser = useAuthStore((state) => state.user)
   const {
     formMethods,
@@ -26,6 +29,7 @@ export function AssignmentFormPage() {
     isLoading,
     isFetching,
     className,
+    classId,
     testCases,
     pendingTestCases,
     isLoadingTestCases,
@@ -49,6 +53,28 @@ export function AssignmentFormPage() {
     handleUpdatePendingTestCase,
     handleDeletePendingTestCase,
   } = useAssignmentForm()
+
+  const [modules, setModules] = useState<Module[]>([])
+
+  useEffect(() => {
+    if (!classId) return
+
+    const fetchModules = async () => {
+      try {
+        const fetchedModules = await getModulesByClassId(parseInt(classId, 10))
+        setModules(fetchedModules)
+      } catch (error) {
+        console.error("Failed to fetch modules:", error)
+      }
+    }
+
+    fetchModules()
+  }, [classId])
+
+  const moduleOptions = modules.map((m) => ({
+    value: String(m.id),
+    label: m.name,
+  }))
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
@@ -134,6 +160,29 @@ export function AssignmentFormPage() {
             </div>
 
             <div className="space-y-6">
+              {/* Module Selector */}
+              {moduleOptions.length > 0 && (
+                <Card className={assignmentFormTheme.actionCard}>
+                  <CardContent className="p-6 space-y-2">
+                    <label className="text-sm font-medium text-slate-700">
+                      Module
+                    </label>
+                    <Select
+                      options={moduleOptions}
+                      value={formData.moduleId ? String(formData.moduleId) : ""}
+                      onChange={(value) =>
+                        handleInputChange("moduleId", value ? parseInt(value, 10) : null)
+                      }
+                      placeholder="Select a module..."
+                      variant="light"
+                    />
+                    <p className="text-xs text-slate-400">
+                      Choose which module this assignment belongs to.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+
               <SubmissionSettings isLoading={isLoading} />
 
               <LatePenaltyConfig

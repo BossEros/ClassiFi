@@ -95,6 +95,7 @@ export const assignmentFormSchema = z
     scheduledDate: z.string().nullable(),
     allowLateSubmissions: z.boolean(),
     latePenaltyConfig: latePenaltyConfigSchema,
+    moduleId: z.number().nullable(),
   })
   .superRefine((formValue, context) => {
     const assignmentNameError = validateAssignmentTitleValue(

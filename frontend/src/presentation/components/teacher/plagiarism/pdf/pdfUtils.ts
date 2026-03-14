@@ -13,7 +13,9 @@ import type {
   LineDiff,
   QualitativeSignalBadgeValue,
   SimilarityBadgeValue,
+  TextSegment,
 } from "./pdfTypes"
+import type { MatchFragment } from "../types"
 
 // ─── Text Formatters ───────────────────────────────────────────────────────────
 
@@ -163,16 +165,16 @@ export function computeLineDiff(leftCode: string, rightCode: string): LineDiff {
 
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0 && leftLines[i - 1] === rightLines[j - 1]) {
-      leftResult.unshift({ kind: "unchanged", text: leftLines[i - 1] })
-      rightResult.unshift({ kind: "unchanged", text: rightLines[j - 1] })
+      leftResult.unshift({ kind: "unchanged", text: leftLines[i - 1], lineNumber: i })
+      rightResult.unshift({ kind: "unchanged", text: rightLines[j - 1], lineNumber: j })
       i--
       j--
     } else if (j > 0 && (i === 0 || table[i][j - 1] >= table[i - 1][j])) {
       leftResult.unshift({ kind: "unchanged", text: "" })
-      rightResult.unshift({ kind: "added", text: `+ ${rightLines[j - 1]}` })
+      rightResult.unshift({ kind: "added", text: rightLines[j - 1], lineNumber: j })
       j--
     } else {
-      leftResult.unshift({ kind: "removed", text: `- ${leftLines[i - 1]}` })
+      leftResult.unshift({ kind: "removed", text: leftLines[i - 1], lineNumber: i })
       rightResult.unshift({ kind: "unchanged", text: "" })
       i--
     }
@@ -188,4 +190,109 @@ export function isLineHighlighted(
   ranges: { start: number; end: number }[],
 ): boolean {
   return ranges.some((r) => lineIndex >= r.start && lineIndex <= r.end)
+}
+
+// ─── Column-Level Highlight Segments ───────────────────────────────────────────
+
+/**
+ * Computes inline text segments for a single line, marking which character
+ * ranges are highlighted by matched fragments. Produces the same column-level
+ * precision shown in the Monaco editor UI.
+ *
+ * @param lineText - The full text content of the line.
+ * @param lineIndex - The 0-indexed line number.
+ * @param fragments - All matched fragments for the pair.
+ * @param side - Which side of the comparison to evaluate.
+ * @returns An array of text segments with highlight flags.
+ */
+export function getLineTextSegments(
+  lineText: string,
+  lineIndex: number,
+  fragments: MatchFragment[],
+  side: "left" | "right",
+): TextSegment[] {
+  const charRanges: { start: number; end: number }[] = []
+
+  for (const fragment of fragments) {
+    const region =
+      side === "left" ? fragment.leftSelection : fragment.rightSelection
+
+    if (lineIndex < region.startRow || lineIndex > region.endRow) {
+      continue
+    }
+
+    let rangeStart: number
+    let rangeEnd: number
+
+    if (region.startRow === region.endRow) {
+      rangeStart = region.startCol
+      rangeEnd = region.endCol
+    } else if (lineIndex === region.startRow) {
+      rangeStart = region.startCol
+      rangeEnd = lineText.length
+    } else if (lineIndex === region.endRow) {
+      rangeStart = 0
+      rangeEnd = region.endCol
+    } else {
+      rangeStart = 0
+      rangeEnd = lineText.length
+    }
+
+    rangeStart = Math.max(0, Math.min(rangeStart, lineText.length))
+    rangeEnd = Math.max(rangeStart, Math.min(rangeEnd, lineText.length))
+
+    if (rangeStart < rangeEnd) {
+      charRanges.push({ start: rangeStart, end: rangeEnd })
+    }
+  }
+
+  if (charRanges.length === 0) {
+    return [{ text: lineText || " ", isHighlighted: false }]
+  }
+
+  charRanges.sort((a, b) => a.start - b.start)
+
+  const merged: { start: number; end: number }[] = []
+
+  for (const range of charRanges) {
+    if (merged.length > 0 && range.start <= merged[merged.length - 1].end) {
+      merged[merged.length - 1].end = Math.max(
+        merged[merged.length - 1].end,
+        range.end,
+      )
+    } else {
+      merged.push({ start: range.start, end: range.end })
+    }
+  }
+
+  const segments: TextSegment[] = []
+  let pos = 0
+
+  for (const range of merged) {
+    if (pos < range.start) {
+      segments.push({
+        text: lineText.substring(pos, range.start),
+        isHighlighted: false,
+      })
+    }
+
+    segments.push({
+      text: lineText.substring(range.start, range.end),
+      isHighlighted: true,
+    })
+    pos = range.end
+  }
+
+  if (pos < lineText.length) {
+    segments.push({
+      text: lineText.substring(pos),
+      isHighlighted: false,
+    })
+  }
+
+  if (segments.length === 0 || segments.every((s) => s.text === "")) {
+    return [{ text: " ", isHighlighted: false }]
+  }
+
+  return segments
 }
