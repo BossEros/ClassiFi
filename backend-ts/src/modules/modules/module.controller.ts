@@ -20,7 +20,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /** Query schema for listing modules */
 const GetModulesQuerySchema = z.object({
-  isStudent: z.coerce.boolean().default(false),
+  isStudent: z.string().default("false").transform((val) => val === "true"),
 })
 
 type GetModulesQuery = z.infer<typeof GetModulesQuerySchema>
