@@ -343,7 +343,7 @@ export function FragmentEvidenceTable({
 
 // ─── Monaco Code View Components ─────────────────────────────────────────────
 
-import { isLineHighlighted, computeLineDiff } from "./pdfUtils"
+import { isLineHighlighted, computeLineDiff, getLineTextSegments } from "./pdfUtils"
 import type { SideBySideProps } from "./pdfTypes"
 
 export function SideBySideCodeView({
@@ -355,9 +355,11 @@ export function SideBySideCodeView({
   rightFileName,
   rightCode,
   rightHighlightRanges = [],
+  fragments = [],
 }: SideBySideProps) {
   const leftLines = leftCode.split("\n")
   const rightLines = rightCode.split("\n")
+  const useColumnHighlight = fragments.length > 0
 
   return (
     <View style={pdfStyles.monacoContainer}>
@@ -367,24 +369,51 @@ export function SideBySideCodeView({
           <Text style={pdfStyles.monacoTabFilename}>{leftFileName}</Text>
         </View>
         <View style={pdfStyles.monacoEditor}>
-          {leftLines.map((line, i) => (
-            <View
-              key={i}
-              style={[
-                pdfStyles.monacoLine,
-                isLineHighlighted(i, leftHighlightRanges)
-                  ? pdfStyles.monacoLineMatch
-                  : {},
-              ]}
-            >
-              <View style={pdfStyles.monacoGutter}>
-                <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+          {leftLines.map((line, i) => {
+            if (useColumnHighlight) {
+              const segments = getLineTextSegments(line, i, fragments, "left")
+
+              return (
+                <View key={i} style={pdfStyles.monacoLine}>
+                  <View style={pdfStyles.monacoGutter}>
+                    <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+                  </View>
+                  <View style={pdfStyles.monacoCode}>
+                    <Text style={pdfStyles.monacoCodeText}>
+                      {segments.map((seg, idx) =>
+                        seg.isHighlighted ? (
+                          <Text key={idx} style={pdfStyles.monacoCodeHighlight}>
+                            {seg.text}
+                          </Text>
+                        ) : (
+                          <Text key={idx}>{seg.text}</Text>
+                        ),
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              )
+            }
+
+            return (
+              <View
+                key={i}
+                style={[
+                  pdfStyles.monacoLine,
+                  isLineHighlighted(i, leftHighlightRanges)
+                    ? pdfStyles.monacoLineMatch
+                    : {},
+                ]}
+              >
+                <View style={pdfStyles.monacoGutter}>
+                  <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+                </View>
+                <View style={pdfStyles.monacoCode}>
+                  <Text style={pdfStyles.monacoCodeText}>{line || " "}</Text>
+                </View>
               </View>
-              <View style={pdfStyles.monacoCode}>
-                <Text style={pdfStyles.monacoCodeText}>{line || " "}</Text>
-              </View>
-            </View>
-          ))}
+            )
+          })}
         </View>
       </View>
 
@@ -394,24 +423,51 @@ export function SideBySideCodeView({
           <Text style={pdfStyles.monacoTabFilename}>{rightFileName}</Text>
         </View>
         <View style={pdfStyles.monacoEditor}>
-          {rightLines.map((line, i) => (
-            <View
-              key={i}
-              style={[
-                pdfStyles.monacoLine,
-                isLineHighlighted(i, rightHighlightRanges)
-                  ? pdfStyles.monacoLineMatch
-                  : {},
-              ]}
-            >
-              <View style={pdfStyles.monacoGutter}>
-                <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+          {rightLines.map((line, i) => {
+            if (useColumnHighlight) {
+              const segments = getLineTextSegments(line, i, fragments, "right")
+
+              return (
+                <View key={i} style={pdfStyles.monacoLine}>
+                  <View style={pdfStyles.monacoGutter}>
+                    <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+                  </View>
+                  <View style={pdfStyles.monacoCode}>
+                    <Text style={pdfStyles.monacoCodeText}>
+                      {segments.map((seg, idx) =>
+                        seg.isHighlighted ? (
+                          <Text key={idx} style={pdfStyles.monacoCodeHighlight}>
+                            {seg.text}
+                          </Text>
+                        ) : (
+                          <Text key={idx}>{seg.text}</Text>
+                        ),
+                      )}
+                    </Text>
+                  </View>
+                </View>
+              )
+            }
+
+            return (
+              <View
+                key={i}
+                style={[
+                  pdfStyles.monacoLine,
+                  isLineHighlighted(i, rightHighlightRanges)
+                    ? pdfStyles.monacoLineMatch
+                    : {},
+                ]}
+              >
+                <View style={pdfStyles.monacoGutter}>
+                  <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+                </View>
+                <View style={pdfStyles.monacoCode}>
+                  <Text style={pdfStyles.monacoCodeText}>{line || " "}</Text>
+                </View>
               </View>
-              <View style={pdfStyles.monacoCode}>
-                <Text style={pdfStyles.monacoCodeText}>{line || " "}</Text>
-              </View>
-            </View>
-          ))}
+            )
+          })}
         </View>
       </View>
     </View>
@@ -445,7 +501,9 @@ export function SideBySideDiffView({
               ]}
             >
               <View style={pdfStyles.monacoGutter}>
-                <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+                <Text style={pdfStyles.monacoLineNumber}>
+                  {line.lineNumber ?? ""}
+                </Text>
               </View>
               <View style={pdfStyles.monacoCode}>
                 <Text
@@ -478,7 +536,9 @@ export function SideBySideDiffView({
               ]}
             >
               <View style={pdfStyles.monacoGutter}>
-                <Text style={pdfStyles.monacoLineNumber}>{i + 1}</Text>
+                <Text style={pdfStyles.monacoLineNumber}>
+                  {line.lineNumber ?? ""}
+                </Text>
               </View>
               <View style={pdfStyles.monacoCode}>
                 <Text

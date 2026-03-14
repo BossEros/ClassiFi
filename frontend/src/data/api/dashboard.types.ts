@@ -38,6 +38,7 @@ export interface TeacherDashboardTaskResponse {
   createdAt: string
   className?: string
   submissionCount?: number
+  totalStudents?: number
 }
 
 /** Complete teacher dashboard response */

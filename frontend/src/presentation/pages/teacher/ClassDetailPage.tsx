@@ -17,9 +17,11 @@ import { useToastStore } from "@/shared/store/useToastStore";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import type { User } from "@/business/models/auth/types";
 import type { Class, Assignment, EnrolledStudent } from "@/business/models/dashboard/types";
+import type { Module } from "@/shared/types/class";
 import type { AssignmentFilter, TeacherAssignmentFilter } from "@/shared/utils/assignmentFilters";
 import { filterAssignments, calculateFilterCounts, filterTeacherAssignmentsByTimeline, calculateTeacherFilterCounts, groupAssignments } from "@/shared/utils/assignmentFilters";
 import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers";
+import { getModulesByClassId, createModule, renameModule, toggleModulePublish, deleteModule } from "@/business/services/moduleService";
 import { X, LogOut, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";
 import { leaveClass } from "@/business/services/studentDashboardService";
@@ -36,8 +38,6 @@ interface DeleteClassModalProps {
   className?: string
   isDeleting?: boolean
 }
-
-
 
 function DeleteClassModal({
   isOpen,
@@ -470,6 +470,7 @@ export function ClassDetailPage() {
   const [classInfo, setClassInfo] = useState<Class | null>(null)
   const [assignments, setAssignments] = useState<Assignment[]>([])
   const [students, setStudents] = useState<EnrolledStudent[]>([])
+  const [modules, setModules] = useState<Module[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<ClassTab>("assignments")
@@ -571,6 +572,15 @@ export function ClassDetailPage() {
         setClassInfo(data.classInfo)
         setAssignments(data.assignments)
         setStudents(data.students)
+
+        // Fetch modules for this class
+        try {
+          const fetchedModules = await getModulesByClassId(parseInt(classId))
+          setModules(fetchedModules)
+        } catch (moduleError) {
+          setModules([])
+          console.error("Failed to fetch modules:", moduleError)
+        }
       } catch (err) {
         console.error("Failed to fetch class data:", err)
         setError("Failed to load class. Please try refreshing the page.")
@@ -635,6 +645,65 @@ export function ClassDetailPage() {
       setError("Failed to delete class. Please try again.")
       setIsDeleting(false)
       setIsDeleteModalOpen(false)
+    }
+  }
+
+  const handleCreateModule = async (name: string) => {
+    if (!user || !classId) return
+
+    try {
+      const newModule = await createModule(parseInt(classId), name)
+      setModules((previous) => [...previous, newModule])
+      showToast("Module created successfully")
+    } catch (err) {
+      console.error("Failed to create module:", err)
+      showToast("Failed to create module. Please try again.")
+    }
+  }
+
+  const handleRenameModule = async (moduleId: number, name: string) => {
+    if (!user) return
+
+    try {
+      await renameModule(moduleId, name)
+      setModules((previous) =>
+        previous.map((m) => (m.id === moduleId ? { ...m, name } : m)),
+      )
+      showToast("Module renamed successfully")
+    } catch (err) {
+      console.error("Failed to rename module:", err)
+      showToast("Failed to rename module. Please try again.")
+    }
+  }
+
+  const handleDeleteModule = async (moduleId: number) => {
+    if (!user) return
+
+    try {
+      const deletedModule = modules.find((m) => m.id === moduleId)
+      const deletedAssignmentIds = new Set(deletedModule?.assignments.map((a) => a.id) ?? [])
+      await deleteModule(moduleId)
+      setModules((previous) => previous.filter((m) => m.id !== moduleId))
+      setAssignments((previous) => previous.filter((a) => !deletedAssignmentIds.has(a.id)))
+      showToast("Module deleted successfully")
+    } catch (err) {
+      console.error("Failed to delete module:", err)
+      showToast("Failed to delete module. Please try again.")
+    }
+  }
+
+  const handleToggleModulePublish = async (moduleId: number, isPublished: boolean) => {
+    if (!user) return
+
+    try {
+      await toggleModulePublish(moduleId, isPublished)
+      setModules((previous) =>
+        previous.map((m) => (m.id === moduleId ? { ...m, isPublished } : m)),
+      )
+      showToast(isPublished ? "Module published" : "Module unpublished")
+    } catch (err) {
+      console.error("Failed to update module:", err)
+      showToast("Failed to update module. Please try again.")
     }
   }
 
@@ -757,10 +826,16 @@ export function ClassDetailPage() {
                 isTeacher={isTeacher}
                 onFilterChange={setAssignmentFilter}
                 onTeacherFilterChange={setTeacherAssignmentFilter}
-                onCreateAssignment={() =>
-                  navigate(`/dashboard/classes/${classId}/assignments/new`)
-                }
+                onCreateAssignment={(moduleId?: number) => {
+                  const baseUrl = `/dashboard/classes/${classId}/assignments/new`
+                  navigate(moduleId ? `${baseUrl}?moduleId=${moduleId}` : baseUrl)
+                }}
                 onAssignmentClick={handleAssignmentClick}
+                modules={modules}
+                onCreateModule={handleCreateModule}
+                onRenameModule={handleRenameModule}
+                onDeleteModule={handleDeleteModule}
+                onToggleModulePublish={handleToggleModulePublish}
                 variant={isLightClassView ? "light" : "dark"}
               />
             )}

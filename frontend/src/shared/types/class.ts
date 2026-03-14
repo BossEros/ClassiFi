@@ -77,6 +77,7 @@ export interface Class {
 export interface Assignment {
   id: number
   classId: number
+  moduleId: number | null
   assignmentName: string
   className?: string
   deadline: ISODateString | null
@@ -103,6 +104,19 @@ export interface Assignment {
 
 /** Alias for Assignment */
 export type Task = Assignment
+
+/**
+ * Module entity - a grouping container for assignments within a class.
+ */
+export interface Module {
+  id: number
+  classId: number
+  name: string
+  isPublished: boolean
+  createdAt: ISODateString
+  updatedAt: ISODateString
+  assignments: Assignment[]
+}
 
 /**
  * Enrolled student in a class

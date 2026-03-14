@@ -26,7 +26,6 @@ export function ClassesPage() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [status, setStatus] = useState<FilterStatus>("active")
-  const [selectedTerm, setSelectedTerm] = useState("all")
   const currentUser = useAuthStore((state) => state.user)
 
   useEffect(() => {
@@ -65,36 +64,14 @@ export function ClassesPage() {
     fetchData()
   }, [fetchData])
 
-  const terms = useMemo(() => {
-    const uniqueTerms = new Set<string>()
-
-    classes.forEach((classRecord) => {
-      if (classRecord.academicYear && classRecord.semester) {
-        uniqueTerms.add(
-          `${classRecord.academicYear} - Semester ${classRecord.semester}`,
-        )
-      }
-    })
-
-    return Array.from(uniqueTerms).sort().reverse()
-  }, [classes])
-
   const filteredClasses = useMemo(() => {
     return classes.filter((classRecord) => {
+      if (status === "active" && !classRecord.isActive) {
+        return false
+      }
+
       if (status === "archived" && classRecord.isActive) {
         return false
-      }
-
-      if (status !== "archived" && !classRecord.isActive) {
-        return false
-      }
-
-      if (selectedTerm !== "all") {
-        const termLabel = `${classRecord.academicYear} - Semester ${classRecord.semester}`
-
-        if (termLabel !== selectedTerm) {
-          return false
-        }
       }
 
       if (searchQuery) {
@@ -109,12 +86,11 @@ export function ClassesPage() {
 
       return true
     })
-  }, [classes, searchQuery, selectedTerm, status])
+  }, [classes, searchQuery, status])
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
-    status !== "active" ||
-    selectedTerm !== "all"
+    status !== "active"
 
   const userInitials = currentUser
     ? `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase()
@@ -145,13 +121,10 @@ export function ClassesPage() {
         <ClassFilters
           onSearchChange={setSearchQuery}
           onStatusChange={setStatus}
-          onTermChange={setSelectedTerm}
           currentFilters={{
             searchQuery,
             status,
-            selectedTerm,
           }}
-          terms={terms}
         />
 
         <div className={`mb-8 ${dashboardTheme.divider}`}></div>

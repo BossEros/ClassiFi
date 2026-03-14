@@ -4,6 +4,7 @@ import type { LatePenaltyConfig } from "@/models/index.js"
 export interface CreateAssignmentServiceDTO {
   classId: number
   teacherId: number
+  moduleId: number
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null

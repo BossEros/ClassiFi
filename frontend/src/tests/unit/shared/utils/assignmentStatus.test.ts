@@ -21,6 +21,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-10T23:59:59Z" as any,
         programmingLanguage: "python",
@@ -35,6 +36,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-10T23:59:59Z" as any,
         programmingLanguage: "python",
@@ -50,6 +52,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-10T23:59:59Z" as any,
         programmingLanguage: "python",
@@ -66,6 +69,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-20T23:59:59Z" as any,
         programmingLanguage: "python",
@@ -82,6 +86,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-20T23:59:59Z" as any,
         programmingLanguage: "python",
@@ -97,6 +102,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-20T23:59:59Z" as any,
         programmingLanguage: "python",
@@ -111,6 +117,7 @@ describe("assignmentStatus", () => {
       const assignment: Assignment = {
         id: 1,
         classId: 1,
+        moduleId: null,
         assignmentName: "Test",
         deadline: "2024-01-20T23:59:59Z" as any,
         programmingLanguage: "python",

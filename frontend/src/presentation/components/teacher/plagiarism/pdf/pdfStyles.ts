@@ -423,4 +423,7 @@ export const pdfStyles = StyleSheet.create({
     fontFamily: "Courier",
     lineHeight: 1.4,
   },
+  monacoCodeHighlight: {
+    backgroundColor: "#264F78",
+  },
 })

@@ -4,6 +4,7 @@ import { TestCaseRepository } from "@/modules/test-cases/test-case.repository.js
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { ModuleRepository } from "@/modules/modules/module.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { StorageService } from "@/services/storage.service.js"
 import {
@@ -44,6 +45,8 @@ export class AssignmentService {
     private enrollmentRepo: EnrollmentRepository,
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
+    @inject(DI_TOKENS.repositories.module)
+    private moduleRepo: ModuleRepository,
     @inject(DI_TOKENS.services.storage)
     private storageService: StorageService,
     @inject(DI_TOKENS.services.notification)
@@ -60,6 +63,7 @@ export class AssignmentService {
     const {
       classId,
       teacherId,
+      moduleId,
       assignmentName,
       instructions,
       instructionsImageUrl,
@@ -77,17 +81,16 @@ export class AssignmentService {
     // Verify class exists and teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
+    // Verify the module belongs to the same class
+    await this.validateModuleBelongsToClass(moduleId, classId)
+
     const normalizedInstructions = instructions.trim()
     const normalizedInstructionsImageUrl =
       this.normalizeNullableString(instructionsImageUrl)
 
-    this.validateInstructionsContent(
-      normalizedInstructions,
-      normalizedInstructionsImageUrl,
-    )
-
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
+      moduleId,
       assignmentName,
       instructions: normalizedInstructions,
       instructionsImageUrl: normalizedInstructionsImageUrl,
@@ -261,19 +264,6 @@ export class AssignmentService {
         ? this.normalizeNullableString(updateData.instructionsImageUrl)
         : undefined
 
-    const finalInstructions = (
-      normalizedInstructions ?? existingAssignment.instructions
-    ).trim()
-    const finalInstructionsImageUrl =
-      normalizedInstructionsImageUrl !== undefined
-        ? normalizedInstructionsImageUrl
-        : existingAssignment.instructionsImageUrl
-
-    this.validateInstructionsContent(
-      finalInstructions,
-      finalInstructionsImageUrl,
-    )
-
     const previousInstructionsImageUrl = existingAssignment.instructionsImageUrl
 
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
@@ -324,20 +314,24 @@ export class AssignmentService {
     await this.assignmentRepo.deleteAssignment(assignmentId)
   }
 
-  /**
-   * Ensures assignment has at least one instructions surface.
-   */
-  private validateInstructionsContent(
-    instructions: string,
-    instructionsImageUrl: string | null | undefined,
-  ): void {
-    const hasTextInstructions = instructions.trim().length > 0
-    const hasImageInstructions = !!instructionsImageUrl?.trim()
 
-    if (!hasTextInstructions && !hasImageInstructions) {
-      throw new InvalidAssignmentDataError(
-        "Either instructions text or instructions image is required",
-      )
+
+  /**
+   * Validates that the given module belongs to the expected class.
+   *
+   * @param moduleId - The module ID to validate.
+   * @param classId - The class ID the assignment belongs to.
+   * @throws BadRequestError if the module does not exist or belongs to a different class.
+   */
+  private async validateModuleBelongsToClass(moduleId: number, classId: number): Promise<void> {
+    const module = await this.moduleRepo.getModuleById(moduleId)
+
+    if (!module) {
+      throw new BadRequestError(`Module not found: ${moduleId}`)
+    }
+
+    if (module.classId !== classId) {
+      throw new BadRequestError("Module does not belong to the specified class")
     }
   }
 

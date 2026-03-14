@@ -1,5 +1,5 @@
 ﻿import { injectable } from "tsyringe"
-import { and, desc, eq, gt, isNull, sql } from "drizzle-orm"
+import { and, desc, eq, gt, isNull, or, sql } from "drizzle-orm"
 import {
   assignments,
   classes,
@@ -18,7 +18,7 @@ export interface StudentPendingAssignmentReadModel {
   assignmentName: string
   className: string
   classId: number
-  deadline: Date
+  deadline: Date | null
   programmingLanguage: Assignment["programmingLanguage"]
 }
 
@@ -83,25 +83,17 @@ export class DashboardQueryRepository implements DashboardQueryReadRepository {
           eq(enrollments.studentId, studentId),
           eq(classes.isActive, true),
           eq(assignments.isActive, true),
-          gt(assignments.deadline, now),
+          or(gt(assignments.deadline, now), isNull(assignments.deadline)),
           isNull(submissions.id),
         ),
       )
-      .orderBy(assignments.deadline)
+      .orderBy(sql`${assignments.deadline} ASC NULLS LAST`)
       .limit(limit)
 
-    return results
-      .filter(
-        (
-          row,
-        ): row is typeof row & {
-          deadline: Date
-        } => row.deadline !== null,
-      )
-      .map((row) => ({
-        ...row,
-        deadline: row.deadline,
-      }))
+    return results.map((row) => ({
+      ...row,
+      deadline: row.deadline,
+    }))
   }
 
   /**

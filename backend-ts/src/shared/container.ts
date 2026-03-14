@@ -12,6 +12,7 @@ import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository
 import { TestCaseRepository } from "@/modules/test-cases/test-case.repository.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { GradebookRepository } from "@/modules/gradebook/gradebook-query.repository.js"
+import { ModuleRepository } from "@/modules/modules/module.repository.js"
 import { NotificationRepository } from "@/modules/notifications/notification.repository.js"
 import { NotificationDeliveryRepository } from "@/modules/notifications/notification-delivery.repository.js"
 import { NotificationPreferenceRepository } from "@/modules/notifications/notification-preference.repository.js"
@@ -30,6 +31,7 @@ import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { Judge0Service } from "@/services/judge0.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
 import { TestCaseService } from "@/modules/test-cases/test-case.service.js"
+import { ModuleService } from "@/modules/modules/module.service.js"
 import { CODE_EXECUTOR_TOKEN } from "@/services/interfaces/codeExecutor.interface.js"
 import { GradebookService } from "@/modules/gradebook/gradebook.service.js"
 import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
@@ -84,6 +86,7 @@ container.registerSingleton(
   DI_TOKENS.repositories.gradebook,
   GradebookRepository,
 )
+container.registerSingleton(DI_TOKENS.repositories.module, ModuleRepository)
 container.registerSingleton(
   DI_TOKENS.repositories.notification,
   NotificationRepository,
@@ -139,6 +142,7 @@ container.registerSingleton(
 container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)
 container.registerSingleton(DI_TOKENS.services.codeTest, CodeTestService)
 container.registerSingleton(DI_TOKENS.services.testCase, TestCaseService)
+container.registerSingleton(DI_TOKENS.services.module, ModuleService)
 
 // Register focused admin services as singletons
 container.registerSingleton(DI_TOKENS.services.adminUser, AdminUserService)

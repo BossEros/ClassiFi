@@ -11,6 +11,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import { classes } from "@/modules/classes/class.model.js"
+import { modules } from "@/modules/modules/module.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
 import { similarityReports } from "@/modules/plagiarism/similarity-report.model.js"
 
@@ -37,6 +38,9 @@ export const assignments = pgTable("assignments", {
   classId: integer("class_id")
     .notNull()
     .references(() => classes.id, { onDelete: "cascade" }),
+  moduleId: integer("module_id").references(() => modules.id, {
+    onDelete: "cascade",
+  }),
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
   instructions: text("instructions").notNull(),
   instructionsImageUrl: text("instructions_image_url"),
@@ -71,6 +75,10 @@ export const assignmentsRelations = relations(assignments, ({ one, many }) => ({
   classObj: one(classes, {
     fields: [assignments.classId],
     references: [classes.id],
+  }),
+  module: one(modules, {
+    fields: [assignments.moduleId],
+    references: [modules.id],
   }),
   submissions: many(submissions),
   similarityReports: many(similarityReports),

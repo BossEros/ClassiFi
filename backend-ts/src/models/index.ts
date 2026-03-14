@@ -134,3 +134,10 @@ export type {
   NotificationPreference,
   NewNotificationPreference,
 } from "@/modules/notifications/notification-preference.model.js"
+
+// Module model
+export {
+  modules,
+  modulesRelations,
+} from "@/modules/modules/module.model.js"
+export type { Module, NewModule } from "@/modules/modules/module.model.js"

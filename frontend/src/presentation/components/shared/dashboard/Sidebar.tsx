@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Calendar,
   Bell,
+  ClipboardList,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react"
@@ -26,6 +27,12 @@ const teacherNavigationItems = [
     label: "Classes",
     path: "/dashboard/classes",
     icon: BookOpen,
+  },
+  {
+    id: "assignments",
+    label: "Assignments",
+    path: "/dashboard/assignments",
+    icon: ClipboardList,
   },
   {
     id: "calendar",
@@ -48,6 +55,12 @@ const studentNavigationItems = [
     label: "Classes",
     path: "/dashboard/classes",
     icon: BookOpen,
+  },
+  {
+    id: "assignments",
+    label: "Assignments",
+    path: "/dashboard/assignments",
+    icon: ClipboardList,
   },
   {
     id: "calendar",

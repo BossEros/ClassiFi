@@ -6,7 +6,7 @@ import type {
   PairResponse,
 } from "@/business/services/plagiarismService"
 import type { User } from "@/shared/types/auth"
-import type { FilePair } from "../types"
+import type { FilePair, MatchFragment } from "../types"
 import type { SimilarityGraphLayout } from "@/presentation/utils/plagiarismGraphUtils"
 import type {
   SimilarityBadgeSeverity,
@@ -77,6 +77,7 @@ export interface PairSimilarityReportData {
   rightCode: string
   leftFragmentRanges: { start: number; end: number }[]
   rightFragmentRanges: { start: number; end: number }[]
+  fragments: MatchFragment[]
 }
 
 // ─── Builder Options ───────────────────────────────────────────────────────────
@@ -114,11 +115,17 @@ export type DiffLineKind = "unchanged" | "added" | "removed"
 export interface DiffLine {
   kind: DiffLineKind
   text: string
+  lineNumber?: number
 }
 
 export interface LineDiff {
   left: DiffLine[]
   right: DiffLine[]
+}
+
+export interface TextSegment {
+  text: string
+  isHighlighted: boolean
 }
 
 // ─── Code View Props ───────────────────────────────────────────────────────────
@@ -132,6 +139,7 @@ export interface SideBySideProps {
   rightFileName: string
   rightCode: string
   rightHighlightRanges?: { start: number; end: number }[]
+  fragments?: MatchFragment[]
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────

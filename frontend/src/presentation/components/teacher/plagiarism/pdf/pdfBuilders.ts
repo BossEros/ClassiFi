@@ -256,5 +256,6 @@ export function buildPairSimilarityReportData(
       start: f.rightSelection.startRow,
       end: f.rightSelection.endRow,
     })),
+    fragments: options.pairDetails.fragments,
   }
 }

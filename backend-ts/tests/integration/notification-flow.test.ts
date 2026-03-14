@@ -135,6 +135,12 @@ describe("Notification Flow Integration Tests", () => {
     container.registerInstance("SubmissionRepository", mockSubmissionRepo)
     container.registerInstance("StorageService", mockStorageService)
     container.registerInstance("TestCaseRepository", mockTestCaseRepo)
+
+    const mockModuleRepo = {
+      getModuleById: vi.fn().mockResolvedValue({ id: 1, classId: 1, name: "Module 1", isPublished: true, createdAt: new Date(), updatedAt: new Date() }),
+    } as any
+    container.registerInstance("ModuleRepository", mockModuleRepo)
+
     container.registerInstance("TestResultRepository", mockTestResultRepo)
     container.registerInstance("LatePenaltyService", mockLatePenaltyService)
 
@@ -171,6 +177,7 @@ describe("Notification Flow Integration Tests", () => {
       const assignmentData = {
         classId,
         teacherId,
+        moduleId: 1,
         assignmentName: "Test Assignment",
         instructions: "Test instructions",
         programmingLanguage: "python" as const,
@@ -194,7 +201,8 @@ describe("Notification Flow Integration Tests", () => {
         teacherId,
         className: "Test Class",
         classCode: "TEST123",
-        description: "Test class",
+        description: "Test class",
+
         semester: 1,
         academicYear: "2024-2025",
         schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },
@@ -300,6 +308,7 @@ describe("Notification Flow Integration Tests", () => {
       const assignmentData = {
         classId,
         teacherId,
+        moduleId: 1,
         assignmentName: "Test Assignment",
         instructions: "Test instructions",
         programmingLanguage: "python" as const,
@@ -323,7 +332,8 @@ describe("Notification Flow Integration Tests", () => {
         teacherId,
         className: "Test Class",
         classCode: "TEST123",
-        description: "Test class",
+        description: "Test class",
+
         semester: 1,
         academicYear: "2024-2025",
         schedule: { days: ["monday"], startTime: "09:00", endTime: "10:00" },

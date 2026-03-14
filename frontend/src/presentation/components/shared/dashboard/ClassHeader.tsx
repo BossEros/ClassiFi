@@ -173,20 +173,20 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
 
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 {!isTeacher ? (
-                  <div className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-medium text-slate-600">
+                  <div className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
                     <Avatar
                       size="sm"
                       src={instructorAvatarUrl ?? undefined}
                       fallback={instructorInitials}
                       alt={instructorName}
-                      className="h-6 w-6 border border-slate-200 text-[10px]"
+                      className="h-6 w-6 border border-slate-300 text-[10px]"
                     />
                     <span>{instructorName}</span>
                   </div>
                 ) : null}
 
                 {academicTermText ? (
-                  <span className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600">
+                  <span className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm">
                     {academicTermText}
                   </span>
                 ) : null}

@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ChevronUp, ChevronDown } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
-import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
+import { getDeadlineStatus, formatDateTime, getMinutesUntilNextSession } from "@/presentation/utils/dateUtils"
 import type { Class, Task } from "@/business/models/dashboard/types"
 
 function getDeadlineBadgeClass(deadlineStatus: string): string {
@@ -25,6 +25,8 @@ function getDeadlineBadgeClass(deadlineStatus: string): string {
   return "border-slate-300 bg-slate-100 text-slate-600"
 }
 
+type SortDirection = "asc" | "desc"
+
 export function StudentDashboardPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
@@ -32,6 +34,22 @@ export function StudentDashboardPage() {
   const [pendingAssignments, setPendingAssignments] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deadlineSort, setDeadlineSort] = useState<SortDirection>("asc")
+
+  const sortedAssignments = useMemo(() => {
+    return [...pendingAssignments].sort((a, b) => {
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+
+      const dateA = new Date(a.deadline).getTime()
+      const dateB = new Date(b.deadline).getTime()
+      const safeA = Number.isFinite(dateA) ? dateA : (deadlineSort === "asc" ? Infinity : -Infinity)
+      const safeB = Number.isFinite(dateB) ? dateB : (deadlineSort === "asc" ? Infinity : -Infinity)
+
+      return deadlineSort === "asc" ? safeA - safeB : safeB - safeA
+    })
+  }, [pendingAssignments, deadlineSort])
 
   const fetchDashboardData = async (studentId: number) => {
     try {
@@ -63,7 +81,17 @@ export function StudentDashboardPage() {
     : "?"
 
   const topBar = useTopBar({ user, userInitials })
-  const displayedClasses = enrolledClasses.slice(0, 3)
+
+  const displayedClasses = useMemo(() => {
+    return [...enrolledClasses]
+      .sort((a, b) => {
+        const minutesA = a.schedule ? getMinutesUntilNextSession(a.schedule) : Infinity
+        const minutesB = b.schedule ? getMinutesUntilNextSession(b.schedule) : Infinity
+
+        return minutesA - minutesB
+      })
+      .slice(0, 3)
+  }, [enrolledClasses])
 
   return (
     <DashboardLayout topBar={topBar}>
@@ -132,6 +160,13 @@ export function StudentDashboardPage() {
           <h2 className="text-lg font-semibold tracking-tight text-slate-800 md:text-lg">
             To-Do
           </h2>
+          <button
+            onClick={() => navigate("/dashboard/assignments")}
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-teal-600 transition-colors hover:text-teal-700"
+          >
+            View all
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -150,8 +185,23 @@ export function StudentDashboardPage() {
                     <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Class
                     </th>
-                    <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      Deadline
+                    <th
+                      className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600"
+                      aria-sort={deadlineSort === "asc" ? "ascending" : "descending"}
+                    >
+                      <button
+                        type="button"
+                        className="inline-flex cursor-pointer select-none items-center gap-1 hover:text-slate-800"
+                        onClick={() => setDeadlineSort(prev => prev === "asc" ? "desc" : "asc")}
+                        aria-label="Sort by deadline"
+                      >
+                        Deadline
+                        {deadlineSort === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )}
+                      </button>
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Action
@@ -159,7 +209,7 @@ export function StudentDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingAssignments.map((assignment) => {
+                  {sortedAssignments.slice(0, 5).map((assignment) => {
                     const deadlineStatus = getDeadlineStatus(assignment.deadline)
                     const deadlineBadgeClass = getDeadlineBadgeClass(deadlineStatus)
 
@@ -169,16 +219,11 @@ export function StudentDashboardPage() {
                         className="border-t border-slate-200 transition-colors hover:bg-slate-50/70"
                       >
                         <td className="px-6 py-4">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">
-                              {assignment.assignmentName}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              Status: {deadlineStatus}
-                            </p>
-                          </div>
+                          <p className="text-sm font-semibold text-slate-900">
+                            {assignment.assignmentName}
+                          </p>
                         </td>
-                        <td className="px-6 py-4 text-xs font-semibold text-slate-700">
+                        <td className="px-6 py-4 text-sm text-slate-700">
                           {assignment.className || "Unknown class"}
                         </td>
                         <td className="px-6 py-4">
@@ -186,7 +231,7 @@ export function StudentDashboardPage() {
                             className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${deadlineBadgeClass}`}
                           >
                             <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                            {deadlineStatus}
+                            {assignment.deadline ? formatDateTime(assignment.deadline) : "No deadline"}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">

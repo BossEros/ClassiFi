@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray, sql, or, gt, asc } from "drizzle-orm"
+import { eq, and, desc, inArray, sql, or, gt } from "drizzle-orm"
 import {
   assignments,
   classes,
@@ -27,6 +27,7 @@ export interface PendingTeacherTask {
 /** Data required to create a new assignment */
 export interface CreateAssignmentData {
   classId: number
+  moduleId: number
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
@@ -217,7 +218,7 @@ export class AssignmentRepository extends BaseRepository<
           ),
         ),
       )
-      .orderBy(asc(assignments.deadline))
+      .orderBy(sql`${assignments.deadline} ASC NULLS LAST`)
       .limit(limit)
   }
 
@@ -246,6 +247,7 @@ export class AssignmentRepository extends BaseRepository<
       .insert(assignments)
       .values({
         classId: data.classId,
+        moduleId: data.moduleId,
         assignmentName: data.assignmentName,
         instructions: data.instructions,
         instructionsImageUrl: data.instructionsImageUrl ?? null,

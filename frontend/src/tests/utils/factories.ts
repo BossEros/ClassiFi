@@ -104,7 +104,8 @@ export function createMockClass(overrides?: Partial<Class>): Class {
     classCode: "CS101",
     description: "Learn the fundamentals of programming",
     isActive: true,
-    createdAt: toISO(new Date()),
+    createdAt: toISO(new Date()),
+
     semester: 1,
     academicYear: "2024-2025",
     schedule: createMockSchedule(),
@@ -141,6 +142,7 @@ export function createMockAssignment(
   return {
     id: 1,
     classId: 1,
+    moduleId: null,
     assignmentName: "Hello World Assignment",
     deadline: toISO(deadline),
     programmingLanguage: "python",
