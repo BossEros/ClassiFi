@@ -651,40 +651,60 @@ export function ClassDetailPage() {
   const handleCreateModule = async (name: string) => {
     if (!user || !classId) return
 
-    const newModule = await createModule(parseInt(classId), name)
-    setModules((previous) => [...previous, newModule])
-    showToast("Module created successfully")
+    try {
+      const newModule = await createModule(parseInt(classId), name)
+      setModules((previous) => [...previous, newModule])
+      showToast("Module created successfully")
+    } catch (err) {
+      console.error("Failed to create module:", err)
+      showToast("Failed to create module. Please try again.")
+    }
   }
 
   const handleRenameModule = async (moduleId: number, name: string) => {
     if (!user) return
 
-    await renameModule(moduleId, name)
-    setModules((previous) =>
-      previous.map((m) => (m.id === moduleId ? { ...m, name } : m)),
-    )
-    showToast("Module renamed successfully")
+    try {
+      await renameModule(moduleId, name)
+      setModules((previous) =>
+        previous.map((m) => (m.id === moduleId ? { ...m, name } : m)),
+      )
+      showToast("Module renamed successfully")
+    } catch (err) {
+      console.error("Failed to rename module:", err)
+      showToast("Failed to rename module. Please try again.")
+    }
   }
 
   const handleDeleteModule = async (moduleId: number) => {
     if (!user) return
 
-    await deleteModule(moduleId)
-    const deletedModule = modules.find((m) => m.id === moduleId)
-    const deletedAssignmentIds = new Set(deletedModule?.assignments.map((a) => a.id) ?? [])
-    setModules((previous) => previous.filter((m) => m.id !== moduleId))
-    setAssignments((previous) => previous.filter((a) => !deletedAssignmentIds.has(a.id)))
-    showToast("Module deleted successfully")
+    try {
+      const deletedModule = modules.find((m) => m.id === moduleId)
+      const deletedAssignmentIds = new Set(deletedModule?.assignments.map((a) => a.id) ?? [])
+      await deleteModule(moduleId)
+      setModules((previous) => previous.filter((m) => m.id !== moduleId))
+      setAssignments((previous) => previous.filter((a) => !deletedAssignmentIds.has(a.id)))
+      showToast("Module deleted successfully")
+    } catch (err) {
+      console.error("Failed to delete module:", err)
+      showToast("Failed to delete module. Please try again.")
+    }
   }
 
   const handleToggleModulePublish = async (moduleId: number, isPublished: boolean) => {
     if (!user) return
 
-    await toggleModulePublish(moduleId, isPublished)
-    setModules((previous) =>
-      previous.map((m) => (m.id === moduleId ? { ...m, isPublished } : m)),
-    )
-    showToast(isPublished ? "Module published" : "Module unpublished")
+    try {
+      await toggleModulePublish(moduleId, isPublished)
+      setModules((previous) =>
+        previous.map((m) => (m.id === moduleId ? { ...m, isPublished } : m)),
+      )
+      showToast(isPublished ? "Module published" : "Module unpublished")
+    } catch (err) {
+      console.error("Failed to update module:", err)
+      showToast("Failed to update module. Please try again.")
+    }
   }
 
   const handleAssignmentClick = (assignmentId: number) => {

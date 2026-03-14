@@ -44,8 +44,10 @@ export function StudentDashboardPage() {
 
       const dateA = new Date(a.deadline).getTime()
       const dateB = new Date(b.deadline).getTime()
+      const safeA = Number.isFinite(dateA) ? dateA : (deadlineSort === "asc" ? Infinity : -Infinity)
+      const safeB = Number.isFinite(dateB) ? dateB : (deadlineSort === "asc" ? Infinity : -Infinity)
 
-      return deadlineSort === "asc" ? dateA - dateB : dateB - dateA
+      return deadlineSort === "asc" ? safeA - safeB : safeB - safeA
     })
   }, [pendingAssignments, deadlineSort])
 
@@ -82,7 +84,12 @@ export function StudentDashboardPage() {
 
   const displayedClasses = useMemo(() => {
     return [...enrolledClasses]
-      .sort((a, b) => getMinutesUntilNextSession(a.schedule) - getMinutesUntilNextSession(b.schedule))
+      .sort((a, b) => {
+        const minutesA = a.schedule ? getMinutesUntilNextSession(a.schedule) : Infinity
+        const minutesB = b.schedule ? getMinutesUntilNextSession(b.schedule) : Infinity
+
+        return minutesA - minutesB
+      })
       .slice(0, 3)
   }, [enrolledClasses])
 

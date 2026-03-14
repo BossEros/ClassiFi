@@ -25,12 +25,10 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
   const dialogRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
 
-  // Reset isDeleting when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setIsDeleting(false)
-    }
-  }, [isOpen])
+  const handleClose = useCallback(() => {
+    setIsDeleting(false)
+    onClose()
+  }, [onClose])
 
   // Focus management: capture previous focus, auto-focus dialog, restore on close
   useEffect(() => {
@@ -52,7 +50,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isDeleting) {
-        onClose()
+        handleClose()
         return
       }
 
@@ -79,7 +77,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
         }
       }
     },
-    [isDeleting, onClose],
+    [isDeleting, handleClose],
   )
 
   useEffect(() => {
@@ -101,7 +99,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
 
     try {
       await onConfirm()
-      onClose()
+      handleClose()
     } catch {
       setIsDeleting(false)
     }
@@ -112,7 +110,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={!isDeleting ? onClose : undefined}
+        onClick={!isDeleting ? handleClose : undefined}
       />
 
       {/* Modal */}
@@ -131,7 +129,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
       >
         {/* Close button */}
         <button
-          onClick={onClose}
+          onClick={handleClose}
           disabled={isDeleting}
           aria-label="Close"
           className={cn(
@@ -178,7 +176,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
         {/* Actions */}
         <div className="flex gap-3">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isDeleting}
             className={cn(
               "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",

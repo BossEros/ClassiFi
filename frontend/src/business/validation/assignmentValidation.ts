@@ -29,12 +29,10 @@ export const validateAssignmentTitle = (title: string): string | null => {
  * Validates the assignment instructions.
  *
  * @param instructions - The instructions to validate.
- * @param instructionsImageUrl - Optional image URL used as the main instructions.
  * @returns An error message string if invalid, otherwise null.
  */
 export const validateInstructions = (
   instructions: string,
-  _instructionsImageUrl?: string | null,
 ): string | null => {
   const trimmed = instructions.trim()
 
@@ -126,10 +124,7 @@ export const validateCreateAssignmentData = (
 
   // Validate instructions (optional, only check max length if provided)
   if (data.instructions !== undefined) {
-    const instructionsError = validateInstructions(
-      data.instructions,
-      data.instructionsImageUrl,
-    )
+    const instructionsError = validateInstructions(data.instructions)
     if (instructionsError) {
       errors.push({ field: "instructions", message: instructionsError })
     }

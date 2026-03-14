@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
@@ -64,35 +64,25 @@ export function AssignmentsTabContent({
   variant = "dark",
 }: AssignmentsTabContentProps) {
   const isLight = variant === "light"
-  const [viewMode, setViewMode] = useState<AssignmentViewMode>(
-    modules && modules.length > 0 ? "module" : "list",
-  )
-  const [expandedModuleIds, setExpandedModuleIds] = useState<Set<number>>(() => {
-    const firstModuleId = modules.length > 0 ? modules[0].id : null
-    return firstModuleId !== null ? new Set([firstModuleId]) : new Set()
-  })
+  const [viewMode, setViewMode] = useState<AssignmentViewMode>("module")
+  const [expandedModuleIds, setExpandedModuleIds] = useState<Set<number>>(new Set())
 
-  // Fall back to list view when modules become empty
-  useEffect(() => {
-    if (modules.length === 0) {
-      setViewMode("list")
-    }
-  }, [modules])
+  // Derive the effective view: fall back to "list" when no modules exist
+  const effectiveViewMode = modules.length === 0 ? "list" : viewMode
 
-  // Update expanded state when modules first load (for the first-expanded-by-default behavior)
-  useEffect(() => {
-    if (modules.length > 0 && expandedModuleIds.size === 0) {
-      setExpandedModuleIds(new Set([modules[0].id]))
-    }
-  }, [modules])
+  // Derive effective expanded IDs: if user hasn't interacted yet and modules exist, default first open
+  const effectiveExpandedIds =
+    expandedModuleIds.size === 0 && modules.length > 0
+      ? new Set([modules[0].id])
+      : expandedModuleIds
 
   const hasVisibleAssignments = groupedAssignments.current.length > 0 || groupedAssignments.past.length > 0
   const shouldShowNoFilterResultsState = assignments.length > 0 && !hasVisibleAssignments
   const hasModules = modules.length > 0
 
   const toggleModuleExpanded = (moduleId: number) => {
-    setExpandedModuleIds((previous) => {
-      const next = new Set(previous)
+    setExpandedModuleIds(() => {
+      const next = new Set(effectiveExpandedIds)
 
       if (next.has(moduleId)) {
         next.delete(moduleId)
@@ -116,11 +106,11 @@ export function AssignmentsTabContent({
             Assignments
           </h2>
           <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
-            <ViewToggle activeView={viewMode} onViewChange={setViewMode} variant={variant} />
+            <ViewToggle activeView={effectiveViewMode} onViewChange={setViewMode} variant={variant} />
           </div>
         </div>
 
-        {viewMode === "list" && (
+        {effectiveViewMode === "list" && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {isTeacher ? (
               <AssignmentFilterBar
@@ -153,14 +143,14 @@ export function AssignmentsTabContent({
       </div>
 
       {/* Module View */}
-      {viewMode === "module" && (
+      {effectiveViewMode === "module" && (
         hasModules ? (
           <div className="space-y-4">
             {modules.map((module) => (
               <ModuleCard
                 key={module.id}
                 module={module}
-                isExpanded={expandedModuleIds.has(module.id)}
+                isExpanded={effectiveExpandedIds.has(module.id)}
                 onToggleExpand={() => toggleModuleExpanded(module.id)}
                 onAssignmentClick={onAssignmentClick}
                 isTeacher={isTeacher}
@@ -199,7 +189,7 @@ export function AssignmentsTabContent({
       )}
 
       {/* List View */}
-      {viewMode === "list" && (
+      {effectiveViewMode === "list" && (
         shouldShowNoFilterResultsState ? (
           <div className="py-12 text-center">
             <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}>

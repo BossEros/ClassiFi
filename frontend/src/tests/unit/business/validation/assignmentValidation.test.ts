@@ -58,7 +58,7 @@ describe("assignmentValidation", () => {
 
     it("should allow image-only instructions", () => {
       expect(
-        validateInstructions("", "https://example.com/image.png"),
+        validateInstructions(""),
       ).toBeNull()
     })
 
