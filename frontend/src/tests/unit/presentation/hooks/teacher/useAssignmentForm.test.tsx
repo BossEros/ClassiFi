@@ -81,7 +81,8 @@ describe("useAssignmentForm", () => {
       teacherId: 1,
       description: "Desc",
       isActive: true,
-      createdAt: new Date().toISOString() as ISODateString,
+      createdAt: new Date().toISOString() as ISODateString,
+
       semester: 1,
       academicYear: "2023-2024",
       schedule: {
@@ -165,6 +166,7 @@ describe("useAssignmentForm", () => {
           buildFutureLocalDateTimeString(),
         )
         result.current.handleInputChange("totalScore", 100)
+        result.current.handleInputChange("moduleId", 1)
       })
 
       const mockCreatedAssignment = { id: 303 }
@@ -256,6 +258,7 @@ describe("useAssignmentForm", () => {
         result.current.handleInputChange("instructions", "Desc")
         result.current.handleInputChange("programmingLanguage", "python")
         result.current.handleInputChange("totalScore", 100)
+        result.current.handleInputChange("moduleId", 1)
         result.current.handleInputChange("allowLateSubmissions", true)
       })
 
@@ -314,6 +317,7 @@ describe("useAssignmentForm", () => {
           buildFutureLocalDateTimeString(),
         )
         result.current.handleInputChange("totalScore", 100)
+        result.current.handleInputChange("moduleId", 1)
         result.current.handleAddPendingTestCase({
           tempId: "t1",
           name: "TC1",
@@ -370,6 +374,7 @@ describe("useAssignmentForm", () => {
         scheduledDate: null,
         allowLateSubmissions: false,
         latePenaltyConfig: null,
+        moduleId: 1,
       } as any)
       vi.mocked(testCaseService.getTestCases).mockResolvedValue([])
       vi.mocked(classService.updateAssignment).mockResolvedValue({} as any) // Mock void/result
