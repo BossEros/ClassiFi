@@ -99,6 +99,12 @@
   --radius-full: 9999px; /* Fully rounded */
 
   /* ============================================
+     TYPOGRAPHY - Font Families
+     ============================================ */
+
+  --font-expletus: "Expletus Sans", system-ui, sans-serif;
+
+  /* ============================================
      TRANSITIONS - Smooth Interactions
      ============================================ */
 
