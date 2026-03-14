@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray, sql, or, gt, asc } from "drizzle-orm"
+import { eq, and, desc, inArray, sql, or, gt, isNull } from "drizzle-orm"
 import {
   assignments,
   classes,
@@ -214,11 +214,12 @@ export class AssignmentRepository extends BaseRepository<
           eq(assignments.isActive, true),
           or(
             gt(assignments.deadline, now),
+            isNull(assignments.deadline),
             gt(sql`COALESCE(${submissionCountsSubquery.count}, 0)`, 0),
           ),
         ),
       )
-      .orderBy(asc(assignments.deadline))
+      .orderBy(sql`${assignments.deadline} ASC NULLS LAST`)
       .limit(limit)
   }
 

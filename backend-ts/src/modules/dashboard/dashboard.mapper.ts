@@ -44,7 +44,7 @@ export interface PendingAssignmentDTO {
   assignmentName: string
   className: string
   classId: number
-  deadline: string
+  deadline: string | null
   hasSubmitted: boolean
   programmingLanguage: string
 }
