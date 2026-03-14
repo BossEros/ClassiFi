@@ -115,6 +115,7 @@ export function useAssignmentForm() {
     scheduledDate: getFieldErrorMessage(formStateErrors, "scheduledDate"),
     totalScore: getFieldErrorMessage(formStateErrors, "totalScore"),
     maxAttempts: getFieldErrorMessage(formStateErrors, "maxAttempts"),
+    moduleId: getFieldErrorMessage(formStateErrors, "moduleId"),
     general: generalError,
   }
 

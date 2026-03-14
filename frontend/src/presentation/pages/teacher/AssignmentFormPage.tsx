@@ -176,9 +176,13 @@ export function AssignmentFormPage() {
                       placeholder="Select a module..."
                       variant="light"
                     />
-                    <p className="text-xs text-slate-400">
-                      Choose which module this assignment belongs to.
-                    </p>
+                    {errors.moduleId ? (
+                      <p className="text-xs text-rose-600">{errors.moduleId}</p>
+                    ) : (
+                      <p className="text-xs text-slate-400">
+                        Choose which module this assignment belongs to.
+                      </p>
+                    )}
                   </CardContent>
                 </Card>
               )}
