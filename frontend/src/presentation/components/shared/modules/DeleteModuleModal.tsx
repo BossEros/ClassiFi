@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import { createPortal } from "react-dom"
 import { X, Trash2, RefreshCw, AlertTriangle } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
@@ -22,15 +22,68 @@ interface DeleteModuleModalProps {
  */
 export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assignmentCount }: DeleteModuleModalProps) {
   const [isDeleting, setIsDeleting] = useState(false)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
+  // Reset isDeleting when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsDeleting(false)
+    }
+  }, [isOpen])
+
+  // Focus management: capture previous focus, auto-focus dialog, restore on close
   useEffect(() => {
     if (!isOpen) return
 
-    const handleKeyDown = (event: KeyboardEvent) => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null
+
+    // Auto-focus the dialog after a frame so the portal has rendered
+    requestAnimationFrame(() => {
+      dialogRef.current?.focus()
+    })
+
+    return () => {
+      previousFocusRef.current?.focus()
+    }
+  }, [isOpen])
+
+  // Focus trap + Escape key
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isDeleting) {
         onClose()
+        return
       }
-    }
+
+      if (event.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        )
+
+        if (focusable.length === 0) return
+
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+
+        if (event.shiftKey) {
+          if (document.activeElement === first) {
+            event.preventDefault()
+            last.focus()
+          }
+        } else {
+          if (document.activeElement === last) {
+            event.preventDefault()
+            first.focus()
+          }
+        }
+      }
+    },
+    [isDeleting, onClose],
+  )
+
+  useEffect(() => {
+    if (!isOpen) return
 
     window.addEventListener("keydown", handleKeyDown)
     document.body.style.overflow = "hidden"
@@ -39,7 +92,7 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
       window.removeEventListener("keydown", handleKeyDown)
       document.body.style.overflow = "unset"
     }
-  }, [isOpen, onClose, isDeleting])
+  }, [isOpen, handleKeyDown])
 
   if (!isOpen) return null
 
@@ -73,11 +126,14 @@ export function DeleteModuleModal({ isOpen, onClose, onConfirm, moduleName, assi
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-module-title"
+        ref={dialogRef}
+        tabIndex={-1}
       >
         {/* Close button */}
         <button
           onClick={onClose}
           disabled={isDeleting}
+          aria-label="Close"
           className={cn(
             "absolute top-4 right-4 cursor-pointer rounded-lg p-1",
             "text-slate-400 hover:text-slate-900 hover:bg-slate-100",

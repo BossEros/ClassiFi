@@ -2,32 +2,27 @@ import { z } from "zod"
 
 /** Create module request schema */
 export const CreateModuleRequestSchema = z.object({
-  teacherId: z.number().int().min(1),
-  name: z.string().min(1).max(255).trim(),
+  name: z.string().trim().min(1).max(255),
 })
 
 export type CreateModuleRequest = z.infer<typeof CreateModuleRequestSchema>
 
 /** Rename module request schema */
 export const RenameModuleRequestSchema = z.object({
-  teacherId: z.number().int().min(1),
-  name: z.string().min(1).max(255).trim(),
+  name: z.string().trim().min(1).max(255),
 })
 
 export type RenameModuleRequest = z.infer<typeof RenameModuleRequestSchema>
 
 /** Toggle module publish request schema */
 export const ToggleModulePublishRequestSchema = z.object({
-  teacherId: z.number().int().min(1),
   isPublished: z.boolean(),
 })
 
 export type ToggleModulePublishRequest = z.infer<typeof ToggleModulePublishRequestSchema>
 
 /** Delete module request schema */
-export const DeleteModuleRequestSchema = z.object({
-  teacherId: z.number().int().min(1),
-})
+export const DeleteModuleRequestSchema = z.object({})
 
 export type DeleteModuleRequest = z.infer<typeof DeleteModuleRequestSchema>
 

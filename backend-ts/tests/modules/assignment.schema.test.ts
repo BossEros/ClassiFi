@@ -17,6 +17,7 @@ describe("Assignment Schemas", () => {
   const validAssignmentResponse = {
     id: 1,
     classId: 10,
+    moduleId: null,
     assignmentName: "Activity 1",
     instructions: "Solve all tasks",
     instructionsImageUrl: null,
@@ -69,6 +70,7 @@ describe("Assignment Schemas", () => {
     it("applies defaults for omitted optional/defaulted fields", () => {
       const parsed = CreateAssignmentRequestSchema.parse({
         teacherId: 1,
+        moduleId: 1,
         assignmentName: "Activity 1",
         programmingLanguage: "python",
       })
@@ -82,6 +84,7 @@ describe("Assignment Schemas", () => {
     it("rejects invalid maxAttempts values", () => {
       const result = CreateAssignmentRequestSchema.safeParse({
         teacherId: 1,
+        moduleId: 1,
         assignmentName: "Activity 1",
         programmingLanguage: "python",
         maxAttempts: 0,

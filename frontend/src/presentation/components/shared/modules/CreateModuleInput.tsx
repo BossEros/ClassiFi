@@ -104,6 +104,9 @@ export function CreateModuleInput({ onCreateModule, variant = "light" }: CreateM
         autoFocus
         disabled={isSubmitting}
         maxLength={255}
+        aria-label="Module name"
+        aria-invalid={!!error}
+        aria-describedby={error ? "module-name-error" : undefined}
         className={cn(
           "w-full rounded-lg border px-3 py-2 text-sm transition-colors duration-200",
           "focus:outline-none focus:ring-2 focus:ring-teal-600 focus:border-teal-600",
@@ -115,7 +118,7 @@ export function CreateModuleInput({ onCreateModule, variant = "light" }: CreateM
         )}
       />
 
-      {error && <p className="text-xs text-rose-500">{error}</p>}
+      {error && <p id="module-name-error" className="text-xs text-rose-500">{error}</p>}
 
       <div className="flex items-center gap-2">
         <button

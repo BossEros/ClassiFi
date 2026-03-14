@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
@@ -64,18 +64,27 @@ export function AssignmentsTabContent({
   variant = "dark",
 }: AssignmentsTabContentProps) {
   const isLight = variant === "light"
-  const [viewMode, setViewMode] = useState<AssignmentViewMode>("module")
+  const [viewMode, setViewMode] = useState<AssignmentViewMode>(
+    modules && modules.length > 0 ? "module" : "list",
+  )
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<number>>(() => {
     const firstModuleId = modules.length > 0 ? modules[0].id : null
     return firstModuleId !== null ? new Set([firstModuleId]) : new Set()
   })
 
+  // Fall back to list view when modules become empty
+  useEffect(() => {
+    if (modules.length === 0) {
+      setViewMode("list")
+    }
+  }, [modules])
+
   // Update expanded state when modules first load (for the first-expanded-by-default behavior)
-  useMemo(() => {
+  useEffect(() => {
     if (modules.length > 0 && expandedModuleIds.size === 0) {
       setExpandedModuleIds(new Set([modules[0].id]))
     }
-  }, [modules.length])
+  }, [modules])
 
   const hasVisibleAssignments = groupedAssignments.current.length > 0 || groupedAssignments.past.length > 0
   const shouldShowNoFilterResultsState = assignments.length > 0 && !hasVisibleAssignments

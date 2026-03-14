@@ -575,9 +575,10 @@ export function ClassDetailPage() {
 
         // Fetch modules for this class
         try {
-          const fetchedModules = await getModulesByClassId(parseInt(classId), isStudent)
+          const fetchedModules = await getModulesByClassId(parseInt(classId))
           setModules(fetchedModules)
         } catch (moduleError) {
+          setModules([])
           console.error("Failed to fetch modules:", moduleError)
         }
       } catch (err) {
@@ -650,7 +651,7 @@ export function ClassDetailPage() {
   const handleCreateModule = async (name: string) => {
     if (!user || !classId) return
 
-    const newModule = await createModule(parseInt(classId), parseInt(user.id), name)
+    const newModule = await createModule(parseInt(classId), name)
     setModules((previous) => [...previous, newModule])
     showToast("Module created successfully")
   }
@@ -658,7 +659,7 @@ export function ClassDetailPage() {
   const handleRenameModule = async (moduleId: number, name: string) => {
     if (!user) return
 
-    await renameModule(moduleId, parseInt(user.id), name)
+    await renameModule(moduleId, name)
     setModules((previous) =>
       previous.map((m) => (m.id === moduleId ? { ...m, name } : m)),
     )
@@ -668,7 +669,7 @@ export function ClassDetailPage() {
   const handleDeleteModule = async (moduleId: number) => {
     if (!user) return
 
-    await deleteModule(moduleId, parseInt(user.id))
+    await deleteModule(moduleId)
     const deletedModule = modules.find((m) => m.id === moduleId)
     const deletedAssignmentIds = new Set(deletedModule?.assignments.map((a) => a.id) ?? [])
     setModules((previous) => previous.filter((m) => m.id !== moduleId))
@@ -679,7 +680,7 @@ export function ClassDetailPage() {
   const handleToggleModulePublish = async (moduleId: number, isPublished: boolean) => {
     if (!user) return
 
-    await toggleModulePublish(moduleId, parseInt(user.id), isPublished)
+    await toggleModulePublish(moduleId, isPublished)
     setModules((previous) =>
       previous.map((m) => (m.id === moduleId ? { ...m, isPublished } : m)),
     )

@@ -179,17 +179,22 @@ export function StudentDashboardPage() {
                       Class
                     </th>
                     <th
-                      className="cursor-pointer select-none px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:text-slate-800"
-                      onClick={() => setDeadlineSort(prev => prev === "asc" ? "desc" : "asc")}
+                      className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600"
+                      aria-sort={deadlineSort === "asc" ? "ascending" : "descending"}
                     >
-                      <span className="inline-flex items-center gap-1">
+                      <button
+                        type="button"
+                        className="inline-flex cursor-pointer select-none items-center gap-1 hover:text-slate-800"
+                        onClick={() => setDeadlineSort(prev => prev === "asc" ? "desc" : "asc")}
+                        aria-label="Sort by deadline"
+                      >
                         Deadline
                         {deadlineSort === "asc" ? (
                           <ChevronUp className="h-3.5 w-3.5" />
                         ) : (
                           <ChevronDown className="h-3.5 w-3.5" />
                         )}
-                      </span>
+                      </button>
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Action

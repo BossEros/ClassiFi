@@ -139,6 +139,7 @@ export interface AssignmentDetailDTO {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   testCases?: AssignmentTestCase[]
+  moduleId?: number | null
 }
 
 export interface SubmissionDTO {

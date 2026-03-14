@@ -1,29 +1,19 @@
 import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { ModuleService } from "@/modules/modules/module.service.js"
-import { validateBody, validateParams, validateQuery } from "@/api/plugins/zod-validation.js"
+import { validateBody, validateParams } from "@/api/plugins/zod-validation.js"
 import { ClassIdParamSchema, type ClassIdParam } from "@/modules/classes/class.schema.js"
 import {
   CreateModuleRequestSchema,
   RenameModuleRequestSchema,
   ToggleModulePublishRequestSchema,
-  DeleteModuleRequestSchema,
   ModuleIdParamSchema,
   type CreateModuleRequest,
   type RenameModuleRequest,
   type ToggleModulePublishRequest,
-  type DeleteModuleRequest,
   type ModuleIdParam,
 } from "@/modules/modules/module.schema.js"
-import { z } from "zod"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
-
-/** Query schema for listing modules */
-const GetModulesQuerySchema = z.object({
-  isStudent: z.string().default("false").transform((val) => val === "true"),
-})
-
-type GetModulesQuery = z.infer<typeof GetModulesQuerySchema>
 
 /**
  * Registers module routes nested under /api/v1/classes/:classId/modules
@@ -45,7 +35,8 @@ export async function moduleClassRoutes(app: FastifyInstance): Promise<void> {
     ],
     async handler(request, reply) {
       const { classId } = request.validatedParams as ClassIdParam
-      const { teacherId, name } = request.validatedBody as CreateModuleRequest
+      const { name } = request.validatedBody as CreateModuleRequest
+      const teacherId = request.user!.id
 
       const createdModule = await moduleService.createModule({
         classId,
@@ -68,11 +59,10 @@ export async function moduleClassRoutes(app: FastifyInstance): Promise<void> {
   app.get("/:classId/modules", {
     preHandler: [
       validateParams(ClassIdParamSchema),
-      validateQuery(GetModulesQuerySchema),
     ],
     async handler(request, reply) {
       const { classId } = request.validatedParams as ClassIdParam
-      const { isStudent } = request.validatedQuery as GetModulesQuery
+      const isStudent = request.user!.role !== "teacher"
 
       const moduleList = await moduleService.getModulesWithAssignments(classId, isStudent)
 
@@ -104,7 +94,8 @@ export async function moduleRoutes(app: FastifyInstance): Promise<void> {
     ],
     async handler(request, reply) {
       const { moduleId } = request.validatedParams as ModuleIdParam
-      const { teacherId, name } = request.validatedBody as RenameModuleRequest
+      const { name } = request.validatedBody as RenameModuleRequest
+      const teacherId = request.user!.id
 
       const updatedModule = await moduleService.renameModule({
         moduleId,
@@ -131,7 +122,8 @@ export async function moduleRoutes(app: FastifyInstance): Promise<void> {
     ],
     async handler(request, reply) {
       const { moduleId } = request.validatedParams as ModuleIdParam
-      const { teacherId, isPublished } = request.validatedBody as ToggleModulePublishRequest
+      const { isPublished } = request.validatedBody as ToggleModulePublishRequest
+      const teacherId = request.user!.id
 
       const updatedModule = await moduleService.toggleModulePublish({
         moduleId,
@@ -154,11 +146,10 @@ export async function moduleRoutes(app: FastifyInstance): Promise<void> {
   app.delete("/:moduleId", {
     preHandler: [
       validateParams(ModuleIdParamSchema),
-      validateBody(DeleteModuleRequestSchema),
     ],
     async handler(request, reply) {
       const { moduleId } = request.validatedParams as ModuleIdParam
-      const { teacherId } = request.validatedBody as DeleteModuleRequest
+      const teacherId = request.user!.id
 
       await moduleService.deleteModule({ moduleId, teacherId })
 

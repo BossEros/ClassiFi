@@ -173,52 +173,60 @@ export function ModuleCard({
                       isLight ? "border-slate-200 bg-white" : "border-white/20 bg-slate-800",
                     )}
                   >
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false)
-                        setIsRenameModalOpen(true)
-                      }}
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
-                        isLight ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:bg-white/10",
-                      )}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Rename
-                    </button>
-                    <button
-                      onClick={handleTogglePublish}
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
-                        isLight ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:bg-white/10",
-                      )}
-                    >
-                      {module.isPublished ? (
-                        <>
-                          <EyeOff className="h-3.5 w-3.5" />
-                          Unpublish
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="h-3.5 w-3.5" />
-                          Publish
-                        </>
-                      )}
-                    </button>
-                    <div className={cn("my-1 h-px", isLight ? "bg-slate-200" : "bg-white/10")} />
-                    <button
-                      onClick={() => {
-                        setIsMenuOpen(false)
-                        setIsDeleteModalOpen(true)
-                      }}
-                      className={cn(
-                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
-                        "text-rose-600 hover:bg-rose-50",
-                      )}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </button>
+                    {onRenameModule && (
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false)
+                          setIsRenameModalOpen(true)
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                          isLight ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:bg-white/10",
+                        )}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Rename
+                      </button>
+                    )}
+                    {onTogglePublish && (
+                      <button
+                        onClick={handleTogglePublish}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                          isLight ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:bg-white/10",
+                        )}
+                      >
+                        {module.isPublished ? (
+                          <>
+                            <EyeOff className="h-3.5 w-3.5" />
+                            Unpublish
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="h-3.5 w-3.5" />
+                            Publish
+                          </>
+                        )}
+                      </button>
+                    )}
+                    {onDeleteModule && (onRenameModule || onTogglePublish) && (
+                      <div className={cn("my-1 h-px", isLight ? "bg-slate-200" : "bg-white/10")} />
+                    )}
+                    {onDeleteModule && (
+                      <button
+                        onClick={() => {
+                          setIsMenuOpen(false)
+                          setIsDeleteModalOpen(true)
+                        }}
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                          "text-rose-600 hover:bg-rose-50",
+                        )}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </>
               )}

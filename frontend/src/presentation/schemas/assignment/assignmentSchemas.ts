@@ -32,7 +32,6 @@ function validateAssignmentTitleValue(titleValue: string): string | null {
 
 function validateInstructionsValue(
   instructionsValue: string,
-  _instructionsImageUrlValue: string | null,
 ): string | null {
   const normalizedInstructions = instructionsValue.trim()
 
@@ -107,7 +106,6 @@ export const assignmentFormSchema = z
 
     const instructionsError = validateInstructionsValue(
       formValue.instructions,
-      formValue.instructionsImageUrl,
     )
 
     if (instructionsError) {

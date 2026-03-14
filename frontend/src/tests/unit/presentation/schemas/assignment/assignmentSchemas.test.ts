@@ -25,6 +25,7 @@ function buildValidAssignmentData() {
       tiers: [{ id: "tier-1", hoursLate: 24, penaltyPercent: 10 }],
       rejectAfterHours: 120,
     },
+    moduleId: 1,
   }
 }
 

@@ -8,6 +8,7 @@ import type { EnrollmentRepository } from "../../src/modules/enrollments/enrollm
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import type { StorageService } from "../../src/services/storage.service.js"
+import type { ModuleRepository } from "../../src/modules/modules/module.repository.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -24,6 +25,7 @@ describe("AssignmentService", () => {
   let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
   let mockStorageService: Partial<MockedObject<StorageService>>
   let mockNotificationService: Partial<MockedObject<NotificationService>>
+  let mockModuleRepo: Partial<MockedObject<ModuleRepository>>
 
   beforeEach(() => {
     mockClassRepo = {
@@ -58,12 +60,17 @@ describe("AssignmentService", () => {
       createNotification: vi.fn(),
     }
 
+    mockModuleRepo = {
+      getModuleById: vi.fn().mockResolvedValue({ id: 1, classId: 1, name: "Module 1", isPublished: true, createdAt: new Date(), updatedAt: new Date() }),
+    }
+
     assignmentService = new AssignmentService(
       mockAssignmentRepo as unknown as AssignmentRepository,
       mockClassRepo as unknown as ClassRepository,
       mockTestCaseRepo as unknown as TestCaseRepository,
       mockEnrollmentRepo as unknown as EnrollmentRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
+      mockModuleRepo as unknown as ModuleRepository,
       mockStorageService as unknown as StorageService,
       mockNotificationService as unknown as NotificationService,
     )
@@ -74,6 +81,7 @@ describe("AssignmentService", () => {
   // ============================================
   describe("createAssignment", () => {
     const validAssignmentData = {
+      moduleId: 1,
       assignmentName: "Test Assignment",
       instructions: "Test instructions for the assignment",
       programmingLanguage: "python" as const,
