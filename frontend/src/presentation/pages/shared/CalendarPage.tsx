@@ -405,7 +405,7 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout className="p-0" topBar={topBar}>
-      <div className="h-full flex flex-col -m-6 lg:-m-8 bg-slate-50">
+      <div className="h-full flex flex-col -m-6 lg:-mx-8 lg:-mb-8 bg-slate-50">
         {/* Page Header */}
         <div className="px-6 lg:px-8 pt-6 pb-4">
           {/* Row 1: Title and Subtitle */}

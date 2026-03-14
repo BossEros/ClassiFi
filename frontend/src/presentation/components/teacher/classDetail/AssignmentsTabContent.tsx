@@ -108,32 +108,38 @@ export function AssignmentsTabContent({
           </h2>
           <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
             <ViewToggle activeView={viewMode} onViewChange={setViewMode} variant={variant} />
-            {isTeacher && viewMode === "list" ? (
-              <Button onClick={() => onCreateAssignment()} className="w-full sm:w-auto">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Assignment
-              </Button>
-            ) : null}
           </div>
         </div>
 
         {viewMode === "list" && (
-          isTeacher ? (
-            <AssignmentFilterBar
-              mode="teacher"
-              activeFilter={teacherAssignmentFilter}
-              onFilterChange={onTeacherFilterChange}
-              counts={teacherFilterCounts}
-              variant={variant}
-            />
-          ) : (
-            <AssignmentFilterBar
-              activeFilter={assignmentFilter}
-              onFilterChange={onFilterChange}
-              counts={filterCounts}
-              variant={variant}
-            />
-          )
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {isTeacher ? (
+              <AssignmentFilterBar
+                mode="teacher"
+                activeFilter={teacherAssignmentFilter}
+                onFilterChange={onTeacherFilterChange}
+                counts={teacherFilterCounts}
+                variant={variant}
+              />
+            ) : (
+              <AssignmentFilterBar
+                activeFilter={assignmentFilter}
+                onFilterChange={onFilterChange}
+                counts={filterCounts}
+                variant={variant}
+              />
+            )}
+            {isTeacher && (
+              <Button
+                onClick={() => onCreateAssignment()}
+                variant="secondary"
+                className="w-full sm:w-auto shrink-0 border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400 hover:text-slate-900"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Assignment
+              </Button>
+            )}
+          </div>
         )}
       </div>
 

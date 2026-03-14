@@ -78,11 +78,11 @@ export function ModuleCard({
     <>
       <div
         className={cn(
-          "rounded-xl border transition-colors duration-200",
+          "rounded-lg border transition-colors duration-200",
           isLight
             ? isUnpublished
-              ? "border-dashed border-slate-300 bg-slate-50/50"
-              : "border-slate-200 bg-white shadow-sm"
+              ? "border-dashed border-slate-300 bg-white/80 shadow-[0_2px_8px_rgba(15,23,42,0.04)]"
+              : "border-slate-300 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.06)]"
             : isUnpublished
               ? "border-dashed border-white/20 bg-white/3"
               : "border-white/10 bg-white/5",
@@ -141,7 +141,7 @@ export function ModuleCard({
 
             {isUnpublished && (
               <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                Draft
+                Unpublished
               </span>
             )}
           </button>
@@ -152,9 +152,11 @@ export function ModuleCard({
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={cn(
-                  "rounded-lg p-1.5 transition-colors duration-200",
+                  "rounded-md p-1.5 transition-colors duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
-                  isLight ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100" : "text-slate-500 hover:text-white hover:bg-white/5",
+                  isLight
+                    ? "text-slate-500 hover:text-slate-800 hover:bg-slate-200 border border-transparent hover:border-slate-300"
+                    : "text-slate-400 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20",
                 )}
                 aria-label="Module actions"
               >
@@ -167,7 +169,7 @@ export function ModuleCard({
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)} />
                   <div
                     className={cn(
-                      "absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border py-1 shadow-lg",
+                      "absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border p-1 shadow-lg",
                       isLight ? "border-slate-200 bg-white" : "border-white/20 bg-slate-800",
                     )}
                   >
@@ -177,8 +179,8 @@ export function ModuleCard({
                         setIsRenameModalOpen(true)
                       }}
                       className={cn(
-                        "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors duration-200",
-                        isLight ? "text-slate-700 hover:bg-slate-50" : "text-slate-300 hover:bg-white/5",
+                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                        isLight ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:bg-white/10",
                       )}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -187,8 +189,8 @@ export function ModuleCard({
                     <button
                       onClick={handleTogglePublish}
                       className={cn(
-                        "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors duration-200",
-                        isLight ? "text-slate-700 hover:bg-slate-50" : "text-slate-300 hover:bg-white/5",
+                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
+                        isLight ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:bg-white/10",
                       )}
                     >
                       {module.isPublished ? (
@@ -203,14 +205,14 @@ export function ModuleCard({
                         </>
                       )}
                     </button>
-                    <div className={cn("my-1 h-px", isLight ? "bg-slate-100" : "bg-white/10")} />
+                    <div className={cn("my-1 h-px", isLight ? "bg-slate-200" : "bg-white/10")} />
                     <button
                       onClick={() => {
                         setIsMenuOpen(false)
                         setIsDeleteModalOpen(true)
                       }}
                       className={cn(
-                        "flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors duration-200",
+                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors duration-200",
                         "text-rose-600 hover:bg-rose-50",
                       )}
                     >
@@ -248,11 +250,11 @@ export function ModuleCard({
               <button
                 onClick={() => onAddAssignment(module.id)}
                 className={cn(
-                  "flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed px-3 py-2 text-sm font-medium transition-colors duration-200",
+                  "flex w-full items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                   isLight
-                    ? "border-slate-300 text-slate-400 hover:border-teal-400 hover:text-teal-600 hover:bg-teal-50/50"
-                    : "border-white/20 text-slate-500 hover:border-teal-400 hover:text-teal-400 hover:bg-white/5",
+                    ? "border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:border-teal-300"
+                    : "border border-teal-500/30 bg-teal-500/10 text-teal-400 hover:bg-teal-500/20",
                 )}
               >
                 <Plus className="h-3.5 w-3.5" />

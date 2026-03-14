@@ -72,11 +72,11 @@ export function CreateModuleInput({ onCreateModule, variant = "light" }: CreateM
       <button
         onClick={() => setIsCreating(true)}
         className={cn(
-          "flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-3 text-sm font-medium transition-colors duration-200",
+          "flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
           isLight
-            ? "border-slate-300 text-slate-500 hover:border-teal-400 hover:text-teal-600 hover:bg-teal-50/50"
-            : "border-white/20 text-slate-400 hover:border-teal-400 hover:text-teal-400 hover:bg-white/5",
+            ? "border-2 border-dashed border-teal-300 text-teal-700 bg-teal-50/60 hover:border-teal-400 hover:bg-teal-50"
+            : "border-2 border-dashed border-teal-500/30 text-teal-400 bg-teal-500/5 hover:border-teal-400 hover:bg-teal-500/10",
         )}
       >
         <Plus className="h-4 w-4" />
