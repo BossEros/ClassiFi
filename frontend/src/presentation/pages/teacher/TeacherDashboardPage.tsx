@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ChevronUp, ChevronDown } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/teacherDashboardService"
-import { getDeadlineStatus } from "@/presentation/utils/dateUtils"
+import { getDeadlineStatus, formatDateTime, getMinutesUntilNextSession } from "@/presentation/utils/dateUtils"
 import type { User } from "@/business/models/auth/types"
 import type { Class, Task } from "@/business/models/dashboard/types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
@@ -26,6 +26,24 @@ function getPendingBadgeClass(pendingCount: number): string {
   return "border-slate-300 bg-slate-100 text-slate-600"
 }
 
+function getDeadlineBadgeClass(deadlineStatus: string): string {
+  if (deadlineStatus === "Overdue") {
+    return "border-rose-300 bg-rose-100 text-rose-700"
+  }
+
+  if (deadlineStatus === "Due today" || deadlineStatus === "Due tomorrow") {
+    return "border-amber-300 bg-amber-100 text-amber-700"
+  }
+
+  if (deadlineStatus.startsWith("Due in")) {
+    return "border-blue-300 bg-blue-100 text-blue-700"
+  }
+
+  return "border-slate-300 bg-slate-100 text-slate-600"
+}
+
+type SortDirection = "asc" | "desc"
+
 export function TeacherDashboardPage() {
   const navigate = useNavigate()
   const currentUser = useAuthStore((state) => state.user)
@@ -34,6 +52,20 @@ export function TeacherDashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [deadlineSort, setDeadlineSort] = useState<SortDirection>("asc")
+
+  const sortedTasks = useMemo(() => {
+    return [...tasks].sort((a, b) => {
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+
+      const dateA = new Date(a.deadline).getTime()
+      const dateB = new Date(b.deadline).getTime()
+
+      return deadlineSort === "asc" ? dateA - dateB : dateB - dateA
+    })
+  }, [tasks, deadlineSort])
 
   useEffect(() => {
     if (!currentUser) {
@@ -68,7 +100,12 @@ export function TeacherDashboardPage() {
     : "?"
 
   const topBar = useTopBar({ user, userInitials })
-  const displayedClasses = classes.slice(0, 3)
+
+  const displayedClasses = useMemo(() => {
+    return [...classes]
+      .sort((a, b) => getMinutesUntilNextSession(a.schedule) - getMinutesUntilNextSession(b.schedule))
+      .slice(0, 3)
+  }, [classes])
 
   return (
     <DashboardLayout topBar={topBar}>
@@ -90,7 +127,7 @@ export function TeacherDashboardPage() {
       <section className="mb-12">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight text-slate-800 md:text-lg">
-            Recent Classes
+            My Classes
           </h2>
           <button
             onClick={() => navigate("/dashboard/classes")}
@@ -139,6 +176,13 @@ export function TeacherDashboardPage() {
           <h2 className="text-lg font-semibold tracking-tight text-slate-800 md:text-lg">
             To-Check
           </h2>
+          <button
+            onClick={() => navigate("/dashboard/assignments")}
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-teal-600 transition-colors hover:text-teal-700"
+          >
+            View all
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
@@ -157,6 +201,19 @@ export function TeacherDashboardPage() {
                     <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Class
                     </th>
+                    <th
+                      className="cursor-pointer select-none px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600 hover:text-slate-800"
+                      onClick={() => setDeadlineSort(prev => prev === "asc" ? "desc" : "asc")}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        Deadline
+                        {deadlineSort === "asc" ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )}
+                      </span>
+                    </th>
                     <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
                       Pending Submissions
                     </th>
@@ -166,7 +223,7 @@ export function TeacherDashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {tasks.map((task) => {
+                  {sortedTasks.slice(0, 5).map((task) => {
                     const pendingCount = task.submissionCount ?? 0
                     const pendingBadgeClass = getPendingBadgeClass(pendingCount)
                     const deadlineStatus = getDeadlineStatus(task.deadline)
@@ -177,17 +234,20 @@ export function TeacherDashboardPage() {
                         className="border-t border-slate-200 transition-colors hover:bg-slate-50/70"
                       >
                         <td className="px-6 py-4">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">
-                              {task.assignmentName}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              Due: {deadlineStatus}
-                            </p>
-                          </div>
+                          <p className="text-sm font-semibold text-slate-900">
+                            {task.assignmentName}
+                          </p>
                         </td>
-                        <td className="px-6 py-4 text-xs font-semibold text-slate-700">
+                        <td className="px-6 py-4 text-sm text-slate-700">
                           {task.className || "Unknown class"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getDeadlineBadgeClass(deadlineStatus)}`}
+                          >
+                            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />
+                            {task.deadline ? formatDateTime(task.deadline) : "No deadline"}
+                          </span>
                         </td>
                         <td className="px-6 py-4">
                           <span
