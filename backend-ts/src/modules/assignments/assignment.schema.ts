@@ -21,6 +21,7 @@ export const LatePenaltyConfigSchema = z.object({
 /** Create assignment request schema */
 export const CreateAssignmentRequestSchema = z.object({
   teacherId: z.number().int().min(1),
+  moduleId: z.number().int().min(1),
   assignmentName: z.string().min(1).max(150),
   instructions: z.string().max(5000).default(""),
   instructionsImageUrl: z.string().url().max(2000).nullable().optional(),
@@ -64,6 +65,7 @@ export type UpdateAssignmentRequest = z.infer<
 export const AssignmentResponseSchema = z.object({
   id: z.number(),
   classId: z.number(),
+  moduleId: z.number().nullable(),
   assignmentName: z.string(),
   instructions: z.string(),
   instructionsImageUrl: z.string().nullable().optional(),

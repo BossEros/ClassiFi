@@ -27,6 +27,7 @@ export interface PendingTeacherTask {
 /** Data required to create a new assignment */
 export interface CreateAssignmentData {
   classId: number
+  moduleId: number
   assignmentName: string
   instructions: string
   instructionsImageUrl?: string | null
@@ -246,6 +247,7 @@ export class AssignmentRepository extends BaseRepository<
       .insert(assignments)
       .values({
         classId: data.classId,
+        moduleId: data.moduleId,
         assignmentName: data.assignmentName,
         instructions: data.instructions,
         instructionsImageUrl: data.instructionsImageUrl ?? null,

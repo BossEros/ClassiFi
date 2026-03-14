@@ -60,6 +60,7 @@ export class AssignmentService {
     const {
       classId,
       teacherId,
+      moduleId,
       assignmentName,
       instructions,
       instructionsImageUrl,
@@ -88,6 +89,7 @@ export class AssignmentService {
 
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
+      moduleId,
       assignmentName,
       instructions: normalizedInstructions,
       instructionsImageUrl: normalizedInstructionsImageUrl,

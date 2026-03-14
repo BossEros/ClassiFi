@@ -12,6 +12,7 @@ import { userRoutes } from "@/modules/users/index.js"
 import { adminRoutes } from "@/modules/admin/index.js"
 import { testCaseRoutes } from "@/modules/test-cases/index.js"
 import { gradebookRoutes } from "@/modules/gradebook/index.js"
+import { moduleClassRoutes, moduleRoutes } from "@/modules/modules/index.js"
 import {
   notificationRoutes,
   notificationPreferenceRoutes,
@@ -27,6 +28,12 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
   // Class routes - /api/v1/classes/*
   await app.register(classRoutes, { prefix: "/classes" })
+
+  // Module routes nested under classes - /api/v1/classes/:classId/modules/*
+  await app.register(moduleClassRoutes, { prefix: "/classes" })
+
+  // Module standalone routes - /api/v1/modules/*
+  await app.register(moduleRoutes, { prefix: "/modules" })
 
   // Assignment routes - /api/v1/assignments/*
   await app.register(assignmentRoutes, { prefix: "/assignments" })
