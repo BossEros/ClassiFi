@@ -181,6 +181,7 @@ The backend now uses a module-first layout under `src/modules/*`.
 - `src/modules/plagiarism`
 - `src/modules/admin`
 - `src/modules/test-cases`
+- `src/modules/modules`
 
 Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
@@ -320,6 +321,24 @@ The programming language is specified at assignment creation and enforced during
 - For students: Includes `submittedAt`, `grade`, and `maxGrade` fields
 - `grade` is null if not yet graded
 - `maxGrade` defaults to 100 if not specified
+
+### Modules
+
+| Method | Endpoint                         | Description               |
+| ------ | -------------------------------- | ------------------------- |
+| POST   | `/classes/:classId/modules`      | Create a module           |
+| GET    | `/classes/:classId/modules`      | Get modules with assignments |
+| PUT    | `/modules/:moduleId`             | Rename a module           |
+| PATCH  | `/modules/:moduleId/publish`     | Toggle module publish     |
+| DELETE | `/modules/:moduleId`             | Delete module (cascades)  |
+
+**Module Design**:
+- Modules are assignment grouping containers within a class (e.g., "Module 1", "Midterm", "Finals")
+- Every assignment optionally belongs to a module via the `moduleId` foreign key
+- `GET /classes/:classId/modules` returns modules ordered by creation date (ascending), each including its nested assignments with submission counts
+- Deleting a module cascades to all assignments within it
+- Modules support publish/unpublish toggling (`isPublished` boolean)
+- A "General" module is auto-created per class during migration for ungrouped assignments
 
 ### Assignments & Submissions
 

@@ -45,6 +45,7 @@ frontend/
 |   |   |   |-- admin/
 |   |   |   |-- auth/
 |   |   |   |-- shared/
+|   |   |   |   |-- modules/  # Module UI components (ViewToggle, ModuleCard, CreateModuleInput, etc.)
 |   |   |   |-- student/
 |   |   |   |-- teacher/
 |   |   |   `-- ui/
@@ -500,9 +501,14 @@ Specialized types for the class detail page redesign:
    - Gradebook provides a read-only grade overview and CSV export (no inline grade override actions)
    - Class code badge is styled with teal colors for easy visibility
 3. **Manage Assignments**:
-   - View all assignments organized by current/upcoming and past
-   - Use teacher assignment filters: all, current & upcoming, and past
-   - Assignment cards emphasize due date only for teachers
+   - Assignments are organized into **modules** (collapsible sections like "Module 1", "Midterm", "Finals")
+   - Toggle between **Module View** (default, grouped by module) and **List View** (flat filter-based) using the view toggle
+   - **Module View**: Each module is a collapsible accordion card showing assignment count badge, draft/published status, and a three-dot menu (Rename, Publish/Unpublish, Delete)
+   - The first module is expanded by default, others are collapsed
+   - Create new modules via the dashed "Create Module" input at the bottom of the module list
+   - Add assignments to a specific module via the "Add Assignment" button inside each module card
+   - Rename modules via modal, delete modules with cascade confirmation (shows assignment count)
+   - **List View**: Preserves the existing flat assignment list with teacher filters (All, Current & Upcoming, Past)
    - Click assignment cards to view submissions and grade student work
    - In the submissions view, the Instructions card is collapsible from the header chevron to save vertical space
    - Submission metrics are shown as individual cards (`Total Submissions`, `On Time`, `Late`, `Missing`) with status icons
@@ -520,8 +526,10 @@ Specialized types for the class detail page redesign:
    - Switch to Students tab to view enrolled students
    - Manage student enrollments
 5. **Create New Assignment**:
-   - Click "Add Assignment" button in the Assignment tab
+   - Click "Add Assignment" button (from module card or tab header)
+   - Select which module to assign the assignment to via the module selector dropdown
    - Configure assignment details, test cases, deadlines, and late submission policy
+   - Module is pre-selected when creating from within a module card
 
 ### Teacher: Reviewing Plagiarism Results
 
