@@ -28,7 +28,8 @@ describe("classService", () => {
     classCode: "TEST123",
     description: "A test class",
     isActive: true,
-    createdAt: toISO(new Date()),
+    createdAt: toISO(new Date()),
+
     semester: 1,
     academicYear: "2024-2025",
     schedule: {
@@ -41,6 +42,7 @@ describe("classService", () => {
   const mockAssignment = {
     id: 1,
     classId: 1,
+    moduleId: null,
     assignmentName: "Test Assignment",
     deadline: toISO(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
     programmingLanguage: "python",
@@ -65,7 +67,8 @@ describe("classService", () => {
       teacherId: 1,
       className: "New Class",
       classCode: "NEW123",
-      description: "A new class",
+      description: "A new class",
+
       semester: 1 as const,
       academicYear: "2024-2025",
       schedule: {
@@ -112,7 +115,8 @@ describe("classService", () => {
       await expect(classService.createClass(invalidRequest)).rejects.toThrow(
         "Description must not exceed 1000 characters",
       )
-    })
+    })
+
   })
 
   // ============================================================================
