@@ -82,11 +82,6 @@ export class AssignmentService {
     const normalizedInstructionsImageUrl =
       this.normalizeNullableString(instructionsImageUrl)
 
-    this.validateInstructionsContent(
-      normalizedInstructions,
-      normalizedInstructionsImageUrl,
-    )
-
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
       moduleId,
@@ -263,19 +258,6 @@ export class AssignmentService {
         ? this.normalizeNullableString(updateData.instructionsImageUrl)
         : undefined
 
-    const finalInstructions = (
-      normalizedInstructions ?? existingAssignment.instructions
-    ).trim()
-    const finalInstructionsImageUrl =
-      normalizedInstructionsImageUrl !== undefined
-        ? normalizedInstructionsImageUrl
-        : existingAssignment.instructionsImageUrl
-
-    this.validateInstructionsContent(
-      finalInstructions,
-      finalInstructionsImageUrl,
-    )
-
     const previousInstructionsImageUrl = existingAssignment.instructionsImageUrl
 
     const updatedAssignment = await this.assignmentRepo.updateAssignment(
@@ -326,22 +308,7 @@ export class AssignmentService {
     await this.assignmentRepo.deleteAssignment(assignmentId)
   }
 
-  /**
-   * Ensures assignment has at least one instructions surface.
-   */
-  private validateInstructionsContent(
-    instructions: string,
-    instructionsImageUrl: string | null | undefined,
-  ): void {
-    const hasTextInstructions = instructions.trim().length > 0
-    const hasImageInstructions = !!instructionsImageUrl?.trim()
 
-    if (!hasTextInstructions && !hasImageInstructions) {
-      throw new InvalidAssignmentDataError(
-        "Either instructions text or instructions image is required",
-      )
-    }
-  }
 
   /**
    * Normalizes optional text values by trimming and converting blanks to null.
