@@ -16,6 +16,12 @@ export interface SubmissionGradedMetadata {
   submissionUrl: string
 }
 
+export interface SubmissionFeedbackGivenMetadata {
+  assignmentId: number
+  assignmentTitle: string
+  submissionId: number
+}
+
 export interface ClassAnnouncementMetadata {
   classId: number
   className: string
@@ -55,6 +61,10 @@ export type Notification =
   | (BaseNotification & {
       type: "SUBMISSION_GRADED"
       metadata: SubmissionGradedMetadata
+    })
+  | (BaseNotification & {
+      type: "SUBMISSION_FEEDBACK_GIVEN"
+      metadata: SubmissionFeedbackGivenMetadata
     })
   | (BaseNotification & {
       type: "CLASS_ANNOUNCEMENT"

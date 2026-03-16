@@ -1,4 +1,5 @@
-import { Download, BarChart3, RefreshCw } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Download, BarChart3, RefreshCw, FileText, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/presentation/components/ui/Card";
 import { Button } from "@/presentation/components/ui/Button";
 import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teacher/useGradebook";
@@ -6,18 +7,13 @@ import { useToastStore } from "@/shared/store/useToastStore";
 import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/shared/types/gradebook";
 import { X, Edit2 } from "lucide-react";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
+import { buildGradeReportData, downloadGradeReportDocument, GradeReportDocument } from "./pdf/gradeReportPdf";
 
-// Inlined from src/presentation/components/teacher/gradebook/GradebookTable.tsx
-// Inlined from src/presentation/components/teacher/gradebook/GradeCell.tsx
 interface GradeCellProps {
   grade: GradeEntry | null
   totalScore: number
   variant?: "dark" | "light"
 }
-
-
-
-
 
 function GradeCell({ grade, totalScore, variant = "dark" }: GradeCellProps) {
   if (!grade || !grade.submissionId) {
@@ -256,6 +252,8 @@ function getAverageColorClass(
 interface GradebookContentProps {
   classId: number
   classCode?: string
+  className?: string
+  teacherName?: string
   variant?: "dark" | "light"
 }
 
@@ -265,9 +263,34 @@ interface GradebookContentProps {
 export function GradebookContent({
   classId,
   classCode,
+  className,
+  teacherName,
   variant = "dark",
 }: GradebookContentProps) {
   const showToast = useToastStore((state) => state.showToast)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+  const exportMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setIsExportMenuOpen(false)
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsExportMenuOpen(false)
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("keydown", handleEscape)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+      document.removeEventListener("keydown", handleEscape)
+    }
+  }, [])
 
   const {
     gradebook,
@@ -284,6 +307,32 @@ export function GradebookContent({
       showToast("Gradebook exported successfully")
     } catch {
       showToast("Failed to export gradebook", "error")
+    }
+  }
+
+  const handleDownloadPdf = async () => {
+    if (!gradebook) return
+
+    try {
+      setIsDownloadingPdf(true)
+      const reportData = buildGradeReportData({
+        gradebook,
+        className,
+        classCode,
+        teacherName,
+      })
+
+      await downloadGradeReportDocument({
+        document: <GradeReportDocument data={reportData} />,
+        fileName: `grade-report-${classCode || classId}.pdf`,
+      })
+
+      showToast("Grade report downloaded successfully")
+    } catch (error) {
+      console.error("Failed to download grade report:", error)
+      showToast("Failed to download grade report", "error")
+    } finally {
+      setIsDownloadingPdf(false)
     }
   }
 
@@ -354,16 +403,60 @@ export function GradebookContent({
             />
             Refresh
           </Button>
-          <Button
-            onClick={handleExport}
-            className="w-auto px-4 h-10"
-            disabled={isExporting}
-          >
-            <Download
-              className={`w-4 h-4 mr-2 ${isExporting ? "animate-bounce" : ""}`}
-            />
-            {isExporting ? "Exporting..." : "Export CSV"}
-          </Button>
+          <div className="relative" ref={exportMenuRef}>
+            <Button
+              onClick={() => setIsExportMenuOpen((prev) => !prev)}
+              className="w-auto px-4 h-10"
+              disabled={isExporting || isDownloadingPdf}
+            >
+              <Download
+                className={`w-4 h-4 mr-2 ${isExporting || isDownloadingPdf ? "animate-bounce" : ""}`}
+              />
+              {isExporting ? "Exporting..." : isDownloadingPdf ? "Preparing..." : "Export"}
+              <ChevronDown className="w-4 h-4 ml-1" />
+            </Button>
+
+            {isExportMenuOpen && (
+              <div
+                className={`absolute right-0 top-full mt-2 z-50 min-w-[180px] overflow-hidden p-1 rounded-lg shadow-lg shadow-black/20 ${
+                  variant === "light"
+                    ? "border border-slate-200 bg-white"
+                    : "border border-white/10 bg-slate-900/95 backdrop-blur-sm"
+                }`}
+              >
+                <button
+                  onClick={() => {
+                    setIsExportMenuOpen(false)
+                    handleExport()
+                  }}
+                  disabled={isExporting}
+                  className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                    variant === "light"
+                      ? "text-slate-700 hover:bg-teal-100 hover:text-teal-800"
+                      : "text-gray-300 hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  <Download className="w-4 h-4" />
+                  Export as CSV
+                </button>
+                <button
+                  onClick={() => {
+                    setIsExportMenuOpen(false)
+                    handleDownloadPdf()
+                  }}
+                  disabled={isDownloadingPdf || !gradebook}
+                  className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-150 cursor-pointer ${
+                    variant === "light"
+                      ? "text-slate-700 hover:bg-teal-100 hover:text-teal-800"
+                      : "text-gray-300 hover:bg-white/20 hover:text-white"
+                  }`}
+                >
+                  <FileText className="w-4 h-4" />
+                  Download as PDF
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

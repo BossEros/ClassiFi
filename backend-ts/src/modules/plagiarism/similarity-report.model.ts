@@ -2,7 +2,6 @@ import {
   pgTable,
   serial,
   integer,
-  text,
   timestamp,
   numeric,
   index,
@@ -29,16 +28,15 @@ export const similarityReports = pgTable(
     flaggedPairs: integer("flagged_pairs").default(0).notNull(),
     averageSimilarity: numeric("average_similarity", {
       precision: 5,
-      scale: 4,
+      scale: 2,
     }),
     highestSimilarity: numeric("highest_similarity", {
       precision: 5,
-      scale: 4,
+      scale: 2,
     }),
     generatedAt: timestamp("generated_at", { withTimezone: true })
       .defaultNow()
-      .notNull(),
-    reportFilePath: text("report_file_path"),
+      .notNull()
   },
   (table) => [
     check(

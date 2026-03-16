@@ -875,12 +875,15 @@ export function ClassDetailPage() {
                 <GradebookContent
                   classId={parsedClassId}
                   classCode={classInfo?.classCode}
+                  className={classInfo?.className}
+                  teacherName={classInfo?.teacherName}
                   variant={isLightClassView ? "light" : "dark"}
                 />
               ) : (
                 <StudentClassGradesContent
                   classId={parsedClassId}
                   studentId={user ? parseInt(user.id, 10) : 0}
+                  studentName={user ? `${user.firstName} ${user.lastName}` : undefined}
                   variant={isLightClassView ? "light" : "dark"}
                 />
               ))}

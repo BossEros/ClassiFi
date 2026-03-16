@@ -25,7 +25,7 @@ A TypeScript/Fastify backend implementation for the ClassiFi platform, following
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL database
 - Supabase project (for auth & storage)
 
@@ -77,15 +77,21 @@ npm start
 
 ### Available Scripts
 
-| Script                  | Description                      |
-| ----------------------- | -------------------------------- |
-| `npm run dev`           | Start dev server with hot reload |
-| `npm run build`         | Compile TypeScript to JavaScript |
-| `npm start`             | Run compiled production server   |
-| `npm run test`          | Run test suite                   |
-| `npm run test:watch`    | Watch mode testing               |
-| `npm run test:coverage` | Generate coverage report         |
-| `npm run typecheck`     | Type check without emitting      |
+| Script | Description |
+| ------ | ----------- |
+| `npm run dev` | Start the backend with `tsx watch` |
+| `npm run build` | Compile TypeScript and rewrite path aliases with `tsc-alias` |
+| `npm start` | Run the compiled production server |
+| `npm run test` | Run the full Vitest suite |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run test:coverage` | Generate coverage output |
+| `npm run typecheck` | Run TypeScript without emitting |
+| `npm run lint` | Lint the codebase with ESLint |
+| `npm run format` | Format backend source and tests with Prettier |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:migrate` | Apply Drizzle migrations |
+| `npm run db:push` | Push schema changes directly to the database |
+| `npm run db:studio` | Open Drizzle Studio |
 
 ---
 
@@ -111,6 +117,7 @@ backend-ts/
 |  |  |- dashboard/
 |  |  |- notifications/
 |  |  |- enrollments/
+|  |  |- modules/
 |  |  |- plagiarism/
 |  |  `- admin/
 |  |- services/               # Cross-cutting services (email, adapters, interfaces)
@@ -187,7 +194,8 @@ Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
 - Feature-specific helper services are colocated with their module (for example, plagiarism helper services under `src/modules/plagiarism` and late penalty logic under `src/modules/assignments`).
 - Feature-specific mappers/guards/helpers are colocated with their module (for example, `src/modules/*/*.mapper.ts`, `src/modules/classes/class.guard.ts`).
-- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points (for example, auth, classes, assignments, submissions, dashboard, notifications) from `src/modules/*/index.ts`.
+- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points for auth, classes, modules, assignments, submissions, dashboards, plagiarism, users, admin, test cases, gradebook, notifications, and notification preferences.
+- Protected route registration is centralized in a dedicated `protectedRoutes` scope that applies the auth middleware once and then mounts the authenticated route groups.
 - Internal/shared modules that are not mounted directly as route groups can still be consumed through services without requiring their own route entrypoint.
 - Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
 
@@ -565,6 +573,18 @@ Notifications are queued for email delivery with:
 - `limit` (number, default: 20, max: 100) - Items per page
 - `unreadOnly` (boolean, default: false) - Filter to show only unread notifications
 
+### Notification Preferences
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/notification-preferences` | Get the caller's notification channel preferences |
+| PUT | `/notification-preferences` | Update email and in-app preference flags for a notification type |
+
+Behavior notes:
+- Preferences are stored per user and per notification type.
+- When no row exists yet, the service returns default preferences with both `emailEnabled` and `inAppEnabled` set to `true`.
+- Notification delivery resolves enabled channels through `NotificationPreferenceService` before queueing email or in-app work.
+
 
 ### Dashboard
 
@@ -717,6 +737,30 @@ export const notificationDeliveries = pgTable("notification_deliveries", {
 **Indexes**:
 - `notifications`: `user_id`, `created_at`, `is_read`, composite `(user_id, is_read)`
 - `notification_deliveries`: `notification_id`, `status`, composite `(status, created_at)`
+
+### Notification Preference Model
+
+```typescript
+export const notificationPreferences = pgTable(
+  "notification_preferences",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    notificationType: notificationTypeEnum("notification_type").notNull(),
+    emailEnabled: boolean("email_enabled").notNull().default(true),
+    inAppEnabled: boolean("in_app_enabled").notNull().default(true),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at"),
+  },
+  (table) => [
+    unique("uq_user_notification_type").on(table.userId, table.notificationType),
+  ],
+)
+```
+
+**Behavior**:
+- One row exists per `(userId, notificationType)` pair once a preference is explicitly updated.
+- Missing rows are treated as fully enabled defaults by the service layer.
 
 ### Roles
 
@@ -949,6 +993,43 @@ class NotificationService {
 - Exponential backoff between retries
 - Status tracking (PENDING, SENT, FAILED, RETRYING)
 
+### NotificationPreferenceService
+
+Manages per-user delivery-channel preferences for each notification type:
+
+```typescript
+class NotificationPreferenceService {
+  getPreference(userId, notificationType); // Get one type, defaulting to both channels enabled
+  getAllPreferences(userId); // Get full settings-page preference list
+  updatePreference(userId, notificationType, emailEnabled, inAppEnabled); // Upsert preference row
+  getEnabledChannels(userId, notificationType); // Resolve EMAIL / IN_APP delivery targets
+}
+```
+
+**Features**:
+- Returns default preferences when a user has not saved explicit settings yet
+- Keeps notification delivery policy out of controllers and UI callers
+- Provides the backend contract consumed by the frontend settings page
+
+### ModuleService
+
+Manages assignment-grouping modules within a class:
+
+```typescript
+class ModuleService {
+  createModule(data); // Create a module for a class
+  getModulesWithAssignments(classId, isStudent); // Return ordered modules with nested assignments
+  renameModule(data); // Rename an existing module
+  toggleModulePublish(data); // Publish or unpublish a module
+  deleteModule(data); // Delete a module and cascade its assignments
+}
+```
+
+**Features**:
+- Supports the frontend's Module View / List View toggle workflows
+- Enforces teacher ownership on write operations
+- Returns assignment-grouped read models for class detail pages
+
 ---
 
 ## Repositories
@@ -1148,12 +1229,13 @@ describe('AuthService', () => {
 
 ### Adding a New Endpoint
 
-1. **Schema** - Define Zod schema in `api/schemas/`
-2. **Repository** - Add data methods if needed
-3. **Service** - Implement business logic
-4. **Controller** - Add route handler with validation
-5. **Test** - Add unit tests
-6. **Documentation** - Add comprehensive endpoint documentation
+1. **Schema** - Define or extend the module-local Zod schema for the endpoint contract.
+2. **Repository** - Add or update the entity/query repository method if data access changes are needed.
+3. **Service** - Implement business logic in the owning module service.
+4. **Controller** - Add the Fastify route handler with validation and OpenAPI schema.
+5. **Route registration** - Ensure the module entry point is exported and mounted from `src/api/routes/v1/index.ts` if it is a new routable surface.
+6. **Test** - Add focused tests under `backend-ts/tests/**`.
+7. **Documentation** - Update this file when the API surface, runtime contract, or architectural expectations change.
 
 ### Endpoint Documentation Standards
 
@@ -1305,7 +1387,7 @@ npm run typecheck
 
 | Component           | Technology       | Version |
 | ------------------- | ---------------- | ------- |
-| Runtime             | Node.js          | 18+     |
+| Runtime             | Node.js          | 20+     |
 | Language            | TypeScript       | 5.x     |
 | Framework           | Fastify          | 5.x     |
 | ORM                 | Drizzle ORM      | 0.36.x  |

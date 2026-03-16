@@ -23,7 +23,7 @@ export const testCases = pgTable(
     assignmentId: integer("assignment_id")
       .notNull()
       .references(() => assignments.id, { onDelete: "cascade" }),
-    name: varchar("name", { length: 100 }).notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
     input: text("input").notNull().default(""),
     expectedOutput: text("expected_output").notNull(),
     isHidden: boolean("is_hidden").default(false).notNull(),

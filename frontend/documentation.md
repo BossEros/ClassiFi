@@ -2,23 +2,26 @@
 
 ## Project Overview
 
-The ClassiFi Frontend is a modern, responsive web application built with **React 19**, **Vite**, and **TypeScript**. It follows a strict **Clean Architecture** pattern to separate concerns between the UI (Presentation), Business Logic (Business), and Data Access (Data) layers. The application is styled using **Tailwind CSS v4** and manages global state through lightweight Zustand stores plus feature services.
+The ClassiFi Frontend is a role-aware single-page application built with **React 19**, **Vite**, and **TypeScript**. It follows a strict **Clean Architecture** split between Presentation, Business, and Data layers so UI code stays thin and feature logic remains testable. The app uses **Tailwind CSS v4** for styling, **Zustand** for minimal shared state, **react-hook-form + Zod** for form workflows, and Supabase-backed services for authentication and storage.
 
 ## Technology Stack
 
-| Category        | Technology       | Version | Description                    |
-| --------------- | ---------------- | ------- | ------------------------------ |
-| **Core**        | React            | 19.x    | UI Library                     |
-| **Build Tool**  | Vite             | 7.x     | Fast bundler and dev server    |
-| **Language**    | TypeScript       | 5.9.x   | Static typing                  |
-| **Styling**     | Tailwind CSS     | 4.x     | Utility-first CSS framework    |
-| **Routing**     | React Router DOM | 7.x     | Client-side routing            |
-| **Auth & Data** | Supabase JS      | 2.93.x  | Authentication and Storage SDK |
-| **Editor**      | Monaco Editor    | 0.55.x  | Code editor for IDE features   |
-| **Icons**       | Lucide React     | 0.563.x | Icon set                       |
-| **Testing**     | Vitest           | 4.x     | Unit and Integration testing   |
-| **E2E Testing** | Playwright       | 1.58.x  | End-to-End testing             |
-| **Formatting**  | Prettier         | 3.8.x   | Code formatting                |
+| Category | Technology | Version | Description |
+| -------- | ---------- | ------- | ----------- |
+| **Core** | React | 19.2.x | UI library for the application shell and feature pages |
+| **Build Tool** | Vite | 7.2.x | Dev server and production bundler |
+| **Language** | TypeScript | 5.9.x | Static typing across UI, services, and tests |
+| **Styling** | Tailwind CSS | 4.1.x | Utility-first styling and design tokens |
+| **Routing** | React Router DOM | 7.13.x | Browser routing with shared, teacher, student, and admin route groups |
+| **Forms** | React Hook Form + Zod | 7.71.x / 4.3.x | Typed form state, validation, and submission flows |
+| **State** | Zustand | 5.0.x | Minimal shared auth and toast state |
+| **Auth & Storage** | Supabase JS | 2.93.x | Authentication session handling and storage access |
+| **Editor** | Monaco Editor | 0.55.x | Code editor for assignment authoring and review |
+| **Calendar & Dates** | react-big-calendar + date-fns | 1.19.x / 4.1.x | Shared calendar views and date formatting |
+| **PDF Export** | @react-pdf/renderer | 4.3.x | Teacher-facing plagiarism evidence export |
+| **Icons** | Lucide React | 0.563.x | Consistent iconography across the UI |
+| **Testing** | Vitest + Playwright | 4.x / 1.58.x | Centralized unit tests and end-to-end workflows |
+| **Formatting** | Prettier | 3.8.x | Markdown, TypeScript, and CSS formatting |
 
 ---
 
@@ -104,30 +107,41 @@ frontend/
 
 ## Routing & Navigation
 
-Routing is handled in `src/app/App.tsx`, with route groups split in `src/app/routes/*`.
+Routing is composed in `src/app/App.tsx`, which mounts route groups from `src/app/routes/*` in this order: `auth.routes.tsx`, `shared.routes.tsx`, `student.routes.tsx`, `teacher.routes.tsx`, and `admin.routes.tsx`.
 
 ### Route Types
 
-1.  **Public Routes**: `/login`, `/register`, `/forgot-password`, `/reset-password`.
-2.  **Protected Routes**: Wrapped in `<ProtectedRoute>`. Requires authenticated user.
-    - Redirects to `/login` if unauthorized.
-3.  **Role-Based Routes**:
-    - **Functions**: `RoleBasedDashboard`, `RoleBasedClassesPage`.
-    - **Logic**: Conditionally renders `StudentDashboardPage`, `TeacherDashboardPage`, or `AdminDashboardPage` based on `user.role` ('student', 'teacher', 'admin').
-    - **Teacher-Only**: `TeacherOnlyRoute` is applied for teacher class creation (`/dashboard/classes/new`). Other teacher pages are protected by auth, with teacher/admin-only controls gated in-page where needed.
+1. **Public routes**: Authentication flows such as `/login`, `/register`, `/forgot-password`, `/reset-password`, and email confirmation live in `auth.routes.tsx`.
+2. **Shared protected routes**: Core authenticated routes such as `/dashboard`, `/dashboard/classes`, `/dashboard/assignments`, `/dashboard/settings`, `/dashboard/notifications`, and `/dashboard/calendar` live in `shared.routes.tsx` and are wrapped in `ProtectedRoute`.
+3. **Role-based guards**: `RoleBasedDashboard`, `RoleBasedClassesPage`, and `RoleBasedClassDetailPage` choose the correct student, teacher, or admin page at runtime from the authenticated user role.
+4. **Teacher-specific routes**: Assignment authoring, gradebook, submissions, and similarity review are defined in `teacher.routes.tsx`. `TeacherOnlyRoute` is currently enforced for teacher class creation; the rest of the teacher surfaces are auth-protected and keep teacher/admin action checks in-page where appropriate.
+5. **Admin-specific routes**: User management, enrollment management, and admin class create/edit routes live in `admin.routes.tsx`.
+
+### Route Behavior Notes
+
+- `RoleBasedClassDetailPage` renders `AdminClassDetailPage` for admins and the shared teacher/student class detail page for everyone else.
+- `AuthRedirectHandler` normalizes Supabase email-confirmation and recovery links into the correct reset or confirmation pages.
+- Shared pages such as assignment detail, settings, notifications, and calendar are intentionally routed once and adapt based on user role and available permissions.
 
 ### Key Routes
 
-| Path                         | Component                  | Description                        |
-| ---------------------------- | -------------------------- | ---------------------------------- |
-| `/dashboard`                 | `RoleBasedDashboard`       | Main landing page after login.     |
-| `/dashboard/classes`         | `RoleBasedClassesPage`     | List of enrolled/teaching classes. |
-| `/dashboard/classes/:id`     | `RoleBasedClassDetailPage` | detailed view of a class.          |
-| `/dashboard/admin/classes/new` | `AdminClassFormPage`     | Admin class creation page.         |
-| `/dashboard/admin/classes/:classId/edit` | `AdminClassFormPage` | Admin class edit page.             |
-| `/dashboard/assignments/:id` | `AssignmentDetailPage`     | IDE and submission interface.      |
-| `/dashboard/users`           | `AdminUsersPage`           | User management (Admin only).      |
-| `/dashboard/enrollments`     | `AdminEnrollmentsPage`     | Cross-class enrollment workspace.  |
+| Path | Component | Description |
+| ---- | --------- | ----------- |
+| `/dashboard` | `RoleBasedDashboard` | Student, teacher, or admin landing page after authentication |
+| `/dashboard/classes` | `RoleBasedClassesPage` | Student, teacher, or admin classes listing |
+| `/dashboard/classes/:classId` | `RoleBasedClassDetailPage` | Role-specific class detail page |
+| `/dashboard/assignments` | `AssignmentsPage` | Shared assignments listing |
+| `/dashboard/assignments/:assignmentId` | `AssignmentDetailPage` | Shared assignment detail, IDE, and submission review surface |
+| `/dashboard/assignments/:assignmentId/submissions` | `AssignmentSubmissionsPage` | Teacher/admin submissions workspace for an assignment |
+| `/dashboard/assignments/:assignmentId/similarity` | `SimilarityResultsPage` | Graph-first plagiarism triage and evidence export |
+| `/dashboard/classes/:classId/gradebook` | `GradebookPage` | Teacher/admin gradebook page |
+| `/dashboard/settings` | `SettingsPage` | Shared account settings and notification preferences |
+| `/dashboard/notifications` | `NotificationsPage` | Shared notifications inbox |
+| `/dashboard/calendar` | `CalendarPage` | Shared calendar experience |
+| `/dashboard/users` | `AdminUsersPage` | Admin-only user management workspace |
+| `/dashboard/enrollments` | `AdminEnrollmentsPage` | Admin-only cross-class enrollment workspace |
+| `/dashboard/admin/classes/new` | `AdminClassFormPage` | Admin class creation page |
+| `/dashboard/admin/classes/:classId/edit` | `AdminClassFormPage` | Admin class edit page |
 
 Admin class detail behavior:
 - `AdminClassDetailPage` is a student-management focused view.
@@ -146,26 +160,22 @@ Admin enrollment workspace behavior:
 ### Dashboard Components
 
 - **`Sidebar`**: Main navigation, responsive.
-- **`Header`**: User profile, notifications, breadcrumbs.
+- **`TopBar`**: Breadcrumbs, page actions, profile controls, and notification access.
 - **`ClassCard`**: Displays class information in list view with code pattern background, instructor avatar, student count, term info, and archived status. Used in classes list pages.
 - **`ClassHeader`**: Displays class information including name, instructor, schedule, and optional description with action buttons (teachers: Gradebook button and Edit/Delete dropdown; students: Leave Class dropdown).
 - **`ClassTabs`**: Tab navigation for Assignment, Students, and Calendar views with keyboard accessibility.
 - **`CustomEventComponent`**: Month-view calendar event content renderer that shows assignment title (with status icon) in a compact single-line card.
-- **`InstructorInfo`**: Displays instructor name with user icon for class detail views.
-- **`ScheduleInfo`**: Displays class schedule with days and time range.
-- **`ClassCodeBadge`**: Styled badge displaying the class join code.
 - **`AssignmentFilterBar`**: Role-aware filter buttons with counts. Student view uses all/pending/submitted; teacher view uses all/current & upcoming/past timeline filters.
 - **`AssignmentSection`**: Groups assignments by time period (current/upcoming vs past) with section headers.
 - **`AssignmentCard`**: Shared assignment card with role-based content. Student cards show submission/status context and grades. Teacher cards emphasize assignment name + due date and intentionally hide student-only status badges and submission ratio details.
+- **`ViewToggle`**, **`ModuleCard`**, and **`CreateModuleInput`**: Teacher-only module-management UI for switching between grouped module view and flat assignment-list view.
 
 ### Feature Components
 
 - **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks with syntax highlighting for Python, Java, and C.
-- **`PlagiarismReport`**: Visualizes similarity analysis results with a pairwise-triage-first workflow:
-  - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination
-  - **`PairComparison`**: Side-by-side code editor with match highlighting
-  - **`PairCodeEditor`**: Monaco-based editor with synchronized scrolling
-  - **`SimilarityBadge`**: Visual indicator for similarity percentage
+- **`SimilarityGraphView`**: SVG graph surface that renders suspicious links and optional singleton submissions for assignment-level plagiarism review.
+- **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination.
+- **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal class average, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
@@ -245,6 +255,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                              |
 | **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export                             |
 | **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                                 |
+| **notificationPreferenceService** | `src/business/services/notificationPreferenceService.ts` | Settings-page notification delivery preferences and labels                            |
 | **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, assignment-level similarity analysis, pairwise code comparison |
 | **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                                   |
 | **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                                   |
@@ -332,6 +343,7 @@ Comprehensive settings page with:
 
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
+- **Notification preferences**: Per-notification-type email and in-app delivery toggles backed by `notificationPreferenceService`
 - **Account deletion**: Self-service account removal with confirmation
 
 ### Notification System
@@ -430,13 +442,12 @@ The notification system is integrated into the main dashboard layout:
 
 #### Styling
 
-Notifications follow ClassiFi's dark theme design system:
+Notifications follow the current light-surface design system:
 
-- Background: `slate-800` and `slate-900`
-- Accent: `blue-500` for unread indicators
-- Text: `white` for primary, `slate-300` for secondary
-- Hover states: `slate-700` backgrounds
-- Borders: `white/10` for subtle separation
+- White and off-white surfaces with subtle borders and shadows
+- Slate text for primary and secondary copy
+- Blue accents for unread indicators and interactive states
+- Soft hover states that stay consistent with the rest of the dashboard chrome
 
 ---
 
@@ -533,11 +544,12 @@ Specialized types for the class detail page redesign:
 
 ### Teacher: Reviewing Plagiarism Results
 
-1. **Navigate to Results**: From the assignment submissions page, click "View Plagiarism Report"
+1. **Navigate to Results**: From the assignment submissions page, click `Check Similarities` for a fresh run or `Review Similarities` when a reusable report already exists.
 2. **Triage Pairwise Results** (Default View):
    - Review direct `Student A vs Student B` pair rows sorted by highest similarity.
-   - Start with the default `85% and above` threshold, then relax/tighten as needed.
+   - Start with the default `75% and above` threshold, then relax or tighten as needed.
    - Use student-name search and sorting to prioritize suspicious pairs quickly.
+   - Use the graph and table together; they share one threshold and selection flow.
 3. **Compare Code**:
    - View matched code fragments highlighted in both files
    - Use synchronized scrolling to navigate through matches
@@ -557,16 +569,17 @@ Specialized types for the class detail page redesign:
 
 ### Adding a New Page
 
-1.  Create the page component in `src/presentation/pages/NewPage.tsx`.
-2.  Define the route in `src/app/routes/*.routes.tsx` and mount it in `src/app/App.tsx`.
-3.  (Optional) specific components in `src/presentation/components/feature/`.
+1. Create the page component in the correct role/shared folder under `src/presentation/pages/`.
+2. Register the route in the appropriate route group file: `auth.routes.tsx`, `shared.routes.tsx`, `student.routes.tsx`, `teacher.routes.tsx`, or `admin.routes.tsx`.
+3. Reuse or add supporting Presentation components under `src/presentation/components/` only when the page cannot stay readable without extraction.
+4. Keep route-level permission logic in guards or page orchestration, not inside low-level UI components.
 
 ### Adding Data Logic
 
-1.  Define the Model in `src/business/models/`.
-2.  Create/Update specific `Repository` in `src/data/repositories/`.
-3.  Create/Update `Service` in `src/business/services/`.
-4.  Consume in Component.
+1. Define or extend the domain model in `src/business/models/`.
+2. Create or update the repository in `src/data/repositories/` and keep DTO-to-domain mapping there.
+3. Create or update the Business-layer service in `src/business/services/`.
+4. Consume the service from Presentation code; do not call repositories or API clients directly from pages/components.
 
 ### Styling
 
