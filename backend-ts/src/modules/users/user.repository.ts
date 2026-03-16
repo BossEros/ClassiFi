@@ -26,6 +26,8 @@ export interface UpdateUserRepoData {
   lastName?: string
   role?: UserRole
   avatarUrl?: string | null
+  emailNotificationsEnabled?: boolean
+  inAppNotificationsEnabled?: boolean
 }
 
 /** Filter options for user queries */

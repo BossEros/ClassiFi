@@ -188,4 +188,29 @@ describe("UserService", () => {
       expect(userRepositoryMock.getUserById).toHaveBeenCalledWith(77)
     })
   })
+
+  describe("updateNotificationPreferences", () => {
+    it("throws UserNotFoundError when user does not exist", async () => {
+      userRepositoryMock.getUserById!.mockResolvedValue(undefined)
+
+      await expect(
+        service.updateNotificationPreferences(1, false, true),
+      ).rejects.toThrow(UserNotFoundError)
+    })
+
+    it("updates notification preferences for an existing user", async () => {
+      userRepositoryMock.getUserById!.mockResolvedValue(createMockUser({ id: 9 }))
+
+      const result = await service.updateNotificationPreferences(9, false, true)
+
+      expect(userRepositoryMock.updateUser).toHaveBeenCalledWith(9, {
+        emailNotificationsEnabled: false,
+        inAppNotificationsEnabled: true,
+      })
+      expect(result).toEqual({
+        emailNotificationsEnabled: false,
+        inAppNotificationsEnabled: true,
+      })
+    })
+  })
 })

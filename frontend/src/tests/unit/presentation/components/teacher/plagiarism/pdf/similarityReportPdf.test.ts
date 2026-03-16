@@ -11,6 +11,8 @@ const mockTeacher = {
   lastName: "Teacher",
   email: "teacher@classifi.test",
   role: "teacher" as const,
+  emailNotificationsEnabled: true,
+  inAppNotificationsEnabled: true,
   createdAt: new Date("2026-03-10T09:00:00.000Z"),
 }
 

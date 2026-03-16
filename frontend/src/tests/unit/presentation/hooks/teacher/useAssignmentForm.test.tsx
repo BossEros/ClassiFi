@@ -34,6 +34,8 @@ const mockUser: User = {
   firstName: "Teacher",
   lastName: "One",
   role: "teacher",
+  emailNotificationsEnabled: true,
+  inAppNotificationsEnabled: true,
   createdAt: new Date(),
 }
 
