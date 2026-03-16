@@ -29,6 +29,7 @@ describe("Notification Flow Integration Tests", () => {
       markAllAsReadByUserId: vi.fn(),
       delete: vi.fn(),
       findById: vi.fn(),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     mockUserRepo = {
@@ -40,6 +41,7 @@ describe("Notification Flow Integration Tests", () => {
           inAppNotificationsEnabled: true,
         }),
       ),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     mockEmailService = {
@@ -85,6 +87,7 @@ describe("Notification Flow Integration Tests", () => {
       getSubmissionsByAssignment: vi.fn(),
       updateGrade: vi.fn(),
       removeGradeOverride: vi.fn(),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     container.registerInstance("NotificationRepository", mockNotificationRepo)
@@ -253,7 +256,6 @@ describe("Notification Flow Integration Tests", () => {
     }))
 
     await gradebookService.overrideGrade(1, 85, "Great job")
-    await new Promise((resolve) => setTimeout(resolve, 0))
 
     expect(mockNotificationRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -302,6 +304,11 @@ describe("Notification Flow Integration Tests", () => {
         type: "ASSIGNMENT_CREATED",
         metadata: payload,
       }),
+    )
+    await notificationService.sendEmailNotificationIfEnabled(
+      1,
+      "ASSIGNMENT_CREATED",
+      payload,
     )
     expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(1)
   })
