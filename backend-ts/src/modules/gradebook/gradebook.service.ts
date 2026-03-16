@@ -11,6 +11,7 @@ import { TestResultRepository } from "@/modules/test-cases/test-result.repositor
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { withTransaction } from "@/shared/transaction.js"
 
 const logger = createLogger("GradebookService")
 
@@ -116,21 +117,58 @@ export class GradebookService {
       throw new Error(`Grade must be between 0 and ${assignment.totalScore}`)
     }
 
-    await this.submissionRepo.setGradeOverride(submissionId, grade, feedback)
+    try {
+      await withTransaction(async (transactionContext) => {
+        const transactionSubmissionRepo =
+          this.submissionRepo.withContext(transactionContext)
+        const transactionNotificationService =
+          this.notificationService.withContext(transactionContext)
 
-    // Create notification for student
-    this.notificationService
-      .createNotification(submission.studentId, "SUBMISSION_GRADED", {
+        await transactionSubmissionRepo.setGradeOverride(
+          submissionId,
+          grade,
+          feedback,
+        )
+        await transactionNotificationService.createNotification(
+          submission.studentId,
+          "SUBMISSION_GRADED",
+          {
+            submissionId: submission.id,
+            assignmentId: assignment.id,
+            assignmentTitle: assignment.assignmentName,
+            grade,
+            maxGrade: assignment.totalScore,
+            submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          },
+        )
+      })
+    } catch (error) {
+      logger.error("Failed to persist grade override notification", {
+        submissionId,
+        studentId: submission.studentId,
+        error,
+      })
+      throw error
+    }
+
+    void this.notificationService.sendEmailNotificationIfEnabled(
+      submission.studentId,
+      "SUBMISSION_GRADED",
+      {
         submissionId: submission.id,
         assignmentId: assignment.id,
         assignmentTitle: assignment.assignmentName,
         grade,
         maxGrade: assignment.totalScore,
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      },
+    ).catch((error) => {
+      logger.error("Failed to send grade notification email", {
+        submissionId,
+        studentId: submission.studentId,
+        error,
       })
-      .catch((error) => {
-        logger.error("Failed to send grade notification:", error)
-      })
+    })
   }
 
   /**

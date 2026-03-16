@@ -6,7 +6,7 @@ import { z } from "zod"
 
 /** Create test case request schema */
 export const CreateTestCaseRequestSchema = z.object({
-  name: z.string().min(1).max(100),
+  name: z.string().min(1).max(255),
   input: z.string().default(""),
   expectedOutput: z.string().min(1, "Expected output is required"),
   isHidden: z.boolean().default(false),
@@ -18,7 +18,7 @@ export type CreateTestCaseRequest = z.infer<typeof CreateTestCaseRequestSchema>
 
 /** Update test case request schema */
 export const UpdateTestCaseRequestSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
+  name: z.string().min(1).max(255).optional(),
   input: z.string().optional(),
   expectedOutput: z.string().min(1).optional(),
   isHidden: z.boolean().optional(),

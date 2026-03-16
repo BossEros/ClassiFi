@@ -348,8 +348,8 @@ export class PlagiarismPersistenceService {
         reportId,
         submission1Id: firstSubmissionId,
         submission2Id: secondSubmissionId,
-        structuralScore: pair.similarity.toFixed(4),
-        semanticScore: semanticScore.toFixed(4),
+        structuralScore: pair.similarity.toFixed(6),
+        semanticScore: semanticScore.toFixed(6),
         hybridScore: this.computeHybrid(pair.similarity, semanticScore),
         overlap: pair.overlap,
         longestFragment: pair.longest,
@@ -366,11 +366,11 @@ export class PlagiarismPersistenceService {
 
   /**
    * Compute the hybrid score as an equal-weighted average of structural
-   * and semantic scores. Returns a 4-decimal fixed-point string ready
-   * for the numeric(5,4) database column.
+   * and semantic scores. Returns a 6-decimal fixed-point string ready
+   * for the numeric(7,6) database column.
    */
   private computeHybrid(structural: number, semantic: number): string {
-    return (0.5 * structural + 0.5 * semantic).toFixed(4)
+    return (0.5 * structural + 0.5 * semantic).toFixed(6)
   }
 
   /** Prepare fragments for database insertion. */
