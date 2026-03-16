@@ -71,6 +71,8 @@ export function GradebookPage() {
       <GradebookContent
         classId={parsedClassId}
         classCode={classInfo?.classCode}
+        className={classInfo?.className}
+        teacherName={classInfo?.teacherName}
       />
     </DashboardLayout>
   )

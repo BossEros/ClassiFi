@@ -1,25 +1,29 @@
-  import {
+import {
   AlertTriangle,
   BarChart3,
   CheckCircle2,
   ClipboardCheck,
   Clock3,
+  Download,
   FileText,
   MessageSquareText,
   RefreshCw,
 } from "lucide-react"
-import type { ElementType } from "react"
+import { useState, type ElementType } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
+import { useToastStore } from "@/shared/store/useToastStore"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
 import type { StudentClassGrades, StudentGradeEntry } from "@/shared/types/gradebook"
 import { cn } from "@/shared/utils/cn"
+import { buildStudentGradeReportData, downloadStudentGradeReportDocument, StudentGradeReportDocument } from "./pdf/studentGradeReportPdf"
 
 interface StudentClassGradesContentProps {
   classId: number
   studentId: number
+  studentName?: string
   variant?: "dark" | "light"
 }
 
@@ -340,8 +344,12 @@ function AssignmentGradeRow({
 export function StudentClassGradesContent({
   classId,
   studentId,
+  studentName,
   variant = "light",
 }: StudentClassGradesContentProps) {
+  const showToast = useToastStore((state) => state.showToast)
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+
   const { grades, isLoading, error, refetch } = useStudentGrades(
     studentId,
     classId,
@@ -360,6 +368,30 @@ export function StudentClassGradesContent({
     classGrades?.assignments.filter((assignment) => assignment.submittedAt === null)
       .length ?? 0
   const totalAssignments = classGrades?.assignments.length ?? 0
+
+  const handleDownloadPdf = async () => {
+    if (!classGrades) return
+
+    try {
+      setIsDownloadingPdf(true)
+      const reportData = buildStudentGradeReportData({
+        classGrades,
+        studentName,
+      })
+
+      await downloadStudentGradeReportDocument({
+        document: <StudentGradeReportDocument data={reportData} />,
+        fileName: `grade-report-${classGrades.className.replace(/\s+/g, "-").toLowerCase()}.pdf`,
+      })
+
+      showToast("Grade report downloaded successfully")
+    } catch (error) {
+      console.error("Failed to download grade report:", error)
+      showToast("Failed to download grade report", "error")
+    } finally {
+      setIsDownloadingPdf(false)
+    }
+  }
 
   if (isLoading) {
     return (
@@ -446,18 +478,30 @@ export function StudentClassGradesContent({
           </p>
         </div>
 
-        <Button
-          onClick={refetch}
-          className={cn(
-            "h-10 w-auto px-4",
-            variant === "light"
-              ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-              : "bg-white/10 hover:bg-white/20",
-          )}
-        >
-          <RefreshCw className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={refetch}
+            className={cn(
+              "h-10 w-auto px-4",
+              variant === "light"
+                ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                : "bg-white/10 hover:bg-white/20",
+            )}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+          <Button
+            onClick={handleDownloadPdf}
+            className="w-auto px-4 h-10"
+            disabled={isDownloadingPdf || !classGrades}
+          >
+            <Download
+              className={cn("mr-2 h-4 w-4", isDownloadingPdf && "animate-bounce")}
+            />
+            {isDownloadingPdf ? "Preparing PDF..." : "Download PDF"}
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
