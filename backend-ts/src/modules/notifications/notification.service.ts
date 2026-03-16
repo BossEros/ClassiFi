@@ -1,8 +1,8 @@
 import { injectable, inject } from "tsyringe"
 import type { NotificationRepository } from "@/modules/notifications/notification.repository.js"
-import type { NotificationQueueService } from "@/modules/notifications/notification-queue.service.js"
-import type { NotificationPreferenceService } from "@/modules/notifications/notification-preference.service.js"
-import type { Notification, NewNotification } from "@/models/index.js"
+import type { UserRepository } from "@/modules/users/user.repository.js"
+import type { Notification, NewNotification, User } from "@/models/index.js"
+import type { IEmailService } from "@/services/interfaces/email.interface.js"
 import type { NotificationType } from "@/modules/notifications/notification.schema.js"
 import {
   NOTIFICATION_TYPES,
@@ -13,6 +13,9 @@ import {
 } from "@/modules/notifications/notification.types.js"
 import { NotFoundError, ForbiddenError } from "@/shared/errors.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("NotificationService")
 
 /**
  * Service for managing notifications.
@@ -23,50 +26,60 @@ export class NotificationService {
   constructor(
     @inject(DI_TOKENS.repositories.notification)
     private notificationRepo: NotificationRepository,
-    @inject(DI_TOKENS.services.notificationQueue)
-    private queueService: NotificationQueueService,
-    @inject(DI_TOKENS.services.notificationPreference)
-    private preferenceService: NotificationPreferenceService,
+    @inject(DI_TOKENS.repositories.user)
+    private userRepo: UserRepository,
+    @inject(DI_TOKENS.services.email)
+    private emailService: IEmailService,
   ) {}
 
   /**
-   * Creates and queues a notification for delivery.
+   * Creates an in-app notification and/or sends a best-effort email.
    * Respects user preferences for notification channels.
    *
    * @param userId - The ID of the user to notify
    * @param type - The notification type
    * @param data - Type-specific data for template rendering
-   * @returns The created notification
+   * @returns The created in-app notification, or null when nothing is persisted
    */
   async createNotification<T extends NotificationType>(
     userId: number,
     type: T,
     data: PayloadFor<T>,
-  ): Promise<Notification> {
+  ): Promise<Notification | null> {
     const config = this.getNotificationConfig(type)
     const metadata = this.extractMetadata(config, data, type)
-    const preferredChannels = await this.preferenceService.getEnabledChannels(
-      userId,
-      type,
-    )
+    const user = await this.userRepo.getUserById(userId)
+
+    if (!user) {
+      return null
+    }
+
+    const preferredChannels = this.getPreferredChannels(user)
     const enabledChannels = this.getEffectiveChannels(
       preferredChannels,
       config.channels,
     )
 
     if (enabledChannels.length === 0) {
-      return this.createMockNotification(userId, type, config, data, metadata)
+      return null
     }
 
-    const notification = await this.createNotificationRecord(
-      userId,
-      type,
-      config,
-      data,
-      metadata,
-    )
+    const shouldCreateInAppNotification = enabledChannels.includes("IN_APP")
+    const shouldSendEmail = enabledChannels.includes("EMAIL")
 
-    await this.queueDeliveries(notification.id, enabledChannels, data)
+    const notification = shouldCreateInAppNotification
+      ? await this.createNotificationRecord(userId, type, config, data, metadata)
+      : null
+
+    if (shouldSendEmail && user.email) {
+      void this.sendEmailNotification(user, type, config, data).catch((error) => {
+        logger.error("Failed to send notification email", {
+          userId,
+          notificationType: type,
+          error,
+        })
+      })
+    }
 
     return notification
   }
@@ -128,40 +141,51 @@ export class NotificationService {
   }
 
   /**
-   * Creates a mock notification object when no channels are enabled.
-   * This notification is not persisted to the database.
+   * Gets enabled notification channels from user preferences.
    *
-   * @param userId - The user ID
-   * @param type - The notification type
-   * @param config - The notification configuration
-   * @param data - The notification data
-   * @param metadata - The notification metadata
-   * @returns A mock notification object
+   * @param user - The target user
+   * @returns List of enabled notification channels
    */
-  private createMockNotification<T extends NotificationType>(
-    userId: number,
-    type: T,
-    config: NotificationTypeConfig<T>,
-    data: PayloadFor<T>,
-    metadata: NotificationMetadataByType[T],
-  ): Notification {
-    // Safe: metadata and type come from the same notification config.
-    return {
-      id: 0,
-      userId,
-      type,
-      title: config.titleTemplate(data),
-      message: config.messageTemplate(data),
-      metadata,
-      isRead: false,
-      readAt: null,
-      createdAt: new Date(),
-    } as Notification
+  private getPreferredChannels(user: Pick<User, "emailNotificationsEnabled" | "inAppNotificationsEnabled">): NotificationChannel[] {
+    const channels: NotificationChannel[] = []
+    if (user.emailNotificationsEnabled) channels.push("EMAIL")
+    if (user.inAppNotificationsEnabled) channels.push("IN_APP")
+    return channels
   }
 
   /**
-   * Creates a notification record in the database.
-   * The notification record is created when at least one delivery channel is enabled.
+   * Sends a best-effort email notification.
+   *
+   * @param user - The target user
+   * @param type - The notification type
+   * @param config - The notification configuration
+   * @param data - The notification data
+   * @returns Promise that resolves when the email send attempt completes
+   */
+  private async sendEmailNotification<T extends NotificationType>(
+    user: Pick<User, "id" | "email">,
+    type: T,
+    config: NotificationTypeConfig<T>,
+    data: PayloadFor<T>,
+  ): Promise<void> {
+    const emailHtml =
+      config.emailTemplate?.(data) ??
+      `<p>${config.messageTemplate(data)}</p>`
+
+    await this.emailService.sendEmail({
+      to: user.email,
+      subject: config.titleTemplate(data),
+      html: emailHtml,
+    })
+
+    logger.info("Notification email sent", {
+      userId: user.id,
+      notificationType: type,
+    })
+  }
+
+  /**
+   * Creates an in-app notification record in the database.
    *
    * @param userId - The user ID
    * @param type - The notification type
@@ -187,25 +211,6 @@ export class NotificationService {
     } as NewNotification
 
     return this.notificationRepo.create(newNotification)
-  }
-
-  /**
-   * Queues deliveries for enabled channels.
-   * Only queues IN_APP delivery if that channel is enabled.
-   * Only queues EMAIL delivery if that channel is enabled.
-   *
-   * @param notificationId - The notification ID
-   * @param enabledChannels - The enabled delivery channels
-   * @param data - The notification data
-   */
-  private async queueDeliveries<T extends NotificationType>(
-    notificationId: number,
-    enabledChannels: NotificationChannel[],
-    data: PayloadFor<T>,
-  ): Promise<void> {
-    for (const channel of enabledChannels) {
-      await this.queueService.enqueueDelivery(notificationId, channel, data)
-    }
   }
 
   /**

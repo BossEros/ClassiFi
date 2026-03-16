@@ -107,33 +107,11 @@ export {
   notifications,
   notificationsRelations,
   notificationTypeEnum,
-  notificationChannelEnum,
 } from "@/modules/notifications/notification.model.js"
 export type {
   Notification,
   NewNotification,
 } from "@/modules/notifications/notification.model.js"
-
-// Notification Delivery model
-export {
-  notificationDeliveries,
-  notificationDeliveriesRelations,
-  deliveryStatusEnum,
-} from "@/modules/notifications/notification-delivery.model.js"
-export type {
-  NotificationDelivery,
-  NewNotificationDelivery,
-} from "@/modules/notifications/notification-delivery.model.js"
-
-// Notification Preference model
-export {
-  notificationPreferences,
-  notificationPreferencesRelations,
-} from "@/modules/notifications/notification-preference.model.js"
-export type {
-  NotificationPreference,
-  NewNotificationPreference,
-} from "@/modules/notifications/notification-preference.model.js"
 
 // Module model
 export {

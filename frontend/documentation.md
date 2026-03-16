@@ -255,14 +255,13 @@ The Business Layer contains services that encapsulate business logic and orchest
 | **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                              |
 | **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export                             |
 | **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                                 |
-| **notificationPreferenceService** | `src/business/services/notificationPreferenceService.ts` | Settings-page notification delivery preferences and labels                            |
 | **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, assignment-level similarity analysis, pairwise code comparison |
 | **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                                   |
 | **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                                   |
 | **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                                 |
 | **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                                           |
 | **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, classes, enrollments, analytics)                   |
-| **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, account deletion)                            |
+| **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, notification preferences, account deletion)  |
 
 ### Service Guidelines
 
@@ -343,7 +342,7 @@ Comprehensive settings page with:
 
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
-- **Notification preferences**: Per-notification-type email and in-app delivery toggles backed by `notificationPreferenceService`
+- **Notification preferences**: Two global delivery toggles for email and in-app notifications backed by `userService`
 - **Account deletion**: Self-service account removal with confirmation
 
 ### Notification System
@@ -641,7 +640,7 @@ The project maintains comprehensive test coverage for:
 
 High-signal coverage gate:
 
-- `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `notificationPreferenceService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `notificationPreferenceRepository`, `userRepository`, and `authSchemas`).
+- `vitest` coverage includes a strict critical-path set (`authService`, `userService`, `classMappers`, `assignmentValidation`, `authValidation`, `classValidation`, `commonValidation`, `submissionFileValidation`, `userRepository`, and `authSchemas`).
 - Critical-path files enforce `100%` statements/branches/functions/lines with per-file thresholds.
 - Low-signal component rendering tests are not part of this strict gate.
 

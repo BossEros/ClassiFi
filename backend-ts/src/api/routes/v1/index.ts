@@ -15,7 +15,6 @@ import { gradebookRoutes } from "@/modules/gradebook/index.js"
 import { moduleClassRoutes, moduleRoutes } from "@/modules/modules/index.js"
 import {
   notificationRoutes,
-  notificationPreferenceRoutes,
 } from "@/modules/notifications/index.js"
 import { authMiddleware } from "@/api/middlewares/auth.middleware.js"
 
@@ -64,11 +63,6 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
   // Notification routes - /api/v1/notifications/*
   await app.register(notificationRoutes, { prefix: "/notifications" })
-
-  // Notification preference routes - /api/v1/notification-preferences/*
-  await app.register(notificationPreferenceRoutes, {
-    prefix: "/notification-preferences",
-  })
 }
 
 /** API v1 routes aggregator */
