@@ -120,6 +120,7 @@ export function getNotificationIcon(type: NotificationType): string {
   const iconMap: Record<NotificationType, string> = {
     ASSIGNMENT_CREATED: "FileText",
     SUBMISSION_GRADED: "CheckCircle",
+    SUBMISSION_FEEDBACK_GIVEN: "MessageSquare",
     CLASS_ANNOUNCEMENT: "Megaphone",
     DEADLINE_REMINDER: "Clock",
     ENROLLMENT_CONFIRMED: "UserPlus",

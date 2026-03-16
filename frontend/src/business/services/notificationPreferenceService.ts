@@ -48,6 +48,7 @@ export const notificationPreferenceService = {
     const labels: Record<NotificationType, string> = {
       ASSIGNMENT_CREATED: "New Assignments",
       SUBMISSION_GRADED: "Graded Submissions",
+      SUBMISSION_FEEDBACK_GIVEN: "Submission Feedback",
       CLASS_ANNOUNCEMENT: "Class Announcements",
       DEADLINE_REMINDER: "Deadline Reminders",
       ENROLLMENT_CONFIRMED: "Enrollment Confirmations",
@@ -66,6 +67,7 @@ export const notificationPreferenceService = {
     const descriptions: Record<NotificationType, string> = {
       ASSIGNMENT_CREATED: "Get notified when teachers post new assignments",
       SUBMISSION_GRADED: "Get notified when your submissions are graded",
+      SUBMISSION_FEEDBACK_GIVEN: "Get notified when feedback is given on your submissions",
       CLASS_ANNOUNCEMENT: "Get notified about class announcements",
       DEADLINE_REMINDER: "Get reminded about upcoming assignment deadlines",
       ENROLLMENT_CONFIRMED: "Get notified when you're enrolled in a class",
