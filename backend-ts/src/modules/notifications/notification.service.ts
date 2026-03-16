@@ -14,6 +14,11 @@ import {
 import { NotFoundError, ForbiddenError } from "@/shared/errors.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { createLogger } from "@/shared/logger.js"
+import type { TransactionContext } from "@/shared/transaction.js"
+import {
+  escapeHtml,
+  sanitizeEmailSubject,
+} from "@/services/email/templates.js"
 
 const logger = createLogger("NotificationService")
 
@@ -33,7 +38,7 @@ export class NotificationService {
   ) {}
 
   /**
-   * Creates an in-app notification and/or sends a best-effort email.
+   * Creates an in-app notification when that channel is enabled.
    * Respects user preferences for notification channels.
    *
    * @param userId - The ID of the user to notify
@@ -64,24 +69,61 @@ export class NotificationService {
       return null
     }
 
-    const shouldCreateInAppNotification = enabledChannels.includes("IN_APP")
-    const shouldSendEmail = enabledChannels.includes("EMAIL")
-
-    const notification = shouldCreateInAppNotification
-      ? await this.createNotificationRecord(userId, type, config, data, metadata)
-      : null
-
-    if (shouldSendEmail && user.email) {
-      void this.sendEmailNotification(user, type, config, data).catch((error) => {
-        logger.error("Failed to send notification email", {
-          userId,
-          notificationType: type,
-          error,
-        })
-      })
+    if (!enabledChannels.includes("IN_APP")) {
+      return null
     }
 
-    return notification
+    return this.createNotificationRecord(userId, type, config, data, metadata)
+  }
+
+  /**
+   * Creates a transaction-aware clone that reuses the same service behavior with
+   * repository instances bound to the provided database context.
+   *
+   * @param context - The transaction context to bind repository operations to.
+   * @returns A cloned notification service bound to the transaction.
+   */
+  withContext(context: TransactionContext): NotificationService {
+    const scopedService = Object.create(Object.getPrototypeOf(this)) as NotificationService
+
+    Object.assign(scopedService, this, {
+      notificationRepo: this.notificationRepo.withContext(context),
+      userRepo: this.userRepo.withContext(context),
+    })
+
+    return scopedService
+  }
+
+  /**
+   * Sends an email notification after the triggering write has committed.
+   *
+   * @param userId - The ID of the user to notify.
+   * @param type - The notification type.
+   * @param data - Type-specific data for template rendering.
+   */
+  async sendEmailNotificationIfEnabled<T extends NotificationType>(
+    userId: number,
+    type: T,
+    data: PayloadFor<T>,
+  ): Promise<void> {
+    const config = this.getNotificationConfig(type)
+    const user = await this.userRepo.getUserById(userId)
+
+    if (!user?.email) {
+      return
+    }
+
+    const preferredChannels = this.getPreferredChannels(user)
+    const enabledChannels = this.getEffectiveChannels(
+      preferredChannels,
+      config.channels,
+    )
+
+    if (!enabledChannels.includes("EMAIL")) {
+      return
+    }
+
+    await this.sendEmailNotification(user, type, config, data)
   }
 
   /**
@@ -154,6 +196,7 @@ export class NotificationService {
   }
 
   /**
+  /**
    * Sends a best-effort email notification.
    *
    * @param user - The target user
@@ -168,14 +211,17 @@ export class NotificationService {
     config: NotificationTypeConfig<T>,
     data: PayloadFor<T>,
   ): Promise<void> {
+    const fallbackMessage = escapeHtml(config.messageTemplate(data))
+    const safeSubject = sanitizeEmailSubject(config.titleTemplate(data))
     const emailHtml =
       config.emailTemplate?.(data) ??
-      `<p>${config.messageTemplate(data)}</p>`
+      `<p>${fallbackMessage}</p>`
 
     await this.emailService.sendEmail({
       to: user.email,
-      subject: config.titleTemplate(data),
+      subject: safeSubject,
       html: emailHtml,
+      text: config.messageTemplate(data),
     })
 
     logger.info("Notification email sent", {
