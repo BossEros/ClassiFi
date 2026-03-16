@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { uploadAvatar } from "@/business/services/userService"
+import {
+  uploadAvatar,
+  updateNotificationPreferences,
+} from "@/business/services/userService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as userRepository from "@/data/repositories/userRepository"
 import type { User } from "@/business/models/auth/types"
@@ -13,6 +16,8 @@ describe("userService.uploadAvatar", () => {
     firstName: "Student",
     lastName: "User",
     role: "student",
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     avatarUrl: undefined,
   }
@@ -83,6 +88,57 @@ describe("userService.uploadAvatar", () => {
     expect(result).toEqual({
       success: false,
       message: "Failed to upload avatar",
+    })
+  })
+})
+
+describe("userService.updateNotificationPreferences", () => {
+  const mockUser: User = {
+    id: "user-2",
+    email: "student@classifi.com",
+    firstName: "Student",
+    lastName: "User",
+    role: "student",
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
+    createdAt: new Date(),
+    avatarUrl: undefined,
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    useAuthStore.setState({ user: null, isAuthenticated: false })
+  })
+
+  it("throws when the user is not authenticated", async () => {
+    await expect(updateNotificationPreferences(false, true)).rejects.toThrow(
+      "You must be logged in to update notification preferences",
+    )
+
+    expect(userRepository.updateNotificationPreferences).not.toHaveBeenCalled()
+  })
+
+  it("updates notification preferences and syncs the auth store", async () => {
+    useAuthStore.setState({ user: mockUser, isAuthenticated: true })
+    vi.mocked(userRepository.updateNotificationPreferences).mockResolvedValue({
+      emailNotificationsEnabled: false,
+      inAppNotificationsEnabled: true,
+    })
+
+    const result = await updateNotificationPreferences(false, true)
+
+    expect(userRepository.updateNotificationPreferences).toHaveBeenCalledWith(
+      false,
+      true,
+    )
+    expect(result).toEqual({
+      emailNotificationsEnabled: false,
+      inAppNotificationsEnabled: true,
+    })
+    expect(useAuthStore.getState().user).toEqual({
+      ...mockUser,
+      emailNotificationsEnabled: false,
+      inAppNotificationsEnabled: true,
     })
   })
 })

@@ -26,6 +26,7 @@ import {
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { withTransaction } from "@/shared/transaction.js"
 
 const logger = createLogger("CodeTestService")
 
@@ -386,20 +387,45 @@ export class CodeTestService {
     const grade =
       total > 0 ? Math.floor((passed / total) * totalScore) : totalScore
 
-    await this.submissionRepo.updateGrade(submissionId, grade)
+    await withTransaction(async (transactionContext) => {
+      const transactionSubmissionRepo =
+        this.submissionRepo.withContext(transactionContext)
+      const transactionNotificationService =
+        this.notificationService.withContext(transactionContext)
 
-    this.notificationService
-      .createNotification(submission.studentId, "SUBMISSION_GRADED", {
+      await transactionSubmissionRepo.updateGrade(submissionId, grade)
+      await transactionNotificationService.createNotification(
+        submission.studentId,
+        "SUBMISSION_GRADED",
+        {
+          submissionId: submission.id,
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          grade,
+          maxGrade: totalScore,
+          submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        },
+      )
+    })
+
+    void this.notificationService.sendEmailNotificationIfEnabled(
+      submission.studentId,
+      "SUBMISSION_GRADED",
+      {
         submissionId: submission.id,
         assignmentId: assignment.id,
         assignmentTitle: assignment.assignmentName,
         grade,
         maxGrade: totalScore,
         submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      },
+    ).catch((error) => {
+      logger.error("Failed to send grade notification email", {
+        submissionId,
+        studentId: submission.studentId,
+        error,
       })
-      .catch((error) => {
-        logger.error("Failed to send grade notification:", error)
-      })
+    })
   }
 
   /**

@@ -26,6 +26,12 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull(),
   avatarUrl: text("avatar_url"),
   isActive: boolean("is_active").default(true).notNull(),
+  emailNotificationsEnabled: boolean("email_notifications_enabled")
+    .notNull()
+    .default(true),
+  inAppNotificationsEnabled: boolean("in_app_notifications_enabled")
+    .notNull()
+    .default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

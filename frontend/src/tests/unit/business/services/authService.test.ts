@@ -25,6 +25,8 @@ describe("authService", () => {
     firstName: "Test",
     lastName: "User",
     role: "student",
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
   }
 

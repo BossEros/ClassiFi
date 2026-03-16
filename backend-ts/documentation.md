@@ -194,7 +194,7 @@ Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
 - Feature-specific helper services are colocated with their module (for example, plagiarism helper services under `src/modules/plagiarism` and late penalty logic under `src/modules/assignments`).
 - Feature-specific mappers/guards/helpers are colocated with their module (for example, `src/modules/*/*.mapper.ts`, `src/modules/classes/class.guard.ts`).
-- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points for auth, classes, modules, assignments, submissions, dashboards, plagiarism, users, admin, test cases, gradebook, notifications, and notification preferences.
+- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points for auth, classes, modules, assignments, submissions, dashboards, plagiarism, users, admin, test cases, gradebook, and notifications.
 - Protected route registration is centralized in a dedicated `protectedRoutes` scope that applies the auth middleware once and then mounts the authenticated route groups.
 - Internal/shared modules that are not mounted directly as route groups can still be consumed through services without requiring their own route entrypoint.
 - Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
@@ -305,6 +305,7 @@ The programming language is specified at assignment creation and enforced during
 | ------ | ----------------- | -------------------------- |
 | GET    | `/user/me`        | Get current user's profile |
 | PATCH  | `/user/me/avatar` | Update avatar URL          |
+| PATCH  | `/user/me/notification-preferences` | Update user notification delivery settings |
 | DELETE | `/user/me`        | Delete account             |
 
 ### Classes
@@ -462,7 +463,7 @@ The notification system provides real-time updates to users about important even
 
 **Features**:
 - In-app notifications with real-time unread count
-- Email delivery queue with retry logic
+- Post-commit email delivery for grade and feedback write flows
 - Configurable notification channels (IN_APP, EMAIL)
 - Pagination support for notification history
 - User-specific notification filtering
@@ -519,13 +520,13 @@ Templates include:
 - Assignment/submission details
 - Branding and styling
 
-**Delivery Queue**:
+**Email Delivery Behavior**:
 
-Notifications are queued for email delivery with:
-- Automatic retry on failure (max 3 attempts)
-- Exponential backoff between retries
-- Status tracking (PENDING, SENT, FAILED, RETRYING)
-- Error logging for debugging
+Notifications separate write commits from email delivery:
+- In-app notification rows are persisted during the main write flow when that channel is enabled
+- Email sends for grade and feedback updates happen only after the surrounding write transaction commits
+- Failed email attempts are logged for operational visibility and do not partially commit the caller's primary write
+- In-app notifications are stored only when the user has in-app notifications enabled
 
 **Example Response** (`GET /notifications`):
 ```json
@@ -572,19 +573,6 @@ Notifications are queued for email delivery with:
 - `page` (number, default: 1) - Page number for pagination
 - `limit` (number, default: 20, max: 100) - Items per page
 - `unreadOnly` (boolean, default: false) - Filter to show only unread notifications
-
-### Notification Preferences
-
-| Method | Endpoint | Description |
-| ------ | -------- | ----------- |
-| GET | `/notification-preferences` | Get the caller's notification channel preferences |
-| PUT | `/notification-preferences` | Update email and in-app preference flags for a notification type |
-
-Behavior notes:
-- Preferences are stored per user and per notification type.
-- When no row exists yet, the service returns default preferences with both `emailEnabled` and `inAppEnabled` set to `true`.
-- Notification delivery resolves enabled channels through `NotificationPreferenceService` before queueing email or in-app work.
-
 
 ### Dashboard
 
@@ -644,33 +632,19 @@ Behavior notes:
 
 ### Entity Relationship Diagram
 
+```text
+[User] <- [Class] <- [Assignment] <- [TestCase]
+  |          |             |              |
+  +-------> [Enrollment]   +----------> [Submission] <---------- [TestResult]
+                             |
+                             v
+                     [SimilarityReport]
+                             |
+                             v
+                     [SimilarityResult] <---------- [MatchFragment]
+  |
+  +----------> [Notification]
 ```
-┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
-│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
-└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
-     │                 │                   │                     │
-     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
-     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
-     │            └──────────┘         └────┬────┘         └────────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityReport │
-     │                             └────────┬────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityResult │◄───────┐
-     │                             └────────┬────────┘        │
-     │                                      │           ┌─────┴────────┐
-     │                                      └──────────►│MatchFragment │
-     │                                                  └──────────────┘
-     │
-     │            ┌──────────────┐
-     └───────────►│ Notification │
-                  └──────┬───────┘
-                         │
-                  ┌──────▼──────────────────┐
-                  │ NotificationDelivery    │
-                  └─────────────────────────┘
 ```
 
 ### User Model
@@ -684,6 +658,9 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 50 }).notNull(),
   role: userRoleEnum("role").notNull().default("student"),
   avatarUrl: varchar("avatar_url", { length: 255 }),
+  isActive: boolean("is_active").notNull().default(true),
+  emailNotificationsEnabled: boolean("email_notifications_enabled").notNull().default(true),
+  inAppNotificationsEnabled: boolean("in_app_notifications_enabled").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at"),
 });
@@ -695,18 +672,10 @@ export const users = pgTable("users", {
 export const notificationTypeEnum = pgEnum("notification_type", [
   "ASSIGNMENT_CREATED",
   "SUBMISSION_GRADED",
-]);
-
-export const notificationChannelEnum = pgEnum("notification_channel", [
-  "EMAIL",
-  "IN_APP",
-]);
-
-export const deliveryStatusEnum = pgEnum("delivery_status", [
-  "PENDING",
-  "SENT",
-  "FAILED",
-  "RETRYING",
+  "SUBMISSION_FEEDBACK_GIVEN",
+  "CLASS_ANNOUNCEMENT",
+  "DEADLINE_REMINDER",
+  "ENROLLMENT_CONFIRMED",
 ]);
 
 export const notifications = pgTable("notifications", {
@@ -720,47 +689,15 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-
-export const notificationDeliveries = pgTable("notification_deliveries", {
-  id: serial("id").primaryKey(),
-  notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade" }),
-  channel: notificationChannelEnum("channel").notNull(),
-  status: deliveryStatusEnum("status").notNull().default("PENDING"),
-  retryCount: integer("retry_count").notNull().default(0),
-  sentAt: timestamp("sent_at"),
-  failedAt: timestamp("failed_at"),
-  errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 ```
 
 **Indexes**:
 - `notifications`: `user_id`, `created_at`, `is_read`, composite `(user_id, is_read)`
-- `notification_deliveries`: `notification_id`, `status`, composite `(status, created_at)`
 
-### Notification Preference Model
-
-```typescript
-export const notificationPreferences = pgTable(
-  "notification_preferences",
-  {
-    id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-    notificationType: notificationTypeEnum("notification_type").notNull(),
-    emailEnabled: boolean("email_enabled").notNull().default(true),
-    inAppEnabled: boolean("in_app_enabled").notNull().default(true),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at"),
-  },
-  (table) => [
-    unique("uq_user_notification_type").on(table.userId, table.notificationType),
-  ],
-)
-```
-
-**Behavior**:
-- One row exists per `(userId, notificationType)` pair once a preference is explicitly updated.
-- Missing rows are treated as fully enabled defaults by the service layer.
+**Delivery behavior**:
+- In-app notifications are persisted in `notifications`
+- Email notifications are sent separately after successful write completion when the relevant flow opts into post-commit delivery
+- If in-app notifications are disabled but email is enabled, the user receives the email without an inbox row being created
 
 ### Roles
 
@@ -963,7 +900,8 @@ Manages user notifications and email delivery:
 
 ```typescript
 class NotificationService {
-  createNotification(userId, type, data); // Create notification with email queue
+  createNotification(userId, type, data); // Create an in-app notification when that channel is enabled
+  sendEmailNotificationIfEnabled(userId, type, data); // Send email after commit when that channel is enabled
   getUserNotifications(userId, page, limit, unreadOnly); // Get paginated notifications
   getUnreadCount(userId); // Get unread notification count
   markAsRead(notificationId, userId); // Mark single notification as read
@@ -974,7 +912,7 @@ class NotificationService {
 
 **Features**:
 - Automatic notification creation on key events (assignment creation, grading)
-- Email delivery queue with retry logic
+- Post-commit email delivery for transaction-sensitive write flows
 - Template-based email generation
 - User authorization checks
 - Pagination support
@@ -988,28 +926,15 @@ class NotificationService {
 - SMTP (for custom email servers)
 - Supabase (uses built-in email service)
 
-**Delivery Queue**:
-- Automatic retry on failure (max 3 attempts)
-- Exponential backoff between retries
-- Status tracking (PENDING, SENT, FAILED, RETRYING)
+**Email Delivery Behavior**:
+- Email delivery is attempted only after grade/feedback write transactions commit
+- Failed email attempts are logged and do not partially commit the caller's primary write
 
-### NotificationPreferenceService
-
-Manages per-user delivery-channel preferences for each notification type:
-
-```typescript
-class NotificationPreferenceService {
-  getPreference(userId, notificationType); // Get one type, defaulting to both channels enabled
-  getAllPreferences(userId); // Get full settings-page preference list
-  updatePreference(userId, notificationType, emailEnabled, inAppEnabled); // Upsert preference row
-  getEnabledChannels(userId, notificationType); // Resolve EMAIL / IN_APP delivery targets
-}
-```
-
-**Features**:
-- Returns default preferences when a user has not saved explicit settings yet
-- Keeps notification delivery policy out of controllers and UI callers
-- Provides the backend contract consumed by the frontend settings page
+**Preference Resolution**:
+- Notification delivery reads the current user record before deciding which channels to use.
+- `emailNotificationsEnabled` gates email delivery globally for the user.
+- `inAppNotificationsEnabled` gates in-app delivery globally for the user.
+- Type-level channel restrictions still apply through each notification type configuration.
 
 ### ModuleService
 
@@ -1199,7 +1124,7 @@ Test location policy:
 - Do not add new test files under `backend-ts/src/**`.
 
 High-signal coverage gate:
-- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `notification-preference.schema`, `notification-preference.service`, `user.service`).
+- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `user.service`).
 - This gate ensures login/register payload rules and auth service business paths fail fast on regressions.
 
 ### Test Factories

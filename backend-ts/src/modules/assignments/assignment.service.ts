@@ -139,13 +139,18 @@ export class AssignmentService {
     }))
 
     const settledNotificationResults = await Promise.allSettled(
-      notificationTargets.map((target) =>
-        this.notificationService.createNotification(
+      notificationTargets.map(async (target) => {
+        await this.notificationService.createNotification(
           target.recipientUserId,
           "ASSIGNMENT_CREATED",
           target.notificationData,
-        ),
-      ),
+        )
+        await this.notificationService.sendEmailNotificationIfEnabled(
+          target.recipientUserId,
+          "ASSIGNMENT_CREATED",
+          target.notificationData,
+        )
+      }),
     )
 
     const failedRecipientUserIds: number[] = []
@@ -429,13 +434,28 @@ export class AssignmentService {
 
     // Send notifications to non-submitters
     const notificationPromises = nonSubmitters.map((enrollment) =>
-      this.notificationService
-        .createNotification(enrollment.user.id, "DEADLINE_REMINDER", {
-          assignmentId: assignment.id,
-          assignmentTitle: assignment.assignmentName,
-          dueDate: formatAssignmentDueDate(assignment.deadline),
-          assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
-        })
+      Promise.all([
+        this.notificationService.createNotification(
+          enrollment.user.id,
+          "DEADLINE_REMINDER",
+          {
+            assignmentId: assignment.id,
+            assignmentTitle: assignment.assignmentName,
+            dueDate: formatAssignmentDueDate(assignment.deadline),
+            assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          },
+        ),
+        this.notificationService.sendEmailNotificationIfEnabled(
+          enrollment.user.id,
+          "DEADLINE_REMINDER",
+          {
+            assignmentId: assignment.id,
+            assignmentTitle: assignment.assignmentName,
+            dueDate: formatAssignmentDueDate(assignment.deadline),
+            assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          },
+        ),
+      ])
         .then(() => ({
           status: "fulfilled" as const,
           userId: enrollment.user.id,

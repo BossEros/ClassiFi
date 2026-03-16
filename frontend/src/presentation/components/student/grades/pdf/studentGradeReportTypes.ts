@@ -1,18 +1,11 @@
-import type { ReactElement } from "react"
-import type { DocumentProps } from "@react-pdf/renderer"
 import type { StudentClassGrades } from "@/shared/types/gradebook"
+import type { ReportMetadataEntry, SummaryMetric } from "@/presentation/components/shared/pdf/pdfReportTypes"
 
-// ─── Value Object Types ────────────────────────────────────────────────────────
-
-export interface ReportMetadataEntry {
-  label: string
-  value: string
-}
-
-export interface SummaryMetric {
-  label: string
-  value: string
-}
+export type {
+  PdfDocumentDownloadOptions,
+  ReportMetadataEntry,
+  SummaryMetric,
+} from "@/presentation/components/shared/pdf/pdfReportTypes"
 
 export interface StudentGradeReportRow {
   assignmentName: string
@@ -28,8 +21,6 @@ export interface StudentGradeReportRow {
   isOverridden: boolean
 }
 
-// ─── Report Data Shape ─────────────────────────────────────────────────────────
-
 export interface StudentGradeReportData {
   title: string
   reportMetadata: ReportMetadataEntry[]
@@ -37,17 +28,8 @@ export interface StudentGradeReportData {
   assignmentRows: StudentGradeReportRow[]
 }
 
-// ─── Builder Options ───────────────────────────────────────────────────────────
-
 export interface StudentGradeReportBuilderOptions {
   classGrades: StudentClassGrades
   studentName?: string
   downloadedAt?: Date
-}
-
-// ─── Download Options ──────────────────────────────────────────────────────────
-
-export interface StudentGradeReportDocumentDownloadOptions {
-  document: ReactElement<DocumentProps>
-  fileName: string
 }

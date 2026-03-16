@@ -16,8 +16,6 @@ export const DI_TOKENS = {
     gradebook: "GradebookRepository",
     module: "ModuleRepository",
     notification: "NotificationRepository",
-    notificationDelivery: "NotificationDeliveryRepository",
-    notificationPreference: "NotificationPreferenceRepository",
   },
   adapters: {
     supabaseAuth: "SupabaseAuthAdapter",
@@ -36,8 +34,6 @@ export const DI_TOKENS = {
     latePenalty: "LatePenaltyService",
     email: "EmailService",
     notification: "NotificationService",
-    notificationQueue: "NotificationQueueService",
-    notificationPreference: "NotificationPreferenceService",
     codeTest: "CodeTestService",
     testCase: "TestCaseService",
     module: "ModuleService",

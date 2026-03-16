@@ -26,6 +26,15 @@ const UpdateAvatarSchema = z.object({
 
 type UpdateAvatarRequest = z.infer<typeof UpdateAvatarSchema>
 
+const UpdateNotificationPreferencesSchema = z.object({
+  emailNotificationsEnabled: z.boolean(),
+  inAppNotificationsEnabled: z.boolean(),
+})
+
+type UpdateNotificationPreferencesRequest = z.infer<
+  typeof UpdateNotificationPreferencesSchema
+>
+
 /**
  * Registers user routes for profile management, avatar updates, and account deletion.
  *
@@ -92,6 +101,30 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         message: "Your account has been permanently deleted.",
+      })
+    },
+  })
+
+  /**
+   * PATCH /me/notification-preferences
+   * Update the current user's notification preferences
+   */
+  app.patch("/me/notification-preferences", {
+    preHandler: validateBody(UpdateNotificationPreferencesSchema),
+    handler: async (request, reply) => {
+      const authenticatedUserId = request.user!.id
+      const { emailNotificationsEnabled, inAppNotificationsEnabled } =
+        request.validatedBody as UpdateNotificationPreferencesRequest
+
+      const preferences = await userService.updateNotificationPreferences(
+        authenticatedUserId,
+        emailNotificationsEnabled,
+        inAppNotificationsEnabled,
+      )
+
+      return reply.send({
+        success: true,
+        ...preferences,
       })
     },
   })

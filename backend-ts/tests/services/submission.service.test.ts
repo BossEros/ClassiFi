@@ -113,6 +113,8 @@ describe("SubmissionService", () => {
 
     mockNotificationService = {
       createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     mockPlagiarismAutoAnalysisService = {
@@ -646,6 +648,17 @@ describe("SubmissionService", () => {
           ),
         }),
       )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledWith(
+        20,
+        "SUBMISSION_FEEDBACK_GIVEN",
+        expect.objectContaining({
+          submissionUrl: expect.stringContaining(
+            "/dashboard/assignments/10",
+          ),
+        }),
+      )
     })
 
     it("trims teacher name and feedback before saving and notifying", async () => {
@@ -704,7 +717,7 @@ describe("SubmissionService", () => {
       expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
     })
 
-    it("does not fail when feedback notification delivery fails", async () => {
+    it("rolls back feedback save when notification persistence fails", async () => {
       const notificationSubmission = createMockSubmission({
         id: 6,
         assignmentId: 11,
@@ -740,20 +753,17 @@ describe("SubmissionService", () => {
           "Teacher Name",
           "Review pointer updates",
         ),
-      ).resolves.toMatchObject({ id: 6, teacherFeedback: "Review pointer updates" })
+      ).rejects.toThrow("Queue unavailable")
+    })
 
-      expect(mockSubmissionRepo.saveTeacherFeedback).toHaveBeenCalledWith(
-        6,
-        "Review pointer updates",
+    it("does not fail when feedback notification email delivery fails after commit", async () => {
+      mockNotificationService.sendEmailNotificationIfEnabled.mockRejectedValue(
+        new Error("SMTP unavailable"),
       )
-      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
-        21,
-        "SUBMISSION_FEEDBACK_GIVEN",
-        expect.objectContaining({
-          assignmentId: 11,
-          assignmentTitle: "Linked List Practice",
-        }),
-      )
+
+      await expect(
+        submissionService.saveTeacherFeedback(5, "Teacher Name", "Great work"),
+      ).resolves.toMatchObject({ id: 5, teacherFeedback: "Great work" })
     })
   })
 })

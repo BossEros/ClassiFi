@@ -42,6 +42,8 @@ export function createMockUser(overrides?: Partial<User>): User {
     firstName: "Test",
     lastName: "Student",
     role: "student" as UserRole,
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     ...overrides,
   }
@@ -57,6 +59,8 @@ export function createMockTeacher(overrides?: Partial<User>): User {
     firstName: "Test",
     lastName: "Teacher",
     role: "teacher" as UserRole,
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     ...overrides,
   }
@@ -72,6 +76,8 @@ export function createMockAdmin(overrides?: Partial<User>): User {
     firstName: "Test",
     lastName: "Admin",
     role: "admin" as UserRole,
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     ...overrides,
   }

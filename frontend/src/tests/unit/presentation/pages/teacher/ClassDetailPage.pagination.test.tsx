@@ -5,9 +5,11 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ClassDetailPage } from "@/presentation/pages/teacher/ClassDetailPage"
 import * as classService from "@/business/services/classService"
+import * as moduleService from "@/business/services/moduleService"
 import type { ISODateString, DayOfWeek } from "@/shared/types/class"
 
 vi.mock("@/business/services/classService")
+vi.mock("@/business/services/moduleService")
 
 const mockUser = {
   id: "1",
@@ -74,6 +76,7 @@ describe("ClassDetailPage - Pagination", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     useAuthStore.setState({ user: mockUser as any, isAuthenticated: true })
+    vi.mocked(moduleService.getModulesByClassId).mockResolvedValue([])
   })
 
   it("shows teacher timeline filters and hides student status filters", async () => {

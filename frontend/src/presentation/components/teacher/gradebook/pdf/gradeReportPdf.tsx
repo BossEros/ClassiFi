@@ -9,17 +9,19 @@
  * from the plagiarism report module for consistent branding.
  */
 
-import { Document, Page, Text, View, pdf, StyleSheet } from "@react-pdf/renderer"
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
 import { pdfStyles, C } from "../../plagiarism/pdf/pdfStyles"
-import { ReportHeader, SectionTitle, MetadataGrid, MetricRow, DocumentFooter } from "../../plagiarism/pdf/pdfComponents"
-import type { GradeReportData, GradeReportDocumentDownloadOptions, GradeReportStudentRow } from "./gradeReportTypes"
-
-// ─── Re-exports (public API) ──────────────────────────────────────────────────
+import {
+  ReportHeader,
+  SectionTitle,
+  MetadataGrid,
+  MetricRow,
+  DocumentFooter,
+} from "../../plagiarism/pdf/pdfComponents"
+import type { GradeReportData, GradeReportStudentRow } from "./gradeReportTypes"
 
 export type { GradeReportData } from "./gradeReportTypes"
 export { buildGradeReportData } from "./gradeReportBuilder"
-
-// ─── Grade Table Styles ───────────────────────────────────────────────────────
 
 const gradeStyles = StyleSheet.create({
   table: {
@@ -114,11 +116,10 @@ const gradeStyles = StyleSheet.create({
   },
 })
 
-// ─── Grade Color Helper ───────────────────────────────────────────────────────
-
 function getGradeTextStyle(percentage: number) {
   if (percentage >= 75) return gradeStyles.gradeTextHigh
   if (percentage >= 60) return gradeStyles.gradeTextMid
+
   return gradeStyles.gradeTextLow
 }
 
@@ -128,36 +129,44 @@ function getAverageColor(averageStr: string): string {
   if (isNaN(value)) return C.inkLight
   if (value >= 75) return C.lowText
   if (value >= 60) return C.medText
+
   return C.highText
 }
 
-// ─── Grade Table Component ────────────────────────────────────────────────────
-
 function GradeTable({ data }: { data: GradeReportData }) {
   const assignmentCount = data.assignmentNames.length
-  const studentColWidth = assignmentCount > 5 ? "18%" : "22%"
-  const averageColWidth = "10%"
-  const remainingWidth = assignmentCount > 5
-    ? (82 - 10) / assignmentCount
-    : (78 - 10) / assignmentCount
-  const assignmentColWidth = `${remainingWidth}%`
 
-  if (data.studentRows.length === 0) {
+  if (data.studentRows.length === 0 || assignmentCount === 0) {
     return (
       <View style={[pdfStyles.emptyState]}>
-        <Text style={{ fontSize: 9, color: C.inkLight, fontFamily: "Helvetica-Oblique" }}>
-          No students enrolled in this class.
+        <Text
+          style={{
+            fontSize: 9,
+            color: C.inkLight,
+            fontFamily: "Helvetica-Oblique",
+          }}
+        >
+          {assignmentCount === 0
+            ? "No assignments created for this class."
+            : "No students enrolled in this class."}
         </Text>
       </View>
     )
   }
 
+  const studentColWidth = assignmentCount > 5 ? "18%" : "22%"
+  const averageColWidth = "10%"
+  const remainingWidth =
+    assignmentCount > 5 ? (82 - 10) / assignmentCount : (78 - 10) / assignmentCount
+  const assignmentColWidth = `${remainingWidth}%`
+
   return (
     <View style={gradeStyles.table}>
-      {/* Header */}
       <View style={gradeStyles.headerRow} wrap={false}>
         <View style={[gradeStyles.headerCell, { width: studentColWidth }]}>
-          <Text style={[gradeStyles.headerText, gradeStyles.headerTextLeft]}>Student</Text>
+          <Text style={[gradeStyles.headerText, gradeStyles.headerTextLeft]}>
+            Student
+          </Text>
         </View>
         {data.assignmentNames.map((name, index) => (
           <View
@@ -167,12 +176,17 @@ function GradeTable({ data }: { data: GradeReportData }) {
             <Text style={gradeStyles.headerText}>{name}</Text>
           </View>
         ))}
-        <View style={[gradeStyles.headerCell, gradeStyles.headerCellLast, { width: averageColWidth }]}>
+        <View
+          style={[
+            gradeStyles.headerCell,
+            gradeStyles.headerCellLast,
+            { width: averageColWidth },
+          ]}
+        >
           <Text style={gradeStyles.headerText}>Average</Text>
         </View>
       </View>
 
-      {/* Rows */}
       {data.studentRows.map((student, rowIndex) => (
         <GradeTableRow
           key={`row-${rowIndex}`}
@@ -216,7 +230,10 @@ function GradeTableRow({
         <Text style={gradeStyles.studentNameText}>{student.studentName}</Text>
       </View>
       {student.grades.map((grade, index) => (
-        <View key={`cell-${index}`} style={[gradeStyles.cell, { width: assignmentColWidth }]}>
+        <View
+          key={`cell-${index}`}
+          style={[gradeStyles.cell, { width: assignmentColWidth }]}
+        >
           {grade.score === "-" ? (
             <Text style={gradeStyles.noDataText}>-</Text>
           ) : (
@@ -224,42 +241,25 @@ function GradeTableRow({
           )}
         </View>
       ))}
-      <View style={[gradeStyles.cell, gradeStyles.cellLast, { width: averageColWidth }]}>
-        <Text style={[gradeStyles.averageText, { color: getAverageColor(student.average) }]}>
+      <View
+        style={[
+          gradeStyles.cell,
+          gradeStyles.cellLast,
+          { width: averageColWidth },
+        ]}
+      >
+        <Text
+          style={[
+            gradeStyles.averageText,
+            { color: getAverageColor(student.average) },
+          ]}
+        >
           {student.average}
         </Text>
       </View>
     </View>
   )
 }
-
-// ─── Download Utility ─────────────────────────────────────────────────────────
-
-/**
- * Triggers a browser download for a generated grade report PDF document.
- *
- * @param options - Document instance and target filename.
- * @returns A promise that resolves after the browser download is triggered.
- */
-export async function downloadGradeReportDocument(
-  options: GradeReportDocumentDownloadOptions,
-): Promise<void> {
-  const pdfBlob = await pdf(options.document).toBlob()
-  const downloadUrl = window.URL.createObjectURL(pdfBlob)
-  const downloadLinkElement = document.createElement("a")
-
-  try {
-    downloadLinkElement.href = downloadUrl
-    downloadLinkElement.download = options.fileName
-    document.body.appendChild(downloadLinkElement)
-    downloadLinkElement.click()
-  } finally {
-    document.body.removeChild(downloadLinkElement)
-    window.URL.revokeObjectURL(downloadUrl)
-  }
-}
-
-// ─── Grade Report Document ────────────────────────────────────────────────────
 
 /**
  * Grade report PDF document for a class gradebook.
@@ -270,7 +270,11 @@ export async function downloadGradeReportDocument(
 export function GradeReportDocument({ data }: { data: GradeReportData }) {
   return (
     <Document title={data.title}>
-      <Page size="A4" orientation={data.assignmentNames.length > 5 ? "landscape" : "portrait"} style={pdfStyles.page}>
+      <Page
+        size="A4"
+        orientation={data.assignmentNames.length > 5 ? "landscape" : "portrait"}
+        style={pdfStyles.page}
+      >
         <ReportHeader
           title={data.title}
           subtitle="Comprehensive grade summary for all enrolled students across all assignments."

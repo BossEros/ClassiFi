@@ -120,3 +120,39 @@ function appendCacheBustVersion(avatarUrl: string): string {
   const querySeparator = avatarUrl.includes("?") ? "&" : "?"
   return `${avatarUrl}${querySeparator}v=${Date.now()}`
 }
+
+/**
+ * Updates the user's notification preferences via the backend API.
+ *
+ * @param emailNotificationsEnabled - Whether email notifications are enabled.
+ * @param inAppNotificationsEnabled - Whether in-app notifications are enabled.
+ * @returns The updated notification preferences.
+ * @throws Error if the API call fails.
+ */
+export async function updateNotificationPreferences(
+  emailNotificationsEnabled: boolean,
+  inAppNotificationsEnabled: boolean,
+): Promise<{
+  emailNotificationsEnabled: boolean
+  inAppNotificationsEnabled: boolean
+}> {
+  const response = await apiClient.patch<{
+    success: boolean
+    emailNotificationsEnabled: boolean
+    inAppNotificationsEnabled: boolean
+  }>("/user/me/notification-preferences", {
+    emailNotificationsEnabled,
+    inAppNotificationsEnabled,
+  })
+
+  if (response.error || !response.data || !response.data.success) {
+    throw new Error(
+      response.error || "Failed to update notification preferences",
+    )
+  }
+
+  return {
+    emailNotificationsEnabled: response.data.emailNotificationsEnabled,
+    inAppNotificationsEnabled: response.data.inAppNotificationsEnabled,
+  }
+}

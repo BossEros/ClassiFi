@@ -36,6 +36,7 @@ export function AssignmentFilters({
         />
         <Input
           placeholder="Search assignments by name..."
+          aria-label="Search assignments"
           value={currentFilters.searchQuery}
           onChange={(event) => onSearchChange(event.target.value)}
           className={`pl-12 ${classFiltersTheme.searchInput}`}
@@ -45,11 +46,13 @@ export function AssignmentFilters({
       <div className="group relative min-w-[200px]">
         <Filter
           className={`pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 ${classFiltersTheme.selectIcon}`}
+          aria-hidden="true"
         />
         <Select
           value={currentFilters.selectedClass}
           onChange={(value) => onClassChange(value)}
           options={classOptions}
+          aria-label="Filter by class"
           className={`appearance-none cursor-pointer pl-9 pr-10 transition-all ${classFiltersTheme.select} ${classFiltersTheme.selectOption}`}
         />
       </div>

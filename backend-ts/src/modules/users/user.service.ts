@@ -87,4 +87,30 @@ export class UserService {
   async getUserById(userId: number) {
     return await this.userRepo.getUserById(userId)
   }
+
+  /**
+   * Update user notification preferences.
+   * @throws {UserNotFoundError} If user not found
+   */
+  async updateNotificationPreferences(
+    userId: number,
+    emailNotificationsEnabled: boolean,
+    inAppNotificationsEnabled: boolean,
+  ): Promise<{
+    emailNotificationsEnabled: boolean
+    inAppNotificationsEnabled: boolean
+  }> {
+    const user = await this.userRepo.getUserById(userId)
+
+    if (!user) {
+      throw new UserNotFoundError(userId)
+    }
+
+    await this.userRepo.updateUser(userId, {
+      emailNotificationsEnabled,
+      inAppNotificationsEnabled,
+    })
+
+    return { emailNotificationsEnabled, inAppNotificationsEnabled }
+  }
 }

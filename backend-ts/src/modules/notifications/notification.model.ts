@@ -21,11 +21,6 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "SUBMISSION_FEEDBACK_GIVEN",
 ])
 
-export const notificationChannelEnum = pgEnum("notification_channel", [
-  "EMAIL",
-  "IN_APP",
-])
-
 export const notifications = pgTable("notifications", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")

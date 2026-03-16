@@ -53,11 +53,7 @@ import {
   type DeleteAccountFormValues,
 } from "@/presentation/schemas/auth/authSchemas"
 import { Toggle } from "@/presentation/components/ui/Toggle"
-import { notificationPreferenceService } from "@/business/services/notificationPreferenceService"
-import type {
-  NotificationPreference,
-  NotificationType,
-} from "@/business/models/notification/preference.types"
+import { updateNotificationPreferences } from "@/business/services/userService"
 
 const LIGHT_SURFACE_CARD_CLASSES =
   "border-slate-300 bg-white shadow-md shadow-slate-200/70"
@@ -1095,168 +1091,91 @@ export function DeleteAccountModal({
 // Inlined from src/presentation/components/shared/settings/NotificationPreferences.tsx
 /**
  * Notification preferences component.
- * Allows users to configure email and in-app notification settings.
+ * Allows users to toggle global email and in-app notification settings.
  */
 function NotificationPreferences() {
-  const [preferences, setPreferences] = useState<NotificationPreference[]>([])
-  const [loading, setLoading] = useState(true)
-  const [updating, setUpdating] = useState<Set<string>>(new Set())
+  const user = useAuthStore((state) => state.user)
+  const [updating, setUpdating] = useState(false)
 
-  useEffect(() => {
-    loadPreferences()
-  }, [])
-
-  const loadPreferences = async () => {
-    try {
-      setLoading(true)
-      const prefs = await notificationPreferenceService.getPreferences()
-      setPreferences(prefs)
-    } catch (error) {
-      console.error("Failed to load notification preferences:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  if (!user) return null
 
   const handleToggle = async (
-    type: NotificationType,
-    field: "emailEnabled" | "inAppEnabled",
-    currentValue: boolean,
+    field: "emailNotificationsEnabled" | "inAppNotificationsEnabled",
   ) => {
-    const updateKey = `${type}-${field}`
-
-    // Add the key to the updating set
-    setUpdating((prev) => new Set(prev).add(updateKey))
-
-    // Helper to remove the key from the updating set
-    const clearUpdating = () => {
-      setUpdating((prev) => {
-        const next = new Set(prev)
-        next.delete(updateKey)
-
-        return next
-      })
-    }
-
-    const preference = preferences.find((p) => p.notificationType === type)
-
-    if (!preference) {
-      clearUpdating()
-
-      return
-    }
+    setUpdating(true)
 
     try {
-      const updatedPreference =
-        await notificationPreferenceService.updatePreference(
-          type,
-          field === "emailEnabled" ? !currentValue : preference.emailEnabled,
-          field === "inAppEnabled" ? !currentValue : preference.inAppEnabled,
-        )
-
-      setPreferences((prev) =>
-        prev.map((p) => (p.notificationType === type ? updatedPreference : p)),
+      await updateNotificationPreferences(
+        field === "emailNotificationsEnabled"
+          ? !user.emailNotificationsEnabled
+          : user.emailNotificationsEnabled,
+        field === "inAppNotificationsEnabled"
+          ? !user.inAppNotificationsEnabled
+          : user.inAppNotificationsEnabled,
       )
     } catch (error) {
       console.error("Failed to update notification preference:", error)
     } finally {
-      clearUpdating()
+      setUpdating(false)
     }
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="animate-pulse rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60"
-          >
-            <div className="mb-2 h-4 w-1/3 rounded bg-slate-200"></div>
-            <div className="h-3 w-2/3 rounded bg-slate-200"></div>
-          </div>
-        ))}
-      </div>
-    )
-  }
+  const channels = [
+    {
+      field: "emailNotificationsEnabled" as const,
+      label: "Email Notifications",
+      description:
+        "Receive notifications by email, even if they are not shown in your dashboard inbox",
+      icon: Mail,
+      iconBgClass: "bg-teal-50",
+      iconClass: "text-teal-600",
+      enabled: user.emailNotificationsEnabled,
+    },
+    {
+      field: "inAppNotificationsEnabled" as const,
+      label: "In-App Notifications",
+      description:
+        "Show notifications inside your dashboard inbox and notification bell",
+      icon: Bell,
+      iconBgClass: "bg-amber-50",
+      iconClass: "text-amber-600",
+      enabled: user.inAppNotificationsEnabled,
+    },
+  ]
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm shadow-slate-200/60">
-      {/* Table header */}
-      <div className="flex items-center border-b border-slate-200 bg-slate-100/80 px-4 py-2.5">
-        <div className="flex-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
-          Notification Type
-        </div>
-        <div className="flex items-center gap-8 sm:gap-12">
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <Mail className="h-3.5 w-3.5" />
-            Email
-          </div>
-          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">
-            <Bell className="h-3.5 w-3.5" />
-            In-App
-          </div>
-        </div>
-      </div>
-
-      {/* Preference rows */}
-      {preferences.map((preference, index) => {
-        const label = notificationPreferenceService.getNotificationTypeLabel(
-          preference.notificationType,
-        )
-        const description =
-          notificationPreferenceService.getNotificationTypeDescription(
-            preference.notificationType,
-          )
-        const isLast = index === preferences.length - 1
-
-        return (
-          <div
-            key={preference.notificationType}
-            className={cn(
-              "flex items-center bg-white px-4 py-4 transition-colors hover:bg-slate-50/60",
-              !isLast && "border-b border-slate-100",
-            )}
-          >
-            <div className="flex-1 min-w-0 pr-4">
-              <p className="text-sm font-medium text-slate-900">{label}</p>
-              <p className="mt-0.5 text-xs text-slate-500 truncate">
-                {description}
+    <div className="space-y-3">
+      {channels.map((channel) => (
+        <div
+          key={channel.field}
+          className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60"
+        >
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <div
+              className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                channel.iconBgClass,
+              )}
+            >
+              <channel.icon className={cn("w-5 h-5", channel.iconClass)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900">
+                {channel.label}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {channel.description}
               </p>
             </div>
-            <div className="flex items-center gap-8 sm:gap-12 shrink-0">
-              <Toggle
-                enabled={preference.emailEnabled}
-                onChange={() =>
-                  handleToggle(
-                    preference.notificationType,
-                    "emailEnabled",
-                    preference.emailEnabled,
-                  )
-                }
-                disabled={updating.has(
-                  `${preference.notificationType}-emailEnabled`,
-                )}
-                variant="light"
-              />
-              <Toggle
-                enabled={preference.inAppEnabled}
-                onChange={() =>
-                  handleToggle(
-                    preference.notificationType,
-                    "inAppEnabled",
-                    preference.inAppEnabled,
-                  )
-                }
-                disabled={updating.has(
-                  `${preference.notificationType}-inAppEnabled`,
-                )}
-                variant="light"
-              />
-            </div>
           </div>
-        )
-      })}
+          <Toggle
+            enabled={channel.enabled}
+            onChange={() => handleToggle(channel.field)}
+            disabled={updating}
+            variant="light"
+          />
+        </div>
+      ))}
     </div>
   )
 }
@@ -1386,7 +1305,7 @@ export function SettingsPage() {
                 Notification Preferences
               </CardTitle>
               <CardDescription className="text-slate-500">
-                Choose how and when you'd like to be notified
+                Choose how you'd like to receive notifications and where they should appear
               </CardDescription>
             </CardHeader>
             <CardContent>

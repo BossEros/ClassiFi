@@ -14,8 +14,6 @@ import { TestResultRepository } from "@/modules/test-cases/test-result.repositor
 import { GradebookRepository } from "@/modules/gradebook/gradebook-query.repository.js"
 import { ModuleRepository } from "@/modules/modules/module.repository.js"
 import { NotificationRepository } from "@/modules/notifications/notification.repository.js"
-import { NotificationDeliveryRepository } from "@/modules/notifications/notification-delivery.repository.js"
-import { NotificationPreferenceRepository } from "@/modules/notifications/notification-preference.repository.js"
 
 // Services
 import { AuthService } from "@/modules/auth/auth.service.js"
@@ -37,8 +35,6 @@ import { GradebookService } from "@/modules/gradebook/gradebook.service.js"
 import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
 import { EmailService } from "@/services/email/index.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
-import { NotificationQueueService } from "@/modules/notifications/notification-queue.service.js"
-import { NotificationPreferenceService } from "@/modules/notifications/notification-preference.service.js"
 
 // Admin Services (focused, single-responsibility)
 import { AdminUserService } from "@/modules/admin/admin-user.service.js"
@@ -91,14 +87,6 @@ container.registerSingleton(
   DI_TOKENS.repositories.notification,
   NotificationRepository,
 )
-container.registerSingleton(
-  DI_TOKENS.repositories.notificationDelivery,
-  NotificationDeliveryRepository,
-)
-container.registerSingleton(
-  DI_TOKENS.repositories.notificationPreference,
-  NotificationPreferenceRepository,
-)
 
 // Register infrastructure adapters as singletons
 container.registerSingleton(
@@ -125,14 +113,6 @@ container.registerSingleton(DI_TOKENS.services.user, UserService)
 container.registerSingleton(DI_TOKENS.services.gradebook, GradebookService)
 container.registerSingleton(DI_TOKENS.services.latePenalty, LatePenaltyService)
 container.registerSingleton(DI_TOKENS.services.email, EmailService)
-container.registerSingleton(
-  DI_TOKENS.services.notificationQueue,
-  NotificationQueueService,
-)
-container.registerSingleton(
-  DI_TOKENS.services.notificationPreference,
-  NotificationPreferenceService,
-)
 container.registerSingleton(
   DI_TOKENS.services.notification,
   NotificationService,

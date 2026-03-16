@@ -38,6 +38,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { NotificationService } from "@/modules/notifications/notification.service.js"
 import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
 import { settings } from "@/shared/config.js"
+import { withTransaction } from "@/shared/transaction.js"
 
 const logger = createLogger("SubmissionService")
 const MAX_TEACHER_NAME_LENGTH = 100
@@ -320,19 +321,24 @@ export class SubmissionService {
       )
     }
 
-    const updated = await this.submissionRepo.saveTeacherFeedback(
-      submissionId,
-      normalizedFeedback,
-    )
-
-    if (!updated) {
-      throw new SubmissionNotFoundError(submissionId)
-    }
-
     const submissionUrl = `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`
 
-    void Promise.resolve(
-      this.notificationService.createNotification(
+    const updated = await withTransaction(async (transactionContext) => {
+      const transactionSubmissionRepo =
+        this.submissionRepo.withContext(transactionContext)
+      const transactionNotificationService =
+        this.notificationService.withContext(transactionContext)
+
+      const updatedSubmission = await transactionSubmissionRepo.saveTeacherFeedback(
+        submissionId,
+        normalizedFeedback,
+      )
+
+      if (!updatedSubmission) {
+        return undefined
+      }
+
+      await transactionNotificationService.createNotification(
         submission.studentId,
         "SUBMISSION_FEEDBACK_GIVEN",
         {
@@ -342,15 +348,32 @@ export class SubmissionService {
           teacherName: normalizedTeacherName,
           submissionUrl,
         },
-      ),
-    )
-      .catch((error) => {
-        logger.error("Failed to send submission feedback notification", {
-          submissionId,
-          studentId: submission.studentId,
-          error,
-        })
+      )
+
+      return updatedSubmission
+    })
+
+    if (!updated) {
+      throw new SubmissionNotFoundError(submissionId)
+    }
+
+    void this.notificationService.sendEmailNotificationIfEnabled(
+      submission.studentId,
+      "SUBMISSION_FEEDBACK_GIVEN",
+      {
+        submissionId,
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        teacherName: normalizedTeacherName,
+        submissionUrl,
+      },
+    ).catch((error) => {
+      logger.error("Failed to send submission feedback notification email", {
+        submissionId,
+        studentId: submission.studentId,
+        error,
       })
+    })
 
     return toSubmissionDTO(updated)
   }

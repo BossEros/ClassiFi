@@ -7,7 +7,7 @@ import { settings } from "@/shared/config.js"
  * @param text - The text to escape.
  * @returns The escaped text safe for HTML insertion.
  */
-function escapeHtml(text: string): string {
+export function escapeHtml(text: string): string {
   const htmlEscapeMap: Record<string, string> = {
     "&": "&amp;",
     "<": "&lt;",
@@ -17,6 +17,16 @@ function escapeHtml(text: string): string {
   }
 
   return text.replace(/[&<>"']/g, (char) => htmlEscapeMap[char] || char)
+}
+
+/**
+ * Removes control characters that are unsafe in email headers.
+ *
+ * @param subject - The candidate email subject line.
+ * @returns A header-safe subject string.
+ */
+export function sanitizeEmailSubject(subject: string): string {
+  return subject.replace(/[\r\n]+/g, " ").trim()
 }
 
 /**

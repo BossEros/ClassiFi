@@ -45,6 +45,8 @@ describe("GradebookService", () => {
 
     mockNotificationService = {
       createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     gradebookService = new GradebookService(
@@ -179,9 +181,6 @@ describe("GradebookService", () => {
 
       await gradebookService.overrideGrade(1, 95, "Excellent work!")
 
-      // Wait for async notification promise
-      await new Promise((resolve) => setTimeout(resolve, 10))
-
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
         10,
         "SUBMISSION_GRADED",
@@ -194,25 +193,42 @@ describe("GradebookService", () => {
           submissionUrl: expect.stringContaining("/dashboard/assignments/1"),
         }),
       )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledWith(
+        10,
+        "SUBMISSION_GRADED",
+        expect.objectContaining({
+          submissionId: 1,
+          assignmentId: 1,
+          grade: 95,
+        }),
+      )
     })
 
-    it("should handle notification failure gracefully", async () => {
+    it("should rollback when notification persistence fails", async () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
       mockNotificationService.createNotification.mockRejectedValue(
         new Error("Notification service error"),
       )
 
-      // Should not throw even if notification fails
+      await expect(
+        gradebookService.overrideGrade(1, 95, "Excellent work!"),
+      ).rejects.toThrow("Notification service error")
+    })
+
+    it("should not fail when post-commit notification email delivery fails", async () => {
+      mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockResolvedValue({})
+      mockNotificationService.sendEmailNotificationIfEnabled.mockRejectedValue(
+        new Error("SMTP unavailable"),
+      )
+
       await expect(
         gradebookService.overrideGrade(1, 95, "Excellent work!"),
       ).resolves.not.toThrow()
-
-      expect(mockSubmissionRepo.setGradeOverride).toHaveBeenCalledWith(
-        1,
-        95,
-        "Excellent work!",
-      )
     })
 
     it("should throw error if submission not found", async () => {

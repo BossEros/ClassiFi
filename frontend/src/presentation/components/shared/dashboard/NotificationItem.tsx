@@ -34,6 +34,8 @@ export function NotificationItem({
         return `/dashboard/assignments/${notification.metadata.assignmentId}`
       case "SUBMISSION_GRADED":
         return `/dashboard/assignments/${notification.metadata.assignmentId}`
+      case "SUBMISSION_FEEDBACK_GIVEN":
+        return `/dashboard/assignments/${notification.metadata.assignmentId}`
       case "CLASS_ANNOUNCEMENT":
         return `/dashboard/classes/${notification.metadata.classId}`
       case "DEADLINE_REMINDER":

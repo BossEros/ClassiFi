@@ -29,20 +29,20 @@ export const similarityResults = pgTable(
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
     structuralScore: numeric("structural_score", {
-      precision: 5,
-      scale: 2,
+      precision: 7,
+      scale: 6,
     }).notNull(),
     semanticScore: numeric("semantic_score", {
-      precision: 5,
-      scale: 2,
+      precision: 7,
+      scale: 6,
     }).notNull(),
-    hybridScore: numeric("hybrid_score", { precision: 5, scale: 2 }).notNull(),
-    overlap: integer("overlap").default(0).notNull(),
-    longestFragment: integer("longest_fragment").default(0).notNull(),
-    leftCovered: integer("left_covered").default(0).notNull(),
-    rightCovered: integer("right_covered").default(0).notNull(),
-    leftTotal: integer("left_total").default(0).notNull(),
-    rightTotal: integer("right_total").default(0).notNull(),
+    hybridScore: numeric("hybrid_score", { precision: 7, scale: 6 }).notNull(),
+    overlap: integer("overlap").notNull(),
+    longestFragment: integer("longest_fragment").notNull(),
+    leftCovered: integer("left_covered").notNull(),
+    rightCovered: integer("right_covered").notNull(),
+    leftTotal: integer("left_total").notNull(),
+    rightTotal: integer("right_total").notNull(),
     isFlagged: boolean("is_flagged").default(false).notNull(),
     analyzedAt: timestamp("analyzed_at", { withTimezone: true })
       .defaultNow()

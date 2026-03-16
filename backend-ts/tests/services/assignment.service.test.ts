@@ -58,6 +58,7 @@ describe("AssignmentService", () => {
 
     mockNotificationService = {
       createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn(),
     }
 
     mockModuleRepo = {
@@ -180,6 +181,9 @@ describe("AssignmentService", () => {
       expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(
         2,
       )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledTimes(2)
 
       // Verify first student notification
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
@@ -196,6 +200,17 @@ describe("AssignmentService", () => {
 
       // Verify second student notification
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        11,
+        "ASSIGNMENT_CREATED",
+        expect.objectContaining({
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "Test Class",
+        }),
+      )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledWith(
         11,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({
