@@ -14,11 +14,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/pre
 import { Button } from "@/presentation/components/ui/Button"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
+import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
 import type { StudentClassGrades, StudentGradeEntry } from "@/shared/types/gradebook"
 import { cn } from "@/shared/utils/cn"
-import { buildStudentGradeReportData, downloadStudentGradeReportDocument, StudentGradeReportDocument } from "./pdf/studentGradeReportPdf"
+import { buildStudentGradeReportData, StudentGradeReportDocument } from "./pdf/studentGradeReportPdf"
 
 interface StudentClassGradesContentProps {
   classId: number
@@ -379,7 +380,7 @@ export function StudentClassGradesContent({
         studentName,
       })
 
-      await downloadStudentGradeReportDocument({
+      await downloadPdfDocument({
         document: <StudentGradeReportDocument data={reportData} />,
         fileName: `grade-report-${classGrades.className.replace(/\s+/g, "-").toLowerCase()}.pdf`,
       })

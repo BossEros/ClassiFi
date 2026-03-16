@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader } from "@/presentation/components/ui/Card
 import { Button } from "@/presentation/components/ui/Button";
 import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teacher/useGradebook";
 import { useToastStore } from "@/shared/store/useToastStore";
+import { downloadPdfDocument } from "@/presentation/utils/pdfDownload";
 import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/shared/types/gradebook";
 import { X, Edit2 } from "lucide-react";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
-import { buildGradeReportData, downloadGradeReportDocument, GradeReportDocument } from "./pdf/gradeReportPdf";
+import { buildGradeReportData, GradeReportDocument } from "./pdf/gradeReportPdf";
 
 interface GradeCellProps {
   grade: GradeEntry | null
@@ -322,7 +323,7 @@ export function GradebookContent({
         teacherName,
       })
 
-      await downloadGradeReportDocument({
+      await downloadPdfDocument({
         document: <GradeReportDocument data={reportData} />,
         fileName: `grade-report-${classCode || classId}.pdf`,
       })
