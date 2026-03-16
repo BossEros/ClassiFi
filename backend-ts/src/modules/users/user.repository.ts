@@ -122,7 +122,7 @@ export class UserRepository extends BaseRepository<
       return await this.getUserById(userId)
     }
 
-    return await this.update(userId, updateData)
+    return await this.update(userId, { ...updateData, updatedAt: new Date() })
   }
 
   /** Delete a user */
@@ -213,7 +213,7 @@ export class UserRepository extends BaseRepository<
     const newStatus = !user.isActive
     const results = await this.db
       .update(users)
-      .set({ isActive: newStatus })
+      .set({ isActive: newStatus, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning()
 

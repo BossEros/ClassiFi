@@ -15,21 +15,18 @@ import { modules } from "@/modules/modules/module.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
 import { similarityReports } from "@/modules/plagiarism/similarity-report.model.js"
 
-/** Programming language enum for assignments */
 export const programmingLanguageEnum = pgEnum("programming_language", [
   "python",
   "java",
   "c",
 ])
 
-/** Late penalty configuration type */
 export interface LatePenaltyConfig {
   tiers: Array<{
-    // Penalty tiers
-    hoursLate: number // Maximum hours late covered by this tier
-    penaltyPercent: number // Percentage to deduct (e.g., 10 = -10%)
+    hoursLate: number 
+    penaltyPercent: number
   }>
-  rejectAfterHours: number | null // Reject submissions after X hours (null = always accept)
+  rejectAfterHours: number | null
 }
 
 /** Assignments table - represents assignments for classes */
@@ -39,14 +36,14 @@ export const assignments = pgTable("assignments", {
     .notNull()
     .references(() => classes.id, { onDelete: "cascade" }),
   moduleId: integer("module_id").references(() => modules.id, {
-    onDelete: "cascade",
-  }),
+      onDelete: "cascade",
+    }),
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
   instructions: text("instructions").notNull(),
   instructionsImageUrl: text("instructions_image_url"),
   programmingLanguage: programmingLanguageEnum(
     "programming_language",
-  ).notNull(),
+    ).notNull(),
   deadline: timestamp("deadline", { withTimezone: true }),
   allowResubmission: boolean("allow_resubmission").default(true).notNull(),
   maxAttempts: integer("max_attempts"),
@@ -57,14 +54,10 @@ export const assignments = pgTable("assignments", {
     .defaultNow()
     .notNull(),
   isActive: boolean("is_active").default(true).notNull(),
-
-  // Late Penalty Configuration
   allowLateSubmissions: boolean("allow_late_submissions")
     .default(false)
     .notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
-
-  // Reminder tracking
   lastReminderSentAt: timestamp("last_reminder_sent_at", {
     withTimezone: true,
   }),
