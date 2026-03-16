@@ -463,7 +463,7 @@ The notification system provides real-time updates to users about important even
 
 **Features**:
 - In-app notifications with real-time unread count
-- Best-effort email delivery without retry persistence
+- Post-commit email delivery for grade and feedback write flows
 - Configurable notification channels (IN_APP, EMAIL)
 - Pagination support for notification history
 - User-specific notification filtering
@@ -522,10 +522,10 @@ Templates include:
 
 **Email Delivery Behavior**:
 
-Notifications send email on a best-effort basis:
-- Email is attempted immediately when the notification type allows email and the user has email notifications enabled
-- Failed email attempts are logged for debugging
-- Failed email attempts do not create retry jobs or delivery-tracking records
+Notifications separate write commits from email delivery:
+- In-app notification rows are persisted during the main write flow when that channel is enabled
+- Email sends for grade and feedback updates happen only after the surrounding write transaction commits
+- Failed email attempts are logged for operational visibility and do not partially commit the caller's primary write
 - In-app notifications are stored only when the user has in-app notifications enabled
 
 **Example Response** (`GET /notifications`):
@@ -632,33 +632,19 @@ Notifications send email on a best-effort basis:
 
 ### Entity Relationship Diagram
 
+```text
+[User] <- [Class] <- [Assignment] <- [TestCase]
+  |          |             |              |
+  +-------> [Enrollment]   +----------> [Submission] <---------- [TestResult]
+                             |
+                             v
+                     [SimilarityReport]
+                             |
+                             v
+                     [SimilarityResult] <---------- [MatchFragment]
+  |
+  +----------> [Notification]
 ```
-┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
-│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
-└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
-     │                 │                   │                     │
-     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
-     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
-     │            └──────────┘         └────┬────┘         └────────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityReport │
-     │                             └────────┬────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityResult │◄───────┐
-     │                             └────────┬────────┘        │
-     │                                      │           ┌─────┴────────┐
-     │                                      └──────────►│MatchFragment │
-     │                                                  └──────────────┘
-     │
-     │            ┌──────────────┐
-     └───────────►│ Notification │
-                  └──────┬───────┘
-                         │
-                  ┌──────▼──────────────────┐
-                  │ Notification            │
-                  └─────────────────────────┘
 ```
 
 ### User Model
@@ -710,7 +696,7 @@ export const notifications = pgTable("notifications", {
 
 **Delivery behavior**:
 - In-app notifications are persisted in `notifications`
-- Email notifications are best-effort sends and are not tracked in a separate delivery table
+- Email notifications are sent separately after successful write completion when the relevant flow opts into post-commit delivery
 - If in-app notifications are disabled but email is enabled, the user receives the email without an inbox row being created
 
 ### Roles
@@ -914,7 +900,8 @@ Manages user notifications and email delivery:
 
 ```typescript
 class NotificationService {
-  createNotification(userId, type, data); // Create in-app notification and/or send best-effort email
+  createNotification(userId, type, data); // Create an in-app notification when that channel is enabled
+  sendEmailNotificationIfEnabled(userId, type, data); // Send email after commit when that channel is enabled
   getUserNotifications(userId, page, limit, unreadOnly); // Get paginated notifications
   getUnreadCount(userId); // Get unread notification count
   markAsRead(notificationId, userId); // Mark single notification as read
@@ -925,7 +912,7 @@ class NotificationService {
 
 **Features**:
 - Automatic notification creation on key events (assignment creation, grading)
-- Best-effort email sending without queue persistence
+- Post-commit email delivery for transaction-sensitive write flows
 - Template-based email generation
 - User authorization checks
 - Pagination support
@@ -940,9 +927,8 @@ class NotificationService {
 - Supabase (uses built-in email service)
 
 **Email Delivery Behavior**:
-- Email is attempted immediately when enabled by both the notification type and the user's preferences
-- Failed email attempts are logged and do not block the calling business flow
-- No delivery-attempt rows, retry jobs, or per-channel status history are persisted
+- Email delivery is attempted only after grade/feedback write transactions commit
+- Failed email attempts are logged and do not partially commit the caller's primary write
 
 **Preference Resolution**:
 - Notification delivery reads the current user record before deciding which channels to use.
