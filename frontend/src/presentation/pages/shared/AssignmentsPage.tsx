@@ -93,10 +93,11 @@ export function AssignmentsPage() {
     ]
   }, [tasks])
 
+  const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery])
+
   const filteredTasks = useMemo(() => {
     return tasks.filter((task) => {
-      if (searchQuery) {
-        const normalizedQuery = searchQuery.toLowerCase()
+      if (normalizedQuery) {
         const matchesName = task.assignmentName.toLowerCase().includes(normalizedQuery)
 
         if (!matchesName) return false
@@ -108,7 +109,7 @@ export function AssignmentsPage() {
 
       return true
     })
-  }, [tasks, searchQuery, selectedClass])
+  }, [tasks, normalizedQuery, selectedClass])
 
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE))
 
@@ -137,7 +138,7 @@ export function AssignmentsPage() {
     ? "New pending checks will appear here."
     : "New assignments will appear here when available."
 
-  const hasActiveFilters = searchQuery.trim().length > 0 || selectedClass !== "all"
+  const hasActiveFilters = normalizedQuery.length > 0 || selectedClass !== "all"
 
   return (
     <DashboardLayout topBar={topBar}>

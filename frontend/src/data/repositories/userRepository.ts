@@ -145,7 +145,7 @@ export async function updateNotificationPreferences(
     inAppNotificationsEnabled,
   })
 
-  if (response.error || !response.data) {
+  if (response.error || !response.data || !response.data.success) {
     throw new Error(
       response.error || "Failed to update notification preferences",
     )
