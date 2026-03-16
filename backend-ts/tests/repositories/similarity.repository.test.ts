@@ -48,13 +48,22 @@ vi.mock("../../src/modules/plagiarism/match-fragment.model.js", () => ({
   },
 }))
 
-describe("SimilarityRepository", () => {
-  let mockDb: any
+import { db } from "../../src/shared/database.js"
+import { SimilarityRepository } from "../../src/modules/plagiarism/similarity.repository.js"
 
-  beforeEach(async () => {
+interface MockDatabase {
+  insert: ReturnType<typeof vi.fn>
+  select: ReturnType<typeof vi.fn>
+  delete: ReturnType<typeof vi.fn>
+  execute: ReturnType<typeof vi.fn>
+}
+
+describe("SimilarityRepository", () => {
+  let mockDb: MockDatabase
+
+  beforeEach(() => {
     vi.clearAllMocks()
-    const { db } = await import("../../src/shared/database.js")
-    mockDb = db
+    mockDb = db as unknown as MockDatabase
   })
 
   // ============ createReport Tests ============
@@ -76,8 +85,6 @@ describe("SimilarityRepository", () => {
       const insertMock = vi.fn().mockReturnValue({ values: valuesMock })
       mockDb.insert = insertMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createReport({
@@ -101,8 +108,6 @@ describe("SimilarityRepository", () => {
       const executeMock = vi.fn().mockResolvedValue(undefined)
       mockDb.execute = executeMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       await similarityRepo.acquireAssignmentReportLock(42)
@@ -121,8 +126,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportById(1)
@@ -137,8 +140,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportById(999)
@@ -160,8 +161,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportsByAssignment(1)
@@ -177,8 +176,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getReportsByAssignment(999)
@@ -202,8 +199,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getLatestReportByAssignment(1)
@@ -224,8 +219,6 @@ describe("SimilarityRepository", () => {
       const insertMock = vi.fn().mockReturnValue({ values: valuesMock })
       mockDb.insert = insertMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createResults([
@@ -247,8 +240,6 @@ describe("SimilarityRepository", () => {
     })
 
     it("should return empty array when no results to insert", async () => {
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createResults([])
@@ -270,8 +261,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getResultsByReport(1)
@@ -292,8 +281,6 @@ describe("SimilarityRepository", () => {
       const insertMock = vi.fn().mockReturnValue({ values: valuesMock })
       mockDb.insert = insertMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createFragments([
@@ -305,8 +292,6 @@ describe("SimilarityRepository", () => {
     })
 
     it("should return empty array when no fragments to insert", async () => {
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.createFragments([])
@@ -325,8 +310,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getResultById(1)
@@ -347,8 +330,6 @@ describe("SimilarityRepository", () => {
       const selectMock = vi.fn().mockReturnValue({ from: fromMock })
       mockDb.select = selectMock
 
-      const { SimilarityRepository } =
-        await import("../../src/modules/plagiarism/similarity.repository.js")
       const similarityRepo = new SimilarityRepository()
 
       const result = await similarityRepo.getFragmentsByResult(1)
