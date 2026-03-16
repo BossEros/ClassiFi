@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight, ChevronUp, ChevronDown, ClipboardList } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
+import { AssignmentFilters } from "@/presentation/components/shared/dashboard/AssignmentFilters"
+import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { getDeadlineStatus, formatDateTime } from "@/presentation/utils/dateUtils"
 import { getPendingAssignments } from "@/business/services/studentDashboardService"
 import { getPendingTasks } from "@/business/services/teacherDashboardService"
 import type { Task } from "@/business/models/dashboard/types"
+
+const ITEMS_PER_PAGE = 10
 
 function getDeadlineBadgeClass(deadlineStatus: string): string {
   if (deadlineStatus === "Overdue") {
@@ -43,6 +47,9 @@ export function AssignmentsPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [selectedClass, setSelectedClass] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
 
   const isTeacher = user?.role === "teacher"
 
@@ -76,6 +83,45 @@ export function AssignmentsPage() {
     fetchAssignments()
   }, [navigate, user, isTeacher])
 
+  const classOptions = useMemo(() => {
+    const uniqueClasses = [...new Set(tasks.map((task) => task.className).filter(Boolean))]
+    uniqueClasses.sort((a, b) => (a ?? "").localeCompare(b ?? ""))
+
+    return [
+      { value: "all", label: "All Classes" },
+      ...uniqueClasses.map((name) => ({ value: name!, label: name! })),
+    ]
+  }, [tasks])
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter((task) => {
+      if (searchQuery) {
+        const normalizedQuery = searchQuery.toLowerCase()
+        const matchesName = task.assignmentName.toLowerCase().includes(normalizedQuery)
+
+        if (!matchesName) return false
+      }
+
+      if (selectedClass !== "all") {
+        if (task.className !== selectedClass) return false
+      }
+
+      return true
+    })
+  }, [tasks, searchQuery, selectedClass])
+
+  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE))
+
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query)
+    setCurrentPage(1)
+  }, [])
+
+  const handleClassChange = useCallback((className: string) => {
+    setSelectedClass(className)
+    setCurrentPage(1)
+  }, [])
+
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : "?"
@@ -91,6 +137,8 @@ export function AssignmentsPage() {
     ? "New pending checks will appear here."
     : "New assignments will appear here when available."
 
+  const hasActiveFilters = searchQuery.trim().length > 0 || selectedClass !== "all"
+
   return (
     <DashboardLayout topBar={topBar}>
       <div className="mb-8">
@@ -99,6 +147,15 @@ export function AssignmentsPage() {
         </h1>
         <p className="mt-2 text-base text-slate-500">{pageDescription}</p>
       </div>
+
+      {!isLoading && tasks.length > 0 && (
+        <AssignmentFilters
+          onSearchChange={handleSearchChange}
+          onClassChange={handleClassChange}
+          currentFilters={{ searchQuery, selectedClass }}
+          classOptions={classOptions}
+        />
+      )}
 
       {error && (
         <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4">
@@ -111,13 +168,44 @@ export function AssignmentsPage() {
           <div className="p-8 text-center text-sm text-slate-500">
             Loading assignments...
           </div>
-        ) : tasks.length > 0 ? (
-          <div className="overflow-x-auto">
-            {isTeacher ? (
-              <TeacherAssignmentsTable tasks={tasks} onNavigate={navigate} />
-            ) : (
-              <StudentAssignmentsTable tasks={tasks} onNavigate={navigate} />
-            )}
+        ) : filteredTasks.length > 0 ? (
+          <div>
+            <div className="overflow-x-auto">
+              {isTeacher ? (
+                <TeacherAssignmentsTable
+                  tasks={filteredTasks}
+                  onNavigate={navigate}
+                  currentPage={currentPage}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
+              ) : (
+                <StudentAssignmentsTable
+                  tasks={filteredTasks}
+                  onNavigate={navigate}
+                  currentPage={currentPage}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                />
+              )}
+            </div>
+
+            <div className="border-t border-slate-200 px-6 py-4">
+              <TablePaginationFooter
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filteredTasks.length}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={setCurrentPage}
+                variant="light"
+              />
+            </div>
+          </div>
+        ) : hasActiveFilters ? (
+          <div className="p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
+              <ClipboardList className="h-8 w-8 text-slate-400" />
+            </div>
+            <p className="text-base font-semibold text-slate-700">No matching assignments</p>
+            <p className="mt-1 text-sm text-slate-500">Try adjusting your search or filter.</p>
           </div>
         ) : (
           <div className="p-8 text-center">
@@ -138,9 +226,11 @@ type SortDirection = "asc" | "desc"
 interface AssignmentsTableProps {
   tasks: Task[]
   onNavigate: (path: string) => void
+  currentPage: number
+  itemsPerPage: number
 }
 
-function TeacherAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
+function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage }: AssignmentsTableProps) {
   const [deadlineSort, setDeadlineSort] = useState<SortDirection>("asc")
 
   const sortedTasks = useMemo(() => {
@@ -155,6 +245,12 @@ function TeacherAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
       return deadlineSort === "asc" ? dateA - dateB : dateB - dateA
     })
   }, [tasks, deadlineSort])
+
+  const paginatedTasks = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+
+    return sortedTasks.slice(startIndex, startIndex + itemsPerPage)
+  }, [sortedTasks, currentPage, itemsPerPage])
 
   return (
     <table className="w-full min-w-[760px]">
@@ -188,7 +284,7 @@ function TeacherAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
         </tr>
       </thead>
       <tbody>
-        {sortedTasks.map((task) => {
+        {paginatedTasks.map((task) => {
           const deadlineStatus = getDeadlineStatus(task.deadline)
           const submitted = task.submissionCount ?? 0
           const total = task.studentCount ?? 0
@@ -238,7 +334,7 @@ function TeacherAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
   )
 }
 
-function StudentAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
+function StudentAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage }: AssignmentsTableProps) {
   const [deadlineSort, setDeadlineSort] = useState<SortDirection>("asc")
 
   const sortedTasks = useMemo(() => {
@@ -253,6 +349,12 @@ function StudentAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
       return deadlineSort === "asc" ? dateA - dateB : dateB - dateA
     })
   }, [tasks, deadlineSort])
+
+  const paginatedTasks = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+
+    return sortedTasks.slice(startIndex, startIndex + itemsPerPage)
+  }, [sortedTasks, currentPage, itemsPerPage])
 
   return (
     <table className="w-full min-w-[640px]">
@@ -283,7 +385,7 @@ function StudentAssignmentsTable({ tasks, onNavigate }: AssignmentsTableProps) {
         </tr>
       </thead>
       <tbody>
-        {sortedTasks.map((task) => {
+        {paginatedTasks.map((task) => {
           const deadlineStatus = getDeadlineStatus(task.deadline)
 
           return (

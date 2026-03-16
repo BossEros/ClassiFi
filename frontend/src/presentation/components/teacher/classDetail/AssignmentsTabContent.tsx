@@ -66,13 +66,14 @@ export function AssignmentsTabContent({
   const isLight = variant === "light"
   const [viewMode, setViewMode] = useState<AssignmentViewMode>("module")
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<number>>(new Set())
+  const [hasToggledModules, setHasToggledModules] = useState(false)
 
   // Derive the effective view: fall back to "list" when no modules exist
   const effectiveViewMode = modules.length === 0 ? "list" : viewMode
 
   // Derive effective expanded IDs: if user hasn't interacted yet and modules exist, default first open
   const effectiveExpandedIds =
-    expandedModuleIds.size === 0 && modules.length > 0
+    !hasToggledModules && expandedModuleIds.size === 0 && modules.length > 0
       ? new Set([modules[0].id])
       : expandedModuleIds
 
@@ -81,6 +82,7 @@ export function AssignmentsTabContent({
   const hasModules = modules.length > 0
 
   const toggleModuleExpanded = (moduleId: number) => {
+    setHasToggledModules(true)
     setExpandedModuleIds(() => {
       const next = new Set(effectiveExpandedIds)
 
