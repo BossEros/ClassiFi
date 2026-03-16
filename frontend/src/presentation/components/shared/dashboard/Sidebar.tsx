@@ -1,12 +1,10 @@
 import { useState } from "react"
-import { NavLink, useNavigate } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 import {
   Home,
   BookOpen,
   Menu,
   X,
-  LogOut,
-  Settings,
   Users,
   GraduationCap,
   Calendar,
@@ -16,8 +14,9 @@ import {
   PanelLeftOpen,
 } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
-import { logoutUser } from "@/business/services/authService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
+import { Avatar } from "@/presentation/components/ui/Avatar"
+import { ProfileDropdown } from "./ProfileDropdown"
 import type { NavigationItem } from "@/business/models/dashboard/types"
 
 const teacherNavigationItems = [
@@ -149,12 +148,6 @@ export function Sidebar({
 }: SidebarProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const user = useAuthStore((state) => state.user)
-  const navigate = useNavigate()
-
-  const handleLogout = async () => {
-    await logoutUser()
-    navigate("/login")
-  }
 
   return (
     <>
@@ -181,6 +174,9 @@ export function Sidebar({
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
           isCollapsed ? "lg:w-16" : "w-56",
         )}
+        style={{
+          "--sidebar-width": isCollapsed ? "64px" : "224px",
+        } as React.CSSProperties}
       >
         <div
           className={cn(
@@ -250,31 +246,32 @@ export function Sidebar({
           ))}
         </nav>
 
-        {/* Bottom Section - Settings & Logout */}
+        {/* Bottom Section */}
         <div className="p-3 border-t border-white/10 space-y-1.5">
-          <SidebarNavItem
-            item={{
-              id: "settings",
-              label: "Settings",
-              path: "/dashboard/settings",
-              icon: Settings,
-            }}
-            onClick={() => setIsMobileOpen(false)}
-            isCollapsed={isCollapsed}
-          />
-          <button
-            onClick={handleLogout}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900",
-              isCollapsed && "lg:justify-center lg:px-2",
-            )}
-            title={isCollapsed ? "Sign Out" : undefined}
-          >
-            <LogOut className="w-4 h-4 flex-shrink-0" />
-            <span className={cn("font-medium", isCollapsed && "lg:hidden")}>
-              Sign Out
-            </span>
-          </button>
+          {user && (
+            <ProfileDropdown
+              user={user}
+              userInitials={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()}
+            >
+              <div className={cn("flex items-center gap-2 min-w-0", isCollapsed && "lg:justify-center")}>
+                <Avatar
+                  size="sm"
+                  src={user.avatarUrl}
+                  fallback={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()}
+                  alt={`${user.firstName} ${user.lastName}`}
+                  className="border border-slate-200"
+                />
+                <div className={cn("hidden text-left sm:block min-w-0", isCollapsed && "lg:hidden")}>
+                  <p className="text-sm font-semibold text-slate-100 truncate">
+                    {user.firstName}
+                  </p>
+                  <p className="text-xs text-slate-400 truncate">
+                    {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                  </p>
+                </div>
+              </div>
+            </ProfileDropdown>
+          )}
         </div>
       </aside>
 
