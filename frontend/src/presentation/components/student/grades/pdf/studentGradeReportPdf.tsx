@@ -9,17 +9,22 @@
  * from the plagiarism report module for consistent branding.
  */
 
-import { Document, Page, Text, View, pdf, StyleSheet } from "@react-pdf/renderer"
+import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer"
 import { pdfStyles, C } from "../../../teacher/plagiarism/pdf/pdfStyles"
-import { ReportHeader, SectionTitle, MetadataGrid, MetricRow, DocumentFooter } from "../../../teacher/plagiarism/pdf/pdfComponents"
-import type { StudentGradeReportData, StudentGradeReportDocumentDownloadOptions, StudentGradeReportRow } from "./studentGradeReportTypes"
-
-// ─── Re-exports (public API) ──────────────────────────────────────────────────
+import {
+  ReportHeader,
+  SectionTitle,
+  MetadataGrid,
+  MetricRow,
+  DocumentFooter,
+} from "../../../teacher/plagiarism/pdf/pdfComponents"
+import type {
+  StudentGradeReportData,
+  StudentGradeReportRow,
+} from "./studentGradeReportTypes"
 
 export type { StudentGradeReportData } from "./studentGradeReportTypes"
 export { buildStudentGradeReportData } from "./studentGradeReportBuilder"
-
-// ─── Column Widths ────────────────────────────────────────────────────────────
 
 const COL = {
   assignment: "28%",
@@ -28,8 +33,6 @@ const COL = {
   deadline: "22%",
   submitted: "22%",
 } as const
-
-// ─── Student Grade Table Styles ───────────────────────────────────────────────
 
 const gradeStyles = StyleSheet.create({
   table: {
@@ -175,8 +178,6 @@ const gradeStyles = StyleSheet.create({
   },
 })
 
-// ─── Grade Color Helper ───────────────────────────────────────────────────────
-
 function getGradeTextStyle(percentage: string) {
   const value = parseInt(percentage, 10)
 
@@ -189,27 +190,37 @@ function getGradeTextStyle(percentage: string) {
 
 function getStatusStyle(status: StudentGradeReportRow["status"]) {
   switch (status) {
-    case "graded": return gradeStyles.statusGraded
-    case "pending": return gradeStyles.statusPending
-    default: return gradeStyles.statusNotSubmitted
+    case "graded":
+      return gradeStyles.statusGraded
+    case "pending":
+      return gradeStyles.statusPending
+    default:
+      return gradeStyles.statusNotSubmitted
   }
 }
 
 function getStatusLabel(status: StudentGradeReportRow["status"]) {
   switch (status) {
-    case "graded": return "Graded"
-    case "pending": return "Pending"
-    default: return "Missing"
+    case "graded":
+      return "Graded"
+    case "pending":
+      return "Pending"
+    default:
+      return "Missing"
   }
 }
-
-// ─── Student Grade Table Component ────────────────────────────────────────────
 
 function StudentGradeTable({ rows }: { rows: StudentGradeReportRow[] }) {
   if (rows.length === 0) {
     return (
       <View style={pdfStyles.emptyState}>
-        <Text style={{ fontSize: 9, color: C.inkLight, fontFamily: "Helvetica-Oblique" }}>
+        <Text
+          style={{
+            fontSize: 9,
+            color: C.inkLight,
+            fontFamily: "Helvetica-Oblique",
+          }}
+        >
           No assignments available for this class.
         </Text>
       </View>
@@ -218,10 +229,11 @@ function StudentGradeTable({ rows }: { rows: StudentGradeReportRow[] }) {
 
   return (
     <View style={gradeStyles.table}>
-      {/* Header */}
       <View style={gradeStyles.headerRow} wrap={false}>
         <View style={[gradeStyles.headerCell, { width: COL.assignment }]}>
-          <Text style={[gradeStyles.headerText, gradeStyles.headerTextLeft]}>Assignment</Text>
+          <Text style={[gradeStyles.headerText, gradeStyles.headerTextLeft]}>
+            Assignment
+          </Text>
         </View>
         <View style={[gradeStyles.headerCell, { width: COL.grade }]}>
           <Text style={gradeStyles.headerText}>Grade</Text>
@@ -232,37 +244,60 @@ function StudentGradeTable({ rows }: { rows: StudentGradeReportRow[] }) {
         <View style={[gradeStyles.headerCell, { width: COL.deadline }]}>
           <Text style={gradeStyles.headerText}>Deadline</Text>
         </View>
-        <View style={[gradeStyles.headerCell, gradeStyles.headerCellLast, { width: COL.submitted }]}>
+        <View
+          style={[
+            gradeStyles.headerCell,
+            gradeStyles.headerCellLast,
+            { width: COL.submitted },
+          ]}
+        >
           <Text style={gradeStyles.headerText}>Submitted</Text>
         </View>
       </View>
 
-      {/* Rows */}
       {rows.map((row, index) => (
         <View key={`row-${index}`} wrap={false}>
           <View
             style={[
               gradeStyles.row,
               index % 2 === 1 ? gradeStyles.rowAlternate : {},
-              index === rows.length - 1 && !row.feedback ? gradeStyles.rowLast : {},
+              index === rows.length - 1 && !row.feedback
+                ? gradeStyles.rowLast
+                : {},
             ]}
           >
             <View style={[gradeStyles.cell, { width: COL.assignment }]}>
               <Text style={gradeStyles.assignmentText}>{row.assignmentName}</Text>
-              {row.isOverridden && <Text style={gradeStyles.overriddenBadge}>Adjusted</Text>}
+              {row.isOverridden && (
+                <Text style={gradeStyles.overriddenBadge}>Adjusted</Text>
+              )}
             </View>
             <View style={[gradeStyles.cell, { width: COL.grade }]}>
-              <Text style={row.grade === "-" ? gradeStyles.noDataText : getGradeTextStyle(row.percentage)}>
+              <Text
+                style={
+                  row.grade === "-"
+                    ? gradeStyles.noDataText
+                    : getGradeTextStyle(row.percentage)
+                }
+              >
                 {row.grade}
               </Text>
             </View>
             <View style={[gradeStyles.cell, { width: COL.status }]}>
-              <Text style={getStatusStyle(row.status)}>{getStatusLabel(row.status)}</Text>
+              <Text style={getStatusStyle(row.status)}>
+                {getStatusLabel(row.status)}
+              </Text>
             </View>
             <View style={[gradeStyles.cell, { width: COL.deadline }]}>
               <Text style={gradeStyles.dateText}>{row.deadline}</Text>
             </View>
-            <View style={[gradeStyles.cell, gradeStyles.cellLast, { width: COL.submitted }]}>
+            <View
+              style={[
+                gradeStyles.cell,
+                gradeStyles.cellLast,
+                { width: COL.submitted },
+              ]}
+            >
               <Text style={gradeStyles.dateText}>{row.submittedAt}</Text>
             </View>
           </View>
@@ -279,41 +314,17 @@ function StudentGradeTable({ rows }: { rows: StudentGradeReportRow[] }) {
   )
 }
 
-// ─── Download Utility ─────────────────────────────────────────────────────────
-
-/**
- * Triggers a browser download for a generated student grade report PDF document.
- *
- * @param options - Document instance and target filename.
- * @returns A promise that resolves after the browser download is triggered.
- */
-export async function downloadStudentGradeReportDocument(
-  options: StudentGradeReportDocumentDownloadOptions,
-): Promise<void> {
-  const pdfBlob = await pdf(options.document).toBlob()
-  const downloadUrl = window.URL.createObjectURL(pdfBlob)
-  const downloadLinkElement = document.createElement("a")
-
-  try {
-    downloadLinkElement.href = downloadUrl
-    downloadLinkElement.download = options.fileName
-    document.body.appendChild(downloadLinkElement)
-    downloadLinkElement.click()
-  } finally {
-    document.body.removeChild(downloadLinkElement)
-    window.URL.revokeObjectURL(downloadUrl)
-  }
-}
-
-// ─── Student Grade Report Document ────────────────────────────────────────────
-
 /**
  * Student grade report PDF document showing all assignment grades for a class.
  *
  * @param props - Prebuilt report data.
  * @returns React PDF document with student-specific grade information.
  */
-export function StudentGradeReportDocument({ data }: { data: StudentGradeReportData }) {
+export function StudentGradeReportDocument({
+  data,
+}: {
+  data: StudentGradeReportData
+}) {
   return (
     <Document title={data.title}>
       <Page size="A4" orientation="landscape" style={pdfStyles.page}>
