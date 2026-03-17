@@ -24,6 +24,7 @@ export interface FormErrors {
   scheduledDate?: string
   totalScore?: string
   maxAttempts?: string
+  moduleId?: string
   general?: string
 }
 

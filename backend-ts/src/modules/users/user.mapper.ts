@@ -9,6 +9,8 @@ export interface UserDTO {
   role: string
   avatarUrl: string | null
   isActive: boolean
+  emailNotificationsEnabled: boolean
+  inAppNotificationsEnabled: boolean
   createdAt: string
 }
 
@@ -22,6 +24,8 @@ export function toUserDTO(user: User): UserDTO {
     role: user.role,
     avatarUrl: user.avatarUrl ?? null,
     isActive: user.isActive ?? true,
+    emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
+    inAppNotificationsEnabled: user.inAppNotificationsEnabled ?? true,
     createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
   }
 }

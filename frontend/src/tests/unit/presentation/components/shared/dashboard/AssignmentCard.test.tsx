@@ -19,6 +19,7 @@ describe("AssignmentCard", () => {
   const mockAssignment: Assignment = {
     id: 1,
     classId: 101,
+    moduleId: null,
     assignmentName: "Test Assignment",
     deadline: "2023-12-31T23:59:59.000Z" as any,
     programmingLanguage: "python",

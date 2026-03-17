@@ -10,6 +10,7 @@ describe("AssignmentSection", () => {
     {
       id: 1,
       classId: 1,
+      moduleId: null,
       assignmentName: "Assignment 1",
       deadline: "2024-12-31T23:59:59Z" as ISODateString,
       hasSubmitted: false,
@@ -19,6 +20,7 @@ describe("AssignmentSection", () => {
     {
       id: 2,
       classId: 1,
+      moduleId: null,
       assignmentName: "Assignment 2",
       deadline: "2024-12-25T23:59:59Z" as ISODateString,
       hasSubmitted: true,

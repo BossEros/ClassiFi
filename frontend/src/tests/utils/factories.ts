@@ -42,6 +42,8 @@ export function createMockUser(overrides?: Partial<User>): User {
     firstName: "Test",
     lastName: "Student",
     role: "student" as UserRole,
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     ...overrides,
   }
@@ -57,6 +59,8 @@ export function createMockTeacher(overrides?: Partial<User>): User {
     firstName: "Test",
     lastName: "Teacher",
     role: "teacher" as UserRole,
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     ...overrides,
   }
@@ -72,6 +76,8 @@ export function createMockAdmin(overrides?: Partial<User>): User {
     firstName: "Test",
     lastName: "Admin",
     role: "admin" as UserRole,
+    emailNotificationsEnabled: true,
+    inAppNotificationsEnabled: true,
     createdAt: new Date(),
     ...overrides,
   }
@@ -104,7 +110,8 @@ export function createMockClass(overrides?: Partial<Class>): Class {
     classCode: "CS101",
     description: "Learn the fundamentals of programming",
     isActive: true,
-    createdAt: toISO(new Date()),
+    createdAt: toISO(new Date()),
+
     semester: 1,
     academicYear: "2024-2025",
     schedule: createMockSchedule(),
@@ -141,6 +148,7 @@ export function createMockAssignment(
   return {
     id: 1,
     classId: 1,
+    moduleId: null,
     assignmentName: "Hello World Assignment",
     deadline: toISO(deadline),
     programmingLanguage: "python",

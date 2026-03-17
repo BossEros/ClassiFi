@@ -32,6 +32,7 @@ describe("calendarService", () => {
     const mockAssignment: Assignment = {
       id: 1,
       classId: 1,
+      moduleId: null,
       assignmentName: "Test Assignment",
       instructions: "Test description",
       programmingLanguage: "python",

@@ -25,6 +25,7 @@ function buildValidAssignmentData() {
       tiers: [{ id: "tier-1", hoursLate: 24, penaltyPercent: 10 }],
       rejectAfterHours: 120,
     },
+    moduleId: 1,
   }
 }
 
@@ -52,20 +53,14 @@ describe("assignmentFormSchema", () => {
     }
   })
 
-  it("rejects when instructions and image are both missing", () => {
+  it("accepts when instructions and image are both empty", () => {
     const parsedResult = assignmentFormSchema.safeParse({
       ...buildValidAssignmentData(),
       instructions: "   ",
       instructionsImageUrl: null,
     })
 
-    expect(parsedResult.success).toBe(false)
-
-    if (!parsedResult.success) {
-      expect(parsedResult.error.issues[0]?.message).toBe(
-        "Add instructions or upload an image",
-      )
-    }
+    expect(parsedResult.success).toBe(true)
   })
 
   it("rejects scheduled release date without time", () => {

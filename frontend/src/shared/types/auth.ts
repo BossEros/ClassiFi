@@ -22,6 +22,8 @@ export interface User {
   lastName: string
   role: UserRole
   avatarUrl?: string
+  emailNotificationsEnabled: boolean
+  inAppNotificationsEnabled: boolean
   createdAt: Date
 }
 

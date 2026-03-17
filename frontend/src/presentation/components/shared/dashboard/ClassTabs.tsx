@@ -54,7 +54,7 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
       {/* Tab Bar */}
       <div
         role="tablist"
-        className={`mb-8 flex ${variant === "light" ? "inline-flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm" : "gap-2 border-b border-white/10"}`}
+        className={`mb-8 flex ${variant === "light" ? "inline-flex overflow-hidden rounded-md border border-slate-300 bg-white shadow-sm" : "gap-2 border-b border-white/10"}`}
       >
         {tabs.map((tab, index) => {
           const Icon = tab.icon

@@ -6,19 +6,18 @@
  * so callers (SimilarityResultsPage) need not change their imports.
  *
  * Internal module structure:
- *  pdfTypes.ts        — shared interfaces, types, and constants
- *  pdfStyles.ts       — StyleSheet + color tokens
- *  pdfUtils.ts        — pure formatting and diff utilities
- *  pdfBuilders.ts     — data builder functions
- *  pdfComponents.tsx  — all PDF React components
+ *  pdfTypes.ts        - shared interfaces, types, and constants
+ *  pdfStyles.ts       - StyleSheet + color tokens
+ *  pdfUtils.ts        - pure formatting and diff utilities
+ *  pdfBuilders.ts     - data builder functions
+ *  pdfComponents.tsx  - all PDF React components
  */
 
-import { Document, Page, View, pdf } from "@react-pdf/renderer"
+import { Document, Page, View } from "@react-pdf/renderer"
 import { pdfStyles } from "./pdfStyles"
 import type {
   ClassSimilarityReportData,
   PairSimilarityReportData,
-  SimilarityReportDocumentDownloadOptions,
 } from "./pdfTypes"
 import {
   ClassPairsTable,
@@ -34,8 +33,6 @@ import {
   SimilarityGraphPdf,
 } from "./pdfComponents"
 
-// ─── Re-exports (public API) ──────────────────────────────────────────────────
-
 export type {
   ClassSimilarityReportData,
   PairSimilarityReportData,
@@ -46,34 +43,6 @@ export {
   buildPairSimilarityReportData,
 } from "./pdfBuilders"
 export { toFileNameSegment } from "./pdfUtils"
-
-// ─── Download Utility ─────────────────────────────────────────────────────────
-
-/**
- * Triggers a browser download for a generated similarity PDF document.
- *
- * @param options - Document instance and target filename.
- * @returns A promise that resolves after the browser download is triggered.
- */
-export async function downloadSimilarityReportDocument(
-  options: SimilarityReportDocumentDownloadOptions,
-): Promise<void> {
-  const pdfBlob = await pdf(options.document).toBlob()
-  const downloadUrl = window.URL.createObjectURL(pdfBlob)
-  const downloadLinkElement = document.createElement("a")
-
-  try {
-    downloadLinkElement.href = downloadUrl
-    downloadLinkElement.download = options.fileName
-    document.body.appendChild(downloadLinkElement)
-    downloadLinkElement.click()
-  } finally {
-    document.body.removeChild(downloadLinkElement)
-    window.URL.revokeObjectURL(downloadUrl)
-  }
-}
-
-// ─── Class Similarity Report Document ────────────────────────────────────────
 
 /**
  * Class-level similarity PDF document.
@@ -131,8 +100,6 @@ export function ClassSimilarityReportDocument({
   )
 }
 
-// ─── Pair Similarity Report Document ─────────────────────────────────────────
-
 /**
  * Pairwise similarity PDF document.
  *
@@ -184,6 +151,7 @@ export function PairSimilarityReportDocument({
             rightFileName={data.rightFileName}
             rightCode={data.rightCode}
             rightHighlightRanges={data.rightFragmentRanges}
+            fragments={data.fragments}
           />
         </View>
 

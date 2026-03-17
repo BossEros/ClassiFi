@@ -243,3 +243,61 @@ export function toLocalDateTimeString(date: Date | string): string {
   cloned.setMinutes(cloned.getMinutes() - cloned.getTimezoneOffset())
   return cloned.toISOString().slice(0, 16)
 }
+
+type DayOfWeek = "monday" | "tuesday" | "wednesday" | "thursday" | "friday" | "saturday" | "sunday"
+
+interface ScheduleLike {
+  days: DayOfWeek[]
+  startTime: string
+  endTime: string
+}
+
+const DAY_TO_INDEX: Record<DayOfWeek, number> = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+}
+
+/**
+ * Calculates the number of minutes from now until the next scheduled session
+ * for a class. Classes currently in session return 0. Classes with no scheduled
+ * days return Infinity.
+ *
+ * @param schedule - The class schedule containing days, startTime, and endTime.
+ * @returns Minutes until the next session (0 if currently in session).
+ */
+export function getMinutesUntilNextSession(schedule: ScheduleLike): number {
+  if (!schedule.days.length) return Infinity
+
+  const now = new Date()
+  const currentDayIndex = now.getDay()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+  const [startH, startM] = schedule.startTime.split(":").map(Number)
+  const [endH, endM] = schedule.endTime.split(":").map(Number)
+  const startMinutes = startH * 60 + startM
+  const endMinutes = endH * 60 + endM
+
+  let minDiff = Infinity
+
+  for (const day of schedule.days) {
+    const dayIndex = DAY_TO_INDEX[day]
+    let dayDiff = dayIndex - currentDayIndex
+
+    if (dayDiff < 0) dayDiff += 7
+
+    if (dayDiff === 0) {
+      if (currentMinutes < startMinutes) {
+        minDiff = Math.min(minDiff, startMinutes - currentMinutes)
+      } else if (currentMinutes < endMinutes) {
+        return 0
+      } else {
+        minDiff = Math.min(minDiff, 7 * 24 * 60 - (currentMinutes - startMinutes))
+      }
+    } else {
+      const minutesUntil = dayDiff * 24 * 60 + (startMinutes - currentMinutes)
+      minDiff = Math.min(minDiff, minutesUntil)
+    }
+  }
+
+  return minDiff
+}

@@ -54,3 +54,42 @@ export async function uploadAvatar(
     }
   }
 }
+
+/**
+ * Updates the current user's notification preferences.
+ * Calls the backend API and syncs the auth store.
+ *
+ * @param emailNotificationsEnabled - Whether email notifications are enabled.
+ * @param inAppNotificationsEnabled - Whether in-app notifications are enabled.
+ * @returns The updated notification preferences.
+ * @throws Error if the user is not logged in.
+ */
+export async function updateNotificationPreferences(
+  emailNotificationsEnabled: boolean,
+  inAppNotificationsEnabled: boolean,
+): Promise<{
+  emailNotificationsEnabled: boolean
+  inAppNotificationsEnabled: boolean
+}> {
+  const user = useAuthStore.getState().user
+
+  if (!user) {
+    throw new Error(
+      "You must be logged in to update notification preferences",
+    )
+  }
+
+  const result = await userRepository.updateNotificationPreferences(
+    emailNotificationsEnabled,
+    inAppNotificationsEnabled,
+  )
+
+  // Sync auth store so all components see updated preferences
+  useAuthStore.getState().login({
+    ...user,
+    emailNotificationsEnabled: result.emailNotificationsEnabled,
+    inAppNotificationsEnabled: result.inAppNotificationsEnabled,
+  })
+
+  return result
+}

@@ -18,8 +18,6 @@ export default defineConfig({
                 'src/modules/classes/class-code.util.ts',
                 'src/modules/assignments/assignment.schema.ts',
                 'src/modules/notifications/notification.schema.ts',
-                'src/modules/notifications/notification-preference.schema.ts',
-                'src/modules/notifications/notification-preference.service.ts',
                 'src/modules/submissions/submission.schema.ts',
                 'src/modules/users/user.service.ts',
             ],

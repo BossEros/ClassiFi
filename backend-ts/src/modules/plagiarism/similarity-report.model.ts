@@ -2,7 +2,6 @@ import {
   pgTable,
   serial,
   integer,
-  text,
   timestamp,
   numeric,
   index,
@@ -37,8 +36,7 @@ export const similarityReports = pgTable(
     }),
     generatedAt: timestamp("generated_at", { withTimezone: true })
       .defaultNow()
-      .notNull(),
-    reportFilePath: text("report_file_path"),
+      .notNull()
   },
   (table) => [
     check(

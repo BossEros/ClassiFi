@@ -205,7 +205,6 @@ export function StudentClassesPage() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [status, setStatus] = useState<FilterStatus>("active")
-  const [selectedTerm, setSelectedTerm] = useState("all")
 
   useEffect(() => {
     if (!user) {
@@ -235,32 +234,10 @@ export function StudentClassesPage() {
     showToast(`Successfully joined ${classInfo.className}!`, "success")
   }
 
-  const terms = useMemo(() => {
-    const uniqueTerms = new Set<string>()
-
-    classes.forEach((classRecord) => {
-      if (classRecord.academicYear && classRecord.semester) {
-        uniqueTerms.add(
-          `${classRecord.academicYear} - Semester ${classRecord.semester}`,
-        )
-      }
-    })
-
-    return Array.from(uniqueTerms).sort().reverse()
-  }, [classes])
-
   const filteredClasses = useMemo(() => {
     return classes.filter((classRecord) => {
-      if (status === "archived" && classRecord.isActive) return false
       if (status === "active" && !classRecord.isActive) return false
-
-      if (selectedTerm !== "all") {
-        const termLabel = `${classRecord.academicYear} - Semester ${classRecord.semester}`
-
-        if (termLabel !== selectedTerm) {
-          return false
-        }
-      }
+      if (status === "archived" && classRecord.isActive) return false
 
       if (searchQuery) {
         const normalizedQuery = searchQuery.toLowerCase()
@@ -274,7 +251,7 @@ export function StudentClassesPage() {
 
       return true
     })
-  }, [classes, searchQuery, selectedTerm, status])
+  }, [classes, searchQuery, status])
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -305,13 +282,10 @@ export function StudentClassesPage() {
         <ClassFilters
           onSearchChange={setSearchQuery}
           onStatusChange={setStatus}
-          onTermChange={setSelectedTerm}
           currentFilters={{
             searchQuery,
             status,
-            selectedTerm,
           }}
-          terms={terms}
         />
       </div>
 

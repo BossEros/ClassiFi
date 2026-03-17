@@ -29,14 +29,14 @@ export const similarityResults = pgTable(
       .notNull()
       .references(() => submissions.id, { onDelete: "cascade" }),
     structuralScore: numeric("structural_score", {
-      precision: 5,
-      scale: 4,
+      precision: 7,
+      scale: 6,
     }).notNull(),
     semanticScore: numeric("semantic_score", {
-      precision: 5,
-      scale: 4,
+      precision: 7,
+      scale: 6,
     }).notNull(),
-    hybridScore: numeric("hybrid_score", { precision: 5, scale: 4 }).notNull(),
+    hybridScore: numeric("hybrid_score", { precision: 7, scale: 6 }).notNull(),
     overlap: integer("overlap").notNull(),
     longestFragment: integer("longest_fragment").notNull(),
     leftCovered: integer("left_covered").notNull(),

@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 
-// Mock database module before importing repository
 vi.mock("../../src/shared/database.js", () => ({
   db: {
     insert: vi.fn(),
@@ -10,16 +9,13 @@ vi.mock("../../src/shared/database.js", () => ({
   },
 }))
 
-// Mock drizzle-orm
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((field, value) => ({ field, value, type: "eq" })),
   desc: vi.fn((field) => ({ field, type: "desc" })),
   and: vi.fn((...conditions) => ({ conditions, type: "and" })),
-  inArray: vi.fn((field, values) => ({ field, values, type: "inArray" })),
   sql: vi.fn(),
 }))
 
-// Mock models
 vi.mock("../../src/models/index.js", () => ({
   notifications: {
     id: "id",
@@ -32,66 +28,40 @@ vi.mock("../../src/models/index.js", () => ({
     readAt: "readAt",
     createdAt: "createdAt",
   },
-  notificationDeliveries: {
-    id: "id",
-    notificationId: "notificationId",
-    channel: "channel",
-    status: "status",
-    retryCount: "retryCount",
-    sentAt: "sentAt",
-    failedAt: "failedAt",
-    errorMessage: "errorMessage",
-    templateData: "templateData",
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
-  },
 }))
 
+import { db } from "../../src/shared/database.js"
+import { NotificationRepository } from "../../src/modules/notifications/notification.repository.js"
+
+interface MockDatabase {
+  insert: ReturnType<typeof vi.fn>
+  select: ReturnType<typeof vi.fn>
+  update: ReturnType<typeof vi.fn>
+  delete: ReturnType<typeof vi.fn>
+}
+
 describe("NotificationRepository", () => {
-  let mockDb: any
+  let mockDb: MockDatabase
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-
-    // Get the mocked db
-    const { db } = await import("../../src/shared/database.js")
-    mockDb = db
+    mockDb = db as unknown as MockDatabase
   })
 
   describe("findByUserId", () => {
-    it("should return notifications for a user with pagination", async () => {
+    it("returns notifications for a user with pagination", async () => {
       const mockNotifications = [
         { id: 1, userId: 1, title: "Test 1", isRead: false },
         { id: 2, userId: 1, title: "Test 2", isRead: true },
       ]
 
-      // Mock the getInAppNotificationIds query (first query)
-      const inAppWhereMock = vi
-        .fn()
-        .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
-      const _inAppSelectMock = vi.fn().mockReturnValue({ from: inAppFromMock })
-
-      // Mock the main findByUserId query (second query)
       const offsetMock = vi.fn().mockResolvedValue(mockNotifications)
       const limitMock = vi.fn().mockReturnValue({ offset: offsetMock })
       const orderByMock = vi.fn().mockReturnValue({ limit: limitMock })
       const whereMock = vi.fn().mockReturnValue({ orderBy: orderByMock })
       const fromMock = vi.fn().mockReturnValue({ where: whereMock })
-      const _selectMock = vi.fn().mockReturnValue({ from: fromMock })
+      mockDb.select = vi.fn().mockReturnValue({ from: fromMock })
 
-      // Setup mockDb.select to return different mocks based on call order
-      let selectCallCount = 0
-      mockDb.select = vi.fn(() => {
-        selectCallCount++
-        if (selectCallCount === 1) {
-          return { from: inAppFromMock }
-        }
-        return { from: fromMock }
-      })
-
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.findByUserId(1, 10, 0)
@@ -103,29 +73,11 @@ describe("NotificationRepository", () => {
   })
 
   describe("countByUserId", () => {
-    it("should return total count of notifications for a user", async () => {
-      // Mock the getInAppNotificationIds query (first query)
-      const inAppWhereMock = vi
-        .fn()
-        .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
-
-      // Mock the main countByUserId query (second query)
+    it("returns the total count of notifications for a user", async () => {
       const whereMock = vi.fn().mockResolvedValue([{ count: 5 }])
       const fromMock = vi.fn().mockReturnValue({ where: whereMock })
+      mockDb.select = vi.fn().mockReturnValue({ from: fromMock })
 
-      // Setup mockDb.select to return different mocks based on call order
-      let selectCallCount = 0
-      mockDb.select = vi.fn(() => {
-        selectCallCount++
-        if (selectCallCount === 1) {
-          return { from: inAppFromMock }
-        }
-        return { from: fromMock }
-      })
-
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.countByUserId(1)
@@ -133,16 +85,11 @@ describe("NotificationRepository", () => {
       expect(result).toBe(5)
     })
 
-    it("should return 0 when user has no notifications", async () => {
-      // Mock the getInAppNotificationIds query (first query)
-      const inAppWhereMock = vi.fn().mockResolvedValue([])
-      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
+    it("returns 0 when the user has no notifications", async () => {
+      const whereMock = vi.fn().mockResolvedValue([])
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock })
+      mockDb.select = vi.fn().mockReturnValue({ from: fromMock })
 
-      // Setup mockDb.select
-      mockDb.select = vi.fn().mockReturnValue({ from: inAppFromMock })
-
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.countByUserId(1)
@@ -152,29 +99,11 @@ describe("NotificationRepository", () => {
   })
 
   describe("countUnreadByUserId", () => {
-    it("should return count of unread notifications", async () => {
-      // Mock the getInAppNotificationIds query (first query)
-      const inAppWhereMock = vi
-        .fn()
-        .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
-
-      // Mock the main countUnreadByUserId query (second query)
+    it("returns the count of unread notifications", async () => {
       const whereMock = vi.fn().mockResolvedValue([{ count: 3 }])
       const fromMock = vi.fn().mockReturnValue({ where: whereMock })
+      mockDb.select = vi.fn().mockReturnValue({ from: fromMock })
 
-      // Setup mockDb.select to return different mocks based on call order
-      let selectCallCount = 0
-      mockDb.select = vi.fn(() => {
-        selectCallCount++
-        if (selectCallCount === 1) {
-          return { from: inAppFromMock }
-        }
-        return { from: fromMock }
-      })
-
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.countUnreadByUserId(1)
@@ -184,19 +113,16 @@ describe("NotificationRepository", () => {
   })
 
   describe("markAsRead", () => {
-    it("should mark a notification as read", async () => {
+    it("marks a notification as read", async () => {
       const whereMock = vi.fn().mockResolvedValue([])
       const setMock = vi.fn().mockReturnValue({ where: whereMock })
       const updateMock = vi.fn().mockReturnValue({ set: setMock })
       mockDb.update = updateMock
 
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       await notificationRepo.markAsRead(1)
 
-      expect(updateMock).toHaveBeenCalled()
       expect(setMock).toHaveBeenCalledWith(
         expect.objectContaining({
           isRead: true,
@@ -207,19 +133,16 @@ describe("NotificationRepository", () => {
   })
 
   describe("markAllAsReadByUserId", () => {
-    it("should mark all unread notifications as read for a user", async () => {
+    it("marks all unread notifications as read for a user", async () => {
       const whereMock = vi.fn().mockResolvedValue([])
       const setMock = vi.fn().mockReturnValue({ where: whereMock })
       const updateMock = vi.fn().mockReturnValue({ set: setMock })
       mockDb.update = updateMock
 
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       await notificationRepo.markAllAsReadByUserId(1)
 
-      expect(updateMock).toHaveBeenCalled()
       expect(setMock).toHaveBeenCalledWith(
         expect.objectContaining({
           isRead: true,
@@ -230,37 +153,19 @@ describe("NotificationRepository", () => {
   })
 
   describe("findRecentUnread", () => {
-    it("should return recent unread notifications", async () => {
+    it("returns recent unread notifications", async () => {
       const mockNotifications = [
         { id: 1, userId: 1, title: "Unread 1", isRead: false },
         { id: 2, userId: 1, title: "Unread 2", isRead: false },
       ]
 
-      // Mock the getInAppNotificationIds query (first query)
-      const inAppWhereMock = vi
-        .fn()
-        .mockResolvedValue([{ notificationId: 1 }, { notificationId: 2 }])
-      const inAppFromMock = vi.fn().mockReturnValue({ where: inAppWhereMock })
-
-      // Mock the main findRecentUnread query (second query)
       const offsetMock = vi.fn().mockResolvedValue(mockNotifications)
       const limitMock = vi.fn().mockReturnValue({ offset: offsetMock })
       const orderByMock = vi.fn().mockReturnValue({ limit: limitMock })
       const whereMock = vi.fn().mockReturnValue({ orderBy: orderByMock })
       const fromMock = vi.fn().mockReturnValue({ where: whereMock })
+      mockDb.select = vi.fn().mockReturnValue({ from: fromMock })
 
-      // Setup mockDb.select to return different mocks based on call order
-      let selectCallCount = 0
-      mockDb.select = vi.fn(() => {
-        selectCallCount++
-        if (selectCallCount === 1) {
-          return { from: inAppFromMock }
-        }
-        return { from: fromMock }
-      })
-
-      const { NotificationRepository } =
-        await import("../../src/modules/notifications/notification.repository.js")
       const notificationRepo = new NotificationRepository()
 
       const result = await notificationRepo.findRecentUnread(1, 5, 0)

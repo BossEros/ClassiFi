@@ -1,29 +1,26 @@
-import type { DocumentProps } from "@react-pdf/renderer"
-import type { ReactElement } from "react"
 import type { AssignmentDetail } from "@/business/models/assignment/types"
 import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
-import type { User } from "@/shared/types/auth"
-import type { FilePair } from "../types"
+import type {
+  PdfDocumentDownloadOptions,
+  ReportMetadataEntry,
+  SummaryMetric,
+} from "@/presentation/components/shared/pdf/pdfReportTypes"
 import type { SimilarityGraphLayout } from "@/presentation/utils/plagiarismGraphUtils"
 import type {
   SimilarityBadgeSeverity,
   SimilaritySignalLevel,
 } from "@/presentation/utils/plagiarismSignalUtils"
+import type { User } from "@/shared/types/auth"
+import type { FilePair, MatchFragment } from "../types"
 
-// ─── Value Object Types ────────────────────────────────────────────────────────
-
-export interface ReportMetadataEntry {
-  label: string
-  value: string
-}
-
-export interface SummaryMetric {
-  label: string
-  value: string
-}
+export type {
+  PdfDocumentDownloadOptions,
+  ReportMetadataEntry,
+  SummaryMetric,
+} from "@/presentation/components/shared/pdf/pdfReportTypes"
 
 export interface SimilarityBadgeValue {
   label: string
@@ -51,8 +48,6 @@ export interface FragmentEvidenceRow {
   length: string
 }
 
-// ─── Report Data Shapes ────────────────────────────────────────────────────────
-
 export interface ClassSimilarityReportData {
   title: string
   reportMetadata: ReportMetadataEntry[]
@@ -77,9 +72,8 @@ export interface PairSimilarityReportData {
   rightCode: string
   leftFragmentRanges: { start: number; end: number }[]
   rightFragmentRanges: { start: number; end: number }[]
+  fragments: MatchFragment[]
 }
-
-// ─── Builder Options ───────────────────────────────────────────────────────────
 
 export interface ClassSimilarityReportBuilderOptions {
   assignment: AssignmentDetail | null
@@ -100,20 +94,14 @@ export interface PairSimilarityReportBuilderOptions {
   downloadedAt?: Date
 }
 
-// ─── Download Options ──────────────────────────────────────────────────────────
-
-export interface SimilarityReportDocumentDownloadOptions {
-  document: ReactElement<DocumentProps>
-  fileName: string
-}
-
-// ─── Diff Types ────────────────────────────────────────────────────────────────
+export type SimilarityReportDocumentDownloadOptions = PdfDocumentDownloadOptions
 
 export type DiffLineKind = "unchanged" | "added" | "removed"
 
 export interface DiffLine {
   kind: DiffLineKind
   text: string
+  lineNumber?: number
 }
 
 export interface LineDiff {
@@ -121,7 +109,10 @@ export interface LineDiff {
   right: DiffLine[]
 }
 
-// ─── Code View Props ───────────────────────────────────────────────────────────
+export interface TextSegment {
+  text: string
+  isHighlighted: boolean
+}
 
 export interface SideBySideProps {
   leftStudentName: string
@@ -132,9 +123,8 @@ export interface SideBySideProps {
   rightFileName: string
   rightCode: string
   rightHighlightRanges?: { start: number; end: number }[]
+  fragments?: MatchFragment[]
 }
-
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 export const CLASS_REPORT_TABLE_HEADERS = [
   "Student Pair",

@@ -7,6 +7,7 @@ import { SimilarityResultsPage } from "@/presentation/pages/teacher/SimilarityRe
 import { getResultDetails } from "@/business/services/plagiarismService"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import * as similarityReportPdf from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
+import * as pdfDownload from "@/presentation/utils/pdfDownload"
 
 function createDeferredPromise<T>() {
   let resolvePromise!: (value: T) => void
@@ -218,7 +219,6 @@ vi.mock(
   () => ({
     buildClassSimilarityReportData: vi.fn(() => ({ title: "Class Report" })),
     buildPairSimilarityReportData: vi.fn(() => ({ title: "Pair Report" })),
-    downloadSimilarityReportDocument: vi.fn().mockResolvedValue(undefined),
     ClassSimilarityReportDocument: () => <div>Class PDF Document</div>,
     PairSimilarityReportDocument: () => <div>Pair PDF Document</div>,
     toFileNameSegment: (value: string) =>
@@ -229,6 +229,10 @@ vi.mock(
         .replace(/^-+|-+$/g, "") || "report",
   }),
 )
+
+vi.mock("@/presentation/utils/pdfDownload", () => ({
+  downloadPdfDocument: vi.fn().mockResolvedValue(undefined),
+}))
 
 function renderSimilarityResultsPage() {
   return render(
@@ -336,9 +340,7 @@ describe("SimilarityResultsPage", () => {
     const buildPairSimilarityReportDataMock = vi.mocked(
       similarityReportPdf.buildPairSimilarityReportData,
     )
-    const downloadSimilarityReportDocumentMock = vi.mocked(
-      similarityReportPdf.downloadSimilarityReportDocument,
-    )
+    const downloadPdfDocumentMock = vi.mocked(pdfDownload.downloadPdfDocument)
 
     renderSimilarityResultsPage()
 
@@ -358,7 +360,7 @@ describe("SimilarityResultsPage", () => {
           assignment: mockData.assignment,
         }),
       )
-      expect(downloadSimilarityReportDocumentMock).toHaveBeenCalledWith(
+      expect(downloadPdfDocumentMock).toHaveBeenCalledWith(
         expect.objectContaining({
           fileName: "similarity-review-similarity-threshold-75.pdf",
         }),
@@ -384,7 +386,7 @@ describe("SimilarityResultsPage", () => {
           assignment: mockData.assignment,
         }),
       )
-      expect(downloadSimilarityReportDocumentMock).toHaveBeenCalledWith(
+      expect(downloadPdfDocumentMock).toHaveBeenCalledWith(
         expect.objectContaining({
           fileName: "similarity-review-student-a-vs-student-b.pdf",
         }),

@@ -29,19 +29,12 @@ export const validateAssignmentTitle = (title: string): string | null => {
  * Validates the assignment instructions.
  *
  * @param instructions - The instructions to validate.
- * @param instructionsImageUrl - Optional image URL used as the main instructions.
  * @returns An error message string if invalid, otherwise null.
  */
 export const validateInstructions = (
   instructions: string,
-  instructionsImageUrl?: string | null,
 ): string | null => {
   const trimmed = instructions.trim()
-  const hasInstructionsImage = !!instructionsImageUrl?.trim()
-
-  if (!trimmed && !hasInstructionsImage) {
-    return "Add instructions or upload an image"
-  }
 
   if (trimmed.length > 5000) {
     return "Instructions must not exceed 5000 characters"
@@ -129,23 +122,12 @@ export const validateCreateAssignmentData = (
     })
   }
 
-  // Validate instructions
-  if (
-    data.instructions !== undefined ||
-    data.instructionsImageUrl !== undefined
-  ) {
-    const instructionsError = validateInstructions(
-      data.instructions ?? "",
-      data.instructionsImageUrl,
-    )
+  // Validate instructions (optional, only check max length if provided)
+  if (data.instructions !== undefined) {
+    const instructionsError = validateInstructions(data.instructions)
     if (instructionsError) {
       errors.push({ field: "instructions", message: instructionsError })
     }
-  } else {
-    errors.push({
-      field: "instructions",
-      message: "Add instructions or upload an image",
-    })
   }
 
   // Validate programming language
@@ -210,13 +192,12 @@ export const validateUpdateAssignmentData = (
     }
   }
 
-  // Validate instructions content consistency
-  const instructionsError = validateInstructions(
-    data.instructions ?? "",
-    data.instructionsImageUrl,
-  )
+  // Validate instructions max length if provided
+  if (data.instructions !== undefined) {
+    const instructionsError = validateInstructions(data.instructions)
 
-  if (instructionsError) {
-    throw new Error(instructionsError)
+    if (instructionsError) {
+      throw new Error(instructionsError)
+    }
   }
 }

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { uploadUserAvatar } from "@/data/repositories/userRepository"
+import {
+  uploadUserAvatar,
+  updateNotificationPreferences,
+} from "@/data/repositories/userRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 const { mockStorageFrom, mockUpload, mockGetPublicUrl, mockRemove, mockPatch } =
@@ -179,6 +182,59 @@ describe("userRepository.uploadUserAvatar", () => {
     expect(errorSpy).toHaveBeenCalled()
     expect(result).toBe(
       `https://cdn.classifi.com/avatars/user-1.png?v=${fixedTimestampMs}`,
+    )
+  })
+})
+
+describe("userRepository.updateNotificationPreferences", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("patches the backend and returns the updated preferences", async () => {
+    mockPatch.mockResolvedValueOnce({
+      data: {
+        success: true,
+        emailNotificationsEnabled: false,
+        inAppNotificationsEnabled: true,
+      },
+      error: null,
+    })
+
+    const result = await updateNotificationPreferences(false, true)
+
+    expect(apiClient.patch).toHaveBeenCalledWith(
+      "/user/me/notification-preferences",
+      {
+        emailNotificationsEnabled: false,
+        inAppNotificationsEnabled: true,
+      },
+    )
+    expect(result).toEqual({
+      emailNotificationsEnabled: false,
+      inAppNotificationsEnabled: true,
+    })
+  })
+
+  it("throws the API error when the backend request fails", async () => {
+    mockPatch.mockResolvedValueOnce({
+      data: null,
+      error: "Request failed",
+    })
+
+    await expect(updateNotificationPreferences(false, false)).rejects.toThrow(
+      "Request failed",
+    )
+  })
+
+  it("throws a fallback error when the backend response is missing data", async () => {
+    mockPatch.mockResolvedValueOnce({
+      data: null,
+      error: null,
+    })
+
+    await expect(updateNotificationPreferences(true, false)).rejects.toThrow(
+      "Failed to update notification preferences",
     )
   })
 })

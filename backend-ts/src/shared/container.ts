@@ -12,9 +12,8 @@ import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository
 import { TestCaseRepository } from "@/modules/test-cases/test-case.repository.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { GradebookRepository } from "@/modules/gradebook/gradebook-query.repository.js"
+import { ModuleRepository } from "@/modules/modules/module.repository.js"
 import { NotificationRepository } from "@/modules/notifications/notification.repository.js"
-import { NotificationDeliveryRepository } from "@/modules/notifications/notification-delivery.repository.js"
-import { NotificationPreferenceRepository } from "@/modules/notifications/notification-preference.repository.js"
 
 // Services
 import { AuthService } from "@/modules/auth/auth.service.js"
@@ -30,13 +29,12 @@ import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { Judge0Service } from "@/services/judge0.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
 import { TestCaseService } from "@/modules/test-cases/test-case.service.js"
+import { ModuleService } from "@/modules/modules/module.service.js"
 import { CODE_EXECUTOR_TOKEN } from "@/services/interfaces/codeExecutor.interface.js"
 import { GradebookService } from "@/modules/gradebook/gradebook.service.js"
 import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
 import { EmailService } from "@/services/email/index.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
-import { NotificationQueueService } from "@/modules/notifications/notification-queue.service.js"
-import { NotificationPreferenceService } from "@/modules/notifications/notification-preference.service.js"
 
 // Admin Services (focused, single-responsibility)
 import { AdminUserService } from "@/modules/admin/admin-user.service.js"
@@ -84,17 +82,10 @@ container.registerSingleton(
   DI_TOKENS.repositories.gradebook,
   GradebookRepository,
 )
+container.registerSingleton(DI_TOKENS.repositories.module, ModuleRepository)
 container.registerSingleton(
   DI_TOKENS.repositories.notification,
   NotificationRepository,
-)
-container.registerSingleton(
-  DI_TOKENS.repositories.notificationDelivery,
-  NotificationDeliveryRepository,
-)
-container.registerSingleton(
-  DI_TOKENS.repositories.notificationPreference,
-  NotificationPreferenceRepository,
 )
 
 // Register infrastructure adapters as singletons
@@ -123,14 +114,6 @@ container.registerSingleton(DI_TOKENS.services.gradebook, GradebookService)
 container.registerSingleton(DI_TOKENS.services.latePenalty, LatePenaltyService)
 container.registerSingleton(DI_TOKENS.services.email, EmailService)
 container.registerSingleton(
-  DI_TOKENS.services.notificationQueue,
-  NotificationQueueService,
-)
-container.registerSingleton(
-  DI_TOKENS.services.notificationPreference,
-  NotificationPreferenceService,
-)
-container.registerSingleton(
   DI_TOKENS.services.notification,
   NotificationService,
 )
@@ -139,6 +122,7 @@ container.registerSingleton(
 container.registerSingleton(CODE_EXECUTOR_TOKEN, Judge0Service)
 container.registerSingleton(DI_TOKENS.services.codeTest, CodeTestService)
 container.registerSingleton(DI_TOKENS.services.testCase, TestCaseService)
+container.registerSingleton(DI_TOKENS.services.module, ModuleService)
 
 // Register focused admin services as singletons
 container.registerSingleton(DI_TOKENS.services.adminUser, AdminUserService)

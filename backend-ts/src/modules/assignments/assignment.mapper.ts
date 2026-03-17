@@ -5,6 +5,7 @@ const DEFAULT_TOTAL_SCORE = 100
 export interface AssignmentDTO {
   id: number
   classId: number
+  moduleId: number | null
   assignmentName: string
   instructions: string
   instructionsImageUrl: string | null
@@ -46,6 +47,7 @@ export function toAssignmentDTO(
   return {
     id: assignment.id,
     classId: assignment.classId,
+    moduleId: assignment.moduleId ?? null,
     assignmentName: assignment.assignmentName,
     instructions: assignment.instructions,
     instructionsImageUrl: assignment.instructionsImageUrl ?? null,

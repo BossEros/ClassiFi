@@ -79,7 +79,10 @@ export async function getPendingTasks(
       limit,
     )
 
-    return tasksResponse.tasks as unknown as Task[]
+    return tasksResponse.tasks.map((task) => ({
+      ...task,
+      studentCount: task.totalStudents,
+    })) as unknown as Task[]
   } catch (error) {
     console.error("Error fetching pending tasks:", error)
     throw error

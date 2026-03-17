@@ -25,7 +25,7 @@ A TypeScript/Fastify backend implementation for the ClassiFi platform, following
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL database
 - Supabase project (for auth & storage)
 
@@ -77,15 +77,21 @@ npm start
 
 ### Available Scripts
 
-| Script                  | Description                      |
-| ----------------------- | -------------------------------- |
-| `npm run dev`           | Start dev server with hot reload |
-| `npm run build`         | Compile TypeScript to JavaScript |
-| `npm start`             | Run compiled production server   |
-| `npm run test`          | Run test suite                   |
-| `npm run test:watch`    | Watch mode testing               |
-| `npm run test:coverage` | Generate coverage report         |
-| `npm run typecheck`     | Type check without emitting      |
+| Script | Description |
+| ------ | ----------- |
+| `npm run dev` | Start the backend with `tsx watch` |
+| `npm run build` | Compile TypeScript and rewrite path aliases with `tsc-alias` |
+| `npm start` | Run the compiled production server |
+| `npm run test` | Run the full Vitest suite |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run test:coverage` | Generate coverage output |
+| `npm run typecheck` | Run TypeScript without emitting |
+| `npm run lint` | Lint the codebase with ESLint |
+| `npm run format` | Format backend source and tests with Prettier |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:migrate` | Apply Drizzle migrations |
+| `npm run db:push` | Push schema changes directly to the database |
+| `npm run db:studio` | Open Drizzle Studio |
 
 ---
 
@@ -111,6 +117,7 @@ backend-ts/
 |  |  |- dashboard/
 |  |  |- notifications/
 |  |  |- enrollments/
+|  |  |- modules/
 |  |  |- plagiarism/
 |  |  `- admin/
 |  |- services/               # Cross-cutting services (email, adapters, interfaces)
@@ -181,12 +188,14 @@ The backend now uses a module-first layout under `src/modules/*`.
 - `src/modules/plagiarism`
 - `src/modules/admin`
 - `src/modules/test-cases`
+- `src/modules/modules`
 
 Current behavior:
 - Feature implementations (controllers, services, repositories, schemas, models) are colocated in their module folders.
 - Feature-specific helper services are colocated with their module (for example, plagiarism helper services under `src/modules/plagiarism` and late penalty logic under `src/modules/assignments`).
 - Feature-specific mappers/guards/helpers are colocated with their module (for example, `src/modules/*/*.mapper.ts`, `src/modules/classes/class.guard.ts`).
-- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points (for example, auth, classes, assignments, submissions, dashboard, notifications) from `src/modules/*/index.ts`.
+- Route registration in `src/api/routes/v1/index.ts` imports routable module entry points for auth, classes, modules, assignments, submissions, dashboards, plagiarism, users, admin, test cases, gradebook, and notifications.
+- Protected route registration is centralized in a dedicated `protectedRoutes` scope that applies the auth middleware once and then mounts the authenticated route groups.
 - Internal/shared modules that are not mounted directly as route groups can still be consumed through services without requiring their own route entrypoint.
 - Shared cross-cutting concerns remain in shared layer folders such as `src/shared`, `src/api/middlewares`, `src/services/interfaces`, and `src/services/email`.
 
@@ -296,6 +305,7 @@ The programming language is specified at assignment creation and enforced during
 | ------ | ----------------- | -------------------------- |
 | GET    | `/user/me`        | Get current user's profile |
 | PATCH  | `/user/me/avatar` | Update avatar URL          |
+| PATCH  | `/user/me/notification-preferences` | Update user notification delivery settings |
 | DELETE | `/user/me`        | Delete account             |
 
 ### Classes
@@ -320,6 +330,24 @@ The programming language is specified at assignment creation and enforced during
 - For students: Includes `submittedAt`, `grade`, and `maxGrade` fields
 - `grade` is null if not yet graded
 - `maxGrade` defaults to 100 if not specified
+
+### Modules
+
+| Method | Endpoint                         | Description               |
+| ------ | -------------------------------- | ------------------------- |
+| POST   | `/classes/:classId/modules`      | Create a module           |
+| GET    | `/classes/:classId/modules`      | Get modules with assignments |
+| PUT    | `/modules/:moduleId`             | Rename a module           |
+| PATCH  | `/modules/:moduleId/publish`     | Toggle module publish     |
+| DELETE | `/modules/:moduleId`             | Delete module (cascades)  |
+
+**Module Design**:
+- Modules are assignment grouping containers within a class (e.g., "Module 1", "Midterm", "Finals")
+- Every assignment optionally belongs to a module via the `moduleId` foreign key
+- `GET /classes/:classId/modules` returns modules ordered by creation date (ascending), each including its nested assignments with submission counts
+- Deleting a module cascades to all assignments within it
+- Modules support publish/unpublish toggling (`isPublished` boolean)
+- A "General" module is auto-created per class during migration for ungrouped assignments
 
 ### Assignments & Submissions
 
@@ -435,7 +463,7 @@ The notification system provides real-time updates to users about important even
 
 **Features**:
 - In-app notifications with real-time unread count
-- Email delivery queue with retry logic
+- Post-commit email delivery for grade and feedback write flows
 - Configurable notification channels (IN_APP, EMAIL)
 - Pagination support for notification history
 - User-specific notification filtering
@@ -492,13 +520,13 @@ Templates include:
 - Assignment/submission details
 - Branding and styling
 
-**Delivery Queue**:
+**Email Delivery Behavior**:
 
-Notifications are queued for email delivery with:
-- Automatic retry on failure (max 3 attempts)
-- Exponential backoff between retries
-- Status tracking (PENDING, SENT, FAILED, RETRYING)
-- Error logging for debugging
+Notifications separate write commits from email delivery:
+- In-app notification rows are persisted during the main write flow when that channel is enabled
+- Email sends for grade and feedback updates happen only after the surrounding write transaction commits
+- Failed email attempts are logged for operational visibility and do not partially commit the caller's primary write
+- In-app notifications are stored only when the user has in-app notifications enabled
 
 **Example Response** (`GET /notifications`):
 ```json
@@ -545,7 +573,6 @@ Notifications are queued for email delivery with:
 - `page` (number, default: 1) - Page number for pagination
 - `limit` (number, default: 20, max: 100) - Items per page
 - `unreadOnly` (boolean, default: false) - Filter to show only unread notifications
-
 
 ### Dashboard
 
@@ -605,33 +632,19 @@ Notifications are queued for email delivery with:
 
 ### Entity Relationship Diagram
 
+```text
+[User] <- [Class] <- [Assignment] <- [TestCase]
+  |          |             |              |
+  +-------> [Enrollment]   +----------> [Submission] <---------- [TestResult]
+                             |
+                             v
+                     [SimilarityReport]
+                             |
+                             v
+                     [SimilarityResult] <---------- [MatchFragment]
+  |
+  +----------> [Notification]
 ```
-┌─────────┐       ┌─────────┐       ┌──────────────┐      ┌────────────┐
-│  User   │◄──────┤  Class  │◄──────┤  Assignment  │◄─────┤  TestCase  │
-└────┬────┘       └────┬────┘       └──────┬───────┘      └──────┬─────┘
-     │                 │                   │                     │
-     │            ┌────▼────┐         ┌────▼────┐         ┌──────▼─────┐
-     ├───────────►│Enrollment│         │Submission│◄───────┤ TestResult │
-     │            └──────────┘         └────┬────┘         └────────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityReport │
-     │                             └────────┬────────┘
-     │                                      │
-     │                             ┌────────▼────────┐
-     │                             │SimilarityResult │◄───────┐
-     │                             └────────┬────────┘        │
-     │                                      │           ┌─────┴────────┐
-     │                                      └──────────►│MatchFragment │
-     │                                                  └──────────────┘
-     │
-     │            ┌──────────────┐
-     └───────────►│ Notification │
-                  └──────┬───────┘
-                         │
-                  ┌──────▼──────────────────┐
-                  │ NotificationDelivery    │
-                  └─────────────────────────┘
 ```
 
 ### User Model
@@ -645,6 +658,9 @@ export const users = pgTable("users", {
   lastName: varchar("last_name", { length: 50 }).notNull(),
   role: userRoleEnum("role").notNull().default("student"),
   avatarUrl: varchar("avatar_url", { length: 255 }),
+  isActive: boolean("is_active").notNull().default(true),
+  emailNotificationsEnabled: boolean("email_notifications_enabled").notNull().default(true),
+  inAppNotificationsEnabled: boolean("in_app_notifications_enabled").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at"),
 });
@@ -656,18 +672,10 @@ export const users = pgTable("users", {
 export const notificationTypeEnum = pgEnum("notification_type", [
   "ASSIGNMENT_CREATED",
   "SUBMISSION_GRADED",
-]);
-
-export const notificationChannelEnum = pgEnum("notification_channel", [
-  "EMAIL",
-  "IN_APP",
-]);
-
-export const deliveryStatusEnum = pgEnum("delivery_status", [
-  "PENDING",
-  "SENT",
-  "FAILED",
-  "RETRYING",
+  "SUBMISSION_FEEDBACK_GIVEN",
+  "CLASS_ANNOUNCEMENT",
+  "DEADLINE_REMINDER",
+  "ENROLLMENT_CONFIRMED",
 ]);
 
 export const notifications = pgTable("notifications", {
@@ -681,23 +689,15 @@ export const notifications = pgTable("notifications", {
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-
-export const notificationDeliveries = pgTable("notification_deliveries", {
-  id: serial("id").primaryKey(),
-  notificationId: integer("notification_id").notNull().references(() => notifications.id, { onDelete: "cascade" }),
-  channel: notificationChannelEnum("channel").notNull(),
-  status: deliveryStatusEnum("status").notNull().default("PENDING"),
-  retryCount: integer("retry_count").notNull().default(0),
-  sentAt: timestamp("sent_at"),
-  failedAt: timestamp("failed_at"),
-  errorMessage: text("error_message"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
 ```
 
 **Indexes**:
 - `notifications`: `user_id`, `created_at`, `is_read`, composite `(user_id, is_read)`
-- `notification_deliveries`: `notification_id`, `status`, composite `(status, created_at)`
+
+**Delivery behavior**:
+- In-app notifications are persisted in `notifications`
+- Email notifications are sent separately after successful write completion when the relevant flow opts into post-commit delivery
+- If in-app notifications are disabled but email is enabled, the user receives the email without an inbox row being created
 
 ### Roles
 
@@ -900,7 +900,8 @@ Manages user notifications and email delivery:
 
 ```typescript
 class NotificationService {
-  createNotification(userId, type, data); // Create notification with email queue
+  createNotification(userId, type, data); // Create an in-app notification when that channel is enabled
+  sendEmailNotificationIfEnabled(userId, type, data); // Send email after commit when that channel is enabled
   getUserNotifications(userId, page, limit, unreadOnly); // Get paginated notifications
   getUnreadCount(userId); // Get unread notification count
   markAsRead(notificationId, userId); // Mark single notification as read
@@ -911,7 +912,7 @@ class NotificationService {
 
 **Features**:
 - Automatic notification creation on key events (assignment creation, grading)
-- Email delivery queue with retry logic
+- Post-commit email delivery for transaction-sensitive write flows
 - Template-based email generation
 - User authorization checks
 - Pagination support
@@ -925,10 +926,34 @@ class NotificationService {
 - SMTP (for custom email servers)
 - Supabase (uses built-in email service)
 
-**Delivery Queue**:
-- Automatic retry on failure (max 3 attempts)
-- Exponential backoff between retries
-- Status tracking (PENDING, SENT, FAILED, RETRYING)
+**Email Delivery Behavior**:
+- Email delivery is attempted only after grade/feedback write transactions commit
+- Failed email attempts are logged and do not partially commit the caller's primary write
+
+**Preference Resolution**:
+- Notification delivery reads the current user record before deciding which channels to use.
+- `emailNotificationsEnabled` gates email delivery globally for the user.
+- `inAppNotificationsEnabled` gates in-app delivery globally for the user.
+- Type-level channel restrictions still apply through each notification type configuration.
+
+### ModuleService
+
+Manages assignment-grouping modules within a class:
+
+```typescript
+class ModuleService {
+  createModule(data); // Create a module for a class
+  getModulesWithAssignments(classId, isStudent); // Return ordered modules with nested assignments
+  renameModule(data); // Rename an existing module
+  toggleModulePublish(data); // Publish or unpublish a module
+  deleteModule(data); // Delete a module and cascade its assignments
+}
+```
+
+**Features**:
+- Supports the frontend's Module View / List View toggle workflows
+- Enforces teacher ownership on write operations
+- Returns assignment-grouped read models for class detail pages
 
 ---
 
@@ -1099,7 +1124,7 @@ Test location policy:
 - Do not add new test files under `backend-ts/src/**`.
 
 High-signal coverage gate:
-- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `notification-preference.schema`, `notification-preference.service`, `user.service`).
+- `vitest` coverage enforces `100%` statements/branches/functions/lines with per-file thresholds for critical contracts (`auth.service`, `auth.schema`, `class.schema`, `class-code.util`, `assignment.schema`, `submission.schema`, `notification.schema`, `user.service`).
 - This gate ensures login/register payload rules and auth service business paths fail fast on regressions.
 
 ### Test Factories
@@ -1129,12 +1154,13 @@ describe('AuthService', () => {
 
 ### Adding a New Endpoint
 
-1. **Schema** - Define Zod schema in `api/schemas/`
-2. **Repository** - Add data methods if needed
-3. **Service** - Implement business logic
-4. **Controller** - Add route handler with validation
-5. **Test** - Add unit tests
-6. **Documentation** - Add comprehensive endpoint documentation
+1. **Schema** - Define or extend the module-local Zod schema for the endpoint contract.
+2. **Repository** - Add or update the entity/query repository method if data access changes are needed.
+3. **Service** - Implement business logic in the owning module service.
+4. **Controller** - Add the Fastify route handler with validation and OpenAPI schema.
+5. **Route registration** - Ensure the module entry point is exported and mounted from `src/api/routes/v1/index.ts` if it is a new routable surface.
+6. **Test** - Add focused tests under `backend-ts/tests/**`.
+7. **Documentation** - Update this file when the API surface, runtime contract, or architectural expectations change.
 
 ### Endpoint Documentation Standards
 
@@ -1286,7 +1312,7 @@ npm run typecheck
 
 | Component           | Technology       | Version |
 | ------------------- | ---------------- | ------- |
-| Runtime             | Node.js          | 18+     |
+| Runtime             | Node.js          | 20+     |
 | Language            | TypeScript       | 5.x     |
 | Framework           | Fastify          | 5.x     |
 | ORM                 | Drizzle ORM      | 0.36.x  |

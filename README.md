@@ -14,22 +14,23 @@ ClassiFi provides role-based experiences for students, teachers, and admins:
 
 - Programming assignments with Python, Java, and C support
 - Test-case based evaluation and manual test execution
+- Assignment modules with teacher-side module view and list view workflows
 - Teacher submissions workspace with collapsible instructions, per-status metric cards, and a paginated submissions table
 - Role-gated hidden test-case detail access (teacher/admin can review hidden inputs/outputs; student view stays masked)
 - Late submission policy and late-penalty configuration
 - Gradebook with override workflows
-- Plagiarism analysis with student-centric and pairwise views
+- Plagiarism analysis with graph-first review, pairwise comparison, and PDF evidence export
 - Role-based access control using Supabase authentication
-- Notifications for assignment and grading events
+- Notifications for assignment and grading events, plus per-user notification channel preferences
 
 ## Architecture
 
 ### Frontend
 
-- Stack: React + TypeScript + Vite + Tailwind CSS
+- Stack: React + TypeScript + Vite + Tailwind CSS v4
 - Pattern: Clean Architecture (`presentation -> business -> data`)
 - Global UI/auth state: Zustand stores (`useAuthStore`, `useToastStore`)
-- Routing: React Router with protected and role-based route wrappers
+- Routing: React Router with auth, shared, teacher, student, and admin route groups
 
 ### Backend
 
@@ -38,6 +39,7 @@ ClassiFi provides role-based experiences for students, teachers, and admins:
 - Layout: Module-first under `backend-ts/src/modules/*`
 - Dependency Injection: `tsyringe`
 - Validation: Zod-based request and environment validation
+- Route composition: centralized API v1 registration with protected-route mounting and module entrypoints
 
 ## Project Structure
 
@@ -64,7 +66,8 @@ ClassiFi/
 |   `-- documentation.md
 |
 |-- judge0/                       # Local Judge0 setup (optional)
-|-- docs/                         # Deployment and supporting docs
+|-- semantic-service/             # Semantic similarity sidecar service
+|-- render.yaml                   # Render deployment configuration
 |-- AGENTS.md                     # Agent development rules
 `-- README.md
 ```
@@ -73,7 +76,7 @@ ClassiFi/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - npm
 - Supabase project (Auth/DB/Storage)
 - Optional: Judge0 instance for code execution
@@ -94,11 +97,12 @@ Default dev URL: `http://localhost:5173`
 ```bash
 cd backend-ts
 npm install
-cp .env.example .env
 npm run dev
 ```
 
 Default API URL: `http://localhost:8001`
+
+Backend environment variables are documented in [backend-ts/documentation.md](./backend-ts/documentation.md).
 
 ### Optional Judge0
 
@@ -120,6 +124,7 @@ npm test
 ```
 
 Unit test location: `frontend/src/tests/unit/**/*.test.ts(x)`
+E2E test location: `frontend/src/tests/e2e/**/*.spec.ts`
 
 ### Backend
 
@@ -144,12 +149,14 @@ Unit/integration test location: `backend-ts/tests/**/*.test.ts`
 - Backend: Render
 - Database/Auth/Storage: Supabase
 - Judge0: self-hosted
+- Semantic similarity sidecar: `semantic-service/`
 
-See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for deployment details.
+Deployment configuration currently lives in `render.yaml`, backend/frontend environment docs, and service-specific folders such as `judge0/` and `semantic-service/`.
 
 ## Documentation
 
 - [frontend/documentation.md](./frontend/documentation.md)
 - [backend-ts/documentation.md](./backend-ts/documentation.md)
 - [AGENTS.md](./AGENTS.md)
+- [implementation_plan.md](./implementation_plan.md)
 

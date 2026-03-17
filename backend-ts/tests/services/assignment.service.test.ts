@@ -8,6 +8,7 @@ import type { EnrollmentRepository } from "../../src/modules/enrollments/enrollm
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import type { StorageService } from "../../src/services/storage.service.js"
+import type { ModuleRepository } from "../../src/modules/modules/module.repository.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -24,6 +25,7 @@ describe("AssignmentService", () => {
   let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
   let mockStorageService: Partial<MockedObject<StorageService>>
   let mockNotificationService: Partial<MockedObject<NotificationService>>
+  let mockModuleRepo: Partial<MockedObject<ModuleRepository>>
 
   beforeEach(() => {
     mockClassRepo = {
@@ -56,6 +58,11 @@ describe("AssignmentService", () => {
 
     mockNotificationService = {
       createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn(),
+    }
+
+    mockModuleRepo = {
+      getModuleById: vi.fn().mockResolvedValue({ id: 1, classId: 1, name: "Module 1", isPublished: true, createdAt: new Date(), updatedAt: new Date() }),
     }
 
     assignmentService = new AssignmentService(
@@ -64,6 +71,7 @@ describe("AssignmentService", () => {
       mockTestCaseRepo as unknown as TestCaseRepository,
       mockEnrollmentRepo as unknown as EnrollmentRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
+      mockModuleRepo as unknown as ModuleRepository,
       mockStorageService as unknown as StorageService,
       mockNotificationService as unknown as NotificationService,
     )
@@ -74,6 +82,7 @@ describe("AssignmentService", () => {
   // ============================================
   describe("createAssignment", () => {
     const validAssignmentData = {
+      moduleId: 1,
       assignmentName: "Test Assignment",
       instructions: "Test instructions for the assignment",
       programmingLanguage: "python" as const,
@@ -172,6 +181,9 @@ describe("AssignmentService", () => {
       expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(
         2,
       )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledTimes(2)
 
       // Verify first student notification
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
@@ -188,6 +200,17 @@ describe("AssignmentService", () => {
 
       // Verify second student notification
       expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        11,
+        "ASSIGNMENT_CREATED",
+        expect.objectContaining({
+          assignmentId: 1,
+          assignmentTitle: "Test Assignment",
+          className: "Test Class",
+        }),
+      )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledWith(
         11,
         "ASSIGNMENT_CREATED",
         expect.objectContaining({

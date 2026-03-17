@@ -48,10 +48,8 @@ describe("assignmentValidation", () => {
       ).toBeNull()
     })
 
-    it("should return error when both instructions and image are missing", () => {
-      expect(validateInstructions("")).toBe(
-        "Add instructions or upload an image",
-      )
+    it("should return null when both instructions and image are missing", () => {
+      expect(validateInstructions("")).toBeNull()
     })
 
     it("should allow short instructions when provided", () => {
@@ -60,7 +58,7 @@ describe("assignmentValidation", () => {
 
     it("should allow image-only instructions", () => {
       expect(
-        validateInstructions("", "https://example.com/image.png"),
+        validateInstructions(""),
       ).toBeNull()
     })
 
@@ -187,17 +185,14 @@ describe("assignmentValidation", () => {
       ).toBe("Assignment title is required")
     })
 
-    it("should return error for missing instructions and image", () => {
+    it("should return valid when instructions and image are both missing", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Lab 1",
         programmingLanguage: "python",
         deadline: "2024-07-01T12:00:00Z",
       })
 
-      expect(result.isValid).toBe(false)
-      expect(
-        result.errors.find((e) => e.field === "instructions")?.message,
-      ).toBe("Add instructions or upload an image")
+      expect(result.isValid).toBe(true)
     })
 
     it("should allow create with image-only instructions", () => {
@@ -257,7 +252,7 @@ describe("assignmentValidation", () => {
       ).toBeDefined()
       expect(
         result.errors.find((e) => e.field === "instructions"),
-      ).toBeDefined()
+      ).toBeUndefined()
       expect(
         result.errors.find((e) => e.field === "programmingLanguage"),
       ).toBeDefined()
@@ -278,18 +273,14 @@ describe("assignmentValidation", () => {
       })
     })
 
-    it("should return instructions error when instructions are provided but invalid", () => {
+    it("should return valid when instructions are whitespace-only", () => {
       const result = validateCreateAssignmentData({
         assignmentName: "Valid title",
         instructions: "   ",
         programmingLanguage: "python",
       })
 
-      expect(result.isValid).toBe(false)
-      expect(result.errors).toContainEqual({
-        field: "instructions",
-        message: "Add instructions or upload an image",
-      })
+      expect(result.isValid).toBe(true)
     })
 
     it("should return programmingLanguage error when provided language is invalid", () => {
@@ -407,12 +398,12 @@ describe("assignmentValidation", () => {
       ).toThrow("Deadline must be in the future")
     })
 
-    it("should throw when both instructions and image are missing", () => {
+    it("should not throw when both instructions and image are missing", () => {
       expect(() =>
         validateUpdateAssignmentData({
           teacherId: 1,
         }),
-      ).toThrow("Add instructions or upload an image")
+      ).not.toThrow()
     })
   })
 })

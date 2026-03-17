@@ -26,7 +26,6 @@ import {
   buildClassSimilarityReportData,
   buildPairSimilarityReportData,
   ClassSimilarityReportDocument,
-  downloadSimilarityReportDocument,
   PairSimilarityReportDocument,
   toFileNameSegment,
 } from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
@@ -40,6 +39,7 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
 import type { AssignmentDetail } from "@/business/models/assignment/types"
+import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 
 interface LocationState {
   results: AnalyzeResponse
@@ -234,7 +234,7 @@ export function SimilarityResultsPage() {
         showSingletons,
       })
 
-      await downloadSimilarityReportDocument({
+      await downloadPdfDocument({
         document: <ClassSimilarityReportDocument data={reportData} />,
         fileName: buildClassReportFileName(
           assignment?.assignmentName,
@@ -267,7 +267,7 @@ export function SimilarityResultsPage() {
         minimumSimilarityPercent,
       })
 
-      await downloadSimilarityReportDocument({
+      await downloadPdfDocument({
         document: <PairSimilarityReportDocument data={reportData} />,
         fileName: buildPairReportFileName(
           assignment?.assignmentName,

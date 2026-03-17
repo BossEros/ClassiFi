@@ -32,14 +32,8 @@ function validateAssignmentTitleValue(titleValue: string): string | null {
 
 function validateInstructionsValue(
   instructionsValue: string,
-  instructionsImageUrlValue: string | null,
 ): string | null {
   const normalizedInstructions = instructionsValue.trim()
-  const hasInstructionsImage = Boolean(instructionsImageUrlValue?.trim())
-
-  if (!normalizedInstructions && !hasInstructionsImage) {
-    return "Add instructions or upload an image"
-  }
 
   if (normalizedInstructions.length > 5000) {
     return "Instructions must not exceed 5000 characters"
@@ -95,6 +89,7 @@ export const assignmentFormSchema = z
     scheduledDate: z.string().nullable(),
     allowLateSubmissions: z.boolean(),
     latePenaltyConfig: latePenaltyConfigSchema,
+    moduleId: z.number().nullable(),
   })
   .superRefine((formValue, context) => {
     const assignmentNameError = validateAssignmentTitleValue(
@@ -111,7 +106,6 @@ export const assignmentFormSchema = z
 
     const instructionsError = validateInstructionsValue(
       formValue.instructions,
-      formValue.instructionsImageUrl,
     )
 
     if (instructionsError) {
@@ -183,6 +177,14 @@ export const assignmentFormSchema = z
           message: "Max attempts must be between 1 and 99",
         })
       }
+    }
+
+    if (!formValue.moduleId) {
+      context.addIssue({
+        code: "custom",
+        path: ["moduleId"],
+        message: "Please select a module for this assignment",
+      })
     }
   })
 

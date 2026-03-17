@@ -210,7 +210,12 @@ describe("UserRepository", () => {
       const result = await userRepo.updateUser(1, { firstName: "Updated" })
 
       expect(result).toEqual(updatedUser)
-      expect(setMock).toHaveBeenCalledWith({ firstName: "Updated" })
+      expect(setMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          firstName: "Updated",
+          updatedAt: expect.any(Date),
+        }),
+      )
     })
 
     it("should allow clearing avatarUrl with null", async () => {
@@ -233,7 +238,12 @@ describe("UserRepository", () => {
 
       expect(result).toEqual(updatedUser)
       // Verify that null is passed to the database (not filtered out)
-      expect(setMock).toHaveBeenCalledWith({ avatarUrl: null })
+      expect(setMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          avatarUrl: null,
+          updatedAt: expect.any(Date),
+        }),
+      )
     })
 
     it("should not update avatarUrl when undefined", async () => {
@@ -259,7 +269,12 @@ describe("UserRepository", () => {
 
       expect(result).toEqual(updatedUser)
       // Verify that undefined is filtered out (avatarUrl should not be in the update)
-      expect(setMock).toHaveBeenCalledWith({ firstName: "Updated" })
+      expect(setMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          firstName: "Updated",
+          updatedAt: expect.any(Date),
+        }),
+      )
     })
   })
 })

@@ -23,6 +23,7 @@ describe("assignmentFilters", () => {
   ): Assignment => ({
     id: 1,
     classId: 1,
+    moduleId: null,
     assignmentName: "Test",
     deadline: "2024-01-20T23:59:59Z" as any,
     programmingLanguage: "python",

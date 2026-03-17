@@ -98,7 +98,7 @@ export class StudentDashboardService {
         assignmentName: assignment.assignmentName,
         className: assignment.className,
         classId: assignment.classId,
-        deadline: assignment.deadline.toISOString(),
+        deadline: assignment.deadline?.toISOString() ?? null,
         hasSubmitted: false,
         programmingLanguage: assignment.programmingLanguage,
       }))
@@ -119,8 +119,10 @@ export class StudentDashboardService {
       )
 
       for (const assignment of assignments) {
-        // Check if deadline hasn't passed
-        if (assignment.deadline && assignment.deadline > now) {
+        // Include assignments with no deadline or whose deadline hasn't passed
+        const isUpcoming = !assignment.deadline || assignment.deadline > now
+
+        if (isUpcoming) {
           // Check if student has submitted
           const submission = await this.submissionRepo.getLatestSubmission(
             assignment.id,
@@ -133,7 +135,7 @@ export class StudentDashboardService {
               assignmentName: assignment.assignmentName,
               className: classData.className,
               classId: classData.id,
-              deadline: assignment.deadline.toISOString(),
+              deadline: assignment.deadline?.toISOString() ?? null,
               hasSubmitted: false,
               programmingLanguage: assignment.programmingLanguage,
             })
@@ -142,10 +144,14 @@ export class StudentDashboardService {
       }
     }
 
-    // Sort by deadline and limit
-    pendingAssignments.sort(
-      (a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime(),
-    )
+    // Sort by deadline (null deadlines last) and limit
+    pendingAssignments.sort((a, b) => {
+      if (!a.deadline && !b.deadline) return 0
+      if (!a.deadline) return 1
+      if (!b.deadline) return -1
+
+      return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+    })
 
     return pendingAssignments.slice(0, limit)
   }

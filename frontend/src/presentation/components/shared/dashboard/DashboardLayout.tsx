@@ -54,7 +54,7 @@ export function DashboardLayout({
         >
           <div
             className={cn(
-              "w-full p-6 transition-[max-width,margin] duration-300 lg:p-8",
+              "w-full p-6 transition-[max-width,margin] duration-300 lg:px-8 lg:pb-8",
               isCollapsed
                 ? "lg:mr-auto lg:max-w-screen-2xl lg:mx-0"
                 : "max-w-7xl mx-auto",
