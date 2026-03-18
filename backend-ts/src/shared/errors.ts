@@ -58,14 +58,17 @@ export class UserAlreadyExistsError extends BadRequestError {
 
 export class InvalidCredentialsError extends ApiError {
   constructor() {
-    super("Invalid email or password", 401)
+    super("Incorrect email or password.", 401)
     this.name = "InvalidCredentialsError"
   }
 }
 
 export class EmailNotVerifiedError extends ApiError {
   constructor() {
-    super("Please verify your email address before logging in", 401)
+    super(
+      "Please confirm your email before signing in. Check your inbox or spam folder for the verification link.",
+      401,
+    )
     this.name = "EmailNotVerifiedError"
   }
 }

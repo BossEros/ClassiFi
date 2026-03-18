@@ -23,6 +23,49 @@ import type {
   DeleteAccountResponse,
 } from "@/business/models/auth/types"
 
+const emailConfirmationRequiredLoginMessage =
+  "Please confirm your email before signing in. Check your inbox or spam folder for the verification link."
+const invalidLoginCredentialsMessage = "Incorrect email or password."
+
+/**
+ * Converts provider-specific authentication failures into clear, actionable messages.
+ *
+ * @param authenticationFailureMessage - The raw authentication error message.
+ * @returns A user-friendly authentication error message.
+ */
+function normalizeAuthenticationFailureMessage(
+  authenticationFailureMessage?: string,
+): string {
+  if (!authenticationFailureMessage) {
+    return "Login failed"
+  }
+
+  const normalizedAuthenticationFailureMessage =
+    authenticationFailureMessage.toLowerCase()
+
+  if (
+    normalizedAuthenticationFailureMessage.includes("email not confirmed") ||
+    normalizedAuthenticationFailureMessage.includes(
+      "verify your email address before logging in",
+    )
+  ) {
+    return emailConfirmationRequiredLoginMessage
+  }
+
+  if (
+    normalizedAuthenticationFailureMessage.includes(
+      "invalid login credentials",
+    ) ||
+    normalizedAuthenticationFailureMessage.includes(
+      "invalid email or password",
+    )
+  ) {
+    return invalidLoginCredentialsMessage
+  }
+
+  return authenticationFailureMessage
+}
+
 /**
  * Authenticates a user with email and password.
  * Validates credentials locally before attempting login with the repository.
@@ -55,11 +98,21 @@ export async function loginUser(
       persistAuthenticationSession(response.token, response.user)
     }
 
+    if (!response.success) {
+      return {
+        ...response,
+        message: normalizeAuthenticationFailureMessage(response.message),
+      }
+    }
+
     return response
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Login failed",
+      message:
+        error instanceof Error
+          ? normalizeAuthenticationFailureMessage(error.message)
+          : "Login failed",
     }
   }
 }
