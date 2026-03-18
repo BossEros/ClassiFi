@@ -17,8 +17,9 @@ import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
-import type { StudentClassGrades, StudentGradeEntry } from "@/shared/types/gradebook"
+import type { StudentGradeEntry } from "@/shared/types/gradebook"
 import { cn } from "@/shared/utils/cn"
+import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
 import { buildStudentGradeReportData, StudentGradeReportDocument } from "./pdf/studentGradeReportPdf"
 
 interface StudentClassGradesContentProps {
@@ -132,22 +133,6 @@ function SummaryCard({
       </CardContent>
     </Card>
   )
-}
-
-function calculateClassAverage(classGrades: StudentClassGrades | null): number | null {
-  if (!classGrades) return null
-
-  const gradedAssignments = classGrades.assignments.filter(
-    (assignment) => assignment.grade !== null && assignment.totalScore > 0,
-  )
-
-  if (gradedAssignments.length === 0) return null
-
-  const totalPercentage = gradedAssignments.reduce((sum, assignment) => {
-    return sum + (((assignment.grade ?? 0) / assignment.totalScore) * 100)
-  }, 0)
-
-  return Math.round(totalPercentage / gradedAssignments.length)
 }
 
 function getGradeColor(percentage: number, variant: "dark" | "light"): string {
@@ -356,19 +341,14 @@ export function StudentClassGradesContent({
     classId,
   )
   const classGrades = grades[0] ?? null
-  const average = calculateClassAverage(classGrades)
-  const gradedCount =
-    classGrades?.assignments.filter((assignment) => assignment.grade !== null)
-      .length ?? 0
-  const pendingReviewCount =
-    classGrades?.assignments.filter(
-      (assignment) =>
-        assignment.grade === null && assignment.submittedAt !== null,
-    ).length ?? 0
-  const notSubmittedCount =
-    classGrades?.assignments.filter((assignment) => assignment.submittedAt === null)
-      .length ?? 0
-  const totalAssignments = classGrades?.assignments.length ?? 0
+  const {
+    currentGrade,
+    gradedCount,
+    overdueMissingCount,
+    pendingReviewCount,
+    notSubmittedCount,
+    totalAssignments,
+  } = calculateStudentGradeSummaryMetrics(classGrades?.assignments ?? [])
 
   const handleDownloadPdf = async () => {
     if (!classGrades) return
@@ -508,9 +488,13 @@ export function StudentClassGradesContent({
       <div className="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
           icon={BarChart3}
-          label="Class Average"
-          value={average !== null ? `${average}%` : "No grades yet"}
-          helperText={average !== null ? `${gradedCount} graded assignments included` : "Average appears after your first graded assignment"}
+          label="Current Grade"
+          value={currentGrade !== null ? `${currentGrade}%` : "No grade yet"}
+          helperText={
+            currentGrade !== null
+              ? `Counts ${gradedCount} graded and ${overdueMissingCount} overdue missing assignments`
+              : "Appears after a score is posted or an assignment becomes overdue and missing"
+          }
           variant={variant}
         />
         <SummaryCard
