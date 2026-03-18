@@ -3,6 +3,7 @@ import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { ResetPasswordPage } from "@/presentation/pages/auth/ResetPasswordPage"
 import * as authService from "@/business/services/authService"
+import { authTheme } from "@/presentation/constants/authTheme"
 
 vi.mock("@/business/services/authService")
 
@@ -34,6 +35,26 @@ describe("ResetPasswordPage", () => {
     expect(
       screen.getByText("Invalid or expired reset link."),
     ).toBeInTheDocument()
+  })
+
+  it("uses the shared auth card width in the reset form view", async () => {
+    const { container } = render(<ResetPasswordPage />)
+
+    await waitFor(() => {
+      expect(screen.getByText("Reset Your Password")).toBeInTheDocument()
+    })
+
+    const resetCardWrapper = Array.from(container.querySelectorAll("div")).find(
+      (element) =>
+        authTheme.cardWrapper
+          .split(" ")
+          .every((className) => element.classList.contains(className)) &&
+        authTheme.loginCardWidth
+          .split(" ")
+          .every((className) => element.classList.contains(className)),
+    )
+
+    expect(resetCardWrapper).not.toBeNull()
   })
 
   it("shows schema validation errors on submit", async () => {

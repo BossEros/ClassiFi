@@ -11,7 +11,7 @@ export const authTheme = {
   cardSurface:
     "rounded-3xl border border-[#D7E2DE] bg-[#F4F7F6] p-6 shadow-2xl sm:p-8 md:p-10",
   compactCardSurface:
-    "rounded-3xl border border-[#D7E2DE] bg-[#F4F7F6] p-8 shadow-2xl md:p-10",
+    "w-full rounded-3xl border border-[#D7E2DE] bg-[#F4F7F6] p-8 shadow-2xl md:p-10",
   cardTitle: "text-3xl font-bold tracking-tight text-[#13211E] sm:text-4xl",
   cardSubtitle: "text-sm leading-relaxed text-[#5F746E] sm:text-base",
   contentText: "text-sm leading-relaxed text-[#5F746E]",
