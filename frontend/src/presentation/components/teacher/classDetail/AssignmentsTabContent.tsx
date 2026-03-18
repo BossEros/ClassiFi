@@ -68,9 +68,6 @@ export function AssignmentsTabContent({
   const [expandedModuleIds, setExpandedModuleIds] = useState<Set<number>>(new Set())
   const [hasToggledModules, setHasToggledModules] = useState(false)
 
-  // Derive the effective view: fall back to "list" when no modules exist
-  const effectiveViewMode = modules.length === 0 ? "list" : viewMode
-
   // Derive effective expanded IDs: if user hasn't interacted yet and modules exist, default first open
   const effectiveExpandedIds =
     !hasToggledModules && expandedModuleIds.size === 0 && modules.length > 0
@@ -108,11 +105,11 @@ export function AssignmentsTabContent({
             Assignments
           </h2>
           <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
-            <ViewToggle activeView={effectiveViewMode} onViewChange={setViewMode} variant={variant} />
+            <ViewToggle activeView={viewMode} onViewChange={setViewMode} variant={variant} />
           </div>
         </div>
 
-        {effectiveViewMode === "list" && (
+        {viewMode === "list" && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {isTeacher ? (
               <AssignmentFilterBar
@@ -145,7 +142,7 @@ export function AssignmentsTabContent({
       </div>
 
       {/* Module View */}
-      {effectiveViewMode === "module" && (
+      {viewMode === "module" && (
         hasModules ? (
           <div className="space-y-4">
             {modules.map((module) => (
@@ -191,7 +188,7 @@ export function AssignmentsTabContent({
       )}
 
       {/* List View */}
-      {effectiveViewMode === "list" && (
+      {viewMode === "list" && (
         shouldShowNoFilterResultsState ? (
           <div className="py-12 text-center">
             <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}>
