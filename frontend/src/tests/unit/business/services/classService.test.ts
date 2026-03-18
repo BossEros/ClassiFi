@@ -55,6 +55,7 @@ describe("classService", () => {
     lastName: "Doe",
     email: "john@example.com",
     avatarUrl: null,
+    schoolId: null,
     enrolledAt: toISO(new Date()),
   }
 
@@ -414,6 +415,22 @@ describe("classService", () => {
         teacherId: 1,
         className: "Trimmed Name",
         description: "Trimmed Description",
+      })
+    })
+
+    it("passes null when clearing the description", async () => {
+      vi.mocked(classRepository.updateClassDetailsById).mockResolvedValue(
+        mockClass,
+      )
+
+      await classService.updateClass(1, {
+        teacherId: 1,
+        description: "",
+      })
+
+      expect(classRepository.updateClassDetailsById).toHaveBeenCalledWith(1, {
+        teacherId: 1,
+        description: null,
       })
     })
 

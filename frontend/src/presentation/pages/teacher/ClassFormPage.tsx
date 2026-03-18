@@ -36,6 +36,10 @@ import {
   teacherClassFormSchema,
   type TeacherClassFormValues,
 } from "@/presentation/schemas/class/classSchemas"
+import {
+  normalizeClassDescriptionForCreate,
+  normalizeClassDescriptionForUpdate,
+} from "@/business/validation/classValidation"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 import type { DayOfWeek } from "@/business/models/dashboard/types"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
@@ -197,6 +201,13 @@ export function ClassFormPage() {
       return
     }
 
+    const normalizedCreateDescription = normalizeClassDescriptionForCreate(
+      formValues.description,
+    )
+    const normalizedUpdateDescription = normalizeClassDescriptionForUpdate(
+      formValues.description,
+    )
+
     setIsLoading(true)
     setGeneralError(null)
 
@@ -206,7 +217,7 @@ export function ClassFormPage() {
         await updateClass(parseInt(classId), {
           teacherId: parseInt(currentUser.id),
           className: formValues.className.trim(),
-          description: formValues.description.trim() || undefined,
+          description: normalizedUpdateDescription,
           semester: formValues.semester,
           academicYear: formValues.academicYear,
           schedule: formValues.schedule,
@@ -218,7 +229,7 @@ export function ClassFormPage() {
         await createClass({
           teacherId: parseInt(currentUser.id),
           className: formValues.className.trim(),
-          description: formValues.description.trim() || undefined,
+          description: normalizedCreateDescription,
           classCode: formValues.classCode,
 
           semester: formValues.semester,

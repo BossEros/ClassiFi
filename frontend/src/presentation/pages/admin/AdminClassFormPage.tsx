@@ -27,6 +27,10 @@ import {
   type AdminClassPageFormValues,
 } from "@/presentation/schemas/class/classSchemas"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import {
+  normalizeClassDescriptionForCreate,
+  normalizeClassDescriptionForUpdate,
+} from "@/business/validation/classValidation"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/presentation/utils/dateUtils"
@@ -240,25 +244,37 @@ export function AdminClassFormPage() {
       return
     }
 
+    const normalizedCreateDescription = normalizeClassDescriptionForCreate(
+      formValues.description,
+    )
+    const normalizedUpdateDescription = normalizeClassDescriptionForUpdate(
+      formValues.description,
+    )
+
     setIsLoading(true)
     setGeneralError(null)
 
     try {
-      const classPayload = {
+      const sharedClassPayload = {
         teacherId: Number(formValues.teacherId),
         className: formValues.className.trim(),
-        description: formValues.description.trim() || undefined,
         semester: formValues.semester,
         academicYear: formValues.academicYear,
         schedule: formValues.schedule,
       }
 
       if (isEditMode && parsedClassId !== null) {
-        await adminService.updateClass(parsedClassId, classPayload)
+        await adminService.updateClass(parsedClassId, {
+          ...sharedClassPayload,
+          description: normalizedUpdateDescription,
+        })
         showToast("Class updated successfully", "success")
         navigate(`/dashboard/classes/${parsedClassId}`)
       } else {
-        await adminService.createClass(classPayload)
+        await adminService.createClass({
+          ...sharedClassPayload,
+          description: normalizedCreateDescription,
+        })
         showToast("Class created successfully", "success")
         navigate("/dashboard/classes")
       }

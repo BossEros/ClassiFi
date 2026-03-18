@@ -57,7 +57,7 @@ export interface CreateClassRequest {
 export interface UpdateClassRequest {
   teacherId: number
   className?: string
-  description?: string
+  description?: string | null
   isActive?: boolean
   semester?: 1 | 2
   academicYear?: string
