@@ -139,14 +139,17 @@ describe("assignmentRepository", () => {
     it("returns error for deadline passed", async () => {
       mockFetch.mockResolvedValue(
         createMockResponse(false, 400, {
-          message: "Submission deadline has passed",
+          message:
+            "The deadline for this assignment has passed. Late submissions are not allowed.",
         }),
       )
 
       const result =
         await assignmentRepository.submitAssignmentWithFile(mockRequest)
 
-      expect(result.error).toContain("Submission deadline has passed")
+      expect(result.error).toContain(
+        "The deadline for this assignment has passed. Late submissions are not allowed.",
+      )
       expect(result.error).not.toContain("Status: 400")
     })
 

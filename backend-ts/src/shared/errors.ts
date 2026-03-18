@@ -128,7 +128,9 @@ export class InvalidAssignmentDataError extends BadRequestError {
 
 export class DeadlinePassedError extends BadRequestError {
   constructor() {
-    super("The deadline for this assignment has passed")
+    super(
+      "The deadline for this assignment has passed. Late submissions are not allowed.",
+    )
     this.name = "DeadlinePassedError"
   }
 }
