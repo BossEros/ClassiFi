@@ -165,16 +165,15 @@ export async function updateClassDetailsById(
   classId: number,
   updatedClassData: UpdateClassRequest,
 ): Promise<Class> {
-  const apiResponse = await apiClient.put<{
-    success: boolean
-    message?: string
-    classInfo?: Class
-  }>(`/classes/${classId}`, updatedClassData)
+  const apiResponse = await apiClient.put<ClassDetailResponse>(
+    `/classes/${classId}`,
+    updatedClassData,
+  )
 
   if (
     apiResponse.error ||
     !apiResponse.data?.success ||
-    !apiResponse.data.classInfo
+    !apiResponse.data.class
   ) {
     throw new Error(
       apiResponse.error ||
@@ -183,7 +182,7 @@ export async function updateClassDetailsById(
     )
   }
 
-  return apiResponse.data.classInfo
+  return apiResponse.data.class
 }
 
 export async function unenrollStudentFromClassByTeacher(
