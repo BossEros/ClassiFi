@@ -55,7 +55,6 @@ describe("classService", () => {
     lastName: "Doe",
     email: "john@example.com",
     avatarUrl: null,
-    schoolId: null,
     enrolledAt: toISO(new Date()),
   }
 

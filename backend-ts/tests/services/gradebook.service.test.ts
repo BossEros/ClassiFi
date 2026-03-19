@@ -7,6 +7,12 @@ import type { LatePenaltyService } from "../../src/modules/assignments/late-pena
 import type { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 
+vi.mock("../../src/shared/transaction.js", () => ({
+  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) =>
+    callback({}),
+  ),
+}))
+
 describe("GradebookService", () => {
   let gradebookService: GradebookService
   let mockGradebookRepo: any
@@ -28,6 +34,7 @@ describe("GradebookService", () => {
       setGradeOverride: vi.fn(),
       removeGradeOverride: vi.fn(),
       updateGrade: vi.fn(),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     mockAssignmentRepo = {
