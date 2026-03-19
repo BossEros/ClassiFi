@@ -53,30 +53,46 @@ export interface FilePair {
 export const MATCH_COLORS = {
   /**
    * Normal match background.
-   * A soft, highly transparent cool blue. Easy on the eyes, clearly indicates a region of interest
-   * without feeling alarming or heavy.
+   * A soft sky-blue wash that marks shared code without implying "success" or "failure."
+   * This keeps suspicious overlap visually prominent while preserving syntax readability.
    */
   match: "rgba(56, 189, 248, 0.18)",
 
   /**
    * Hovering over a match.
-   * Modest opacity bump to give clear interactive feedback without jarring the eyes.
+   * Slightly stronger tint so teachers can track the fragment under inspection quickly.
    */
-  matchHover: "rgba(56, 189, 248, 0.22)",
+  matchHover: "rgba(56, 189, 248, 0.26)",
+
+  /**
+   * Hover outline.
+   * Adds a faint edge so overlapping fragments remain easy to distinguish on light surfaces.
+   */
+  matchHoverOutline: "rgba(14, 165, 233, 0.34)",
 
   /**
    * Selected match.
-   * A stronger, solid blue to firmly anchor the user's focus on the active fragment
-   * while keeping the syntax colors beneath completely readable.
+   * A more deliberate sky-blue fill that anchors the active fragment immediately.
    */
-  matchSelected: "rgba(56, 189, 248, 0.34)",
+  matchSelected: "rgba(14, 165, 233, 0.38)",
+
+  /**
+   * Selected match outline.
+   * Stronger than hover so the active fragment stays obvious even in dense overlap regions.
+   */
+  matchSelectedOutline: "rgba(2, 132, 199, 0.85)",
 
   /**
    * Ignored/template code.
-   * A very faint, nearly invisible wash. Opaque gray completely ruins syntax highlighting.
-   * This extremely faint transparency marks the area while perfectly preserving readability.
+   * A quiet slate tint that remains visible on the light review surface without competing with true matches.
    */
-  matchIgnored: "rgba(255, 255, 255, 0.03)",
+  matchIgnored: "rgba(148, 163, 184, 0.10)",
+
+  /**
+   * Ignored/template outline.
+   * Keeps ignored blocks discoverable while staying visually subordinate to selected and hovered matches.
+   */
+  matchIgnoredOutline: "rgba(148, 163, 184, 0.18)",
 } as const
 
 /**

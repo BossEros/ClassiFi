@@ -467,12 +467,15 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
         }
         .plagiarism-match-hover {
           background-color: ${MATCH_COLORS.matchHover};
+          box-shadow: inset 0 0 0 1px ${MATCH_COLORS.matchHoverOutline};
         }
         .plagiarism-match-selected {
           background-color: ${MATCH_COLORS.matchSelected};
+          box-shadow: inset 0 0 0 1px ${MATCH_COLORS.matchSelectedOutline};
         }
         .plagiarism-match-ignored {
           background-color: ${MATCH_COLORS.matchIgnored};
+          box-shadow: inset 0 0 0 1px ${MATCH_COLORS.matchIgnoredOutline};
         }
       `}</style>
     </div>
