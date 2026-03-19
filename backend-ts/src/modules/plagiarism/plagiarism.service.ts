@@ -22,6 +22,12 @@ import {
   type PlagiarismSummaryDTO,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
+  buildPairSimilarityScoreBreakdown,
+  normalizeSubmissionPair,
+  summarizePairSimilarityScores,
+  type PairSimilarityScoreBreakdown,
+} from "@/modules/plagiarism/plagiarism-scoring.js"
+import {
   AssignmentNotFoundError,
   PlagiarismReportNotFoundError,
   PlagiarismResultNotFoundError,
@@ -85,6 +91,8 @@ export interface ResultDetailsResponse {
     submission1Id: number
     submission2Id: number
     structuralScore: string
+    semanticScore: string
+    hybridScore: string
     overlap: number
     longestFragment: number
   }
@@ -180,7 +188,7 @@ export class PlagiarismService {
     const reportId = this.generateReportId()
     this.legacyReportsStore.set(reportId, { report, createdAt })
 
-    const threshold = request.threshold ?? PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+    const threshold = request.threshold ?? settings.plagiarismHybridThreshold
     const summary = report.getSummary()
     const pairs = report.getPairs()
 
@@ -251,8 +259,8 @@ export class PlagiarismService {
             studentName: details.rightFile.studentName,
           },
           structuralScore: parseFloat(details.result.structuralScore),
-          semanticScore: 0,
-          hybridScore: parseFloat(details.result.structuralScore),
+          semanticScore: parseFloat(details.result.semanticScore),
+          hybridScore: parseFloat(details.result.hybridScore),
           overlap: details.result.overlap,
           longest: details.result.longestFragment,
         },
@@ -279,7 +287,7 @@ export class PlagiarismService {
 
     const summary = storedReport.report.getSummary()
     const pairs = storedReport.report.getPairs()
-    const threshold = PLAGIARISM_CONFIG.DEFAULT_THRESHOLD
+    const threshold = settings.plagiarismHybridThreshold
 
     return {
       reportId,
@@ -332,6 +340,8 @@ export class PlagiarismService {
         submission1Id: result.submission1Id,
         submission2Id: result.submission2Id,
         structuralScore: result.structuralScore,
+        semanticScore: result.semanticScore,
+        hybridScore: result.hybridScore,
         overlap: result.overlap,
         longestFragment: result.longestFragment,
       },
@@ -519,6 +529,14 @@ export class PlagiarismService {
     resultIdMap: Map<string, number>,
     semanticScores: Map<string, number>,
   ): AnalyzeResponse {
+    const pairScoreBreakdowns = this.buildPairScoreBreakdowns(
+      pairs,
+      semanticScores,
+    )
+    const pairSimilaritySummary = summarizePairSimilarityScores(
+      pairScoreBreakdowns,
+    )
+
     return {
       reportId: dbReport.id.toString(),
       isReusedReport: false,
@@ -526,20 +544,11 @@ export class PlagiarismService {
       summary: {
         totalFiles: report.files.length,
         totalPairs: pairs.length,
-        suspiciousPairs: pairs.filter(
-          (pair: Pair) => pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
-        ).length,
+        suspiciousPairs: pairSimilaritySummary.suspiciousPairs,
         averageSimilarity: parseFloat(
-          (
-            pairs.reduce(
-              (sum: number, pair: Pair) => sum + pair.similarity,
-              0,
-            ) / Math.max(1, pairs.length)
-          ).toFixed(4),
+          pairSimilaritySummary.averageSimilarity.toFixed(4),
         ),
-        maxSimilarity: parseFloat(
-          Math.max(...pairs.map((pair: Pair) => pair.similarity), 0).toFixed(4),
-        ),
+        maxSimilarity: parseFloat(pairSimilaritySummary.maxSimilarity.toFixed(4)),
       },
       submissions: this.mapReportFilesToDTOs(report.files),
       pairs: pairs.map((pair: Pair) => {
@@ -551,13 +560,17 @@ export class PlagiarismService {
           pair.rightFile.info?.submissionId || "0",
           10,
         )
-        const [firstSubmissionId, secondSubmissionId] =
-          leftSubmissionId < rightSubmissionId
-            ? [leftSubmissionId, rightSubmissionId]
-            : [rightSubmissionId, leftSubmissionId]
-        const pairKey = `${firstSubmissionId}-${secondSubmissionId}`
-        const resultId = resultIdMap.get(pairKey) ?? 0
-        const semanticScore = semanticScores.get(pairKey) ?? 0
+        const normalizedSubmissionPair = normalizeSubmissionPair(
+          leftSubmissionId,
+          rightSubmissionId,
+        )
+        const resultId = resultIdMap.get(normalizedSubmissionPair.pairKey) ?? 0
+        const semanticScore =
+          semanticScores.get(normalizedSubmissionPair.pairKey) ?? 0
+        const pairScoreBreakdown = buildPairSimilarityScoreBreakdown(
+          pair.similarity,
+          semanticScore,
+        )
 
         return {
           id: resultId,
@@ -577,15 +590,54 @@ export class PlagiarismService {
             studentId: pair.rightFile.info?.studentId,
             studentName: pair.rightFile.info?.studentName,
           },
-          structuralScore: pair.similarity,
-          semanticScore,
-          hybridScore: 0.5 * pair.similarity + 0.5 * semanticScore,
+          structuralScore: pairScoreBreakdown.structuralScore,
+          semanticScore: pairScoreBreakdown.semanticScore,
+          hybridScore: pairScoreBreakdown.hybridScore,
           overlap: pair.overlap,
           longest: pair.longest,
         }
       }),
       warnings: [],
     }
+  }
+
+  private buildPairScoreBreakdowns(
+    pairs: Pair[],
+    semanticScores: Map<string, number>,
+  ): PairSimilarityScoreBreakdown[] {
+    return pairs
+      .map((pair) => {
+        const leftSubmissionId = parseInt(
+          pair.leftFile.info?.submissionId || "0",
+          10,
+        )
+        const rightSubmissionId = parseInt(
+          pair.rightFile.info?.submissionId || "0",
+          10,
+        )
+
+        if (!leftSubmissionId || !rightSubmissionId) {
+          return null
+        }
+
+        const normalizedSubmissionPair = normalizeSubmissionPair(
+          leftSubmissionId,
+          rightSubmissionId,
+        )
+        const semanticScore =
+          semanticScores.get(normalizedSubmissionPair.pairKey) ?? 0
+
+        return buildPairSimilarityScoreBreakdown(
+          pair.similarity,
+          semanticScore,
+        )
+      })
+      .filter(
+        (
+          pairScoreBreakdown,
+        ): pairScoreBreakdown is PairSimilarityScoreBreakdown =>
+          pairScoreBreakdown !== null,
+      )
   }
 
   /**
@@ -612,19 +664,18 @@ export class PlagiarismService {
         continue
       }
 
-      const [firstSubmissionId, secondSubmissionId] =
-        leftSubmissionId < rightSubmissionId
-          ? [leftSubmissionId, rightSubmissionId]
-          : [rightSubmissionId, leftSubmissionId]
-      const pairKey = `${firstSubmissionId}-${secondSubmissionId}`
+      const normalizedSubmissionPair = normalizeSubmissionPair(
+        leftSubmissionId,
+        rightSubmissionId,
+      )
 
-      if (queuedPairKeys.has(pairKey)) {
+      if (queuedPairKeys.has(normalizedSubmissionPair.pairKey)) {
         continue
       }
 
-      queuedPairKeys.add(pairKey)
+      queuedPairKeys.add(normalizedSubmissionPair.pairKey)
       queuedRequests.push({
-        key: pairKey,
+        key: normalizedSubmissionPair.pairKey,
         leftContent: pair.leftFile.content,
         rightContent: pair.rightFile.content,
       })

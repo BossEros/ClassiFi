@@ -130,7 +130,7 @@ export class SimilarityRepository extends BaseRepository<
       .select()
       .from(similarityResults)
       .where(eq(similarityResults.reportId, reportId))
-      .orderBy(desc(similarityResults.structuralScore))
+      .orderBy(desc(similarityResults.hybridScore))
   }
   /** Create match fragments (batch insert) */
   async createFragments(
