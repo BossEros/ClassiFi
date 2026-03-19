@@ -216,9 +216,10 @@ export class PlagiarismPersistenceService {
     const pairs: PlagiarismPairDTO[] = results.map((result) => {
       const leftSubmission = submissionMap.get(result.submission1Id)
       const rightSubmission = submissionMap.get(result.submission2Id)
-      const structuralScore = parseFloat(result.structuralScore || "0")
-      const rawHybridScore = parseFloat(result.hybridScore || "0")
-      const hybridScore = rawHybridScore > 0 ? rawHybridScore : structuralScore
+      const structuralScore =
+        this.parseStoredSimilarityScore(result.structuralScore) ?? 0
+      const hybridScore =
+        this.parseStoredSimilarityScore(result.hybridScore) ?? structuralScore
 
       return {
         id: result.id,
@@ -239,7 +240,8 @@ export class PlagiarismPersistenceService {
           studentName: rightSubmission?.studentName || "Unknown",
         },
         structuralScore,
-        semanticScore: parseFloat(result.semanticScore || "0"),
+        semanticScore:
+          this.parseStoredSimilarityScore(result.semanticScore) ?? 0,
         hybridScore,
         overlap: result.overlap,
         longest: result.longestFragment,
@@ -258,8 +260,10 @@ export class PlagiarismPersistenceService {
         totalFiles: report.totalSubmissions,
         totalPairs: report.totalComparisons,
         suspiciousPairs: report.flaggedPairs,
-        averageSimilarity: parseFloat(report.averageSimilarity || "0"),
-        maxSimilarity: parseFloat(report.highestSimilarity || "0"),
+        averageSimilarity:
+          this.parseStoredSimilarityScore(report.averageSimilarity) ?? 0,
+        maxSimilarity:
+          this.parseStoredSimilarityScore(report.highestSimilarity) ?? 0,
       },
       submissions: submissionDTOs,
       pairs,
@@ -301,6 +305,26 @@ export class PlagiarismPersistenceService {
       studentId: submission.studentId.toString(),
       studentName,
     }))
+  }
+
+  /**
+   * Parse a persisted numeric similarity score while preserving valid zero values.
+   */
+  private parseStoredSimilarityScore(
+    storedScore: string | null | undefined,
+  ): number | null {
+    if (storedScore === null || storedScore === undefined) {
+      return null
+    }
+
+    const normalizedStoredScore = storedScore.trim()
+    if (normalizedStoredScore.length === 0) {
+      return null
+    }
+
+    const parsedScore = Number.parseFloat(normalizedStoredScore)
+
+    return Number.isNaN(parsedScore) ? null : parsedScore
   }
 
   private buildPairScoreBreakdowns(
