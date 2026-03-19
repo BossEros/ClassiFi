@@ -19,6 +19,8 @@ import type { RegisterUserServiceDTO } from "@/modules/auth/auth.dtos.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("AuthService")
+const LOCAL_USER_SYNC_MAX_ATTEMPTS = 5
+const LOCAL_USER_SYNC_RETRY_DELAYS_MS = [150, 300, 600, 1200] as const
 
 /** Auth result type */
 interface AuthResult {
@@ -64,6 +66,13 @@ function isDbError(
     typeof (error as Record<string, unknown>).code === "string" &&
     typeof (error as Record<string, unknown>).constraint === "string"
   )
+}
+
+/**
+ * Pause execution for the provided number of milliseconds.
+ */
+function delayExecution(delayMs: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, delayMs))
 }
 
 /**
@@ -161,7 +170,51 @@ export class AuthService {
       throw new Error("Failed to create Supabase user")
     }
 
+    if (!token) {
+      await this.ensureSupabaseUserExistsForPendingConfirmation(
+        supabaseUser.id,
+        email,
+      )
+    }
+
     return { user: supabaseUser, token }
+  }
+
+  /**
+   * Confirm that a signup with pending email confirmation produced a real
+   * Supabase auth user rather than an obfuscated duplicate-signup response.
+   */
+  private async ensureSupabaseUserExistsForPendingConfirmation(
+    supabaseUserId: string,
+    email: string,
+  ): Promise<void> {
+    for (
+      let attemptNumber = 1;
+      attemptNumber <= LOCAL_USER_SYNC_MAX_ATTEMPTS;
+      attemptNumber++
+    ) {
+      const supabaseUser =
+        await this.authAdapter.getAdminUserById(supabaseUserId)
+
+      if (supabaseUser) {
+        return
+      }
+
+      const hasAnotherRetryAttempt =
+        attemptNumber < LOCAL_USER_SYNC_MAX_ATTEMPTS
+
+      if (!hasAnotherRetryAttempt) {
+        throw new UserAlreadyExistsError(email)
+      }
+
+      const retryDelayMs = this.getLocalUserSyncRetryDelayMs(attemptNumber)
+
+      logger.warn(
+        `[Auth] Supabase signup returned user ${supabaseUserId} for ${email}, but the admin API could not find that auth record yet. Waiting ${retryDelayMs}ms before retrying confirmation lookup ${attemptNumber}/${LOCAL_USER_SYNC_MAX_ATTEMPTS}.`,
+      )
+
+      await delayExecution(retryDelayMs)
+    }
   }
 
   /**
@@ -177,7 +230,7 @@ export class AuthService {
     role: UserRole,
   ): Promise<User> {
     try {
-      return await this.userRepo.createUser({
+      return await this.createLocalUserWithSyncRetry({
         supabaseUserId,
         email,
         firstName,
@@ -194,6 +247,84 @@ export class AuthService {
       }
       throw error
     }
+  }
+
+  /**
+   * Retry local user creation when the referenced Supabase auth row
+   * has not become visible to the database foreign-key check yet.
+   */
+  private async createLocalUserWithSyncRetry(
+    data: {
+      supabaseUserId: string
+      email: string
+      firstName: string
+      lastName: string
+      role: UserRole
+    },
+  ): Promise<User> {
+    let latestError: unknown
+
+    for (
+      let attemptNumber = 1;
+      attemptNumber <= LOCAL_USER_SYNC_MAX_ATTEMPTS;
+      attemptNumber++
+    ) {
+      try {
+        return await this.userRepo.createUser(data)
+      } catch (error: unknown) {
+        latestError = error
+
+        if (!this.isSupabaseUserForeignKeyViolation(error)) {
+          throw error
+        }
+
+        const hasAnotherRetryAttempt =
+          attemptNumber < LOCAL_USER_SYNC_MAX_ATTEMPTS
+
+        if (!hasAnotherRetryAttempt) {
+          break
+        }
+
+        await this.waitForSupabaseUserAvailability(
+          data.supabaseUserId,
+          attemptNumber,
+        )
+      }
+    }
+
+    throw latestError
+  }
+
+  /**
+   * Wait for the newly created auth user to become visible through
+   * the service-role admin API before retrying the local insert.
+   */
+  private async waitForSupabaseUserAvailability(
+    supabaseUserId: string,
+    attemptNumber: number,
+  ): Promise<void> {
+    const retryDelayMs = this.getLocalUserSyncRetryDelayMs(attemptNumber)
+
+    const supabaseUser =
+      await this.authAdapter.getAdminUserById(supabaseUserId)
+
+    if (!supabaseUser) {
+      logger.warn(
+        `[Auth] Supabase user ${supabaseUserId} not yet visible to admin lookup during registration retry ${attemptNumber}/${LOCAL_USER_SYNC_MAX_ATTEMPTS}. Waiting ${retryDelayMs}ms before retrying local insert.`,
+      )
+    }
+
+    await delayExecution(retryDelayMs)
+  }
+
+  /**
+   * Resolve the retry delay to use for a given attempt number.
+   */
+  private getLocalUserSyncRetryDelayMs(attemptNumber: number): number {
+    return (
+      LOCAL_USER_SYNC_RETRY_DELAYS_MS[attemptNumber - 1] ??
+      LOCAL_USER_SYNC_RETRY_DELAYS_MS[LOCAL_USER_SYNC_RETRY_DELAYS_MS.length - 1]
+    )
   }
 
   /**
@@ -220,6 +351,21 @@ export class AuthService {
     }
 
     return error.code === "23505" && error.constraint.includes("email")
+  }
+
+  /**
+   * Check if error is the transient FK violation caused by the auth user
+   * not being referenceable yet from the local users table.
+   */
+  private isSupabaseUserForeignKeyViolation(error: unknown): boolean {
+    if (!isDbError(error)) {
+      return false
+    }
+
+    return (
+      error.code === "23503" &&
+      error.constraint === "fk_users_supabase_user_id"
+    )
   }
 
   /**

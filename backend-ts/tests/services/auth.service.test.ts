@@ -52,6 +52,7 @@ describe("AuthService", () => {
       signUp: vi.fn(),
       signInWithPassword: vi.fn(),
       getUser: vi.fn(),
+      getAdminUserById: vi.fn(),
       resetPasswordForEmail: vi.fn(),
       deleteUser: vi.fn(),
     }
@@ -89,6 +90,10 @@ describe("AuthService", () => {
       mockAuthAdapter.signUp.mockResolvedValue({
         user: { id: supabaseUserId },
         token: accessToken,
+      })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: supabaseUserId,
+        email: validRegistration.email,
       })
 
       const result = await authService.registerUser(validRegistration)
@@ -171,6 +176,10 @@ describe("AuthService", () => {
         user: { id: supabaseUserId },
         token: "token",
       })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: supabaseUserId,
+        email: validRegistration.email,
+      })
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
         "Database insert failed",
@@ -191,6 +200,10 @@ describe("AuthService", () => {
         user: { id: supabaseUserId },
         token: "token",
       })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: supabaseUserId,
+        email: validRegistration.email,
+      })
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
         "Database insert failed",
@@ -207,6 +220,10 @@ describe("AuthService", () => {
         user: { id: "supabase-unique-email" },
         token: "token",
       })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: "supabase-unique-email",
+        email: validRegistration.email,
+      })
 
       await expect(authService.registerUser(validRegistration)).rejects.toThrow(
         UserAlreadyExistsError,
@@ -214,6 +231,60 @@ describe("AuthService", () => {
       expect(mockAuthAdapter.deleteUser).toHaveBeenCalledWith(
         "supabase-unique-email",
       )
+    })
+
+    it("should retry local user creation when supabase user foreign key is not ready yet", async () => {
+      const mockUser = createMockUser({
+        email: validRegistration.email,
+      })
+      const supabaseUserId = "eventual-consistency-id"
+
+      mockUserRepo.checkEmailExists.mockResolvedValue(false)
+      mockUserRepo.createUser
+        .mockRejectedValueOnce({
+          code: "23503",
+          constraint: "fk_users_supabase_user_id",
+        })
+        .mockResolvedValueOnce(mockUser)
+      mockAuthAdapter.signUp.mockResolvedValue({
+        user: { id: supabaseUserId },
+        token: null,
+      })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: supabaseUserId,
+        email: validRegistration.email,
+      })
+
+      const result = await authService.registerUser(validRegistration)
+
+      expect(result.userData.email).toBe(validRegistration.email)
+      expect(mockUserRepo.createUser).toHaveBeenCalledTimes(2)
+      expect(mockAuthAdapter.getAdminUserById).toHaveBeenCalledWith(
+        supabaseUserId,
+      )
+      expect(mockAuthAdapter.deleteUser).not.toHaveBeenCalled()
+    })
+
+    it("should reject obfuscated signup users for existing auth emails", async () => {
+      vi.useFakeTimers()
+
+      const obfuscatedSupabaseUserId = "obfuscated-auth-user-id"
+      mockUserRepo.checkEmailExists.mockResolvedValue(false)
+      mockAuthAdapter.signUp.mockResolvedValue({
+        user: { id: obfuscatedSupabaseUserId },
+        token: null,
+      })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue(null)
+
+      const registrationPromise = authService.registerUser(validRegistration)
+
+      await vi.runAllTimersAsync()
+
+      await expect(registrationPromise).rejects.toThrow(UserAlreadyExistsError)
+      expect(mockUserRepo.createUser).not.toHaveBeenCalled()
+      expect(mockAuthAdapter.deleteUser).not.toHaveBeenCalled()
+
+      vi.useRealTimers()
     })
 
     it("should return null token when session is not provided", async () => {
@@ -224,6 +295,10 @@ describe("AuthService", () => {
       mockAuthAdapter.signUp.mockResolvedValue({
         user: { id: "supabase-id" },
         token: null,
+      })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: "supabase-id",
+        email: validRegistration.email,
       })
 
       const result = await authService.registerUser(validRegistration)

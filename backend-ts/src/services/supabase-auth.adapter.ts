@@ -58,6 +58,25 @@ export class SupabaseAuthAdapter {
   }
 
   /**
+   * Retrieve a user from Supabase Auth using the admin API.
+   * Returns null when the user is not found or the lookup fails.
+   */
+  async getAdminUserById(supabaseUserId: string): Promise<AuthUser | null> {
+    const { data, error } = await supabase.auth.admin.getUserById(
+      supabaseUserId,
+    )
+
+    if (error || !data.user) {
+      return null
+    }
+
+    return {
+      id: data.user.id,
+      email: data.user.email ?? "",
+    }
+  }
+
+  /**
    * Update a user's email in Supabase Auth.
    * @throws Error if update fails
    */
