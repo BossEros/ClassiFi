@@ -97,7 +97,8 @@ export class SubmissionService {
 
     this.validateFile(file, assignment.programmingLanguage)
 
-    const submissionNumber = existingSubmissions.length + 1
+    const submissionNumber =
+      this.calculateNextSubmissionNumber(existingSubmissions)
 
     const filePath = await this.uploadFile(
       assignmentId,
@@ -493,8 +494,27 @@ export class SubmissionService {
   }
 
   /**
+   * Calculate the next submission number from the highest stored attempt.
+   * This preserves monotonic numbering even when older submissions are deleted.
+   */
+  private calculateNextSubmissionNumber(
+    existingSubmissions: Submission[],
+  ): number {
+    let highestSubmissionNumber = 0
+
+    for (const existingSubmission of existingSubmissions) {
+      highestSubmissionNumber = Math.max(
+        highestSubmissionNumber,
+        existingSubmission.submissionNumber,
+      )
+    }
+
+    return highestSubmissionNumber + 1
+  }
+
+  /**
    * Upload file to storage.
-   * Uses upsert:true to allow overwriting files at the same path.
+   * Reuses the shared storage helper to keep submission paths consistent.
    */
   private async uploadFile(
     assignmentId: number,
@@ -502,17 +522,15 @@ export class SubmissionService {
     file: SubmissionFileDTO,
     submissionNumber: number,
   ): Promise<string> {
-    const filePath = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${file.filename}`
-
     try {
-      await this.storageService.upload(
-        "submissions",
-        filePath,
+      return await this.storageService.uploadSubmission(
+        assignmentId,
+        studentId,
+        submissionNumber,
+        file.filename,
         file.data,
         file.mimetype,
-        true,
       )
-      return filePath
     } catch (error) {
       logger.error("Submission upload error:", error)
       throw new UploadFailedError(
