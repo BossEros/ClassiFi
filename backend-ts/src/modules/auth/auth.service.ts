@@ -172,7 +172,7 @@ export class AuthService {
           last_name: metadata.lastName,
           role: metadata.role,
         },
-        emailRedirectTo: buildFrontendAuthRedirectUrl("/confirm-email"),
+        emailRedirectTo: buildFrontendAuthRedirectUrl("/login"),
       },
     )
 
