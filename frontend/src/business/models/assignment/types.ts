@@ -82,6 +82,7 @@ export interface UpdateAssignmentRequest {
   scheduledDate?: Date | string | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  moduleId?: number | null
 }
 
 export interface UpdateAssignmentValidationData {

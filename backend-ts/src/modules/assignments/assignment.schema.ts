@@ -55,6 +55,7 @@ export const UpdateAssignmentRequestSchema = z.object({
   scheduledDate: z.string().datetime().nullable().optional(),
   allowLateSubmissions: z.boolean().optional(),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
+  moduleId: z.number().int().min(1).optional(),
 })
 
 export type UpdateAssignmentRequest = z.infer<
