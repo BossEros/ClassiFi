@@ -44,7 +44,7 @@ describe("PlagiarismPersistenceService", () => {
   })
 
   describe("getReport", () => {
-    it("preserves persisted zero hybrid scores instead of falling back to structural score", async () => {
+    it("recomputes reused report scores from structural and semantic values", async () => {
       mockSimilarityRepository.getReportById.mockResolvedValue({
         id: 1,
         assignmentId: 100,
@@ -124,12 +124,12 @@ describe("PlagiarismPersistenceService", () => {
       const report = await plagiarismPersistenceService.getReport(1)
 
       expect(report).not.toBeNull()
-      expect(report?.summary.averageSimilarity).toBe(0)
-      expect(report?.summary.maxSimilarity).toBe(0)
+      expect(report?.summary.averageSimilarity).toBe(0.42)
+      expect(report?.summary.maxSimilarity).toBe(0.42)
       expect(report?.pairs).toHaveLength(1)
       expect(report?.pairs[0].structuralScore).toBe(0.6)
       expect(report?.pairs[0].semanticScore).toBe(0)
-      expect(report?.pairs[0].hybridScore).toBe(0)
+      expect(report?.pairs[0].hybridScore).toBe(0.42)
     })
 
     it("recomputes stale persisted hybrid scores using the current structural and semantic weights", async () => {
@@ -246,10 +246,23 @@ describe("PlagiarismPersistenceService", () => {
 
       expect(report).not.toBeNull()
       expect(report?.pairs).toHaveLength(2)
-      expect(report?.pairs[0].structuralScore).toBe(0.23)
-      expect(report?.pairs[0].semanticScore).toBe(0.89)
-      expect(report?.pairs[0].hybridScore).toBe(0.428)
-      expect(report?.pairs[1].hybridScore).toBe(0.56)
+      expect(report?.pairs.map((pair) => pair.hybridScore)).toEqual([0.56, 0.428])
+      expect(report?.pairs).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 10,
+            structuralScore: 0.23,
+            semanticScore: 0.89,
+            hybridScore: 0.428,
+          }),
+          expect.objectContaining({
+            id: 11,
+            structuralScore: 0.8,
+            semanticScore: 0,
+            hybridScore: 0.56,
+          }),
+        ]),
+      )
       expect(report?.summary.suspiciousPairs).toBe(1)
       expect(report?.summary.averageSimilarity).toBe(0.494)
       expect(report?.summary.maxSimilarity).toBe(0.56)
