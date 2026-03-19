@@ -110,11 +110,11 @@ export function AdminEnrollmentTable({
                         <div className="h-4 w-36 rounded bg-slate-100" />
                         <div className="h-3 w-28 rounded bg-slate-100" />
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4"><div className="h-4 w-40 rounded bg-slate-100" /></td>
-                  <td className="px-6 py-4"><div className="h-4 w-28 rounded bg-slate-100" /></td>
-                  <td className="px-6 py-4"><div className="h-4 w-32 rounded bg-slate-100" /></td>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4"><div className="h-4 w-40 rounded bg-slate-100" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-28 rounded bg-slate-100" /></td>
+                    <td className="px-6 py-4"><div className="h-4 w-32 rounded bg-slate-100" /></td>
                   <td className="px-6 py-4"><div className="h-4 w-24 rounded bg-slate-100" /></td>
                   <td className="px-6 py-4"><div className="h-6 w-28 rounded-full bg-slate-100" /></td>
                   <td className="px-6 py-4">

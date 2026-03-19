@@ -29,7 +29,8 @@ const mockClassInfo = {
   isActive: true,
   createdAt: new Date().toISOString() as ISODateString,
   teacherName: "Test Teacher",
-  studentCount: 25,
+  studentCount: 25,
+
   semester: 1,
   academicYear: "2024-2025",
   schedule: {
@@ -72,6 +73,10 @@ const waitForClassHeading = async () => {
   })
 }
 
+const switchAssignmentsToListView = async () => {
+  await userEvent.click(screen.getByRole("tab", { name: /list/i }))
+}
+
 describe("ClassDetailPage - Pagination", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -97,6 +102,7 @@ describe("ClassDetailPage - Pagination", () => {
     renderClassDetailPage()
 
     await waitForClassHeading()
+    await switchAssignmentsToListView()
 
     expect(screen.queryByText(/Pending \(/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Submitted \(/)).not.toBeInTheDocument()
@@ -131,6 +137,7 @@ describe("ClassDetailPage - Pagination", () => {
     renderClassDetailPage()
 
     await waitForClassHeading()
+    await switchAssignmentsToListView()
 
     expect(screen.getByText("CURRENT & UPCOMING")).toBeInTheDocument()
     expect(screen.getByText("PAST ASSIGNMENTS")).toBeInTheDocument()
