@@ -203,6 +203,10 @@ export function SimilarityGraphView({
   const reviewableNodePair =
     selectedNode?.strongestVisiblePair ?? selectedNode?.strongestPair
   const reviewableClusterPair = selectedCluster?.strongestPair ?? null
+  const emptyStatePanelWidthPx = Math.max(
+    Math.min(containerSize.width - 96, 768),
+    320,
+  )
 
   return (
     <div className="space-y-6">
@@ -224,7 +228,10 @@ export function SimilarityGraphView({
           >
             {visibleNodes.length === 0 ? (
               <div className="flex h-full min-h-[560px] w-full items-center justify-center px-4 py-10 sm:px-8 lg:px-10">
-                <div className="w-full max-w-2xl rounded-[32px] border border-white/80 bg-white/88 px-6 py-10 text-center shadow-2xl shadow-slate-200/70 backdrop-blur-sm sm:px-10">
+                <div
+                  className="max-w-full rounded-[32px] border border-white/80 bg-white/88 px-6 py-10 text-center shadow-2xl shadow-slate-200/70 backdrop-blur-sm sm:px-10"
+                  style={{ width: emptyStatePanelWidthPx }}
+                >
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-300/60">
                     <Info className="h-6 w-6" />
                   </div>
