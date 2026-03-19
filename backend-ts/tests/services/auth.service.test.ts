@@ -111,9 +111,12 @@ describe("AuthService", () => {
         validRegistration.email,
         validRegistration.password,
         {
-          first_name: validRegistration.firstName,
-          last_name: validRegistration.lastName,
-          role: validRegistration.role,
+          metadata: {
+            first_name: validRegistration.firstName,
+            last_name: validRegistration.lastName,
+            role: validRegistration.role,
+          },
+          emailRedirectTo: "http://localhost:3000/confirm-email",
         },
       )
     })
@@ -309,6 +312,33 @@ describe("AuthService", () => {
       const result = await authService.registerUser(validRegistration)
 
       expect(result.token).toBeNull()
+    })
+
+    it("should use the configured frontend confirmation route for signup emails", async () => {
+      const mockUser = createMockUser({
+        email: validRegistration.email,
+      })
+
+      mockUserRepo.checkEmailExists.mockResolvedValue(false)
+      mockUserRepo.createUser.mockResolvedValue(mockUser)
+      mockAuthAdapter.signUp.mockResolvedValue({
+        user: { id: "signup-redirect-user-id" },
+        token: null,
+      })
+      mockAuthAdapter.getAdminUserById.mockResolvedValue({
+        id: "signup-redirect-user-id",
+        email: validRegistration.email,
+      })
+
+      await authService.registerUser(validRegistration)
+
+      expect(mockAuthAdapter.signUp).toHaveBeenCalledWith(
+        validRegistration.email,
+        validRegistration.password,
+        expect.objectContaining({
+          emailRedirectTo: "http://localhost:3000/confirm-email",
+        }),
+      )
     })
 
     it("should work for teacher role", async () => {

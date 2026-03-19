@@ -75,6 +75,15 @@ npm run build
 npm start
 ```
 
+### Frontend Redirect Configuration
+
+`FRONTEND_URL` is also used when generating authentication email redirects:
+
+- Signup confirmation emails redirect to `${FRONTEND_URL}/confirm-email`
+- Password reset emails redirect to `${FRONTEND_URL}/reset-password`
+
+For hosted environments, set `FRONTEND_URL` to the public frontend origin and make sure the same origin/path is allowed in Supabase Auth redirect settings. Do not leave this value pointed at `localhost` in production.
+
 ### Available Scripts
 
 | Script | Description |
@@ -774,6 +783,11 @@ class AuthService {
   requestPasswordReset(email); // Send reset email
 }
 ```
+
+**Auth Email Redirects**:
+- Registration passes an explicit Supabase `emailRedirectTo` value so confirmation emails land on the frontend `/confirm-email` route.
+- Password reset requests redirect to the frontend `/reset-password` route using the same configured frontend origin.
+- Supabase project URL configuration must still allow the deployed frontend origin/path for these redirects to succeed.
 
 ### ClassService
 

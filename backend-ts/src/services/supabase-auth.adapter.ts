@@ -19,6 +19,11 @@ export interface CreateAuthUserOptions {
   emailConfirm?: boolean
 }
 
+export interface SignUpOptions {
+  metadata: object
+  emailRedirectTo?: string
+}
+
 @injectable()
 export class SupabaseAuthAdapter {
   /**
@@ -133,12 +138,15 @@ export class SupabaseAuthAdapter {
   async signUp(
     email: string,
     password: string,
-    data: object,
+    options: SignUpOptions,
   ): Promise<{ user: AuthUser | null; token: string | null }> {
     const { data: result, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data },
+      options: {
+        data: options.metadata,
+        emailRedirectTo: options.emailRedirectTo,
+      },
     })
 
     if (error) {
