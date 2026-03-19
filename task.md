@@ -1,13 +1,13 @@
-# Student Grade Calculation Checklist
+# School ID Rollback Checklist
 
 - [x] Read `AGENTS.md`
 - [x] Read `frontend/documentation.md`
-- [x] Inspect the existing student grade summary implementation
-- [x] Define the current-grade calculation rules for overdue missing, pending review, and future work
-- [x] Extract reusable student grade metrics helper
-- [x] Update student-facing summaries and PDF labels to use current grade
-- [x] Add focused frontend unit tests
-- [ ] Run `npm run build` in `frontend`
-- [ ] Run `npm test` in `frontend`
-
-Verification note: `npm.cmd run typecheck` passed. `npm.cmd run build` and `npm.cmd test` were attempted but Vite/Vitest are blocked in this sandbox by a Windows `spawn EPERM` during config loading.
+- [x] Read `backend-ts/documentation.md`
+- [x] Audit current `schoolId` touchpoints against the pre-feature baseline
+- [x] Remove backend `schoolId` contracts, routes, lookups, and schema/model changes
+- [x] Remove frontend `schoolId` types, registration/settings/table UI, and layout changes
+- [x] Update tests and fixtures for the restored baseline
+- [x] Delete local schema artifact `backend-ts/drizzle/0002_add_school_id.sql`
+- [x] Run `rg -n "schoolId|school_id|School ID|Faculty ID"` across `backend-ts` and `frontend`
+- [ ] Run `npm run typecheck` and `npm test` in `backend-ts`
+- [ ] Run `npm run build` and `npm test` in `frontend`

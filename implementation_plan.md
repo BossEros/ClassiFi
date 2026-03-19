@@ -1,23 +1,20 @@
-# Student Current Grade Plan
+# School ID Rollback Implementation Plan
 
 ## Goal
 
-Replace the student-facing "Class Average" behavior with a true current grade that reflects actual class standing for the current point in time.
+Restore the application to the pre-`schoolId` baseline that already exists in `HEAD` so tomorrow's demo uses the original primary-key-based behavior.
 
-## Decision
+## Decision Summary
 
-Use a points-based current-grade calculation with these rules:
+- Apply a full rollback across backend, frontend, tests, and local schema artifacts.
+- Restore previous UI behavior instead of replacing removed `schoolId` fields with new numeric-ID columns.
+- Preserve unrelated dirty changes already present in touched files.
 
-- Include graded assignments using their earned score.
-- Include overdue assignments without a submission as `0`.
-- Exclude submitted-but-not-yet-graded assignments so students are not penalized while work is pending review.
-- Exclude assignments that are not yet due.
-- Exclude assignments without a deadline when they are still ungraded and unsubmitted because they are not yet missing.
+## Execution Steps
 
-## Implementation Steps
-
-- Inspect all student-facing grade summaries that currently average graded work only.
-- Extract a reusable helper for student grade metrics so the class overview card, grades page, and grade-report PDF stay consistent.
-- Rename summary labels/help text from average-oriented wording to current-grade wording where needed.
-- Add focused unit tests that cover graded work, overdue missing work, pending review work, and future assignments.
-- Run frontend verification and document any failures before closing the task.
+1. Replace rollback trackers so the current task is documented clearly.
+2. Remove backend `schoolId` schema, DTO, repository, service, mapper, controller, and admin-enrollment additions.
+3. Remove frontend `schoolId` types, schemas, registration/settings/table UI additions, and any layout changes made to support them.
+4. Update focused tests and fixtures to match the restored baseline.
+5. Delete the local `school_id` migration artifact.
+6. Verify with search, backend checks, and frontend checks.
