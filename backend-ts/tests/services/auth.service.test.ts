@@ -268,23 +268,28 @@ describe("AuthService", () => {
     it("should reject obfuscated signup users for existing auth emails", async () => {
       vi.useFakeTimers()
 
-      const obfuscatedSupabaseUserId = "obfuscated-auth-user-id"
-      mockUserRepo.checkEmailExists.mockResolvedValue(false)
-      mockAuthAdapter.signUp.mockResolvedValue({
-        user: { id: obfuscatedSupabaseUserId },
-        token: null,
-      })
-      mockAuthAdapter.getAdminUserById.mockResolvedValue(null)
+      try {
+        const obfuscatedSupabaseUserId = "obfuscated-auth-user-id"
+        mockUserRepo.checkEmailExists.mockResolvedValue(false)
+        mockAuthAdapter.signUp.mockResolvedValue({
+          user: { id: obfuscatedSupabaseUserId },
+          token: null,
+        })
+        mockAuthAdapter.getAdminUserById.mockResolvedValue(null)
 
-      const registrationPromise = authService.registerUser(validRegistration)
+        const registrationPromise = authService.registerUser(validRegistration)
+        const registrationRejectionExpectation = expect(
+          registrationPromise,
+        ).rejects.toThrow(UserAlreadyExistsError)
 
-      await vi.runAllTimersAsync()
+        await vi.runAllTimersAsync()
+        await registrationRejectionExpectation
 
-      await expect(registrationPromise).rejects.toThrow(UserAlreadyExistsError)
-      expect(mockUserRepo.createUser).not.toHaveBeenCalled()
-      expect(mockAuthAdapter.deleteUser).not.toHaveBeenCalled()
-
-      vi.useRealTimers()
+        expect(mockUserRepo.createUser).not.toHaveBeenCalled()
+        expect(mockAuthAdapter.deleteUser).not.toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it("should return null token when session is not provided", async () => {
