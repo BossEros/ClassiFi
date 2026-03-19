@@ -116,7 +116,7 @@ describe("AuthService", () => {
             last_name: validRegistration.lastName,
             role: validRegistration.role,
           },
-          emailRedirectTo: "http://localhost:3000/confirm-email",
+          emailRedirectTo: "http://localhost:3000/login",
         },
       )
     })
@@ -314,7 +314,7 @@ describe("AuthService", () => {
       expect(result.token).toBeNull()
     })
 
-    it("should use the configured frontend confirmation route for signup emails", async () => {
+    it("should use the configured frontend login route for signup emails", async () => {
       const mockUser = createMockUser({
         email: validRegistration.email,
       })
@@ -336,7 +336,7 @@ describe("AuthService", () => {
         validRegistration.email,
         validRegistration.password,
         expect.objectContaining({
-          emailRedirectTo: "http://localhost:3000/confirm-email",
+          emailRedirectTo: "http://localhost:3000/login",
         }),
       )
     })
