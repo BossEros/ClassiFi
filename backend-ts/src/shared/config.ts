@@ -66,6 +66,30 @@ const EnvSchema = z
         (v) => Number.isInteger(v) && v >= 0,
         "SEMANTIC_SIMILARITY_MAX_RETRIES must be an integer >= 0",
       ),
+    PLAGIARISM_STRUCTURAL_WEIGHT: z
+      .string()
+      .default("0.7")
+      .transform(Number)
+      .refine(
+        (v) => Number.isFinite(v) && v >= 0 && v <= 1,
+        "PLAGIARISM_STRUCTURAL_WEIGHT must be between 0 and 1",
+      ),
+    PLAGIARISM_SEMANTIC_WEIGHT: z
+      .string()
+      .default("0.3")
+      .transform(Number)
+      .refine(
+        (v) => Number.isFinite(v) && v >= 0 && v <= 1,
+        "PLAGIARISM_SEMANTIC_WEIGHT must be between 0 and 1",
+      ),
+    PLAGIARISM_HYBRID_THRESHOLD: z
+      .string()
+      .default("0.5")
+      .transform(Number)
+      .refine(
+        (v) => Number.isFinite(v) && v >= 0 && v <= 1,
+        "PLAGIARISM_HYBRID_THRESHOLD must be between 0 and 1",
+      ),
 
     // Test Execution Timeout (in seconds)
     TEST_EXECUTION_TIMEOUT_SECONDS: z
@@ -130,6 +154,24 @@ const EnvSchema = z
         message: "SMTP_PORT must be an integer between 1 and 65535",
       })
     }
+
+    const totalPlagiarismWeight =
+      data.PLAGIARISM_STRUCTURAL_WEIGHT + data.PLAGIARISM_SEMANTIC_WEIGHT
+
+    if (Math.abs(totalPlagiarismWeight - 1) > 0.000001) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["PLAGIARISM_STRUCTURAL_WEIGHT"],
+        message:
+          "PLAGIARISM_STRUCTURAL_WEIGHT and PLAGIARISM_SEMANTIC_WEIGHT must sum to 1",
+      })
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["PLAGIARISM_SEMANTIC_WEIGHT"],
+        message:
+          "PLAGIARISM_STRUCTURAL_WEIGHT and PLAGIARISM_SEMANTIC_WEIGHT must sum to 1",
+      })
+    }
   })
 
 /** Validated environment type */
@@ -191,6 +233,9 @@ export const settings = {
     env.SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS,
   semanticSimilarityTimeoutMs: env.SEMANTIC_SIMILARITY_TIMEOUT_MS,
   semanticSimilarityMaxRetries: env.SEMANTIC_SIMILARITY_MAX_RETRIES,
+  plagiarismStructuralWeight: env.PLAGIARISM_STRUCTURAL_WEIGHT,
+  plagiarismSemanticWeight: env.PLAGIARISM_SEMANTIC_WEIGHT,
+  plagiarismHybridThreshold: env.PLAGIARISM_HYBRID_THRESHOLD,
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,

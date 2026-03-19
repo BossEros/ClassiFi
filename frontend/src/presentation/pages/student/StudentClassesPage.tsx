@@ -286,6 +286,10 @@ export function StudentClassesPage() {
             searchQuery,
             status,
           }}
+          statusLabels={{
+            active: "Current classes",
+            archived: "Past classes",
+          }}
         />
       </div>
 

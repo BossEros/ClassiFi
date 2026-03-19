@@ -126,7 +126,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           <div className={authTheme.backgroundOrbPrimary}></div>
           <div className={authTheme.backgroundOrbSecondary}></div>
         </div>
-        <div className={`${authTheme.cardWrapper} max-w-md`}>
+        <div className={`${authTheme.cardWrapper} ${authTheme.loginCardWidth}`}>
           <div className={`${authTheme.compactCardSurface} text-center`}>
             <div className="flex justify-center mb-6">
               <div className={authTheme.successIconShell}>
@@ -160,7 +160,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           <div className={authTheme.backgroundOrbPrimary}></div>
           <div className={authTheme.backgroundOrbSecondary}></div>
         </div>
-        <div className={`${authTheme.cardWrapper} max-w-md`}>
+        <div className={`${authTheme.cardWrapper} ${authTheme.loginCardWidth}`}>
           <div className={`${authTheme.compactCardSurface} text-center`}>
             <div className="flex justify-center mb-6">
               <div className={authTheme.loadingSpinnerShell}></div>
@@ -185,7 +185,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           <div className={authTheme.backgroundOrbPrimary}></div>
           <div className={authTheme.backgroundOrbSecondary}></div>
         </div>
-        <div className={`${authTheme.cardWrapper} max-w-md`}>
+        <div className={`${authTheme.cardWrapper} ${authTheme.loginCardWidth}`}>
           <div className={`${authTheme.compactCardSurface} text-center`}>
             <div className="flex justify-center mb-6">
               <div className={authTheme.errorIconShell}>
@@ -216,7 +216,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
         <div className={authTheme.backgroundOrbSecondary}></div>
       </div>
 
-      <div className={`${authTheme.cardWrapper} max-w-md`}>
+      <div className={`${authTheme.cardWrapper} ${authTheme.loginCardWidth}`}>
         {/* Card */}
         <div className={authTheme.compactCardSurface}>
           {/* Header */}

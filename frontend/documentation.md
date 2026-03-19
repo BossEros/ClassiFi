@@ -178,7 +178,7 @@ Admin enrollment workspace behavior:
 - **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
-- **`StudentClassGradesContent`**: Student-only class grades tab that shows personal class average, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
+- **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
 - **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
@@ -499,7 +499,7 @@ Specialized types for the class detail page redesign:
    - Keyboard navigation supported (arrow keys + Enter)
 6. **Review Grades in Class Context**:
    - Open the `Grades` tab to see a personal performance view for the current class
-   - Summary cards show class average, graded assignments, pending review, and not-submitted counts
+   - Summary cards show current grade, graded assignments, pending review, and not-submitted counts
    - Assignment rows show score, percentage, submission timing, late penalties, adjusted grades, and teacher feedback when available
 
 ### Teacher: Managing Class Assignments

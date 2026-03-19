@@ -11,6 +11,7 @@ import {
   validateSemester,
   validateAcademicYear,
   validateSchedule,
+  normalizeClassDescriptionForUpdate,
 } from "@/business/validation/classValidation"
 import { validateId } from "@/business/validation/commonValidation"
 import type {
@@ -236,7 +237,7 @@ export async function updateClass(
   return await classRepository.updateClassDetailsById(classId, {
     ...updateData,
     className: updateData.className?.trim(),
-    description: updateData.description?.trim(),
+    description: normalizeClassDescriptionForUpdate(updateData.description),
   })
 }
 

@@ -1,5 +1,5 @@
-import type { StudentClassGrades } from "@/shared/types/gradebook"
 import type { StudentGradeReportBuilderOptions, StudentGradeReportData, StudentGradeReportRow, ReportMetadataEntry, SummaryMetric } from "./studentGradeReportTypes"
+import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
 
 // ─── Date Formatter ────────────────────────────────────────────────────────────
 
@@ -31,20 +31,6 @@ function formatDateTimeValue(value: string | null): string {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
-function calculateAverage(classGrades: StudentClassGrades): number | null {
-  const gradedAssignments = classGrades.assignments.filter(
-    (assignment) => assignment.grade !== null && assignment.totalScore > 0,
-  )
-
-  if (gradedAssignments.length === 0) return null
-
-  const totalPercentage = gradedAssignments.reduce((sum, assignment) => {
-    return sum + (((assignment.grade ?? 0) / assignment.totalScore) * 100)
-  }, 0)
-
-  return Math.round(totalPercentage / gradedAssignments.length)
-}
-
 // ─── Builder ───────────────────────────────────────────────────────────────────
 
 /**
@@ -56,14 +42,18 @@ function calculateAverage(classGrades: StudentClassGrades): number | null {
 export function buildStudentGradeReportData(options: StudentGradeReportBuilderOptions): StudentGradeReportData {
   const { classGrades, studentName, downloadedAt } = options
   const generatedAt = downloadedAt ?? new Date()
+  const summaryMetricsData = calculateStudentGradeSummaryMetrics(
+    classGrades.assignments,
+    generatedAt,
+  )
 
   const title = `Grade Report — ${classGrades.className}`
 
-  const average = calculateAverage(classGrades)
-  const gradedCount = classGrades.assignments.filter((a) => a.grade !== null).length
-  const pendingCount = classGrades.assignments.filter((a) => a.grade === null && a.submittedAt !== null).length
-  const notSubmittedCount = classGrades.assignments.filter((a) => a.submittedAt === null).length
-  const totalAssignments = classGrades.assignments.length
+  const currentGrade = summaryMetricsData.currentGrade
+  const gradedCount = summaryMetricsData.gradedCount
+  const pendingCount = summaryMetricsData.pendingReviewCount
+  const notSubmittedCount = summaryMetricsData.notSubmittedCount
+  const totalAssignments = summaryMetricsData.totalAssignments
 
   const reportMetadata: ReportMetadataEntry[] = [
     { label: "Student", value: studentName || "N/A" },
@@ -74,7 +64,7 @@ export function buildStudentGradeReportData(options: StudentGradeReportBuilderOp
   ]
 
   const summaryMetrics: SummaryMetric[] = [
-    { label: "Average", value: average !== null ? `${average}%` : "N/A" },
+    { label: "Current Grade", value: currentGrade !== null ? `${currentGrade}%` : "N/A" },
     { label: "Graded", value: `${gradedCount}/${totalAssignments}` },
     { label: "Pending Review", value: String(pendingCount) },
     { label: "Not Submitted", value: String(notSubmittedCount) },

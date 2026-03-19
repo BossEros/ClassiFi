@@ -143,13 +143,29 @@ describe("authService", () => {
         authRepository.authenticateUserWithEmailAndPassword,
       ).mockResolvedValue({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid login credentials",
       })
 
       const result = await authService.loginUser(credentials)
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Invalid credentials")
+      expect(result.message).toBe("Incorrect email or password.")
+    })
+
+    it("should convert unconfirmed email login errors into a clear next-step message", async () => {
+      vi.mocked(
+        authRepository.authenticateUserWithEmailAndPassword,
+      ).mockResolvedValue({
+        success: false,
+        message: "Email not confirmed",
+      })
+
+      const result = await authService.loginUser(credentials)
+
+      expect(result.success).toBe(false)
+      expect(result.message).toBe(
+        "Please confirm your email before signing in. Check your inbox or spam folder for the verification link.",
+      )
     })
 
     it("should catch and handle unexpected errors", async () => {
@@ -161,6 +177,30 @@ describe("authService", () => {
 
       expect(result.success).toBe(false)
       expect(result.message).toBe("Network error")
+    })
+
+    it("should convert thrown unconfirmed email errors into the same clear next-step message", async () => {
+      vi.mocked(
+        authRepository.authenticateUserWithEmailAndPassword,
+      ).mockRejectedValue(new Error("Please verify your email address before logging in"))
+
+      const result = await authService.loginUser(credentials)
+
+      expect(result.success).toBe(false)
+      expect(result.message).toBe(
+        "Please confirm your email before signing in. Check your inbox or spam folder for the verification link.",
+      )
+    })
+
+    it("should convert thrown invalid credential errors into a simple message", async () => {
+      vi.mocked(
+        authRepository.authenticateUserWithEmailAndPassword,
+      ).mockRejectedValue(new Error("Invalid login credentials"))
+
+      const result = await authService.loginUser(credentials)
+
+      expect(result.success).toBe(false)
+      expect(result.message).toBe("Incorrect email or password.")
     })
 
     it("should return fallback message for non-error login failures", async () => {

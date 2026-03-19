@@ -21,6 +21,7 @@ import type { Module } from "@/shared/types/class";
 import type { AssignmentFilter, TeacherAssignmentFilter } from "@/shared/utils/assignmentFilters";
 import { filterAssignments, calculateFilterCounts, filterTeacherAssignmentsByTimeline, calculateTeacherFilterCounts, groupAssignments } from "@/shared/utils/assignmentFilters";
 import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers";
+import { mergeModuleAssignmentsWithLatestAssignmentState } from "@/presentation/utils/mergeModuleAssignments";
 import { getModulesByClassId, createModule, renameModule, toggleModulePublish, deleteModule } from "@/business/services/moduleService";
 import { X, LogOut, AlertTriangle, RefreshCw } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";
@@ -512,6 +513,12 @@ export function ClassDetailPage() {
     [isTeacher, assignments, teacherAssignmentFilter, filteredAssignments],
   )
 
+  const modulesWithLatestAssignmentState = useMemo(
+    () =>
+      mergeModuleAssignmentsWithLatestAssignmentState(modules, assignments),
+    [modules, assignments],
+  )
+
   const filterCounts = useMemo(
     () => calculateFilterCounts(assignments),
     [assignments],
@@ -831,7 +838,7 @@ export function ClassDetailPage() {
                   navigate(moduleId ? `${baseUrl}?moduleId=${moduleId}` : baseUrl)
                 }}
                 onAssignmentClick={handleAssignmentClick}
-                modules={modules}
+                modules={modulesWithLatestAssignmentState}
                 onCreateModule={handleCreateModule}
                 onRenameModule={handleRenameModule}
                 onDeleteModule={handleDeleteModule}

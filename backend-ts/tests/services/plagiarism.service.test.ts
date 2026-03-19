@@ -12,6 +12,14 @@ import {
 
 // Mock repositories
 vi.mock("../../src/modules/assignments/assignment.repository.js")
+vi.mock("../../src/shared/config.js", () => ({
+  settings: {
+    plagiarismStructuralWeight: 0.7,
+    plagiarismSemanticWeight: 0.3,
+    plagiarismHybridThreshold: 0.5,
+    semanticSimilarityMaxConcurrentRequests: 4,
+  },
+}))
 
 // Mock new services
 vi.mock("../../src/modules/plagiarism/plagiarism-persistence.service.js")
@@ -42,14 +50,22 @@ const mockReport = {
         filename: "file1.py",
         content: 'print("hello")',
         lineCount: 1,
-        info: { studentId: "1", studentName: "Student 1" },
+        info: {
+          submissionId: "1",
+          studentId: "1",
+          studentName: "Student 1",
+        },
       },
       rightFile: {
         path: "file2.py",
         filename: "file2.py",
         content: 'print("hello")',
         lineCount: 1,
-        info: { studentId: "2", studentName: "Student 2" },
+        info: {
+          submissionId: "2",
+          studentId: "2",
+          studentName: "Student 2",
+        },
       },
       buildFragments: () => [],
     },
@@ -206,12 +222,67 @@ describe("PlagiarismService", () => {
 
       expect(result).toBeDefined()
       expect(result.reportId).toBeDefined()
-      expect(result.pairs[0].hybridScore).toBe(0.4)
+      expect(result.pairs[0].hybridScore).toBe(0.56)
+      expect(result.summary.suspiciousPairs).toBe(1)
+      expect(result.summary.averageSimilarity).toBe(0.56)
+      expect(result.summary.maxSimilarity).toBe(0.56)
       expect(mockPersistenceService.getReusableAssignmentReport).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).toHaveBeenCalledWith(1)
       expect(mockDetectorFactory.create).toHaveBeenCalled()
       expect(mockDetector.analyze).toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).toHaveBeenCalled()
+    })
+
+    it("uses hybrid score for suspicious-pair summary counts", async () => {
+      const assignment = createMockAssignment({ programmingLanguage: "python" })
+      const mockFiles = [
+        { path: "p1", content: "c1", info: {} },
+        { path: "p2", content: "c2", info: {} },
+      ]
+      const lowSemanticReport = {
+        files: [{ path: "file1.py" }, { path: "file2.py" }],
+        getPairs: () => [
+          {
+            id: 1,
+            similarity: 0.6,
+            overlap: 30,
+            longest: 9,
+            leftCovered: 35,
+            rightCovered: 37,
+            leftTotal: 80,
+            rightTotal: 90,
+            leftFile: {
+              path: "left.py",
+              filename: "left.py",
+              content: 'print("left")',
+              lineCount: 1,
+              info: { submissionId: "11", studentId: "1", studentName: "Left" },
+            },
+            rightFile: {
+              path: "right.py",
+              filename: "right.py",
+              content: 'print("right")',
+              lineCount: 1,
+              info: { submissionId: "12", studentId: "2", studentName: "Right" },
+            },
+            buildFragments: () => [],
+          },
+        ],
+      }
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
+      mockDetector.analyze.mockResolvedValueOnce(lowSemanticReport)
+      mockSemanticClient.getSemanticScore.mockResolvedValueOnce(0)
+
+      const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1)
+
+      expect(result.summary.suspiciousPairs).toBe(0)
+      expect(result.summary.averageSimilarity).toBe(0.42)
+      expect(result.summary.maxSimilarity).toBe(0.42)
+      expect(result.pairs[0].structuralScore).toBe(0.6)
+      expect(result.pairs[0].semanticScore).toBe(0)
+      expect(result.pairs[0].hybridScore).toBe(0.42)
     })
 
     it("should reuse the existing assignment report when it is current", async () => {
@@ -347,6 +418,48 @@ describe("PlagiarismService", () => {
     // It fetches files, creates ignoredFile, then calls `detector.analyze`.
     // `PlagiarismDetector` typically throws if not enough files.
     // So we can assume `detector.analyze` throws if files < 2.
+  })
+
+  describe("getPairDetails", () => {
+    it("returns persisted semantic and hybrid scores for database-backed pair details", async () => {
+      mockPersistenceService.getResultData.mockResolvedValue({
+        result: {
+          id: 55,
+          submission1Id: 101,
+          submission2Id: 202,
+          structuralScore: "0.900000",
+          semanticScore: "0.400000",
+          hybridScore: "0.750000",
+          overlap: 44,
+          longestFragment: 15,
+        },
+        fragments: [],
+        submission1: {
+          submission: {
+            filePath: "left.py",
+            fileName: "left.py",
+          },
+          studentName: "Student Left",
+        },
+        submission2: {
+          submission: {
+            filePath: "right.py",
+            fileName: "right.py",
+          },
+          studentName: "Student Right",
+        },
+      })
+      mockFileService.downloadSubmissionFiles.mockResolvedValue([
+        'print("left")',
+        'print("right")',
+      ])
+
+      const result = await plagiarismService.getPairDetails("1", 55)
+
+      expect(result.pair.structuralScore).toBe(0.9)
+      expect(result.pair.semanticScore).toBe(0.4)
+      expect(result.pair.hybridScore).toBe(0.75)
+    })
   })
 
 })

@@ -5,6 +5,12 @@ import { GradebookService } from "../../src/modules/gradebook/gradebook.service.
 import { AssignmentService } from "../../src/modules/assignments/assignment.service.js"
 import type { Notification } from "../../src/models/index.js"
 
+vi.mock("../../src/shared/transaction.js", () => ({
+  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) =>
+    callback({}),
+  ),
+}))
+
 describe("Notification Flow Integration Tests", () => {
   let notificationService: NotificationService
   let assignmentService: AssignmentService

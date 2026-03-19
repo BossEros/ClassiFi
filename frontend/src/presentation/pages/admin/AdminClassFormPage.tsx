@@ -8,7 +8,6 @@ import {
   RefreshCw,
   Search,
   X,
-  AlertTriangle,
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import {
@@ -28,6 +27,10 @@ import {
   type AdminClassPageFormValues,
 } from "@/presentation/schemas/class/classSchemas"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
+import {
+  normalizeClassDescriptionForCreate,
+  normalizeClassDescriptionForUpdate,
+} from "@/business/validation/classValidation"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/presentation/utils/dateUtils"
@@ -241,25 +244,37 @@ export function AdminClassFormPage() {
       return
     }
 
+    const normalizedCreateDescription = normalizeClassDescriptionForCreate(
+      formValues.description,
+    )
+    const normalizedUpdateDescription = normalizeClassDescriptionForUpdate(
+      formValues.description,
+    )
+
     setIsLoading(true)
     setGeneralError(null)
 
     try {
-      const classPayload = {
+      const sharedClassPayload = {
         teacherId: Number(formValues.teacherId),
         className: formValues.className.trim(),
-        description: formValues.description.trim() || undefined,
         semester: formValues.semester,
         academicYear: formValues.academicYear,
         schedule: formValues.schedule,
       }
 
       if (isEditMode && parsedClassId !== null) {
-        await adminService.updateClass(parsedClassId, classPayload)
+        await adminService.updateClass(parsedClassId, {
+          ...sharedClassPayload,
+          description: normalizedUpdateDescription,
+        })
         showToast("Class updated successfully", "success")
         navigate(`/dashboard/classes/${parsedClassId}`)
       } else {
-        await adminService.createClass(classPayload)
+        await adminService.createClass({
+          ...sharedClassPayload,
+          description: normalizedCreateDescription,
+        })
         showToast("Class created successfully", "success")
         navigate("/dashboard/classes")
       }
@@ -292,13 +307,6 @@ export function AdminClassFormPage() {
       { label: isEditMode ? "Edit Class" : "Create New Class" },
     ],
   })
-  const validationErrorMessages = [
-    errors.className?.message,
-    errors.teacherId?.message,
-    errors.semester?.message,
-    errors.academicYear?.message,
-    scheduleErrorMessage,
-  ].filter(Boolean) as string[]
   const saveActionLabel = isEditMode ? "Save Changes" : "Create Class"
   const savingActionLabel = isEditMode ? "Saving changes..." : "Creating class..."
 
@@ -334,24 +342,6 @@ export function AdminClassFormPage() {
       {generalError && (
         <div className={dashboardTheme.errorSurface}>
           <p className="text-sm">{generalError}</p>
-        </div>
-      )}
-
-      {validationErrorMessages.length > 0 && (
-        <div className="sticky top-3 z-20 mb-6 rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-amber-800">
-                Please review the highlighted fields.
-              </p>
-              {validationErrorMessages.slice(0, 3).map((errorMessage) => (
-                <p key={errorMessage} className="text-xs text-amber-700">
-                  - {errorMessage}
-                </p>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 

@@ -10,6 +10,8 @@ import {
   validateSchedule,
   validateCreateClassData,
   validateClassField,
+  normalizeClassDescriptionForCreate,
+  normalizeClassDescriptionForUpdate,
 } from "@/business/validation/classValidation"
 
 describe("classValidation", () => {
@@ -72,6 +74,37 @@ describe("classValidation", () => {
 
     it("should trim whitespace and validate", () => {
       expect(validateClassDescription("  Description  ")).toBeNull()
+    })
+  })
+
+  describe("normalizeClassDescriptionForCreate", () => {
+    it("returns a trimmed description when content exists", () => {
+      expect(normalizeClassDescriptionForCreate("  Description  ")).toBe(
+        "Description",
+      )
+    })
+
+    it("returns undefined for empty descriptions", () => {
+      expect(normalizeClassDescriptionForCreate("   ")).toBeUndefined()
+      expect(normalizeClassDescriptionForCreate(undefined)).toBeUndefined()
+      expect(normalizeClassDescriptionForCreate(null)).toBeUndefined()
+    })
+  })
+
+  describe("normalizeClassDescriptionForUpdate", () => {
+    it("returns a trimmed description when content exists", () => {
+      expect(normalizeClassDescriptionForUpdate("  Description  ")).toBe(
+        "Description",
+      )
+    })
+
+    it("returns null for empty descriptions", () => {
+      expect(normalizeClassDescriptionForUpdate("   ")).toBeNull()
+      expect(normalizeClassDescriptionForUpdate(null)).toBeNull()
+    })
+
+    it("returns undefined when the description is untouched", () => {
+      expect(normalizeClassDescriptionForUpdate(undefined)).toBeUndefined()
     })
   })
 

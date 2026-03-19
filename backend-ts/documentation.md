@@ -260,12 +260,16 @@ This flow uses in-memory scheduling plus periodic reconciliation and does not re
 - **`SEMANTIC_SIMILARITY_MAX_CONCURRENT_REQUESTS`** (default: `2`) caps semantic sidecar requests in flight per assignment analysis to prevent timeout-heavy fan-out.
 - **`SEMANTIC_SIMILARITY_TIMEOUT_MS`** (default: `10000`) sets per-request semantic sidecar timeout.
 - **`SEMANTIC_SIMILARITY_MAX_RETRIES`** (default: `1`) retries transient semantic failures (timeouts/5xx/429) before using fallback `semanticScore=0`.
+- **`PLAGIARISM_STRUCTURAL_WEIGHT`** (default: `0.7`) sets the structural contribution to hybrid plagiarism scoring.
+- **`PLAGIARISM_SEMANTIC_WEIGHT`** (default: `0.3`) sets the semantic contribution to hybrid plagiarism scoring.
+- **`PLAGIARISM_HYBRID_THRESHOLD`** (default: `0.5`) controls suspicious-pair flagging and report summaries based on hybrid score.
 
 **Behavior**:
 - Submission success is not blocked by similarity scheduling failures.
 - Rapid submission bursts for the same assignment are coalesced into one run.
 - Reconciliation re-triggers analysis if reports are stale or missing after restarts.
 - Assignment report persistence acquires an assignment-scoped transaction lock to prevent duplicate latest reports during concurrent analysis runs.
+- Assignment report `flaggedPairs`, `averageSimilarity`, `highestSimilarity`, and pair ordering now follow the weighted hybrid score instead of structural score alone.
 
 ### Programming Language Support
 
@@ -436,7 +440,7 @@ The plagiarism API now focuses on assignment-level review workflows:
 
 - Report responses include `submissions` plus pair rows so the frontend can render true singleton nodes alongside suspicious links.
 - Assignment-level analyze/report responses also include `generatedAt`, allowing the frontend to stamp exported evidence PDFs with both report-generation time and download time.
-- Pair rows include both students, similarity score, overlap, and longest match.
+- Pair rows include both students plus structural, semantic, and hybrid similarity scores alongside overlap and longest match.
 - Clients can sort/filter pair results to prioritize high-risk comparisons and generate threshold-aware class or pairwise PDF evidence on the frontend without needing a server-side PDF endpoint.
 - Detailed fragment/code inspection remains available through result-detail endpoints.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
@@ -871,7 +875,7 @@ class PlagiarismService {
 - Uses Tree-Sitter for language-specific AST parsing
 - Implements Winnowing algorithm for fingerprint generation
 - Stores match fragments with precise line/column positions
-- Calculates similarity, overlap, and longest match metrics
+- Calculates structural, semantic, and weighted hybrid similarity metrics
 - Returns reusable report metadata (`reportId`, `generatedAt`, submissions, pairs) needed by the frontend evidence-export workflow
 - Supports Python, Java, and C programming languages
 
