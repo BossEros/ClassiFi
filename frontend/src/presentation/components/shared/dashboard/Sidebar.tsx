@@ -259,7 +259,7 @@ export function Sidebar({
                   src={user.avatarUrl}
                   fallback={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()}
                   alt={`${user.firstName} ${user.lastName}`}
-                  className="border border-slate-200"
+                  className="border border-slate-200 flex-shrink-0"
                 />
                 <div className={cn("hidden text-left sm:block min-w-0", isCollapsed && "lg:hidden")}>
                   <p className="text-sm font-semibold text-slate-100 truncate">
