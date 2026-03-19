@@ -44,6 +44,13 @@ interface SupabaseUserResult {
 const REGISTERABLE_USER_ROLES = ["student", "teacher"] as const
 
 /**
+ * Build a frontend redirect URL for authentication emails.
+ */
+function buildFrontendAuthRedirectUrl(pathname: string): string {
+  return new URL(pathname, settings.frontendUrl).toString()
+}
+
+/**
  * Type guard to check if a value is a valid UserRole.
  * Uses USER_ROLES constant as single source of truth.
  */
@@ -160,9 +167,12 @@ export class AuthService {
       email,
       password,
       {
-        first_name: metadata.firstName,
-        last_name: metadata.lastName,
-        role: metadata.role,
+        metadata: {
+          first_name: metadata.firstName,
+          last_name: metadata.lastName,
+          role: metadata.role,
+        },
+        emailRedirectTo: buildFrontendAuthRedirectUrl("/confirm-email"),
       },
     )
 
@@ -417,7 +427,7 @@ export class AuthService {
   async requestPasswordReset(email: string): Promise<void> {
     await this.authAdapter.resetPasswordForEmail(
       email,
-      `${settings.frontendUrl}/reset-password`,
+      buildFrontendAuthRedirectUrl("/reset-password"),
     )
   }
 }
