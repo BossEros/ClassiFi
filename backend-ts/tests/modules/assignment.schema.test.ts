@@ -103,6 +103,15 @@ describe("Assignment Schemas", () => {
 
       expect(result.success).toBe(true)
     })
+
+    it("accepts module reassignment updates", () => {
+      const result = UpdateAssignmentRequestSchema.safeParse({
+        teacherId: 1,
+        moduleId: 4,
+      })
+
+      expect(result.success).toBe(true)
+    })
   })
 
   describe("Assignment response and param schemas", () => {

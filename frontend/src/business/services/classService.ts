@@ -374,6 +374,7 @@ export async function updateAssignment(
       : undefined,
     allowLateSubmissions: updateAssignmentData.allowLateSubmissions,
     latePenaltyConfig: updateAssignmentData.latePenaltyConfig,
+    moduleId: updateAssignmentData.moduleId ?? undefined,
   })
 }
 

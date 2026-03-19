@@ -441,6 +441,34 @@ describe("classService", () => {
   })
 
   // ============================================================================
+  // updateAssignment Tests
+  // ============================================================================
+
+  describe("updateAssignment", () => {
+    it("passes moduleId through when reassigning an assignment to a new module", async () => {
+      vi.mocked(assignmentRepository.updateAssignmentDetailsById).mockResolvedValue({
+        ...mockAssignment,
+        moduleId: 8,
+      } as any)
+
+      await classService.updateAssignment(1, {
+        teacherId: 1,
+        assignmentName: "Updated Assignment",
+        moduleId: 8,
+      })
+
+      expect(assignmentRepository.updateAssignmentDetailsById).toHaveBeenCalledWith(
+        1,
+        expect.objectContaining({
+          teacherId: 1,
+          assignmentName: "Updated Assignment",
+          moduleId: 8,
+        }),
+      )
+    })
+  })
+
+  // ============================================================================
   // deleteAssignment Tests
   // ============================================================================
 

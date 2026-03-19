@@ -239,6 +239,16 @@ export class AssignmentService {
       teacherId,
     )
 
+    if (
+      updateData.moduleId !== undefined &&
+      updateData.moduleId !== existingAssignment.moduleId
+    ) {
+      await this.validateModuleBelongsToClass(
+        updateData.moduleId,
+        existingAssignment.classId,
+      )
+    }
+
     // Validate business rule: deadline must be after scheduled date
     // Handle partial updates by comparing against existing values
     const finalDeadline =

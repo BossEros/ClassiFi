@@ -57,6 +57,7 @@ export interface UpdateAssignmentData {
   scheduledDate?: Date | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  moduleId?: number
 }
 
 /**
