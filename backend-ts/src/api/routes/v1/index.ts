@@ -10,7 +10,7 @@ import {
 import { plagiarismRoutes } from "@/modules/plagiarism/index.js"
 import { userRoutes } from "@/modules/users/index.js"
 import { adminRoutes } from "@/modules/admin/index.js"
-import { testCaseRoutes } from "@/modules/test-cases/index.js"
+import { codeTestRoutes, testCaseRoutes } from "@/modules/test-cases/index.js"
 import { gradebookRoutes } from "@/modules/gradebook/index.js"
 import { moduleClassRoutes, moduleRoutes } from "@/modules/modules/index.js"
 import {
@@ -55,8 +55,11 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
   // Admin routes - /api/v1/admin/* (admin middleware applied in controller)
   await app.register(adminRoutes, { prefix: "/admin" })
 
-  // Test case and code testing routes - /api/v1/*
-  await app.register(testCaseRoutes)
+  // Test case CRUD routes - /api/v1/test-cases/*
+  await app.register(testCaseRoutes, { prefix: "/test-cases" })
+
+  // Code testing routes - /api/v1/code/*
+  await app.register(codeTestRoutes, { prefix: "/code" })
 
   // Gradebook routes - /api/v1/gradebook/*
   await app.register(gradebookRoutes, { prefix: "/gradebook" })

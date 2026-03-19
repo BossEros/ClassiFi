@@ -12,16 +12,27 @@ export interface ClassFiltersProps {
     searchQuery: string
     status: FilterStatus
   }
+  statusLabels?: {
+    active: string
+    archived: string
+  }
 }
 
 export function ClassFilters({
   onSearchChange,
   onStatusChange,
   currentFilters,
+  statusLabels,
 }: ClassFiltersProps) {
   const statusOptions = [
-    { value: "active", label: "Active Classes" },
-    { value: "archived", label: "Archived" },
+    {
+      value: "active",
+      label: statusLabels?.active ?? "Active classes",
+    },
+    {
+      value: "archived",
+      label: statusLabels?.archived ?? "Archived",
+    },
   ]
 
   return (

@@ -38,6 +38,7 @@ vi.mock("../../src/modules/plagiarism/similarity-result.model.js", () => ({
     id: "id",
     reportId: "reportId",
     structuralScore: "structuralScore",
+    hybridScore: "hybridScore",
   },
 }))
 
@@ -250,10 +251,10 @@ describe("SimilarityRepository", () => {
 
   // ============ getResultsByReport Tests ============
   describe("getResultsByReport Logic", () => {
-    it("should return results ordered by structural score", async () => {
+    it("should return results ordered by hybrid score", async () => {
       const results = [
-        { id: 1, reportId: 1, structuralScore: "0.9" },
-        { id: 2, reportId: 1, structuralScore: "0.5" },
+        { id: 1, reportId: 1, structuralScore: "0.9", hybridScore: "0.75" },
+        { id: 2, reportId: 1, structuralScore: "0.5", hybridScore: "0.42" },
       ]
       const orderByMock = vi.fn().mockResolvedValue(results)
       const whereMock = vi.fn().mockReturnValue({ orderBy: orderByMock })

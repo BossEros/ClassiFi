@@ -7,10 +7,17 @@ import {
 } from "@/modules/submissions/submission.repository.js"
 import { Report, Pair } from "@/lib/plagiarism/index.js"
 import {
-  PLAGIARISM_CONFIG,
   type PlagiarismFileDTO,
   type PlagiarismPairDTO,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
+import {
+  buildPairSimilarityScoreBreakdown,
+  formatPairSimilarityScoreForStorage,
+  formatReportSimilarityScore,
+  normalizeSubmissionPair,
+  summarizePairSimilarityScores,
+  type PairSimilarityScoreBreakdown,
+} from "@/modules/plagiarism/plagiarism-scoring.js"
 import type {
   NewSimilarityResult,
   NewMatchFragment,
@@ -125,20 +132,26 @@ export class PlagiarismPersistenceService {
           assignmentId,
         )) ??
         null
+      const pairScoreBreakdowns = this.buildPairScoreBreakdowns(
+        pairs,
+        semanticScores,
+      )
+      const pairSimilaritySummary = summarizePairSimilarityScores(
+        pairScoreBreakdowns,
+      )
 
       const dbReport = await similarityRepositoryWithContext.createReport({
         assignmentId,
         teacherId: resolvedTeacherId,
         totalSubmissions: report.files.length,
         totalComparisons: pairs.length,
-        flaggedPairs: pairs.filter(
-          (pair) => pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
-        ).length,
-        averageSimilarity: (
-          pairs.reduce((sum, pair) => sum + pair.similarity, 0) /
-          Math.max(1, pairs.length)
-        ).toFixed(4),
-        highestSimilarity: Math.max(...pairs.map((pair) => pair.similarity), 0).toFixed(4),
+        flaggedPairs: pairSimilaritySummary.suspiciousPairs,
+        averageSimilarity: formatReportSimilarityScore(
+          pairSimilaritySummary.averageSimilarity,
+        ),
+        highestSimilarity: formatReportSimilarityScore(
+          pairSimilaritySummary.maxSimilarity,
+        ),
       })
 
       const { resultsToInsert, pairMap, swappedMap } =
@@ -203,9 +216,10 @@ export class PlagiarismPersistenceService {
     const pairs: PlagiarismPairDTO[] = results.map((result) => {
       const leftSubmission = submissionMap.get(result.submission1Id)
       const rightSubmission = submissionMap.get(result.submission2Id)
-      const structuralScore = parseFloat(result.structuralScore || "0")
-      const rawHybridScore = parseFloat(result.hybridScore || "0")
-      const hybridScore = rawHybridScore > 0 ? rawHybridScore : structuralScore
+      const structuralScore =
+        this.parseStoredSimilarityScore(result.structuralScore) ?? 0
+      const hybridScore =
+        this.parseStoredSimilarityScore(result.hybridScore) ?? structuralScore
 
       return {
         id: result.id,
@@ -226,7 +240,8 @@ export class PlagiarismPersistenceService {
           studentName: rightSubmission?.studentName || "Unknown",
         },
         structuralScore,
-        semanticScore: parseFloat(result.semanticScore || "0"),
+        semanticScore:
+          this.parseStoredSimilarityScore(result.semanticScore) ?? 0,
         hybridScore,
         overlap: result.overlap,
         longest: result.longestFragment,
@@ -245,8 +260,10 @@ export class PlagiarismPersistenceService {
         totalFiles: report.totalSubmissions,
         totalPairs: report.totalComparisons,
         suspiciousPairs: report.flaggedPairs,
-        averageSimilarity: parseFloat(report.averageSimilarity || "0"),
-        maxSimilarity: parseFloat(report.highestSimilarity || "0"),
+        averageSimilarity:
+          this.parseStoredSimilarityScore(report.averageSimilarity) ?? 0,
+        maxSimilarity:
+          this.parseStoredSimilarityScore(report.highestSimilarity) ?? 0,
       },
       submissions: submissionDTOs,
       pairs,
@@ -288,6 +305,65 @@ export class PlagiarismPersistenceService {
       studentId: submission.studentId.toString(),
       studentName,
     }))
+  }
+
+  /**
+   * Parse a persisted numeric similarity score while preserving valid zero values.
+   */
+  private parseStoredSimilarityScore(
+    storedScore: string | null | undefined,
+  ): number | null {
+    if (storedScore === null || storedScore === undefined) {
+      return null
+    }
+
+    const normalizedStoredScore = storedScore.trim()
+    if (normalizedStoredScore.length === 0) {
+      return null
+    }
+
+    const parsedScore = Number.parseFloat(normalizedStoredScore)
+
+    return Number.isNaN(parsedScore) ? null : parsedScore
+  }
+
+  private buildPairScoreBreakdowns(
+    pairs: Pair[],
+    semanticScores: Map<string, number>,
+  ): PairSimilarityScoreBreakdown[] {
+    return pairs
+      .map((pair) => {
+        const leftSubmissionId = parseInt(
+          pair.leftFile.info?.submissionId || "0",
+          10,
+        )
+        const rightSubmissionId = parseInt(
+          pair.rightFile.info?.submissionId || "0",
+          10,
+        )
+
+        if (!leftSubmissionId || !rightSubmissionId) {
+          return null
+        }
+
+        const normalizedSubmissionPair = normalizeSubmissionPair(
+          leftSubmissionId,
+          rightSubmissionId,
+        )
+        const semanticScore =
+          semanticScores.get(normalizedSubmissionPair.pairKey) ?? 0
+
+        return buildPairSimilarityScoreBreakdown(
+          pair.similarity,
+          semanticScore,
+        )
+      })
+      .filter(
+        (
+          pairScoreBreakdown,
+        ): pairScoreBreakdown is PairSimilarityScoreBreakdown =>
+          pairScoreBreakdown !== null,
+      )
   }
 
   private isReportCurrent(
@@ -333,44 +409,47 @@ export class PlagiarismPersistenceService {
         continue
       }
 
-      const needsSwap = leftSubmissionId > rightSubmissionId
-      const [firstSubmissionId, secondSubmissionId] = needsSwap
-        ? [rightSubmissionId, leftSubmissionId]
-        : [leftSubmissionId, rightSubmissionId]
+      const normalizedSubmissionPair = normalizeSubmissionPair(
+        leftSubmissionId,
+        rightSubmissionId,
+      )
+      pairMap.set(normalizedSubmissionPair.pairKey, pair)
+      swappedMap.set(
+        normalizedSubmissionPair.pairKey,
+        normalizedSubmissionPair.isSwapped,
+      )
 
-      const pairKey = `${firstSubmissionId}-${secondSubmissionId}`
-      pairMap.set(pairKey, pair)
-      swappedMap.set(pairKey, needsSwap)
-
-      const semanticScore = semanticScores.get(pairKey) ?? 0
+      const semanticScore =
+        semanticScores.get(normalizedSubmissionPair.pairKey) ?? 0
+      const pairScoreBreakdown = buildPairSimilarityScoreBreakdown(
+        pair.similarity,
+        semanticScore,
+      )
 
       resultsToInsert.push({
         reportId,
-        submission1Id: firstSubmissionId,
-        submission2Id: secondSubmissionId,
-        structuralScore: pair.similarity.toFixed(6),
-        semanticScore: semanticScore.toFixed(6),
-        hybridScore: this.computeHybrid(pair.similarity, semanticScore),
+        submission1Id: normalizedSubmissionPair.submission1Id,
+        submission2Id: normalizedSubmissionPair.submission2Id,
+        structuralScore: formatPairSimilarityScoreForStorage(
+          pairScoreBreakdown.structuralScore,
+        ),
+        semanticScore: formatPairSimilarityScoreForStorage(
+          pairScoreBreakdown.semanticScore,
+        ),
+        hybridScore: formatPairSimilarityScoreForStorage(
+          pairScoreBreakdown.hybridScore,
+        ),
         overlap: pair.overlap,
         longestFragment: pair.longest,
         leftCovered: pair.leftCovered,
         rightCovered: pair.rightCovered,
         leftTotal: pair.leftTotal,
         rightTotal: pair.rightTotal,
-        isFlagged: pair.similarity >= PLAGIARISM_CONFIG.DEFAULT_THRESHOLD,
+        isFlagged: pairScoreBreakdown.isSuspicious,
       })
     }
 
     return { resultsToInsert, pairMap, swappedMap }
-  }
-
-  /**
-   * Compute the hybrid score as an equal-weighted average of structural
-   * and semantic scores. Returns a 6-decimal fixed-point string ready
-   * for the numeric(7,6) database column.
-   */
-  private computeHybrid(structural: number, semantic: number): string {
-    return (0.5 * structural + 0.5 * semantic).toFixed(6)
   }
 
   /** Prepare fragments for database insertion. */

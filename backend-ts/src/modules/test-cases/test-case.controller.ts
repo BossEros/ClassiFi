@@ -14,7 +14,7 @@ import {
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 /**
- * Registers test case routes for managing test cases and running code tests.
+ * Registers test case CRUD routes.
  *
  * @param app - The Fastify application instance.
  * @returns A promise that resolves when all routes are registered.
@@ -22,9 +22,6 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
   const testCaseService = container.resolve<TestCaseService>(
     DI_TOKENS.services.testCase,
-  )
-  const codeTestService = container.resolve<CodeTestService>(
-    DI_TOKENS.services.codeTest,
   )
 
   /**
@@ -73,12 +70,24 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
       })
     },
   })
+}
+
+/**
+ * Registers code preview and health routes.
+ *
+ * @param app - The Fastify application instance.
+ * @returns A promise that resolves when all routes are registered.
+ */
+export async function codeTestRoutes(app: FastifyInstance): Promise<void> {
+  const codeTestService = container.resolve<CodeTestService>(
+    DI_TOKENS.services.codeTest,
+  )
 
   /**
-   * POST /code/run-tests
+   * POST /run-tests
    * Run tests in preview mode (without saving)
    */
-  app.post("/code/run-tests", {
+  app.post("/run-tests", {
     preHandler: validateBody(RunTestsPreviewRequestSchema),
     handler: async (request, reply) => {
       const { sourceCode, language, assignmentId } =
@@ -99,10 +108,10 @@ export async function testCaseRoutes(app: FastifyInstance): Promise<void> {
   })
 
   /**
-   * GET /code/health
+   * GET /health
    * Check if code execution service is healthy
    */
-  app.get("/code/health", {
+  app.get("/health", {
     handler: async (_request, reply) => {
       const isServiceHealthy = await codeTestService.healthCheck()
 

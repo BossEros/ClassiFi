@@ -412,7 +412,7 @@ describe("classRepository", () => {
 
     it("updates a class successfully", async () => {
       vi.mocked(apiClient.put).mockResolvedValue({
-        data: { success: true, classInfo: mockUpdatedClass },
+        data: { success: true, class: mockUpdatedClass },
         status: 200,
       })
 

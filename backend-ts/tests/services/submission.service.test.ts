@@ -28,6 +28,12 @@ vi.mock("../../src/modules/classes/class.repository.js")
 vi.mock("../../src/modules/test-cases/test-result.repository.js")
 vi.mock("../../src/services/code-test.service.js")
 
+vi.mock("../../src/shared/transaction.js", () => ({
+  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) =>
+    callback({}),
+  ),
+}))
+
 // Mock Supabase (for legacy tests that still use it)
 vi.mock("../../src/shared/supabase.js", () => ({
   supabase: {
@@ -66,6 +72,7 @@ describe("SubmissionService", () => {
       saveTeacherFeedback: vi.fn(),
       updateGrade: vi.fn(),
       delete: vi.fn(),
+      withContext: vi.fn().mockReturnThis(),
     }
 
     mockAssignmentRepo = {

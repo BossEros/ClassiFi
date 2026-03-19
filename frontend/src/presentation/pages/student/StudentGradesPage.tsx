@@ -10,6 +10,7 @@ import type { StudentClassGrades, StudentGradeEntry } from "@/shared/types/grade
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { Clock } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
+import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics";
 
 // Inlined from src/presentation/components/teacher/gradebook/LatePenaltyBadge.tsx
 interface LatePenaltyBadgeProps {
@@ -72,30 +73,9 @@ export function StudentGradesPage() {
 
   const topBar = useTopBar({ user, userInitials })
 
-  // Calculate overall average across all classes
-  const calculateOverallAverage = (): number | null => {
-    if (!grades.length) return null
-
-    let total = 0
-    let count = 0
-
-    grades.forEach((classGrade) => {
-      classGrade.assignments.forEach((assignment) => {
-        if (assignment.grade !== null && assignment.grade !== undefined) {
-          // Calculate percentage for each assignment
-          if (assignment.totalScore > 0) {
-            const percentage = (assignment.grade / assignment.totalScore) * 100
-            total += percentage
-            count++
-          }
-        }
-      })
-    })
-
-    return count > 0 ? Math.round(total / count) : null
-  }
-
-  const overallAverage = calculateOverallAverage()
+  const allStudentAssignments = grades.flatMap((classGrade) => classGrade.assignments)
+  const overallMetrics = calculateStudentGradeSummaryMetrics(allStudentAssignments)
+  const overallCurrentGrade = overallMetrics.currentGrade
 
   return (
     <DashboardLayout topBar={topBar}>
@@ -141,7 +121,7 @@ export function StudentGradesPage() {
         </div>
       ) : (
         <>
-          {/* Overall Average Card */}
+          {/* Overall Current Grade Card */}
           <div className="mb-6">
             <Card className="bg-gradient-to-r from-teal-500/10 to-teal-500/10 border-teal-500/20">
               <CardContent className="py-6">
@@ -151,16 +131,16 @@ export function StudentGradesPage() {
                       <Trophy className="w-7 h-7 text-teal-400" />
                     </div>
                     <div>
-                      <p className="text-sm text-slate-300">Overall Average</p>
-                      {overallAverage !== null ? (
+                      <p className="text-sm text-slate-300">Overall Current Grade</p>
+                      {overallCurrentGrade !== null ? (
                         <p
-                          className={`text-3xl font-bold ${getGradeColor(overallAverage)}`}
+                          className={`text-3xl font-bold ${getGradeColor(overallCurrentGrade)}`}
                         >
-                          {overallAverage}%
+                          {overallCurrentGrade}%
                         </p>
                       ) : (
                         <p className="text-2xl font-bold text-slate-400">
-                          No grades yet
+                          No grade yet
                         </p>
                       )}
                     </div>
@@ -214,27 +194,12 @@ interface ClassGradesCardProps {
 }
 
 function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
-  // Calculate class average for this student
-  const calculateAverage = (): number | null => {
-    const gradedAssignments = classGrades.assignments.filter(
-      (a) => a.grade !== null && a.grade !== undefined,
-    )
-    if (gradedAssignments.length === 0) return null
-
-    const total = gradedAssignments.reduce((sum, a) => {
-      const percentage =
-        a.totalScore > 0 ? ((a.grade ?? 0) / a.totalScore) * 100 : 0
-      return sum + percentage
-    }, 0)
-
-    return Math.round(total / gradedAssignments.length)
-  }
-
-  const average = calculateAverage()
-  const gradedCount = classGrades.assignments.filter(
-    (a) => a.grade !== null,
-  ).length
-  const totalCount = classGrades.assignments.length
+  const classGradeMetrics = calculateStudentGradeSummaryMetrics(
+    classGrades.assignments,
+  )
+  const currentGrade = classGradeMetrics.currentGrade
+  const gradedCount = classGradeMetrics.gradedCount
+  const totalCount = classGradeMetrics.totalAssignments
 
   return (
     <Card
@@ -249,11 +214,11 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
               {classGrades.teacherName} • {gradedCount}/{totalCount} graded
             </CardDescription>
           </div>
-          {average !== null && (
+          {currentGrade !== null && (
             <div className="text-right">
-              <p className="text-sm text-slate-300">Average</p>
-              <p className={`text-2xl font-bold ${getGradeColor(average)}`}>
-                {average}%
+              <p className="text-sm text-slate-300">Current Grade</p>
+              <p className={`text-2xl font-bold ${getGradeColor(currentGrade)}`}>
+                {currentGrade}%
               </p>
             </div>
           )}

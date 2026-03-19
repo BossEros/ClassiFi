@@ -2,8 +2,6 @@ import type { Pair, Fragment } from "@/lib/plagiarism/index.js"
 
 /** Configuration for plagiarism detection */
 export const PLAGIARISM_CONFIG = {
-  /** Default similarity threshold for flagging suspicious pairs */
-  DEFAULT_THRESHOLD: 0.5,
   /** Default k-gram length for fingerprinting */
   DEFAULT_KGRAM_LENGTH: 23,
   /** Default number of k-grams in a window */
