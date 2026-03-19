@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { CheckCircle, XCircle, Loader2 } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 
@@ -13,8 +13,15 @@ export function EmailConfirmationPage({
     "loading",
   )
   const [message, setMessage] = useState("")
+  const loginRedirectCallbackRef = useRef(onRedirectToLogin)
 
   useEffect(() => {
+    loginRedirectCallbackRef.current = onRedirectToLogin
+  }, [onRedirectToLogin])
+
+  useEffect(() => {
+    let redirectTimeoutId: number | undefined
+
     // Check for token in URL query params or hash (from email confirmation link)
     const handleEmailConfirmation = () => {
       // First check query parameters
@@ -54,8 +61,8 @@ export function EmailConfirmationPage({
         window.history.replaceState(null, "", window.location.pathname)
 
         // Auto-redirect to login after 3 seconds
-        setTimeout(() => {
-          onRedirectToLogin?.()
+        redirectTimeoutId = window.setTimeout(() => {
+          loginRedirectCallbackRef.current?.()
         }, 3000)
       } else if (tokenHash && tokenType === "recovery") {
         // Password recovery
@@ -71,7 +78,13 @@ export function EmailConfirmationPage({
     }
 
     handleEmailConfirmation()
-  }, [onRedirectToLogin])
+
+    return () => {
+      if (redirectTimeoutId) {
+        window.clearTimeout(redirectTimeoutId)
+      }
+    }
+  }, [])
 
   const handleRedirect = () => {
     onRedirectToLogin?.()
