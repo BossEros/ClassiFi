@@ -25,6 +25,7 @@ import {
 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { useToastStore } from "@/shared/store/useToastStore"
@@ -69,20 +70,44 @@ function AdminAddStudentModal({
   const [students, setStudents] = useState<AdminUser[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState<number | null>(null)
-  const [debouncedSearch, setDebouncedSearch] = useState("")
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 300)
+
+  const hasSearchQuery = searchQuery.trim().length > 0
+  const availableStudentCountLabel = `${students.length} ${
+    hasSearchQuery ? "matching" : "available"
+  } student${students.length === 1 ? "" : "s"}`
+  const emptyStateTitle = hasSearchQuery ? "No students found" : "No available students"
+  const emptyStateDescription = hasSearchQuery
+    ? "Try adjusting the student name or email you entered."
+    : "All active students are already enrolled in this class."
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-    }, 300)
+    if (!isOpen) {
+      return
+    }
 
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isSubmitting === null) {
+        onClose()
+      }
+    }
+
+    const previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    document.addEventListener("keydown", handleEscapeKey)
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.removeEventListener("keydown", handleEscapeKey)
+    }
+  }, [isOpen, isSubmitting, onClose])
 
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("")
       setStudents([])
+      setIsLoading(false)
+      setIsSubmitting(null)
       return
     }
 
@@ -91,8 +116,8 @@ function AdminAddStudentModal({
         setIsLoading(true)
         const response = await getAllUsers({
           role: "student",
-          search: debouncedSearch || undefined,
-          limit: 10,
+          search: debouncedSearchQuery || undefined,
+          limit: 12,
           status: "active",
         })
 
@@ -110,7 +135,7 @@ function AdminAddStudentModal({
     }
 
     void fetchStudents()
-  }, [isOpen, debouncedSearch, existingStudents])
+  }, [debouncedSearchQuery, existingStudents, isOpen])
 
   const handleAddStudent = async (student: AdminUser) => {
     try {
@@ -137,94 +162,143 @@ function AdminAddStudentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[10000] grid place-items-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200 sm:p-6">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       <div
-        className="mx-auto flex max-h-[85vh] min-w-[320px] w-full max-w-lg flex-shrink-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#0B1120] shadow-2xl animate-in zoom-in-95 duration-200"
+        className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
+        onClick={isSubmitting === null ? onClose : undefined}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-class-enroll-student-title"
+        aria-describedby="admin-class-enroll-student-description"
+        className="relative z-10 flex max-h-[88vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 shrink-0">
-          <div>
-            <h2 className="text-lg font-semibold text-white">Enroll Student</h2>
-            <p className="text-sm text-gray-400">Add a student to this class</p>
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isSubmitting !== null}
+          aria-label="Close enroll student modal"
+          className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="border-b border-slate-200 px-6 py-6">
+          <div className="flex items-start gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 text-teal-700">
+              <UserPlus className="h-6 w-6" />
+            </div>
+
+            <div className="min-w-0">
+              <h2
+                id="admin-class-enroll-student-title"
+                className="text-xl font-semibold text-slate-900"
+              >
+                Enroll Student
+              </h2>
+              <p
+                id="admin-class-enroll-student-description"
+                className="mt-1 text-sm leading-6 text-slate-500"
+              >
+                Add an active student to this class. Students who are already
+                enrolled are hidden from the list below.
+              </p>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
 
-        <div className="shrink-0 border-b border-white/10 bg-slate-900/50 p-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search students by name or email..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black/20 py-2.5 pl-10 pr-4 text-sm text-white placeholder-gray-500 transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-              autoFocus
-            />
+        <div className="flex-1 space-y-4 overflow-y-auto bg-white px-6 py-5">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+            Search active students by name or email, then use the enroll action
+            on the right.
           </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-12 text-gray-500">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <p className="text-sm">Loading available students...</p>
-            </div>
-          ) : students.length > 0 ? (
-            <div className="space-y-1">
-              {students.map((student) => (
-                <div
-                  key={student.id}
-                  className="group flex items-center justify-between rounded-xl border border-transparent p-3 transition-all hover:border-white/5 hover:bg-white/5"
-                >
-                  <div className="flex min-w-0 items-center gap-3">
-                    <Avatar
-                      src={student.avatarUrl ?? undefined}
-                      fallback={`${student.firstName[0]}${student.lastName[0]}`}
-                      className="h-10 w-10 border border-white/10"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-white">
-                        {student.firstName} {student.lastName}
-                      </p>
-                      <p className="truncate text-xs text-gray-500">{student.email}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleAddStudent(student)}
-                    disabled={isSubmitting === student.id}
-                    className="shrink-0 flex items-center gap-2 rounded-lg bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-400 transition-all hover:bg-blue-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50 group-hover:shadow-[0_0_10px_rgba(59,130,246,0.2)]"
-                  >
-                    {isSubmitting === student.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <UserPlus className="h-3.5 w-3.5" />
-                    )}
-                    Enroll
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-gray-500">
-              <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
-                <Search className="h-6 w-6 opacity-40" />
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative w-full min-w-0 lg:flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search students by name or email..."
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all hover:border-slate-400 focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                  autoFocus
+                />
               </div>
-              <p className="text-sm font-medium">No students found</p>
-              <p className="text-xs text-gray-600">Try adjusting your search</p>
+
+              <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm lg:self-auto">
+                <Users className="h-3.5 w-3.5 text-teal-600" />
+                <span>{availableStudentCountLabel}</span>
+              </div>
             </div>
-          )}
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-2">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-white py-12 text-slate-500">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="text-sm">Loading available students...</p>
+              </div>
+            ) : students.length > 0 ? (
+              <div className="space-y-2">
+                {students.map((student) => (
+                  <div
+                    key={student.id}
+                    className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar
+                        src={student.avatarUrl ?? undefined}
+                        fallback={`${student.firstName[0]}${student.lastName[0]}`}
+                        className="h-10 w-10 ring-2 ring-slate-100"
+                      />
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">
+                          {student.firstName} {student.lastName}
+                        </p>
+                        <p className="truncate text-xs text-slate-500">{student.email}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddStudent(student)}
+                      disabled={isSubmitting === student.id}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isSubmitting === student.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserPlus className="h-4 w-4" />
+                      )}
+                      Enroll
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center">
+                <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                  <Search className="h-6 w-6" />
+                </div>
+                <p className="text-sm font-semibold text-slate-700">{emptyStateTitle}</p>
+                <p className="text-xs leading-5 text-slate-500">
+                  {emptyStateDescription}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="flex justify-end border-t border-white/10 bg-slate-900/50 px-6 py-4 shrink-0">
+        <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4">
           <button
             onClick={onClose}
-            className="rounded-xl px-4 py-2 text-sm font-medium text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+            disabled={isSubmitting !== null}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Close
           </button>
@@ -758,7 +832,7 @@ export function AdminClassDetailPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="w-full min-w-0 space-y-6">
         <div className="relative overflow-hidden rounded-3xl border border-slate-300 bg-white p-6 shadow-md shadow-slate-200/80">
           <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-teal-500 via-sky-500 to-transparent" />
 
@@ -846,21 +920,21 @@ export function AdminClassDetailPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="relative w-full min-w-0 md:flex-1 md:max-w-2xl">
+          <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full min-w-0 lg:flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search enrolled students by name or email..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="w-full rounded-xl border border-slate-400 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-md shadow-slate-200/70 transition-all hover:border-slate-500 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm shadow-slate-200/70 transition-all hover:border-slate-400 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
               />
             </div>
 
             <button
               onClick={() => setShowAddStudentModal(true)}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 md:shrink-0"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 lg:shrink-0"
             >
               <UserPlus className="h-4 w-4" />
               Enroll Student
