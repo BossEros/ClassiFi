@@ -211,35 +211,28 @@ function AdminAddStudentModal({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto bg-white px-6 py-5">
-          <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-            Search active students by name or email, then use the enroll action
-            on the right.
-          </div>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full min-w-0 lg:flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search students by name or email..."
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm shadow-slate-200/70 transition-all hover:border-slate-400 focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                autoFocus
+              />
+            </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="relative w-full min-w-0 lg:flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search students by name or email..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 transition-all hover:border-slate-400 focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
-                  autoFocus
-                />
-              </div>
-
-              <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm lg:self-auto">
-                <Users className="h-3.5 w-3.5 text-teal-600" />
-                <span>{availableStudentCountLabel}</span>
-              </div>
+            <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm shadow-slate-200/70 lg:self-auto">
+              <Users className="h-3.5 w-3.5 text-teal-600" />
+              <span>{availableStudentCountLabel}</span>
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-2">
+          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-2">
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl bg-white py-12 text-slate-500">
+              <div className="flex flex-col items-center justify-center gap-3 rounded-md bg-white py-12 text-slate-500">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p className="text-sm">Loading available students...</p>
               </div>
@@ -248,7 +241,7 @@ function AdminAddStudentModal({
                 {students.map((student) => (
                   <div
                     key={student.id}
-                    className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
+                    className="group flex flex-col gap-3 rounded-md border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <Avatar
@@ -281,7 +274,7 @@ function AdminAddStudentModal({
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center">
+              <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-4 py-12 text-center">
                 <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                   <Search className="h-6 w-6" />
                 </div>
@@ -292,16 +285,6 @@ function AdminAddStudentModal({
               </div>
             )}
           </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-3 border-t border-slate-200 bg-slate-50/80 px-6 py-4">
-          <button
-            onClick={onClose}
-            disabled={isSubmitting !== null}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>
