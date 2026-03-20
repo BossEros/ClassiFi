@@ -20,7 +20,7 @@ describe("Auth Validation", () => {
 
     it("should return error for invalid email format", () => {
       expect(validateEmail("invalid-email")).toBe(
-        "Please enter a valid email address",
+        "Invalid email format. Please enter a valid email address",
       )
     })
 
@@ -196,7 +196,10 @@ describe("Auth Validation", () => {
             field: "lastName",
             message: "Last name must be at least 2 characters long",
           },
-          { field: "email", message: "Please enter a valid email address" },
+          {
+            field: "email",
+            message: "Invalid email format. Please enter a valid email address",
+          },
           {
             field: "password",
             message: "Password must be at least 8 characters long",
@@ -264,7 +267,9 @@ describe("Auth Validation", () => {
     it("should validate email field", () => {
       const message = validateField("email", "invalid-email")
 
-      expect(message).toBe("Please enter a valid email address")
+      expect(message).toBe(
+        "Invalid email format. Please enter a valid email address",
+      )
     })
 
     it("should validate password field", () => {

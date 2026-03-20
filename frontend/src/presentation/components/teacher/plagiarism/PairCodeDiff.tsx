@@ -39,6 +39,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   const editorRef = useRef<HTMLDivElement>(null)
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
   const isLight = variant === "light"
+  const legendTextColor = isLight ? "#475569" : "#cbd5e1"
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -144,6 +145,61 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
             }}
           >
             ({rightFile.lineCount} lines)
+          </span>
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "8px 16px",
+          padding: "8px 12px",
+          backgroundColor: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.05)",
+          borderBottom: isLight
+            ? "1px solid #e2e8f0"
+            : "1px solid rgba(255, 255, 255, 0.08)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: "9999px",
+              padding: "2px 8px",
+              backgroundColor: "rgba(16, 185, 129, 0.12)",
+              border: "1px solid rgba(5, 150, 105, 0.24)",
+              color: "#047857",
+              fontSize: "12px",
+              fontWeight: 600,
+            }}
+          >
+            Added
+          </span>
+          <span style={{ color: legendTextColor, fontSize: "12px" }}>
+            Emerald marks code present only in the right file.
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: "9999px",
+              padding: "2px 8px",
+              backgroundColor: "rgba(244, 63, 94, 0.12)",
+              border: "1px solid rgba(225, 29, 72, 0.24)",
+              color: "#be123c",
+              fontSize: "12px",
+              fontWeight: 600,
+            }}
+          >
+            Removed
+          </span>
+          <span style={{ color: legendTextColor, fontSize: "12px" }}>
+            Rose marks code missing from the right file.
           </span>
         </div>
       </div>
