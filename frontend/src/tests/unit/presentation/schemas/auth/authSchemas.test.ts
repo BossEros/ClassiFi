@@ -68,7 +68,22 @@ describe("authSchemas", () => {
 
     if (!parseResult.success) {
       expect(parseResult.error.issues[0]?.message).toBe(
-        "Please enter a valid email address",
+        "Invalid email format. Please enter a valid email address",
+      )
+    }
+  })
+
+  it("rejects invalid email for login", () => {
+    const parseResult = loginFormSchema.safeParse({
+      email: "invalid-email",
+      password: "Password1!",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Invalid email format. Please enter a valid email address",
       )
     }
   })
@@ -127,6 +142,25 @@ describe("authSchemas", () => {
     })
 
     expect(parseResult.success).toBe(true)
+  })
+
+  it("rejects registration email with the explicit format message", () => {
+    const parseResult = registerFormSchema.safeParse({
+      role: "student",
+      firstName: "Juan",
+      lastName: "Dela Cruz",
+      email: "invalid-email",
+      password: "Password1!",
+      confirmPassword: "Password1!",
+    })
+
+    expect(parseResult.success).toBe(false)
+
+    if (!parseResult.success) {
+      expect(parseResult.error.issues[0]?.message).toBe(
+        "Invalid email format. Please enter a valid email address",
+      )
+    }
   })
 
   it("rejects missing registration role with existing message", () => {

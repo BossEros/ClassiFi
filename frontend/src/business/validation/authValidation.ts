@@ -10,6 +10,8 @@ import { VALID_ROLES } from "@/shared/types/auth"
 export type { ValidationResult }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const INVALID_EMAIL_MESSAGE =
+  "Invalid email format. Please enter a valid email address"
 
 /**
  * Password validation patterns.
@@ -33,7 +35,7 @@ export const validateEmail = (email: string): string | null => {
   }
 
   if (!EMAIL_PATTERN.test(email)) {
-    return "Please enter a valid email address"
+    return INVALID_EMAIL_MESSAGE
   }
 
   return null
