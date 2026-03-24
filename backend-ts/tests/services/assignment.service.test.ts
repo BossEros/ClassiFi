@@ -663,6 +663,43 @@ describe("AssignmentService", () => {
         maxAttempts: 5,
       })
     })
+
+    it("should persist module reassignment after validating module ownership", async () => {
+      const mockAssignment = createMockAssignment({
+        id: 1,
+        classId: 1,
+        moduleId: 1,
+      })
+      const mockClass = createMockClass({ id: 1, teacherId: 1 })
+      const updatedAssignment = {
+        ...mockAssignment,
+        moduleId: 2,
+      }
+
+      mockAssignmentRepo.getAssignmentById!.mockResolvedValue(mockAssignment)
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockModuleRepo.getModuleById = vi.fn().mockResolvedValue({
+        id: 2,
+        classId: 1,
+        name: "Module 2",
+        isPublished: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as any)
+      mockAssignmentRepo.updateAssignment!.mockResolvedValue(updatedAssignment)
+
+      const result = await assignmentService.updateAssignment({
+        assignmentId: 1,
+        teacherId: 1,
+        moduleId: 2,
+      })
+
+      expect(result.moduleId).toBe(2)
+      expect(mockModuleRepo.getModuleById).toHaveBeenCalledWith(2)
+      expect(mockAssignmentRepo.updateAssignment).toHaveBeenCalledWith(1, {
+        moduleId: 2,
+      })
+    })
   })
 
   // ============================================

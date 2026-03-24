@@ -212,41 +212,57 @@ export class PlagiarismPersistenceService {
         submissionWithStudent,
       ]),
     )
+    const persistedPairsWithScores = results
+      .map((result) => {
+        const leftSubmission = submissionMap.get(result.submission1Id)
+        const rightSubmission = submissionMap.get(result.submission2Id)
+        const pairScoreBreakdown = this.buildCurrentPairSimilarityScoreBreakdown(
+          result.structuralScore,
+          result.semanticScore,
+        )
 
-    const pairs: PlagiarismPairDTO[] = results.map((result) => {
-      const leftSubmission = submissionMap.get(result.submission1Id)
-      const rightSubmission = submissionMap.get(result.submission2Id)
-      const structuralScore =
-        this.parseStoredSimilarityScore(result.structuralScore) ?? 0
-      const hybridScore =
-        this.parseStoredSimilarityScore(result.hybridScore) ?? structuralScore
+        return {
+          pair: {
+            id: result.id,
+            leftFile: {
+              id: result.submission1Id,
+              path: leftSubmission?.submission.filePath || "",
+              filename: leftSubmission?.submission.fileName || "Unknown",
+              lineCount: result.leftTotal,
+              studentId: leftSubmission?.submission.studentId?.toString(),
+              studentName: leftSubmission?.studentName || "Unknown",
+            },
+            rightFile: {
+              id: result.submission2Id,
+              path: rightSubmission?.submission.filePath || "",
+              filename: rightSubmission?.submission.fileName || "Unknown",
+              lineCount: result.rightTotal,
+              studentId: rightSubmission?.submission.studentId?.toString(),
+              studentName: rightSubmission?.studentName || "Unknown",
+            },
+            structuralScore: pairScoreBreakdown.structuralScore,
+            semanticScore: pairScoreBreakdown.semanticScore,
+            hybridScore: pairScoreBreakdown.hybridScore,
+            overlap: result.overlap,
+            longest: result.longestFragment,
+          },
+          pairScoreBreakdown,
+        }
+      })
+      .sort(
+        (leftPairWithScore, rightPairWithScore) =>
+          rightPairWithScore.pairScoreBreakdown.hybridScore -
+          leftPairWithScore.pairScoreBreakdown.hybridScore,
+      )
 
-      return {
-        id: result.id,
-        leftFile: {
-          id: result.submission1Id,
-          path: leftSubmission?.submission.filePath || "",
-          filename: leftSubmission?.submission.fileName || "Unknown",
-          lineCount: result.leftTotal,
-          studentId: leftSubmission?.submission.studentId?.toString(),
-          studentName: leftSubmission?.studentName || "Unknown",
-        },
-        rightFile: {
-          id: result.submission2Id,
-          path: rightSubmission?.submission.filePath || "",
-          filename: rightSubmission?.submission.fileName || "Unknown",
-          lineCount: result.rightTotal,
-          studentId: rightSubmission?.submission.studentId?.toString(),
-          studentName: rightSubmission?.studentName || "Unknown",
-        },
-        structuralScore,
-        semanticScore:
-          this.parseStoredSimilarityScore(result.semanticScore) ?? 0,
-        hybridScore,
-        overlap: result.overlap,
-        longest: result.longestFragment,
-      }
-    })
+    const pairs: PlagiarismPairDTO[] = persistedPairsWithScores.map(
+      (persistedPairWithScore) => persistedPairWithScore.pair,
+    )
+    const pairSimilaritySummary = summarizePairSimilarityScores(
+      persistedPairsWithScores.map(
+        (persistedPairWithScore) => persistedPairWithScore.pairScoreBreakdown,
+      ),
+    )
 
     const reportSubmissions = await this.getReportSubmissions(reportId)
     const submissionDTOs = this.mapSubmissionsToDTOs(reportSubmissions)
@@ -259,11 +275,9 @@ export class PlagiarismPersistenceService {
       summary: {
         totalFiles: report.totalSubmissions,
         totalPairs: report.totalComparisons,
-        suspiciousPairs: report.flaggedPairs,
-        averageSimilarity:
-          this.parseStoredSimilarityScore(report.averageSimilarity) ?? 0,
-        maxSimilarity:
-          this.parseStoredSimilarityScore(report.highestSimilarity) ?? 0,
+        suspiciousPairs: pairSimilaritySummary.suspiciousPairs,
+        averageSimilarity: pairSimilaritySummary.averageSimilarity,
+        maxSimilarity: pairSimilaritySummary.maxSimilarity,
       },
       submissions: submissionDTOs,
       pairs,
@@ -325,6 +339,25 @@ export class PlagiarismPersistenceService {
     const parsedScore = Number.parseFloat(normalizedStoredScore)
 
     return Number.isNaN(parsedScore) ? null : parsedScore
+  }
+
+  /**
+   * Recomputes the hybrid score using the current configured weights.
+   * This keeps reused reports aligned even when older persisted rows used a different formula.
+   */
+  private buildCurrentPairSimilarityScoreBreakdown(
+    structuralScore: string,
+    semanticScore: string,
+  ): PairSimilarityScoreBreakdown {
+    const parsedStructuralScore =
+      this.parseStoredSimilarityScore(structuralScore) ?? 0
+    const parsedSemanticScore =
+      this.parseStoredSimilarityScore(semanticScore) ?? 0
+
+    return buildPairSimilarityScoreBreakdown(
+      parsedStructuralScore,
+      parsedSemanticScore,
+    )
   }
 
   private buildPairScoreBreakdowns(

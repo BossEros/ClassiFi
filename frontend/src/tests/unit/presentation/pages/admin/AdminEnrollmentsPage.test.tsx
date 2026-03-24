@@ -47,7 +47,8 @@ const mockEnrollmentRecord = {
   classIsActive: true,
   teacherId: 7,
   teacherName: "Prof. Ada",
-  teacherAvatarUrl: null,
+  teacherAvatarUrl: null,
+
   semester: 1,
   academicYear: "2025-2026",
   enrolledAt: "2025-06-01T00:00:00Z",
@@ -69,7 +70,8 @@ const mockClassOptions = [
     id: 2,
     className: "Algorithms",
     classCode: "ALG101",
-    teacherId: 7,
+    teacherId: 7,
+
     semester: 1,
     academicYear: "2025-2026",
     schedule: { days: ["monday" as const], startTime: "09:00", endTime: "10:00" },
@@ -83,7 +85,8 @@ const mockClassOptions = [
     id: 3,
     className: "Data Structures",
     classCode: "DS201",
-    teacherId: 8,
+    teacherId: 8,
+
     semester: 1,
     academicYear: "2025-2026",
     schedule: { days: ["tuesday" as const], startTime: "10:00", endTime: "11:00" },

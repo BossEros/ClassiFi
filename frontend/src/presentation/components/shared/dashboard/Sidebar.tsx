@@ -206,8 +206,7 @@ export function Sidebar({
                   className="w-8.5 h-8.5 object-contain"
                 />
                 <h1
-                  className="text-xl font-normal text-white tracking-tight whitespace-nowrap"
-                  style={{ fontFamily: '"Expletus Sans", system-ui, sans-serif' }}
+                  className="font-expletus text-xl font-normal text-white tracking-tight whitespace-nowrap"
                 >
                   ClassiFi
                 </h1>

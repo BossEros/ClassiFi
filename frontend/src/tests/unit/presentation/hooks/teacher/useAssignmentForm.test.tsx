@@ -386,6 +386,7 @@ describe("useAssignmentForm", () => {
 
       act(() => {
         result.current.handleInputChange("assignmentName", "Updated Name")
+        result.current.handleInputChange("moduleId", 2)
       })
 
       await act(async () => {
@@ -396,6 +397,7 @@ describe("useAssignmentForm", () => {
         202,
         expect.objectContaining({
           assignmentName: "Updated Name",
+          moduleId: 2,
         }),
       )
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard/classes/101")

@@ -89,6 +89,7 @@ describe("SubmissionService", () => {
 
     mockStorageService = {
       upload: vi.fn().mockResolvedValue("path/to/file"),
+      uploadSubmission: vi.fn().mockResolvedValue("path/to/file"),
       download: vi.fn(),
       deleteFiles: vi.fn(),
       getSignedUrl: vi.fn().mockResolvedValue("https://example.com/signed-url"),
@@ -175,7 +176,14 @@ describe("SubmissionService", () => {
       expect(result).toBeDefined()
       expect(result.id).toBe(mockSubmission.id)
       expect(mockSubmissionRepo.createSubmission).toHaveBeenCalled()
-      expect(mockStorageService.upload).toHaveBeenCalled()
+      expect(mockStorageService.uploadSubmission).toHaveBeenCalledWith(
+        1,
+        1,
+        1,
+        "solution.py",
+        validFile.data,
+        "text/x-python",
+      )
       expect(mockCodeTestService.runTestsForSubmission).toHaveBeenCalledWith(
         mockSubmission.id,
       )
@@ -318,8 +326,6 @@ describe("SubmissionService", () => {
     })
 
     it("should allow resubmission when allowResubmission is true", async () => {
-      // Note: Current logic deletes previous submission and creates a new one as "Submission 1".
-      // So we mock history, assert delete called, and verify success.
       const assignment = createMockAssignment({
         id: 1,
         isActive: true,
@@ -334,7 +340,7 @@ describe("SubmissionService", () => {
       })
       const newSubmission = createMockSubmission({
         id: 100,
-        submissionNumber: 1,
+        submissionNumber: 2,
       })
 
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
@@ -440,17 +446,15 @@ describe("SubmissionService", () => {
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
       mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
       mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
-      mockStorageService.upload.mockRejectedValue(new Error("Upload failed"))
+      mockStorageService.uploadSubmission.mockRejectedValue(
+        new Error("Upload failed"),
+      )
 
       await expect(
         submissionService.submitAssignment(1, 1, validFile),
       ).rejects.toThrow(UploadFailedError)
     })
 
-    // "should increment submission number correctly" is invalid with current logic (it resets to 1)
-    // so I will verify that behaviour or remove the test.
-    // Actually, logic is: `const submissionNumber = 1;` after cleanup.
-    // Submission number should increment based on existing submissions count
     it("should increment submission number based on existing submissions", async () => {
       const assignment = createMockAssignment({
         isActive: true,
@@ -473,6 +477,46 @@ describe("SubmissionService", () => {
 
       expect(mockSubmissionRepo.createSubmission).toHaveBeenCalledWith(
         expect.objectContaining({ submissionNumber: 2 }),
+      )
+    })
+
+    it("should continue numbering from the highest previous submission number", async () => {
+      const assignment = createMockAssignment({
+        isActive: true,
+        deadline: futureDeadline,
+        allowResubmission: true,
+        programmingLanguage: "python",
+      })
+      const latestSubmissionOnly = createMockSubmission({
+        id: 200,
+        submissionNumber: 2,
+        filePath: "submissions/1/1/2_solution.py",
+      })
+      const newSubmission = createMockSubmission({
+        id: 201,
+        submissionNumber: 3,
+      })
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
+      mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([
+        latestSubmissionOnly,
+      ])
+      mockSubmissionRepo.createSubmission.mockResolvedValue(newSubmission)
+      mockSubmissionRepo.delete.mockResolvedValue(true)
+
+      await submissionService.submitAssignment(1, 1, validFile)
+
+      expect(mockStorageService.uploadSubmission).toHaveBeenCalledWith(
+        1,
+        1,
+        3,
+        "solution.py",
+        validFile.data,
+        "text/x-python",
+      )
+      expect(mockSubmissionRepo.createSubmission).toHaveBeenCalledWith(
+        expect.objectContaining({ submissionNumber: 3 }),
       )
     })
   })

@@ -7,13 +7,19 @@ const PASSWORD_PATTERNS = {
   specialChar: /[!@#$%^&*(),.?":{}|<>]/,
 } as const
 
+function createEmailSchema(invalidEmailMessage: string) {
+  return z
+    .string()
+    .min(1, "Email is required")
+    .email(invalidEmailMessage)
+}
+
 /**
  * Shared email schema used by frontend form validation.
  */
-export const emailSchema = z
-  .string()
-  .min(1, "Email is required")
-  .email("Please enter a valid email address")
+export const emailSchema = createEmailSchema(
+  "Invalid email format. Please enter a valid email address",
+)
 
 /**
  * Basic password schema for flows that only require non-empty values.

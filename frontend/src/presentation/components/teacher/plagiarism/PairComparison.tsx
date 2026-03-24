@@ -113,9 +113,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
         }}
       >
         <strong style={{ color: isLight ? "#0f172a" : "#fff" }}>Tip:</strong>{" "}
-        Matching code fragments are highlighted in blue. Click on highlighted
-        code to select a fragment. Both editors will scroll to show the matching
-        region.
+        Shared fragments are highlighted in sky blue. Click any highlighted
+        block to lock in a stronger outline and keep both editors centered on
+        the same region.
       </div>
     </div>
   )
