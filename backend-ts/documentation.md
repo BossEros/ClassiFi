@@ -380,6 +380,7 @@ Authorization notes:
 
 **Assignment Instructions Content**:
 - Assignment create/update supports both text (`instructions`) and an optional image field (`instructionsImageUrl`)
+- Assignment updates also support reassigning the record to a different class module through `moduleId`
 - Business rule requires at least one instructions surface: text or image
 - Assignment deadline is optional (`deadline` may be `null`) to support assignment with no due date
 - Assignment create/update also supports late submission policy fields (`allowLateSubmissions`, `latePenaltyConfig`)
