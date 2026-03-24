@@ -68,6 +68,22 @@ Ensure `saveTeacherFeedback` returns success once feedback persistence succeeds,
 
 ---
 
+# Implementation Plan - Submission Attempt Numbering Regression
+
+## Goal
+Fix student resubmissions so submission attempt numbers continue from the highest previous attempt instead of reusing the current row count after cleanup.
+
+## Approach
+1. Update `SubmissionService` to calculate the next submission number from the highest stored `submissionNumber`.
+2. Reuse the shared `StorageService.uploadSubmission(...)` helper instead of duplicating submission path generation.
+3. Add regression tests for the "only submission 2 remains, next must be 3" scenario.
+
+## Verification
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+
+---
+
 # Implementation Plan - Test Case Edit/Delete Route Contract Fix
 
 ## Goal
@@ -147,6 +163,67 @@ Verify the reported backend findings against the current codebase, then fix only
 4. Restore plagiarism score precision in the affected Drizzle models and align the stale persistence comment.
 5. Fix the test-case request schemas so validation matches the 255-character database column.
 6. Correct the stale ERD notification connector and update the notification-delivery documentation to reflect the no-new-table delivery model.
+
+## Verification
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Configurable Hybrid Similarity Weighting
+
+## Goal
+Make plagiarism scoring configurable with a default `70%` structural / `30%` semantic ratio, and ensure report flagging, summary metrics, and result ordering consistently follow the hybrid score instead of structural score alone.
+
+## Constraints
+- Keep the existing controller-service-repository architecture intact.
+- Reuse the current plagiarism persistence flow instead of introducing a new scoring subsystem.
+- Preserve pair-level structural and semantic scores in the API for instructor review.
+- Avoid schema changes unless the runtime behavior truly requires them.
+
+## Approach
+1. Extend backend configuration with validated structural/semantic weight settings and a hybrid suspicious threshold, defaulting to `0.7`, `0.3`, and `0.5`.
+2. Centralize hybrid-score and suspicious-pair calculations inside the plagiarism module to avoid duplicated weighting logic.
+3. Persist and return report summaries, flagged state, and pair ordering based on hybrid score.
+4. Update focused repository/service tests plus backend documentation and `.env.example`.
+
+## Verification
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Hosted Email Confirmation Redirects
+
+## Goal
+Ensure registration confirmation emails redirect users to the correct deployed frontend route instead of falling back to `localhost`, while preserving the existing auth service architecture and frontend confirmation page.
+
+## Constraints
+- Keep the backend controller-service-adapter boundaries intact.
+- Reuse the existing `FRONTEND_URL` configuration instead of adding duplicate redirect settings.
+- Preserve the existing frontend `/confirm-email` route and password reset flow.
+
+## Approach
+1. Extend the Supabase auth adapter signup contract so the auth service can pass an explicit confirmation redirect URL.
+2. Build auth-email redirect URLs from `settings.frontendUrl` inside the auth module and reuse that logic for both signup confirmation and password reset.
+3. Add focused auth service regression coverage for the confirmation redirect.
+4. Update backend documentation and environment guidance so production deployments point `FRONTEND_URL` at the hosted frontend and align Supabase redirect settings.
+
+## Verification
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Reused Similarity Report Score Recalculation
+
+## Goal
+Ensure reused plagiarism reports always reflect the current weighted hybrid formula instead of trusting stale persisted hybrid scores from older report generations.
+
+## Approach
+1. Recompute pair-level hybrid scores from persisted structural and semantic scores when reading reports.
+2. Rebuild reused-report summary metrics and pair ordering from the recalculated hybrid scores.
+3. Add a regression test covering a stale persisted `0.56` hybrid score for a `23%` structural / `89%` semantic pair.
 
 ## Verification
 1. Run `npm run typecheck` in `backend-ts`.

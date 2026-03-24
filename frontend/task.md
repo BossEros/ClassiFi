@@ -46,3 +46,17 @@
 - [x] Verify the frontend with the available build commands
   `npx.cmd tsc -b` passed.
   `npm.cmd run build` is still blocked in this sandbox by Vite/esbuild `spawn EPERM` while loading `vite.config.ts`.
+
+---
+
+# Global Styling Structure Cleanup Checklist
+
+- [x] Read `frontend/documentation.md`
+- [x] Audit `frontend/src/index.css` and scan current style usage
+- [x] Split global styling into `tokens.css`, `base.css`, and `utilities.css` while keeping `index.css` as the entrypoint
+- [x] Remove dead global helper classes
+- [x] Centralize Expletus wordmark styling via the shared token utility
+- [x] Update frontend documentation for the new styling structure
+- [x] Verify with the available frontend commands
+  `npx.cmd tsc -b` passed.
+  Dead-style scan confirmed the removed helper classes no longer have consumers.

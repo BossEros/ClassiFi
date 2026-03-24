@@ -42,3 +42,14 @@
 3. Remove the extra page-width constraint that prevents the class detail page from expanding with the sidebar layout.
 4. Widen the enrolled-student search row so the search field remains usable beside the `Enroll Student` action.
 5. Verify the frontend with the available build commands.
+
+---
+
+## Global Styling Structure Cleanup
+
+1. Audit `src/index.css` and confirm which global classes and tokens still have real consumers.
+2. Keep `src/index.css` as the single CSS entrypoint, but split styling concerns into dedicated `src/styles/` files for tokens, base rules, and reusable global utilities.
+3. Remove dead helper classes that are no longer referenced anywhere in the frontend.
+4. Replace repeated inline Expletus wordmark styles with the shared `font-expletus` utility generated from the token layer.
+5. Update frontend documentation so future UI decisions have a clear home and maintenance pattern.
+6. Verify with the available frontend typecheck/build-safe commands.
