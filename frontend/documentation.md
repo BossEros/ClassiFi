@@ -25,6 +25,27 @@ The ClassiFi Frontend is a role-aware single-page application built with **React
 
 ---
 
+## Styling Architecture
+
+Global styling is centralized through the CSS entrypoint at `src/index.css`.
+
+- `src/index.css`: The single stylesheet imported by the app. It should stay small and only compose the styling system.
+- `src/styles/tokens.css`: App-wide design tokens defined with Tailwind v4 `@theme` (`--color-*`, `--radius-*`, `--shadow-*`, `--font-*`, etc.).
+- `src/styles/base.css`: Global element-level rules such as document scroll behavior, typography defaults, and selection styling.
+- `src/styles/utilities.css`: Project-wide utility helpers that are intentionally global, such as `.custom-scrollbar` and `.sr-only`.
+
+Guidelines:
+
+- Put app-wide UI decisions and reusable design tokens in `src/styles/tokens.css`.
+- Put only true global element resets/defaults in `src/styles/base.css`.
+- Put only intentionally shared CSS helpers in `src/styles/utilities.css`.
+- Do not add one-off component styling to these files. Keep component-specific styling inside the component or the relevant shared theme constant/module.
+- Prefer shared React UI components and colocated constants for reusable component styling over global CSS helper classes.
+
+This keeps the frontend scalable while preserving a single entrypoint for global design decisions.
+
+---
+
 ## Project Structure
 
 The codebase keeps application source under `src/`:
@@ -68,7 +89,11 @@ frontend/
 |   |   |-- e2e/            # Playwright tests
 |   |   |-- mocks/          # Test doubles / MSW handlers
 |   |   `-- setup.ts        # Vitest setup
-|   |-- index.css
+|   |-- index.css           # Global styling entrypoint
+|   |-- styles/             # Global styling organization
+|   |   |-- tokens.css      # Tailwind v4 theme tokens
+|   |   |-- base.css        # Global element defaults
+|   |   `-- utilities.css   # Shared global helpers
 |   `-- main.tsx            # Application Entry Point
 |-- public/
 `-- index.html
@@ -188,6 +213,7 @@ Admin enrollment workspace behavior:
 
 - **`ClassForm`**: Create/Edit classes with schedule configuration.
 - **`AssignmentForm`**: Create/Edit assignments with:
+  - Module selection for choosing or reassigning which module owns the assignment
   - Programming language selection (Python, Java, C)
   - Instructions text plus optional image attachment (preview)
   - File attachments

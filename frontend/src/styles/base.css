@@ -1,0 +1,30 @@
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.2;
+}
+
+p {
+  line-height: 1.6;
+}
+
+label {
+  line-height: 1.5;
+}
+
+*::selection {
+  background: color-mix(in srgb, var(--color-brand-primary) 25%, white);
+}
