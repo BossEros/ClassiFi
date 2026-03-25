@@ -39,6 +39,7 @@ export interface AdminClass {
   studentCount: number
   createdAt: string
   teacherName: string
+  teacherEmail?: string | null
   teacherAvatarUrl?: string | null
 }
 

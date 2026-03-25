@@ -186,95 +186,87 @@ function AdminAddStudentModal({
           <X className="h-5 w-5" />
         </button>
 
-        <div className="border-b border-slate-200 px-6 py-6">
-          <div className="flex items-start gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-teal-200 bg-teal-50 text-teal-700">
-              <UserPlus className="h-6 w-6" />
-            </div>
-
-            <div className="min-w-0">
-              <h2
-                id="admin-class-enroll-student-title"
-                className="text-xl font-semibold text-slate-900"
-              >
-                Enroll Student
-              </h2>
-              <p
-                id="admin-class-enroll-student-description"
-                className="mt-1 text-sm leading-6 text-slate-500"
-              >
-                Add an active student to this class. Students who are already
-                enrolled are hidden from the list below.
-              </p>
-            </div>
+        <div className="border-b border-slate-200 bg-slate-50/70 px-6 py-6 shadow-sm shadow-slate-200/40">
+          <div className="min-w-0 pr-10">
+            <h2
+              id="admin-class-enroll-student-title"
+              className="text-xl font-semibold text-slate-900"
+            >
+              Enroll Student
+            </h2>
+            <p
+              id="admin-class-enroll-student-description"
+              className="mt-1 text-sm leading-6 text-slate-600"
+            >
+              Add an active student to this class. Students who are already
+              enrolled are hidden from the list below.
+            </p>
           </div>
         </div>
 
-        <div className="flex-1 space-y-4 overflow-y-auto bg-white px-6 py-5">
+        <div className="flex-1 space-y-5 overflow-y-auto bg-white px-6 py-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="relative w-full min-w-0 lg:flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               <input
                 type="text"
                 placeholder="Search students by name or email..."
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-sm shadow-slate-200/70 transition-all hover:border-slate-400 focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"
+                className="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-500 shadow-sm shadow-slate-200/70 transition-all hover:border-slate-400 hover:bg-white focus:border-transparent focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                 autoFocus
               />
             </div>
 
-            <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 shadow-sm shadow-slate-200/70 lg:self-auto">
-              <Users className="h-3.5 w-3.5 text-teal-600" />
+            <div className="inline-flex items-center gap-2 self-start rounded-xl border border-teal-200 bg-teal-50 px-3.5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-700 shadow-sm shadow-teal-100/80 lg:self-auto">
+              <Users className="h-4 w-4 text-teal-600" />
               <span>{availableStudentCountLabel}</span>
             </div>
           </div>
 
-          <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-2">
+          <div className="space-y-3">
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-md bg-white py-12 text-slate-500">
+              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-12 text-slate-500 shadow-sm shadow-slate-200/70">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <p className="text-sm">Loading available students...</p>
               </div>
             ) : students.length > 0 ? (
-              <div className="space-y-2">
-                {students.map((student) => (
-                  <div
-                    key={student.id}
-                    className="group flex flex-col gap-3 rounded-md border border-slate-200 bg-white px-4 py-4 shadow-sm transition-all duration-150 hover:border-slate-300 hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="flex min-w-0 items-center gap-3">
-                      <Avatar
-                        src={student.avatarUrl ?? undefined}
-                        fallback={`${student.firstName[0]}${student.lastName[0]}`}
-                        className="h-10 w-10 ring-2 ring-slate-100"
-                      />
+              students.map((student) => (
+                <div
+                  key={student.id}
+                  className="group flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-md shadow-slate-200/80 ring-1 ring-slate-200/60 transition-all duration-200 hover:-translate-y-1 hover:border-slate-300 hover:bg-slate-50 hover:shadow-xl hover:shadow-slate-200/90 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar
+                      src={student.avatarUrl ?? undefined}
+                      fallback={`${student.firstName[0]}${student.lastName[0]}`}
+                      className="h-10 w-10 ring-2 ring-slate-100"
+                    />
 
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-slate-900">
-                          {student.firstName} {student.lastName}
-                        </p>
-                        <p className="truncate text-xs text-slate-500">{student.email}</p>
-                      </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {student.firstName} {student.lastName}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{student.email}</p>
                     </div>
-
-                    <button
-                      onClick={() => handleAddStudent(student)}
-                      disabled={isSubmitting === student.id}
-                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {isSubmitting === student.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <UserPlus className="h-4 w-4" />
-                      )}
-                      Enroll
-                    </button>
                   </div>
-                ))}
-              </div>
+
+                  <button
+                    onClick={() => handleAddStudent(student)}
+                    disabled={isSubmitting === student.id}
+                    className="inline-flex min-w-[116px] shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-lg hover:shadow-teal-200/80 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isSubmitting === student.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserPlus className="h-4 w-4" />
+                    )}
+                    Enroll
+                  </button>
+                </div>
+              ))
             ) : (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-4 py-12 text-center">
+              <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-12 text-center shadow-sm shadow-slate-200/50">
                 <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
                   <Search className="h-6 w-6" />
                 </div>
@@ -512,6 +504,134 @@ function AdminDeleteClassModal({
             </div>
           </>
         )}
+      </div>
+    </div>
+  )
+}
+
+interface AdminRemoveStudentModalProps {
+  isOpen: boolean
+  isRemoving: boolean
+  student: EnrolledStudent | null
+  onClose: () => void
+  onConfirm: () => Promise<void>
+}
+
+function AdminRemoveStudentModal({
+  isOpen,
+  isRemoving,
+  student,
+  onClose,
+  onConfirm,
+}: AdminRemoveStudentModalProps) {
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !isRemoving) {
+        onClose()
+      }
+    }
+
+    const previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    document.addEventListener("keydown", handleEscape)
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+      document.removeEventListener("keydown", handleEscape)
+    }
+  }, [isOpen, isRemoving, onClose])
+
+  if (!isOpen || !student) {
+    return null
+  }
+
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={!isRemoving ? onClose : undefined}
+      />
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="remove-student-title"
+        aria-describedby="remove-student-description"
+        className="relative z-10 mx-4 w-full max-w-md min-w-[500px] overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isRemoving}
+          className="absolute right-4 top-4 rounded-lg p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+          aria-label="Close remove student modal"
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        <div className="px-6 pb-4 pt-6 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 text-rose-600">
+            <AlertTriangle className="h-6 w-6" />
+          </div>
+
+          <h2
+            id="remove-student-title"
+            className="text-xl font-semibold text-slate-900"
+          >
+            Remove Student?
+          </h2>
+          <p
+            id="remove-student-description"
+            className="mt-2 text-sm leading-6 text-slate-600"
+          >
+            This will unenroll{" "}
+            <span className="font-semibold text-slate-900">
+              {student.firstName} {student.lastName}
+            </span>{" "}
+            from the class.
+          </p>
+        </div>
+
+        <div className="mx-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <p className="text-sm font-medium text-slate-800">
+            {student.firstName} {student.lastName}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">{student.email}</p>
+        </div>
+
+        <div className="flex gap-3 px-6 pb-6 pt-5">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isRemoving}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={isRemoving}
+            className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isRemoving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Removing...
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                Remove Student
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -824,19 +944,19 @@ export function AdminClassDetailPage() {
               <div className="min-w-0 flex-1 space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
                   {classInfo.isActive ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                    <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
                       <CheckCircle className="h-3.5 w-3.5" />
                       Active
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-xl border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+                    <span className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                       Archived
                     </span>
                   )}
 
-                  <div className="inline-flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <div className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                     <span>Class Code</span>
-                    <span className="font-mono text-sm tracking-[0.18em] text-slate-900">
+                    <span className="font-mono text-xs tracking-[0.14em] text-slate-900">
                       {classInfo.classCode}
                     </span>
                   </div>
@@ -878,8 +998,8 @@ export function AdminClassDetailPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="inline-flex min-w-0 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="inline-flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm shadow-slate-200/60">
                 <Avatar
                   src={classInfo.teacherAvatarUrl ?? undefined}
                   fallback={classTeacherInitials}
@@ -889,13 +1009,13 @@ export function AdminClassDetailPage() {
                 <span className="truncate">{classInfo.teacherName}</span>
               </div>
 
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60">
-                <Calendar className="h-4 w-4 text-sky-600" />
-                <span>{semesterLabel} - A.Y. {classInfo.academicYear}</span>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+                <Calendar className="h-3.5 w-3.5 text-sky-600" />
+                <span>{semesterLabel} - S.Y. {classInfo.academicYear}</span>
               </div>
 
-              <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm shadow-slate-200/60">
-                <Users className="h-4 w-4 text-teal-600" />
+              <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+                <Users className="h-3.5 w-3.5 text-teal-600" />
                 <span>{students.length} students</span>
               </div>
             </div>
@@ -938,7 +1058,7 @@ export function AdminClassDetailPage() {
                     <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                       Enrolled On
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                    <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                       Actions
                     </th>
                   </tr>
@@ -975,26 +1095,8 @@ export function AdminClassDetailPage() {
                             <span>{new Date(student.enrolledAt).toLocaleDateString()}</span>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          {studentPendingRemoval?.id === student.id ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="mr-2 text-xs font-medium text-rose-600">
-                                Confirm removal?
-                              </span>
-                              <button
-                                onClick={() => handleRemoveStudent(student.id)}
-                                className="inline-flex cursor-pointer items-center rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-rose-700"
-                              >
-                                Yes
-                              </button>
-                              <button
-                                onClick={() => setStudentPendingRemoval(null)}
-                                className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-                              >
-                                No
-                              </button>
-                            </div>
-                          ) : (
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-center">
                             <button
                               onClick={() => setStudentPendingRemoval(student)}
                               disabled={studentActionLoadingId === student.id}
@@ -1007,7 +1109,7 @@ export function AdminClassDetailPage() {
                                 <Trash2 className="h-4 w-4" />
                               )}
                             </button>
-                          )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -1128,6 +1230,28 @@ export function AdminClassDetailPage() {
           onSuccess={fetchClassData}
           classId={parsedClassId ?? 0}
           existingStudents={students}
+        />
+        <AdminRemoveStudentModal
+          isOpen={!!studentPendingRemoval}
+          isRemoving={
+            !!studentPendingRemoval &&
+            studentActionLoadingId === studentPendingRemoval.id
+          }
+          student={studentPendingRemoval}
+          onClose={() => {
+            if (studentActionLoadingId !== null) {
+              return
+            }
+
+            setStudentPendingRemoval(null)
+          }}
+          onConfirm={async () => {
+            if (!studentPendingRemoval) {
+              return
+            }
+
+            await handleRemoveStudent(studentPendingRemoval.id)
+          }}
         />
         {classPendingDeletion && (
           <AdminDeleteClassModal
