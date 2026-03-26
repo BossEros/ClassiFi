@@ -68,7 +68,6 @@ export interface EnrollmentFilterOptions extends PaginationOptions {
   classId?: number
   teacherId?: number
   studentId?: number
-  status?: "active" | "archived" | "all"
   semester?: number
   academicYear?: string
 }

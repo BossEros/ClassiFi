@@ -58,12 +58,7 @@ export class AdminEnrollmentService {
   async getAllEnrollments(
     options: EnrollmentFilterOptions,
   ): Promise<PaginatedResult<AdminEnrollmentListItem>> {
-    const { status, ...remainingOptions } = options
-    const normalizedStatus = status === "all" ? undefined : status
-    const result = await this.enrollmentRepo.getAllEnrollmentsFiltered({
-      ...remainingOptions,
-      status: normalizedStatus,
-    })
+    const result = await this.enrollmentRepo.getAllEnrollmentsFiltered(options)
 
     return {
       ...result,

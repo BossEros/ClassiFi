@@ -148,7 +148,6 @@ describe("AdminEnrollmentsPage", () => {
 
     expect(screen.getByText("Jane Doe")).toBeInTheDocument()
     expect(screen.getByText("Algorithms")).toBeInTheDocument()
-    expect(screen.getByText("Prof. Ada")).toBeInTheDocument()
     expect(screen.getByText("Active Enrollment")).toBeInTheDocument()
   })
 

@@ -250,7 +250,7 @@ export async function getRecentActivity(
 /**
  * Retrieves a paginated list of enrollment records across all classes.
  *
- * @param options - Filtering options including search, status, semester, and academic year.
+ * @param options - Filtering options including search, semester, and academic year.
  * @returns A paginated response object containing enrollment rows and metadata.
  */
 export async function getAllEnrollments(
@@ -261,7 +261,6 @@ export async function getAllEnrollments(
     classId?: number
     teacherId?: number
     studentId?: number
-    status?: string
     semester?: number
     academicYear?: string
   } = {},
@@ -273,7 +272,7 @@ export async function getAllEnrollments(
     classId: options.classId,
     teacherId: options.teacherId,
     studentId: options.studentId,
-    enrollmentStatus: options.status,    semesterNumber: options.semester,
+    semesterNumber: options.semester,
     academicYear: options.academicYear,
   })
 }

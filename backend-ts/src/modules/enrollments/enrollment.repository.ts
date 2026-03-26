@@ -183,7 +183,6 @@ export class EnrollmentRepository extends BaseRepository<
       classId,
       teacherId,
       studentId,
-      status,
       semester,
       academicYear,
     } = options
@@ -217,11 +216,6 @@ export class EnrollmentRepository extends BaseRepository<
       conditions.push(eq(users.id, studentId))
     }
 
-    if (status === "active") {
-      conditions.push(eq(classes.isActive, true))
-    } else if (status === "archived") {
-      conditions.push(eq(classes.isActive, false))
-    }
     if (semester !== undefined) {
       conditions.push(eq(classes.semester, semester))
     }

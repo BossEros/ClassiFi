@@ -162,7 +162,7 @@ export class NotEnrolledError extends ForbiddenError {
 
 export class AlreadyEnrolledError extends BadRequestError {
   constructor() {
-    super("You are already enrolled in this class")
+    super("This student is already enrolled in the selected class.")
     this.name = "AlreadyEnrolledError"
   }
 }

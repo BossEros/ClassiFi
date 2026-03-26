@@ -332,8 +332,6 @@ describe("adminService", () => {
         page: 1,
         limit: 10,
         search: "jane",
-        status: "active",
-
         semester: 1,
         academicYear: "2025-2026",
       })
@@ -345,8 +343,6 @@ describe("adminService", () => {
         classId: undefined,
         teacherId: undefined,
         studentId: undefined,
-        enrollmentStatus: "active",
-
         semesterNumber: 1,
         academicYear: "2025-2026",
       })

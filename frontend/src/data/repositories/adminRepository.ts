@@ -330,7 +330,6 @@ export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
   classId?: number
   teacherId?: number
   studentId?: number
-  enrollmentStatus?: string
   semesterNumber?: number
   academicYear?: string
 }): Promise<PaginatedResponse<AdminEnrollmentRecord>> {
@@ -348,8 +347,6 @@ export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
     urlQueryParams.set("teacherId", filterOptions.teacherId.toString())
   if (filterOptions.studentId)
     urlQueryParams.set("studentId", filterOptions.studentId.toString())
-  if (filterOptions.enrollmentStatus)
-    urlQueryParams.set("status", filterOptions.enrollmentStatus)
   if (filterOptions.semesterNumber)
     urlQueryParams.set("semester", filterOptions.semesterNumber.toString())
   if (filterOptions.academicYear)

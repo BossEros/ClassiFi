@@ -19,20 +19,19 @@ export function errorHandler(
   reply: FastifyReply,
 ): void {
   const statusCode = error instanceof ApiError ? error.statusCode : 500
-  const message = error.message || "Internal Server Error"
+  const clientFacingMessage =
+    error instanceof ApiError
+      ? error.message
+      : "Something went wrong. Please try again."
 
-  // Preserve current behavior: detailed logging in development
-  if (process.env.ENVIRONMENT === "development") {
-    logger.error("Request handling error", {
-      statusCode,
-      message,
-      stack: error.stack,
-    })
-  }
+  logger.error("Request handling error", {
+    statusCode,
+    message: error.message || "Internal Server Error",
+    stack: error.stack,
+  })
 
   reply.status(statusCode).send({
     success: false,
-    message,
-    error: process.env.ENVIRONMENT === "development" ? error.stack : undefined,
+    message: clientFacingMessage,
   })
 }

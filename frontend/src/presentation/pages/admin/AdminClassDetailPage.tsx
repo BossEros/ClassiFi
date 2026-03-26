@@ -23,6 +23,7 @@ import {
   X,
   XCircle,
 } from "lucide-react"
+import { convertToSingleLetterAbbr, formatTimeRange } from "@/presentation/constants/schedule.constants"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
@@ -598,10 +599,22 @@ function AdminRemoveStudentModal({
         </div>
 
         <div className="mx-6 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <p className="text-sm font-medium text-slate-800">
-            {student.firstName} {student.lastName}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">{student.email}</p>
+          <div className="flex items-center gap-3">
+            <Avatar
+              fallback={`${student.firstName[0] ?? "?"}${student.lastName[0] ?? ""}`}
+              src={student.avatarUrl ?? undefined}
+              size="sm"
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-slate-800">
+                {student.firstName} {student.lastName}
+              </p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <Mail className="h-3 w-3 shrink-0 text-slate-400" />
+                <p className="truncate text-xs text-slate-500">{student.email}</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="flex gap-3 px-6 pb-6 pt-5">
@@ -875,6 +888,10 @@ export function AdminClassDetailPage() {
   const semesterLabel =
     classInfo?.semester === 1 ? "1st Semester" : "2nd Semester"
 
+  const scheduleText = classInfo?.schedule.days.length
+    ? `${convertToSingleLetterAbbr(classInfo.schedule.days).join("")} ${formatTimeRange(classInfo.schedule.startTime, classInfo.schedule.endTime)}`
+    : null
+
   const dropdownWidthPx = 224
   const dropdownVerticalOffsetPx = 8
   const viewportPaddingPx = 8
@@ -1013,6 +1030,13 @@ export function AdminClassDetailPage() {
                 <Calendar className="h-3.5 w-3.5 text-sky-600" />
                 <span>{semesterLabel} - S.Y. {classInfo.academicYear}</span>
               </div>
+
+              {scheduleText && (
+                <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm shadow-slate-200/60">
+                  <Clock className="h-3.5 w-3.5 text-violet-500" />
+                  <span>{scheduleText}</span>
+                </div>
+              )}
 
               <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm shadow-slate-200/60">
                 <Users className="h-3.5 w-3.5 text-teal-600" />

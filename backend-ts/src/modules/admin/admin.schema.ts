@@ -234,7 +234,7 @@ export const EnrollmentFilterQuerySchema = PaginationQuerySchema.extend({
   classId: z.coerce.number().int().positive().optional(),
   teacherId: z.coerce.number().int().positive().optional(),
   studentId: z.coerce.number().int().positive().optional(),
-  status: z.enum(["active", "archived", "all"]).default("all"),  semester: z.coerce.number().int().min(1).max(MAX_SEMESTER).optional(),
+  semester: z.coerce.number().int().min(1).max(MAX_SEMESTER).optional(),
   academicYear: z.string().optional(),
 })
 export type EnrollmentFilterQuery = z.infer<typeof EnrollmentFilterQuerySchema>
