@@ -97,13 +97,11 @@ describe("AdminEnrollmentService", () => {
       const result = await adminEnrollmentService.getAllEnrollments({
         page: 1,
         limit: 20,
-        status: "all",
       })
 
       expect(mockEnrollmentRepo.getAllEnrollmentsFiltered).toHaveBeenCalledWith({
         page: 1,
         limit: 20,
-        status: undefined,
       })
       expect(result.data[0]?.teacherName).toBe("Teacher Name")
       expect(result.data[0]?.enrolledAt).toBe(enrolledAt.toISOString())

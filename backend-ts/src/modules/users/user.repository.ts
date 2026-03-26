@@ -1,4 +1,4 @@
-import { eq, or, ilike, and, desc, count } from "drizzle-orm"
+import { eq, or, ilike, and, desc, count, sql } from "drizzle-orm"
 import { users, type User, type NewUser } from "@/models/index.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
@@ -162,6 +162,7 @@ export class UserRepository extends BaseRepository<
           ilike(users.email, `%${search}%`),
           ilike(users.firstName, `%${search}%`),
           ilike(users.lastName, `%${search}%`),
+          sql`${users.firstName} || ' ' || ${users.lastName} ilike ${'%' + search + '%'}`,
         )!,
       )
     }

@@ -340,6 +340,7 @@ export class ClassRepository extends BaseRepository<
       Class & {
         studentCount: number
         teacherName?: string
+        teacherEmail?: string | null
         teacherAvatarUrl?: string | null
       }
     >
@@ -419,6 +420,7 @@ export class ClassRepository extends BaseRepository<
         isActive: classes.isActive,
         studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
         teacherName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+        teacherEmail: users.email,
         teacherAvatarUrl: users.avatarUrl,
       })
       .from(classes)
@@ -436,6 +438,7 @@ export class ClassRepository extends BaseRepository<
       data: data.map((r) => ({
         ...r,
         studentCount: Number(r.studentCount),
+        teacherEmail: r.teacherEmail ?? null,
         teacherAvatarUrl: r.teacherAvatarUrl ?? null,
       })),
       total,
@@ -452,7 +455,11 @@ export class ClassRepository extends BaseRepository<
   async getClassWithTeacher(
     classId: number,
   ): Promise<
-    (Class & { teacherName: string; teacherAvatarUrl?: string | null }) | undefined
+    (Class & {
+      teacherName: string
+      teacherEmail?: string | null
+      teacherAvatarUrl?: string | null
+    }) | undefined
   > {
     const results = await this.db
       .select({
@@ -467,6 +474,7 @@ export class ClassRepository extends BaseRepository<
         createdAt: classes.createdAt,
         isActive: classes.isActive,
         teacherName: sql<string>`COALESCE(CONCAT(${users.firstName}, ' ', ${users.lastName}), 'Unknown')`,
+        teacherEmail: users.email,
         teacherAvatarUrl: users.avatarUrl,
       })
       .from(classes)
@@ -475,7 +483,11 @@ export class ClassRepository extends BaseRepository<
       .limit(1)
 
     return results[0] as
-      | (Class & { teacherName: string; teacherAvatarUrl?: string | null })
+      | (Class & {
+          teacherName: string
+          teacherEmail?: string | null
+          teacherAvatarUrl?: string | null
+        })
       | undefined
   }
 

@@ -1,20 +1,17 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { GraduationCap, RefreshCw, UserPlus, XCircle } from "lucide-react"
+import { RefreshCw, UserPlus, XCircle } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
-import {
-  AdminEnrollmentFilters,
-  type EnrollmentStatusFilter,
-} from "@/presentation/components/admin/AdminEnrollmentFilters"
+import { AdminEnrollmentFilters } from "@/presentation/components/admin/AdminEnrollmentFilters"
 import { AdminEnrollmentTable } from "@/presentation/components/admin/AdminEnrollmentTable"
 import {
   AdminEnrollStudentModal,
   AdminRemoveEnrollmentModal,
   AdminTransferEnrollmentModal,
-} from "@/presentation/components/admin/AdminEnrollmentModals"
+} from "@/presentation/components/admin/enrollment-modals"
 import * as adminService from "@/business/services/adminService"
 import type { AdminEnrollmentRecord } from "@/business/services/adminService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
@@ -28,7 +25,6 @@ export default function AdminEnrollmentsPage() {
   const showToast = useToastStore((state) => state.showToast)
   const [enrollments, setEnrollments] = useState<AdminEnrollmentRecord[]>([])
   const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<EnrollmentStatusFilter>("all")
   const [semesterFilter, setSemesterFilter] = useState<number | "all">("all")
   const [academicYearFilter, setAcademicYearFilter] = useState("all")
   const [page, setPage] = useState(1)
@@ -55,12 +51,7 @@ export default function AdminEnrollmentsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [
-    academicYearFilter,
-    debouncedSearchQuery,
-    semesterFilter,
-    statusFilter,
-  ])
+  }, [academicYearFilter, debouncedSearchQuery, semesterFilter])
 
   const fetchEnrollments = useCallback(async () => {
     await executeRequest({
@@ -69,7 +60,6 @@ export default function AdminEnrollmentsPage() {
           page,
           limit: ENROLLMENT_PAGE_LIMIT,
           search: debouncedSearchQuery || undefined,
-          status: statusFilter,
           semester: semesterFilter === "all" ? undefined : semesterFilter,
           academicYear:
             academicYearFilter === "all" ? undefined : academicYearFilter,
@@ -87,7 +77,6 @@ export default function AdminEnrollmentsPage() {
     executeRequest,
     page,
     semesterFilter,
-    statusFilter,
   ])
 
   useEffect(() => {
@@ -177,19 +166,14 @@ export default function AdminEnrollmentsPage() {
     <DashboardLayout topBar={topBar}>
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-200 bg-sky-50 shadow-sm shadow-sky-100/70">
-              <GraduationCap className="h-7 w-7 text-sky-600" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-                Enrollment Management
-              </h1>
-              <p className="mt-2 text-sm text-slate-500">
-                Review enrollment activity across classes and handle routine adds, transfers, and removals in one place.
-                <span className="text-slate-400"> ({totalEnrollments} records)</span>
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+              Enrollment Management
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Review enrollment activity across classes and handle routine adds, transfers, and removals in one place.
+              <span className="text-slate-400"> ({totalEnrollments} records)</span>
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
@@ -222,11 +206,9 @@ export default function AdminEnrollmentsPage() {
 
         <AdminEnrollmentFilters
           searchQuery={searchQuery}
-          statusFilter={statusFilter}
           semesterFilter={semesterFilter}
           academicYearFilter={academicYearFilter}
           onSearchQueryChange={setSearchQuery}
-          onStatusFilterChange={setStatusFilter}
           onSemesterFilterChange={setSemesterFilter}
           onAcademicYearFilterChange={setAcademicYearFilter}
         />

@@ -24,6 +24,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
  */
 type ClassWithTeacherDTO = ClassDTO & {
   teacherName: string
+  teacherEmail: string | null
   teacherAvatarUrl: string | null
 }
 
@@ -62,6 +63,7 @@ export class AdminClassService {
       data: result.data.map((row) => ({
         ...toClassDTO(row, { studentCount: row.studentCount }),
         teacherName: row.teacherName || "Unknown",
+        teacherEmail: row.teacherEmail ?? null,
         teacherAvatarUrl: row.teacherAvatarUrl ?? null,
       })),
     }
@@ -83,6 +85,7 @@ export class AdminClassService {
     return {
       ...toClassDTO(result, { studentCount }),
       teacherName: result.teacherName || "Unknown",
+      teacherEmail: result.teacherEmail ?? null,
       teacherAvatarUrl: result.teacherAvatarUrl ?? null,
     }
   }

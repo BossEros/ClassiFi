@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, type MouseEvent as ReactMouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw, XCircle, Plus } from "lucide-react";
+import { RefreshCw, XCircle, Plus, Mail } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import * as adminService from "@/business/services/adminService";
@@ -68,7 +68,7 @@ function AdminClassesFilters({
     const currentYear = new Date().getFullYear()
 
     return [
-      { value: "all", label: "All A.Y." },
+      { value: "all", label: "All S.Y." },
       ...Array.from({ length: 4 }).map((_, index) => {
         const startYear = currentYear - index
         const endYear = startYear + 1
@@ -167,7 +167,7 @@ function AdminClassesFilters({
           >
             <div className="flex items-center gap-2">
               <span className="capitalize">
-                {academicYearFilter === "all" ? "All A.Y." : academicYearFilter}
+                {academicYearFilter === "all" ? "All S.Y." : academicYearFilter}
               </span>
             </div>
             <ChevronDown
@@ -292,10 +292,24 @@ interface AdminClassesTableProps {
 
 
 
-function getStatusBadgeStyle(isActive: boolean): string {
-  return isActive
-    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-    : "border-slate-200 bg-slate-100 text-slate-600"
+function getClassStatusDisplay(isActive: boolean): {
+  dotClassName: string
+  textClassName: string
+  label: string
+} {
+  if (isActive) {
+    return {
+      dotClassName: "bg-emerald-500",
+      textClassName: "text-emerald-700",
+      label: "Active",
+    }
+  }
+
+  return {
+    dotClassName: "bg-slate-400",
+    textClassName: "text-slate-500",
+    label: "Archived",
+  }
 }
 
 
@@ -314,6 +328,14 @@ function getOrdinalSuffix(value: number): string {
   }
 
   return "th"
+}
+
+function getShortSemesterLabel(semester: number): string {
+  return `${semester}${getOrdinalSuffix(semester)} Semester`
+}
+
+function getAcademicInfoLabel(selectedClass: AdminClass): string {
+  return `${getShortSemesterLabel(selectedClass.semester)} - S.Y. ${selectedClass.academicYear}`
 }
 
 
@@ -376,26 +398,34 @@ function AdminClassesTable({
 
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-300 bg-white shadow-md shadow-slate-200/80">
-           <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="overflow-x-auto">
+        <table className="w-full table-fixed border-collapse text-left">
+          <colgroup>
+            <col className="w-[28%]" />
+            <col className="w-[24%]" />
+            <col className="w-[20%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[8%]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-slate-300 bg-slate-200/85">
-              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[35%]">
+              <th className="px-6 py-5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Class Details
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[20%]">
+              <th className="px-6 py-5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Teacher
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[20%]">
-                Academic Info
+              <th className="px-6 py-5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
+                Semester &amp; Year
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[10%]">
+              <th className="px-6 py-5 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Students
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] w-[10%]">
+              <th className="px-6 py-5 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Status
               </th>
-              <th className="px-6 py-5 text-xs font-semibold text-slate-700 uppercase tracking-[0.12em] text-right w-[5%]">
+              <th className="px-6 py-5 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Actions
               </th>
             </tr>
@@ -428,17 +458,26 @@ function AdminClassesTable({
                 </tr>
               ))
             ) : classes.length > 0 ? (
-              classes.map((selectedClass) => (
-                <tr
-                  key={selectedClass.id}
-                  onClick={() => onRowClick(selectedClass.id)}
-                  className="group cursor-pointer transition-colors duration-200 hover:bg-slate-100"
-                >
+              classes.map((selectedClass) => {
+                const classStatusDisplay = getClassStatusDisplay(selectedClass.isActive)
+
+                return (
+                  <tr
+                    key={selectedClass.id}
+                    onClick={() => onRowClick(selectedClass.id)}
+                    className="group cursor-pointer transition-colors duration-200 hover:bg-slate-100"
+                  >
                   <td className="px-6 py-5">
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium text-slate-900 transition-colors group-hover:text-teal-700">
                           {selectedClass.className}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <BookOpen className="h-3 w-3 text-slate-400" />
+                        <p className="text-xs text-slate-500">
+                          {selectedClass.classCode}
                         </p>
                       </div>
                     </div>
@@ -455,24 +494,24 @@ function AdminClassesTable({
                         <span className="text-sm font-medium text-slate-700">
                           {selectedClass.teacherName}
                         </span>
+                        {selectedClass.teacherEmail ? (
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            <Mail className="h-3 w-3 text-slate-400" />
+                            <span className="text-xs text-slate-500">
+                              {selectedClass.teacherEmail}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
-                          {selectedClass.semester}
-                          {getOrdinalSuffix(selectedClass.semester)} Sem
-                        </span>
-                      </div>
-                      <p className="pl-1 text-[11px] text-slate-500">
-                        A.Y. {selectedClass.academicYear}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-slate-600">
+                      {getAcademicInfoLabel(selectedClass)}
+                    </p>
                   </td>
                   <td className="px-6 py-5">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center gap-2">
                       <Users2 className="h-4 w-4 text-cyan-600" strokeWidth={2.35} />
                       <span className="text-sm font-medium text-slate-700">
                         {selectedClass.studentCount}
@@ -480,11 +519,16 @@ function AdminClassesTable({
                     </div>
                   </td>
                   <td className="px-6 py-5">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadgeStyle(selectedClass.isActive)}`}
-                    >
-                      {selectedClass.isActive ? "Active" : "Archived"}
-                    </span>
+                    <div className="flex items-center justify-center gap-2">
+                      <div
+                        className={`h-2 w-2 rounded-full ${classStatusDisplay.dotClassName}`}
+                      />
+                      <span
+                        className={`text-[11px] font-medium ${classStatusDisplay.textClassName}`}
+                      >
+                        {classStatusDisplay.label}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-5 text-right">
                     <div className="relative inline-block">
@@ -508,8 +552,9 @@ function AdminClassesTable({
                       </button>
                     </div>
                   </td>
-                </tr>
-              ))
+                  </tr>
+                )
+              })
             ) : (
               <tr>
                 <td

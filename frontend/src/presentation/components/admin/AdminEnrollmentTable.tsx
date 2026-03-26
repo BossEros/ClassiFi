@@ -2,11 +2,10 @@ import { Avatar } from "@/presentation/components/ui/Avatar"
 import type { AdminEnrollmentRecord } from "@/business/services/adminService"
 import {
   ArrowRightLeft,
-  CalendarClock,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
-  GraduationCap,
   Loader2,
   Mail,
   Search,
@@ -26,22 +25,6 @@ interface AdminEnrollmentTableProps {
   onOpenTransferModal: (enrollment: AdminEnrollmentRecord) => void
   onOpenRemoveModal: (enrollment: AdminEnrollmentRecord) => void
   onOpenClassDetail: (classId: number) => void
-}
-
-function getOrdinalSuffix(value: number): string {
-  if (value === 1) return "st"
-  if (value === 2) return "nd"
-  if (value === 3) return "rd"
-
-  return "th"
-}
-
-function formatEnrollmentDate(enrolledAt: string): string {
-  return new Date(enrolledAt).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
 }
 
 function getEnrollmentStatusBadge(enrollment: AdminEnrollmentRecord): {
@@ -72,6 +55,18 @@ function getEnrollmentStatusBadge(enrollment: AdminEnrollmentRecord): {
   }
 }
 
+function getOrdinalSuffix(value: number): string {
+  if (value === 1) return "st"
+  if (value === 2) return "nd"
+  if (value === 3) return "rd"
+
+  return "th"
+}
+
+function getSemesterAndAcademicYearLabel(semester: number, academicYear: string): string {
+  return `${semester}${getOrdinalSuffix(semester)} Semester - ${academicYear}`
+}
+
 export function AdminEnrollmentTable({
   enrollments,
   isLoading,
@@ -90,32 +85,28 @@ export function AdminEnrollmentTable({
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-300 bg-slate-200/85">
-              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Student</th>
-              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Class</th>
-              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Teacher</th>
-              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Academic Info</th>
-              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Enrolled</th>
-              <th className="px-6 py-4 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Status</th>
-              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Actions</th>
+              <th className="px-6 py-4 align-middle text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Student</th>
+              <th className="px-10 py-4 align-middle text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Class</th>
+              <th className="px-6 py-4 align-middle text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Semester &amp; Year</th>
+              <th className="px-14 py-4 align-middle text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Status</th>
+              <th className="px-24 py-4 align-middle text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-300/70">
             {isLoading ? (
               Array.from({ length: 6 }).map((_, index) => (
                 <tr key={index} className="animate-pulse">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-slate-100" />
-                      <div className="space-y-2">
-                        <div className="h-4 w-36 rounded bg-slate-100" />
-                        <div className="h-3 w-28 rounded bg-slate-100" />
-                      </div>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-slate-100" />
+                        <div className="space-y-2">
+                          <div className="h-4 w-36 rounded bg-slate-100" />
+                          <div className="h-3 w-28 rounded bg-slate-100" />
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4"><div className="h-4 w-40 rounded bg-slate-100" /></td>
-                    <td className="px-6 py-4"><div className="h-4 w-28 rounded bg-slate-100" /></td>
                     <td className="px-6 py-4"><div className="h-4 w-32 rounded bg-slate-100" /></td>
-                  <td className="px-6 py-4"><div className="h-4 w-24 rounded bg-slate-100" /></td>
                   <td className="px-6 py-4"><div className="h-6 w-28 rounded-full bg-slate-100" /></td>
                   <td className="px-6 py-4">
                     <div className="ml-auto flex justify-end gap-2">
@@ -132,8 +123,8 @@ export function AdminEnrollmentTable({
 
                 return (
                   <tr key={enrollment.id} className="group transition-colors duration-200 hover:bg-slate-100">
-                    <td className="px-6 py-4 align-top">
-                      <div className="flex items-start gap-3">
+                    <td className="px-6 py-4 align-middle">
+                      <div className="flex items-center gap-3">
                         <Avatar
                           fallback={`${enrollment.studentFirstName[0] ?? "?"}${enrollment.studentLastName[0] ?? ""}`}
                           src={enrollment.studentAvatarUrl ?? undefined}
@@ -144,58 +135,44 @@ export function AdminEnrollmentTable({
                           <p className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-teal-700">
                             {enrollment.studentFirstName} {enrollment.studentLastName}
                           </p>
-                          <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                            <Mail className="h-3 w-3 shrink-0" />
-                            <span className="truncate">{enrollment.studentEmail}</span>
+                          <div className="mt-0.5 flex items-center gap-1.5">
+                            <Mail className="h-3 w-3 shrink-0 text-slate-400" />
+                            <p className="truncate text-xs text-slate-500">{enrollment.studentEmail}</p>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-6 py-4 align-middle">
                       <button
                         type="button"
                         onClick={() => onOpenClassDetail(enrollment.classId)}
                         aria-label={`Open class ${enrollment.className} details`}
-                        className="group/class flex cursor-pointer items-start gap-2 text-left"
+                        className="group/class flex cursor-pointer items-center gap-2 text-left"
                       >
                         <div>
                           <p className="text-sm font-medium text-slate-900 transition-colors group-hover/class:text-teal-700">
                             {enrollment.className}
                           </p>
-                          <p className="mt-1 text-xs font-mono text-slate-500">{enrollment.classCode}</p>
-                        </div>
-                        <ExternalLink className="mt-0.5 h-3.5 w-3.5 text-slate-400 transition-colors group-hover/class:text-teal-600" />
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <BookOpen className="h-3 w-3 text-slate-400" />
+                            <p className="text-xs font-mono text-slate-500">{enrollment.classCode}</p>
+                          </div>
+                          </div>
+                        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400 transition-colors group-hover/class:text-teal-600" />
                       </button>
                     </td>
-                    <td className="px-6 py-4 align-top">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-slate-900">{enrollment.teacherName}</p>
-                        <p className="mt-1 text-xs text-slate-500">Teacher ID: {enrollment.teacherId}</p>
-                      </div>
+                    <td className="px-6 py-4 align-middle">
+                      <p className="whitespace-nowrap text-xs text-slate-600">
+                        {getSemesterAndAcademicYearLabel(enrollment.semester, enrollment.academicYear)}
+                      </p>
                     </td>
-                    <td className="px-6 py-4 align-top">
-                      <div className="space-y-1 text-xs text-slate-600">
-                        <div className="flex items-center gap-1.5">
-                          <GraduationCap className="h-3.5 w-3.5 text-slate-400" />
-                          <span>Academic Year</span>
-                        </div>
-                        <p>{enrollment.semester}{getOrdinalSuffix(enrollment.semester)} Semester</p>
-                        <p>{enrollment.academicYear}</p>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 align-top">
-                      <div className="flex items-center gap-2 text-xs text-slate-600">
-                        <CalendarClock className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{formatEnrollmentDate(enrollment.enrolledAt)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-6 py-4 align-middle">
                       <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${enrollmentStatus.className}`}>
                         <StatusIcon className="h-3.5 w-3.5" />
                         {enrollmentStatus.label}
                       </span>
                     </td>
-                    <td className="px-6 py-4 align-top">
+                    <td className="px-6 py-4 align-middle">
                       <div className="flex justify-end gap-2">
                         <button
                           type="button"
@@ -220,7 +197,7 @@ export function AdminEnrollmentTable({
               })
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-16 text-center text-slate-500">
+                <td colSpan={5} className="px-6 py-16 text-center text-slate-500">
                   <div className="flex flex-col items-center gap-3">
                     <div className="rounded-full bg-slate-100 p-4">
                       <Search className="h-8 w-8 opacity-40" />
