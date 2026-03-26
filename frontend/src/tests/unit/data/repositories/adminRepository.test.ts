@@ -825,13 +825,12 @@ describe("adminRepository", () => {
         pageNumber: 1,
         itemsPerPage: 10,
         searchQuery: "jane",
-        enrollmentStatus: "active",
         semesterNumber: 1,
         academicYear: "2025-2026",
       })
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        "/admin/enrollments?page=1&limit=10&search=jane&status=active&semester=1&academicYear=2025-2026",
+        "/admin/enrollments?page=1&limit=10&search=jane&semester=1&academicYear=2025-2026",
       )
       expect(result.data).toEqual([mockEnrollmentRecord])
     })

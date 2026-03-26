@@ -417,7 +417,7 @@ function AdminClassesTable({
                 Teacher
               </th>
               <th className="px-6 py-5 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
-                Academic Info
+                Semester &amp; Year
               </th>
               <th className="px-6 py-5 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Students
