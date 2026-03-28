@@ -59,6 +59,27 @@ export function getPairOverallSimilarityRatio(pair: PairResponse): number {
 }
 
 /**
+ * Returns the pairs that meet the active minimum similarity threshold.
+ *
+ * @param pairs - Pairwise similarity results for an assignment.
+ * @param minimumSimilarityPercent - Minimum overall similarity percentage required for a pair to qualify.
+ * @returns The threshold-qualified pairs.
+ */
+export function getThresholdQualifiedPairs(
+  pairs: PairResponse[],
+  minimumSimilarityPercent: number,
+): PairResponse[] {
+  const minimumSimilarityRatio = Math.max(
+    0,
+    Math.min(1, minimumSimilarityPercent / 100),
+  )
+
+  return pairs.filter(
+    (pair) => getPairOverallSimilarityRatio(pair) >= minimumSimilarityRatio,
+  )
+}
+
+/**
  * Builds connected submission clusters from pairwise similarity results.
  * Pairs at or above the provided threshold become graph edges.
  * Any submissions connected through those edges are grouped into the same cluster.
@@ -71,12 +92,9 @@ export function buildSimilarityClusters(
   pairs: PairResponse[],
   minimumSimilarityPercent: number,
 ): SimilarityCluster[] {
-  const minimumSimilarityRatio = Math.max(
-    0,
-    Math.min(1, minimumSimilarityPercent / 100),
-  )
-  const eligiblePairs = pairs.filter(
-    (pair) => getPairOverallSimilarityRatio(pair) >= minimumSimilarityRatio,
+  const eligiblePairs = getThresholdQualifiedPairs(
+    pairs,
+    minimumSimilarityPercent,
   )
 
   if (eligiblePairs.length === 0) {

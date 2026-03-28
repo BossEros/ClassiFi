@@ -38,6 +38,7 @@ import {
   formatDeadline,
   isLateSubmission,
 } from "@/presentation/utils/dateUtils"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
@@ -106,7 +107,7 @@ function DeleteAssignmentModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
+          "relative w-full max-w-[448px] mx-auto p-6 flex-shrink-0",
           "rounded-2xl border border-slate-200 bg-white",
           "shadow-xl shadow-black/20",
           "animate-in fade-in-0 zoom-in-95 duration-200",
@@ -717,7 +718,7 @@ export function AssignmentSubmissionsPage() {
       <div className="space-y-6 max-w-[1600px]">
         <div className="flex flex-col gap-5 border-b border-slate-200 pb-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className={dashboardTheme.pageTitle}>
               {assignment.assignmentName}
             </h1>
 
