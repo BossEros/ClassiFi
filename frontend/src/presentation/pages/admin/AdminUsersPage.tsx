@@ -22,6 +22,7 @@ import { Shield, Power } from "lucide-react";
 import { adminEditUserFormSchema, type AdminEditUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { adminCreateUserFormSchema, type AdminCreateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
 // Inlined from src/presentation/components/admin/AdminDeleteUserModal.tsx
 interface AdminDeleteUserModalProps {
@@ -128,7 +129,7 @@ function AdminDeleteUserModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-md min-w-[450px] mx-4 p-6",
+          "relative w-full max-w-md mx-4 p-6",
           "rounded-3xl border border-rose-200 bg-white",
           "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",
@@ -520,7 +521,7 @@ function AdminEditUserModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md min-w-[450px] transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
+      <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold tracking-tight text-slate-900">
@@ -835,7 +836,7 @@ function AdminUserModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md min-w-[450px] transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
+      <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold tracking-tight text-slate-900">
@@ -1172,7 +1173,7 @@ export function AdminUsersPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className={dashboardTheme.pageTitle}>
               User Management
             </h1>
             <p className="mt-2 text-sm text-slate-500">

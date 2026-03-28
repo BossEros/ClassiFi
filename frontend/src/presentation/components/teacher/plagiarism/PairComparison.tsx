@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import type { FilePair, MatchFragment } from "./types"
 import { PairCodeEditor } from "./PairCodeEditor"
+import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
 
 interface PairComparisonProps {
   /** The file pair to compare */
@@ -33,6 +34,7 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
     null,
   )
   const isLight = variant === "light"
+  const isTabletOrBelow = useIsTabletOrBelow()
 
   return (
     <div
@@ -43,11 +45,11 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      {/* Side-by-side editors */}
+      {/* Side-by-side editors (stacked on mobile) */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: isTabletOrBelow ? "1fr" : "1fr 1fr",
           gap: "16px",
         }}
       >

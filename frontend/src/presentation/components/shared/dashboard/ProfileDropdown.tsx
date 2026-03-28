@@ -5,6 +5,21 @@ import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
 import type { User } from "@/business/models/auth/types"
 
+const DESKTOP_PROFILE_DROPDOWN_MEDIA_QUERY = "(min-width: 1024px)"
+
+function getIsDesktopViewport(): boolean {
+  if (typeof window === "undefined") {
+    return false
+  }
+
+  return window.matchMedia(DESKTOP_PROFILE_DROPDOWN_MEDIA_QUERY).matches
+}
+
+type CompatibleMediaQueryList = MediaQueryList & {
+  addListener?: (listener: (event: MediaQueryListEvent) => void) => void
+  removeListener?: (listener: (event: MediaQueryListEvent) => void) => void
+}
+
 interface ProfileDropdownProps {
   user: User | null
   userInitials: string
@@ -22,6 +37,9 @@ export function ProfileDropdown({
   children,
 }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(
+    getIsDesktopViewport,
+  )
   const containerRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
@@ -44,18 +62,55 @@ export function ProfileDropdown({
     }
   }, [isOpen])
 
+  useEffect(() => {
+    const desktopMediaQueryList = window.matchMedia(
+      DESKTOP_PROFILE_DROPDOWN_MEDIA_QUERY,
+    ) as CompatibleMediaQueryList
+
+    const syncDesktopViewportState = (matchesDesktopViewport: boolean) => {
+      setIsDesktopViewport(matchesDesktopViewport)
+    }
+
+    syncDesktopViewportState(desktopMediaQueryList.matches)
+
+    const handleDesktopViewportChange = (event: MediaQueryListEvent) => {
+      syncDesktopViewportState(event.matches)
+    }
+
+    if (desktopMediaQueryList.addEventListener) {
+      desktopMediaQueryList.addEventListener(
+        "change",
+        handleDesktopViewportChange,
+      )
+    } else {
+      desktopMediaQueryList.addListener?.(handleDesktopViewportChange)
+    }
+
+    return () => {
+      if (desktopMediaQueryList.removeEventListener) {
+        desktopMediaQueryList.removeEventListener(
+          "change",
+          handleDesktopViewportChange,
+        )
+      } else {
+        desktopMediaQueryList.removeListener?.(handleDesktopViewportChange)
+      }
+    }
+  }, [])
+
   const handleSettingsClick = () => {
     navigate("/dashboard/settings")
     setIsOpen(false)
   }
 
   const handleLogout = async () => {
+    setIsOpen(false)
     await logoutUser()
     navigate("/login")
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full cursor-pointer flex items-center gap-3 rounded-lg px-2 py-1.5 transition-colors text-gray-300 hover:text-white hover:bg-white/10"
@@ -69,12 +124,18 @@ export function ProfileDropdown({
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-2 w-48 rounded-lg border border-slate-700 bg-slate-800 shadow-lg",
-            "z-50 p-1",
+            "z-50 rounded-lg border border-slate-700 bg-slate-800 p-1 shadow-lg shadow-black/25",
+            isDesktopViewport
+              ? "fixed bottom-2 w-48"
+              : "absolute bottom-full left-0 right-0 mb-2 w-full",
           )}
-          style={{
-            left: `calc(var(--sidebar-width, 224px) + 8px)`,
-          }}
+          style={
+            isDesktopViewport
+              ? {
+                  left: `calc(var(--sidebar-width, 224px) + 8px)`,
+                }
+              : undefined
+          }
           role="menu"
           aria-orientation="vertical"
         >

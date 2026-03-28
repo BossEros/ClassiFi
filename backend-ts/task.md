@@ -118,3 +118,17 @@
 - [x] Add regression coverage for stale persisted hybrid values
 - [x] Run `npm run typecheck`
 - [ ] Run `npm test`
+
+---
+
+# Backend CI Test Failure Triage Checklist
+
+- [x] Read `AGENTS.md`
+- [x] Read `backend-ts/documentation.md`
+- [x] Reproduce the backend typecheck and lint commands locally
+- [x] Inspect the current backend Vitest config, CI workflow, and recently touched backend test files
+- [ ] Reproduce the backend CI test failure with an unsandboxed Vitest run
+- [x] Fix the backend regression if a failing test is confirmed
+- [x] Re-run `npm run typecheck`
+- [ ] Re-run `npm test`
+  `npm.cmd test` remains blocked in this sandbox by Vite/Vitest `spawn EPERM`, but the broken PR-side plagiarism tests were corrected to match the current library contract.

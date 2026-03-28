@@ -18,6 +18,7 @@ import * as React from "react";
 import { cn } from "@/shared/utils/cn";
 import { Avatar } from "@/presentation/components/ui/Avatar";
 import { AlertTriangle, X, AlertCircle } from "lucide-react";
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
 // Inlined from src/presentation/components/admin/AdminClassesFilters.tsx
 type StatusFilter = "all" | "active" | "archived"
@@ -55,11 +56,11 @@ function AdminClassesFilters({
   semesterFilter,
   academicYearFilter,
   onSearchQueryChange,
-  onStatusFilterChange,
+  onStatusFilterChange,
   onSemesterFilterChange,
   onAcademicYearFilterChange,
 }: AdminClassesFiltersProps) {
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [showSemesterDropdown, setShowSemesterDropdown] = useState(false)
   const [showAcademicYearDropdown, setShowAcademicYearDropdown] =
     useState(false)
@@ -81,7 +82,7 @@ function AdminClassesFilters({
   }, [])
 
   useDocumentClick(() => {
-    setShowStatusDropdown(false)
+    setShowStatusDropdown(false)
     setShowSemesterDropdown(false)
     setShowAcademicYearDropdown(false)
   })
@@ -105,7 +106,7 @@ function AdminClassesFilters({
             onClick={(event) => {
               event.stopPropagation()
               setShowSemesterDropdown(!showSemesterDropdown)
-              setShowStatusDropdown(false)
+              setShowStatusDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
             className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -160,7 +161,7 @@ function AdminClassesFilters({
             onClick={(event) => {
               event.stopPropagation()
               setShowAcademicYearDropdown(!showAcademicYearDropdown)
-              setShowStatusDropdown(false)
+              setShowStatusDropdown(false)
               setShowSemesterDropdown(false)
             }}
             className="cursor-pointer flex min-w-[150px] items-center justify-between gap-2 rounded-xl border border-slate-400 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-md shadow-slate-200/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-500 hover:bg-slate-100 hover:text-slate-900"
@@ -210,7 +211,7 @@ function AdminClassesFilters({
           <button
             onClick={(event) => {
               event.stopPropagation()
-              setShowStatusDropdown(!showStatusDropdown)
+              setShowStatusDropdown(!showStatusDropdown)
               setShowSemesterDropdown(false)
               setShowAcademicYearDropdown(false)
             }}
@@ -751,7 +752,7 @@ function AdminDeleteClassModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-md min-w-[500px] mx-4 p-6",
+          "relative w-full max-w-md mx-4 p-6",
           "rounded-3xl border border-rose-200 bg-white",
           "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",
@@ -1136,7 +1137,7 @@ export function AdminClassesPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className={dashboardTheme.pageTitle}>
               Class Management
             </h1>
             <p className="mt-2 text-sm text-slate-500">

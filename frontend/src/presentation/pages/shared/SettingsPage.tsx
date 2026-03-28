@@ -54,6 +54,7 @@ import {
 } from "@/presentation/schemas/auth/authSchemas"
 import { Toggle } from "@/presentation/components/ui/Toggle"
 import { updateNotificationPreferences } from "@/business/services/userService"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
 const LIGHT_SURFACE_CARD_CLASSES =
   "border-slate-300 bg-white shadow-md shadow-slate-200/70"
@@ -215,7 +216,7 @@ function AvatarUploadModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[540px] mx-4 p-6 shrink-0",
+          "relative w-[calc(100%-2rem)] max-w-[540px] mx-4 p-6 shrink-0",
           LIGHT_MODAL_SHELL_CLASSES,
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
@@ -510,7 +511,7 @@ export function ChangePasswordModal({
 
       <div
         className={cn(
-          "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[480px] mx-4 p-6 shrink-0",
+          "relative w-[calc(100%-2rem)] max-w-[480px] mx-4 p-6 shrink-0",
           LIGHT_MODAL_SHELL_CLASSES,
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
@@ -846,7 +847,7 @@ export function DeleteAccountModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-[calc(100%-2rem)] min-w-[320px] max-w-[480px] mx-4 p-6 shrink-0",
+          "relative w-[calc(100%-2rem)] max-w-[480px] mx-4 p-6 shrink-0",
           "rounded-2xl border border-rose-200 bg-white shadow-2xl shadow-rose-200/50",
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
@@ -1212,10 +1213,10 @@ export function SettingsPage() {
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          <h1 className={dashboardTheme.pageTitle}>
             Account Settings
           </h1>
-          <p className="mt-2 text-base text-slate-500">
+          <p className={dashboardTheme.pageSubtitle}>
             Manage your profile information and preferences.
           </p>
         </div>

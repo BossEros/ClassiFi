@@ -229,18 +229,18 @@ export function SimilarityGraphView({
             {visibleNodes.length === 0 ? (
               <div className="flex h-full min-h-[560px] w-full items-center justify-center px-4 py-10 sm:px-8 lg:px-10">
                 <div
-                  className="max-w-full rounded-[32px] border border-white/80 bg-white/88 px-6 py-10 text-center shadow-2xl shadow-slate-200/70 backdrop-blur-sm sm:px-10"
+                  className="max-w-full rounded-[32px] border border-white/80 bg-white/88 px-6 py-10 text-center sm:px-10"
                   style={{ width: emptyStatePanelWidthPx }}
                 >
                   <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-300/60">
                     <Info className="h-6 w-6" />
                   </div>
 
-                  <h3 className="mx-auto mt-5 max-w-2xl text-balance text-xl font-semibold text-slate-900">
+                  <h3 className="mx-auto mt-5 text-balance text-xl font-semibold text-slate-900">
                     No nodes are visible at this threshold
                   </h3>
 
-                  <p className="mx-auto mt-3 max-w-2xl text-pretty text-sm leading-6 text-slate-600 sm:text-[15px]">
+                  <p className="mx-auto mt-3 text-pretty text-sm leading-6 text-slate-600 sm:text-[15px]">
                     Lower the threshold or enable singleton nodes to inspect the
                     available submissions in this similarity result set.
                   </p>

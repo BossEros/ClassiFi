@@ -4,7 +4,11 @@ import type { PairResponse } from "@/business/services/plagiarismService"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
-import { getPairOverallSimilarityRatio, normalizeSimilarityToRatio } from "@/presentation/utils/plagiarismClusterUtils"
+import {
+  getPairOverallSimilarityRatio,
+  getThresholdQualifiedPairs,
+  normalizeSimilarityToRatio,
+} from "@/presentation/utils/plagiarismClusterUtils"
 import {
   getNormalizedLongestRatio,
   getNormalizedOverlapRatio,
@@ -25,8 +29,6 @@ interface PairwiseTriageTableProps {
   pairs: PairResponse[]
   /** Triggered when a row or compare action is selected. */
   onPairSelect: (pair: PairResponse) => void
-  /** Optional callback triggered when filtered pair count changes. */
-  onFilteredCountChange?: (count: number) => void
   /** Optional callback triggered when minimum similarity threshold changes. */
   onMinimumSimilarityPercentChange?: (minimumSimilarityPercent: number) => void
   /** Optional externally controlled minimum similarity threshold. */
@@ -143,7 +145,6 @@ function QualitativeSignalBadge({
 export function PairwiseTriageTable({
   pairs,
   onPairSelect,
-  onFilteredCountChange,
   onMinimumSimilarityPercentChange,
   minimumSimilarityPercent,
   showThresholdControl = true,
@@ -160,13 +161,13 @@ export function PairwiseTriageTable({
   const effectiveMinimumSimilarityPercent =
     minimumSimilarityPercent ?? internalMinimumSimilarityPercent
 
-  const filteredAndSortedPairs = useMemo(() => {
-    const filteredPairs = pairs.filter((pair) => {
-      const pairSimilarityPercent = getPairOverallSimilarityRatio(pair) * 100
-      return pairSimilarityPercent >= effectiveMinimumSimilarityPercent
-    })
+  const thresholdQualifiedPairs = useMemo(
+    () => getThresholdQualifiedPairs(pairs, effectiveMinimumSimilarityPercent),
+    [effectiveMinimumSimilarityPercent, pairs],
+  )
 
-    return [...filteredPairs].sort((leftPair, rightPair) => {
+  const filteredAndSortedPairs = useMemo(() => {
+    return [...thresholdQualifiedPairs].sort((leftPair, rightPair) => {
       let comparisonValue = 0
 
       switch (sortKey) {
@@ -199,15 +200,7 @@ export function PairwiseTriageTable({
 
       return sortOrder === "desc" ? -comparisonValue : comparisonValue
     })
-  }, [effectiveMinimumSimilarityPercent, pairs, sortKey, sortOrder])
-
-  useEffect(() => {
-    if (!onFilteredCountChange) {
-      return
-    }
-
-    onFilteredCountChange(filteredAndSortedPairs.length)
-  }, [filteredAndSortedPairs.length, onFilteredCountChange])
+  }, [sortKey, sortOrder, thresholdQualifiedPairs])
 
   useEffect(() => {
     if (!onMinimumSimilarityPercentChange || isControlledThreshold) {

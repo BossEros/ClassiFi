@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { NavLink } from "react-router-dom"
+import { useState, useEffect, useCallback } from "react"
+import { NavLink, useLocation } from "react-router-dom"
 import {
   Home,
   BookOpen,
@@ -18,6 +18,22 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { ProfileDropdown } from "./ProfileDropdown"
 import type { NavigationItem } from "@/business/models/dashboard/types"
+import type { User } from "@/shared/types/auth"
+
+const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 1024px)"
+
+function getIsDesktopViewport(): boolean {
+  if (typeof window === "undefined") {
+    return false
+  }
+
+  return window.matchMedia(DESKTOP_SIDEBAR_MEDIA_QUERY).matches
+}
+
+type CompatibleMediaQueryList = MediaQueryList & {
+  addListener?: (listener: (event: MediaQueryListEvent) => void) => void
+  removeListener?: (listener: (event: MediaQueryListEvent) => void) => void
+}
 
 const teacherNavigationItems = [
   { id: "home", label: "Dashboard", path: "/dashboard", icon: Home },
@@ -109,6 +125,12 @@ interface SidebarNavItemProps {
   isCollapsed?: boolean
 }
 
+interface SidebarContentProps {
+  isCollapsed: boolean
+  onToggleCollapse?: () => void
+  user: User | null
+}
+
 function SidebarNavItem({
   item,
   onClick,
@@ -146,45 +168,156 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
 }: SidebarProps) {
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
   const user = useAuthStore((state) => state.user)
+  const location = useLocation()
+  const sidebarInstanceKey = `${location.key}:${location.pathname}${location.search}${location.hash}`
+
+  return (
+    <SidebarContent
+      key={sidebarInstanceKey}
+      isCollapsed={isCollapsed}
+      onToggleCollapse={onToggleCollapse}
+      user={user}
+    />
+  )
+}
+
+function SidebarContent({
+  isCollapsed,
+  onToggleCollapse,
+  user,
+}: SidebarContentProps) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isDesktopViewport, setIsDesktopViewport] = useState(
+    getIsDesktopViewport,
+  )
+  const shouldRenderCollapsedDesktopSidebar =
+    isCollapsed && isDesktopViewport
+
+  const closeMobileSidebar = useCallback(() => {
+    setIsMobileOpen(false)
+  }, [])
+
+  const toggleMobileSidebar = useCallback(() => {
+    setIsMobileOpen((previousIsMobileOpen) => !previousIsMobileOpen)
+  }, [])
+
+  // Close sidebar on Escape key
+  const handleEscapeKey = useCallback((event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      closeMobileSidebar()
+    }
+  }, [closeMobileSidebar])
+
+  useEffect(() => {
+    if (isMobileOpen) {
+      document.addEventListener("keydown", handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscapeKey)
+    }
+  }, [isMobileOpen, handleEscapeKey])
+
+  useEffect(() => {
+    const desktopMediaQueryList = window.matchMedia(
+      DESKTOP_SIDEBAR_MEDIA_QUERY,
+    ) as CompatibleMediaQueryList
+
+    const syncDesktopViewportState = (matchesDesktopViewport: boolean) => {
+      setIsDesktopViewport(matchesDesktopViewport)
+
+      if (matchesDesktopViewport) {
+        closeMobileSidebar()
+      }
+    }
+
+    syncDesktopViewportState(desktopMediaQueryList.matches)
+
+    const handleDesktopViewportChange = (event: MediaQueryListEvent) => {
+      syncDesktopViewportState(event.matches)
+    }
+
+    if (desktopMediaQueryList.addEventListener) {
+      desktopMediaQueryList.addEventListener(
+        "change",
+        handleDesktopViewportChange,
+      )
+    } else {
+      desktopMediaQueryList.addListener?.(handleDesktopViewportChange)
+    }
+
+    return () => {
+      if (desktopMediaQueryList.removeEventListener) {
+        desktopMediaQueryList.removeEventListener(
+          "change",
+          handleDesktopViewportChange,
+        )
+      } else {
+        desktopMediaQueryList.removeListener?.(handleDesktopViewportChange)
+      }
+    }
+  }, [closeMobileSidebar])
+
+  useEffect(() => {
+    if (!isMobileOpen) {
+      return
+    }
+
+    const previousBodyOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow
+    }
+  }, [isMobileOpen])
 
   return (
     <>
       {/* Mobile menu button */}
       <button
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-colors shadow-lg"
-        aria-label="Toggle menu"
+        onClick={toggleMobileSidebar}
+        className={cn(
+          "fixed left-3 top-3 z-[70] flex h-11 w-11 items-center justify-center rounded-lg border shadow-lg backdrop-blur-sm transition-all duration-200 lg:hidden",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FCFDFD]",
+          isMobileOpen
+            ? "border-slate-700 bg-slate-900 text-white shadow-slate-950/35 hover:bg-slate-800"
+            : "border-slate-300/90 bg-white/95 text-slate-800 shadow-slate-300/80 hover:border-slate-400 hover:bg-white",
+        )}
+        aria-label={isMobileOpen ? "Close menu" : "Open menu"}
+        aria-expanded={isMobileOpen}
+        aria-controls="dashboard-sidebar"
       >
         {isMobileOpen ? (
-          <X className="w-5 h-5" />
+          <X className="h-5 w-5" />
         ) : (
-          <Menu className="w-5 h-5" />
+          <Menu className="h-5 w-5" />
         )}
       </button>
 
       {/* Sidebar */}
       <aside
+        id="dashboard-sidebar"
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-40",
-          "h-full bg-[#11211F] backdrop-blur-xl",
-          "flex flex-col relative",
+          "fixed inset-y-0 left-0 z-[60] lg:static",
+          "relative flex h-full w-72 flex-col bg-[#11211F] shadow-2xl backdrop-blur-xl lg:shadow-none",
           "transform transition-all duration-300 ease-in-out lg:transform-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-          isCollapsed ? "lg:w-16" : "w-56",
+          shouldRenderCollapsedDesktopSidebar ? "lg:w-16" : "lg:w-56",
         )}
         style={{
-          "--sidebar-width": isCollapsed ? "64px" : "224px",
+          "--sidebar-width": shouldRenderCollapsedDesktopSidebar
+            ? "64px"
+            : "224px",
         } as React.CSSProperties}
       >
         <div
           className={cn(
             "h-16 bg-[#11211F] backdrop-blur-xl border-b border-white/10 flex items-center justify-center shrink-0 transition-all duration-300",
-            isCollapsed ? "px-2" : "px-4",
+            shouldRenderCollapsedDesktopSidebar ? "px-2" : "px-4",
           )}
         >
-          {isCollapsed ? (
+          {shouldRenderCollapsedDesktopSidebar ? (
             onToggleCollapse ? (
               <button
                 onClick={onToggleCollapse}
@@ -239,8 +372,8 @@ export function Sidebar({
             <SidebarNavItem
               key={item.id}
               item={item}
-              onClick={() => setIsMobileOpen(false)}
-              isCollapsed={isCollapsed}
+              onClick={closeMobileSidebar}
+              isCollapsed={shouldRenderCollapsedDesktopSidebar}
             />
           ))}
         </nav>
@@ -252,7 +385,12 @@ export function Sidebar({
               user={user}
               userInitials={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()}
             >
-              <div className={cn("flex items-center gap-2 min-w-0", isCollapsed && "lg:justify-center")}>
+              <div
+                className={cn(
+                  "flex items-center gap-2 min-w-0",
+                  shouldRenderCollapsedDesktopSidebar && "lg:justify-center",
+                )}
+              >
                 <Avatar
                   size="sm"
                   src={user.avatarUrl}
@@ -260,7 +398,12 @@ export function Sidebar({
                   alt={`${user.firstName} ${user.lastName}`}
                   className="border border-slate-200 flex-shrink-0"
                 />
-                <div className={cn("hidden text-left sm:block min-w-0", isCollapsed && "lg:hidden")}>
+                <div
+                  className={cn(
+                    "min-w-0 text-left",
+                    shouldRenderCollapsedDesktopSidebar && "lg:hidden",
+                  )}
+                >
                   <p className="text-sm font-semibold text-slate-100 truncate">
                     {user.firstName}
                   </p>
@@ -277,8 +420,8 @@ export function Sidebar({
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 z-[50] bg-slate-950/55 backdrop-blur-[1px] lg:hidden"
+          onClick={closeMobileSidebar}
           aria-hidden="true"
         />
       )}

@@ -31,6 +31,7 @@ import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { useAuthStore } from "@/shared/store/useAuthStore"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import {
   addStudentToClass,
   archiveClass,
@@ -347,7 +348,7 @@ function AdminDeleteClassModal({
       />
 
       <div
-        className="relative mx-4 w-full max-w-md min-w-[500px] rounded-3xl border border-rose-200 bg-white p-6 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative mx-4 w-full max-w-md rounded-3xl border border-rose-200 bg-white p-6 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="delete-class-title"
@@ -562,7 +563,7 @@ function AdminRemoveStudentModal({
         aria-modal="true"
         aria-labelledby="remove-student-title"
         aria-describedby="remove-student-description"
-        className="relative z-10 mx-4 w-full max-w-md min-w-[500px] overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative z-10 mx-4 w-full max-w-md overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -980,7 +981,7 @@ export function AdminClassDetailPage() {
                 </div>
 
                 <div className="space-y-3">
-                  <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+                  <h1 className={dashboardTheme.pageTitle}>
                     {classInfo.className}
                   </h1>
                   {classInfo.description ? (

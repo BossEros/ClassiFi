@@ -36,10 +36,12 @@ import {
 } from "@/business/services/plagiarismService"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
 import type { AssignmentDetail } from "@/business/models/assignment/types"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
+import { getThresholdQualifiedPairs } from "@/presentation/utils/plagiarismClusterUtils"
 
 interface LocationState {
   results: AnalyzeResponse
@@ -72,7 +74,6 @@ function detectLanguage(filename: string): string {
     kt: "kotlin",
     scala: "scala",
   }
-
   return extensionMap[extension] || "plaintext"
 }
 
@@ -114,9 +115,6 @@ export function SimilarityResultsPage() {
   const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
   const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [detailsError, setDetailsError] = useState<string | null>(null)
-  const [filteredPairCount, setFilteredPairCount] = useState(
-    () => locationState?.results?.pairs.length ?? 0,
-  )
   const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(75)
   const [showSingletons, setShowSingletons] = useState(true)
   const [comparisonScrollToken, setComparisonScrollToken] = useState(0)
@@ -133,7 +131,6 @@ export function SimilarityResultsPage() {
   useEffect(() => {
     if (locationState?.results) {
       setResults(locationState.results)
-      setFilteredPairCount(locationState.results.pairs.length)
     }
   }, [locationState])
 
@@ -296,6 +293,17 @@ export function SimilarityResultsPage() {
     return detectLanguage(pairDetails.leftFile.filename)
   }, [pairDetails])
 
+  const suspiciousPairCount = useMemo(() => {
+    if (!results) {
+      return 0
+    }
+
+    return getThresholdQualifiedPairs(
+      results.pairs,
+      minimumSimilarityPercent,
+    ).length
+  }, [minimumSimilarityPercent, results])
+
   const breadcrumbItems = [
     { label: "Classes", to: "/dashboard/classes" },
     ...(assignment
@@ -350,10 +358,10 @@ export function SimilarityResultsPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      <div className="max-w-[1600px] space-y-6">
+      <div className="max-w-full xl:max-w-[1600px] space-y-6">
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-start md:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className={dashboardTheme.pageTitle}>
               Similarity Analysis Results
             </h1>
             <p className="mt-2 text-sm text-slate-500">
@@ -393,8 +401,8 @@ export function SimilarityResultsPage() {
           />
 
           <SummaryStatCard
-            label="Suspicious"
-            value={filteredPairCount}
+            label="Suspicious Pair"
+            value={suspiciousPairCount}
             icon={AlertTriangle}
             variant="light"
             className="border-slate-300 shadow-md shadow-slate-200/70"
@@ -444,7 +452,6 @@ export function SimilarityResultsPage() {
             <PairwiseTriageTable
               pairs={results.pairs}
               onPairSelect={handleViewDetails}
-              onFilteredCountChange={setFilteredPairCount}
               minimumSimilarityPercent={minimumSimilarityPercent}
               showThresholdControl={false}
               selectedPairId={selectedPair?.id ?? null}

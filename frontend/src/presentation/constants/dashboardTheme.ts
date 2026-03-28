@@ -1,6 +1,6 @@
 export const dashboardTheme = {
-  pageTitle: "text-3xl font-semibold tracking-tight text-slate-900",
-  pageSubtitle: "mt-1 text-sm text-slate-500",
+  pageTitle: "text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl",
+  pageSubtitle: "mt-2 text-sm text-slate-500 sm:text-base",
   sectionTitle: "text-lg font-semibold tracking-tight text-slate-800",
   divider: "h-px bg-slate-200",
   cardSurface: "rounded-2xl border border-slate-200 bg-white",

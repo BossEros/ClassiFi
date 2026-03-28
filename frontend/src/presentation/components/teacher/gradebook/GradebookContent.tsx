@@ -131,103 +131,150 @@ function GradebookTable({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[800px]">
-        <thead className="sticky top-0 z-10">
-          <tr
-            className={`border-b ${variant === "light" ? "border-slate-200 bg-slate-100/95" : "border-white/10 bg-gray-800/80 backdrop-blur-sm"}`}
-          >
-            <th
-              className={`sticky left-0 z-20 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-slate-100/95 text-slate-500" : "bg-gray-800/95 backdrop-blur-sm text-gray-400"}`}
-            >
-              Student
-            </th>
-            {assignments.map((assignment) => (
-              <th
-                key={assignment.id}
-                className={`px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] min-w-[100px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
-              >
-                <div className="flex flex-col items-center gap-1">
-                  <span
-                    className="truncate max-w-[120px]"
-                    title={assignment.name}
-                  >
-                    {assignment.name}
-                  </span>
-                  <span
-                    className={`font-normal normal-case ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
-                  >
-                    /{assignment.totalScore}
-                  </span>
-                </div>
-              </th>
-            ))}
-            <th
-              className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] min-w-[80px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
-            >
-              Average
-            </th>
-          </tr>
-        </thead>
-        <tbody
-          className={variant === "light" ? "divide-y divide-slate-200" : "divide-y divide-white/5"}
-        >
-          {students.map((student) => {
-            const average = calculateStudentAverage(student.grades)
+    <>
+      {/* Mobile card layout */}
+      <div className="lg:hidden divide-y divide-slate-200">
+        {students.map((student) => {
+          const average = calculateStudentAverage(student.grades)
 
-            return (
-              <tr
-                key={student.id}
-                className={`transition-colors ${variant === "light" ? "hover:bg-slate-50" : "hover:bg-white/5"}`}
-              >
-                <td
-                  className={`sticky left-0 z-10 px-4 py-3 w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-white" : "border-r border-white/5 bg-gray-900/95 backdrop-blur-sm"}`}
-                >
-                  <div>
-                    <p
-                      className={`truncate text-sm font-medium ${variant === "light" ? "text-slate-800" : "text-white"}`}
-                      title={student.name}
-                    >
-                      {student.name}
-                    </p>
-                  </div>
-                </td>
+          return (
+            <div key={`mobile-${student.id}`} className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className={`text-sm font-semibold ${variant === "light" ? "text-slate-800" : "text-white"}`}>
+                  {student.name}
+                </p>
+                {average !== null ? (
+                  <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded text-xs font-semibold ${getAverageColorClass(average, variant)}`}>
+                    Avg: {average}%
+                  </span>
+                ) : (
+                  <span className={`text-xs ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}>
+                    No grades
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2">
                 {assignments.map((assignment) => {
-                  const grade = student.grades.find(
-                    (g) => g.assignmentId === assignment.id,
-                  )
+                  const grade = student.grades.find((g) => g.assignmentId === assignment.id)
 
                   return (
-                    <td key={assignment.id} className="px-3 py-3 text-center">
-                      <GradeCell
-                        grade={grade ?? null}
-                        totalScore={assignment.totalScore}
-                        variant={variant}
-                      />
-                    </td>
+                    <div
+                      key={assignment.id}
+                      className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${variant === "light" ? "bg-slate-50 border border-slate-200" : "bg-white/5"}`}
+                      title={assignment.name}
+                    >
+                      <span className={`truncate max-w-[80px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}>
+                        {assignment.name}
+                      </span>
+                      <GradeCell grade={grade ?? null} totalScore={assignment.totalScore} variant={variant} />
+                    </div>
                   )
                 })}
-                <td className="px-4 py-3 text-center">
-                  {average !== null ? (
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table layout */}
+      <div className="hidden lg:block overflow-x-auto">
+        <table className="w-full">
+          <thead className="sticky top-0 z-10">
+            <tr
+              className={`border-b ${variant === "light" ? "border-slate-200 bg-slate-100/95" : "border-white/10 bg-gray-800/80 backdrop-blur-sm"}`}
+            >
+              <th
+                className={`sticky left-0 z-20 px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-slate-100/95 text-slate-500" : "bg-gray-800/95 backdrop-blur-sm text-gray-400"}`}
+              >
+                Student
+              </th>
+              {assignments.map((assignment) => (
+                <th
+                  key={assignment.id}
+                  className={`px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] min-w-[100px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+                >
+                  <div className="flex flex-col items-center gap-1">
                     <span
-                      className={`inline-flex items-center justify-center w-12 h-8 rounded text-sm font-medium ${getAverageColorClass(average, variant)}`}
+                      className="truncate max-w-[120px]"
+                      title={assignment.name}
                     >
-                      {average}%
+                      {assignment.name}
                     </span>
-                  ) : (
                     <span
-                      className={`text-sm ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
+                      className={`font-normal normal-case ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
                     >
-                      -
+                      /{assignment.totalScore}
                     </span>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+                  </div>
+                </th>
+              ))}
+              <th
+                className={`px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] min-w-[80px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+              >
+                Average
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            className={variant === "light" ? "divide-y divide-slate-200" : "divide-y divide-white/5"}
+          >
+            {students.map((student) => {
+              const average = calculateStudentAverage(student.grades)
+
+              return (
+                <tr
+                  key={student.id}
+                  className={`transition-colors ${variant === "light" ? "hover:bg-slate-50" : "hover:bg-white/5"}`}
+                >
+                  <td
+                    className={`sticky left-0 z-10 px-4 py-3 w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-white" : "border-r border-white/5 bg-gray-900/95 backdrop-blur-sm"}`}
+                  >
+                    <div>
+                      <p
+                        className={`truncate text-sm font-medium ${variant === "light" ? "text-slate-800" : "text-white"}`}
+                        title={student.name}
+                      >
+                        {student.name}
+                      </p>
+                    </div>
+                  </td>
+                  {assignments.map((assignment) => {
+                    const grade = student.grades.find(
+                      (g) => g.assignmentId === assignment.id,
+                    )
+
+                    return (
+                      <td key={assignment.id} className="px-3 py-3 text-center">
+                        <GradeCell
+                          grade={grade ?? null}
+                          totalScore={assignment.totalScore}
+                          variant={variant}
+                        />
+                      </td>
+                    )
+                  })}
+                  <td className="px-4 py-3 text-center">
+                    {average !== null ? (
+                      <span
+                        className={`inline-flex items-center justify-center w-12 h-8 rounded text-sm font-medium ${getAverageColorClass(average, variant)}`}
+                      >
+                        {average}%
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-sm ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}
+                      >
+                        -
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
 

@@ -43,7 +43,7 @@ export class Report {
    * Get fragments for a specific pair.
    */
   public getFragments(pair: Pair): Fragment[] {
-    return pair.buildFragments()
+    return pair.buildFragments(this.options.minFragmentLength)
   }
 
   /**

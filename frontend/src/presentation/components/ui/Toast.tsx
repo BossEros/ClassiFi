@@ -87,7 +87,7 @@ export function Toast({
     <div
       className={cn(
         "flex items-center gap-3 px-4 py-3 rounded-xl border bg-white shadow-lg",
-        "transition-all duration-300 ease-out min-w-[320px] max-w-md w-full",
+        "transition-all duration-300 ease-out min-w-0 sm:min-w-[320px] max-w-md w-full",
         styles.bg,
         isVisible && !isLeaving
           ? "translate-x-0 opacity-100"
@@ -126,8 +126,8 @@ export function ToastContainer({ toasts, onDismiss }: ToastContainerProps) {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed top-6 right-6 z-[11050] flex flex-col items-end gap-3 pointer-events-none">
-      <div className="flex flex-col gap-3 pointer-events-auto">
+    <div className="fixed top-4 right-4 left-4 sm:left-auto sm:right-6 sm:top-6 z-[11050] flex flex-col items-end gap-3 pointer-events-none">
+      <div className="flex flex-col gap-3 w-full sm:w-auto pointer-events-auto">
         {toasts.map((toast) => (
           <Toast
             key={toast.id}
