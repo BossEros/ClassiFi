@@ -1,3 +1,41 @@
+## Dashboard Mobile Sidebar Fix
+
+1. Inspect the shared dashboard shell to confirm why the mobile hamburger and sidebar become unreliable across breakpoints and collapsed desktop state.
+2. Keep the existing dashboard architecture, but make the mobile drawer independent from desktop collapse width and ensure it closes cleanly on route changes, escape, and desktop resize.
+3. Lock body scrolling while the mobile drawer is open and correct the stacking order so the sidebar and overlay sit above the top bar.
+4. Add focused regression coverage for the shared sidebar behavior.
+5. Verify the frontend with `npm run build`.
+
+---
+
+## Dashboard Mobile Shell Polish
+
+1. Refine the shared mobile hamburger button so it has a clearly square footprint that matches common dashboard navigation patterns.
+2. Reduce oversized mobile typography in the shared dashboard shell using existing theme constants before touching one-off page classes.
+3. Reuse the shared dashboard title token across pages that still hardcode large desktop-first heading sizes.
+4. Verify the frontend with the available typecheck/build-safe commands.
+
+---
+
+## Mobile Sidebar Profile Dropdown Fix
+
+1. Inspect the shared sidebar avatar row and profile dropdown positioning logic to confirm why the mobile user label is hidden and why the dropdown overflows the right edge.
+2. Keep the desktop collapsed behavior intact, but render the user identity text for the expanded mobile drawer.
+3. Reposition the profile dropdown so mobile keeps the menu inside the sidebar viewport while desktop retains its current adjacent placement.
+4. Verify the frontend with the available typecheck/build-safe commands.
+
+---
+
+## Admin Manual Enrollment Modal Refresh
+
+1. Inspect the shared enrollment modal frame and the manual enrollment list cards to identify why the dialog overflows the viewport and lacks internal scrolling.
+2. Update the modal shell so long content stays within the viewport, the body becomes scrollable, and the manual-enrollment header can render without a leading icon.
+3. Strengthen the `Select Student` and `Select Class` cards with more visible surfaces, borders, and shadows so they lift clearly from the modal background.
+4. Increase the visual prominence of both search bars with stronger borders, surface contrast, and shadow treatment that matches other elevated admin inputs.
+5. Verify the frontend with `npm run build`.
+
+---
+
 ## Teacher Modules View Toggle Bug
 
 1. Inspect the assignments tab view-state logic to confirm why `Modules` cannot activate when a class has zero modules.

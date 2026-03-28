@@ -34,7 +34,7 @@ export function AdminRemoveEnrollmentModal({
         aria-modal="true"
         aria-labelledby="remove-enrollment-title"
         aria-describedby="remove-enrollment-description"
-        className="relative z-10 w-full max-w-md min-w-[500px] overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
         onClick={(event) => event.stopPropagation()}
       >
         <button

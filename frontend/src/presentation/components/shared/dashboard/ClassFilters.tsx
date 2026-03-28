@@ -1,4 +1,4 @@
-﻿import { Search, Filter } from "lucide-react"
+import { Search, Filter } from "lucide-react"
 import { Input } from "@/presentation/components/ui/Input"
 import { Select } from "@/presentation/components/ui/Select"
 import { classFiltersTheme } from "@/presentation/constants/dashboardTheme"
@@ -24,6 +24,7 @@ export function ClassFilters({
   currentFilters,
   statusLabels,
 }: ClassFiltersProps) {
+  
   const statusOptions = [
     {
       value: "active",

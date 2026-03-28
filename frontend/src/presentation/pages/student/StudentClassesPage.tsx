@@ -112,7 +112,7 @@ function JoinClassModal({
         onClick={onClose}
       />
 
-      <div className="relative z-10 w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
+      <div className="relative z-10 w-full max-w-[448px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.18)]">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-teal-100 p-2">

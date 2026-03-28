@@ -25,6 +25,7 @@ import {
 import * as adminService from "@/business/services/adminService"
 import type { ActivityItem, AdminStats } from "@/business/services/adminService"
 import { formatTimeAgo } from "@/presentation/utils/dateUtils"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 
 interface DashboardStat {
@@ -146,7 +147,7 @@ export function AdminDashboardPage() {
       <div className="space-y-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className={dashboardTheme.pageTitle}>
               Admin Dashboard
             </h1>
             {user ? (

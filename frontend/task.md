@@ -1,3 +1,40 @@
+# Dashboard Mobile Sidebar Fix Checklist
+
+- [x] Read `AGENTS.md`
+- [x] Read `frontend/documentation.md`
+- [x] Inspect the shared dashboard sidebar, top bar, and layout composition
+- [x] Make the mobile drawer width and stacking behavior reliable across breakpoints
+- [x] Add focused regression coverage for shared sidebar mobile behavior
+- [x] Verify the frontend with the available commands
+  `npm.cmd run typecheck` passed.
+  `npm.cmd run test -- Sidebar` and `npm.cmd run build` are blocked in this sandbox by Vite/esbuild `spawn EPERM` while loading config files.
+
+---
+
+# Dashboard Mobile Shell Polish Checklist
+
+- [x] Read `frontend/documentation.md`
+- [x] Inspect the shared hamburger button, top bar, and dashboard page title patterns
+- [x] Make the mobile hamburger explicitly square while preserving the new contrast treatment
+- [x] Reduce shared mobile dashboard typography where it is currently too large
+- [x] Verify the frontend with the available commands
+  `npm.cmd run typecheck` passed.
+  Shared dashboard title scan confirms the old oversized mobile title class is no longer used in the main dashboard surfaces.
+
+---
+
+# Mobile Sidebar Profile Dropdown Fix Checklist
+
+- [x] Read `frontend/documentation.md`
+- [x] Inspect the shared sidebar avatar row and profile dropdown positioning logic
+- [x] Show the user name beside the avatar in the expanded mobile sidebar
+- [x] Keep the mobile settings/logout menu fully visible within the sidebar viewport
+- [x] Verify the frontend with the available commands
+  `npm.cmd run typecheck` passed.
+  Vitest remains blocked in this sandbox when Vite loads config because of the existing `spawn EPERM` issue.
+
+---
+
 # Similarity Graph Empty State Checklist
 
 - [x] Read `AGENTS.md`

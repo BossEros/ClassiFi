@@ -121,7 +121,7 @@ function CalendarFilters({
       {/* Dropdown Panel */}
       {isOpen && (
         <div
-          className="absolute right-0 top-full mt-2 w-72 p-4 bg-white border border-slate-200 rounded-xl shadow-xl z-50"
+          className="absolute right-0 top-full mt-2 w-[calc(100vw-3rem)] sm:w-72 max-w-72 p-4 bg-white border border-slate-200 rounded-xl shadow-xl z-50"
           role="listbox"
           aria-label="Class filter options"
         >
@@ -405,9 +405,9 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout className="p-0" topBar={topBar}>
-      <div className="h-full flex flex-col -m-6 lg:-mx-8 lg:-mb-8 bg-slate-50">
+      <div className="h-full flex flex-col -m-4 sm:-m-6 lg:-mx-8 lg:-mb-8 bg-slate-50">
         {/* Page Header */}
-        <div className="px-6 lg:px-8 pt-6 pb-4">
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-4">
           {/* Row 1: Title and Subtitle */}
           <div className="mb-4">
             <h1 className={calendarTheme.pageTitle}>
@@ -431,7 +431,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Main Content - Calendar Container */}
-        <div className="flex-1 overflow-hidden px-6 lg:px-8 pb-6">
+        <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 pb-4 sm:pb-6">
           <div className="h-full min-h-0">
             {/* Error State */}
             {error && (
