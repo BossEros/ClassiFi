@@ -1,13 +1,13 @@
 export const authTheme = {
   pageShell:
-    "min-h-screen w-full grid place-items-center bg-gradient-to-br from-[#11211F] via-[#17312D] to-[#0E1B19] p-6 md:p-8",
+    "min-h-screen w-full grid place-items-center bg-gradient-to-br from-[#11211F] via-[#17312D] to-[#0E1B19] p-4 sm:p-6 md:p-8",
   backgroundOrbPrimary:
     "absolute top-1/4 -left-20 h-96 w-96 rounded-full bg-teal-400/10 blur-3xl",
   backgroundOrbSecondary:
     "absolute bottom-1/4 -right-20 h-96 w-96 rounded-full bg-emerald-200/10 blur-3xl",
   cardWrapper: "relative w-full",
-  loginCardWidth: "max-w-[448px] min-w-[320px]",
-  registerCardWidth: "max-w-[672px] min-w-[320px]",
+  loginCardWidth: "max-w-[448px]",
+  registerCardWidth: "max-w-[672px]",
   cardSurface:
     "rounded-3xl border border-[#D7E2DE] bg-[#F4F7F6] p-6 shadow-2xl sm:p-8 md:p-10",
   compactCardSurface:

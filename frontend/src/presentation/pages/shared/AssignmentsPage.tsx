@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight, ChevronUp, ChevronDown, ClipboardList } from "lucide-react"
+import { ArrowRight, ChevronUp, ChevronDown, ClipboardList, Clock } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { AssignmentFilters } from "@/presentation/components/shared/dashboard/AssignmentFilters"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime } from "@/presentation/utils/dateUtils"
 import { getPendingAssignments } from "@/business/services/studentDashboardService"
 import { getPendingTasks } from "@/business/services/teacherDashboardService"
@@ -143,10 +144,10 @@ export function AssignmentsPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-3xl">
+        <h1 className={dashboardTheme.pageTitle}>
           {pageTitle}
         </h1>
-        <p className="mt-2 text-base text-slate-500">{pageDescription}</p>
+        <p className={dashboardTheme.pageSubtitle}>{pageDescription}</p>
       </div>
 
       {!isLoading && tasks.length > 0 && (
@@ -254,7 +255,43 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
   }, [sortedTasks, currentPage, itemsPerPage])
 
   return (
-    <table className="w-full min-w-[760px]">
+    <>
+      {/* Mobile card layout */}
+      <div className="lg:hidden divide-y divide-slate-200">
+        {paginatedTasks.map((task) => {
+          const deadlineStatus = getDeadlineStatus(task.deadline)
+          const submitted = task.submissionCount ?? 0
+          const total = task.studentCount ?? 0
+
+          return (
+            <div key={`mobile-${task.id}`} className="p-4 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{task.assignmentName}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{task.className || "Unknown class"}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${getDeadlineBadgeClass(deadlineStatus)}`}>
+                  <Clock className="h-3 w-3" />
+                  {task.deadline ? formatDateTime(task.deadline) : "No deadline"}
+                </span>
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${getSubmissionProgressClass(submitted, total)}`}>
+                  {submitted}/{total} submitted
+                </span>
+              </div>
+              <button
+                onClick={() => onNavigate(`/dashboard/assignments/${task.id}/submissions`)}
+                className="inline-flex items-center gap-2 rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-600"
+              >
+                Review
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table layout */}
+      <table className="hidden lg:table w-full">
       <thead className="bg-slate-100 text-left">
         <tr>
           <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -332,6 +369,7 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
         })}
       </tbody>
     </table>
+    </>
   )
 }
 
@@ -358,7 +396,38 @@ function StudentAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
   }, [sortedTasks, currentPage, itemsPerPage])
 
   return (
-    <table className="w-full min-w-[640px]">
+    <>
+      {/* Mobile card layout */}
+      <div className="lg:hidden divide-y divide-slate-200">
+        {paginatedTasks.map((task) => {
+          const deadlineStatus = getDeadlineStatus(task.deadline)
+
+          return (
+            <div key={`mobile-${task.id}`} className="p-4 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{task.assignmentName}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{task.className || "Unknown class"}</p>
+              </div>
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${getDeadlineBadgeClass(deadlineStatus)}`}>
+                <Clock className="h-3 w-3" />
+                {task.deadline ? formatDateTime(task.deadline) : "No deadline"}
+              </span>
+              <div>
+                <button
+                  onClick={() => onNavigate(`/dashboard/assignments/${task.id}`)}
+                  className="inline-flex items-center gap-2 rounded-md bg-teal-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-600"
+                >
+                  Open
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Desktop table layout */}
+      <table className="hidden lg:table w-full">
       <thead className="bg-slate-100 text-left">
         <tr>
           <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -424,5 +493,6 @@ function StudentAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
         })}
       </tbody>
     </table>
+    </>
   )
 }

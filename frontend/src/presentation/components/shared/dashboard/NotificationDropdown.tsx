@@ -91,7 +91,7 @@ export function NotificationDropdown({
   return (
     <div
       ref={dropdownRef}
-      className="absolute right-0 mt-2 w-96 rounded-lg border border-slate-300 bg-white shadow-2xl z-[9999]"
+      className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-96 rounded-lg border border-slate-300 bg-white shadow-2xl z-[9999]"
     >
       <div className="flex items-center justify-between border-b border-slate-200 p-4">
         <h3 className="text-lg font-semibold text-slate-900">Notifications</h3>

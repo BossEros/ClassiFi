@@ -16,6 +16,7 @@ import * as adminService from "@/business/services/adminService"
 import type { AdminEnrollmentRecord } from "@/business/services/adminService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
 const ENROLLMENT_PAGE_LIMIT = 10
 
@@ -167,7 +168,7 @@ export default function AdminEnrollmentsPage() {
       <div className="space-y-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className={dashboardTheme.pageTitle}>
               Enrollment Management
             </h1>
             <p className="mt-2 text-sm text-slate-500">

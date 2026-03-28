@@ -7,7 +7,7 @@ import {
   convertToSingleLetterAbbr,
   formatTimeRange,
 } from "@/presentation/constants/schedule.constants"
-
+import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type { DayOfWeek } from "@/shared/types/class"
 
 interface ClassHeaderProps {
@@ -112,7 +112,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
 
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+                  <h1 className={dashboardTheme.pageTitle}>
                     {classNameTitle}
                   </h1>
                 </div>

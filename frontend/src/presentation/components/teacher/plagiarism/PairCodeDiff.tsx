@@ -6,6 +6,7 @@ import {
   CLASSIFI_PLAGIARISM_LIGHT_THEME,
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
+import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
 
 interface PairCodeDiffProps {
   /** Left file (original) */
@@ -40,6 +41,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   const diffEditorRef = useRef<monaco.editor.IStandaloneDiffEditor | null>(null)
   const isLight = variant === "light"
   const legendTextColor = isLight ? "#475569" : "#cbd5e1"
+  const isTabletOrBelow = useIsTabletOrBelow()
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -64,7 +66,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
         : CLASSIFI_PLAGIARISM_DARK_THEME,
       scrollBeyondLastLine: false,
       minimap: { enabled: false },
-      renderSideBySide: true,
+      renderSideBySide: !isTabletOrBelow,
       originalEditable: false,
     })
 
@@ -82,7 +84,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       modifiedModel.dispose()
       editor.dispose()
     }
-  }, [isLight, leftFile.content, rightFile.content, language])
+  }, [isLight, isTabletOrBelow, leftFile.content, rightFile.content, language])
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -90,7 +92,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1px 1fr",
+          gridTemplateColumns: isTabletOrBelow ? "1fr" : "1fr 1px 1fr",
         }}
       >
         <div
@@ -118,11 +120,13 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
           </span>
         </div>
         {/* Center divider */}
-        <div
-          style={{
-            backgroundColor: isLight ? "#cbd5e1" : "rgba(255, 255, 255, 0.2)",
-          }}
-        />
+        {!isTabletOrBelow && (
+          <div
+            style={{
+              backgroundColor: isLight ? "#cbd5e1" : "rgba(255, 255, 255, 0.2)",
+            }}
+          />
+        )}
         <div
           style={{
             padding: "8px 12px",

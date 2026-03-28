@@ -80,7 +80,7 @@ function DeleteClassModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-[448px] min-w-[320px] mx-auto p-6 flex-shrink-0",
+          "relative w-full max-w-[448px] mx-auto p-6 flex-shrink-0",
           "rounded-xl border border-slate-200 bg-white",
           "shadow-xl shadow-black/20",
           "animate-in fade-in-0 zoom-in-95 duration-200",
@@ -218,7 +218,7 @@ function RemoveStudentModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 mx-auto w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div className="relative z-10 mx-auto w-full max-w-[448px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 p-6">
           <div className="flex items-center gap-3">
@@ -362,7 +362,7 @@ function LeaveClassModal({
       />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-[448px] min-w-[320px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div className="relative z-10 w-full max-w-[448px] flex-shrink-0 rounded-2xl border border-slate-200 bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 p-6">
           <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 import {
   getPairOverallSimilarityRatio,
+  getThresholdQualifiedPairs,
   normalizeSimilarityToRatio,
 } from "@/presentation/utils/plagiarismClusterUtils"
 import {
@@ -114,15 +115,7 @@ export function getThresholdFilteredPairs(
   pairs: PairResponse[],
   minimumSimilarityPercent: number,
 ): PairResponse[] {
-  const minimumSimilarityRatio = Math.max(
-    0,
-    Math.min(1, minimumSimilarityPercent / 100),
-  )
-
-  return [...pairs]
-    .filter(
-      (pair) => getPairOverallSimilarityRatio(pair) >= minimumSimilarityRatio,
-    )
+  return getThresholdQualifiedPairs(pairs, minimumSimilarityPercent)
     .sort(
       (leftPair, rightPair) =>
         getPairOverallSimilarityRatio(rightPair) -

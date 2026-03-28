@@ -234,13 +234,13 @@ vi.mock("@/presentation/utils/pdfDownload", () => ({
   downloadPdfDocument: vi.fn().mockResolvedValue(undefined),
 }))
 
-function renderSimilarityResultsPage() {
+function renderSimilarityResultsPage(results = mockData.results) {
   return render(
     <MemoryRouter
       initialEntries={[
         {
           pathname: "/dashboard/assignments/1/similarity",
-          state: { results: mockData.results },
+          state: { results },
         },
       ]}
     >
@@ -273,6 +273,7 @@ describe("SimilarityResultsPage", () => {
     renderSimilarityResultsPage()
 
     expect(screen.getByText("Submissions: 3")).toBeInTheDocument()
+    expect(screen.getByText("Suspicious Pair: 1")).toBeInTheDocument()
     expect(screen.getByText("Average Similarity: 89.0%")).toBeInTheDocument()
     expect(screen.getByText("Max Similarity: 90.0%")).toBeInTheDocument()
     expect(
@@ -293,6 +294,52 @@ describe("SimilarityResultsPage", () => {
     )
 
     expect(averageCardPosition & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it("derives the suspicious pair card from the active threshold-qualified pairs", async () => {
+    const lowSimilarityPair = {
+      ...mockData.pair,
+      id: 102,
+      leftFile: {
+        id: 21,
+        path: "student-c.py",
+        filename: "student-c.py",
+        lineCount: 8,
+        studentName: "Student C",
+      },
+      rightFile: {
+        id: 22,
+        path: "student-d.py",
+        filename: "student-d.py",
+        lineCount: 9,
+        studentName: "Student D",
+      },
+      structuralScore: 0.61,
+      semanticScore: 0.58,
+      hybridScore: 0.6,
+      overlap: 10,
+      longest: 3,
+    }
+    const thresholdQualifiedResults = {
+      ...mockData.results,
+      summary: {
+        ...mockData.results.summary,
+        totalFiles: 4,
+        totalPairs: 2,
+        suspiciousPairs: 2,
+      },
+      submissions: [
+        mockData.pair.leftFile,
+        mockData.pair.rightFile,
+        lowSimilarityPair.leftFile,
+        lowSimilarityPair.rightFile,
+      ],
+      pairs: [mockData.pair, lowSimilarityPair],
+    }
+
+    renderSimilarityResultsPage(thresholdQualifiedResults)
+
+    expect(screen.getByText("Suspicious Pair: 1")).toBeInTheDocument()
   })
 
   it("auto-scrolls to comparison section when a pair is selected", async () => {
