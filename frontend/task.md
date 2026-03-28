@@ -97,3 +97,16 @@
 - [x] Verify with the available frontend commands
   `npx.cmd tsc -b` passed.
   Dead-style scan confirmed the removed helper classes no longer have consumers.
+
+---
+
+# CI Frontend Failure Triage Checklist
+
+- [x] Read `AGENTS.md`
+- [x] Read `frontend/documentation.md`
+- [x] Reproduce the frontend CI lint failure locally
+- [x] Refactor the shared dashboard sidebar route-change behavior to satisfy the React hooks lint rule without changing the dashboard architecture
+- [x] Re-run `npm run lint`
+- [ ] Re-run `npm test`
+- [ ] Re-run `npm run build`
+  `npm.cmd test -- Sidebar` and `npm.cmd run build` are still blocked in this sandbox by Vite/esbuild `spawn EPERM`.

@@ -91,3 +91,12 @@
 4. Replace repeated inline Expletus wordmark styles with the shared `font-expletus` utility generated from the token layer.
 5. Update frontend documentation so future UI decisions have a clear home and maintenance pattern.
 6. Verify with the available frontend typecheck/build-safe commands.
+
+---
+
+## Frontend CI Lint Failure in Shared Sidebar
+
+1. Inspect the shared dashboard sidebar route-change behavior and confirm why it now violates `react-hooks/set-state-in-effect`.
+2. Replace the effect-driven mobile-close behavior with a render-safe state model that still closes the drawer when the route changes.
+3. Preserve existing explicit close paths such as nav clicks, overlay clicks, escape handling, and desktop breakpoint transitions.
+4. Re-run the frontend CI commands: `npm run lint`, `npm test`, and `npm run build`.

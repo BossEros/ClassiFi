@@ -18,6 +18,7 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { ProfileDropdown } from "./ProfileDropdown"
 import type { NavigationItem } from "@/business/models/dashboard/types"
+import type { User } from "@/shared/types/auth"
 
 const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 1024px)"
 
@@ -124,6 +125,12 @@ interface SidebarNavItemProps {
   isCollapsed?: boolean
 }
 
+interface SidebarContentProps {
+  isCollapsed: boolean
+  onToggleCollapse?: () => void
+  user: User | null
+}
+
 function SidebarNavItem({
   item,
   onClick,
@@ -161,12 +168,29 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
 }: SidebarProps) {
+  const user = useAuthStore((state) => state.user)
+  const location = useLocation()
+  const sidebarInstanceKey = `${location.key}:${location.pathname}${location.search}${location.hash}`
+
+  return (
+    <SidebarContent
+      key={sidebarInstanceKey}
+      isCollapsed={isCollapsed}
+      onToggleCollapse={onToggleCollapse}
+      user={user}
+    />
+  )
+}
+
+function SidebarContent({
+  isCollapsed,
+  onToggleCollapse,
+  user,
+}: SidebarContentProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const [isDesktopViewport, setIsDesktopViewport] = useState(
     getIsDesktopViewport,
   )
-  const user = useAuthStore((state) => state.user)
-  const location = useLocation()
   const shouldRenderCollapsedDesktopSidebar =
     isCollapsed && isDesktopViewport
 
@@ -234,10 +258,6 @@ export function Sidebar({
       }
     }
   }, [closeMobileSidebar])
-
-  useEffect(() => {
-    closeMobileSidebar()
-  }, [location.pathname, location.search, location.hash, closeMobileSidebar])
 
   useEffect(() => {
     if (!isMobileOpen) {

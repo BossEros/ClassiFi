@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, useNavigate } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Sidebar } from "@/presentation/components/shared/dashboard/Sidebar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
@@ -35,6 +35,19 @@ function renderSidebar(isCollapsed = false) {
     <MemoryRouter initialEntries={["/dashboard"]}>
       <Sidebar isCollapsed={isCollapsed} onToggleCollapse={vi.fn()} />
     </MemoryRouter>,
+  )
+}
+
+function SidebarRouteChangeHarness() {
+  const navigate = useNavigate()
+
+  return (
+    <>
+      <button onClick={() => navigate("/dashboard/classes")}>
+        Navigate to classes
+      </button>
+      <Sidebar isCollapsed={false} onToggleCollapse={vi.fn()} />
+    </>
   )
 }
 
@@ -88,6 +101,26 @@ describe("Sidebar", () => {
     expect(document.body.style.overflow).toBe("hidden")
 
     await user.click(screen.getByLabelText("Close menu"))
+
+    expect(screen.getByLabelText("Open menu")).toBeInTheDocument()
+    expect(document.body.style.overflow).toBe("")
+  })
+
+  it("closes the mobile drawer after route navigation without an effect-driven state write", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <SidebarRouteChangeHarness />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByLabelText("Open menu"))
+
+    expect(screen.getByLabelText("Close menu")).toBeInTheDocument()
+    expect(document.body.style.overflow).toBe("hidden")
+
+    await user.click(screen.getByRole("button", { name: "Navigate to classes" }))
 
     expect(screen.getByLabelText("Open menu")).toBeInTheDocument()
     expect(document.body.style.overflow).toBe("")

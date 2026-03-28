@@ -68,6 +68,24 @@ Ensure `saveTeacherFeedback` returns success once feedback persistence succeeds,
 
 ---
 
+# Implementation Plan - Backend CI Test Failure Triage
+
+## Goal
+Identify and fix the backend test regression currently breaking remote CI without disturbing the existing controller-service-repository boundaries.
+
+## Constraints
+- Preserve the current backend architecture and test organization.
+- Reuse existing services, repositories, and test helpers wherever possible.
+- Confirm the exact failing backend path before changing production code or test expectations.
+
+## Approach
+1. Reproduce the backend test run as closely as possible to CI, including an unsandboxed Vitest execution if the local sandbox blocks `esbuild`.
+2. Inspect the failing suite and compare the expectation against the current module behavior before deciding whether the fix belongs in application code or test setup.
+3. Apply the smallest clean fix that restores the intended contract.
+4. Re-run `npm run typecheck` and `npm test`.
+
+---
+
 # Implementation Plan - Submission Attempt Numbering Regression
 
 ## Goal
