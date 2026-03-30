@@ -19,7 +19,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@react-pdf/renderer": "^4.3.2",
     "@supabase/supabase-js": "^2.93.3",
-    "@tailwindcss/vite": "^4.1.17",
+    "@tailwindcss/vite": "^4.2.2",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.563.0",
