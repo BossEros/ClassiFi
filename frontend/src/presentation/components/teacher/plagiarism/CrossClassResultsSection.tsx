@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   AlertTriangle,
   ArrowRight,
@@ -7,7 +7,6 @@ import {
   Layers,
   Loader2,
   School,
-  Shield,
   Users,
   X,
 } from "lucide-react"
@@ -16,6 +15,7 @@ import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
 import { SimilarityBadge } from "@/presentation/components/teacher/plagiarism/SimilarityBadge"
 import { PairComparison } from "@/presentation/components/teacher/plagiarism/PairComparison"
 import { PairCodeDiff } from "@/presentation/components/teacher/plagiarism/PairCodeDiff"
+import { SimilarityThresholdSlider } from "@/presentation/components/teacher/plagiarism/SimilarityThresholdSlider"
 import type { FilePair } from "@/presentation/components/teacher/plagiarism/types"
 import {
   analyzeCrossClassSimilarity,
@@ -33,6 +33,24 @@ type CodeViewMode = "match" | "diff"
 interface CrossClassResultsSectionProps {
   /** The source assignment ID. */
   assignmentId: number
+  /** Whether the current navigation explicitly requested a fresh comparison. */
+  shouldRunInitialAnalysis?: boolean
+}
+
+function getCrossClassAnalysisToastConfig(
+  analysisReport: CrossClassAnalysisResponse,
+): { message: string; type: "success" | "info" } {
+  if (analysisReport.matchedAssignments.length === 0) {
+    return {
+      message: "No matching assignments found across your classes",
+      type: "info",
+    }
+  }
+
+  return {
+    message: "Cross-class similarity analysis completed",
+    type: "success",
+  }
 }
 
 /**
@@ -72,13 +90,16 @@ function detectLanguageFromFilename(filename: string): string {
  * @param props - Component props containing the assignment ID.
  * @returns The cross-class results section with analysis controls and results display.
  */
-export function CrossClassResultsSection({ assignmentId }: CrossClassResultsSectionProps) {
+export function CrossClassResultsSection({
+  assignmentId,
+  shouldRunInitialAnalysis = false,
+}: CrossClassResultsSectionProps) {
   const showToast = useToastStore((state) => state.showToast)
 
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [isLoadingExisting, setIsLoadingExisting] = useState(false)
   const [report, setReport] = useState<CrossClassAnalysisResponse | null>(null)
-  const [hasCheckedExisting, setHasCheckedExisting] = useState(false)
+  const [isInitializingReport, setIsInitializingReport] = useState(true)
+  const [isRunningAnalysis, setIsRunningAnalysis] = useState(false)
+  const [reportLoadError, setReportLoadError] = useState<string | null>(null)
 
   const [selectedResult, setSelectedResult] = useState<CrossClassResultDTO | null>(null)
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
@@ -89,6 +110,101 @@ export function CrossClassResultsSection({ assignmentId }: CrossClassResultsSect
 
   const comparisonRef = useRef<HTMLDivElement | null>(null)
 
+  useEffect(() => {
+    let isDisposed = false
+
+    setIsInitializingReport(true)
+    setIsRunningAnalysis(false)
+    setReportLoadError(null)
+    setReport(null)
+    setSelectedResult(null)
+    setPairDetails(null)
+    setDetailsError(null)
+
+    const initializeReport = async () => {
+      try {
+        if (!shouldRunInitialAnalysis) {
+          const latestReport = await getLatestCrossClassReport(assignmentId)
+
+          if (isDisposed) {
+            return
+          }
+
+          if (latestReport) {
+            setReport(latestReport)
+            return
+          }
+        }
+
+        setIsRunningAnalysis(true)
+
+        const analysisReport = await analyzeCrossClassSimilarity(assignmentId)
+
+        if (isDisposed) {
+          return
+        }
+
+        setReport(analysisReport)
+
+        const toastConfig = getCrossClassAnalysisToastConfig(analysisReport)
+        showToast(toastConfig.message, toastConfig.type)
+      } catch (error) {
+        if (isDisposed) {
+          return
+        }
+
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to load cross-class similarity results"
+
+        console.error("Failed to initialize cross-class analysis:", error)
+        setReportLoadError(errorMessage)
+        showToast(errorMessage, "error")
+      } finally {
+        if (isDisposed) {
+          return
+        }
+
+        setIsInitializingReport(false)
+        setIsRunningAnalysis(false)
+      }
+    }
+
+    void initializeReport()
+
+    return () => {
+      isDisposed = true
+    }
+  }, [assignmentId, shouldRunInitialAnalysis, showToast])
+
+  const handleRunAnalysis = useCallback(async () => {
+    setIsInitializingReport(false)
+    setIsRunningAnalysis(true)
+    setReportLoadError(null)
+    setSelectedResult(null)
+    setPairDetails(null)
+    setDetailsError(null)
+
+    try {
+      const analysisReport = await analyzeCrossClassSimilarity(assignmentId)
+
+      setReport(analysisReport)
+
+      const toastConfig = getCrossClassAnalysisToastConfig(analysisReport)
+      showToast(toastConfig.message, toastConfig.type)
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Cross-class analysis failed"
+
+      console.error("Cross-class analysis failed:", error)
+      setReportLoadError(errorMessage)
+      showToast(errorMessage, "error")
+    } finally {
+      setIsRunningAnalysis(false)
+    }
+  }, [assignmentId, showToast])
+
   const flaggedResults = useMemo(() => {
     if (!report) return []
 
@@ -96,51 +212,6 @@ export function CrossClassResultsSection({ assignmentId }: CrossClassResultsSect
       (result) => result.isFlagged && result.hybridScore * 100 >= minimumSimilarityPercent,
     )
   }, [report, minimumSimilarityPercent])
-
-  const handleCheckExisting = useCallback(async () => {
-    setIsLoadingExisting(true)
-
-    try {
-      const existingReport = await getLatestCrossClassReport(assignmentId)
-      setHasCheckedExisting(true)
-
-      if (existingReport) {
-        setReport(existingReport)
-        showToast("Previous cross-class report loaded")
-      }
-    } catch (error) {
-      console.error("Failed to check for existing cross-class report:", error)
-    } finally {
-      setIsLoadingExisting(false)
-    }
-  }, [assignmentId, showToast])
-
-  const handleRunAnalysis = useCallback(async () => {
-    setIsAnalyzing(true)
-    setReport(null)
-    setSelectedResult(null)
-    setPairDetails(null)
-
-    try {
-      const analysisReport = await analyzeCrossClassSimilarity(assignmentId)
-      setReport(analysisReport)
-      setHasCheckedExisting(true)
-
-      if (analysisReport.matchedAssignments.length === 0) {
-        showToast("No matching assignments found across your classes", "info")
-      } else {
-        showToast("Cross-class similarity analysis completed")
-      }
-    } catch (error) {
-      console.error("Cross-class analysis failed:", error)
-      showToast(
-        error instanceof Error ? error.message : "Cross-class analysis failed",
-        "error",
-      )
-    } finally {
-      setIsAnalyzing(false)
-    }
-  }, [assignmentId, showToast])
 
   const handleViewResultDetails = useCallback(async (result: CrossClassResultDTO) => {
     setSelectedResult(result)
@@ -206,57 +277,45 @@ export function CrossClassResultsSection({ assignmentId }: CrossClassResultsSect
     return detectLanguageFromFilename(pairDetails.leftFile.filename)
   }, [pairDetails])
 
-  // ------- No report yet: show trigger section -------
+  if (!report && isInitializingReport) {
+    return (
+      <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
+        <CardContent className="p-6">
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+            <p className="text-sm font-medium text-slate-500">
+              Loading the latest cross-class similarity report...
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   if (!report) {
     return (
       <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
         <CardContent className="p-6">
-          <div className="flex flex-col items-center gap-4 py-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50">
-              <School className="h-7 w-7 text-indigo-600" />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                Cross-Class Similarity Check
-              </h3>
-              <p className="mt-1 max-w-md text-sm text-slate-500">
-                Compare submissions across your classes to detect similarity between
-                students in different sections with matching assignments.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {!hasCheckedExisting && (
-                <button
-                  type="button"
-                  onClick={() => void handleCheckExisting()}
-                  disabled={isLoadingExisting || isAnalyzing}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isLoadingExisting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Shield className="h-4 w-4" />
-                  )}
-                  <span>{isLoadingExisting ? "Checking..." : "Load Existing Report"}</span>
-                </button>
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <AlertTriangle className="h-8 w-8 text-rose-500" />
+            <p className="text-sm font-medium text-slate-700">
+              {reportLoadError ?? "No cross-class similarity report is available yet."}
+            </p>
+            <button
+              type="button"
+              onClick={() => void handleRunAnalysis()}
+              disabled={isRunningAnalysis}
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isRunningAnalysis ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <GitCompare className="h-4 w-4" />
               )}
-
-              <button
-                type="button"
-                onClick={() => void handleRunAnalysis()}
-                disabled={isAnalyzing || isLoadingExisting}
-                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isAnalyzing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <School className="h-4 w-4" />
-                )}
-                <span>{isAnalyzing ? "Analyzing Across Classes..." : "Run Cross-Class Check"}</span>
-              </button>
-            </div>
+              <span>
+                {isRunningAnalysis ? "Running Comparison..." : "Run Cross-Class Comparison"}
+              </span>
+            </button>
           </div>
         </CardContent>
       </Card>
@@ -268,25 +327,30 @@ export function CrossClassResultsSection({ assignmentId }: CrossClassResultsSect
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
-        <div> 
+        <div>
           <p className="mt-1 text-sm text-slate-500">
             Source: <span className="font-medium text-slate-700">{report.sourceAssignment.name}</span>
             {" "}({report.sourceAssignment.className})
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Latest saved report: {new Date(report.generatedAt).toLocaleString()}
           </p>
         </div>
 
         <button
           type="button"
           onClick={() => void handleRunAnalysis()}
-          disabled={isAnalyzing}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isRunningAnalysis}
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isAnalyzing ? (
+          {isRunningAnalysis ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <School className="h-4 w-4" />
+            <GitCompare className="h-4 w-4" />
           )}
-          <span>{isAnalyzing ? "Re-analyzing..." : "Re-run Analysis"}</span>
+          <span>
+            {isRunningAnalysis ? "Running Comparison..." : "Run New Comparison"}
+          </span>
         </button>
       </div>
 
@@ -316,19 +380,16 @@ export function CrossClassResultsSection({ assignmentId }: CrossClassResultsSect
       )}
 
       {/* Threshold slider */}
-      <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <span className="shrink-0 text-xs font-semibold text-slate-600">Threshold</span>
-        <input
-          type="range"
-          min={25}
-          max={100}
-          step={1}
-          value={minimumSimilarityPercent}
-          onChange={(event) => setMinimumSimilarityPercent(Number(event.target.value))}
-          className="h-1.5 w-40 cursor-pointer appearance-none rounded-full bg-slate-200 accent-teal-600"
-          aria-label="Similarity threshold"
-        />
-        <span className="shrink-0 text-xs font-semibold text-slate-700">&gt;= {minimumSimilarityPercent}%</span>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="w-full max-w-3xl">
+          <SimilarityThresholdSlider
+            minimumSimilarityPercent={minimumSimilarityPercent}
+            min={25}
+            max={100}
+            size="large"
+            onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
+          />
+        </div>
       </div>
 
       {/* Summary stats */}
