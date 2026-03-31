@@ -27,7 +27,6 @@ const inFlightCrossClassAnalysisByAssignmentId = new Map<
  */
 export async function analyzeCrossClassSimilarity(
   assignmentId: number,
-  _signal?: AbortSignal,
 ): Promise<CrossClassAnalysisResponse> {
   validateId(assignmentId, "assignment")
 

@@ -162,12 +162,10 @@ export function CrossClassResultsSection({
         setReportLoadError(errorMessage)
         showToast(errorMessage, "error")
       } finally {
-        if (isDisposed) {
-          return
+        if (!isDisposed) {
+          setIsInitializingReport(false)
+          setIsRunningAnalysis(false)
         }
-
-        setIsInitializingReport(false)
-        setIsRunningAnalysis(false)
       }
     }
 
