@@ -16,6 +16,8 @@ export interface ApiRequestConfig {
   body?: unknown
   /** Response type - 'json' (default) or 'blob' for binary data. */
   responseType?: "json" | "blob"
+  /** Optional AbortSignal to cancel the request mid-flight. */
+  signal?: AbortSignal
 }
 
 /**
@@ -67,7 +69,7 @@ class ApiClient {
     endpoint: string,
     config: ApiRequestConfig = {},
   ): Promise<ApiResponse<T>> {
-    const { method = "GET", headers = {}, body, responseType = "json" } = config
+    const { method = "GET", headers = {}, body, responseType = "json", signal } = config
 
     const url = `${this.baseURL}${endpoint}`
 
@@ -85,6 +87,7 @@ class ApiClient {
         method,
         headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
+        signal,
       })
 
       // Handle blob responses
@@ -240,8 +243,9 @@ class ApiClient {
     endpoint: string,
     body: unknown,
     headers?: HeadersInit,
+    signal?: AbortSignal,
   ): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: "POST", body, headers })
+    return this.request<T>(endpoint, { method: "POST", body, headers, signal })
   }
 
   /**

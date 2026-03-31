@@ -1,4 +1,5 @@
 import type { Submission } from "@/models/index.js"
+import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
 
 export interface SubmissionDTO {
   id: number
@@ -29,6 +30,12 @@ export function toSubmissionDTO(
     className?: string
   },
 ): SubmissionDTO {
+  const submissionGradeComputation = buildSubmissionGradeComputation({
+    grade: submission.grade,
+    isGradeOverridden: submission.isGradeOverridden,
+    overrideGrade: submission.overrideGrade,
+  })
+
   return {
     id: submission.id,
     assignmentId: submission.assignmentId,
@@ -40,7 +47,7 @@ export function toSubmissionDTO(
     submittedAt:
       submission.submittedAt?.toISOString() ?? new Date().toISOString(),
     isLatest: submission.isLatest ?? false,
-    grade: submission.grade ?? null,
+    grade: submissionGradeComputation.effectiveGrade,
     isGradeOverridden: submission.isGradeOverridden ?? false,
     overrideReason: submission.overrideReason ?? null,
     overriddenAt: submission.overriddenAt?.toISOString() ?? null,

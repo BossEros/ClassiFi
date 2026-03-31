@@ -310,27 +310,17 @@ describe("GradebookService", () => {
       id: 1,
       assignmentId: 1,
       grade: 95,
+      overrideGrade: 95,
       isGradeOverridden: true,
     }
 
-    const mockAssignment = {
-      id: 1,
-      totalScore: 100,
-    }
-
-    it("should remove override and recalculate grade", async () => {
+    it("should remove override without rewriting the raw grade", async () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
-      mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
-      mockTestResultRepo.calculateScore.mockResolvedValue({
-        passed: 8,
-        total: 10,
-        percentage: 80,
-      })
 
       await gradebookService.removeOverride(1)
 
       expect(mockSubmissionRepo.removeGradeOverride).toHaveBeenCalledWith(1)
-      expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(1, 80)
+      expect(mockSubmissionRepo.updateGrade).not.toHaveBeenCalled()
     })
 
     it("should throw error if submission not found", async () => {
@@ -341,31 +331,13 @@ describe("GradebookService", () => {
       )
     })
 
-    it("should throw error if assignment not found", async () => {
+    it("should complete even when no test results are involved", async () => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
-      mockAssignmentRepo.getAssignmentById.mockResolvedValue(null)
-      mockTestResultRepo.calculateScore.mockResolvedValue({
-        passed: 5,
-        total: 10,
-      })
-
-      await expect(gradebookService.removeOverride(1)).rejects.toThrow(
-        "Assignment not found",
-      )
-    })
-
-    it("should set grade to 0 when no test results", async () => {
-      mockSubmissionRepo.getSubmissionById.mockResolvedValue(mockSubmission)
-      mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
-      mockTestResultRepo.calculateScore.mockResolvedValue({
-        passed: 0,
-        total: 0,
-        percentage: 0,
-      })
 
       await gradebookService.removeOverride(1)
 
-      expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(1, 0)
+      expect(mockSubmissionRepo.removeGradeOverride).toHaveBeenCalledWith(1)
+      expect(mockSubmissionRepo.updateGrade).not.toHaveBeenCalled()
     })
   })
 

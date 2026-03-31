@@ -30,9 +30,7 @@ function validateAssignmentTitleValue(titleValue: string): string | null {
   return null
 }
 
-function validateInstructionsValue(
-  instructionsValue: string,
-): string | null {
+function validateInstructionsValue(instructionsValue: string): string | null {
   const normalizedInstructions = instructionsValue.trim()
 
   if (normalizedInstructions.length > 5000) {
@@ -89,6 +87,7 @@ export const assignmentFormSchema = z
     scheduledDate: z.string().nullable(),
     allowLateSubmissions: z.boolean(),
     latePenaltyConfig: latePenaltyConfigSchema,
+    enableSimilarityPenalty: z.boolean(),
     moduleId: z.number().nullable(),
   })
   .superRefine((formValue, context) => {
@@ -104,9 +103,7 @@ export const assignmentFormSchema = z
       })
     }
 
-    const instructionsError = validateInstructionsValue(
-      formValue.instructions,
-    )
+    const instructionsError = validateInstructionsValue(formValue.instructions)
 
     if (instructionsError) {
       context.addIssue({

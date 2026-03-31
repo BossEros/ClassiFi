@@ -10,6 +10,7 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
+import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import {
   PLAGIARISM_CONFIG,
@@ -124,7 +125,10 @@ export class PlagiarismService {
    * In-memory storage for ad-hoc reports (not tied to assignment submissions).
    * Kept for analyzeFiles flows that do not persist to the database.
    */
-  private legacyReportsStore = new Map<string, { report: Report; createdAt: Date }>()
+  private legacyReportsStore = new Map<
+    string,
+    { report: Report; createdAt: Date }
+  >()
 
   /** Interval ID for cleanup timer - stored to allow cleanup in dispose(). */
   private cleanupIntervalId: ReturnType<typeof setInterval> | null = null
@@ -138,6 +142,8 @@ export class PlagiarismService {
     private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.plagiarismPersistence)
     private persistenceService: PlagiarismPersistenceService,
+    @inject(DI_TOKENS.services.similarityPenalty)
+    private similarityPenaltyService: SimilarityPenaltyService,
     @inject(DI_TOKENS.services.semanticSimilarityClient)
     private semanticClient: SemanticSimilarityClient,
   ) {
@@ -390,6 +396,9 @@ export class PlagiarismService {
       await this.persistenceService.getReusableAssignmentReport(assignmentId)
 
     if (reusableAssignmentReport) {
+      await this.similarityPenaltyService.syncAssignmentPenaltyState(
+        assignmentId,
+      )
       return reusableAssignmentReport
     }
 
@@ -419,6 +428,11 @@ export class PlagiarismService {
         pairs,
         semanticScores,
       )
+
+    await this.similarityPenaltyService.applyAssignmentPenaltyFromReport(
+      assignmentId,
+      dbReport.id,
+    )
 
     return this.buildAssignmentAnalysisResponse(
       dbReport,
@@ -533,9 +547,8 @@ export class PlagiarismService {
       pairs,
       semanticScores,
     )
-    const pairSimilaritySummary = summarizePairSimilarityScores(
-      pairScoreBreakdowns,
-    )
+    const pairSimilaritySummary =
+      summarizePairSimilarityScores(pairScoreBreakdowns)
 
     return {
       reportId: dbReport.id.toString(),
@@ -548,7 +561,9 @@ export class PlagiarismService {
         averageSimilarity: parseFloat(
           pairSimilaritySummary.averageSimilarity.toFixed(4),
         ),
-        maxSimilarity: parseFloat(pairSimilaritySummary.maxSimilarity.toFixed(4)),
+        maxSimilarity: parseFloat(
+          pairSimilaritySummary.maxSimilarity.toFixed(4),
+        ),
       },
       submissions: this.mapReportFilesToDTOs(report.files),
       pairs: pairs.map((pair: Pair) => {
@@ -627,10 +642,7 @@ export class PlagiarismService {
         const semanticScore =
           semanticScores.get(normalizedSubmissionPair.pairKey) ?? 0
 
-        return buildPairSimilarityScoreBreakdown(
-          pair.similarity,
-          semanticScore,
-        )
+        return buildPairSimilarityScoreBreakdown(pair.similarity, semanticScore)
       })
       .filter(
         (
@@ -658,7 +670,9 @@ export class PlagiarismService {
 
     for (const pair of pairs) {
       const leftSubmissionId = parseInt(pair.leftFile.info?.submissionId || "0")
-      const rightSubmissionId = parseInt(pair.rightFile.info?.submissionId || "0")
+      const rightSubmissionId = parseInt(
+        pair.rightFile.info?.submissionId || "0",
+      )
 
       if (!leftSubmissionId || !rightSubmissionId) {
         continue
@@ -712,4 +726,3 @@ export class PlagiarismService {
     return semanticScores
   }
 }
-

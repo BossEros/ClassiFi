@@ -14,6 +14,9 @@ export interface SubmissionGradedMetadata {
   grade: number
   maxGrade: number
   submissionUrl: string
+  reason?: "similarity_deduction"
+  previousGrade?: number
+  deductedPoints?: number
 }
 
 export interface SubmissionFeedbackGivenMetadata {

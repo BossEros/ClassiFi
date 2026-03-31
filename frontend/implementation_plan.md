@@ -130,3 +130,13 @@
 2. Replace the effect-driven mobile-close behavior with a render-safe state model that still closes the drawer when the route changes.
 3. Preserve existing explicit close paths such as nav clicks, overlay clicks, escape handling, and desktop breakpoint transitions.
 4. Re-run the frontend CI commands: `npm run lint`, `npm test`, and `npm run build`.
+
+---
+
+## Fair Similarity-Based Deduction for Assignments
+
+1. Extend frontend assignment and submission models with the new similarity-penalty contract while keeping existing service boundaries intact.
+2. Add the assignment create/edit toggle beside the existing submission-policy controls and keep the v1 UI to a single switch plus helper copy.
+3. Show a student-facing policy notice in the shared assignment detail page before submission when the toggle is enabled.
+4. Update teacher and student score displays to show effective score with raw-grade and similarity-penalty context where appropriate.
+5. Add focused frontend regression coverage and verify with `npm run build`.

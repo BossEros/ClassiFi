@@ -131,4 +131,61 @@
 - [x] Fix the backend regression if a failing test is confirmed
 - [x] Re-run `npm run typecheck`
 - [ ] Re-run `npm test`
-  `npm.cmd test` remains blocked in this sandbox by Vite/Vitest `spawn EPERM`, but the broken PR-side plagiarism tests were corrected to match the current library contract.
+      `npm.cmd test` remains blocked in this sandbox by Vite/Vitest `spawn EPERM`, but the broken PR-side plagiarism tests were corrected to match the current library contract.
+
+---
+
+# Fair Similarity-Based Deduction for Assignments
+
+- [ ] Read `backend-ts/documentation.md`
+- [ ] Extend assignment and submission persistence models for similarity penalty metadata
+- [ ] Add plagiarism penalty evaluation service and wire it into analysis plus assignment updates
+- [ ] Update submission, gradebook, and assignment DTOs, schemas, and controllers
+- [ ] Add backend regression coverage for penalty eligibility, highest-pair-only behavior, and override precedence
+- [ ] Run `npm run typecheck`
+- [ ] Run `npm test`
+
+# Simplify Similarity Deduction Gates
+
+- [x] Confirm backend architecture guidance in `backend-ts/documentation.md`
+- [x] Inspect similarity penalty config, service logic, and related UI copy
+- [x] Remove overlap-coverage and longest-fragment eligibility gates from similarity deduction
+- [x] Add backend regression tests for threshold-only deduction bands and highest-pair precedence
+- [x] Update backend/frontend documentation and assignment copy to match the simplified rule
+- [x] Run `npm run typecheck`
+- [ ] Run `npm test`
+      `npm.cmd test` is still blocked in this workspace by the existing Vite/Vitest `spawn EPERM` startup failure.
+
+# Auto Similarity Deduction Refresh
+
+- [x] Trace auto similarity startup and current-report reuse behavior
+- [x] Refresh similarity penalties when auto processing finds a current report
+- [x] Refresh similarity penalties when manual review reuses a current report
+- [x] Add regression coverage for current-report sync behavior
+- [ ] Run `npm run typecheck`
+- [ ] Run `npm test`
+
+# Similarity Deduction Notification
+
+- [x] Inspect current grade update and notification flows for similarity deductions
+- [x] Add notification dispatch when similarity deduction changes the student's visible score
+- [x] Add regression coverage for similarity-deduction notification behavior
+- [x] Update notification typing/documentation for the similarity-deduction message
+- [x] Run `npm run typecheck`
+- [ ] Run `npm test`
+      `npm.cmd test` remains blocked in this workspace by the existing Vite/Vitest `spawn EPERM` startup failure.
+
+# Cross-Class Similarity Report Lifecycle Bug
+
+- [x] Confirm backend architecture guidance in `backend-ts/documentation.md`
+- [x] Trace the cross-class analysis controller, service, repository, and frontend page flow
+- [x] Inspect live database state for report/result deletion behavior
+- [x] Preserve historical cross-class reports instead of pruning prior runs
+- [x] Update the frontend cross-class page to load the latest saved report before running a new analysis
+- [x] Add focused regression coverage for cross-class report retention
+- [x] Update backend documentation for cross-class report retention behavior
+- [x] Run `npm run typecheck` in `backend-ts`
+- [ ] Run `npm test` in `backend-ts`
+      `npm.cmd test` is still blocked in this workspace by the Vite/Vitest `spawn EPERM` startup failure.
+- [ ] Run `npm run build` in `frontend`
+      `npm.cmd run build` is currently blocked by pre-existing frontend test typing errors in `src/tests/unit/data/repositories/moduleRepository.test.ts` and `src/tests/unit/shared/store/useAuthStore.test.ts`.

@@ -59,6 +59,7 @@ function buildDefaultFormValues(): AssignmentFormValues {
     scheduledDate: null,
     allowLateSubmissions: false,
     latePenaltyConfig: normalizeLatePenaltyConfig(DEFAULT_LATE_PENALTY_CONFIG),
+    enableSimilarityPenalty: false,
     moduleId: null,
   }
 }
@@ -167,6 +168,8 @@ export function useAssignmentForm() {
               latePenaltyConfig: normalizeLatePenaltyConfig(
                 assignment.latePenaltyConfig,
               ),
+              enableSimilarityPenalty:
+                assignment.enableSimilarityPenalty ?? false,
               moduleId: assignment.moduleId ?? null,
             })
             setShowTemplateCode(!!assignment.templateCode)

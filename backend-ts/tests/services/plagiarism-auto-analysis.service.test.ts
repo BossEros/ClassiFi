@@ -9,6 +9,7 @@ describe("PlagiarismAutoAnalysisService", () => {
   let mockSimilarityRepo: any
   let mockClassRepo: any
   let mockPlagiarismService: any
+  let mockSimilarityPenaltyService: any
   let originalAutoSimilarityEnabled: boolean
   let originalAutoSimilarityDebounceMs: number
   let originalAutoSimilarityReconciliationIntervalMs: number
@@ -55,12 +56,17 @@ describe("PlagiarismAutoAnalysisService", () => {
       analyzeAssignmentSubmissions: vi.fn().mockResolvedValue(undefined),
     }
 
+    mockSimilarityPenaltyService = {
+      syncAssignmentPenaltyState: vi.fn().mockResolvedValue(undefined),
+    }
+
     service = new PlagiarismAutoAnalysisService(
       mockAssignmentRepo,
       mockSubmissionRepo,
       mockSimilarityRepo,
       mockClassRepo,
       mockPlagiarismService,
+      mockSimilarityPenaltyService,
     )
   })
 
@@ -169,6 +175,24 @@ describe("PlagiarismAutoAnalysisService", () => {
     expect(
       mockPlagiarismService.analyzeAssignmentSubmissions,
     ).not.toHaveBeenCalled()
+  })
+
+  it("syncs similarity penalties when the latest report is already current", async () => {
+    mockSimilarityRepo.getLatestReportByAssignment.mockResolvedValue({
+      id: 99,
+      totalSubmissions: 2,
+      generatedAt: new Date("2026-01-01T10:05:00.000Z"),
+    })
+
+    await service.scheduleFromSubmission(1)
+    await vi.advanceTimersByTimeAsync(50)
+
+    expect(
+      mockPlagiarismService.analyzeAssignmentSubmissions,
+    ).not.toHaveBeenCalled()
+    expect(
+      mockSimilarityPenaltyService.syncAssignmentPenaltyState,
+    ).toHaveBeenCalledWith(1)
   })
 
   it("passes undefined teacher ID when assignment class cannot be resolved", async () => {

@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   pgTable,
   serial,
   integer,
@@ -21,13 +22,15 @@ export const similarityResults = pgTable(
     id: serial("id").primaryKey(),
     reportId: integer("report_id")
       .notNull()
-      .references(() => similarityReports.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => similarityReports.id, {
+        onDelete: "cascade",
+      }),
     submission1Id: integer("submission1_id")
       .notNull()
-      .references(() => submissions.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => submissions.id, { onDelete: "cascade" }),
     submission2Id: integer("submission2_id")
       .notNull()
-      .references(() => submissions.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => submissions.id, { onDelete: "cascade" }),
     structuralScore: numeric("structural_score", {
       precision: 7,
       scale: 6,

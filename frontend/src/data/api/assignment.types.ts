@@ -28,6 +28,7 @@ export interface AssignmentDetail {
   scheduledDate?: string | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
   testCases?: AssignmentTestCase[]
   moduleId?: number | null
 }
@@ -54,6 +55,7 @@ export interface CreateAssignmentRequest {
   scheduledDate?: Date | string | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
   moduleId?: number | null
 }
 
@@ -71,6 +73,7 @@ export interface UpdateAssignmentRequest {
   scheduledDate?: Date | string | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
   moduleId?: number | null
 }
 
@@ -139,6 +142,7 @@ export interface AssignmentDetailDTO {
   scheduledDate?: string | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
   testCases?: AssignmentTestCase[]
   moduleId?: number | null
 }

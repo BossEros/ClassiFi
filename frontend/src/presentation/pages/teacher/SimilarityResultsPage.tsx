@@ -646,6 +646,7 @@ export function SimilarityResultsPage() {
                   onClick={() =>
                     navigate(
                       `/dashboard/assignments/${assignmentId}/cross-class-similarity`,
+                      { state: { shouldRunInitialAnalysis: true } },
                     )
                   }
                   className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700"

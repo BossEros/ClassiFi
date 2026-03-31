@@ -56,6 +56,7 @@ interface AssignmentPayload {
   scheduledDate: Date | null
   allowLateSubmissions: boolean
   latePenaltyConfig: LatePenaltyConfig | null
+  enableSimilarityPenalty: boolean
   moduleId: number | null
 }
 
@@ -84,7 +85,7 @@ export function buildAssignmentPayload(
     latePenaltyConfig: shouldEnableLatePenalty
       ? formData.latePenaltyConfig
       : null,
+    enableSimilarityPenalty: formData.enableSimilarityPenalty,
     moduleId: formData.moduleId ?? null,
   }
 }
-

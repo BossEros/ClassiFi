@@ -34,6 +34,7 @@ export const CreateAssignmentRequestSchema = z.object({
   scheduledDate: z.string().datetime().nullable().optional(),
   allowLateSubmissions: z.boolean().default(false),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
+  enableSimilarityPenalty: z.boolean().default(false),
 })
 
 export type CreateAssignmentRequest = z.infer<
@@ -56,6 +57,7 @@ export const UpdateAssignmentRequestSchema = z.object({
   allowLateSubmissions: z.boolean().optional(),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
   moduleId: z.number().int().min(1).optional(),
+  enableSimilarityPenalty: z.boolean().optional(),
 })
 
 export type UpdateAssignmentRequest = z.infer<
@@ -82,6 +84,7 @@ export const AssignmentResponseSchema = z.object({
   scheduledDate: z.string().nullable().optional(),
   allowLateSubmissions: z.boolean().optional(),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
+  enableSimilarityPenalty: z.boolean().optional(),
   submissionCount: z.number().optional(),
   studentCount: z.number().optional(),
   hasSubmitted: z.boolean().optional(),

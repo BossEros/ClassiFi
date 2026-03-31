@@ -23,6 +23,7 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
     formState: { errors: formErrors },
   } = useFormContext<AssignmentFormValues>()
   const allowResubmission = watch("allowResubmission")
+  const enableSimilarityPenalty = watch("enableSimilarityPenalty")
   const maxAttempts = watch("maxAttempts")
   const maxAttemptsError = getFieldErrorMessage(formErrors, "maxAttempts")
 
@@ -40,6 +41,16 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
       shouldTouch: true,
     })
     clearErrors("maxAttempts")
+  }
+
+  const handleSimilarityPenaltyChange = (
+    shouldEnableSimilarityPenalty: boolean,
+  ) => {
+    setValue("enableSimilarityPenalty", shouldEnableSimilarityPenalty, {
+      shouldDirty: true,
+      shouldTouch: true,
+    })
+    clearErrors("enableSimilarityPenalty")
   }
 
   return (
@@ -71,6 +82,33 @@ export function SubmissionSettings({ isLoading }: SubmissionSettingsProps) {
             />
             <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-teal-600 peer-focus:ring-2 peer-focus:ring-teal-500/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
           </label>
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-slate-700">
+                Deduct score based on similarity score
+              </p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                Uses one highest-matching pair, excludes template code, and
+                caps the automatic deduction at 20%.
+              </p>
+            </div>
+
+            <label className="relative inline-flex cursor-pointer items-center">
+              <input
+                type="checkbox"
+                checked={enableSimilarityPenalty}
+                onChange={(event) =>
+                  handleSimilarityPenaltyChange(event.target.checked)
+                }
+                disabled={isLoading}
+                className="sr-only peer"
+              />
+              <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-checked:bg-teal-600 peer-focus:ring-2 peer-focus:ring-teal-500/30 after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow-sm after:transition-transform after:content-[''] peer-checked:after:translate-x-5" />
+            </label>
+          </div>
         </div>
 
         {allowResubmission && (

@@ -203,11 +203,12 @@ Admin enrollment workspace behavior:
 - **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
 - **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export.
-- **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, and teacher feedback without exposing any class ranking or peer data.
+- **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, similarity-deduction breakdowns, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
 - **`SummaryStatCard`**: Shared icon-label-value card used by teacher submissions metrics and similarity analysis summaries.
 - **`AssignmentSubmissionsTable`**: Teacher submissions table (`Student Name`, `Status`, `Grade`, `Action`) with avatar cells, centered actions, and built-in pagination summary/controls.
 - **`AssignmentTestResultsCard`**: Displays test details in stacked blocks (`Input`, `Expected`, `Actual`) to preserve output readability; hidden-case details are role-aware (teacher/admin can view, student view remains masked).
+- **`AssignmentDetailPage`**: Shared assignment detail view now shows the similarity-policy notice before submission and a score breakdown (`raw score`, deduction, final score) when similarity penalties apply.
 
 ### Forms
 
@@ -219,6 +220,7 @@ Admin enrollment workspace behavior:
   - File attachments
   - Test cases with input/output validation
   - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
+  - Similarity deduction toggle (`Deduct score based on similarity score`) with helper copy explaining the capped hybrid-band policy
   - Optional deadline settings (assignment can be created without a deadline)
   - Resubmission settings
 - **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
@@ -413,7 +415,7 @@ Real-time notification system that keeps users informed about important events:
 | Type                 | Trigger                    | Content                                |
 | -------------------- | -------------------------- | -------------------------------------- |
 | `ASSIGNMENT_CREATED` | Teacher creates assignment | Assignment title, class name, due date |
-| `SUBMISSION_GRADED`  | Submission receives grade  | Assignment title, grade, feedback      |
+| `SUBMISSION_GRADED`  | Submission receives grade or has its visible score updated after similarity review | Assignment title, updated score, feedback |
 
 #### Features
 
@@ -526,7 +528,7 @@ Specialized types for the class detail page redesign:
 6. **Review Grades in Class Context**:
    - Open the `Grades` tab to see a personal performance view for the current class
    - Summary cards show current grade, graded assignments, pending review, and not-submitted counts
-   - Assignment rows show score, percentage, submission timing, late penalties, adjusted grades, and teacher feedback when available
+   - Assignment rows show score, percentage, submission timing, late penalties, adjusted grades, similarity deductions, and teacher feedback when available
 
 ### Teacher: Managing Class Assignments
 
@@ -564,7 +566,7 @@ Specialized types for the class detail page redesign:
 5. **Create New Assignment**:
    - Click "Add Assignment" button (from module card or tab header)
    - Select which module to assign the assignment to via the module selector dropdown
-   - Configure assignment details, test cases, deadlines, and late submission policy
+   - Configure assignment details, test cases, deadlines, late submission policy, and whether strong similarity evidence can trigger a capped automatic deduction
    - Module is pre-selected when creating from within a module card
 
 ### Teacher: Reviewing Plagiarism Results

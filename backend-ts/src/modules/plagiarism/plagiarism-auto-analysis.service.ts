@@ -7,6 +7,7 @@ import type { SubmissionRepository } from "@/modules/submissions/submission.repo
 import type { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import type { ClassRepository } from "@/modules/classes/class.repository.js"
 import type { PlagiarismService } from "@/modules/plagiarism/plagiarism.service.js"
+import type { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 
 type AutoAnalysisTrigger = "submission" | "reconciliation" | "rerun"
 
@@ -36,6 +37,8 @@ export class PlagiarismAutoAnalysisService {
     private classRepo: ClassRepository,
     @inject(DI_TOKENS.services.plagiarism)
     private plagiarismService: PlagiarismService,
+    @inject(DI_TOKENS.services.similarityPenalty)
+    private similarityPenaltyService: SimilarityPenaltyService,
   ) {}
 
   /**
@@ -170,6 +173,9 @@ export class PlagiarismAutoAnalysisService {
     try {
       const shouldAnalyze = await this.shouldAnalyzeAssignment(assignmentId)
       if (!shouldAnalyze) {
+        await this.similarityPenaltyService.syncAssignmentPenaltyState(
+          assignmentId,
+        )
         return
       }
 

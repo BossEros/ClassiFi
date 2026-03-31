@@ -287,6 +287,7 @@ export async function createAssignment(
         : null,
       allowLateSubmissions: createAssignmentData.allowLateSubmissions,
       latePenaltyConfig: createAssignmentData.latePenaltyConfig,
+      enableSimilarityPenalty: createAssignmentData.enableSimilarityPenalty,
       moduleId: createAssignmentData.moduleId ?? null,
     },
   )
@@ -374,6 +375,7 @@ export async function updateAssignment(
       : undefined,
     allowLateSubmissions: updateAssignmentData.allowLateSubmissions,
     latePenaltyConfig: updateAssignmentData.latePenaltyConfig,
+    enableSimilarityPenalty: updateAssignmentData.enableSimilarityPenalty,
     moduleId: updateAssignmentData.moduleId ?? undefined,
   })
 }
@@ -441,5 +443,3 @@ export async function removeStudent(
     teacherId,
   )
 }
-
-

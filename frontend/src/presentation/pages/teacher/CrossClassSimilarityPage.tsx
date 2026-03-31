@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { CrossClassResultsSection } from "@/presentation/components/teacher/plagiarism"
 import { getAssignmentById } from "@/business/services/assignmentService"
@@ -7,6 +7,10 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import type { AssignmentDetail } from "@/business/models/assignment/types"
+
+interface CrossClassSimilarityNavigationState {
+  shouldRunInitialAnalysis?: boolean
+}
 
 /**
  * Dedicated page for cross-class similarity detection.
@@ -16,10 +20,17 @@ import type { AssignmentDetail } from "@/business/models/assignment/types"
  */
 export function CrossClassSimilarityPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
+  const [shouldRunInitialAnalysis] = useState(() => {
+    const navigationState =
+      location.state as CrossClassSimilarityNavigationState | null
+
+    return Boolean(navigationState?.shouldRunInitialAnalysis)
+  })
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -44,6 +55,14 @@ export function CrossClassSimilarityPage() {
 
     void fetchAssignment()
   }, [assignmentId, user])
+
+  useEffect(() => {
+    if (!shouldRunInitialAnalysis) {
+      return
+    }
+
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, navigate, shouldRunInitialAnalysis])
 
   const breadcrumbItems = [
     { label: "Classes", to: "/dashboard/classes" },
@@ -98,7 +117,10 @@ export function CrossClassSimilarityPage() {
           </p>
         </div>
 
-        <CrossClassResultsSection assignmentId={parseInt(assignmentId, 10)} />
+        <CrossClassResultsSection
+          assignmentId={parseInt(assignmentId, 10)}
+          shouldRunInitialAnalysis={shouldRunInitialAnalysis}
+        />
       </div>
     </DashboardLayout>
   )

@@ -90,6 +90,7 @@ describe("PlagiarismService", () => {
   let mockPersistenceService: any
   let mockFileService: any
   let mockDetectorFactory: any
+  let mockSimilarityPenaltyService: any
   let mockSemanticClient: any
 
   beforeEach(() => {
@@ -117,6 +118,11 @@ describe("PlagiarismService", () => {
       create: vi.fn().mockReturnValue(mockDetector),
     }
 
+    mockSimilarityPenaltyService = {
+      applyAssignmentPenaltyFromReport: vi.fn().mockResolvedValue(undefined),
+      syncAssignmentPenaltyState: vi.fn().mockResolvedValue(undefined),
+    }
+
     mockSemanticClient = {
       getSemanticScore: vi.fn().mockResolvedValue(0),
       healthCheck: vi.fn(),
@@ -130,6 +136,7 @@ describe("PlagiarismService", () => {
       mockDetectorFactory,
       mockFileService,
       mockPersistenceService,
+      mockSimilarityPenaltyService,
       mockSemanticClient,
     )
   })
@@ -226,11 +233,16 @@ describe("PlagiarismService", () => {
       expect(result.summary.suspiciousPairs).toBe(1)
       expect(result.summary.averageSimilarity).toBe(0.56)
       expect(result.summary.maxSimilarity).toBe(0.56)
-      expect(mockPersistenceService.getReusableAssignmentReport).toHaveBeenCalledWith(1)
+      expect(
+        mockPersistenceService.getReusableAssignmentReport,
+      ).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).toHaveBeenCalledWith(1)
       expect(mockDetectorFactory.create).toHaveBeenCalled()
       expect(mockDetector.analyze).toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).toHaveBeenCalled()
+      expect(
+        mockSimilarityPenaltyService.applyAssignmentPenaltyFromReport,
+      ).toHaveBeenCalledWith(1, 1)
     })
 
     it("uses hybrid score for suspicious-pair summary counts", async () => {
@@ -263,7 +275,11 @@ describe("PlagiarismService", () => {
               filename: "right.py",
               content: 'print("right")',
               lineCount: 1,
-              info: { submissionId: "12", studentId: "2", studentName: "Right" },
+              info: {
+                submissionId: "12",
+                studentId: "2",
+                studentName: "Right",
+              },
             },
             buildFragments: () => [],
           },
@@ -334,7 +350,12 @@ describe("PlagiarismService", () => {
       const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
       expect(result).toEqual(reusableReport)
-      expect(mockPersistenceService.getReusableAssignmentReport).toHaveBeenCalledWith(1)
+      expect(
+        mockSimilarityPenaltyService.syncAssignmentPenaltyState,
+      ).toHaveBeenCalledWith(1)
+      expect(
+        mockPersistenceService.getReusableAssignmentReport,
+      ).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).not.toHaveBeenCalled()
       expect(mockDetectorFactory.create).not.toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).not.toHaveBeenCalled()
@@ -400,7 +421,9 @@ describe("PlagiarismService", () => {
 
       await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
-      expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(pairCount)
+      expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(
+        pairCount,
+      )
       expect(maxInFlightRequests).toBeLessThanOrEqual(4)
     })
 
@@ -461,6 +484,4 @@ describe("PlagiarismService", () => {
       expect(result.pair.hybridScore).toBe(0.75)
     })
   })
-
 })
-

@@ -87,6 +87,25 @@ describe("Notification Types Registry", () => {
         submissionUrl: "https://app.com/submissions/1",
       })
     })
+
+    it("should generate similarity deduction messaging when requested", () => {
+      const similarityUpdateData = {
+        ...testData,
+        reason: "similarity_deduction" as const,
+        previousGrade: 85,
+        deductedPoints: 21,
+        grade: 64,
+      }
+
+      expect(config.titleTemplate(similarityUpdateData)).toBe(
+        "Score Updated After Similarity Review",
+      )
+      expect(config.messageTemplate(similarityUpdateData)).toContain(
+        "reviewed for similarity",
+      )
+      expect(config.messageTemplate(similarityUpdateData)).toContain("85/100")
+      expect(config.messageTemplate(similarityUpdateData)).toContain("64/100")
+    })
   })
 
   describe("CLASS_ANNOUNCEMENT", () => {

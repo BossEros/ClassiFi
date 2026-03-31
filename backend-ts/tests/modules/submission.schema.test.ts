@@ -85,7 +85,9 @@ describe("Submission Schemas", () => {
 
   describe("Param and query schemas", () => {
     it("coerces ID params from strings", () => {
-      expect(SubmissionIdParamSchema.parse({ submissionId: "5" }).submissionId).toBe(5)
+      expect(
+        SubmissionIdParamSchema.parse({ submissionId: "5" }).submissionId,
+      ).toBe(5)
 
       const historyParams = HistoryParamsSchema.parse({
         assignmentId: "10",
@@ -101,7 +103,9 @@ describe("Submission Schemas", () => {
     })
 
     it("coerces test results query includeHiddenDetails from string", () => {
-      const parsed = TestResultsQuerySchema.parse({ includeHiddenDetails: "true" })
+      const parsed = TestResultsQuerySchema.parse({
+        includeHiddenDetails: "true",
+      })
       expect(parsed.includeHiddenDetails).toBe(true)
     })
   })
