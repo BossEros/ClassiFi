@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom"
-import { ChevronRight } from "lucide-react"
+import { ArrowLeft, ChevronRight } from "lucide-react"
 import type { User } from "@/business/models/auth/types"
+import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery"
 import { NotificationBadge } from "./NotificationBadge"
 
 interface TopBarBreadcrumbItem {
@@ -9,14 +10,28 @@ interface TopBarBreadcrumbItem {
 }
 
 interface TopBarProps {
-  breadcrumbItems?: TopBarBreadcrumbItem[]
-}
-
-interface TopBarProps {
   user?: User | null
   userInitials?: string
   breadcrumbItems?: TopBarBreadcrumbItem[]
   showProfileButton?: boolean
+}
+
+function getMobileBackBreadcrumb(
+  breadcrumbItems: TopBarBreadcrumbItem[],
+): TopBarBreadcrumbItem | null {
+  for (
+    let breadcrumbIndex = breadcrumbItems.length - 2;
+    breadcrumbIndex >= 0;
+    breadcrumbIndex -= 1
+  ) {
+    const breadcrumbItem = breadcrumbItems[breadcrumbIndex]
+
+    if (breadcrumbItem?.to) {
+      return breadcrumbItem
+    }
+  }
+
+  return null
 }
 
 /**
@@ -29,17 +44,47 @@ export function useTopBar({
   breadcrumbItems,
 }: TopBarProps = {}) {
   const navigate = useNavigate()
+  const isMobileViewport = useIsMobile()
+  const resolvedBreadcrumbItems = breadcrumbItems ?? []
+  const hasBreadcrumbs = resolvedBreadcrumbItems.length > 0
+  const currentMobileBreadcrumb = hasBreadcrumbs
+    ? resolvedBreadcrumbItems[resolvedBreadcrumbItems.length - 1]
+    : null
+  const mobileBackBreadcrumb =
+    hasBreadcrumbs && resolvedBreadcrumbItems.length > 1
+      ? getMobileBackBreadcrumb(resolvedBreadcrumbItems)
+      : null
 
   return {
     main: (
       <div className="h-16 shrink-0 border-b border-slate-200 bg-[#FCFDFD] px-4 pl-14 sm:pl-4 lg:px-8">
         <div className="flex h-full w-full items-center justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
-            {breadcrumbItems && breadcrumbItems.length > 0 ? (
+            {isMobileViewport && currentMobileBreadcrumb ? (
+              <div className="flex min-w-0 items-center gap-3 sm:hidden">
+                {mobileBackBreadcrumb ? (
+                  <button
+                    type="button"
+                    onClick={() => navigate(mobileBackBreadcrumb.to!)}
+                    aria-label={`Go back to ${mobileBackBreadcrumb.label}`}
+                    className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FCFDFD]"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back</span>
+                  </button>
+                ) : null}
+
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {currentMobileBreadcrumb.label}
+                  </p>
+                </div>
+              </div>
+            ) : hasBreadcrumbs ? (
               <div className="flex items-center gap-1 overflow-hidden text-xs sm:gap-1.5 sm:text-sm">
-                {breadcrumbItems.map((breadcrumbItem, breadcrumbIndex) => {
+                {resolvedBreadcrumbItems.map((breadcrumbItem, breadcrumbIndex) => {
                   const isLastBreadcrumb =
-                    breadcrumbIndex === breadcrumbItems.length - 1
+                    breadcrumbIndex === resolvedBreadcrumbItems.length - 1
                   const isClickable = Boolean(breadcrumbItem.to)
 
                   return (

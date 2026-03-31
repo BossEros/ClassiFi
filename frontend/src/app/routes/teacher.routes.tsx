@@ -5,6 +5,7 @@ import { AssignmentSubmissionsPage } from "@/presentation/pages/teacher/Assignme
 import { ClassFormPage } from "@/presentation/pages/teacher/ClassFormPage"
 import { GradebookPage } from "@/presentation/pages/teacher/GradebookPage"
 import { SimilarityResultsPage } from "@/presentation/pages/teacher/SimilarityResultsPage"
+import { CrossClassSimilarityPage } from "@/presentation/pages/teacher/CrossClassSimilarityPage"
 import { TeacherOnlyRoute } from "@/app/routes/routeGuards"
 
 export const teacherRouteElements = (
@@ -64,6 +65,14 @@ export const teacherRouteElements = (
       element={
         <ProtectedRoute>
           <SimilarityResultsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/dashboard/assignments/:assignmentId/cross-class-similarity"
+      element={
+        <ProtectedRoute>
+          <CrossClassSimilarityPage />
         </ProtectedRoute>
       }
     />

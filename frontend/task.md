@@ -78,6 +78,42 @@
 - [x] Read `frontend/documentation.md`
 - [x] Inspect the admin class detail page, its inlined enroll-student modal, and the shared admin enrollment modal patterns
 - [x] Refresh the inlined enroll-student modal to a light design that matches the other admin modals
+
+---
+
+# Mobile Top Bar Back Pattern Checklist
+
+- [x] Read `frontend/documentation.md`
+- [x] Audit the shared top bar and the pages that currently pass breadcrumb trails
+- [x] Keep desktop breadcrumbs unchanged while collapsing mobile trails into a shared `Back + title` pattern
+- [x] Add focused unit coverage for mobile and desktop top bar breadcrumb behavior
+- [x] Verify the frontend with the available commands
+  `npm.cmd run typecheck` passed.
+  `npm.cmd run test -- TopBar` is blocked in this sandbox by Vite/esbuild `spawn EPERM` while loading `vitest.config.ts`.
+
+---
+
+# Mobile Sidebar Close Control Alignment Checklist
+
+- [x] Read `frontend/documentation.md`
+- [x] Inspect the shared mobile sidebar trigger and header controls
+- [x] Keep the outer trigger as a stable menu button and move the close action into the drawer header beside `ClassiFi`
+- [x] Update the shared sidebar regression coverage for the new mobile close control
+- [x] Verify the frontend with the available commands
+  `npm.cmd run typecheck` passed.
+  Sidebar Vitest coverage remains blocked in this sandbox when Vite loads config because of the existing `spawn EPERM` issue.
+
+---
+
+# Mobile Toast Position Fix Checklist
+
+- [x] Read `frontend/documentation.md`
+- [x] Inspect the shared toast container and its app-level mount point
+- [x] Keep mobile toasts right-anchored with a bounded width instead of stretching between both viewport edges
+- [x] Add focused coverage for the mobile toast container classes
+- [x] Verify the frontend with the available commands
+  `npm.cmd run typecheck` passed.
+  `npm.cmd run test -- Toast` is blocked in this sandbox by Vite/esbuild `spawn EPERM` while loading `vitest.config.ts`.
 - [x] Replace the custom debounce logic with the shared `useDebouncedValue` hook
 - [x] Remove the fixed inner page width and widen the student search row beside the `Enroll Student` button
 - [x] Verify the frontend with the available build commands

@@ -56,6 +56,7 @@ export type {
 export {
   similarityReports,
   similarityReportsRelations,
+  reportTypeEnum,
 } from "@/modules/plagiarism/similarity-report.model.js"
 export type {
   SimilarityReport,
