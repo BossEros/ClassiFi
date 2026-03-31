@@ -2,6 +2,7 @@
 export { PairCodeEditor } from "./PairCodeEditor"
 export { PairCodeDiff } from "./PairCodeDiff"
 export { PairComparison } from "./PairComparison"
+export { CrossClassResultsSection } from "./CrossClassResultsSection"
 export { SimilarityBadge } from "./SimilarityBadge"
 export { SimilarityGraphView } from "./SimilarityGraphView"
 export { SimilarityThresholdSlider } from "./SimilarityThresholdSlider"

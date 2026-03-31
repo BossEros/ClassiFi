@@ -4,7 +4,6 @@ import {
   Home,
   BookOpen,
   Menu,
-  X,
   Users,
   GraduationCap,
   Calendar,
@@ -193,6 +192,7 @@ function SidebarContent({
   )
   const shouldRenderCollapsedDesktopSidebar =
     isCollapsed && isDesktopViewport
+  const shouldShowMobileDrawerCloseButton = isMobileOpen && !isDesktopViewport
 
   const closeMobileSidebar = useCallback(() => {
     setIsMobileOpen(false)
@@ -275,25 +275,20 @@ function SidebarContent({
   return (
     <>
       {/* Mobile menu button */}
-      <button
-        onClick={toggleMobileSidebar}
-        className={cn(
-          "fixed left-3 top-3 z-[70] flex h-11 w-11 items-center justify-center rounded-lg border shadow-lg backdrop-blur-sm transition-all duration-200 lg:hidden",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FCFDFD]",
-          isMobileOpen
-            ? "border-slate-700 bg-slate-900 text-white shadow-slate-950/35 hover:bg-slate-800"
-            : "border-slate-300/90 bg-white/95 text-slate-800 shadow-slate-300/80 hover:border-slate-400 hover:bg-white",
-        )}
-        aria-label={isMobileOpen ? "Close menu" : "Open menu"}
-        aria-expanded={isMobileOpen}
-        aria-controls="dashboard-sidebar"
-      >
-        {isMobileOpen ? (
-          <X className="h-5 w-5" />
-        ) : (
+      {!isMobileOpen && (
+        <button
+          onClick={toggleMobileSidebar}
+          className={cn(
+            "fixed left-3 top-3 z-[70] flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300/90 bg-white/95 text-slate-800 shadow-lg shadow-slate-300/80 backdrop-blur-sm transition-all duration-200 hover:border-slate-400 hover:bg-white lg:hidden",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FCFDFD]",
+          )}
+          aria-label="Open menu"
+          aria-expanded={isMobileOpen}
+          aria-controls="dashboard-sidebar"
+        >
           <Menu className="h-5 w-5" />
-        )}
-      </button>
+        </button>
+      )}
 
       {/* Sidebar */}
       <aside
@@ -345,14 +340,25 @@ function SidebarContent({
                 </h1>
               </div>
 
-              {onToggleCollapse && (
+              {(onToggleCollapse || shouldShowMobileDrawerCloseButton) && (
                 <button
-                  onClick={onToggleCollapse}
+                  onClick={
+                    shouldShowMobileDrawerCloseButton
+                      ? closeMobileSidebar
+                      : onToggleCollapse
+                  }
                   className={cn(
-                    "hidden lg:flex shrink-0 items-center justify-center text-slate-300 hover:text-white transition-colors",
+                    "shrink-0 items-center justify-center text-slate-300 hover:text-white transition-colors",
+                    shouldShowMobileDrawerCloseButton
+                      ? "inline-flex"
+                      : "hidden lg:flex",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
                   )}
-                  aria-label="Collapse sidebar"
+                  aria-label={
+                    shouldShowMobileDrawerCloseButton
+                      ? "Close sidebar"
+                      : "Collapse sidebar"
+                  }
                 >
                   <PanelLeftClose className="w-5 h-5" />
                 </button>
