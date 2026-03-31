@@ -22,6 +22,7 @@ describe("Notification Flow Integration Tests", () => {
   let mockClassRepo: any
   let mockEnrollmentRepo: any
   let mockSubmissionRepo: any
+  let mockSimilarityPenaltyService: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -96,6 +97,10 @@ describe("Notification Flow Integration Tests", () => {
       withContext: vi.fn().mockReturnThis(),
     }
 
+    mockSimilarityPenaltyService = {
+      syncAssignmentPenaltyState: vi.fn(),
+    }
+
     container.registerInstance("NotificationRepository", mockNotificationRepo)
     container.registerInstance("UserRepository", mockUserRepo)
     container.registerInstance("EmailService", mockEmailService)
@@ -119,6 +124,10 @@ describe("Notification Flow Integration Tests", () => {
     } as any)
     container.registerInstance("TestResultRepository", {} as any)
     container.registerInstance("LatePenaltyService", {} as any)
+    container.registerInstance(
+      "SimilarityPenaltyService",
+      mockSimilarityPenaltyService,
+    )
 
     notificationService = new NotificationService(
       mockNotificationRepo,

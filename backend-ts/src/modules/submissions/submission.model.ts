@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   pgTable,
   serial,
   integer,
@@ -21,10 +22,10 @@ export const submissions = pgTable(
     id: serial("id").primaryKey(),
     assignmentId: integer("assignment_id")
       .notNull()
-      .references(() => assignments.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => assignments.id, { onDelete: "cascade" }),
     studentId: integer("student_id")
       .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+      .references((): AnyPgColumn => users.id, { onDelete: "cascade" }),
     fileName: varchar("file_name", { length: 255 }).notNull(),
     filePath: text("file_path").notNull(),
     fileSize: integer("file_size").notNull(),
@@ -39,6 +40,7 @@ export const submissions = pgTable(
 
     // Grade Override Tracking
     isGradeOverridden: boolean("is_grade_overridden").default(false).notNull(),
+    overrideGrade: integer("override_grade"),
     overrideReason: text("override_reason"), // Optional reason for grade override (nullable)
     overriddenAt: timestamp("overridden_at", { withTimezone: true }), // When override occurred
 
@@ -59,7 +61,7 @@ export const submissions = pgTable(
     check("check_submission_number", sql`${table.submissionNumber} > 0`),
     check(
       "check_override_consistency",
-      sql`NOT ${table.isGradeOverridden} OR ${table.overriddenAt} IS NOT NULL`,
+      sql`NOT ${table.isGradeOverridden} OR (${table.overriddenAt} IS NOT NULL AND ${table.overrideGrade} IS NOT NULL)`,
     ),
     index("idx_submissions_assignment").on(table.assignmentId),
     index("idx_submissions_student").on(table.studentId),

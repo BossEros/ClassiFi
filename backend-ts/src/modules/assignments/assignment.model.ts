@@ -23,7 +23,7 @@ export const programmingLanguageEnum = pgEnum("programming_language", [
 
 export interface LatePenaltyConfig {
   tiers: Array<{
-    hoursLate: number 
+    hoursLate: number
     penaltyPercent: number
   }>
   rejectAfterHours: number | null
@@ -36,14 +36,14 @@ export const assignments = pgTable("assignments", {
     .notNull()
     .references(() => classes.id, { onDelete: "cascade" }),
   moduleId: integer("module_id").references(() => modules.id, {
-      onDelete: "cascade",
-    }),
+    onDelete: "cascade",
+  }),
   assignmentName: varchar("assignment_name", { length: 150 }).notNull(),
   instructions: text("instructions").notNull(),
   instructionsImageUrl: text("instructions_image_url"),
   programmingLanguage: programmingLanguageEnum(
     "programming_language",
-    ).notNull(),
+  ).notNull(),
   deadline: timestamp("deadline", { withTimezone: true }),
   allowResubmission: boolean("allow_resubmission").default(true).notNull(),
   maxAttempts: integer("max_attempts"),
@@ -58,6 +58,9 @@ export const assignments = pgTable("assignments", {
     .default(false)
     .notNull(),
   latePenaltyConfig: jsonb("late_penalty_config").$type<LatePenaltyConfig>(),
+  enableSimilarityPenalty: boolean("enable_similarity_penalty")
+    .default(false)
+    .notNull(),
   lastReminderSentAt: timestamp("last_reminder_sent_at", {
     withTimezone: true,
   }),

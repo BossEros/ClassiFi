@@ -390,6 +390,7 @@ function SidebarContent({
             <ProfileDropdown
               user={user}
               userInitials={`${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()}
+              isSidebarCollapsed={shouldRenderCollapsedDesktopSidebar}
             >
               <div
                 className={cn(

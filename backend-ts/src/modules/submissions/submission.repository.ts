@@ -114,6 +114,7 @@ export class SubmissionRepository extends BaseRepository<
         isLate: submissions.isLate,
         penaltyApplied: submissions.penaltyApplied,
         isGradeOverridden: submissions.isGradeOverridden,
+        overrideGrade: submissions.overrideGrade,
         overrideReason: submissions.overrideReason,
         overriddenAt: submissions.overriddenAt,
         teacherFeedback: submissions.teacherFeedback,
@@ -184,7 +185,10 @@ export class SubmissionRepository extends BaseRepository<
       )
 
     return new Map(
-      latestSubmissions.map((submission) => [submission.assignmentId, submission]),
+      latestSubmissions.map((submission) => [
+        submission.assignmentId,
+        submission,
+      ]),
     )
   }
 
@@ -406,7 +410,9 @@ export class SubmissionRepository extends BaseRepository<
   async updateGrade(submissionId: number, grade: number): Promise<void> {
     await this.db
       .update(submissions)
-      .set({ grade })
+      .set({
+        grade,
+      })
       .where(eq(submissions.id, submissionId))
   }
 
@@ -422,7 +428,7 @@ export class SubmissionRepository extends BaseRepository<
     await this.db
       .update(submissions)
       .set({
-        grade,
+        overrideGrade: grade,
         isGradeOverridden: true,
         overrideReason: reason,
         overriddenAt: new Date(),
@@ -439,6 +445,7 @@ export class SubmissionRepository extends BaseRepository<
       .update(submissions)
       .set({
         isGradeOverridden: false,
+        overrideGrade: null,
         overrideReason: null,
         overriddenAt: null,
       })

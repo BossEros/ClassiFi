@@ -9,14 +9,18 @@ import type {
  * Compares submissions across matching assignments in the teacher's classes.
  *
  * @param assignmentId - The source assignment to analyze.
+ * @param signal - Optional AbortSignal to cancel the request mid-flight.
  * @returns API response containing the cross-class analysis report.
  */
 export async function analyzeCrossClassSimilarity(
   assignmentId: number,
+  signal?: AbortSignal,
 ): Promise<ApiResponse<CrossClassAnalysisResponse>> {
   return apiClient.post<CrossClassAnalysisResponse>(
     `/plagiarism/cross-class/analyze/assignment/${assignmentId}`,
     {},
+    undefined,
+    signal,
   )
 }
 

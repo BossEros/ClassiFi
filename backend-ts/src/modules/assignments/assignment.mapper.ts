@@ -21,6 +21,7 @@ export interface AssignmentDTO {
   scheduledDate: string | null
   allowLateSubmissions: boolean
   latePenaltyConfig: Assignment["latePenaltyConfig"] | null
+  enableSimilarityPenalty: boolean
   submissionCount?: number
   studentCount?: number
   hasSubmitted?: boolean
@@ -63,6 +64,7 @@ export function toAssignmentDTO(
     scheduledDate: assignment.scheduledDate?.toISOString() ?? null,
     allowLateSubmissions: assignment.allowLateSubmissions ?? false,
     latePenaltyConfig: assignment.latePenaltyConfig ?? null,
+    enableSimilarityPenalty: assignment.enableSimilarityPenalty ?? false,
     ...extras,
   }
 }

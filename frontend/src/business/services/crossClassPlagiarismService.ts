@@ -11,30 +11,63 @@ export type {
   CrossClassResultDetailsResponse,
 } from "@/business/models/plagiarism/crossClassTypes"
 
+const inFlightCrossClassAnalysisByAssignmentId = new Map<
+  number,
+  Promise<CrossClassAnalysisResponse>
+>()
+
 /**
  * Triggers cross-class similarity analysis for an assignment.
  * Compares submissions across matching assignments in the teacher's classes.
  *
  * @param assignmentId - The source assignment to analyze.
+ * @param signal - Optional AbortSignal to cancel the request mid-flight.
  * @returns The cross-class analysis report with matched assignments and results.
  * @throws Error if the analysis fails or returns no data.
  */
 export async function analyzeCrossClassSimilarity(
   assignmentId: number,
+  _signal?: AbortSignal,
 ): Promise<CrossClassAnalysisResponse> {
   validateId(assignmentId, "assignment")
 
-  const response = await crossClassRepository.analyzeCrossClassSimilarity(assignmentId)
-
-  if (response.error) {
-    throw new Error(response.error)
+  const existingAnalysisRequest = inFlightCrossClassAnalysisByAssignmentId.get(
+    assignmentId,
+  )
+  if (existingAnalysisRequest) {
+    return existingAnalysisRequest
   }
 
-  if (!response.data) {
-    throw new Error("Failed to run cross-class similarity analysis")
-  }
+  const analysisRequestPromise = (async () => {
+    const response =
+      await crossClassRepository.analyzeCrossClassSimilarity(assignmentId)
 
-  return response.data
+    if (response.error) {
+      throw new Error(response.error)
+    }
+
+    if (!response.data) {
+      throw new Error("Failed to run cross-class similarity analysis")
+    }
+
+    return response.data
+  })()
+
+  inFlightCrossClassAnalysisByAssignmentId.set(
+    assignmentId,
+    analysisRequestPromise,
+  )
+
+  try {
+    return await analysisRequestPromise
+  } finally {
+    if (
+      inFlightCrossClassAnalysisByAssignmentId.get(assignmentId) ===
+      analysisRequestPromise
+    ) {
+      inFlightCrossClassAnalysisByAssignmentId.delete(assignmentId)
+    }
+  }
 }
 
 /**

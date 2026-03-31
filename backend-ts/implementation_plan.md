@@ -1,16 +1,20 @@
 # Implementation Plan: Automatic Similarity Analysis (No New Tables)
 
 ## Goal
+
 Automatically trigger assignment similarity analysis after successful student submissions without introducing a queue table or other schema changes.
 
 ## Constraints
+
 - Keep existing Controller-Service-Repository architecture.
 - Reuse existing plagiarism analysis and report reuse logic.
 - No new database tables or migrations.
 - Submission flow must remain successful even when scheduling/analysis fails.
 
 ## Approach
+
 1. Add an in-memory automation service in the plagiarism module:
+
 - debounced scheduling per assignment on submission events
 - single in-progress guard with one pending rerun flag
 - periodic reconciliation cycle that checks existing submissions/reports
@@ -18,12 +22,14 @@ Automatically trigger assignment similarity analysis after successful student su
 2. Integrate scheduling from `SubmissionService` after successful submission creation and grading flow.
 
 3. Reuse existing data sources only:
+
 - `submissions` (latest submissions)
 - `similarity_reports` (latest report freshness)
 
 4. Start/stop automation lifecycle from `buildApp` and Fastify `onClose`.
 
 ## Implementation Steps
+
 1. Extend config with automation flags (enabled, debounce, reconciliation interval, min submissions).
 2. Add submission repository helper for latest submission snapshots by assignment.
 3. Implement `PlagiarismAutoAnalysisService` under `src/modules/plagiarism`.
@@ -35,6 +41,7 @@ Automatically trigger assignment similarity analysis after successful student su
 9. Verify with `npm run typecheck` and `npm test`.
 
 ## Risks and Mitigation
+
 - Risk: in-memory timers are lost on restart.
 - Mitigation: reconciliation cycle catches stale/missing reports and re-triggers analysis.
 
@@ -49,36 +56,72 @@ Automatically trigger assignment similarity analysis after successful student su
 # Implementation Plan: Decouple Feedback Save From Notification Delivery
 
 ## Goal
+
 Ensure `saveTeacherFeedback` returns success once feedback persistence succeeds, even if downstream notification delivery fails.
 
 ## Constraints
+
 - Keep Controller-Service-Repository boundaries intact.
 - Preserve existing notification payload content.
 - Match resilience behavior already used by grade override flow.
 
 ## Approach
+
 1. Keep feedback write as the critical path (`submissionRepo.saveTeacherFeedback`).
 2. Send feedback notification as best-effort async work.
 3. Catch and log notification errors without rethrowing.
 4. Add service unit test to assert notification failures do not fail save.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Fair Similarity-Based Deduction for Assignments
+
+## Goal
+
+Implement an assignment-level similarity-deduction toggle with a conservative capped policy that preserves raw grades, exposes effective grades, and stays fair to students.
+
+## Constraints
+
+- Keep the existing Controller-Service-Repository architecture intact.
+- Reuse the current plagiarism report pipeline instead of inventing a second analysis flow.
+- Keep teacher manual override as the final correction path.
+- Show students the policy before submission.
+
+## Approach
+
+1. Extend assignment persistence with `enableSimilarityPenalty`.
+2. Extend submission persistence with `override_grade` so manual overrides stay separate from the automatic grade.
+3. Add a dedicated plagiarism-module service that evaluates latest report results and applies the highest qualifying penalty directly to the automatic grade for each latest submission.
+4. Keep submission and gradebook DTOs lean by returning the displayed `grade` plus override state only.
+5. Update frontend assignment creation, assignment detail, and grade displays to consume the simplified contracts.
+
+## Verification
+
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+3. Run `npm run build` in `frontend`.
 
 ---
 
 # Implementation Plan - Backend CI Test Failure Triage
 
 ## Goal
+
 Identify and fix the backend test regression currently breaking remote CI without disturbing the existing controller-service-repository boundaries.
 
 ## Constraints
+
 - Preserve the current backend architecture and test organization.
 - Reuse existing services, repositories, and test helpers wherever possible.
 - Confirm the exact failing backend path before changing production code or test expectations.
 
 ## Approach
+
 1. Reproduce the backend test run as closely as possible to CI, including an unsandboxed Vitest execution if the local sandbox blocks `esbuild`.
 2. Inspect the failing suite and compare the expectation against the current module behavior before deciding whether the fix belongs in application code or test setup.
 3. Apply the smallest clean fix that restores the intended contract.
@@ -89,14 +132,17 @@ Identify and fix the backend test regression currently breaking remote CI withou
 # Implementation Plan - Submission Attempt Numbering Regression
 
 ## Goal
+
 Fix student resubmissions so submission attempt numbers continue from the highest previous attempt instead of reusing the current row count after cleanup.
 
 ## Approach
+
 1. Update `SubmissionService` to calculate the next submission number from the highest stored `submissionNumber`.
 2. Reuse the shared `StorageService.uploadSubmission(...)` helper instead of duplicating submission path generation.
 3. Add regression tests for the "only submission 2 remains, next must be 3" scenario.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
 
@@ -105,15 +151,18 @@ Fix student resubmissions so submission attempt numbers continue from the highes
 # Implementation Plan - Test Case Edit/Delete Route Contract Fix
 
 ## Goal
+
 Restore teacher test case edit and delete actions by aligning backend route registration with the documented and frontend-used `/test-cases/:testCaseId` API contract.
 
 ## Approach
+
 1. Split test-case CRUD routes from code-preview routes so each can be mounted under the correct prefix.
 2. Register CRUD routes under `/test-cases` and keep code-preview routes under `/code`.
 3. Add focused backend controller coverage for the new route group.
 4. Re-run backend verification commands.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
 
@@ -122,20 +171,24 @@ Restore teacher test case edit and delete actions by aligning backend route regi
 # Implementation Plan - Registration Foreign-Key Sync Failure
 
 ## Goal
+
 Fix the registration flow so `/auth/register` no longer fails when local `users.supabase_user_id` insertion races the underlying Supabase `auth.users` record availability.
 
 ## Constraints
+
 - Preserve the existing controller-service-repository architecture.
 - Keep the current self-registration UX and avoid changing frontend behavior unless required.
 - Reuse the existing Supabase auth adapter instead of duplicating auth client logic.
 
 ## Approach
+
 1. Add a service-role lookup helper to the Supabase auth adapter so the backend can verify when a newly created auth user is available.
 2. Harden `AuthService.registerUser` to retry local user creation when it encounters the specific `fk_users_supabase_user_id` foreign-key violation.
 3. Add a focused regression test that simulates the first insert failing with `23503` and succeeding after the auth record becomes visible.
 4. Re-run backend verification commands.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
 
@@ -166,15 +219,18 @@ Investigate why semantic scores are `0` for some similarity results and harden r
 # Implementation Plan - Notification Outbox, Precision Restoration, and Validation Drift
 
 ## Goal
+
 Verify the reported backend findings against the current codebase, then fix only the issues that are still present across notifications, plagiarism persistence, test-case validation, and backend documentation.
 
 ## Constraints
+
 - Keep the existing controller-service-repository architecture intact.
 - Reuse existing escaping/template utilities instead of duplicating them.
 - Keep notification writes transaction-safe when paired with grade/feedback mutations.
 - Update backend documentation when the runtime model changes.
 
 ## Approach
+
 1. Move email delivery out of transaction-sensitive notification write flows without introducing a new table.
 2. Wrap grade override, grade publish, and teacher feedback flows in transactions so the primary write and in-app notification persist atomically.
 3. Send email only after the write transaction commits, using the existing email service and user preference checks.
@@ -183,6 +239,7 @@ Verify the reported backend findings against the current codebase, then fix only
 6. Correct the stale ERD notification connector and update the notification-delivery documentation to reflect the no-new-table delivery model.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
 
@@ -191,21 +248,25 @@ Verify the reported backend findings against the current codebase, then fix only
 # Implementation Plan - Configurable Hybrid Similarity Weighting
 
 ## Goal
+
 Make plagiarism scoring configurable with a default `70%` structural / `30%` semantic ratio, and ensure report flagging, summary metrics, and result ordering consistently follow the hybrid score instead of structural score alone.
 
 ## Constraints
+
 - Keep the existing controller-service-repository architecture intact.
 - Reuse the current plagiarism persistence flow instead of introducing a new scoring subsystem.
 - Preserve pair-level structural and semantic scores in the API for instructor review.
 - Avoid schema changes unless the runtime behavior truly requires them.
 
 ## Approach
+
 1. Extend backend configuration with validated structural/semantic weight settings and a hybrid suspicious threshold, defaulting to `0.7`, `0.3`, and `0.5`.
 2. Centralize hybrid-score and suspicious-pair calculations inside the plagiarism module to avoid duplicated weighting logic.
 3. Persist and return report summaries, flagged state, and pair ordering based on hybrid score.
 4. Update focused repository/service tests plus backend documentation and `.env.example`.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
 
@@ -214,20 +275,24 @@ Make plagiarism scoring configurable with a default `70%` structural / `30%` sem
 # Implementation Plan - Hosted Email Confirmation Redirects
 
 ## Goal
+
 Ensure registration confirmation emails redirect users to the correct deployed frontend route instead of falling back to `localhost`, while preserving the existing auth service architecture and frontend confirmation page.
 
 ## Constraints
+
 - Keep the backend controller-service-adapter boundaries intact.
 - Reuse the existing `FRONTEND_URL` configuration instead of adding duplicate redirect settings.
 - Preserve the existing frontend `/confirm-email` route and password reset flow.
 
 ## Approach
+
 1. Extend the Supabase auth adapter signup contract so the auth service can pass an explicit confirmation redirect URL.
 2. Build auth-email redirect URLs from `settings.frontendUrl` inside the auth module and reuse that logic for both signup confirmation and password reset.
 3. Add focused auth service regression coverage for the confirmation redirect.
 4. Update backend documentation and environment guidance so production deployments point `FRONTEND_URL` at the hosted frontend and align Supabase redirect settings.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
 
@@ -236,13 +301,63 @@ Ensure registration confirmation emails redirect users to the correct deployed f
 # Implementation Plan - Reused Similarity Report Score Recalculation
 
 ## Goal
+
 Ensure reused plagiarism reports always reflect the current weighted hybrid formula instead of trusting stale persisted hybrid scores from older report generations.
 
 ## Approach
+
 1. Recompute pair-level hybrid scores from persisted structural and semantic scores when reading reports.
 2. Rebuild reused-report summary metrics and pair ordering from the recalculated hybrid scores.
 3. Add a regression test covering a stale persisted `0.56` hybrid score for a `23%` structural / `89%` semantic pair.
 
 ## Verification
+
 1. Run `npm run typecheck` in `backend-ts`.
 2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Simplify Similarity Deduction Gates
+
+## Goal
+
+Remove the extra overlap-coverage and longest-fragment eligibility requirements so similarity deductions depend only on the configured hybrid-score bands.
+
+## Approach
+
+1. Simplify the similarity penalty config and service logic to use hybrid-score thresholds only.
+2. Keep the highest-qualifying-pair behavior and the 20% deduction cap unchanged.
+3. Add focused backend unit coverage for warning-only, 5/10/20 percent bands, and highest-pair precedence.
+4. Update backend/frontend documentation and teacher-student helper copy to match the new policy.
+
+## Verification
+
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+
+---
+
+# Implementation Plan - Cross-Class Similarity Report Lifecycle Bug
+
+## Goal
+
+Stop cross-class report/result IDs from disappearing after a compare run, while keeping the existing controller-service-repository architecture intact.
+
+## Constraints
+
+- Preserve the current shared `similarity_reports` and `similarity_results` tables.
+- Avoid changing the assignment-level plagiarism flow unless required.
+- Reuse the existing cross-class latest-report API instead of inventing a second read path.
+
+## Approach
+
+1. Preserve historical cross-class reports instead of pruning older cross-class rows during new report persistence.
+2. Update the cross-class page to load the latest saved report first and only trigger a fresh analysis deliberately.
+3. Guard the page against duplicate mount-triggered writes in development.
+4. Add focused regression coverage and update documentation for the retention behavior.
+
+## Verification
+
+1. Run `npm run typecheck` in `backend-ts`.
+2. Run `npm test` in `backend-ts`.
+3. Run `npm run build` in `frontend`.

@@ -3,4 +3,5 @@ export { crossClassSimilarityRoutes } from "@/modules/plagiarism/cross-class-sim
 export { PlagiarismService } from "@/modules/plagiarism/plagiarism.service.js"
 export { CrossClassSimilarityService } from "@/modules/plagiarism/cross-class-similarity.service.js"
 export { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
+export { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 export { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"

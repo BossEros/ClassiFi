@@ -604,11 +604,8 @@ export class CrossClassSimilarityService {
         }
       }
 
-      await repoWithContext.deleteCrossClassReportsExcept(
-        sourceAssignmentId,
-        createdReport.id,
-      )
-
+      // Preserve historical cross-class reports so previously opened result IDs
+      // remain valid even after newer cross-class analyses are generated.
       return createdReport
     })
 

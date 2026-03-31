@@ -30,6 +30,9 @@ export interface SubmissionGradedPayload {
   grade: number
   maxGrade: number
   submissionUrl: string
+  reason?: "similarity_deduction"
+  previousGrade?: number
+  deductedPoints?: number
 }
 
 /** Payload for SUBMISSION_FEEDBACK_GIVEN notification */
@@ -153,9 +156,14 @@ export const NOTIFICATION_TYPES: {
 
   SUBMISSION_GRADED: {
     type: "SUBMISSION_GRADED",
-    titleTemplate: () => "Assignment Graded",
+    titleTemplate: (data) =>
+      data.reason === "similarity_deduction"
+        ? "Score Updated After Similarity Review"
+        : "Assignment Graded",
     messageTemplate: (data) =>
-      `Your submission for "${data.assignmentTitle}" has been graded. Score: ${data.grade}/${data.maxGrade}`,
+      data.reason === "similarity_deduction"
+        ? `Your submission for "${data.assignmentTitle}" was reviewed for similarity and your score changed from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade}.`
+        : `Your submission for "${data.assignmentTitle}" has been graded. Score: ${data.grade}/${data.maxGrade}`,
     emailTemplate: (data) => submissionGradedEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
@@ -165,6 +173,9 @@ export const NOTIFICATION_TYPES: {
       grade: data.grade,
       maxGrade: data.maxGrade,
       submissionUrl: data.submissionUrl,
+      reason: data.reason,
+      previousGrade: data.previousGrade,
+      deductedPoints: data.deductedPoints,
     }),
   },
 

@@ -97,6 +97,7 @@ export interface Assignment {
   scheduledDate?: ISODateString | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
   submittedAt?: ISODateString | null
   grade?: number | null
   maxGrade?: number
@@ -149,5 +150,3 @@ export type AssignmentFilter = "all" | "pending" | "submitted"
  * Class detail page tab options
  */
 export type ClassTab = "assignments" | "students" | "calendar" | "grades"
-
-

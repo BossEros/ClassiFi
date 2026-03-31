@@ -17,6 +17,7 @@ export interface CreateAssignmentServiceDTO {
   scheduledDate?: Date | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
 }
 
 /** DTO for AssignmentService.updateAssignment */
@@ -36,4 +37,5 @@ export interface UpdateAssignmentServiceDTO {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   moduleId?: number
+  enableSimilarityPenalty?: boolean
 }

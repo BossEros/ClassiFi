@@ -12,6 +12,7 @@ import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { withTransaction } from "@/shared/transaction.js"
+import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
 
 const logger = createLogger("GradebookService")
 
@@ -151,57 +152,37 @@ export class GradebookService {
       throw error
     }
 
-    void this.notificationService.sendEmailNotificationIfEnabled(
-      submission.studentId,
-      "SUBMISSION_GRADED",
-      {
-        submissionId: submission.id,
-        assignmentId: assignment.id,
-        assignmentTitle: assignment.assignmentName,
-        grade,
-        maxGrade: assignment.totalScore,
-        submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
-      },
-    ).catch((error) => {
-      logger.error("Failed to send grade notification email", {
-        submissionId,
-        studentId: submission.studentId,
-        error,
+    void this.notificationService
+      .sendEmailNotificationIfEnabled(
+        submission.studentId,
+        "SUBMISSION_GRADED",
+        {
+          submissionId: submission.id,
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          grade,
+          maxGrade: assignment.totalScore,
+          submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        },
+      )
+      .catch((error) => {
+        logger.error("Failed to send grade notification email", {
+          submissionId,
+          studentId: submission.studentId,
+          error,
+        })
       })
-    })
   }
 
   /**
-   * Remove a grade override and recalculate the grade from test results.
+   * Remove a grade override.
    */
   async removeOverride(submissionId: number): Promise<void> {
     const submission = await this.submissionRepo.getSubmissionById(submissionId)
     if (!submission) {
       throw new Error("Submission not found")
     }
-
-    // Get original test results to recalculate grade
-    const testSummary = await this.testResultRepo.calculateScore(submissionId)
-
-    // Get assignment for total score
-    const assignment = await this.assignmentRepo.getAssignmentById(
-      submission.assignmentId,
-    )
-    if (!assignment) {
-      throw new Error("Assignment not found")
-    }
-
-    // Calculate grade from test results
-    let recalculatedGrade = 0
-    if (testSummary && testSummary.total > 0) {
-      recalculatedGrade = Math.floor(
-        (testSummary.passed / testSummary.total) * assignment.totalScore,
-      )
-    }
-
-    // Remove override and set recalculated grade
     await this.submissionRepo.removeGradeOverride(submissionId)
-    await this.submissionRepo.updateGrade(submissionId, recalculatedGrade)
   }
 
   /**
@@ -291,8 +272,14 @@ export class GradebookService {
       )
     }
 
-    return {
+    const submissionGradeComputation = buildSubmissionGradeComputation({
       grade: submission.grade,
+      isGradeOverridden: submission.isGradeOverridden,
+      overrideGrade: submission.overrideGrade,
+    })
+
+    return {
+      grade: submissionGradeComputation.effectiveGrade,
       isOverridden: submission.isGradeOverridden,
       feedback: submission.overrideReason,
       overriddenAt: submission.overriddenAt,

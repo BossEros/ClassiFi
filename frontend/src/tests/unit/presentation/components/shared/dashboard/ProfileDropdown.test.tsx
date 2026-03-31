@@ -56,4 +56,52 @@ describe("ProfileDropdown", () => {
     expect(dropdownMenu).toHaveClass("absolute", "bottom-full", "left-0", "right-0", "w-full")
     expect(dropdownMenu).not.toHaveAttribute("style")
   })
+
+  it("keeps the desktop expanded-sidebar dropdown anchored inside the trigger container", async () => {
+    mockMatchMedia(true)
+
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <ProfileDropdown user={testUser} userInitials="TN">
+          <div>Open Profile Menu</div>
+        </ProfileDropdown>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole("button", { name: /open profile menu/i }))
+
+    const dropdownMenu = screen.getByRole("menu")
+
+    expect(dropdownMenu).toHaveClass("absolute", "bottom-full", "left-0", "right-0", "w-full")
+    expect(dropdownMenu).not.toHaveAttribute("style")
+  })
+
+  it("renders a floating desktop menu only when the sidebar is collapsed", async () => {
+    mockMatchMedia(true)
+
+    const user = userEvent.setup()
+
+    render(
+      <MemoryRouter initialEntries={["/dashboard"]}>
+        <ProfileDropdown
+          user={testUser}
+          userInitials="TN"
+          isSidebarCollapsed
+        >
+          <div>Open Profile Menu</div>
+        </ProfileDropdown>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole("button", { name: /open profile menu/i }))
+
+    const dropdownMenu = screen.getByRole("menu")
+
+    expect(dropdownMenu).toHaveClass("fixed", "bottom-2", "w-48")
+    expect(dropdownMenu).toHaveStyle({
+      left: "72px",
+    })
+  })
 })

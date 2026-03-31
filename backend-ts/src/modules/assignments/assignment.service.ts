@@ -6,6 +6,7 @@ import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repositor
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { ModuleRepository } from "@/modules/modules/module.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
+import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 import { StorageService } from "@/services/storage.service.js"
 import {
   toAssignmentDTO,
@@ -51,6 +52,8 @@ export class AssignmentService {
     private storageService: StorageService,
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
+    @inject(DI_TOKENS.services.similarityPenalty)
+    private similarityPenaltyService: SimilarityPenaltyService,
   ) {}
 
   /**
@@ -76,6 +79,7 @@ export class AssignmentService {
       scheduledDate,
       allowLateSubmissions,
       latePenaltyConfig,
+      enableSimilarityPenalty,
     } = data
 
     // Verify class exists and teacher owns it
@@ -103,6 +107,7 @@ export class AssignmentService {
       scheduledDate,
       allowLateSubmissions,
       latePenaltyConfig,
+      enableSimilarityPenalty: enableSimilarityPenalty ?? false,
     })
 
     // Notify enrolled students asynchronously (don't block assignment creation)
@@ -302,6 +307,12 @@ export class AssignmentService {
       await this.deleteInstructionsImageSafely(previousInstructionsImageUrl)
     }
 
+    if (updateData.enableSimilarityPenalty !== undefined) {
+      await this.similarityPenaltyService.syncAssignmentPenaltyState(
+        assignmentId,
+      )
+    }
+
     return toAssignmentDTO(updatedAssignment)
   }
 
@@ -329,8 +340,6 @@ export class AssignmentService {
     await this.assignmentRepo.deleteAssignment(assignmentId)
   }
 
-
-
   /**
    * Validates that the given module belongs to the expected class.
    *
@@ -338,7 +347,10 @@ export class AssignmentService {
    * @param classId - The class ID the assignment belongs to.
    * @throws BadRequestError if the module does not exist or belongs to a different class.
    */
-  private async validateModuleBelongsToClass(moduleId: number, classId: number): Promise<void> {
+  private async validateModuleBelongsToClass(
+    moduleId: number,
+    classId: number,
+  ): Promise<void> {
     const module = await this.moduleRepo.getModuleById(moduleId)
 
     if (!module) {

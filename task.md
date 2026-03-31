@@ -1,0 +1,4 @@
+- [x] Inspect frontend dashboard layout and profile dropdown layering behavior
+- [x] Update desktop profile dropdown positioning to avoid content overlap
+- [x] Add regression coverage for desktop profile dropdown behavior
+- [ ] Verify the frontend build passes
