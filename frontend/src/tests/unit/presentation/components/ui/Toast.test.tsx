@@ -188,6 +188,26 @@ describe("ToastContainer", () => {
     expect(screen.getByText("Toast 3")).toBeInTheDocument()
   })
 
+  it("uses a right-anchored bounded container on mobile", () => {
+    const toasts = [{ id: "1", message: "Toast 1" }]
+    const { container } = render(
+      <ToastContainer toasts={toasts} onDismiss={vi.fn()} />,
+    )
+
+    const toastContainer = container.firstChild
+
+    expect(toastContainer).toHaveClass("inset-x-3")
+
+    const toastStack = toastContainer?.firstChild
+
+    expect(toastStack).toHaveClass("w-full")
+
+    const toastCard = screen.getByText("Toast 1").closest('[role="status"]')
+
+    expect(toastCard).toHaveClass("ml-auto")
+    expect(toastCard).toHaveClass("max-w-sm")
+  })
+
   it("passes onDismiss to each toast", () => {
     const onDismiss = vi.fn()
     const toasts = [{ id: "1", message: "Toast 1" }]

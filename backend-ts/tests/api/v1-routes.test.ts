@@ -25,6 +25,7 @@ vi.mock("../../src/modules/dashboard/index.js", () => ({
 
 vi.mock("../../src/modules/plagiarism/index.js", () => ({
   plagiarismRoutes: vi.fn(),
+  crossClassSimilarityRoutes: vi.fn(),
 }))
 
 vi.mock("../../src/modules/users/index.js", () => ({
