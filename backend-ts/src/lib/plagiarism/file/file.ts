@@ -8,6 +8,7 @@ export interface FileInfo {
   studentId?: string
   studentName?: string
   submissionId?: string
+  classId?: string
   labels?: string[]
 }
 

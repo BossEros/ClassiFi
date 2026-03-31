@@ -26,29 +26,38 @@ describe("CrossClassSimilarityService", () => {
     programmingLanguage: "python",
   }
 
+  /** Raw files returned by fileService (before classId tagging) */
   const leftFile = {
     path: "submissions/101.py",
-    filename: "101.py",
     content: "print('left')",
-    info: {
-      submissionId: "101",
-      studentId: "60",
-    },
+    info: { submissionId: "101", studentId: "60" },
   }
 
   const rightFile = {
     path: "submissions/201.py",
-    filename: "201.py",
     content: "print('right')",
-    info: {
-      submissionId: "201",
-      studentId: "61",
-    },
+    info: { submissionId: "201", studentId: "61" },
+  }
+
+  /**
+   * The detector sees File objects that the service tagged with classId.
+   * We replicate that tagging here so extractCrossClassPairs works correctly.
+   */
+  const taggedLeftFile = {
+    path: "submissions/101.py",
+    content: "print('left')",
+    info: { submissionId: "101", studentId: "60", classId: "43" },
+  }
+
+  const taggedRightFile = {
+    path: "submissions/201.py",
+    content: "print('right')",
+    info: { submissionId: "201", studentId: "61", classId: "44" },
   }
 
   const mockPair = {
-    leftFile,
-    rightFile,
+    leftFile: taggedLeftFile,
+    rightFile: taggedRightFile,
     similarity: 0.91,
     overlap: 18,
     longest: 6,
@@ -88,6 +97,9 @@ describe("CrossClassSimilarityService", () => {
   let mockClassRepo: {
     getClassesByTeacher: ReturnType<typeof vi.fn>
   }
+  let mockSubmissionRepo: {
+    getSubmissionWithStudent: ReturnType<typeof vi.fn>
+  }
   let mockSimilarityRepo: {
     withContext: ReturnType<typeof vi.fn>
     getCrossClassResultsWithContext: ReturnType<typeof vi.fn>
@@ -106,7 +118,6 @@ describe("CrossClassSimilarityService", () => {
     createReport: ReturnType<typeof vi.fn>
     createResults: ReturnType<typeof vi.fn>
     createFragments: ReturnType<typeof vi.fn>
-    deleteCrossClassReportsExcept: ReturnType<typeof vi.fn>
   }
 
   beforeEach(() => {
@@ -128,27 +139,17 @@ describe("CrossClassSimilarityService", () => {
         generatedAt: new Date("2026-03-31T18:48:09.347Z"),
       }),
       createResults: vi.fn().mockResolvedValue([
-        {
-          id: 1886,
-          submission1Id: 101,
-          submission2Id: 201,
-        },
+        { id: 1886, submission1Id: 101, submission2Id: 201 },
       ]),
       createFragments: vi.fn().mockResolvedValue([]),
-      deleteCrossClassReportsExcept: vi.fn().mockResolvedValue(1),
     }
 
     mockAssignmentRepo = {
       getAssignmentById: vi
         .fn()
         .mockImplementation(async (assignmentId: number) => {
-          if (assignmentId === 104) {
-            return sourceAssignment
-          }
-
-          if (assignmentId === 114) {
-            return matchedAssignment
-          }
+          if (assignmentId === 104) return sourceAssignment
+          if (assignmentId === 114) return matchedAssignment
 
           return undefined
         }),
@@ -162,6 +163,10 @@ describe("CrossClassSimilarityService", () => {
         { id: 43, className: "BSCS 3A" },
         { id: 44, className: "BSCS 3B" },
       ]),
+    }
+
+    mockSubmissionRepo = {
+      getSubmissionWithStudent: vi.fn().mockResolvedValue(null),
     }
 
     mockSimilarityRepo = {
@@ -184,13 +189,8 @@ describe("CrossClassSimilarityService", () => {
       fetchSubmissionFiles: vi
         .fn()
         .mockImplementation(async (assignmentId: number) => {
-          if (assignmentId === 104) {
-            return [leftFile]
-          }
-
-          if (assignmentId === 114) {
-            return [rightFile]
-          }
+          if (assignmentId === 104) return [leftFile]
+          if (assignmentId === 114) return [rightFile]
 
           return []
         }),
@@ -201,24 +201,126 @@ describe("CrossClassSimilarityService", () => {
     }
   })
 
-  it("preserves older cross-class reports after persisting a fresh comparison", async () => {
-    const crossClassSimilarityService = new CrossClassSimilarityService(
+  function createService(): CrossClassSimilarityService {
+    return new CrossClassSimilarityService(
       mockAssignmentRepo as never,
       mockClassRepo as never,
+      mockSubmissionRepo as never,
       mockSimilarityRepo as never,
       mockDetectorFactory as never,
       mockFileService as never,
       mockSemanticClient as never,
     )
+  }
 
-    const analysisResult =
-      await crossClassSimilarityService.analyzeCrossClassSimilarity(104, 47)
+  it("runs a full cross-class analysis and returns a report with results", async () => {
+    const service = createService()
+
+    const result = await service.analyzeCrossClassSimilarity(104, 47)
 
     expect((db.transaction as ReturnType<typeof vi.fn>)).toHaveBeenCalledTimes(1)
-    expect(
-      repoWithTransactionContext.deleteCrossClassReportsExcept,
-    ).not.toHaveBeenCalled()
-    expect(analysisResult.reportId).toBe(400)
-    expect(analysisResult.results).toHaveLength(1)
+    expect(repoWithTransactionContext.createReport).toHaveBeenCalledTimes(1)
+    expect(repoWithTransactionContext.createResults).toHaveBeenCalledTimes(1)
+    expect(result.reportId).toBe(400)
+    expect(result.results).toHaveLength(1)
+    expect(result.results[0].student1Name).toBe("John Doe")
+    expect(result.results[0].student2Name).toBe("Jane Smith")
+  })
+
+  it("returns an empty response when no matching assignments are found", async () => {
+    mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue([sourceAssignment])
+    const service = createService()
+
+    const result = await service.analyzeCrossClassSimilarity(104, 47)
+
+    expect(result.reportId).toBe(0)
+    expect(result.results).toHaveLength(0)
+    expect(result.matchedAssignments).toHaveLength(0)
+  })
+
+  it("returns an empty response when fewer than two files are collected", async () => {
+    mockFileService.fetchSubmissionFiles.mockResolvedValue([])
+    const service = createService()
+
+    const result = await service.analyzeCrossClassSimilarity(104, 47)
+
+    expect(result.reportId).toBe(0)
+    expect(result.results).toHaveLength(0)
+  })
+
+  it("skips detector pairs where both files belong to the same class", async () => {
+    const sameClassPair = {
+      ...mockPair,
+      leftFile: { ...taggedLeftFile, info: { ...taggedLeftFile.info, classId: "43" } },
+      rightFile: { ...taggedRightFile, info: { ...taggedRightFile.info, classId: "43" } },
+    }
+
+    mockDetectorFactory.create.mockReturnValue({
+      analyze: vi.fn().mockResolvedValue({
+        getPairs: () => [sameClassPair],
+        getFragments: () => [],
+      }),
+    })
+
+    const service = createService()
+
+    const result = await service.analyzeCrossClassSimilarity(104, 47)
+
+    expect(result.reportId).toBe(0)
+    expect(result.results).toHaveLength(0)
+  })
+
+  it("skips pairs with missing submission IDs", async () => {
+    const missingIdPair = {
+      ...mockPair,
+      leftFile: {
+        ...taggedLeftFile,
+        info: { ...taggedLeftFile.info, submissionId: undefined },
+      },
+    }
+
+    mockDetectorFactory.create.mockReturnValue({
+      analyze: vi.fn().mockResolvedValue({
+        getPairs: () => [missingIdPair],
+        getFragments: () => [],
+      }),
+    })
+
+    const service = createService()
+
+    const result = await service.analyzeCrossClassSimilarity(104, 47)
+
+    expect(result.reportId).toBe(0)
+    expect(result.results).toHaveLength(0)
+  })
+
+  it("sets semantic score to 0 for pairs below the structural threshold", async () => {
+    const lowSimilarityPair = {
+      ...mockPair,
+      similarity: 0.1,
+    }
+
+    mockDetectorFactory.create.mockReturnValue({
+      analyze: vi.fn().mockResolvedValue({
+        getPairs: () => [lowSimilarityPair],
+        getFragments: () => [],
+      }),
+    })
+
+    const service = createService()
+    await service.analyzeCrossClassSimilarity(104, 47)
+
+    expect(mockSemanticClient.getSemanticScore).not.toHaveBeenCalled()
+  })
+
+  it("calls semantic scoring for pairs above the structural threshold", async () => {
+    const service = createService()
+    await service.analyzeCrossClassSimilarity(104, 47)
+
+    expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(1)
+    expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledWith(
+      "print('left')",
+      "print('right')",
+    )
   })
 })
