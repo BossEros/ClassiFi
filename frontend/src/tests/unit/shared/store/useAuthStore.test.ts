@@ -3,15 +3,14 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import type { User } from "@/shared/types/auth"
 
 const mockUser: User = {
-  id: 1,
+  id: "1",
   firstName: "John",
   lastName: "Doe",
   email: "john@example.com",
   role: "student",
-  avatarUrl: null,
-  isActive: true,
   emailNotificationsEnabled: true,
   inAppNotificationsEnabled: true,
+  createdAt: new Date("2024-01-01"),
 }
 
 describe("useAuthStore", () => {

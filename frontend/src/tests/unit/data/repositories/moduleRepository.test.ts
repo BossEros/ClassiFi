@@ -34,8 +34,8 @@ describe("moduleRepository", () => {
   describe("getModulesByClassId", () => {
     it("should return modules on success", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
+        status: 200,
         data: { success: true, modules: [mockModule] },
-        error: null,
       })
 
       const result = await moduleRepository.getModulesByClassId(10)
@@ -46,7 +46,7 @@ describe("moduleRepository", () => {
 
     it("should throw error on API failure", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
-        data: null,
+        status: 500,
         error: "Network error",
       })
 
@@ -57,8 +57,8 @@ describe("moduleRepository", () => {
 
     it("should throw error when success is false", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
+        status: 200,
         data: { success: false, message: "Unauthorized" },
-        error: null,
       })
 
       await expect(moduleRepository.getModulesByClassId(10)).rejects.toThrow(
@@ -70,8 +70,8 @@ describe("moduleRepository", () => {
   describe("createModule", () => {
     it("should create and return module", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
+        status: 201,
         data: { success: true, module: mockModule },
-        error: null,
       })
 
       const result = await moduleRepository.createModule(10, "Module 1")
@@ -84,7 +84,7 @@ describe("moduleRepository", () => {
 
     it("should throw error on failure", async () => {
       vi.mocked(apiClient.post).mockResolvedValue({
-        data: null,
+        status: 500,
         error: "Failed",
       })
 
@@ -98,8 +98,8 @@ describe("moduleRepository", () => {
     it("should rename and return module", async () => {
       const renamed = { ...mockModule, name: "Renamed" }
       vi.mocked(apiClient.put).mockResolvedValue({
+        status: 200,
         data: { success: true, module: renamed },
-        error: null,
       })
 
       const result = await moduleRepository.renameModule(1, "Renamed")
@@ -112,7 +112,7 @@ describe("moduleRepository", () => {
 
     it("should throw error on failure", async () => {
       vi.mocked(apiClient.put).mockResolvedValue({
-        data: null,
+        status: 404,
         error: "Not found",
       })
 
@@ -126,8 +126,8 @@ describe("moduleRepository", () => {
     it("should toggle publish state and return module", async () => {
       const toggled = { ...mockModule, isPublished: false }
       vi.mocked(apiClient.patch).mockResolvedValue({
+        status: 200,
         data: { success: true, module: toggled },
-        error: null,
       })
 
       const result = await moduleRepository.toggleModulePublish(1, false)
@@ -142,8 +142,8 @@ describe("moduleRepository", () => {
   describe("deleteModule", () => {
     it("should delete module without error", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
+        status: 200,
         data: { success: true },
-        error: null,
       })
 
       await expect(moduleRepository.deleteModule(1)).resolves.toBeUndefined()
@@ -152,8 +152,8 @@ describe("moduleRepository", () => {
 
     it("should throw error on failure", async () => {
       vi.mocked(apiClient.delete).mockResolvedValue({
+        status: 200,
         data: { success: false, message: "Cannot delete" },
-        error: null,
       })
 
       await expect(moduleRepository.deleteModule(1)).rejects.toThrow(
