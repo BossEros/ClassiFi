@@ -8,6 +8,7 @@ import {
   teacherDashboardRoutes,
 } from "@/modules/dashboard/index.js"
 import { plagiarismRoutes } from "@/modules/plagiarism/index.js"
+import { crossClassSimilarityRoutes } from "@/modules/plagiarism/index.js"
 import { userRoutes } from "@/modules/users/index.js"
 import { adminRoutes } from "@/modules/admin/index.js"
 import { codeTestRoutes, testCaseRoutes } from "@/modules/test-cases/index.js"
@@ -48,6 +49,9 @@ async function protectedRoutes(app: FastifyInstance): Promise<void> {
 
   // Plagiarism detection routes - /api/v1/plagiarism/*
   await app.register(plagiarismRoutes, { prefix: "/plagiarism" })
+
+  // Cross-class similarity routes - /api/v1/plagiarism/cross-class/*
+  await app.register(crossClassSimilarityRoutes, { prefix: "/plagiarism/cross-class" })
 
   // User account routes - /api/v1/user/*
   await app.register(userRoutes, { prefix: "/user" })
