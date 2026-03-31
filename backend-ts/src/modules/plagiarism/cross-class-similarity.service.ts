@@ -8,6 +8,7 @@ import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism
 import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import { findMatchingAssignments, type MatchedAssignment } from "@/modules/plagiarism/cross-class-assignment-matcher.js"
 import { PLAGIARISM_LANGUAGE_MAP, type PlagiarismFragmentDTO } from "@/modules/plagiarism/plagiarism.mapper.js"
+import type { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import {
   buildPairSimilarityScoreBreakdown,
   formatPairSimilarityScoreForStorage,
@@ -793,8 +794,7 @@ export class CrossClassSimilarityService {
    */
   private async resolveSubmissionFilePath(submissionId: number): Promise<string> {
     const { container } = await import("@/shared/container.js")
-    const { SubmissionRepository } = await import("@/modules/submissions/submission.repository.js")
-    const submissionRepo = container.resolve<InstanceType<typeof SubmissionRepository>>(DI_TOKENS.repositories.submission)
+    const submissionRepo = container.resolve<SubmissionRepository>(DI_TOKENS.repositories.submission)
     const submission = await submissionRepo.getSubmissionWithStudent(submissionId)
 
     if (!submission) {
