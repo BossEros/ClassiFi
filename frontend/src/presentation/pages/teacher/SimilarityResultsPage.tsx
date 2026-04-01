@@ -6,12 +6,14 @@ import { Button } from "@/presentation/components/ui/Button"
 import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
 import {
   AlertTriangle,
+  ArrowRight,
   BarChart3,
   Download,
   FileCode,
   GitCompare,
   Layers,
   Loader2,
+  School,
   Users,
   X,
 } from "lucide-react"
@@ -31,6 +33,7 @@ import {
 } from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
 import {
   getResultDetails,
+  analyzeAssignmentSubmissions,
   type AnalyzeResponse,
   type PairResponse,
 } from "@/business/services/plagiarismService"
@@ -123,6 +126,7 @@ export function SimilarityResultsPage() {
   const [isDownloadingPairReport, setIsDownloadingPairReport] = useState(false)
   const comparisonSectionRef = useRef<HTMLDivElement | null>(null)
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
+  const [isRefetchingResults, setIsRefetchingResults] = useState(false)
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -133,6 +137,29 @@ export function SimilarityResultsPage() {
       setResults(locationState.results)
     }
   }, [locationState])
+
+  useEffect(() => {
+    if (results || !assignmentId) {
+      return
+    }
+
+    const refetchResults = async () => {
+      setIsRefetchingResults(true)
+
+      try {
+        const fetchedResults = await analyzeAssignmentSubmissions(
+          parseInt(assignmentId, 10),
+        )
+        setResults(fetchedResults)
+      } catch (refetchError) {
+        console.error("Failed to refetch similarity results:", refetchError)
+      } finally {
+        setIsRefetchingResults(false)
+      }
+    }
+
+    void refetchResults()
+  }, [assignmentId, results])
 
   useEffect(() => {
     const fetchAssignment = async () => {
@@ -324,6 +351,19 @@ export function SimilarityResultsPage() {
   const topBar = useTopBar({ user, userInitials, breadcrumbItems })
 
   if (!results) {
+    if (isRefetchingResults) {
+      return (
+        <DashboardLayout topBar={topBar}>
+          <div className="flex flex-col items-center justify-center py-24">
+            <Loader2 className="h-10 w-10 animate-spin text-teal-600" />
+            <p className="mt-4 text-sm text-slate-500">
+              Loading similarity results...
+            </p>
+          </div>
+        </DashboardLayout>
+      )
+    }
+
     return (
       <DashboardLayout topBar={topBar}>
         <Card className="border-amber-200 bg-amber-50/80 shadow-md shadow-amber-100/80">
@@ -358,7 +398,7 @@ export function SimilarityResultsPage() {
 
   return (
     <DashboardLayout topBar={topBar}>
-      <div className="max-w-full xl:max-w-[1600px] space-y-6">
+      <div className="w-full max-w-full space-y-6 xl:max-w-[1600px]">
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-start md:justify-between">
           <div>
             <h1 className={dashboardTheme.pageTitle}>
@@ -579,6 +619,42 @@ export function SimilarityResultsPage() {
                   <li key={index}>{warning}</li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {assignmentId && (
+          <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
+            <CardContent className="p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
+                    <School className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Cross-Class Similarity Check
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Compare submissions across your classes with matching assignments
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/assignments/${assignmentId}/cross-class-similarity`,
+                      { state: { shouldRunInitialAnalysis: true } },
+                    )
+                  }
+                  className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700"
+                >
+                  <span>Compare Across Classes</span>
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
             </CardContent>
           </Card>
         )}

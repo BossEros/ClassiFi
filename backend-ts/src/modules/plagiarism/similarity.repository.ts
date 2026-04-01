@@ -7,6 +7,8 @@ import {
 } from "@/modules/plagiarism/similarity-report.model.js"
 import { assignments } from "@/modules/assignments/assignment.model.js"
 import { classes } from "@/modules/classes/class.model.js"
+import { submissions } from "@/modules/submissions/submission.model.js"
+import { users } from "@/modules/users/user.model.js"
 import {
   similarityResults,
   type SimilarityResult,
@@ -19,6 +21,20 @@ import {
 } from "@/modules/plagiarism/match-fragment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("SimilarityRepository")
+
+/** Shape returned by cross-class result queries with contextual join data */
+export interface CrossClassResultWithContext {
+  result: SimilarityResult
+  submission1StudentName: string
+  submission2StudentName: string
+  submission1ClassName: string
+  submission2ClassName: string
+  submission1AssignmentName: string
+  submission2AssignmentName: string
+}
 
 /**
  * Repository for similarity report and result operations.
@@ -57,25 +73,35 @@ export class SimilarityRepository extends BaseRepository<
     return this.findById(reportId)
   }
 
-  /** Get all reports for an assignment */
+  /** Get all intra-assignment reports for an assignment */
   async getReportsByAssignment(
     assignmentId: number,
   ): Promise<SimilarityReport[]> {
     return await this.db
       .select()
       .from(similarityReports)
-      .where(eq(similarityReports.assignmentId, assignmentId))
+      .where(
+        and(
+          eq(similarityReports.assignmentId, assignmentId),
+          eq(similarityReports.reportType, "assignment"),
+        ),
+      )
       .orderBy(desc(similarityReports.generatedAt))
   }
 
-  /** Get the most recent report for an assignment */
+  /** Get the most recent intra-assignment report for an assignment */
   async getLatestReportByAssignment(
     assignmentId: number,
   ): Promise<SimilarityReport | undefined> {
     const results = await this.db
       .select()
       .from(similarityReports)
-      .where(eq(similarityReports.assignmentId, assignmentId))
+      .where(
+        and(
+          eq(similarityReports.assignmentId, assignmentId),
+          eq(similarityReports.reportType, "assignment"),
+        ),
+      )
       .orderBy(desc(similarityReports.generatedAt))
       .limit(1)
 
@@ -97,7 +123,7 @@ export class SimilarityRepository extends BaseRepository<
     return results[0]?.teacherId
   }
 
-  /** Delete all reports for an assignment except the specified report. */
+  /** Delete all intra-assignment reports for an assignment except the specified report. */
   async deleteReportsByAssignmentExcept(
     assignmentId: number,
     keepReportId: number,
@@ -107,10 +133,19 @@ export class SimilarityRepository extends BaseRepository<
       .where(
         and(
           eq(similarityReports.assignmentId, assignmentId),
+          eq(similarityReports.reportType, "assignment"),
           ne(similarityReports.id, keepReportId),
         ),
       )
       .returning({ id: similarityReports.id })
+
+    if (deletedReports.length > 0) {
+      logger.info("Deleted old intra-class reports", {
+        assignmentId,
+        keepReportId,
+        deletedIds: deletedReports.map((r) => r.id),
+      })
+    }
 
     return deletedReports.length
   }
@@ -187,5 +222,110 @@ export class SimilarityRepository extends BaseRepository<
       .select({ count: count() })
       .from(similarityReports)
     return Number(result[0]?.count ?? 0)
+  }
+
+  // ====================================================================
+  // Cross-Class Report Methods
+  // ====================================================================
+
+  /** Get the most recent cross-class report for a source assignment */
+  async getLatestCrossClassReport(
+    assignmentId: number,
+  ): Promise<SimilarityReport | undefined> {
+    const results = await this.db
+      .select()
+      .from(similarityReports)
+      .where(
+        and(
+          eq(similarityReports.assignmentId, assignmentId),
+          eq(similarityReports.reportType, "cross-class"),
+        ),
+      )
+      .orderBy(desc(similarityReports.generatedAt))
+      .limit(1)
+
+    return results[0]
+  }
+
+  /** Delete all cross-class reports for an assignment except the specified report. */
+  async deleteCrossClassReportsExcept(
+    assignmentId: number,
+    keepReportId: number,
+  ): Promise<number> {
+    const deletedReports = await this.db
+      .delete(similarityReports)
+      .where(
+        and(
+          eq(similarityReports.assignmentId, assignmentId),
+          eq(similarityReports.reportType, "cross-class"),
+          ne(similarityReports.id, keepReportId),
+        ),
+      )
+      .returning({ id: similarityReports.id })
+
+    if (deletedReports.length > 0) {
+      logger.info("Deleted old cross-class reports", {
+        assignmentId,
+        keepReportId,
+        deletedIds: deletedReports.map((r) => r.id),
+      })
+    }
+
+    return deletedReports.length
+  }
+
+  /**
+   * Get cross-class results for a report with student, class, and assignment context.
+   * Joins through submissions to derive cross-class context without denormalized columns.
+   */
+  async getCrossClassResultsWithContext(
+    reportId: number,
+  ): Promise<CrossClassResultWithContext[]> {
+    const sub1 = this.db.$with("sub1").as(
+      this.db
+        .select({
+          submissionId: submissions.id,
+          studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student1_name"),
+          className: classes.className,
+          assignmentName: assignments.assignmentName,
+        })
+        .from(submissions)
+        .innerJoin(users, eq(submissions.studentId, users.id))
+        .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+        .innerJoin(classes, eq(assignments.classId, classes.id)),
+    )
+
+    const sub2 = this.db.$with("sub2").as(
+      this.db
+        .select({
+          submissionId: submissions.id,
+          studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student2_name"),
+          className: classes.className,
+          assignmentName: assignments.assignmentName,
+        })
+        .from(submissions)
+        .innerJoin(users, eq(submissions.studentId, users.id))
+        .innerJoin(assignments, eq(submissions.assignmentId, assignments.id))
+        .innerJoin(classes, eq(assignments.classId, classes.id)),
+    )
+
+    const rows = await this.db
+      .with(sub1, sub2)
+      .select({
+        result: similarityResults,
+        submission1StudentName: sub1.studentName,
+        submission1ClassName: sub1.className,
+        submission1AssignmentName: sub1.assignmentName,
+        submission2StudentName: sub2.studentName,
+        submission2ClassName: sub2.className,
+        submission2AssignmentName: sub2.assignmentName,
+      })
+      .from(similarityResults)
+      .innerJoin(sub1, eq(similarityResults.submission1Id, sub1.submissionId))
+      .innerJoin(sub2, eq(similarityResults.submission2Id, sub2.submissionId))
+      .where(eq(similarityResults.reportId, reportId))
+      .orderBy(desc(similarityResults.hybridScore))
+
+    return rows
   }
 }

@@ -1,4 +1,5 @@
 import { injectable } from "tsyringe"
+import { randomUUID } from "node:crypto"
 import { supabase } from "@/shared/supabase.js"
 import { type IStorageService } from "@/services/interfaces/storage.interface.js"
 import { createLogger } from "@/shared/logger.js"
@@ -69,6 +70,7 @@ export class StorageService implements IStorageService {
 
     const deletedCount = data?.length ?? 0
     logger.info(`Deleted ${deletedCount} files from ${bucket}`)
+    
     return deletedCount
   }
 
@@ -226,7 +228,9 @@ export class StorageService implements IStorageService {
     data: Buffer,
     contentType: string,
   ): Promise<string> {
-    const path = `submissions/${assignmentId}/${studentId}/${submissionNumber}_${filename}`
+    const uploadSessionId = randomUUID()
+    const path = `submissions/${assignmentId}/${studentId}/${submissionNumber}/${uploadSessionId}/${filename}`
+
     return await this.upload("submissions", path, data, contentType)
   }
 }

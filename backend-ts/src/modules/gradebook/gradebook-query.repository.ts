@@ -8,6 +8,7 @@ import {
   classes,
 } from "@/models/index.js"
 import { injectable } from "tsyringe"
+import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
 
 /** Assignment summary for gradebook */
 export interface GradebookAssignment {
@@ -31,6 +32,7 @@ export interface GradebookSubmission {
   assignmentId: number
   studentId: number
   grade: number | null
+  overrideGrade: number | null
   isGradeOverridden: boolean
   submittedAt: Date | null
 }
@@ -79,6 +81,7 @@ export interface ClassAssignmentInfo {
 export interface StudentSubmissionInfo {
   assignmentId: number
   grade: number | null
+  overrideGrade: number | null
   isGradeOverridden: boolean
   overrideReason: string | null
   submittedAt: Date | null
@@ -198,6 +201,7 @@ export class GradebookRepository {
         assignmentId: submissions.assignmentId,
         studentId: submissions.studentId,
         grade: submissions.grade,
+        overrideGrade: submissions.overrideGrade,
         isGradeOverridden: submissions.isGradeOverridden,
         submittedAt: submissions.submittedAt,
       })
@@ -231,10 +235,16 @@ export class GradebookRepository {
       email: student.email,
       grades: classAssignments.map((assignment) => {
         const sub = submissionMap.get(`${student.id}-${assignment.id}`)
+        const gradeComputation = buildSubmissionGradeComputation({
+          grade: sub?.grade,
+          isGradeOverridden: sub?.isGradeOverridden ?? false,
+          overrideGrade: sub?.overrideGrade ?? null,
+        })
+
         return {
           assignmentId: assignment.id,
           submissionId: sub?.id ?? null,
-          grade: sub?.grade ?? null,
+          grade: gradeComputation.effectiveGrade,
           isOverridden: sub?.isGradeOverridden ?? false,
           submittedAt: sub?.submittedAt ?? null,
         }
@@ -335,6 +345,7 @@ export class GradebookRepository {
       .select({
         assignmentId: submissions.assignmentId,
         grade: submissions.grade,
+        overrideGrade: submissions.overrideGrade,
         isGradeOverridden: submissions.isGradeOverridden,
         overrideReason: submissions.overrideReason,
         submittedAt: submissions.submittedAt,
@@ -385,12 +396,18 @@ export class GradebookRepository {
         teacherName: `${cls.teacherFirstName} ${cls.teacherLastName}`,
         assignments: classAssignments.map((a) => {
           const sub = submissionMap.get(a.id)
+          const gradeComputation = buildSubmissionGradeComputation({
+            grade: sub?.grade,
+            isGradeOverridden: sub?.isGradeOverridden ?? false,
+            overrideGrade: sub?.overrideGrade ?? null,
+          })
+
           return {
             assignmentId: a.id,
             assignmentName: a.name,
             totalScore: a.totalScore,
             deadline: a.deadline,
-            grade: sub?.grade ?? null,
+            grade: gradeComputation.effectiveGrade,
             isOverridden: sub?.isGradeOverridden ?? false,
             feedback: sub?.overrideReason ?? null,
             submittedAt: sub?.submittedAt ?? null,

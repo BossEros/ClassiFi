@@ -83,6 +83,36 @@
 
 ---
 
+## Mobile Top Bar Back Pattern
+
+1. Audit the shared dashboard top bar and confirm which pages currently pass breadcrumb trails into the shared shell.
+2. Keep desktop breadcrumbs intact, but collapse mobile breadcrumb trails into a `Back + title` pattern derived from the existing breadcrumb data.
+3. Reuse the shared mobile viewport hook so the behavior stays centralized in `TopBar` instead of adding page-specific conditionals.
+4. Add focused unit coverage for mobile `Back + title` behavior and desktop breadcrumb preservation.
+5. Verify the frontend with the available typecheck/build-safe commands.
+
+---
+
+## Mobile Sidebar Close Control Alignment
+
+1. Inspect the shared mobile sidebar trigger and header controls to confirm why the open-state trigger swaps to an `X` instead of reusing the drawer header affordance.
+2. Keep the outer mobile trigger as a stable open-menu button, then move the close action into the expanded drawer header beside the `ClassiFi` wordmark.
+3. Reuse the existing panel-close iconography so mobile and desktop sidebar controls feel consistent without adding a second close pattern.
+4. Update the shared sidebar regression coverage to assert the new mobile open and close controls.
+5. Verify the frontend with the available typecheck/build-safe commands.
+
+---
+
+## Mobile Toast Position Fix
+
+1. Inspect the shared toast container and confirm why mobile toasts stretch across the viewport and appear left-biased instead of right-anchored.
+2. Keep the shared toast component intact, but tighten the mobile toast container to a capped width anchored from the right edge only.
+3. Preserve the desktop toast placement while ensuring mobile still leaves a small viewport gutter and keeps the stack readable.
+4. Add focused unit coverage for the mobile toast container positioning classes.
+5. Verify the frontend with the available typecheck/build-safe commands.
+
+---
+
 ## Global Styling Structure Cleanup
 
 1. Audit `src/index.css` and confirm which global classes and tokens still have real consumers.
@@ -100,3 +130,13 @@
 2. Replace the effect-driven mobile-close behavior with a render-safe state model that still closes the drawer when the route changes.
 3. Preserve existing explicit close paths such as nav clicks, overlay clicks, escape handling, and desktop breakpoint transitions.
 4. Re-run the frontend CI commands: `npm run lint`, `npm test`, and `npm run build`.
+
+---
+
+## Fair Similarity-Based Deduction for Assignments
+
+1. Extend frontend assignment and submission models with the new similarity-penalty contract while keeping existing service boundaries intact.
+2. Add the assignment create/edit toggle beside the existing submission-policy controls and keep the v1 UI to a single switch plus helper copy.
+3. Show a student-facing policy notice in the shared assignment detail page before submission when the toggle is enabled.
+4. Update teacher and student score displays to show effective score with raw-grade and similarity-penalty context where appropriate.
+5. Add focused frontend regression coverage and verify with `npm run build`.

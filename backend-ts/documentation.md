@@ -279,6 +279,7 @@ This flow uses in-memory scheduling plus periodic reconciliation and does not re
 - Reconciliation re-triggers analysis if reports are stale or missing after restarts.
 - Assignment report persistence acquires an assignment-scoped transaction lock to prevent duplicate latest reports during concurrent analysis runs.
 - Assignment report `flaggedPairs`, `averageSimilarity`, `highestSimilarity`, and pair ordering now follow the weighted hybrid score instead of structural score alone.
+- When an assignment enables similarity deduction, persisted assignment reports also refresh latest-submission similarity penalties through `SimilarityPenaltyService`.
 
 ### Programming Language Support
 
@@ -384,8 +385,15 @@ Authorization notes:
 - Business rule requires at least one instructions surface: text or image
 - Assignment deadline is optional (`deadline` may be `null`) to support assignment with no due date
 - Assignment create/update also supports late submission policy fields (`allowLateSubmissions`, `latePenaltyConfig`)
+- Assignment create/update also supports the assignment-level similarity deduction toggle (`enableSimilarityPenalty`)
+- Similarity deduction uses a backend-managed conservative default policy in v1:
+  - `75%` to `<85%` hybrid similarity is warning-only
+  - deductions start at `85%` based on the hybrid similarity band alone
+  - only the highest qualifying pair is applied to the latest submission
+  - automatic deduction is capped at `20%`
 - If `allowLateSubmissions` is false, submissions after deadline are rejected when a deadline exists
 - If `allowLateSubmissions` is true, late submissions are accepted and penalties are computed from the stored config (or default fallback) when a deadline exists
+- If `enableSimilarityPenalty` is false, no automatic similarity deduction is applied
 - Late penalty tiers apply immediately after the deadline (no grace-period window), with optional `rejectAfterHours` cutoff
 - Instruction images are stored in the `assignment-descriptions` bucket and are cleaned up on image replacement, assignment deletion, and class deletion
 - Storage setup is provisioned via SQL migration scripts under `backend-ts/drizzle/`
@@ -403,6 +411,11 @@ Authorization notes:
 | DELETE | `/gradebook/submissions/:submissionId/override`        | Remove override          |
 | GET    | `/gradebook/assignments/:id/late-penalty`              | Get late penalty config  |
 | PUT    | `/gradebook/assignments/:id/late-penalty`              | Set late penalty config  |
+
+Gradebook scoring notes:
+- `grade` is the displayed score returned to clients.
+- Automatic similarity deductions are applied to the automatic grade after test scoring and late penalties.
+- Manual teacher overrides still win as the final displayed score and are stored separately in `override_grade`.
 
 ### Test Cases & Code Testing
 
@@ -434,6 +447,11 @@ The plagiarism detection system uses a custom implementation based on Winnowing 
 | DELETE | `/plagiarism/reports/:reportId`                               | Delete report                  |
 | GET    | `/plagiarism/reports/:reportId/pairs/:pairId`                 | Get match pair details         |
 | GET    | `/plagiarism/results/:resultId/details`                       | Get result details             |
+| POST   | `/plagiarism/cross-class/analyze/assignment/:assignmentId`    | Analyze matching assignments across classes |
+| GET    | `/plagiarism/cross-class/reports/:reportId`                   | Get a saved cross-class report |
+| GET    | `/plagiarism/cross-class/reports/assignment/:assignmentId/latest` | Get the latest cross-class report for an assignment |
+| GET    | `/plagiarism/cross-class/results/:resultId/details`           | Get cross-class result details |
+| DELETE | `/plagiarism/cross-class/reports/:reportId`                   | Delete a cross-class report manually |
 
 **Supported Languages**: Python, Java, C
 
@@ -455,6 +473,8 @@ The plagiarism API now focuses on assignment-level review workflows:
 - Detailed fragment/code inspection remains available through result-detail endpoints.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
 - The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
+- Cross-class reports are retained as historical records so previously opened cross-class result IDs and report deep links remain valid even after newer cross-class comparisons are generated.
+- `GET /plagiarism/cross-class/reports/assignment/:assignmentId/latest` should be used by clients that want the newest saved cross-class comparison without triggering a fresh write.
 - Automatic similarity scheduling runs after successful submissions (when at least two latest submissions exist) and keeps manual analyze endpoint support for explicit teacher-initiated checks.
 
 ### Notifications
@@ -939,6 +959,10 @@ class NotificationService {
 **Notification Types**:
 - `ASSIGNMENT_CREATED` - Sent to all enrolled students when teacher creates assignment
 - `SUBMISSION_GRADED` - Sent to student when their submission is graded
+
+Similarity-deduction notification behavior:
+- When automatic similarity deduction changes a student's visible score, the student also receives a `SUBMISSION_GRADED` notification explaining that the score was updated after similarity review.
+- The notification is sent only when the displayed score actually changes; repeated penalty syncs with the same grade do not create duplicate notices.
 
 **Email Providers**:
 - SendGrid (recommended for production)

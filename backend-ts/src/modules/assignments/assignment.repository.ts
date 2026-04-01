@@ -40,6 +40,7 @@ export interface CreateAssignmentData {
   scheduledDate?: Date | null
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
 }
 
 /** Data for updating an existing assignment */
@@ -58,6 +59,7 @@ export interface UpdateAssignmentData {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   moduleId?: number
+  enableSimilarityPenalty?: boolean
 }
 
 /**
@@ -264,6 +266,7 @@ export class AssignmentRepository extends BaseRepository<
           data.allowLateSubmissions === true
             ? (data.latePenaltyConfig ?? null)
             : null,
+        enableSimilarityPenalty: data.enableSimilarityPenalty ?? false,
         isActive: true,
       })
       .returning()

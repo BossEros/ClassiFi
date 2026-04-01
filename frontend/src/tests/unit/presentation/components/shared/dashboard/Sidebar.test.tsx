@@ -97,10 +97,11 @@ describe("Sidebar", () => {
 
     await user.click(mobileMenuButton)
 
-    expect(screen.getByLabelText("Close menu")).toBeInTheDocument()
+    expect(screen.queryByLabelText("Open menu")).not.toBeInTheDocument()
+    expect(screen.getByLabelText("Close sidebar")).toBeInTheDocument()
     expect(document.body.style.overflow).toBe("hidden")
 
-    await user.click(screen.getByLabelText("Close menu"))
+    await user.click(screen.getByLabelText("Close sidebar"))
 
     expect(screen.getByLabelText("Open menu")).toBeInTheDocument()
     expect(document.body.style.overflow).toBe("")
@@ -117,7 +118,7 @@ describe("Sidebar", () => {
 
     await user.click(screen.getByLabelText("Open menu"))
 
-    expect(screen.getByLabelText("Close menu")).toBeInTheDocument()
+    expect(screen.getByLabelText("Close sidebar")).toBeInTheDocument()
     expect(document.body.style.overflow).toBe("hidden")
 
     await user.click(screen.getByRole("button", { name: "Navigate to classes" }))

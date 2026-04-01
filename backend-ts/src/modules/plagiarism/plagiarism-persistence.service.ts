@@ -57,6 +57,7 @@ export class PlagiarismPersistenceService {
 
     const { result, fragments } = resultData
 
+    // Fetch both submission rows (with student info) in parallel to save round-trip time.
     const [submission1, submission2] = await Promise.all([
       this.submissionRepo.getSubmissionWithStudent(result.submission1Id),
       this.submissionRepo.getSubmissionWithStudent(result.submission2Id),
@@ -73,6 +74,7 @@ export class PlagiarismPersistenceService {
   async getReusableAssignmentReport(
     assignmentId: number,
   ): Promise<AnalyzeResponse | null> {
+    // Check freshness first — no point fetching the full report if it’s stale.
     const reusableReportId =
       await this.getReusableAssignmentReportId(assignmentId)
 
@@ -80,6 +82,8 @@ export class PlagiarismPersistenceService {
       return null
     }
 
+    // Prune any older reports for this assignment now that we know one is reusable.
+    // This keeps the table tidy even when the report is being reused.
     await this.similarityRepo.deleteReportsByAssignmentExcept(
       assignmentId,
       reusableReportId,
@@ -92,6 +96,7 @@ export class PlagiarismPersistenceService {
   async getReusableAssignmentReportId(
     assignmentId: number,
   ): Promise<number | null> {
+    // Fetch the most recently generated report for this assignment.
     const latestReport =
       await this.similarityRepo.getLatestReportByAssignment(assignmentId)
 
@@ -99,9 +104,11 @@ export class PlagiarismPersistenceService {
       return null
     }
 
+    // Fetch only the current (latest) submissions to compare against the stored report.
     const latestSubmissions =
       await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
 
+    // Run the two-part freshness check: count match + no newer submission than report time.
     if (!this.isReportCurrent(latestReport, latestSubmissions)) {
       return null
     }
@@ -122,16 +129,21 @@ export class PlagiarismPersistenceService {
         transaction as unknown as TransactionContext,
       )
 
+      // Acquire a per-assignment advisory lock so concurrent analysis requests
+      // don’t produce duplicate reports for the same assignment.
       await similarityRepositoryWithContext.acquireAssignmentReportLock(
         assignmentId,
       )
 
+      // Fall back to looking up the teacher from the assignment if not passed in directly.
       const resolvedTeacherId =
         teacherId ??
         (await similarityRepositoryWithContext.getTeacherIdByAssignment(
           assignmentId,
         )) ??
         null
+
+      // Build per-pair score breakdowns so we can derive summary stats for the report header.
       const pairScoreBreakdowns = this.buildPairScoreBreakdowns(
         pairs,
         semanticScores,
@@ -154,6 +166,8 @@ export class PlagiarismPersistenceService {
         ),
       })
 
+      // Prepare result rows, the pairMap (for looking up Pair objects later),
+      // and the swappedMap (for correcting fragment left/right orientation).
       const { resultsToInsert, pairMap, swappedMap } =
         this.prepareResultsForInsert(dbReport.id, pairs, semanticScores)
 
@@ -163,6 +177,8 @@ export class PlagiarismPersistenceService {
         const insertedResults =
           await similarityRepositoryWithContext.createResults(resultsToInsert)
 
+        // Build a lookup map from pairKey to DB result ID so callers can reference
+        // individual results without an extra query.
         for (const insertedResult of insertedResults) {
           const pairKey = `${insertedResult.submission1Id}-${insertedResult.submission2Id}`
           resultIdMap.set(pairKey, insertedResult.id)
@@ -179,6 +195,7 @@ export class PlagiarismPersistenceService {
         }
       }
 
+      // Remove all older reports for this assignment — only the freshly persisted report is kept.
       await similarityRepositoryWithContext.deleteReportsByAssignmentExcept(
         assignmentId,
         dbReport.id,
@@ -197,6 +214,7 @@ export class PlagiarismPersistenceService {
 
     const results = await this.similarityRepo.getResultsByReport(reportId)
 
+    // Collect all unique submission IDs so we can batch-fetch student info in one query.
     const submissionIds = new Set<number>()
     for (const result of results) {
       submissionIds.add(result.submission1Id)
@@ -206,6 +224,7 @@ export class PlagiarismPersistenceService {
     const pairSubmissions = await this.submissionRepo.getBatchSubmissionsWithStudents(
       Array.from(submissionIds),
     )
+    // Convert the array to a Map for O(1) lookups when building each pair DTO.
     const submissionMap = new Map(
       pairSubmissions.map((submissionWithStudent) => [
         submissionWithStudent.submission.id,
@@ -216,6 +235,9 @@ export class PlagiarismPersistenceService {
       .map((result) => {
         const leftSubmission = submissionMap.get(result.submission1Id)
         const rightSubmission = submissionMap.get(result.submission2Id)
+
+        // Re-derive the hybrid score using the current configured weights in case
+        // the weight settings changed after this report was originally generated.
         const pairScoreBreakdown = this.buildCurrentPairSimilarityScoreBreakdown(
           result.structuralScore,
           result.semanticScore,
@@ -249,6 +271,7 @@ export class PlagiarismPersistenceService {
           pairScoreBreakdown,
         }
       })
+      // Sort highest hybrid score first so the most suspicious pairs appear at the top.
       .sort(
         (leftPairWithScore, rightPairWithScore) =>
           rightPairWithScore.pairScoreBreakdown.hybridScore -
@@ -302,6 +325,7 @@ export class PlagiarismPersistenceService {
       return []
     }
 
+    // Fetch only the latest submission per student so stale re-submissions are excluded.
     return this.submissionRepo.getSubmissionsWithStudentInfo(
       report.assignmentId,
       true,
@@ -327,6 +351,7 @@ export class PlagiarismPersistenceService {
   private parseStoredSimilarityScore(
     storedScore: string | null | undefined,
   ): number | null {
+    // Treat null and undefined as "not set" — distinct from a legitimate score of 0.
     if (storedScore === null || storedScore === undefined) {
       return null
     }
@@ -349,6 +374,7 @@ export class PlagiarismPersistenceService {
     structuralScore: string,
     semanticScore: string,
   ): PairSimilarityScoreBreakdown {
+    // Fall back to 0 if either score was never stored (e.g., semantic service was down).
     const parsedStructuralScore =
       this.parseStoredSimilarityScore(structuralScore) ?? 0
     const parsedSemanticScore =
@@ -375,6 +401,7 @@ export class PlagiarismPersistenceService {
           10,
         )
 
+        // Pairs with missing submission IDs can’t be scored — skip them.
         if (!leftSubmissionId || !rightSubmissionId) {
           return null
         }
@@ -403,10 +430,14 @@ export class PlagiarismPersistenceService {
     report: SimilarityReport,
     latestSubmissions: Submission[],
   ): boolean {
+    // Check 1: the number of submissions must match exactly.
+    // A new submission or a deleted one means the report is outdated.
     if (report.totalSubmissions !== latestSubmissions.length) {
       return false
     }
 
+    // Check 2: no submission can be newer than when the report was generated.
+    // If a student re-submitted after the report was run, the report is outdated.
     const newestLatestSubmissionMs = latestSubmissions.reduce(
       (currentMax, submission) => {
         const submittedAtMs = new Date(submission.submittedAt).getTime()
@@ -442,6 +473,8 @@ export class PlagiarismPersistenceService {
         continue
       }
 
+      // Normalize so the lower submission ID is always submission1.
+      // Track whether IDs were swapped so fragments can be flipped accordingly later.
       const normalizedSubmissionPair = normalizeSubmissionPair(
         leftSubmissionId,
         rightSubmissionId,
@@ -509,6 +542,9 @@ export class PlagiarismPersistenceService {
       const fragments = pair.buildFragments()
 
       for (const fragment of fragments) {
+        // If the submission IDs were swapped during normalization, the detector’s
+        // left/right fragment positions are also flipped relative to the stored row.
+        // We flip them back here so the diff view renders correctly in the frontend.
         if (swapped) {
           fragmentsToInsert.push({
             similarityResultId: insertedResult.id,

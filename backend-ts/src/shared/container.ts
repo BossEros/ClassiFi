@@ -47,7 +47,9 @@ import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detec
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
+import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
+import { CrossClassSimilarityService } from "@/modules/plagiarism/cross-class-similarity.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 // Register repositories as singletons
@@ -154,8 +156,16 @@ container.registerSingleton(
   PlagiarismAutoAnalysisService,
 )
 container.registerSingleton(
+  DI_TOKENS.services.similarityPenalty,
+  SimilarityPenaltyService,
+)
+container.registerSingleton(
   DI_TOKENS.services.semanticSimilarityClient,
   SemanticSimilarityClient,
+)
+container.registerSingleton(
+  DI_TOKENS.services.crossClassSimilarity,
+  CrossClassSimilarityService,
 )
 
 export { container }

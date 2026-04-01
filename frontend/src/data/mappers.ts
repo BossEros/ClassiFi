@@ -125,6 +125,7 @@ export function mapAssignmentDetail(
     scheduledDate: dto.scheduledDate ?? null,
     allowLateSubmissions: dto.allowLateSubmissions ?? false,
     latePenaltyConfig: dto.latePenaltyConfig ?? null,
+    enableSimilarityPenalty: dto.enableSimilarityPenalty ?? false,
     testCases: dto.testCases ?? [],
     moduleId: dto.moduleId ?? null,
   }

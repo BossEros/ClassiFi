@@ -114,6 +114,7 @@ export class SubmissionRepository extends BaseRepository<
         isLate: submissions.isLate,
         penaltyApplied: submissions.penaltyApplied,
         isGradeOverridden: submissions.isGradeOverridden,
+        overrideGrade: submissions.overrideGrade,
         overrideReason: submissions.overrideReason,
         overriddenAt: submissions.overriddenAt,
         teacherFeedback: submissions.teacherFeedback,
@@ -184,7 +185,10 @@ export class SubmissionRepository extends BaseRepository<
       )
 
     return new Map(
-      latestSubmissions.map((submission) => [submission.assignmentId, submission]),
+      latestSubmissions.map((submission) => [
+        submission.assignmentId,
+        submission,
+      ]),
     )
   }
 
@@ -231,6 +235,51 @@ export class SubmissionRepository extends BaseRepository<
       .groupBy(submissions.assignmentId)
 
     return new Map(rows.map((row) => [row.assignmentId, Number(row.count)]))
+  }
+
+  /**
+   * Returns the latest-submission count and most recent submission timestamp for
+   * each of the specified assignment IDs in a single query.
+   *
+   * Used by cross-class staleness checks to determine whether any involved
+   * assignment has received a new or updated submission since the last report.
+   *
+   * @param assignmentIds - The assignment IDs to look up.
+   * @returns An array of snapshots (one per assignment that has at least one latest submission).
+   */
+  async getLatestSubmissionSnapshotsByAssignmentIds(
+    assignmentIds: number[],
+  ): Promise<AssignmentLatestSubmissionSnapshot[]> {
+    if (assignmentIds.length === 0) return []
+
+    const rows = await this.db
+      .select({
+        assignmentId: submissions.assignmentId,
+        latestSubmissionCount: sql<number>`count(*)`,
+        latestSubmittedAt: sql<string | null>`max(${submissions.submittedAt})`,
+      })
+      .from(submissions)
+      .where(
+        and(
+          inArray(submissions.assignmentId, assignmentIds),
+          eq(submissions.isLatest, true),
+        ),
+      )
+      .groupBy(submissions.assignmentId)
+
+    const snapshots: AssignmentLatestSubmissionSnapshot[] = []
+
+    for (const row of rows) {
+      if (!row.latestSubmittedAt) continue
+
+      snapshots.push({
+        assignmentId: row.assignmentId,
+        latestSubmissionCount: Number(row.latestSubmissionCount),
+        latestSubmittedAt: new Date(row.latestSubmittedAt),
+      })
+    }
+
+    return snapshots
   }
 
   /**
@@ -406,7 +455,9 @@ export class SubmissionRepository extends BaseRepository<
   async updateGrade(submissionId: number, grade: number): Promise<void> {
     await this.db
       .update(submissions)
-      .set({ grade })
+      .set({
+        grade,
+      })
       .where(eq(submissions.id, submissionId))
   }
 
@@ -422,7 +473,7 @@ export class SubmissionRepository extends BaseRepository<
     await this.db
       .update(submissions)
       .set({
-        grade,
+        overrideGrade: grade,
         isGradeOverridden: true,
         overrideReason: reason,
         overriddenAt: new Date(),
@@ -439,6 +490,7 @@ export class SubmissionRepository extends BaseRepository<
       .update(submissions)
       .set({
         isGradeOverridden: false,
+        overrideGrade: null,
         overrideReason: null,
         overriddenAt: null,
       })

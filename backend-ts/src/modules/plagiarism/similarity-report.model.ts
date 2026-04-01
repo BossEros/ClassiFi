@@ -1,9 +1,11 @@
 import {
   pgTable,
+  pgEnum,
   serial,
   integer,
   timestamp,
   numeric,
+  jsonb,
   index,
   check,
 } from "drizzle-orm/pg-core"
@@ -12,7 +14,13 @@ import { assignments } from "@/modules/assignments/assignment.model.js"
 import { users } from "@/modules/users/user.model.js"
 import { similarityResults } from "@/modules/plagiarism/similarity-result.model.js"
 
-/** Similarity reports table - stores class-wide similarity analysis reports */
+/** Report type discriminator: intra-assignment vs cross-class analysis */
+export const reportTypeEnum = pgEnum("report_type", [
+  "assignment",
+  "cross-class",
+])
+
+/** Similarity reports table - stores similarity analysis reports (both intra-assignment and cross-class) */
 export const similarityReports = pgTable(
   "similarity_reports",
   {
@@ -23,6 +31,8 @@ export const similarityReports = pgTable(
     teacherId: integer("teacher_id").references(() => users.id, {
       onDelete: "set null",
     }),
+    reportType: reportTypeEnum("report_type").default("assignment").notNull(),
+    matchedAssignmentIds: jsonb("matched_assignment_ids").$type<number[]>(),
     totalSubmissions: integer("total_submissions").notNull(),
     totalComparisons: integer("total_comparisons").notNull(),
     flaggedPairs: integer("flagged_pairs").default(0).notNull(),
@@ -53,6 +63,7 @@ export const similarityReports = pgTable(
     index("idx_similarity_reports_assignment").on(table.assignmentId),
     index("idx_similarity_reports_teacher").on(table.teacherId),
     index("idx_similarity_reports_date").on(table.generatedAt),
+    index("idx_similarity_reports_type").on(table.reportType),
   ],
 )
 

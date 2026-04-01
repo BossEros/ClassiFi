@@ -56,6 +56,7 @@ export type {
 export {
   similarityReports,
   similarityReportsRelations,
+  reportTypeEnum,
 } from "@/modules/plagiarism/similarity-report.model.js"
 export type {
   SimilarityReport,
@@ -114,8 +115,5 @@ export type {
 } from "@/modules/notifications/notification.model.js"
 
 // Module model
-export {
-  modules,
-  modulesRelations,
-} from "@/modules/modules/module.model.js"
+export { modules, modulesRelations } from "@/modules/modules/module.model.js"
 export type { Module, NewModule } from "@/modules/modules/module.model.js"

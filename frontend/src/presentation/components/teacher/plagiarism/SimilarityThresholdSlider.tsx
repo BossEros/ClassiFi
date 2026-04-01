@@ -7,6 +7,10 @@ interface SimilarityThresholdSliderProps {
   max: number
   /** Slider step. */
   step?: number
+  /** Visual density preset for layouts that need a larger control. */
+  size?: "default" | "large"
+  /** Optional wrapper class for layout-specific sizing. */
+  className?: string
   /** Called whenever the threshold changes. */
   onMinimumSimilarityPercentChange: (minimumSimilarityPercent: number) => void
 }
@@ -22,13 +26,28 @@ export function SimilarityThresholdSlider({
   min,
   max,
   step = 1,
+  size = "default",
+  className,
   onMinimumSimilarityPercentChange,
 }: SimilarityThresholdSliderProps) {
+  const isLargeSlider = size === "large"
+  const wrapperClassName = className ? `w-full ${className}` : "w-full"
+  const headerClassName = isLargeSlider
+    ? "mb-4 flex items-center justify-between gap-4 text-base font-semibold text-slate-900"
+    : "mb-3 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900"
+  const valueClassName = isLargeSlider ? "text-lg" : undefined
+  const sliderClassName = isLargeSlider
+    ? "block h-3 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-teal-600"
+    : "block h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-teal-600"
+  const scaleClassName = isLargeSlider
+    ? "mt-3 flex items-center justify-between text-sm font-medium text-slate-500"
+    : "mt-2 flex items-center justify-between text-xs font-medium text-slate-500"
+
   return (
-    <div className="w-full">
-      <div className="mb-3 flex items-center justify-between gap-3 text-sm font-semibold text-slate-900">
+    <div className={wrapperClassName}>
+      <div className={headerClassName}>
         <span>Threshold</span>
-        <span>
+        <span className={valueClassName}>
           {">="} {minimumSimilarityPercent}%
         </span>
       </div>
@@ -42,11 +61,11 @@ export function SimilarityThresholdSlider({
         onChange={(event) =>
           onMinimumSimilarityPercentChange(Number(event.target.value))
         }
-        className="block h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-teal-600"
+        className={sliderClassName}
         aria-label="Similarity threshold"
       />
 
-      <div className="mt-2 flex items-center justify-between text-xs font-medium text-slate-500">
+      <div className={scaleClassName}>
         <span>{min}%</span>
         <span>{max}%</span>
       </div>

@@ -10,7 +10,13 @@ import {
   RefreshCw,
 } from "lucide-react"
 import { useState, type ElementType } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
@@ -20,7 +26,10 @@ import { formatDateTime } from "@/presentation/utils/dateUtils"
 import type { StudentGradeEntry } from "@/shared/types/gradebook"
 import { cn } from "@/shared/utils/cn"
 import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
-import { buildStudentGradeReportData, StudentGradeReportDocument } from "./pdf/studentGradeReportPdf"
+import {
+  buildStudentGradeReportData,
+  StudentGradeReportDocument,
+} from "./pdf/studentGradeReportPdf"
 
 interface StudentClassGradesContentProps {
   classId: number
@@ -254,14 +263,36 @@ function AssignmentGradeRow({
 
         <div className="shrink-0 text-left md:text-right">
           {hasGrade ? (
-            <>
-              <p className={cn("text-xl font-bold", getGradeColor(percentage, variant))}>
+            <div className="space-y-1">
+              <p
+                className={cn(
+                  "text-xl font-bold",
+                  getGradeColor(percentage, variant),
+                )}
+              >
                 {assignment.grade}/{assignment.totalScore}
               </p>
-              <p className={cn("text-xs font-medium", getGradeColor(percentage, variant))}>
+              <p
+                className={cn(
+                  "text-xs font-medium",
+                  getGradeColor(percentage, variant),
+                )}
+              >
                 {Math.round(percentage)}%
               </p>
-            </>
+              {assignment.isOverridden ? (
+                <div
+                  className={cn(
+                    "rounded-xl border px-3 py-2 text-left text-xs md:text-right",
+                    variant === "light"
+                      ? "border-slate-200 bg-white text-blue-700"
+                      : "border-white/10 bg-slate-900/60 text-blue-300",
+                  )}
+                >
+                  Final score includes a manual override.
+                </div>
+              ) : null}
+            </div>
           ) : hasSubmission ? (
             <div
               className={cn(
@@ -386,7 +417,11 @@ export function StudentClassGradesContent({
                 : "border-white/30 border-t-white",
             )}
           ></div>
-          <p className={variant === "light" ? dashboardTheme.loadingText : "text-gray-400"}>
+          <p
+            className={
+              variant === "light" ? dashboardTheme.loadingText : "text-gray-400"
+            }
+          >
             Loading your grades...
           </p>
         </div>
@@ -455,7 +490,7 @@ export function StudentClassGradesContent({
               variant === "light" ? "text-slate-500" : "text-slate-300",
             )}
           >
-            Track your scores and check what still needs grading. 
+            Track your scores and check what still needs grading.
           </p>
         </div>
 
@@ -478,7 +513,10 @@ export function StudentClassGradesContent({
             disabled={isDownloadingPdf || !classGrades}
           >
             <Download
-              className={cn("mr-2 h-4 w-4", isDownloadingPdf && "animate-bounce")}
+              className={cn(
+                "mr-2 h-4 w-4",
+                isDownloadingPdf && "animate-bounce",
+              )}
             />
             {isDownloadingPdf ? "Preparing PDF..." : "Download PDF"}
           </Button>
@@ -527,11 +565,19 @@ export function StudentClassGradesContent({
             : undefined
         }
       >
-        <CardHeader className={variant === "light" ? "border-b border-slate-200" : undefined}>
-          <CardTitle className={variant === "light" ? "text-slate-900" : "text-white"}>
+        <CardHeader
+          className={
+            variant === "light" ? "border-b border-slate-200" : undefined
+          }
+        >
+          <CardTitle
+            className={variant === "light" ? "text-slate-900" : "text-white"}
+          >
             Assignment Grades
           </CardTitle>
-          <CardDescription className={variant === "light" ? "text-slate-500" : undefined}>
+          <CardDescription
+            className={variant === "light" ? "text-slate-500" : undefined}
+          >
             Assignment-by-assignment breakdown for this class.
           </CardDescription>
         </CardHeader>
@@ -575,7 +621,8 @@ export function StudentClassGradesContent({
                   variant === "light" ? "text-slate-500" : "text-gray-500",
                 )}
               >
-                Grades will appear here after assignments are created and reviewed.
+                Grades will appear here after assignments are created and
+                reviewed.
               </p>
             </div>
           )}
