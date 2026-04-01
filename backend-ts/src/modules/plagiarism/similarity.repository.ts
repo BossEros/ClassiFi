@@ -21,6 +21,9 @@ import {
 } from "@/modules/plagiarism/match-fragment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
+import { createLogger } from "@/shared/logger.js"
+
+const logger = createLogger("SimilarityRepository")
 
 /** Shape returned by cross-class result queries with contextual join data */
 export interface CrossClassResultWithContext {
@@ -135,6 +138,14 @@ export class SimilarityRepository extends BaseRepository<
         ),
       )
       .returning({ id: similarityReports.id })
+
+    if (deletedReports.length > 0) {
+      logger.info("Deleted old intra-class reports", {
+        assignmentId,
+        keepReportId,
+        deletedIds: deletedReports.map((r) => r.id),
+      })
+    }
 
     return deletedReports.length
   }
@@ -251,6 +262,14 @@ export class SimilarityRepository extends BaseRepository<
         ),
       )
       .returning({ id: similarityReports.id })
+
+    if (deletedReports.length > 0) {
+      logger.info("Deleted old cross-class reports", {
+        assignmentId,
+        keepReportId,
+        deletedIds: deletedReports.map((r) => r.id),
+      })
+    }
 
     return deletedReports.length
   }

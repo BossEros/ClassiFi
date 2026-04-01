@@ -99,10 +99,13 @@ describe("CrossClassSimilarityService", () => {
   }
   let mockSubmissionRepo: {
     getSubmissionWithStudent: ReturnType<typeof vi.fn>
+    getLatestSubmissionSnapshotsByAssignmentIds: ReturnType<typeof vi.fn>
   }
   let mockSimilarityRepo: {
     withContext: ReturnType<typeof vi.fn>
     getCrossClassResultsWithContext: ReturnType<typeof vi.fn>
+    getLatestCrossClassReport: ReturnType<typeof vi.fn>
+    deleteCrossClassReportsExcept: ReturnType<typeof vi.fn>
   }
   let mockDetectorFactory: {
     create: ReturnType<typeof vi.fn>
@@ -167,6 +170,7 @@ describe("CrossClassSimilarityService", () => {
 
     mockSubmissionRepo = {
       getSubmissionWithStudent: vi.fn().mockResolvedValue(null),
+      getLatestSubmissionSnapshotsByAssignmentIds: vi.fn().mockResolvedValue([]),
     }
 
     mockSimilarityRepo = {
@@ -174,6 +178,8 @@ describe("CrossClassSimilarityService", () => {
       getCrossClassResultsWithContext: vi
         .fn()
         .mockResolvedValue(mockCrossClassResultWithContext),
+      getLatestCrossClassReport: vi.fn().mockResolvedValue(null),
+      deleteCrossClassReportsExcept: vi.fn().mockResolvedValue(0),
     }
 
     mockDetectorFactory = {
