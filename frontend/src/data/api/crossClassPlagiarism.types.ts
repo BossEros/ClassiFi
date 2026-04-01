@@ -6,7 +6,9 @@ export interface CrossClassResultDTO {
   student1Name: string
   student2Name: string
   class1Name: string
+  class1Code: string
   class2Name: string
+  class2Code: string
   assignment1Name: string
   assignment2Name: string
   structuralScore: number
@@ -26,6 +28,7 @@ export interface CrossClassAnalysisResponse {
     id: number
     name: string
     className: string
+    classCode: string
     nameSimilarity: number
   }>
   summary: {

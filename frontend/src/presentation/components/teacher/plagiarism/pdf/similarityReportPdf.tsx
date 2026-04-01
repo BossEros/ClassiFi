@@ -41,6 +41,8 @@ export { CLASS_REPORT_TABLE_HEADERS } from "./pdfTypes"
 export {
   buildClassSimilarityReportData,
   buildPairSimilarityReportData,
+  buildCrossClassReportData,
+  buildCrossClassPairReportData,
 } from "./pdfBuilders"
 export { toFileNameSegment } from "./pdfUtils"
 

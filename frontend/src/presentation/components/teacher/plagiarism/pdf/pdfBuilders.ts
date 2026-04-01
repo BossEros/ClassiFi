@@ -3,6 +3,7 @@ import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
+import type { CrossClassResultDTO } from "@/data/api/crossClassPlagiarism.types"
 import type { User } from "@/shared/types/auth"
 
 import {
@@ -18,6 +19,8 @@ import {
 import type {
   ClassSimilarityReportBuilderOptions,
   ClassSimilarityReportData,
+  CrossClassPairReportBuilderOptions,
+  CrossClassReportBuilderOptions,
   PairSimilarityReportBuilderOptions,
   PairSimilarityReportData,
   ReportMetadataEntry,
@@ -257,5 +260,163 @@ export function buildPairSimilarityReportData(
       end: f.rightSelection.endRow,
     })),
     fragments: options.pairDetails.fragments,
+  }
+}
+
+// ─── Cross-Class Report Builders ───────────────────────────────────────────────
+
+/**
+ * Builds the class-level PDF report data for a cross-class similarity analysis.
+ *
+ * @param options - Report, teacher, and threshold context.
+ * @returns Class-level report data reusing the existing PDF document structure.
+ */
+export function buildCrossClassReportData(
+  options: CrossClassReportBuilderOptions,
+): ClassSimilarityReportData {
+  const downloadedAt = options.downloadedAt ?? new Date()
+  const { report, teacher, minimumSimilarityPercent } = options
+  const flaggedResults = report.results.filter(
+    (r) => r.isFlagged && r.hybridScore * 100 >= minimumSimilarityPercent,
+  )
+
+  const reportMetadata: ReportMetadataEntry[] = [
+    { label: "Teacher", value: buildTeacherDisplayName(teacher) },
+    { label: "Source Assignment", value: report.sourceAssignment.name },
+    { label: "Source Class", value: report.sourceAssignment.className },
+    {
+      label: "Matched Assignments",
+      value: report.matchedAssignments.map((m) => m.name).join(", ") || "None",
+    },
+    { label: "Report ID", value: String(report.reportId) },
+    {
+      label: "Report Generated",
+      value: formatDateTimeValue(report.generatedAt),
+    },
+    {
+      label: "Downloaded At",
+      value: formatDateTimeValue(downloadedAt.toISOString()),
+    },
+    {
+      label: "Similarity Threshold",
+      value: `${minimumSimilarityPercent}% and above`,
+    },
+  ]
+
+  return {
+    title: "Cross-Class Similarity Analysis Report",
+    reportMetadata,
+    summaryMetrics: [
+      { label: "Submissions", value: String(report.summary.totalSubmissions) },
+      { label: "Suspicious Pairs", value: String(report.summary.flaggedPairs) },
+      {
+        label: "Average Similarity",
+        value: formatPercent(report.summary.averageSimilarity),
+      },
+      {
+        label: "Max Similarity",
+        value: formatPercent(report.summary.maxSimilarity),
+      },
+    ],
+    minimumSimilarityPercent,
+    filteredPairRows: flaggedResults.map((result: CrossClassResultDTO) => ({
+      pairLabel: `${result.student1Name} (${result.class1Name}) vs ${result.student2Name} (${result.class2Name})`,
+      overallSimilarity: buildSimilarityBadgeValue(result.hybridScore),
+      structuralSimilarity: buildSimilarityBadgeValue(result.structuralScore),
+      semanticSimilarity: buildSimilarityBadgeValue(result.semanticScore),
+      overlapSignal: buildQualitativeSignalValue(0),
+      longestFragmentSignal: buildQualitativeSignalValue(0),
+    })),
+    graphLayout: null,
+    emptyStateMessage:
+      "No pairs met the active threshold when this report was generated.",
+  }
+}
+
+/**
+ * Builds the pairwise PDF report data for a selected cross-class pair.
+ *
+ * @param options - Report, teacher, selected result, and fetched code details.
+ * @returns Pair report data reusing the existing PDF document structure.
+ */
+export function buildCrossClassPairReportData(
+  options: CrossClassPairReportBuilderOptions,
+): PairSimilarityReportData {
+  const downloadedAt = options.downloadedAt ?? new Date()
+  const { report, teacher, selectedResult, pairDetails } = options
+
+  const reportMetadata: ReportMetadataEntry[] = [
+    { label: "Teacher", value: buildTeacherDisplayName(teacher) },
+    { label: "Source Assignment", value: report.sourceAssignment.name },
+    { label: "Source Class", value: report.sourceAssignment.className },
+    { label: "Report ID", value: String(report.reportId) },
+    {
+      label: "Report Generated",
+      value: formatDateTimeValue(downloadedAt.toISOString()),
+    },
+    {
+      label: "Left Submission",
+      value: `${selectedResult.student1Name} (${selectedResult.class1Name}) — ${pairDetails.leftFile.filename}`,
+    },
+    {
+      label: "Right Submission",
+      value: `${selectedResult.student2Name} (${selectedResult.class2Name}) — ${pairDetails.rightFile.filename}`,
+    },
+  ]
+
+  return {
+    title: "Cross-Class Pairwise Similarity Evidence Report",
+    reportMetadata,
+    summaryMetrics: [
+      {
+        label: "Overall Similarity",
+        value: formatPercent(selectedResult.hybridScore),
+      },
+      {
+        label: "Structural Similarity",
+        value: formatPercent(selectedResult.structuralScore),
+      },
+      {
+        label: "Semantic Similarity",
+        value: formatPercent(selectedResult.semanticScore),
+      },
+      { label: "Total Overlap", value: String(selectedResult.overlap) },
+      {
+        label: "Longest Fragment",
+        value: String(selectedResult.longestFragment),
+      },
+      {
+        label: "Matched Fragments",
+        value: String(pairDetails.fragments.length),
+      },
+    ],
+    fragmentRows: pairDetails.fragments.map((fragment, index) => ({
+      fragmentLabel: `Fragment ${index + 1}`,
+      leftRange: formatCodeRange(
+        fragment.leftSelection.startRow,
+        fragment.leftSelection.endRow,
+      ),
+      rightRange: formatCodeRange(
+        fragment.rightSelection.startRow,
+        fragment.rightSelection.endRow,
+      ),
+      length: String(fragment.length),
+    })),
+    emptyStateMessage: "No matched fragments were returned for this pair.",
+    leftFileName: pairDetails.leftFile.filename,
+    rightFileName: pairDetails.rightFile.filename,
+    leftStudentName: selectedResult.student1Name,
+    rightStudentName: selectedResult.student2Name,
+    leftCode: pairDetails.leftFile.content,
+    rightCode: pairDetails.rightFile.content,
+    leftFragmentRanges: pairDetails.fragments.map((f) => ({
+      start: f.leftSelection.startRow,
+      end: f.leftSelection.endRow,
+    })),
+    rightFragmentRanges: pairDetails.fragments.map((f) => ({
+      start: f.rightSelection.startRow,
+      end: f.rightSelection.endRow,
+    })),
+    fragments: pairDetails.fragments,
   }
 }

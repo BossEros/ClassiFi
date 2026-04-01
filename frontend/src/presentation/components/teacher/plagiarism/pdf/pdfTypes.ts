@@ -4,6 +4,10 @@ import type {
   PairResponse,
 } from "@/business/services/plagiarismService"
 import type {
+  CrossClassAnalysisResponse,
+  CrossClassResultDTO,
+} from "@/data/api/crossClassPlagiarism.types"
+import type {
   PdfDocumentDownloadOptions,
   ReportMetadataEntry,
   SummaryMetric,
@@ -134,3 +138,27 @@ export const CLASS_REPORT_TABLE_HEADERS = [
   "Total Overlap",
   "Longest Fragment",
 ] as const
+
+export interface CrossClassReportBuilderOptions {
+  report: CrossClassAnalysisResponse
+  teacher: User | null
+  minimumSimilarityPercent: number
+  downloadedAt?: Date
+}
+
+export interface CrossClassPairReportBuilderOptions {
+  report: CrossClassAnalysisResponse
+  teacher: User | null
+  selectedResult: CrossClassResultDTO
+  pairDetails: FilePair
+  downloadedAt?: Date
+}
+
+export interface CrossClassReportPairRow {
+  pairLabel: string
+  class1Label: string
+  class2Label: string
+  overallSimilarity: SimilarityBadgeValue
+  structuralSimilarity: SimilarityBadgeValue
+  semanticSimilarity: SimilarityBadgeValue
+}

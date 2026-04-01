@@ -32,6 +32,8 @@ export interface CrossClassResultWithContext {
   submission2StudentName: string
   submission1ClassName: string
   submission2ClassName: string
+  submission1ClassCode: string
+  submission2ClassCode: string
   submission1AssignmentName: string
   submission2AssignmentName: string
 }
@@ -287,6 +289,7 @@ export class SimilarityRepository extends BaseRepository<
           submissionId: submissions.id,
           studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student1_name"),
           className: classes.className,
+          classCode: classes.classCode,
           assignmentName: assignments.assignmentName,
         })
         .from(submissions)
@@ -301,6 +304,7 @@ export class SimilarityRepository extends BaseRepository<
           submissionId: submissions.id,
           studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student2_name"),
           className: classes.className,
+          classCode: classes.classCode,
           assignmentName: assignments.assignmentName,
         })
         .from(submissions)
@@ -315,9 +319,11 @@ export class SimilarityRepository extends BaseRepository<
         result: similarityResults,
         submission1StudentName: sub1.studentName,
         submission1ClassName: sub1.className,
+        submission1ClassCode: sub1.classCode,
         submission1AssignmentName: sub1.assignmentName,
         submission2StudentName: sub2.studentName,
         submission2ClassName: sub2.className,
+        submission2ClassCode: sub2.classCode,
         submission2AssignmentName: sub2.assignmentName,
       })
       .from(similarityResults)

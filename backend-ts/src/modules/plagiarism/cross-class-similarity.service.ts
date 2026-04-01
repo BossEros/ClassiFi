@@ -50,7 +50,7 @@ export interface CrossClassAnalysisResponse {
   reportId: number
   generatedAt: string
   sourceAssignment: { id: number; name: string; className: string }
-  matchedAssignments: Array<{ id: number; name: string; className: string; nameSimilarity: number }>
+  matchedAssignments: Array<{ id: number; name: string; className: string; classCode: string; nameSimilarity: number }>
   summary: {
     totalSubmissions: number
     totalComparisons: number
@@ -69,7 +69,9 @@ export interface CrossClassResultDTO {
   student1Name: string
   student2Name: string
   class1Name: string
+  class1Code: string
   class2Name: string
+  class2Code: string
   assignment1Name: string
   assignment2Name: string
   structuralScore: number
@@ -874,7 +876,7 @@ export class CrossClassSimilarityService {
     sourceAssignment: Assignment,
     sourceClassName: string,
     matchedAssignments: MatchedAssignment[],
-    classMap: Map<number, { id: number; className: string }>,
+    classMap: Map<number, { id: number; className: string; classCode: string }>,
     resultsWithContext: CrossClassResultWithContext[],
   ): CrossClassAnalysisResponse {
     return {
@@ -889,6 +891,7 @@ export class CrossClassSimilarityService {
         id: m.assignment.id,
         name: m.assignment.assignmentName,
         className: classMap.get(m.assignment.classId)?.className ?? "Unknown",
+        classCode: classMap.get(m.assignment.classId)?.classCode ?? "",
         nameSimilarity: m.nameSimilarity,
       })),
       summary: {
@@ -913,7 +916,9 @@ export class CrossClassSimilarityService {
       student1Name: context?.submission1StudentName ?? "Unknown",
       student2Name: context?.submission2StudentName ?? "Unknown",
       class1Name: context?.submission1ClassName ?? "Unknown",
+      class1Code: context?.submission1ClassCode ?? "",
       class2Name: context?.submission2ClassName ?? "Unknown",
+      class2Code: context?.submission2ClassCode ?? "",
       assignment1Name: context?.submission1AssignmentName ?? "Unknown",
       assignment2Name: context?.submission2AssignmentName ?? "Unknown",
       structuralScore: parseFloat(result.structuralScore),
