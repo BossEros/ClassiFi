@@ -168,6 +168,7 @@ export class PlagiarismService {
 
   /** Analyze files for plagiarism (ad-hoc analysis). */
   async analyzeFiles(request: AnalyzeRequest): Promise<AnalyzeResponse> {
+    // Validate that the request has enough files and a language specified before doing anything.
     this.validateAnalyzeRequest(request)
 
     const detector = this.detectorFactory.create({
@@ -175,6 +176,7 @@ export class PlagiarismService {
       kgramLength: request.kgramLength,
     })
 
+    // Wrap each raw file object into the detector's File type, preserving student metadata.
     const files = request.files.map(
       (file) =>
         new File(file.path, file.content, {
@@ -183,15 +185,18 @@ export class PlagiarismService {
         }),
     )
 
+    // If a template file is provided, pass it to the detector so shared boilerplate is ignored.
     const ignoredFile = request.templateFile
       ? new File(request.templateFile.path, request.templateFile.content)
       : undefined
 
     const report = await detector.analyze(files, ignoredFile)
 
+    // Purge stale in-memory reports before storing this new one to keep memory usage bounded.
     this.cleanupExpiredReports()
     const createdAt = new Date()
     const reportId = this.generateReportId()
+    // Store in-memory — ad-hoc reports are not persisted to the database.
     this.legacyReportsStore.set(reportId, { report, createdAt })
 
     const threshold = request.threshold ?? settings.plagiarismHybridThreshold
@@ -221,6 +226,7 @@ export class PlagiarismService {
     reportId: string,
     pairId: number,
   ): Promise<PairDetailsResponse> {
+    // First check if this is an in-memory (ad-hoc) report — these are not in the database.
     const legacyStored = this.legacyReportsStore.get(reportId)
 
     if (legacyStored) {
@@ -243,6 +249,8 @@ export class PlagiarismService {
       }
     }
 
+    // If the reportId is a numeric string, it refers to a persisted DB report.
+    // Delegate to getResultDetails to fetch the full pair with file content and fragments.
     const numericReportId = parseInt(reportId, 10)
     if (!Number.isNaN(numericReportId)) {
       const details = await this.getResultDetails(pairId)
@@ -281,11 +289,13 @@ export class PlagiarismService {
 
   /** Get report by ID. */
   async getReport(reportId: string): Promise<AnalyzeResponse | null> {
+    // Numeric IDs belong to persisted DB reports — delegate to the persistence service.
     const numericReportId = parseInt(reportId, 10)
     if (!Number.isNaN(numericReportId)) {
       return this.persistenceService.getReport(numericReportId)
     }
 
+    // Non-numeric IDs are in-memory ad-hoc reports; look them up in the local store.
     const storedReport = this.legacyReportsStore.get(reportId)
     if (!storedReport) {
       return null
@@ -316,16 +326,19 @@ export class PlagiarismService {
 
   /** Delete a report. */
   async deleteReport(reportId: string): Promise<boolean> {
+    // Numeric ID → delete from the database via persistence service.
     const numericReportId = parseInt(reportId, 10)
     if (!Number.isNaN(numericReportId)) {
       return this.persistenceService.deleteReport(numericReportId)
     }
 
+    // Non-numeric ID → remove from in-memory store.
     return this.legacyReportsStore.delete(reportId)
   }
 
   /** Get result details from database with fragments and file content. */
   async getResultDetails(resultId: number): Promise<ResultDetailsResponse> {
+    // Load the result row, its fragments, and both submission records from the database.
     const resultData = await this.persistenceService.getResultData(resultId)
 
     if (!resultData || !resultData.submission1 || !resultData.submission2) {
@@ -334,6 +347,7 @@ export class PlagiarismService {
 
     const { result, fragments, submission1, submission2 } = resultData
 
+    // Download the actual source code for both submissions from storage in parallel.
     const [leftContent, rightContent] =
       await this.fileService.downloadSubmissionFiles(
         submission1.submission.filePath,
@@ -387,26 +401,33 @@ export class PlagiarismService {
     assignmentId: number,
     teacherId?: number,
   ): Promise<AnalyzeResponse> {
+    // Verify the assignment exists before doing anything.
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
+    // Check if a usable existing report is still current (same submission count, no newer submissions).
+    // If so, return it directly to avoid re-running the full analysis pipeline unnecessarily.
     const reusableAssignmentReport =
       await this.persistenceService.getReusableAssignmentReport(assignmentId)
 
     if (reusableAssignmentReport) {
+      // Sync penalty state in case grades changed since the report was generated, then return.
       await this.similarityPenaltyService.syncAssignmentPenaltyState(
         assignmentId,
       )
       return reusableAssignmentReport
     }
 
+    // Download all latest submission files for this assignment from storage.
     const files = await this.fileService.fetchSubmissionFiles(assignmentId)
 
     const language = this.getLanguage(assignment.programmingLanguage)
     let ignoredFile: File | undefined
 
+    // If the assignment has template code, exclude it from comparison so shared boilerplate
+    // doesn't inflate similarity scores.
     if (assignment.templateCode) {
       ignoredFile = new File(
         `template.${this.getFileExtension(language)}`,
@@ -414,12 +435,15 @@ export class PlagiarismService {
       )
     }
 
+    // Run structural detection (Winnowing fingerprinting) across all submission files.
     const detector = this.detectorFactory.create({ language })
     const report = await detector.analyze(files, ignoredFile)
     const pairs = report.getPairs()
 
+    // Compute semantic similarity scores for all pairs using the GraphCodeBERT microservice.
     const semanticScores = await this.computeSemanticScores(pairs, language)
 
+    // Persist the report, per-pair results, and fragment positions to the database.
     const { dbReport, resultIdMap } =
       await this.persistenceService.persistReport(
         assignmentId,
@@ -429,6 +453,7 @@ export class PlagiarismService {
         semanticScores,
       )
 
+    // Apply grade penalties to any student pairs that exceed the suspicious threshold.
     await this.similarityPenaltyService.applyAssignmentPenaltyFromReport(
       assignmentId,
       dbReport.id,
@@ -447,11 +472,14 @@ export class PlagiarismService {
   async getAssignmentSimilarityStatus(
     assignmentId: number,
   ): Promise<AssignmentSimilarityStatusResponse> {
+    // Guard: assignment must exist before checking report status.
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
+    // Check whether a current (non-stale) report already exists.
+    // The frontend uses this to decide whether to show "Review" or "Run Analysis" button.
     const reusableReportId =
       await this.persistenceService.getReusableAssignmentReportId(assignmentId)
 
@@ -465,6 +493,7 @@ export class PlagiarismService {
   private cleanupExpiredReports(): void {
     const currentTimestampMs = Date.now()
 
+    // First pass: remove any reports older than the TTL (24 hours by default).
     for (const [reportId, reportData] of this.legacyReportsStore.entries()) {
       const reportAgeMs = currentTimestampMs - reportData.createdAt.getTime()
       if (reportAgeMs > PlagiarismService.LEGACY_REPORT_TTL_MS) {
@@ -472,6 +501,7 @@ export class PlagiarismService {
       }
     }
 
+    // Second pass: if the store still exceeds the max count, evict the oldest entries first.
     if (this.legacyReportsStore.size > PlagiarismService.MAX_LEGACY_REPORTS) {
       const sortedEntries = Array.from(this.legacyReportsStore.entries()).sort(
         (leftEntry, rightEntry) =>
@@ -487,6 +517,7 @@ export class PlagiarismService {
   }
 
   private validateAnalyzeRequest(request: AnalyzeRequest): void {
+    // Ensure the minimum number of files are present to form at least one comparison pair.
     if (
       !request.files ||
       request.files.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED
@@ -536,6 +567,8 @@ export class PlagiarismService {
     return extensionMap[language] || "txt"
   }
 
+  // Shapes the freshly persisted report and all detector pairs into the AnalyzeResponse
+  // contract returned to the API controller and ultimately to the frontend.
   private buildAssignmentAnalysisResponse(
     dbReport: { id: number; generatedAt: Date },
     report: Report,
@@ -616,6 +649,8 @@ export class PlagiarismService {
     }
   }
 
+  // Builds the score breakdown (structural, semantic, hybrid, flagged) for each pair
+  // so the breakdown can be reused for both summary stats and per-pair DTO building.
   private buildPairScoreBreakdowns(
     pairs: Pair[],
     semanticScores: Map<string, number>,
@@ -631,6 +666,7 @@ export class PlagiarismService {
           10,
         )
 
+        // Skip pairs where metadata is missing — these can't be meaningfully scored.
         if (!leftSubmissionId || !rightSubmissionId) {
           return null
         }
@@ -666,6 +702,7 @@ export class PlagiarismService {
       leftContent: string
       rightContent: string
     }> = []
+    // Track queued keys to avoid sending duplicate requests for the same pair.
     const queuedPairKeys = new Set<string>()
 
     for (const pair of pairs) {
@@ -674,6 +711,7 @@ export class PlagiarismService {
         pair.rightFile.info?.submissionId || "0",
       )
 
+      // Skip pairs with missing submission IDs — they can't be uniquely keyed.
       if (!leftSubmissionId || !rightSubmissionId) {
         continue
       }
@@ -683,6 +721,7 @@ export class PlagiarismService {
         rightSubmissionId,
       )
 
+      // Deduplicate: the detector may produce A→B and B→A; only send one request.
       if (queuedPairKeys.has(normalizedSubmissionPair.pairKey)) {
         continue
       }
@@ -695,6 +734,7 @@ export class PlagiarismService {
       })
     }
 
+    // Nothing to score — return early.
     if (queuedRequests.length === 0) {
       return semanticScores
     }
