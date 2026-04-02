@@ -128,13 +128,12 @@ export class PlagiarismPersistenceService {
         transaction as unknown as TransactionContext,
       )
 
-      // Acquire a per-assignment advisory lock so concurrent analysis requests
-      // don’t produce duplicate reports for the same assignment.
+      // STEP 1: Acquire a per-assignment advisory lock to prevent duplicate concurrent reports
       await similarityRepositoryWithContext.acquireAssignmentReportLock(
         assignmentId,
       )
 
-      // Fall back to looking up the teacher from the assignment if not passed in directly.
+      // STEP 2: Resolve the teacher ID — falls back to a DB lookup when not passed directly
       const resolvedTeacherId =
         teacherId ??
         (await similarityRepositoryWithContext.getTeacherIdByAssignment(
@@ -142,7 +141,7 @@ export class PlagiarismPersistenceService {
         )) ??
         null
 
-      // Build per-pair score breakdowns so we can derive summary stats for the report header.
+      // STEP 3: Build per-pair score breakdowns and derive summary statistics for the report header
       const pairScoreBreakdowns = this.buildPairScoreBreakdowns(
         pairs,
         semanticScores,
@@ -151,6 +150,7 @@ export class PlagiarismPersistenceService {
         pairScoreBreakdowns,
       )
 
+      // STEP 4: Create the report header record in the database
       const dbReport = await similarityRepositoryWithContext.createReport({
         assignmentId,
         teacherId: resolvedTeacherId,
@@ -161,8 +161,7 @@ export class PlagiarismPersistenceService {
         highestSimilarity: formatSimilarityScore(pairSimilaritySummary.maxSimilarity, 4),
       })
 
-      // Prepare result rows, the pairMap (for looking up Pair objects later),
-      // and the swappedMap (for correcting fragment left/right orientation).
+      // STEP 5: Prepare result rows and orientation maps (canonical ascending-ID pair ordering)
       const { resultsToInsert, pairMap, swappedMap } =
         this.prepareResultsForInsert(dbReport.id, pairs, semanticScores)
 
@@ -172,13 +171,13 @@ export class PlagiarismPersistenceService {
         const insertedResults =
           await similarityRepositoryWithContext.createResults(resultsToInsert)
 
-        // Build a lookup map from pairKey to DB result ID so callers can reference
-        // individual results without an extra query.
+        // STEP 6: Build a lookup map from pairKey → DB result ID for callers to reference pairs without extra queries
         for (const insertedResult of insertedResults) {
           const pairKey = `${insertedResult.submission1Id}-${insertedResult.submission2Id}`
           resultIdMap.set(pairKey, insertedResult.id)
         }
 
+        // STEP 7: Insert matching code fragment position records
         const fragmentsToInsert = this.prepareFragmentsForInsert(
           insertedResults,
           pairMap,
@@ -190,7 +189,7 @@ export class PlagiarismPersistenceService {
         }
       }
 
-      // Remove all older reports for this assignment — only the freshly persisted report is kept.
+      // STEP 8: Prune all older reports for this assignment — keep only the freshly created one
       await similarityRepositoryWithContext.deleteReportsByAssignmentExcept(
         assignmentId,
         dbReport.id,
@@ -202,6 +201,7 @@ export class PlagiarismPersistenceService {
 
   /** Get report from database and reconstruct the API response. */
   async getReport(reportId: number): Promise<AnalyzeResponse | null> {
+    // STEP 1: Fetch the report header from the database
     const report = await this.similarityRepo.getReportById(reportId)
     if (!report) {
       return null
@@ -209,30 +209,31 @@ export class PlagiarismPersistenceService {
 
     const results = await this.similarityRepo.getResultsByReport(reportId)
 
-    // Collect all unique submission IDs so we can batch-fetch student info in one query.
+    // STEP 2: Collect all unique submission IDs referenced by the results
     const submissionIds = new Set<number>()
     for (const result of results) {
       submissionIds.add(result.submission1Id)
       submissionIds.add(result.submission2Id)
     }
 
+    // STEP 3: Batch-fetch submission + student info for all involved submissions
     const pairSubmissions = await this.submissionRepo.getBatchSubmissionsWithStudents(
       Array.from(submissionIds),
     )
-    // Convert the array to a Map for O(1) lookups when building each pair DTO.
     const submissionMap = new Map(
       pairSubmissions.map((submissionWithStudent) => [
         submissionWithStudent.submission.id,
         submissionWithStudent,
       ]),
     )
+
+    // STEP 4: Re-derive the hybrid score using current configured weights and build pair DTOs
+    // Recalculating ensures the response reflects any weight changes since the report was first saved.
     const persistedPairsWithScores = results
       .map((result) => {
         const leftSubmission = submissionMap.get(result.submission1Id)
         const rightSubmission = submissionMap.get(result.submission2Id)
 
-        // Re-derive the hybrid score using the current configured weights in case
-        // the weight settings changed after this report was originally generated.
         const pairScoreBreakdown = this.buildCurrentPairSimilarityScoreBreakdown(
           result.structuralScore,
           result.semanticScore,
@@ -266,7 +267,7 @@ export class PlagiarismPersistenceService {
           pairScoreBreakdown,
         }
       })
-      // Sort highest hybrid score first so the most suspicious pairs appear at the top.
+      // STEP 5: Sort pairs by hybrid score descending so the most suspicious appear first
       .sort(
         (leftPairWithScore, rightPairWithScore) =>
           rightPairWithScore.pairScoreBreakdown.hybridScore -
@@ -285,6 +286,7 @@ export class PlagiarismPersistenceService {
     const reportSubmissions = await this.getReportSubmissions(reportId)
     const submissionDTOs = this.mapSubmissionsToDTOs(reportSubmissions)
 
+    // STEP 6: Build and return the full analysis response DTO
     return {
       reportId: reportId.toString(),
       isReusedReport: true,
