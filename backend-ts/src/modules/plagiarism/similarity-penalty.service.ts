@@ -2,6 +2,8 @@ import { inject, injectable } from "tsyringe"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { ClassRepository } from "@/modules/classes/class.repository.js"
+import { UserRepository } from "@/modules/users/user.repository.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
@@ -30,6 +32,8 @@ export class SimilarityPenaltyService {
     private similarityRepo: SimilarityRepository,
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.services.plagiarismPersistence)
     private persistenceService: PlagiarismPersistenceService,
     @inject(DI_TOKENS.repositories.testResult)
@@ -345,5 +349,40 @@ export class SimilarityPenaltyService {
           error,
         })
       })
+
+    // Notify teacher about similarity detection (fire-and-forget)
+    this.sendSimilarityDetectedToTeacher(submission, assignment, penaltyPercent)
+      .catch((error) => logger.error("Failed to send similarity detected notification to teacher", { submissionId: submission.id, error }))
+  }
+
+  /**
+   * Sends SIMILARITY_DETECTED notification to the teacher of the class.
+   */
+  private async sendSimilarityDetectedToTeacher(
+    submission: Submission,
+    assignment: Assignment,
+    similarityPercentage: number,
+  ): Promise<void> {
+    const [classData, student] = await Promise.all([
+      this.classRepo.getClassById(assignment.classId),
+      this.userRepo.getUserById(submission.studentId),
+    ])
+
+    if (!classData) return
+
+    const similarityData = {
+      assignmentId: assignment.id,
+      assignmentTitle: assignment.assignmentName,
+      className: classData.className,
+      classId: classData.id,
+      studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
+      similarityPercentage,
+      submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`,
+    }
+
+    await Promise.allSettled([
+      this.notificationService.createNotification(classData.teacherId, "SIMILARITY_DETECTED", similarityData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "SIMILARITY_DETECTED", similarityData),
+    ])
   }
 }

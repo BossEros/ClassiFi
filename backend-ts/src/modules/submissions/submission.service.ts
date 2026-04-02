@@ -2,6 +2,8 @@ import { inject, injectable } from "tsyringe"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
+import { ClassRepository } from "@/modules/classes/class.repository.js"
+import { UserRepository } from "@/modules/users/user.repository.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
@@ -57,6 +59,8 @@ export class SubmissionService {
     private assignmentRepo: AssignmentRepository,
     @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
     @inject(DI_TOKENS.services.storage)
@@ -129,6 +133,14 @@ export class SubmissionService {
       submission.id,
     )
     await this.triggerAutomaticSimilarityAnalysis(assignmentId)
+
+    // Notify teacher about the new submission (fire-and-forget)
+    this.sendSubmissionReceivedNotification(
+      updatedSubmission ?? submission,
+      assignment,
+      studentId,
+      penaltyResult,
+    ).catch((error) => logger.error("Failed to send submission notification to teacher", { submissionId: submission.id, error }))
 
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
@@ -646,6 +658,61 @@ export class SubmissionService {
         assignmentId,
         error,
       })
+    }
+  }
+
+  /**
+   * Sends NEW_SUBMISSION_RECEIVED or LATE_SUBMISSION_RECEIVED notification to the teacher.
+   */
+  private async sendSubmissionReceivedNotification(
+    submission: Submission,
+    assignment: Assignment,
+    studentId: number,
+    penaltyResult: PenaltyResult | null,
+  ): Promise<void> {
+    const [classData, student] = await Promise.all([
+      this.classRepo.getClassById(assignment.classId),
+      this.userRepo.getUserById(studentId),
+    ])
+
+    if (!classData) return
+
+    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
+    const submissionUrl = `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`
+    const isLate = penaltyResult !== null
+
+    if (isLate) {
+      const lateData = {
+        submissionId: submission.id,
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        studentName,
+        className: classData.className,
+        classId: classData.id,
+        submissionUrl,
+        submittedAt: submission.submittedAt.toISOString(),
+        dueDate: assignment.deadline?.toISOString() ?? "No deadline",
+      }
+
+      await Promise.allSettled([
+        this.notificationService.createNotification(classData.teacherId, "LATE_SUBMISSION_RECEIVED", lateData),
+        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "LATE_SUBMISSION_RECEIVED", lateData),
+      ])
+    } else {
+      const submissionData = {
+        submissionId: submission.id,
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        studentName,
+        className: classData.className,
+        classId: classData.id,
+        submissionUrl,
+      }
+
+      await Promise.allSettled([
+        this.notificationService.createNotification(classData.teacherId, "NEW_SUBMISSION_RECEIVED", submissionData),
+        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "NEW_SUBMISSION_RECEIVED", submissionData),
+      ])
     }
   }
 }
