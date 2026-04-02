@@ -12,7 +12,6 @@ import {
 } from "@/modules/assignments/assignment.mapper.js"
 import { generateUniqueClassCode } from "@/modules/classes/class-code.util.js"
 import { StorageService } from "@/services/storage.service.js"
-import type { ClassSchedule } from "@/models/index.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -21,6 +20,7 @@ import {
   BadRequestError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
+import { fireAndForget, filterUndefined } from "@/shared/utils.js"
 import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
@@ -105,6 +105,29 @@ export class ClassService {
     )
   }
 
+  /**
+   * Verify that a class exists and belongs to the given teacher.
+   *
+   * @param classId - The class ID to look up.
+   * @param teacherId - The teacher who must own the class.
+   * @returns The class record.
+   * @throws ClassNotFoundError if the class does not exist.
+   * @throws NotClassOwnerError if the class belongs to another teacher.
+   */
+  private async ensureClassOwnership(classId: number, teacherId: number) {
+    const classData = await this.classRepo.getClassById(classId)
+
+    if (!classData) {
+      throw new ClassNotFoundError(classId)
+    }
+
+    if (classData.teacherId !== teacherId) {
+      throw new NotClassOwnerError()
+    }
+
+    return classData
+  }
+
   /** Update a class */
   async updateClass(data: UpdateClassServiceDTO): Promise<ClassDTO> {
     const {
@@ -118,31 +141,9 @@ export class ClassService {
       schedule,
     } = data
 
-    const existingClass = await this.classRepo.getClassById(classId)
+    await this.ensureClassOwnership(classId, teacherId)
 
-    if (!existingClass) {
-      throw new ClassNotFoundError(classId)
-    }
-
-    if (existingClass.teacherId !== teacherId) {
-      throw new NotClassOwnerError()
-    }
-
-    const updates: Partial<{
-      className: string
-      description: string | null
-      isActive: boolean
-      semester: number
-      academicYear: string
-      schedule: ClassSchedule
-    }> = {}
-
-    if (className !== undefined) updates.className = className
-    if (description !== undefined) updates.description = description
-    if (isActive !== undefined) updates.isActive = isActive
-    if (semester !== undefined) updates.semester = semester
-    if (academicYear !== undefined) updates.academicYear = academicYear
-    if (schedule !== undefined) updates.schedule = schedule
+    const updates = filterUndefined({ className, description, isActive, semester, academicYear, schedule })
 
     const updatedClass = await this.classRepo.updateClass(classId, updates)
 
@@ -157,15 +158,7 @@ export class ClassService {
 
   /** Delete a class */
   async deleteClass(classId: number, teacherId: number): Promise<void> {
-    const existingClass = await this.classRepo.getClassById(classId)
-
-    if (!existingClass) {
-      throw new ClassNotFoundError(classId)
-    }
-
-    if (existingClass.teacherId !== teacherId) {
-      throw new NotClassOwnerError()
-    }
+    await this.ensureClassOwnership(classId, teacherId)
 
     await this.performClassDeletion(classId)
   }
@@ -320,15 +313,7 @@ export class ClassService {
   async removeStudent(data: RemoveStudentServiceDTO): Promise<void> {
     const { classId, studentId, teacherId } = data
 
-    const existingClass = await this.classRepo.getClassById(classId)
-
-    if (!existingClass) {
-      throw new ClassNotFoundError(classId)
-    }
-
-    if (existingClass.teacherId !== teacherId) {
-      throw new NotClassOwnerError()
-    }
+    const existingClass = await this.ensureClassOwnership(classId, teacherId)
 
     const isStudentInClass = await this.enrollmentRepo.isEnrolled(studentId, classId)
 
@@ -358,10 +343,15 @@ export class ClassService {
       instructorName: teacherName,
     }
 
-    void Promise.allSettled([
-      this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
-      this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
-    ]).catch((error) => logger.error("Failed to send removal notification to student", { studentId, classId, error }))
+    fireAndForget(
+      Promise.allSettled([
+        this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
+        this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
+      ]),
+      logger,
+      "Failed to send removal notification to student",
+      { studentId, classId },
+    )
 
     // Send STUDENT_UNENROLLED to teacher
     const unenrolledData = {
@@ -371,10 +361,15 @@ export class ClassService {
       studentEmail,
     }
 
-    void Promise.allSettled([
-      this.notificationService.createNotification(teacherId, "STUDENT_UNENROLLED", unenrolledData),
-      this.notificationService.sendEmailNotificationIfEnabled(teacherId, "STUDENT_UNENROLLED", unenrolledData),
-    ]).catch((error) => logger.error("Failed to send unenrollment notification to teacher", { teacherId, classId, error }))
+    fireAndForget(
+      Promise.allSettled([
+        this.notificationService.createNotification(teacherId, "STUDENT_UNENROLLED", unenrolledData),
+        this.notificationService.sendEmailNotificationIfEnabled(teacherId, "STUDENT_UNENROLLED", unenrolledData),
+      ]),
+      logger,
+      "Failed to send unenrollment notification to teacher",
+      { teacherId, classId },
+    )
   }
 }
 

@@ -12,8 +12,7 @@ import {
 } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
   buildPairSimilarityScoreBreakdown,
-  formatPairSimilarityScoreForStorage,
-  formatReportSimilarityScore,
+  formatSimilarityScore,
   normalizeSubmissionPair,
   summarizePairSimilarityScores,
   type PairSimilarityScoreBreakdown,
@@ -158,12 +157,8 @@ export class PlagiarismPersistenceService {
         totalSubmissions: report.files.length,
         totalComparisons: pairs.length,
         flaggedPairs: pairSimilaritySummary.suspiciousPairs,
-        averageSimilarity: formatReportSimilarityScore(
-          pairSimilaritySummary.averageSimilarity,
-        ),
-        highestSimilarity: formatReportSimilarityScore(
-          pairSimilaritySummary.maxSimilarity,
-        ),
+        averageSimilarity: formatSimilarityScore(pairSimilaritySummary.averageSimilarity, 4),
+        highestSimilarity: formatSimilarityScore(pairSimilaritySummary.maxSimilarity, 4),
       })
 
       // Prepare result rows, the pairMap (for looking up Pair objects later),
@@ -496,15 +491,9 @@ export class PlagiarismPersistenceService {
         reportId,
         submission1Id: normalizedSubmissionPair.submission1Id,
         submission2Id: normalizedSubmissionPair.submission2Id,
-        structuralScore: formatPairSimilarityScoreForStorage(
-          pairScoreBreakdown.structuralScore,
-        ),
-        semanticScore: formatPairSimilarityScoreForStorage(
-          pairScoreBreakdown.semanticScore,
-        ),
-        hybridScore: formatPairSimilarityScoreForStorage(
-          pairScoreBreakdown.hybridScore,
-        ),
+        structuralScore: formatSimilarityScore(pairScoreBreakdown.structuralScore, 6),
+        semanticScore: formatSimilarityScore(pairScoreBreakdown.semanticScore, 6),
+        hybridScore: formatSimilarityScore(pairScoreBreakdown.hybridScore, 6),
         overlap: pair.overlap,
         longestFragment: pair.longest,
         leftCovered: pair.leftCovered,

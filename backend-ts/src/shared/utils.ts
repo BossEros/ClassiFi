@@ -1,4 +1,5 @@
 import { BadRequestError } from "@/shared/errors.js"
+import type { Logger } from "@/shared/logger.js"
 
 /**
  * Parse and validate a positive integer from a string.
@@ -92,4 +93,22 @@ export function filterUndefined<T extends object>(obj: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(obj).filter(([, value]) => value !== undefined),
   ) as Partial<T>
+}
+
+/**
+ * Execute a promise in the background, logging any errors without propagating them.
+ * Use for non-critical side-effects like sending notifications or emails.
+ *
+ * @param promise - The promise to execute in the background.
+ * @param log - Logger instance for recording failures.
+ * @param message - Error message to log on failure.
+ * @param context - Optional structured context for the log entry.
+ */
+export function fireAndForget(
+  promise: Promise<unknown>,
+  log: Logger,
+  message: string,
+  context?: Record<string, unknown>,
+): void {
+  void promise.catch((error) => log.error(message, { ...context, error }))
 }

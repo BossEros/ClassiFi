@@ -22,6 +22,7 @@ import type {
 import { withTransaction } from "@/shared/transaction.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { fireAndForget } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("AdminEnrollmentService")
@@ -100,10 +101,15 @@ export class AdminEnrollmentService {
       classUrl: `${settings.frontendUrl}/dashboard/classes/${classId}`,
     }
 
-    void Promise.allSettled([
-      this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
-      this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
-    ]).catch((error) => logger.error("Failed to send enrollment notification to student", { studentId, classId, error }))
+    fireAndForget(
+      Promise.allSettled([
+        this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+        this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+      ]),
+      logger,
+      "Failed to send enrollment notification to student",
+      { studentId, classId },
+    )
 
     // Send STUDENT_ENROLLED to teacher (fire-and-forget)
     const studentEnrolledData = {
@@ -113,10 +119,15 @@ export class AdminEnrollmentService {
       studentEmail: student.email,
     }
 
-    void Promise.allSettled([
-      this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
-      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
-    ]).catch((error) => logger.error("Failed to send enrollment notification to teacher", { teacherId: classData.teacherId, classId, error }))
+    fireAndForget(
+      Promise.allSettled([
+        this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+      ]),
+      logger,
+      "Failed to send enrollment notification to teacher",
+      { teacherId: classData.teacherId, classId },
+    )
   }
 
   /**
@@ -143,10 +154,15 @@ export class AdminEnrollmentService {
       instructorName: teacherName,
     }
 
-    void Promise.allSettled([
-      this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
-      this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
-    ]).catch((error) => logger.error("Failed to send removal notification to student", { studentId, classId, error }))
+    fireAndForget(
+      Promise.allSettled([
+        this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
+        this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
+      ]),
+      logger,
+      "Failed to send removal notification to student",
+      { studentId, classId },
+    )
 
     // Send STUDENT_UNENROLLED to teacher (fire-and-forget)
     const unenrolledData = {
@@ -156,10 +172,15 @@ export class AdminEnrollmentService {
       studentEmail,
     }
 
-    void Promise.allSettled([
-      this.notificationService.createNotification(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
-      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
-    ]).catch((error) => logger.error("Failed to send unenrollment notification to teacher", { teacherId: classData.teacherId, classId, error }))
+    fireAndForget(
+      Promise.allSettled([
+        this.notificationService.createNotification(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
+        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
+      ]),
+      logger,
+      "Failed to send unenrollment notification to teacher",
+      { teacherId: classData.teacherId, classId },
+    )
   }
 
   /**

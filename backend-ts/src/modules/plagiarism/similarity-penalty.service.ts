@@ -15,6 +15,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { Assignment, Submission } from "@/models/index.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { fireAndForget } from "@/shared/utils.js"
 
 interface SubmissionPenaltyCandidate {
   penaltyPercent: number
@@ -336,23 +337,24 @@ export class SimilarityPenaltyService {
       })
     }
 
-    void this.notificationService
-      .sendEmailNotificationIfEnabled(
+    fireAndForget(
+      this.notificationService.sendEmailNotificationIfEnabled(
         submission.studentId,
         "SUBMISSION_GRADED",
         notificationPayload,
-      )
-      .catch((error) => {
-        logger.error("Failed to send similarity deduction notification email", {
-          submissionId: submission.id,
-          studentId: submission.studentId,
-          error,
-        })
-      })
+      ),
+      logger,
+      "Failed to send similarity deduction notification email",
+      { submissionId: submission.id, studentId: submission.studentId },
+    )
 
     // Notify teacher about similarity detection (fire-and-forget)
-    this.sendSimilarityDetectedToTeacher(submission, assignment, penaltyPercent)
-      .catch((error) => logger.error("Failed to send similarity detected notification to teacher", { submissionId: submission.id, error }))
+    fireAndForget(
+      this.sendSimilarityDetectedToTeacher(submission, assignment, penaltyPercent),
+      logger,
+      "Failed to send similarity detected notification to teacher",
+      { submissionId: submission.id },
+    )
   }
 
   /**

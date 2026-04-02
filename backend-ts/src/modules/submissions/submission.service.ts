@@ -36,6 +36,7 @@ import {
   SubmissionFileNotFoundError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
+import { fireAndForget } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { NotificationService } from "@/modules/notifications/notification.service.js"
 import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
@@ -135,12 +136,17 @@ export class SubmissionService {
     await this.triggerAutomaticSimilarityAnalysis(assignmentId)
 
     // Notify teacher about the new submission (fire-and-forget)
-    this.sendSubmissionReceivedNotification(
-      updatedSubmission ?? submission,
-      assignment,
-      studentId,
-      penaltyResult,
-    ).catch((error) => logger.error("Failed to send submission notification to teacher", { submissionId: submission.id, error }))
+    fireAndForget(
+      this.sendSubmissionReceivedNotification(
+        updatedSubmission ?? submission,
+        assignment,
+        studentId,
+        penaltyResult,
+      ),
+      logger,
+      "Failed to send submission notification to teacher",
+      { submissionId: submission.id },
+    )
 
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
@@ -512,14 +518,11 @@ export class SubmissionService {
   private calculateNextSubmissionNumber(
     existingSubmissions: Submission[],
   ): number {
-    let highestSubmissionNumber = 0
+    if (existingSubmissions.length === 0) return 1
 
-    for (const existingSubmission of existingSubmissions) {
-      highestSubmissionNumber = Math.max(
-        highestSubmissionNumber,
-        existingSubmission.submissionNumber,
-      )
-    }
+    const highestSubmissionNumber = Math.max(
+      ...existingSubmissions.map((submission) => submission.submissionNumber),
+    )
 
     return highestSubmissionNumber + 1
   }
@@ -678,41 +681,27 @@ export class SubmissionService {
     if (!classData) return
 
     const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
-    const submissionUrl = `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`
     const isLate = penaltyResult !== null
 
-    if (isLate) {
-      const lateData = {
-        submissionId: submission.id,
-        assignmentId: assignment.id,
-        assignmentTitle: assignment.assignmentName,
-        studentName,
-        className: classData.className,
-        classId: classData.id,
-        submissionUrl,
+    const notificationType = isLate ? "LATE_SUBMISSION_RECEIVED" as const : "NEW_SUBMISSION_RECEIVED" as const
+
+    const notificationData = {
+      submissionId: submission.id,
+      assignmentId: assignment.id,
+      assignmentTitle: assignment.assignmentName,
+      studentName,
+      className: classData.className,
+      classId: classData.id,
+      submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`,
+      ...(isLate && {
         submittedAt: submission.submittedAt.toISOString(),
         dueDate: assignment.deadline?.toISOString() ?? "No deadline",
-      }
-
-      await Promise.allSettled([
-        this.notificationService.createNotification(classData.teacherId, "LATE_SUBMISSION_RECEIVED", lateData),
-        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "LATE_SUBMISSION_RECEIVED", lateData),
-      ])
-    } else {
-      const submissionData = {
-        submissionId: submission.id,
-        assignmentId: assignment.id,
-        assignmentTitle: assignment.assignmentName,
-        studentName,
-        className: classData.className,
-        classId: classData.id,
-        submissionUrl,
-      }
-
-      await Promise.allSettled([
-        this.notificationService.createNotification(classData.teacherId, "NEW_SUBMISSION_RECEIVED", submissionData),
-        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "NEW_SUBMISSION_RECEIVED", submissionData),
-      ])
+      }),
     }
+
+    await Promise.allSettled([
+      this.notificationService.createNotification(classData.teacherId, notificationType, notificationData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, notificationType, notificationData),
+    ])
   }
 }
