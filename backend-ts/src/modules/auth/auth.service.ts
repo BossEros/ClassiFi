@@ -9,6 +9,7 @@ import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { settlePromisesAndLogRejections } from "@/shared/utils.js"
 import {
   UserAlreadyExistsError,
   InvalidCredentialsError,
@@ -466,6 +467,11 @@ export class AuthService {
       this.notificationService.sendEmailNotificationIfEnabled(admin.id, "NEW_USER_REGISTERED", notificationData),
     ])
 
-    await Promise.allSettled(notificationPromises)
+    await settlePromisesAndLogRejections(
+      notificationPromises,
+      logger,
+      "Failed to notify admins of new registration",
+      { userId: user.id },
+    )
   }
 }

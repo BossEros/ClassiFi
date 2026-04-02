@@ -22,7 +22,7 @@ import type {
 import { withTransaction } from "@/shared/transaction.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
-import { fireAndForget } from "@/shared/utils.js"
+import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("AdminEnrollmentService")
@@ -90,7 +90,10 @@ export class AdminEnrollmentService {
     await this.assertStudentNotEnrolled(studentId, classId)
 
     // STEP 3: Create the enrollment record
-    await this.enrollmentRepo.enrollStudent(studentId, classId)
+    const createdEnrollment = await this.enrollmentRepo.enrollStudent(
+      studentId,
+      classId,
+    )
 
     const teacher = await this.userRepo.getUserById(classData.teacherId)
     const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
@@ -100,16 +103,19 @@ export class AdminEnrollmentService {
     const enrollmentData = {
       classId,
       className: classData.className,
-      enrollmentId: classId,
+      enrollmentId: createdEnrollment.id,
       instructorName: teacherName,
       classUrl: `${settings.frontendUrl}/dashboard/classes/${classId}`,
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
         this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
-      ]),
+      ], logger, "Failed to send enrollment notification to student", {
+        studentId,
+        classId,
+      }),
       logger,
       "Failed to send enrollment notification to student",
       { studentId, classId },
@@ -123,10 +129,13 @@ export class AdminEnrollmentService {
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
         this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
-      ]),
+      ], logger, "Failed to send enrollment notification to teacher", {
+        teacherId: classData.teacherId,
+        classId,
+      }),
       logger,
       "Failed to send enrollment notification to teacher",
       { teacherId: classData.teacherId, classId },
@@ -160,10 +169,13 @@ export class AdminEnrollmentService {
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
         this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
-      ]),
+      ], logger, "Failed to send removal notification to student", {
+        studentId,
+        classId,
+      }),
       logger,
       "Failed to send removal notification to student",
       { studentId, classId },
@@ -177,10 +189,13 @@ export class AdminEnrollmentService {
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
         this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
-      ]),
+      ], logger, "Failed to send unenrollment notification to teacher", {
+        teacherId: classData.teacherId,
+        classId,
+      }),
       logger,
       "Failed to send unenrollment notification to teacher",
       { teacherId: classData.teacherId, classId },

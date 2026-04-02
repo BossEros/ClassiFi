@@ -42,14 +42,12 @@ export function buildSharedReportMetadata({
   assignment,
   teacher,
   results,
-  downloadedAt,
   minimumSimilarityPercent,
   includeThreshold,
 }: {
   assignment: AssignmentDetail | null
   teacher: User | null
   results: AnalyzeResponse
-  downloadedAt: Date
   minimumSimilarityPercent: number
   includeThreshold: boolean
 }): ReportMetadataEntry[] {
@@ -63,7 +61,7 @@ export function buildSharedReportMetadata({
     { label: "Report ID", value: results.reportId },
     {
       label: "Report Generated",
-      value: formatDateTimeValue(downloadedAt.toISOString()),
+      value: formatDateTimeValue(results.generatedAt),
     },
   ]
 
@@ -115,7 +113,6 @@ export function buildClassReportGraphLayout(
 export function buildClassSimilarityReportData(
   options: ClassSimilarityReportBuilderOptions,
 ): ClassSimilarityReportData {
-  const downloadedAt = options.downloadedAt ?? new Date()
   const filteredPairs = getThresholdFilteredPairs(
     options.results.pairs,
     options.minimumSimilarityPercent,
@@ -132,7 +129,6 @@ export function buildClassSimilarityReportData(
       assignment: options.assignment,
       teacher: options.teacher,
       results: options.results,
-      downloadedAt,
       minimumSimilarityPercent: options.minimumSimilarityPercent,
       includeThreshold: true,
     }),
@@ -183,8 +179,6 @@ export function buildClassSimilarityReportData(
 export function buildPairSimilarityReportData(
   options: PairSimilarityReportBuilderOptions,
 ): PairSimilarityReportData {
-  const downloadedAt = options.downloadedAt ?? new Date()
-
   return {
     title: "Pairwise Similarity Evidence Report",
     reportMetadata: [
@@ -192,7 +186,6 @@ export function buildPairSimilarityReportData(
         assignment: options.assignment,
         teacher: options.teacher,
         results: options.results,
-        downloadedAt,
         minimumSimilarityPercent: options.minimumSimilarityPercent,
         includeThreshold: false,
       }),
@@ -278,6 +271,14 @@ export function buildCrossClassReportData(
   const flaggedResults = report.results.filter(
     (r) => r.isFlagged && r.hybridScore * 100 >= minimumSimilarityPercent,
   )
+  const maxCrossClassOverlap = Math.max(
+    ...flaggedResults.map((result) => result.overlap),
+    1,
+  )
+  const maxCrossClassLongestFragment = Math.max(
+    ...flaggedResults.map((result) => result.longestFragment),
+    1,
+  )
 
   const reportMetadata: ReportMetadataEntry[] = [
     { label: "Teacher", value: buildTeacherDisplayName(teacher) },
@@ -319,8 +320,12 @@ export function buildCrossClassReportData(
       overallSimilarity: buildSimilarityBadgeValue(result.hybridScore),
       structuralSimilarity: buildSimilarityBadgeValue(result.structuralScore),
       semanticSimilarity: buildSimilarityBadgeValue(result.semanticScore),
-      overlapSignal: buildQualitativeSignalValue(0),
-      longestFragmentSignal: buildQualitativeSignalValue(0),
+      overlapSignal: buildQualitativeSignalValue(
+        result.overlap / maxCrossClassOverlap,
+      ),
+      longestFragmentSignal: buildQualitativeSignalValue(
+        result.longestFragment / maxCrossClassLongestFragment,
+      ),
     })),
     graphLayout: null,
     emptyStateMessage:

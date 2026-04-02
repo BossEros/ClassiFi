@@ -36,7 +36,7 @@ import {
   SubmissionFileNotFoundError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
-import { fireAndForget } from "@/shared/utils.js"
+import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { NotificationService } from "@/modules/notifications/notification.service.js"
 import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
@@ -712,9 +712,13 @@ export class SubmissionService {
       }),
     }
 
-    await Promise.allSettled([
+    await settlePromisesAndLogRejections([
       this.notificationService.createNotification(classData.teacherId, notificationType, notificationData),
       this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, notificationType, notificationData),
-    ])
+    ], logger, "Failed to send submission notification to teacher", {
+      teacherId: classData.teacherId,
+      submissionId: submission.id,
+      notificationType,
+    })
   }
 }

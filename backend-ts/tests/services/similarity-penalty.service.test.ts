@@ -17,8 +17,8 @@ describe("SimilarityPenaltyService", () => {
     getSubmissionsByAssignment: ReturnType<typeof vi.fn>
     updateGrade: ReturnType<typeof vi.fn>
   }
-  let mockClassRepo: Record<string, never>
-  let mockUserRepo: Record<string, never>
+  let mockClassRepo: { getClassById: ReturnType<typeof vi.fn> }
+  let mockUserRepo: { getUserById: ReturnType<typeof vi.fn> }
   let mockPersistenceService: {
     getReusableAssignmentReportId: ReturnType<typeof vi.fn>
   }
@@ -46,8 +46,12 @@ describe("SimilarityPenaltyService", () => {
       getReusableAssignmentReportId: vi.fn(),
     }
 
-    mockClassRepo = {}
-    mockUserRepo = {}
+    mockClassRepo = {
+      getClassById: vi.fn(),
+    }
+    mockUserRepo = {
+      getUserById: vi.fn(),
+    }
 
     mockTestResultRepo = {
       calculateScore: vi.fn(),
@@ -283,6 +287,71 @@ describe("SimilarityPenaltyService", () => {
     expect(
       mockNotificationService.sendEmailNotificationIfEnabled,
     ).toHaveBeenCalledTimes(1)
+  })
+
+  it("notifies the teacher with the detected similarity percentage", async () => {
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+      id: 1,
+      classId: 10,
+      assignmentName: "Homework 1",
+      enableSimilarityPenalty: true,
+      totalScore: 100,
+    })
+    mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
+      {
+        id: 61,
+        assignmentId: 1,
+        studentId: 601,
+        grade: 100,
+        penaltyApplied: 0,
+        isGradeOverridden: false,
+      },
+      {
+        id: 62,
+        assignmentId: 1,
+        studentId: 602,
+        grade: 100,
+        penaltyApplied: 0,
+        isGradeOverridden: false,
+      },
+    ])
+    mockSimilarityRepo.getResultsByReport.mockResolvedValue([
+      {
+        submission1Id: 61,
+        submission2Id: 62,
+        hybridScore: "0.900000",
+        leftCovered: 0,
+        rightCovered: 0,
+        leftTotal: 0,
+        rightTotal: 0,
+        longestFragment: 0,
+      },
+    ])
+    mockTestResultRepo.calculateScore.mockResolvedValue({ passed: 10, total: 10 })
+    mockClassRepo.getClassById.mockResolvedValue({
+      id: 10,
+      teacherId: 700,
+      className: "Algorithms",
+    })
+    mockUserRepo.getUserById.mockResolvedValue({
+      id: 601,
+      firstName: "Alice",
+      lastName: "Student",
+    })
+
+    await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+      700,
+      "SIMILARITY_DETECTED",
+      expect.objectContaining({
+        similarityPercentage: 90,
+        classId: 10,
+        assignmentId: 1,
+      }),
+    )
   })
 
   it("restores automatic grades when similarity deduction is disabled", async () => {

@@ -22,7 +22,11 @@ export async function getCompleteGradebookForClassId(
   const apiResponse = await apiClient.get<ClassGradebookResponse>(
     `/gradebook/classes/${classId}`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch gradebook")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch gradebook",
+    ["assignments", "students"],
+  )
 
   return {
     assignments: data.assignments,
@@ -71,7 +75,11 @@ export async function getAllGradesForStudentId(
   const apiResponse = await apiClient.get<StudentGradesResponse>(
     `/gradebook/students/${studentId}`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch student grades")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch student grades",
+    "grades",
+  )
 
   return data.grades
 }
@@ -83,7 +91,11 @@ export async function getGradesForStudentInSpecificClass(
   const apiResponse = await apiClient.get<StudentGradesResponse>(
     `/gradebook/students/${studentId}/classes/${classId}`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch student class grades")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch student class grades",
+    "grades",
+  )
 
   return data.grades[0] ?? null
 }
@@ -95,7 +107,11 @@ export async function getClassRankForStudentById(
   const apiResponse = await apiClient.get<StudentRankResponse>(
     `/gradebook/students/${studentId}/classes/${classId}/rank`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch student rank")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch student rank",
+    ["rank", "totalStudents", "percentile"],
+  )
 
   return {
     rank: data.rank,
@@ -144,7 +160,11 @@ export async function getLatePenaltyConfigurationForAssignmentId(
   const apiResponse = await apiClient.get<LatePenaltyConfigResponse>(
     `/gradebook/assignments/${assignmentId}/late-penalty`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch late penalty config")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch late penalty config",
+    "enabled",
+  )
 
   return {
     enabled: data.enabled,

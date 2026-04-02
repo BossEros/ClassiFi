@@ -19,7 +19,7 @@ import {
 } from "@/shared/errors.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
-import { fireAndForget } from "@/shared/utils.js"
+import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 const logger = createLogger("StudentDashboardService")
@@ -190,7 +190,10 @@ export class StudentDashboardService {
     }
 
     // STEP 3: Create the enrollment record
-    await this.enrollmentRepo.enrollStudent(studentId, classData.id)
+    const createdEnrollment = await this.enrollmentRepo.enrollStudent(
+      studentId,
+      classData.id,
+    )
 
     const studentCount = await this.classRepo.getStudentCount(classData.id)
     const teacher = await this.userRepo.getUserById(classData.teacherId)
@@ -203,16 +206,19 @@ export class StudentDashboardService {
     const enrollmentData = {
       classId: classData.id,
       className: classData.className,
-      enrollmentId: classData.id,
+      enrollmentId: createdEnrollment.id,
       instructorName: teacherName,
       classUrl: `${settings.frontendUrl}/dashboard/classes/${classData.id}`,
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
         this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
-      ]),
+      ], logger, "Failed to send enrollment notification to student", {
+        studentId,
+        classId: classData.id,
+      }),
       logger,
       "Failed to send enrollment notification to student",
       { studentId, classId: classData.id },
@@ -226,10 +232,13 @@ export class StudentDashboardService {
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
         this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
-      ]),
+      ], logger, "Failed to send enrollment notification to teacher", {
+        teacherId: classData.teacherId,
+        classId: classData.id,
+      }),
       logger,
       "Failed to send enrollment notification to teacher",
       { teacherId: classData.teacherId, classId: classData.id },
@@ -268,10 +277,13 @@ export class StudentDashboardService {
       }
 
       fireAndForget(
-        Promise.allSettled([
+        settlePromisesAndLogRejections([
           this.notificationService.createNotification(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
           this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
-        ]),
+        ], logger, "Failed to send unenrollment notification to teacher", {
+          teacherId: classData.teacherId,
+          classId,
+        }),
         logger,
         "Failed to send unenrollment notification to teacher",
         { teacherId: classData.teacherId, classId },

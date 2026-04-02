@@ -15,7 +15,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { Assignment, Submission } from "@/models/index.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
-import { fireAndForget } from "@/shared/utils.js"
+import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 
 interface SubmissionPenaltyCandidate {
   penaltyPercent: number
@@ -171,6 +171,9 @@ export class SimilarityPenaltyService {
         automaticGrade,
         adjustedGrade,
         penaltyCandidate?.penaltyPercent ?? 0,
+        penaltyCandidate
+          ? Math.round(penaltyCandidate.sourceHybridScore * 100)
+          : 0,
       )
     }
   }
@@ -312,6 +315,7 @@ export class SimilarityPenaltyService {
     automaticGrade: number,
     adjustedGrade: number,
     penaltyPercent: number,
+    similarityPercentage: number,
   ): Promise<void> {
     if (penaltyPercent <= 0 || submission.isGradeOverridden) {
       return
@@ -360,7 +364,11 @@ export class SimilarityPenaltyService {
 
     // Notify teacher about similarity detection (fire-and-forget)
     fireAndForget(
-      this.sendSimilarityDetectedToTeacher(submission, assignment, penaltyPercent),
+      this.sendSimilarityDetectedToTeacher(
+        submission,
+        assignment,
+        similarityPercentage,
+      ),
       logger,
       "Failed to send similarity detected notification to teacher",
       { submissionId: submission.id },
@@ -392,9 +400,13 @@ export class SimilarityPenaltyService {
       submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`,
     }
 
-    await Promise.allSettled([
+    await settlePromisesAndLogRejections([
       this.notificationService.createNotification(classData.teacherId, "SIMILARITY_DETECTED", similarityData),
       this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "SIMILARITY_DETECTED", similarityData),
-    ])
+    ], logger, "Failed to send similarity detected notification to teacher", {
+      teacherId: classData.teacherId,
+      submissionId: submission.id,
+      assignmentId: assignment.id,
+    })
   }
 }

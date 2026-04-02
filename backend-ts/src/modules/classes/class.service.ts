@@ -20,7 +20,11 @@ import {
   BadRequestError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
-import { fireAndForget, filterUndefined } from "@/shared/utils.js"
+import {
+  fireAndForget,
+  filterUndefined,
+  settlePromisesAndLogRejections,
+} from "@/shared/utils.js"
 import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
@@ -360,10 +364,13 @@ export class ClassService {
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
         this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
-      ]),
+      ], logger, "Failed to send removal notification to student", {
+        studentId,
+        classId,
+      }),
       logger,
       "Failed to send removal notification to student",
       { studentId, classId },
@@ -378,10 +385,13 @@ export class ClassService {
     }
 
     fireAndForget(
-      Promise.allSettled([
+      settlePromisesAndLogRejections([
         this.notificationService.createNotification(teacherId, "STUDENT_UNENROLLED", unenrolledData),
         this.notificationService.sendEmailNotificationIfEnabled(teacherId, "STUDENT_UNENROLLED", unenrolledData),
-      ]),
+      ], logger, "Failed to send unenrollment notification to teacher", {
+        teacherId,
+        classId,
+      }),
       logger,
       "Failed to send unenrollment notification to teacher",
       { teacherId, classId },

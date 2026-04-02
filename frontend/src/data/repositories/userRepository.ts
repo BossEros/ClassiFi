@@ -144,7 +144,11 @@ export async function updateNotificationPreferences(
     emailNotificationsEnabled,
     inAppNotificationsEnabled,
   })
-  const data = unwrapApiResponse(response, "Failed to update notification preferences")
+  const data = unwrapApiResponse(
+    response,
+    "Failed to update notification preferences",
+    ["emailNotificationsEnabled", "inAppNotificationsEnabled"],
+  )
 
   return {
     emailNotificationsEnabled: data.emailNotificationsEnabled,

@@ -31,7 +31,7 @@ export async function getModulesByClassId(classId: number): Promise<Module[]> {
   const apiResponse = await apiClient.get<ModuleListResponse>(
     `/classes/${classId}/modules`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch modules")
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch modules", "modules")
 
   return data.modules
 }
@@ -48,7 +48,7 @@ export async function createModule(classId: number, name: string): Promise<Modul
     `/classes/${classId}/modules`,
     { name },
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to create module")
+  const data = unwrapApiResponse(apiResponse, "Failed to create module", "module")
 
   return data.module
 }
@@ -65,7 +65,7 @@ export async function renameModule(moduleId: number, name: string): Promise<Modu
     `/modules/${moduleId}`,
     { name },
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to rename module")
+  const data = unwrapApiResponse(apiResponse, "Failed to rename module", "module")
 
   return data.module
 }
@@ -85,7 +85,7 @@ export async function toggleModulePublish(
     `/modules/${moduleId}/publish`,
     { isPublished },
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to update module")
+  const data = unwrapApiResponse(apiResponse, "Failed to update module", "module")
 
   return data.module
 }

@@ -18,16 +18,25 @@ export async function createNewClass(
     "/classes",
     newClassData,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to create class")
+  const data = unwrapApiResponse(apiResponse, "Failed to create class", "class")
+  const createdClass = data.class
 
-  return data.class!
+  if (!createdClass) {
+    throw new Error("Failed to create class: missing class")
+  }
+
+  return createdClass
 }
 
 export async function generateUniqueClassCode(): Promise<string> {
   const apiResponse = await apiClient.get<GenerateCodeResponse>(
     "/classes/generate-code",
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to generate class code")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to generate class code",
+    "code",
+  )
 
   return data.code
 }
@@ -44,7 +53,11 @@ export async function getAllClassesForTeacherId(
   const apiResponse = await apiClient.get<ClassListResponse>(
     `/classes/teacher/${teacherId}${urlQueryString}`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch classes")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch classes",
+    "classes",
+  )
 
   return data.classes
 }
@@ -57,9 +70,14 @@ export async function getClassDetailsById(
     ? `/classes/${classId}?teacherId=${teacherId}`
     : `/classes/${classId}`
   const apiResponse = await apiClient.get<ClassDetailResponse>(apiUrl)
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch class")
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch class", "class")
+  const classDetails = data.class
 
-  return data.class!
+  if (!classDetails) {
+    throw new Error("Failed to fetch class: missing class")
+  }
+
+  return classDetails
 }
 
 /**
@@ -80,7 +98,11 @@ export async function getAllAssignmentsForClassId(
   const apiResponse = await apiClient.get<AssignmentListResponse>(
     assignmentApiUrl,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch assignments")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch assignments",
+    "assignments",
+  )
 
   return data.assignments
 }
@@ -91,7 +113,11 @@ export async function getAllEnrolledStudentsForClassId(
   const apiResponse = await apiClient.get<StudentListResponse>(
     `/classes/${classId}/students`,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to fetch students")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to fetch students",
+    "students",
+  )
 
   return data.students
 }
@@ -114,9 +140,14 @@ export async function updateClassDetailsById(
     `/classes/${classId}`,
     updatedClassData,
   )
-  const data = unwrapApiResponse(apiResponse, "Failed to update class")
+  const data = unwrapApiResponse(apiResponse, "Failed to update class", "class")
+  const updatedClass = data.class
 
-  return data.class!
+  if (!updatedClass) {
+    throw new Error("Failed to update class: missing class")
+  }
+
+  return updatedClass
 }
 
 export async function unenrollStudentFromClassByTeacher(

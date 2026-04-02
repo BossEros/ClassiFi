@@ -257,7 +257,7 @@ describe("similarityReportPdf", () => {
     })
   })
 
-  it("renames the retained download timestamp to report generated in metadata", () => {
+  it("uses the persisted report timestamp for assignment report metadata", () => {
     const reportData = buildClassSimilarityReportData({
       assignment: mockAssignment,
       teacher: mockTeacher,
@@ -268,10 +268,10 @@ describe("similarityReportPdf", () => {
     })
 
     expect(
-      reportData.reportMetadata.filter(
+      reportData.reportMetadata.find(
         (entry) => entry.label === "Report Generated",
-      ),
-    ).toHaveLength(1)
+      )?.value,
+    ).toContain("March 10, 2026")
     expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
       "Downloaded",
     )
@@ -353,6 +353,10 @@ describe("similarityReportPdf", () => {
     expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
       "Downloaded At",
     )
+    expect(reportData.filteredPairRows[0]).toMatchObject({
+      overlapSignal: { label: "High", level: "high" },
+      longestFragmentSignal: { label: "High", level: "high" },
+    })
   })
 
   it("uses the persisted report timestamp for the cross-class pair report metadata", () => {

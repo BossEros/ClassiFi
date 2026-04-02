@@ -162,9 +162,18 @@ export async function createNewAssignmentForClass(
     message?: string
     assignment?: Assignment
   }>(`/classes/${classId}/assignments`, newAssignmentData)
-  const data = unwrapApiResponse(apiResponse, "Failed to create assignment")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to create assignment",
+    "assignment",
+  )
+  const createdAssignment = data.assignment
 
-  return data.assignment!
+  if (!createdAssignment) {
+    throw new Error("Failed to create assignment: missing assignment")
+  }
+
+  return createdAssignment
 }
 
 export async function updateAssignmentDetailsById(
@@ -176,9 +185,18 @@ export async function updateAssignmentDetailsById(
     message?: string
     assignment?: Assignment
   }>(`/assignments/${assignmentId}`, updatedAssignmentData)
-  const data = unwrapApiResponse(apiResponse, "Failed to update assignment")
+  const data = unwrapApiResponse(
+    apiResponse,
+    "Failed to update assignment",
+    "assignment",
+  )
+  const updatedAssignment = data.assignment
 
-  return data.assignment!
+  if (!updatedAssignment) {
+    throw new Error("Failed to update assignment: missing assignment")
+  }
+
+  return updatedAssignment
 }
 
 export async function deleteAssignmentByIdForTeacher(
