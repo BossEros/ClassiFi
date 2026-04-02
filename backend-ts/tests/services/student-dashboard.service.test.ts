@@ -23,6 +23,7 @@ describe("StudentDashboardService", () => {
   let mockAssignmentRepo: any
   let mockSubmissionRepo: any
   let mockUserRepo: any
+  let mockNotificationService: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,6 +33,7 @@ describe("StudentDashboardService", () => {
       getClassesByStudentWithDetails: vi.fn(),
       getStudentCount: vi.fn(),
       getClassByCode: vi.fn(),
+      getClassById: vi.fn(),
     }
 
     mockEnrollmentRepo = {
@@ -52,12 +54,18 @@ describe("StudentDashboardService", () => {
       getUserById: vi.fn(),
     }
 
+    mockNotificationService = {
+      createNotification: vi.fn().mockResolvedValue(null),
+      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+    }
+
     dashboardService = new StudentDashboardService(
       mockClassRepo,
       mockEnrollmentRepo,
       mockAssignmentRepo,
       mockSubmissionRepo,
       mockUserRepo,
+      mockNotificationService,
     )
   })
 

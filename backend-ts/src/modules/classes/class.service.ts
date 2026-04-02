@@ -54,13 +54,17 @@ export class ClassService {
 
   /** Create a new class */
   async createClass(data: CreateClassServiceDTO): Promise<ClassDTO> {
+    // STEP 1: Verify the user exists and has the teacher role
     const teacher = await this.userRepo.getUserById(data.teacherId)
 
     if (!teacher || teacher.role !== "teacher") {
       throw new InvalidRoleError("teacher")
     }
 
+    // STEP 2: Create the class record in the database
     const newClass = await this.classRepo.createClass(data)
+
+    // STEP 3: Fetch student count for the response DTO (always 0 for a brand-new class)
     const studentCount = await this.classRepo.getStudentCount(newClass.id)
 
     return toClassDTO(newClass, { studentCount })
@@ -141,16 +145,20 @@ export class ClassService {
       schedule,
     } = data
 
+    // STEP 1: Verify the class exists and the requesting teacher owns it
     await this.ensureClassOwnership(classId, teacherId)
 
+    // STEP 2: Build the update payload using only the fields that were explicitly provided
     const updates = filterUndefined({ className, description, isActive, semester, academicYear, schedule })
 
+    // STEP 3: Persist the changes to the database
     const updatedClass = await this.classRepo.updateClass(classId, updates)
 
     if (!updatedClass) {
       throw new ClassNotFoundError(classId)
     }
 
+    // STEP 4: Fetch current student count and return the updated class DTO
     const studentCount = await this.classRepo.getStudentCount(classId)
 
     return toClassDTO(updatedClass, { studentCount })
@@ -158,8 +166,10 @@ export class ClassService {
 
   /** Delete a class */
   async deleteClass(classId: number, teacherId: number): Promise<void> {
+    // STEP 1: Verify the class exists and the requesting teacher owns it
     await this.ensureClassOwnership(classId, teacherId)
 
+    // STEP 2: Delete the class and all its associated files from storage
     await this.performClassDeletion(classId)
   }
 
@@ -203,6 +213,7 @@ export class ClassService {
    * Shared helper to safely delete a class and its associated files.
    */
   private async performClassDeletion(classId: number): Promise<void> {
+    // STEP 1: Delete all student submission files from storage (best-effort, errors are non-fatal)
     try {
       const submissions = await this.submissionRepo.getSubmissionsByClass(classId)
 
@@ -214,6 +225,7 @@ export class ClassService {
       logger.error("Error cleaning up class submission files:", error)
     }
 
+    // STEP 2: Delete all assignment instruction images from storage (best-effort, errors are non-fatal)
     try {
       const classAssignments =
         await this.assignmentRepo.getAssignmentsByClassId(classId, false)
@@ -231,6 +243,7 @@ export class ClassService {
       logger.error("Error cleaning up assignment instructions images:", error)
     }
 
+    // STEP 3: Delete the class record from the database (cascades to enrollments, assignments, etc.)
     await this.classRepo.deleteClass(classId)
   }
 
@@ -313,21 +326,24 @@ export class ClassService {
   async removeStudent(data: RemoveStudentServiceDTO): Promise<void> {
     const { classId, studentId, teacherId } = data
 
+    // STEP 1: Verify the class exists and the requesting teacher owns it
     const existingClass = await this.ensureClassOwnership(classId, teacherId)
 
+    // STEP 2: Confirm the student is currently enrolled in the class
     const isStudentInClass = await this.enrollmentRepo.isEnrolled(studentId, classId)
 
     if (!isStudentInClass) {
       throw new StudentNotInClassError()
     }
 
+    // STEP 3: Remove the enrollment record from the database
     const removed = await this.enrollmentRepo.unenrollStudent(studentId, classId)
 
     if (!removed) {
       throw new BadRequestError("Failed to remove student from class")
     }
 
-    // Notify student of removal and teacher of unenrollment (fire-and-forget)
+    // STEP 4: Notify student and teacher (fire-and-forget — does not block the response)
     const [teacher, student] = await Promise.all([
       this.userRepo.getUserById(teacherId),
       this.userRepo.getUserById(studentId),

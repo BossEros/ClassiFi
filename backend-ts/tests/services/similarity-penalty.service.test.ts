@@ -3,6 +3,8 @@ import { SimilarityPenaltyService } from "../../src/modules/plagiarism/similarit
 import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import type { SimilarityRepository } from "../../src/modules/plagiarism/similarity.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
+import type { ClassRepository } from "../../src/modules/classes/class.repository.js"
+import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { PlagiarismPersistenceService } from "../../src/modules/plagiarism/plagiarism-persistence.service.js"
 import type { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
@@ -15,6 +17,8 @@ describe("SimilarityPenaltyService", () => {
     getSubmissionsByAssignment: ReturnType<typeof vi.fn>
     updateGrade: ReturnType<typeof vi.fn>
   }
+  let mockClassRepo: Record<string, never>
+  let mockUserRepo: Record<string, never>
   let mockPersistenceService: {
     getReusableAssignmentReportId: ReturnType<typeof vi.fn>
   }
@@ -42,6 +46,9 @@ describe("SimilarityPenaltyService", () => {
       getReusableAssignmentReportId: vi.fn(),
     }
 
+    mockClassRepo = {}
+    mockUserRepo = {}
+
     mockTestResultRepo = {
       calculateScore: vi.fn(),
     }
@@ -55,6 +62,8 @@ describe("SimilarityPenaltyService", () => {
       mockAssignmentRepo as unknown as AssignmentRepository,
       mockSimilarityRepo as unknown as SimilarityRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
+      mockClassRepo as unknown as ClassRepository,
+      mockUserRepo as unknown as UserRepository,
       mockPersistenceService as unknown as PlagiarismPersistenceService,
       mockTestResultRepo as unknown as TestResultRepository,
       mockNotificationService as unknown as NotificationService,

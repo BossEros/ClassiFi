@@ -89,10 +89,16 @@ export class SubmissionService {
     studentId: number,
     file: SubmissionFileDTO,
   ): Promise<SubmissionDTO> {
+    // STEP 1: Verify the assignment exists and is currently active
     const assignment = await this.validateAssignment(assignmentId)
+
+    // STEP 2: Check the deadline and compute any late-submission penalty
     const penaltyResult = await this.checkDeadlineAndPenalty(assignment)
+
+    // STEP 3: Confirm the student is enrolled in the class that owns this assignment
     await this.validateEnrollment(studentId, assignment.classId)
 
+    // STEP 4: Load existing submissions and enforce resubmission and attempt-limit rules
     const existingSubmissions = await this.checkExistingSubmissions(
       assignmentId,
       studentId,
@@ -100,8 +106,10 @@ export class SubmissionService {
       assignment.maxAttempts,
     )
 
+    // STEP 5: Validate the uploaded file's extension and size
     this.validateFile(file, assignment.programmingLanguage)
 
+    // STEP 6: Upload the file to storage and record its path
     const submissionNumber =
       this.calculateNextSubmissionNumber(existingSubmissions)
 
@@ -112,6 +120,7 @@ export class SubmissionService {
       submissionNumber,
     )
 
+    // STEP 7: Create the submission record in the database
     const submission = await this.createSubmission(
       assignmentId,
       studentId,
@@ -121,11 +130,13 @@ export class SubmissionService {
       submissionNumber,
     )
 
+    // STEP 8: Run automated test cases and apply any late-penalty deduction to the grade
     const testsPassed = await this.runTestsAndApplyPenalty(
       submission.id,
       penaltyResult,
     )
 
+    // STEP 9: If tests passed, prune older submissions so storage stays tidy
     if (testsPassed) {
       await this.cleanupOldSubmissions(existingSubmissions)
     }
@@ -133,9 +144,11 @@ export class SubmissionService {
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
       submission.id,
     )
+
+    // STEP 10: Kick off background plagiarism analysis for the assignment
     await this.triggerAutomaticSimilarityAnalysis(assignmentId)
 
-    // Notify teacher about the new submission (fire-and-forget)
+    // STEP 11: Notify the teacher of the new submission (fire-and-forget — does not block the response)
     fireAndForget(
       this.sendSubmissionReceivedNotification(
         updatedSubmission ?? submission,

@@ -396,14 +396,14 @@ export class PlagiarismService {
     assignmentId: number,
     teacherId?: number,
   ): Promise<AnalyzeResponse> {
-    // Verify the assignment exists before doing anything.
+    // STEP 1: Verify the assignment exists
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Check if a usable existing report is still current (same submission count, no newer submissions).
-    // If so, return it directly to avoid re-running the full analysis pipeline unnecessarily.
+    // STEP 2: Check if a current report already exists and can be reused
+    // A report is reusable if submission count and latest-modification times haven't changed since generation.
     const reusableAssignmentReport =
       await this.persistenceService.getReusableAssignmentReport(assignmentId)
 
@@ -415,14 +415,14 @@ export class PlagiarismService {
       return reusableAssignmentReport
     }
 
-    // Download all latest submission files for this assignment from storage.
+    // STEP 3: Download all latest submission files for this assignment from storage
     const files = await this.fileService.fetchSubmissionFiles(assignmentId)
 
     const language = this.getLanguage(assignment.programmingLanguage)
     let ignoredFile: File | undefined
 
-    // If the assignment has template code, exclude it from comparison so shared boilerplate
-    // doesn't inflate similarity scores.
+    // STEP 4: If the assignment has template code, wrap it as an ignored file so shared
+    // boilerplate is excluded from comparisons and doesn't inflate similarity scores
     if (assignment.templateCode) {
       ignoredFile = new File(
         `template.${this.getFileExtension(language)}`,
@@ -430,15 +430,15 @@ export class PlagiarismService {
       )
     }
 
-    // Run structural detection (Winnowing fingerprinting) across all submission files.
+    // STEP 5: Run structural detection (Winnowing fingerprinting) across all submission files
     const detector = createPlagiarismDetector(language)
     const report = await detector.analyze(files, ignoredFile)
     const pairs = report.getPairs()
 
-    // Compute semantic similarity scores for all pairs using the GraphCodeBERT microservice.
+    // STEP 6: Compute semantic similarity scores for all pairs using the GraphCodeBERT microservice
     const semanticScores = await this.computeSemanticScores(pairs, language)
 
-    // Persist the report, per-pair results, and fragment positions to the database.
+    // STEP 7: Persist the report, per-pair results, and fragment positions to the database
     const { dbReport, resultIdMap } =
       await this.persistenceService.persistReport(
         assignmentId,
@@ -448,12 +448,13 @@ export class PlagiarismService {
         semanticScores,
       )
 
-    // Apply grade penalties to any student pairs that exceed the suspicious threshold.
+    // STEP 8: Apply grade penalties to any student pairs that exceed the suspicious threshold
     await this.similarityPenaltyService.applyAssignmentPenaltyFromReport(
       assignmentId,
       dbReport.id,
     )
 
+    // STEP 9: Build and return the analysis response DTO
     return this.buildAssignmentAnalysisResponse(
       dbReport,
       report,
