@@ -42,6 +42,7 @@ import type {
 } from "@/business/services/crossClassPlagiarismService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
+import { detectLanguageFromFilename } from "@/shared/utils/languageDetection"
 
 type CodeViewMode = "match" | "diff"
 type SortableColumn = "hybridScore" | "structuralScore" | "semanticScore"
@@ -85,36 +86,6 @@ function getCrossClassAnalysisToastConfig(
   return {
     message: "Cross-class similarity analysis completed",
     type: "success",
-  }
-}
-
-/**
- * Detects the language from a filename extension for Monaco syntax highlighting.
- *
- * @param filename - The filename to extract the language from.
- * @returns The Monaco language identifier.
- */
-function detectLanguageFromFilename(filename: string): string {
-  const extension = filename.split(".").pop()?.toLowerCase()
-
-  switch (extension) {
-    case "py":
-      return "python"
-    case "java":
-      return "java"
-    case "c":
-    case "h":
-      return "c"
-    case "cpp":
-    case "cc":
-    case "cxx":
-      return "cpp"
-    case "js":
-      return "javascript"
-    case "ts":
-      return "typescript"
-    default:
-      return "plaintext"
   }
 }
 
