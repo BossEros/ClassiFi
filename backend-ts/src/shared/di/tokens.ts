@@ -41,7 +41,6 @@ export const DI_TOKENS = {
     adminAnalytics: "AdminAnalyticsService",
     adminClass: "AdminClassService",
     adminEnrollment: "AdminEnrollmentService",
-    plagiarismDetectorFactory: "PlagiarismDetectorFactory",
     plagiarismSubmissionFile: "PlagiarismSubmissionFileService",
     plagiarismPersistence: "PlagiarismPersistenceService",
     plagiarismAutoAnalysis: "PlagiarismAutoAnalysisService",

@@ -4,15 +4,13 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { SimilarityRepository, type CrossClassResultWithContext } from "@/modules/plagiarism/similarity.repository.js"
-import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import { findMatchingAssignments, type MatchedAssignment } from "@/modules/plagiarism/cross-class-assignment-matcher.js"
-import { PLAGIARISM_LANGUAGE_MAP, type PlagiarismFragmentDTO } from "@/modules/plagiarism/plagiarism.mapper.js"
+import { PLAGIARISM_LANGUAGE_MAP, createPlagiarismDetector, type PlagiarismFragmentDTO } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
   buildPairSimilarityScoreBreakdown,
-  formatPairSimilarityScoreForStorage,
-  formatReportSimilarityScore,
+  formatSimilarityScore,
   normalizeSubmissionPair,
   summarizePairSimilarityScores,
 } from "@/modules/plagiarism/plagiarism-scoring.js"
@@ -132,8 +130,6 @@ export class CrossClassSimilarityService {
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.repositories.similarity)
     private similarityRepo: SimilarityRepository,
-    @inject(DI_TOKENS.services.plagiarismDetectorFactory)
-    private detectorFactory: PlagiarismDetectorFactory,
     @inject(DI_TOKENS.services.plagiarismSubmissionFile)
     private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.semanticSimilarityClient)
@@ -229,7 +225,7 @@ export class CrossClassSimilarityService {
     // The detector compares every file against every other file using fingerprinting (Winnowing algorithm).
     logger.info("Running structural analysis", { fileCount: taggedFiles.length })
 
-    const detector = this.detectorFactory.create({ language })
+    const detector = createPlagiarismDetector(language)
     const detectorReport = await detector.analyze(taggedFiles)
 
     // Step 4: Cross-Class Pair Filtering
@@ -707,8 +703,8 @@ export class CrossClassSimilarityService {
         totalSubmissions: this.countUniqueSubmissions(crossClassPairs),
         totalComparisons: crossClassPairs.length,
         flaggedPairs: summary.suspiciousPairs,
-        averageSimilarity: formatReportSimilarityScore(summary.averageSimilarity),
-        highestSimilarity: formatReportSimilarityScore(summary.maxSimilarity),
+        averageSimilarity: formatSimilarityScore(summary.averageSimilarity, 4),
+        highestSimilarity: formatSimilarityScore(summary.maxSimilarity, 4),
       })
 
       // Build and batch-insert one result row per cross-class pair.
@@ -771,9 +767,9 @@ export class CrossClassSimilarityService {
         reportId,
         submission1Id: crossClassPair.leftSubmissionId,
         submission2Id: crossClassPair.rightSubmissionId,
-        structuralScore: formatPairSimilarityScoreForStorage(structuralScore),
-        semanticScore: formatPairSimilarityScoreForStorage(semanticScore),
-        hybridScore: formatPairSimilarityScoreForStorage(breakdown.hybridScore),
+        structuralScore: formatSimilarityScore(structuralScore, 6),
+        semanticScore: formatSimilarityScore(semanticScore, 6),
+        hybridScore: formatSimilarityScore(breakdown.hybridScore, 6),
         overlap: crossClassPair.pair.overlap,
         longestFragment: crossClassPair.pair.longest,
         leftCovered: crossClassPair.pair.leftCovered,

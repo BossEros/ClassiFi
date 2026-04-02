@@ -8,7 +8,16 @@ vi.mock("../../src/shared/database.js", () => ({
   },
 }))
 
+vi.mock("../../src/modules/plagiarism/plagiarism.mapper.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/modules/plagiarism/plagiarism.mapper.js")>()
+  return {
+    ...actual,
+    createPlagiarismDetector: vi.fn(),
+  }
+})
+
 import { CrossClassSimilarityService } from "../../src/modules/plagiarism/cross-class-similarity.service.js"
+import { createPlagiarismDetector } from "../../src/modules/plagiarism/plagiarism.mapper.js"
 import { db } from "../../src/shared/database.js"
 
 describe("CrossClassSimilarityService", () => {
@@ -107,9 +116,6 @@ describe("CrossClassSimilarityService", () => {
     getLatestCrossClassReport: ReturnType<typeof vi.fn>
     deleteCrossClassReportsExcept: ReturnType<typeof vi.fn>
   }
-  let mockDetectorFactory: {
-    create: ReturnType<typeof vi.fn>
-  }
   let mockFileService: {
     fetchSubmissionFiles: ReturnType<typeof vi.fn>
   }
@@ -182,14 +188,12 @@ describe("CrossClassSimilarityService", () => {
       deleteCrossClassReportsExcept: vi.fn().mockResolvedValue(0),
     }
 
-    mockDetectorFactory = {
-      create: vi.fn().mockReturnValue({
-        analyze: vi.fn().mockResolvedValue({
-          getPairs: () => [mockPair],
-          getFragments: () => [],
-        }),
+    vi.mocked(createPlagiarismDetector).mockReturnValue({
+      analyze: vi.fn().mockResolvedValue({
+        getPairs: () => [mockPair],
+        getFragments: () => [],
       }),
-    }
+    } as never)
 
     mockFileService = {
       fetchSubmissionFiles: vi
@@ -213,7 +217,6 @@ describe("CrossClassSimilarityService", () => {
       mockClassRepo as never,
       mockSubmissionRepo as never,
       mockSimilarityRepo as never,
-      mockDetectorFactory as never,
       mockFileService as never,
       mockSemanticClient as never,
     )
@@ -261,12 +264,12 @@ describe("CrossClassSimilarityService", () => {
       rightFile: { ...taggedRightFile, info: { ...taggedRightFile.info, classId: "43" } },
     }
 
-    mockDetectorFactory.create.mockReturnValue({
+    vi.mocked(createPlagiarismDetector).mockReturnValue({
       analyze: vi.fn().mockResolvedValue({
         getPairs: () => [sameClassPair],
         getFragments: () => [],
       }),
-    })
+    } as never)
 
     const service = createService()
 
@@ -285,12 +288,12 @@ describe("CrossClassSimilarityService", () => {
       },
     }
 
-    mockDetectorFactory.create.mockReturnValue({
+    vi.mocked(createPlagiarismDetector).mockReturnValue({
       analyze: vi.fn().mockResolvedValue({
         getPairs: () => [missingIdPair],
         getFragments: () => [],
       }),
-    })
+    } as never)
 
     const service = createService()
 
@@ -306,12 +309,12 @@ describe("CrossClassSimilarityService", () => {
       similarity: 0.1,
     }
 
-    mockDetectorFactory.create.mockReturnValue({
+    vi.mocked(createPlagiarismDetector).mockReturnValue({
       analyze: vi.fn().mockResolvedValue({
         getPairs: () => [lowSimilarityPair],
         getFragments: () => [],
       }),
-    })
+    } as never)
 
     const service = createService()
     await service.analyzeCrossClassSimilarity(104, 47)

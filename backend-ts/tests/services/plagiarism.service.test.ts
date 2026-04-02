@@ -3,6 +3,7 @@ import {
   PlagiarismService,
   type AnalyzeRequest,
 } from "../../src/modules/plagiarism/plagiarism.service.js"
+import { createPlagiarismDetector } from "../../src/modules/plagiarism/plagiarism.mapper.js"
 import { createMockAssignment } from "../utils/factories.js"
 import {
   AssignmentNotFoundError,
@@ -24,7 +25,13 @@ vi.mock("../../src/shared/config.js", () => ({
 // Mock new services
 vi.mock("../../src/modules/plagiarism/plagiarism-persistence.service.js")
 vi.mock("../../src/modules/plagiarism/plagiarism-submission-file.service.js")
-vi.mock("../../src/modules/plagiarism/plagiarism-detector.factory.js")
+vi.mock("../../src/modules/plagiarism/plagiarism.mapper.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/modules/plagiarism/plagiarism.mapper.js")>()
+  return {
+    ...actual,
+    createPlagiarismDetector: vi.fn(),
+  }
+})
 
 // Mock PlagiarismDetector
 const mockReport = {
@@ -89,7 +96,6 @@ describe("PlagiarismService", () => {
   let mockAssignmentRepo: any
   let mockPersistenceService: any
   let mockFileService: any
-  let mockDetectorFactory: any
   let mockSimilarityPenaltyService: any
   let mockSemanticClient: any
 
@@ -114,9 +120,7 @@ describe("PlagiarismService", () => {
       downloadSubmissionFiles: vi.fn(),
     }
 
-    mockDetectorFactory = {
-      create: vi.fn().mockReturnValue(mockDetector),
-    }
+    vi.mocked(createPlagiarismDetector).mockReturnValue(mockDetector as any)
 
     mockSimilarityPenaltyService = {
       applyAssignmentPenaltyFromReport: vi.fn().mockResolvedValue(undefined),
@@ -133,7 +137,6 @@ describe("PlagiarismService", () => {
 
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
-      mockDetectorFactory,
       mockFileService,
       mockPersistenceService,
       mockSimilarityPenaltyService,
@@ -162,7 +165,7 @@ describe("PlagiarismService", () => {
       expect(result.summary).toBeDefined()
       expect(result.pairs).toHaveLength(1)
       expect(result.pairs[0].hybridScore).toBe(0.8)
-      expect(mockDetectorFactory.create).toHaveBeenCalled()
+      expect(createPlagiarismDetector).toHaveBeenCalled()
       expect(mockDetector.analyze).toHaveBeenCalled()
     })
 
@@ -237,7 +240,7 @@ describe("PlagiarismService", () => {
         mockPersistenceService.getReusableAssignmentReport,
       ).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).toHaveBeenCalledWith(1)
-      expect(mockDetectorFactory.create).toHaveBeenCalled()
+      expect(createPlagiarismDetector).toHaveBeenCalled()
       expect(mockDetector.analyze).toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).toHaveBeenCalled()
       expect(
@@ -357,7 +360,7 @@ describe("PlagiarismService", () => {
         mockPersistenceService.getReusableAssignmentReport,
       ).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).not.toHaveBeenCalled()
-      expect(mockDetectorFactory.create).not.toHaveBeenCalled()
+      expect(createPlagiarismDetector).not.toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).not.toHaveBeenCalled()
     })
 

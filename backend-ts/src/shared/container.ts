@@ -43,7 +43,6 @@ import { AdminClassService } from "@/modules/admin/admin-class.service.js"
 import { AdminEnrollmentService } from "@/modules/admin/admin-enrollment.service.js"
 
 // Plagiarism Services
-import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
@@ -139,10 +138,6 @@ container.registerSingleton(
 )
 
 // Register Plagiarism component services
-container.registerSingleton(
-  DI_TOKENS.services.plagiarismDetectorFactory,
-  PlagiarismDetectorFactory,
-)
 container.registerSingleton(
   DI_TOKENS.services.plagiarismSubmissionFile,
   PlagiarismSubmissionFileService,

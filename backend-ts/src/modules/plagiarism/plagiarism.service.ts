@@ -7,7 +7,6 @@ import {
   Fragment,
 } from "@/lib/plagiarism/index.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
@@ -15,6 +14,7 @@ import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similari
 import {
   PLAGIARISM_CONFIG,
   PLAGIARISM_LANGUAGE_MAP,
+  createPlagiarismDetector,
   toPlagiarismPairDTO,
   toPlagiarismFragmentDTO,
   type PlagiarismFileDTO,
@@ -136,8 +136,6 @@ export class PlagiarismService {
   constructor(
     @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
-    @inject(DI_TOKENS.services.plagiarismDetectorFactory)
-    private detectorFactory: PlagiarismDetectorFactory,
     @inject(DI_TOKENS.services.plagiarismSubmissionFile)
     private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.plagiarismPersistence)
@@ -171,10 +169,7 @@ export class PlagiarismService {
     // Validate that the request has enough files and a language specified before doing anything.
     this.validateAnalyzeRequest(request)
 
-    const detector = this.detectorFactory.create({
-      language: request.language,
-      kgramLength: request.kgramLength,
-    })
+    const detector = createPlagiarismDetector(request.language, request.kgramLength)
 
     // Wrap each raw file object into the detector's File type, preserving student metadata.
     const files = request.files.map(
@@ -436,7 +431,7 @@ export class PlagiarismService {
     }
 
     // Run structural detection (Winnowing fingerprinting) across all submission files.
-    const detector = this.detectorFactory.create({ language })
+    const detector = createPlagiarismDetector(language)
     const report = await detector.analyze(files, ignoredFile)
     const pairs = report.getPairs()
 
