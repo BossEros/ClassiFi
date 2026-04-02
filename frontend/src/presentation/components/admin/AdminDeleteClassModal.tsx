@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { AlertCircle, AlertTriangle, ChevronLeft, Loader2, Trash2, X } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import type { AdminClass } from "@/business/services/adminService"
@@ -16,19 +16,34 @@ interface AdminDeleteClassModalProps {
  * Step 2: Type "DELETE" to confirm.
  */
 export function AdminDeleteClassModal({ isOpen, onClose, onConfirm, classData }: AdminDeleteClassModalProps) {
+  if (!isOpen || !classData) {
+    return null
+  }
+
+  return (
+    <DeleteClassModalContent
+      onClose={onClose}
+      onConfirm={onConfirm}
+      classData={classData}
+    />
+  )
+}
+
+interface DeleteClassModalContentProps {
+  onClose: () => void
+  onConfirm: () => Promise<void>
+  classData: AdminClass
+}
+
+function DeleteClassModalContent({
+  onClose,
+  onConfirm,
+  classData,
+}: DeleteClassModalContentProps) {
   const [confirmation, setConfirmation] = useState("")
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState<"warning" | "confirm">("warning")
-
-  useEffect(() => {
-    if (!isOpen) {
-      setConfirmation("")
-      setError(null)
-      setStep("warning")
-      setIsDeleting(false)
-    }
-  }, [isOpen])
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -37,16 +52,14 @@ export function AdminDeleteClassModal({ isOpen, onClose, onConfirm, classData }:
       }
     }
 
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape)
-      document.body.style.overflow = "hidden"
-    }
+    document.addEventListener("keydown", handleEscape)
+    document.body.style.overflow = "hidden"
 
     return () => {
       document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = "unset"
     }
-  }, [isOpen, onClose, isDeleting])
+  }, [onClose, isDeleting])
 
   const handleDelete = async () => {
     setError(null)
@@ -62,8 +75,6 @@ export function AdminDeleteClassModal({ isOpen, onClose, onConfirm, classData }:
   }
 
   const isConfirmDisabled = confirmation !== "DELETE" || isDeleting
-
-  if (!isOpen || !classData) return null
 
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">

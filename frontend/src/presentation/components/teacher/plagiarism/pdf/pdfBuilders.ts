@@ -1,9 +1,9 @@
 import type { AssignmentDetail } from "@/business/models/assignment/types"
+import type { CrossClassResultDTO } from "@/business/models/plagiarism/crossClassTypes"
 import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
-import type { CrossClassResultDTO } from "@/data/api/crossClassPlagiarism.types"
 import type { User } from "@/shared/types/auth"
 
 import {

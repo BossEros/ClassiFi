@@ -1,12 +1,12 @@
 import type { AssignmentDetail } from "@/business/models/assignment/types"
 import type {
+  CrossClassAnalysisResponse,
+  CrossClassResultDTO,
+} from "@/business/models/plagiarism/crossClassTypes"
+import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
-import type {
-  CrossClassAnalysisResponse,
-  CrossClassResultDTO,
-} from "@/data/api/crossClassPlagiarism.types"
 import type {
   PdfDocumentDownloadOptions,
   ReportMetadataEntry,
