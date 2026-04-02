@@ -88,7 +88,11 @@ class Predictor:
             map_location="cpu",
             weights_only=False,
         )
-        wrapper.load_state_dict(state_dict)
+        # strict=False allows loading checkpoints that were saved without the
+        # classifier head (e.g. encoder-only exports from the training notebook).
+        # Missing classifier keys are intentional — the head is never invoked
+        # at inference; we only use encoder.roberta for CLS embeddings.
+        wrapper.load_state_dict(state_dict, strict=False)
         wrapper.eval()
 
         self._model = wrapper
@@ -123,6 +127,21 @@ class Predictor:
         score = max(0.0, similarity)
 
         return round(score, 4)
+
+    def embed(self, code: str) -> list[float]:
+        """
+        Return the CLS embedding as a flat list of floats.
+
+        This allows clients to cache embeddings per-submission and compute
+        pairwise cosine similarity locally, reducing model forward passes
+        from O(n²) to O(n) for n submissions.
+        """
+        if not self.is_loaded:
+            raise RuntimeError("Model has not been loaded yet.")
+
+        vec = self._encode(code)
+
+        return vec.squeeze(0).tolist()
 
     # ------------------------------------------------------------------
     # Private helpers

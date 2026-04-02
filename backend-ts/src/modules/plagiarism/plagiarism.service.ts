@@ -10,7 +10,7 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
-import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
+import { SemanticSimilarityClient, cosineSimilarity } from "@/modules/plagiarism/semantic-similarity.client.js"
 import {
   PLAGIARISM_CONFIG,
   PLAGIARISM_LANGUAGE_MAP,
@@ -685,79 +685,95 @@ export class PlagiarismService {
   }
 
   /**
-   * Compute semantic similarity scores for all pairs with bounded concurrency.
-   * Runs for all supported languages. Any individual pair failure is absorbed by the client.
+   * Compute semantic similarity scores for all pairs using cached embeddings.
+   *
+   * Instead of sending every pair to the semantic service (O(n²) model calls),
+   * this method embeds each unique submission once (O(n)), then computes
+   * pairwise cosine similarity locally.
    */
   private async computeSemanticScores(
     pairs: Pair[],
     _language: LanguageName,
   ): Promise<Map<string, number>> {
     const semanticScores = new Map<string, number>()
-    const queuedRequests: Array<{
+
+    // ── Collect unique submissions from all pairs ──────────────────────────
+    const submissionContentMap = new Map<string, string>()
+    const pairEntries: Array<{
       key: string
-      leftContent: string
-      rightContent: string
+      leftSubmissionId: string
+      rightSubmissionId: string
     }> = []
-    // Track queued keys to avoid sending duplicate requests for the same pair.
-    const queuedPairKeys = new Set<string>()
+    const seenPairKeys = new Set<string>()
 
     for (const pair of pairs) {
-      const leftSubmissionId = parseInt(pair.leftFile.info?.submissionId || "0")
-      const rightSubmissionId = parseInt(
-        pair.rightFile.info?.submissionId || "0",
-      )
+      const leftSubmissionId = pair.leftFile.info?.submissionId || "0"
+      const rightSubmissionId = pair.rightFile.info?.submissionId || "0"
 
-      // Skip pairs with missing submission IDs — they can't be uniquely keyed.
-      if (!leftSubmissionId || !rightSubmissionId) {
-        continue
-      }
+      if (leftSubmissionId === "0" || rightSubmissionId === "0") continue
 
       const normalizedSubmissionPair = normalizeSubmissionPair(
-        leftSubmissionId,
-        rightSubmissionId,
+        parseInt(leftSubmissionId),
+        parseInt(rightSubmissionId),
       )
 
-      // Deduplicate: the detector may produce A→B and B→A; only send one request.
-      if (queuedPairKeys.has(normalizedSubmissionPair.pairKey)) {
-        continue
-      }
+      if (seenPairKeys.has(normalizedSubmissionPair.pairKey)) continue
+      seenPairKeys.add(normalizedSubmissionPair.pairKey)
 
-      queuedPairKeys.add(normalizedSubmissionPair.pairKey)
-      queuedRequests.push({
+      submissionContentMap.set(leftSubmissionId, pair.leftFile.content)
+      submissionContentMap.set(rightSubmissionId, pair.rightFile.content)
+      pairEntries.push({
         key: normalizedSubmissionPair.pairKey,
-        leftContent: pair.leftFile.content,
-        rightContent: pair.rightFile.content,
+        leftSubmissionId,
+        rightSubmissionId,
       })
     }
 
-    // Nothing to score — return early.
-    if (queuedRequests.length === 0) {
-      return semanticScores
-    }
+    if (pairEntries.length === 0) return semanticScores
+
+    // ── Embed each unique submission once (O(n) model calls) ───────────────
+    const embeddingCache = new Map<string, number[]>()
+    const submissionIds = [...submissionContentMap.keys()]
 
     const maxConcurrency = Math.max(
       1,
       settings.semanticSimilarityMaxConcurrentRequests ?? 4,
     )
-    const workerCount = Math.min(maxConcurrency, queuedRequests.length)
-    let nextRequestIndex = 0
+    const workerCount = Math.min(maxConcurrency, submissionIds.length)
+    let nextIndex = 0
 
     await Promise.all(
       Array.from({ length: workerCount }, async () => {
-        while (nextRequestIndex < queuedRequests.length) {
-          const requestIndex = nextRequestIndex
-          nextRequestIndex += 1
-          const queuedRequest = queuedRequests[requestIndex]
+        while (nextIndex < submissionIds.length) {
+          const currentIndex = nextIndex
+          nextIndex += 1
+          const submissionId = submissionIds[currentIndex]
+          const code = submissionContentMap.get(submissionId)!
 
-          const semanticScore = await this.semanticClient.getSemanticScore(
-            queuedRequest.leftContent,
-            queuedRequest.rightContent,
-          )
+          const embedding = await this.semanticClient.getEmbedding(code)
 
-          semanticScores.set(queuedRequest.key, semanticScore)
+          if (embedding) {
+            embeddingCache.set(submissionId, embedding)
+          }
         }
       }),
     )
+
+    // ── Compute pairwise cosine similarity locally (instant) ───────────────
+    for (const { key, leftSubmissionId, rightSubmissionId } of pairEntries) {
+      const leftEmbedding = embeddingCache.get(leftSubmissionId)
+      const rightEmbedding = embeddingCache.get(rightSubmissionId)
+
+      if (!leftEmbedding || !rightEmbedding) {
+        semanticScores.set(key, 0)
+        continue
+      }
+
+      const similarity = cosineSimilarity(leftEmbedding, rightEmbedding)
+      const clampedScore = Math.min(1, Math.max(0, similarity))
+
+      semanticScores.set(key, Math.round(clampedScore * 10000) / 10000)
+    }
 
     return semanticScores
   }

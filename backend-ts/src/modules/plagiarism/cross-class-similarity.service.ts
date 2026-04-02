@@ -5,7 +5,7 @@ import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { SimilarityRepository, type CrossClassResultWithContext } from "@/modules/plagiarism/similarity.repository.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
-import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
+import { SemanticSimilarityClient, cosineSimilarity } from "@/modules/plagiarism/semantic-similarity.client.js"
 import { findMatchingAssignments, type MatchedAssignment } from "@/modules/plagiarism/cross-class-assignment-matcher.js"
 import { PLAGIARISM_LANGUAGE_MAP, createPlagiarismDetector, type PlagiarismFragmentDTO } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
@@ -575,7 +575,10 @@ export class CrossClassSimilarityService {
 
   /**
    * Compute semantic scores for cross-class pairs whose structural score
-   * exceeds the pre-filter threshold. Uses bounded concurrency.
+   * exceeds the pre-filter threshold.
+   *
+   * Uses embedding caching: each unique submission is embedded once (O(n)),
+   * then pairwise cosine similarity is computed locally.
    *
    * @param crossClassPairs - The cross-class pairs to score.
    * @returns A map from pair key to semantic score.
@@ -585,13 +588,12 @@ export class CrossClassSimilarityService {
   ): Promise<Map<string, number>> {
     const semanticScores = new Map<string, number>()
 
-    // Only send pairs to the semantic service if their structural score is above the
-    // pre-filter threshold. Pairs below it get a semantic score of 0 automatically,
-    // saving expensive microservice calls for clearly non-similar code.
-    const qualifiedRequests: Array<{
+    // ── Collect unique submissions from qualified pairs ─────────────────
+    const submissionContentMap = new Map<string, string>()
+    const qualifiedPairEntries: Array<{
       pairKey: string
-      leftContent: string
-      rightContent: string
+      leftSubmissionId: string
+      rightSubmissionId: string
     }> = []
 
     for (const crossClassPair of crossClassPairs) {
@@ -600,44 +602,68 @@ export class CrossClassSimilarityService {
         continue
       }
 
-      qualifiedRequests.push({
+      const leftSubmissionId = crossClassPair.pair.leftFile.info?.submissionId || "0"
+      const rightSubmissionId = crossClassPair.pair.rightFile.info?.submissionId || "0"
+
+      if (leftSubmissionId === "0" || rightSubmissionId === "0") continue
+
+      submissionContentMap.set(leftSubmissionId, crossClassPair.pair.leftFile.content)
+      submissionContentMap.set(rightSubmissionId, crossClassPair.pair.rightFile.content)
+      qualifiedPairEntries.push({
         pairKey: crossClassPair.pairKey,
-        leftContent: crossClassPair.pair.leftFile.content,
-        rightContent: crossClassPair.pair.rightFile.content,
+        leftSubmissionId,
+        rightSubmissionId,
       })
     }
 
-    // Nothing passed the filter — return early with all scores set to 0.
-    if (qualifiedRequests.length === 0) return semanticScores
+    if (qualifiedPairEntries.length === 0) return semanticScores
 
-    logger.info("Running semantic scoring with pre-filter", {
+    logger.info("Running semantic scoring with pre-filter (embedding cache)", {
       totalPairs: crossClassPairs.length,
-      qualifiedPairs: qualifiedRequests.length,
+      qualifiedPairs: qualifiedPairEntries.length,
+      uniqueSubmissions: submissionContentMap.size,
     })
 
-    // Use bounded concurrency: run up to maxConcurrency semantic requests in parallel
-    // to avoid overwhelming the microservice while still processing faster than sequential.
+    // ── Embed each unique submission once (O(n) model calls) ───────────
+    const embeddingCache = new Map<string, number[]>()
+    const submissionIds = [...submissionContentMap.keys()]
+
     const maxConcurrency = Math.max(1, settings.semanticSimilarityMaxConcurrentRequests ?? 4)
-    const workerCount = Math.min(maxConcurrency, qualifiedRequests.length)
+    const workerCount = Math.min(maxConcurrency, submissionIds.length)
     let nextIndex = 0
 
     await Promise.all(
       Array.from({ length: workerCount }, async () => {
-        // Each worker picks the next unprocessed request and loops until all are done.
-        while (nextIndex < qualifiedRequests.length) {
+        while (nextIndex < submissionIds.length) {
           const currentIndex = nextIndex
           nextIndex += 1
-          const request = qualifiedRequests[currentIndex]
+          const submissionId = submissionIds[currentIndex]
+          const code = submissionContentMap.get(submissionId)!
 
-          const semanticScore = await this.semanticClient.getSemanticScore(
-            request.leftContent,
-            request.rightContent,
-          )
+          const embedding = await this.semanticClient.getEmbedding(code)
 
-          semanticScores.set(request.pairKey, semanticScore)
+          if (embedding) {
+            embeddingCache.set(submissionId, embedding)
+          }
         }
       }),
     )
+
+    // ── Compute pairwise cosine similarity locally (instant) ───────────
+    for (const { pairKey, leftSubmissionId, rightSubmissionId } of qualifiedPairEntries) {
+      const leftEmbedding = embeddingCache.get(leftSubmissionId)
+      const rightEmbedding = embeddingCache.get(rightSubmissionId)
+
+      if (!leftEmbedding || !rightEmbedding) {
+        semanticScores.set(pairKey, 0)
+        continue
+      }
+
+      const similarity = cosineSimilarity(leftEmbedding, rightEmbedding)
+      const clampedScore = Math.min(1, Math.max(0, similarity))
+
+      semanticScores.set(pairKey, Math.round(clampedScore * 10000) / 10000)
+    }
 
     return semanticScores
   }

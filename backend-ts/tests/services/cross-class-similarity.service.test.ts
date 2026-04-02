@@ -120,7 +120,7 @@ describe("CrossClassSimilarityService", () => {
     fetchSubmissionFiles: ReturnType<typeof vi.fn>
   }
   let mockSemanticClient: {
-    getSemanticScore: ReturnType<typeof vi.fn>
+    getEmbedding: ReturnType<typeof vi.fn>
   }
   let repoWithTransactionContext: {
     acquireAssignmentReportLock: ReturnType<typeof vi.fn>
@@ -207,7 +207,20 @@ describe("CrossClassSimilarityService", () => {
     }
 
     mockSemanticClient = {
-      getSemanticScore: vi.fn().mockResolvedValue(0.83),
+      getEmbedding: vi.fn().mockImplementation(async (code: string) => {
+        // Return deterministic embeddings that produce cosine similarity ~0.83
+        // when compared. Use code content to differentiate vectors.
+        const base = Array(768).fill(0.5)
+        if (code.includes("left")) {
+          base[0] = 1.0
+          base[1] = 0.3
+        } else {
+          base[0] = 0.8
+          base[1] = 1.0
+        }
+
+        return base
+      }),
     }
   })
 
@@ -319,17 +332,15 @@ describe("CrossClassSimilarityService", () => {
     const service = createService()
     await service.analyzeCrossClassSimilarity(104, 47)
 
-    expect(mockSemanticClient.getSemanticScore).not.toHaveBeenCalled()
+    expect(mockSemanticClient.getEmbedding).not.toHaveBeenCalled()
   })
 
   it("calls semantic scoring for pairs above the structural threshold", async () => {
     const service = createService()
     await service.analyzeCrossClassSimilarity(104, 47)
 
-    expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(1)
-    expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledWith(
-      "print('left')",
-      "print('right')",
-    )
+    // With embedding caching, each unique submission is embedded once.
+    // Two submissions (101 and 201) → 2 embedding calls.
+    expect(mockSemanticClient.getEmbedding).toHaveBeenCalledTimes(2)
   })
 })

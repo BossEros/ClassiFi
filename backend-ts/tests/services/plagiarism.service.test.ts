@@ -128,6 +128,7 @@ describe("PlagiarismService", () => {
     }
 
     mockSemanticClient = {
+      getEmbedding: vi.fn().mockResolvedValue(null),
       getSemanticScore: vi.fn().mockResolvedValue(0),
       healthCheck: vi.fn(),
     }
@@ -292,7 +293,7 @@ describe("PlagiarismService", () => {
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
       mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
       mockDetector.analyze.mockResolvedValueOnce(lowSemanticReport)
-      mockSemanticClient.getSemanticScore.mockResolvedValueOnce(0)
+      mockSemanticClient.getEmbedding.mockResolvedValue(null)
 
       const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
@@ -414,18 +415,20 @@ describe("PlagiarismService", () => {
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
       mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
       mockDetector.analyze.mockResolvedValueOnce(throttlingReport)
-      mockSemanticClient.getSemanticScore.mockImplementation(async () => {
+      mockSemanticClient.getEmbedding.mockImplementation(async () => {
         inFlightRequests += 1
         maxInFlightRequests = Math.max(maxInFlightRequests, inFlightRequests)
         await new Promise((resolve) => setTimeout(resolve, 5))
         inFlightRequests -= 1
-        return 0.6
+        return Array(768).fill(0).map(() => Math.random())
       })
 
       await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
-      expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(
-        pairCount,
+      // With embedding caching, each unique submission is embedded once.
+      // 12 pairs with unique left/right IDs = 24 unique submissions.
+      expect(mockSemanticClient.getEmbedding).toHaveBeenCalledTimes(
+        pairCount * 2,
       )
       expect(maxInFlightRequests).toBeLessThanOrEqual(4)
     })
