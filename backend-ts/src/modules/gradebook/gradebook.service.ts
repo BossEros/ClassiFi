@@ -100,7 +100,7 @@ export class GradebookService {
     grade: number,
     feedback: string | null,
   ): Promise<void> {
-    // Validate grade
+    // STEP 1: Load the submission and its parent assignment
     const submission = await this.submissionRepo.getSubmissionById(submissionId)
     if (!submission) {
       throw new Error("Submission not found")
@@ -113,11 +113,12 @@ export class GradebookService {
       throw new Error("Assignment not found")
     }
 
-    // Validate grade is within bounds
+    // STEP 2: Validate the override grade is within the assignment's score bounds
     if (grade < 0 || grade > assignment.totalScore) {
       throw new Error(`Grade must be between 0 and ${assignment.totalScore}`)
     }
 
+    // STEP 3: Persist the grade override and create an in-app notification in a single transaction
     try {
       await withTransaction(async (transactionContext) => {
         const transactionSubmissionRepo =
@@ -152,6 +153,7 @@ export class GradebookService {
       throw error
     }
 
+    // STEP 4: Send an email notification to the student (fire-and-forget)
     void this.notificationService
       .sendEmailNotificationIfEnabled(
         submission.studentId,

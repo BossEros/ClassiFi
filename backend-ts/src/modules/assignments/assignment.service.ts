@@ -82,12 +82,13 @@ export class AssignmentService {
       enableSimilarityPenalty,
     } = data
 
-    // Verify class exists and teacher owns it
+    // STEP 1: Verify the class exists and the requesting teacher owns it
     await requireClassOwnership(this.classRepo, classId, teacherId)
 
-    // Verify the module belongs to the same class
+    // STEP 2: Verify the selected module belongs to this class
     await this.validateModuleBelongsToClass(moduleId, classId)
 
+    // STEP 3: Normalize text fields and persist the assignment to the database
     const normalizedInstructions = instructions.trim()
     const normalizedInstructionsImageUrl =
       this.normalizeNullableString(instructionsImageUrl)
@@ -110,7 +111,7 @@ export class AssignmentService {
       enableSimilarityPenalty: enableSimilarityPenalty ?? false,
     })
 
-    // Notify enrolled students asynchronously (don't block assignment creation)
+    // STEP 4: Notify all enrolled students about the new assignment (fire-and-forget)
     this.notifyStudentsOfNewAssignment(assignment).catch((error) => {
       logger.error("Failed to send assignment notifications:", error)
     })
@@ -230,6 +231,7 @@ export class AssignmentService {
   ): Promise<AssignmentDTO> {
     const { assignmentId, teacherId, ...updateData } = data
 
+    // STEP 1: Verify the assignment exists and the requesting teacher owns its class
     const existingAssignment =
       await this.assignmentRepo.getAssignmentById(assignmentId)
 
@@ -237,13 +239,13 @@ export class AssignmentService {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Verify teacher owns the class
     await requireClassOwnership(
       this.classRepo,
       existingAssignment.classId,
       teacherId,
     )
 
+    // STEP 2: If the module is being changed, verify the new module belongs to this class
     if (
       updateData.moduleId !== undefined &&
       updateData.moduleId !== existingAssignment.moduleId
@@ -254,8 +256,7 @@ export class AssignmentService {
       )
     }
 
-    // Validate business rule: deadline must be after scheduled date
-    // Handle partial updates by comparing against existing values
+    // STEP 3: Validate business rules — deadline must be after the scheduled date
     const finalDeadline =
       updateData.deadline === undefined
         ? existingAssignment.deadline
@@ -275,6 +276,7 @@ export class AssignmentService {
       )
     }
 
+    // STEP 4: Normalize text fields and persist the updates to the database
     const normalizedInstructions =
       updateData.instructions !== undefined
         ? updateData.instructions.trim()
@@ -299,6 +301,7 @@ export class AssignmentService {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
+    // STEP 5: Delete the old instructions image from storage if it was replaced
     const nextInstructionsImageUrl = updatedAssignment.instructionsImageUrl
     if (
       previousInstructionsImageUrl &&
@@ -307,13 +310,14 @@ export class AssignmentService {
       await this.deleteInstructionsImageSafely(previousInstructionsImageUrl)
     }
 
+    // STEP 6: Re-sync grade penalties if the similarity penalty setting changed
     if (updateData.enableSimilarityPenalty !== undefined) {
       await this.similarityPenaltyService.syncAssignmentPenaltyState(
         assignmentId,
       )
     }
 
-    // Notify enrolled students about the assignment update (fire-and-forget)
+    // STEP 7: Notify enrolled students about the update (fire-and-forget)
     this.sendAssignmentUpdatedNotifications(updatedAssignment).catch(
       (error) => logger.error("Failed to send assignment update notifications", { assignmentId, error }),
     )

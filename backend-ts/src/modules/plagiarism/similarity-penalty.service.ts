@@ -44,6 +44,7 @@ export class SimilarityPenaltyService {
   ) {}
 
   async syncAssignmentPenaltyState(assignmentId: number): Promise<void> {
+    // STEP 1: Load the assignment and its current set of latest submissions
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     const latestSubmissions =
       await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
@@ -52,11 +53,13 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 2: If similarity penalty is disabled, restore base automatic grades and exit
     if (!assignment.enableSimilarityPenalty) {
       await this.restoreAutomaticGrades(latestSubmissions, assignment)
       return
     }
 
+    // STEP 3: Check whether a current similarity report exists to score against
     const reusableReportId =
       await this.persistenceService.getReusableAssignmentReportId(assignmentId)
 
@@ -65,6 +68,7 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 4: Apply similarity-based penalty deductions from the latest report
     await this.applyAssignmentPenaltyFromReport(assignmentId, reusableReportId)
   }
 
@@ -72,6 +76,7 @@ export class SimilarityPenaltyService {
     assignmentId: number,
     reportId: number,
   ): Promise<void> {
+    // STEP 1: Load the assignment and all current latest submissions
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     const latestSubmissions =
       await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
@@ -80,11 +85,13 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 2: If penalty is disabled, restore base automatic grades and exit
     if (!assignment.enableSimilarityPenalty) {
       await this.restoreAutomaticGrades(latestSubmissions, assignment)
       return
     }
 
+    // STEP 3: Load the normalized penalty configuration and build a lookup set of latest submission IDs
     const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(
       undefined,
     )
@@ -96,6 +103,8 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 4: Fetch all similarity results from this report and build a worst-case penalty map
+    // Each submission maps to the highest-priority penalty candidate found across all its pairs
     const reportResults = await this.similarityRepo.getResultsByReport(reportId)
     const candidateBySubmissionId = new Map<
       number,
@@ -136,6 +145,7 @@ export class SimilarityPenaltyService {
       )
     }
 
+    // STEP 5: Apply the penalty to each submission's automatic grade and notify the student
     for (const latestSubmission of latestSubmissions) {
       const automaticGrade = await this.calculateAutomaticGrade(
         latestSubmission,

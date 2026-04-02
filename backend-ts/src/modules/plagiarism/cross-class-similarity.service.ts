@@ -147,7 +147,7 @@ export class CrossClassSimilarityService {
     sourceAssignmentId: number,
     teacherId: number,
   ): Promise<CrossClassAnalysisResponse> {
-    // Phase 1: Guard Checks & Discovery
+    // STEP 1: Guard checks and discovery
     // Verify the source assignment exists before proceeding with any analysis.
     const sourceAssignment = await this.assignmentRepo.getAssignmentById(sourceAssignmentId)
 
@@ -199,9 +199,8 @@ export class CrossClassSimilarityService {
     const allAssignmentIds = [sourceAssignmentId, ...matchedAssignments.map((m) => m.assignment.id)]
     const classMap = new Map(teacherClasses.map((cls) => [cls.id, cls]))
 
-    // Staleness check: if a previous cross-class report for this source assignment already
-    // exists and is still current (same matched assignments, no new submissions), return it
-    // immediately without running the expensive file download + detection + semantic pipeline.
+    // STEP 2: Check cache — if a current report exists and matches the submission state, return it immediately
+    // and skip the expensive file download + detection + semantic pipeline.
     const cachedReport = await this.tryGetCachedCrossClassReport(
       sourceAssignmentId,
       teacherId,
@@ -210,7 +209,7 @@ export class CrossClassSimilarityService {
 
     if (cachedReport) return cachedReport
 
-    // Step 2: File Collection
+    // STEP 3: File collection
     // Download submission files for every involved assignment.
     // Each file is tagged with its classId in metadata so we can tell which class it belongs to later.
     const taggedFiles = await this.collectTaggedSubmissionFiles(allAssignmentIds, allAssignments, sourceAssignment)
@@ -220,7 +219,7 @@ export class CrossClassSimilarityService {
       return this.buildEmptyResponse(sourceAssignment, sourceClass.className)
     }
 
-    // Step 3: Structural Detection
+    // STEP 4: Structural detection (Winnowing fingerprinting)
     // Run all files through the plagiarism detector at once.
     // The detector compares every file against every other file using fingerprinting (Winnowing algorithm).
     logger.info("Running structural analysis", { fileCount: taggedFiles.length })
@@ -228,7 +227,7 @@ export class CrossClassSimilarityService {
     const detector = createPlagiarismDetector(language)
     const detectorReport = await detector.analyze(taggedFiles)
 
-    // Step 4: Cross-Class Pair Filtering
+    // STEP 5: Cross-class pair filtering
     // The detector returns ALL matching pairs, including same-class pairs.
     // Filter down to only pairs where the two files come from different classes.
     const crossClassPairs = this.extractCrossClassPairs(detectorReport.getPairs())
@@ -240,13 +239,13 @@ export class CrossClassSimilarityService {
 
     logger.info("Cross-class pairs extracted", { pairCount: crossClassPairs.length })
 
-    // Step 5: Semantic Scoring
+    // STEP 6: Semantic scoring (GraphCodeBERT)
     // For pairs that passed the structural threshold, compute a semantic similarity score
     // using the GraphCodeBERT microservice. This gives a deeper, meaning-based comparison
     // beyond just code structure.
     const semanticScores = await this.computeSemanticScores(crossClassPairs)
 
-    // Step 6: Persistence
+    // STEP 7: Persistence
     // Save the report, per-pair results, and matching code fragment positions to the database
     // inside a single transaction so all data is written atomically.
     const persistResult = await this.persistReport(
@@ -268,7 +267,7 @@ export class CrossClassSimilarityService {
       prunedCount,
     })
 
-    // Step 7: Build and return the API response from the saved report and enriched results.
+    // STEP 8: Build and return the analysis response
     return this.buildAnalysisResponse(
       persistResult.dbReport,
       sourceAssignment,
