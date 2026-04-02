@@ -6,6 +6,14 @@ import {
   classAnnouncementEmailTemplate,
   deadlineReminderEmailTemplate,
   enrollmentConfirmedEmailTemplate,
+  assignmentUpdatedEmailTemplate,
+  newSubmissionReceivedEmailTemplate,
+  lateSubmissionReceivedEmailTemplate,
+  similarityDetectedEmailTemplate,
+  studentEnrolledEmailTemplate,
+  studentUnenrolledEmailTemplate,
+  newUserRegisteredEmailTemplate,
+  removedFromClassEmailTemplate,
 } from "@/services/email/templates.js"
 
 // ============================================================================
@@ -68,6 +76,82 @@ export interface EnrollmentConfirmedPayload {
   classUrl: string
 }
 
+/** Payload for ASSIGNMENT_UPDATED notification (student) */
+export interface AssignmentUpdatedPayload {
+  assignmentId: number
+  assignmentTitle: string
+  className: string
+  classId: number
+  dueDate: string
+  assignmentUrl: string
+}
+
+/** Payload for NEW_SUBMISSION_RECEIVED notification (teacher) */
+export interface NewSubmissionReceivedPayload {
+  submissionId: number
+  assignmentId: number
+  assignmentTitle: string
+  studentName: string
+  className: string
+  classId: number
+  submissionUrl: string
+}
+
+/** Payload for LATE_SUBMISSION_RECEIVED notification (teacher) */
+export interface LateSubmissionReceivedPayload {
+  submissionId: number
+  assignmentId: number
+  assignmentTitle: string
+  studentName: string
+  className: string
+  classId: number
+  submissionUrl: string
+  submittedAt: string
+  dueDate: string
+}
+
+/** Payload for SIMILARITY_DETECTED notification (teacher) */
+export interface SimilarityDetectedPayload {
+  assignmentId: number
+  assignmentTitle: string
+  className: string
+  classId: number
+  studentName: string
+  similarityPercentage: number
+  submissionUrl: string
+}
+
+/** Payload for STUDENT_ENROLLED notification (teacher) */
+export interface StudentEnrolledPayload {
+  classId: number
+  className: string
+  studentName: string
+  studentEmail: string
+}
+
+/** Payload for STUDENT_UNENROLLED notification (teacher) */
+export interface StudentUnenrolledPayload {
+  classId: number
+  className: string
+  studentName: string
+  studentEmail: string
+}
+
+/** Payload for NEW_USER_REGISTERED notification (admin) */
+export interface NewUserRegisteredPayload {
+  userId: number
+  userName: string
+  userEmail: string
+  userRole: string
+}
+
+/** Payload for REMOVED_FROM_CLASS notification (student) */
+export interface RemovedFromClassPayload {
+  classId: number
+  className: string
+  instructorName: string
+}
+
 /**
  * Maps each NotificationType to its specific payload shape.
  * This creates a discriminated union ensuring type safety across the notification system.
@@ -79,6 +163,14 @@ export type NotificationDataByType = {
   CLASS_ANNOUNCEMENT: ClassAnnouncementPayload
   DEADLINE_REMINDER: DeadlineReminderPayload
   ENROLLMENT_CONFIRMED: EnrollmentConfirmedPayload
+  ASSIGNMENT_UPDATED: AssignmentUpdatedPayload
+  NEW_SUBMISSION_RECEIVED: NewSubmissionReceivedPayload
+  LATE_SUBMISSION_RECEIVED: LateSubmissionReceivedPayload
+  SIMILARITY_DETECTED: SimilarityDetectedPayload
+  STUDENT_ENROLLED: StudentEnrolledPayload
+  STUDENT_UNENROLLED: StudentUnenrolledPayload
+  NEW_USER_REGISTERED: NewUserRegisteredPayload
+  REMOVED_FROM_CLASS: RemovedFromClassPayload
 }
 
 /**
@@ -236,6 +328,138 @@ export const NOTIFICATION_TYPES: {
       enrollmentId: data.enrollmentId,
       instructorName: data.instructorName,
       classUrl: data.classUrl,
+    }),
+  },
+
+  ASSIGNMENT_UPDATED: {
+    type: "ASSIGNMENT_UPDATED",
+    titleTemplate: (data) => `${data.className}: Assignment Updated`,
+    messageTemplate: (data) =>
+      `The assignment "${data.assignmentTitle}" in ${data.className} has been updated. Due: ${data.dueDate}.`,
+    emailTemplate: (data) => assignmentUpdatedEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
+      className: data.className,
+      classId: data.classId,
+      dueDate: data.dueDate,
+      assignmentUrl: data.assignmentUrl,
+    }),
+  },
+
+  NEW_SUBMISSION_RECEIVED: {
+    type: "NEW_SUBMISSION_RECEIVED",
+    titleTemplate: (data) => `New Submission: ${data.assignmentTitle}`,
+    messageTemplate: (data) =>
+      `${data.studentName} submitted "${data.assignmentTitle}" in ${data.className}.`,
+    emailTemplate: (data) => newSubmissionReceivedEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      submissionId: data.submissionId,
+      assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
+      studentName: data.studentName,
+      className: data.className,
+      classId: data.classId,
+      submissionUrl: data.submissionUrl,
+    }),
+  },
+
+  LATE_SUBMISSION_RECEIVED: {
+    type: "LATE_SUBMISSION_RECEIVED",
+    titleTemplate: (data) => `Late Submission: ${data.assignmentTitle}`,
+    messageTemplate: (data) =>
+      `${data.studentName} submitted "${data.assignmentTitle}" late in ${data.className}. Due: ${data.dueDate}, Submitted: ${data.submittedAt}.`,
+    emailTemplate: (data) => lateSubmissionReceivedEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      submissionId: data.submissionId,
+      assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
+      studentName: data.studentName,
+      className: data.className,
+      classId: data.classId,
+      submissionUrl: data.submissionUrl,
+      submittedAt: data.submittedAt,
+      dueDate: data.dueDate,
+    }),
+  },
+
+  SIMILARITY_DETECTED: {
+    type: "SIMILARITY_DETECTED",
+    titleTemplate: (data) => `Similarity Alert: ${data.assignmentTitle}`,
+    messageTemplate: (data) =>
+      `High similarity (${String(data.similarityPercentage)}%) detected for ${data.studentName}'s submission in "${data.assignmentTitle}" (${data.className}).`,
+    emailTemplate: (data) => similarityDetectedEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      assignmentId: data.assignmentId,
+      assignmentTitle: data.assignmentTitle,
+      className: data.className,
+      classId: data.classId,
+      studentName: data.studentName,
+      similarityPercentage: data.similarityPercentage,
+      submissionUrl: data.submissionUrl,
+    }),
+  },
+
+  STUDENT_ENROLLED: {
+    type: "STUDENT_ENROLLED",
+    titleTemplate: (data) => `New Student in ${data.className}`,
+    messageTemplate: (data) =>
+      `${data.studentName} (${data.studentEmail}) has enrolled in ${data.className}.`,
+    emailTemplate: (data) => studentEnrolledEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      classId: data.classId,
+      className: data.className,
+      studentName: data.studentName,
+      studentEmail: data.studentEmail,
+    }),
+  },
+
+  STUDENT_UNENROLLED: {
+    type: "STUDENT_UNENROLLED",
+    titleTemplate: (data) => `Student Left ${data.className}`,
+    messageTemplate: (data) =>
+      `${data.studentName} (${data.studentEmail}) has left ${data.className}.`,
+    emailTemplate: (data) => studentUnenrolledEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      classId: data.classId,
+      className: data.className,
+      studentName: data.studentName,
+      studentEmail: data.studentEmail,
+    }),
+  },
+
+  NEW_USER_REGISTERED: {
+    type: "NEW_USER_REGISTERED",
+    titleTemplate: () => "New User Registration",
+    messageTemplate: (data) =>
+      `A new ${data.userRole} "${data.userName}" (${data.userEmail}) has registered.`,
+    emailTemplate: (data) => newUserRegisteredEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      userId: data.userId,
+      userName: data.userName,
+      userEmail: data.userEmail,
+      userRole: data.userRole,
+    }),
+  },
+
+  REMOVED_FROM_CLASS: {
+    type: "REMOVED_FROM_CLASS",
+    titleTemplate: (data) => `Removed from ${data.className}`,
+    messageTemplate: (data) =>
+      `You have been removed from ${data.className} by ${data.instructorName}.`,
+    emailTemplate: (data) => removedFromClassEmailTemplate(data),
+    channels: ["EMAIL", "IN_APP"],
+    metadata: (data) => ({
+      classId: data.classId,
+      className: data.className,
+      instructorName: data.instructorName,
     }),
   },
 }
