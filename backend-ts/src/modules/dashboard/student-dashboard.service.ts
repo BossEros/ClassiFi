@@ -169,7 +169,7 @@ export class StudentDashboardService {
     studentId: number,
     classCode: string,
   ): Promise<DashboardClassDTO> {
-    // Find class by code
+    // STEP 1: Find the class by join code and verify it is active
     const classData = await this.classRepo.getClassByCode(classCode)
 
     if (!classData) {
@@ -180,7 +180,7 @@ export class StudentDashboardService {
       throw new ClassInactiveError()
     }
 
-    // Check if already enrolled
+    // STEP 2: Ensure the student is not already enrolled
     const isEnrolled = await this.enrollmentRepo.isEnrolled(
       studentId,
       classData.id,
@@ -189,7 +189,7 @@ export class StudentDashboardService {
       throw new AlreadyEnrolledError()
     }
 
-    // Enroll student
+    // STEP 3: Create the enrollment record
     await this.enrollmentRepo.enrollStudent(studentId, classData.id)
 
     const studentCount = await this.classRepo.getStudentCount(classData.id)
@@ -199,7 +199,7 @@ export class StudentDashboardService {
     const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
     const studentEmail = student?.email ?? ""
 
-    // Send ENROLLMENT_CONFIRMED to student (fire-and-forget)
+    // STEP 4: Notify the student (enrollment confirmed) and teacher (student enrolled) — fire-and-forget
     const enrollmentData = {
       classId: classData.id,
       className: classData.className,
@@ -218,7 +218,6 @@ export class StudentDashboardService {
       { studentId, classId: classData.id },
     )
 
-    // Send STUDENT_ENROLLED to teacher (fire-and-forget)
     const studentEnrolledData = {
       classId: classData.id,
       className: classData.className,

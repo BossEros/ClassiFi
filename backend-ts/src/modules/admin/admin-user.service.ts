@@ -107,26 +107,25 @@ export class AdminUserService {
    * Updates both Supabase Auth and local users table.
    */
   async updateUserEmail(userId: number, newEmail: string): Promise<UserDTO> {
+    // STEP 1: Load the user and verify the new email is not already in use by another account
     const user = await this.userRepo.getUserById(userId)
     if (!user) {
       throw new UserNotFoundError(userId)
     }
 
-    // Check if new email is already in use
     const existingUser = await this.userRepo.getUserByEmail(newEmail)
     if (existingUser && existingUser.id !== userId) {
       throw new Error("Email address is already in use by another account")
     }
 
-    // Ensure user has a Supabase auth account
     if (!user.supabaseUserId) {
       throw new Error("User does not have a linked Supabase auth account")
     }
 
-    // Update email in Supabase Auth
+    // STEP 2: Update the email in Supabase Auth
     await this.authAdapter.updateUserEmail(user.supabaseUserId, newEmail)
 
-    // Update email in local users table
+    // STEP 3: Update the email in the local database
     const updated = await this.userRepo.updateUser(userId, { email: newEmail })
     if (!updated) {
       throw new UserNotFoundError(userId)
@@ -153,21 +152,21 @@ export class AdminUserService {
    * Create a new user (admin-initiated).
    */
   async createUser(data: CreateUserData): Promise<UserDTO> {
-    // Check if email exists
+    // STEP 1: Check for an existing account with this email to prevent duplicates
     const exists = await this.userRepo.checkEmailExists(data.email)
 
     if (exists) {
       throw new Error(`User with email '${data.email}' already exists`)
     }
 
-    // Create user in Supabase Auth
+    // STEP 2: Create the user account in Supabase Auth (auto-confirmed for admin-created users)
     const authUser = await this.authAdapter.createUser({
       email: data.email,
       password: data.password,
       emailConfirm: true, // Auto-confirm for admin-created users
     })
 
-    // Create user in local database
+    // STEP 3: Create the user profile record in the local database
     const user = await this.userRepo.createUser({
       supabaseUserId: authUser.id,
       email: data.email,
@@ -183,17 +182,18 @@ export class AdminUserService {
    * Delete a user (admin-initiated).
    */
   async deleteUser(userId: number): Promise<void> {
+    // STEP 1: Load and verify the user exists
     const user = await this.userRepo.getUserById(userId)
     if (!user) {
       throw new UserNotFoundError(userId)
     }
 
-    // If user is a teacher, delete their classes first for proper file cleanup
+    // STEP 2: If the user is a teacher, cascade-delete all their classes and associated files first
     if (user.role === "teacher") {
       await this.classService.deleteClassesByTeacher(userId)
     }
 
-    // Use UserService to safely delete account (handles file cleanup)
+    // STEP 3: Delete the account (handles storage cleanup and Supabase auth removal)
     await this.userService.deleteAccount(userId)
   }
 

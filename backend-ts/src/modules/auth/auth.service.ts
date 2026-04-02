@@ -106,20 +106,20 @@ export class AuthService {
   async registerUser(data: RegisterUserServiceDTO): Promise<AuthResult> {
     const { email, password, firstName, lastName, role } = data
 
-    // Validate inputs
+    // STEP 1: Validate that the role is a registerable role (student or teacher)
     this.validateRegistrationData(role)
 
-    // Check for existing user
+    // STEP 2: Ensure the email address is not already registered
     await this.ensureEmailNotExists(email)
 
-    // Create Supabase auth user
+    // STEP 3: Create the user in Supabase Auth and receive an auth token
     const { user: supabaseUser, token } = await this.createSupabaseUser(
       email,
       password,
       { firstName, lastName, role },
     )
 
-    // Create local database user with rollback on failure
+    // STEP 4: Create the local database user, with automatic Supabase rollback on failure
     const user = await this.createLocalUserWithRollback(
       supabaseUser.id,
       email,
@@ -128,7 +128,7 @@ export class AuthService {
       role,
     )
 
-    // Notify admin users about the new registration (fire-and-forget)
+    // STEP 5: Notify admin users about the new registration (fire-and-forget)
     this.notifyAdminsOfNewRegistration(user).catch((error) =>
       logger.error("Failed to send new user registration notifications to admins", { userId: user.id, error }),
     )
@@ -392,6 +392,7 @@ export class AuthService {
    * @throws {UserNotFoundError} If user not in local database
    */
   async loginUser(email: string, password: string): Promise<AuthResult> {
+    // STEP 1: Authenticate with Supabase and retrieve the access token
     const { accessToken, user: supabaseUser } =
       await this.authAdapter.signInWithPassword(email, password)
 
@@ -399,12 +400,14 @@ export class AuthService {
       throw new InvalidCredentialsError()
     }
 
+    // STEP 2: Find the matching local user record by Supabase ID
     const user = await this.userRepo.getUserBySupabaseId(supabaseUser.id)
 
     if (!user) {
       throw new UserNotFoundError(supabaseUser.id)
     }
 
+    // STEP 3: Return the user profile DTO and access token
     return {
       userData: toUserDTO(user),
       token: accessToken,

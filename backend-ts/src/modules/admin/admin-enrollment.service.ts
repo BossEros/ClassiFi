@@ -82,17 +82,21 @@ export class AdminEnrollmentService {
    * Add a student to a class (admin-initiated enrollment).
    */
   async addStudentToClass(classId: number, studentId: number): Promise<void> {
+    // STEP 1: Validate the class (must exist and be active) and student (must exist, be active, with student role)
     const classData = await this.getValidatedClass(classId, { requireActive: true })
     const student = await this.getValidatedStudent(studentId, { requireActive: true })
+
+    // STEP 2: Confirm the student is not already enrolled in this class
     await this.assertStudentNotEnrolled(studentId, classId)
 
+    // STEP 3: Create the enrollment record
     await this.enrollmentRepo.enrollStudent(studentId, classId)
 
     const teacher = await this.userRepo.getUserById(classData.teacherId)
     const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
     const studentName = `${student.firstName} ${student.lastName}`
 
-    // Send ENROLLMENT_CONFIRMED to student (fire-and-forget)
+    // STEP 4: Notify the student (enrollment confirmed) and teacher (student enrolled) — fire-and-forget
     const enrollmentData = {
       classId,
       className: classData.className,
@@ -111,7 +115,6 @@ export class AdminEnrollmentService {
       { studentId, classId },
     )
 
-    // Send STUDENT_ENROLLED to teacher (fire-and-forget)
     const studentEnrolledData = {
       classId,
       className: classData.className,
@@ -134,9 +137,11 @@ export class AdminEnrollmentService {
    * Remove a student from a class (admin-initiated unenrollment).
    */
   async removeStudentFromClass(classId: number, studentId: number): Promise<void> {
+    // STEP 1: Validate the class exists and confirm the student is currently enrolled
     const classData = await this.getValidatedClass(classId)
     await this.assertStudentIsEnrolled(studentId, classId)
 
+    // STEP 2: Remove the enrollment record
     await this.enrollmentRepo.unenrollStudent(studentId, classId)
 
     const [teacher, student] = await Promise.all([
@@ -147,7 +152,7 @@ export class AdminEnrollmentService {
     const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
     const studentEmail = student?.email ?? ""
 
-    // Send REMOVED_FROM_CLASS to student (fire-and-forget)
+    // STEP 3: Notify the student (removed from class) and teacher (student unenrolled) — fire-and-forget
     const removedData = {
       classId,
       className: classData.className,
@@ -164,7 +169,6 @@ export class AdminEnrollmentService {
       { studentId, classId },
     )
 
-    // Send STUDENT_UNENROLLED to teacher (fire-and-forget)
     const unenrolledData = {
       classId,
       className: classData.className,
@@ -189,12 +193,14 @@ export class AdminEnrollmentService {
   async transferStudent(data: TransferStudentData): Promise<void> {
     const { studentId, fromClassId, toClassId } = data
 
+    // STEP 1: Validate that the source and destination classes are different
     if (fromClassId === toClassId) {
       throw new BadRequestError(
         "Source and destination classes must be different",
       )
     }
 
+    // STEP 2: Validate the student, both classes, and enrollment state in parallel
     await Promise.all([
       this.getValidatedClass(fromClassId),
       this.getValidatedClass(toClassId, { requireActive: true }),
@@ -203,6 +209,7 @@ export class AdminEnrollmentService {
       this.assertStudentNotEnrolled(studentId, toClassId),
     ])
 
+    // STEP 3: Unenroll from the source class and enroll in the destination class in a single transaction
     await withTransaction(async (transactionContext) => {
       const enrollmentRepositoryWithContext = this.enrollmentRepo.withContext(
         transactionContext,

@@ -90,8 +90,7 @@ export class AssignmentService {
 
     // STEP 3: Normalize text fields and persist the assignment to the database
     const normalizedInstructions = instructions.trim()
-    const normalizedInstructionsImageUrl =
-      this.normalizeNullableString(instructionsImageUrl)
+    const normalizedInstructionsImageUrl = this.normalizeNullableString(instructionsImageUrl)
 
     const assignment = await this.assignmentRepo.createAssignment({
       classId,
@@ -333,19 +332,21 @@ export class AssignmentService {
     assignmentId: number,
     teacherId: number,
   ): Promise<void> {
+    // STEP 1: Verify the assignment exists and the requesting teacher owns its class
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
 
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
+    // STEP 2: Delete the instructions image from storage if one exists (best-effort)
     if (assignment.instructionsImageUrl) {
       await this.deleteInstructionsImageSafely(assignment.instructionsImageUrl)
     }
 
+    // STEP 3: Delete the assignment record from the database (cascades to test cases and submissions)
     await this.assignmentRepo.deleteAssignment(assignmentId)
   }
 
@@ -423,17 +424,16 @@ export class AssignmentService {
     assignmentId: number,
     teacherId: number,
   ): Promise<{ remindersSent: number }> {
-    // Get assignment and verify it exists
+    // STEP 1: Verify the assignment exists and the requesting teacher owns its class
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
 
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
-    // Verify teacher owns the class
     await requireClassOwnership(this.classRepo, assignment.classId, teacherId)
 
-    // Check cooldown: prevent sending reminders more than once per 24 hours
+    // STEP 2: Enforce the 24-hour cooldown to prevent notification spam
     if (assignment.lastReminderSentAt) {
       const hoursSinceLastReminder =
         (Date.now() - assignment.lastReminderSentAt.getTime()) /
@@ -447,23 +447,21 @@ export class AssignmentService {
       }
     }
 
-    // Get all enrolled students
+    // STEP 3: Identify enrolled students who have not yet submitted
     const enrolledStudents =
       await this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId)
 
-    // Get all students who have submitted (latest submissions only)
     const submissions = await this.submissionRepo.getSubmissionsByAssignment(
       assignmentId,
       true,
     )
     const submittedStudentIds = new Set(submissions.map((sub) => sub.studentId))
 
-    // Filter to students who haven't submitted
     const nonSubmitters = enrolledStudents.filter(
       (enrollment) => !submittedStudentIds.has(enrollment.user.id),
     )
 
-    // Send notifications to non-submitters
+    // STEP 4: Send deadline reminder notifications concurrently to all non-submitters
     const notificationPromises = nonSubmitters.map((enrollment) =>
       Promise.all([
         this.notificationService.createNotification(
@@ -507,7 +505,6 @@ export class AssignmentService {
         r.status === "rejected",
     )
 
-    // Log errors for failed notifications
     if (failedResults.length > 0) {
       failedResults.forEach(({ userId, error }) => {
         logger.error(
@@ -517,7 +514,7 @@ export class AssignmentService {
       })
     }
 
-    // Update the last reminder sent timestamp only if at least one notification succeeded
+    // STEP 5: Update the last reminder timestamp and return the count of successful reminders
     if (successCount > 0) {
       await this.assignmentRepo.updateLastReminderSentAt(assignmentId)
     }
