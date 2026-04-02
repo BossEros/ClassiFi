@@ -274,7 +274,6 @@ export function buildPairSimilarityReportData(
 export function buildCrossClassReportData(
   options: CrossClassReportBuilderOptions,
 ): ClassSimilarityReportData {
-  const downloadedAt = options.downloadedAt ?? new Date()
   const { report, teacher, minimumSimilarityPercent } = options
   const flaggedResults = report.results.filter(
     (r) => r.isFlagged && r.hybridScore * 100 >= minimumSimilarityPercent,
@@ -292,10 +291,6 @@ export function buildCrossClassReportData(
     {
       label: "Report Generated",
       value: formatDateTimeValue(report.generatedAt),
-    },
-    {
-      label: "Downloaded At",
-      value: formatDateTimeValue(downloadedAt.toISOString()),
     },
     {
       label: "Similarity Threshold",
@@ -342,7 +337,6 @@ export function buildCrossClassReportData(
 export function buildCrossClassPairReportData(
   options: CrossClassPairReportBuilderOptions,
 ): PairSimilarityReportData {
-  const downloadedAt = options.downloadedAt ?? new Date()
   const { report, teacher, selectedResult, pairDetails } = options
 
   const reportMetadata: ReportMetadataEntry[] = [
@@ -352,7 +346,7 @@ export function buildCrossClassPairReportData(
     { label: "Report ID", value: String(report.reportId) },
     {
       label: "Report Generated",
-      value: formatDateTimeValue(downloadedAt.toISOString()),
+      value: formatDateTimeValue(report.generatedAt),
     },
     {
       label: "Left Submission",

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import {
   buildClassSimilarityReportData,
+  buildCrossClassPairReportData,
+  buildCrossClassReportData,
   buildPairSimilarityReportData,
   CLASS_REPORT_TABLE_HEADERS,
 } from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
@@ -172,6 +174,53 @@ const mockPairDetails = {
   ],
 }
 
+const mockCrossClassReport = {
+  reportId: 401,
+  generatedAt: "2026-03-11T08:30:00.000Z",
+  sourceAssignment: {
+    id: 9,
+    name: "Threshold Review",
+    className: "Algorithms",
+  },
+  matchedAssignments: [
+    {
+      id: 19,
+      name: "Threshold Review",
+      className: "Algorithms B",
+      classCode: "ALG-B",
+      nameSimilarity: 1,
+    },
+  ],
+  summary: {
+    totalSubmissions: 4,
+    totalComparisons: 6,
+    flaggedPairs: 1,
+    averageSimilarity: 0.84,
+    maxSimilarity: 0.96,
+  },
+  results: [
+    {
+      id: 44,
+      submission1Id: 1001,
+      submission2Id: 1002,
+      student1Name: "Student A",
+      student2Name: "Student D",
+      class1Name: "Algorithms",
+      class1Code: "ALG-A",
+      class2Name: "Algorithms B",
+      class2Code: "ALG-B",
+      assignment1Name: "Threshold Review",
+      assignment2Name: "Threshold Review",
+      structuralScore: 0.93,
+      semanticScore: 0.89,
+      hybridScore: 0.92,
+      overlap: 28,
+      longestFragment: 11,
+      isFlagged: true,
+    },
+  ],
+}
+
 describe("similarityReportPdf", () => {
   it("filters the class report by the active threshold and maps badge metadata", () => {
     const reportData = buildClassSimilarityReportData({
@@ -285,6 +334,43 @@ describe("similarityReportPdf", () => {
     ).toHaveLength(1)
     expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
       "Downloaded",
+    )
+  })
+
+  it("uses the persisted report timestamp for the cross-class class report metadata", () => {
+    const reportData = buildCrossClassReportData({
+      report: mockCrossClassReport,
+      teacher: mockTeacher,
+      minimumSimilarityPercent: 90,
+      downloadedAt: new Date("2026-03-11T10:00:00.000Z"),
+    })
+
+    expect(
+      reportData.reportMetadata.find(
+        (entry) => entry.label === "Report Generated",
+      )?.value,
+    ).toContain("Mar 11, 2026")
+    expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
+      "Downloaded At",
+    )
+  })
+
+  it("uses the persisted report timestamp for the cross-class pair report metadata", () => {
+    const reportData = buildCrossClassPairReportData({
+      report: mockCrossClassReport,
+      teacher: mockTeacher,
+      selectedResult: mockCrossClassReport.results[0],
+      pairDetails: mockPairDetails,
+      downloadedAt: new Date("2026-03-11T10:00:00.000Z"),
+    })
+
+    expect(
+      reportData.reportMetadata.find(
+        (entry) => entry.label === "Report Generated",
+      )?.value,
+    ).toContain("Mar 11, 2026")
+    expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
+      "Downloaded At",
     )
   })
 })
