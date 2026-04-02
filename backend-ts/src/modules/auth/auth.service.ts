@@ -6,6 +6,7 @@ import {
 } from "@/modules/users/user.repository.js"
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import {
@@ -92,6 +93,8 @@ export class AuthService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.adapters.supabaseAuth)
     private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -123,6 +126,11 @@ export class AuthService {
       firstName,
       lastName,
       role,
+    )
+
+    // Notify admin users about the new registration (fire-and-forget)
+    this.notifyAdminsOfNewRegistration(user).catch((error) =>
+      logger.error("Failed to send new user registration notifications to admins", { userId: user.id, error }),
     )
 
     return {
@@ -429,5 +437,32 @@ export class AuthService {
       email,
       buildFrontendAuthRedirectUrl("/reset-password"),
     )
+  }
+
+  /**
+   * Notify all admin users about a new user registration.
+   *
+   * @param user - The newly registered user.
+   */
+  private async notifyAdminsOfNewRegistration(user: User): Promise<void> {
+    const adminUsers = await this.userRepo.getUsersByRole("admin")
+
+    if (adminUsers.length === 0) {
+      return
+    }
+
+    const notificationData = {
+      userId: user.id,
+      userName: `${user.firstName} ${user.lastName}`,
+      userEmail: user.email,
+      userRole: user.role,
+    }
+
+    const notificationPromises = adminUsers.flatMap((admin) => [
+      this.notificationService.createNotification(admin.id, "NEW_USER_REGISTERED", notificationData),
+      this.notificationService.sendEmailNotificationIfEnabled(admin.id, "NEW_USER_REGISTERED", notificationData),
+    ])
+
+    await Promise.allSettled(notificationPromises)
   }
 }
