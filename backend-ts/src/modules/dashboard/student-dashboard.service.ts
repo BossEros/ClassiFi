@@ -4,6 +4,7 @@ import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repositor
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import type { DashboardQueryReadRepository } from "@/modules/dashboard/dashboard-query.repository.js"
 import {
   toDashboardClassDTO,
@@ -16,7 +17,11 @@ import {
   AlreadyEnrolledError,
   NotEnrolledError,
 } from "@/shared/errors.js"
+import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+
+const logger = createLogger("StudentDashboardService")
 
 /**
  * Business logic for student dashboard operations.
@@ -33,6 +38,8 @@ export class StudentDashboardService {
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
     @inject(DI_TOKENS.repositories.dashboardQuery)
     private dashboardQueryRepo?: DashboardQueryReadRepository,
   ) {}
@@ -186,6 +193,37 @@ export class StudentDashboardService {
 
     const studentCount = await this.classRepo.getStudentCount(classData.id)
     const teacher = await this.userRepo.getUserById(classData.teacherId)
+    const student = await this.userRepo.getUserById(studentId)
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
+    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
+    const studentEmail = student?.email ?? ""
+
+    // Send ENROLLMENT_CONFIRMED to student (fire-and-forget)
+    const enrollmentData = {
+      classId: classData.id,
+      className: classData.className,
+      enrollmentId: classData.id,
+      instructorName: teacherName,
+      classUrl: `${settings.frontendUrl}/dashboard/classes/${classData.id}`,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+      this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+    ]).catch((error) => logger.error("Failed to send enrollment notification to student", { studentId, classId: classData.id, error }))
+
+    // Send STUDENT_ENROLLED to teacher (fire-and-forget)
+    const studentEnrolledData = {
+      classId: classData.id,
+      className: classData.className,
+      studentName,
+      studentEmail,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+    ]).catch((error) => logger.error("Failed to send enrollment notification to teacher", { teacherId: classData.teacherId, classId: classData.id, error }))
 
     return toDashboardClassDTO(classData, {
       studentCount,
@@ -204,5 +242,25 @@ export class StudentDashboardService {
     }
 
     await this.enrollmentRepo.unenrollStudent(studentId, classId)
+
+    // Notify teacher that student left (fire-and-forget)
+    const [classData, student] = await Promise.all([
+      this.classRepo.getClassById(classId),
+      this.userRepo.getUserById(studentId),
+    ])
+
+    if (classData && student) {
+      const unenrolledData = {
+        classId,
+        className: classData.className,
+        studentName: `${student.firstName} ${student.lastName}`,
+        studentEmail: student.email,
+      }
+
+      void Promise.allSettled([
+        this.notificationService.createNotification(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
+        this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
+      ]).catch((error) => logger.error("Failed to send unenrollment notification to teacher", { teacherId: classData.teacherId, classId, error }))
+    }
   }
 }

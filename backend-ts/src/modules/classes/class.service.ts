@@ -4,6 +4,7 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { toClassDTO, type ClassDTO } from "@/modules/classes/class.mapper.js"
 import {
   toAssignmentDTO,
@@ -42,6 +43,8 @@ export class ClassService {
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.services.storage) private storageService: StorageService,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
   ) {}
 
   /** Generate a unique class code using shared utility */
@@ -338,6 +341,40 @@ export class ClassService {
     if (!removed) {
       throw new BadRequestError("Failed to remove student from class")
     }
+
+    // Notify student of removal and teacher of unenrollment (fire-and-forget)
+    const [teacher, student] = await Promise.all([
+      this.userRepo.getUserById(teacherId),
+      this.userRepo.getUserById(studentId),
+    ])
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
+    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
+    const studentEmail = student?.email ?? ""
+
+    // Send REMOVED_FROM_CLASS to student
+    const removedData = {
+      classId,
+      className: existingClass.className,
+      instructorName: teacherName,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
+      this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
+    ]).catch((error) => logger.error("Failed to send removal notification to student", { studentId, classId, error }))
+
+    // Send STUDENT_UNENROLLED to teacher
+    const unenrolledData = {
+      classId,
+      className: existingClass.className,
+      studentName,
+      studentEmail,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(teacherId, "STUDENT_UNENROLLED", unenrolledData),
+      this.notificationService.sendEmailNotificationIfEnabled(teacherId, "STUDENT_UNENROLLED", unenrolledData),
+    ]).catch((error) => logger.error("Failed to send unenrollment notification to teacher", { teacherId, classId, error }))
   }
 }
 

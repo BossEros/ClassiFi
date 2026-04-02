@@ -2,6 +2,7 @@ import { inject, injectable } from "tsyringe"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import {
   UserNotFoundError,
@@ -19,7 +20,11 @@ import type {
   TransferStudentData,
 } from "@/modules/admin/admin.types.js"
 import { withTransaction } from "@/shared/transaction.js"
+import { settings } from "@/shared/config.js"
+import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+
+const logger = createLogger("AdminEnrollmentService")
 
 /**
  * Admin service for class enrollment management.
@@ -32,6 +37,8 @@ export class AdminEnrollmentService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -74,24 +81,85 @@ export class AdminEnrollmentService {
    * Add a student to a class (admin-initiated enrollment).
    */
   async addStudentToClass(classId: number, studentId: number): Promise<void> {
-    await this.getValidatedClass(classId, { requireActive: true })
-    await this.getValidatedStudent(studentId, { requireActive: true })
+    const classData = await this.getValidatedClass(classId, { requireActive: true })
+    const student = await this.getValidatedStudent(studentId, { requireActive: true })
     await this.assertStudentNotEnrolled(studentId, classId)
 
     await this.enrollmentRepo.enrollStudent(studentId, classId)
+
+    const teacher = await this.userRepo.getUserById(classData.teacherId)
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
+    const studentName = `${student.firstName} ${student.lastName}`
+
+    // Send ENROLLMENT_CONFIRMED to student (fire-and-forget)
+    const enrollmentData = {
+      classId,
+      className: classData.className,
+      enrollmentId: classId,
+      instructorName: teacherName,
+      classUrl: `${settings.frontendUrl}/dashboard/classes/${classId}`,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+      this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+    ]).catch((error) => logger.error("Failed to send enrollment notification to student", { studentId, classId, error }))
+
+    // Send STUDENT_ENROLLED to teacher (fire-and-forget)
+    const studentEnrolledData = {
+      classId,
+      className: classData.className,
+      studentName,
+      studentEmail: student.email,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+    ]).catch((error) => logger.error("Failed to send enrollment notification to teacher", { teacherId: classData.teacherId, classId, error }))
   }
 
   /**
    * Remove a student from a class (admin-initiated unenrollment).
    */
-  async removeStudentFromClass(
-    classId: number,
-    studentId: number,
-  ): Promise<void> {
-    await this.getValidatedClass(classId)
+  async removeStudentFromClass(classId: number, studentId: number): Promise<void> {
+    const classData = await this.getValidatedClass(classId)
     await this.assertStudentIsEnrolled(studentId, classId)
 
     await this.enrollmentRepo.unenrollStudent(studentId, classId)
+
+    const [teacher, student] = await Promise.all([
+      this.userRepo.getUserById(classData.teacherId),
+      this.userRepo.getUserById(studentId),
+    ])
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
+    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
+    const studentEmail = student?.email ?? ""
+
+    // Send REMOVED_FROM_CLASS to student (fire-and-forget)
+    const removedData = {
+      classId,
+      className: classData.className,
+      instructorName: teacherName,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
+      this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
+    ]).catch((error) => logger.error("Failed to send removal notification to student", { studentId, classId, error }))
+
+    // Send STUDENT_UNENROLLED to teacher (fire-and-forget)
+    const unenrolledData = {
+      classId,
+      className: classData.className,
+      studentName,
+      studentEmail,
+    }
+
+    void Promise.allSettled([
+      this.notificationService.createNotification(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_UNENROLLED", unenrolledData),
+    ]).catch((error) => logger.error("Failed to send unenrollment notification to teacher", { teacherId: classData.teacherId, classId, error }))
   }
 
   /**
