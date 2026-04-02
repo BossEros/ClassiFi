@@ -313,6 +313,11 @@ export class AssignmentService {
       )
     }
 
+    // Notify enrolled students about the assignment update (fire-and-forget)
+    this.sendAssignmentUpdatedNotifications(updatedAssignment).catch(
+      (error) => logger.error("Failed to send assignment update notifications", { assignmentId, error }),
+    )
+
     return toAssignmentDTO(updatedAssignment)
   }
 
@@ -514,5 +519,49 @@ export class AssignmentService {
     }
 
     return { remindersSent: successCount }
+  }
+
+  /**
+   * Send ASSIGNMENT_UPDATED notifications to all enrolled students.
+   * Runs as a background operation; errors are logged but do not propagate.
+   */
+  private async sendAssignmentUpdatedNotifications(
+    assignment: { id: number; classId: number; assignmentName: string; deadline: Date | null },
+  ): Promise<void> {
+    const [classData, enrolledStudents] = await Promise.all([
+      this.classRepo.getClassById(assignment.classId),
+      this.enrollmentRepo.getEnrolledStudentsWithInfo(assignment.classId),
+    ])
+
+    const className = classData?.className || "Unknown Class"
+
+    const notificationTargets = enrolledStudents.map((enrollment) => ({
+      recipientUserId: enrollment.user.id,
+      notificationData: {
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        className,
+        classId: assignment.classId,
+        dueDate: formatAssignmentDueDate(assignment.deadline),
+        assignmentUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+      },
+    }))
+
+    const results = await Promise.allSettled(
+      notificationTargets.map(async (target) => {
+        await this.notificationService.createNotification(target.recipientUserId, "ASSIGNMENT_UPDATED", target.notificationData)
+        await this.notificationService.sendEmailNotificationIfEnabled(target.recipientUserId, "ASSIGNMENT_UPDATED", target.notificationData)
+      }),
+    )
+
+    const failedCount = results.filter((r) => r.status === "rejected").length
+
+    if (failedCount > 0) {
+      logger.error("Failed to send some assignment update notifications", {
+        assignmentId: assignment.id,
+        totalTargets: notificationTargets.length,
+        failedCount,
+      })
+    }
   }
 }
