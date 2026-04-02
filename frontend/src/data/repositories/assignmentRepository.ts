@@ -1,4 +1,4 @@
-import { apiClient, type ApiResponse } from "@/data/api/apiClient"
+import { apiClient, type ApiResponse, unwrapApiResponse } from "@/data/api/apiClient"
 import { supabase } from "@/data/api/supabaseClient"
 import { sanitizeUserFacingErrorMessage } from "@/data/api/errorMapping"
 import {
@@ -162,20 +162,9 @@ export async function createNewAssignmentForClass(
     message?: string
     assignment?: Assignment
   }>(`/classes/${classId}/assignments`, newAssignmentData)
+  const data = unwrapApiResponse(apiResponse, "Failed to create assignment")
 
-  if (
-    apiResponse.error ||
-    !apiResponse.data?.success ||
-    !apiResponse.data.assignment
-  ) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to create assignment",
-    )
-  }
-
-  return apiResponse.data.assignment
+  return data.assignment!
 }
 
 export async function updateAssignmentDetailsById(
@@ -187,20 +176,9 @@ export async function updateAssignmentDetailsById(
     message?: string
     assignment?: Assignment
   }>(`/assignments/${assignmentId}`, updatedAssignmentData)
+  const data = unwrapApiResponse(apiResponse, "Failed to update assignment")
 
-  if (
-    apiResponse.error ||
-    !apiResponse.data?.success ||
-    !apiResponse.data.assignment
-  ) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to update assignment",
-    )
-  }
-
-  return apiResponse.data.assignment
+  return data.assignment!
 }
 
 export async function deleteAssignmentByIdForTeacher(
@@ -210,14 +188,7 @@ export async function deleteAssignmentByIdForTeacher(
   const apiResponse = await apiClient.delete<DeleteResponse>(
     `/assignments/${assignmentId}?teacherId=${teacherId}`,
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to delete assignment",
-    )
-  }
+  unwrapApiResponse(apiResponse, "Failed to delete assignment")
 }
 
 export async function getSubmissionFileContentById(

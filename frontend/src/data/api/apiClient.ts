@@ -302,3 +302,26 @@ class ApiClient {
 
 // Export singleton instance
 export const apiClient = new ApiClient(API_BASE_URL)
+
+/**
+ * Unwraps a successful API response, throwing an Error on failure.
+ * Checks for network errors, missing data, and `success: false` responses.
+ *
+ * @param apiResponse - The API response to unwrap.
+ * @param fallbackErrorMessage - Error message when no specific error is available.
+ * @returns The response data on success.
+ * @throws Error with the most specific error message available.
+ */
+export function unwrapApiResponse<T>(apiResponse: ApiResponse<T>, fallbackErrorMessage: string): T {
+  if (apiResponse.error || !apiResponse.data) {
+    throw new Error(apiResponse.error || fallbackErrorMessage)
+  }
+
+  const data = apiResponse.data as { success?: boolean; message?: string }
+
+  if (data.success === false) {
+    throw new Error(data.message || fallbackErrorMessage)
+  }
+
+  return apiResponse.data
+}

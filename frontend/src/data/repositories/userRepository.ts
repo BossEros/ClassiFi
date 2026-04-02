@@ -1,5 +1,5 @@
 import { supabase } from "@/data/api/supabaseClient"
-import { apiClient } from "@/data/api/apiClient"
+import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
 
 /**
  * Uploads a user avatar to Supabase Storage and updates the user profile.
@@ -144,15 +144,10 @@ export async function updateNotificationPreferences(
     emailNotificationsEnabled,
     inAppNotificationsEnabled,
   })
-
-  if (response.error || !response.data || !response.data.success) {
-    throw new Error(
-      response.error || "Failed to update notification preferences",
-    )
-  }
+  const data = unwrapApiResponse(response, "Failed to update notification preferences")
 
   return {
-    emailNotificationsEnabled: response.data.emailNotificationsEnabled,
-    inAppNotificationsEnabled: response.data.inAppNotificationsEnabled,
+    emailNotificationsEnabled: data.emailNotificationsEnabled,
+    inAppNotificationsEnabled: data.inAppNotificationsEnabled,
   }
 }

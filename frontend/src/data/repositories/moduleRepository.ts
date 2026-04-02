@@ -1,4 +1,4 @@
-import { apiClient } from "@/data/api/apiClient"
+import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
 import type { Module } from "@/shared/types/class"
 
 /** Response for module list operations */
@@ -31,12 +31,9 @@ export async function getModulesByClassId(classId: number): Promise<Module[]> {
   const apiResponse = await apiClient.get<ModuleListResponse>(
     `/classes/${classId}/modules`,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch modules")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || apiResponse.data?.message || "Failed to fetch modules")
-  }
-
-  return apiResponse.data.modules
+  return data.modules
 }
 
 /**
@@ -51,12 +48,9 @@ export async function createModule(classId: number, name: string): Promise<Modul
     `/classes/${classId}/modules`,
     { name },
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to create module")
 
-  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.module) {
-    throw new Error(apiResponse.error || apiResponse.data?.message || "Failed to create module")
-  }
-
-  return apiResponse.data.module
+  return data.module
 }
 
 /**
@@ -71,12 +65,9 @@ export async function renameModule(moduleId: number, name: string): Promise<Modu
     `/modules/${moduleId}`,
     { name },
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to rename module")
 
-  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.module) {
-    throw new Error(apiResponse.error || apiResponse.data?.message || "Failed to rename module")
-  }
-
-  return apiResponse.data.module
+  return data.module
 }
 
 /**
@@ -94,12 +85,9 @@ export async function toggleModulePublish(
     `/modules/${moduleId}/publish`,
     { isPublished },
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to update module")
 
-  if (apiResponse.error || !apiResponse.data?.success || !apiResponse.data.module) {
-    throw new Error(apiResponse.error || apiResponse.data?.message || "Failed to update module")
-  }
-
-  return apiResponse.data.module
+  return data.module
 }
 
 /**
@@ -111,8 +99,5 @@ export async function deleteModule(moduleId: number): Promise<void> {
   const apiResponse = await apiClient.delete<DeleteResponse>(
     `/modules/${moduleId}`,
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || apiResponse.data?.message || "Failed to delete module")
-  }
+  unwrapApiResponse(apiResponse, "Failed to delete module")
 }

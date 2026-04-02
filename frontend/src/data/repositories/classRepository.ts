@@ -1,4 +1,4 @@
-import { apiClient } from "@/data/api/apiClient"
+import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
 import type { Class, Assignment, EnrolledStudent } from "@/shared/types/class"
 import type {
   CreateClassRequest,
@@ -18,36 +18,18 @@ export async function createNewClass(
     "/classes",
     newClassData,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to create class")
 
-  if (
-    apiResponse.error ||
-    !apiResponse.data?.success ||
-    !apiResponse.data.class
-  ) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to create class",
-    )
-  }
-
-  return apiResponse.data.class
+  return data.class!
 }
 
 export async function generateUniqueClassCode(): Promise<string> {
   const apiResponse = await apiClient.get<GenerateCodeResponse>(
     "/classes/generate-code",
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to generate class code")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to generate class code",
-    )
-  }
-
-  return apiResponse.data.code
+  return data.code
 }
 
 export async function getAllClassesForTeacherId(
@@ -62,16 +44,9 @@ export async function getAllClassesForTeacherId(
   const apiResponse = await apiClient.get<ClassListResponse>(
     `/classes/teacher/${teacherId}${urlQueryString}`,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch classes")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to fetch classes",
-    )
-  }
-
-  return apiResponse.data.classes
+  return data.classes
 }
 
 export async function getClassDetailsById(
@@ -82,18 +57,9 @@ export async function getClassDetailsById(
     ? `/classes/${classId}?teacherId=${teacherId}`
     : `/classes/${classId}`
   const apiResponse = await apiClient.get<ClassDetailResponse>(apiUrl)
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch class")
 
-  if (
-    apiResponse.error ||
-    !apiResponse.data?.success ||
-    !apiResponse.data.class
-  ) {
-    throw new Error(
-      apiResponse.error || apiResponse.data?.message || "Failed to fetch class",
-    )
-  }
-
-  return apiResponse.data.class
+  return data.class!
 }
 
 /**
@@ -114,16 +80,9 @@ export async function getAllAssignmentsForClassId(
   const apiResponse = await apiClient.get<AssignmentListResponse>(
     assignmentApiUrl,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch assignments")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to fetch assignments",
-    )
-  }
-
-  return apiResponse.data.assignments
+  return data.assignments
 }
 
 export async function getAllEnrolledStudentsForClassId(
@@ -132,16 +91,9 @@ export async function getAllEnrolledStudentsForClassId(
   const apiResponse = await apiClient.get<StudentListResponse>(
     `/classes/${classId}/students`,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch students")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to fetch students",
-    )
-  }
-
-  return apiResponse.data.students
+  return data.students
 }
 
 export async function deleteClassByIdForTeacher(
@@ -151,14 +103,7 @@ export async function deleteClassByIdForTeacher(
   const apiResponse = await apiClient.delete<DeleteResponse>(
     `/classes/${classId}?teacherId=${teacherId}`,
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to delete class",
-    )
-  }
+  unwrapApiResponse(apiResponse, "Failed to delete class")
 }
 
 export async function updateClassDetailsById(
@@ -169,20 +114,9 @@ export async function updateClassDetailsById(
     `/classes/${classId}`,
     updatedClassData,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to update class")
 
-  if (
-    apiResponse.error ||
-    !apiResponse.data?.success ||
-    !apiResponse.data.class
-  ) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to update class",
-    )
-  }
-
-  return apiResponse.data.class
+  return data.class!
 }
 
 export async function unenrollStudentFromClassByTeacher(
@@ -191,14 +125,7 @@ export async function unenrollStudentFromClassByTeacher(
   teacherId: number,
 ): Promise<void> {
   const apiResponse = await apiClient.delete<DeleteResponse>(
-    `/classes/${classId}/students/${studentId}?teacherId=${teacherId}`,
+    `/classes/${classId}/students/${studentId}?teacherId=${teacherId}`, 
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to remove student",
-    )
-  }
+  unwrapApiResponse(apiResponse, "Failed to remove student")
 }

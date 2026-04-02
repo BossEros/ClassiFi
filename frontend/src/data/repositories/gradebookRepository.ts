@@ -1,4 +1,4 @@
-import { apiClient } from "../api/apiClient"
+import { apiClient, unwrapApiResponse } from "../api/apiClient"
 import type {
   ClassGradebook,
   ClassGradebookResponse,
@@ -22,14 +22,11 @@ export async function getCompleteGradebookForClassId(
   const apiResponse = await apiClient.get<ClassGradebookResponse>(
     `/gradebook/classes/${classId}`,
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || "Failed to fetch gradebook")
-  }
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch gradebook")
 
   return {
-    assignments: apiResponse.data.assignments,
-    students: apiResponse.data.students,
+    assignments: data.assignments,
+    students: data.students,
   }
 }
 
@@ -74,12 +71,9 @@ export async function getAllGradesForStudentId(
   const apiResponse = await apiClient.get<StudentGradesResponse>(
     `/gradebook/students/${studentId}`,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch student grades")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || "Failed to fetch student grades")
-  }
-
-  return apiResponse.data.grades
+  return data.grades
 }
 
 export async function getGradesForStudentInSpecificClass(
@@ -89,12 +83,9 @@ export async function getGradesForStudentInSpecificClass(
   const apiResponse = await apiClient.get<StudentGradesResponse>(
     `/gradebook/students/${studentId}/classes/${classId}`,
   )
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch student class grades")
 
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || "Failed to fetch student class grades")
-  }
-
-  return apiResponse.data.grades[0] ?? null
+  return data.grades[0] ?? null
 }
 
 export async function getClassRankForStudentById(
@@ -104,15 +95,12 @@ export async function getClassRankForStudentById(
   const apiResponse = await apiClient.get<StudentRankResponse>(
     `/gradebook/students/${studentId}/classes/${classId}/rank`,
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || "Failed to fetch student rank")
-  }
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch student rank")
 
   return {
-    rank: apiResponse.data.rank,
-    totalStudents: apiResponse.data.totalStudents,
-    percentile: apiResponse.data.percentile,
+    rank: data.rank,
+    totalStudents: data.totalStudents,
+    percentile: data.percentile,
   }
 }
 
@@ -133,14 +121,7 @@ export async function setGradeOverrideForSubmissionById(
     success: boolean
     message?: string
   }>(`/gradebook/submissions/${submissionId}/override`, requestBody)
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to override grade",
-    )
-  }
+  unwrapApiResponse(apiResponse, "Failed to override grade")
 }
 
 export async function removeGradeOverrideForSubmissionById(
@@ -150,14 +131,7 @@ export async function removeGradeOverrideForSubmissionById(
     success: boolean
     message?: string
   }>(`/gradebook/submissions/${submissionId}/override`)
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to remove grade override",
-    )
-  }
+  unwrapApiResponse(apiResponse, "Failed to remove grade override")
 }
 
 // ============================================================================
@@ -170,14 +144,11 @@ export async function getLatePenaltyConfigurationForAssignmentId(
   const apiResponse = await apiClient.get<LatePenaltyConfigResponse>(
     `/gradebook/assignments/${assignmentId}/late-penalty`,
   )
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(apiResponse.error || "Failed to fetch late penalty config")
-  }
+  const data = unwrapApiResponse(apiResponse, "Failed to fetch late penalty config")
 
   return {
-    enabled: apiResponse.data.enabled,
-    config: apiResponse.data.config,
+    enabled: data.enabled,
+    config: data.config,
   }
 }
 
@@ -194,12 +165,5 @@ export async function updateLatePenaltyConfigurationForAssignmentId(
     success: boolean
     message?: string
   }>(`/gradebook/assignments/${assignmentId}/late-penalty`, requestBody)
-
-  if (apiResponse.error || !apiResponse.data?.success) {
-    throw new Error(
-      apiResponse.error ||
-        apiResponse.data?.message ||
-        "Failed to update late penalty config",
-    )
-  }
+  unwrapApiResponse(apiResponse, "Failed to update late penalty config")
 }
