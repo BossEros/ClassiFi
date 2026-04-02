@@ -10,16 +10,16 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 BASE_MODEL_NAME = "microsoft/graphcodebert-base"
-PLAGIARIZED_CLASS_IDX = 0
 
 
 class _ClassificationHead(nn.Module):
     """
-    Top-level classification head used in the fine-tuned training code.
+    Classification head matching the fine-tuned checkpoint structure.
 
-    Dense layer input is 1536 (2 × 768) because both code1 and code2 CLS
-    embeddings are concatenated before being passed in.  Output is 2 logits
-    (similar / dissimilar).
+    This class is NOT used during inference (we use cosine similarity of CLS
+    embeddings instead), but its parameters MUST exist in `_ModelWrapper` so
+    that `load_state_dict()` can load the checkpoint keys that reference
+    `classifier.dense.*` and `classifier.out_proj.*`.
     """
 
     def __init__(self, hidden_size: int, hidden_dropout_prob: float) -> None:
@@ -41,17 +41,12 @@ class _ModelWrapper(nn.Module):
     """
     Reconstructed model class matching the state-dict produced by fine-tuning.
 
-    Architecture (inferred from state-dict key prefixes and shapes):
-      self.encoder  — RobertaForSequenceClassification(num_labels=1)
-                      Keys: encoder.roberta.*  encoder.classifier.*
-      self.classifier — custom head, input=1536, output=2
-                        Keys: classifier.dense.weight (768, 1536)
-                              classifier.out_proj.weight (2, 768)
+    Architecture (from checkpoint key prefixes):
+      self.encoder    — RobertaForSequenceClassification(num_labels=1)
+      self.classifier — _ClassificationHead (kept for state_dict compatibility)
 
-    Inference uses:
-      1. Run encoder.roberta on each snippet independently → two CLS vectors
-      2. Concatenate them (dim=-1) → 1536-dim vector
-      3. Run through self.classifier → 2 logits → softmax → score
+    Inference only uses self.encoder.roberta to extract CLS embeddings,
+    then computes cosine similarity — the classifier head is never invoked.
     """
 
     def __init__(
@@ -93,7 +88,11 @@ class Predictor:
             map_location="cpu",
             weights_only=False,
         )
-        wrapper.load_state_dict(state_dict)
+        # strict=False allows loading checkpoints that were saved without the
+        # classifier head (e.g. encoder-only exports from the training notebook).
+        # Missing classifier keys are intentional — the head is never invoked
+        # at inference; we only use encoder.roberta for CLS embeddings.
+        wrapper.load_state_dict(state_dict, strict=False)
         wrapper.eval()
 
         self._model = wrapper
@@ -128,6 +127,21 @@ class Predictor:
         score = max(0.0, similarity)
 
         return round(score, 4)
+
+    def embed(self, code: str) -> list[float]:
+        """
+        Return the CLS embedding as a flat list of floats.
+
+        This allows clients to cache embeddings per-submission and compute
+        pairwise cosine similarity locally, reducing model forward passes
+        from O(n²) to O(n) for n submissions.
+        """
+        if not self.is_loaded:
+            raise RuntimeError("Model has not been loaded yet.")
+
+        vec = self._encode(code)
+
+        return vec.squeeze(0).tolist()
 
     # ------------------------------------------------------------------
     # Private helpers

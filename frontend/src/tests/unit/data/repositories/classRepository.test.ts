@@ -102,6 +102,17 @@ describe("classRepository", () => {
         "Failed to create class",
       )
     })
+
+    it("throws a clear error when the response omits the class payload", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: { success: true },
+        status: 201,
+      })
+
+      await expect(classRepository.createNewClass(mockRequest)).rejects.toThrow(
+        "Failed to create class: missing class",
+      )
+    })
   })
 
   // ============================================================================

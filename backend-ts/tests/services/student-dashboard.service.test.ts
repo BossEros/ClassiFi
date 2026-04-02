@@ -23,6 +23,7 @@ describe("StudentDashboardService", () => {
   let mockAssignmentRepo: any
   let mockSubmissionRepo: any
   let mockUserRepo: any
+  let mockNotificationService: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,6 +33,7 @@ describe("StudentDashboardService", () => {
       getClassesByStudentWithDetails: vi.fn(),
       getStudentCount: vi.fn(),
       getClassByCode: vi.fn(),
+      getClassById: vi.fn(),
     }
 
     mockEnrollmentRepo = {
@@ -52,12 +54,18 @@ describe("StudentDashboardService", () => {
       getUserById: vi.fn(),
     }
 
+    mockNotificationService = {
+      createNotification: vi.fn().mockResolvedValue(null),
+      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+    }
+
     dashboardService = new StudentDashboardService(
       mockClassRepo,
       mockEnrollmentRepo,
       mockAssignmentRepo,
       mockSubmissionRepo,
       mockUserRepo,
+      mockNotificationService,
     )
   })
 
@@ -282,15 +290,36 @@ describe("StudentDashboardService", () => {
 
       mockClassRepo.getClassByCode.mockResolvedValue(mockClass)
       mockEnrollmentRepo.isEnrolled.mockResolvedValue(false)
-      mockEnrollmentRepo.enrollStudent.mockResolvedValue(undefined)
+      mockEnrollmentRepo.enrollStudent.mockResolvedValue({
+        id: 91,
+        studentId: 1,
+        classId: 1,
+      })
       mockClassRepo.getStudentCount.mockResolvedValue(11)
-      mockUserRepo.getUserById.mockResolvedValue(teacher)
+      mockUserRepo.getUserById
+        .mockResolvedValueOnce(teacher)
+        .mockResolvedValueOnce(
+          createMockUser({
+            id: 1,
+            firstName: "Test",
+            lastName: "Student",
+            email: "student@classifi.test",
+          }),
+        )
 
       const result = await dashboardService.joinClass(1, "ABC123")
 
       expect(result.id).toBe(1)
       expect(result.teacherName).toBe("Test Teacher")
       expect(mockEnrollmentRepo.enrollStudent).toHaveBeenCalledWith(1, 1)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        1,
+        "ENROLLMENT_CONFIRMED",
+        expect.objectContaining({
+          enrollmentId: 91,
+          classId: 1,
+        }),
+      )
     })
 
     it("should throw ClassNotFoundError when class code is invalid", async () => {

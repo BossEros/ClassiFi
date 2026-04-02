@@ -1,4 +1,8 @@
-- [x] Inspect frontend dashboard layout and profile dropdown layering behavior
-- [x] Update desktop profile dropdown positioning to avoid content overlap
-- [x] Add regression coverage for desktop profile dropdown behavior
-- [ ] Verify the frontend build passes
+- [x] Inspect the reported backend notification, frontend PDF, and API response issues
+- [x] Add shared handling for logged `Promise.allSettled` rejections
+- [x] Fix enrollment notification payload identifiers
+- [x] Fix similarity detection payload values
+- [x] Fix plagiarism PDF metadata and cross-class signal mapping
+- [x] Harden required frontend API payload extraction
+- [x] Add or update regression tests for the changed behavior
+- [ ] Verify backend and frontend checks pass in the full Vite/Vitest runners

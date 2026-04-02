@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
+import { Download, Loader2 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { CrossClassResultsSection } from "@/presentation/components/teacher/plagiarism"
 import { getAssignmentById } from "@/business/services/assignmentService"
@@ -25,6 +26,10 @@ export function CrossClassSimilarityPage() {
   const user = useAuthStore((state) => state.user)
 
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
+  const [downloadClassReportAction, setDownloadClassReportAction] = useState<{
+    action: () => Promise<void>
+    isDisabled: boolean
+  } | null>(null)
   const [shouldRunInitialAnalysis] = useState(() => {
     const navigationState =
       location.state as CrossClassSimilarityNavigationState | null
@@ -107,19 +112,40 @@ export function CrossClassSimilarityPage() {
   return (
     <DashboardLayout topBar={topBar}>
       <div className="w-full max-w-full space-y-6 xl:max-w-[1600px]">
-        <div className="border-b border-slate-200 pb-6">
-          <h1 className={dashboardTheme.pageTitle}>
-            Cross-Class Similarity Check
-          </h1>
-          <p className="mt-2 text-sm text-slate-500">
-            Compare submissions across your classes to detect similarity between
-            students in different sections with matching assignments.
-          </p>
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-6 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className={dashboardTheme.pageTitle}>
+              Cross-Class Similarity Check
+            </h1>
+            <p className="mt-2 text-sm text-slate-500">
+              Compare submissions across your classes to detect similarity between
+              students in different sections with matching assignments.
+            </p>
+          </div>
+
+          {downloadClassReportAction && (
+            <button
+              type="button"
+              onClick={() => void downloadClassReportAction.action()}
+              disabled={downloadClassReportAction.isDisabled}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {downloadClassReportAction.isDisabled ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span>
+                {downloadClassReportAction.isDisabled ? "Preparing Class PDF..." : "Download Cross-Class Report"}
+              </span>
+            </button>
+          )}
         </div>
 
         <CrossClassResultsSection
           assignmentId={parseInt(assignmentId, 10)}
           shouldRunInitialAnalysis={shouldRunInitialAnalysis}
+          setDownloadClassReportAction={setDownloadClassReportAction}
         />
       </div>
     </DashboardLayout>

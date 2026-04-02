@@ -1,4 +1,4 @@
-﻿import { apiClient } from "@/data/api/apiClient"
+﻿import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
 import type {
   AdminUser,
   AdminClass,
@@ -43,11 +43,7 @@ export async function getAllUsersWithPaginationAndFilters(filterOptions: {
     `/admin/users?${urlQueryParams.toString()}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch users")
 }
 
 export async function getAdminUserDetailsById(
@@ -57,11 +53,7 @@ export async function getAdminUserDetailsById(
     `/admin/users/${userId}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch user details")
 }
 
 export async function createNewUserAccount(
@@ -72,11 +64,7 @@ export async function createNewUserAccount(
     newUserData,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to create user")
 }
 
 export async function updateUserRoleById(
@@ -88,11 +76,7 @@ export async function updateUserRoleById(
     { role: newUserRole },
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to update user role")
 }
 
 export async function updateUserPersonalDetailsById(
@@ -104,11 +88,7 @@ export async function updateUserPersonalDetailsById(
     updatedPersonalDetails,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to update user details")
 }
 
 export async function updateUserEmailAddressById(
@@ -120,11 +100,7 @@ export async function updateUserEmailAddressById(
     { email: newEmailAddress },
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to update user email")
 }
 
 export async function toggleUserAccountStatusById(
@@ -135,11 +111,7 @@ export async function toggleUserAccountStatusById(
     {},
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to toggle user status")
 }
 
 export async function deleteUserAccountById(
@@ -149,11 +121,7 @@ export async function deleteUserAccountById(
     `/admin/users/${userId}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to delete user")
 }
 
 // ============ Analytics ============
@@ -161,11 +129,7 @@ export async function deleteUserAccountById(
 export async function getAdminDashboardStatistics(): Promise<AdminStatsResponse> {
   const apiResponse = await apiClient.get<AdminStatsResponse>("/admin/stats")
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch statistics")
 }
 
 export async function getRecentAdminActivityLog(
@@ -175,11 +139,7 @@ export async function getRecentAdminActivityLog(
     `/admin/activity?limit=${maximumActivityCount}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch activity log")
 }
 
 // ============ Class Management ============
@@ -214,11 +174,7 @@ export async function getAllClassesWithPaginationAndFilters(filterOptions: {
     `/admin/classes?${urlQueryParams.toString()}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch classes")
 }
 
 export async function getAdminClassDetailsById(
@@ -228,11 +184,7 @@ export async function getAdminClassDetailsById(
     `/admin/classes/${classId}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch class details")
 }
 
 export async function createNewClass(
@@ -243,11 +195,7 @@ export async function createNewClass(
     newClassData,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to create class")
 }
 
 export async function updateClassDetailsById(
@@ -259,11 +207,7 @@ export async function updateClassDetailsById(
     updatedClassData,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to update class")
 }
 
 export async function deleteClassById(classId: number): Promise<AdminResponse> {
@@ -271,11 +215,7 @@ export async function deleteClassById(classId: number): Promise<AdminResponse> {
     `/admin/classes/${classId}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to delete class")
 }
 
 export async function reassignClassTeacherById(
@@ -287,11 +227,7 @@ export async function reassignClassTeacherById(
     { teacherId: newTeacherId },
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to reassign class teacher")
 }
 
 export async function archiveClassById(
@@ -302,11 +238,7 @@ export async function archiveClassById(
     {},
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to archive class")
 }
 
 export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
@@ -314,11 +246,7 @@ export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
     "/admin/users/teachers",
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch teachers")
 }
 
 // ============ Enrollment Management ============
@@ -356,11 +284,7 @@ export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
     `/admin/enrollments?${urlQueryParams.toString()}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch enrollments")
 }
 
 export async function transferStudentBetweenClasses(
@@ -371,11 +295,7 @@ export async function transferStudentBetweenClasses(
     transferStudentData,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to transfer student")
 }
 
 // ============ Class Enrollment Management ============
@@ -387,11 +307,7 @@ export async function getEnrolledStudentsInClassById(
     `/admin/classes/${classId}/students`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch enrolled students")
 }
 
 export async function getAllAssignmentsInClassById(
@@ -401,11 +317,7 @@ export async function getAllAssignmentsInClassById(
     `/admin/classes/${classId}/assignments`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to fetch assignments")
 }
 
 export async function enrollStudentInClassById(
@@ -417,11 +329,7 @@ export async function enrollStudentInClassById(
     { studentId },
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to enroll student")
 }
 
 export async function unenrollStudentFromClassById(
@@ -432,11 +340,7 @@ export async function unenrollStudentFromClassById(
     `/admin/classes/${classId}/students/${studentId}`,
   )
 
-  if (apiResponse.error) {
-    throw new Error(apiResponse.error)
-  }
-
-  return apiResponse.data!
+  return unwrapApiResponse(apiResponse, "Failed to unenroll student")
 }
 
 

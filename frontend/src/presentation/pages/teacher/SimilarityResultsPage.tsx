@@ -45,6 +45,7 @@ import { useToastStore } from "@/shared/store/useToastStore"
 import type { AssignmentDetail } from "@/business/models/assignment/types"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { getThresholdQualifiedPairs } from "@/presentation/utils/plagiarismClusterUtils"
+import { detectLanguageFromFilename } from "@/shared/utils/languageDetection"
 
 interface LocationState {
   results: AnalyzeResponse
@@ -52,33 +53,6 @@ interface LocationState {
 
 /** Code comparison view mode */
 type CodeViewMode = "match" | "diff"
-
-/**
- * Detect the syntax highlighting language from a filename extension.
- */
-function detectLanguage(filename: string): string {
-  const extension = filename.split(".").pop()?.toLowerCase() || ""
-  const extensionMap: Record<string, string> = {
-    java: "java",
-    py: "python",
-    js: "javascript",
-    ts: "typescript",
-    tsx: "typescript",
-    jsx: "javascript",
-    cpp: "cpp",
-    c: "c",
-    h: "c",
-    cs: "csharp",
-    rb: "ruby",
-    go: "go",
-    rs: "rust",
-    php: "php",
-    swift: "swift",
-    kt: "kotlin",
-    scala: "scala",
-  }
-  return extensionMap[extension] || "plaintext"
-}
 
 function buildClassReportFileName(
   assignmentName: string | undefined,
@@ -317,7 +291,7 @@ export function SimilarityResultsPage() {
   const detectedLanguage = useMemo(() => {
     if (!pairDetails) return "plaintext"
 
-    return detectLanguage(pairDetails.leftFile.filename)
+    return detectLanguageFromFilename(pairDetails.leftFile.filename)
   }, [pairDetails])
 
   const suspiciousPairCount = useMemo(() => {

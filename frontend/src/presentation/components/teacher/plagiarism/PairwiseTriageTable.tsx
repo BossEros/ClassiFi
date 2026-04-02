@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { ArrowDown, ArrowUp, CircleHelp } from "lucide-react"
+import { ArrowDown, ArrowRight, ArrowUp, CircleHelp } from "lucide-react"
 import type { PairResponse } from "@/business/services/plagiarismService"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
@@ -80,6 +80,10 @@ function getPairStructuralSimilarityRatio(pair: PairResponse): number {
 
 function getPairSemanticSimilarityRatio(pair: PairResponse): number {
   return normalizeSimilarityToRatio(pair.semanticScore)
+}
+
+function formatSimilarityPercentLabel(similarityRatio: number): string {
+  return `${(similarityRatio * 100).toFixed(0)}%`
 }
 
 function getSignalLabel(level: SimilaritySignalLevel): string {
@@ -410,22 +414,16 @@ export function PairwiseTriageTable({
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <div className="flex justify-center">
-                            <SimilarityBadge
-                              similarity={structuralSimilarity}
-                              size="small"
-                              showLabel={false}
-                            />
-                          </div>
+                          <span className="text-xs text-slate-600">
+                            {formatSimilarityPercentLabel(
+                              structuralSimilarity,
+                            )}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <div className="flex justify-center">
-                            <SimilarityBadge
-                              similarity={semanticSimilarity}
-                              size="small"
-                              showLabel={false}
-                            />
-                          </div>
+                          <span className="text-xs text-slate-600">
+                            {formatSimilarityPercentLabel(semanticSimilarity)}
+                          </span>
                         </td>
                         <td className="px-6 py-4 text-center text-sm text-slate-600">
                           <QualitativeSignalBadge
@@ -451,9 +449,10 @@ export function PairwiseTriageTable({
                               event.stopPropagation()
                               onPairSelect(pair)
                             }}
-                            className="inline-flex items-center justify-center rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-xs font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 active:bg-indigo-800"
                           >
-                            Compare Code
+                            Compare
+                            <ArrowRight className="h-3 w-3" />
                           </button>
                         </td>
                       </tr>

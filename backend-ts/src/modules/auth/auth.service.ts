@@ -6,8 +6,10 @@ import {
 } from "@/modules/users/user.repository.js"
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { settlePromisesAndLogRejections } from "@/shared/utils.js"
 import {
   UserAlreadyExistsError,
   InvalidCredentialsError,
@@ -92,6 +94,8 @@ export class AuthService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.adapters.supabaseAuth)
     private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
   ) {}
 
   /**
@@ -103,26 +107,31 @@ export class AuthService {
   async registerUser(data: RegisterUserServiceDTO): Promise<AuthResult> {
     const { email, password, firstName, lastName, role } = data
 
-    // Validate inputs
+    // STEP 1: Validate that the role is a registerable role (student or teacher)
     this.validateRegistrationData(role)
 
-    // Check for existing user
+    // STEP 2: Ensure the email address is not already registered
     await this.ensureEmailNotExists(email)
 
-    // Create Supabase auth user
+    // STEP 3: Create the user in Supabase Auth and receive an auth token
     const { user: supabaseUser, token } = await this.createSupabaseUser(
       email,
       password,
       { firstName, lastName, role },
     )
 
-    // Create local database user with rollback on failure
+    // STEP 4: Create the local database user, with automatic Supabase rollback on failure
     const user = await this.createLocalUserWithRollback(
       supabaseUser.id,
       email,
       firstName,
       lastName,
       role,
+    )
+
+    // STEP 5: Notify admin users about the new registration (fire-and-forget)
+    this.notifyAdminsOfNewRegistration(user).catch((error) =>
+      logger.error("Failed to send new user registration notifications to admins", { userId: user.id, error }),
     )
 
     return {
@@ -384,6 +393,7 @@ export class AuthService {
    * @throws {UserNotFoundError} If user not in local database
    */
   async loginUser(email: string, password: string): Promise<AuthResult> {
+    // STEP 1: Authenticate with Supabase and retrieve the access token
     const { accessToken, user: supabaseUser } =
       await this.authAdapter.signInWithPassword(email, password)
 
@@ -391,12 +401,14 @@ export class AuthService {
       throw new InvalidCredentialsError()
     }
 
+    // STEP 2: Find the matching local user record by Supabase ID
     const user = await this.userRepo.getUserBySupabaseId(supabaseUser.id)
 
     if (!user) {
       throw new UserNotFoundError(supabaseUser.id)
     }
 
+    // STEP 3: Return the user profile DTO and access token
     return {
       userData: toUserDTO(user),
       token: accessToken,
@@ -428,6 +440,38 @@ export class AuthService {
     await this.authAdapter.resetPasswordForEmail(
       email,
       buildFrontendAuthRedirectUrl("/reset-password"),
+    )
+  }
+
+  /**
+   * Notify all admin users about a new user registration.
+   *
+   * @param user - The newly registered user.
+   */
+  private async notifyAdminsOfNewRegistration(user: User): Promise<void> {
+    const adminUsers = await this.userRepo.getUsersByRole("admin")
+
+    if (adminUsers.length === 0) {
+      return
+    }
+
+    const notificationData = {
+      userId: user.id,
+      userName: `${user.firstName} ${user.lastName}`,
+      userEmail: user.email,
+      userRole: user.role,
+    }
+
+    const notificationPromises = adminUsers.flatMap((admin) => [
+      this.notificationService.createNotification(admin.id, "NEW_USER_REGISTERED", notificationData),
+      this.notificationService.sendEmailNotificationIfEnabled(admin.id, "NEW_USER_REGISTERED", notificationData),
+    ])
+
+    await settlePromisesAndLogRejections(
+      notificationPromises,
+      logger,
+      "Failed to notify admins of new registration",
+      { userId: user.id },
     )
   }
 }

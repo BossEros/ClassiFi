@@ -3,6 +3,7 @@ import {
   PlagiarismService,
   type AnalyzeRequest,
 } from "../../src/modules/plagiarism/plagiarism.service.js"
+import { createPlagiarismDetector } from "../../src/modules/plagiarism/plagiarism.mapper.js"
 import { createMockAssignment } from "../utils/factories.js"
 import {
   AssignmentNotFoundError,
@@ -24,7 +25,13 @@ vi.mock("../../src/shared/config.js", () => ({
 // Mock new services
 vi.mock("../../src/modules/plagiarism/plagiarism-persistence.service.js")
 vi.mock("../../src/modules/plagiarism/plagiarism-submission-file.service.js")
-vi.mock("../../src/modules/plagiarism/plagiarism-detector.factory.js")
+vi.mock("../../src/modules/plagiarism/plagiarism.mapper.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/modules/plagiarism/plagiarism.mapper.js")>()
+  return {
+    ...actual,
+    createPlagiarismDetector: vi.fn(),
+  }
+})
 
 // Mock PlagiarismDetector
 const mockReport = {
@@ -89,7 +96,6 @@ describe("PlagiarismService", () => {
   let mockAssignmentRepo: any
   let mockPersistenceService: any
   let mockFileService: any
-  let mockDetectorFactory: any
   let mockSimilarityPenaltyService: any
   let mockSemanticClient: any
 
@@ -114,9 +120,7 @@ describe("PlagiarismService", () => {
       downloadSubmissionFiles: vi.fn(),
     }
 
-    mockDetectorFactory = {
-      create: vi.fn().mockReturnValue(mockDetector),
-    }
+    vi.mocked(createPlagiarismDetector).mockReturnValue(mockDetector as any)
 
     mockSimilarityPenaltyService = {
       applyAssignmentPenaltyFromReport: vi.fn().mockResolvedValue(undefined),
@@ -124,6 +128,7 @@ describe("PlagiarismService", () => {
     }
 
     mockSemanticClient = {
+      getEmbedding: vi.fn().mockResolvedValue(null),
       getSemanticScore: vi.fn().mockResolvedValue(0),
       healthCheck: vi.fn(),
     }
@@ -133,7 +138,6 @@ describe("PlagiarismService", () => {
 
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
-      mockDetectorFactory,
       mockFileService,
       mockPersistenceService,
       mockSimilarityPenaltyService,
@@ -162,7 +166,7 @@ describe("PlagiarismService", () => {
       expect(result.summary).toBeDefined()
       expect(result.pairs).toHaveLength(1)
       expect(result.pairs[0].hybridScore).toBe(0.8)
-      expect(mockDetectorFactory.create).toHaveBeenCalled()
+      expect(createPlagiarismDetector).toHaveBeenCalled()
       expect(mockDetector.analyze).toHaveBeenCalled()
     })
 
@@ -237,7 +241,7 @@ describe("PlagiarismService", () => {
         mockPersistenceService.getReusableAssignmentReport,
       ).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).toHaveBeenCalledWith(1)
-      expect(mockDetectorFactory.create).toHaveBeenCalled()
+      expect(createPlagiarismDetector).toHaveBeenCalled()
       expect(mockDetector.analyze).toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).toHaveBeenCalled()
       expect(
@@ -289,7 +293,7 @@ describe("PlagiarismService", () => {
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
       mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
       mockDetector.analyze.mockResolvedValueOnce(lowSemanticReport)
-      mockSemanticClient.getSemanticScore.mockResolvedValueOnce(0)
+      mockSemanticClient.getEmbedding.mockResolvedValue(null)
 
       const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
@@ -357,7 +361,7 @@ describe("PlagiarismService", () => {
         mockPersistenceService.getReusableAssignmentReport,
       ).toHaveBeenCalledWith(1)
       expect(mockFileService.fetchSubmissionFiles).not.toHaveBeenCalled()
-      expect(mockDetectorFactory.create).not.toHaveBeenCalled()
+      expect(createPlagiarismDetector).not.toHaveBeenCalled()
       expect(mockPersistenceService.persistReport).not.toHaveBeenCalled()
     })
 
@@ -411,18 +415,20 @@ describe("PlagiarismService", () => {
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
       mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
       mockDetector.analyze.mockResolvedValueOnce(throttlingReport)
-      mockSemanticClient.getSemanticScore.mockImplementation(async () => {
+      mockSemanticClient.getEmbedding.mockImplementation(async () => {
         inFlightRequests += 1
         maxInFlightRequests = Math.max(maxInFlightRequests, inFlightRequests)
         await new Promise((resolve) => setTimeout(resolve, 5))
         inFlightRequests -= 1
-        return 0.6
+        return Array(768).fill(0).map(() => Math.random())
       })
 
       await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
-      expect(mockSemanticClient.getSemanticScore).toHaveBeenCalledTimes(
-        pairCount,
+      // With embedding caching, each unique submission is embedded once.
+      // 12 pairs with unique left/right IDs = 24 unique submissions.
+      expect(mockSemanticClient.getEmbedding).toHaveBeenCalledTimes(
+        pairCount * 2,
       )
       expect(maxInFlightRequests).toBeLessThanOrEqual(4)
     })

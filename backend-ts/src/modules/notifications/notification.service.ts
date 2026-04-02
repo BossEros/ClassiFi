@@ -51,14 +51,18 @@ export class NotificationService {
     type: T,
     data: PayloadFor<T>,
   ): Promise<Notification | null> {
+    // STEP 1: Load the notification type configuration and extract template metadata
     const config = this.getNotificationConfig(type)
     const metadata = this.extractMetadata(config, data, type)
+
+    // STEP 2: Fetch the target user — silently bail if they don’t exist
     const user = await this.userRepo.getUserById(userId)
 
     if (!user) {
       return null
     }
 
+    // STEP 3: Resolve enabled channels by intersecting user preferences with type-allowed channels
     const preferredChannels = this.getPreferredChannels(user)
     const enabledChannels = this.getEffectiveChannels(
       preferredChannels,
@@ -69,10 +73,12 @@ export class NotificationService {
       return null
     }
 
+    // STEP 4: Check the IN_APP channel is enabled — bail if the user has it disabled
     if (!enabledChannels.includes("IN_APP")) {
       return null
     }
 
+    // STEP 5: Persist the in-app notification record to the database
     return this.createNotificationRecord(userId, type, config, data, metadata)
   }
 
@@ -106,13 +112,17 @@ export class NotificationService {
     type: T,
     data: PayloadFor<T>,
   ): Promise<void> {
+    // STEP 1: Load the notification type configuration
     const config = this.getNotificationConfig(type)
+
+    // STEP 2: Fetch the user — bail if they have no email address on record
     const user = await this.userRepo.getUserById(userId)
 
     if (!user?.email) {
       return
     }
 
+    // STEP 3: Resolve effective channels and check if EMAIL is enabled
     const preferredChannels = this.getPreferredChannels(user)
     const enabledChannels = this.getEffectiveChannels(
       preferredChannels,
@@ -123,6 +133,7 @@ export class NotificationService {
       return
     }
 
+    // STEP 4: Dispatch the email notification
     await this.sendEmailNotification(user, type, config, data)
   }
 

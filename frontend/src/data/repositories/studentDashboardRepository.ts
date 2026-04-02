@@ -1,4 +1,4 @@
-import { apiClient } from "@/data/api/apiClient"
+import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
 import type {
   ClassResponse,
   AssignmentResponse,
@@ -31,11 +31,7 @@ export async function getCompleteDashboardDataForStudentId(
     `/student/dashboard/${studentId}?enrolledClassesLimit=${maximumEnrolledClassesCount}&pendingAssignmentsLimit=${maximumPendingAssignmentsCount}`,
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to fetch dashboard data")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to fetch dashboard data")
 }
 
 export async function getAllEnrolledClassesForStudentId(
@@ -49,11 +45,7 @@ export async function getAllEnrolledClassesForStudentId(
 
   const apiResponse = await apiClient.get<ClassListResponse>(apiUrl)
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to fetch enrolled classes")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to fetch enrolled classes")
 }
 
 export async function getAllPendingAssignmentsForStudentId(
@@ -64,11 +56,7 @@ export async function getAllPendingAssignmentsForStudentId(
     `/student/dashboard/${studentId}/assignments?limit=${maximumAssignmentsCount}`,
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to fetch pending assignments")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to fetch pending assignments")
 }
 
 export async function enrollStudentInClassWithCode(
@@ -83,11 +71,7 @@ export async function enrollStudentInClassWithCode(
     },
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to join class")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to join class")
 }
 
 export async function unenrollStudentFromClassById(
@@ -102,9 +86,5 @@ export async function unenrollStudentFromClassById(
     },
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to leave class")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to leave class")
 }

@@ -1,4 +1,4 @@
-import { apiClient } from "@/data/api/apiClient"
+import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
 import type {
   TeacherDashboardResponse,
   TeacherDashboardClassListResponse,
@@ -25,11 +25,7 @@ export async function getCompleteDashboardDataForTeacherId(
     `/teacher/dashboard/${teacherId}?recentClassesLimit=${maximumRecentClassesCount}&pendingTasksLimit=${maximumPendingTasksCount}`,
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to fetch dashboard data")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to fetch dashboard data")
 }
 
 export async function getRecentClassesForTeacherId(
@@ -40,11 +36,7 @@ export async function getRecentClassesForTeacherId(
     `/teacher/dashboard/${teacherId}/classes?limit=${maximumClassesCount}`,
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to fetch recent classes")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to fetch recent classes")
 }
 
 export async function getPendingTasksForTeacherId(
@@ -55,9 +47,5 @@ export async function getPendingTasksForTeacherId(
     `/teacher/dashboard/${teacherId}/tasks?limit=${maximumTasksCount}`,
   )
 
-  if (apiResponse.error || !apiResponse.data) {
-    throw new Error(apiResponse.error || "Failed to fetch pending tasks")
-  }
-
-  return apiResponse.data
+  return unwrapApiResponse(apiResponse, "Failed to fetch pending tasks")
 }
