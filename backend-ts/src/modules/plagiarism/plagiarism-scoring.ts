@@ -140,23 +140,12 @@ export function summarizePairSimilarityScores(
 }
 
 /**
- * Format a pair-level similarity score for persistence in numeric(7,6) columns.
+ * Format a similarity score as a fixed-point string for database storage.
  *
- * @param similarityScore - The similarity score to format.
- * @returns A 6-decimal fixed-point string.
+ * @param score - The similarity score to format.
+ * @param decimals - Number of decimal places (6 for pair-level, 4 for report-level).
+ * @returns A fixed-point string with the specified precision.
  */
-export function formatPairSimilarityScoreForStorage(
-  similarityScore: number,
-): string {
-  return similarityScore.toFixed(6)
-}
-
-/**
- * Format a report-level similarity score for persistence in summary columns.
- *
- * @param similarityScore - The summary similarity score to format.
- * @returns A 4-decimal fixed-point string.
- */
-export function formatReportSimilarityScore(similarityScore: number): string {
-  return similarityScore.toFixed(4)
+export function formatSimilarityScore(score: number, decimals: number): string {
+  return score.toFixed(decimals)
 }

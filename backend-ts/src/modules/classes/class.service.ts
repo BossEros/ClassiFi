@@ -4,6 +4,7 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import { toClassDTO, type ClassDTO } from "@/modules/classes/class.mapper.js"
 import {
   toAssignmentDTO,
@@ -11,7 +12,6 @@ import {
 } from "@/modules/assignments/assignment.mapper.js"
 import { generateUniqueClassCode } from "@/modules/classes/class-code.util.js"
 import { StorageService } from "@/services/storage.service.js"
-import type { ClassSchedule } from "@/models/index.js"
 import {
   ClassNotFoundError,
   NotClassOwnerError,
@@ -20,6 +20,11 @@ import {
   BadRequestError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
+import {
+  fireAndForget,
+  filterUndefined,
+  settlePromisesAndLogRejections,
+} from "@/shared/utils.js"
 import type {
   CreateClassServiceDTO,
   RemoveStudentServiceDTO,
@@ -42,6 +47,8 @@ export class ClassService {
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.services.storage) private storageService: StorageService,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
   ) {}
 
   /** Generate a unique class code using shared utility */
@@ -51,13 +58,17 @@ export class ClassService {
 
   /** Create a new class */
   async createClass(data: CreateClassServiceDTO): Promise<ClassDTO> {
+    // STEP 1: Verify the user exists and has the teacher role
     const teacher = await this.userRepo.getUserById(data.teacherId)
 
     if (!teacher || teacher.role !== "teacher") {
       throw new InvalidRoleError("teacher")
     }
 
+    // STEP 2: Create the class record in the database
     const newClass = await this.classRepo.createClass(data)
+
+    // STEP 3: Fetch student count for the response DTO (always 0 for a brand-new class)
     const studentCount = await this.classRepo.getStudentCount(newClass.id)
 
     return toClassDTO(newClass, { studentCount })
@@ -102,6 +113,29 @@ export class ClassService {
     )
   }
 
+  /**
+   * Verify that a class exists and belongs to the given teacher.
+   *
+   * @param classId - The class ID to look up.
+   * @param teacherId - The teacher who must own the class.
+   * @returns The class record.
+   * @throws ClassNotFoundError if the class does not exist.
+   * @throws NotClassOwnerError if the class belongs to another teacher.
+   */
+  private async ensureClassOwnership(classId: number, teacherId: number) {
+    const classData = await this.classRepo.getClassById(classId)
+
+    if (!classData) {
+      throw new ClassNotFoundError(classId)
+    }
+
+    if (classData.teacherId !== teacherId) {
+      throw new NotClassOwnerError()
+    }
+
+    return classData
+  }
+
   /** Update a class */
   async updateClass(data: UpdateClassServiceDTO): Promise<ClassDTO> {
     const {
@@ -115,38 +149,20 @@ export class ClassService {
       schedule,
     } = data
 
-    const existingClass = await this.classRepo.getClassById(classId)
+    // STEP 1: Verify the class exists and the requesting teacher owns it
+    await this.ensureClassOwnership(classId, teacherId)
 
-    if (!existingClass) {
-      throw new ClassNotFoundError(classId)
-    }
+    // STEP 2: Build the update payload using only the fields that were explicitly provided
+    const updates = filterUndefined({ className, description, isActive, semester, academicYear, schedule })
 
-    if (existingClass.teacherId !== teacherId) {
-      throw new NotClassOwnerError()
-    }
-
-    const updates: Partial<{
-      className: string
-      description: string | null
-      isActive: boolean
-      semester: number
-      academicYear: string
-      schedule: ClassSchedule
-    }> = {}
-
-    if (className !== undefined) updates.className = className
-    if (description !== undefined) updates.description = description
-    if (isActive !== undefined) updates.isActive = isActive
-    if (semester !== undefined) updates.semester = semester
-    if (academicYear !== undefined) updates.academicYear = academicYear
-    if (schedule !== undefined) updates.schedule = schedule
-
+    // STEP 3: Persist the changes to the database
     const updatedClass = await this.classRepo.updateClass(classId, updates)
 
     if (!updatedClass) {
       throw new ClassNotFoundError(classId)
     }
 
+    // STEP 4: Fetch current student count and return the updated class DTO
     const studentCount = await this.classRepo.getStudentCount(classId)
 
     return toClassDTO(updatedClass, { studentCount })
@@ -154,16 +170,10 @@ export class ClassService {
 
   /** Delete a class */
   async deleteClass(classId: number, teacherId: number): Promise<void> {
-    const existingClass = await this.classRepo.getClassById(classId)
+    // STEP 1: Verify the class exists and the requesting teacher owns it
+    await this.ensureClassOwnership(classId, teacherId)
 
-    if (!existingClass) {
-      throw new ClassNotFoundError(classId)
-    }
-
-    if (existingClass.teacherId !== teacherId) {
-      throw new NotClassOwnerError()
-    }
-
+    // STEP 2: Delete the class and all its associated files from storage
     await this.performClassDeletion(classId)
   }
 
@@ -207,6 +217,7 @@ export class ClassService {
    * Shared helper to safely delete a class and its associated files.
    */
   private async performClassDeletion(classId: number): Promise<void> {
+    // STEP 1: Delete all student submission files from storage (best-effort, errors are non-fatal)
     try {
       const submissions = await this.submissionRepo.getSubmissionsByClass(classId)
 
@@ -218,6 +229,7 @@ export class ClassService {
       logger.error("Error cleaning up class submission files:", error)
     }
 
+    // STEP 2: Delete all assignment instruction images from storage (best-effort, errors are non-fatal)
     try {
       const classAssignments =
         await this.assignmentRepo.getAssignmentsByClassId(classId, false)
@@ -235,6 +247,7 @@ export class ClassService {
       logger.error("Error cleaning up assignment instructions images:", error)
     }
 
+    // STEP 3: Delete the class record from the database (cascades to enrollments, assignments, etc.)
     await this.classRepo.deleteClass(classId)
   }
 
@@ -317,27 +330,72 @@ export class ClassService {
   async removeStudent(data: RemoveStudentServiceDTO): Promise<void> {
     const { classId, studentId, teacherId } = data
 
-    const existingClass = await this.classRepo.getClassById(classId)
+    // STEP 1: Verify the class exists and the requesting teacher owns it
+    const existingClass = await this.ensureClassOwnership(classId, teacherId)
 
-    if (!existingClass) {
-      throw new ClassNotFoundError(classId)
-    }
-
-    if (existingClass.teacherId !== teacherId) {
-      throw new NotClassOwnerError()
-    }
-
+    // STEP 2: Confirm the student is currently enrolled in the class
     const isStudentInClass = await this.enrollmentRepo.isEnrolled(studentId, classId)
 
     if (!isStudentInClass) {
       throw new StudentNotInClassError()
     }
 
+    // STEP 3: Remove the enrollment record from the database
     const removed = await this.enrollmentRepo.unenrollStudent(studentId, classId)
 
     if (!removed) {
       throw new BadRequestError("Failed to remove student from class")
     }
+
+    // STEP 4: Notify student and teacher (fire-and-forget — does not block the response)
+    const [teacher, student] = await Promise.all([
+      this.userRepo.getUserById(teacherId),
+      this.userRepo.getUserById(studentId),
+    ])
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
+    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
+    const studentEmail = student?.email ?? ""
+
+    // Send REMOVED_FROM_CLASS to student
+    const removedData = {
+      classId,
+      className: existingClass.className,
+      instructorName: teacherName,
+    }
+
+    fireAndForget(
+      settlePromisesAndLogRejections([
+        this.notificationService.createNotification(studentId, "REMOVED_FROM_CLASS", removedData),
+        this.notificationService.sendEmailNotificationIfEnabled(studentId, "REMOVED_FROM_CLASS", removedData),
+      ], logger, "Failed to send removal notification to student", {
+        studentId,
+        classId,
+      }),
+      logger,
+      "Failed to send removal notification to student",
+      { studentId, classId },
+    )
+
+    // Send STUDENT_UNENROLLED to teacher
+    const unenrolledData = {
+      classId,
+      className: existingClass.className,
+      studentName,
+      studentEmail,
+    }
+
+    fireAndForget(
+      settlePromisesAndLogRejections([
+        this.notificationService.createNotification(teacherId, "STUDENT_UNENROLLED", unenrolledData),
+        this.notificationService.sendEmailNotificationIfEnabled(teacherId, "STUDENT_UNENROLLED", unenrolledData),
+      ], logger, "Failed to send unenrollment notification to teacher", {
+        teacherId,
+        classId,
+      }),
+      logger,
+      "Failed to send unenrollment notification to teacher",
+      { teacherId, classId },
+    )
   }
 }
 

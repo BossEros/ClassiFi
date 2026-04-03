@@ -122,7 +122,24 @@ export function useAssignmentSubmissionFlow({
     setSelectedFile(file)
   }
 
-  // Fetch test results with retry
+  /**
+   * Wait for the given delay, but resolve immediately if the signal is aborted.
+   */
+  const abortableDelay = (ms: number, signal: AbortSignal): Promise<void> => {
+    return new Promise<void>((resolve) => {
+      if (signal.aborted) { resolve(); return }
+
+      const timeoutId = setTimeout(resolve, ms)
+      timeoutIdsRef.current.push(timeoutId)
+
+      signal.addEventListener("abort", () => { clearTimeout(timeoutId); resolve() }, { once: true })
+    })
+  }
+
+  /**
+   * Poll for test results with retries (up to 10 attempts, 1s apart).
+   * Returns true if results were loaded, false if aborted or all retries exhausted.
+   */
   const fetchTestResultsWithRetry = async (
     submissionId: number,
     signal: AbortSignal,
@@ -131,55 +148,20 @@ export function useAssignmentSubmissionFlow({
     const retryDelayMs = 1000
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      if (signal.aborted) {
-        return false
-      }
+      if (signal.aborted) return false
 
       try {
         const testResults = await getTestResultsForSubmission(submissionId)
 
-        if (!signal.aborted) {
-          setSubmissionTestResults(testResults)
-          return true
-        }
+        if (signal.aborted) return false
 
-        return false
-      } catch (testResultsError) {
-        console.error(
-          `Attempt ${attempt} failed to load submission test results`,
-          testResultsError,
-        )
+        setSubmissionTestResults(testResults)
+        return true
+      } catch (error) {
+        console.error(`Attempt ${attempt}/${maxRetries} failed to load test results`, error)
 
-        if (attempt === maxRetries) {
-          if (!signal.aborted) {
-            console.error(
-              "Failed to load test results after all retries",
-              testResultsError,
-            )
-          }
-          return false
-        }
-
-        if (!signal.aborted) {
-          await new Promise<void>((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-              if (!signal.aborted) {
-                resolve()
-              } else {
-                reject(new Error("Aborted"))
-              }
-            }, retryDelayMs)
-
-            timeoutIdsRef.current.push(timeoutId)
-            signal.addEventListener(
-              "abort",
-              () => {
-                clearTimeout(timeoutId)
-                reject(new Error("Aborted"))
-              },
-              { once: true },
-            )
-          })
+        if (attempt < maxRetries) {
+          await abortableDelay(retryDelayMs, signal)
         }
       }
     }
@@ -255,40 +237,24 @@ export function useAssignmentSubmissionFlow({
       // Clear submission form
       clearSubmissionForm()
 
-      // Create abort controller for test results
+      // Create abort controller for test results polling
       submissionAbortRef.current = new AbortController()
       const signal = submissionAbortRef.current.signal
 
-      // Clear timeout IDs
       timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
       timeoutIdsRef.current = []
 
-      // Try to fetch test results with retry
-      try {
-        const didLoadTestResults = await fetchTestResultsWithRetry(
-          submission.id,
-          signal,
-        )
+      const didLoadTestResults = await fetchTestResultsWithRetry(submission.id, signal)
 
-        // Handle test results loading
-        if (!didLoadTestResults && !signal.aborted) {
-          setResultsError(
-            "Failed to load test results after multiple attempts. Please refresh the page.",
-          )
-          showToast(
-            "Submission successful, but test results failed to load",
-            "error",
-          )
-        } else if (didLoadTestResults) {
-          showToast("Assignment submitted successfully!")
-        }
-      } catch (abortError) {
-        if (abortError instanceof Error && abortError.message !== "Aborted") {
-          throw abortError
-        }
-      } finally {
-        timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
-        timeoutIdsRef.current = []
+      // Clean up timeout references
+      timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
+      timeoutIdsRef.current = []
+
+      if (didLoadTestResults) {
+        showToast("Assignment submitted successfully!")
+      } else if (!signal.aborted) {
+        setResultsError("Failed to load test results after multiple attempts. Please refresh the page.")
+        showToast("Submission successful, but test results failed to load", "error")
       }
     } catch (submissionError) {
       console.error("Failed to submit assignment:", submissionError)
@@ -313,44 +279,18 @@ export function useAssignmentSubmissionFlow({
     }
   }
 
-  // Toggle preview test expand
-  const togglePreviewTestExpand = (index: number) => {
-    setExpandedPreviewTests((previousExpandedTests) => {
-      const nextExpandedTests = new Set(previousExpandedTests)
-      if (nextExpandedTests.has(index)) {
-        nextExpandedTests.delete(index)
-      } else {
-        nextExpandedTests.add(index)
-      }
-      return nextExpandedTests
+  // Shared toggle helper for test expand/collapse state
+  const toggleSetItem = (setter: Dispatch<SetStateAction<Set<number>>>, index: number) => {
+    setter((previous) => {
+      const next = new Set(previous)
+      if (next.has(index)) { next.delete(index) } else { next.add(index) }
+      return next
     })
   }
 
-  // Toggle submission test expand
-  const toggleSubmissionTestExpand = (index: number) => {
-    setExpandedSubmissionTests((previousExpandedTests) => {
-      const nextExpandedTests = new Set(previousExpandedTests)
-      if (nextExpandedTests.has(index)) {
-        nextExpandedTests.delete(index)
-      } else {
-        nextExpandedTests.add(index)
-      }
-      return nextExpandedTests
-    })
-  }
-
-  // Toggle initial test expand
-  const toggleInitialTestExpand = (index: number) => {
-    setExpandedInitialTests((previousExpandedTests) => {
-      const nextExpandedTests = new Set(previousExpandedTests)
-      if (nextExpandedTests.has(index)) {
-        nextExpandedTests.delete(index)
-      } else {
-        nextExpandedTests.add(index)
-      }
-      return nextExpandedTests
-    })
-  }
+  const togglePreviewTestExpand = (index: number) => toggleSetItem(setExpandedPreviewTests, index)
+  const toggleSubmissionTestExpand = (index: number) => toggleSetItem(setExpandedSubmissionTests, index)
+  const toggleInitialTestExpand = (index: number) => toggleSetItem(setExpandedInitialTests, index)
 
   // Handle run preview tests
   const handleRunPreviewTests = async () => {

@@ -90,9 +90,11 @@ export class CodeTestService {
   async runTestsForSubmission(
     submissionId: number,
   ): Promise<TestExecutionSummary> {
+    // STEP 1: Fetch the submission record and its parent assignment
     const { submission, assignment } =
       await this.fetchSubmissionData(submissionId)
 
+    // STEP 2: Load test cases — if none exist, award full marks and return immediately
     const testCases = await this.testCaseRepo.getByAssignmentId(
       submission.assignmentId,
     )
@@ -101,11 +103,13 @@ export class CodeTestService {
       return this.handleNoTestCases(submissionId, assignment.totalScore ?? 100)
     }
 
+    // STEP 3: Download and preprocess the submitted source code
     const sourceCode = await this.prepareSourceCode(
       submission.filePath,
       assignment.programmingLanguage,
     )
 
+    // STEP 4: Execute all test cases against the source code via Judge0
     const executionResults = await this.executeTests(
       sourceCode,
       testCases,
@@ -113,11 +117,14 @@ export class CodeTestService {
       submission.filePath,
     )
 
+    // STEP 5: Persist the execution results to the database
     await this.saveTestResults(submissionId, testCases, executionResults)
 
+    // STEP 6: Calculate the aggregate pass/fail score
     const { passed, total, percentage } =
       await this.testResultRepo.calculateScore(submissionId)
 
+    // STEP 7: Update the submission grade and notify the student
     await this.updateGradeAndNotify(
       submissionId,
       submission,
@@ -126,6 +133,7 @@ export class CodeTestService {
       total,
     )
 
+    // STEP 8: Build and return the execution summary
     const results = this.buildResultDetails(testCases, executionResults)
 
     return {

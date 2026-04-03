@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, type MouseEvent as ReactMouseEvent } 
 import { createPortal } from "react-dom"
 import { useNavigate, useParams } from "react-router-dom"
 import {
-  AlertCircle,
   AlertTriangle,
   Archive,
   BookOpen,
@@ -32,6 +31,7 @@ import { Avatar } from "@/presentation/components/ui/Avatar"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
+import { AdminDeleteClassModal } from "@/presentation/components/admin/AdminDeleteClassModal"
 import {
   addStudentToClass,
   archiveClass,
@@ -280,232 +280,6 @@ function AdminAddStudentModal({
             )}
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-interface AdminDeleteClassModalProps {
-  onClose: () => void
-  onConfirm: () => Promise<void>
-  classData: AdminClass | null
-}
-
-function AdminDeleteClassModal({
-  onClose,
-  onConfirm,
-  classData,
-}: AdminDeleteClassModalProps) {
-  const [confirmationValue, setConfirmationValue] = useState("")
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [modalStep, setModalStep] = useState<"warning" | "confirm">("warning")
-
-
-  useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isDeleting) {
-        onClose()
-      }
-    }
-
-      document.addEventListener("keydown", handleEscape)
-      document.body.style.overflow = "hidden"
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape)
-      document.body.style.overflow = "unset"
-    }
-  }, [isDeleting, onClose])
-
-  const handleDelete = async () => {
-    setErrorMessage(null)
-    setIsDeleting(true)
-
-    try {
-      await onConfirm()
-      onClose()
-    } catch (requestError) {
-      setErrorMessage(
-        requestError instanceof Error ? requestError.message : "Failed to delete class",
-      )
-      setIsDeleting(false)
-    }
-  }
-
-  const isDeleteConfirmationDisabled =
-    confirmationValue !== "DELETE" || isDeleting
-
-  if (!classData) {
-    return null
-  }
-
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={!isDeleting ? onClose : undefined}
-      />
-
-      <div
-        className="relative mx-4 w-full max-w-md rounded-3xl border border-rose-200 bg-white p-6 shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="delete-class-title"
-      >
-        <button
-          onClick={onClose}
-          disabled={isDeleting}
-          className="absolute right-4 top-4 cursor-pointer rounded-lg p-1 text-slate-400 transition-colors duration-200 hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <div className="mb-4 flex justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
-            {modalStep === "warning" ? (
-              <AlertTriangle className="h-8 w-8 text-rose-600" />
-            ) : (
-              <Trash2 className="h-8 w-8 text-rose-600" />
-            )}
-          </div>
-        </div>
-
-        <h2
-          id="delete-class-title"
-          className="mb-2 text-center text-xl font-semibold text-slate-900"
-        >
-          {modalStep === "warning" ? "Delete Class?" : "Confirm Deletion"}
-        </h2>
-
-        {modalStep === "warning" ? (
-          <>
-            <div className="mb-4 text-center">
-              <p className="text-sm text-slate-500">
-                You are about to delete {" "}
-                <span className="font-medium text-slate-900">{classData.className}</span>
-              </p>
-              <p className="mt-1 text-xs font-mono text-slate-400">
-                Code: {classData.classCode}
-              </p>
-            </div>
-
-            <div className="mb-6 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-sm text-slate-600">
-                This action is {" "}
-                <span className="font-semibold text-rose-700">
-                  permanent and irreversible
-                </span>
-                . Deleting this class will remove:
-              </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  All class information and settings
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  All assignments and their submissions
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  All student enrollments ({classData.studentCount} students)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  All plagiarism reports and analysis data
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                type="button"
-                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
-              >
-                <X className="h-4 w-4" />
-                Cancel
-              </button>
-              <button
-                onClick={() => setModalStep("confirm")}
-                type="button"
-                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
-              >
-                <AlertTriangle className="h-4 w-4" />
-                Continue
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="mb-6 text-center text-sm text-slate-500">
-              To confirm deletion, please type {" "}
-              <span className="font-mono font-semibold text-rose-700">DELETE</span>{" "}
-              below.
-            </p>
-
-            <div className="space-y-4">
-              {errorMessage ? (
-                <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
-                  <p className="text-sm text-rose-700">{errorMessage}</p>
-                </div>
-              ) : null}
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-600">
-                  Type <span className="font-mono text-rose-700">DELETE</span> to confirm
-                </label>
-                <input
-                  type="text"
-                  value={confirmationValue}
-                  onChange={(event) => {
-                    setConfirmationValue(event.target.value.toUpperCase())
-                    setErrorMessage(null)
-                  }}
-                  className={`w-full rounded-lg border bg-white px-4 py-3 font-mono text-slate-900 placeholder-slate-300 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-red-500 ${
-                    confirmationValue === "DELETE"
-                      ? "border-rose-400"
-                      : "border-slate-300"
-                  }`}
-                  placeholder="DELETE"
-                  disabled={isDeleting}
-                  autoFocus
-                />
-              </div>
-
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setModalStep("warning")}
-                  disabled={isDeleting}
-                  type="button"
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  Back
-                </button>
-                <button
-                  onClick={handleDelete}
-                  disabled={isDeleteConfirmationDisabled}
-                  className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {isDeleting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4" />
-                      Delete Class
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </>
-        )}
       </div>
     </div>
   )
@@ -1278,13 +1052,12 @@ export function AdminClassDetailPage() {
             await handleRemoveStudent(studentPendingRemoval.id)
           }}
         />
-        {classPendingDeletion && (
-          <AdminDeleteClassModal
-            onClose={() => setClassPendingDeletion(null)}
-            onConfirm={handleDeleteClass}
-            classData={classPendingDeletion}
-          />
-        )}
+        <AdminDeleteClassModal
+          isOpen={!!classPendingDeletion}
+          onClose={() => setClassPendingDeletion(null)}
+          onConfirm={handleDeleteClass}
+          classData={classPendingDeletion}
+        />
       </div>
     </DashboardLayout>
   )

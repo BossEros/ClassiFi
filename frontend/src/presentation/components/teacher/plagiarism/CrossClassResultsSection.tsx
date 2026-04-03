@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   AlertTriangle,
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
   BarChart3,
+  BookOpen,
+  Download,
+  FileCode,
   GitCompare,
   Layers,
   Loader2,
@@ -12,11 +17,20 @@ import {
 } from "lucide-react"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { SummaryStatCard } from "@/presentation/components/ui/SummaryStatCard"
+import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
 import { SimilarityBadge } from "@/presentation/components/teacher/plagiarism/SimilarityBadge"
 import { PairComparison } from "@/presentation/components/teacher/plagiarism/PairComparison"
 import { PairCodeDiff } from "@/presentation/components/teacher/plagiarism/PairCodeDiff"
 import { SimilarityThresholdSlider } from "@/presentation/components/teacher/plagiarism/SimilarityThresholdSlider"
 import type { FilePair } from "@/presentation/components/teacher/plagiarism/types"
+import {
+  buildCrossClassReportData,
+  buildCrossClassPairReportData,
+  ClassSimilarityReportDocument,
+  PairSimilarityReportDocument,
+  toFileNameSegment,
+} from "@/presentation/components/teacher/plagiarism/pdf/similarityReportPdf"
+import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import {
   analyzeCrossClassSimilarity,
   getLatestCrossClassReport,
@@ -26,15 +40,37 @@ import type {
   CrossClassAnalysisResponse,
   CrossClassResultDTO,
 } from "@/business/services/crossClassPlagiarismService"
+import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
+import { detectLanguageFromFilename } from "@/shared/utils/languageDetection"
 
 type CodeViewMode = "match" | "diff"
+type SortableColumn = "hybridScore" | "structuralScore" | "semanticScore"
+type SortDirection = "asc" | "desc"
+
+const SortIndicator: React.FC<{
+  column: SortableColumn
+  currentSort: SortableColumn
+  sortDirection: SortDirection
+}> = ({ column, currentSort, sortDirection }) => {
+  if (currentSort !== column) return null
+  return sortDirection === "desc"
+    ? <ArrowDown className="inline h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
+    : <ArrowUp className="inline h-3.5 w-3.5 text-teal-600" aria-hidden="true" />
+}
+
+interface DownloadClassReportAction {
+  action: () => Promise<void>
+  isDisabled: boolean
+}
 
 interface CrossClassResultsSectionProps {
   /** The source assignment ID. */
   assignmentId: number
   /** Whether the current navigation explicitly requested a fresh comparison. */
   shouldRunInitialAnalysis?: boolean
+  /** Setter that exposes the download-class-report action to the parent page header. */
+  setDownloadClassReportAction?: React.Dispatch<React.SetStateAction<DownloadClassReportAction | null>>
 }
 
 function getCrossClassAnalysisToastConfig(
@@ -54,36 +90,6 @@ function getCrossClassAnalysisToastConfig(
 }
 
 /**
- * Detects the language from a filename extension for Monaco syntax highlighting.
- *
- * @param filename - The filename to extract the language from.
- * @returns The Monaco language identifier.
- */
-function detectLanguageFromFilename(filename: string): string {
-  const extension = filename.split(".").pop()?.toLowerCase()
-
-  switch (extension) {
-    case "py":
-      return "python"
-    case "java":
-      return "java"
-    case "c":
-    case "h":
-      return "c"
-    case "cpp":
-    case "cc":
-    case "cxx":
-      return "cpp"
-    case "js":
-      return "javascript"
-    case "ts":
-      return "typescript"
-    default:
-      return "plaintext"
-  }
-}
-
-/**
  * Self-contained section for cross-class similarity analysis.
  * Handles triggering analysis, displaying results, and viewing pair details.
  *
@@ -93,8 +99,10 @@ function detectLanguageFromFilename(filename: string): string {
 export function CrossClassResultsSection({
   assignmentId,
   shouldRunInitialAnalysis = false,
+  setDownloadClassReportAction,
 }: CrossClassResultsSectionProps) {
   const showToast = useToastStore((state) => state.showToast)
+  const user = useAuthStore((state) => state.user)
 
   const [report, setReport] = useState<CrossClassAnalysisResponse | null>(null)
   const [isInitializingReport, setIsInitializingReport] = useState(true)
@@ -107,6 +115,11 @@ export function CrossClassResultsSection({
   const [detailsError, setDetailsError] = useState<string | null>(null)
   const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(50)
+  const [sortColumn, setSortColumn] = useState<SortableColumn>("hybridScore")
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [isDownloadingClassReport, setIsDownloadingClassReport] = useState(false)
+  const [isDownloadingPairReport, setIsDownloadingPairReport] = useState(false)
 
   const comparisonRef = useRef<HTMLDivElement | null>(null)
 
@@ -210,6 +223,40 @@ export function CrossClassResultsSection({
       (result) => result.isFlagged && result.hybridScore * 100 >= minimumSimilarityPercent,
     )
   }, [report, minimumSimilarityPercent])
+  const suspiciousPairCount = flaggedResults.length
+
+  const handleSortColumn = useCallback((column: SortableColumn) => {
+    if (sortColumn === column) {
+      setSortDirection((dir) => (dir === "asc" ? "desc" : "asc"))
+    } else {
+      setSortColumn(column)
+      setSortDirection("desc")
+    }
+    setCurrentPage(1)
+  }, [sortColumn])
+
+  // Reset page when threshold or sort changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [minimumSimilarityPercent])
+
+  const ROWS_PER_PAGE = 10
+
+  const sortedResults = useMemo(() => {
+    return [...flaggedResults].sort((a, b) => {
+      const multiplier = sortDirection === "asc" ? 1 : -1
+
+      return (a[sortColumn] - b[sortColumn]) * multiplier
+    })
+  }, [flaggedResults, sortColumn, sortDirection])
+
+  const totalPages = Math.max(1, Math.ceil(sortedResults.length / ROWS_PER_PAGE))
+
+  const paginatedResults = useMemo(() => {
+    const startIndex = (currentPage - 1) * ROWS_PER_PAGE
+
+    return sortedResults.slice(startIndex, startIndex + ROWS_PER_PAGE)
+  }, [sortedResults, currentPage])
 
   const handleViewResultDetails = useCallback(async (result: CrossClassResultDTO) => {
     setSelectedResult(result)
@@ -269,6 +316,58 @@ export function CrossClassResultsSection({
     setDetailsError(null)
   }, [])
 
+  const handleDownloadClassReport = useCallback(async () => {
+    if (!report) return
+
+    try {
+      setIsDownloadingClassReport(true)
+      const reportData = buildCrossClassReportData({ report, teacher: user, minimumSimilarityPercent })
+
+      await downloadPdfDocument({
+        document: <ClassSimilarityReportDocument data={reportData} />,
+        fileName: `${toFileNameSegment(report.sourceAssignment.name)}-cross-class-similarity-threshold-${minimumSimilarityPercent}.pdf`,
+      })
+
+      showToast("Cross-class similarity report downloaded successfully")
+    } catch (error) {
+      console.error("Failed to download cross-class similarity report:", error)
+      showToast("Failed to download cross-class similarity report", "error")
+    } finally {
+      setIsDownloadingClassReport(false)
+    }
+  }, [report, user, minimumSimilarityPercent, showToast])
+
+  const handleDownloadPairReport = useCallback(async () => {
+    if (!report || !selectedResult || !pairDetails) return
+
+    try {
+      setIsDownloadingPairReport(true)
+      const reportData = buildCrossClassPairReportData({ report, teacher: user, selectedResult, pairDetails })
+
+      await downloadPdfDocument({
+        document: <PairSimilarityReportDocument data={reportData} />,
+        fileName: `${toFileNameSegment(report.sourceAssignment.name)}-${toFileNameSegment(selectedResult.student1Name)}-vs-${toFileNameSegment(selectedResult.student2Name)}.pdf`,
+      })
+
+      showToast("Pairwise similarity report downloaded successfully")
+    } catch (error) {
+      console.error("Failed to download pairwise similarity report:", error)
+      showToast("Failed to download pairwise similarity report", "error")
+    } finally {
+      setIsDownloadingPairReport(false)
+    }
+  }, [report, user, selectedResult, pairDetails, showToast])
+
+  useEffect(() => {
+    if (!setDownloadClassReportAction) return
+
+    setDownloadClassReportAction(
+      report
+        ? { action: handleDownloadClassReport, isDisabled: isDownloadingClassReport }
+        : null,
+    )
+  }, [report, isDownloadingClassReport, handleDownloadClassReport, setDownloadClassReportAction])
+
   const detectedLanguage = useMemo(() => {
     if (!pairDetails) return "plaintext"
 
@@ -323,96 +422,49 @@ export function CrossClassResultsSection({
   // ------- Report loaded: show results -------
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="mt-1 text-sm text-slate-500">
-            Source: <span className="font-medium text-slate-700">{report.sourceAssignment.name}</span>
-            {" "}({report.sourceAssignment.className})
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Latest saved report: {new Date(report.generatedAt).toLocaleString()}
-          </p>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => void handleRunAnalysis()}
-          disabled={isRunningAnalysis}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isRunningAnalysis ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <GitCompare className="h-4 w-4" />
-          )}
-          <span>
-            {isRunningAnalysis ? "Running Comparison..." : "Run New Comparison"}
-          </span>
-        </button>
-      </div>
-
       {/* Matched assignments */}
       {report.matchedAssignments.length > 0 && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4">
-          <h3 className="mb-2 text-sm font-semibold text-indigo-800">
+          <h3 className="mb-3 text-sm font-semibold text-indigo-800">
             Matched Assignments ({report.matchedAssignments.length})
           </h3>
           <div className="flex flex-wrap gap-2">
             {report.matchedAssignments.map((matched) => (
-              <span
+              <div
                 key={matched.id}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs font-medium text-indigo-800"
+                className="inline-flex items-start gap-2 rounded-lg border border-indigo-200 bg-white px-3 py-2 shadow-sm"
               >
-                <School className="h-3 w-3 text-indigo-500" />
-                {matched.name}
-                <span className="text-indigo-400">·</span>
-                <span className="text-indigo-500">{matched.className}</span>
-                <span className="text-indigo-400">
-                  ({Math.round(matched.nameSimilarity * 100)}% name match)
-                </span>
-              </span>
+                <School className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-indigo-500" />
+                <div>
+                  <p className="text-xs font-semibold text-indigo-800">{matched.name}</p>
+                  <p className="text-xs text-indigo-600">{matched.className}</p>
+                  <div className="mt-0.5 flex items-center gap-1">
+                    <BookOpen className="h-2.5 w-2.5 text-indigo-300" />
+                    <span className="text-[10px] leading-tight text-indigo-400">{matched.classCode}</span>
+                    <span className="text-[10px] leading-tight text-indigo-300">·</span>
+                    <span className="text-[10px] leading-tight text-indigo-400">{Math.round(matched.nameSimilarity * 100)}% name match</span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Threshold slider */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        <div className="w-full max-w-3xl">
-          <SimilarityThresholdSlider
-            minimumSimilarityPercent={minimumSimilarityPercent}
-            min={25}
-            max={100}
-            size="large"
-            onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
-          />
-        </div>
-      </div>
-
       {/* Summary stats */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryStatCard
-          label="Submissions Compared"
+          label="Submissions"
           value={report.summary.totalSubmissions}
           icon={Users}
           variant="light"
           className="border-slate-300 shadow-md shadow-slate-200/70"
           iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
-          iconClassName="h-7 w-7 text-indigo-600"
+          iconClassName="h-7 w-7 text-teal-600"
         />
         <SummaryStatCard
-          label="Total Comparisons"
-          value={report.summary.totalComparisons}
-          icon={GitCompare}
-          variant="light"
-          className="border-slate-300 shadow-md shadow-slate-200/70"
-          iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
-          iconClassName="h-7 w-7 text-sky-600"
-        />
-        <SummaryStatCard
-          label="Flagged Pairs"
-          value={report.summary.flaggedPairs}
+          label="Suspicious Pair"
+          value={suspiciousPairCount}
           icon={AlertTriangle}
           variant="light"
           className="border-slate-300 shadow-md shadow-slate-200/70"
@@ -420,13 +472,33 @@ export function CrossClassResultsSection({
           iconClassName="h-7 w-7 text-rose-600"
         />
         <SummaryStatCard
-          label="Avg Similarity"
+          label="Average Similarity"
           value={`${(report.summary.averageSimilarity * 100).toFixed(1)}%`}
           icon={BarChart3}
           variant="light"
           className="border-slate-300 shadow-md shadow-slate-200/70"
           iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
+          iconClassName="h-7 w-7 text-sky-600"
+        />
+        <SummaryStatCard
+          label="Max Similarity"
+          value={`${(report.summary.maxSimilarity * 100).toFixed(1)}%`}
+          icon={FileCode}
+          variant="light"
+          className="border-slate-300 shadow-md shadow-slate-200/70"
+          iconContainerClassName="h-auto w-auto rounded-none bg-transparent p-0"
           iconClassName="h-7 w-7 text-amber-600"
+        />
+      </div>
+
+      {/* Threshold slider */}
+      <div className="w-full min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <SimilarityThresholdSlider
+          minimumSimilarityPercent={minimumSimilarityPercent}
+          min={25}
+          max={100}
+          size="large"
+          onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
         />
       </div>
 
@@ -450,26 +522,52 @@ export function CrossClassResultsSection({
       {flaggedResults.length > 0 && (
         <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
           <CardContent className="p-6">
-            <h3 className="mb-4 text-base font-semibold text-slate-900">
-              Flagged Pairs ({flaggedResults.length})
-            </h3>
+            <div className="mb-4">
+              <h3 className="text-base font-semibold text-slate-900">
+                Flagged Pairs ({flaggedResults.length})
+              </h3>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
-                    <th className="px-3 py-3">Student 1</th>
-                    <th className="px-3 py-3">Class</th>
-                    <th className="px-3 py-3">Student 2</th>
-                    <th className="px-3 py-3">Class</th>
-                    <th className="px-3 py-3 text-center">Hybrid</th>
-                    <th className="px-3 py-3 text-center">Structural</th>
-                    <th className="px-3 py-3 text-center">Semantic</th>
-                    <th className="px-3 py-3 text-right">Action</th>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Student 1</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Class</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Student 2</th>
+                    <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Class</th>
+                    <th
+                      onClick={() => handleSortColumn("hybridScore")}
+                      className="cursor-pointer select-none px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>Overall Similarity</span>
+                        <SortIndicator column="hybridScore" currentSort={sortColumn} sortDirection={sortDirection} />
+                      </span>
+                    </th>
+                    <th
+                      onClick={() => handleSortColumn("structuralScore")}
+                      className="cursor-pointer select-none px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>Structural Similarity</span>
+                        <SortIndicator column="structuralScore" currentSort={sortColumn} sortDirection={sortDirection} />
+                      </span>
+                    </th>
+                    <th
+                      onClick={() => handleSortColumn("semanticScore")}
+                      className="cursor-pointer select-none px-3 py-3 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700 transition-colors hover:text-slate-900"
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <span>Semantic Similarity</span>
+                        <SortIndicator column="semanticScore" currentSort={sortColumn} sortDirection={sortDirection} />
+                      </span>
+                    </th>
+                    <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {flaggedResults.map((result) => (
+                  {paginatedResults.map((result) => (
                     <tr
                       key={result.id}
                       className={`transition-colors duration-150 hover:bg-slate-50 ${
@@ -479,14 +577,26 @@ export function CrossClassResultsSection({
                       <td className="px-3 py-3 font-medium text-slate-800">
                         {result.student1Name}
                       </td>
-                      <td className="px-3 py-3 text-slate-500">
-                        {result.class1Name}
+                      <td className="px-3 py-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm text-slate-700">{result.class1Name}</p>
+                          <div className="flex items-center gap-1">
+                            <BookOpen className="h-2.5 w-2.5 text-slate-300" />
+                            <p className="text-[10px] leading-tight text-slate-400">{result.class1Code}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-3 py-3 font-medium text-slate-800">
                         {result.student2Name}
                       </td>
-                      <td className="px-3 py-3 text-slate-500">
-                        {result.class2Name}
+                      <td className="px-3 py-3">
+                        <div className="space-y-0.5">
+                          <p className="text-sm text-slate-700">{result.class2Name}</p>
+                          <div className="flex items-center gap-1">
+                            <BookOpen className="h-2.5 w-2.5 text-slate-300" />
+                            <p className="text-[10px] leading-tight text-slate-400">{result.class2Code}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <SimilarityBadge similarity={result.hybridScore} size="small" showLabel={false} />
@@ -505,7 +615,7 @@ export function CrossClassResultsSection({
                         <button
                           type="button"
                           onClick={() => void handleViewResultDetails(result)}
-                          className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+                          className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 active:bg-indigo-800"
                         >
                           Compare <ArrowRight className="h-3 w-3" />
                         </button>
@@ -515,6 +625,15 @@ export function CrossClassResultsSection({
                 </tbody>
               </table>
             </div>
+
+            <TablePaginationFooter
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={sortedResults.length}
+              itemsPerPage={ROWS_PER_PAGE}
+              onPageChange={setCurrentPage}
+              variant="light"
+            />
           </CardContent>
         </Card>
       )}
@@ -536,14 +655,29 @@ export function CrossClassResultsSection({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleCloseDetails}
-                  className="group flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900"
-                >
-                  <X className="h-4 w-4 transition-colors" />
-                  <span className="text-sm font-medium">Close</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void handleDownloadPairReport()}
+                    disabled={isLoadingDetails || !pairDetails || isDownloadingPairReport}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isDownloadingPairReport ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    <span>{isDownloadingPairReport ? "Preparing Pair PDF..." : "Download Pair Report"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCloseDetails}
+                    className="group flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 shadow-sm transition-colors duration-200 hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <X className="h-4 w-4 transition-colors" />
+                    <span className="text-sm font-medium">Close</span>
+                  </button>
+                </div>
               </div>
 
               {/* View mode toggle */}
@@ -554,7 +688,7 @@ export function CrossClassResultsSection({
                     onClick={() => setCodeViewMode("match")}
                     className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                       codeViewMode === "match"
-                        ? "border border-indigo-500/30 bg-indigo-600 text-white shadow-sm"
+                        ? "border border-teal-500/30 bg-teal-600 text-white shadow-sm"
                         : "text-slate-600 hover:bg-white hover:text-slate-900"
                     }`}
                   >
@@ -566,7 +700,7 @@ export function CrossClassResultsSection({
                     onClick={() => setCodeViewMode("diff")}
                     className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                       codeViewMode === "diff"
-                        ? "border border-indigo-500/30 bg-indigo-600 text-white shadow-sm"
+                        ? "border border-teal-500/30 bg-teal-600 text-white shadow-sm"
                         : "text-slate-600 hover:bg-white hover:text-slate-900"
                     }`}
                   >

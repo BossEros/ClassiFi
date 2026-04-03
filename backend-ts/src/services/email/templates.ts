@@ -642,3 +642,352 @@ export function submissionFeedbackGivenEmailTemplate(data: {
 
   return baseEmailTemplate(content, "#0d9488")
 }
+
+/**
+ * Generates an HTML email template for assignment updated notifications.
+ *
+ * @param data - Assignment update data
+ * @param data.assignmentTitle - The title of the updated assignment
+ * @param data.className - The name of the class
+ * @param data.dueDate - The (possibly updated) due date
+ * @param data.assignmentUrl - The URL to view the assignment
+ * @returns The generated HTML email string
+ */
+export function assignmentUpdatedEmailTemplate(data: {
+  assignmentTitle: string
+  className: string
+  dueDate: string
+  assignmentUrl: string
+}): string {
+  const content = `
+    <h1>📝 Assignment Updated</h1>
+    <p>Your teacher has updated the assignment <strong>${escapeHtml(data.assignmentTitle)}</strong> in <strong>${escapeHtml(data.className)}</strong>. Please review the changes.</p>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Assignment</span>
+        <span class="info-value">${escapeHtml(data.assignmentTitle)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Class</span>
+        <span class="info-value">${escapeHtml(data.className)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Due Date</span>
+        <span class="info-value">📅 ${escapeHtml(data.dueDate)}</span>
+      </div>
+    </div>
+    
+    <center>
+      <a href="${escapeHtml(data.assignmentUrl)}" class="button">View Updated Assignment</a>
+    </center>
+    
+    <div class="alert alert-info">
+      <strong>📌 Note:</strong> Make sure to review the updated requirements and adjust your submission accordingly.
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#6366f1")
+}
+
+/**
+ * Generates an HTML email template for new submission received notifications (teacher).
+ *
+ * @param data - Submission data
+ * @param data.assignmentTitle - The assignment title
+ * @param data.studentName - The name of the student who submitted
+ * @param data.className - The class name
+ * @param data.submissionUrl - The URL to view the submission
+ * @returns The generated HTML email string
+ */
+export function newSubmissionReceivedEmailTemplate(data: {
+  assignmentTitle: string
+  studentName: string
+  className: string
+  submissionUrl: string
+}): string {
+  const content = `
+    <h1>📥 New Submission Received</h1>
+    <p><strong>${escapeHtml(data.studentName)}</strong> has submitted their work for <strong>${escapeHtml(data.assignmentTitle)}</strong> in <strong>${escapeHtml(data.className)}</strong>.</p>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Student</span>
+        <span class="info-value">${escapeHtml(data.studentName)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Assignment</span>
+        <span class="info-value">${escapeHtml(data.assignmentTitle)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Class</span>
+        <span class="info-value">${escapeHtml(data.className)}</span>
+      </div>
+    </div>
+    
+    <center>
+      <a href="${escapeHtml(data.submissionUrl)}" class="button">Review Submission</a>
+    </center>
+  `
+
+  return baseEmailTemplate(content, "#0d9488")
+}
+
+/**
+ * Generates an HTML email template for late submission received notifications (teacher).
+ *
+ * @param data - Late submission data
+ * @param data.assignmentTitle - The assignment title
+ * @param data.studentName - The student who submitted late
+ * @param data.className - The class name
+ * @param data.dueDate - The original due date
+ * @param data.submittedAt - When the submission was actually made
+ * @param data.submissionUrl - The URL to view the submission
+ * @returns The generated HTML email string
+ */
+export function lateSubmissionReceivedEmailTemplate(data: {
+  assignmentTitle: string
+  studentName: string
+  className: string
+  dueDate: string
+  submittedAt: string
+  submissionUrl: string
+}): string {
+  const content = `
+    <h1>⚠️ Late Submission Received</h1>
+    <p><strong>${escapeHtml(data.studentName)}</strong> submitted <strong>${escapeHtml(data.assignmentTitle)}</strong> in <strong>${escapeHtml(data.className)}</strong> after the deadline.</p>
+    
+    <div class="info-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b;">
+      <div class="info-card-row" style="border-color: #fbbf24;">
+        <span class="info-label" style="color: #92400e;">Student</span>
+        <span class="info-value" style="color: #78350f;">${escapeHtml(data.studentName)}</span>
+      </div>
+      <div class="info-card-row" style="border-color: #fbbf24;">
+        <span class="info-label" style="color: #92400e;">Assignment</span>
+        <span class="info-value" style="color: #78350f;">${escapeHtml(data.assignmentTitle)}</span>
+      </div>
+      <div class="info-card-row" style="border-color: #fbbf24;">
+        <span class="info-label" style="color: #92400e;">Due Date</span>
+        <span class="info-value" style="color: #78350f;">📅 ${escapeHtml(data.dueDate)}</span>
+      </div>
+      <div class="info-card-row" style="border-bottom: none;">
+        <span class="info-label" style="color: #92400e;">Submitted</span>
+        <span class="info-value" style="color: #78350f;">🕐 ${escapeHtml(data.submittedAt)}</span>
+      </div>
+    </div>
+    
+    <center>
+      <a href="${escapeHtml(data.submissionUrl)}" class="button" style="background: #f59e0b;">Review Late Submission</a>
+    </center>
+  `
+
+  return baseEmailTemplate(content, "#f59e0b")
+}
+
+/**
+ * Generates an HTML email template for similarity detected notifications (teacher).
+ *
+ * @param data - Similarity detection data
+ * @param data.assignmentTitle - The assignment title
+ * @param data.studentName - The student whose submission was flagged
+ * @param data.className - The class name
+ * @param data.similarityPercentage - The similarity percentage
+ * @param data.submissionUrl - The URL to view the submission
+ * @returns The generated HTML email string
+ */
+export function similarityDetectedEmailTemplate(data: {
+  assignmentTitle: string
+  studentName: string
+  className: string
+  similarityPercentage: number
+  submissionUrl: string
+}): string {
+  const content = `
+    <h1>🔍 Similarity Alert</h1>
+    <p>A high code similarity score has been detected for a submission in <strong>${escapeHtml(data.className)}</strong>.</p>
+    
+    <div class="score-display" style="border-color: #ef4444;">
+      <p class="score-number" style="color: #ef4444;">
+        ${String(data.similarityPercentage)}%
+      </p>
+      <p class="score-percentage" style="color: #ef4444;">
+        Similarity Score
+      </p>
+    </div>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Student</span>
+        <span class="info-value">${escapeHtml(data.studentName)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Assignment</span>
+        <span class="info-value">${escapeHtml(data.assignmentTitle)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Class</span>
+        <span class="info-value">${escapeHtml(data.className)}</span>
+      </div>
+    </div>
+    
+    <center>
+      <a href="${escapeHtml(data.submissionUrl)}" class="button" style="background: #ef4444;">Review Submission</a>
+    </center>
+    
+    <div class="alert alert-warning">
+      <strong>⚠️ Action Required:</strong> Please review this submission to determine if academic integrity policies apply.
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#ef4444")
+}
+
+/**
+ * Generates an HTML email template for student enrolled notifications (teacher).
+ *
+ * @param data - Student enrollment data
+ * @param data.className - The class name
+ * @param data.studentName - The student who enrolled
+ * @param data.studentEmail - The student's email
+ * @returns The generated HTML email string
+ */
+export function studentEnrolledEmailTemplate(data: {
+  className: string
+  studentName: string
+  studentEmail: string
+}): string {
+  const content = `
+    <h1>👋 New Student Enrolled</h1>
+    <p>A new student has joined your class <strong>${escapeHtml(data.className)}</strong>.</p>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Student</span>
+        <span class="info-value">${escapeHtml(data.studentName)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Email</span>
+        <span class="info-value">${escapeHtml(data.studentEmail)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Class</span>
+        <span class="info-value">${escapeHtml(data.className)}</span>
+      </div>
+    </div>
+    
+    <div class="alert alert-success">
+      <strong>🎉 Welcome!</strong> You may want to greet the new student and share any important class information.
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#10b981")
+}
+
+/**
+ * Generates an HTML email template for student unenrolled notifications (teacher).
+ *
+ * @param data - Student unenrollment data
+ * @param data.className - The class name
+ * @param data.studentName - The student who left
+ * @param data.studentEmail - The student's email
+ * @returns The generated HTML email string
+ */
+export function studentUnenrolledEmailTemplate(data: {
+  className: string
+  studentName: string
+  studentEmail: string
+}): string {
+  const content = `
+    <h1>👤 Student Left Class</h1>
+    <p><strong>${escapeHtml(data.studentName)}</strong> has left your class <strong>${escapeHtml(data.className)}</strong>.</p>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Student</span>
+        <span class="info-value">${escapeHtml(data.studentName)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Email</span>
+        <span class="info-value">${escapeHtml(data.studentEmail)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Class</span>
+        <span class="info-value">${escapeHtml(data.className)}</span>
+      </div>
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#6b7280")
+}
+
+/**
+ * Generates an HTML email template for new user registration notifications (admin).
+ *
+ * @param data - Registration data
+ * @param data.userName - The new user's name
+ * @param data.userEmail - The new user's email
+ * @param data.userRole - The new user's role
+ * @returns The generated HTML email string
+ */
+export function newUserRegisteredEmailTemplate(data: {
+  userName: string
+  userEmail: string
+  userRole: string
+}): string {
+  const content = `
+    <h1>🆕 New User Registration</h1>
+    <p>A new user has registered on the platform.</p>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Name</span>
+        <span class="info-value">${escapeHtml(data.userName)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Email</span>
+        <span class="info-value">${escapeHtml(data.userEmail)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Role</span>
+        <span class="info-value">${escapeHtml(data.userRole)}</span>
+      </div>
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#8b5cf6")
+}
+
+/**
+ * Generates an HTML email template for removed from class notifications (student).
+ *
+ * @param data - Removal data
+ * @param data.className - The class name
+ * @param data.instructorName - The instructor who removed the student
+ * @returns The generated HTML email string
+ */
+export function removedFromClassEmailTemplate(data: {
+  className: string
+  instructorName: string
+}): string {
+  const content = `
+    <h1>📋 Class Enrollment Update</h1>
+    <p>You have been removed from <strong>${escapeHtml(data.className)}</strong> by <strong>${escapeHtml(data.instructorName)}</strong>.</p>
+    
+    <div class="info-card">
+      <div class="info-card-row">
+        <span class="info-label">Class</span>
+        <span class="info-value">${escapeHtml(data.className)}</span>
+      </div>
+      <div class="info-card-row">
+        <span class="info-label">Instructor</span>
+        <span class="info-value">${escapeHtml(data.instructorName)}</span>
+      </div>
+    </div>
+    
+    <div class="alert alert-info">
+      <strong>ℹ️ Note:</strong> If you believe this was done in error, please contact your instructor directly.
+    </div>
+  `
+
+  return baseEmailTemplate(content, "#6b7280")
+}

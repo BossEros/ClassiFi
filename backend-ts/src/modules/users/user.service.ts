@@ -26,19 +26,19 @@ export class UserService {
    * @throws {UserNotFoundError} If user not found
    */
   async deleteAccount(userId: number): Promise<void> {
-    // Get user to retrieve Supabase ID and avatar URL
+    // STEP 1: Load the user record and verify they exist
     const user = await this.userRepo.getUserById(userId)
 
     if (!user) {
       throw new UserNotFoundError(userId)
     }
 
-    // Clean up avatar from Supabase Storage using StorageService
+    // STEP 2: Delete the avatar from storage (best-effort)
     if (user.avatarUrl) {
       await this.storageService.deleteAvatar(user.avatarUrl)
     }
 
-    // Get all submissions to clean up files before cascade delete
+    // STEP 3: Delete all submission files from storage before the database cascade removes the records
     try {
       const submissions = await this.submissionRepo.getSubmissionsByStudent(
         userId,
@@ -54,14 +54,14 @@ export class UserService {
       // Continue with deletion anyway
     }
 
-    // Delete from local database (cascades to enrollments and submissions)
+    // STEP 4: Delete the user from the local database (cascades to enrollments and submissions)
     const deleted = await this.userRepo.deleteUser(userId)
 
     if (!deleted) {
       throw new Error("Failed to delete user from database")
     }
 
-    // Delete from Supabase Auth if supabaseUserId exists
+    // STEP 5: Delete the user from Supabase Auth to revoke all login access
     if (user.supabaseUserId) {
       await this.authAdapter.deleteUser(user.supabaseUserId)
     }

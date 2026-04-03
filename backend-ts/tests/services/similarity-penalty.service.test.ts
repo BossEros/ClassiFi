@@ -3,6 +3,8 @@ import { SimilarityPenaltyService } from "../../src/modules/plagiarism/similarit
 import type { AssignmentRepository } from "../../src/modules/assignments/assignment.repository.js"
 import type { SimilarityRepository } from "../../src/modules/plagiarism/similarity.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
+import type { ClassRepository } from "../../src/modules/classes/class.repository.js"
+import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { PlagiarismPersistenceService } from "../../src/modules/plagiarism/plagiarism-persistence.service.js"
 import type { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
@@ -15,6 +17,8 @@ describe("SimilarityPenaltyService", () => {
     getSubmissionsByAssignment: ReturnType<typeof vi.fn>
     updateGrade: ReturnType<typeof vi.fn>
   }
+  let mockClassRepo: { getClassById: ReturnType<typeof vi.fn> }
+  let mockUserRepo: { getUserById: ReturnType<typeof vi.fn> }
   let mockPersistenceService: {
     getReusableAssignmentReportId: ReturnType<typeof vi.fn>
   }
@@ -42,6 +46,13 @@ describe("SimilarityPenaltyService", () => {
       getReusableAssignmentReportId: vi.fn(),
     }
 
+    mockClassRepo = {
+      getClassById: vi.fn(),
+    }
+    mockUserRepo = {
+      getUserById: vi.fn(),
+    }
+
     mockTestResultRepo = {
       calculateScore: vi.fn(),
     }
@@ -55,6 +66,8 @@ describe("SimilarityPenaltyService", () => {
       mockAssignmentRepo as unknown as AssignmentRepository,
       mockSimilarityRepo as unknown as SimilarityRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
+      mockClassRepo as unknown as ClassRepository,
+      mockUserRepo as unknown as UserRepository,
       mockPersistenceService as unknown as PlagiarismPersistenceService,
       mockTestResultRepo as unknown as TestResultRepository,
       mockNotificationService as unknown as NotificationService,
@@ -274,6 +287,71 @@ describe("SimilarityPenaltyService", () => {
     expect(
       mockNotificationService.sendEmailNotificationIfEnabled,
     ).toHaveBeenCalledTimes(1)
+  })
+
+  it("notifies the teacher with the detected similarity percentage", async () => {
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+      id: 1,
+      classId: 10,
+      assignmentName: "Homework 1",
+      enableSimilarityPenalty: true,
+      totalScore: 100,
+    })
+    mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
+      {
+        id: 61,
+        assignmentId: 1,
+        studentId: 601,
+        grade: 100,
+        penaltyApplied: 0,
+        isGradeOverridden: false,
+      },
+      {
+        id: 62,
+        assignmentId: 1,
+        studentId: 602,
+        grade: 100,
+        penaltyApplied: 0,
+        isGradeOverridden: false,
+      },
+    ])
+    mockSimilarityRepo.getResultsByReport.mockResolvedValue([
+      {
+        submission1Id: 61,
+        submission2Id: 62,
+        hybridScore: "0.900000",
+        leftCovered: 0,
+        rightCovered: 0,
+        leftTotal: 0,
+        rightTotal: 0,
+        longestFragment: 0,
+      },
+    ])
+    mockTestResultRepo.calculateScore.mockResolvedValue({ passed: 10, total: 10 })
+    mockClassRepo.getClassById.mockResolvedValue({
+      id: 10,
+      teacherId: 700,
+      className: "Algorithms",
+    })
+    mockUserRepo.getUserById.mockResolvedValue({
+      id: 601,
+      firstName: "Alice",
+      lastName: "Student",
+    })
+
+    await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
+    await Promise.resolve()
+    await Promise.resolve()
+
+    expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+      700,
+      "SIMILARITY_DETECTED",
+      expect.objectContaining({
+        similarityPercentage: 90,
+        classId: 10,
+        assignmentId: 1,
+      }),
+    )
   })
 
   it("restores automatic grades when similarity deduction is disabled", async () => {

@@ -12,6 +12,14 @@ export const NotificationTypeSchema = z.enum([
   "CLASS_ANNOUNCEMENT",
   "DEADLINE_REMINDER",
   "ENROLLMENT_CONFIRMED",
+  "ASSIGNMENT_UPDATED",
+  "NEW_SUBMISSION_RECEIVED",
+  "LATE_SUBMISSION_RECEIVED",
+  "SIMILARITY_DETECTED",
+  "STUDENT_ENROLLED",
+  "STUDENT_UNENROLLED",
+  "NEW_USER_REGISTERED",
+  "REMOVED_FROM_CLASS",
 ])
 
 export type NotificationType = z.infer<typeof NotificationTypeSchema>

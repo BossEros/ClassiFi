@@ -1,5 +1,9 @@
 import type { AssignmentDetail } from "@/business/models/assignment/types"
 import type {
+  CrossClassAnalysisResponse,
+  CrossClassResultDTO,
+} from "@/business/models/plagiarism/crossClassTypes"
+import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
@@ -134,3 +138,27 @@ export const CLASS_REPORT_TABLE_HEADERS = [
   "Total Overlap",
   "Longest Fragment",
 ] as const
+
+export interface CrossClassReportBuilderOptions {
+  report: CrossClassAnalysisResponse
+  teacher: User | null
+  minimumSimilarityPercent: number
+  downloadedAt?: Date
+}
+
+export interface CrossClassPairReportBuilderOptions {
+  report: CrossClassAnalysisResponse
+  teacher: User | null
+  selectedResult: CrossClassResultDTO
+  pairDetails: FilePair
+  downloadedAt?: Date
+}
+
+export interface CrossClassReportPairRow {
+  pairLabel: string
+  class1Label: string
+  class2Label: string
+  overallSimilarity: SimilarityBadgeValue
+  structuralSimilarity: SimilarityBadgeValue
+  semanticSimilarity: SimilarityBadgeValue
+}

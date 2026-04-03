@@ -2,6 +2,8 @@ import { inject, injectable } from "tsyringe"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { ClassRepository } from "@/modules/classes/class.repository.js"
+import { UserRepository } from "@/modules/users/user.repository.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
@@ -13,6 +15,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { Assignment, Submission } from "@/models/index.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
+import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 
 interface SubmissionPenaltyCandidate {
   penaltyPercent: number
@@ -30,6 +33,8 @@ export class SimilarityPenaltyService {
     private similarityRepo: SimilarityRepository,
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.services.plagiarismPersistence)
     private persistenceService: PlagiarismPersistenceService,
     @inject(DI_TOKENS.repositories.testResult)
@@ -39,6 +44,7 @@ export class SimilarityPenaltyService {
   ) {}
 
   async syncAssignmentPenaltyState(assignmentId: number): Promise<void> {
+    // STEP 1: Load the assignment and its current set of latest submissions
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     const latestSubmissions =
       await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
@@ -47,11 +53,13 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 2: If similarity penalty is disabled, restore base automatic grades and exit
     if (!assignment.enableSimilarityPenalty) {
       await this.restoreAutomaticGrades(latestSubmissions, assignment)
       return
     }
 
+    // STEP 3: Check whether a current similarity report exists to score against
     const reusableReportId =
       await this.persistenceService.getReusableAssignmentReportId(assignmentId)
 
@@ -60,6 +68,7 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 4: Apply similarity-based penalty deductions from the latest report
     await this.applyAssignmentPenaltyFromReport(assignmentId, reusableReportId)
   }
 
@@ -67,6 +76,7 @@ export class SimilarityPenaltyService {
     assignmentId: number,
     reportId: number,
   ): Promise<void> {
+    // STEP 1: Load the assignment and all current latest submissions
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
     const latestSubmissions =
       await this.submissionRepo.getSubmissionsByAssignment(assignmentId, true)
@@ -75,11 +85,13 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 2: If penalty is disabled, restore base automatic grades and exit
     if (!assignment.enableSimilarityPenalty) {
       await this.restoreAutomaticGrades(latestSubmissions, assignment)
       return
     }
 
+    // STEP 3: Load the normalized penalty configuration and build a lookup set of latest submission IDs
     const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(
       undefined,
     )
@@ -91,6 +103,8 @@ export class SimilarityPenaltyService {
       return
     }
 
+    // STEP 4: Fetch all similarity results from this report and build a worst-case penalty map
+    // Each submission maps to the highest-priority penalty candidate found across all its pairs
     const reportResults = await this.similarityRepo.getResultsByReport(reportId)
     const candidateBySubmissionId = new Map<
       number,
@@ -131,6 +145,7 @@ export class SimilarityPenaltyService {
       )
     }
 
+    // STEP 5: Apply the penalty to each submission's automatic grade and notify the student
     for (const latestSubmission of latestSubmissions) {
       const automaticGrade = await this.calculateAutomaticGrade(
         latestSubmission,
@@ -156,6 +171,9 @@ export class SimilarityPenaltyService {
         automaticGrade,
         adjustedGrade,
         penaltyCandidate?.penaltyPercent ?? 0,
+        penaltyCandidate
+          ? Math.round(penaltyCandidate.sourceHybridScore * 100)
+          : 0,
       )
     }
   }
@@ -297,6 +315,7 @@ export class SimilarityPenaltyService {
     automaticGrade: number,
     adjustedGrade: number,
     penaltyPercent: number,
+    similarityPercentage: number,
   ): Promise<void> {
     if (penaltyPercent <= 0 || submission.isGradeOverridden) {
       return
@@ -332,18 +351,62 @@ export class SimilarityPenaltyService {
       })
     }
 
-    void this.notificationService
-      .sendEmailNotificationIfEnabled(
+    fireAndForget(
+      this.notificationService.sendEmailNotificationIfEnabled(
         submission.studentId,
         "SUBMISSION_GRADED",
         notificationPayload,
-      )
-      .catch((error) => {
-        logger.error("Failed to send similarity deduction notification email", {
-          submissionId: submission.id,
-          studentId: submission.studentId,
-          error,
-        })
-      })
+      ),
+      logger,
+      "Failed to send similarity deduction notification email",
+      { submissionId: submission.id, studentId: submission.studentId },
+    )
+
+    // Notify teacher about similarity detection (fire-and-forget)
+    fireAndForget(
+      this.sendSimilarityDetectedToTeacher(
+        submission,
+        assignment,
+        similarityPercentage,
+      ),
+      logger,
+      "Failed to send similarity detected notification to teacher",
+      { submissionId: submission.id },
+    )
+  }
+
+  /**
+   * Sends SIMILARITY_DETECTED notification to the teacher of the class.
+   */
+  private async sendSimilarityDetectedToTeacher(
+    submission: Submission,
+    assignment: Assignment,
+    similarityPercentage: number,
+  ): Promise<void> {
+    const [classData, student] = await Promise.all([
+      this.classRepo.getClassById(assignment.classId),
+      this.userRepo.getUserById(submission.studentId),
+    ])
+
+    if (!classData) return
+
+    const similarityData = {
+      assignmentId: assignment.id,
+      assignmentTitle: assignment.assignmentName,
+      className: classData.className,
+      classId: classData.id,
+      studentName: student ? `${student.firstName} ${student.lastName}` : "Unknown",
+      similarityPercentage,
+      submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`,
+    }
+
+    await settlePromisesAndLogRejections([
+      this.notificationService.createNotification(classData.teacherId, "SIMILARITY_DETECTED", similarityData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "SIMILARITY_DETECTED", similarityData),
+    ], logger, "Failed to send similarity detected notification to teacher", {
+      teacherId: classData.teacherId,
+      submissionId: submission.id,
+      assignmentId: assignment.id,
+    })
   }
 }

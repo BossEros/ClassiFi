@@ -61,7 +61,8 @@ export class PlagiarismDetector {
 
     const warnings: string[] = []
 
-    // Determine language
+    // STEP 1: Resolve the programming language to use for tokenization
+    // Use the explicit option if given; otherwise auto-detect from the first file's extension.
     if (this.options.language && this.languageRegistry) {
       this.language = this.languageRegistry.get(this.options.language) ?? null
       if (!this.language) {
@@ -86,7 +87,7 @@ export class PlagiarismDetector {
       )
     }
 
-    // Create tokenizer and index
+    // STEP 2: Initialize the AST tokenizer and create a fresh fingerprint index
     const tokenizer = this.language.createTokenizer({
       includeComments: this.options.includeComments,
     })
@@ -97,7 +98,7 @@ export class PlagiarismDetector {
       this.options.kgramData,
     )
 
-    // Filter files by language extension
+    // STEP 3: Filter submitted files to only those matching the resolved language extension
     const filteredFiles = files.filter((file) =>
       this.language?.extensionMatches(file.path),
     )
@@ -108,12 +109,13 @@ export class PlagiarismDetector {
       )
     }
 
-    // Validate file count
+    // STEP 4: Validate there are enough files to form at least one comparison pair
     if (filteredFiles.length < 2) {
       throw new Error("You need to supply at least two files to analyze.")
     }
 
-    // Configure max fingerprint file count
+    // STEP 5: Configure the fingerprint frequency threshold
+    // Fingerprints appearing in more files than this limit are treated as common boilerplate and suppressed.
     let maxFingerprintFileCount: number | undefined
     if (this.options.maxFingerprintCount != null) {
       maxFingerprintFileCount = this.options.maxFingerprintCount
@@ -123,7 +125,8 @@ export class PlagiarismDetector {
     }
     this.index.updateMaxFingerprintFileCount(maxFingerprintFileCount)
 
-    // Tokenize all files
+    // STEP 6: Tokenize each file into an AST-based token sequence
+    // Failures are non-fatal — the file is skipped with a warning so partial results are still returned.
     const tokenizedFiles: TokenizedFile[] = []
     for (const file of filteredFiles) {
       try {
@@ -133,10 +136,10 @@ export class PlagiarismDetector {
       }
     }
 
-    // Add files to index
+    // STEP 7: Add all tokenized files to the fingerprint index to build the comparison matrix
     this.index.addFiles(tokenizedFiles)
 
-    // Add ignored file if provided
+    // STEP 8: Register the template/boilerplate file so its fingerprints are excluded from matches
     if (ignoredFile) {
       try {
         const tokenizedIgnored = tokenizer.tokenizeFile(ignoredFile)

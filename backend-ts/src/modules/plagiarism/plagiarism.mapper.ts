@@ -1,4 +1,5 @@
 import type { Pair, Fragment } from "@/lib/plagiarism/index.js"
+import { PlagiarismDetector, type LanguageName } from "@/lib/plagiarism/index.js"
 
 /** Configuration for plagiarism detection */
 export const PLAGIARISM_CONFIG = {
@@ -9,6 +10,26 @@ export const PLAGIARISM_CONFIG = {
   /** Minimum number of files required for analysis */
   MINIMUM_FILES_REQUIRED: 2,
 } as const
+
+/**
+ * Create a PlagiarismDetector with default configuration.
+ *
+ * @param language - The programming language to tokenize for.
+ * @param kgramLength - Optional k-gram length override.
+ * @param kgramsInWindow - Optional window size override.
+ * @returns A configured PlagiarismDetector instance.
+ */
+export function createPlagiarismDetector(
+  language: LanguageName,
+  kgramLength?: number,
+  kgramsInWindow?: number,
+): PlagiarismDetector {
+  return new PlagiarismDetector({
+    language,
+    kgramLength: kgramLength ?? PLAGIARISM_CONFIG.DEFAULT_KGRAM_LENGTH,
+    kgramsInWindow: kgramsInWindow ?? PLAGIARISM_CONFIG.DEFAULT_KGRAMS_IN_WINDOW,
+  })
+}
 
 /** Supported languages for plagiarism detection */
 export const PLAGIARISM_LANGUAGE_MAP: Record<string, "python" | "java" | "c"> =

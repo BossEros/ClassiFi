@@ -52,6 +52,8 @@ describe("SubmissionService", () => {
   let mockAssignmentRepo: any
   let mockEnrollmentRepo: any
   let mockTestResultRepo: any
+  let mockClassRepo: any
+  let mockUserRepo: any
   let mockStorageService: any
   let mockCodeTestService: any
   let mockLatePenaltyService: any
@@ -81,6 +83,14 @@ describe("SubmissionService", () => {
 
     mockEnrollmentRepo = {
       isEnrolled: vi.fn(),
+    }
+
+    mockClassRepo = {
+      getClassById: vi.fn(),
+    }
+
+    mockUserRepo = {
+      getUserById: vi.fn(),
     }
 
     mockTestResultRepo = {
@@ -133,6 +143,8 @@ describe("SubmissionService", () => {
       mockSubmissionRepo,
       mockAssignmentRepo,
       mockEnrollmentRepo,
+      mockClassRepo,
+      mockUserRepo,
       mockTestResultRepo,
       mockStorageService,
       mockCodeTestService,

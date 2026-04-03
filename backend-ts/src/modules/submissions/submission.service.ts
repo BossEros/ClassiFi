@@ -2,6 +2,8 @@ import { inject, injectable } from "tsyringe"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
+import { ClassRepository } from "@/modules/classes/class.repository.js"
+import { UserRepository } from "@/modules/users/user.repository.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
@@ -34,6 +36,7 @@ import {
   SubmissionFileNotFoundError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
+import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { NotificationService } from "@/modules/notifications/notification.service.js"
 import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
@@ -57,6 +60,8 @@ export class SubmissionService {
     private assignmentRepo: AssignmentRepository,
     @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
+    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
+    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
     @inject(DI_TOKENS.services.storage)
@@ -84,10 +89,16 @@ export class SubmissionService {
     studentId: number,
     file: SubmissionFileDTO,
   ): Promise<SubmissionDTO> {
+    // STEP 1: Verify the assignment exists and is currently active
     const assignment = await this.validateAssignment(assignmentId)
+
+    // STEP 2: Check the deadline and compute any late-submission penalty
     const penaltyResult = await this.checkDeadlineAndPenalty(assignment)
+
+    // STEP 3: Confirm the student is enrolled in the class that owns this assignment
     await this.validateEnrollment(studentId, assignment.classId)
 
+    // STEP 4: Load existing submissions and enforce resubmission and attempt-limit rules
     const existingSubmissions = await this.checkExistingSubmissions(
       assignmentId,
       studentId,
@@ -95,8 +106,10 @@ export class SubmissionService {
       assignment.maxAttempts,
     )
 
+    // STEP 5: Validate the uploaded file's extension and size
     this.validateFile(file, assignment.programmingLanguage)
 
+    // STEP 6: Upload the file to storage and record its path
     const submissionNumber =
       this.calculateNextSubmissionNumber(existingSubmissions)
 
@@ -107,6 +120,7 @@ export class SubmissionService {
       submissionNumber,
     )
 
+    // STEP 7: Create the submission record in the database
     const submission = await this.createSubmission(
       assignmentId,
       studentId,
@@ -116,11 +130,13 @@ export class SubmissionService {
       submissionNumber,
     )
 
+    // STEP 8: Run automated test cases and apply any late-penalty deduction to the grade
     const testsPassed = await this.runTestsAndApplyPenalty(
       submission.id,
       penaltyResult,
     )
 
+    // STEP 9: If tests passed, prune older submissions so storage stays tidy
     if (testsPassed) {
       await this.cleanupOldSubmissions(existingSubmissions)
     }
@@ -128,7 +144,22 @@ export class SubmissionService {
     const updatedSubmission = await this.submissionRepo.getSubmissionById(
       submission.id,
     )
+
+    // STEP 10: Kick off background plagiarism analysis for the assignment
     await this.triggerAutomaticSimilarityAnalysis(assignmentId)
+
+    // STEP 11: Notify the teacher of the new submission (fire-and-forget — does not block the response)
+    fireAndForget(
+      this.sendSubmissionReceivedNotification(
+        updatedSubmission ?? submission,
+        assignment,
+        studentId,
+        penaltyResult,
+      ),
+      logger,
+      "Failed to send submission notification to teacher",
+      { submissionId: submission.id },
+    )
 
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
@@ -500,14 +531,11 @@ export class SubmissionService {
   private calculateNextSubmissionNumber(
     existingSubmissions: Submission[],
   ): number {
-    let highestSubmissionNumber = 0
+    if (existingSubmissions.length === 0) return 1
 
-    for (const existingSubmission of existingSubmissions) {
-      highestSubmissionNumber = Math.max(
-        highestSubmissionNumber,
-        existingSubmission.submissionNumber,
-      )
-    }
+    const highestSubmissionNumber = Math.max(
+      ...existingSubmissions.map((submission) => submission.submissionNumber),
+    )
 
     return highestSubmissionNumber + 1
   }
@@ -647,5 +675,50 @@ export class SubmissionService {
         error,
       })
     }
+  }
+
+  /**
+   * Sends NEW_SUBMISSION_RECEIVED or LATE_SUBMISSION_RECEIVED notification to the teacher.
+   */
+  private async sendSubmissionReceivedNotification(
+    submission: Submission,
+    assignment: Assignment,
+    studentId: number,
+    penaltyResult: PenaltyResult | null,
+  ): Promise<void> {
+    const [classData, student] = await Promise.all([
+      this.classRepo.getClassById(assignment.classId),
+      this.userRepo.getUserById(studentId),
+    ])
+
+    if (!classData) return
+
+    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
+    const isLate = penaltyResult !== null
+
+    const notificationType = isLate ? "LATE_SUBMISSION_RECEIVED" as const : "NEW_SUBMISSION_RECEIVED" as const
+
+    const notificationData = {
+      submissionId: submission.id,
+      assignmentId: assignment.id,
+      assignmentTitle: assignment.assignmentName,
+      studentName,
+      className: classData.className,
+      classId: classData.id,
+      submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`,
+      ...(isLate && {
+        submittedAt: submission.submittedAt.toISOString(),
+        dueDate: assignment.deadline?.toISOString() ?? "No deadline",
+      }),
+    }
+
+    await settlePromisesAndLogRejections([
+      this.notificationService.createNotification(classData.teacherId, notificationType, notificationData),
+      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, notificationType, notificationData),
+    ], logger, "Failed to send submission notification to teacher", {
+      teacherId: classData.teacherId,
+      submissionId: submission.id,
+      notificationType,
+    })
   }
 }

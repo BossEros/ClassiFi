@@ -64,6 +64,31 @@ describe("assignmentRepository", () => {
   }
 
   // ============================================================================
+  // createNewAssignmentForClass Tests
+  // ============================================================================
+
+  describe("createNewAssignmentForClass", () => {
+    it("throws a clear error when the response omits the assignment payload", async () => {
+      vi.mocked(apiClient.post).mockResolvedValue({
+        data: { success: true },
+        status: 201,
+      })
+
+      await expect(
+        assignmentRepository.createNewAssignmentForClass(1, {
+          assignmentName: "New Assignment",
+          instructions: "Solve the task",
+          programmingLanguage: "python",
+          deadline: null,
+          allowResubmission: false,
+          isActive: true,
+          testCases: [],
+        } as never),
+      ).rejects.toThrow("Failed to create assignment: missing assignment")
+    })
+  })
+
+  // ============================================================================
   // submitAssignmentWithFile Tests
   // ============================================================================
 

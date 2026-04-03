@@ -4,15 +4,13 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { SimilarityRepository, type CrossClassResultWithContext } from "@/modules/plagiarism/similarity.repository.js"
-import { PlagiarismDetectorFactory } from "@/modules/plagiarism/plagiarism-detector.factory.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
-import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
+import { SemanticSimilarityClient, cosineSimilarity } from "@/modules/plagiarism/semantic-similarity.client.js"
 import { findMatchingAssignments, type MatchedAssignment } from "@/modules/plagiarism/cross-class-assignment-matcher.js"
-import { PLAGIARISM_LANGUAGE_MAP, type PlagiarismFragmentDTO } from "@/modules/plagiarism/plagiarism.mapper.js"
+import { PLAGIARISM_LANGUAGE_MAP, createPlagiarismDetector, type PlagiarismFragmentDTO } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
   buildPairSimilarityScoreBreakdown,
-  formatPairSimilarityScoreForStorage,
-  formatReportSimilarityScore,
+  formatSimilarityScore,
   normalizeSubmissionPair,
   summarizePairSimilarityScores,
 } from "@/modules/plagiarism/plagiarism-scoring.js"
@@ -50,7 +48,7 @@ export interface CrossClassAnalysisResponse {
   reportId: number
   generatedAt: string
   sourceAssignment: { id: number; name: string; className: string }
-  matchedAssignments: Array<{ id: number; name: string; className: string; nameSimilarity: number }>
+  matchedAssignments: Array<{ id: number; name: string; className: string; classCode: string; nameSimilarity: number }>
   summary: {
     totalSubmissions: number
     totalComparisons: number
@@ -69,7 +67,9 @@ export interface CrossClassResultDTO {
   student1Name: string
   student2Name: string
   class1Name: string
+  class1Code: string
   class2Name: string
+  class2Code: string
   assignment1Name: string
   assignment2Name: string
   structuralScore: number
@@ -130,8 +130,6 @@ export class CrossClassSimilarityService {
     private submissionRepo: SubmissionRepository,
     @inject(DI_TOKENS.repositories.similarity)
     private similarityRepo: SimilarityRepository,
-    @inject(DI_TOKENS.services.plagiarismDetectorFactory)
-    private detectorFactory: PlagiarismDetectorFactory,
     @inject(DI_TOKENS.services.plagiarismSubmissionFile)
     private fileService: PlagiarismSubmissionFileService,
     @inject(DI_TOKENS.services.semanticSimilarityClient)
@@ -149,7 +147,7 @@ export class CrossClassSimilarityService {
     sourceAssignmentId: number,
     teacherId: number,
   ): Promise<CrossClassAnalysisResponse> {
-    // Phase 1: Guard Checks & Discovery
+    // STEP 1: Guard checks and discovery
     // Verify the source assignment exists before proceeding with any analysis.
     const sourceAssignment = await this.assignmentRepo.getAssignmentById(sourceAssignmentId)
 
@@ -201,9 +199,8 @@ export class CrossClassSimilarityService {
     const allAssignmentIds = [sourceAssignmentId, ...matchedAssignments.map((m) => m.assignment.id)]
     const classMap = new Map(teacherClasses.map((cls) => [cls.id, cls]))
 
-    // Staleness check: if a previous cross-class report for this source assignment already
-    // exists and is still current (same matched assignments, no new submissions), return it
-    // immediately without running the expensive file download + detection + semantic pipeline.
+    // STEP 2: Check cache — if a current report exists and matches the submission state, return it immediately
+    // and skip the expensive file download + detection + semantic pipeline.
     const cachedReport = await this.tryGetCachedCrossClassReport(
       sourceAssignmentId,
       teacherId,
@@ -212,7 +209,7 @@ export class CrossClassSimilarityService {
 
     if (cachedReport) return cachedReport
 
-    // Step 2: File Collection
+    // STEP 3: File collection
     // Download submission files for every involved assignment.
     // Each file is tagged with its classId in metadata so we can tell which class it belongs to later.
     const taggedFiles = await this.collectTaggedSubmissionFiles(allAssignmentIds, allAssignments, sourceAssignment)
@@ -222,15 +219,15 @@ export class CrossClassSimilarityService {
       return this.buildEmptyResponse(sourceAssignment, sourceClass.className)
     }
 
-    // Step 3: Structural Detection
+    // STEP 4: Structural detection (Winnowing fingerprinting)
     // Run all files through the plagiarism detector at once.
     // The detector compares every file against every other file using fingerprinting (Winnowing algorithm).
     logger.info("Running structural analysis", { fileCount: taggedFiles.length })
 
-    const detector = this.detectorFactory.create({ language })
+    const detector = createPlagiarismDetector(language)
     const detectorReport = await detector.analyze(taggedFiles)
 
-    // Step 4: Cross-Class Pair Filtering
+    // STEP 5: Cross-class pair filtering
     // The detector returns ALL matching pairs, including same-class pairs.
     // Filter down to only pairs where the two files come from different classes.
     const crossClassPairs = this.extractCrossClassPairs(detectorReport.getPairs())
@@ -242,13 +239,13 @@ export class CrossClassSimilarityService {
 
     logger.info("Cross-class pairs extracted", { pairCount: crossClassPairs.length })
 
-    // Step 5: Semantic Scoring
+    // STEP 6: Semantic scoring (GraphCodeBERT)
     // For pairs that passed the structural threshold, compute a semantic similarity score
     // using the GraphCodeBERT microservice. This gives a deeper, meaning-based comparison
     // beyond just code structure.
     const semanticScores = await this.computeSemanticScores(crossClassPairs)
 
-    // Step 6: Persistence
+    // STEP 7: Persistence
     // Save the report, per-pair results, and matching code fragment positions to the database
     // inside a single transaction so all data is written atomically.
     const persistResult = await this.persistReport(
@@ -270,7 +267,7 @@ export class CrossClassSimilarityService {
       prunedCount,
     })
 
-    // Step 7: Build and return the API response from the saved report and enriched results.
+    // STEP 8: Build and return the analysis response
     return this.buildAnalysisResponse(
       persistResult.dbReport,
       sourceAssignment,
@@ -578,7 +575,10 @@ export class CrossClassSimilarityService {
 
   /**
    * Compute semantic scores for cross-class pairs whose structural score
-   * exceeds the pre-filter threshold. Uses bounded concurrency.
+   * exceeds the pre-filter threshold.
+   *
+   * Uses embedding caching: each unique submission is embedded once (O(n)),
+   * then pairwise cosine similarity is computed locally.
    *
    * @param crossClassPairs - The cross-class pairs to score.
    * @returns A map from pair key to semantic score.
@@ -588,13 +588,12 @@ export class CrossClassSimilarityService {
   ): Promise<Map<string, number>> {
     const semanticScores = new Map<string, number>()
 
-    // Only send pairs to the semantic service if their structural score is above the
-    // pre-filter threshold. Pairs below it get a semantic score of 0 automatically,
-    // saving expensive microservice calls for clearly non-similar code.
-    const qualifiedRequests: Array<{
+    // ── Collect unique submissions from qualified pairs ─────────────────
+    const submissionContentMap = new Map<string, string>()
+    const qualifiedPairEntries: Array<{
       pairKey: string
-      leftContent: string
-      rightContent: string
+      leftSubmissionId: string
+      rightSubmissionId: string
     }> = []
 
     for (const crossClassPair of crossClassPairs) {
@@ -603,44 +602,68 @@ export class CrossClassSimilarityService {
         continue
       }
 
-      qualifiedRequests.push({
+      const leftSubmissionId = crossClassPair.pair.leftFile.info?.submissionId || "0"
+      const rightSubmissionId = crossClassPair.pair.rightFile.info?.submissionId || "0"
+
+      if (leftSubmissionId === "0" || rightSubmissionId === "0") continue
+
+      submissionContentMap.set(leftSubmissionId, crossClassPair.pair.leftFile.content)
+      submissionContentMap.set(rightSubmissionId, crossClassPair.pair.rightFile.content)
+      qualifiedPairEntries.push({
         pairKey: crossClassPair.pairKey,
-        leftContent: crossClassPair.pair.leftFile.content,
-        rightContent: crossClassPair.pair.rightFile.content,
+        leftSubmissionId,
+        rightSubmissionId,
       })
     }
 
-    // Nothing passed the filter — return early with all scores set to 0.
-    if (qualifiedRequests.length === 0) return semanticScores
+    if (qualifiedPairEntries.length === 0) return semanticScores
 
-    logger.info("Running semantic scoring with pre-filter", {
+    logger.info("Running semantic scoring with pre-filter (embedding cache)", {
       totalPairs: crossClassPairs.length,
-      qualifiedPairs: qualifiedRequests.length,
+      qualifiedPairs: qualifiedPairEntries.length,
+      uniqueSubmissions: submissionContentMap.size,
     })
 
-    // Use bounded concurrency: run up to maxConcurrency semantic requests in parallel
-    // to avoid overwhelming the microservice while still processing faster than sequential.
+    // ── Embed each unique submission once (O(n) model calls) ───────────
+    const embeddingCache = new Map<string, number[]>()
+    const submissionIds = [...submissionContentMap.keys()]
+
     const maxConcurrency = Math.max(1, settings.semanticSimilarityMaxConcurrentRequests ?? 4)
-    const workerCount = Math.min(maxConcurrency, qualifiedRequests.length)
+    const workerCount = Math.min(maxConcurrency, submissionIds.length)
     let nextIndex = 0
 
     await Promise.all(
       Array.from({ length: workerCount }, async () => {
-        // Each worker picks the next unprocessed request and loops until all are done.
-        while (nextIndex < qualifiedRequests.length) {
+        while (nextIndex < submissionIds.length) {
           const currentIndex = nextIndex
           nextIndex += 1
-          const request = qualifiedRequests[currentIndex]
+          const submissionId = submissionIds[currentIndex]
+          const code = submissionContentMap.get(submissionId)!
 
-          const semanticScore = await this.semanticClient.getSemanticScore(
-            request.leftContent,
-            request.rightContent,
-          )
+          const embedding = await this.semanticClient.getEmbedding(code)
 
-          semanticScores.set(request.pairKey, semanticScore)
+          if (embedding) {
+            embeddingCache.set(submissionId, embedding)
+          }
         }
       }),
     )
+
+    // ── Compute pairwise cosine similarity locally (instant) ───────────
+    for (const { pairKey, leftSubmissionId, rightSubmissionId } of qualifiedPairEntries) {
+      const leftEmbedding = embeddingCache.get(leftSubmissionId)
+      const rightEmbedding = embeddingCache.get(rightSubmissionId)
+
+      if (!leftEmbedding || !rightEmbedding) {
+        semanticScores.set(pairKey, 0)
+        continue
+      }
+
+      const similarity = cosineSimilarity(leftEmbedding, rightEmbedding)
+      const clampedScore = Math.min(1, Math.max(0, similarity))
+
+      semanticScores.set(pairKey, Math.round(clampedScore * 10000) / 10000)
+    }
 
     return semanticScores
   }
@@ -705,8 +728,8 @@ export class CrossClassSimilarityService {
         totalSubmissions: this.countUniqueSubmissions(crossClassPairs),
         totalComparisons: crossClassPairs.length,
         flaggedPairs: summary.suspiciousPairs,
-        averageSimilarity: formatReportSimilarityScore(summary.averageSimilarity),
-        highestSimilarity: formatReportSimilarityScore(summary.maxSimilarity),
+        averageSimilarity: formatSimilarityScore(summary.averageSimilarity, 4),
+        highestSimilarity: formatSimilarityScore(summary.maxSimilarity, 4),
       })
 
       // Build and batch-insert one result row per cross-class pair.
@@ -769,9 +792,9 @@ export class CrossClassSimilarityService {
         reportId,
         submission1Id: crossClassPair.leftSubmissionId,
         submission2Id: crossClassPair.rightSubmissionId,
-        structuralScore: formatPairSimilarityScoreForStorage(structuralScore),
-        semanticScore: formatPairSimilarityScoreForStorage(semanticScore),
-        hybridScore: formatPairSimilarityScoreForStorage(breakdown.hybridScore),
+        structuralScore: formatSimilarityScore(structuralScore, 6),
+        semanticScore: formatSimilarityScore(semanticScore, 6),
+        hybridScore: formatSimilarityScore(breakdown.hybridScore, 6),
         overlap: crossClassPair.pair.overlap,
         longestFragment: crossClassPair.pair.longest,
         leftCovered: crossClassPair.pair.leftCovered,
@@ -874,7 +897,7 @@ export class CrossClassSimilarityService {
     sourceAssignment: Assignment,
     sourceClassName: string,
     matchedAssignments: MatchedAssignment[],
-    classMap: Map<number, { id: number; className: string }>,
+    classMap: Map<number, { id: number; className: string; classCode: string }>,
     resultsWithContext: CrossClassResultWithContext[],
   ): CrossClassAnalysisResponse {
     return {
@@ -889,6 +912,7 @@ export class CrossClassSimilarityService {
         id: m.assignment.id,
         name: m.assignment.assignmentName,
         className: classMap.get(m.assignment.classId)?.className ?? "Unknown",
+        classCode: classMap.get(m.assignment.classId)?.classCode ?? "",
         nameSimilarity: m.nameSimilarity,
       })),
       summary: {
@@ -913,7 +937,9 @@ export class CrossClassSimilarityService {
       student1Name: context?.submission1StudentName ?? "Unknown",
       student2Name: context?.submission2StudentName ?? "Unknown",
       class1Name: context?.submission1ClassName ?? "Unknown",
+      class1Code: context?.submission1ClassCode ?? "",
       class2Name: context?.submission2ClassName ?? "Unknown",
+      class2Code: context?.submission2ClassCode ?? "",
       assignment1Name: context?.submission1AssignmentName ?? "Unknown",
       assignment2Name: context?.submission2AssignmentName ?? "Unknown",
       structuralScore: parseFloat(result.structuralScore),
