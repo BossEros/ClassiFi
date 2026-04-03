@@ -47,15 +47,16 @@ export function ProfileDropdown({
     getIsDesktopViewport,
   )
   const containerRef = useRef<HTMLDivElement>(null)
+  const dropdownMenuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
 
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      const clickedInsideContainer = containerRef.current?.contains(event.target as Node) ?? false
+      const clickedInsideDropdown = dropdownMenuRef.current?.contains(event.target as Node) ?? false
+
+      if (!clickedInsideContainer && !clickedInsideDropdown) {
         setIsOpen(false)
       }
     }
@@ -124,6 +125,7 @@ export function ProfileDropdown({
 
   const dropdownMenu = (
     <div
+      ref={dropdownMenuRef}
       className={cn(
         "z-[11000] rounded-lg border border-slate-700 bg-slate-800 p-1 shadow-lg shadow-black/25",
         shouldRenderFloatingDesktopMenu
