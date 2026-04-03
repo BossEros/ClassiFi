@@ -5,14 +5,18 @@ import { apiClient } from "@/data/api/apiClient"
 import type { ISODateString } from "@/shared/types/class"
 
 // Mock the apiClient module
-vi.mock("@/data/api/apiClient", () => ({
-  apiClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    delete: vi.fn(),
-  },
-}))
+vi.mock("@/data/api/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/api/apiClient")>()
+  return {
+    ...actual,
+    apiClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      delete: vi.fn(),
+    },
+  }
+})
 
 // Helper to create ISO date string
 const toISO = (date: Date): ISODateString => date.toISOString() as ISODateString
@@ -31,7 +35,8 @@ describe("classRepository", () => {
       teacherId: 1,
       className: "Test Class",
       classCode: "TEST123",
-      description: "A test class",
+      description: "A test class",
+
       semester: 1 as const,
       academicYear: "2024-2025",
       schedule: {
@@ -48,7 +53,8 @@ describe("classRepository", () => {
       classCode: "TEST123",
       description: "A test class",
       isActive: true,
-      createdAt: toISO(new Date()),
+      createdAt: toISO(new Date()),
+
       semester: 1,
       academicYear: "2024-2025",
       schedule: {

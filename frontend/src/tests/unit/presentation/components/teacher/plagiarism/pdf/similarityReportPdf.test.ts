@@ -349,7 +349,7 @@ describe("similarityReportPdf", () => {
       reportData.reportMetadata.find(
         (entry) => entry.label === "Report Generated",
       )?.value,
-    ).toContain("Mar 11, 2026")
+    ).toContain("March 11, 2026")
     expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
       "Downloaded At",
     )
@@ -372,7 +372,7 @@ describe("similarityReportPdf", () => {
       reportData.reportMetadata.find(
         (entry) => entry.label === "Report Generated",
       )?.value,
-    ).toContain("Mar 11, 2026")
+    ).toContain("March 11, 2026")
     expect(reportData.reportMetadata.map((entry) => entry.label)).not.toContain(
       "Downloaded At",
     )
