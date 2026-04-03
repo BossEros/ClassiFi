@@ -22,11 +22,15 @@ vi.mock("@/data/api/supabaseClient", () => ({
   },
 }))
 
-vi.mock("@/data/api/apiClient", () => ({
-  apiClient: {
-    patch: mockPatch,
-  },
-}))
+vi.mock("@/data/api/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/api/apiClient")>()
+  return {
+    ...actual,
+    apiClient: {
+      patch: mockPatch,
+    },
+  }
+})
 
 describe("userRepository.uploadUserAvatar", () => {
   const fixedTimestampMs = 1735689600000

@@ -4,15 +4,19 @@ import * as moduleRepository from "@/data/repositories/moduleRepository"
 import { apiClient } from "@/data/api/apiClient"
 import type { ISODateString } from "@/shared/types/class"
 
-vi.mock("@/data/api/apiClient", () => ({
-  apiClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
-  },
-}))
+vi.mock("@/data/api/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/api/apiClient")>()
+  return {
+    ...actual,
+    apiClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+    },
+  }
+})
 
 const toISO = (date: Date): ISODateString => date.toISOString() as ISODateString
 

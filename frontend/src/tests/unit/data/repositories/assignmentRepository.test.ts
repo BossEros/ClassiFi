@@ -4,12 +4,16 @@ import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
-vi.mock("@/data/api/apiClient", () => ({
-  apiClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-  },
-}))
+vi.mock("@/data/api/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/api/apiClient")>()
+  return {
+    ...actual,
+    apiClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+    },
+  }
+})
 
 // Mock supabase client
 vi.mock("@/data/api/supabaseClient", () => ({
