@@ -4,15 +4,19 @@ import * as adminRepository from "@/data/repositories/adminRepository"
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
-vi.mock("@/data/api/apiClient", () => ({
-  apiClient: {
-    get: vi.fn(),
-    post: vi.fn(),
-    put: vi.fn(),
-    patch: vi.fn(),
-    delete: vi.fn(),
-  },
-}))
+vi.mock("@/data/api/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/api/apiClient")>()
+  return {
+    ...actual,
+    apiClient: {
+      get: vi.fn(),
+      post: vi.fn(),
+      put: vi.fn(),
+      patch: vi.fn(),
+      delete: vi.fn(),
+    },
+  }
+})
 
 describe("adminRepository", () => {
   beforeEach(() => {
@@ -40,7 +44,8 @@ describe("adminRepository", () => {
     teacherId: 1,
     teacherName: "Prof. Smith",
     studentCount: 30,
-    isActive: true,
+    isActive: true,
+
     semester: 1,
     academicYear: "2024-2025",
     createdAt: "2024-01-01T00:00:00Z",
@@ -429,7 +434,8 @@ describe("adminRepository", () => {
         itemsPerPage: 10,
         searchQuery: "intro",
         teacherId: 1,
-        classStatus: "active",
+        classStatus: "active",
+
         semesterNumber: 1,
         academicYear: "2024-2025",
       })
@@ -481,7 +487,8 @@ describe("adminRepository", () => {
       className: "New Class",
       classCode: "NEW101",
       teacherId: 1,
-      description: "A new class",
+      description: "A new class",
+
       semester: 1,
       academicYear: "2024-2025",
       schedule: {
@@ -802,7 +809,8 @@ describe("adminRepository", () => {
       classIsActive: true,
       teacherId: 7,
       teacherName: "Prof. Ada",
-      teacherAvatarUrl: null,
+      teacherAvatarUrl: null,
+
       semester: 1,
       academicYear: "2025-2026",
       enrolledAt: "2025-06-01T00:00:00Z",

@@ -4,11 +4,15 @@ import * as teacherDashboardRepository from "@/data/repositories/teacherDashboar
 import { apiClient } from "@/data/api/apiClient"
 
 // Mock the apiClient module
-vi.mock("@/data/api/apiClient", () => ({
-  apiClient: {
-    get: vi.fn(),
-  },
-}))
+vi.mock("@/data/api/apiClient", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/data/api/apiClient")>()
+  return {
+    ...actual,
+    apiClient: {
+      get: vi.fn(),
+    },
+  }
+})
 
 describe("teacherDashboardRepository", () => {
   beforeEach(() => {
