@@ -12,6 +12,16 @@ import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }
 
+/**
+ * Maps raw API test execution data into a typed TestPreviewResult.
+ * Resolves field name aliases (e.g., `passed` vs `passedCount`, `percentage` vs `score`)
+ * to maintain backward compatibility across older and newer API response formats.
+ * Each raw result is normalized via `normalizeTestResult` for consistent display.
+ *
+ * @param testExecutionSummaryData - The raw test result payload from the API response.
+ * @returns A normalized TestPreviewResult with pass counts, total counts, percentage, and detailed results.
+ * @throws Error if required summary fields (passed, total, percentage) are missing from the raw data.
+ */
 function mapTestExecutionSummaryToPreviewResult(
   testExecutionSummaryData: TestResultsResponse["data"],
 ): TestPreviewResult {

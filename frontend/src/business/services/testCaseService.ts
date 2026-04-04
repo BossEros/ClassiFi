@@ -10,6 +10,17 @@ import type {
 import type { TestResultsResponse } from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
+/**
+ * Maps raw API test execution data into a typed TestExecutionSummary.
+ * Resolves field name aliases (e.g., `passed` vs `passedCount`, `percentage` vs `score`)
+ * to maintain backward compatibility across older and newer API response shapes.
+ * Each raw result is normalized via `normalizeTestResult` before being included.
+ *
+ * @param testExecutionSummaryData - The raw test execution payload from the API response.
+ * @param submissionId - The submission ID to attach to the resulting summary object.
+ * @returns A typed TestExecutionSummary with normalized counts, totals, percentage, and per-test details.
+ * @throws Error if required summary fields (passed, total, percentage) are missing from the raw data.
+ */
 function mapTestExecutionSummary(
   testExecutionSummaryData: TestResultsResponse["data"],
   submissionId: number,
