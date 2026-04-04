@@ -2,7 +2,7 @@ import { notificationRepository } from "@/data/repositories/notificationReposito
 import type {
   NotificationListResponse,
   NotificationType,
-} from "@/business/models/notification/types"
+} from "@/data/api/notification.types"
 
 /**
  * Fetches notifications with pagination.

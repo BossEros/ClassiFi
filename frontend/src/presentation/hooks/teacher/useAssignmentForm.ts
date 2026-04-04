@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { type ProgrammingLanguage } from "@/business/models/assignment/types"
+import { type ProgrammingLanguage } from "@/data/api/assignment.types"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {

@@ -7,12 +7,12 @@ import {
   getSubmissionHistory,
 } from "@/business/services/assignmentService"
 import { getTestResultsForSubmission } from "@/business/services/testService"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/shared/types/auth"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/business/models/assignment/types"
-import type { TestPreviewResult } from "@/business/models/test/types"
+} from "@/data/api/assignment.types"
+import type { TestPreviewResult } from "@/data/api/test-case.types"
 
 interface UseAssignmentDetailDataOptions {
   assignmentId: string | undefined

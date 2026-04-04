@@ -6,7 +6,7 @@ import type {
   AssignmentDetail,
   SubmitAssignmentRequest,
   SubmissionContent,
-} from "@/business/models/assignment/types"
+} from "@/data/api/assignment.types"
 import { validateFile } from "@/shared/utils/fileValidationUtils"
 export { validateFile }
 

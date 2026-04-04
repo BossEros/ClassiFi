@@ -1,7 +1,7 @@
 import { cn } from "@/shared/utils/cn"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { Trash2 } from "lucide-react"
-import type { EnrolledStudent } from "@/business/models/dashboard/types"
+import type { EnrolledStudent } from "@/data/api/class.types"
 
 interface StudentListItemProps {
   student: EnrolledStudent

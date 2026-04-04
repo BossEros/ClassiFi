@@ -1,4 +1,4 @@
-import type { ProgrammingLanguage } from "@/business/models/assignment/types"
+import type { ProgrammingLanguage } from "@/data/api/assignment.types"
 import type { LatePenaltyConfig, PenaltyTier } from "@/shared/types/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { AssignmentFormData } from "@/presentation/hooks/teacher/assignmentForm.types"

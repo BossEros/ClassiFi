@@ -10,8 +10,7 @@ import {
 } from "date-fns"
 
 import * as calendarService from "@/business/services/calendarService"
-import type { CalendarEvent, ClassInfo } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/business/models/calendar/types"
+import type { CalendarEvent, ClassInfo, CalendarView } from "@/data/api/calendar.types"
 
 /**
  * Type guard to validate user role.

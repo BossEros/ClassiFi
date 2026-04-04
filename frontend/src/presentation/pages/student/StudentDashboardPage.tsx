@@ -8,7 +8,7 @@ import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime, getMinutesUntilNextSession } from "@/presentation/utils/dateUtils"
-import type { Class, Task } from "@/business/models/dashboard/types"
+import type { Class, Task } from "@/data/api/class.types"
 
 function getDeadlineBadgeClass(deadlineStatus: string): string {
   if (deadlineStatus === "Overdue") {

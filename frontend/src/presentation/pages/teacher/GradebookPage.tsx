@@ -7,7 +7,7 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { getClassById } from "@/business/services/classService"
-import type { Class } from "@/business/models/dashboard/types"
+import type { Class } from "@/data/api/class.types"
 
 /**
  * Standalone gradebook route page.

@@ -15,10 +15,10 @@ import {
   getTestResultsForSubmission,
   runTestsPreview,
 } from "@/business/services/testService"
-import type { Submission } from "@/business/models/assignment/types"
-import type { AssignmentDetail } from "@/business/models/assignment/types"
-import type { User } from "@/business/models/auth/types"
-import type { TestPreviewResult } from "@/business/models/test/types"
+import type { Submission } from "@/data/api/assignment.types"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
+import type { User } from "@/shared/types/auth"
+import type { TestPreviewResult } from "@/data/api/test-case.types"
 import type { ToastVariant } from "@/presentation/components/ui/Toast"
 
 interface UseAssignmentSubmissionFlowOptions {

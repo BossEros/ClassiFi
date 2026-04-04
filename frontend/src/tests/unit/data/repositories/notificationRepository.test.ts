@@ -5,7 +5,7 @@ import type {
   Notification,
   NotificationListResponse,
   UnreadCountResponse,
-} from "@/business/models/notification/types"
+} from "@/data/api/notification.types"
 
 // Mock the apiClient module
 vi.mock("@/data/api/apiClient", () => ({

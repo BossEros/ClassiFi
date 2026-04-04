@@ -3,7 +3,7 @@ import { CheckCircle, Eye, FileCode, Play, RefreshCw, Upload, UploadCloud } from
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
 import { formatFileSize } from "@/presentation/utils/formatUtils"
-import type { ProgrammingLanguage } from "@/business/models/assignment/types"
+import type { ProgrammingLanguage } from "@/data/api/assignment.types"
 import { cn } from "@/shared/utils/cn"
 
 interface AssignmentSubmissionFormProps {

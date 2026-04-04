@@ -4,7 +4,7 @@ import { createPortal } from "react-dom"
 import { Settings, LogOut } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/shared/types/auth"
 
 const DESKTOP_PROFILE_DROPDOWN_MEDIA_QUERY = "(min-width: 1024px)"
 const EXPANDED_SIDEBAR_WIDTH_PX = 224

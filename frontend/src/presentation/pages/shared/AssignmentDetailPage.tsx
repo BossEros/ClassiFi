@@ -38,7 +38,7 @@ import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignm
 import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview"
 import { GradeOverrideModal } from "@/presentation/components/teacher/gradebook/GradeOverrideModal"
 import { useGradeOverride } from "@/presentation/hooks/teacher/useGradebook"
-import type { Submission } from "@/business/models/assignment/types"
+import type { Submission } from "@/data/api/assignment.types"
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
 import {
   getAssignmentSubmissions,

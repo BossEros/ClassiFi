@@ -7,7 +7,7 @@ import { getAssignmentById } from "@/business/services/assignmentService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
-import type { AssignmentDetail } from "@/business/models/assignment/types"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
 
 interface CrossClassSimilarityNavigationState {
   shouldRunInitialAnalysis?: boolean

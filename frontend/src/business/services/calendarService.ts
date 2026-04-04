@@ -15,10 +15,10 @@ import type {
   AssignmentStatus,
   ClassInfo,
   DateRange,
-} from "@/business/models/calendar/types"
-import type { Assignment, Class } from "@/business/models/dashboard/types"
-import type { Submission } from "@/business/models/assignment/types"
-import type { CalendarView } from "@/business/models/calendar/types"
+  CalendarView,
+} from "@/data/api/calendar.types"
+import type { Assignment, Class } from "@/data/api/class.types"
+import type { Submission } from "@/data/api/assignment.types"
 import { formatCalendarDate as formatCalendarDateValue } from "@/shared/utils/calendarDateUtils"
 import { getClassColor as getClassColorValue } from "@/shared/utils/colorUtils"
 

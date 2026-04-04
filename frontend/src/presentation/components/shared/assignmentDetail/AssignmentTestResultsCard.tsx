@@ -1,7 +1,7 @@
 import { ChevronDown, Code, Lock } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
-import type { AssignmentTestCase } from "@/business/models/assignment/types"
-import type { TestPreviewResult } from "@/business/models/test/types"
+import type { AssignmentTestCase } from "@/data/api/assignment.types"
+import type { TestPreviewResult } from "@/data/api/test-case.types"
 import { cn } from "@/shared/utils/cn"
 
 interface AssignmentTestResultsCardProps {

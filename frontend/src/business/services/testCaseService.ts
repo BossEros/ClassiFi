@@ -7,7 +7,7 @@ import type {
   UpdateTestCaseRequest,
   TestExecutionSummary,
 } from "@/shared/types/testCase"
-import type { TestResultsResponse } from "@/business/models/test/types"
+import type { TestResultsResponse } from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
 function mapTestExecutionSummary(

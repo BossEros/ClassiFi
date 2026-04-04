@@ -1,13 +1,13 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import { validateId } from "@/shared/utils/idUtils"
-import type { ProgrammingLanguage } from "@/business/models/assignment/types"
+import type { ProgrammingLanguage } from "@/data/api/shared.types"
 import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
   TestResultsResponse,
-} from "@/business/models/test/types"
+} from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }

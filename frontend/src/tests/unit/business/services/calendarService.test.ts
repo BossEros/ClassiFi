@@ -4,7 +4,7 @@ import {
   calculateSubmissionStatus,
   formatCalendarDate,
 } from "@/business/services/calendarService"
-import type { Assignment } from "@/business/models/dashboard/types"
+import type { Assignment } from "@/data/api/class.types"
 import type { Submission } from "@/data/api/shared.types"
 
 describe("calendarService", () => {

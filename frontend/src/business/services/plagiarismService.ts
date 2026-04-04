@@ -6,7 +6,7 @@ import type {
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
-} from "@/business/models/plagiarism/types"
+} from "@/data/api/plagiarism.types"
 
 export type {
   AnalyzeResponse,

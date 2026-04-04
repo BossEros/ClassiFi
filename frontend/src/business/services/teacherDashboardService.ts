@@ -1,9 +1,6 @@
 import * as dashboardRepository from "@/data/repositories/teacherDashboardRepository"
-import type {
-  DashboardData,
-  Class,
-  Task,
-} from "@/business/models/dashboard/types"
+import type { DashboardData } from "@/data/api/dashboard.types"
+import type { Class, Task } from "@/data/api/class.types"
 import { validateId } from "@/shared/utils/idUtils"
 
 /**

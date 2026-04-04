@@ -10,7 +10,7 @@ import type {
   ResetPasswordRequest,
   ChangePasswordRequest,
   DeleteAccountRequest,
-} from "@/business/models/auth/types"
+} from "@/shared/types/auth"
 import { AuthError } from "@supabase/supabase-js"
 
 // Mock dependencies

@@ -10,7 +10,7 @@ import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime } from "@/presentation/utils/dateUtils"
 import { getPendingAssignments } from "@/business/services/studentDashboardService"
 import { getPendingTasks } from "@/business/services/teacherDashboardService"
-import type { Task } from "@/business/models/dashboard/types"
+import type { Task } from "@/data/api/class.types"
 
 const ITEMS_PER_PAGE = 10
 

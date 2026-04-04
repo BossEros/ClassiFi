@@ -12,8 +12,8 @@ import type {
   ClassAssignment,
   AdminEnrollmentRecord,
   TransferStudentData,
-} from "@/business/models/admin/types"
-export type { AdminUser, AdminStats, ActivityItem, AdminClass, PaginatedResponse, CreateUserData, CreateClassData, UpdateClassData, EnrolledStudent, ClassAssignment, AdminEnrollmentRecord, TransferStudentData } from "@/business/models/admin/types"
+} from "@/data/api/admin.types"
+export type { AdminUser, AdminStats, ActivityItem, AdminClass, PaginatedResponse, CreateUserData, CreateClassData, UpdateClassData, EnrolledStudent, ClassAssignment, AdminEnrollmentRecord, TransferStudentData } from "@/data/api/admin.types"
 import { validateId } from "@/shared/utils/idUtils"
 
 // ============ User Management ============

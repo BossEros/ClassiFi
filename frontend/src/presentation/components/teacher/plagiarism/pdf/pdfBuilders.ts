@@ -1,5 +1,5 @@
-import type { AssignmentDetail } from "@/business/models/assignment/types"
-import type { CrossClassResultDTO } from "@/business/models/plagiarism/crossClassTypes"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
+import type { CrossClassResultDTO } from "@/data/api/crossClassPlagiarism.types"
 import type {
   AnalyzeResponse,
   PairResponse,

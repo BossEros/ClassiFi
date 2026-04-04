@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
-import type { Notification } from "@/business/models/notification/types"
+import type { Notification } from "@/data/api/notification.types"
 import { NotificationItem } from "./NotificationItem"
 
 interface NotificationDropdownProps {

@@ -11,7 +11,7 @@ import {
   Bell,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import type { CalendarEvent } from "@/business/models/calendar/types"
+import type { CalendarEvent } from "@/data/api/calendar.types"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { formatCalendarDate } from "@/business/services/calendarService"
 import { sendReminderToNonSubmitters } from "@/business/services/assignmentService"

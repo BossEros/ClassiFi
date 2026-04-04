@@ -14,7 +14,7 @@ import type {
   ChangePasswordResponse,
   DeleteAccountRequest,
   DeleteAccountResponse,
-} from "@/business/models/auth/types"
+} from "@/shared/types/auth"
 
 const emailConfirmationRequiredLoginMessage =
   "Please confirm your email before signing in. Check your inbox or spam folder for the verification link."

@@ -1,8 +1,8 @@
-import type { AssignmentDetail } from "@/business/models/assignment/types"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
 import type {
   CrossClassAnalysisResponse,
   CrossClassResultDTO,
-} from "@/business/models/plagiarism/crossClassTypes"
+} from "@/data/api/crossClassPlagiarism.types"
 import type {
   AnalyzeResponse,
   PairResponse,

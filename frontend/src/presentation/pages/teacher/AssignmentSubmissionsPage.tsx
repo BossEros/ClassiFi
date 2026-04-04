@@ -45,7 +45,7 @@ import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/business/models/assignment/types"
+} from "@/data/api/assignment.types"
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { AlertTriangle, X } from "lucide-react"

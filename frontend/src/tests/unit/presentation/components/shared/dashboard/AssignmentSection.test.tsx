@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { AssignmentSection } from "@/presentation/components/shared/dashboard/AssignmentSection"
 import { describe, it, expect, vi } from "vitest"
-import type { Assignment } from "@/business/models/dashboard/types"
+import type { Assignment } from "@/data/api/class.types"
 import type { ISODateString } from "@/shared/types/class"
 
 describe("AssignmentSection", () => {

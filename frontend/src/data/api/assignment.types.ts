@@ -6,6 +6,10 @@ import type {
 } from "@/data/api/shared.types"
 import type { TaskDTO } from "@/data/api/class.types"
 
+export { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/shared.types"
+export type { ProgrammingLanguage, AssignmentTestCase } from "@/data/api/shared.types"
+export type { Submission, SubmissionWithAssignment, SubmissionWithStudent, SubmissionContent } from "@/shared/types/submission"
+
 export interface AssignmentDetail {
   id: number
   classId: number

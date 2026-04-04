@@ -3,7 +3,7 @@ import {
   isValidClass,
   mapToClassArray,
 } from "@/business/services/calendarService"
-import type { Class } from "@/business/models/dashboard/types"
+import type { Class } from "@/data/api/class.types"
 
 describe("classMappers", () => {
   const validClass: Class = {

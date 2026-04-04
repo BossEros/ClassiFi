@@ -1,9 +1,13 @@
-﻿import type {
+﻿import type { ComponentType } from "react"
+import type {
   Schedule,
   Class,
   Assignment,
+  Task,
   EnrolledStudent,
 } from "@/shared/types/class"
+
+export type { DayOfWeek, Schedule, Class, Assignment, Task, EnrolledStudent, AssignmentStatus, AssignmentFilter, ClassTab } from "@/shared/types/class"
 
 /** Base class fields shared across all class representations */
 interface ClassBase {
@@ -120,6 +124,21 @@ export interface GenerateCodeResponse {
   success: boolean
   message?: string
   code: string
+}
+
+/** Aggregated class detail data returned by the class service */
+export interface ClassDetailData {
+  classInfo: Class
+  assignments: Task[]
+  students: EnrolledStudent[]
+}
+
+/** Navigation item used in the sidebar */
+export interface NavigationItem {
+  id: string
+  label: string
+  path: string
+  icon: ComponentType<{ className?: string }>
 }
 
 
