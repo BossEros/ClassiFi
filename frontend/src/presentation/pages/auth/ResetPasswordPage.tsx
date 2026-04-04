@@ -61,7 +61,7 @@ export function ResetPasswordPage({ onSuccess }: ResetPasswordPageProps) {
           setError(result.message || "Failed to verify reset link.")
           setIsCheckingSession(false)
         }
-      } catch (err) {
+      } catch {
         if (!isMounted) return
         setTokenError(true)
         setError("An unexpected error occurred.")

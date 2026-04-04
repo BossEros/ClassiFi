@@ -101,6 +101,7 @@ export function mapAssignmentDetail(
     : "python" // Safe fallback to default language
 
   if (!isValidProgrammingLanguage(dto.programmingLanguage)) {
+    // Keep the safe fallback when older or malformed payloads contain unsupported languages.
   }
 
   return {

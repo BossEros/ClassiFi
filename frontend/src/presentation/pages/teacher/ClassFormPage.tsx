@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+﻿import { useState, useEffect } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   ClipboardList,
@@ -41,7 +41,7 @@ import {
   normalizeClassDescriptionForUpdate,
 } from "@/shared/utils/classDescriptionUtils"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
-import type { DayOfWeek } from "@/data/api/class.types"
+import type { DayOfWeek } from "@/business/models/class"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
 function getDefaultClassFormValues(): TeacherClassFormValues {
@@ -583,5 +583,6 @@ export function ClassFormPage() {
     </DashboardLayout>
   )
 }
+
 
 

@@ -15,7 +15,7 @@ import {
   joinClass,
 } from "@/business/services/studentDashboardService"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { Class } from "@/data/api/class.types"
+import type { Class } from "@/business/models/class"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { Input } from "@/presentation/components/ui/Input"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
@@ -351,3 +351,4 @@ export function StudentClassesPage() {
     </DashboardLayout>
   )
 }
+

@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react"
+﻿import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
-import type { Notification } from "@/data/api/notification.types"
+import type { Notification } from "@/business/models/notification"
 import { NotificationItem } from "./NotificationItem"
 
 interface NotificationDropdownProps {
@@ -67,6 +67,7 @@ export function NotificationDropdown({
       )
       onNotificationRead()
     } catch {
+      // Leave the notification unread in the dropdown when the API update fails.
     }
   }
 
@@ -82,6 +83,7 @@ export function NotificationDropdown({
         })),
       )
     } catch {
+      // Preserve the existing notification state when the bulk action fails.
     }
   }
 
@@ -164,3 +166,4 @@ export function NotificationDropdown({
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight, ChevronUp, ChevronDown, Clock } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -6,8 +6,8 @@ import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/teacherDashboardService"
 import { getDeadlineStatus, formatDateTime, getMinutesUntilNextSession } from "@/presentation/utils/dateUtils"
-import type { User } from "@/data/api/auth.types"
-import type { Class, Task } from "@/data/api/class.types"
+import type { User } from "@/business/models/auth"
+import type { Class, Task } from "@/business/models/class"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
@@ -356,4 +356,5 @@ export function TeacherDashboardPage() {
     </DashboardLayout>
   )
 }
+
 

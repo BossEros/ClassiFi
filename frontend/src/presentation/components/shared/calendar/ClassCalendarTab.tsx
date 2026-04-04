@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from "react"
+﻿import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
 import { useCalendar } from "@/presentation/hooks/shared/useCalendar"
 import { CustomEventComponent } from "./CustomEventComponent"
@@ -9,7 +9,7 @@ import { EventDetailsModal } from "./EventDetailsModal"
 import { getCalendarMonthEventStyle } from "./eventStyle"
 import { calendarLocalizer } from "@/presentation/constants/calendarConfig"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { CalendarEvent, CalendarView } from "@/data/api/calendar.types"
+import type { CalendarEvent, CalendarView } from "@/business/models/calendar"
 import { calendarTheme } from "@/presentation/constants/calendarTheme"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "@/presentation/pages/shared/CalendarPage.css"
@@ -41,7 +41,6 @@ export interface ClassCalendarTabProps {
  */
 export function ClassCalendarTab({
   classId,
-  className: _className,
 }: ClassCalendarTabProps) {
   const {
     currentDate,
@@ -364,3 +363,4 @@ export function ClassCalendarTab({
     </div>
   )
 }
+

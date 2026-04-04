@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/shared/store/useAuthStore"
+﻿import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import {
   addMonths,
@@ -10,7 +10,7 @@ import {
 } from "date-fns"
 
 import * as calendarService from "@/business/services/calendarService"
-import type { CalendarEvent, ClassInfo, CalendarView } from "@/data/api/calendar.types"
+import type { CalendarEvent, ClassInfo, CalendarView } from "@/business/models/calendar"
 
 /**
  * Type guard to validate user role.
@@ -362,3 +362,4 @@ export function useCalendar(): UseCalendarReturn {
     refetchEvents,
   }
 }
+

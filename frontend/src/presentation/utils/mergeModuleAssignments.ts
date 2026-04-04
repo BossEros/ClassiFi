@@ -1,4 +1,4 @@
-import type { Assignment, Module } from "@/data/api/class.types"
+﻿import type { Assignment, Module } from "@/business/models/class"
 
 /**
  * Merges the latest assignment state from the flat class-detail assignment list
@@ -35,3 +35,4 @@ export function mergeModuleAssignmentsWithLatestAssignmentState(
     }),
   }))
 }
+

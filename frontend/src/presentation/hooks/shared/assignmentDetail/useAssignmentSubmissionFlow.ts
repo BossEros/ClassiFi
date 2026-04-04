@@ -1,4 +1,4 @@
-import {
+﻿import {
   useEffect,
   useRef,
   useState,
@@ -15,10 +15,10 @@ import {
   getTestResultsForSubmission,
   runTestsPreview,
 } from "@/business/services/testService"
-import type { Submission } from "@/data/api/assignment.types"
-import type { AssignmentDetail } from "@/data/api/assignment.types"
-import type { User } from "@/data/api/auth.types"
-import type { TestPreviewResult } from "@/data/api/test-case.types"
+import type { Submission } from "@/business/models/assignment"
+import type { AssignmentDetail } from "@/business/models/assignment"
+import type { User } from "@/business/models/auth"
+import type { TestPreviewResult } from "@/business/models/testCase"
 import type { ToastVariant } from "@/presentation/components/ui/Toast"
 
 interface UseAssignmentSubmissionFlowOptions {
@@ -352,3 +352,4 @@ export function useAssignmentSubmissionFlow({
     toggleInitialTestExpand,
   }
 }
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from "react"
+﻿import { useState, useEffect, useId } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
@@ -45,7 +45,7 @@ import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/data/api/assignment.types"
+} from "@/business/models/assignment"
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { AlertTriangle, X } from "lucide-react"
@@ -494,6 +494,7 @@ export function AssignmentSubmissionsPage() {
             return accumulator
           }, {})
         } catch {
+          // Submission details can still render without the class roster enrichment.
         }
 
         setAssignment(assignmentData)
@@ -899,3 +900,4 @@ export function AssignmentSubmissionsPage() {
     </DashboardLayout>
   )
 }
+

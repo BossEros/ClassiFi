@@ -1,4 +1,4 @@
-import type { EnrolledStudent } from "@/data/api/class.types"
+﻿import type { EnrolledStudent } from "@/business/models/class"
 
 export function filterStudentsByQuery(
   students: EnrolledStudent[],
@@ -18,3 +18,4 @@ export function filterStudentsByQuery(
       (student.lastName ?? "").toLowerCase().includes(query),
   )
 }
+

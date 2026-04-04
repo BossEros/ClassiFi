@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+﻿import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import {
   X,
@@ -11,7 +11,7 @@ import {
   Bell,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import type { CalendarEvent } from "@/data/api/calendar.types"
+import type { CalendarEvent } from "@/business/models/calendar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { formatCalendarDate } from "@/business/services/calendarService"
 import { sendReminderToNonSubmitters } from "@/business/services/assignmentService"
@@ -320,3 +320,4 @@ export function EventDetailsModal({
 
   return createPortal(modalContent, document.body)
 }
+

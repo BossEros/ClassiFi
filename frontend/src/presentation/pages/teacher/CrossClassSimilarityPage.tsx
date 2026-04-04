@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+﻿import { useEffect, useState } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { Download, Loader2 } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -7,7 +7,7 @@ import { getAssignmentById } from "@/business/services/assignmentService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
-import type { AssignmentDetail } from "@/data/api/assignment.types"
+import type { AssignmentDetail } from "@/business/models/assignment"
 
 interface CrossClassSimilarityNavigationState {
   shouldRunInitialAnalysis?: boolean
@@ -54,6 +54,7 @@ export function CrossClassSimilarityPage() {
         )
         setAssignment(assignmentDetail)
       } catch {
+        // Keep the page mounted even when the optional assignment header fails to load.
       }
     }
 
@@ -150,3 +151,4 @@ export function CrossClassSimilarityPage() {
     </DashboardLayout>
   )
 }
+

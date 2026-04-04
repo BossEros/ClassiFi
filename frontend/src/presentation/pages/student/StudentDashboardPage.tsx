@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight, ChevronUp, ChevronDown, Clock } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -8,7 +8,7 @@ import { getDashboardData } from "@/business/services/studentDashboardService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime, getMinutesUntilNextSession } from "@/presentation/utils/dateUtils"
-import type { Class, Task } from "@/data/api/class.types"
+import type { Class, Task } from "@/business/models/class"
 
 function getDeadlineBadgeClass(deadlineStatus: string): string {
   if (deadlineStatus === "Overdue") {
@@ -60,7 +60,7 @@ export function StudentDashboardPage() {
       const data = await getDashboardData(studentId)
       setEnrolledClasses(data.enrolledClasses as Class[])
       setPendingAssignments(data.pendingAssignments as Task[])
-    } catch (fetchError) {
+    } catch {
       setError("Failed to load dashboard data. Please try refreshing the page.")
     } finally {
       setIsLoading(false)
@@ -309,3 +309,4 @@ export function StudentDashboardPage() {
     </DashboardLayout>
   )
 }
+

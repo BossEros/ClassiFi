@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+﻿import React, { useState } from "react"
 import { LogOut, Trash2, Edit, Clock, Copy, Check } from "lucide-react"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import { Avatar } from "@/presentation/components/ui/Avatar"
@@ -8,7 +8,7 @@ import {
   formatTimeRange,
 } from "@/presentation/constants/schedule.constants"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
-import type { DayOfWeek } from "@/data/api/class.types"
+import type { DayOfWeek } from "@/business/models/class"
 
 interface ClassHeaderProps {
   className?: string
@@ -296,3 +296,4 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+﻿import { useState, useEffect, useCallback } from "react"
 import { NavLink, useLocation } from "react-router-dom"
 import {
   Home,
@@ -16,8 +16,8 @@ import { cn } from "@/shared/utils/cn"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { ProfileDropdown } from "./ProfileDropdown"
-import type { NavigationItem } from "@/data/api/class.types"
-import type { User } from "@/data/api/auth.types"
+import type { NavigationItem } from "@/business/models/class"
+import type { User } from "@/business/models/auth"
 
 const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 1024px)"
 
@@ -435,3 +435,4 @@ function SidebarContent({
     </>
   )
 }
+

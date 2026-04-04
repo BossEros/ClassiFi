@@ -15,13 +15,9 @@ import * as dashboardRepository from "@/data/repositories/studentDashboardReposi
 export async function getDashboardData(
   studentId: number,
 ): Promise<StudentDashboardBackendResponse> {
-  try {
-    return await dashboardRepository.getCompleteDashboardDataForStudentId(
-      studentId,
-    )
-  } catch (error) {
-    throw error
-  }
+  return await dashboardRepository.getCompleteDashboardDataForStudentId(
+    studentId,
+  )
 }
 
 /**
@@ -36,14 +32,10 @@ export async function getEnrolledClasses(
   studentId: number,
   limit?: number,
 ): Promise<dashboardRepository.ClassListResponse> {
-  try {
-    return await dashboardRepository.getAllEnrolledClassesForStudentId(
-      studentId,
-      limit,
-    )
-  } catch (error) {
-    throw error
-  }
+  return await dashboardRepository.getAllEnrolledClassesForStudentId(
+    studentId,
+    limit,
+  )
 }
 
 /**
@@ -58,14 +50,10 @@ export async function getPendingAssignments(
   studentId: number,
   limit: number = 10,
 ): Promise<dashboardRepository.AssignmentListResponse> {
-  try {
-    return await dashboardRepository.getAllPendingAssignmentsForStudentId(
-      studentId,
-      limit,
-    )
-  } catch (error) {
-    throw error
-  }
+  return await dashboardRepository.getAllPendingAssignmentsForStudentId(
+    studentId,
+    limit,
+  )
 }
 
 /**

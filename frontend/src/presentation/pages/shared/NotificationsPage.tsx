@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { Bell, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { Button } from "@/presentation/components/ui/Button";
 import * as notificationService from "@/business/services/notificationService";
-import type { Notification } from "@/data/api/notification.types";
+import type { Notification } from "@/business/models/notification";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
@@ -380,3 +380,4 @@ export function NotificationsPage() {
     </DashboardLayout>
   )
 }
+

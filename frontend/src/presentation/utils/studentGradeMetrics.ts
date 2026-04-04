@@ -1,4 +1,4 @@
-import type { StudentGradeEntry } from "@/data/api/gradebook.types"
+﻿import type { StudentGradeEntry } from "@/business/models/gradebook"
 
 export interface StudentGradeSummaryMetrics {
   currentGrade: number | null
@@ -111,3 +111,4 @@ export function calculateStudentGradeSummaryMetrics(
     totalAssignments: assignments.length,
   }
 }
+

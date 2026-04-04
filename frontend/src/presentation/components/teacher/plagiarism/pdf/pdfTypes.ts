@@ -1,8 +1,8 @@
-import type { AssignmentDetail } from "@/data/api/assignment.types"
+﻿import type { AssignmentDetail } from "@/business/models/assignment"
 import type {
   CrossClassAnalysisResponse,
   CrossClassResultDTO,
-} from "@/data/api/crossClassPlagiarism.types"
+} from "@/business/models/crossClassPlagiarism"
 import type {
   AnalyzeResponse,
   PairResponse,
@@ -17,7 +17,7 @@ import type {
   SimilarityBadgeSeverity,
   SimilaritySignalLevel,
 } from "@/presentation/utils/plagiarismSignalUtils"
-import type { User } from "@/data/api/auth.types"
+import type { User } from "@/business/models/auth"
 import type { FilePair, MatchFragment } from "../types"
 
 export type {
@@ -162,3 +162,4 @@ export interface CrossClassReportPairRow {
   structuralSimilarity: SimilarityBadgeValue
   semanticSimilarity: SimilarityBadgeValue
 }
+

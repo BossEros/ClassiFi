@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react"
+﻿import { useState, useEffect, useMemo, useRef } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
@@ -42,7 +42,7 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { AssignmentDetail } from "@/data/api/assignment.types"
+import type { AssignmentDetail } from "@/business/models/assignment"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { getThresholdQualifiedPairs } from "@/presentation/utils/plagiarismClusterUtils"
 import { detectLanguageFromFilename } from "@/shared/utils/languageDetection"
@@ -126,6 +126,7 @@ export function SimilarityResultsPage() {
         )
         setResults(fetchedResults)
       } catch {
+        // Preserve the current results if a background refetch fails.
       } finally {
         setIsRefetchingResults(false)
       }
@@ -147,6 +148,7 @@ export function SimilarityResultsPage() {
         )
         setAssignment(assignmentDetail)
       } catch {
+        // Keep the similarity results visible even when assignment metadata refresh fails.
       }
     }
 
@@ -631,3 +633,4 @@ export function SimilarityResultsPage() {
     </DashboardLayout>
   )
 }
+

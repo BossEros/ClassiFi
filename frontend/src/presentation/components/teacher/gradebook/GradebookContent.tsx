@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from "react";
+﻿import { useState, useRef, useEffect } from "react";
 import { Download, BarChart3, RefreshCw, FileText, ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/presentation/components/ui/Card";
 import { Button } from "@/presentation/components/ui/Button";
 import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teacher/useGradebook";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload";
-import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/data/api/gradebook.types";
+import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/business/models/gradebook";
 import { X, Edit2 } from "lucide-react";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 import { buildGradeReportData, GradeReportDocument } from "./pdf/gradeReportPdf";
@@ -542,3 +542,4 @@ export function GradebookContent({
     </>
   )
 }
+

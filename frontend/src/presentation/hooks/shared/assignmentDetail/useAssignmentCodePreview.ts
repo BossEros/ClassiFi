@@ -1,9 +1,9 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import {
   getSubmissionContent,
   getSubmissionDownloadUrl,
 } from "@/business/services/assignmentService"
-import type { Submission } from "@/data/api/assignment.types"
+import type { Submission } from "@/business/models/assignment"
 import type { ToastVariant } from "@/presentation/components/ui/Toast"
 
 interface UseAssignmentCodePreviewOptions {
@@ -118,3 +118,4 @@ export function useAssignmentCodePreview({
     closePreview,
   }
 }
+

@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+﻿import { useMemo } from "react"
 import {
   format,
   startOfWeek,
@@ -7,7 +7,7 @@ import {
   isSameDay,
   isToday,
 } from "date-fns"
-import type { CalendarEvent, CalendarView } from "@/data/api/calendar.types"
+import type { CalendarEvent, CalendarView } from "@/business/models/calendar"
 import { CustomViewToolbar } from "./CustomViewToolbar"
 import { getCalendarStackedEventStyle } from "./eventStyle"
 import "./CustomWeekView.css"
@@ -281,3 +281,4 @@ export function CustomWeekView({
     </div>
   )
 }
+

@@ -1,10 +1,10 @@
-import type { AssignmentDetail } from "@/data/api/assignment.types"
-import type { CrossClassResultDTO } from "@/data/api/crossClassPlagiarism.types"
+﻿import type { AssignmentDetail } from "@/business/models/assignment"
+import type { CrossClassResultDTO } from "@/business/models/crossClassPlagiarism"
 import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
-import type { User } from "@/data/api/auth.types"
+import type { User } from "@/business/models/auth"
 
 import {
   buildSimilarityGraphData,
@@ -36,7 +36,7 @@ import {
   getThresholdFilteredPairs,
 } from "./pdfUtils"
 
-// ─── Shared Metadata Builder ───────────────────────────────────────────────────
+// â”€â”€â”€ Shared Metadata Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function buildSharedReportMetadata({
   assignment,
@@ -75,7 +75,7 @@ export function buildSharedReportMetadata({
   return metadata
 }
 
-// ─── Graph Layout Builder ──────────────────────────────────────────────────────
+// â”€â”€â”€ Graph Layout Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function buildClassReportGraphLayout(
   results: AnalyzeResponse,
@@ -102,7 +102,7 @@ export function buildClassReportGraphLayout(
   return graphLayout
 }
 
-// ─── Class Report Builder ──────────────────────────────────────────────────────
+// â”€â”€â”€ Class Report Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Builds the evidence-focused class report payload used by the PDF document.
@@ -168,7 +168,7 @@ export function buildClassSimilarityReportData(
   }
 }
 
-// ─── Pair Report Builder ───────────────────────────────────────────────────────
+// â”€â”€â”€ Pair Report Builder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Builds the evidence-focused pairwise report payload used by the PDF document.
@@ -191,11 +191,11 @@ export function buildPairSimilarityReportData(
       }),
       {
         label: "Left Submission",
-        value: `${options.selectedPair.leftFile.studentName || "Unknown Student"} — ${options.pairDetails.leftFile.filename}`,
+        value: `${options.selectedPair.leftFile.studentName || "Unknown Student"} â€” ${options.pairDetails.leftFile.filename}`,
       },
       {
         label: "Right Submission",
-        value: `${options.selectedPair.rightFile.studentName || "Unknown Student"} — ${options.pairDetails.rightFile.filename}`,
+        value: `${options.selectedPair.rightFile.studentName || "Unknown Student"} â€” ${options.pairDetails.rightFile.filename}`,
       },
     ],
     summaryMetrics: [
@@ -256,7 +256,7 @@ export function buildPairSimilarityReportData(
   }
 }
 
-// ─── Cross-Class Report Builders ───────────────────────────────────────────────
+// â”€â”€â”€ Cross-Class Report Builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Builds the class-level PDF report data for a cross-class similarity analysis.
@@ -355,11 +355,11 @@ export function buildCrossClassPairReportData(
     },
     {
       label: "Left Submission",
-      value: `${selectedResult.student1Name} (${selectedResult.class1Name}) — ${pairDetails.leftFile.filename}`,
+      value: `${selectedResult.student1Name} (${selectedResult.class1Name}) â€” ${pairDetails.leftFile.filename}`,
     },
     {
       label: "Right Submission",
-      value: `${selectedResult.student2Name} (${selectedResult.class2Name}) — ${pairDetails.rightFile.filename}`,
+      value: `${selectedResult.student2Name} (${selectedResult.class2Name}) â€” ${pairDetails.rightFile.filename}`,
     },
   ]
 
@@ -419,3 +419,4 @@ export function buildCrossClassPairReportData(
     fragments: pairDetails.fragments,
   }
 }
+

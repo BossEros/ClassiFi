@@ -130,6 +130,7 @@ function AdminAddStudentModal({
 
         setStudents(availableStudents)
       } catch {
+        // Keep the modal open with an empty list when the student search fails.
       } finally {
         setIsLoading(false)
       }
@@ -150,7 +151,7 @@ function AdminAddStudentModal({
       setStudents((previousStudents) =>
         previousStudents.filter((availableStudent) => availableStudent.id !== student.id),
       )
-    } catch (requestError) {
+    } catch {
       showToast("Failed to enroll student", "error")
     } finally {
       setIsSubmitting(null)
@@ -459,7 +460,7 @@ export function AdminClassDetailPage() {
       const data = await getAdminClassDetailData(parsedClassId)
       setClassInfo(data.classInfo)
       setStudents(data.students)
-    } catch (requestError) {
+    } catch {
       setErrorMessage("Failed to load class details")
     } finally {
       setIsLoading(false)
@@ -536,7 +537,7 @@ export function AdminClassDetailPage() {
       await archiveClass(classInfo.id)
       await fetchClassData()
       showToast("Class archived successfully", "success")
-    } catch (requestError) {
+    } catch {
       showToast("Failed to archive class", "error")
     } finally {
       setClassActionLoadingId(null)
@@ -554,7 +555,7 @@ export function AdminClassDetailPage() {
       await restoreClass(classInfo.id)
       await fetchClassData()
       showToast("Class restored successfully", "success")
-    } catch (requestError) {
+    } catch {
       showToast("Failed to restore class", "error")
     } finally {
       setClassActionLoadingId(null)
@@ -572,8 +573,8 @@ export function AdminClassDetailPage() {
       await deleteClass(classPendingDeletion.id)
       showToast("Class deleted successfully", "success")
       navigate("/dashboard/classes")
-    } catch (requestError) {
-      throw requestError
+    } catch {
+      showToast("Failed to delete class", "error")
     } finally {
       setClassActionLoadingId(null)
       setActiveClassActionsMenu(null)
@@ -594,7 +595,7 @@ export function AdminClassDetailPage() {
       )
       showToast("Student removed from class", "success")
       setStudentPendingRemoval(null)
-    } catch (requestError) {
+    } catch {
       showToast("Failed to remove student", "error")
     } finally {
       setStudentActionLoadingId(null)

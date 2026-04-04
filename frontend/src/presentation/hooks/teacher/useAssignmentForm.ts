@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react"
+﻿import { useEffect, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { type ProgrammingLanguage } from "@/data/api/assignment.types"
+import { type ProgrammingLanguage } from "@/business/models/assignment"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
@@ -41,7 +41,7 @@ import type {
   CreateTestCaseRequest,
   TestCase,
   UpdateTestCaseRequest,
-} from "@/data/api/test-case.types"
+} from "@/business/models/testCase"
 
 export const programmingLanguageOptions: SelectOption[] =
   PROGRAMMING_LANGUAGE_OPTIONS.map((option) => ({ ...option }))
@@ -215,6 +215,7 @@ export function useAssignmentForm() {
           setTestCases(fetchedTestCases)
         }
       } catch {
+        // Keep the form usable even when existing test cases fail to load.
       } finally {
         setIsLoadingTestCases(false)
       }
@@ -420,6 +421,7 @@ export function useAssignmentForm() {
         try {
           await removeAssignmentInstructionsImage(previousInstructionsImageUrl)
         } catch {
+          // Ignore cleanup failures after a successful replacement upload.
         }
       }
     } catch (error) {
@@ -450,6 +452,7 @@ export function useAssignmentForm() {
     try {
       await removeAssignmentInstructionsImage(currentInstructionsImageUrl)
     } catch {
+      // Ignore storage cleanup failures after the form state is updated locally.
     }
   }
 
@@ -481,3 +484,4 @@ export function useAssignmentForm() {
     handleDeletePendingTestCase,
   }
 }
+

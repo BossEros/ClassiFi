@@ -1,4 +1,4 @@
-﻿import type { FileResponse, PairResponse } from "@/data/api/plagiarism.types"
+﻿import type { FileResponse, PairResponse } from "@/business/models/plagiarism"
 import {
   buildSimilarityClusters,
   getPairOverallSimilarityRatio,
@@ -644,4 +644,5 @@ function buildNodeInitials(displayName: string): string {
 function clampNumber(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
+
 

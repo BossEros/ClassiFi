@@ -1,5 +1,5 @@
-import type { ProgrammingLanguage } from "@/data/api/assignment.types"
-import type { LatePenaltyConfig, PenaltyTier, SimilarityPenaltyConfig } from "@/data/api/gradebook.types"
+﻿import type { ProgrammingLanguage } from "@/business/models/assignment"
+import type { LatePenaltyConfig, PenaltyTier, SimilarityPenaltyConfig } from "@/business/models/gradebook"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { AssignmentFormData } from "@/presentation/hooks/teacher/assignmentForm.types"
 
@@ -93,3 +93,4 @@ export function buildAssignmentPayload(
     moduleId: formData.moduleId ?? null,
   }
 }
+

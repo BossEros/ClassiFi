@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react"
+﻿import { useEffect, useMemo, useRef, useState, useCallback } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import { Grid3x3, Plus } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -12,7 +12,7 @@ import {
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getAllClasses } from "@/business/services/classService"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { Class } from "@/data/api/class.types"
+import type { Class } from "@/business/models/class"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
@@ -188,3 +188,4 @@ export function ClassesPage() {
     </DashboardLayout>
   )
 }
+

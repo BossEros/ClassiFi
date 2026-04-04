@@ -37,7 +37,8 @@ export function NotificationBadge() {
     try {
       await notificationService.markAllAsRead()
       setUnreadCount(0)
-} catch {
+    } catch {
+      // Keep the current unread count when the bulk update fails.
     }
   }
 

@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react"
+﻿import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { createPortal } from "react-dom"
 import { Settings, LogOut } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { logoutUser } from "@/business/services/authService"
-import type { User } from "@/data/api/auth.types"
+import type { User } from "@/business/models/auth"
 
 const DESKTOP_PROFILE_DROPDOWN_MEDIA_QUERY = "(min-width: 1024px)"
 const EXPANDED_SIDEBAR_WIDTH_PX = 224
@@ -189,3 +189,4 @@ export function ProfileDropdown({
     </div>
   )
 }
+

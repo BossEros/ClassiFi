@@ -1,6 +1,6 @@
-import React from "react"
+﻿import React from "react"
 import { AssignmentCard } from "./AssignmentCard"
-import type { Assignment } from "@/data/api/class.types"
+import type { Assignment } from "@/business/models/class"
 
 interface AssignmentSectionProps {
   title: string
@@ -44,3 +44,4 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({
     </div>
   )
 }
+

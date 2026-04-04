@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+﻿import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import {
   ClipboardList,
@@ -38,7 +38,7 @@ import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { DayOfWeek } from "@/data/api/class.types"
+import type { DayOfWeek } from "@/business/models/class"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
 function getDefaultClassFormValues(): AdminClassPageFormValues {
@@ -727,4 +727,5 @@ export function AdminClassFormPage() {
 }
 
 export default AdminClassFormPage
+
 

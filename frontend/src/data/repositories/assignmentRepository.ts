@@ -433,6 +433,7 @@ export async function deleteAssignmentInstructionsImage(
       .from(storageLocation.bucket)
       .remove([storageLocation.path])
   } catch {
+    // Ignore storage cleanup failures because the asset may already be deleted.
   }
 }
 

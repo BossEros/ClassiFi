@@ -46,6 +46,7 @@ class SupabaseAuthAdapter {
         // Token is managed by Supabase internally
         // apiClient retrieves it via getSession() when needed
         if (session?.access_token) {
+          // Supabase owns token persistence; this listener stays active for session transitions.
         }
       } else if (event === "SIGNED_OUT") {
         // Clear user data (token is managed by Supabase)

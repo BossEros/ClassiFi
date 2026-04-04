@@ -1,4 +1,4 @@
-import { useState } from "react"
+﻿import { useState } from "react"
 import { Clock, Plus, Trash2, AlertTriangle } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { Input } from "@/presentation/components/ui/Input"
@@ -12,7 +12,7 @@ import { Button } from "@/presentation/components/ui/Button"
 import type {
   LatePenaltyConfig as LatePenaltyConfigType,
   PenaltyTier,
-} from "@/data/api/gradebook.types"
+} from "@/business/models/gradebook"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface LatePenaltyConfigProps {
@@ -382,3 +382,4 @@ export function LatePenaltyConfig({
 }
 
 export { DEFAULT_CONFIG as DEFAULT_LATE_PENALTY_CONFIG }
+
