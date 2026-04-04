@@ -13,23 +13,8 @@ import type {
   AdminEnrollmentRecord,
   TransferStudentData,
 } from "@/business/models/admin/types"
+export type { AdminUser, AdminStats, ActivityItem, AdminClass, PaginatedResponse, CreateUserData, CreateClassData, UpdateClassData, EnrolledStudent, ClassAssignment, AdminEnrollmentRecord, TransferStudentData } from "@/business/models/admin/types"
 import { validateId } from "@/shared/utils/idUtils"
-
-// Re-export common types for consumers
-export type {
-  AdminUser,
-  AdminStats,
-  ActivityItem,
-  AdminClass,
-  PaginatedResponse,
-  CreateUserData,
-  CreateClassData,
-  UpdateClassData,
-  EnrolledStudent,
-  ClassAssignment,
-  AdminEnrollmentRecord,
-  TransferStudentData,
-}
 
 // ============ User Management ============
 
@@ -272,9 +257,11 @@ export async function transferStudent(
   validateId(data.studentId, "student")
   validateId(data.fromClassId, "source class")
   validateId(data.toClassId, "destination class")
+
   if (data.fromClassId === data.toClassId) {
     throw new Error("Source and destination classes must be different")
   }
+
   await adminRepository.transferStudentBetweenClasses(data)
 }
 // ============ Class Management ============

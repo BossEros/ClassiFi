@@ -10,7 +10,7 @@ import type {
   LatePenaltyConfigResponse,
   GradeOverrideRequest,
   LatePenaltyUpdateRequest,
-} from "../api/types"
+} from "../api/gradebook.types"
 
 // ============================================================================
 // Class Gradebook Functions
