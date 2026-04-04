@@ -1,6 +1,6 @@
-﻿import React from "react"
+import React from "react"
 import { AssignmentCard } from "./AssignmentCard"
-import type { Assignment } from "@/business/models/class"
+import type { Assignment } from "@/data/api/class.types"
 
 interface AssignmentSectionProps {
   title: string

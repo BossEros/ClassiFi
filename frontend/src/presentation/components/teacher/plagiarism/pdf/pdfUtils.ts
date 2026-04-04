@@ -1,4 +1,4 @@
-﻿import {
+import {
   getPairOverallSimilarityRatio,
   getThresholdQualifiedPairs,
   normalizeSimilarityToRatio,
@@ -8,7 +8,7 @@ import {
   getSimilarityBadgeSeverity,
 } from "@/presentation/utils/plagiarismSignalUtils"
 import type { PairResponse } from "@/business/services/plagiarismService"
-import type { User } from "@/business/models/auth"
+import type { User } from "@/data/api/auth.types"
 import type {
   DiffLine,
   LineDiff,
@@ -18,7 +18,7 @@ import type {
 } from "./pdfTypes"
 import type { MatchFragment } from "../types"
 
-// â”€â”€â”€ Text Formatters â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Text Formatters ───────────────────────────────────────────────────────────
 
 export function formatPercent(value: number): string {
   return `${(normalizeSimilarityToRatio(value) * 100).toFixed(1)}%`
@@ -48,7 +48,7 @@ export function formatCodeRange(startRow: number, endRow: number): string {
     return `Line ${displayStart}`
   }
 
-  return `Lines ${displayStart}â€“${displayEnd}`
+  return `Lines ${displayStart}–${displayEnd}`
 }
 
 export function toFileNameSegment(value: string): string {
@@ -60,7 +60,7 @@ export function toFileNameSegment(value: string): string {
   return normalizedValue.replace(/^-+|-+$/g, "") || "report"
 }
 
-// â”€â”€â”€ Display Label Builders â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Display Label Builders ────────────────────────────────────────────────────
 
 export function buildTeacherDisplayName(teacher: User | null): string {
   if (!teacher) {
@@ -101,7 +101,7 @@ export function getSignalLabel(level: "high" | "medium" | "low"): string {
   }
 }
 
-// â”€â”€â”€ Pair Utility Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Pair Utility Helpers ──────────────────────────────────────────────────────
 
 export function getPairLabel(pair: PairResponse): string {
   const leftStudentName = pair.leftFile.studentName?.trim() || "Unknown Student"
@@ -123,7 +123,7 @@ export function getThresholdFilteredPairs(
     )
 }
 
-// â”€â”€â”€ Diff Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Diff Utility ──────────────────────────────────────────────────────────────
 
 /**
  * Computes a line-level diff between two source strings using LCS.
@@ -176,7 +176,7 @@ export function computeLineDiff(leftCode: string, rightCode: string): LineDiff {
   return { left: leftResult, right: rightResult }
 }
 
-// â”€â”€â”€ Line Highlight Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Line Highlight Utility ────────────────────────────────────────────────────
 
 export function isLineHighlighted(
   lineIndex: number,
@@ -185,7 +185,7 @@ export function isLineHighlighted(
   return ranges.some((r) => lineIndex >= r.start && lineIndex <= r.end)
 }
 
-// â”€â”€â”€ Column-Level Highlight Segments â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Column-Level Highlight Segments ───────────────────────────────────────────
 
 /**
  * Computes inline text segments for a single line, marking which character

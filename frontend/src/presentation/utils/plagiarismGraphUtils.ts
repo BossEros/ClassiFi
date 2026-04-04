@@ -1,4 +1,4 @@
-﻿import type { FileResponse, PairResponse } from "@/business/models/plagiarism"
+import type { FileResponse, PairResponse } from "@/data/api/plagiarism.types"
 import {
   buildSimilarityClusters,
   getPairOverallSimilarityRatio,

@@ -1,6 +1,6 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { type ProgrammingLanguage } from "@/business/models/assignment"
+import { type ProgrammingLanguage } from "@/data/api/assignment.types"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
@@ -41,7 +41,7 @@ import type {
   CreateTestCaseRequest,
   TestCase,
   UpdateTestCaseRequest,
-} from "@/business/models/testCase"
+} from "@/data/api/test-case.types"
 
 export const programmingLanguageOptions: SelectOption[] =
   PROGRAMMING_LANGUAGE_OPTIONS.map((option) => ({ ...option }))

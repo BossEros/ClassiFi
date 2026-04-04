@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trophy, BookOpen, TrendingUp, AlertTriangle } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/pre
 import { BackButton } from "@/presentation/components/ui/BackButton";
 import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook";
 import { useAuthStore } from "@/shared/store/useAuthStore";
-import type { StudentClassGrades, StudentGradeEntry } from "@/business/models/gradebook";
+import type { StudentClassGrades, StudentGradeEntry } from "@/data/api/gradebook.types";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { Clock } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
@@ -211,7 +211,7 @@ function ClassGradesCard({ classGrades, onNavigate }: ClassGradesCardProps) {
           <div>
             <CardTitle className="text-lg">{classGrades.className}</CardTitle>
             <CardDescription>
-              {classGrades.teacherName} â€¢ {gradedCount}/{totalCount} graded
+              {classGrades.teacherName} • {gradedCount}/{totalCount} graded
             </CardDescription>
           </div>
           {currentGrade !== null && (

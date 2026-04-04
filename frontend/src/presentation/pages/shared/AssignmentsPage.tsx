@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, useCallback } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowRight, ChevronUp, ChevronDown, ClipboardList, Clock } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -10,7 +10,7 @@ import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime } from "@/presentation/utils/dateUtils"
 import { getPendingAssignments } from "@/business/services/studentDashboardService"
 import { getPendingTasks } from "@/business/services/teacherDashboardService"
-import type { Task } from "@/business/models/class"
+import type { Task } from "@/data/api/class.types"
 
 const ITEMS_PER_PAGE = 10
 

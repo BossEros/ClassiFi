@@ -1,4 +1,4 @@
-﻿import { FileCode, FileUp, Calendar, Code, Image as ImageIcon, ChevronDown, Upload, Trash2, LoaderCircle, Monitor } from "lucide-react";
+import { FileCode, FileUp, Calendar, Code, Image as ImageIcon, ChevronDown, Upload, Trash2, LoaderCircle, Monitor } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card";
@@ -13,7 +13,7 @@ import type { AssignmentFormData, PendingTestCase } from "@/presentation/hooks/t
 import { formatTimeRemaining } from "@/presentation/utils/dateUtils";
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap";
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils";
-import type { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from "@/business/models/testCase";
+import type { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from "@/data/api/test-case.types";
 import { useState } from "react";
 import { Plus, Edit2, EyeOff, FlaskConical } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";

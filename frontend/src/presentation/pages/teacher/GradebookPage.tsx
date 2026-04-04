@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { BackButton } from "@/presentation/components/ui/BackButton"
@@ -7,7 +7,7 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { getClassById } from "@/business/services/classService"
-import type { Class } from "@/business/models/class"
+import type { Class } from "@/data/api/class.types"
 
 /**
  * Standalone gradebook route page.

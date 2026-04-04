@@ -1,6 +1,6 @@
-﻿import React, { useRef } from "react"
+import React, { useRef } from "react"
 import { ClipboardList, Users, Calendar, BarChart3 } from "lucide-react"
-import type { ClassTab } from "@/business/models/class"
+import type { ClassTab } from "@/data/api/class.types"
 
 interface ClassTabsProps {
   activeTab: ClassTab

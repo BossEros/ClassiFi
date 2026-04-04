@@ -1,4 +1,4 @@
-﻿import type { ClassGradebook } from "@/business/models/gradebook"
+import type { ClassGradebook } from "@/data/api/gradebook.types"
 import type { ReportMetadataEntry, SummaryMetric } from "@/presentation/components/shared/pdf/pdfReportTypes"
 
 export type {

@@ -1,4 +1,4 @@
-﻿import type { EnrolledStudent } from "@/business/models/class"
+import type { EnrolledStudent } from "@/data/api/class.types"
 
 export function filterStudentsByQuery(
   students: EnrolledStudent[],

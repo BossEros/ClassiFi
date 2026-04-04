@@ -1,4 +1,4 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
@@ -6,8 +6,8 @@ import { AssignmentSection } from "@/presentation/components/shared/dashboard/As
 import { ModuleCard, CreateModuleInput, ViewToggle } from "@/presentation/components/shared/modules"
 import type { AssignmentViewMode } from "@/presentation/components/shared/modules"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
-import type { Assignment } from "@/business/models/class"
-import type { Module } from "@/business/models/class"
+import type { Assignment } from "@/data/api/class.types"
+import type { Module } from "@/data/api/class.types"
 import type {
   AssignmentFilter,
   TeacherAssignmentFilter,

@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { RefreshCw, Check, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -10,15 +10,15 @@ import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignmen
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
 import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import { SimilarityPenaltyConfig } from "@/presentation/components/teacher/forms/assignment/SimilarityPenaltyConfig"
-import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/business/models/gradebook"
-import type { SimilarityPenaltyConfig as SimilarityPenaltyConfigType } from "@/business/models/gradebook"
+import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/data/api/gradebook.types"
+import type { SimilarityPenaltyConfig as SimilarityPenaltyConfigType } from "@/data/api/gradebook.types"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 import { getModulesByClassId } from "@/business/services/moduleService"
-import type { Module } from "@/business/models/class"
+import type { Module } from "@/data/api/class.types"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()

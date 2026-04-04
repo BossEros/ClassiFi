@@ -109,12 +109,14 @@ const mockData = vi.hoisted(() => {
       content: "print('A')",
       lineCount: 1,
       studentName: "Student A",
+      submittedAt: "2026-03-10T10:00:00.000Z",
     },
     rightFile: {
       filename: "student-b.py",
       content: "print('B')",
       lineCount: 1,
       studentName: "Student B",
+      submittedAt: "2026-03-10T11:00:00.000Z",
     },
   }
 

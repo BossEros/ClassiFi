@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useId } from "react"
+import { useState, useEffect, useId } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
@@ -45,7 +45,7 @@ import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/business/models/assignment"
+} from "@/data/api/assignment.types"
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { AlertTriangle, X } from "lucide-react"

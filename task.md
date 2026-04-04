@@ -6,3 +6,7 @@
 - [x] Harden required frontend API payload extraction
 - [x] Add or update regression tests for the changed behavior
 - [ ] Verify backend and frontend checks pass in the full Vite/Vitest runners
+- [x] Add presentation-safe frontend model imports for the current lint failures
+- [x] Remove redundant and empty catch blocks in the frontend lint pass
+- [ ] Re-run `frontend` lint and build after the lint remediation
+  Note: `frontend` lint passes. `tsc -b` passes. `vite build` is blocked by sandbox `spawn EPERM`.

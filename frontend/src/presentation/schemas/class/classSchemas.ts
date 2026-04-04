@@ -1,6 +1,6 @@
-﻿import { z } from "zod"
+import { z } from "zod"
 import { DAY_ABBREVIATIONS } from "@/presentation/constants/schedule.constants"
-import type { DayOfWeek } from "@/business/models/class"
+import type { DayOfWeek } from "@/data/api/class.types"
 
 const dayOfWeekValues = [
   "monday",

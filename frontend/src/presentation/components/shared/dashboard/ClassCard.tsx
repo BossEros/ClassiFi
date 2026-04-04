@@ -1,7 +1,7 @@
-﻿import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { cn } from "@/shared/utils/cn"
 import { Clock3, Users } from "lucide-react"
-import type { Class } from "@/business/models/class"
+import type { Class } from "@/data/api/class.types"
 import {
   convertToSingleLetterAbbr,
   formatTimeRange,

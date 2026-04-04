@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo, useRef } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { Card, CardContent } from "@/presentation/components/ui/Card"
@@ -42,7 +42,7 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { AssignmentDetail } from "@/business/models/assignment"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { getThresholdQualifiedPairs } from "@/presentation/utils/plagiarismClusterUtils"
 import { detectLanguageFromFilename } from "@/shared/utils/languageDetection"
@@ -184,6 +184,8 @@ export function SimilarityResultsPage() {
           filename: details.leftFile.filename,
           content: details.leftFile.content,
           lineCount: details.leftFile.lineCount,
+          studentName: details.leftFile.studentName,
+          submittedAt: details.leftFile.submittedAt,
         },
         rightFile: {
           id: details.result.submission2Id,
@@ -191,6 +193,8 @@ export function SimilarityResultsPage() {
           filename: details.rightFile.filename,
           content: details.rightFile.content,
           lineCount: details.rightFile.lineCount,
+          studentName: details.rightFile.studentName,
+          submittedAt: details.rightFile.submittedAt,
         },
         similarity: parseFloat(details.result.structuralScore),
         overlap: details.result.overlap,

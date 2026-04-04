@@ -1,8 +1,8 @@
-﻿import type { AssignmentDetail } from "@/business/models/assignment"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
 import type {
   CrossClassAnalysisResponse,
   CrossClassResultDTO,
-} from "@/business/models/crossClassPlagiarism"
+} from "@/data/api/crossClassPlagiarism.types"
 import type {
   AnalyzeResponse,
   PairResponse,
@@ -17,7 +17,7 @@ import type {
   SimilarityBadgeSeverity,
   SimilaritySignalLevel,
 } from "@/presentation/utils/plagiarismSignalUtils"
-import type { User } from "@/business/models/auth"
+import type { User } from "@/data/api/auth.types"
 import type { FilePair, MatchFragment } from "../types"
 
 export type {

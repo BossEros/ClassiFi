@@ -1,11 +1,11 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { ChevronDown, Plus, Pencil, Trash2, Eye, EyeOff, MoreHorizontal } from "lucide-react"
 import { AssignmentCard } from "@/presentation/components/shared/dashboard/AssignmentCard"
 import { RenameModuleModal } from "@/presentation/components/shared/modules/RenameModuleModal"
 import { DeleteModuleModal } from "@/presentation/components/shared/modules/DeleteModuleModal"
 import { cn } from "@/shared/utils/cn"
-import type { Module } from "@/business/models/class"
-import type { Assignment } from "@/business/models/class"
+import type { Module } from "@/data/api/class.types"
+import type { Assignment } from "@/data/api/class.types"
 
 interface ModuleCardProps {
   module: Module
@@ -21,7 +21,7 @@ interface ModuleCardProps {
 }
 
 /**
- * Collapsible accordion container for a module â€” displays header with actions and assignment list.
+ * Collapsible accordion container for a module — displays header with actions and assignment list.
  *
  * @param module - The module data including its assignments.
  * @param isExpanded - Whether the module is currently expanded.

@@ -12,6 +12,8 @@ export interface FileData {
   filename: string
   content: string
   lineCount: number
+  studentName?: string
+  submittedAt?: string | null
 }
 
 /**

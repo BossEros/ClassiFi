@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react"
 import type { NavigateFunction } from "react-router-dom"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
@@ -7,12 +7,12 @@ import {
   getSubmissionHistory,
 } from "@/business/services/assignmentService"
 import { getTestResultsForSubmission } from "@/business/services/testService"
-import type { User } from "@/business/models/auth"
+import type { User } from "@/data/api/auth.types"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/business/models/assignment"
-import type { TestPreviewResult } from "@/business/models/testCase"
+} from "@/data/api/assignment.types"
+import type { TestPreviewResult } from "@/data/api/test-case.types"
 
 interface UseAssignmentDetailDataOptions {
   assignmentId: string | undefined

@@ -15,6 +15,7 @@ import {
   getSignalLevel,
   type SimilaritySignalLevel,
 } from "@/presentation/utils/plagiarismSignalUtils"
+import { formatTimeDifference } from "@/presentation/utils/timeUtils"
 
 type SortKey =
   | "similarity"
@@ -89,18 +90,6 @@ function getSubmissionOrderLabel(pair: PairResponse): string | null {
   const earlier = leftDate < rightDate ? pair.leftFile.studentName?.trim() : pair.rightFile.studentName?.trim()
 
   return `${earlier || "Unknown"} submitted ${formatTimeDifference(diffMs)} earlier`
-}
-
-function formatTimeDifference(diffMs: number): string {
-  const diffMinutes = Math.floor(diffMs / 60_000)
-  const diffHours = Math.floor(diffMs / 3_600_000)
-  const diffDays = Math.floor(diffMs / 86_400_000)
-
-  if (diffMinutes < 1) return `${Math.floor(diffMs / 1000)}s`
-  if (diffMinutes < 60) return `${diffMinutes}m`
-  if (diffHours < 24) return diffMinutes % 60 === 0 ? `${diffHours}h` : `${diffHours}h ${diffMinutes % 60}m`
-
-  return diffHours % 24 === 0 ? `${diffDays}d` : `${diffDays}d ${diffHours % 24}h`
 }
 
 function getPairStructuralSimilarityRatio(pair: PairResponse): number {

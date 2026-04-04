@@ -1,12 +1,16 @@
-# Implementation Plan
+# Frontend Lint Remediation Plan
 
 ## Goal
-Fix the confirmed notification, PDF metadata, and API-response robustness issues without breaking the existing backend service/repository and frontend clean-architecture patterns.
 
-## Approach
-1. Add a shared backend utility for logging rejected `Promise.allSettled` results so background notification flows remain DRY and observable.
-2. Update enrollment flows to emit the real enrollment record ID in `ENROLLMENT_CONFIRMED` payloads.
-3. Fix similarity-detection notifications so teachers receive the actual detected similarity percentage rather than the deduction percentage.
-4. Correct PDF metadata and cross-class qualitative signal derivation in the plagiarism export builders.
-5. Harden `unwrapApiResponse` call sites that currently rely on non-null assertions for required payload fields.
-6. Extend targeted backend and frontend tests, then run backend typecheck/tests and frontend build/tests relevant to the changed surfaces.
+Resolve the current `frontend` lint failures while preserving the documented Clean Architecture boundaries.
+
+## Checklist
+
+- [x] Add business-facing model entrypoints for presentation-safe imports
+- [x] Update presentation imports to consume business models instead of `data/api/*`
+- [x] Remove redundant `try/catch` wrappers flagged by `no-useless-catch`
+- [x] Replace empty blocks with explicit intent or safe fallbacks
+- [x] Remove unused catch variables and unused parameters
+- [x] Run `npm run lint` in `frontend` and fix any remaining issues
+- [ ] Run `npm run build` in `frontend` to verify the changes compile
+  Note: `npx.cmd tsc -b` passes, but `vite build` is blocked in this sandbox by `spawn EPERM` from `esbuild`.

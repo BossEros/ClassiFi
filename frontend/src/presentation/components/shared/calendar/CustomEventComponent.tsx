@@ -1,5 +1,5 @@
-﻿import { AlertCircle, CheckCircle, Clock } from "lucide-react"
-import type { CalendarEvent } from "@/business/models/calendar"
+import { AlertCircle, CheckCircle, Clock } from "lucide-react"
+import type { CalendarEvent } from "@/data/api/calendar.types"
 
 interface CustomEventComponentProps {
   event: CalendarEvent

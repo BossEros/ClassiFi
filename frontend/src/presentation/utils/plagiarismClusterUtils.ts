@@ -1,7 +1,7 @@
-﻿import type {
+import type {
   FileResponse,
   PairResponse,
-} from "@/business/models/plagiarism"
+} from "@/data/api/plagiarism.types"
 
 /**
  * A submission included in a similarity cluster.

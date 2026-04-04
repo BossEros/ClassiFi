@@ -1,8 +1,8 @@
-﻿import { Card, CardContent } from "@/presentation/components/ui/Card"
+import { Card, CardContent } from "@/presentation/components/ui/Card"
 import { cn } from "@/shared/utils/cn"
 import { CheckCircle, Clock } from "lucide-react"
-import type { Assignment } from "@/business/models/class"
-import { parseISODate } from "@/business/models/class"
+import type { Assignment } from "@/data/api/class.types"
+import { parseISODate } from "@/data/api/class.types"
 import {
   getAssignmentStatus,
   getStatusLabel,

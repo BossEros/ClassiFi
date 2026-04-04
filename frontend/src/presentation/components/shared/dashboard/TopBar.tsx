@@ -1,6 +1,6 @@
-﻿import { useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { ArrowLeft, ChevronRight } from "lucide-react"
-import type { User } from "@/business/models/auth"
+import type { User } from "@/data/api/auth.types"
 import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery"
 import { NotificationBadge } from "./NotificationBadge"
 

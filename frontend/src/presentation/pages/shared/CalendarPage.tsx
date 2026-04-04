@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar";
 import { useCalendar } from "@/presentation/hooks/shared/useCalendar";
 import { CustomEventComponent, CustomToolbar, CustomDayView, CustomWeekView, EventDetailsModal } from "@/presentation/components/shared/calendar";
@@ -8,11 +8,11 @@ import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { calendarLocalizer } from "@/presentation/constants/calendarConfig";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { useAuthStore } from "@/shared/store/useAuthStore";
-import type { CalendarEvent } from "@/business/models/calendar";
+import type { CalendarEvent } from "@/data/api/calendar.types";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./CalendarPage.css";
 import { Filter, Check, ChevronDown } from "lucide-react";
-import type { ClassInfo } from "@/business/models/calendar";
+import type { ClassInfo } from "@/data/api/calendar.types";
 import { useState, useRef } from "react";
 import { calendarTheme } from "@/presentation/constants/calendarTheme";
 

@@ -1,5 +1,5 @@
-﻿import { z } from "zod"
-import { VALID_ROLES, type UserRole } from "@/business/models/auth"
+import { z } from "zod"
+import { VALID_ROLES, type UserRole } from "@/data/api/auth.types"
 import {
   emailSchema,
   strongPasswordSchema,

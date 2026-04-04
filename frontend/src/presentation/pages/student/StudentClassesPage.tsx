@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Check, Grid3x3, Plus, RefreshCw, Users, X } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
@@ -15,7 +15,7 @@ import {
   joinClass,
 } from "@/business/services/studentDashboardService"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { Class } from "@/business/models/class"
+import type { Class } from "@/data/api/class.types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { Input } from "@/presentation/components/ui/Input"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"

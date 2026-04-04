@@ -103,12 +103,14 @@ export interface ResultDetailsResponse {
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
   rightFile: {
     filename: string
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
 }
 
@@ -381,12 +383,14 @@ export class PlagiarismService {
         content: leftContent,
         lineCount: leftContent.split("\n").length,
         studentName: submission1.studentName || "Unknown",
+        submittedAt: submission1.submission.submittedAt?.toISOString() ?? null,
       },
       rightFile: {
         filename: submission2.submission.fileName,
         content: rightContent,
         lineCount: rightContent.split("\n").length,
         studentName: submission2.studentName || "Unknown",
+        submittedAt: submission2.submission.submittedAt?.toISOString() ?? null,
       },
     }
   }

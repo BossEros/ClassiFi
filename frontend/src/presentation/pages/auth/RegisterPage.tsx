@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Input } from "@/presentation/components/ui/Input";
 import { Button } from "@/presentation/components/ui/Button";
@@ -6,7 +6,7 @@ import { Eye, EyeOff, ArrowLeft, ArrowRight, GraduationCap, Users, Check, CheckC
 import { registerUser } from "@/business/services/authService";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { registerFormSchema, type RegisterFormValues } from "@/presentation/schemas/auth/authSchemas";
-import type { RegistrationStep, RegistrationStepInfo } from "@/business/models/auth";
+import type { RegistrationStep, RegistrationStepInfo } from "@/data/api/auth.types";
 import { authTheme } from "@/presentation/constants/authTheme";
 
 // Inlined from src/presentation/components/auth/forms/RegisterForm.tsx

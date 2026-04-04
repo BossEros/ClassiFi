@@ -1,10 +1,10 @@
-﻿import { useState } from "react"
+import { useState } from "react"
 import { ShieldAlert, Plus, Trash2, AlertTriangle } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import { Input } from "@/presentation/components/ui/Input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
-import type { SimilarityPenaltyConfig as SimilarityPenaltyConfigType, SimilarityPenaltyBand } from "@/business/models/gradebook"
+import type { SimilarityPenaltyConfig as SimilarityPenaltyConfigType, SimilarityPenaltyBand } from "@/data/api/gradebook.types"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface SimilarityPenaltyConfigProps {
@@ -339,7 +339,7 @@ export function SimilarityPenaltyConfig({
                 <ul className="ml-6 space-y-1 text-xs text-slate-700">
                   {sortedPreviewBands.map((band) => (
                     <li key={band.id}>
-                      â‰¥ {Math.round(band.minHybridScore * 100)}% similarity: -{band.penaltyPercent}%
+                      ≥ {Math.round(band.minHybridScore * 100)}% similarity: -{band.penaltyPercent}%
                     </li>
                   ))}
                   <li className="text-rose-700">

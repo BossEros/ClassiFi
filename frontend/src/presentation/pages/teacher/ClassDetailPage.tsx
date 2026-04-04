@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ClipboardList } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
@@ -11,13 +11,13 @@ import { ClassCalendarTab } from "@/presentation/components/shared/calendar";
 import { AssignmentsTabContent } from "@/presentation/components/teacher/classDetail/AssignmentsTabContent";
 import { StudentsTabContent } from "@/presentation/components/teacher/classDetail/StudentsTabContent";
 import { useAuthStore } from "@/shared/store/useAuthStore";
-import type { ClassTab } from "@/business/models/class";
+import type { ClassTab } from "@/data/api/class.types";
 import { getClassDetailData, deleteClass } from "@/business/services/classService";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
-import type { User } from "@/business/models/auth";
-import type { Class, Assignment, EnrolledStudent } from "@/business/models/class";
-import type { Module } from "@/business/models/class";
+import type { User } from "@/data/api/auth.types";
+import type { Class, Assignment, EnrolledStudent } from "@/data/api/class.types";
+import type { Module } from "@/data/api/class.types";
 import type { AssignmentFilter, TeacherAssignmentFilter } from "@/shared/utils/assignmentFilters";
 import { filterAssignments, calculateFilterCounts, filterTeacherAssignmentsByTimeline, calculateTeacherFilterCounts, groupAssignments } from "@/shared/utils/assignmentFilters";
 import { filterStudentsByQuery } from "@/presentation/pages/teacher/classDetail.helpers";
@@ -259,13 +259,13 @@ function RemoveStudentModal({
             </p>
             <ul className="mt-3 space-y-2 text-xs text-slate-600">
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-amber-500">â€¢</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   The student will lose access to all class assignments
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-amber-500">â€¢</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   Their submissions will be preserved but they cannot submit new
                   work
@@ -401,19 +401,19 @@ function LeaveClassModal({
             </p>
             <ul className="mt-3 space-y-2 text-xs text-slate-500">
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-amber-500">â€¢</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   You will lose access to all class assignments and materials
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-amber-500">â€¢</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>
                   Your submissions will still be visible to your teacher
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 text-amber-500">â€¢</span>
+                <span className="mt-0.5 text-amber-500">•</span>
                 <span>You will need a new class code to rejoin later</span>
               </li>
             </ul>

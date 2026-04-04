@@ -1,4 +1,4 @@
-﻿import type { DayOfWeek } from "@/business/models/class"
+import type { DayOfWeek } from "@/data/api/class.types"
 
 /**
  * Days of the week with labels and short forms for UI display
@@ -50,8 +50,8 @@ export const DAY_ABBREVIATIONS = DAYS.map((day) => day.short)
  * Uses academic convention: M, T, W, TH (Thursday), F, S, SU (Sunday)
  * @param daysOfWeek - Array of DayOfWeek values
  * @returns Array of single-letter day abbreviations
- * @example convertToSingleLetterAbbr(["monday", "wednesday", "friday"]) â†’ ["M", "W", "F"]
- * @example convertToSingleLetterAbbr(["tuesday", "thursday"]) â†’ ["T", "TH"]
+ * @example convertToSingleLetterAbbr(["monday", "wednesday", "friday"]) → ["M", "W", "F"]
+ * @example convertToSingleLetterAbbr(["tuesday", "thursday"]) → ["T", "TH"]
  */
 export function convertToSingleLetterAbbr(daysOfWeek: DayOfWeek[]): string[] {
   return daysOfWeek
@@ -66,8 +66,8 @@ export function convertToSingleLetterAbbr(daysOfWeek: DayOfWeek[]): string[] {
  * Formats a time string from 24-hour format to 12-hour format with AM/PM.
  * @param time - Time string in 24-hour format (e.g., "08:00", "14:30")
  * @returns Time string in 12-hour format (e.g., "8:00 AM", "2:30 PM")
- * @example formatTime12Hour("08:00") â†’ "8:00 AM"
- * @example formatTime12Hour("14:30") â†’ "2:30 PM"
+ * @example formatTime12Hour("08:00") → "8:00 AM"
+ * @example formatTime12Hour("14:30") → "2:30 PM"
  */
 export function formatTime12Hour(time: string): string {
   const [hourStr, minute] = time.split(":")
@@ -89,8 +89,8 @@ export function formatTime12Hour(time: string): string {
  * @param startTime - Start time in 24-hour format (e.g., "08:00")
  * @param endTime - End time in 24-hour format (e.g., "09:30")
  * @returns Formatted time range (e.g., "8:00 - 9:30 AM" or "11:30 AM - 1:00 PM")
- * @example formatTimeRange("08:00", "09:30") â†’ "8:00 - 9:30 AM"
- * @example formatTimeRange("11:30", "13:00") â†’ "11:30 AM - 1:00 PM"
+ * @example formatTimeRange("08:00", "09:30") → "8:00 - 9:30 AM"
+ * @example formatTimeRange("11:30", "13:00") → "11:30 AM - 1:00 PM"
  */
 export function formatTimeRange(startTime: string, endTime: string): string {
   const [startHourStr] = startTime.split(":")
