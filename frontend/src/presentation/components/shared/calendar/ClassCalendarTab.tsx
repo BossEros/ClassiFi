@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
-import { useClassCalendar } from "@/presentation/hooks/shared/useClassCalendar"
+import { useCalendar } from "@/presentation/hooks/shared/useCalendar"
 import { CustomEventComponent } from "./CustomEventComponent"
 import { CustomToolbar } from "./CustomToolbar"
 import { CustomDayView } from "./CustomDayView"
@@ -42,12 +42,12 @@ export interface ClassCalendarTabProps {
  */
 export function ClassCalendarTab({
   classId,
-  className,
+  className: _className,
 }: ClassCalendarTabProps) {
   const {
     currentDate,
     currentView,
-    filteredEvents,
+    events,
     selectedEvent,
     isLoading,
     error,
@@ -57,7 +57,13 @@ export function ClassCalendarTab({
     openEventDetails,
     closeEventDetails,
     refetchEvents,
-  } = useClassCalendar({ classId, className })
+  } = useCalendar()
+
+  // Filter events to only those belonging to this class
+  const filteredEvents = useMemo(
+    () => events.filter((event) => event.classInfo.id === classId),
+    [events, classId],
+  )
 
   const showToast = useToastStore((state) => state.showToast)
 

@@ -19,7 +19,6 @@ import type {
 import type { Assignment, Class } from "@/business/models/dashboard/types"
 import type { Submission } from "@/business/models/assignment/types"
 import type { CalendarView } from "@/business/models/calendar/types"
-import { isValidClass as isValidClassValue } from "@/business/services/calendar/classMappers"
 import { formatCalendarDate as formatCalendarDateValue } from "@/shared/utils/calendarDateUtils"
 import { getClassColor as getClassColorValue } from "@/shared/utils/colorUtils"
 
@@ -341,20 +340,42 @@ export async function getClassesForFilter(
 /**
  * Type guard to validate if an object matches the Class interface structure.
  *
- * @param obj - Object to validate
- * @returns True if object has required Class properties
+ * @param value - Unknown candidate value.
+ * @returns True when the value matches required Class fields.
  */
-function isValidClass(obj: unknown): obj is Class {
-  return isValidClassValue(obj)
+export function isValidClass(value: unknown): value is Class {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+
+  const candidate = value as Record<string, unknown>
+
+  const checks = {
+    id: typeof candidate.id === "number",
+    teacherId: typeof candidate.teacherId === "number",
+    className: typeof candidate.className === "string",
+    classCode: typeof candidate.classCode === "string",
+    description:
+      candidate.description === null ||
+      typeof candidate.description === "string",
+    isActive: typeof candidate.isActive === "boolean",
+    createdAt: typeof candidate.createdAt === "string",
+    semester: typeof candidate.semester === "number",
+    academicYear: typeof candidate.academicYear === "string",
+    schedule:
+      typeof candidate.schedule === "object" && candidate.schedule !== null,
+  }
+
+  return Object.values(checks).every((passed) => passed === true)
 }
 
 /**
- * Safely maps and validates response data to Class array.
+ * Safely maps unknown class array data to validated Class records.
  *
- * @param classes - Array of class objects from API response
- * @returns Validated array of Class objects
+ * @param classes - Unknown class array payload.
+ * @returns Valid Class array.
  */
-function mapToClassArray(classes: unknown[]): Class[] {
+export function mapToClassArray(classes: unknown[]): Class[] {
   return classes.filter(isValidClass)
 }
 
