@@ -88,8 +88,8 @@ async function deleteOldAvatar(avatarUrl: string): Promise<void> {
     }
 
     await supabase.storage.from("avatars").remove([filePath])
-  } catch {
-    // Continue anyway - not critical
+  } catch (err) {
+    console.error("[userRepository] Failed to delete old avatar:", err)
   }
 }
 
@@ -102,8 +102,8 @@ async function deleteOldAvatar(avatarUrl: string): Promise<void> {
 async function persistAvatarUrlToBackend(avatarUrl: string): Promise<void> {
   try {
     await apiClient.patch("/user/me/avatar", { avatarUrl })
-  } catch {
-    // Continue anyway - localStorage will still work
+  } catch (err) {
+    console.error("[userRepository] Failed to persist avatar URL to backend:", err)
   }
 }
 

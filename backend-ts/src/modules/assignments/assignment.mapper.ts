@@ -1,4 +1,5 @@
 import type { Assignment } from "@/modules/assignments/assignment.model.js"
+import type { SimilarityPenaltyConfig } from "@/modules/assignments/similarity-penalty-config.js"
 
 const DEFAULT_TOTAL_SCORE = 100
 
@@ -22,6 +23,7 @@ export interface AssignmentDTO {
   allowLateSubmissions: boolean
   latePenaltyConfig: Assignment["latePenaltyConfig"] | null
   enableSimilarityPenalty: boolean
+  similarityPenaltyConfig: SimilarityPenaltyConfig | null
   submissionCount?: number
   studentCount?: number
   hasSubmitted?: boolean
@@ -65,6 +67,7 @@ export function toAssignmentDTO(
     allowLateSubmissions: assignment.allowLateSubmissions ?? false,
     latePenaltyConfig: assignment.latePenaltyConfig ?? null,
     enableSimilarityPenalty: assignment.enableSimilarityPenalty ?? false,
+    similarityPenaltyConfig: assignment.similarityPenaltyConfig ?? null,
     ...extras,
   }
 }

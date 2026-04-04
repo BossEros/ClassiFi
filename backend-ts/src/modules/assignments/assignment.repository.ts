@@ -7,6 +7,7 @@ import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 import type { ProgrammingLanguage } from "@/shared/constants.js"
 import { filterUndefined } from "@/shared/utils.js"
+import type { SimilarityPenaltyConfig } from "@/modules/assignments/similarity-penalty-config.js"
 
 /** Pending task result for teacher dashboard */
 export interface PendingTeacherTask {
@@ -36,6 +37,7 @@ export interface CreateAssignmentData {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
 }
 
 /** Data for updating an existing assignment */
@@ -55,6 +57,7 @@ export interface UpdateAssignmentData {
   latePenaltyConfig?: LatePenaltyConfig | null
   moduleId?: number
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
 }
 
 /**
@@ -336,6 +339,50 @@ export class AssignmentRepository extends BaseRepository<
     return {
       enabled: result[0].allowLateSubmissions,
       config: result[0].latePenaltyConfig,
+    }
+  }
+
+  /**
+   * Set the similarity penalty configuration for an assignment.
+   */
+  async setSimilarityPenaltyConfig(
+    assignmentId: number,
+    enabled: boolean,
+    config: SimilarityPenaltyConfig | null,
+  ): Promise<boolean> {
+    const result = await this.db
+      .update(assignments)
+      .set({
+        enableSimilarityPenalty: enabled,
+        similarityPenaltyConfig: config,
+      })
+      .where(eq(assignments.id, assignmentId))
+      .returning()
+
+    return result.length > 0
+  }
+
+  /**
+   * Get the similarity penalty configuration for an assignment.
+   * Returns null if the assignment does not exist.
+   */
+  async getSimilarityPenaltyConfig(
+    assignmentId: number,
+  ): Promise<{ enabled: boolean; config: SimilarityPenaltyConfig | null } | null> {
+    const result = await this.db
+      .select({
+        enableSimilarityPenalty: assignments.enableSimilarityPenalty,
+        similarityPenaltyConfig: assignments.similarityPenaltyConfig,
+      })
+      .from(assignments)
+      .where(eq(assignments.id, assignmentId))
+      .limit(1)
+
+    if (!result[0]) return null
+
+    return {
+      enabled: result[0].enableSimilarityPenalty,
+      config: result[0].similarityPenaltyConfig ?? null,
     }
   }
 

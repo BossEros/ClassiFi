@@ -13,6 +13,7 @@ vi.mock("../../src/shared/database.js", () => ({
 // Mock drizzle-orm
 vi.mock("drizzle-orm", () => ({
   eq: vi.fn((field, value) => ({ field, value, type: "eq" })),
+  relations: vi.fn(),
 }))
 
 // Mock models

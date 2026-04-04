@@ -123,6 +123,7 @@ export function mapAssignmentDetail(
     allowLateSubmissions: dto.allowLateSubmissions ?? false,
     latePenaltyConfig: dto.latePenaltyConfig ?? null,
     enableSimilarityPenalty: dto.enableSimilarityPenalty ?? false,
+    similarityPenaltyConfig: dto.similarityPenaltyConfig ?? null,
     testCases: dto.testCases ?? [],
     moduleId: dto.moduleId ?? null,
   }

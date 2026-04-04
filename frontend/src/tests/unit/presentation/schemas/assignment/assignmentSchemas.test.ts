@@ -26,6 +26,12 @@ function buildValidAssignmentData() {
       rejectAfterHours: 120,
     },
     enableSimilarityPenalty: false,
+    similarityPenaltyConfig: {
+      warningThreshold: 0.75,
+      deductionBands: [{ id: "default-1", minHybridScore: 0.85, penaltyPercent: 5 }],
+      maxPenaltyPercent: 20,
+      applyHighestPairOnly: true,
+    },
     moduleId: 1,
   }
 }

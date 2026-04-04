@@ -118,12 +118,22 @@ describe("SimilarityPenaltyService", () => {
       id: 1,
       enableSimilarityPenalty: true,
       totalScore: 100,
+      similarityPenaltyConfig: {
+        warningThreshold: 0.75,
+        deductionBands: [
+          { id: "b1", minHybridScore: 0.85, penaltyPercent: 5 },
+          { id: "b2", minHybridScore: 0.90, penaltyPercent: 10 },
+          { id: "b3", minHybridScore: 0.95, penaltyPercent: 20 },
+        ],
+        maxPenaltyPercent: 20,
+        applyHighestPairOnly: true,
+      },
     })
     mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
-      { id: 21, grade: null, penaltyApplied: 0 },
-      { id: 22, grade: null, penaltyApplied: 0 },
-      { id: 23, grade: null, penaltyApplied: 0 },
-      { id: 24, grade: null, penaltyApplied: 0 },
+      { id: 21, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T10:00:00Z") },
+      { id: 22, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T11:00:00Z") },
+      { id: 23, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T12:00:00Z") },
+      { id: 24, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T13:00:00Z") },
     ])
     mockSimilarityRepo.getResultsByReport.mockResolvedValue([
       {
@@ -161,11 +171,11 @@ describe("SimilarityPenaltyService", () => {
 
     await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
 
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(21, 95)
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(22, 90)
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(23, 80)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(21, 100)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(22, 95)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(23, 90)
     expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(24, 80)
-    expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(4)
+    expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(3)
   })
 
   it("keeps only the highest qualifying pair for each latest submission", async () => {
@@ -173,11 +183,21 @@ describe("SimilarityPenaltyService", () => {
       id: 1,
       enableSimilarityPenalty: true,
       totalScore: 100,
+      similarityPenaltyConfig: {
+        warningThreshold: 0.75,
+        deductionBands: [
+          { id: "b1", minHybridScore: 0.85, penaltyPercent: 5 },
+          { id: "b2", minHybridScore: 0.90, penaltyPercent: 10 },
+          { id: "b3", minHybridScore: 0.95, penaltyPercent: 20 },
+        ],
+        maxPenaltyPercent: 20,
+        applyHighestPairOnly: true,
+      },
     })
     mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
-      { id: 31, grade: null, penaltyApplied: 10 },
-      { id: 32, grade: null, penaltyApplied: 0 },
-      { id: 33, grade: null, penaltyApplied: 0 },
+      { id: 31, grade: null, penaltyApplied: 10, submittedAt: new Date("2026-01-01T10:00:00Z") },
+      { id: 32, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T11:00:00Z") },
+      { id: 33, grade: null, penaltyApplied: 0, submittedAt: new Date("2026-01-01T12:00:00Z") },
     ])
     mockSimilarityRepo.getResultsByReport.mockResolvedValue([
       {
@@ -205,10 +225,10 @@ describe("SimilarityPenaltyService", () => {
 
     await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
 
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(31, 65)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(31, 81)
     expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(32, 86)
     expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(33, 72)
-    expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(3)
+    expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(2)
   })
 
   it("notifies the student when similarity deduction changes the visible score", async () => {
@@ -217,6 +237,16 @@ describe("SimilarityPenaltyService", () => {
       assignmentName: "Homework 1",
       enableSimilarityPenalty: true,
       totalScore: 100,
+      similarityPenaltyConfig: {
+        warningThreshold: 0.75,
+        deductionBands: [
+          { id: "b1", minHybridScore: 0.85, penaltyPercent: 5 },
+          { id: "b2", minHybridScore: 0.90, penaltyPercent: 10 },
+          { id: "b3", minHybridScore: 0.95, penaltyPercent: 20 },
+        ],
+        maxPenaltyPercent: 20,
+        applyHighestPairOnly: true,
+      },
     })
     mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
       {
@@ -226,14 +256,16 @@ describe("SimilarityPenaltyService", () => {
         grade: 80,
         penaltyApplied: 0,
         isGradeOverridden: false,
+        submittedAt: new Date("2026-01-01T10:00:00Z"),
       },
       {
         id: 52,
         assignmentId: 1,
         studentId: 502,
-        grade: 64,
+        grade: 80,
         penaltyApplied: 0,
         isGradeOverridden: false,
+        submittedAt: new Date("2026-01-01T11:00:00Z"),
       },
       {
         id: 53,
@@ -242,6 +274,7 @@ describe("SimilarityPenaltyService", () => {
         grade: 90,
         penaltyApplied: 0,
         isGradeOverridden: true,
+        submittedAt: new Date("2026-01-01T12:00:00Z"),
       },
     ])
     mockSimilarityRepo.getResultsByReport.mockResolvedValue([
@@ -275,7 +308,7 @@ describe("SimilarityPenaltyService", () => {
 
     expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(1)
     expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
-      501,
+      502,
       "SUBMISSION_GRADED",
       expect.objectContaining({
         reason: "similarity_deduction",
@@ -296,6 +329,16 @@ describe("SimilarityPenaltyService", () => {
       assignmentName: "Homework 1",
       enableSimilarityPenalty: true,
       totalScore: 100,
+      similarityPenaltyConfig: {
+        warningThreshold: 0.75,
+        deductionBands: [
+          { id: "b1", minHybridScore: 0.85, penaltyPercent: 5 },
+          { id: "b2", minHybridScore: 0.90, penaltyPercent: 10 },
+          { id: "b3", minHybridScore: 0.95, penaltyPercent: 20 },
+        ],
+        maxPenaltyPercent: 20,
+        applyHighestPairOnly: true,
+      },
     })
     mockSubmissionRepo.getSubmissionsByAssignment.mockResolvedValue([
       {
@@ -305,6 +348,7 @@ describe("SimilarityPenaltyService", () => {
         grade: 100,
         penaltyApplied: 0,
         isGradeOverridden: false,
+        submittedAt: new Date("2026-01-01T10:00:00Z"),
       },
       {
         id: 62,
@@ -313,6 +357,7 @@ describe("SimilarityPenaltyService", () => {
         grade: 100,
         penaltyApplied: 0,
         isGradeOverridden: false,
+        submittedAt: new Date("2026-01-01T11:00:00Z"),
       },
     ])
     mockSimilarityRepo.getResultsByReport.mockResolvedValue([

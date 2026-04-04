@@ -245,6 +245,7 @@ export async function createAssignment(
       allowLateSubmissions: createAssignmentData.allowLateSubmissions,
       latePenaltyConfig: createAssignmentData.latePenaltyConfig,
       enableSimilarityPenalty: createAssignmentData.enableSimilarityPenalty,
+      similarityPenaltyConfig: createAssignmentData.similarityPenaltyConfig,
       moduleId: createAssignmentData.moduleId ?? null,
     },
   )
@@ -330,6 +331,7 @@ export async function updateAssignment(
     allowLateSubmissions: updateAssignmentData.allowLateSubmissions,
     latePenaltyConfig: updateAssignmentData.latePenaltyConfig,
     enableSimilarityPenalty: updateAssignmentData.enableSimilarityPenalty,
+    similarityPenaltyConfig: updateAssignmentData.similarityPenaltyConfig,
     moduleId: updateAssignmentData.moduleId ?? undefined,
   })
 }

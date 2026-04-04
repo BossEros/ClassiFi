@@ -164,6 +164,36 @@ export const LatePenaltyUpdateBodySchema = z.object({
 export type LatePenaltyUpdateBody = z.infer<typeof LatePenaltyUpdateBodySchema>
 
 // ============================================================================
+// Similarity Penalty Configuration Schemas
+// ============================================================================
+
+/** Single similarity penalty deduction band */
+export const SimilarityPenaltyBandSchema = z.object({
+  minHybridScore: z.number().min(0).max(1),
+  penaltyPercent: z.number().min(0).max(100),
+})
+
+export type SimilarityPenaltyBand = z.infer<typeof SimilarityPenaltyBandSchema>
+
+/** Similarity penalty configuration schema */
+export const SimilarityPenaltyConfigSchema = z.object({
+  warningThreshold: z.number().min(0).max(1),
+  deductionBands: z.array(SimilarityPenaltyBandSchema),
+  maxPenaltyPercent: z.number().min(0).max(100),
+  applyHighestPairOnly: z.boolean(),
+})
+
+export type SimilarityPenaltyConfigInput = z.infer<typeof SimilarityPenaltyConfigSchema>
+
+/** Similarity penalty config update request body */
+export const SimilarityPenaltyUpdateBodySchema = z.object({
+  enabled: z.boolean(),
+  config: SimilarityPenaltyConfigSchema.optional(),
+})
+
+export type SimilarityPenaltyUpdateBody = z.infer<typeof SimilarityPenaltyUpdateBodySchema>
+
+// ============================================================================
 // Param Schemas
 // ============================================================================
 

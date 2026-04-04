@@ -103,3 +103,27 @@ export interface LatePenaltyUpdateRequest {
   enabled: boolean
   config?: LatePenaltyConfig
 }
+
+export interface SimilarityPenaltyBand {
+  id: string
+  minHybridScore: number
+  penaltyPercent: number
+}
+
+export interface SimilarityPenaltyConfig {
+  warningThreshold: number
+  deductionBands: SimilarityPenaltyBand[]
+  maxPenaltyPercent: number
+  applyHighestPairOnly: boolean
+}
+
+export interface SimilarityPenaltyConfigResponse {
+  success: boolean
+  enabled: boolean
+  config: SimilarityPenaltyConfig | null
+}
+
+export interface SimilarityPenaltyUpdateRequest {
+  enabled: boolean
+  config?: SimilarityPenaltyConfig
+}

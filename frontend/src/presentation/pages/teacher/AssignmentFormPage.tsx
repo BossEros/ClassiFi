@@ -9,7 +9,9 @@ import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentFor
 import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignment/BasicInfoForm"
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
 import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
+import { SimilarityPenaltyConfig } from "@/presentation/components/teacher/forms/assignment/SimilarityPenaltyConfig"
 import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/data/api/gradebook.types"
+import type { SimilarityPenaltyConfig as SimilarityPenaltyConfigType } from "@/data/api/gradebook.types"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
@@ -198,6 +200,18 @@ export function AssignmentFormPage() {
                   handleInputChange("latePenaltyConfig", config)
                 }
                 disabled={isLoading || !hasDeadlineConfigured}
+              />
+
+              <SimilarityPenaltyConfig
+                enabled={formData.enableSimilarityPenalty}
+                config={formData.similarityPenaltyConfig}
+                onEnabledChange={(enabled) =>
+                  handleInputChange("enableSimilarityPenalty", enabled)
+                }
+                onConfigChange={(config: SimilarityPenaltyConfigType) =>
+                  handleInputChange("similarityPenaltyConfig", config)
+                }
+                disabled={isLoading}
               />
 
               <Card className={assignmentFormTheme.actionCard}>

@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { AssignmentService } from "@/modules/assignments/assignment.service.js"
 import { LatePenaltyService } from "@/modules/assignments/late-penalty.service.js"
+import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
 import { TestCaseService } from "@/modules/test-cases/test-case.service.js"
 
 import {
@@ -22,6 +23,8 @@ import {
 import {
   LatePenaltyUpdateBodySchema,
   type LatePenaltyUpdateBody,
+  SimilarityPenaltyUpdateBodySchema,
+  type SimilarityPenaltyUpdateBody,
 } from "@/modules/gradebook/gradebook.schema.js"
 import {
   CreateTestCaseRequestSchema,
@@ -63,6 +66,9 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
   )
   const latePenaltyService = container.resolve<LatePenaltyService>(
     DI_TOKENS.services.latePenalty,
+  )
+  const similarityPenaltyService = container.resolve<SimilarityPenaltyService>(
+    DI_TOKENS.services.similarityPenalty,
   )
   const testCaseService = container.resolve<TestCaseService>(
     DI_TOKENS.services.testCase,
@@ -201,6 +207,57 @@ export async function assignmentRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         success: true,
         message: "Late penalty configuration updated successfully",
+      })
+    },
+  })
+
+  /**
+   * GET /:assignmentId/similarity-penalty
+   * Get similarity penalty configuration for an assignment
+   */
+  app.get("/:assignmentId/similarity-penalty", {
+    preHandler: validateParams(AssignmentIdParamSchema),
+    handler: async (request, reply) => {
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
+
+      const similarityPenaltyConfig =
+        await similarityPenaltyService.getAssignmentConfig(assignmentId)
+
+      return reply.send({
+        success: true,
+        enabled: similarityPenaltyConfig.enabled,
+        config: similarityPenaltyConfig.config,
+      })
+    },
+  })
+
+  /**
+   * PUT /:assignmentId/similarity-penalty
+   * Update similarity penalty configuration for an assignment
+   */
+  app.put("/:assignmentId/similarity-penalty", {
+    preHandler: [
+      validateParams(AssignmentIdParamSchema),
+      validateBody(SimilarityPenaltyUpdateBodySchema),
+    ],
+    handler: async (request, reply) => {
+      const { assignmentId } = request.validatedParams as AssignmentIdParam
+
+      const { enabled: isSimilarityPenaltyEnabled, config: providedConfig } =
+        request.validatedBody as SimilarityPenaltyUpdateBody
+
+      const similarityPenaltyConfigToApply =
+        providedConfig ?? similarityPenaltyService.getDefaultConfig()
+
+      await similarityPenaltyService.setAssignmentConfig(
+        assignmentId,
+        isSimilarityPenaltyEnabled,
+        similarityPenaltyConfigToApply,
+      )
+
+      return reply.send({
+        success: true,
+        message: "Similarity penalty configuration updated successfully",
       })
     },
   })

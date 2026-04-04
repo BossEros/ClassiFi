@@ -9,6 +9,7 @@ import { TestResultRepository } from "@/modules/test-cases/test-result.repositor
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import {
   normalizeSimilarityPenaltyConfig,
+  DEFAULT_SIMILARITY_PENALTY_CONFIG,
   type SimilarityPenaltyConfig,
 } from "@/modules/assignments/similarity-penalty-config.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -43,6 +44,90 @@ export class SimilarityPenaltyService {
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
+
+  /**
+   * Returns the system-wide default similarity penalty configuration.
+   */
+  getDefaultConfig(): SimilarityPenaltyConfig {
+    return normalizeSimilarityPenaltyConfig(DEFAULT_SIMILARITY_PENALTY_CONFIG)
+  }
+
+  /**
+   * Retrieves the similarity penalty configuration for an assignment.
+   * Falls back to the system default when no custom config has been set.
+   *
+   * @param assignmentId - The assignment to fetch the config for.
+   * @returns The enabled flag and the resolved config.
+   */
+  async getAssignmentConfig(
+    assignmentId: number,
+  ): Promise<{ enabled: boolean; config: SimilarityPenaltyConfig }> {
+    const storedConfig =
+      await this.assignmentRepo.getSimilarityPenaltyConfig(assignmentId)
+
+    if (!storedConfig) {
+      return { enabled: false, config: this.getDefaultConfig() }
+    }
+
+    return {
+      enabled: storedConfig.enabled,
+      config: normalizeSimilarityPenaltyConfig(storedConfig.config),
+    }
+  }
+
+  /**
+   * Persists the similarity penalty configuration for an assignment.
+   * Validates band values before writing.
+   *
+   * @param assignmentId - The assignment to configure.
+   * @param enabled - Whether similarity penalty enforcement is active.
+   * @param config - The penalty config to store, or null to reset to default.
+   * @returns true when the update succeeded.
+   */
+  async setAssignmentConfig(
+    assignmentId: number,
+    enabled: boolean,
+    config: SimilarityPenaltyConfig | null,
+  ): Promise<boolean> {
+    const configToValidate = config ?? DEFAULT_SIMILARITY_PENALTY_CONFIG
+
+    if (
+      configToValidate.warningThreshold < 0 ||
+      configToValidate.warningThreshold > 1
+    ) {
+      throw new Error(
+        "Invalid similarity penalty configuration: warningThreshold must be between 0 and 1",
+      )
+    }
+
+    if (configToValidate.maxPenaltyPercent < 0 || configToValidate.maxPenaltyPercent > 100) {
+      throw new Error(
+        "Invalid similarity penalty configuration: maxPenaltyPercent must be between 0 and 100",
+      )
+    }
+
+    for (const band of configToValidate.deductionBands) {
+      if (band.minHybridScore < 0 || band.minHybridScore > 1) {
+        throw new Error(
+          "Invalid similarity penalty configuration: band minHybridScore must be between 0 and 1",
+        )
+      }
+
+      if (band.penaltyPercent < 0 || band.penaltyPercent > 100) {
+        throw new Error(
+          "Invalid similarity penalty configuration: band penaltyPercent must be between 0 and 100",
+        )
+      }
+    }
+
+    const normalizedConfig = config ? normalizeSimilarityPenaltyConfig(config) : null
+
+    return await this.assignmentRepo.setSimilarityPenaltyConfig(
+      assignmentId,
+      enabled,
+      normalizedConfig,
+    )
+  }
 
   async syncAssignmentPenaltyState(assignmentId: number): Promise<void> {
     // STEP 1: Load the assignment and its current set of latest submissions
@@ -93,7 +178,9 @@ export class SimilarityPenaltyService {
     }
 
     // STEP 3: Load the normalized penalty configuration and build lookup structures
-    const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(undefined)
+    const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(
+      assignment.similarityPenaltyConfig,
+    )
     const latestSubmissionIds = new Set(
       latestSubmissions.map((latestSubmission) => latestSubmission.id),
     )

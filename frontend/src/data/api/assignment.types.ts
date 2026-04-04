@@ -1,4 +1,4 @@
-import type { LatePenaltyConfig } from "@/data/api/gradebook.types"
+import type { LatePenaltyConfig, SimilarityPenaltyConfig } from "@/data/api/gradebook.types"
 import type {
   Submission,
 } from "@/data/api/shared.types"
@@ -41,6 +41,7 @@ export interface AssignmentDetail {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   testCases?: AssignmentTestCase[]
   moduleId?: number | null
 }
@@ -68,6 +69,7 @@ export interface CreateAssignmentRequest {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   moduleId?: number | null
 }
 
@@ -86,6 +88,7 @@ export interface UpdateAssignmentRequest {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   moduleId?: number | null
 }
 
@@ -155,6 +158,7 @@ export interface AssignmentDetailDTO {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   testCases?: AssignmentTestCase[]
   moduleId?: number | null
 }

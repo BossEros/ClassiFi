@@ -1,5 +1,5 @@
 ﻿import type { ComponentType } from "react"
-import type { LatePenaltyConfig } from "@/data/api/gradebook.types"
+import type { LatePenaltyConfig, SimilarityPenaltyConfig } from "@/data/api/gradebook.types"
 
 export type ISODateString = string & { readonly __brand: "ISODateString" }
 
@@ -70,6 +70,7 @@ export interface Assignment {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   submittedAt?: ISODateString | null
   grade?: number | null
   maxGrade?: number

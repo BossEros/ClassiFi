@@ -1,4 +1,5 @@
 import type { LatePenaltyConfig } from "@/modules/assignments/assignment.model.js"
+import type { SimilarityPenaltyConfig } from "@/modules/assignments/similarity-penalty-config.js"
 
 /** DTO for AssignmentService.createAssignment */
 export interface CreateAssignmentServiceDTO {
@@ -18,6 +19,7 @@ export interface CreateAssignmentServiceDTO {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
 }
 
 /** DTO for AssignmentService.updateAssignment */
@@ -38,4 +40,5 @@ export interface UpdateAssignmentServiceDTO {
   latePenaltyConfig?: LatePenaltyConfig | null
   moduleId?: number
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
 }

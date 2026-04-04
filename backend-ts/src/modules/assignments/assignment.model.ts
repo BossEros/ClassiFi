@@ -14,6 +14,7 @@ import { classes } from "@/modules/classes/class.model.js"
 import { modules } from "@/modules/modules/module.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
 import { similarityReports } from "@/modules/plagiarism/similarity-report.model.js"
+import type { SimilarityPenaltyConfig } from "@/modules/assignments/similarity-penalty-config.js"
 
 export const programmingLanguageEnum = pgEnum("programming_language", [
   "python",
@@ -61,6 +62,7 @@ export const assignments = pgTable("assignments", {
   enableSimilarityPenalty: boolean("enable_similarity_penalty")
     .default(false)
     .notNull(),
+  similarityPenaltyConfig: jsonb("similarity_penalty_config").$type<SimilarityPenaltyConfig>(),
   lastReminderSentAt: timestamp("last_reminder_sent_at", {
     withTimezone: true,
   }),

@@ -17,6 +17,7 @@ import {
   updateTestCase,
 } from "@/business/services/testCaseService"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
+import { DEFAULT_SIMILARITY_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/SimilarityPenaltyConfig"
 import { useToastStore } from "@/shared/store/useToastStore"
 import {
   buildAssignmentPayload,
@@ -60,6 +61,7 @@ function buildDefaultFormValues(): AssignmentFormValues {
     allowLateSubmissions: false,
     latePenaltyConfig: normalizeLatePenaltyConfig(DEFAULT_LATE_PENALTY_CONFIG),
     enableSimilarityPenalty: false,
+    similarityPenaltyConfig: DEFAULT_SIMILARITY_PENALTY_CONFIG,
     moduleId: null,
   }
 }
@@ -170,6 +172,8 @@ export function useAssignmentForm() {
               ),
               enableSimilarityPenalty:
                 assignment.enableSimilarityPenalty ?? false,
+              similarityPenaltyConfig:
+                assignment.similarityPenaltyConfig ?? DEFAULT_SIMILARITY_PENALTY_CONFIG,
               moduleId: assignment.moduleId ?? null,
             })
             setShowTemplateCode(!!assignment.templateCode)
