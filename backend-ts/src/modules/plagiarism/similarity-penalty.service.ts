@@ -12,7 +12,8 @@ import {
   type SimilarityPenaltyConfig,
 } from "@/modules/assignments/similarity-penalty-config.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
-import type { Assignment, Submission } from "@/models/index.js"
+import type { Assignment } from "@/modules/assignments/assignment.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"

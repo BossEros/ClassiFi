@@ -1,11 +1,7 @@
 import { injectable } from "tsyringe"
 import { db } from "@/shared/database.js"
-import {
-  testResults,
-  testCases,
-  type TestResult,
-  type NewTestResult,
-} from "@/models/index.js"
+import { testCases } from "@/modules/test-cases/test-case.model.js"
+import { testResults, type TestResult, type NewTestResult } from "@/modules/test-cases/test-result.model.js"
 import { eq } from "drizzle-orm"
 
 /** Database executor type that works with both db and transactions */

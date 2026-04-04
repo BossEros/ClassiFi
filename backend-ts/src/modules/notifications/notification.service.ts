@@ -1,7 +1,8 @@
 import { injectable, inject } from "tsyringe"
 import type { NotificationRepository } from "@/modules/notifications/notification.repository.js"
 import type { UserRepository } from "@/modules/users/user.repository.js"
-import type { Notification, NewNotification, User } from "@/models/index.js"
+import type { User } from "@/modules/users/user.model.js"
+import type { Notification, NewNotification } from "@/modules/notifications/notification.model.js"
 import type { IEmailService } from "@/services/interfaces/email.interface.js"
 import type { NotificationType } from "@/modules/notifications/notification.schema.js"
 import {

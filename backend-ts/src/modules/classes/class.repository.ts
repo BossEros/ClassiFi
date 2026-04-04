@@ -1,11 +1,7 @@
 ﻿import { eq, and, desc, sql, count, ilike, or } from "drizzle-orm"
-import {
-  classes,
-  enrollments,
-  users,
-  type Class,
-  type NewClass,
-} from "@/models/index.js"
+import { users } from "@/modules/users/user.model.js"
+import { classes, type Class, type NewClass } from "@/modules/classes/class.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 import { filterUndefined } from "@/shared/utils.js"

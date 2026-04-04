@@ -1,4 +1,4 @@
-import type { LatePenaltyConfig } from "@/models/index.js"
+import type { LatePenaltyConfig } from "@/modules/assignments/assignment.model.js"
 
 /** DTO for AssignmentService.createAssignment */
 export interface CreateAssignmentServiceDTO {

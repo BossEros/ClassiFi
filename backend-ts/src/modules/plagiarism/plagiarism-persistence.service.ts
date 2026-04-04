@@ -17,14 +17,10 @@ import {
   summarizePairSimilarityScores,
   type PairSimilarityScoreBreakdown,
 } from "@/modules/plagiarism/plagiarism-scoring.js"
-import type {
-  NewSimilarityResult,
-  NewMatchFragment,
-  MatchFragment,
-  SimilarityResult,
-  Submission,
-  SimilarityReport,
-} from "@/models/index.js"
+import type { SimilarityReport } from "@/modules/plagiarism/similarity-report.model.js"
+import type { MatchFragment, NewMatchFragment } from "@/modules/plagiarism/match-fragment.model.js"
+import type { SimilarityResult, NewSimilarityResult } from "@/modules/plagiarism/similarity-result.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import type { TransactionContext } from "@/shared/transaction.js"
 import type { AnalyzeResponse } from "@/modules/plagiarism/plagiarism.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"

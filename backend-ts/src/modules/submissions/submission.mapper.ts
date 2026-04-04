@@ -1,4 +1,4 @@
-import type { Submission } from "@/models/index.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
 
 export interface SubmissionDTO {

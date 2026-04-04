@@ -1,12 +1,10 @@
 import { db } from "@/shared/database.js"
 import { eq, and, sql, isNotNull, inArray } from "drizzle-orm"
-import {
-  submissions,
-  assignments,
-  enrollments,
-  users,
-  classes,
-} from "@/models/index.js"
+import { users } from "@/modules/users/user.model.js"
+import { classes } from "@/modules/classes/class.model.js"
+import { assignments } from "@/modules/assignments/assignment.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
+import { submissions } from "@/modules/submissions/submission.model.js"
 import { injectable } from "tsyringe"
 import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
 

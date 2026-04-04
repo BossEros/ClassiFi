@@ -1,13 +1,8 @@
 import { eq, and, desc, inArray, sql, or, gt } from "drizzle-orm"
-import {
-  assignments,
-  classes,
-  submissions,
-  enrollments,
-  type Assignment,
-  type NewAssignment,
-  type LatePenaltyConfig,
-} from "@/models/index.js"
+import { assignments, type Assignment, type NewAssignment, type LatePenaltyConfig } from "@/modules/assignments/assignment.model.js"
+import { classes } from "@/modules/classes/class.model.js"
+import { submissions } from "@/modules/submissions/submission.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 import type { ProgrammingLanguage } from "@/shared/constants.js"

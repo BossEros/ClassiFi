@@ -1,6 +1,6 @@
 import { injectable, inject } from "tsyringe"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import { type LatePenaltyConfig } from "@/models/index.js"
+import { type LatePenaltyConfig } from "@/modules/assignments/assignment.model.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
 interface LegacyPenaltyTier {

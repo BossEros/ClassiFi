@@ -13,12 +13,10 @@ import {
   type ExecutionResult,
   type ProgrammingLanguage,
 } from "@/services/interfaces/codeExecutor.interface.js"
-import type {
-  TestCase,
-  NewTestResult,
-  Submission,
-  Assignment,
-} from "@/models/index.js"
+import type { Assignment } from "@/modules/assignments/assignment.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
+import type { TestCase } from "@/modules/test-cases/test-case.model.js"
+import type { NewTestResult } from "@/modules/test-cases/test-result.model.js"
 import {
   SubmissionNotFoundError,
   AssignmentNotFoundError,

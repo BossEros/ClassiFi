@@ -16,7 +16,8 @@ import {
   type SubmissionDTO,
 } from "@/modules/submissions/submission.mapper.js"
 import { type SubmissionFileDTO } from "@/modules/submissions/submission.dtos.js"
-import type { Assignment, Submission } from "@/models/index.js"
+import type { Assignment } from "@/modules/assignments/assignment.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import {
   ALLOWED_EXTENSIONS,
   type ProgrammingLanguage,

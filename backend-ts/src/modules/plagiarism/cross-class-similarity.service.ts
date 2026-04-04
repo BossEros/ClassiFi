@@ -26,12 +26,9 @@ import {
   UnsupportedLanguageError,
 } from "@/shared/errors.js"
 import type { TransactionContext } from "@/shared/transaction.js"
-import type {
-  MatchFragment,
-  NewMatchFragment,
-  NewSimilarityResult,
-  SimilarityReport,
-} from "@/models/index.js"
+import type { SimilarityReport } from "@/modules/plagiarism/similarity-report.model.js"
+import type { MatchFragment, NewMatchFragment } from "@/modules/plagiarism/match-fragment.model.js"
+import type { NewSimilarityResult } from "@/modules/plagiarism/similarity-result.model.js"
 import type { Assignment } from "@/modules/assignments/assignment.model.js"
 
 const logger = createLogger("CrossClassSimilarityService")

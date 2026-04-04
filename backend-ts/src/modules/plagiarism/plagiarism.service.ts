@@ -37,7 +37,7 @@ import {
   UnsupportedLanguageError,
   LanguageRequiredError,
 } from "@/shared/errors.js"
-import type { MatchFragment } from "@/models/index.js"
+import type { MatchFragment } from "@/modules/plagiarism/match-fragment.model.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { settings } from "@/shared/config.js"
 

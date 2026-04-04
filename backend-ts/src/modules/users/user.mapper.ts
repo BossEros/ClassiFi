@@ -1,4 +1,4 @@
-import type { User } from "@/models/index.js"
+import type { User } from "@/modules/users/user.model.js"
 
 export interface UserDTO {
   id: number

@@ -1,7 +1,7 @@
 import { inject, injectable } from "tsyringe"
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
-import type { DashboardQueryReadRepository } from "@/modules/dashboard/dashboard-query.repository.js"
+import { DashboardQueryRepository } from "@/modules/dashboard/dashboard-query.repository.js"
 // Note: SubmissionRepository reserved for future use
 import {
   toDashboardClassDTO,
@@ -21,7 +21,7 @@ export class TeacherDashboardService {
     @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
     @inject(DI_TOKENS.repositories.dashboardQuery)
-    private dashboardQueryRepo?: DashboardQueryReadRepository,
+    private dashboardQueryRepo?: DashboardQueryRepository,
   ) {}
 
   /** Get complete dashboard data for a teacher */

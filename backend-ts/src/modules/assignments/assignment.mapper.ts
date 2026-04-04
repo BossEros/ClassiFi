@@ -1,4 +1,4 @@
-import type { Assignment } from "@/models/index.js"
+import type { Assignment } from "@/modules/assignments/assignment.model.js"
 
 const DEFAULT_TOTAL_SCORE = 100
 

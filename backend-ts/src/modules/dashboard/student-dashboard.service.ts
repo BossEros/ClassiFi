@@ -5,7 +5,7 @@ import { AssignmentRepository } from "@/modules/assignments/assignment.repositor
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
-import type { DashboardQueryReadRepository } from "@/modules/dashboard/dashboard-query.repository.js"
+import { DashboardQueryRepository } from "@/modules/dashboard/dashboard-query.repository.js"
 import {
   toDashboardClassDTO,
   type DashboardClassDTO,
@@ -42,7 +42,7 @@ export class StudentDashboardService {
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
     @inject(DI_TOKENS.repositories.dashboardQuery)
-    private dashboardQueryRepo?: DashboardQueryReadRepository,
+    private dashboardQueryRepo?: DashboardQueryRepository,
   ) {}
 
   /** Get complete dashboard data for a student */

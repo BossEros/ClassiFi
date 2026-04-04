@@ -1,10 +1,7 @@
 import { eq, and, desc, sql, inArray } from "drizzle-orm"
-import {
-  submissions,
-  users,
-  type Submission,
-  type NewSubmission,
-} from "@/models/index.js"
+import { users } from "@/modules/users/user.model.js"
+import { submissions, type Submission, type NewSubmission } from "@/modules/submissions/submission.model.js"
+import { assignments } from "@/modules/assignments/assignment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 
@@ -96,9 +93,6 @@ export class SubmissionRepository extends BaseRepository<
    * Used for cleanup during class deletion.
    */
   async getSubmissionsByClass(classId: number): Promise<Submission[]> {
-    // We need to import assignments model to join
-    const { assignments } = await import("@/models/index.js")
-
     return await this.db
       .select({
         id: submissions.id,

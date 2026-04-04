@@ -1,4 +1,4 @@
-﻿import type { Class, ClassSchedule } from "@/models/index.js"
+﻿import type { Class, ClassSchedule } from "@/modules/classes/class.model.js"
 
 export interface ClassDTO {
   id: number
