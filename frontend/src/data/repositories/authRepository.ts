@@ -16,6 +16,13 @@ export { retrieveStoredUserFromLocalStorage }
 // Auth Repository Functions
 // ============================================================================
 
+/**
+ * Authenticates a user with email and password via Supabase, then fetches their profile from the backend.
+ * On success, returns the session token and full user data for the business layer to store.
+ *
+ * @param loginCredentials - The user's login credentials (email and password).
+ * @returns The authentication response containing success status, token, and user data.
+ */
 export async function authenticateUserWithEmailAndPassword(
   loginCredentials: LoginRequest,
 ): Promise<AuthResponse> {
@@ -63,6 +70,12 @@ export async function authenticateUserWithEmailAndPassword(
   }
 }
 
+/**
+ * Registers a new user account by calling the backend registration endpoint.
+ *
+ * @param registrationData - The user's registration details (name, email, password, role).
+ * @returns The authentication response containing success status and any error message.
+ */
 export async function registerNewUserAccount(
   registrationData: RegisterRequest,
 ): Promise<AuthResponse> {
@@ -92,6 +105,12 @@ export async function signOutCurrentUserAndClearSession(): Promise<void> {
   localStorage.removeItem("user")
 }
 
+/**
+ * Validates an authentication token by calling the backend verify endpoint.
+ *
+ * @param authenticationToken - The JWT token to verify.
+ * @returns True if the token is valid, false otherwise.
+ */
 export async function validateAuthenticationToken(
   authenticationToken: string,
 ): Promise<boolean> {
@@ -107,6 +126,12 @@ export async function validateAuthenticationToken(
   return response.data?.success ?? false
 }
 
+/**
+ * Sends a password reset email to the specified address via the backend API.
+ *
+ * @param userEmailAddress - The email address to send the password reset link to.
+ * @returns The response indicating whether the reset email was sent successfully.
+ */
 export async function initiatePasswordResetForEmail(
   userEmailAddress: string,
 ): Promise<ForgotPasswordResponse> {

@@ -16,6 +16,13 @@ import type {
 // Class Gradebook Functions
 // ============================================================================
 
+/**
+ * Fetches the complete gradebook for a class, including all assignments and every student's scores.
+ *
+ * @param classId - The unique identifier of the class.
+ * @returns An object with `assignments` (column headers) and `students` (rows of grade data).
+ * @throws Error if the API call fails.
+ */
 export async function getCompleteGradebookForClassId(
   classId: number,
 ): Promise<ClassGradebook> {
@@ -34,6 +41,14 @@ export async function getCompleteGradebookForClassId(
   }
 }
 
+/**
+ * Requests a CSV export of the gradebook from the backend and returns it as a Blob.
+ * Used internally by `downloadGradebookCSVFileForClassId`.
+ *
+ * @param classId - The unique identifier of the class.
+ * @returns A Blob containing the CSV data.
+ * @throws Error if the API call fails or returns no data.
+ */
 export async function exportGradebookAsCSVForClassId(
   classId: number,
 ): Promise<Blob> {
@@ -49,6 +64,13 @@ export async function exportGradebookAsCSVForClassId(
   return apiResponse.data
 }
 
+/**
+ * Downloads the gradebook as a CSV file and triggers a browser file download.
+ * Creates a temporary anchor element to initiate the download, then cleans up.
+ *
+ * @param classId - The unique identifier of the class.
+ * @param customFilename - Optional custom filename for the downloaded file. Defaults to `gradebook-class-{classId}.csv`.
+ */
 export async function downloadGradebookCSVFileForClassId(
   classId: number,
   customFilename?: string,
@@ -69,6 +91,13 @@ export async function downloadGradebookCSVFileForClassId(
 // Student Grades Functions
 // ============================================================================
 
+/**
+ * Fetches all graded class grades for a specific student across all their enrolled classes.
+ *
+ * @param studentId - The unique identifier of the student.
+ * @returns An array of `StudentClassGrades` objects, one per enrolled class.
+ * @throws Error if the API call fails.
+ */
 export async function getAllGradesForStudentId(
   studentId: number,
 ): Promise<StudentClassGrades[]> {
@@ -84,6 +113,14 @@ export async function getAllGradesForStudentId(
   return data.grades
 }
 
+/**
+ * Fetches a student's grades within a specific class.
+ *
+ * @param studentId - The unique identifier of the student.
+ * @param classId - The unique identifier of the class.
+ * @returns The `StudentClassGrades` object for that class, or null if no grades are found.
+ * @throws Error if the API call fails.
+ */
 export async function getGradesForStudentInSpecificClass(
   studentId: number,
   classId: number,
@@ -100,6 +137,14 @@ export async function getGradesForStudentInSpecificClass(
   return data.grades[0] ?? null
 }
 
+/**
+ * Fetches a student's rank within a class based on their overall grade score.
+ *
+ * @param studentId - The unique identifier of the student.
+ * @param classId - The unique identifier of the class.
+ * @returns A `StudentRank` object containing the rank, total students, and percentile.
+ * @throws Error if the API call fails.
+ */
 export async function getClassRankForStudentById(
   studentId: number,
   classId: number,
@@ -124,6 +169,15 @@ export async function getClassRankForStudentById(
 // Grade Override Functions
 // ============================================================================
 
+/**
+ * Sets a manual grade override on a specific submission, bypassing the auto-graded score.
+ * Optionally attaches teacher feedback alongside the override.
+ *
+ * @param submissionId - The unique identifier of the submission to override.
+ * @param overriddenGradeValue - The grade value to set as the override.
+ * @param teacherFeedbackText - Optional written feedback from the teacher.
+ * @throws Error if the API call fails.
+ */
 export async function setGradeOverrideForSubmissionById(
   submissionId: number,
   overriddenGradeValue: number,
@@ -140,6 +194,13 @@ export async function setGradeOverrideForSubmissionById(
   unwrapApiResponse(apiResponse, "Failed to override grade")
 }
 
+/**
+ * Removes a previously applied manual grade override from a submission.
+ * After removal, the auto-graded score will be used again.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @throws Error if the API call fails.
+ */
 export async function removeGradeOverrideForSubmissionById(
   submissionId: number,
 ): Promise<void> {
@@ -154,6 +215,14 @@ export async function removeGradeOverrideForSubmissionById(
 // Late Penalty Configuration Functions
 // ============================================================================
 
+/**
+ * Fetches the late penalty configuration for a specific assignment.
+ * The config determines how points are deducted for late submissions.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @returns An object with `enabled` flag and the `config` details (or null if not configured).
+ * @throws Error if the API call fails.
+ */
 export async function getLatePenaltyConfigurationForAssignmentId(
   assignmentId: number,
 ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null }> {
@@ -172,6 +241,15 @@ export async function getLatePenaltyConfigurationForAssignmentId(
   }
 }
 
+/**
+ * Updates the late penalty configuration for a specific assignment.
+ * Enables or disables late penalties and sets the penalty rules.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param isLatePenaltyEnabled - Whether late penalties should be applied.
+ * @param latePenaltyConfiguration - The penalty rules to apply (deduction rate, grace period, etc).
+ * @throws Error if the API call fails.
+ */
 export async function updateLatePenaltyConfigurationForAssignmentId(
   assignmentId: number,
   isLatePenaltyEnabled: boolean,

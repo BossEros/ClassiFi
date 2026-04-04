@@ -34,6 +34,13 @@ const ASSIGNMENT_INSTRUCTIONS_BUCKET =
 const ASSIGNMENT_INSTRUCTIONS_BUCKET_CANDIDATES =
   resolveAssignmentInstructionsBucketCandidates(ASSIGNMENT_INSTRUCTIONS_BUCKET)
 
+/**
+ * Submits a student's assignment file using multipart upload to the backend.
+ * Handles token injection, response validation, and user-friendly error mapping.
+ *
+ * @param submissionRequest - Submission payload containing assignment, student, and file data.
+ * @returns API response containing submission result or normalized error details.
+ */
 export async function submitAssignmentWithFile(
   submissionRequest: SubmitAssignmentRequest,
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
@@ -72,6 +79,14 @@ export async function submitAssignmentWithFile(
   }
 }
 
+/**
+ * Retrieves submission history for one student in one assignment.
+ * Maps API DTOs into normalized submission models.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param studentId - The unique identifier of the student.
+ * @returns API response containing the student's submission history.
+ */
 export async function getSubmissionHistoryForStudentAndAssignment(
   assignmentId: number,
   studentId: number,
@@ -90,6 +105,14 @@ export async function getSubmissionHistoryForStudentAndAssignment(
   return apiResponse
 }
 
+/**
+ * Retrieves submissions made by a student across assignments.
+ * Optionally limits to each assignment's latest submission.
+ *
+ * @param studentId - The unique identifier of the student.
+ * @param shouldReturnLatestSubmissionsOnly - Whether to include only latest attempts.
+ * @returns API response containing student submissions.
+ */
 export async function getAllSubmissionsByStudentId(
   studentId: number,
   shouldReturnLatestSubmissionsOnly: boolean = true,
@@ -110,6 +133,14 @@ export async function getAllSubmissionsByStudentId(
   return apiResponse
 }
 
+/**
+ * Retrieves submissions for a specific assignment.
+ * Optionally limits to latest submissions and maps student-enriched submission DTOs.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param shouldReturnLatestSubmissionsOnly - Whether to include only latest attempts.
+ * @returns API response containing assignment submissions.
+ */
 export async function getAllSubmissionsForAssignmentId(
   assignmentId: number,
   shouldReturnLatestSubmissionsOnly: boolean = true,
@@ -128,6 +159,14 @@ export async function getAllSubmissionsForAssignmentId(
   return apiResponse
 }
 
+/**
+ * Retrieves assignment details for a specific user context.
+ * Maps backend assignment DTOs into strongly typed frontend models.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param userId - The user requesting assignment details.
+ * @returns API response containing a mapped assignment detail payload.
+ */
 export async function getAssignmentDetailsByIdForUser(
   assignmentId: number,
   userId: number,
@@ -153,6 +192,14 @@ export async function getAssignmentDetailsByIdForUser(
   return apiResponse as ApiResponse<MappedAssignmentDetailResponse>
 }
 
+/**
+ * Creates a new assignment inside a class.
+ *
+ * @param classId - The unique identifier of the target class.
+ * @param newAssignmentData - Assignment creation payload without classId.
+ * @returns The created assignment entity.
+ * @throws Error if creation fails or response payload is missing assignment data.
+ */
 export async function createNewAssignmentForClass(
   classId: number,
   newAssignmentData: Omit<CreateAssignmentRequest, "classId">,
@@ -178,6 +225,14 @@ export async function createNewAssignmentForClass(
   return createdAssignment
 }
 
+/**
+ * Updates an existing assignment by ID.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param updatedAssignmentData - Assignment fields to update.
+ * @returns The updated assignment entity.
+ * @throws Error if update fails or response payload is missing assignment data.
+ */
 export async function updateAssignmentDetailsById(
   assignmentId: number,
   updatedAssignmentData: UpdateAssignmentRequest,
@@ -201,6 +256,12 @@ export async function updateAssignmentDetailsById(
   return updatedAssignment
 }
 
+/**
+ * Deletes an assignment and validates teacher authorization through query parameters.
+ *
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param teacherId - The unique identifier of the requesting teacher.
+ */
 export async function deleteAssignmentByIdForTeacher(
   assignmentId: number,
   teacherId: number,
@@ -211,6 +272,12 @@ export async function deleteAssignmentByIdForTeacher(
   unwrapApiResponse(apiResponse, "Failed to delete assignment")
 }
 
+/**
+ * Retrieves raw submission file content for code viewer rendering.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @returns API response containing source content and optional language metadata.
+ */
 export async function getSubmissionFileContentById(
   submissionId: number,
 ): Promise<
@@ -219,6 +286,12 @@ export async function getSubmissionFileContentById(
   return await apiClient.get(`/submissions/${submissionId}/content`)
 }
 
+/**
+ * Retrieves a temporary URL that can be used to download a submission file.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @returns API response containing a downloadable URL.
+ */
 export async function getSubmissionFileDownloadUrlById(
   submissionId: number,
 ): Promise<
@@ -231,6 +304,13 @@ export async function getSubmissionFileDownloadUrlById(
   }>(`/submissions/${submissionId}/download`)
 }
 
+/**
+ * Retrieves stored test execution results for a submission.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @param includeHiddenDetails - Whether hidden test case details should be included.
+ * @returns API response containing test result summary and itemized case outcomes.
+ */
 export async function getTestResultsForSubmissionById(
   submissionId: number,
   includeHiddenDetails: boolean = false,
@@ -244,6 +324,12 @@ export async function getTestResultsForSubmissionById(
   )
 }
 
+/**
+ * Triggers test execution for an existing submission and stores the new result.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @returns API response containing the updated test run result.
+ */
 export async function executeTestsForSubmissionById(
   submissionId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
@@ -352,6 +438,12 @@ export async function deleteAssignmentInstructionsImage(
 
 // Helper functions
 
+/**
+ * Resolves a safe file extension from filename or MIME type.
+ *
+ * @param file - Source image file.
+ * @returns Lowercased extension compatible with storage naming.
+ */
 function resolveFileExtension(file: File): string {
   const extensionFromName = file.name.split(".").pop()
   if (extensionFromName && extensionFromName !== file.name) {
@@ -369,6 +461,12 @@ function resolveFileExtension(file: File): string {
   return mimeToExtension[file.type] || "jpg"
 }
 
+/**
+ * Sanitizes a filename for storage path compatibility.
+ *
+ * @param fileName - Raw filename without extension.
+ * @returns Normalized filename containing lowercase alphanumeric, hyphen, and underscore characters.
+ */
 function sanitizeFilename(fileName: string): string {
   const normalizedFileName = fileName.trim().toLowerCase()
   const sanitizedFileName = normalizedFileName.replace(/[^a-z0-9-_]/g, "-")
@@ -376,6 +474,12 @@ function sanitizeFilename(fileName: string): string {
   return compactFileName || "assignment-instructions"
 }
 
+/**
+ * Reads the configured assignment instructions bucket from environment variables.
+ * Falls back to the default bucket when no valid value is provided.
+ *
+ * @returns Selected bucket name.
+ */
 function getConfiguredAssignmentInstructionsBucket(): string {
   const configuredBucketName = import.meta.env
     .VITE_SUPABASE_ASSIGNMENT_INSTRUCTIONS_BUCKET
@@ -390,6 +494,12 @@ function getConfiguredAssignmentInstructionsBucket(): string {
   return DEFAULT_ASSIGNMENT_INSTRUCTIONS_BUCKET
 }
 
+/**
+ * Produces ordered unique bucket candidates for upload and delete operations.
+ *
+ * @param primaryBucketName - Primary bucket configured for assignment instructions.
+ * @returns Deduplicated candidate bucket list.
+ */
 function resolveAssignmentInstructionsBucketCandidates(
   primaryBucketName: string,
 ): string[] {
@@ -408,6 +518,12 @@ function resolveAssignmentInstructionsBucketCandidates(
   )
 }
 
+/**
+ * Detects whether a storage error likely comes from missing bucket configuration or permissions.
+ *
+ * @param errorMessage - Raw storage error message.
+ * @returns True when the error indicates bucket setup or authorization issues.
+ */
 function isStorageBucketConfigurationError(errorMessage: string): boolean {
   const normalizedMessage = errorMessage.toLowerCase()
 
@@ -421,6 +537,13 @@ function isStorageBucketConfigurationError(errorMessage: string): boolean {
   )
 }
 
+/**
+ * Parses a storage public URL into bucket and path components.
+ * Supports absolute URLs, legacy patterns, and bucket/path direct strings.
+ *
+ * @param storagePublicUrl - Public storage URL or path-like value.
+ * @returns Storage location tuple or null when parsing fails.
+ */
 function parseStorageLocationFromPublicUrl(
   storagePublicUrl: string,
 ): StorageLocation | null {
@@ -453,6 +576,12 @@ function parseStorageLocationFromPublicUrl(
   return { bucket: bucketName, path: normalizedPath }
 }
 
+/**
+ * Parses Supabase absolute public storage URLs.
+ *
+ * @param storagePublicUrl - Absolute URL that may include /storage/v1/object/public/ marker.
+ * @returns Parsed storage location or null when URL format does not match.
+ */
 function parseStorageLocationFromAbsoluteUrl(
   storagePublicUrl: string,
 ): StorageLocation | null {
@@ -488,6 +617,12 @@ function parseStorageLocationFromAbsoluteUrl(
   }
 }
 
+/**
+ * Parses legacy assignment image URL patterns by scanning known bucket names.
+ *
+ * @param storagePublicUrl - URL that may contain a bucket marker segment.
+ * @returns Parsed storage location or null when no candidate bucket is found.
+ */
 function parseStorageLocationFromLegacyPattern(
   storagePublicUrl: string,
 ): StorageLocation | null {
@@ -513,6 +648,11 @@ function parseStorageLocationFromLegacyPattern(
   return null
 }
 
+/**
+ * Retrieves the active Supabase access token from the current session.
+ *
+ * @returns Session access token or null when no authenticated session exists.
+ */
 async function retrieveAuthenticationTokenFromSession(): Promise<
   string | null
 > {
@@ -520,6 +660,12 @@ async function retrieveAuthenticationTokenFromSession(): Promise<
   return sessionData.session?.access_token ?? null
 }
 
+/**
+ * Builds multipart FormData payload used for assignment file submission.
+ *
+ * @param submissionRequest - Submission request object.
+ * @returns FormData payload with assignment ID, student ID, and file.
+ */
 function buildSubmissionFormDataFromRequest(
   submissionRequest: SubmitAssignmentRequest,
 ): FormData {
@@ -530,6 +676,12 @@ function buildSubmissionFormDataFromRequest(
   return formData
 }
 
+/**
+ * Extracts a human-readable error message from an unknown backend response shape.
+ *
+ * @param responseData - Raw response payload.
+ * @returns Best-effort error message string.
+ */
 function extractErrorMessageFromResponseData(responseData: unknown): string {
   if (typeof responseData === "object" && responseData !== null) {
     const data = responseData as Record<string, unknown>
@@ -540,6 +692,13 @@ function extractErrorMessageFromResponseData(responseData: unknown): string {
   return "Failed to submit assignment"
 }
 
+/**
+ * Builds a normalized API error response for failed submission requests.
+ *
+ * @param httpResponse - Fetch response object.
+ * @param responseData - Parsed response payload.
+ * @returns Standardized ApiResponse error object with sanitized message and status.
+ */
 function buildErrorResponseForFailedSubmission(
   httpResponse: Response,
   responseData: unknown,
@@ -552,6 +711,14 @@ function buildErrorResponseForFailedSubmission(
   }
 }
 
+/**
+ * Validates and maps successful submission response payload into typed ApiResponse data.
+ *
+ * @param responseData - Raw success response payload.
+ * @param httpStatusCode - HTTP status from the submission request.
+ * @returns Standardized ApiResponse success object.
+ * @throws Error when response payload is not an object.
+ */
 function buildSuccessResponseFromSubmissionData(
   responseData: unknown,
   httpStatusCode: number,
