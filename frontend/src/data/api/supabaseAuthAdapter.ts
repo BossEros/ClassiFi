@@ -42,18 +42,14 @@ class SupabaseAuthAdapter {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[Auth] State change:", event)
-
       if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
         // Token is managed by Supabase internally
         // apiClient retrieves it via getSession() when needed
         if (session?.access_token) {
-          console.log("[Auth] Session established/refreshed")
         }
       } else if (event === "SIGNED_OUT") {
         // Clear user data (token is managed by Supabase)
         localStorage.removeItem("user")
-        console.log("[Auth] User signed out, auth state cleared")
 
         // Only redirect if not already on login page
         if (!window.location.pathname.includes("/login")) {

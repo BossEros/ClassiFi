@@ -28,7 +28,6 @@ export async function getDashboardData(
       pendingTasks: dashboardResponse.pendingTasks as unknown as Task[],
     }
   } catch (error) {
-    console.error("Error fetching dashboard data:", error)
     throw error
   }
 }
@@ -53,7 +52,6 @@ export async function getRecentClasses(
 
     return classesResponse.classes as unknown as Class[]
   } catch (error) {
-    console.error("Error fetching recent classes:", error)
     throw error
   }
 }
@@ -84,7 +82,6 @@ export async function getPendingTasks(
       studentCount: task.totalStudents,
     })) as unknown as Task[]
   } catch (error) {
-    console.error("Error fetching pending tasks:", error)
     throw error
   }
 }

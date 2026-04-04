@@ -210,8 +210,7 @@ export function useAssignmentForm() {
         if (fetchedTestCases) {
           setTestCases(fetchedTestCases)
         }
-      } catch (error) {
-        console.error("Failed to load test cases:", error)
+      } catch {
       } finally {
         setIsLoadingTestCases(false)
       }
@@ -322,8 +321,7 @@ export function useAssignmentForm() {
         setTestCases((currentTestCases) => [...currentTestCases, newTestCase])
         showToast("Test case added")
       }
-    } catch (error) {
-      console.error("Failed to add test case:", error)
+    } catch {
       showToast("Failed to add test case", "error")
     }
   }
@@ -343,8 +341,7 @@ export function useAssignmentForm() {
         )
         showToast("Test case updated")
       }
-    } catch (error) {
-      console.error("Failed to update test case:", error)
+    } catch {
       showToast("Failed to update test case", "error")
     }
   }
@@ -356,8 +353,7 @@ export function useAssignmentForm() {
         currentTestCases.filter((testCase) => testCase.id !== id),
       )
       showToast("Test case deleted")
-    } catch (error) {
-      console.error("Failed to delete test case:", error)
+    } catch {
       showToast("Failed to delete test case", "error")
     }
   }
@@ -419,11 +415,7 @@ export function useAssignmentForm() {
       ) {
         try {
           await removeAssignmentInstructionsImage(previousInstructionsImageUrl)
-        } catch (cleanupError) {
-          console.error(
-            "Failed to cleanup previous instructions image after successful upload:",
-            cleanupError,
-          )
+        } catch {
         }
       }
     } catch (error) {
@@ -453,8 +445,7 @@ export function useAssignmentForm() {
 
     try {
       await removeAssignmentInstructionsImage(currentInstructionsImageUrl)
-    } catch (error) {
-      console.error("Failed to remove assignment instructions image:", error)
+    } catch {
     }
   }
 

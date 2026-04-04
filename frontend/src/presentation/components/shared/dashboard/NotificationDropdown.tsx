@@ -48,8 +48,7 @@ export function NotificationDropdown({
       setLoadError(null)
       const response = await notificationService.getNotifications(1, 5)
       setNotifications(response.notifications)
-    } catch (error) {
-      console.error("Failed to load notifications:", error)
+    } catch {
       setLoadError("Failed to load notifications.")
     } finally {
       setLoading(false)
@@ -67,8 +66,7 @@ export function NotificationDropdown({
         ),
       )
       onNotificationRead()
-    } catch (error) {
-      console.error("Failed to mark as read:", error)
+    } catch {
     }
   }
 
@@ -83,8 +81,7 @@ export function NotificationDropdown({
           readAt: new Date().toISOString(),
         })),
       )
-    } catch (error) {
-      console.error("Failed to mark all notifications as read:", error)
+    } catch {
     }
   }
 

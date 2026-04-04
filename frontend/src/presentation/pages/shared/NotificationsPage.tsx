@@ -212,8 +212,7 @@ export function NotificationsPage() {
 
       setHasMore(response.hasMore)
       setTotal(response.total)
-    } catch (error) {
-      console.error("Failed to load notifications:", error)
+    } catch {
       setLoadError("Failed to load notifications.")
       showToast("Failed to load notifications", "error")
     } finally {
@@ -236,8 +235,7 @@ export function NotificationsPage() {
             : n,
         ),
       )
-    } catch (error) {
-      console.error("Failed to mark as read:", error)
+    } catch {
       showToast("Failed to mark notification as read", "error")
     }
   }
@@ -253,8 +251,7 @@ export function NotificationsPage() {
         })),
       )
       showToast("All notifications marked as read")
-    } catch (error) {
-      console.error("Failed to mark all as read:", error)
+    } catch {
       showToast("Failed to mark all as read", "error")
     }
   }
@@ -265,8 +262,7 @@ export function NotificationsPage() {
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
       setTotal((prev) => prev - 1)
       showToast("Notification deleted")
-    } catch (error) {
-      console.error("Failed to delete notification:", error)
+    } catch {
       showToast("Failed to delete notification", "error")
     }
   }

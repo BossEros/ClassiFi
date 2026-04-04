@@ -199,8 +199,7 @@ function RemoveStudentModal({
       await removeStudent(classId, studentId, teacherId)
       onSuccess()
       onClose()
-    } catch (error) {
-      console.error("Failed to remove student:", error)
+    } catch {
       setError("Failed to remove student. Please try again.")
     } finally {
       setIsSubmitting(false)
@@ -344,7 +343,6 @@ function LeaveClassModal({
       onSuccess()
       onClose()
     } catch (err) {
-      console.error("Failed to leave class:", err)
       setError("Failed to leave class. Please try again.")
     } finally {
       setIsSubmitting(false)
@@ -586,10 +584,8 @@ export function ClassDetailPage() {
           setModules(fetchedModules)
         } catch (moduleError) {
           setModules([])
-          console.error("Failed to fetch modules:", moduleError)
         }
       } catch (err) {
-        console.error("Failed to fetch class data:", err)
         setError("Failed to load class. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
@@ -648,7 +644,6 @@ export function ClassDetailPage() {
       await deleteClass(parseInt(classId), parseInt(user.id))
       navigate("/dashboard/classes", { state: { deleted: true } })
     } catch (err) {
-      console.error("Failed to delete class:", err)
       setError("Failed to delete class. Please try again.")
       setIsDeleting(false)
       setIsDeleteModalOpen(false)
@@ -663,7 +658,6 @@ export function ClassDetailPage() {
       setModules((previous) => [...previous, newModule])
       showToast("Module created successfully")
     } catch (err) {
-      console.error("Failed to create module:", err)
       showToast("Failed to create module. Please try again.")
     }
   }
@@ -678,7 +672,6 @@ export function ClassDetailPage() {
       )
       showToast("Module renamed successfully")
     } catch (err) {
-      console.error("Failed to rename module:", err)
       showToast("Failed to rename module. Please try again.")
     }
   }
@@ -694,7 +687,6 @@ export function ClassDetailPage() {
       setAssignments((previous) => previous.filter((a) => !deletedAssignmentIds.has(a.id)))
       showToast("Module deleted successfully")
     } catch (err) {
-      console.error("Failed to delete module:", err)
       showToast("Failed to delete module. Please try again.")
     }
   }
@@ -708,8 +700,7 @@ export function ClassDetailPage() {
         previous.map((m) => (m.id === moduleId ? { ...m, isPublished } : m)),
       )
       showToast(isPublished ? "Module published" : "Module unpublished")
-    } catch (err) {
-      console.error("Failed to update module:", err)
+    } catch {
       showToast("Failed to update module. Please try again.")
     }
   }

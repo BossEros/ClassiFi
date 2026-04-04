@@ -73,8 +73,7 @@ export function AssignmentsPage() {
           const result = await getPendingAssignments(userId, 50)
           setTasks(result.assignments)
         }
-      } catch (fetchError) {
-        console.error("Failed to fetch assignments:", fetchError)
+      } catch {
         setError("Failed to load assignments. Please try refreshing the page.")
       } finally {
         setIsLoading(false)

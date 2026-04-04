@@ -157,8 +157,7 @@ export function useAssignmentSubmissionFlow({
 
         setSubmissionTestResults(testResults)
         return true
-      } catch (error) {
-        console.error(`Attempt ${attempt}/${maxRetries} failed to load test results`, error)
+      } catch {
 
         if (attempt < maxRetries) {
           await abortableDelay(retryDelayMs, signal)
@@ -257,7 +256,6 @@ export function useAssignmentSubmissionFlow({
         showToast("Submission successful, but test results failed to load", "error")
       }
     } catch (submissionError) {
-      console.error("Failed to submit assignment:", submissionError)
       setError(
         submissionError instanceof Error
           ? submissionError.message
@@ -322,7 +320,6 @@ export function useAssignmentSubmissionFlow({
         )
       }
     } catch (previewError) {
-      console.error("Failed to run preview tests:", previewError)
       showToast(
         previewError instanceof Error
           ? previewError.message

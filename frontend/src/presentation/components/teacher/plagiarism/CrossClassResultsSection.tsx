@@ -171,7 +171,6 @@ export function CrossClassResultsSection({
             ? error.message
             : "Failed to load cross-class similarity results"
 
-        console.error("Failed to initialize cross-class analysis:", error)
         setReportLoadError(errorMessage)
         showToast(errorMessage, "error")
       } finally {
@@ -208,7 +207,6 @@ export function CrossClassResultsSection({
       const errorMessage =
         error instanceof Error ? error.message : "Cross-class analysis failed"
 
-      console.error("Cross-class analysis failed:", error)
       setReportLoadError(errorMessage)
       showToast(errorMessage, "error")
     } finally {
@@ -300,7 +298,6 @@ export function CrossClassResultsSection({
         comparisonRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 100)
     } catch (error) {
-      console.error("Failed to fetch cross-class result details:", error)
       setDetailsError(
         error instanceof Error ? error.message : "Failed to load code comparison",
       )
@@ -329,8 +326,7 @@ export function CrossClassResultsSection({
       })
 
       showToast("Cross-class similarity report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download cross-class similarity report:", error)
+    } catch {
       showToast("Failed to download cross-class similarity report", "error")
     } finally {
       setIsDownloadingClassReport(false)
@@ -350,8 +346,7 @@ export function CrossClassResultsSection({
       })
 
       showToast("Pairwise similarity report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download pairwise similarity report:", error)
+    } catch {
       showToast("Failed to download pairwise similarity report", "error")
     } finally {
       setIsDownloadingPairReport(false)

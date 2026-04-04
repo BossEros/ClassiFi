@@ -218,8 +218,7 @@ export function StudentClassesPage() {
         setError(null)
         const data = await getDashboardData(parseInt(user.id))
         setClasses(data.enrolledClasses as Class[])
-      } catch (error) {
-        console.error("Failed to fetch classes:", error)
+      } catch {
         setError("Failed to load classes. Please try refreshing the page.")
       } finally {
         setIsLoading(false)

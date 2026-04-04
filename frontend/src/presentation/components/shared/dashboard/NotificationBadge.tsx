@@ -25,8 +25,7 @@ export function NotificationBadge() {
     try {
       const count = await notificationService.getUnreadCount()
       setUnreadCount(count)
-    } catch (error) {
-      console.error("Failed to load unread count:", error)
+    } catch {
       // Set to 0 on error to prevent UI issues
       setUnreadCount(0)
     } finally {
@@ -38,8 +37,7 @@ export function NotificationBadge() {
     try {
       await notificationService.markAllAsRead()
       setUnreadCount(0)
-    } catch (error) {
-      console.error("Failed to mark all as read:", error)
+} catch {
     }
   }
 

@@ -101,9 +101,6 @@ export function mapAssignmentDetail(
     : "python" // Safe fallback to default language
 
   if (!isValidProgrammingLanguage(dto.programmingLanguage)) {
-    console.warn(
-      `[mapAssignmentDetail] Invalid programming language "${dto.programmingLanguage}" for assignment ID ${dto.id}. Defaulting to "python".`,
-    )
   }
 
   return {

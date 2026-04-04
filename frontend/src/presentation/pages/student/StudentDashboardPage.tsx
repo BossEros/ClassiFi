@@ -61,7 +61,6 @@ export function StudentDashboardPage() {
       setEnrolledClasses(data.enrolledClasses as Class[])
       setPendingAssignments(data.pendingAssignments as Task[])
     } catch (fetchError) {
-      console.error("Failed to fetch dashboard data:", fetchError)
       setError("Failed to load dashboard data. Please try refreshing the page.")
     } finally {
       setIsLoading(false)

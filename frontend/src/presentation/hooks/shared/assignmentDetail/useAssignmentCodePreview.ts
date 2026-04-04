@@ -58,8 +58,7 @@ export function useAssignmentCodePreview({
       setPreviewLanguage(programmingLanguage || "plaintext")
       setPreviewFileName(file.name)
       setShowPreview(true)
-    } catch (previewError) {
-      console.error("Failed to read file:", previewError)
+    } catch {
       showToast("Failed to read file content", "error")
     }
   }
@@ -82,8 +81,7 @@ export function useAssignmentCodePreview({
       setPreviewContent(submissionContent.content)
       setPreviewLanguage(submissionContent.language || "plaintext")
       setShowPreview(true)
-    } catch (previewError) {
-      console.error("Failed to load submission content:", previewError)
+    } catch {
       showToast("Failed to load submission content", "error")
     } finally {
       setIsPreviewLoading(false)
@@ -94,8 +92,7 @@ export function useAssignmentCodePreview({
     try {
       const downloadUrl = await getSubmissionDownloadUrl(submissionId)
       window.open(downloadUrl, "_blank")
-    } catch (downloadError) {
-      console.error("Failed to download submission:", downloadError)
+    } catch {
       showToast("Failed to download submission", "error")
     }
   }

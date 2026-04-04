@@ -128,8 +128,7 @@ export function ClassFormPage() {
           academicYear: classData.academicYear,
           schedule: classData.schedule,
         })
-      } catch (error) {
-        console.error("Error loading class data:", error)
+      } catch {
         setGeneralError("Failed to load class data. Please try again.")
       } finally {
         setIsFetching(false)

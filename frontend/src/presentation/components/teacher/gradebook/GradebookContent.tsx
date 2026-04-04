@@ -108,9 +108,6 @@ function GradebookTable({
 
       // Guard against division by zero - skip assignments with totalScore of 0
       if (assignment.totalScore === 0) {
-        console.warn(
-          `[GradebookTable] Assignment "${assignment.name}" (id: ${assignment.id}) has totalScore of 0, skipping in average calculation`,
-        )
         return sum
       }
 
@@ -376,8 +373,7 @@ export function GradebookContent({
       })
 
       showToast("Grade report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download grade report:", error)
+    } catch {
       showToast("Failed to download grade report", "error")
     } finally {
       setIsDownloadingPdf(false)

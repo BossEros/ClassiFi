@@ -20,7 +20,6 @@ export async function getDashboardData(
       studentId,
     )
   } catch (error) {
-    console.error("Error fetching student dashboard data:", error)
     throw error
   }
 }
@@ -43,7 +42,6 @@ export async function getEnrolledClasses(
       limit,
     )
   } catch (error) {
-    console.error("Error fetching enrolled classes:", error)
     throw error
   }
 }
@@ -66,7 +64,6 @@ export async function getPendingAssignments(
       limit,
     )
   } catch (error) {
-    console.error("Error fetching pending assignments:", error)
     throw error
   }
 }
@@ -103,8 +100,7 @@ export async function joinClass(
       studentId,
       classCode,
     )
-  } catch (error) {
-    console.error("Error joining class:", error)
+  } catch {
 
     return {
       success: false,
@@ -129,8 +125,7 @@ export async function leaveClass(
       studentId,
       classId,
     )
-  } catch (error) {
-    console.error("Error leaving class:", error)
+  } catch {
 
     return {
       success: false,

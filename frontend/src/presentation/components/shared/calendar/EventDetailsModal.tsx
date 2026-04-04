@@ -148,7 +148,6 @@ export function EventDetailsModal({
 
       showToast(result.message || "Reminders sent successfully", "success")
     } catch (error) {
-      console.error("Error sending reminders:", error)
       const errorMessage =
         error instanceof Error ? error.message : "Failed to send reminders"
       showToast(errorMessage, "error")

@@ -153,7 +153,6 @@ export function useCalendar(): UseCalendarReturn {
         isInitialLoad.current = false
       }
     } catch (err) {
-      console.error("Error fetching calendar events:", err)
       setError(
         err instanceof Error ? err.message : "Failed to load calendar events",
       )

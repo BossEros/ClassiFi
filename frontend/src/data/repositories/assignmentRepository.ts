@@ -60,7 +60,6 @@ export async function submitAssignmentWithFile(
       httpResponse.status,
     )
   } catch (networkError) {
-    console.error("Submission error (network or other):", networkError)
 
     return {
       error:
@@ -162,11 +161,13 @@ export async function createNewAssignmentForClass(
     message?: string
     assignment?: Assignment
   }>(`/classes/${classId}/assignments`, newAssignmentData)
+
   const data = unwrapApiResponse(
     apiResponse,
     "Failed to create assignment",
     "assignment",
   )
+  
   const createdAssignment = data.assignment
 
   if (!createdAssignment) {
@@ -344,8 +345,7 @@ export async function deleteAssignmentInstructionsImage(
     await supabase.storage
       .from(storageLocation.bucket)
       .remove([storageLocation.path])
-  } catch (error) {
-    console.error("Failed to delete assignment instructions image:", error)
+  } catch {
   }
 }
 
@@ -549,13 +549,6 @@ function buildErrorResponseForFailedSubmission(
   responseData: unknown,
 ): ApiResponse<SubmitAssignmentResponse> {
   const errorMessage = extractErrorMessageFromResponseData(responseData)
-
-  console.error("Submission failed:", {
-    status: httpResponse.status,
-    statusText: httpResponse.statusText,
-    error: errorMessage,
-    responseData: responseData,
-  })
 
   return {
     error: sanitizeUserFacingErrorMessage(errorMessage),

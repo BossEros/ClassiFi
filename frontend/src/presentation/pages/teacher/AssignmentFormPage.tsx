@@ -63,8 +63,7 @@ export function AssignmentFormPage() {
       try {
         const fetchedModules = await getModulesByClassId(parseInt(classId, 10))
         setModules(fetchedModules)
-      } catch (error) {
-        console.error("Failed to fetch modules:", error)
+      } catch {
       }
     }
 

@@ -125,8 +125,7 @@ export function SimilarityResultsPage() {
           parseInt(assignmentId, 10),
         )
         setResults(fetchedResults)
-      } catch (refetchError) {
-        console.error("Failed to refetch similarity results:", refetchError)
+      } catch {
       } finally {
         setIsRefetchingResults(false)
       }
@@ -147,8 +146,7 @@ export function SimilarityResultsPage() {
           parseInt(user.id, 10),
         )
         setAssignment(assignmentDetail)
-      } catch (assignmentError) {
-        console.error("Failed to fetch assignment details:", assignmentError)
+      } catch {
       }
     }
 
@@ -205,7 +203,6 @@ export function SimilarityResultsPage() {
 
       setPairDetails(filePair)
     } catch (error) {
-      console.error("Failed to fetch pair details:", error)
       setDetailsError(
         error instanceof Error
           ? error.message
@@ -241,8 +238,7 @@ export function SimilarityResultsPage() {
       })
 
       showToast("Class similarity report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download class similarity report:", error)
+    } catch {
       showToast("Failed to download class similarity report", "error")
     } finally {
       setIsDownloadingClassReport(false)
@@ -274,8 +270,7 @@ export function SimilarityResultsPage() {
       })
 
       showToast("Pairwise similarity report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download pairwise similarity report:", error)
+    } catch {
       showToast("Failed to download pairwise similarity report", "error")
     } finally {
       setIsDownloadingPairReport(false)

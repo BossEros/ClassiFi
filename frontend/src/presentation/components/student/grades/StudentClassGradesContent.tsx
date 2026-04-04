@@ -397,8 +397,7 @@ export function StudentClassGradesContent({
       })
 
       showToast("Grade report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download grade report:", error)
+    } catch {
       showToast("Failed to download grade report", "error")
     } finally {
       setIsDownloadingPdf(false)

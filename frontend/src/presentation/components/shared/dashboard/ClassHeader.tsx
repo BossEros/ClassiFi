@@ -59,8 +59,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
       await navigator.clipboard.writeText(classCode)
       setHasCopied(true)
       setTimeout(() => setHasCopied(false), 2000)
-    } catch (error) {
-      console.error("Failed to copy class code:", error)
+    } catch {
       showToast("Failed to copy class code", "error")
     }
   }

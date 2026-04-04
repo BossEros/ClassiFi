@@ -46,8 +46,7 @@ export function GradebookPage() {
       try {
         const info = await getClassById(parsedClassId)
         setClassInfo(info)
-      } catch (error) {
-        console.error("Failed to load class info:", error)
+      } catch {
       }
     }
 

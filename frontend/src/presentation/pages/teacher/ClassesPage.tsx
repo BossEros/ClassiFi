@@ -52,8 +52,7 @@ export function ClassesPage() {
       )
 
       setClasses(allClasses)
-    } catch (error) {
-      console.error("Failed to fetch classes:", error)
+    } catch {
       setError("Failed to load classes. Please try refreshing the page.")
     } finally {
       setIsLoading(false)

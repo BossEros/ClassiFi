@@ -151,8 +151,7 @@ export function AdminClassFormPage() {
           setTeacherSearchQuery("")
           setIsTeacherSearchOpen(false)
         }
-      } catch (error) {
-        console.error("Failed to load teachers:", error)
+      } catch {
         setGeneralError(
           "Failed to load class form data. Please try refreshing.",
         )

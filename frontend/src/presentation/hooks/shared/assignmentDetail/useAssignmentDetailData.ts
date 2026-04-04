@@ -111,11 +111,7 @@ export function useAssignmentDetailData({
               )
 
               setSubmissionTestResults(testResults)
-            } catch (testResultsError) {
-              console.error(
-                "Failed to load test results for latest submission",
-                testResultsError,
-              )
+            } catch {
             }
           }
 
@@ -150,16 +146,11 @@ export function useAssignmentDetailData({
             const teacherSubmissionTestResults =
               await getTestResultsForSubmission(selectedSubmission.id, true)
             setSubmissionTestResults(teacherSubmissionTestResults)
-          } catch (testResultsError) {
-            console.error(
-              "Failed to load test results for teacher-selected submission",
-              testResultsError,
-            )
+          } catch {
             setSubmissionTestResults(null)
           }
         }
       } catch (requestError) {
-        console.error("Failed to fetch assignment data:", requestError)
 
         const errorMessage =
           requestError instanceof Error

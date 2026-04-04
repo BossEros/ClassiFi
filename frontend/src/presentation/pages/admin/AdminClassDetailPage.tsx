@@ -129,8 +129,7 @@ function AdminAddStudentModal({
         )
 
         setStudents(availableStudents)
-      } catch (requestError) {
-        console.error("Failed to fetch students:", requestError)
+      } catch {
       } finally {
         setIsLoading(false)
       }
@@ -152,7 +151,6 @@ function AdminAddStudentModal({
         previousStudents.filter((availableStudent) => availableStudent.id !== student.id),
       )
     } catch (requestError) {
-      console.error("Failed to enroll student:", requestError)
       showToast("Failed to enroll student", "error")
     } finally {
       setIsSubmitting(null)
@@ -462,7 +460,6 @@ export function AdminClassDetailPage() {
       setClassInfo(data.classInfo)
       setStudents(data.students)
     } catch (requestError) {
-      console.error("Failed to fetch class details:", requestError)
       setErrorMessage("Failed to load class details")
     } finally {
       setIsLoading(false)
@@ -540,7 +537,6 @@ export function AdminClassDetailPage() {
       await fetchClassData()
       showToast("Class archived successfully", "success")
     } catch (requestError) {
-      console.error("Failed to archive class:", requestError)
       showToast("Failed to archive class", "error")
     } finally {
       setClassActionLoadingId(null)
@@ -559,7 +555,6 @@ export function AdminClassDetailPage() {
       await fetchClassData()
       showToast("Class restored successfully", "success")
     } catch (requestError) {
-      console.error("Failed to restore class:", requestError)
       showToast("Failed to restore class", "error")
     } finally {
       setClassActionLoadingId(null)
@@ -578,7 +573,6 @@ export function AdminClassDetailPage() {
       showToast("Class deleted successfully", "success")
       navigate("/dashboard/classes")
     } catch (requestError) {
-      console.error("Failed to delete class:", requestError)
       throw requestError
     } finally {
       setClassActionLoadingId(null)
@@ -601,7 +595,6 @@ export function AdminClassDetailPage() {
       showToast("Student removed from class", "success")
       setStudentPendingRemoval(null)
     } catch (requestError) {
-      console.error("Failed to remove student:", requestError)
       showToast("Failed to remove student", "error")
     } finally {
       setStudentActionLoadingId(null)

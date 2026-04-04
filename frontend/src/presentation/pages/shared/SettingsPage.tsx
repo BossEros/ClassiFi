@@ -1114,8 +1114,7 @@ function NotificationPreferences() {
           ? !user.inAppNotificationsEnabled
           : user.inAppNotificationsEnabled,
       )
-    } catch (error) {
-      console.error("Failed to update notification preference:", error)
+    } catch {
     } finally {
       setUpdating(false)
     }

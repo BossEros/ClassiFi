@@ -8,7 +8,6 @@ import type { Class } from "@/business/models/dashboard/types"
  */
 export function isValidClass(value: unknown): value is Class {
   if (typeof value !== "object" || value === null) {
-    console.warn("Invalid class: not an object or null", value)
     return false
   }
 
@@ -30,21 +29,7 @@ export function isValidClass(value: unknown): value is Class {
       typeof candidate.schedule === "object" && candidate.schedule !== null,
   }
 
-  const isValid = Object.values(checks).every((passed) => passed === true)
-
-  if (!isValid) {
-    console.log("Invalid class object")
-    console.log("Class data:", candidate)
-    console.log("Validation checks:", checks)
-    console.log(
-      "Failed fields:",
-      Object.entries(checks)
-        .filter(([, passed]) => !passed)
-        .map(([fieldName]) => fieldName),
-    )
-  }
-
-  return isValid
+  return Object.values(checks).every((passed) => passed === true)
 }
 
 /**

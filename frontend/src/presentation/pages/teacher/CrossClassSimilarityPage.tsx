@@ -53,8 +53,7 @@ export function CrossClassSimilarityPage() {
           parseInt(user.id, 10),
         )
         setAssignment(assignmentDetail)
-      } catch (assignmentError) {
-        console.error("Failed to fetch assignment details:", assignmentError)
+      } catch {
       }
     }
 

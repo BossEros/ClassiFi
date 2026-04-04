@@ -1,20 +1,18 @@
 import { injectable } from "tsyringe"
 import { randomUUID } from "node:crypto"
 import { supabase } from "@/shared/supabase.js"
-import { type IStorageService } from "@/services/interfaces/storage.interface.js"
 import { createLogger } from "@/shared/logger.js"
 
 const logger = createLogger("StorageService")
 
-// Re-export for backwards compatibility
-export type { IStorageService } from "@/services/interfaces/storage.interface.js"
 
 /**
  * Supabase Storage Service implementation.
  * Handles all file operations through Supabase Storage.
  */
 @injectable()
-export class StorageService implements IStorageService {
+export class StorageService {
+  
   /**
    * Upload a file to Supabase Storage.
    */

@@ -87,8 +87,7 @@ export function TeacherDashboardPage() {
 
         setClasses(dashboardData.recentClasses)
         setTasks(dashboardData.pendingTasks)
-      } catch (fetchError) {
-        console.error("Failed to fetch dashboard data:", fetchError)
+      } catch {
         setError("Failed to load dashboard data. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
