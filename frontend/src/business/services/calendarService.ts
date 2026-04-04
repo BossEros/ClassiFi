@@ -1,7 +1,7 @@
 import * as assignmentService from "./assignmentService"
 import * as classService from "./classService"
 import * as studentDashboardService from "./studentDashboardService"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import {
   startOfMonth,
   endOfMonth,

@@ -39,7 +39,7 @@ import {
 import {
   normalizeClassDescriptionForCreate,
   normalizeClassDescriptionForUpdate,
-} from "@/business/validation/classValidation"
+} from "@/shared/utils/classDescriptionUtils"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 import type { DayOfWeek } from "@/business/models/dashboard/types"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"

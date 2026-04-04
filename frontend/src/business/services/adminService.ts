@@ -13,11 +13,7 @@ import type {
   AdminEnrollmentRecord,
   TransferStudentData,
 } from "@/business/models/admin/types"
-import { validateId } from "@/business/validation/commonValidation"
-import {
-  validateEmail,
-  validateRole,
-} from "@/business/validation/authValidation"
+import { validateId } from "@/shared/utils/idUtils"
 
 // Re-export common types for consumers
 export type {
@@ -88,12 +84,6 @@ export async function getUserById(userId: number): Promise<AdminUser> {
  * @throws Error if creation fails.
  */
 export async function createUser(data: CreateUserData): Promise<AdminUser> {
-  const emailError = validateEmail(data.email)
-  if (emailError) throw new Error(emailError)
-
-  const roleError = validateRole(data.role)
-  if (roleError) throw new Error(roleError)
-
   const response = await adminRepository.createNewUserAccount(data)
 
   if (!response.user) {
@@ -115,9 +105,6 @@ export async function updateUserRole(
   role: string,
 ): Promise<AdminUser> {
   validateId(userId, "user")
-
-  const roleError = validateRole(role)
-  if (roleError) throw new Error(roleError)
 
   const response = await adminRepository.updateUserRoleById(userId, role)
 
@@ -165,9 +152,6 @@ export async function updateUserEmail(
   email: string,
 ): Promise<AdminUser> {
   validateId(userId, "user")
-
-  const emailError = validateEmail(email)
-  if (emailError) throw new Error(emailError)
 
   const response = await adminRepository.updateUserEmailAddressById(
     userId,

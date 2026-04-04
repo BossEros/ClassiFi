@@ -1,10 +1,10 @@
 /**
- * Maximum file size for submissions (10MB)
+ * Maximum file size for submissions (10MB).
  */
 export const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 /**
- * Allowed file extensions by programming language
+ * Allowed file extensions by programming language.
  */
 export const ALLOWED_EXTENSIONS: Record<string, string[]> = {
   python: [".py", ".ipynb"],
@@ -13,22 +13,17 @@ export const ALLOWED_EXTENSIONS: Record<string, string[]> = {
 }
 
 /**
- * Validates a file before submission
+ * Validates a file before submission.
  *
- * @param file - File to validate
- * @param programmingLanguage - Expected programming language
- * @returns Validation error message or null if valid
+ * @param file - The file to validate.
+ * @param programmingLanguage - The expected programming language.
+ * @returns A validation error message, or null if the file is valid.
  */
-export function validateFile(
-  file: File,
-  programmingLanguage: string,
-): string | null {
-  // Check if file exists
+export function validateFile(file: File, programmingLanguage: string): string | null {
   if (!file) {
     return "Please select a file to submit"
   }
 
-  // Check file size
   if (file.size === 0) {
     return "File is empty"
   }
@@ -38,7 +33,6 @@ export function validateFile(
     return `File size exceeds maximum allowed (${maxMB}MB)`
   }
 
-  // Check file extension
   const fileName = file.name.toLowerCase()
   const lastDotIndex = fileName.lastIndexOf(".")
   const fileExt = lastDotIndex === -1 ? "" : fileName.substring(lastDotIndex)
@@ -51,9 +45,7 @@ export function validateFile(
   }
 
   if (!allowedExts.includes(fileExt)) {
-    return `Invalid file type. Expected ${allowedExts.join(
-      ", ",
-    )} for ${programmingLanguage}`
+    return `Invalid file type. Expected ${allowedExts.join(", ")} for ${programmingLanguage}`
   }
 
   return null

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { validateId, validateIds } from "@/business/validation/commonValidation"
+import { validateId, validateIds } from "@/shared/utils/idUtils"
 
 describe("commonValidation", () => {
   // ============================================================================

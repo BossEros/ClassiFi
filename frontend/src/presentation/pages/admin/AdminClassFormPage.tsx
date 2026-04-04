@@ -30,7 +30,7 @@ import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 import {
   normalizeClassDescriptionForCreate,
   normalizeClassDescriptionForUpdate,
-} from "@/business/validation/classValidation"
+} from "@/shared/utils/classDescriptionUtils"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/presentation/utils/dateUtils"

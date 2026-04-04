@@ -3,7 +3,7 @@ import {
   ALLOWED_EXTENSIONS,
   MAX_FILE_SIZE,
   validateFile,
-} from "@/business/validation/submissionFileValidation"
+} from "@/shared/utils/fileValidationUtils"
 
 describe("submissionFileValidation.validateFile", () => {
   it("returns required error when file is missing", () => {

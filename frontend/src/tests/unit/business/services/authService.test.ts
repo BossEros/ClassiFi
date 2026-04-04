@@ -2,7 +2,6 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as authService from "@/business/services/authService"
 import * as authRepository from "@/data/repositories/authRepository"
-import * as authValidation from "@/business/validation/authValidation"
 import type {
   LoginRequest,
   RegisterRequest,
@@ -16,7 +15,6 @@ import { AuthError } from "@supabase/supabase-js"
 
 // Mock dependencies
 vi.mock("@/data/repositories/authRepository")
-vi.mock("@/business/validation/authValidation")
 
 describe("authService", () => {
   const mockUser: User = {
@@ -64,18 +62,7 @@ describe("authService", () => {
       configurable: true,
     })
 
-    // Default validation mocks to return valid
-    vi.mocked(authValidation.validateLoginData).mockReturnValue({
-      isValid: true,
-      errors: [],
-    })
-    vi.mocked(authValidation.validateRegistrationData).mockReturnValue({
-      isValid: true,
-      errors: [],
-    })
-    vi.mocked(authValidation.validateEmail).mockReturnValue(null)
-    vi.mocked(authValidation.validatePassword).mockReturnValue(null)
-    vi.mocked(authValidation.validatePasswordsMatch).mockReturnValue(null)
+    // Default validation mocks — removed (validation handled by Zod schemas at form level)
   })
 
   afterEach(() => {
@@ -87,35 +74,6 @@ describe("authService", () => {
       email: "test@example.com",
       password: "Password1!",
     }
-
-    it("should validate credentials before attempting login", async () => {
-      vi.mocked(
-        authRepository.authenticateUserWithEmailAndPassword,
-      ).mockResolvedValue({
-        success: true,
-        token: mockToken,
-        user: mockUser,
-      })
-
-      await authService.loginUser(credentials)
-
-      expect(authValidation.validateLoginData).toHaveBeenCalledWith(credentials)
-    })
-
-    it("should return validation errors if credentials are invalid", async () => {
-      vi.mocked(authValidation.validateLoginData).mockReturnValue({
-        isValid: false,
-        errors: [{ field: "email", message: "Invalid email" }],
-      })
-
-      const result = await authService.loginUser(credentials)
-
-      expect(result.success).toBe(false)
-      expect(result.message).toContain("Invalid email")
-      expect(
-        authRepository.authenticateUserWithEmailAndPassword,
-      ).not.toHaveBeenCalled()
-    })
 
     it("should call repository login and persist session on success", async () => {
       vi.mocked(
@@ -224,19 +182,6 @@ describe("authService", () => {
       lastName: "User",
       role: "student",
     }
-
-    it("should return validation errors if data is invalid", async () => {
-      vi.mocked(authValidation.validateRegistrationData).mockReturnValue({
-        isValid: false,
-        errors: [{ field: "password", message: "Password too short" }],
-      })
-
-      const result = await authService.registerUser(registrationData)
-
-      expect(result.success).toBe(false)
-      expect(result.message).toContain("Password too short")
-      expect(authRepository.registerNewUserAccount).not.toHaveBeenCalled()
-    })
 
     it("should call repository register and persist session on success", async () => {
       vi.mocked(authRepository.registerNewUserAccount).mockResolvedValue({
@@ -428,13 +373,6 @@ describe("authService", () => {
   describe("requestPasswordReset", () => {
     const request: any = { email: "test@example.com" }
 
-    it("should validate email", async () => {
-      vi.mocked(authValidation.validateEmail).mockReturnValue("Invalid email")
-      const result = await authService.requestPasswordReset(request)
-      expect(result.success).toBe(false)
-      expect(result.message).toBe("Invalid email")
-    })
-
     it("should call repository forgotPassword", async () => {
       vi.mocked(authRepository.initiatePasswordResetForEmail).mockResolvedValue(
         {
@@ -477,29 +415,6 @@ describe("authService", () => {
       newPassword: "NewPassword1!",
       confirmPassword: "NewPassword1!",
     }
-
-    it("should validate password match", async () => {
-      vi.mocked(authValidation.validatePasswordsMatch).mockReturnValue(
-        "Passwords do not match",
-      )
-      const result = await authService.resetPassword(request)
-      expect(result.success).toBe(false)
-      expect(result.message).toBe("Passwords do not match")
-    })
-
-    it("should return password validation error before calling repository", async () => {
-      vi.mocked(authValidation.validatePassword).mockReturnValue(
-        "Password must be at least 8 characters long",
-      )
-
-      const result = await authService.resetPassword(request)
-
-      expect(result.success).toBe(false)
-      expect(result.message).toBe("Password must be at least 8 characters long")
-      expect(
-        authRepository.resetUserPasswordWithNewValue,
-      ).not.toHaveBeenCalled()
-    })
 
     it("should handle invalid link/session error from repository", async () => {
       // Fixed: match resetPassword return type structure
@@ -669,36 +584,6 @@ describe("authService", () => {
         request.currentPassword,
         request.newPassword,
       )
-    })
-
-    it("should return validation error when new password is weak", async () => {
-      vi.mocked(authValidation.validatePassword).mockReturnValue(
-        "Password must contain at least one uppercase letter",
-      )
-
-      const result = await authService.changePassword(request)
-
-      expect(result.success).toBe(false)
-      expect(result.message).toBe(
-        "Password must contain at least one uppercase letter",
-      )
-      expect(
-        authRepository.changeAuthenticatedUserPassword,
-      ).not.toHaveBeenCalled()
-    })
-
-    it("should return mismatch error when passwords differ", async () => {
-      vi.mocked(authValidation.validatePasswordsMatch).mockReturnValue(
-        "Passwords do not match",
-      )
-
-      const result = await authService.changePassword(request)
-
-      expect(result.success).toBe(false)
-      expect(result.message).toBe("Passwords do not match")
-      expect(
-        authRepository.changeAuthenticatedUserPassword,
-      ).not.toHaveBeenCalled()
     })
 
     it("should return current-password error when sign in verification fails", async () => {

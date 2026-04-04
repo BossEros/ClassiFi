@@ -1,5 +1,5 @@
 import * as gradebookRepository from "@/data/repositories/gradebookRepository"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import type {
   ClassGradebook,
   StudentClassGrades,

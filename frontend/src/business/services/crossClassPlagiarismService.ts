@@ -1,5 +1,5 @@
 import * as crossClassRepository from "@/data/repositories/crossClassPlagiarismRepository"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import type {
   CrossClassAnalysisResponse,
   CrossClassResultDetailsResponse,

@@ -98,25 +98,6 @@ describe("classService", () => {
       expect(classRepository.createNewClass).not.toHaveBeenCalled()
     })
 
-    it("throws error for empty class name", async () => {
-      const invalidRequest = { ...validCreateRequest, className: "" }
-
-      await expect(classService.createClass(invalidRequest)).rejects.toThrow(
-        "Class name is required",
-      )
-    })
-
-    it("throws error for description exceeding max length", async () => {
-      const invalidRequest = {
-        ...validCreateRequest,
-        description: "A".repeat(1001),
-      }
-
-      await expect(classService.createClass(invalidRequest)).rejects.toThrow(
-        "Description must not exceed 1000 characters",
-      )
-    })
-
   })
 
   // ============================================================================

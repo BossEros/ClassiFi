@@ -1,12 +1,5 @@
 import * as authRepository from "@/data/repositories/authRepository"
 import { useAuthStore } from "@/shared/store/useAuthStore"
-import {
-  validateLoginData,
-  validateRegistrationData,
-  validateEmail,
-  validatePassword,
-  validatePasswordsMatch,
-} from "@/business/validation/authValidation"
 import type {
   LoginRequest,
   RegisterRequest,
@@ -77,16 +70,6 @@ function normalizeAuthenticationFailureMessage(
 export async function loginUser(
   loginCredentials: LoginRequest,
 ): Promise<AuthResponse> {
-  // Validate credentials
-  const validationResult = validateLoginData(loginCredentials)
-
-  if (!validationResult.isValid) {
-    return {
-      success: false,
-      message: validationResult.errors.map((e) => e.message).join(", "),
-    }
-  }
-
   // Attempt login via repository
   try {
     const response =
@@ -128,15 +111,6 @@ export async function loginUser(
 export async function registerUser(
   registrationRequest: RegisterRequest,
 ): Promise<AuthResponse> {
-  const validationResult = validateRegistrationData(registrationRequest)
-
-  if (!validationResult.isValid) {
-    return {
-      success: false,
-      message: validationResult.errors.map((e) => e.message).join(", "),
-    }
-  }
-
   try {
     const response =
       await authRepository.registerNewUserAccount(registrationRequest)
@@ -242,15 +216,6 @@ function clearLocalAuthenticationSession(): void {
 export async function requestPasswordReset(
   forgotPasswordRequest: ForgotPasswordRequest,
 ): Promise<ForgotPasswordResponse> {
-  const emailError = validateEmail(forgotPasswordRequest.email)
-
-  if (emailError) {
-    return {
-      success: false,
-      message: emailError,
-    }
-  }
-
   try {
     const response = await authRepository.initiatePasswordResetForEmail(
       forgotPasswordRequest.email,
@@ -275,27 +240,6 @@ export async function requestPasswordReset(
 export async function resetPassword(
   resetPasswordRequest: ResetPasswordRequest,
 ): Promise<ResetPasswordResponse> {
-  const passwordError = validatePassword(resetPasswordRequest.newPassword)
-
-  if (passwordError) {
-    return {
-      success: false,
-      message: passwordError,
-    }
-  }
-
-  const matchError = validatePasswordsMatch(
-    resetPasswordRequest.newPassword,
-    resetPasswordRequest.confirmPassword,
-  )
-
-  if (matchError) {
-    return {
-      success: false,
-      message: matchError,
-    }
-  }
-
   try {
     const { session, sessionError, updateError } =
       await authRepository.resetUserPasswordWithNewValue(
@@ -366,29 +310,6 @@ export async function resetPassword(
 export async function changePassword(
   changePasswordRequest: ChangePasswordRequest,
 ): Promise<ChangePasswordResponse> {
-  // Validate new password strength
-  const passwordError = validatePassword(changePasswordRequest.newPassword)
-
-  if (passwordError) {
-    return {
-      success: false,
-      message: passwordError,
-    }
-  }
-
-  // Validate passwords match
-  const matchError = validatePasswordsMatch(
-    changePasswordRequest.newPassword,
-    changePasswordRequest.confirmPassword,
-  )
-
-  if (matchError) {
-    return {
-      success: false,
-      message: matchError,
-    }
-  }
-
   try {
     // Get current user email
     const currentUser = useAuthStore.getState().user

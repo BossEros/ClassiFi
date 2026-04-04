@@ -3,7 +3,6 @@ import type {
   JoinClassResponse,
 } from "@/data/repositories/studentDashboardRepository"
 import * as dashboardRepository from "@/data/repositories/studentDashboardRepository"
-import { validateClassJoinCode } from "@/business/validation/classValidation"
 
 /**
  * Fetches the complete dashboard overview for a specific student.
@@ -86,12 +85,17 @@ export async function joinClass(
 ): Promise<JoinClassResponse> {
   try {
     // Validate class code format (6-8 alphanumeric characters)
-    const codeError = validateClassJoinCode(classCode)
+    const trimmedCode = classCode ? classCode.trim() : ""
+    const classCodePattern = /^[A-Za-z0-9]{6,8}$/
 
-    if (codeError) {
+    if (!trimmedCode) {
+      return { success: false, message: "Class code is required" }
+    }
+
+    if (!classCodePattern.test(trimmedCode)) {
       return {
         success: false,
-        message: codeError,
+        message: "Invalid class code format. Please enter a 6-8 character alphanumeric code.",
       }
     }
 
