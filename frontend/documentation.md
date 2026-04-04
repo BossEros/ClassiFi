@@ -57,11 +57,9 @@ frontend/
 |   |   |-- routes/
 |   |   `-- App.tsx
 |   |-- business/           # Domain Logic Layer
-|   |   |-- models/
-|   |   |-- services/
-|   |   `-- validation/
+|   |   `-- services/       # Business services (auth, class, assignment, etc.)
 |   |-- data/               # Data Access Layer
-|   |   |-- api/
+|   |   |-- api/            # API type definitions, clients, and adapters
 |   |   |-- repositories/
 |   |   `-- mappers.ts
 |   |-- presentation/       # UI Layer
@@ -69,20 +67,29 @@ frontend/
 |   |   |   |-- admin/
 |   |   |   |-- auth/
 |   |   |   |-- shared/
-|   |   |   |   |-- modules/  # Module UI components (ViewToggle, ModuleCard, CreateModuleInput, etc.)
+|   |   |   |   |-- assignmentDetail/  # Shared assignment detail form and test card
+|   |   |   |   |-- calendar/          # Calendar view components
+|   |   |   |   |-- dashboard/         # Layout, sidebar, top bar, notification widgets
+|   |   |   |   |-- modules/           # Module UI components (ViewToggle, ModuleCard, etc.)
+|   |   |   |   `-- pdf/               # Shared PDF report type definitions
 |   |   |   |-- student/
+|   |   |   |   `-- grades/            # Student grade display components and PDF export
 |   |   |   |-- teacher/
-|   |   |   `-- ui/
+|   |   |   |   |-- classDetail/       # Teacher class detail tab contents
+|   |   |   |   |-- forms/             # Assignment form sub-components
+|   |   |   |   |-- gradebook/         # Gradebook content and grade override modal
+|   |   |   |   `-- plagiarism/        # Similarity graph, pair comparison, cross-class section
+|   |   |   `-- ui/                    # Shared UI primitives (Button, Card, Input, etc.)
 |   |   |-- hooks/
-|   |   |   |-- shared/
-|   |   |   `-- teacher/
+|   |   |   |-- shared/                # Shared hooks (useZodForm, useCalendar, useMediaQuery, etc.)
+|   |   |   |   `-- assignmentDetail/  # Assignment detail data and submission hooks
+|   |   |   `-- teacher/               # Teacher-specific hooks (useAssignmentForm, useGradebook)
 |   |   |-- pages/
 |   |   |-- schemas/
 |   |   `-- utils/
 |   |-- shared/             # Cross-cutting concerns
 |   |   |-- constants/
 |   |   |-- store/
-|   |   |-- types/
 |   |   `-- utils/
 |   |-- tests/              # Centralized tests, setup, and mocks
 |   |   |-- unit/           # All frontend unit test files (*.test.ts|tsx)
@@ -112,8 +119,8 @@ frontend/
 
 2.  **Business Layer (`/src/business`)**:
     - **Responsibility**: Enforces business rules, validates data, and orchestrates workflows.
-    - **Dependency**: Depends on the Data Layer (via Interfaces/Repositories) and Models.
-    - **Key Concept**: Services are "pure" logic containers. `AuthService`, `ClassService`, etc.
+    - **Dependency**: Depends on the Data Layer (via Repositories).
+    - **Key Concept**: Services are the sole inhabitants of this layer. Each service encapsulates domain logic for its feature area (e.g., `authService`, `classService`, `calendarService`).
 
 3.  **Data Layer (`/src/data`)**:
     - **Responsibility**: Communicates with the Backend API and Supabase.
@@ -159,6 +166,7 @@ Routing is composed in `src/app/App.tsx`, which mounts route groups from `src/ap
 | `/dashboard/assignments/:assignmentId` | `AssignmentDetailPage` | Shared assignment detail, IDE, and submission review surface |
 | `/dashboard/assignments/:assignmentId/submissions` | `AssignmentSubmissionsPage` | Teacher/admin submissions workspace for an assignment |
 | `/dashboard/assignments/:assignmentId/similarity` | `SimilarityResultsPage` | Graph-first plagiarism triage and evidence export |
+| `/dashboard/assignments/:assignmentId/cross-class-similarity` | `CrossClassSimilarityPage` | Cross-class similarity review for a teacher-owned assignment |
 | `/dashboard/classes/:classId/gradebook` | `GradebookPage` | Teacher/admin gradebook page |
 | `/dashboard/settings` | `SettingsPage` | Shared account settings and notification preferences |
 | `/dashboard/notifications` | `NotificationsPage` | Shared notifications inbox |
@@ -190,6 +198,10 @@ Admin enrollment workspace behavior:
 - **`ClassHeader`**: Displays class information including name, instructor, schedule, and optional description with action buttons (teachers: Gradebook button and Edit/Delete dropdown; students: Leave Class dropdown).
 - **`ClassTabs`**: Tab navigation for Assignment, Students, and Calendar views with keyboard accessibility.
 - **`CustomEventComponent`**: Month-view calendar event content renderer that shows assignment title (with status icon) in a compact single-line card.
+- **`ClassCalendarTab`**: Inline calendar tab on the class detail page showing the assignment deadlines for a specific class.
+- **`CustomDayView`** / **`CustomWeekView`**: Custom `react-big-calendar` views that render day/week grids with CSS-offset positioning for better time slot visibility.
+- **`CustomToolbar`** / **`CustomViewToolbar`**: Toolbar components for the main calendar page and the class-level tab view respectively, providing navigation controls and view switchers.
+- **`EventDetailsModal`**: Overlay panel showing full event details (assignment name, class, due date, status) when a calendar event is clicked.
 - **`AssignmentFilterBar`**: Role-aware filter buttons with counts. Student view uses all/pending/submitted; teacher view uses all/current & upcoming/past timeline filters.
 - **`AssignmentSection`**: Groups assignments by time period (current/upcoming vs past) with section headers.
 - **`AssignmentCard`**: Shared assignment card with role-based content. Student cards show submission/status context and grades. Teacher cards emphasize assignment name + due date and intentionally hide student-only status badges and submission ratio details.
@@ -267,6 +279,13 @@ Reference implementations:
 - **`useAssignmentDetailData`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData.ts`): Handles assignment detail authentication and role-based initial data loading.
 - **`useAssignmentSubmissionFlow`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow.ts`): Encapsulates assignment submission workflow, file validation, test preview execution, and submission-result polling.
 - **`useAssignmentCodePreview`** (`src/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview.ts`): Manages code preview modal state, submission preview loading, and submission download actions.
+- **`useCalendar`** (`src/presentation/hooks/shared/useCalendar.ts`): Manages full calendar state including events, view modes (month/week/day/agenda), period navigation, class-based event filtering, and event detail modal. Delegates to `calendarService` for data fetching.
+- **`useMediaQuery`** / **`useIsMobile`** / **`useIsTabletOrBelow`** (`src/presentation/hooks/shared/useMediaQuery.ts`): Subscribes to CSS media queries via `useSyncExternalStore`. `useIsMobile` returns true below 640 px; `useIsTabletOrBelow` returns true below 1024 px.
+
+### Teacher-Specific Presentation Hooks
+
+- **`useAssignmentForm`** (`src/presentation/hooks/teacher/useAssignmentForm.ts`): Manages the full assignment creation/edit form state including module selection, test cases, late penalty tiers, and file attachment handling.
+- **`useGradebook`** (`src/presentation/hooks/teacher/useGradebook.ts`): Encapsulates gradebook data fetching and grade override/remove lifecycle for the teacher gradebook page.
 
 ---
 
@@ -276,20 +295,24 @@ The Business Layer contains services that encapsulate business logic and orchest
 
 ### Available Services
 
-| Service                     | Location                                           | Purpose                                                                              |
-| --------------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **authService**             | `src/business/services/authService.ts`             | User authentication, registration, password management                               |
-| **assignmentService**       | `src/business/services/assignmentService.ts`       | Assignment submission, file validation                                               |
-| **classService**            | `src/business/services/classService.ts`            | Class management, enrollment operations                                              |
-| **gradebookService**        | `src/business/services/gradebookService.ts`        | Grade management, statistics, late penalties, CSV export                             |
-| **notificationService**     | `src/business/services/notificationService.ts`     | Notification management, unread counts, mark as read                                 |
-| **plagiarismService**       | `src/business/services/plagiarismService.ts`       | Plagiarism detection, assignment-level similarity analysis, pairwise code comparison |
-| **studentDashboardService** | `src/business/services/studentDashboardService.ts` | Student dashboard data aggregation                                                   |
-| **teacherDashboardService** | `src/business/services/teacherDashboardService.ts` | Teacher dashboard data aggregation                                                   |
-| **testCaseService**         | `src/business/services/testCaseService.ts`         | Test case management for assignments                                                 |
-| **testService**             | `src/business/services/testService.ts`             | Code execution and testing                                                           |
-| **adminService**            | `src/business/services/adminService.ts`            | Admin operations (user management, classes, enrollments, analytics)                   |
-| **userService**             | `src/business/services/userService.ts`             | User profile operations (avatar upload, notification preferences, account deletion)  |
+| Service                          | Location                                                | Purpose                                                                              |
+| -------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **authService**                  | `src/business/services/authService.ts`                  | User authentication, registration, password management                               |
+| **assignmentService**            | `src/business/services/assignmentService.ts`            | Assignment submission, file validation                                               |
+| **calendarService**              | `src/business/services/calendarService.ts`              | Calendar event aggregation for student and teacher views; date-range-aware fetching  |
+| **classService**                 | `src/business/services/classService.ts`                 | Class management, enrollment operations                                              |
+| **crossClassPlagiarismService**  | `src/business/services/crossClassPlagiarismService.ts`  | Cross-class similarity analysis and result retrieval for teacher-owned assignments   |
+| **gradebookService**             | `src/business/services/gradebookService.ts`             | Grade management, statistics, late penalties, CSV export                             |
+| **moduleService**                | `src/business/services/moduleService.ts`                | Module CRUD inside a class (create, rename, publish toggle, delete)                  |
+| **notificationService**          | `src/business/services/notificationService.ts`          | Notification management, unread counts, mark as read                                 |
+| **plagiarismService**            | `src/business/services/plagiarismService.ts`            | Assignment-level similarity analysis, pairwise code comparison, report management    |
+| **studentDashboardService**      | `src/business/services/studentDashboardService.ts`      | Student dashboard data aggregation                                                   |
+| **teacherDashboardService**      | `src/business/services/teacherDashboardService.ts`      | Teacher dashboard data aggregation                                                   |
+| **testCaseService**              | `src/business/services/testCaseService.ts`              | Test case management for assignments                                                 |
+| **testResultNormalizer**         | `src/business/services/testResultNormalizer.ts`         | Normalizes raw test-result API responses into consistent `TestResultDetail` objects  |
+| **testService**                  | `src/business/services/testService.ts`                  | Code execution and testing                                                           |
+| **adminService**                 | `src/business/services/adminService.ts`                 | Admin operations (user management, classes, enrollments, analytics)                  |
+| **userService**                  | `src/business/services/userService.ts`                  | User profile operations (avatar upload, notification preferences, account deletion)  |
 
 ### Service Guidelines
 
@@ -336,6 +359,17 @@ Language-specific features:
 - File extension validation
 - Language-specific test execution
 - AST-based plagiarism detection
+
+### Cross-Class Plagiarism Detection
+
+Cross-class analysis extends the per-assignment similarity workflow to compare submissions across multiple classes taught by the same teacher:
+
+- Accessible from the submissions page via a dedicated `Cross-Class Similarity` action that navigates to `/dashboard/assignments/:assignmentId/cross-class-similarity`.
+- `CrossClassSimilarityPage` fetches the assignment details and renders a `CrossClassResultsSection` showing matching assignments found across other classes.
+- Results include per-pair structural, semantic, and hybrid scores so teachers can identify suspicious cross-class sharing quickly.
+- Cross-class reports are retained as historical records; newer analyses do not overwrite prior cross-class results.
+- `crossClassPlagiarismService` deduplicates in-flight requests per assignment using a module-scoped `Map` so concurrent navigation events do not double-trigger analysis.
+- `Download Class Report` is also available on the cross-class page to export the current threshold view.
 
 ### Plagiarism Detection
 
@@ -482,14 +516,20 @@ Notifications follow the current light-surface design system:
 
 ### Core Types
 
-The application uses a strongly-typed system with branded types for enhanced type safety:
+Frontend types live in `src/data/api/` and are colocated with their feature area. There is no centralized `types/` directory; types follow the colocation principle described in the code quality guidelines.
 
-- **`ISODateString`**: Branded type for ISO 8601 date strings from APIs
-- **`DayOfWeek`**: Union type for days of the week
-- **`Schedule`**: Interface for class schedule with days and time range
-- **`Class`**: Core class entity with instructor, schedule, and metadata
-- **`Assignment`**: Assignment entity with deadline, grades, submission status, and programming language
-- **`EnrolledStudent`**: Student enrollment information
+Key type files:
+
+- `src/data/api/class.types.ts`: `Class`, `Assignment`, `EnrolledStudent`, `Schedule`, `DayOfWeek`, `Module`
+- `src/data/api/assignment.types.ts`: `AssignmentDetail`, `Submission`, `TestResult`, `SubmissionStatus`
+- `src/data/api/auth.types.ts`: `User`, `UserRole`, `AuthSession`
+- `src/data/api/gradebook.types.ts`: `GradebookEntry`, `StudentGrade`, `LatePenaltyConfig`
+- `src/data/api/notification.types.ts`: `Notification`, `NotificationChannel`
+- `src/data/api/plagiarism.types.ts`: `SimilarityReport`, `SimilarityPair`, `MatchFragment`
+- `src/data/api/crossClassPlagiarism.types.ts`: `CrossClassAnalysisResponse`, `CrossClassResultDTO`
+- `src/data/api/calendar.types.ts`: `CalendarEvent`, `CalendarView`, `ClassInfo`, `DateRange`
+- `src/data/api/test-case.types.ts`: `TestCase`, `RawTestResult`, `TestResultDetail`
+- `src/data/api/shared.types.ts`: `ISODateString`, `PaginatedResponse`, `ApiResponse`
 
 ### Class Detail View Types
 

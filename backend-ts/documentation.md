@@ -914,6 +914,72 @@ class PlagiarismService {
 - Returns reusable report metadata (`reportId`, `generatedAt`, submissions, pairs) needed by the frontend evidence-export workflow
 - Supports Python, Java, and C programming languages
 
+### CrossClassSimilarityService
+
+Compares latest submissions across assignments with the same name in multiple classes owned by the same teacher:
+
+```typescript
+class CrossClassSimilarityService {
+  analyzeAssignment(assignmentId, teacherId); // Find and analyze matching assignments across teacher classes
+  getLatestReport(assignmentId); // Fetch the latest saved cross-class report
+  getReport(reportId); // Retrieve a saved cross-class report by ID
+  getResultDetails(resultId); // Get detailed fragment/code info for a cross-class pair
+  deleteReport(reportId); // Delete a saved report
+}
+```
+
+**Behavior**:
+- Identifies matching assignments by name in other classes taught by the same teacher.
+- Cross-class reports are persisted as historical records and are never automatically overwritten by newer runs.
+- Use `getLatestReport` when the frontend needs the newest result without triggering a new write.
+
+### PlagiarismAutoAnalysisService
+
+Schedules and reconciles automatic post-submission similarity analysis:
+
+```typescript
+class PlagiarismAutoAnalysisService {
+  scheduleAnalysis(assignmentId); // Debounce and schedule a deferred analysis run
+  reconcile(); // Safety-net scan to trigger analysis for stale or missing reports
+}
+```
+
+**Behavior**:
+- Driven by `AUTO_SIMILARITY_ENABLED`, `AUTO_SIMILARITY_DEBOUNCE_MS`, and `AUTO_SIMILARITY_RECONCILIATION_INTERVAL_MS` env vars.
+- Submission success is never blocked by scheduling failures.
+- Rapid burst submissions for the same assignment are coalesced into a single run.
+
+### PlagiarismPersistenceService
+
+Handles atomic report writes with assignment-scoped transaction locking:
+
+```typescript
+class PlagiarismPersistenceService {
+  saveReport(assignmentId, reportData); // Persist a new report under a lock
+  refreshSimilarityPenalties(assignmentId); // Re-sync similarity deductions after a new report is saved
+}
+```
+
+**Behavior**:
+- Acquires an assignment-scoped lock before writing so concurrent analysis runs never produce duplicate latest reports.
+- After saving a new report, notifies `SimilarityPenaltyService` to refresh deduction records when penalty is enabled.
+
+### SimilarityPenaltyService
+
+Applies and syncs automatic similarity-based grade deductions:
+
+```typescript
+class SimilarityPenaltyService {
+  applyPenaltiesForAssignment(assignmentId); // Compute and persist deductions for all latest submissions
+  getPenaltyForSubmission(submissionId); // Retrieve the stored penalty amount for a submission
+}
+```
+
+**Behavior**:
+- Deductions use the backend-managed conservative band policy (warning-only below 85 %, capped at 20 %).
+- Only the highest qualifying pair hybrid score is applied to each latest submission.
+- When the displayed score changes after a penalty sync, a `SUBMISSION_GRADED` notification is dispatched to the affected student.
+
 ### CodeTestService
 
 Executes code against test cases using Judge0:
