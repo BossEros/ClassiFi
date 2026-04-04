@@ -12,6 +12,12 @@ export { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/shared.types"
 export type { ProgrammingLanguage, AssignmentTestCase } from "@/data/api/shared.types"
 export type { Submission, SubmissionWithAssignment, SubmissionWithStudent, SubmissionContent } from "@/data/api/shared.types"
 
+/** Supabase storage bucket name and file path parsed from a public URL */
+export interface StorageLocation {
+  bucket: string
+  path: string
+}
+
 export interface AssignmentDetail {
   id: number
   classId: number

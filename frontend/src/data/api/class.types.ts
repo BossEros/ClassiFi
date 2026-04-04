@@ -211,6 +211,20 @@ export interface DeleteResponse {
   message?: string
 }
 
+/** Response for module list operations */
+export interface ModuleListResponse {
+  success: boolean
+  message?: string
+  modules: Module[]
+}
+
+/** Response for single module operations */
+export interface ModuleDetailResponse {
+  success: boolean
+  message?: string
+  module: Module
+}
+
 /** Response for class code generation */
 export interface GenerateCodeResponse {
   success: boolean

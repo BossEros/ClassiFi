@@ -1,25 +1,5 @@
 import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
-import type { Module } from "@/data/api/class.types"
-
-/** Response for module list operations */
-interface ModuleListResponse {
-  success: boolean
-  message?: string
-  modules: Module[]
-}
-
-/** Response for single module operations */
-interface ModuleDetailResponse {
-  success: boolean
-  message?: string
-  module: Module
-}
-
-/** Response for delete operations */
-interface DeleteResponse {
-  success: boolean
-  message?: string
-}
+import type { Module, ModuleListResponse, ModuleDetailResponse, DeleteResponse } from "@/data/api/class.types"
 
 /**
  * Fetches all modules for a class with their nested assignments.

@@ -17,6 +17,7 @@ import type {
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
   SubmissionDTO,
+  StorageLocation,
 } from "@/data/api/assignment.types"
 import type { TestResultsResponse } from "@/data/api/test-case.types"
 import type { DeleteResponse } from "@/data/api/class.types"
@@ -418,11 +419,6 @@ function isStorageBucketConfigurationError(errorMessage: string): boolean {
     normalizedMessage.includes("permission denied") ||
     normalizedMessage.includes("not authorized")
   )
-}
-
-interface StorageLocation {
-  bucket: string
-  path: string
 }
 
 function parseStorageLocationFromPublicUrl(
