@@ -1,13 +1,105 @@
 ﻿import type { ComponentType } from "react"
-import type {
-  Schedule,
-  Class,
-  Assignment,
-  Task,
-  EnrolledStudent,
-} from "@/shared/types/class"
+import type { LatePenaltyConfig } from "@/data/api/gradebook.types"
 
-export type { DayOfWeek, Schedule, Class, Assignment, Task, EnrolledStudent, AssignmentStatus, AssignmentFilter, ClassTab } from "@/shared/types/class"
+export type ISODateString = string & { readonly __brand: "ISODateString" }
+
+export function parseISODate(
+  isoString: ISODateString | string | null | undefined,
+): Date | null {
+  if (!isoString) return null
+  const date = new Date(isoString)
+  return isNaN(date.getTime()) ? null : date
+}
+
+export function toISODateString(date: Date): ISODateString {
+  return date.toISOString() as ISODateString
+}
+
+export type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday"
+
+export interface Schedule {
+  days: DayOfWeek[]
+  startTime: string
+  endTime: string
+}
+
+export interface Class {
+  id: number
+  teacherId: number
+  className: string
+  classCode: string
+  description: string | null
+  isActive: boolean
+  createdAt: ISODateString
+  teacherName?: string
+  studentCount?: number
+  assignmentCount?: number
+  semester: number
+  academicYear: string
+  schedule: Schedule
+}
+
+export interface Assignment {
+  id: number
+  classId: number
+  moduleId: number | null
+  assignmentName: string
+  className?: string
+  deadline: ISODateString | null
+  programmingLanguage: string
+  hasSubmitted?: boolean
+  submissionCount?: number
+  studentCount?: number
+  instructions?: string | null
+  instructionsImageUrl?: string | null
+  allowResubmission?: boolean
+  isActive?: boolean
+  createdAt?: ISODateString
+  maxAttempts?: number | null
+  templateCode?: string | null
+  hasTemplateCode?: boolean
+  totalScore?: number
+  scheduledDate?: ISODateString | null
+  allowLateSubmissions?: boolean
+  latePenaltyConfig?: LatePenaltyConfig | null
+  enableSimilarityPenalty?: boolean
+  submittedAt?: ISODateString | null
+  grade?: number | null
+  maxGrade?: number
+}
+
+export type Task = Assignment
+
+export interface Module {
+  id: number
+  classId: number
+  name: string
+  isPublished: boolean
+  createdAt: ISODateString
+  updatedAt: ISODateString
+  assignments: Assignment[]
+}
+
+export interface EnrolledStudent {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  avatarUrl: string | null
+  enrolledAt: ISODateString
+  fullName?: string
+}
+
+export type AssignmentStatus = "pending" | "not-started" | "submitted" | "late"
+export type AssignmentFilter = "all" | "pending" | "submitted"
+export type ClassTab = "assignments" | "students" | "calendar" | "grades"
 
 /** Base class fields shared across all class representations */
 interface ClassBase {

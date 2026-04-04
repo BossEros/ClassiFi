@@ -9,14 +9,14 @@ import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentFor
 import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignment/BasicInfoForm"
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
 import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
-import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
+import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/data/api/gradebook.types"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 import { getModulesByClassId } from "@/business/services/moduleService"
-import type { Module } from "@/shared/types/class"
+import type { Module } from "@/data/api/class.types"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()

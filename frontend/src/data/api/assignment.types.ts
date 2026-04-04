@@ -1,5 +1,7 @@
-import type { LatePenaltyConfig } from "@/shared/types/gradebook"
-import type { Submission } from "@/shared/types/submission"
+import type { LatePenaltyConfig } from "@/data/api/gradebook.types"
+import type {
+  Submission,
+} from "@/data/api/shared.types"
 import type {
   AssignmentTestCase,
   ProgrammingLanguage,
@@ -8,7 +10,7 @@ import type { TaskDTO } from "@/data/api/class.types"
 
 export { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/shared.types"
 export type { ProgrammingLanguage, AssignmentTestCase } from "@/data/api/shared.types"
-export type { Submission, SubmissionWithAssignment, SubmissionWithStudent, SubmissionContent } from "@/shared/types/submission"
+export type { Submission, SubmissionWithAssignment, SubmissionWithStudent, SubmissionContent } from "@/data/api/shared.types"
 
 export interface AssignmentDetail {
   id: number

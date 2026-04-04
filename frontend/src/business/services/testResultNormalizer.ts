@@ -1,4 +1,4 @@
-import type { RawTestResult, TestResultDetail } from "@/shared/types/testCase"
+import type { RawTestResult, TestResultDetail } from "@/data/api/test-case.types"
 
 /**
  * Normalizes a raw test result from the repository into a standardized detail object.

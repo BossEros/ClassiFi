@@ -6,7 +6,7 @@ import type {
   TestResultDetail,
   TestExecutionSummary,
   RawTestResult,
-} from "@/shared/types/testCase"
+} from "@/data/api/test-case.types"
 import type {
   TestCaseListResponse,
   TestCaseResponse,

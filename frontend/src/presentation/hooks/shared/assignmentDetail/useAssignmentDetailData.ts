@@ -7,7 +7,7 @@ import {
   getSubmissionHistory,
 } from "@/business/services/assignmentService"
 import { getTestResultsForSubmission } from "@/business/services/testService"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 import type {
   AssignmentDetail,
   Submission,

@@ -2,7 +2,7 @@ import type {
   Submission,
   SubmissionWithAssignment,
   SubmissionWithStudent,
-} from "@/shared/types/submission"
+} from "@/data/api/shared.types"
 import type {
   SubmissionDTO,
   AssignmentDetailDTO,

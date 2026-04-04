@@ -8,7 +8,7 @@ import {
   formatTimeRange,
 } from "@/presentation/constants/schedule.constants"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
-import type { DayOfWeek } from "@/shared/types/class"
+import type { DayOfWeek } from "@/data/api/class.types"
 
 interface ClassHeaderProps {
   className?: string

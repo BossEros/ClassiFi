@@ -6,7 +6,7 @@ import type {
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
   TestExecutionSummary,
-} from "@/shared/types/testCase"
+} from "@/data/api/test-case.types"
 import type { TestResultsResponse } from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 

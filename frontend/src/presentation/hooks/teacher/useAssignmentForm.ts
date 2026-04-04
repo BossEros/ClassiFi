@@ -40,7 +40,7 @@ import type {
   CreateTestCaseRequest,
   TestCase,
   UpdateTestCaseRequest,
-} from "@/shared/types/testCase"
+} from "@/data/api/test-case.types"
 
 export const programmingLanguageOptions: SelectOption[] =
   PROGRAMMING_LANGUAGE_OPTIONS.map((option) => ({ ...option }))

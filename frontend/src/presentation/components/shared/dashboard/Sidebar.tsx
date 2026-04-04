@@ -17,7 +17,7 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { ProfileDropdown } from "./ProfileDropdown"
 import type { NavigationItem } from "@/data/api/class.types"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 
 const DESKTOP_SIDEBAR_MEDIA_QUERY = "(min-width: 1024px)"
 

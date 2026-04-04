@@ -13,7 +13,7 @@ import type { AssignmentFormData, PendingTestCase } from "@/presentation/hooks/t
 import { formatTimeRemaining } from "@/presentation/utils/dateUtils";
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap";
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils";
-import type { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from "@/shared/types/testCase";
+import type { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from "@/data/api/test-case.types";
 import { useState } from "react";
 import { Plus, Edit2, EyeOff, FlaskConical } from "lucide-react";
 import { Button } from "@/presentation/components/ui/Button";

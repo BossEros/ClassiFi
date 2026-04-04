@@ -5,7 +5,7 @@ import type {
   StudentClassGrades,
   StudentRank,
   LatePenaltyConfig,
-} from "@/shared/types/gradebook"
+} from "@/data/api/gradebook.types"
 
 // Re-export types for presentation layer
 export type { ClassGradebook, StudentClassGrades, StudentRank }

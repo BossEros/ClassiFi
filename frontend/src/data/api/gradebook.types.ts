@@ -1,27 +1,73 @@
-import type {
-  GradeEntry,
-  GradebookAssignment,
-  GradebookStudent,
-  LatePenaltyConfig,
-  PenaltyResult,
-  PenaltyTier,
-  StudentClassGrades,
-  StudentGradeEntry,
-  ClassGradebook,
-  StudentRank,
-} from "@/shared/types/gradebook"
+export interface GradeEntry {
+  assignmentId: number
+  submissionId: number | null
+  grade: number | null
+  isOverridden: boolean
+  submittedAt: string | null
+}
 
-export type {
-  PenaltyTier,
-  LatePenaltyConfig,
-  PenaltyResult,
-  StudentGradeEntry,
-  StudentClassGrades,
-  ClassGradebook,
-  GradebookStudent,
-  GradebookAssignment,
-  GradeEntry,
-  StudentRank,
+export interface PenaltyTier {
+  id: string
+  hoursLate: number
+  penaltyPercent: number
+}
+
+export interface LatePenaltyConfig {
+  tiers: PenaltyTier[]
+  rejectAfterHours: number | null
+}
+
+export interface PenaltyResult {
+  isLate: boolean
+  hoursLate: number
+  penaltyPercent: number
+  gradeMultiplier: number
+  tierLabel: string
+}
+
+export interface StudentGradeEntry {
+  assignmentId: number
+  assignmentName: string
+  totalScore: number
+  deadline: string | null
+  grade: number | null
+  isOverridden: boolean
+  feedback: string | null
+  submittedAt: string | null
+  isLate?: boolean
+  penaltyApplied?: number
+}
+
+export interface StudentClassGrades {
+  classId: number
+  className: string
+  teacherName: string
+  assignments: StudentGradeEntry[]
+}
+
+export interface GradebookAssignment {
+  id: number
+  name: string
+  totalScore: number
+  deadline: string | null
+}
+
+export interface GradebookStudent {
+  id: number
+  name: string
+  email: string
+  grades: GradeEntry[]
+}
+
+export interface ClassGradebook {
+  assignments: GradebookAssignment[]
+  students: GradebookStudent[]
+}
+
+export interface StudentRank {
+  rank: number | null
+  totalStudents: number | null
+  percentile: number | null
 }
 
 export interface ClassGradebookResponse {

@@ -8,7 +8,7 @@ import {
   getSimilarityBadgeSeverity,
 } from "@/presentation/utils/plagiarismSignalUtils"
 import type { PairResponse } from "@/business/services/plagiarismService"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 import type {
   DiffLine,
   LineDiff,

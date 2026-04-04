@@ -17,7 +17,7 @@ import {
 } from "@/business/services/testService"
 import type { Submission } from "@/data/api/assignment.types"
 import type { AssignmentDetail } from "@/data/api/assignment.types"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 import type { TestPreviewResult } from "@/data/api/test-case.types"
 import type { ToastVariant } from "@/presentation/components/ui/Toast"
 

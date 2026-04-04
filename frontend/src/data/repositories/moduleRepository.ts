@@ -1,5 +1,5 @@
 import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
-import type { Module } from "@/shared/types/class"
+import type { Module } from "@/data/api/class.types"
 
 /** Response for module list operations */
 interface ModuleListResponse {

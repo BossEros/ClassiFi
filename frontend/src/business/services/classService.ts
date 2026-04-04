@@ -14,7 +14,7 @@ import type {
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
 } from "@/data/api/assignment.types"
-import type { GradeEntry, GradebookStudent } from "@/shared/types/gradebook"
+import type { GradeEntry, GradebookStudent } from "@/data/api/gradebook.types"
 
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }

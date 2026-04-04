@@ -7,7 +7,7 @@ import type {
   AuthResponse,
   ForgotPasswordResponse,
   DeleteAccountResponse,
-} from "@/shared/types/auth"
+} from "@/data/api/auth.types"
 
 // Export helper for external use
 export { retrieveStoredUserFromLocalStorage }

@@ -1,5 +1,5 @@
 import type { ClassDTO, TaskDTO, ClassResponse } from "@/data/api/class.types"
-import type { Class, Task } from "@/shared/types/class"
+import type { Class, Task } from "@/data/api/class.types"
 export type { ClassResponse } from "@/data/api/class.types"
 
 export interface DashboardResponse {

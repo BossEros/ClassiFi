@@ -1,4 +1,4 @@
-import type { StudentGradeEntry } from "@/shared/types/gradebook"
+import type { StudentGradeEntry } from "@/data/api/gradebook.types"
 
 export interface StudentGradeSummaryMetrics {
   currentGrade: number | null

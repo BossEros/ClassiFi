@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/pre
 import { BackButton } from "@/presentation/components/ui/BackButton";
 import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook";
 import { useAuthStore } from "@/shared/store/useAuthStore";
-import type { StudentClassGrades, StudentGradeEntry } from "@/shared/types/gradebook";
+import type { StudentClassGrades, StudentGradeEntry } from "@/data/api/gradebook.types";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
 import { Clock } from "lucide-react";
 import { cn } from "@/shared/utils/cn";

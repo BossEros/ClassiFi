@@ -1,5 +1,5 @@
 import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
-import type { Class, Assignment, EnrolledStudent } from "@/shared/types/class"
+import type { Class, Assignment, EnrolledStudent } from "@/data/api/class.types"
 import type {
   CreateClassRequest,
   UpdateClassRequest,

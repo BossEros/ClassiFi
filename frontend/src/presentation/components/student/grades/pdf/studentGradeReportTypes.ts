@@ -1,4 +1,4 @@
-import type { StudentClassGrades } from "@/shared/types/gradebook"
+import type { StudentClassGrades } from "@/data/api/gradebook.types"
 import type { ReportMetadataEntry, SummaryMetric } from "@/presentation/components/shared/pdf/pdfReportTypes"
 
 export type {

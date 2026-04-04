@@ -1,5 +1,5 @@
 // ============================================================================
-// Auth Types - Shared Layer
+// Auth Types
 // ============================================================================
 
 /**
@@ -88,9 +88,6 @@ export interface DeleteAccountRequest {
 // Response Types
 // ============================================================================
 
-/**
- * Response for authentication operations.
- */
 /**
  * Failure response for authentication operations.
  */

@@ -20,8 +20,8 @@ import type {
 } from "@/data/api/assignment.types"
 import type { TestResultsResponse } from "@/data/api/test-case.types"
 import type { DeleteResponse } from "@/data/api/class.types"
-import type { Assignment } from "@/shared/types/class"
-import type { Submission } from "@/shared/types/submission"
+import type { Assignment } from "@/data/api/class.types"
+import type { Submission } from "@/data/api/shared.types"
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"

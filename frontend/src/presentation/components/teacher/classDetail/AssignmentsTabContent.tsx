@@ -7,7 +7,7 @@ import { ModuleCard, CreateModuleInput, ViewToggle } from "@/presentation/compon
 import type { AssignmentViewMode } from "@/presentation/components/shared/modules"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type { Assignment } from "@/data/api/class.types"
-import type { Module } from "@/shared/types/class"
+import type { Module } from "@/data/api/class.types"
 import type {
   AssignmentFilter,
   TeacherAssignmentFilter,

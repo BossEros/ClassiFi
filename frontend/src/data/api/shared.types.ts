@@ -1,23 +1,33 @@
-import type {
-  DayOfWeek,
-  Schedule,
-  Class,
-  Assignment,
-  EnrolledStudent,
-} from "@/shared/types/class"
-import type {
-  Submission,
-  SubmissionWithAssignment,
-  SubmissionWithStudent,
-  SubmissionContent,
-} from "@/shared/types/submission"
+export interface Submission {
+  id: number
+  assignmentId: number
+  studentId: number
+  fileName: string
+  fileSize: number
+  submissionNumber: number
+  submittedAt: string
+  isLatest: boolean
+  grade?: number | null
+  teacherFeedback?: string | null
+  feedbackGivenAt?: string | null
+  isGradeOverridden?: boolean
+  overrideReason?: string | null
+  overriddenAt?: string | null
+  assignmentName?: string
+  studentName?: string
+}
 
-export type { DayOfWeek, Schedule, Class, Assignment, EnrolledStudent }
-export type {
-  Submission,
-  SubmissionWithAssignment,
-  SubmissionWithStudent,
-  SubmissionContent,
+export interface SubmissionWithAssignment extends Submission {
+  assignmentName: string
+}
+
+export interface SubmissionWithStudent extends Submission {
+  studentName: string
+}
+
+export interface SubmissionContent {
+  content: string
+  language?: string
 }
 
 /**

@@ -12,7 +12,7 @@ import { Button } from "@/presentation/components/ui/Button"
 import type {
   LatePenaltyConfig as LatePenaltyConfigType,
   PenaltyTier,
-} from "@/shared/types/gradebook"
+} from "@/data/api/gradebook.types"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 
 interface LatePenaltyConfigProps {

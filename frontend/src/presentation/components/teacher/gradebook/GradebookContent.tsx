@@ -5,7 +5,7 @@ import { Button } from "@/presentation/components/ui/Button";
 import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teacher/useGradebook";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload";
-import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/shared/types/gradebook";
+import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/data/api/gradebook.types";
 import { X, Edit2 } from "lucide-react";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 import { buildGradeReportData, GradeReportDocument } from "./pdf/gradeReportPdf";

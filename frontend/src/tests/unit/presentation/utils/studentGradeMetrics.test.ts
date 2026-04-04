@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
-import type { StudentGradeEntry } from "@/shared/types/gradebook"
+import type { StudentGradeEntry } from "@/data/api/gradebook.types"
 
 function createStudentGradeEntry(
   overrides: Partial<StudentGradeEntry> = {},

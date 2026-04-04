@@ -6,7 +6,7 @@ import { Eye, EyeOff, ArrowLeft, ArrowRight, GraduationCap, Users, Check, CheckC
 import { registerUser } from "@/business/services/authService";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { registerFormSchema, type RegisterFormValues } from "@/presentation/schemas/auth/authSchemas";
-import type { RegistrationStep, RegistrationStepInfo } from "@/shared/types/auth";
+import type { RegistrationStep, RegistrationStepInfo } from "@/data/api/auth.types";
 import { authTheme } from "@/presentation/constants/authTheme";
 
 // Inlined from src/presentation/components/auth/forms/RegisterForm.tsx

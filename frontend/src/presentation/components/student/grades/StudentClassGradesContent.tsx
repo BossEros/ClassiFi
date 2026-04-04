@@ -23,7 +23,7 @@ import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
-import type { StudentGradeEntry } from "@/shared/types/gradebook"
+import type { StudentGradeEntry } from "@/data/api/gradebook.types"
 import { cn } from "@/shared/utils/cn"
 import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
 import {

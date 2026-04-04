@@ -1,5 +1,5 @@
 import * as moduleRepository from "@/data/repositories/moduleRepository"
-import type { Module } from "@/shared/types/class"
+import type { Module } from "@/data/api/class.types"
 
 /**
  * Fetches all modules for a class with their nested assignments.

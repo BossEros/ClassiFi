@@ -17,7 +17,7 @@ import type {
   SimilarityBadgeSeverity,
   SimilaritySignalLevel,
 } from "@/presentation/utils/plagiarismSignalUtils"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 import type { FilePair, MatchFragment } from "../types"
 
 export type {

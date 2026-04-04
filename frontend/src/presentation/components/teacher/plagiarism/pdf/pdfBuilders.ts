@@ -4,7 +4,7 @@ import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 
 import {
   buildSimilarityGraphData,
