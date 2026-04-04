@@ -245,6 +245,7 @@ export class PlagiarismPersistenceService {
               lineCount: result.leftTotal,
               studentId: leftSubmission?.submission.studentId?.toString(),
               studentName: leftSubmission?.studentName || "Unknown",
+              submittedAt: leftSubmission?.submission.submittedAt?.toISOString(),
             },
             rightFile: {
               id: result.submission2Id,
@@ -253,6 +254,7 @@ export class PlagiarismPersistenceService {
               lineCount: result.rightTotal,
               studentId: rightSubmission?.submission.studentId?.toString(),
               studentName: rightSubmission?.studentName || "Unknown",
+              submittedAt: rightSubmission?.submission.submittedAt?.toISOString(),
             },
             structuralScore: pairScoreBreakdown.structuralScore,
             semanticScore: pairScoreBreakdown.semanticScore,
@@ -335,6 +337,7 @@ export class PlagiarismPersistenceService {
       lineCount: 0,
       studentId: submission.studentId.toString(),
       studentName,
+      submittedAt: submission.submittedAt.toISOString(),
     }))
   }
 

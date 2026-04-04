@@ -92,25 +92,29 @@ export class SimilarityPenaltyService {
       return
     }
 
-    // STEP 3: Load the normalized penalty configuration and build a lookup set of latest submission IDs
-    const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(
-      undefined,
-    )
+    // STEP 3: Load the normalized penalty configuration and build lookup structures
+    const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(undefined)
     const latestSubmissionIds = new Set(
       latestSubmissions.map((latestSubmission) => latestSubmission.id),
+    )
+    const submissionTimestampMap = new Map(
+      latestSubmissions.map((latestSubmission) => [
+        latestSubmission.id,
+        latestSubmission.submittedAt,
+      ]),
     )
 
     if (latestSubmissionIds.size === 0) {
       return
     }
 
-    // STEP 4: Fetch all similarity results from this report and build a worst-case penalty map
-    // Each submission maps to the highest-priority penalty candidate found across all its pairs
+    // STEP 4: Fetch all similarity results from this report and build a worst-case penalty map.
+    // Only the submission that was submitted LATER in each flagged pair is penalized.
+    // This protects the earlier submitter: if someone copies their work and submits after them,
+    // only the later submitter is penalized — not the original author.
+    // If timestamps are identical or unavailable, neither student is penalized.
     const reportResults = await this.similarityRepo.getResultsByReport(reportId)
-    const candidateBySubmissionId = new Map<
-      number,
-      SubmissionPenaltyCandidate
-    >()
+    const candidateBySubmissionId = new Map<number, SubmissionPenaltyCandidate>()
 
     for (const reportResult of reportResults) {
       if (
@@ -134,14 +138,19 @@ export class SimilarityPenaltyService {
         continue
       }
 
-      this.recordHigherPriorityCandidate(
-        candidateBySubmissionId,
+      const laterSubmissionId = this.resolveLaterSubmission(
         reportResult.submission1Id,
-        penaltyCandidate,
+        reportResult.submission2Id,
+        submissionTimestampMap,
       )
+
+      if (laterSubmissionId === null) {
+        continue
+      }
+
       this.recordHigherPriorityCandidate(
         candidateBySubmissionId,
-        reportResult.submission2Id,
+        laterSubmissionId,
         penaltyCandidate,
       )
     }
@@ -224,6 +233,25 @@ export class SimilarityPenaltyService {
       penaltyPercent,
       sourceHybridScore: hybridScore,
     }
+  }
+
+  /**
+   * Determines which of two submissions was submitted later.
+   * Returns the ID of the later submission, or null if timestamps are unavailable
+   * or identical (no basis to assign blame to either student).
+   */
+  private resolveLaterSubmission(
+    submission1Id: number,
+    submission2Id: number,
+    submissionTimestampMap: Map<number, Date>,
+  ): number | null {
+    const time1 = submissionTimestampMap.get(submission1Id)
+    const time2 = submissionTimestampMap.get(submission2Id)
+
+    if (!time1 || !time2) return null
+    if (time1.getTime() === time2.getTime()) return null
+
+    return time1 > time2 ? submission1Id : submission2Id
   }
 
   private recordHigherPriorityCandidate(

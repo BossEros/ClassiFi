@@ -5,6 +5,7 @@ export interface FileResponse {
   lineCount: number
   studentId?: string
   studentName?: string
+  submittedAt?: string
 }
 
 export interface PairResponse {

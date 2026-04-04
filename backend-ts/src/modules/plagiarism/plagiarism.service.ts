@@ -537,6 +537,7 @@ export class PlagiarismService {
       lineCount: file.lineCount,
       studentId: file.info?.studentId,
       studentName: file.info?.studentName,
+      submittedAt: file.info?.submittedAt,
     }))
   }
 
@@ -625,6 +626,7 @@ export class PlagiarismService {
             lineCount: pair.leftTotal,
             studentId: pair.leftFile.info?.studentId,
             studentName: pair.leftFile.info?.studentName,
+            submittedAt: pair.leftFile.info?.submittedAt,
           },
           rightFile: {
             id: rightSubmissionId,
@@ -633,6 +635,7 @@ export class PlagiarismService {
             lineCount: pair.rightTotal,
             studentId: pair.rightFile.info?.studentId,
             studentName: pair.rightFile.info?.studentName,
+            submittedAt: pair.rightFile.info?.submittedAt,
           },
           structuralScore: pairScoreBreakdown.structuralScore,
           semanticScore: pairScoreBreakdown.semanticScore,

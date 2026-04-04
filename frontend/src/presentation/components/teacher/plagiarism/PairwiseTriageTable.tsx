@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { ArrowDown, ArrowRight, ArrowUp, CircleHelp } from "lucide-react"
+import { ArrowDown, ArrowRight, ArrowUp, CircleHelp, Clock } from "lucide-react"
 import type { PairResponse } from "@/business/services/plagiarismService"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
@@ -72,6 +72,35 @@ function getPairStudentNames(pair: PairResponse): {
     left: pair.leftFile.studentName?.trim() || "Unknown Student",
     right: pair.rightFile.studentName?.trim() || "Unknown Student",
   }
+}
+
+function getSubmissionOrderLabel(pair: PairResponse): string | null {
+  const leftTime = pair.leftFile.submittedAt
+  const rightTime = pair.rightFile.submittedAt
+
+  if (!leftTime || !rightTime) return null
+
+  const leftDate = new Date(leftTime)
+  const rightDate = new Date(rightTime)
+  const diffMs = Math.abs(leftDate.getTime() - rightDate.getTime())
+
+  if (diffMs < 1000) return null
+
+  const earlier = leftDate < rightDate ? pair.leftFile.studentName?.trim() : pair.rightFile.studentName?.trim()
+
+  return `${earlier || "Unknown"} submitted ${formatTimeDifference(diffMs)} earlier`
+}
+
+function formatTimeDifference(diffMs: number): string {
+  const diffMinutes = Math.floor(diffMs / 60_000)
+  const diffHours = Math.floor(diffMs / 3_600_000)
+  const diffDays = Math.floor(diffMs / 86_400_000)
+
+  if (diffMinutes < 1) return `${Math.floor(diffMs / 1000)}s`
+  if (diffMinutes < 60) return `${diffMinutes}m`
+  if (diffHours < 24) return diffMinutes % 60 === 0 ? `${diffHours}h` : `${diffHours}h ${diffMinutes % 60}m`
+
+  return diffHours % 24 === 0 ? `${diffDays}d` : `${diffDays}d ${diffHours % 24}h`
 }
 
 function getPairStructuralSimilarityRatio(pair: PairResponse): number {
@@ -403,6 +432,12 @@ export function PairwiseTriageTable({
                           <div className="text-sm font-medium text-slate-900">
                             {pairStudentNames.left} vs {pairStudentNames.right}
                           </div>
+                          {getSubmissionOrderLabel(pair) && (
+                            <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
+                              <Clock className="h-3 w-3" />
+                              <span>{getSubmissionOrderLabel(pair)}</span>
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex justify-center">
