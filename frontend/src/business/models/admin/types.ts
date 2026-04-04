@@ -22,6 +22,16 @@ export interface CreateUserData {
   role: "student" | "teacher" | "admin"
 }
 
+export interface BulkCreateUserError {
+  email: string
+  message: string
+}
+
+export interface BulkCreateResult {
+  created: AdminUser[]
+  errors: BulkCreateUserError[]
+}
+
 export interface AdminClassSchedule {
   days: DayOfWeek[]
   startTime: string

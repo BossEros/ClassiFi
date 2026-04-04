@@ -16,6 +16,7 @@ import type {
   AdminTeachersResponse,
   AdminEnrollmentRecord,
   TransferStudentData,
+  BulkCreateUsersResponse,
 } from "@/data/api/admin.types"
 
 // ============ User Management ============
@@ -65,6 +66,17 @@ export async function createNewUserAccount(
   )
 
   return unwrapApiResponse(apiResponse, "Failed to create user")
+}
+
+export async function bulkCreateUserAccounts(
+  usersData: CreateUserData[],
+): Promise<BulkCreateUsersResponse> {
+  const apiResponse = await apiClient.post<BulkCreateUsersResponse>(
+    `/admin/users/bulk`,
+    { users: usersData },
+  )
+
+  return unwrapApiResponse(apiResponse, "Failed to bulk create users")
 }
 
 export async function updateUserRoleById(

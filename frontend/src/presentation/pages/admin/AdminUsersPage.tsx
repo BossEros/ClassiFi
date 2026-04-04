@@ -1,12 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, Trash2, UserPlus, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon } from "lucide-react";
+import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, Trash2, UserPlus, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon, Users, Plus, Upload, Download, AlertCircle as AlertCircleIcon, CheckCircle2 } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { Avatar } from "@/presentation/components/ui/Avatar";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import { useToastStore } from "@/shared/store/useToastStore";
 import * as adminService from "@/business/services/adminService";
-import type { AdminUser } from "@/business/services/adminService";
+import type { AdminUser, BulkCreateResult } from "@/business/services/adminService";
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue";
 import { useDocumentClick } from "@/presentation/hooks/shared/useDocumentClick";
 import { useRequestState } from "@/presentation/hooks/shared/useRequestState";
@@ -22,6 +23,7 @@ import { Shield, Power } from "lucide-react";
 import { adminEditUserFormSchema, type AdminEditUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { adminCreateUserFormSchema, type AdminCreateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
+import type { AdminBulkUserRow } from "@/presentation/schemas/admin/adminUserSchemas";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
 // Inlined from src/presentation/components/admin/AdminDeleteUserModal.tsx
@@ -118,7 +120,7 @@ function AdminDeleteUserModal({
 
   if (!isOpen || !user) return null
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center">
       {/* Backdrop */}
       <div
@@ -336,7 +338,8 @@ function AdminDeleteUserModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -514,7 +517,7 @@ function AdminEditUserModal({
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
@@ -737,7 +740,441 @@ function AdminEditUserModal({
           </div>
         </form>
       </div>
+    </div>,
+    document.body,
+  )
+}
+
+// ─── Bulk Create User Modal ───────────────────────────────────────────────────
+
+interface AdminBulkUserModalProps {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: (createdCount: number) => void
+}
+
+const EMPTY_BULK_ROW: AdminBulkUserRow = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  password: "",
+  role: "student",
+}
+
+function BulkUserRow({
+  index,
+  row,
+  onChange,
+  onRemove,
+  canRemove,
+  rowError,
+}: {
+  index: number
+  row: AdminBulkUserRow
+  onChange: (index: number, field: keyof AdminBulkUserRow, value: string) => void
+  onRemove: (index: number) => void
+  canRemove: boolean
+  rowError?: Partial<Record<keyof AdminBulkUserRow, string>>
+}) {
+  const [showPw, setShowPw] = useState(false)
+
+  return (
+    <div className="flex gap-2 items-start py-3 border-b border-slate-100 last:border-b-0">
+      <span className="mt-2.5 w-6 shrink-0 text-center text-xs font-medium text-slate-400">{index + 1}</span>
+
+      {/* First Name */}
+      <div className="flex-1 min-w-0">
+        <input
+          type="text"
+          value={row.firstName}
+          onChange={(e) => onChange(index, "firstName", e.target.value)}
+          placeholder="First name"
+          className={cn(
+            "w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-transparent",
+            rowError?.firstName ? "border-rose-400" : "border-slate-300",
+          )}
+        />
+      </div>
+
+      {/* Last Name */}
+      <div className="flex-1 min-w-0">
+        <input
+          type="text"
+          value={row.lastName}
+          onChange={(e) => onChange(index, "lastName", e.target.value)}
+          placeholder="Last name"
+          className={cn(
+            "w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-transparent",
+            rowError?.lastName ? "border-rose-400" : "border-slate-300",
+          )}
+        />
+      </div>
+
+      {/* Email */}
+      <div className="flex-[2] min-w-0">
+        <input
+          type="email"
+          value={row.email}
+          onChange={(e) => onChange(index, "email", e.target.value)}
+          placeholder="email@example.com"
+          className={cn(
+            "w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-transparent",
+            rowError?.email ? "border-rose-400" : "border-slate-300",
+          )}
+        />
+      </div>
+
+      {/* Password */}
+      <div className="flex-[1.5] min-w-0 relative">
+        <input
+          type={showPw ? "text" : "password"}
+          value={row.password}
+          onChange={(e) => onChange(index, "password", e.target.value)}
+          placeholder="Password"
+          className={cn(
+            "w-full rounded-lg border px-3 py-2 pr-8 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-transparent",
+            rowError?.password ? "border-rose-400" : "border-slate-300",
+          )}
+        />
+        <button
+          type="button"
+          onClick={() => setShowPw((v) => !v)}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          tabIndex={-1}
+        >
+          {showPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+
+      {/* Role */}
+      <div className="w-28 shrink-0">
+        <select
+          value={row.role}
+          onChange={(e) => onChange(index, "role", e.target.value)}
+          className="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-transparent cursor-pointer"
+        >
+          <option value="student">Student</option>
+          <option value="teacher">Teacher</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+
+      {/* Remove */}
+      <button
+        type="button"
+        onClick={() => onRemove(index)}
+        disabled={!canRemove}
+        className="mt-1.5 shrink-0 rounded-md p-1.5 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-500 disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
+  )
+}
+
+function AdminBulkUserModal({ isOpen, onClose, onSuccess }: AdminBulkUserModalProps) {
+  const [rows, setRows] = useState<AdminBulkUserRow[]>([{ ...EMPTY_BULK_ROW }])
+  const [rowErrors, setRowErrors] = useState<Partial<Record<keyof AdminBulkUserRow, string>>[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [globalError, setGlobalError] = useState<string | null>(null)
+  const [result, setResult] = useState<BulkCreateResult | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => {
+    if (!isOpen) {
+      setRows([{ ...EMPTY_BULK_ROW }])
+      setRowErrors([])
+      setGlobalError(null)
+      setResult(null)
+      setIsLoading(false)
+    }
+  }, [isOpen])
+
+  if (!isOpen) return null
+
+  const handleRowChange = (index: number, field: keyof AdminBulkUserRow, value: string) => {
+    setRows((prev) => prev.map((r, i) => i === index ? { ...r, [field]: value } : r))
+    setGlobalError(null)
+    setRowErrors((prev) => {
+      const next = [...prev]
+      if (next[index]) {
+        const { [field]: _removed, ...rest } = next[index] as Record<string, string>
+        next[index] = rest
+      }
+      return next
+    })
+  }
+
+  const handleAddRow = () => {
+    setRows((prev) => [...prev, { ...EMPTY_BULK_ROW }])
+  }
+
+  const handleRemoveRow = (index: number) => {
+    setRows((prev) => prev.filter((_, i) => i !== index))
+    setRowErrors((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string
+      const lines = text.trim().split("\n").filter(Boolean).slice(1)
+      const parsed: AdminBulkUserRow[] = []
+      for (const line of lines) {
+        const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""))
+        if (cols.length < 5) continue
+        parsed.push({
+          firstName: cols[0] ?? "",
+          lastName: cols[1] ?? "",
+          email: cols[2] ?? "",
+          password: cols[3] ?? "",
+          role: (["student", "teacher", "admin"].includes(cols[4] ?? "") ? cols[4] : "student") as AdminBulkUserRow["role"],
+        })
+      }
+      if (parsed.length > 0) {
+        setRows(parsed)
+        setRowErrors([])
+        setGlobalError(null)
+      } else {
+        setGlobalError("No valid rows found in CSV. Expected: firstName, lastName, email, password, role")
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ""
+  }
+
+  const handleDownloadTemplate = () => {
+    const csvContent = "firstName,lastName,email,password,role\nJohn,Doe,john.doe@example.com,SecurePass123!,student\nJane,Smith,jane.smith@example.com,SecurePass123!,teacher"
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = "bulk_users_template.csv"
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const validateRows = (): boolean => {
+    const errors: Partial<Record<keyof AdminBulkUserRow, string>>[] = rows.map((row) => {
+      const rowValidationError: Partial<Record<keyof AdminBulkUserRow, string>> = {}
+      if (!row.firstName.trim()) rowValidationError.firstName = "Required"
+      if (!row.lastName.trim()) rowValidationError.lastName = "Required"
+      if (!row.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) rowValidationError.email = "Valid email required"
+      if (row.password.length < 8) rowValidationError.password = "8+ chars required"
+      return rowValidationError
+    })
+    setRowErrors(errors)
+    return errors.every((e) => Object.keys(e).length === 0)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!validateRows()) {
+      setGlobalError("Fix the highlighted fields before submitting.")
+      return
+    }
+    setIsLoading(true)
+    setGlobalError(null)
+    try {
+      const bulkResult = await adminService.bulkCreateUsers(rows)
+      setResult(bulkResult)
+      if (bulkResult.created.length > 0) {
+        onSuccess(bulkResult.created.length)
+      }
+    } catch (err) {
+      setGlobalError(err instanceof Error ? err.message : "Failed to create users")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ── Result summary screen ─────────────────────────────────────────────────
+  if (result) {
+    return createPortal(
+      <div className="fixed inset-0 z-[10000] flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative flex flex-col w-full h-full bg-white">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-slate-200 shrink-0">
+            <div>
+              <h3 className="text-xl font-bold tracking-tight text-slate-900">Bulk Create — Results</h3>
+              <p className="mt-1 text-sm text-slate-500">
+                {result.created.length} created · {result.errors.length} failed
+              </p>
+            </div>
+            <button onClick={onClose} className="cursor-pointer rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            {result.created.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                  <h4 className="font-semibold text-slate-800">Successfully Created ({result.created.length})</h4>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 divide-y divide-emerald-100">
+                  {result.created.map((u) => (
+                    <div key={u.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                      <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+                      <span className="font-medium text-slate-800">{u.firstName} {u.lastName}</span>
+                      <span className="text-slate-500">{u.email}</span>
+                      <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 capitalize">{u.role}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {result.errors.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertCircleIcon className="w-5 h-5 text-rose-500" />
+                  <h4 className="font-semibold text-slate-800">Failed ({result.errors.length})</h4>
+                </div>
+                <div className="rounded-xl border border-rose-200 bg-rose-50 divide-y divide-rose-100">
+                  {result.errors.map((err, i) => (
+                    <div key={i} className="flex items-start gap-3 px-4 py-2.5 text-sm">
+                      <AlertCircleIcon className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
+                      <div>
+                        <span className="font-medium text-slate-800">{err.email}</span>
+                        <p className="text-rose-600">{err.message}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex gap-3 p-6 border-t border-slate-200 shrink-0">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )
+  }
+
+  // ── Entry screen ──────────────────────────────────────────────────────────
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="relative flex flex-col w-full h-full bg-white">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 shrink-0">
+          <div>
+            <h3 className="text-xl font-bold tracking-tight text-slate-900">Add Users in Bulk</h3>
+            <p className="mt-1 text-sm text-slate-500">Fill in each row or upload a CSV file</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleCSVUpload} />
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              <Download className="w-4 h-4" />
+              Download Template
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              <Upload className="w-4 h-4" />
+              Import CSV
+            </button>
+            <button onClick={onClose} className="cursor-pointer rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 ml-1">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Column headers */}
+        <div className="flex gap-2 px-6 py-2 bg-slate-50 border-b border-slate-200 shrink-0">
+          <span className="w-6 shrink-0" />
+          <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-slate-500">First Name</span>
+          <span className="flex-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Last Name</span>
+          <span className="flex-[2] text-xs font-semibold uppercase tracking-wide text-slate-500">Email</span>
+          <span className="flex-[1.5] text-xs font-semibold uppercase tracking-wide text-slate-500">Password</span>
+          <span className="w-28 shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-500">Role</span>
+          <span className="w-8 shrink-0" />
+        </div>
+
+        {/* Rows */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 overflow-y-auto px-6">
+            {rows.map((row, i) => (
+              <BulkUserRow
+                key={i}
+                index={i}
+                row={row}
+                onChange={handleRowChange}
+                onRemove={handleRemoveRow}
+                canRemove={rows.length > 1}
+                rowError={rowErrors[i]}
+              />
+            ))}
+
+            <button
+              type="button"
+              onClick={handleAddRow}
+              className="flex cursor-pointer items-center gap-2 mt-3 mb-4 rounded-xl border border-dashed border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:border-teal-400 hover:bg-teal-50 hover:text-teal-700 w-full justify-center"
+            >
+              <Plus className="w-4 h-4" />
+              Add Row
+            </button>
+          </div>
+
+          {/* Footer */}
+          <div className="shrink-0 border-t border-slate-200">
+            {globalError && (
+              <div className="flex items-start gap-3 mx-6 mt-4 rounded-xl border border-rose-200 bg-rose-50 p-4">
+                <AlertCircleIcon className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+                <p className="text-sm text-rose-700">{globalError}</p>
+              </div>
+            )}
+            <div className="flex gap-3 p-6">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-300 px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                <X className="h-4 w-4" />
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-teal-500/40 bg-teal-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Users className="w-4 h-4" />
+                    <span>Create {rows.length} User{rows.length !== 1 ? "s" : ""}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -829,15 +1266,15 @@ function AdminUserModal({
 
   const passwordError = errors.password?.message
 
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
-        <div className="flex items-center justify-between mb-6">
+      <div className="relative flex flex-col w-full h-full bg-white text-left shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200 shrink-0">
           <div>
             <h3 className="text-xl font-bold tracking-tight text-slate-900">
               Create User
@@ -854,19 +1291,20 @@ function AdminUserModal({
           </button>
         </div>
 
-        {error && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4">
-            <Loader2 className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
-            <p className="text-sm text-rose-700">{error}</p>
-          </div>
-        )}
-
         <form
           onSubmit={handleSubmit(handleValidSubmit, handleInvalidSubmit)}
-          className="space-y-4"
+          className="flex flex-col flex-1 min-h-0"
           noValidate
         >
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {error && (
+              <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4">
+                <Loader2 className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+                <p className="text-sm text-rose-700">{error}</p>
+              </div>
+            )}
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <label className="ml-1 text-sm font-semibold text-slate-700">
                 First Name
@@ -1011,8 +1449,9 @@ function AdminUserModal({
               </div>
             </div>
           </div>
+          </div>
 
-          <div className="flex gap-3 mt-8 pt-2">
+          <div className="flex gap-3 p-6 border-t border-slate-200 shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -1038,7 +1477,8 @@ function AdminUserModal({
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -1061,6 +1501,7 @@ export function AdminUsersPage() {
   } | null>(null)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showBulkCreateModal, setShowBulkCreateModal] = useState(false)
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
@@ -1188,6 +1629,13 @@ export function AdminUsersPage() {
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
               <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
               Refresh
+            </button>
+            <button
+              onClick={() => setShowBulkCreateModal(true)}
+              className="cursor-pointer flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50"
+            >
+              <Users className="w-4 h-4" />
+              <span>Add in Bulk</span>
             </button>
             <button
               onClick={() => setShowCreateModal(true)}
@@ -1500,6 +1948,15 @@ export function AdminUsersPage() {
           })()}
 
         {/* Modals */}
+        <AdminBulkUserModal
+          isOpen={showBulkCreateModal}
+          onClose={() => setShowBulkCreateModal(false)}
+          onSuccess={(createdCount) => {
+            fetchUsers()
+            setTotal((t) => t + createdCount)
+          }}
+        />
+
         <AdminUserModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}

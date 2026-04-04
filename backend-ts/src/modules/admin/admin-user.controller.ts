@@ -14,12 +14,14 @@ import {
   UpdateUserDetailsSchema,
   UpdateUserEmailSchema,
   CreateUserSchema,
+  BulkCreateUsersSchema,
   type UserFilterQuery,
   type UserParams,
   type UpdateUserRole,
   type UpdateUserDetails,
   type UpdateUserEmail,
   type CreateUser,
+  type BulkCreateUsers,
 } from "@/modules/admin/admin.schema.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -107,6 +109,24 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
       const createdUser = await adminUserService.createUser(newUserData)
 
       return reply.status(201).send({ success: true, user: createdUser })
+    },
+  })
+
+  /**
+   * POST /users/bulk
+   * Bulk create multiple users in a single request
+   */
+  app.post("/users/bulk", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateBody(BulkCreateUsersSchema),
+    ],
+    handler: async (request, reply) => {
+      const { users: usersToCreate } = request.validatedBody as BulkCreateUsers
+
+      const bulkResult = await adminUserService.bulkCreateUsers(usersToCreate)
+
+      return reply.status(201).send({ success: true, ...bulkResult })
     },
   })
 

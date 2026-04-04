@@ -179,6 +179,38 @@ export class AdminUserService {
   }
 
   /**
+   * Bulk create multiple user accounts (admin-initiated).
+   * Processes each user sequentially and collects individual results.
+   *
+   * @param users - Array of user data objects to create.
+   * @returns An object containing successfully created users and any per-row errors.
+   */
+  async bulkCreateUsers(users: CreateUserData[]): Promise<{
+    created: UserDTO[]
+    errors: { email: string; message: string }[]
+  }> {
+    const createdUsers: UserDTO[] = []
+    const creationErrors: { email: string; message: string }[] = []
+
+    for (const userData of users) {
+      try {
+        const createdUser = await this.createUser(userData)
+        createdUsers.push(createdUser)
+      } catch (userCreationError) {
+        creationErrors.push({
+          email: userData.email,
+          message:
+            userCreationError instanceof Error
+              ? userCreationError.message
+              : "Unknown error",
+        })
+      }
+    }
+
+    return { created: createdUsers, errors: creationErrors }
+  }
+
+  /**
    * Delete a user (admin-initiated).
    */
   async deleteUser(userId: number): Promise<void> {

@@ -100,6 +100,18 @@ export const CreateUserSchema = z.object({
 export type CreateUser = z.infer<typeof CreateUserSchema>
 
 /**
+ * Request body schema for bulk creating multiple user accounts.
+ * Wraps an array of individual CreateUser entries.
+ */
+export const BulkCreateUsersSchema = z.object({
+  users: z
+    .array(CreateUserSchema)
+    .min(1, "At least one user is required")
+    .max(100, "Cannot bulk-create more than 100 users at once"),
+})
+export type BulkCreateUsers = z.infer<typeof BulkCreateUsersSchema>
+
+/**
  * User data transfer object schema.
  * Represents user information returned by admin endpoints.
  */

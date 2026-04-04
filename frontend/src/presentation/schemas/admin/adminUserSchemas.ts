@@ -27,6 +27,20 @@ export const adminCreateUserFormSchema = z.object({
   role: roleSchema,
 })
 
+export const adminBulkUserRowSchema = z.object({
+  firstName: firstNameSchema,
+  lastName: lastNameSchema,
+  email: emailSchema,
+  password: strongPasswordSchema,
+  role: roleSchema,
+})
+
+export const adminBulkCreateUsersFormSchema = z.object({
+  users: z
+    .array(adminBulkUserRowSchema)
+    .min(1, "Add at least one user"),
+})
+
 export const adminEditUserFormSchema = z.object({
   firstName: firstNameSchema,
   lastName: lastNameSchema,
@@ -43,6 +57,10 @@ export const adminDeleteUserFormSchema = z.object({
 
 export type AdminCreateUserFormValues = z.infer<
   typeof adminCreateUserFormSchema
+>
+export type AdminBulkUserRow = z.infer<typeof adminBulkUserRowSchema>
+export type AdminBulkCreateUsersFormValues = z.infer<
+  typeof adminBulkCreateUsersFormSchema
 >
 export type AdminEditUserFormValues = z.infer<typeof adminEditUserFormSchema>
 export type AdminDeleteUserFormValues = z.infer<

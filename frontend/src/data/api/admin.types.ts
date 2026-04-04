@@ -162,6 +162,16 @@ export interface AdminEnrollmentsResponse extends AdminResponse {
   enrollments?: AdminEnrollmentRecord[]
 }
 
+export interface BulkCreateUserError {
+  email: string
+  message: string
+}
+
+export interface BulkCreateUsersResponse extends AdminResponse {
+  created: AdminUser[]
+  errors: BulkCreateUserError[]
+}
+
 export interface PaginatedResponse<T> extends AdminResponse {
   data: T[]
   total: number

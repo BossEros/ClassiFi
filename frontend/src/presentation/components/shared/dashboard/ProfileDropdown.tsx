@@ -127,7 +127,7 @@ export function ProfileDropdown({
     <div
       ref={dropdownMenuRef}
       className={cn(
-        "z-[11000] rounded-lg border border-slate-700 bg-slate-800 p-1 shadow-lg shadow-black/25",
+        "z-[11000] rounded-lg border border-white/10 bg-[#1e3532] p-1 shadow-lg shadow-black/25",
         shouldRenderFloatingDesktopMenu
           ? "fixed bottom-2 w-48"
           : "absolute bottom-full left-0 right-0 mb-2 w-full",
@@ -145,7 +145,7 @@ export function ProfileDropdown({
       <button
         onClick={handleSettingsClick}
         className={cn(
-          "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-700 transition-colors rounded-md",
+          "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-slate-200 hover:bg-white/10 transition-colors rounded-md",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-inset",
         )}
         role="menuitem"
@@ -154,12 +154,12 @@ export function ProfileDropdown({
         <span>Settings</span>
       </button>
 
-      <div className="my-1" />
+      <div className="my-1 border-t border-white/10" />
 
       <button
         onClick={handleLogout}
         className={cn(
-          "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-400 hover:bg-slate-700 transition-colors rounded-md",
+          "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-rose-400 hover:bg-white/10 transition-colors rounded-md",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-600 focus-visible:ring-inset",
         )}
         role="menuitem"

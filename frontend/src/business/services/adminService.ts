@@ -12,6 +12,7 @@ import type {
   ClassAssignment,
   AdminEnrollmentRecord,
   TransferStudentData,
+  BulkCreateResult,
 } from "@/business/models/admin/types"
 import { validateId } from "@/business/validation/commonValidation"
 import {
@@ -33,6 +34,7 @@ export type {
   ClassAssignment,
   AdminEnrollmentRecord,
   TransferStudentData,
+  BulkCreateResult,
 }
 
 // ============ User Management ============
@@ -101,6 +103,23 @@ export async function createUser(data: CreateUserData): Promise<AdminUser> {
   }
 
   return response.user
+}
+
+/**
+ * Bulk creates multiple user accounts in a single request.
+ *
+ * @param users - Array of user data objects to create.
+ * @returns An object with successfully created users and per-row errors.
+ */
+export async function bulkCreateUsers(
+  users: CreateUserData[],
+): Promise<BulkCreateResult> {
+  const response = await adminRepository.bulkCreateUserAccounts(users)
+
+  return {
+    created: response.created ?? [],
+    errors: response.errors ?? [],
+  }
 }
 
 /**
