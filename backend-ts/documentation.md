@@ -471,6 +471,7 @@ The plagiarism API now focuses on assignment-level review workflows:
 - Pair rows include both students plus structural, semantic, and hybrid similarity scores alongside overlap and longest match.
 - Clients can sort/filter pair results to prioritize high-risk comparisons and generate threshold-aware class or pairwise PDF evidence on the frontend without needing a server-side PDF endpoint.
 - Detailed fragment/code inspection remains available through result-detail endpoints.
+- Cross-class result-detail responses include both student names and submission timestamps so clients can render the same temporal review cues used by intra-assignment comparisons.
 - `POST /plagiarism/analyze/assignment/:assignmentId` reuses the latest existing report when no new/latest submissions have been added since that report was generated.
 - The system keeps only one report per assignment; when a new report is generated (or a reusable one is reviewed), older reports for that assignment are deleted.
 - Cross-class reports are retained as historical records so previously opened cross-class result IDs and report deep links remain valid even after newer cross-class comparisons are generated.

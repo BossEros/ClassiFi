@@ -367,6 +367,7 @@ Cross-class analysis extends the per-assignment similarity workflow to compare s
 - Accessible from the submissions page via a dedicated `Cross-Class Similarity` action that navigates to `/dashboard/assignments/:assignmentId/cross-class-similarity`.
 - `CrossClassSimilarityPage` fetches the assignment details and renders a `CrossClassResultsSection` showing matching assignments found across other classes.
 - Results include per-pair structural, semantic, and hybrid scores so teachers can identify suspicious cross-class sharing quickly.
+- Selected cross-class pair review reuses the shared `PairComparison` / `PairCodeDiff` experience, including temporal submission-order context when both submissions expose timestamps.
 - Cross-class reports are retained as historical records; newer analyses do not overwrite prior cross-class results.
 - `crossClassPlagiarismService` deduplicates in-flight requests per assignment using a module-scoped `Map` so concurrent navigation events do not double-trigger analysis.
 - `Download Class Report` is also available on the cross-class page to export the current threshold view.

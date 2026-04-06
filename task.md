@@ -10,3 +10,9 @@
 - [x] Remove redundant and empty catch blocks in the frontend lint pass
 - [ ] Re-run `frontend` lint and build after the lint remediation
   Note: `frontend` lint passes. `tsc -b` passes. `vite build` is blocked by sandbox `spawn EPERM`.
+- [x] Trace the intra-class temporal analysis implementation for parity guidance
+- [x] Add submission timestamps to cross-class result detail responses
+- [x] Wire cross-class pair detail mapping to reuse the shared temporal analysis UI
+- [x] Add regression tests for the new cross-class temporal metadata
+- [ ] Verify backend and frontend checks for the temporal analysis change
+  Note: `backend-ts` `npm run typecheck` and `npm test` passed. `frontend` `npx tsc -b` and `npm run build` passed. `frontend` `npm test` is blocked in this sandbox by `spawn EPERM` while Vite/esbuild loads `vitest.config.ts`.
