@@ -118,27 +118,35 @@ export class FingerprintIndex {
     const file = entry.file
     let kgram = 0
 
+    // STEP 1: Run the Winnow algorithm over this file's token array.
+    // It slides a window across the tokens, hashes every k-gram, and picks
+    // the minimum hash in each window — those are the file's fingerprints.
     for (const { data, hash, start, stop } of this.hashFilter.fingerprints(
       file.tokens,
     )) {
-      // Add k-gram range to file entry
+      // STEP 2: Record which token range (start → stop) this fingerprint covers.
+      // Used later to highlight the matching region in the source file.
       entry.kgrams.push(new Range(start, stop))
 
-      // Validate ordering (sanity check)
+      // Sanity check: token positions must be in source order.
       assert(
         Region.isInOrder(file.mapping[start], file.mapping[stop]) ||
           file.tokens[stop] === ")",
         `Invalid ordering in ${file.path}`,
       )
 
+      // STEP 3: Convert the token range to an actual source location (row/col).
       const location = Region.merge(file.mapping[start], file.mapping[stop])
 
+      // STEP 4: Build an Occurrence — records which file and where in it this fingerprint appears.
       const part: Occurrence = {
         file,
         side: { index: kgram, start, stop, data, location },
       }
 
-      // Get or create SharedFingerprint for this hash
+      // STEP 5: Look up this hash in the inverted index.
+      // If it's new, create a SharedFingerprint entry for it.
+      // If it already exists (seen in another file), add this occurrence to it — that's a match.
       let shared: SharedFingerprint | undefined = this.index.get(hash)
       if (!shared) {
         shared = new SharedFingerprint(hash, data)
@@ -147,7 +155,9 @@ export class FingerprintIndex {
 
       shared.add(part)
 
-      // Check if this fingerprint should be ignored
+      // STEP 6: Decide if this fingerprint should count as a real match or be suppressed.
+      // Suppress if: the file is a boilerplate/template, the hash appears in too many files,
+      // or it was manually blocklisted. Otherwise, add it to this file's active match set.
       if (
         entry.isIgnored ||
         shared.fileCount() > this.maxFingerprintFileCount ||

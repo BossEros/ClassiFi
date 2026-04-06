@@ -40,7 +40,12 @@ export abstract class Tokenizer {
    * Tokenize a file and return a TokenizedFile.
    */
   public tokenizeFile(file: File): TokenizedFile {
+    // STEP 1: Extract the raw source code from the file and tokenize it.
+    // This produces two parallel arrays: the token strings and their source locations.
     const [ast, mapping] = this.tokenizeWithMapping(file.content)
+
+    // STEP 2: Wrap everything into a TokenizedFile — the file, its tokens, and the location map.
+    // This is what the FingerprintIndex receives for Winnowing.
     return new TokenizedFile(file, ast, mapping)
   }
 
@@ -51,7 +56,12 @@ export abstract class Tokenizer {
     const resultTokens: Array<string> = []
     const positionMapping: Array<Region> = []
 
+    // STEP 1: Call the language-specific generateTokens() (implemented by CodeTokenizer).
+    // It returns a flat list of { token, location } objects.
     for (const { token, location } of this.generateTokens(text)) {
+      // STEP 2: Split each token into two separate parallel arrays.
+      // resultTokens[i] is the token string, positionMapping[i] is where it appeared in the source.
+      // This mapping is later used to highlight matching regions in the UI.
       resultTokens.push(token)
       positionMapping.push(location)
     }
