@@ -8,6 +8,7 @@ export interface Submission {
   submittedAt: string
   isLatest: boolean
   grade?: number | null
+  gradeBreakdown?: import("@/data/api/gradebook.types").GradeBreakdown | null
   teacherFeedback?: string | null
   feedbackGivenAt?: string | null
   isGradeOverridden?: boolean

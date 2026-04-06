@@ -1,7 +1,18 @@
+export interface GradeBreakdown {
+  originalGrade: number | null
+  latePenaltyPercent: number
+  similarityPenaltyPercent: number
+  similarityScore: number | null
+  finalGrade: number | null
+  effectiveGrade: number | null
+  isOverridden: boolean
+}
+
 export interface GradeEntry {
   assignmentId: number
   submissionId: number | null
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   submittedAt: string | null
 }
@@ -31,6 +42,7 @@ export interface StudentGradeEntry {
   totalScore: number
   deadline: string | null
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   feedback: string | null
   submittedAt: string | null

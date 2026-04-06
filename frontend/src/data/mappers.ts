@@ -28,6 +28,7 @@ export function mapSubmission(sub: SubmissionDTO): Submission {
         : sub.submittedAt.toISOString(),
     isLatest: sub.isLatest,
     grade: sub.grade ?? undefined,
+    gradeBreakdown: sub.gradeBreakdown ?? null,
     isGradeOverridden: sub.isGradeOverridden ?? false,
     overrideReason: sub.overrideReason ?? null,
     overriddenAt:

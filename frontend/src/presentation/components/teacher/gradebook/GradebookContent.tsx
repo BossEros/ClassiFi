@@ -9,14 +9,31 @@ import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/data/a
 import { X, Edit2 } from "lucide-react";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 import { buildGradeReportData, GradeReportDocument } from "./pdf/gradeReportPdf";
+import { GradeBreakdownPanel } from "@/presentation/components/shared/GradeBreakdownPanel";
 
 interface GradeCellProps {
   grade: GradeEntry | null
   totalScore: number
+  deadline?: string | null
   variant?: "dark" | "light"
 }
 
-function GradeCell({ grade, totalScore, variant = "dark" }: GradeCellProps) {
+function GradeCell({ grade, totalScore, deadline, variant = "dark" }: GradeCellProps) {
+  const [isBreakdownVisible, setIsBreakdownVisible] = useState(false)
+  const cellRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (cellRef.current && !cellRef.current.contains(event.target as Node)) {
+        setIsBreakdownVisible(false)
+      }
+    }
+    if (isBreakdownVisible) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [isBreakdownVisible])
+
   if (!grade || !grade.submissionId) {
     return (
       <span
@@ -40,21 +57,40 @@ function GradeCell({ grade, totalScore, variant = "dark" }: GradeCellProps) {
 
   const percentage = totalScore > 0 ? (grade.grade / totalScore) * 100 : 0
   const colorClass = getGradeColorClass(percentage, variant)
+  const hasDeductions =
+    grade.gradeBreakdown &&
+    (grade.gradeBreakdown.latePenaltyPercent > 0 || grade.gradeBreakdown.similarityPenaltyPercent > 0)
 
   return (
-    <span
-      className={`inline-flex items-center justify-center min-w-[48px] h-8 px-2 rounded text-sm font-medium ${colorClass}`}
-      title={`${grade.grade}/${totalScore} (${Math.round(percentage)}%)`}
-    >
-      <span>{grade.grade}</span>
-      {grade.isOverridden && (
-        <span className="ml-1" title="Manually overridden">
-          <Edit2
-            className={`h-3 w-3 ${variant === "light" ? "text-amber-500" : "text-yellow-400"}`}
+    <div ref={cellRef} className="relative inline-block">
+      <button
+        type="button"
+        onClick={() => hasDeductions && setIsBreakdownVisible((prev) => !prev)}
+        className={`inline-flex items-center justify-center min-w-[48px] h-8 px-2 rounded text-sm font-medium ${colorClass} ${hasDeductions ? "cursor-pointer" : "cursor-default"}`}
+        title={`${grade.grade}/${totalScore} (${Math.round(percentage)}%)${hasDeductions ? " — click to see breakdown" : ""}`}
+      >
+        <span>{grade.grade}</span>
+        {grade.isOverridden && (
+          <span className="ml-1" title="Manually overridden">
+            <Edit2
+              className={`h-3 w-3 ${variant === "light" ? "text-amber-500" : "text-yellow-400"}`}
+            />
+          </span>
+        )}
+      </button>
+
+      {isBreakdownVisible && grade.gradeBreakdown && (
+        <div className="absolute left-1/2 z-50 mt-1 w-56 -translate-x-1/2 drop-shadow-lg">
+          <GradeBreakdownPanel
+            breakdown={grade.gradeBreakdown}
+            totalScore={totalScore}
+            submittedAt={grade.submittedAt}
+            deadline={deadline}
+            variant={variant}
           />
-        </span>
+        </div>
       )}
-    </span>
+    </div>
   )
 }
 
@@ -163,7 +199,7 @@ function GradebookTable({
                       <span className={`truncate max-w-[80px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}>
                         {assignment.name}
                       </span>
-                      <GradeCell grade={grade ?? null} totalScore={assignment.totalScore} variant={variant} />
+                      <GradeCell grade={grade ?? null} totalScore={assignment.totalScore} deadline={assignment.deadline} variant={variant} />
                     </div>
                   )
                 })}
@@ -245,6 +281,7 @@ function GradebookTable({
                         <GradeCell
                           grade={grade ?? null}
                           totalScore={assignment.totalScore}
+                          deadline={assignment.deadline}
                           variant={variant}
                         />
                       </td>

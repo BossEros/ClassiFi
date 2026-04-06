@@ -173,6 +173,7 @@ export interface SubmissionDTO {
   submittedAt: string | Date
   isLatest: boolean
   grade?: number | null
+  gradeBreakdown?: import("@/data/api/gradebook.types").GradeBreakdown | null
   isGradeOverridden?: boolean
   overrideReason?: string | null
   overriddenAt?: string | Date | null

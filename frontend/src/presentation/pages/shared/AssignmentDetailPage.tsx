@@ -5,6 +5,8 @@ import {
   Calendar,
   Check,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
   Clock,
   Copy,
@@ -46,6 +48,7 @@ import {
 } from "@/business/services/assignmentService"
 import { cn } from "@/shared/utils/cn"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
+import { GradeBreakdownPanel } from "@/presentation/components/shared/GradeBreakdownPanel"
 
 interface CodePreviewModalProps {
   isOpen: boolean
@@ -466,6 +469,7 @@ export function AssignmentDetailPage() {
   })
 
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false)
+  const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(false)
   const { override, removeOverride, isOverriding } = useGradeOverride()
 
   const {
@@ -495,6 +499,13 @@ export function AssignmentDetailPage() {
     classId: 0,
     className: "",
   }
+
+  const similarityConfig = tempAssignment.similarityPenaltyConfig
+  const firstDeductionBand = similarityConfig?.deductionBands?.[0]
+  const warningThresholdPct = similarityConfig ? Math.round(similarityConfig.warningThreshold * 100) : 75
+  const deductionStartPct = firstDeductionBand ? Math.round(firstDeductionBand.minHybridScore * 100) : 85
+  const warningEndPct = deductionStartPct - 1
+  const maxPenaltyPct = similarityConfig?.maxPenaltyPercent ?? 20
 
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
   const isLightAssignmentView = true
@@ -795,10 +806,11 @@ export function AssignmentDetailPage() {
                     Similarity-based deduction is enabled for this assignment
                   </p>
                   <p className="text-sm leading-6 text-amber-900">
-                    Similarity does not zero the score by itself. Matches from
-                    75% to 84% are warning-only, and deductions begin at 85%.
+                    Similarity does not zero the score by itself. Matches from{" "}
+                    {warningThresholdPct}% to {warningEndPct}% are
+                    warning-only, and deductions begin at {deductionStartPct}%.
                     Template code is excluded and the automatic deduction is
-                    capped at 20%.
+                    capped at {maxPenaltyPct}%.
                   </p>
                 </div>
               </div>
@@ -971,6 +983,43 @@ export function AssignmentDetailPage() {
                                 This score was manually adjusted by the teacher.
                               </div>
                             )}
+
+                            {activeSubmission?.gradeBreakdown &&
+                              (activeSubmission.gradeBreakdown.latePenaltyPercent > 0 ||
+                                activeSubmission.gradeBreakdown.similarityPenaltyPercent > 0) &&
+                              activeSubmission.gradeBreakdown.originalGrade !== null && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIsBreakdownExpanded((prev) => !prev)}
+                                    className={cn(
+                                      "inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all",
+                                      isBreakdownExpanded
+                                        ? "border border-teal-200 bg-teal-50 text-teal-800"
+                                        : "border border-slate-200 bg-slate-50 text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700",
+                                    )}
+                                  >
+                                    {isBreakdownExpanded ? (
+                                      <ChevronUp className="h-3.5 w-3.5" />
+                                    ) : (
+                                      <ChevronDown className="h-3.5 w-3.5" />
+                                    )}
+                                    {isBreakdownExpanded ? "Hide" : "View"} Grade Breakdown
+                                  </button>
+
+                                  {isBreakdownExpanded && (
+                                    <GradeBreakdownPanel
+                                      breakdown={activeSubmission.gradeBreakdown}
+                                      totalScore={assignmentTotalScore}
+                                      submittedAt={activeSubmission.submittedAt}
+                                      deadline={assignment?.deadline}
+                                      testsPassed={submissionTestResults?.passed}
+                                      testsTotal={submissionTestResults?.total}
+                                      variant="light"
+                                    />
+                                  )}
+                                </>
+                              )}
                           </div>
                         ) : (
                           <p className="italic text-slate-500">
