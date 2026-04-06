@@ -65,11 +65,13 @@ export interface CrossClassResultDetailsResponse {
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
   rightFile: {
     filename: string
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
 }

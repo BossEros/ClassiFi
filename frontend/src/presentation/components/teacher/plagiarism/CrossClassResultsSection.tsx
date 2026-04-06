@@ -273,6 +273,8 @@ export function CrossClassResultsSection({
           filename: details.leftFile.filename,
           content: details.leftFile.content,
           lineCount: details.leftFile.lineCount,
+          studentName: details.leftFile.studentName,
+          submittedAt: details.leftFile.submittedAt,
         },
         rightFile: {
           id: details.result.submission2Id,
@@ -280,6 +282,8 @@ export function CrossClassResultsSection({
           filename: details.rightFile.filename,
           content: details.rightFile.content,
           lineCount: details.rightFile.lineCount,
+          studentName: details.rightFile.studentName,
+          submittedAt: details.rightFile.submittedAt,
         },
         similarity: details.result.structuralScore,
         overlap: details.result.overlap,
