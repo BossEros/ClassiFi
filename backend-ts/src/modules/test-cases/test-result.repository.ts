@@ -41,6 +41,8 @@ export class TestResultRepository {
   async getWithCasesBySubmissionId(
     submissionId: number,
   ): Promise<TestResultWithCase[]> {
+    // JOIN test_results with test_cases in one query so callers don't have to do two round-trips.
+    // We alias the test case columns (e.g. testCaseName) to keep them separate from the result fields.
     const results = await db
       .select({
         // Test result fields
@@ -64,6 +66,7 @@ export class TestResultRepository {
       .innerJoin(testCases, eq(testResults.testCaseId, testCases.id))
       .where(eq(testResults.submissionId, submissionId))
 
+    // Reshape the flat JOIN rows into the nested TestResultWithCase shape the rest of the app expects
     return results.map((r) => ({
       id: r.id,
       submissionId: r.submissionId,
@@ -92,6 +95,9 @@ export class TestResultRepository {
     tx?: DbExecutor,
   ): Promise<TestResult[]> {
     if (data.length === 0) return []
+
+    // Use the transaction executor when one is provided (e.g. inside saveTestResults),
+    // otherwise fall back to the default db connection for standalone calls
     const executor = tx ?? db
     return executor.insert(testResults).values(data).returning()
   }
@@ -103,6 +109,8 @@ export class TestResultRepository {
     submissionId: number,
     tx?: DbExecutor,
   ): Promise<number> {
+    // Use the transaction executor when one is provided so this delete
+    // stays atomic with the createMany call that follows it
     const executor = tx ?? db
     const result = await executor
       .delete(testResults)
@@ -117,9 +125,16 @@ export class TestResultRepository {
   async calculateScore(
     submissionId: number,
   ): Promise<{ passed: number; total: number; percentage: number }> {
+    // STEP 1: Read the saved test results back from the DB.
+    // We intentionally read after saving so the score always reflects what's actually persisted.
     const results = await this.getBySubmissionId(submissionId)
+
+    // STEP 2: Count how many Judge0 results came back as "Accepted" (exact output match + within time limit)
     const total = results.length
     const passed = results.filter((r) => r.status === "Accepted").length
+
+    // STEP 3: Calculate the percentage. If there are no results somehow, default to 0 — not 100.
+    // (The 100% default for no test cases is handled upstream before this is ever called.)
     const percentage = total > 0 ? Math.round((passed / total) * 100) : 0
 
     return { passed, total, percentage }
