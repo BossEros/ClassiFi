@@ -170,7 +170,7 @@ describe("LatePenaltyService", () => {
         tierLabel: "On time",
       }
 
-      const result = latePenaltyService.applyPenalty(100, penalty)
+      const result = latePenaltyService.applyPenalty(100, penalty, 100)
       expect(result).toBe(100)
     })
 
@@ -183,7 +183,7 @@ describe("LatePenaltyService", () => {
         tierLabel: "Late",
       }
 
-      const result = latePenaltyService.applyPenalty(100, penalty)
+      const result = latePenaltyService.applyPenalty(100, penalty, 100)
       expect(result).toBe(90)
     })
 
@@ -196,8 +196,8 @@ describe("LatePenaltyService", () => {
         tierLabel: "Late",
       }
 
-      const result = latePenaltyService.applyPenalty(80, penalty)
-      expect(result).toBe(60)
+      const result = latePenaltyService.applyPenalty(80, penalty, 100)
+      expect(result).toBe(55)
     })
 
     it("returns 0 for rejected submission", () => {
@@ -209,7 +209,7 @@ describe("LatePenaltyService", () => {
         tierLabel: "Rejected",
       }
 
-      const result = latePenaltyService.applyPenalty(100, penalty)
+      const result = latePenaltyService.applyPenalty(100, penalty, 100)
       expect(result).toBe(0)
     })
 
@@ -222,7 +222,7 @@ describe("LatePenaltyService", () => {
         tierLabel: "Late",
       }
 
-      const result = latePenaltyService.applyPenalty(0, penalty)
+      const result = latePenaltyService.applyPenalty(0, penalty, 100)
       expect(result).toBe(0)
       expect(result).toBeGreaterThanOrEqual(0)
     })
@@ -236,8 +236,8 @@ describe("LatePenaltyService", () => {
         tierLabel: "Late",
       }
 
-      const result = latePenaltyService.applyPenalty(85, penalty)
-      expect(result).toBe(77)
+      const result = latePenaltyService.applyPenalty(85, penalty, 100)
+      expect(result).toBe(75)
     })
   })
 

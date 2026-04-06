@@ -254,20 +254,26 @@ export class SimilarityPenaltyService {
       }
 
       const penaltyCandidate = candidateBySubmissionId.get(latestSubmission.id)
+      const similarityPenaltyPercent = penaltyCandidate?.penaltyPercent ?? 0
       const adjustedGrade = penaltyCandidate
         ? this.applySimilarityPenalty(
             automaticGrade,
             penaltyCandidate.penaltyPercent,
+            assignment.totalScore ?? 100,
           )
         : automaticGrade
 
+      await this.submissionRepo.updateSimilarityPenalty(
+        latestSubmission.id,
+        similarityPenaltyPercent,
+      )
       await this.submissionRepo.updateGrade(latestSubmission.id, adjustedGrade)
       await this.notifySimilarityDeductionIfNeeded(
         latestSubmission,
         assignment,
         automaticGrade,
         adjustedGrade,
-        penaltyCandidate?.penaltyPercent ?? 0,
+        similarityPenaltyPercent,
         penaltyCandidate
           ? Math.round(penaltyCandidate.sourceHybridScore * 100)
           : 0,
@@ -380,6 +386,7 @@ export class SimilarityPenaltyService {
         continue
       }
 
+      await this.submissionRepo.updateSimilarityPenalty(latestSubmission.id, 0)
       await this.submissionRepo.updateGrade(latestSubmission.id, automaticGrade)
     }
   }
@@ -407,22 +414,17 @@ export class SimilarityPenaltyService {
       return automaticGrade
     }
 
-    return Math.max(
-      0,
-      Math.round(
-        automaticGrade * ((100 - (submission.penaltyApplied ?? 0)) / 100),
-      ),
-    )
+    const latePenaltyPoints = Math.round(totalScore * ((submission.penaltyApplied ?? 0) / 100))
+    return Math.max(0, automaticGrade - latePenaltyPoints)
   }
 
   private applySimilarityPenalty(
     automaticGrade: number,
     penaltyPercent: number,
+    totalScore: number,
   ): number {
-    return Math.max(
-      0,
-      Math.round(automaticGrade * ((100 - penaltyPercent) / 100)),
-    )
+    const penaltyPoints = Math.round(totalScore * (penaltyPercent / 100))
+    return Math.max(0, automaticGrade - penaltyPoints)
   }
 
   private async notifySimilarityDeductionIfNeeded(

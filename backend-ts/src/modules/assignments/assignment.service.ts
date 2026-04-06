@@ -80,6 +80,7 @@ export class AssignmentService {
       allowLateSubmissions,
       latePenaltyConfig,
       enableSimilarityPenalty,
+      similarityPenaltyConfig,
     } = data
 
     // STEP 1: Verify the class exists and the requesting teacher owns it
@@ -108,6 +109,7 @@ export class AssignmentService {
       allowLateSubmissions,
       latePenaltyConfig,
       enableSimilarityPenalty: enableSimilarityPenalty ?? false,
+      similarityPenaltyConfig: enableSimilarityPenalty ? (similarityPenaltyConfig ?? null) : null,
     })
 
     // STEP 4: Notify all enrolled students about the new assignment (fire-and-forget)

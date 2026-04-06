@@ -1,5 +1,5 @@
 import type { Submission } from "@/modules/submissions/submission.model.js"
-import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
+import { buildSubmissionGradeComputation, type GradeBreakdown } from "@/modules/submissions/submission-grade.js"
 
 export interface SubmissionDTO {
   id: number
@@ -12,6 +12,7 @@ export interface SubmissionDTO {
   submittedAt: string
   isLatest: boolean
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isGradeOverridden: boolean
   overrideReason: string | null
   overriddenAt: string | null
@@ -28,12 +29,17 @@ export function toSubmissionDTO(
     studentName?: string
     assignmentName?: string
     className?: string
+    similarityScore?: number | null
   },
 ): SubmissionDTO {
   const submissionGradeComputation = buildSubmissionGradeComputation({
     grade: submission.grade,
+    originalGrade: submission.originalGrade,
     isGradeOverridden: submission.isGradeOverridden,
     overrideGrade: submission.overrideGrade,
+    penaltyApplied: submission.penaltyApplied,
+    similarityPenaltyApplied: submission.similarityPenaltyApplied,
+    similarityScore: extras?.similarityScore ?? null,
   })
 
   return {
@@ -48,6 +54,7 @@ export function toSubmissionDTO(
       submission.submittedAt?.toISOString() ?? new Date().toISOString(),
     isLatest: submission.isLatest ?? false,
     grade: submissionGradeComputation.effectiveGrade,
+    gradeBreakdown: submissionGradeComputation.gradeBreakdown,
     isGradeOverridden: submission.isGradeOverridden ?? false,
     overrideReason: submission.overrideReason ?? null,
     overriddenAt: submission.overriddenAt?.toISOString() ?? null,

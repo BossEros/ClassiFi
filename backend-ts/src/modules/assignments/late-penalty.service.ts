@@ -75,10 +75,17 @@ export class LatePenaltyService {
 
   /**
    * Apply a penalty to a raw grade.
+   *
+   * @param rawGrade - The student's earned grade (e.g. 60 out of 100).
+   * @param penalty - The penalty result containing penaltyPercent.
+   * @param totalScore - The assignment's maximum possible score. The deducted
+   *   points are calculated against this value so that a 10% penalty always
+   *   removes 10 points on a 100-point assignment regardless of how many points
+   *   the student earned.
    */
-  applyPenalty(rawGrade: number, penalty: PenaltyResult): number {
-    const penalizedGrade = Math.round(rawGrade * penalty.gradeMultiplier)
-    return Math.max(0, penalizedGrade) // Never go below 0
+  applyPenalty(rawGrade: number, penalty: PenaltyResult, totalScore: number): number {
+    const penaltyPoints = Math.round(totalScore * (penalty.penaltyPercent / 100))
+    return Math.max(0, rawGrade - penaltyPoints)
   }
 
   /**

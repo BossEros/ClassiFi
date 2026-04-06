@@ -16,6 +16,7 @@ describe("SimilarityPenaltyService", () => {
   let mockSubmissionRepo: {
     getSubmissionsByAssignment: ReturnType<typeof vi.fn>
     updateGrade: ReturnType<typeof vi.fn>
+    updateSimilarityPenalty: ReturnType<typeof vi.fn>
   }
   let mockClassRepo: { getClassById: ReturnType<typeof vi.fn> }
   let mockUserRepo: { getUserById: ReturnType<typeof vi.fn> }
@@ -40,6 +41,7 @@ describe("SimilarityPenaltyService", () => {
     mockSubmissionRepo = {
       getSubmissionsByAssignment: vi.fn(),
       updateGrade: vi.fn().mockResolvedValue(undefined),
+      updateSimilarityPenalty: vi.fn().mockResolvedValue(undefined),
     }
 
     mockPersistenceService = {
@@ -225,9 +227,9 @@ describe("SimilarityPenaltyService", () => {
 
     await similarityPenaltyService.applyAssignmentPenaltyFromReport(1, 99)
 
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(31, 81)
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(32, 86)
-    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(33, 72)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(31, 80)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(32, 85)
+    expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(33, 70)
     expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(2)
   })
 
@@ -313,8 +315,8 @@ describe("SimilarityPenaltyService", () => {
       expect.objectContaining({
         reason: "similarity_deduction",
         previousGrade: 80,
-        grade: 64,
-        deductedPoints: 16,
+        grade: 60,
+        deductedPoints: 20,
       }),
     )
     expect(

@@ -1,5 +1,5 @@
 // db is accessed via BaseRepository.db
-import { and, desc, eq, ne, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, max, ne, sql } from "drizzle-orm"
 import {
   similarityReports,
   type SimilarityReport,
@@ -189,6 +189,52 @@ export class SimilarityRepository extends BaseRepository<
       .limit(1)
 
     return results[0]
+  }
+
+  /**
+   * Get the maximum hybrid similarity score (0-100) for each submission ID.
+   * Looks up both submission1Id and submission2Id in similarity_results.
+   *
+   * @param submissionIds - Array of submission IDs to look up.
+   * @returns Map of submissionId to max similarity score (0-100 integer).
+   */
+  async getMaxSimilarityScoresBySubmissionIds(
+    submissionIds: number[],
+  ): Promise<Map<number, number>> {
+    if (submissionIds.length === 0) return new Map()
+
+    const asSubmission1 = await this.db
+      .select({
+        submissionId: similarityResults.submission1Id,
+        maxScore: max(similarityResults.hybridScore),
+      })
+      .from(similarityResults)
+      .where(inArray(similarityResults.submission1Id, submissionIds))
+      .groupBy(similarityResults.submission1Id)
+
+    const asSubmission2 = await this.db
+      .select({
+        submissionId: similarityResults.submission2Id,
+        maxScore: max(similarityResults.hybridScore),
+      })
+      .from(similarityResults)
+      .where(inArray(similarityResults.submission2Id, submissionIds))
+      .groupBy(similarityResults.submission2Id)
+
+    const scoreMap = new Map<number, number>()
+
+    for (const row of [...asSubmission1, ...asSubmission2]) {
+      if (row.submissionId != null && row.maxScore != null) {
+        const score = Math.round(Number(row.maxScore) * 100)
+        const existing = scoreMap.get(row.submissionId)
+
+        if (existing === undefined || score > existing) {
+          scoreMap.set(row.submissionId, score)
+        }
+      }
+    }
+
+    return scoreMap
   }
 
   /** Delete a report (cascades to results) */

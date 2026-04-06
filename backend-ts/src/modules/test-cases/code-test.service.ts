@@ -313,6 +313,7 @@ export class CodeTestService {
     totalScore: number,
   ): Promise<TestExecutionSummary> {
     // Award the student full marks — if the teacher set up no tests, we can't penalize anyone
+    await this.submissionRepo.updateOriginalGrade(submissionId, totalScore)
     await this.submissionRepo.updateGrade(submissionId, totalScore)
 
     // Return a "perfect" summary so the caller always gets a consistent object shape back
@@ -428,6 +429,7 @@ export class CodeTestService {
       const transactionSubmissionRepo = this.submissionRepo.withContext(transactionContext)
       const transactionNotificationService = this.notificationService.withContext(transactionContext)
 
+      await transactionSubmissionRepo.updateOriginalGrade(submissionId, grade)
       await transactionSubmissionRepo.updateGrade(submissionId, grade)
       await transactionNotificationService.createNotification(
         submission.studentId,

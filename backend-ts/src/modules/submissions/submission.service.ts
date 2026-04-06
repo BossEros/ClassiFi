@@ -11,6 +11,7 @@ import {
   LatePenaltyService,
   type PenaltyResult,
 } from "@/modules/assignments/late-penalty.service.js"
+import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import {
   toSubmissionDTO,
   type SubmissionDTO,
@@ -75,6 +76,8 @@ export class SubmissionService {
     private notificationService: NotificationService,
     @inject(DI_TOKENS.services.plagiarismAutoAnalysis)
     private plagiarismAutoAnalysisService: PlagiarismAutoAnalysisService,
+    @inject(DI_TOKENS.repositories.similarity)
+    private similarityRepo: SimilarityRepository,
   ) {}
 
   /**
@@ -134,6 +137,7 @@ export class SubmissionService {
     const testsPassed = await this.runTestsAndApplyPenalty(
       submission.id,
       penaltyResult,
+      assignment.totalScore ?? 100,
     )
 
     // STEP 9: If tests passed, prune older submissions so storage stays tidy
@@ -179,7 +183,12 @@ export class SubmissionService {
       assignmentId,
       studentId,
     )
-    return submissions.map((s) => toSubmissionDTO(s))
+
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds(
+      submissions.map((s) => s.id),
+    )
+
+    return submissions.map((s) => toSubmissionDTO(s, { similarityScore: scoreMap.get(s.id) ?? null }))
   }
 
   /**
@@ -198,9 +207,14 @@ export class SubmissionService {
       latestOnly,
     )
 
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds(
+      submissions.map((s) => s.submission.id),
+    )
+
     return submissions.map((s) =>
       toSubmissionDTO(s.submission, {
         studentName: s.studentName,
+        similarityScore: scoreMap.get(s.submission.id) ?? null,
       }),
     )
   }
@@ -220,7 +234,12 @@ export class SubmissionService {
       studentId,
       latestOnly,
     )
-    return submissions.map((s) => toSubmissionDTO(s))
+
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds(
+      submissions.map((s) => s.id),
+    )
+
+    return submissions.map((s) => toSubmissionDTO(s, { similarityScore: scoreMap.get(s.id) ?? null }))
   }
 
   /**
@@ -407,7 +426,9 @@ export class SubmissionService {
       })
     })
 
-    return toSubmissionDTO(updated)
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds([updated.id])
+
+    return toSubmissionDTO(updated, { similarityScore: scoreMap.get(updated.id) ?? null })
   }
 
   /**
@@ -618,6 +639,7 @@ export class SubmissionService {
   private async runTestsAndApplyPenalty(
     submissionId: number,
     penaltyResult: PenaltyResult | null,
+    totalScore: number,
   ): Promise<boolean> {
     // STEP 1: Send the submission to the code executor (Judge0).
     // runTestsForSubmission writes the grade and individual test results to the DB.
@@ -643,6 +665,7 @@ export class SubmissionService {
       const penalizedGrade = this.latePenaltyService.applyPenalty(
         updatedSubmission.grade,
         penaltyResult,
+        totalScore,
       )
       await this.submissionRepo.updateGrade(submissionId, penalizedGrade)
     }

@@ -265,6 +265,10 @@ export class AssignmentRepository extends BaseRepository<
             ? (data.latePenaltyConfig ?? null)
             : null,
         enableSimilarityPenalty: data.enableSimilarityPenalty ?? false,
+        similarityPenaltyConfig:
+          data.enableSimilarityPenalty === true
+            ? (data.similarityPenaltyConfig ?? null)
+            : null,
         isActive: true,
       })
       .returning()

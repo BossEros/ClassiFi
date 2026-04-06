@@ -169,6 +169,7 @@ export type LatePenaltyUpdateBody = z.infer<typeof LatePenaltyUpdateBodySchema>
 
 /** Single similarity penalty deduction band */
 export const SimilarityPenaltyBandSchema = z.object({
+  id: z.string().optional(),
   minHybridScore: z.number().min(0).max(1),
   penaltyPercent: z.number().min(0).max(100),
 })

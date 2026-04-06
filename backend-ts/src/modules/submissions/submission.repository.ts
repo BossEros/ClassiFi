@@ -104,9 +104,11 @@ export class SubmissionRepository extends BaseRepository<
         submissionNumber: submissions.submissionNumber,
         submittedAt: submissions.submittedAt,
         isLatest: submissions.isLatest,
+        originalGrade: submissions.originalGrade,
         grade: submissions.grade,
         isLate: submissions.isLate,
         penaltyApplied: submissions.penaltyApplied,
+        similarityPenaltyApplied: submissions.similarityPenaltyApplied,
         isGradeOverridden: submissions.isGradeOverridden,
         overrideGrade: submissions.overrideGrade,
         overrideReason: submissions.overrideReason,
@@ -453,6 +455,36 @@ export class SubmissionRepository extends BaseRepository<
       .update(submissions)
       .set({
         grade,
+      })
+      .where(eq(submissions.id, submissionId))
+  }
+
+  /**
+   * Update the original grade (pre-penalty test score) for a submission.
+   */
+  async updateOriginalGrade(submissionId: number, originalGrade: number): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({
+        originalGrade,
+      })
+      .where(eq(submissions.id, submissionId))
+  }
+
+  /**
+   * Update the similarity penalty percentage applied to a submission.
+   *
+   * @param submissionId - The submission to update.
+   * @param similarityPenaltyPercent - The penalty percentage deducted (e.g. 10 = 10%).
+   */
+  async updateSimilarityPenalty(
+    submissionId: number,
+    similarityPenaltyPercent: number,
+  ): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({
+        similarityPenaltyApplied: similarityPenaltyPercent,
       })
       .where(eq(submissions.id, submissionId))
   }
