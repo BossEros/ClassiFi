@@ -101,6 +101,7 @@ export async function executeTestsInPreviewModeWithoutSaving(
   programmingLanguage: "python" | "java" | "c",
   assignmentId: number,
 ): Promise<ApiResponse<TestResultsResponse>> {
+  // Just fire the request and return whatever the server sends back — nothing gets written to the database here
   return apiClient.post<TestResultsResponse>("/code/run-tests", {
     sourceCode: sourceCodeContent,
     language: programmingLanguage,

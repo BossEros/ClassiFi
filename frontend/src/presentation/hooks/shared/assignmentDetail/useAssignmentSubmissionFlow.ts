@@ -292,41 +292,43 @@ export function useAssignmentSubmissionFlow({
 
   // Handle run preview tests
   const handleRunPreviewTests = async () => {
+    // Don't do anything if the student hasn't selected a file yet or if the page is still loading
     if (!selectedFile || !assignment || !assignmentId) {
       return
     }
 
     try {
+      // STEP 1: Show a loading spinner and wipe out any old preview results from a previous run
       setIsRunningPreview(true)
       setPreviewResults(null)
 
+      // STEP 2: Read the file the student picked so we can send the source code as plain text
       const fileContent = await selectedFile.text()
 
+      // STEP 3: Send the code to the backend — it runs against the test cases but doesn't save anything yet
       const previewTestResults = await runTestsPreview(
         fileContent,
         assignment.programmingLanguage as "python" | "java" | "c",
         parseInt(assignmentId, 10),
       )
 
+      // STEP 4: Save the results so the test results card below the button can display them
       setPreviewResults(previewTestResults)
 
+      // STEP 5: Tell the student how they did — full pass gets a "you're good to submit" message
       if (previewTestResults.percentage === 100) {
-        showToast(
-          `All ${previewTestResults.total} tests passed! You can now submit.`,
-        )
+        showToast(`All ${previewTestResults.total} tests passed! You can now submit.`)
       } else {
-        showToast(
-          `${previewTestResults.passed}/${previewTestResults.total} tests passed`,
-        )
+        showToast(`${previewTestResults.passed}/${previewTestResults.total} tests passed`)
       }
     } catch (previewError) {
+      // Something went wrong on the backend — show the error message so the student knows what happened
       showToast(
-        previewError instanceof Error
-          ? previewError.message
-          : "Failed to run tests",
+        previewError instanceof Error ? previewError.message : "Failed to run tests",
         "error",
       )
     } finally {
+      // Always turn off the loading spinner, even if the run crashed
       setIsRunningPreview(false)
     }
   }
