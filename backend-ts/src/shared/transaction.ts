@@ -1,9 +1,34 @@
 import postgres from "postgres"
 import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js"
 import { env } from "@/shared/config.js"
+import { users, usersRelations, userRoleEnum } from "@/modules/users/user.model.js"
+import { classes, classesRelations } from "@/modules/classes/class.model.js"
+import { assignments, assignmentsRelations, programmingLanguageEnum } from "@/modules/assignments/assignment.model.js"
+import { enrollments, enrollmentsRelations } from "@/modules/enrollments/enrollment.model.js"
+import { submissions, submissionsRelations } from "@/modules/submissions/submission.model.js"
+import { similarityReports, similarityReportsRelations, reportTypeEnum } from "@/modules/plagiarism/similarity-report.model.js"
+import { matchFragments, matchFragmentsRelations } from "@/modules/plagiarism/match-fragment.model.js"
+import { similarityResults, similarityResultsRelations } from "@/modules/plagiarism/similarity-result.model.js"
+import { testCases, testCasesRelations } from "@/modules/test-cases/test-case.model.js"
+import { testResults, testResultsRelations } from "@/modules/test-cases/test-result.model.js"
+import { notifications, notificationsRelations, notificationTypeEnum } from "@/modules/notifications/notification.model.js"
+import { modules, modulesRelations } from "@/modules/modules/module.model.js"
 
-// Import all schema tables for transaction context
-import * as schema from "@/models/index.js"
+// All schema tables for transaction context
+const schema = {
+  users, usersRelations, userRoleEnum,
+  classes, classesRelations,
+  assignments, assignmentsRelations, programmingLanguageEnum,
+  enrollments, enrollmentsRelations,
+  submissions, submissionsRelations,
+  similarityReports, similarityReportsRelations, reportTypeEnum,
+  matchFragments, matchFragmentsRelations,
+  similarityResults, similarityResultsRelations,
+  testCases, testCasesRelations,
+  testResults, testResultsRelations,
+  notifications, notificationsRelations, notificationTypeEnum,
+  modules, modulesRelations,
+}
 
 /** Create a new database connection for transactions */
 function createConnection(): postgres.Sql {

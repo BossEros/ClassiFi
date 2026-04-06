@@ -47,6 +47,7 @@ export interface PlagiarismFileDTO {
   lineCount: number
   studentId?: string
   studentName?: string
+  submittedAt?: string
 }
 
 /** DTO for a plagiarism pair comparison */
@@ -102,6 +103,7 @@ export function toPlagiarismPairDTO(
       lineCount: pair.leftFile.lineCount,
       studentId: pair.leftFile.info?.studentId,
       studentName: pair.leftFile.info?.studentName,
+      submittedAt: pair.leftFile.info?.submittedAt,
     },
     rightFile: {
       id: pair.rightFile.id,
@@ -110,6 +112,7 @@ export function toPlagiarismPairDTO(
       lineCount: pair.rightFile.lineCount,
       studentId: pair.rightFile.info?.studentId,
       studentName: pair.rightFile.info?.studentName,
+      submittedAt: pair.rightFile.info?.submittedAt,
     },
     structuralScore: pair.similarity,
     semanticScore: 0,

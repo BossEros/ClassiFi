@@ -28,6 +28,7 @@ export function parsePositiveInt(
 
   return parsed
 }
+
 /**
  * Parse a numeric ID parameter.
  * Throws a BadRequestError if the value is not a valid positive integer.

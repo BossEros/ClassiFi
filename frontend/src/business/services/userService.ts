@@ -1,16 +1,6 @@
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as userRepository from "@/data/repositories/userRepository"
-
-export interface UploadAvatarRequest {
-  file: File
-  currentAvatarUrl?: string
-}
-
-export interface UploadAvatarResponse {
-  success: boolean
-  avatarUrl?: string
-  message?: string
-}
+import type { UploadAvatarRequest, UploadAvatarResponse } from "@/data/api/user.types"
 
 /**
  * Uploads a new avatar for the current user.

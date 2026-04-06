@@ -4,7 +4,7 @@ import { notificationRepository } from "@/data/repositories/notificationReposito
 import type {
   Notification,
   NotificationListResponse,
-} from "@/business/models/notification/types"
+} from "@/data/api/notification.types"
 
 // Mock the notification repository
 vi.mock("@/data/repositories/notificationRepository", () => ({

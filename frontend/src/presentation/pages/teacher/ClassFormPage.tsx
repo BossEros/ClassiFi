@@ -39,9 +39,9 @@ import {
 import {
   normalizeClassDescriptionForCreate,
   normalizeClassDescriptionForUpdate,
-} from "@/business/validation/classValidation"
+} from "@/shared/utils/classDescriptionUtils"
 import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
-import type { DayOfWeek } from "@/business/models/dashboard/types"
+import type { DayOfWeek } from "@/data/api/class.types"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
 function getDefaultClassFormValues(): TeacherClassFormValues {
@@ -128,8 +128,7 @@ export function ClassFormPage() {
           academicYear: classData.academicYear,
           schedule: classData.schedule,
         })
-      } catch (error) {
-        console.error("Error loading class data:", error)
+      } catch {
         setGeneralError("Failed to load class data. Please try again.")
       } finally {
         setIsFetching(false)
@@ -584,5 +583,4 @@ export function ClassFormPage() {
     </DashboardLayout>
   )
 }
-
 

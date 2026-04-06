@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { Link } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
-import type { Notification } from "@/business/models/notification/types"
+import type { Notification } from "@/data/api/notification.types"
 import { NotificationItem } from "./NotificationItem"
 
 interface NotificationDropdownProps {
@@ -48,8 +48,7 @@ export function NotificationDropdown({
       setLoadError(null)
       const response = await notificationService.getNotifications(1, 5)
       setNotifications(response.notifications)
-    } catch (error) {
-      console.error("Failed to load notifications:", error)
+    } catch {
       setLoadError("Failed to load notifications.")
     } finally {
       setLoading(false)
@@ -67,8 +66,8 @@ export function NotificationDropdown({
         ),
       )
       onNotificationRead()
-    } catch (error) {
-      console.error("Failed to mark as read:", error)
+    } catch {
+      // Leave the notification unread in the dropdown when the API update fails.
     }
   }
 
@@ -83,8 +82,8 @@ export function NotificationDropdown({
           readAt: new Date().toISOString(),
         })),
       )
-    } catch (error) {
-      console.error("Failed to mark all notifications as read:", error)
+    } catch {
+      // Preserve the existing notification state when the bulk action fails.
     }
   }
 
@@ -167,3 +166,4 @@ export function NotificationDropdown({
     </div>
   )
 }
+

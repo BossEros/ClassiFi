@@ -1,5 +1,5 @@
 // db is accessed via BaseRepository.db
-import { and, desc, eq, ne, sql } from "drizzle-orm"
+import { and, desc, eq, inArray, max, ne, sql } from "drizzle-orm"
 import {
   similarityReports,
   type SimilarityReport,
@@ -29,7 +29,9 @@ const logger = createLogger("SimilarityRepository")
 export interface CrossClassResultWithContext {
   result: SimilarityResult
   submission1StudentName: string
+  submission1SubmittedAt: Date | null
   submission2StudentName: string
+  submission2SubmittedAt: Date | null
   submission1ClassName: string
   submission2ClassName: string
   submission1ClassCode: string
@@ -189,6 +191,52 @@ export class SimilarityRepository extends BaseRepository<
     return results[0]
   }
 
+  /**
+   * Get the maximum hybrid similarity score (0-100) for each submission ID.
+   * Looks up both submission1Id and submission2Id in similarity_results.
+   *
+   * @param submissionIds - Array of submission IDs to look up.
+   * @returns Map of submissionId to max similarity score (0-100 integer).
+   */
+  async getMaxSimilarityScoresBySubmissionIds(
+    submissionIds: number[],
+  ): Promise<Map<number, number>> {
+    if (submissionIds.length === 0) return new Map()
+
+    const asSubmission1 = await this.db
+      .select({
+        submissionId: similarityResults.submission1Id,
+        maxScore: max(similarityResults.hybridScore),
+      })
+      .from(similarityResults)
+      .where(inArray(similarityResults.submission1Id, submissionIds))
+      .groupBy(similarityResults.submission1Id)
+
+    const asSubmission2 = await this.db
+      .select({
+        submissionId: similarityResults.submission2Id,
+        maxScore: max(similarityResults.hybridScore),
+      })
+      .from(similarityResults)
+      .where(inArray(similarityResults.submission2Id, submissionIds))
+      .groupBy(similarityResults.submission2Id)
+
+    const scoreMap = new Map<number, number>()
+
+    for (const row of [...asSubmission1, ...asSubmission2]) {
+      if (row.submissionId != null && row.maxScore != null) {
+        const score = Math.round(Number(row.maxScore) * 100)
+        const existing = scoreMap.get(row.submissionId)
+
+        if (existing === undefined || score > existing) {
+          scoreMap.set(row.submissionId, score)
+        }
+      }
+    }
+
+    return scoreMap
+  }
+
   /** Delete a report (cascades to results) */
   async deleteReport(reportId: number): Promise<boolean> {
     return this.delete(reportId)
@@ -288,6 +336,7 @@ export class SimilarityRepository extends BaseRepository<
         .select({
           submissionId: submissions.id,
           studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student1_name"),
+          submittedAt: submissions.submittedAt,
           className: classes.className,
           classCode: classes.classCode,
           assignmentName: assignments.assignmentName,
@@ -303,6 +352,7 @@ export class SimilarityRepository extends BaseRepository<
         .select({
           submissionId: submissions.id,
           studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student2_name"),
+          submittedAt: submissions.submittedAt,
           className: classes.className,
           classCode: classes.classCode,
           assignmentName: assignments.assignmentName,
@@ -318,10 +368,12 @@ export class SimilarityRepository extends BaseRepository<
       .select({
         result: similarityResults,
         submission1StudentName: sub1.studentName,
+        submission1SubmittedAt: sub1.submittedAt,
         submission1ClassName: sub1.className,
         submission1ClassCode: sub1.classCode,
         submission1AssignmentName: sub1.assignmentName,
         submission2StudentName: sub2.studentName,
+        submission2SubmittedAt: sub2.submittedAt,
         submission2ClassName: sub2.className,
         submission2ClassCode: sub2.classCode,
         submission2AssignmentName: sub2.assignmentName,

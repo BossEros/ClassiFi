@@ -2,7 +2,7 @@ import type {
   Submission,
   SubmissionWithAssignment,
   SubmissionWithStudent,
-} from "@/shared/types/submission"
+} from "@/data/api/shared.types"
 import type {
   SubmissionDTO,
   AssignmentDetailDTO,
@@ -28,6 +28,7 @@ export function mapSubmission(sub: SubmissionDTO): Submission {
         : sub.submittedAt.toISOString(),
     isLatest: sub.isLatest,
     grade: sub.grade ?? undefined,
+    gradeBreakdown: sub.gradeBreakdown ?? null,
     isGradeOverridden: sub.isGradeOverridden ?? false,
     overrideReason: sub.overrideReason ?? null,
     overriddenAt:
@@ -101,9 +102,7 @@ export function mapAssignmentDetail(
     : "python" // Safe fallback to default language
 
   if (!isValidProgrammingLanguage(dto.programmingLanguage)) {
-    console.warn(
-      `[mapAssignmentDetail] Invalid programming language "${dto.programmingLanguage}" for assignment ID ${dto.id}. Defaulting to "python".`,
-    )
+    // Keep the safe fallback when older or malformed payloads contain unsupported languages.
   }
 
   return {
@@ -126,6 +125,7 @@ export function mapAssignmentDetail(
     allowLateSubmissions: dto.allowLateSubmissions ?? false,
     latePenaltyConfig: dto.latePenaltyConfig ?? null,
     enableSimilarityPenalty: dto.enableSimilarityPenalty ?? false,
+    similarityPenaltyConfig: dto.similarityPenaltyConfig ?? null,
     testCases: dto.testCases ?? [],
     moduleId: dto.moduleId ?? null,
   }

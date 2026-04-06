@@ -76,6 +76,7 @@ describe("plagiarismService", () => {
         },
       ],
       warnings: [],
+      scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
     }
 
     it("returns analysis results for an assignment", async () => {
@@ -166,12 +167,14 @@ describe("plagiarismService", () => {
         content: "def solution():\n    pass",
         lineCount: 50,
         studentName: "John Doe",
+        submittedAt: "2026-03-10T10:00:00.000Z",
       },
       rightFile: {
         filename: "solution.py",
         content: "def solution():\n    return None",
         lineCount: 48,
         studentName: "Jane Smith",
+        submittedAt: "2026-03-10T11:00:00.000Z",
       },
     }
 

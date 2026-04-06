@@ -1,48 +1,6 @@
 import { z } from "zod"
 
 // ============================================================================
-// Plagiarism Language Enum
-// ============================================================================
-
-/** Supported programming languages for plagiarism detection */
-export const PlagiarismLanguageSchema = z.enum(["java", "python", "c"])
-export type PlagiarismLanguage = z.infer<typeof PlagiarismLanguageSchema>
-
-// ============================================================================
-// Request Schemas
-// ============================================================================
-
-/** File input for plagiarism analysis */
-export const PlagiarismFileSchema = z.object({
-  id: z.string().optional(),
-  path: z.string().min(1),
-  content: z.string(),
-  studentId: z.string().optional(),
-  studentName: z.string().optional(),
-})
-
-export type PlagiarismFile = z.infer<typeof PlagiarismFileSchema>
-
-/** Template file schema */
-export const TemplateFileSchema = z.object({
-  path: z.string().min(1),
-  content: z.string(),
-})
-
-export type TemplateFile = z.infer<typeof TemplateFileSchema>
-
-/** Analyze request body schema */
-export const AnalyzeRequestSchema = z.object({
-  files: z.array(PlagiarismFileSchema).min(2),
-  language: PlagiarismLanguageSchema,
-  templateFile: TemplateFileSchema.optional(),
-  threshold: z.number().min(0).max(1).optional(),
-  kgramLength: z.number().int().min(1).optional(),
-})
-
-export type AnalyzeRequest = z.infer<typeof AnalyzeRequestSchema>
-
-// ============================================================================
 // Param Schemas
 // ============================================================================
 
@@ -125,6 +83,14 @@ export const SummaryResponseSchema = z.object({
 
 export type SummaryResponse = z.infer<typeof SummaryResponseSchema>
 
+/** Scoring weights schema */
+export const ScoringWeightsSchema = z.object({
+  structuralWeight: z.number(),
+  semanticWeight: z.number(),
+})
+
+export type ScoringWeights = z.infer<typeof ScoringWeightsSchema>
+
 /** Analyze response schema */
 export const AnalyzeResponseSchema = z.object({
   success: z.literal(true),
@@ -136,6 +102,7 @@ export const AnalyzeResponseSchema = z.object({
   submissions: z.array(FileResponseSchema),
   pairs: z.array(PairResponseSchema),
   warnings: z.array(z.string()),
+  scoringWeights: ScoringWeightsSchema,
 })
 
 export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>

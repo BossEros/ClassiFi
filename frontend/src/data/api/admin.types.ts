@@ -1,5 +1,7 @@
-﻿import type { DayOfWeek, EnrolledStudent } from "@/shared/types/class"
-import type { UserRole } from "@/shared/types/auth"
+﻿import type { DayOfWeek, EnrolledStudent } from "@/data/api/class.types"
+import type { UserRole } from "@/data/api/auth.types"
+
+export type { EnrolledStudent } from "@/data/api/class.types"
 
 export interface AdminUser {
   id: number

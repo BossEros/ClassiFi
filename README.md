@@ -19,9 +19,11 @@ ClassiFi provides role-based experiences for students, teachers, and admins:
 - Role-gated hidden test-case detail access (teacher/admin can review hidden inputs/outputs; student view stays masked)
 - Late submission policy and late-penalty configuration
 - Gradebook with override workflows
-- Plagiarism analysis with graph-first review, pairwise comparison, and PDF evidence export
+- Plagiarism analysis with graph-first review, pairwise comparison, cross-class similarity detection, and PDF evidence export
+- Automatic post-submission similarity scheduling with debouncing and reconciliation
 - Role-based access control using Supabase authentication
 - Notifications for assignment and grading events, plus per-user notification channel preferences
+- Calendar view aggregating assignment deadlines across all classes for student and teacher roles
 
 ## Architecture
 

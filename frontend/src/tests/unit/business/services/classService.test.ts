@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import * as classService from "@/business/services/classService"
 import * as classRepository from "@/data/repositories/classRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import type { ISODateString } from "@/shared/types/class"
+import type { ISODateString } from "@/data/api/class.types"
 
 // Mock the repositories
 vi.mock("@/data/repositories/classRepository")
@@ -96,25 +96,6 @@ describe("classService", () => {
         "Invalid teacher ID",
       )
       expect(classRepository.createNewClass).not.toHaveBeenCalled()
-    })
-
-    it("throws error for empty class name", async () => {
-      const invalidRequest = { ...validCreateRequest, className: "" }
-
-      await expect(classService.createClass(invalidRequest)).rejects.toThrow(
-        "Class name is required",
-      )
-    })
-
-    it("throws error for description exceeding max length", async () => {
-      const invalidRequest = {
-        ...validCreateRequest,
-        description: "A".repeat(1001),
-      }
-
-      await expect(classService.createClass(invalidRequest)).rejects.toThrow(
-        "Description must not exceed 1000 characters",
-      )
     })
 
   })

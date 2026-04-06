@@ -1,10 +1,7 @@
 import * as dashboardRepository from "@/data/repositories/teacherDashboardRepository"
-import type {
-  DashboardData,
-  Class,
-  Task,
-} from "@/business/models/dashboard/types"
-import { validateId } from "@/business/validation/commonValidation"
+import type { DashboardData } from "@/data/api/dashboard.types"
+import type { Class, Task } from "@/data/api/class.types"
+import { validateId } from "@/shared/utils/idUtils"
 
 /**
  * Fetches the complete dashboard overview for a specific teacher.
@@ -19,17 +16,12 @@ export async function getDashboardData(
 ): Promise<DashboardData> {
   validateId(teacherId, "teacher")
 
-  try {
-    const dashboardResponse =
-      await dashboardRepository.getCompleteDashboardDataForTeacherId(teacherId)
+  const dashboardResponse =
+    await dashboardRepository.getCompleteDashboardDataForTeacherId(teacherId)
 
-    return {
-      recentClasses: dashboardResponse.recentClasses as unknown as Class[],
-      pendingTasks: dashboardResponse.pendingTasks as unknown as Task[],
-    }
-  } catch (error) {
-    console.error("Error fetching dashboard data:", error)
-    throw error
+  return {
+    recentClasses: dashboardResponse.recentClasses as unknown as Class[],
+    pendingTasks: dashboardResponse.pendingTasks as unknown as Task[],
   }
 }
 
@@ -47,15 +39,10 @@ export async function getRecentClasses(
 ): Promise<Class[]> {
   validateId(teacherId, "teacher")
 
-  try {
-    const classesResponse =
-      await dashboardRepository.getRecentClassesForTeacherId(teacherId, limit)
+  const classesResponse =
+    await dashboardRepository.getRecentClassesForTeacherId(teacherId, limit)
 
-    return classesResponse.classes as unknown as Class[]
-  } catch (error) {
-    console.error("Error fetching recent classes:", error)
-    throw error
-  }
+  return classesResponse.classes as unknown as Class[]
 }
 
 /**
@@ -73,18 +60,13 @@ export async function getPendingTasks(
 ): Promise<Task[]> {
   validateId(teacherId, "teacher")
 
-  try {
-    const tasksResponse = await dashboardRepository.getPendingTasksForTeacherId(
-      teacherId,
-      limit,
-    )
+  const tasksResponse = await dashboardRepository.getPendingTasksForTeacherId(
+    teacherId,
+    limit,
+  )
 
-    return tasksResponse.tasks.map((task) => ({
-      ...task,
-      studentCount: task.totalStudents,
-    })) as unknown as Task[]
-  } catch (error) {
-    console.error("Error fetching pending tasks:", error)
-    throw error
-  }
+  return tasksResponse.tasks.map((task) => ({
+    ...task,
+    studentCount: task.totalStudents,
+  })) as unknown as Task[]
 }

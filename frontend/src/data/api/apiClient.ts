@@ -152,9 +152,6 @@ class ApiClient {
 
           // Only redirect if we're not already on the login page
           if (!window.location.pathname.includes("/login")) {
-            console.warn(
-              "[Auth] Token expired or invalid, redirecting to login...",
-            )
             window.location.href = "/login?expired=true"
           }
 

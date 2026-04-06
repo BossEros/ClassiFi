@@ -1,10 +1,22 @@
-import type { LatePenaltyConfig } from "@/shared/types/gradebook"
-import type { Submission } from "@/shared/types/submission"
+import type { LatePenaltyConfig, SimilarityPenaltyConfig } from "@/data/api/gradebook.types"
+import type {
+  Submission,
+} from "@/data/api/shared.types"
 import type {
   AssignmentTestCase,
   ProgrammingLanguage,
 } from "@/data/api/shared.types"
 import type { TaskDTO } from "@/data/api/class.types"
+
+export { VALID_PROGRAMMING_LANGUAGES } from "@/data/api/shared.types"
+export type { ProgrammingLanguage, AssignmentTestCase } from "@/data/api/shared.types"
+export type { Submission, SubmissionWithAssignment, SubmissionWithStudent, SubmissionContent } from "@/data/api/shared.types"
+
+/** Supabase storage bucket name and file path parsed from a public URL */
+export interface StorageLocation {
+  bucket: string
+  path: string
+}
 
 export interface AssignmentDetail {
   id: number
@@ -29,6 +41,7 @@ export interface AssignmentDetail {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   testCases?: AssignmentTestCase[]
   moduleId?: number | null
 }
@@ -56,6 +69,7 @@ export interface CreateAssignmentRequest {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   moduleId?: number | null
 }
 
@@ -74,6 +88,7 @@ export interface UpdateAssignmentRequest {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   moduleId?: number | null
 }
 
@@ -143,6 +158,7 @@ export interface AssignmentDetailDTO {
   allowLateSubmissions?: boolean
   latePenaltyConfig?: LatePenaltyConfig | null
   enableSimilarityPenalty?: boolean
+  similarityPenaltyConfig?: SimilarityPenaltyConfig | null
   testCases?: AssignmentTestCase[]
   moduleId?: number | null
 }
@@ -157,6 +173,7 @@ export interface SubmissionDTO {
   submittedAt: string | Date
   isLatest: boolean
   grade?: number | null
+  gradeBreakdown?: import("@/data/api/gradebook.types").GradeBreakdown | null
   isGradeOverridden?: boolean
   overrideReason?: string | null
   overriddenAt?: string | Date | null

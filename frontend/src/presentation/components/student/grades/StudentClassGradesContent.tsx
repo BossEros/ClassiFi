@@ -23,9 +23,10 @@ import { useStudentGrades } from "@/presentation/hooks/teacher/useGradebook"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { formatDateTime } from "@/presentation/utils/dateUtils"
-import type { StudentGradeEntry } from "@/shared/types/gradebook"
+import type { StudentGradeEntry } from "@/data/api/gradebook.types"
 import { cn } from "@/shared/utils/cn"
 import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
+import { GradeBreakdownPanel } from "@/presentation/components/shared/GradeBreakdownPanel"
 import {
   buildStudentGradeReportData,
   StudentGradeReportDocument,
@@ -346,6 +347,16 @@ function AssignmentGradeRow({
           </p>
         </div>
       ) : null}
+
+      {assignment.gradeBreakdown ? (
+        <GradeBreakdownPanel
+          breakdown={assignment.gradeBreakdown}
+          totalScore={assignment.totalScore}
+          submittedAt={assignment.submittedAt}
+          deadline={assignment.deadline}
+          variant={variant}
+        />
+      ) : null}
     </div>
   )
 }
@@ -397,8 +408,7 @@ export function StudentClassGradesContent({
       })
 
       showToast("Grade report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download grade report:", error)
+    } catch {
       showToast("Failed to download grade report", "error")
     } finally {
       setIsDownloadingPdf(false)
@@ -631,3 +641,4 @@ export function StudentClassGradesContent({
     </>
   )
 }
+

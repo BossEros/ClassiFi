@@ -7,12 +7,12 @@ import {
   getSubmissionHistory,
 } from "@/business/services/assignmentService"
 import { getTestResultsForSubmission } from "@/business/services/testService"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/data/api/auth.types"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/business/models/assignment/types"
-import type { TestPreviewResult } from "@/business/models/test/types"
+} from "@/data/api/assignment.types"
+import type { TestPreviewResult } from "@/data/api/test-case.types"
 
 interface UseAssignmentDetailDataOptions {
   assignmentId: string | undefined
@@ -111,11 +111,8 @@ export function useAssignmentDetailData({
               )
 
               setSubmissionTestResults(testResults)
-            } catch (testResultsError) {
-              console.error(
-                "Failed to load test results for latest submission",
-                testResultsError,
-              )
+            } catch {
+              // Test results are optional here; keep the assignment detail view usable.
             }
           }
 
@@ -150,16 +147,11 @@ export function useAssignmentDetailData({
             const teacherSubmissionTestResults =
               await getTestResultsForSubmission(selectedSubmission.id, true)
             setSubmissionTestResults(teacherSubmissionTestResults)
-          } catch (testResultsError) {
-            console.error(
-              "Failed to load test results for teacher-selected submission",
-              testResultsError,
-            )
+          } catch {
             setSubmissionTestResults(null)
           }
         }
       } catch (requestError) {
-        console.error("Failed to fetch assignment data:", requestError)
 
         const errorMessage =
           requestError instanceof Error
@@ -187,3 +179,4 @@ export function useAssignmentDetailData({
     setSubmissionTestResults,
   }
 }
+

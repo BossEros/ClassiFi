@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as assignmentService from "@/business/services/assignmentService"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import * as assignmentValidation from "@/business/validation/submissionFileValidation"
+import * as assignmentValidation from "@/shared/utils/fileValidationUtils"
 import {
   createMockSubmission,
   createMockAssignment,
@@ -11,7 +11,7 @@ import type { AssignmentDetail } from "@/data/api/assignment.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/assignmentRepository")
-vi.mock("@/business/validation/submissionFileValidation")
+vi.mock("@/shared/utils/fileValidationUtils")
 
 describe("assignmentService", () => {
   beforeEach(() => {

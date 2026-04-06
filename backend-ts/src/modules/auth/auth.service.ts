@@ -16,7 +16,7 @@ import {
   UserNotFoundError,
   InvalidRoleError,
 } from "@/shared/errors.js"
-import type { User } from "@/models/index.js"
+import type { User } from "@/modules/users/user.model.js"
 import type { RegisterUserServiceDTO } from "@/modules/auth/auth.dtos.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 

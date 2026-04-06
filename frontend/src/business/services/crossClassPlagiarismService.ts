@@ -1,15 +1,15 @@
 import * as crossClassRepository from "@/data/repositories/crossClassPlagiarismRepository"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import type {
   CrossClassAnalysisResponse,
   CrossClassResultDetailsResponse,
-} from "@/business/models/plagiarism/crossClassTypes"
+} from "@/data/api/crossClassPlagiarism.types"
 
 export type {
   CrossClassAnalysisResponse,
   CrossClassResultDTO,
   CrossClassResultDetailsResponse,
-} from "@/business/models/plagiarism/crossClassTypes"
+} from "@/data/api/crossClassPlagiarism.types"
 
 const inFlightCrossClassAnalysisByAssignmentId = new Map<
   number,

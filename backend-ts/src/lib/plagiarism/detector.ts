@@ -58,33 +58,16 @@ export class PlagiarismDetector {
     ignoredFile?: File,
   ): Promise<Report> {
     await this.initialize()
-
     const warnings: string[] = []
 
-    // STEP 1: Resolve the programming language to use for tokenization
-    // Use the explicit option if given; otherwise auto-detect from the first file's extension.
-    if (this.options.language && this.languageRegistry) {
-      this.language = this.languageRegistry.get(this.options.language) ?? null
-      if (!this.language) {
-        throw new Error(
-          `Unsupported language: ${this.options.language}. Supported: java, python, c`,
-        )
-      }
-    } else if (this.languageRegistry && files.length > 0) {
-      // Auto-detect from first file
-      this.language =
-        this.languageRegistry.detectFromPath(files[0].path) ?? null
-      if (this.language) {
-        warnings.push(
-          `Detected language as ${this.language.name} based on file extension.`,
-        )
-      }
+    // STEP 1: Resolve the programming language — must be explicitly specified.
+    if (!this.options.language) {
+      throw new Error("Could not determine language. Please specify language option.")
     }
 
+    this.language = this.languageRegistry!.get(this.options.language) ?? null
     if (!this.language) {
-      throw new Error(
-        "Could not determine language. Please specify language option.",
-      )
+      throw new Error(`Unsupported language: ${this.options.language}. Supported: java, python, c`)
     }
 
     // STEP 2: Initialize the AST tokenizer and create a fresh fingerprint index
@@ -98,37 +81,26 @@ export class PlagiarismDetector {
       this.options.kgramData,
     )
 
-    // STEP 3: Filter submitted files to only those matching the resolved language extension
-    const filteredFiles = files.filter((file) =>
-      this.language?.extensionMatches(file.path),
-    )
-    const diff = files.length - filteredFiles.length
-    if (diff > 0) {
-      warnings.push(
-        `${diff} files were ignored because they don't match the ${this.language.name} extension.`,
-      )
-    }
-
-    // STEP 4: Validate there are enough files to form at least one comparison pair
-    if (filteredFiles.length < 2) {
+    // STEP 3: Validate there are enough files to form at least one comparison pair
+    if (files.length < 2) {
       throw new Error("You need to supply at least two files to analyze.")
     }
 
-    // STEP 5: Configure the fingerprint frequency threshold
+    // STEP 4: Configure the fingerprint frequency threshold
     // Fingerprints appearing in more files than this limit are treated as common boilerplate and suppressed.
     let maxFingerprintFileCount: number | undefined
+    
     if (this.options.maxFingerprintCount != null) {
       maxFingerprintFileCount = this.options.maxFingerprintCount
     } else if (this.options.maxFingerprintPercentage != null) {
-      maxFingerprintFileCount =
-        this.options.maxFingerprintPercentage * filteredFiles.length
+      maxFingerprintFileCount = this.options.maxFingerprintPercentage * files.length
     }
     this.index.updateMaxFingerprintFileCount(maxFingerprintFileCount)
 
-    // STEP 6: Tokenize each file into an AST-based token sequence
+    // STEP 5: Tokenize each file into an AST-based token sequence
     // Failures are non-fatal — the file is skipped with a warning so partial results are still returned.
     const tokenizedFiles: TokenizedFile[] = []
-    for (const file of filteredFiles) {
+    for (const file of files) {
       try {
         tokenizedFiles.push(tokenizer.tokenizeFile(file))
       } catch (error) {
@@ -136,10 +108,10 @@ export class PlagiarismDetector {
       }
     }
 
-    // STEP 7: Add all tokenized files to the fingerprint index to build the comparison matrix
+    // STEP 6: Add all tokenized files to the fingerprint index to build the comparison matrix
     this.index.addFiles(tokenizedFiles)
 
-    // STEP 8: Register the template/boilerplate file so its fingerprints are excluded from matches
+    // STEP 7: Register the template/boilerplate file so its fingerprints are excluded from matches
     if (ignoredFile) {
       try {
         const tokenizedIgnored = tokenizer.tokenizeFile(ignoredFile)

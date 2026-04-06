@@ -1,14 +1,11 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import {
   isValidClass,
   mapToClassArray,
-} from "@/business/services/calendar/classMappers"
-import type { Class } from "@/business/models/dashboard/types"
+} from "@/business/services/calendarService"
+import type { Class } from "@/data/api/class.types"
 
 describe("classMappers", () => {
-  const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
-  const logSpy = vi.spyOn(console, "log").mockImplementation(() => {})
-
   const validClass: Class = {
     id: 1,
     teacherId: 2,
@@ -16,7 +13,8 @@ describe("classMappers", () => {
     classCode: "PROG101",
     description: "Intro class",
     isActive: true,
-    createdAt: "2025-01-01T00:00:00.000Z" as Class["createdAt"],
+    createdAt: "2025-01-01T00:00:00.000Z" as Class["createdAt"],
+
     semester: 1,
     academicYear: "2025-2026",
     schedule: {
@@ -26,48 +24,26 @@ describe("classMappers", () => {
     },
   }
 
-  beforeEach(() => {
-    warnSpy.mockClear()
-    logSpy.mockClear()
+  it("returns false for null", () => {
+    expect(isValidClass(null)).toBe(false)
   })
 
-  afterAll(() => {
-    warnSpy.mockRestore()
-    logSpy.mockRestore()
-  })
-
-  it("returns false for null and warns", () => {
-    const result = isValidClass(null)
-
-    expect(result).toBe(false)
-    expect(warnSpy).toHaveBeenCalled()
-  })
-
-  it("returns false for non-object values and warns", () => {
-    const result = isValidClass("invalid")
-
-    expect(result).toBe(false)
-    expect(warnSpy).toHaveBeenCalled()
+  it("returns false for non-object values", () => {
+    expect(isValidClass("invalid")).toBe(false)
   })
 
   it("returns true for a valid class payload", () => {
-    const result = isValidClass(validClass)
-
-    expect(result).toBe(true)
-    expect(logSpy).not.toHaveBeenCalled()
+    expect(isValidClass(validClass)).toBe(true)
   })
 
-  it("returns false and logs details when payload is missing required fields", () => {
+  it("returns false when payload is missing required fields", () => {
     const invalidPayload = {
       ...validClass,
       className: 123,
       schedule: null,
     }
 
-    const result = isValidClass(invalidPayload)
-
-    expect(result).toBe(false)
-    expect(logSpy).toHaveBeenCalled()
+    expect(isValidClass(invalidPayload)).toBe(false)
   })
 
   it("filters unknown array values to valid class records", () => {

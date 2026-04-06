@@ -1,5 +1,5 @@
 ﻿import type { UserRole } from "@/modules/users/user.repository.js"
-import type { ClassSchedule } from "@/models/index.js"
+import type { ClassSchedule } from "@/modules/classes/class.model.js"
 
 // ============ Pagination Types ============
 

@@ -7,8 +7,7 @@ import {
   isSameDay,
   isToday,
 } from "date-fns"
-import type { CalendarEvent } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/business/models/calendar/types"
+import type { CalendarEvent, CalendarView } from "@/data/api/calendar.types"
 import { CustomViewToolbar } from "./CustomViewToolbar"
 import { getCalendarStackedEventStyle } from "./eventStyle"
 import "./CustomWeekView.css"
@@ -282,3 +281,4 @@ export function CustomWeekView({
     </div>
   )
 }
+

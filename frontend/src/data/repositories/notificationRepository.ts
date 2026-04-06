@@ -2,7 +2,7 @@ import { apiClient, type ApiResponse } from "@/data/api/apiClient"
 import type {
   NotificationListResponse,
   UnreadCountResponse,
-} from "@/business/models/notification/types"
+} from "@/data/api/notification.types"
 
 /**
  * Repository for notification-related API operations.

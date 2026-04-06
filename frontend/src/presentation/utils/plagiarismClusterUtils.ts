@@ -1,7 +1,7 @@
 import type {
   FileResponse,
   PairResponse,
-} from "@/business/models/plagiarism/types"
+} from "@/data/api/plagiarism.types"
 
 /**
  * A submission included in a similarity cluster.
@@ -323,3 +323,4 @@ function accumulateMemberSimilarity(
   existingMetrics.total += pairSimilarity
   existingMetrics.count += 1
 }
+

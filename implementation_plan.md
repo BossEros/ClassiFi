@@ -1,12 +1,36 @@
-# Implementation Plan
+# Cross-Class Temporal Analysis Plan
 
 ## Goal
-Fix the confirmed notification, PDF metadata, and API-response robustness issues without breaking the existing backend service/repository and frontend clean-architecture patterns.
 
-## Approach
-1. Add a shared backend utility for logging rejected `Promise.allSettled` results so background notification flows remain DRY and observable.
-2. Update enrollment flows to emit the real enrollment record ID in `ENROLLMENT_CONFIRMED` payloads.
-3. Fix similarity-detection notifications so teachers receive the actual detected similarity percentage rather than the deduction percentage.
-4. Correct PDF metadata and cross-class qualitative signal derivation in the plagiarism export builders.
-5. Harden `unwrapApiResponse` call sites that currently rely on non-null assertions for required payload fields.
-6. Extend targeted backend and frontend tests, then run backend typecheck/tests and frontend build/tests relevant to the changed surfaces.
+Expose submission timestamps through the cross-class result-details flow so the shared pair comparison and diff views can show the same temporal analysis cues already available in the intra-class experience.
+
+## Checklist
+
+- [x] Inspect the existing intra-class temporal analysis wiring and the cross-class result-details pipeline
+- [x] Extend the backend cross-class contextual query and DTOs with submission timestamps
+- [x] Update frontend cross-class API types and detail mapping to pass `submittedAt` into the shared pair view
+- [x] Add regression coverage for the backend result-details response and frontend cross-class service types
+- [ ] Run `backend-ts` typecheck/tests and `frontend` build/tests to verify the change
+      Note: `backend-ts` typecheck and full backend test suite passed. `frontend` build and `tsc -b` passed. `frontend` Vitest remains blocked in this environment by `spawn EPERM` while loading `vitest.config.ts` through Vite/esbuild.
+
+## Current Refactor
+
+- [x] Review backend plagiarism architecture and duplicated semantic scoring flow
+- [x] Extract shared semantic embedding-cache scoring helper for plagiarism module services
+- [x] Refactor `PlagiarismService` and `CrossClassSimilarityService` to use the shared helper
+- [ ] Run `backend-ts` typecheck and focused plagiarism service tests
+  Note: `backend-ts` typecheck passed. Focused Vitest execution is still blocked in this environment by `spawn EPERM` while loading `vitest.config.ts` through Vite/esbuild.
+
+## Frontend Lint Boundary Remediation Plan
+
+### Goal
+
+Resolve the frontend lint failures by allowing shared frontend API contract imports from `src/data/api/*.types`, while still blocking repositories and other data internals from the presentation layer.
+
+### Checklist
+
+- [x] Inventory every presentation import that reaches into `src/data/api`
+- [x] Narrow the presentation-layer lint rule so `src/data/api/*.types` imports stay allowed
+- [x] Restore direct presentation imports from `src/data/api/*.types`
+- [x] Fix the remaining presentation lint issues (`react-refresh/only-export-components` and inline SVG icon usage)
+- [x] Run `frontend` lint and build to verify the remediation

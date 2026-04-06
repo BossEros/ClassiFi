@@ -16,25 +16,16 @@ interface LoginFormProps {
   onForgotPasswordClick?: () => void
 }
 
-
-
 function LoginForm({
   onSuccess,
   onRegisterClick,
   onForgotPasswordClick,
 }: LoginFormProps) {
-  const authInputClassName =
-    `${authTheme.input} ${authTheme.inputWithLeadingIcon}`
-
+  const authInputClassName =`${authTheme.input} ${authTheme.inputWithLeadingIcon}`
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const {
-    register,
-    handleSubmit,
-    trigger,
-    formState: { errors },
-  } = useZodForm({
+  const {register, handleSubmit, trigger, formState: { errors } } = useZodForm({
     schema: loginFormSchema,
     defaultValues: {
       email: "",

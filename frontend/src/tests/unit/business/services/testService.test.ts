@@ -4,7 +4,7 @@ import * as testService from "@/business/services/testService"
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
 import * as testNormalization from "@/business/services/testResultNormalizer"
-import type { RawTestResult } from "@/shared/types/testCase"
+import type { RawTestResult } from "@/data/api/test-case.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/testCaseRepository")

@@ -1,10 +1,7 @@
 import { eq, and, desc, sql, inArray } from "drizzle-orm"
-import {
-  submissions,
-  users,
-  type Submission,
-  type NewSubmission,
-} from "@/models/index.js"
+import { users } from "@/modules/users/user.model.js"
+import { submissions, type Submission, type NewSubmission } from "@/modules/submissions/submission.model.js"
+import { assignments } from "@/modules/assignments/assignment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 
@@ -96,9 +93,6 @@ export class SubmissionRepository extends BaseRepository<
    * Used for cleanup during class deletion.
    */
   async getSubmissionsByClass(classId: number): Promise<Submission[]> {
-    // We need to import assignments model to join
-    const { assignments } = await import("@/models/index.js")
-
     return await this.db
       .select({
         id: submissions.id,
@@ -110,9 +104,11 @@ export class SubmissionRepository extends BaseRepository<
         submissionNumber: submissions.submissionNumber,
         submittedAt: submissions.submittedAt,
         isLatest: submissions.isLatest,
+        originalGrade: submissions.originalGrade,
         grade: submissions.grade,
         isLate: submissions.isLate,
         penaltyApplied: submissions.penaltyApplied,
+        similarityPenaltyApplied: submissions.similarityPenaltyApplied,
         isGradeOverridden: submissions.isGradeOverridden,
         overrideGrade: submissions.overrideGrade,
         overrideReason: submissions.overrideReason,
@@ -329,7 +325,8 @@ export class SubmissionRepository extends BaseRepository<
     penaltyApplied: number
   }): Promise<Submission> {
     return await this.db.transaction(async (tx) => {
-      // Lock relevant rows to serialize concurrent submissions
+      // STEP 1: Acquire a row-level lock on the student's existing submissions for this assignment.
+      // This prevents two simultaneous submits from both thinking they're submission #1.
       await tx
         .select()
         .from(submissions)
@@ -341,7 +338,8 @@ export class SubmissionRepository extends BaseRepository<
         )
         .for("update")
 
-      // Mark previous submission as not latest
+      // STEP 2: Demote the previous latest submission so that only the new one is flagged as latest.
+      // This keeps the "latest only" queries fast without needing a subquery.
       await tx
         .update(submissions)
         .set({ isLatest: false })
@@ -352,7 +350,7 @@ export class SubmissionRepository extends BaseRepository<
           ),
         )
 
-      // Create new submission
+      // STEP 3: Insert the new submission row and mark it as the latest
       const results = await tx
         .insert(submissions)
         .values({
@@ -368,7 +366,7 @@ export class SubmissionRepository extends BaseRepository<
         })
         .returning()
 
-      // Defensive check to ensure insert succeeded
+      // Guard against a silent insert failure — shouldn't happen but better to throw clearly
       if (!results || results.length === 0) {
         throw new Error(
           "Failed to create submission: insert returned no results",
@@ -457,6 +455,36 @@ export class SubmissionRepository extends BaseRepository<
       .update(submissions)
       .set({
         grade,
+      })
+      .where(eq(submissions.id, submissionId))
+  }
+
+  /**
+   * Update the original grade (pre-penalty test score) for a submission.
+   */
+  async updateOriginalGrade(submissionId: number, originalGrade: number): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({
+        originalGrade,
+      })
+      .where(eq(submissions.id, submissionId))
+  }
+
+  /**
+   * Update the similarity penalty percentage applied to a submission.
+   *
+   * @param submissionId - The submission to update.
+   * @param similarityPenaltyPercent - The penalty percentage deducted (e.g. 10 = 10%).
+   */
+  async updateSimilarityPenalty(
+    submissionId: number,
+    similarityPenaltyPercent: number,
+  ): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({
+        similarityPenaltyApplied: similarityPenaltyPercent,
       })
       .where(eq(submissions.id, submissionId))
   }

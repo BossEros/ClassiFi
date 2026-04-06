@@ -8,7 +8,7 @@ import {
   formatTimeRange,
 } from "@/presentation/constants/schedule.constants"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
-import type { DayOfWeek } from "@/shared/types/class"
+import type { DayOfWeek } from "@/data/api/class.types"
 
 interface ClassHeaderProps {
   className?: string
@@ -59,8 +59,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
       await navigator.clipboard.writeText(classCode)
       setHasCopied(true)
       setTimeout(() => setHasCopied(false), 2000)
-    } catch (error) {
-      console.error("Failed to copy class code:", error)
+    } catch {
       showToast("Failed to copy class code", "error")
     }
   }
@@ -297,3 +296,4 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
     </div>
   )
 }
+

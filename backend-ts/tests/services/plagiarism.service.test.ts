@@ -1,15 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import {
-  PlagiarismService,
-  type AnalyzeRequest,
-} from "../../src/modules/plagiarism/plagiarism.service.js"
+import { PlagiarismService } from "../../src/modules/plagiarism/plagiarism.service.js"
 import { createPlagiarismDetector } from "../../src/modules/plagiarism/plagiarism.mapper.js"
 import { createMockAssignment } from "../utils/factories.js"
-import {
-  AssignmentNotFoundError,
-  InsufficientFilesError,
-  LanguageRequiredError,
-} from "../../src/shared/errors.js"
+import { AssignmentNotFoundError } from "../../src/shared/errors.js"
 
 // Mock repositories
 vi.mock("../../src/modules/assignments/assignment.repository.js")
@@ -133,9 +126,6 @@ describe("PlagiarismService", () => {
       healthCheck: vi.fn(),
     }
 
-    // Reset legacy store
-    ;(PlagiarismService as any).prototype.legacyReportsStore = new Map()
-
     plagiarismService = new PlagiarismService(
       mockAssignmentRepo,
       mockFileService,
@@ -147,64 +137,6 @@ describe("PlagiarismService", () => {
 
   afterEach(() => {
     vi.clearAllMocks()
-  })
-
-  describe("analyzeFiles", () => {
-    it("should successfully analyze files", async () => {
-      const request: AnalyzeRequest = {
-        files: [
-          { path: "file1.py", content: 'print("hello")' },
-          { path: "file2.py", content: 'print("hello")' },
-        ],
-        language: "python",
-      }
-
-      const result = await plagiarismService.analyzeFiles(request)
-
-      expect(result).toBeDefined()
-      expect(result.reportId).toBeDefined()
-      expect(result.summary).toBeDefined()
-      expect(result.pairs).toHaveLength(1)
-      expect(result.pairs[0].hybridScore).toBe(0.8)
-      expect(createPlagiarismDetector).toHaveBeenCalled()
-      expect(mockDetector.analyze).toHaveBeenCalled()
-    })
-
-    it("should throw InsufficientFilesError when less than 2 files", async () => {
-      const request: AnalyzeRequest = {
-        files: [{ path: "file1.py", content: 'print("hello")' }],
-        language: "python",
-      }
-
-      await expect(plagiarismService.analyzeFiles(request)).rejects.toThrow(
-        InsufficientFilesError,
-      )
-    })
-
-    it("should throw InsufficientFilesError when files is empty", async () => {
-      const request: AnalyzeRequest = {
-        files: [],
-        language: "python",
-      }
-
-      await expect(plagiarismService.analyzeFiles(request)).rejects.toThrow(
-        InsufficientFilesError,
-      )
-    })
-
-    it("should throw LanguageRequiredError when language is missing", async () => {
-      const request: AnalyzeRequest = {
-        files: [
-          { path: "file1.py", content: 'print("hello")' },
-          { path: "file2.py", content: 'print("hello")' },
-        ],
-        language: "" as any,
-      }
-
-      await expect(plagiarismService.analyzeFiles(request)).rejects.toThrow(
-        LanguageRequiredError,
-      )
-    })
   })
 
   describe("analyzeAssignmentSubmissions", () => {

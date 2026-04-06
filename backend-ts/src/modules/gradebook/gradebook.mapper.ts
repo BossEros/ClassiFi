@@ -1,3 +1,5 @@
+import type { GradeBreakdown } from "@/modules/submissions/submission-grade.js"
+
 export interface GradebookAssignmentDTO {
   id: number
   name: string
@@ -9,6 +11,7 @@ export interface GradebookGradeDTO {
   assignmentId: number
   submissionId: number | null
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   submittedAt: string | null
 }
@@ -31,6 +34,7 @@ export interface StudentGradeAssignmentDTO {
   totalScore: number
   deadline: string | null
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   feedback: string | null
   submittedAt: string | null
@@ -58,6 +62,7 @@ export function toClassGradebookDTO(gradebook: {
       assignmentId: number
       submissionId: number | null
       grade: number | null
+      gradeBreakdown: GradeBreakdown
       isOverridden: boolean
       submittedAt: Date | null
     }>
@@ -78,6 +83,7 @@ export function toClassGradebookDTO(gradebook: {
         assignmentId: g.assignmentId,
         submissionId: g.submissionId,
         grade: g.grade,
+        gradeBreakdown: g.gradeBreakdown,
         isOverridden: g.isOverridden,
         submittedAt: g.submittedAt?.toISOString() ?? null,
       })),
@@ -96,6 +102,7 @@ export function toStudentGradesDTO(
       totalScore: number
       deadline: Date | null
       grade: number | null
+      gradeBreakdown: GradeBreakdown
       isOverridden: boolean
       feedback: string | null
       submittedAt: Date | null
@@ -112,6 +119,7 @@ export function toStudentGradesDTO(
       totalScore: a.totalScore,
       deadline: a.deadline?.toISOString() ?? null,
       grade: a.grade,
+      gradeBreakdown: a.gradeBreakdown,
       isOverridden: a.isOverridden,
       feedback: a.feedback,
       submittedAt: a.submittedAt?.toISOString() ?? null,

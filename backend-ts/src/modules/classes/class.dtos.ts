@@ -1,4 +1,4 @@
-﻿import type { ClassSchedule } from "@/models/index.js"
+﻿import type { ClassSchedule } from "@/modules/classes/class.model.js"
 
 /** DTO for ClassService.createClass */
 export interface CreateClassServiceDTO {

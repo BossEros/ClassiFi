@@ -9,14 +9,16 @@ import { useAssignmentForm } from "@/presentation/hooks/teacher/useAssignmentFor
 import { BasicInfoForm } from "@/presentation/components/teacher/forms/assignment/BasicInfoForm"
 import { SubmissionSettings } from "@/presentation/components/teacher/forms/assignment/SubmissionSettings"
 import { LatePenaltyConfig } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
-import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/shared/types/gradebook"
+import { SimilarityPenaltyConfig } from "@/presentation/components/teacher/forms/assignment/SimilarityPenaltyConfig"
+import type { LatePenaltyConfig as LatePenaltyConfigType } from "@/data/api/gradebook.types"
+import type { SimilarityPenaltyConfig as SimilarityPenaltyConfigType } from "@/data/api/gradebook.types"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { FormProvider } from "react-hook-form"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme"
 import { getModulesByClassId } from "@/business/services/moduleService"
-import type { Module } from "@/shared/types/class"
+import type { Module } from "@/data/api/class.types"
 
 export function AssignmentFormPage() {
   const navigate = useNavigate()
@@ -63,8 +65,8 @@ export function AssignmentFormPage() {
       try {
         const fetchedModules = await getModulesByClassId(parseInt(classId, 10))
         setModules(fetchedModules)
-      } catch (error) {
-        console.error("Failed to fetch modules:", error)
+      } catch {
+        // Leave the module list empty when the fetch fails.
       }
     }
 
@@ -201,6 +203,18 @@ export function AssignmentFormPage() {
                 disabled={isLoading || !hasDeadlineConfigured}
               />
 
+              <SimilarityPenaltyConfig
+                enabled={formData.enableSimilarityPenalty}
+                config={formData.similarityPenaltyConfig}
+                onEnabledChange={(enabled) =>
+                  handleInputChange("enableSimilarityPenalty", enabled)
+                }
+                onConfigChange={(config: SimilarityPenaltyConfigType) =>
+                  handleInputChange("similarityPenaltyConfig", config)
+                }
+                disabled={isLoading}
+              />
+
               <Card className={assignmentFormTheme.actionCard}>
                 <CardContent className="p-6 space-y-3">
                   <Button
@@ -233,5 +247,4 @@ export function AssignmentFormPage() {
     </DashboardLayout>
   )
 }
-
 

@@ -7,15 +7,15 @@
  * Each factory creates a valid default object that can be customized
  * via the overrides parameter.
  */
-import type { User, UserRole } from "@/shared/types/auth"
+import type { User, UserRole } from "@/data/api/auth.types"
 import type {
   Class,
   Assignment,
   EnrolledStudent,
   ISODateString,
   Schedule,
-} from "@/shared/types/class"
-import type { Submission } from "@/shared/types/submission"
+} from "@/data/api/class.types"
+import type { Submission } from "@/data/api/shared.types"
 
 // ============================================================================
 // Helper Functions

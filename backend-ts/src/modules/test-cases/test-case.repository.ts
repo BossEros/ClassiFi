@@ -1,6 +1,6 @@
 import { injectable } from "tsyringe"
 import { db } from "@/shared/database.js"
-import { testCases, type TestCase, type NewTestCase } from "@/models/index.js"
+import { testCases, type TestCase, type NewTestCase } from "@/modules/test-cases/test-case.model.js"
 import { eq, asc } from "drizzle-orm"
 
 /**

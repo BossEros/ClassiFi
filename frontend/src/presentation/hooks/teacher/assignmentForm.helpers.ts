@@ -1,5 +1,5 @@
-import type { ProgrammingLanguage } from "@/business/models/assignment/types"
-import type { LatePenaltyConfig, PenaltyTier } from "@/shared/types/gradebook"
+import type { ProgrammingLanguage } from "@/data/api/assignment.types"
+import type { LatePenaltyConfig, PenaltyTier, SimilarityPenaltyConfig } from "@/data/api/gradebook.types"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 import type { AssignmentFormData } from "@/presentation/hooks/teacher/assignmentForm.types"
 
@@ -57,6 +57,7 @@ interface AssignmentPayload {
   allowLateSubmissions: boolean
   latePenaltyConfig: LatePenaltyConfig | null
   enableSimilarityPenalty: boolean
+  similarityPenaltyConfig: SimilarityPenaltyConfig | null
   moduleId: number | null
 }
 
@@ -86,6 +87,10 @@ export function buildAssignmentPayload(
       ? formData.latePenaltyConfig
       : null,
     enableSimilarityPenalty: formData.enableSimilarityPenalty,
+    similarityPenaltyConfig: formData.enableSimilarityPenalty
+      ? formData.similarityPenaltyConfig
+      : null,
     moduleId: formData.moduleId ?? null,
   }
 }
+

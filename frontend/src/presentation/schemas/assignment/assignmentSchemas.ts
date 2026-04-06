@@ -12,6 +12,19 @@ const latePenaltyConfigSchema = z.object({
   rejectAfterHours: z.number().nullable(),
 })
 
+const similarityPenaltyBandSchema = z.object({
+  id: z.string(),
+  minHybridScore: z.number(),
+  penaltyPercent: z.number(),
+})
+
+const similarityPenaltyConfigSchema = z.object({
+  warningThreshold: z.number(),
+  deductionBands: z.array(similarityPenaltyBandSchema),
+  maxPenaltyPercent: z.number(),
+  applyHighestPairOnly: z.boolean(),
+})
+
 const supportedProgrammingLanguages = new Set<string>(
   PROGRAMMING_LANGUAGE_OPTIONS.map((option) => option.value),
 )
@@ -88,6 +101,7 @@ export const assignmentFormSchema = z
     allowLateSubmissions: z.boolean(),
     latePenaltyConfig: latePenaltyConfigSchema,
     enableSimilarityPenalty: z.boolean(),
+    similarityPenaltyConfig: similarityPenaltyConfigSchema,
     moduleId: z.number().nullable(),
   })
   .superRefine((formValue, context) => {

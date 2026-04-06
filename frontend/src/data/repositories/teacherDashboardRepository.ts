@@ -16,6 +16,14 @@ export type {
 // Repository Functions (return raw API data)
 // ============================================================================
 
+/**
+ * Fetches the complete teacher dashboard payload with recent classes and pending tasks.
+ *
+ * @param teacherId - The unique identifier of the teacher.
+ * @param maximumRecentClassesCount - Maximum number of recent classes to include.
+ * @param maximumPendingTasksCount - Maximum number of pending tasks to include.
+ * @returns Dashboard response for the teacher homepage.
+ */
 export async function getCompleteDashboardDataForTeacherId(
   teacherId: number,
   maximumRecentClassesCount: number = 12,
@@ -28,6 +36,13 @@ export async function getCompleteDashboardDataForTeacherId(
   return unwrapApiResponse(apiResponse, "Failed to fetch dashboard data")
 }
 
+/**
+ * Retrieves a limited list of the teacher's most recent classes.
+ *
+ * @param teacherId - The unique identifier of the teacher.
+ * @param maximumClassesCount - Maximum number of classes to return.
+ * @returns Response containing recent class cards for dashboard display.
+ */
 export async function getRecentClassesForTeacherId(
   teacherId: number,
   maximumClassesCount: number = 5,
@@ -39,6 +54,13 @@ export async function getRecentClassesForTeacherId(
   return unwrapApiResponse(apiResponse, "Failed to fetch recent classes")
 }
 
+/**
+ * Retrieves pending tasks that require teacher action.
+ *
+ * @param teacherId - The unique identifier of the teacher.
+ * @param maximumTasksCount - Maximum number of pending tasks to return.
+ * @returns Response containing pending dashboard tasks.
+ */
 export async function getPendingTasksForTeacherId(
   teacherId: number,
   maximumTasksCount: number = 10,

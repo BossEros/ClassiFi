@@ -7,7 +7,7 @@ import { getAssignmentById } from "@/business/services/assignmentService"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useAuthStore } from "@/shared/store/useAuthStore"
-import type { AssignmentDetail } from "@/business/models/assignment/types"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
 
 interface CrossClassSimilarityNavigationState {
   shouldRunInitialAnalysis?: boolean
@@ -53,8 +53,8 @@ export function CrossClassSimilarityPage() {
           parseInt(user.id, 10),
         )
         setAssignment(assignmentDetail)
-      } catch (assignmentError) {
-        console.error("Failed to fetch assignment details:", assignmentError)
+      } catch {
+        // Keep the page mounted even when the optional assignment header fails to load.
       }
     }
 
@@ -151,3 +151,4 @@ export function CrossClassSimilarityPage() {
     </DashboardLayout>
   )
 }
+

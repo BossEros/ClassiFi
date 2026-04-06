@@ -1,5 +1,5 @@
 import { z } from "zod"
-import { VALID_ROLES, type UserRole } from "@/shared/types/auth"
+import { VALID_ROLES, type UserRole } from "@/data/api/auth.types"
 import {
   emailSchema,
   strongPasswordSchema,
@@ -48,3 +48,4 @@ export type AdminEditUserFormValues = z.infer<typeof adminEditUserFormSchema>
 export type AdminDeleteUserFormValues = z.infer<
   typeof adminDeleteUserFormSchema
 >
+

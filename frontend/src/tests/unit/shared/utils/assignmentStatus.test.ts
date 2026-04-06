@@ -4,7 +4,7 @@ import {
   getStatusColor,
   getStatusLabel,
 } from "@/shared/utils/assignmentStatus"
-import type { Assignment } from "@/shared/types/class"
+import type { Assignment } from "@/data/api/class.types"
 
 describe("assignmentStatus", () => {
   beforeEach(() => {

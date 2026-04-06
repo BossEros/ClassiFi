@@ -9,15 +9,9 @@ import {
   sql,
   type SQL,
 } from "drizzle-orm"
-import {
-  enrollments,
-  classes,
-  users,
-  type Enrollment,
-  type NewEnrollment,
-  type Class,
-  type User,
-} from "@/models/index.js"
+import { users, type User } from "@/modules/users/user.model.js"
+import { classes, type Class } from "@/modules/classes/class.model.js"
+import { enrollments, type Enrollment, type NewEnrollment } from "@/modules/enrollments/enrollment.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 import { alias } from "drizzle-orm/pg-core"

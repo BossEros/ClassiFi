@@ -45,7 +45,7 @@ import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import type {
   AssignmentDetail,
   Submission,
-} from "@/business/models/assignment/types"
+} from "@/data/api/assignment.types"
 import * as React from "react"
 import { cn } from "@/shared/utils/cn"
 import { AlertTriangle, X } from "lucide-react"
@@ -493,11 +493,8 @@ export function AssignmentSubmissionsPage() {
             accumulator[classStudent.id] = classStudent.avatarUrl ?? null
             return accumulator
           }, {})
-        } catch (classStudentsError) {
-          console.error(
-            "Failed to fetch class students for missing count:",
-            classStudentsError,
-          )
+        } catch {
+          // Submission details can still render without the class roster enrichment.
         }
 
         setAssignment(assignmentData)
@@ -511,15 +508,10 @@ export function AssignmentSubmissionsPage() {
             parseInt(assignmentId, 10),
           )
           setHasReusableSimilarityReport(similarityStatus.hasReusableReport)
-        } catch (similarityStatusError) {
-          console.error(
-            "Failed to fetch assignment similarity status:",
-            similarityStatusError,
-          )
+        } catch {
           setHasReusableSimilarityReport(false)
         }
       } catch (err) {
-        console.error("Error fetching assignment data:", err)
         const errorMessage =
           err instanceof Error ? err.message : "An unexpected error occurred"
         setError(errorMessage)
@@ -614,11 +606,8 @@ export function AssignmentSubmissionsPage() {
       navigate(`/dashboard/assignments/${assignmentId}/similarity`, {
         state: { results },
       })
-    } catch (err) {
-      console.error("Plagiarism analysis failed:", err)
-      const errorMessage =
-        err instanceof Error ? err.message : "Analysis failed"
-      showToast(errorMessage, "error")
+    } catch {
+      showToast("Analysis failed", "error")
     } finally {
       setIsAnalyzing(false)
     }
@@ -667,8 +656,7 @@ export function AssignmentSubmissionsPage() {
       await deleteAssignment(assignment.id, parseInt(currentUser.id, 10))
       showToast("Assignment deleted successfully")
       navigate(`/dashboard/classes/${assignment.classId}`)
-    } catch (deleteError) {
-      console.error("Failed to delete assignment:", deleteError)
+    } catch {
       showToast("Failed to delete assignment", "error")
     } finally {
       setIsDeletingAssignment(false)
@@ -912,3 +900,4 @@ export function AssignmentSubmissionsPage() {
     </DashboardLayout>
   )
 }
+

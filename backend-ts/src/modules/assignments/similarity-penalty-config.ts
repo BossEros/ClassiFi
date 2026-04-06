@@ -1,4 +1,5 @@
 export interface SimilarityPenaltyBand {
+  id?: string
   minHybridScore: number
   penaltyPercent: number
 }
@@ -33,6 +34,7 @@ export function normalizeSimilarityPenaltyConfig(
 
   const deductionBands = [...sourceConfig.deductionBands]
     .map((deductionBand) => ({
+      ...(deductionBand.id !== undefined ? { id: deductionBand.id } : {}),
       minHybridScore: Math.min(1, Math.max(0, deductionBand.minHybridScore)),
       penaltyPercent: Math.min(100, Math.max(0, deductionBand.penaltyPercent)),
     }))

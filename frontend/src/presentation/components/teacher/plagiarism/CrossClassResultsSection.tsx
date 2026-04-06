@@ -6,9 +6,12 @@ import {
   ArrowUp,
   BarChart3,
   BookOpen,
+  ChevronDown,
+  CircleHelp,
   Download,
   FileCode,
   GitCompare,
+  Info,
   Layers,
   Loader2,
   School,
@@ -89,6 +92,22 @@ function getCrossClassAnalysisToastConfig(
   }
 }
 
+function formatWeightPercent(weight: number): string {
+  return `${Math.round(weight * 100)}%`
+}
+
+function getOverallSimilarityTooltipText(scoringWeights: { structuralWeight: number; semanticWeight: number }): string {
+  return `Overall Similarity = ${formatWeightPercent(scoringWeights.structuralWeight)} Structural + ${formatWeightPercent(scoringWeights.semanticWeight)} Semantic. This hybrid score combines both analyses to produce a single confidence metric.`
+}
+
+function getStructuralSimilarityTooltipText(): string {
+  return "Structural Similarity measures how closely two code files share the same code structure using k-gram fingerprinting (Winnowing algorithm). It detects copied patterns, renamed variables, and reordered statements."
+}
+
+function getSemanticSimilarityTooltipText(): string {
+  return "Semantic Similarity uses AI (GraphCodeBERT) to detect meaning-level similarity. It catches code that solves problems the same way even if written with different syntax or structure."
+}
+
 /**
  * Self-contained section for cross-class similarity analysis.
  * Handles triggering analysis, displaying results, and viewing pair details.
@@ -120,6 +139,7 @@ export function CrossClassResultsSection({
   const [currentPage, setCurrentPage] = useState(1)
   const [isDownloadingClassReport, setIsDownloadingClassReport] = useState(false)
   const [isDownloadingPairReport, setIsDownloadingPairReport] = useState(false)
+  const [isMethodologyExpanded, setIsMethodologyExpanded] = useState(false)
 
   const comparisonRef = useRef<HTMLDivElement | null>(null)
 
@@ -171,7 +191,6 @@ export function CrossClassResultsSection({
             ? error.message
             : "Failed to load cross-class similarity results"
 
-        console.error("Failed to initialize cross-class analysis:", error)
         setReportLoadError(errorMessage)
         showToast(errorMessage, "error")
       } finally {
@@ -208,7 +227,6 @@ export function CrossClassResultsSection({
       const errorMessage =
         error instanceof Error ? error.message : "Cross-class analysis failed"
 
-      console.error("Cross-class analysis failed:", error)
       setReportLoadError(errorMessage)
       showToast(errorMessage, "error")
     } finally {
@@ -275,6 +293,8 @@ export function CrossClassResultsSection({
           filename: details.leftFile.filename,
           content: details.leftFile.content,
           lineCount: details.leftFile.lineCount,
+          studentName: details.leftFile.studentName,
+          submittedAt: details.leftFile.submittedAt,
         },
         rightFile: {
           id: details.result.submission2Id,
@@ -282,6 +302,8 @@ export function CrossClassResultsSection({
           filename: details.rightFile.filename,
           content: details.rightFile.content,
           lineCount: details.rightFile.lineCount,
+          studentName: details.rightFile.studentName,
+          submittedAt: details.rightFile.submittedAt,
         },
         similarity: details.result.structuralScore,
         overlap: details.result.overlap,
@@ -300,7 +322,6 @@ export function CrossClassResultsSection({
         comparisonRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
       }, 100)
     } catch (error) {
-      console.error("Failed to fetch cross-class result details:", error)
       setDetailsError(
         error instanceof Error ? error.message : "Failed to load code comparison",
       )
@@ -329,8 +350,7 @@ export function CrossClassResultsSection({
       })
 
       showToast("Cross-class similarity report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download cross-class similarity report:", error)
+    } catch {
       showToast("Failed to download cross-class similarity report", "error")
     } finally {
       setIsDownloadingClassReport(false)
@@ -350,8 +370,7 @@ export function CrossClassResultsSection({
       })
 
       showToast("Pairwise similarity report downloaded successfully")
-    } catch (error) {
-      console.error("Failed to download pairwise similarity report:", error)
+    } catch {
       showToast("Failed to download pairwise similarity report", "error")
     } finally {
       setIsDownloadingPairReport(false)
@@ -518,6 +537,88 @@ export function CrossClassResultsSection({
         </Card>
       )}
 
+      {/* How Scoring Works */}
+      <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
+        <CardContent className="p-0">
+          <button
+            type="button"
+            onClick={() => setIsMethodologyExpanded((prev) => !prev)}
+            className={`flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-slate-50 ${isMethodologyExpanded ? "rounded-t-xl" : "rounded-xl"}`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50">
+                <Info className="h-4 w-4 text-teal-600" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  How Scoring Works
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Understand how similarity scores are calculated
+                </p>
+              </div>
+            </div>
+            <ChevronDown
+              className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${
+                isMethodologyExpanded ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {isMethodologyExpanded && (
+            <div className="border-t border-slate-200 px-6 pb-6 pt-4">
+              <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 shadow-sm">
+                  <h4 className="mb-2 text-sm font-semibold text-teal-800">
+                    Overall Similarity Formula
+                  </h4>
+                  <div className="mb-3 rounded-lg bg-white px-3 py-2 font-mono text-sm text-slate-700">
+                    <span className="font-semibold text-teal-700">
+                      {formatWeightPercent(report.scoringWeights.structuralWeight)}
+                    </span>{" "}
+                    Structural +{" "}
+                    <span className="font-semibold text-indigo-700">
+                      {formatWeightPercent(report.scoringWeights.semanticWeight)}
+                    </span>{" "}
+                    Semantic
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    The Overall Similarity score is a weighted hybrid of both
+                    analyses. Pairs meeting or exceeding the threshold set
+                    by the slider above are flagged as suspicious.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+                  <h4 className="mb-2 text-sm font-semibold text-sky-800">
+                    Structural Analysis ({formatWeightPercent(report.scoringWeights.structuralWeight)})
+                  </h4>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    Uses <span className="font-semibold">k-gram fingerprinting</span>{" "}
+                    (Winnowing algorithm) to compare code structure. It detects
+                    copied code patterns even when variables are renamed,
+                    statements are reordered, or formatting is changed. Template
+                    and boilerplate code is automatically excluded.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+                  <h4 className="mb-2 text-sm font-semibold text-indigo-800">
+                    Semantic Analysis ({formatWeightPercent(report.scoringWeights.semanticWeight)})
+                  </h4>
+                  <p className="text-xs leading-relaxed text-slate-600">
+                    Uses <span className="font-semibold">AI (GraphCodeBERT)</span>{" "}
+                    to understand code meaning. It catches submissions that solve
+                    problems the same way even when written with completely
+                    different syntax, variable names, or code structure.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Flagged results table */}
       {flaggedResults.length > 0 && (
         <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
@@ -542,6 +643,13 @@ export function CrossClassResultsSection({
                     >
                       <span className="inline-flex items-center gap-1.5">
                         <span>Overall Similarity</span>
+                        <span
+                          title={getOverallSimilarityTooltipText(report.scoringWeights)}
+                          aria-label={getOverallSimilarityTooltipText(report.scoringWeights)}
+                          className="text-slate-500"
+                        >
+                          <CircleHelp className="h-3.5 w-3.5" />
+                        </span>
                         <SortIndicator column="hybridScore" currentSort={sortColumn} sortDirection={sortDirection} />
                       </span>
                     </th>
@@ -551,6 +659,13 @@ export function CrossClassResultsSection({
                     >
                       <span className="inline-flex items-center gap-1.5">
                         <span>Structural Similarity</span>
+                        <span
+                          title={getStructuralSimilarityTooltipText()}
+                          aria-label={getStructuralSimilarityTooltipText()}
+                          className="text-slate-500"
+                        >
+                          <CircleHelp className="h-3.5 w-3.5" />
+                        </span>
                         <SortIndicator column="structuralScore" currentSort={sortColumn} sortDirection={sortDirection} />
                       </span>
                     </th>
@@ -560,6 +675,13 @@ export function CrossClassResultsSection({
                     >
                       <span className="inline-flex items-center gap-1.5">
                         <span>Semantic Similarity</span>
+                        <span
+                          title={getSemanticSimilarityTooltipText()}
+                          aria-label={getSemanticSimilarityTooltipText()}
+                          className="text-slate-500"
+                        >
+                          <CircleHelp className="h-3.5 w-3.5" />
+                        </span>
                         <SortIndicator column="semanticScore" currentSort={sortColumn} sortDirection={sortDirection} />
                       </span>
                     </th>

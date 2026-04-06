@@ -1,5 +1,6 @@
 import { z } from "zod"
 import { PROGRAMMING_LANGUAGES } from "@/shared/constants.js"
+import { SimilarityPenaltyConfigSchema } from "@/modules/gradebook/gradebook.schema.js"
 
 /** Programming language enum - derived from shared constant */
 export const ProgrammingLanguageSchema = z.enum(PROGRAMMING_LANGUAGES)
@@ -35,6 +36,7 @@ export const CreateAssignmentRequestSchema = z.object({
   allowLateSubmissions: z.boolean().default(false),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
   enableSimilarityPenalty: z.boolean().default(false),
+  similarityPenaltyConfig: SimilarityPenaltyConfigSchema.nullable().optional(),
 })
 
 export type CreateAssignmentRequest = z.infer<
@@ -58,6 +60,7 @@ export const UpdateAssignmentRequestSchema = z.object({
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
   moduleId: z.number().int().min(1).optional(),
   enableSimilarityPenalty: z.boolean().optional(),
+  similarityPenaltyConfig: SimilarityPenaltyConfigSchema.nullable().optional(),
 })
 
 export type UpdateAssignmentRequest = z.infer<
@@ -85,6 +88,7 @@ export const AssignmentResponseSchema = z.object({
   allowLateSubmissions: z.boolean().optional(),
   latePenaltyConfig: LatePenaltyConfigSchema.nullable().optional(),
   enableSimilarityPenalty: z.boolean().optional(),
+  similarityPenaltyConfig: SimilarityPenaltyConfigSchema.nullable().optional(),
   submissionCount: z.number().optional(),
   studentCount: z.number().optional(),
   hasSubmitted: z.boolean().optional(),

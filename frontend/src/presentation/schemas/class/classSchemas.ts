@@ -1,6 +1,6 @@
-﻿import { z } from "zod"
+import { z } from "zod"
 import { DAY_ABBREVIATIONS } from "@/presentation/constants/schedule.constants"
-import type { DayOfWeek } from "@/shared/types/class"
+import type { DayOfWeek } from "@/data/api/class.types"
 
 const dayOfWeekValues = [
   "monday",
@@ -221,3 +221,4 @@ export type TeacherClassFormValues = z.infer<typeof teacherClassFormSchema>
 export type JoinClassFormValues = z.infer<typeof joinClassFormSchema>
 export type AdminClassFormValues = z.infer<typeof adminClassFormSchema>
 export type AdminClassPageFormValues = z.infer<typeof adminClassPageFormSchema>
+

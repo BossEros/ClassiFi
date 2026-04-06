@@ -4,7 +4,7 @@ import { MemoryRouter, useNavigate } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Sidebar } from "@/presentation/components/shared/dashboard/Sidebar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 
 const testUser: User = {
   id: "1",

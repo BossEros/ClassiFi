@@ -1,4 +1,60 @@
-import type { RawTestResult, TestCase } from "@/shared/types/testCase"
+export interface TestCase {
+  id: number
+  assignmentId: number
+  name: string
+  input: string
+  expectedOutput: string
+  isHidden: boolean
+  timeLimit: number
+  sortOrder: number
+  createdAt: string
+}
+
+export interface CreateTestCaseRequest {
+  name: string
+  input: string
+  expectedOutput: string
+  isHidden?: boolean
+  timeLimit?: number
+  sortOrder?: number
+}
+
+export interface UpdateTestCaseRequest {
+  name?: string
+  input?: string
+  expectedOutput?: string
+  isHidden?: boolean
+  timeLimit?: number
+  sortOrder?: number
+}
+
+export interface TestExecutionSummary {
+  submissionId?: number
+  passed: number
+  total: number
+  percentage: number
+  results: TestResultDetail[]
+}
+
+export interface RawTestResult {
+  testCaseId: number
+  name?: string
+  testCase?: {
+    name: string
+    isHidden: boolean
+    expectedOutput: string
+  }
+  status: "Passed" | "Failed"
+  isHidden?: boolean
+  executionTimeMs?: number
+  executionTime?: string
+  memoryUsedKb?: number
+  memoryUsed?: number
+  input: string
+  expectedOutput?: string
+  actualOutput: string
+  errorMessage?: string
+}
 
 /** Individual test result detail */
 export interface TestResultDetail {

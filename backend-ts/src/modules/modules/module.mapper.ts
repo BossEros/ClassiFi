@@ -1,4 +1,4 @@
-import type { Module } from "@/models/index.js"
+import type { Module } from "@/modules/modules/module.model.js"
 import type { AssignmentDTO } from "@/modules/assignments/assignment.mapper.js"
 
 /** Module DTO returned by the API */

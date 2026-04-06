@@ -48,6 +48,7 @@ vi.mock("drizzle-orm", () => ({
   and: vi.fn((...args) => ({ type: "and", conditions: args })),
   desc: vi.fn((field) => ({ field, type: "desc" })),
   sql: vi.fn((strings, ...values) => ({ type: "sql", strings, values })),
+  relations: vi.fn(),
 }))
 
 // Mock models

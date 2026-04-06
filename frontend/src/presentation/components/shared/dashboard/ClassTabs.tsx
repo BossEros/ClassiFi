@@ -1,6 +1,6 @@
 import React, { useRef } from "react"
 import { ClipboardList, Users, Calendar, BarChart3 } from "lucide-react"
-import type { ClassTab } from "@/shared/types/class"
+import type { ClassTab } from "@/data/api/class.types"
 
 interface ClassTabsProps {
   activeTab: ClassTab
@@ -102,3 +102,4 @@ export const ClassTabs: React.FC<ClassTabsProps> = ({
     </div>
   )
 }
+

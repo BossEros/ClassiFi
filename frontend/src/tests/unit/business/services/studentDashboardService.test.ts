@@ -2,12 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as studentDashboardService from "@/business/services/studentDashboardService"
 import * as dashboardRepository from "@/data/repositories/studentDashboardRepository"
-import * as classValidation from "@/business/validation/classValidation"
 import type { StudentDashboardBackendResponse } from "@/data/repositories/studentDashboardRepository"
 
 // Mock dependencies
 vi.mock("@/data/repositories/studentDashboardRepository")
-vi.mock("@/business/validation/classValidation")
 
 describe("studentDashboardService", () => {
   beforeEach(() => {
@@ -116,8 +114,7 @@ describe("studentDashboardService", () => {
     const mockClassCode = "ABC12345"
     const mockStudentId = 1
 
-    it("joins class successfully when validation passes", async () => {
-      vi.mocked(classValidation.validateClassJoinCode).mockReturnValue(null)
+    it("joins class successfully with a valid class code", async () => {
       vi.mocked(
         dashboardRepository.enrollStudentInClassWithCode,
       ).mockResolvedValue({
@@ -130,34 +127,36 @@ describe("studentDashboardService", () => {
         mockClassCode,
       )
 
-      expect(classValidation.validateClassJoinCode).toHaveBeenCalledWith(
-        mockClassCode,
-      )
       expect(
         dashboardRepository.enrollStudentInClassWithCode,
       ).toHaveBeenCalledWith(mockStudentId, mockClassCode)
       expect(result.success).toBe(true)
     })
 
-    it("returns error result when validation fails", async () => {
-      vi.mocked(classValidation.validateClassJoinCode).mockReturnValue(
-        "Invalid code format",
-      )
+    it("returns error result for an empty class code", async () => {
+      const result = await studentDashboardService.joinClass(mockStudentId, "")
 
+      expect(result.success).toBe(false)
+      expect(result.message).toBe("Class code is required")
+      expect(
+        dashboardRepository.enrollStudentInClassWithCode,
+      ).not.toHaveBeenCalled()
+    })
+
+    it("returns error result for an invalid class code format", async () => {
       const result = await studentDashboardService.joinClass(
         mockStudentId,
         "bad",
       )
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Invalid code format")
+      expect(result.message).toContain("Invalid class code format")
       expect(
         dashboardRepository.enrollStudentInClassWithCode,
       ).not.toHaveBeenCalled()
     })
 
     it("handles repository errors gracefully", async () => {
-      vi.mocked(classValidation.validateClassJoinCode).mockReturnValue(null)
       vi.mocked(
         dashboardRepository.enrollStudentInClassWithCode,
       ).mockRejectedValue(new Error("API Error"))

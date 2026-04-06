@@ -59,6 +59,7 @@ describe("SubmissionService", () => {
   let mockLatePenaltyService: any
   let mockNotificationService: any
   let mockPlagiarismAutoAnalysisService: any
+  let mockSimilarityRepo: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -123,7 +124,8 @@ describe("SubmissionService", () => {
         rejectAfterHours: 120,
       }),
       applyPenalty: vi.fn(
-        (score: number, penalty: number) => score * (1 - penalty / 100),
+        (score: number, penalty: { penaltyPercent: number }, totalScore: number) =>
+          Math.max(0, score - Math.round(totalScore * (penalty.penaltyPercent / 100))),
       ),
       getAssignmentPenaltyConfig: vi.fn(),
       setAssignmentPenaltyConfig: vi.fn(),
@@ -139,6 +141,10 @@ describe("SubmissionService", () => {
       scheduleFromSubmission: vi.fn(),
     }
 
+    mockSimilarityRepo = {
+      getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()),
+    }
+
     submissionService = new SubmissionService(
       mockSubmissionRepo,
       mockAssignmentRepo,
@@ -151,6 +157,7 @@ describe("SubmissionService", () => {
       mockLatePenaltyService,
       mockNotificationService,
       mockPlagiarismAutoAnalysisService,
+      mockSimilarityRepo,
     )
   })
 

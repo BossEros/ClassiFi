@@ -5,6 +5,7 @@ export interface FileResponse {
   lineCount: number
   studentId?: string
   studentName?: string
+  submittedAt?: string
 }
 
 export interface PairResponse {
@@ -16,6 +17,12 @@ export interface PairResponse {
   hybridScore: number
   overlap: number
   longest: number
+}
+
+/** Weights used to compute the hybrid similarity score */
+export interface ScoringWeights {
+  structuralWeight: number
+  semanticWeight: number
 }
 
 export interface AnalyzeResponse {
@@ -32,6 +39,7 @@ export interface AnalyzeResponse {
   submissions: FileResponse[]
   pairs: PairResponse[]
   warnings: string[]
+  scoringWeights: ScoringWeights
 }
 
 export interface AssignmentSimilarityStatusResponse {
@@ -70,12 +78,14 @@ export interface ResultDetailsResponse {
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
   rightFile: {
     filename: string
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
 }
 

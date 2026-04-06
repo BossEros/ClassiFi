@@ -1,5 +1,5 @@
 import { eq, desc, and, sql } from "drizzle-orm"
-import { notifications, type Notification, type NewNotification } from "@/models/index.js"
+import { notifications, type Notification, type NewNotification } from "@/modules/notifications/notification.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 

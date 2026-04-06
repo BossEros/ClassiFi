@@ -12,7 +12,7 @@ import {
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getAllClasses } from "@/business/services/classService"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { Class } from "@/business/models/dashboard/types"
+import type { Class } from "@/data/api/class.types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
@@ -52,8 +52,7 @@ export function ClassesPage() {
       )
 
       setClasses(allClasses)
-    } catch (error) {
-      console.error("Failed to fetch classes:", error)
+    } catch {
       setError("Failed to load classes. Please try refreshing the page.")
     } finally {
       setIsLoading(false)
@@ -189,3 +188,4 @@ export function ClassesPage() {
     </DashboardLayout>
   )
 }
+

@@ -1,39 +1,47 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/business/validation/commonValidation"
-import type { ProgrammingLanguage } from "@/business/models/assignment/types"
+import { validateId } from "@/shared/utils/idUtils"
+import type { ProgrammingLanguage } from "@/data/api/shared.types"
 import type {
   TestPreviewResult,
   TestResultDetail,
   TestPreviewResponse,
   TestResultsResponse,
-} from "@/business/models/test/types"
+} from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
 export type { TestPreviewResult, TestResultDetail, TestPreviewResponse }
 
+/**
+ * Maps raw API test execution data into a typed TestPreviewResult.
+ * Resolves field name aliases (e.g., `passed` vs `passedCount`, `percentage` vs `score`)
+ * to maintain backward compatibility across older and newer API response formats.
+ * Each raw result is normalized via `normalizeTestResult` for consistent display.
+ *
+ * @param testExecutionSummaryData - The raw test result payload from the API response.
+ * @returns A normalized TestPreviewResult with pass counts, total counts, percentage, and detailed results.
+ * @throws Error if required summary fields (passed, total, percentage) are missing from the raw data.
+ */
 function mapTestExecutionSummaryToPreviewResult(
   testExecutionSummaryData: TestResultsResponse["data"],
 ): TestPreviewResult {
-  const passedTestCount =
-    testExecutionSummaryData.passed ?? testExecutionSummaryData.passedCount
-  const totalTestCount =
-    testExecutionSummaryData.total ?? testExecutionSummaryData.totalCount
-  const scorePercentage =
-    testExecutionSummaryData.percentage ?? testExecutionSummaryData.score
+  // STEP 1: The API has two naming styles for the same fields (e.g. `passed` vs `passedCount`).
+  // We check both so older and newer responses all work the same way.
+  const passedTestCount = testExecutionSummaryData.passed ?? testExecutionSummaryData.passedCount
+  const totalTestCount = testExecutionSummaryData.total ?? testExecutionSummaryData.totalCount
+  const scorePercentage = testExecutionSummaryData.percentage ?? testExecutionSummaryData.score
 
-  if (
-    passedTestCount === undefined ||
-    totalTestCount === undefined ||
-    scorePercentage === undefined
-  ) {
+  // STEP 2: If we still couldn't find the core numbers, the response is broken — bail out early
+  if (passedTestCount === undefined || totalTestCount === undefined || scorePercentage === undefined) {
     throw new Error("Test execution summary is incomplete")
   }
 
+  // STEP 3: Clean up each individual test result into a consistent shape the UI expects
   const normalizedResults = Array.isArray(testExecutionSummaryData.results)
     ? testExecutionSummaryData.results.map(normalizeTestResult)
     : []
 
+  // STEP 4: Hand back the final object ready for the UI to render
   return {
     passed: passedTestCount,
     total: totalTestCount,
@@ -57,8 +65,10 @@ export async function runTestsPreview(
   language: ProgrammingLanguage,
   assignmentId: number,
 ): Promise<TestPreviewResult> {
+  // STEP 1: Make sure the assignment ID is a valid number before hitting the backend
   validateId(assignmentId, "assignment")
 
+  // STEP 2: Send the source code to the backend — it runs the test cases but doesn't save anything to the DB
   const executionResponse =
     await testCaseRepository.executeTestsInPreviewModeWithoutSaving(
       sourceCode,
@@ -66,6 +76,7 @@ export async function runTestsPreview(
       assignmentId,
     )
 
+  // STEP 3: If the API said the request failed, surface that error message
   if (!executionResponse.data || !executionResponse.data.success) {
     throw new Error(
       executionResponse.data?.message ||
@@ -74,10 +85,12 @@ export async function runTestsPreview(
     )
   }
 
+  // STEP 4: The API responded with success but somehow didn't include any data — shouldn't happen, but guard it anyway
   if (!executionResponse.data.data) {
     throw new Error("Test execution data is missing from the response")
   }
 
+  // STEP 5: Clean up the raw response and return it in the shape the UI components expect
   return mapTestExecutionSummaryToPreviewResult(executionResponse.data.data)
 }
 
