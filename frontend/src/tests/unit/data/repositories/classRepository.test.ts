@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as classRepository from "@/data/repositories/classRepository"
 import { apiClient } from "@/data/api/apiClient"
-import type { ISODateString } from "@/shared/types/class"
+import type { ISODateString } from "@/data/api/class.types"
 
 // Mock the apiClient module
 vi.mock("@/data/api/apiClient", async (importOriginal) => {

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
-import type { Notification } from "@/business/models/notification/types"
+import type { Notification } from "@/data/api/notification.types"
 import * as Icons from "lucide-react"
 
 interface NotificationItemProps {
@@ -108,3 +108,4 @@ export function NotificationItem({
     </div>
   )
 }
+

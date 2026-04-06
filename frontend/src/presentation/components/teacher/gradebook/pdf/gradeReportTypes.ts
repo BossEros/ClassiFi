@@ -1,4 +1,4 @@
-import type { ClassGradebook } from "@/shared/types/gradebook"
+import type { ClassGradebook } from "@/data/api/gradebook.types"
 import type { ReportMetadataEntry, SummaryMetric } from "@/presentation/components/shared/pdf/pdfReportTypes"
 
 export type {
@@ -35,3 +35,4 @@ export interface GradeReportBuilderOptions {
   teacherName?: string
   downloadedAt?: Date
 }
+

@@ -1,10 +1,10 @@
-import type { AssignmentDetail } from "@/business/models/assignment/types"
-import type { CrossClassResultDTO } from "@/business/models/plagiarism/crossClassTypes"
+import type { AssignmentDetail } from "@/data/api/assignment.types"
+import type { CrossClassResultDTO } from "@/data/api/crossClassPlagiarism.types"
 import type {
   AnalyzeResponse,
   PairResponse,
 } from "@/business/services/plagiarismService"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 
 import {
   buildSimilarityGraphData,
@@ -419,3 +419,4 @@ export function buildCrossClassPairReportData(
     fragments: pairDetails.fragments,
   }
 }
+

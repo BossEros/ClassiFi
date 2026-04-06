@@ -31,6 +31,8 @@ interface PairCodeEditorProps {
   height?: string | number
   /** Visual theme variant for comparison chrome. */
   variant?: "dark" | "light"
+  /** Whether this file was submitted first in the pair */
+  submittedFirst?: boolean | null
 }
 
 /**
@@ -57,6 +59,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   language = "java",
   height = "480px",
   variant = "dark",
+  submittedFirst,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null)
@@ -425,7 +428,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* File info header - dark theme */}
+      {/* File info header */}
       <div
         style={{
           padding: "8px 12px",
@@ -436,18 +439,69 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
           fontSize: "14px",
           fontWeight: 500,
           color: isLight ? "#0f172a" : "#fff",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "8px",
+          flexWrap: "wrap",
         }}
       >
-        {file.filename}
-        <span
-          style={{
-            marginLeft: "8px",
-            color: isLight ? "#64748b" : "#9ca3af",
-            fontWeight: 400,
-          }}
-        >
-          ({file.lineCount} lines)
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+          {file.studentName && (
+            <span style={{ fontWeight: 600 }}>{file.studentName}</span>
+          )}
+          {file.studentName && (
+            <span style={{ color: isLight ? "#94a3b8" : "#64748b" }}>·</span>
+          )}
+          <span style={{ fontWeight: file.studentName ? 400 : 500 }}>{file.filename}</span>
+          <span
+            style={{
+              marginLeft: "4px",
+              color: isLight ? "#64748b" : "#9ca3af",
+              fontWeight: 400,
+            }}
+          >
+            ({file.lineCount} lines)
+          </span>
+        </div>
+        {submittedFirst === true && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "2px 8px",
+              borderRadius: "9999px",
+              fontSize: "11px",
+              fontWeight: 600,
+              backgroundColor: isLight ? "rgba(16, 185, 129, 0.10)" : "rgba(16, 185, 129, 0.15)",
+              color: isLight ? "#047857" : "#34d399",
+              border: isLight ? "1px solid rgba(5, 150, 105, 0.20)" : "1px solid rgba(52, 211, 153, 0.25)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Submitted first
+          </span>
+        )}
+        {submittedFirst === false && (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "2px 8px",
+              borderRadius: "9999px",
+              fontSize: "11px",
+              fontWeight: 600,
+              backgroundColor: isLight ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)",
+              color: isLight ? "#64748b" : "#94a3b8",
+              border: isLight ? "1px solid rgba(148, 163, 184, 0.20)" : "1px solid rgba(148, 163, 184, 0.25)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Submitted later
+          </span>
+        )}
       </div>
 
       {/* Editor container */}

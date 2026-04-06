@@ -52,6 +52,7 @@ export class PlagiarismSubmissionFileService {
             studentId: submission.studentId.toString(),
             studentName: studentName,
             submissionId: submission.id.toString(),
+            submittedAt: submission.submittedAt.toISOString(),
           }),
         )
       } catch (error) {

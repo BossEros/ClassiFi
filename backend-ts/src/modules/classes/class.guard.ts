@@ -1,5 +1,5 @@
 import type { ClassRepository } from "@/modules/classes/class.repository.js"
-import type { Class } from "@/models/index.js"
+import type { Class } from "@/modules/classes/class.model.js"
 import { ClassNotFoundError, NotClassOwnerError } from "@/shared/errors.js"
 
 /**

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { PairResponse } from "@/business/models/plagiarism/types"
+import type { PairResponse } from "@/data/api/plagiarism.types"
 import {
   buildSimilarityClusters,
   getPairOverallSimilarityRatio,

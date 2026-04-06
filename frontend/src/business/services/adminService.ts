@@ -12,28 +12,9 @@ import type {
   ClassAssignment,
   AdminEnrollmentRecord,
   TransferStudentData,
-} from "@/business/models/admin/types"
-import { validateId } from "@/business/validation/commonValidation"
-import {
-  validateEmail,
-  validateRole,
-} from "@/business/validation/authValidation"
-
-// Re-export common types for consumers
-export type {
-  AdminUser,
-  AdminStats,
-  ActivityItem,
-  AdminClass,
-  PaginatedResponse,
-  CreateUserData,
-  CreateClassData,
-  UpdateClassData,
-  EnrolledStudent,
-  ClassAssignment,
-  AdminEnrollmentRecord,
-  TransferStudentData,
-}
+} from "@/data/api/admin.types"
+export type { AdminUser, AdminStats, ActivityItem, AdminClass, PaginatedResponse, CreateUserData, CreateClassData, UpdateClassData, EnrolledStudent, ClassAssignment, AdminEnrollmentRecord, TransferStudentData } from "@/data/api/admin.types"
+import { validateId } from "@/shared/utils/idUtils"
 
 // ============ User Management ============
 
@@ -88,12 +69,6 @@ export async function getUserById(userId: number): Promise<AdminUser> {
  * @throws Error if creation fails.
  */
 export async function createUser(data: CreateUserData): Promise<AdminUser> {
-  const emailError = validateEmail(data.email)
-  if (emailError) throw new Error(emailError)
-
-  const roleError = validateRole(data.role)
-  if (roleError) throw new Error(roleError)
-
   const response = await adminRepository.createNewUserAccount(data)
 
   if (!response.user) {
@@ -115,9 +90,6 @@ export async function updateUserRole(
   role: string,
 ): Promise<AdminUser> {
   validateId(userId, "user")
-
-  const roleError = validateRole(role)
-  if (roleError) throw new Error(roleError)
 
   const response = await adminRepository.updateUserRoleById(userId, role)
 
@@ -165,9 +137,6 @@ export async function updateUserEmail(
   email: string,
 ): Promise<AdminUser> {
   validateId(userId, "user")
-
-  const emailError = validateEmail(email)
-  if (emailError) throw new Error(emailError)
 
   const response = await adminRepository.updateUserEmailAddressById(
     userId,
@@ -288,9 +257,11 @@ export async function transferStudent(
   validateId(data.studentId, "student")
   validateId(data.fromClassId, "source class")
   validateId(data.toClassId, "destination class")
+
   if (data.fromClassId === data.toClassId) {
     throw new Error("Source and destination classes must be different")
   }
+
   await adminRepository.transferStudentBetweenClasses(data)
 }
 // ============ Class Management ============

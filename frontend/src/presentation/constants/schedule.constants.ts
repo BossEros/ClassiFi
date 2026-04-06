@@ -1,4 +1,4 @@
-import type { DayOfWeek } from "@/shared/types/class"
+import type { DayOfWeek } from "@/data/api/class.types"
 
 /**
  * Days of the week with labels and short forms for UI display

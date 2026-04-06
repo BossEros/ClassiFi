@@ -7,8 +7,8 @@ import * as classService from "@/business/services/classService"
 import * as assignmentService from "@/business/services/assignmentService"
 import * as testCaseService from "@/business/services/testCaseService"
 import { MemoryRouter } from "react-router-dom"
-import type { User } from "@/shared/types/auth"
-import type { ISODateString } from "@/shared/types/class"
+import type { User } from "@/data/api/auth.types"
+import type { ISODateString } from "@/data/api/class.types"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
 
 // Mock dependencies

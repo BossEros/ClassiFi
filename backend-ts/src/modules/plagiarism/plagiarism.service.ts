@@ -1,22 +1,17 @@
 import { inject, injectable } from "tsyringe"
-import {
-  File,
-  LanguageName,
-  Report,
-  Pair,
-  Fragment,
-} from "@/lib/plagiarism/index.js"
+import { File, LanguageName, Report, Pair } from "@/lib/plagiarism/index.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { PlagiarismSubmissionFileService } from "@/modules/plagiarism/plagiarism-submission-file.service.js"
 import { PlagiarismPersistenceService } from "@/modules/plagiarism/plagiarism-persistence.service.js"
 import { SimilarityPenaltyService } from "@/modules/plagiarism/similarity-penalty.service.js"
-import { SemanticSimilarityClient, cosineSimilarity } from "@/modules/plagiarism/semantic-similarity.client.js"
+import { SemanticSimilarityClient } from "@/modules/plagiarism/semantic-similarity.client.js"
 import {
-  PLAGIARISM_CONFIG,
+  computeSemanticScoresFromEmbeddings,
+  type SemanticScorePairEntry,
+} from "@/modules/plagiarism/semantic-scoring.js"
+import {
   PLAGIARISM_LANGUAGE_MAP,
   createPlagiarismDetector,
-  toPlagiarismPairDTO,
-  toPlagiarismFragmentDTO,
   type PlagiarismFileDTO,
   type PlagiarismPairDTO,
   type PlagiarismFragmentDTO,
@@ -32,31 +27,16 @@ import {
   AssignmentNotFoundError,
   PlagiarismReportNotFoundError,
   PlagiarismResultNotFoundError,
-  PlagiarismPairNotFoundError,
-  InsufficientFilesError,
   UnsupportedLanguageError,
-  LanguageRequiredError,
 } from "@/shared/errors.js"
-import type { MatchFragment } from "@/models/index.js"
+import type { MatchFragment } from "@/modules/plagiarism/match-fragment.model.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { settings } from "@/shared/config.js"
 
-/** Request body for analyzing files */
-export interface AnalyzeRequest {
-  files: Array<{
-    id?: string
-    path: string
-    content: string
-    studentId?: string
-    studentName?: string
-  }>
-  language: LanguageName
-  templateFile?: {
-    path: string
-    content: string
-  }
-  threshold?: number
-  kgramLength?: number
+/** Weights used to compute the hybrid similarity score */
+export interface ScoringWeights {
+  structuralWeight: number
+  semanticWeight: number
 }
 
 /** Response for analyze endpoint */
@@ -69,6 +49,7 @@ export interface AnalyzeResponse {
   submissions: PlagiarismFileDTO[]
   pairs: PlagiarismPairDTO[]
   warnings: string[]
+  scoringWeights: ScoringWeights
 }
 
 /** Response with pair details and fragments */
@@ -103,12 +84,14 @@ export interface ResultDetailsResponse {
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
   rightFile: {
     filename: string
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
 }
 
@@ -118,21 +101,6 @@ export interface ResultDetailsResponse {
  */
 @injectable()
 export class PlagiarismService {
-  private static readonly LEGACY_REPORT_TTL_MS = 24 * 60 * 60 * 1000
-  private static readonly MAX_LEGACY_REPORTS = 100
-
-  /**
-   * In-memory storage for ad-hoc reports (not tied to assignment submissions).
-   * Kept for analyzeFiles flows that do not persist to the database.
-   */
-  private legacyReportsStore = new Map<
-    string,
-    { report: Report; createdAt: Date }
-  >()
-
-  /** Interval ID for cleanup timer - stored to allow cleanup in dispose(). */
-  private cleanupIntervalId: ReturnType<typeof setInterval> | null = null
-
   constructor(
     @inject(DI_TOKENS.repositories.assignment)
     private assignmentRepo: AssignmentRepository,
@@ -144,107 +112,14 @@ export class PlagiarismService {
     private similarityPenaltyService: SimilarityPenaltyService,
     @inject(DI_TOKENS.services.semanticSimilarityClient)
     private semanticClient: SemanticSimilarityClient,
-  ) {
-    this.cleanupIntervalId = setInterval(
-      () => this.cleanupExpiredReports(),
-      60 * 60 * 1000,
-    )
-  }
-
-  /**
-   * Dispose of the service and clean up resources.
-   * Should be called during application shutdown or test teardown.
-   */
-  public dispose(): void {
-    if (this.cleanupIntervalId !== null) {
-      clearInterval(this.cleanupIntervalId)
-      this.cleanupIntervalId = null
-    }
-
-    this.legacyReportsStore.clear()
-  }
-
-  /** Analyze files for plagiarism (ad-hoc analysis). */
-  async analyzeFiles(request: AnalyzeRequest): Promise<AnalyzeResponse> {
-    // Validate that the request has enough files and a language specified before doing anything.
-    this.validateAnalyzeRequest(request)
-
-    const detector = createPlagiarismDetector(request.language, request.kgramLength)
-
-    // Wrap each raw file object into the detector's File type, preserving student metadata.
-    const files = request.files.map(
-      (file) =>
-        new File(file.path, file.content, {
-          studentId: file.studentId,
-          studentName: file.studentName,
-        }),
-    )
-
-    // If a template file is provided, pass it to the detector so shared boilerplate is ignored.
-    const ignoredFile = request.templateFile
-      ? new File(request.templateFile.path, request.templateFile.content)
-      : undefined
-
-    const report = await detector.analyze(files, ignoredFile)
-
-    // Purge stale in-memory reports before storing this new one to keep memory usage bounded.
-    this.cleanupExpiredReports()
-    const createdAt = new Date()
-    const reportId = this.generateReportId()
-    // Store in-memory — ad-hoc reports are not persisted to the database.
-    this.legacyReportsStore.set(reportId, { report, createdAt })
-
-    const threshold = request.threshold ?? settings.plagiarismHybridThreshold
-    const summary = report.getSummary()
-    const pairs = report.getPairs()
-
-    return {
-      reportId,
-      isReusedReport: false,
-      generatedAt: createdAt.toISOString(),
-      summary: {
-        totalFiles: summary.totalFiles,
-        totalPairs: summary.totalPairs,
-        suspiciousPairs: pairs.filter((pair) => pair.similarity >= threshold)
-          .length,
-        averageSimilarity: summary.averageSimilarity,
-        maxSimilarity: summary.maxSimilarity,
-      },
-      submissions: this.mapReportFilesToDTOs(report.files),
-      pairs: pairs.map((pair) => toPlagiarismPairDTO(pair)),
-      warnings: summary.warnings,
-    }
-  }
+  ) {}
 
   /** Get pair details with fragments. */
   async getPairDetails(
     reportId: string,
     pairId: number,
   ): Promise<PairDetailsResponse> {
-    // First check if this is an in-memory (ad-hoc) report — these are not in the database.
-    const legacyStored = this.legacyReportsStore.get(reportId)
-
-    if (legacyStored) {
-      const pairs = legacyStored.report.getPairs()
-      const pair = pairs.find((storedPair: Pair) => storedPair.id === pairId)
-
-      if (!pair) {
-        throw new PlagiarismPairNotFoundError(pairId)
-      }
-
-      const fragments = legacyStored.report.getFragments(pair)
-
-      return {
-        pair: toPlagiarismPairDTO(pair),
-        fragments: fragments.map((fragment: Fragment, index: number) =>
-          toPlagiarismFragmentDTO(fragment, index),
-        ),
-        leftCode: pair.leftFile.content,
-        rightCode: pair.rightFile.content,
-      }
-    }
-
-    // If the reportId is a numeric string, it refers to a persisted DB report.
+    // The reportId is a numeric string referring to a persisted DB report.
     // Delegate to getResultDetails to fetch the full pair with file content and fragments.
     const numericReportId = parseInt(reportId, 10)
     if (!Number.isNaN(numericReportId)) {
@@ -284,51 +159,22 @@ export class PlagiarismService {
 
   /** Get report by ID. */
   async getReport(reportId: string): Promise<AnalyzeResponse | null> {
-    // Numeric IDs belong to persisted DB reports — delegate to the persistence service.
     const numericReportId = parseInt(reportId, 10)
     if (!Number.isNaN(numericReportId)) {
       return this.persistenceService.getReport(numericReportId)
     }
 
-    // Non-numeric IDs are in-memory ad-hoc reports; look them up in the local store.
-    const storedReport = this.legacyReportsStore.get(reportId)
-    if (!storedReport) {
-      return null
-    }
-
-    const summary = storedReport.report.getSummary()
-    const pairs = storedReport.report.getPairs()
-    const threshold = settings.plagiarismHybridThreshold
-
-    return {
-      reportId,
-      isReusedReport: true,
-      generatedAt: storedReport.createdAt.toISOString(),
-      summary: {
-        totalFiles: summary.totalFiles,
-        totalPairs: summary.totalPairs,
-        suspiciousPairs: pairs.filter(
-          (pair: Pair) => pair.similarity >= threshold,
-        ).length,
-        averageSimilarity: summary.averageSimilarity,
-        maxSimilarity: summary.maxSimilarity,
-      },
-      submissions: this.mapReportFilesToDTOs(storedReport.report.files),
-      pairs: pairs.map((pair: Pair) => toPlagiarismPairDTO(pair)),
-      warnings: summary.warnings,
-    }
+    return null
   }
 
   /** Delete a report. */
   async deleteReport(reportId: string): Promise<boolean> {
-    // Numeric ID → delete from the database via persistence service.
     const numericReportId = parseInt(reportId, 10)
     if (!Number.isNaN(numericReportId)) {
       return this.persistenceService.deleteReport(numericReportId)
     }
 
-    // Non-numeric ID → remove from in-memory store.
-    return this.legacyReportsStore.delete(reportId)
+    return false
   }
 
   /** Get result details from database with fragments and file content. */
@@ -381,12 +227,14 @@ export class PlagiarismService {
         content: leftContent,
         lineCount: leftContent.split("\n").length,
         studentName: submission1.studentName || "Unknown",
+        submittedAt: submission1.submission.submittedAt?.toISOString() ?? null,
       },
       rightFile: {
         filename: submission2.submission.fileName,
         content: rightContent,
         lineCount: rightContent.split("\n").length,
         studentName: submission2.studentName || "Unknown",
+        submittedAt: submission2.submission.submittedAt?.toISOString() ?? null,
       },
     }
   }
@@ -486,49 +334,6 @@ export class PlagiarismService {
     }
   }
 
-  private cleanupExpiredReports(): void {
-    const currentTimestampMs = Date.now()
-
-    // First pass: remove any reports older than the TTL (24 hours by default).
-    for (const [reportId, reportData] of this.legacyReportsStore.entries()) {
-      const reportAgeMs = currentTimestampMs - reportData.createdAt.getTime()
-      if (reportAgeMs > PlagiarismService.LEGACY_REPORT_TTL_MS) {
-        this.legacyReportsStore.delete(reportId)
-      }
-    }
-
-    // Second pass: if the store still exceeds the max count, evict the oldest entries first.
-    if (this.legacyReportsStore.size > PlagiarismService.MAX_LEGACY_REPORTS) {
-      const sortedEntries = Array.from(this.legacyReportsStore.entries()).sort(
-        (leftEntry, rightEntry) =>
-          leftEntry[1].createdAt.getTime() - rightEntry[1].createdAt.getTime(),
-      )
-
-      const reportCountToRemove =
-        this.legacyReportsStore.size - PlagiarismService.MAX_LEGACY_REPORTS
-      for (let index = 0; index < reportCountToRemove; index += 1) {
-        this.legacyReportsStore.delete(sortedEntries[index][0])
-      }
-    }
-  }
-
-  private validateAnalyzeRequest(request: AnalyzeRequest): void {
-    // Ensure the minimum number of files are present to form at least one comparison pair.
-    if (
-      !request.files ||
-      request.files.length < PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED
-    ) {
-      throw new InsufficientFilesError(
-        PLAGIARISM_CONFIG.MINIMUM_FILES_REQUIRED,
-        request.files?.length ?? 0,
-      )
-    }
-
-    if (!request.language) {
-      throw new LanguageRequiredError()
-    }
-  }
-
   private mapReportFilesToDTOs(files: File[]): PlagiarismFileDTO[] {
     return files.map((file) => ({
       id: parseInt(file.info?.submissionId || String(file.id), 10),
@@ -537,11 +342,8 @@ export class PlagiarismService {
       lineCount: file.lineCount,
       studentId: file.info?.studentId,
       studentName: file.info?.studentName,
+      submittedAt: file.info?.submittedAt,
     }))
-  }
-
-  private generateReportId(): string {
-    return `report_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   }
 
   private getLanguage(programmingLanguage: string): LanguageName {
@@ -595,6 +397,10 @@ export class PlagiarismService {
         ),
       },
       submissions: this.mapReportFilesToDTOs(report.files),
+      scoringWeights: {
+        structuralWeight: settings.plagiarismStructuralWeight,
+        semanticWeight: settings.plagiarismSemanticWeight,
+      },
       pairs: pairs.map((pair: Pair) => {
         const leftSubmissionId = parseInt(
           pair.leftFile.info?.submissionId || "0",
@@ -625,6 +431,7 @@ export class PlagiarismService {
             lineCount: pair.leftTotal,
             studentId: pair.leftFile.info?.studentId,
             studentName: pair.leftFile.info?.studentName,
+            submittedAt: pair.leftFile.info?.submittedAt,
           },
           rightFile: {
             id: rightSubmissionId,
@@ -633,6 +440,7 @@ export class PlagiarismService {
             lineCount: pair.rightTotal,
             studentId: pair.rightFile.info?.studentId,
             studentName: pair.rightFile.info?.studentName,
+            submittedAt: pair.rightFile.info?.submittedAt,
           },
           structuralScore: pairScoreBreakdown.structuralScore,
           semanticScore: pairScoreBreakdown.semanticScore,
@@ -695,21 +503,16 @@ export class PlagiarismService {
     pairs: Pair[],
     _language: LanguageName,
   ): Promise<Map<string, number>> {
-    const semanticScores = new Map<string, number>()
-
-    // ── Collect unique submissions from all pairs ──────────────────────────
+    // Step 1: Collect the unique submissions and normalized pair entries.
     const submissionContentMap = new Map<string, string>()
-    const pairEntries: Array<{
-      key: string
-      leftSubmissionId: string
-      rightSubmissionId: string
-    }> = []
+    const pairEntries: SemanticScorePairEntry[] = []
     const seenPairKeys = new Set<string>()
 
     for (const pair of pairs) {
       const leftSubmissionId = pair.leftFile.info?.submissionId || "0"
       const rightSubmissionId = pair.rightFile.info?.submissionId || "0"
 
+      // Step 1a: Skip pairs that do not have valid submission IDs.
       if (leftSubmissionId === "0" || rightSubmissionId === "0") continue
 
       const normalizedSubmissionPair = normalizeSubmissionPair(
@@ -717,64 +520,28 @@ export class PlagiarismService {
         parseInt(rightSubmissionId),
       )
 
+      // Step 1b: Skip duplicate pairs like A-B and B-A.
       if (seenPairKeys.has(normalizedSubmissionPair.pairKey)) continue
+
       seenPairKeys.add(normalizedSubmissionPair.pairKey)
 
+      // Step 1c: Save the code once per submission and track the pair to score.
       submissionContentMap.set(leftSubmissionId, pair.leftFile.content)
       submissionContentMap.set(rightSubmissionId, pair.rightFile.content)
       pairEntries.push({
-        key: normalizedSubmissionPair.pairKey,
+        pairKey: normalizedSubmissionPair.pairKey,
         leftSubmissionId,
         rightSubmissionId,
       })
     }
 
-    if (pairEntries.length === 0) return semanticScores
-
-    // ── Embed each unique submission once (O(n) model calls) ───────────────
-    const embeddingCache = new Map<string, number[]>()
-    const submissionIds = [...submissionContentMap.keys()]
-
-    const maxConcurrency = Math.max(
-      1,
-      settings.semanticSimilarityMaxConcurrentRequests ?? 4,
-    )
-    const workerCount = Math.min(maxConcurrency, submissionIds.length)
-    let nextIndex = 0
-
-    await Promise.all(
-      Array.from({ length: workerCount }, async () => {
-        while (nextIndex < submissionIds.length) {
-          const currentIndex = nextIndex
-          nextIndex += 1
-          const submissionId = submissionIds[currentIndex]
-          const code = submissionContentMap.get(submissionId)!
-
-          const embedding = await this.semanticClient.getEmbedding(code)
-
-          if (embedding) {
-            embeddingCache.set(submissionId, embedding)
-          }
-        }
-      }),
-    )
-
-    // ── Compute pairwise cosine similarity locally (instant) ───────────────
-    for (const { key, leftSubmissionId, rightSubmissionId } of pairEntries) {
-      const leftEmbedding = embeddingCache.get(leftSubmissionId)
-      const rightEmbedding = embeddingCache.get(rightSubmissionId)
-
-      if (!leftEmbedding || !rightEmbedding) {
-        semanticScores.set(key, 0)
-        continue
-      }
-
-      const similarity = cosineSimilarity(leftEmbedding, rightEmbedding)
-      const clampedScore = Math.min(1, Math.max(0, similarity))
-
-      semanticScores.set(key, Math.round(clampedScore * 10000) / 10000)
-    }
-
-    return semanticScores
+    // Step 2: Pass the prepared data to the shared semantic scorer.
+    return computeSemanticScoresFromEmbeddings({
+      embeddingClient: this.semanticClient,
+      maxConcurrentRequests:
+        settings.semanticSimilarityMaxConcurrentRequests ?? 4,
+      pairEntries,
+      submissionContentById: submissionContentMap,
+    })
   }
 }

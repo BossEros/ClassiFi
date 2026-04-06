@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react"
 import { AssignmentCard } from "@/presentation/components/shared/dashboard/AssignmentCard"
 import { vi, describe, it, expect } from "vitest"
-import type { Assignment } from "@/business/models/dashboard/types"
+import type { Assignment } from "@/data/api/class.types"
 
 // Mock Card components
 vi.mock("@/presentation/components/ui/Card", () => ({

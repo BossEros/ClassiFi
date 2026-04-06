@@ -7,6 +7,7 @@ import {
   ensurePlagiarismMonacoThemes,
 } from "./monacoDarkTheme"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
+import { getTemporalOrder } from "@/presentation/utils/timeUtils"
 
 interface PairCodeDiffProps {
   /** Left file (original) */
@@ -42,6 +43,7 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
   const isLight = variant === "light"
   const legendTextColor = isLight ? "#475569" : "#cbd5e1"
   const isTabletOrBelow = useIsTabletOrBelow()
+  const temporalOrder = getTemporalOrder(leftFile.submittedAt, rightFile.submittedAt)
 
   useEffect(() => {
     if (!editorRef.current) return
@@ -106,18 +108,35 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
             fontSize: "14px",
             fontWeight: 500,
             color: isLight ? "#0f172a" : "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            flexWrap: "wrap",
           }}
         >
-          {leftFile.filename}
-          <span
-            style={{
-              marginLeft: "8px",
-              color: isLight ? "#64748b" : "#9ca3af",
-              fontWeight: 400,
-            }}
-          >
-            ({leftFile.lineCount} lines)
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+            {leftFile.studentName && (
+              <span style={{ fontWeight: 600 }}>{leftFile.studentName}</span>
+            )}
+            {leftFile.studentName && (
+              <span style={{ color: isLight ? "#94a3b8" : "#64748b" }}>·</span>
+            )}
+            <span style={{ fontWeight: leftFile.studentName ? 400 : 500 }}>{leftFile.filename}</span>
+            <span style={{ marginLeft: "4px", color: isLight ? "#64748b" : "#9ca3af", fontWeight: 400 }}>
+              ({leftFile.lineCount} lines)
+            </span>
+          </div>
+          {temporalOrder === "left" && (
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: "9999px", fontSize: "11px", fontWeight: 600, backgroundColor: isLight ? "rgba(16, 185, 129, 0.10)" : "rgba(16, 185, 129, 0.15)", color: isLight ? "#047857" : "#34d399", border: isLight ? "1px solid rgba(5, 150, 105, 0.20)" : "1px solid rgba(52, 211, 153, 0.25)", whiteSpace: "nowrap" }}>
+              Submitted first
+            </span>
+          )}
+          {temporalOrder === "right" && (
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: "9999px", fontSize: "11px", fontWeight: 600, backgroundColor: isLight ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)", color: isLight ? "#64748b" : "#94a3b8", border: isLight ? "1px solid rgba(148, 163, 184, 0.20)" : "1px solid rgba(148, 163, 184, 0.25)", whiteSpace: "nowrap" }}>
+              Submitted later
+            </span>
+          )}
         </div>
         {/* Center divider */}
         {!isTabletOrBelow && (
@@ -138,18 +157,35 @@ export const PairCodeDiff: React.FC<PairCodeDiffProps> = ({
             fontSize: "14px",
             fontWeight: 500,
             color: isLight ? "#0f172a" : "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            flexWrap: "wrap",
           }}
         >
-          {rightFile.filename}
-          <span
-            style={{
-              marginLeft: "8px",
-              color: isLight ? "#64748b" : "#9ca3af",
-              fontWeight: 400,
-            }}
-          >
-            ({rightFile.lineCount} lines)
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+            {rightFile.studentName && (
+              <span style={{ fontWeight: 600 }}>{rightFile.studentName}</span>
+            )}
+            {rightFile.studentName && (
+              <span style={{ color: isLight ? "#94a3b8" : "#64748b" }}>·</span>
+            )}
+            <span style={{ fontWeight: rightFile.studentName ? 400 : 500 }}>{rightFile.filename}</span>
+            <span style={{ marginLeft: "4px", color: isLight ? "#64748b" : "#9ca3af", fontWeight: 400 }}>
+              ({rightFile.lineCount} lines)
+            </span>
+          </div>
+          {temporalOrder === "right" && (
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: "9999px", fontSize: "11px", fontWeight: 600, backgroundColor: isLight ? "rgba(16, 185, 129, 0.10)" : "rgba(16, 185, 129, 0.15)", color: isLight ? "#047857" : "#34d399", border: isLight ? "1px solid rgba(5, 150, 105, 0.20)" : "1px solid rgba(52, 211, 153, 0.25)", whiteSpace: "nowrap" }}>
+              Submitted first
+            </span>
+          )}
+          {temporalOrder === "left" && (
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "2px 8px", borderRadius: "9999px", fontSize: "11px", fontWeight: 600, backgroundColor: isLight ? "rgba(148, 163, 184, 0.10)" : "rgba(148, 163, 184, 0.12)", color: isLight ? "#64748b" : "#94a3b8", border: isLight ? "1px solid rgba(148, 163, 184, 0.20)" : "1px solid rgba(148, 163, 184, 0.25)", whiteSpace: "nowrap" }}>
+              Submitted later
+            </span>
+          )}
         </div>
       </div>
 

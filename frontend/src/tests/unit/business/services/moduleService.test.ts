@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as moduleService from "@/business/services/moduleService"
 import * as moduleRepository from "@/data/repositories/moduleRepository"
-import type { Module, ISODateString } from "@/shared/types/class"
+import type { Module, ISODateString } from "@/data/api/class.types"
 
 vi.mock("@/data/repositories/moduleRepository")
 

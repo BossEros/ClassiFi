@@ -34,9 +34,11 @@ export const submissions = pgTable(
       .defaultNow()
       .notNull(),
     isLatest: boolean("is_latest").default(true).notNull(),
-    grade: integer("grade"), // The final grade (auto-calculated or manually overridden)
+    originalGrade: integer("original_grade"), // Grade from test cases BEFORE any penalties
+    grade: integer("grade"), // The final grade after all penalties applied
     isLate: boolean("is_late").default(false).notNull(),
     penaltyApplied: integer("penalty_applied").default(0),
+    similarityPenaltyApplied: integer("similarity_penalty_applied").default(0),
 
     // Grade Override Tracking
     isGradeOverridden: boolean("is_grade_overridden").default(false).notNull(),

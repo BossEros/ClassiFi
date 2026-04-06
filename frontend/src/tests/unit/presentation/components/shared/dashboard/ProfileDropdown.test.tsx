@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ProfileDropdown } from "@/presentation/components/shared/dashboard/ProfileDropdown"
-import type { User } from "@/shared/types/auth"
+import type { User } from "@/data/api/auth.types"
 
 vi.mock("@/business/services/authService", () => ({
   logoutUser: vi.fn(),

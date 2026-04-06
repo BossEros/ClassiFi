@@ -8,11 +8,12 @@ import {
   type PenaltyResult,
 } from "@/modules/assignments/late-penalty.service.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
+import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { withTransaction } from "@/shared/transaction.js"
-import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
+import { buildSubmissionGradeComputation, type GradeBreakdown } from "@/modules/submissions/submission-grade.js"
 
 const logger = createLogger("GradebookService")
 
@@ -39,6 +40,7 @@ export interface GradeEntry {
  */
 export interface SubmissionGradeDetails {
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   feedback: string | null
   overriddenAt: Date | null
@@ -67,6 +69,8 @@ export class GradebookService {
     private testResultRepo: TestResultRepository,
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
+    @inject(DI_TOKENS.repositories.similarity)
+    private similarityRepo: SimilarityRepository,
   ) {}
 
   /**
@@ -274,14 +278,21 @@ export class GradebookService {
       )
     }
 
+    const similarityScoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds([submission.id])
+
     const submissionGradeComputation = buildSubmissionGradeComputation({
       grade: submission.grade,
+      originalGrade: submission.originalGrade,
       isGradeOverridden: submission.isGradeOverridden,
       overrideGrade: submission.overrideGrade,
+      penaltyApplied: submission.penaltyApplied,
+      similarityPenaltyApplied: submission.similarityPenaltyApplied,
+      similarityScore: similarityScoreMap.get(submission.id) ?? null,
     })
 
     return {
       grade: submissionGradeComputation.effectiveGrade,
+      gradeBreakdown: submissionGradeComputation.gradeBreakdown,
       isOverridden: submission.isGradeOverridden,
       feedback: submission.overrideReason,
       overriddenAt: submission.overriddenAt,

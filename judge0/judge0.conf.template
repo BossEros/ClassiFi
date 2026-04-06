@@ -9,14 +9,14 @@ POSTGRES_HOST=db
 POSTGRES_PORT=5432
 POSTGRES_DB=judge0
 POSTGRES_USER=judge0
-POSTGRES_PASSWORD=CHANGE_THIS_PASSWORD
+POSTGRES_PASSWORD=ClassiFi2026!
 
 # =============================================================================
 # Redis Configuration
 # =============================================================================
 REDIS_HOST=redis
 REDIS_PORT=6379
-REDIS_PASSWORD=CHANGE_THIS_PASSWORD
+REDIS_PASSWORD=ClassiFi2026!
 
 # =============================================================================
 # Judge0 Core Settings

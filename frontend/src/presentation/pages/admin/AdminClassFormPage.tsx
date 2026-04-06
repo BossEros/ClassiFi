@@ -30,7 +30,7 @@ import { getFieldErrorMessage } from "@/presentation/utils/formErrorMap"
 import {
   normalizeClassDescriptionForCreate,
   normalizeClassDescriptionForUpdate,
-} from "@/business/validation/classValidation"
+} from "@/shared/utils/classDescriptionUtils"
 import { DAYS, TIME_OPTIONS } from "@/presentation/constants/schedule.constants"
 import { formatTimeDisplay } from "@/presentation/utils/timeUtils"
 import { getCurrentAcademicYear } from "@/presentation/utils/dateUtils"
@@ -38,7 +38,7 @@ import * as adminService from "@/business/services/adminService"
 import type { AdminUser } from "@/business/services/adminService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { DayOfWeek } from "@/business/models/dashboard/types"
+import type { DayOfWeek } from "@/data/api/class.types"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
 function getDefaultClassFormValues(): AdminClassPageFormValues {
@@ -151,8 +151,7 @@ export function AdminClassFormPage() {
           setTeacherSearchQuery("")
           setIsTeacherSearchOpen(false)
         }
-      } catch (error) {
-        console.error("Failed to load teachers:", error)
+      } catch {
         setGeneralError(
           "Failed to load class form data. Please try refreshing.",
         )

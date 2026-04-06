@@ -4,8 +4,8 @@ import { AssignmentCard } from "@/presentation/components/shared/dashboard/Assig
 import { RenameModuleModal } from "@/presentation/components/shared/modules/RenameModuleModal"
 import { DeleteModuleModal } from "@/presentation/components/shared/modules/DeleteModuleModal"
 import { cn } from "@/shared/utils/cn"
-import type { Module } from "@/shared/types/class"
-import type { Assignment } from "@/business/models/dashboard/types"
+import type { Module } from "@/data/api/class.types"
+import type { Assignment } from "@/data/api/class.types"
 
 interface ModuleCardProps {
   module: Module
@@ -290,3 +290,4 @@ export function ModuleCard({
     </>
   )
 }
+

@@ -41,6 +41,7 @@ describe("mappers", () => {
         submittedAt: "2024-06-15T12:00:00.000Z",
         isLatest: true,
         grade: 95,
+        gradeBreakdown: null,
         isGradeOverridden: false,
         overrideReason: null,
         overriddenAt: null,

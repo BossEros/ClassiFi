@@ -1,8 +1,7 @@
 import { useMemo } from "react"
 import { format } from "date-fns"
 import { AlertTriangle, CheckCircle2, Circle, Clock3 } from "lucide-react"
-import type { CalendarEvent } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/business/models/calendar/types"
+import type { CalendarEvent, CalendarView } from "@/data/api/calendar.types"
 import { CustomViewToolbar } from "./CustomViewToolbar"
 import { getCalendarStackedEventStyle } from "./eventStyle"
 import "./CustomDayView.css"
@@ -206,3 +205,4 @@ export function CustomDayView({
     </div>
   )
 }
+

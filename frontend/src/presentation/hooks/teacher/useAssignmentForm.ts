@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
-import { type ProgrammingLanguage } from "@/business/models/assignment/types"
+import { type ProgrammingLanguage } from "@/data/api/assignment.types"
 import { getAssignmentById } from "@/business/services/assignmentService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
@@ -17,6 +17,7 @@ import {
   updateTestCase,
 } from "@/business/services/testCaseService"
 import { DEFAULT_LATE_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/LatePenaltyConfig"
+import { DEFAULT_SIMILARITY_PENALTY_CONFIG } from "@/presentation/components/teacher/forms/assignment/SimilarityPenaltyConfig"
 import { useToastStore } from "@/shared/store/useToastStore"
 import {
   buildAssignmentPayload,
@@ -40,7 +41,7 @@ import type {
   CreateTestCaseRequest,
   TestCase,
   UpdateTestCaseRequest,
-} from "@/shared/types/testCase"
+} from "@/data/api/test-case.types"
 
 export const programmingLanguageOptions: SelectOption[] =
   PROGRAMMING_LANGUAGE_OPTIONS.map((option) => ({ ...option }))
@@ -60,6 +61,7 @@ function buildDefaultFormValues(): AssignmentFormValues {
     allowLateSubmissions: false,
     latePenaltyConfig: normalizeLatePenaltyConfig(DEFAULT_LATE_PENALTY_CONFIG),
     enableSimilarityPenalty: false,
+    similarityPenaltyConfig: DEFAULT_SIMILARITY_PENALTY_CONFIG,
     moduleId: null,
   }
 }
@@ -170,6 +172,8 @@ export function useAssignmentForm() {
               ),
               enableSimilarityPenalty:
                 assignment.enableSimilarityPenalty ?? false,
+              similarityPenaltyConfig:
+                assignment.similarityPenaltyConfig ?? DEFAULT_SIMILARITY_PENALTY_CONFIG,
               moduleId: assignment.moduleId ?? null,
             })
             setShowTemplateCode(!!assignment.templateCode)
@@ -210,8 +214,8 @@ export function useAssignmentForm() {
         if (fetchedTestCases) {
           setTestCases(fetchedTestCases)
         }
-      } catch (error) {
-        console.error("Failed to load test cases:", error)
+      } catch {
+        // Keep the form usable even when existing test cases fail to load.
       } finally {
         setIsLoadingTestCases(false)
       }
@@ -322,8 +326,7 @@ export function useAssignmentForm() {
         setTestCases((currentTestCases) => [...currentTestCases, newTestCase])
         showToast("Test case added")
       }
-    } catch (error) {
-      console.error("Failed to add test case:", error)
+    } catch {
       showToast("Failed to add test case", "error")
     }
   }
@@ -343,8 +346,7 @@ export function useAssignmentForm() {
         )
         showToast("Test case updated")
       }
-    } catch (error) {
-      console.error("Failed to update test case:", error)
+    } catch {
       showToast("Failed to update test case", "error")
     }
   }
@@ -356,8 +358,7 @@ export function useAssignmentForm() {
         currentTestCases.filter((testCase) => testCase.id !== id),
       )
       showToast("Test case deleted")
-    } catch (error) {
-      console.error("Failed to delete test case:", error)
+    } catch {
       showToast("Failed to delete test case", "error")
     }
   }
@@ -419,11 +420,8 @@ export function useAssignmentForm() {
       ) {
         try {
           await removeAssignmentInstructionsImage(previousInstructionsImageUrl)
-        } catch (cleanupError) {
-          console.error(
-            "Failed to cleanup previous instructions image after successful upload:",
-            cleanupError,
-          )
+        } catch {
+          // Ignore cleanup failures after a successful replacement upload.
         }
       }
     } catch (error) {
@@ -453,8 +451,8 @@ export function useAssignmentForm() {
 
     try {
       await removeAssignmentInstructionsImage(currentInstructionsImageUrl)
-    } catch (error) {
-      console.error("Failed to remove assignment instructions image:", error)
+    } catch {
+      // Ignore storage cleanup failures after the form state is updated locally.
     }
   }
 
@@ -486,3 +484,4 @@ export function useAssignmentForm() {
     handleDeletePendingTestCase,
   }
 }
+

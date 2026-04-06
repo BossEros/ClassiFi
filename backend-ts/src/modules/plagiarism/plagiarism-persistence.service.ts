@@ -17,17 +17,14 @@ import {
   summarizePairSimilarityScores,
   type PairSimilarityScoreBreakdown,
 } from "@/modules/plagiarism/plagiarism-scoring.js"
-import type {
-  NewSimilarityResult,
-  NewMatchFragment,
-  MatchFragment,
-  SimilarityResult,
-  Submission,
-  SimilarityReport,
-} from "@/models/index.js"
+import type { SimilarityReport } from "@/modules/plagiarism/similarity-report.model.js"
+import type { MatchFragment, NewMatchFragment } from "@/modules/plagiarism/match-fragment.model.js"
+import type { SimilarityResult, NewSimilarityResult } from "@/modules/plagiarism/similarity-result.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import type { TransactionContext } from "@/shared/transaction.js"
 import type { AnalyzeResponse } from "@/modules/plagiarism/plagiarism.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { settings } from "@/shared/config.js"
 
 @injectable()
 export class PlagiarismPersistenceService {
@@ -249,6 +246,7 @@ export class PlagiarismPersistenceService {
               lineCount: result.leftTotal,
               studentId: leftSubmission?.submission.studentId?.toString(),
               studentName: leftSubmission?.studentName || "Unknown",
+              submittedAt: leftSubmission?.submission.submittedAt?.toISOString(),
             },
             rightFile: {
               id: result.submission2Id,
@@ -257,6 +255,7 @@ export class PlagiarismPersistenceService {
               lineCount: result.rightTotal,
               studentId: rightSubmission?.submission.studentId?.toString(),
               studentName: rightSubmission?.studentName || "Unknown",
+              submittedAt: rightSubmission?.submission.submittedAt?.toISOString(),
             },
             structuralScore: pairScoreBreakdown.structuralScore,
             semanticScore: pairScoreBreakdown.semanticScore,
@@ -302,6 +301,10 @@ export class PlagiarismPersistenceService {
       submissions: submissionDTOs,
       pairs,
       warnings: [],
+      scoringWeights: {
+        structuralWeight: settings.plagiarismStructuralWeight,
+        semanticWeight: settings.plagiarismSemanticWeight,
+      },
     }
   }
 
@@ -339,6 +342,7 @@ export class PlagiarismPersistenceService {
       lineCount: 0,
       studentId: submission.studentId.toString(),
       studentName,
+      submittedAt: submission.submittedAt.toISOString(),
     }))
   }
 

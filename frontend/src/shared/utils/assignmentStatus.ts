@@ -1,4 +1,4 @@
-import type { Assignment } from "@/shared/types/class"
+import type { Assignment } from "@/data/api/class.types"
 
 export type AssignmentStatus = "pending" | "not-started" | "submitted" | "late"
 

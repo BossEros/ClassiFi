@@ -6,8 +6,8 @@ import { ClassCard } from "@/presentation/components/shared/dashboard/ClassCard"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { getDashboardData } from "@/business/services/teacherDashboardService"
 import { getDeadlineStatus, formatDateTime, getMinutesUntilNextSession } from "@/presentation/utils/dateUtils"
-import type { User } from "@/business/models/auth/types"
-import type { Class, Task } from "@/business/models/dashboard/types"
+import type { User } from "@/data/api/auth.types"
+import type { Class, Task } from "@/data/api/class.types"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 
@@ -87,8 +87,7 @@ export function TeacherDashboardPage() {
 
         setClasses(dashboardData.recentClasses)
         setTasks(dashboardData.pendingTasks)
-      } catch (fetchError) {
-        console.error("Failed to fetch dashboard data:", fetchError)
+      } catch {
         setError("Failed to load dashboard data. Please try refreshing the page.")
       } finally {
         setIsLoading(false)

@@ -1,13 +1,9 @@
 ﻿import { injectable } from "tsyringe"
 import { and, desc, eq, gt, isNull, or, sql } from "drizzle-orm"
-import {
-  assignments,
-  classes,
-  enrollments,
-  submissions,
-  type Assignment,
-  type Class,
-} from "@/models/index.js"
+import { assignments, type Assignment } from "@/modules/assignments/assignment.model.js"
+import { classes, type Class } from "@/modules/classes/class.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
+import { submissions } from "@/modules/submissions/submission.model.js"
 import { db } from "@/shared/database.js"
 
 /**
@@ -30,25 +26,12 @@ export interface TeacherRecentClassReadModel extends Class {
   assignmentCount: number
 }
 
-/**
- * Contract used by dashboard services for query-heavy read models.
- */
-export interface DashboardQueryReadRepository {
-  getPendingAssignmentsForStudent(
-    studentId: number,
-    limit: number,
-  ): Promise<StudentPendingAssignmentReadModel[]>
-  getRecentClassesForTeacher(
-    teacherId: number,
-    limit: number,
-  ): Promise<TeacherRecentClassReadModel[]>
-}
 
 /**
  * Read-model repository for dashboard-focused aggregate queries.
  */
 @injectable()
-export class DashboardQueryRepository implements DashboardQueryReadRepository {
+export class DashboardQueryRepository {
   /**
    * Returns pending assignments for a student in a single query.
    */

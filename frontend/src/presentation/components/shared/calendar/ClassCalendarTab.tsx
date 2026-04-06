@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback } from "react"
 import { Calendar, type View, type ToolbarProps } from "react-big-calendar"
-import { useClassCalendar } from "@/presentation/hooks/shared/useClassCalendar"
+import { useCalendar } from "@/presentation/hooks/shared/useCalendar"
 import { CustomEventComponent } from "./CustomEventComponent"
 import { CustomToolbar } from "./CustomToolbar"
 import { CustomDayView } from "./CustomDayView"
@@ -9,8 +9,7 @@ import { EventDetailsModal } from "./EventDetailsModal"
 import { getCalendarMonthEventStyle } from "./eventStyle"
 import { calendarLocalizer } from "@/presentation/constants/calendarConfig"
 import { useToastStore } from "@/shared/store/useToastStore"
-import type { CalendarEvent } from "@/business/models/calendar/types"
-import type { CalendarView } from "@/business/models/calendar/types"
+import type { CalendarEvent, CalendarView } from "@/data/api/calendar.types"
 import { calendarTheme } from "@/presentation/constants/calendarTheme"
 import "react-big-calendar/lib/css/react-big-calendar.css"
 import "@/presentation/pages/shared/CalendarPage.css"
@@ -42,12 +41,11 @@ export interface ClassCalendarTabProps {
  */
 export function ClassCalendarTab({
   classId,
-  className,
 }: ClassCalendarTabProps) {
   const {
     currentDate,
     currentView,
-    filteredEvents,
+    events,
     selectedEvent,
     isLoading,
     error,
@@ -57,7 +55,13 @@ export function ClassCalendarTab({
     openEventDetails,
     closeEventDetails,
     refetchEvents,
-  } = useClassCalendar({ classId, className })
+  } = useCalendar()
+
+  // Filter events to only those belonging to this class
+  const filteredEvents = useMemo(
+    () => events.filter((event) => event.classInfo.id === classId),
+    [events, classId],
+  )
 
   const showToast = useToastStore((state) => state.showToast)
 
@@ -359,3 +363,4 @@ export function ClassCalendarTab({
     </div>
   )
 }
+

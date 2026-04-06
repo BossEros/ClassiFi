@@ -1,5 +1,5 @@
 import { eq, and, asc } from "drizzle-orm"
-import { modules, type Module, type NewModule } from "@/models/index.js"
+import { modules, type Module, type NewModule } from "@/modules/modules/module.model.js"
 import { BaseRepository } from "@/repositories/base.repository.js"
 import { injectable } from "tsyringe"
 

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, ChevronRight } from "lucide-react"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/data/api/auth.types"
 import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery"
 import { NotificationBadge } from "./NotificationBadge"
 
@@ -130,6 +130,4 @@ export function useTopBar({
     ),
   }
 }
-
-
 

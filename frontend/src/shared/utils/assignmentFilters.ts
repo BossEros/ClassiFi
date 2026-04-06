@@ -1,4 +1,4 @@
-import type { Assignment } from "@/shared/types/class"
+import type { Assignment } from "@/data/api/class.types"
 import { getAssignmentStatus } from "./assignmentStatus"
 
 export type AssignmentFilter = "all" | "pending" | "submitted"

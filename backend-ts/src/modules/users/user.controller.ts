@@ -2,7 +2,6 @@ import type { FastifyInstance } from "fastify"
 import { container } from "tsyringe"
 import { UserService } from "@/modules/users/user.service.js"
 import { validateBody } from "@/api/plugins/zod-validation.js"
-import { toUserDTO } from "@/modules/users/user.mapper.js"
 import { z } from "zod"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -43,30 +42,6 @@ type UpdateNotificationPreferencesRequest = z.infer<
  */
 export async function userRoutes(app: FastifyInstance): Promise<void> {
   const userService = container.resolve<UserService>(DI_TOKENS.services.user)
-
-  /**
-   * GET /me
-   * Get current user's profile
-   */
-  app.get("/me", {
-    handler: async (request, reply) => {
-      const authenticatedUserId = request.user!.id
-
-      const currentUser = await userService.getUserById(authenticatedUserId)
-
-      if (!currentUser) {
-        return reply.status(404).send({
-          success: false,
-          message: "User not found",
-        })
-      }
-
-      return reply.send({
-        success: true,
-        user: toUserDTO(currentUser),
-      })
-    },
-  })
 
   /**
    * PATCH /me/avatar

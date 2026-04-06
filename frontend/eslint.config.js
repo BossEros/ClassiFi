@@ -32,6 +32,17 @@ export default tseslint.config(
     },
   },
   {
+    files: [
+      "src/presentation/components/admin/enrollment-modals/_shared.tsx",
+      "src/presentation/components/student/grades/pdf/studentGradeReportPdf.tsx",
+      "src/presentation/components/teacher/gradebook/pdf/gradeReportPdf.tsx",
+      "src/presentation/components/teacher/plagiarism/pdf/similarityReportPdf.tsx",
+    ],
+    rules: {
+      "react-refresh/only-export-components": "off",
+    },
+  },
+  {
     files: ["src/presentation/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": [
@@ -39,9 +50,17 @@ export default tseslint.config(
         {
           patterns: [
             {
-              group: ["@/data/*"],
+              group: [
+                "@/data/repositories/*",
+                "@/data/mappers",
+                "@/data/mappers.*",
+                "@/data/api/apiClient",
+                "@/data/api/errorMapping",
+                "@/data/api/supabaseAuthAdapter",
+                "@/data/api/supabaseClient",
+              ],
               message:
-                "Presentation layer must not import data-layer modules directly. Use business services/models.",
+                "Presentation layer must not import repositories, mappers, or API client internals directly. Use business services for logic.",
             },
             {
               group: [

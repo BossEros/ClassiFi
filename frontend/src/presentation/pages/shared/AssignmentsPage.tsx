@@ -10,7 +10,7 @@ import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime } from "@/presentation/utils/dateUtils"
 import { getPendingAssignments } from "@/business/services/studentDashboardService"
 import { getPendingTasks } from "@/business/services/teacherDashboardService"
-import type { Task } from "@/business/models/dashboard/types"
+import type { Task } from "@/data/api/class.types"
 
 const ITEMS_PER_PAGE = 10
 
@@ -73,8 +73,7 @@ export function AssignmentsPage() {
           const result = await getPendingAssignments(userId, 50)
           setTasks(result.assignments)
         }
-      } catch (fetchError) {
-        console.error("Failed to fetch assignments:", fetchError)
+      } catch {
         setError("Failed to load assignments. Please try refreshing the page.")
       } finally {
         setIsLoading(false)
@@ -496,3 +495,4 @@ function StudentAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
     </>
   )
 }
+

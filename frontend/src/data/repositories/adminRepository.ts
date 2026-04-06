@@ -20,6 +20,12 @@ import type {
 
 // ============ User Management ============
 
+/**
+ * Retrieves users with optional pagination and filter criteria.
+ *
+ * @param filterOptions - Paging and filter options (search, role, status).
+ * @returns Paginated user records for admin management screens.
+ */
 export async function getAllUsersWithPaginationAndFilters(filterOptions: {
   pageNumber?: number
   itemsPerPage?: number
@@ -46,6 +52,12 @@ export async function getAllUsersWithPaginationAndFilters(filterOptions: {
   return unwrapApiResponse(apiResponse, "Failed to fetch users")
 }
 
+/**
+ * Fetches complete details for a single user by ID.
+ *
+ * @param userId - The unique identifier of the user.
+ * @returns Detailed admin user response.
+ */
 export async function getAdminUserDetailsById(
   userId: number,
 ): Promise<AdminUserResponse> {
@@ -56,6 +68,12 @@ export async function getAdminUserDetailsById(
   return unwrapApiResponse(apiResponse, "Failed to fetch user details")
 }
 
+/**
+ * Creates a new user account from the admin panel.
+ *
+ * @param newUserData - User profile and account data for creation.
+ * @returns Created user response.
+ */
 export async function createNewUserAccount(
   newUserData: CreateUserData,
 ): Promise<AdminUserResponse> {
@@ -67,6 +85,13 @@ export async function createNewUserAccount(
   return unwrapApiResponse(apiResponse, "Failed to create user")
 }
 
+/**
+ * Updates an existing user's role.
+ *
+ * @param userId - The unique identifier of the user.
+ * @param newUserRole - The new role to assign.
+ * @returns Updated user response.
+ */
 export async function updateUserRoleById(
   userId: number,
   newUserRole: string,
@@ -79,6 +104,13 @@ export async function updateUserRoleById(
   return unwrapApiResponse(apiResponse, "Failed to update user role")
 }
 
+/**
+ * Updates basic personal details for a user.
+ *
+ * @param userId - The unique identifier of the user.
+ * @param updatedPersonalDetails - First and last name values to update.
+ * @returns Updated user response.
+ */
 export async function updateUserPersonalDetailsById(
   userId: number,
   updatedPersonalDetails: { firstName?: string; lastName?: string },
@@ -91,6 +123,13 @@ export async function updateUserPersonalDetailsById(
   return unwrapApiResponse(apiResponse, "Failed to update user details")
 }
 
+/**
+ * Updates a user's email address.
+ *
+ * @param userId - The unique identifier of the user.
+ * @param newEmailAddress - The replacement email address.
+ * @returns Updated user response.
+ */
 export async function updateUserEmailAddressById(
   userId: number,
   newEmailAddress: string,
@@ -103,6 +142,12 @@ export async function updateUserEmailAddressById(
   return unwrapApiResponse(apiResponse, "Failed to update user email")
 }
 
+/**
+ * Toggles a user account between active and inactive status.
+ *
+ * @param userId - The unique identifier of the user.
+ * @returns Updated user response with the new status.
+ */
 export async function toggleUserAccountStatusById(
   userId: number,
 ): Promise<AdminUserResponse> {
@@ -114,6 +159,12 @@ export async function toggleUserAccountStatusById(
   return unwrapApiResponse(apiResponse, "Failed to toggle user status")
 }
 
+/**
+ * Deletes a user account by ID.
+ *
+ * @param userId - The unique identifier of the user to delete.
+ * @returns Generic admin operation response.
+ */
 export async function deleteUserAccountById(
   userId: number,
 ): Promise<AdminResponse> {
@@ -126,12 +177,23 @@ export async function deleteUserAccountById(
 
 // ============ Analytics ============
 
+/**
+ * Fetches aggregate statistics for the admin dashboard.
+ *
+ * @returns Summary metrics used by the admin overview page.
+ */
 export async function getAdminDashboardStatistics(): Promise<AdminStatsResponse> {
   const apiResponse = await apiClient.get<AdminStatsResponse>("/admin/stats")
 
   return unwrapApiResponse(apiResponse, "Failed to fetch statistics")
 }
 
+/**
+ * Retrieves recent admin activity entries.
+ *
+ * @param maximumActivityCount - Maximum number of activity items to return.
+ * @returns Activity log response for dashboard display.
+ */
 export async function getRecentAdminActivityLog(
   maximumActivityCount: number = 10,
 ): Promise<AdminActivityResponse> {
@@ -144,6 +206,12 @@ export async function getRecentAdminActivityLog(
 
 // ============ Class Management ============
 
+/**
+ * Retrieves classes with optional pagination and filter criteria.
+ *
+ * @param filterOptions - Paging and class filters (search, teacher, status, term).
+ * @returns Paginated class records for admin management.
+ */
 export async function getAllClassesWithPaginationAndFilters(filterOptions: {
   pageNumber?: number
   itemsPerPage?: number
@@ -177,6 +245,12 @@ export async function getAllClassesWithPaginationAndFilters(filterOptions: {
   return unwrapApiResponse(apiResponse, "Failed to fetch classes")
 }
 
+/**
+ * Fetches complete details for a class by ID.
+ *
+ * @param classId - The unique identifier of the class.
+ * @returns Detailed class response.
+ */
 export async function getAdminClassDetailsById(
   classId: number,
 ): Promise<AdminClassResponse> {
@@ -187,6 +261,12 @@ export async function getAdminClassDetailsById(
   return unwrapApiResponse(apiResponse, "Failed to fetch class details")
 }
 
+/**
+ * Creates a new class from the admin panel.
+ *
+ * @param newClassData - Class payload for creation.
+ * @returns Created class response.
+ */
 export async function createNewClass(
   newClassData: CreateClassData,
 ): Promise<AdminClassResponse> {
@@ -198,6 +278,13 @@ export async function createNewClass(
   return unwrapApiResponse(apiResponse, "Failed to create class")
 }
 
+/**
+ * Updates class details by ID.
+ *
+ * @param classId - The unique identifier of the class.
+ * @param updatedClassData - Class fields to update.
+ * @returns Updated class response.
+ */
 export async function updateClassDetailsById(
   classId: number,
   updatedClassData: UpdateClassData,
@@ -210,6 +297,12 @@ export async function updateClassDetailsById(
   return unwrapApiResponse(apiResponse, "Failed to update class")
 }
 
+/**
+ * Deletes a class by ID.
+ *
+ * @param classId - The unique identifier of the class to delete.
+ * @returns Generic admin operation response.
+ */
 export async function deleteClassById(classId: number): Promise<AdminResponse> {
   const apiResponse = await apiClient.delete<AdminResponse>(
     `/admin/classes/${classId}`,
@@ -218,6 +311,13 @@ export async function deleteClassById(classId: number): Promise<AdminResponse> {
   return unwrapApiResponse(apiResponse, "Failed to delete class")
 }
 
+/**
+ * Reassigns a class to a different teacher.
+ *
+ * @param classId - The unique identifier of the class.
+ * @param newTeacherId - The teacher ID that will become the new owner.
+ * @returns Updated class response.
+ */
 export async function reassignClassTeacherById(
   classId: number,
   newTeacherId: number,
@@ -230,6 +330,12 @@ export async function reassignClassTeacherById(
   return unwrapApiResponse(apiResponse, "Failed to reassign class teacher")
 }
 
+/**
+ * Archives a class without deleting historical records.
+ *
+ * @param classId - The unique identifier of the class to archive.
+ * @returns Updated class response.
+ */
 export async function archiveClassById(
   classId: number,
 ): Promise<AdminClassResponse> {
@@ -241,6 +347,11 @@ export async function archiveClassById(
   return unwrapApiResponse(apiResponse, "Failed to archive class")
 }
 
+/**
+ * Retrieves all teacher accounts for class assignment flows.
+ *
+ * @returns Teacher list response for admin selectors.
+ */
 export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
   const apiResponse = await apiClient.get<AdminTeachersResponse>(
     "/admin/users/teachers",
@@ -251,6 +362,12 @@ export async function getAllTeacherAccounts(): Promise<AdminTeachersResponse> {
 
 // ============ Enrollment Management ============
 
+/**
+ * Retrieves enrollment records with optional pagination and filter criteria.
+ *
+ * @param filterOptions - Paging and enrollment filters.
+ * @returns Paginated enrollment records.
+ */
 export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
   pageNumber?: number
   itemsPerPage?: number
@@ -287,6 +404,12 @@ export async function getAllEnrollmentsWithPaginationAndFilters(filterOptions: {
   return unwrapApiResponse(apiResponse, "Failed to fetch enrollments")
 }
 
+/**
+ * Transfers a student from one class to another.
+ *
+ * @param transferStudentData - Source class, target class, and student transfer payload.
+ * @returns Generic admin operation response.
+ */
 export async function transferStudentBetweenClasses(
   transferStudentData: TransferStudentData,
 ): Promise<AdminResponse> {
@@ -300,6 +423,12 @@ export async function transferStudentBetweenClasses(
 
 // ============ Class Enrollment Management ============
 
+/**
+ * Retrieves all students currently enrolled in a class.
+ *
+ * @param classId - The unique identifier of the class.
+ * @returns Enrolled students response.
+ */
 export async function getEnrolledStudentsInClassById(
   classId: number,
 ): Promise<AdminStudentsResponse> {
@@ -310,6 +439,12 @@ export async function getEnrolledStudentsInClassById(
   return unwrapApiResponse(apiResponse, "Failed to fetch enrolled students")
 }
 
+/**
+ * Retrieves all assignments configured in a class.
+ *
+ * @param classId - The unique identifier of the class.
+ * @returns Class assignment response.
+ */
 export async function getAllAssignmentsInClassById(
   classId: number,
 ): Promise<AdminAssignmentsResponse> {
@@ -320,6 +455,13 @@ export async function getAllAssignmentsInClassById(
   return unwrapApiResponse(apiResponse, "Failed to fetch assignments")
 }
 
+/**
+ * Enrolls a student in a class from the admin panel.
+ *
+ * @param classId - The unique identifier of the class.
+ * @param studentId - The unique identifier of the student.
+ * @returns Generic admin operation response.
+ */
 export async function enrollStudentInClassById(
   classId: number,
   studentId: number,
@@ -332,6 +474,13 @@ export async function enrollStudentInClassById(
   return unwrapApiResponse(apiResponse, "Failed to enroll student")
 }
 
+/**
+ * Removes a student from a class from the admin panel.
+ *
+ * @param classId - The unique identifier of the class.
+ * @param studentId - The unique identifier of the student.
+ * @returns Generic admin operation response.
+ */
 export async function unenrollStudentFromClassById(
   classId: number,
   studentId: number,

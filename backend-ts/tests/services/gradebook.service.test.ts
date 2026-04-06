@@ -21,6 +21,7 @@ describe("GradebookService", () => {
   let mockLatePenaltyService: any
   let mockTestResultRepo: any
   let mockNotificationService: any
+  let mockSimilarityRepo: any
 
   beforeEach(() => {
     mockGradebookRepo = {
@@ -56,6 +57,10 @@ describe("GradebookService", () => {
       withContext: vi.fn().mockReturnThis(),
     }
 
+    mockSimilarityRepo = {
+      getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()),
+    }
+
     gradebookService = new GradebookService(
       mockGradebookRepo as GradebookRepository,
       mockSubmissionRepo as SubmissionRepository,
@@ -63,6 +68,7 @@ describe("GradebookService", () => {
       mockLatePenaltyService as LatePenaltyService,
       mockTestResultRepo as TestResultRepository,
       mockNotificationService as NotificationService,
+      mockSimilarityRepo,
     )
   })
 

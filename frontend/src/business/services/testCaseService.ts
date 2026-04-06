@@ -1,15 +1,29 @@
 import * as testCaseRepository from "@/data/repositories/testCaseRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import type {
   TestCase,
   CreateTestCaseRequest,
   UpdateTestCaseRequest,
   TestExecutionSummary,
-} from "@/shared/types/testCase"
-import type { TestResultsResponse } from "@/business/models/test/types"
+} from "@/data/api/test-case.types"
+import type { TestResultsResponse } from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
+// Re-export types for presentation layer
+export type { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from "@/data/api/test-case.types"
+
+/**
+ * Maps raw API test execution data into a typed TestExecutionSummary.
+ * Resolves field name aliases (e.g., `passed` vs `passedCount`, `percentage` vs `score`)
+ * to maintain backward compatibility across older and newer API response shapes.
+ * Each raw result is normalized via `normalizeTestResult` before being included.
+ *
+ * @param testExecutionSummaryData - The raw test execution payload from the API response.
+ * @param submissionId - The submission ID to attach to the resulting summary object.
+ * @returns A typed TestExecutionSummary with normalized counts, totals, percentage, and per-test details.
+ * @throws Error if required summary fields (passed, total, percentage) are missing from the raw data.
+ */
 function mapTestExecutionSummary(
   testExecutionSummaryData: TestResultsResponse["data"],
   submissionId: number,

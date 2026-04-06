@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { mergeModuleAssignmentsWithLatestAssignmentState } from "@/presentation/utils/mergeModuleAssignments"
-import type { Assignment, Module } from "@/shared/types/class"
+import type { Assignment, Module } from "@/data/api/class.types"
 
 function createAssignment(
   overrides: Partial<Assignment> = {},

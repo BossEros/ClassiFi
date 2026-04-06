@@ -39,6 +39,7 @@ export interface CrossClassAnalysisResponse {
     maxSimilarity: number
   }
   results: CrossClassResultDTO[]
+  scoringWeights: { structuralWeight: number; semanticWeight: number }
 }
 
 /** Cross-class result details with code contents and fragment positions */
@@ -65,11 +66,13 @@ export interface CrossClassResultDetailsResponse {
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
   rightFile: {
     filename: string
     content: string
     lineCount: number
     studentName: string
+    submittedAt: string | null
   }
 }

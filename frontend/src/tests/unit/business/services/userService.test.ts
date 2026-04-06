@@ -5,7 +5,7 @@ import {
 } from "@/business/services/userService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import * as userRepository from "@/data/repositories/userRepository"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/data/api/auth.types"
 
 vi.mock("@/data/repositories/userRepository")
 

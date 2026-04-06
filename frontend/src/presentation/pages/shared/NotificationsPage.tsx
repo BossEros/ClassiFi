@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { Button } from "@/presentation/components/ui/Button";
 import * as notificationService from "@/business/services/notificationService";
-import type { Notification } from "@/business/models/notification/types";
+import type { Notification } from "@/data/api/notification.types";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { useAuthStore } from "@/shared/store/useAuthStore";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
@@ -212,8 +212,7 @@ export function NotificationsPage() {
 
       setHasMore(response.hasMore)
       setTotal(response.total)
-    } catch (error) {
-      console.error("Failed to load notifications:", error)
+    } catch {
       setLoadError("Failed to load notifications.")
       showToast("Failed to load notifications", "error")
     } finally {
@@ -236,8 +235,7 @@ export function NotificationsPage() {
             : n,
         ),
       )
-    } catch (error) {
-      console.error("Failed to mark as read:", error)
+    } catch {
       showToast("Failed to mark notification as read", "error")
     }
   }
@@ -253,8 +251,7 @@ export function NotificationsPage() {
         })),
       )
       showToast("All notifications marked as read")
-    } catch (error) {
-      console.error("Failed to mark all as read:", error)
+    } catch {
       showToast("Failed to mark all as read", "error")
     }
   }
@@ -265,8 +262,7 @@ export function NotificationsPage() {
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId))
       setTotal((prev) => prev - 1)
       showToast("Notification deleted")
-    } catch (error) {
-      console.error("Failed to delete notification:", error)
+    } catch {
       showToast("Failed to delete notification", "error")
     }
   }
@@ -384,3 +380,4 @@ export function NotificationsPage() {
     </DashboardLayout>
   )
 }
+

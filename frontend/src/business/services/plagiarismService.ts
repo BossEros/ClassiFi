@@ -1,12 +1,13 @@
 import * as plagiarismRepository from "@/data/repositories/plagiarismRepository"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import type {
   AnalyzeResponse,
   AssignmentSimilarityStatusResponse,
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
-} from "@/business/models/plagiarism/types"
+  ScoringWeights,
+} from "@/data/api/plagiarism.types"
 
 export type {
   AnalyzeResponse,
@@ -14,6 +15,7 @@ export type {
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
+  ScoringWeights,
 }
 
 /**

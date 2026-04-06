@@ -1,4 +1,5 @@
 import type { ClassDTO, TaskDTO, ClassResponse } from "@/data/api/class.types"
+import type { Class, Task } from "@/data/api/class.types"
 export type { ClassResponse } from "@/data/api/class.types"
 
 export interface DashboardResponse {
@@ -83,4 +84,17 @@ export interface StudentDashboardBackendResponse {
   message?: string
   enrolledClasses: ClassResponse[]
   pendingAssignments: AssignmentResponse[]
+}
+
+/** Dashboard data returned by teacher/student dashboard service */
+export interface DashboardData {
+  recentClasses: Class[]
+  pendingTasks: Task[]
+}
+
+export interface DashboardStats {
+  totalClasses?: number
+  totalTasks?: number
+  pendingTasks?: number
+  totalStudents?: number
 }

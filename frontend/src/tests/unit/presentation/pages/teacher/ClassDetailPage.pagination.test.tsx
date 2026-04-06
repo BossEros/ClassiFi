@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ClassDetailPage } from "@/presentation/pages/teacher/ClassDetailPage"
 import * as classService from "@/business/services/classService"
 import * as moduleService from "@/business/services/moduleService"
-import type { ISODateString, DayOfWeek } from "@/shared/types/class"
+import type { ISODateString, DayOfWeek } from "@/data/api/class.types"
 
 vi.mock("@/business/services/classService")
 vi.mock("@/business/services/moduleService")

@@ -11,7 +11,7 @@ import {
   Bell,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import type { CalendarEvent } from "@/business/models/calendar/types"
+import type { CalendarEvent } from "@/data/api/calendar.types"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { formatCalendarDate } from "@/business/services/calendarService"
 import { sendReminderToNonSubmitters } from "@/business/services/assignmentService"
@@ -148,7 +148,6 @@ export function EventDetailsModal({
 
       showToast(result.message || "Reminders sent successfully", "success")
     } catch (error) {
-      console.error("Error sending reminders:", error)
       const errorMessage =
         error instanceof Error ? error.message : "Failed to send reminders"
       showToast(errorMessage, "error")
@@ -321,3 +320,4 @@ export function EventDetailsModal({
 
   return createPortal(modalContent, document.body)
 }
+

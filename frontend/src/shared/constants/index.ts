@@ -21,23 +21,6 @@ export const API_ENDPOINTS = {
   },
 } as const
 
-export const VALIDATION_RULES = {
-  PASSWORD: {
-    MIN_LENGTH: 8,
-    MAX_LENGTH: 128,
-    REQUIRE_UPPERCASE: true,
-    REQUIRE_LOWERCASE: true,
-    REQUIRE_NUMBER: true,
-  },
-  NAME: {
-    MIN_LENGTH: 2,
-    MAX_LENGTH: 50,
-  },
-  EMAIL: {
-    PATTERN: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  },
-} as const
-
 /**
  * Programming language options for select dropdowns
  */

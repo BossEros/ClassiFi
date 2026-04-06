@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 import * as crossClassPlagiarismService from "@/business/services/crossClassPlagiarismService"
 import * as crossClassRepository from "@/data/repositories/crossClassPlagiarismRepository"
-import type { CrossClassAnalysisResponse } from "@/data/api/crossClassPlagiarism.types"
+import type {
+  CrossClassAnalysisResponse,
+  CrossClassResultDetailsResponse,
+} from "@/data/api/crossClassPlagiarism.types"
 
 vi.mock("@/data/repositories/crossClassPlagiarismRepository")
 
@@ -52,6 +55,7 @@ describe("crossClassPlagiarismService", () => {
         isFlagged: true,
       },
     ],
+    scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
   }
 
   beforeEach(() => {
@@ -114,6 +118,58 @@ describe("crossClassPlagiarismService", () => {
       await expect(
         crossClassPlagiarismService.analyzeCrossClassSimilarity(0),
       ).rejects.toThrow("Invalid assignment ID")
+    })
+  })
+
+  describe("getCrossClassResultDetails", () => {
+    const mockResultDetailsResponse: CrossClassResultDetailsResponse = {
+      result: {
+        id: 1886,
+        submission1Id: 101,
+        submission2Id: 201,
+        student1Name: "John Doe",
+        student2Name: "Jane Smith",
+        class1Name: "BSCS 3A",
+        class1Code: "CS3A",
+        class2Name: "BSCS 3B",
+        class2Code: "CS3B",
+        assignment1Name: "FizzBuzz",
+        assignment2Name: "FizzBuzz",
+        structuralScore: 0.92,
+        semanticScore: 0.95,
+        hybridScore: 0.93,
+        overlap: 41,
+        longestFragment: 16,
+        isFlagged: true,
+      },
+      fragments: [],
+      leftFile: {
+        filename: "submission_101.py",
+        content: "print('left')",
+        lineCount: 1,
+        studentName: "John Doe",
+        submittedAt: "2026-03-31T09:00:00.000Z",
+      },
+      rightFile: {
+        filename: "submission_201.py",
+        content: "print('right')",
+        lineCount: 1,
+        studentName: "Jane Smith",
+        submittedAt: "2026-03-31T10:30:00.000Z",
+      },
+    }
+
+    it("returns cross-class result details with submission timestamps", async () => {
+      vi.mocked(crossClassRepository.getCrossClassResultDetails).mockResolvedValue({
+        data: mockResultDetailsResponse,
+        status: 200,
+      })
+
+      const result = await crossClassPlagiarismService.getCrossClassResultDetails(1886)
+
+      expect(crossClassRepository.getCrossClassResultDetails).toHaveBeenCalledWith(1886)
+      expect(result.leftFile.submittedAt).toBe("2026-03-31T09:00:00.000Z")
+      expect(result.rightFile.submittedAt).toBe("2026-03-31T10:30:00.000Z")
     })
   })
 })

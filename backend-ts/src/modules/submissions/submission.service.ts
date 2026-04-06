@@ -11,12 +11,14 @@ import {
   LatePenaltyService,
   type PenaltyResult,
 } from "@/modules/assignments/late-penalty.service.js"
+import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import {
   toSubmissionDTO,
   type SubmissionDTO,
 } from "@/modules/submissions/submission.mapper.js"
 import { type SubmissionFileDTO } from "@/modules/submissions/submission.dtos.js"
-import type { Assignment, Submission } from "@/models/index.js"
+import type { Assignment } from "@/modules/assignments/assignment.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import {
   ALLOWED_EXTENSIONS,
   type ProgrammingLanguage,
@@ -74,6 +76,8 @@ export class SubmissionService {
     private notificationService: NotificationService,
     @inject(DI_TOKENS.services.plagiarismAutoAnalysis)
     private plagiarismAutoAnalysisService: PlagiarismAutoAnalysisService,
+    @inject(DI_TOKENS.repositories.similarity)
+    private similarityRepo: SimilarityRepository,
   ) {}
 
   /**
@@ -110,8 +114,7 @@ export class SubmissionService {
     this.validateFile(file, assignment.programmingLanguage)
 
     // STEP 6: Upload the file to storage and record its path
-    const submissionNumber =
-      this.calculateNextSubmissionNumber(existingSubmissions)
+    const submissionNumber = this.calculateNextSubmissionNumber(existingSubmissions)
 
     const filePath = await this.uploadFile(
       assignmentId,
@@ -134,6 +137,7 @@ export class SubmissionService {
     const testsPassed = await this.runTestsAndApplyPenalty(
       submission.id,
       penaltyResult,
+      assignment.totalScore ?? 100,
     )
 
     // STEP 9: If tests passed, prune older submissions so storage stays tidy
@@ -179,7 +183,12 @@ export class SubmissionService {
       assignmentId,
       studentId,
     )
-    return submissions.map((s) => toSubmissionDTO(s))
+
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds(
+      submissions.map((s) => s.id),
+    )
+
+    return submissions.map((s) => toSubmissionDTO(s, { similarityScore: scoreMap.get(s.id) ?? null }))
   }
 
   /**
@@ -198,9 +207,14 @@ export class SubmissionService {
       latestOnly,
     )
 
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds(
+      submissions.map((s) => s.submission.id),
+    )
+
     return submissions.map((s) =>
       toSubmissionDTO(s.submission, {
         studentName: s.studentName,
+        similarityScore: scoreMap.get(s.submission.id) ?? null,
       }),
     )
   }
@@ -220,7 +234,12 @@ export class SubmissionService {
       studentId,
       latestOnly,
     )
-    return submissions.map((s) => toSubmissionDTO(s))
+
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds(
+      submissions.map((s) => s.id),
+    )
+
+    return submissions.map((s) => toSubmissionDTO(s, { similarityScore: scoreMap.get(s.id) ?? null }))
   }
 
   /**
@@ -407,19 +426,24 @@ export class SubmissionService {
       })
     })
 
-    return toSubmissionDTO(updated)
+    const scoreMap = await this.similarityRepo.getMaxSimilarityScoresBySubmissionIds([updated.id])
+
+    return toSubmissionDTO(updated, { similarityScore: scoreMap.get(updated.id) ?? null })
   }
 
   /**
    * Validate assignment exists and is active.
    */
   private async validateAssignment(assignmentId: number): Promise<Assignment> {
+    // STEP 1: Fetch the assignment record — null means the ID never existed or was deleted
     const assignment = await this.assignmentRepo.getAssignmentById(assignmentId)
 
     if (!assignment) {
       throw new AssignmentNotFoundError(assignmentId)
     }
 
+    // STEP 2: Reject submissions to archived or draft assignments —
+    // teachers must explicitly mark an assignment active before students can submit
     if (!assignment.isActive) {
       throw new AssignmentInactiveError()
     }
@@ -435,11 +459,14 @@ export class SubmissionService {
   ): Promise<PenaltyResult | null> {
     const now = new Date()
 
+    // STEP 1: If there's no deadline, or it hasn't passed yet, no penalty applies
     if (!assignment.deadline || now <= assignment.deadline) {
       return null
     }
 
+    // STEP 2: Deadline has passed — check whether the teacher allows late submissions
     if (assignment.allowLateSubmissions) {
+      // Fall back to the platform default penalty config if the teacher didn't set one
       const latePenaltyConfiguration =
         assignment.latePenaltyConfig ??
         this.latePenaltyService.getDefaultConfig()
@@ -450,6 +477,7 @@ export class SubmissionService {
         latePenaltyConfiguration,
       )
 
+      // STEP 3: A 100% penalty means the window has effectively closed even with late allowed
       if (penaltyResult.penaltyPercent >= 100) {
         throw new DeadlinePassedError()
       }
@@ -457,6 +485,7 @@ export class SubmissionService {
       return penaltyResult
     }
 
+    // Late submissions are disabled outright — hard reject
     throw new DeadlinePassedError()
   }
 
@@ -467,6 +496,8 @@ export class SubmissionService {
     studentId: number,
     classId: number,
   ): Promise<void> {
+    // A student can only submit to assignments that belong to a class they're enrolled in.
+    // This prevents submitting to assignments in classes they can see but don't belong to.
     const isEnrolled = await this.enrollmentRepo.isEnrolled(studentId, classId)
 
     if (!isEnrolled) {
@@ -484,17 +515,18 @@ export class SubmissionService {
     allowResubmission: boolean,
     maxAttempts: number | null,
   ): Promise<Submission[]> {
+    // STEP 1: Pull the full submission history so we know how many attempts the student has made
     const existingSubmissions = await this.submissionRepo.getSubmissionHistory(
       assignmentId,
       studentId,
     )
 
-    // Check if resubmission is allowed
+    // STEP 2: If the teacher disabled resubmissions, the first attempt is the only allowed one
     if (existingSubmissions.length > 0 && !allowResubmission) {
       throw new ResubmissionNotAllowedError()
     }
 
-    // Check if max attempts has been reached
+    // STEP 3: If the teacher set a cap, reject once the student has hit it
     if (maxAttempts != null && existingSubmissions.length >= maxAttempts) {
       throw new MaxAttemptsExceededError(maxAttempts)
     }
@@ -509,6 +541,8 @@ export class SubmissionService {
     file: SubmissionFileDTO,
     programmingLanguage: string,
   ): void {
+    // STEP 1: Extract the file extension and compare it against the language's allowed list
+    // (e.g. Python only accepts .py, Java only accepts .java)
     const extension = file.filename.split(".").pop()?.toLowerCase()
     const allowedExtensions =
       ALLOWED_EXTENSIONS[programmingLanguage as ProgrammingLanguage] ?? []
@@ -517,6 +551,7 @@ export class SubmissionService {
       throw new InvalidFileTypeError(allowedExtensions, extension ?? "unknown")
     }
 
+    // STEP 2: Reject files over 10 MB — the code executor has a tight memory budget
     const maxSize = 10 * 1024 * 1024
 
     if (file.data.length > maxSize) {
@@ -551,6 +586,8 @@ export class SubmissionService {
     submissionNumber: number,
   ): Promise<string> {
     try {
+      // Upload to Supabase Storage under a deterministic path built from the IDs and attempt number
+      // so files are easy to locate and clean up later (e.g. submissions/{assignmentId}/{studentId}/{attempt}/filename)
       return await this.storageService.uploadSubmission(
         assignmentId,
         studentId,
@@ -560,6 +597,7 @@ export class SubmissionService {
         file.mimetype,
       )
     } catch (error) {
+      // Translate storage errors into a domain error so the controller gets a clean 500 message
       logger.error("Submission upload error:", error)
       throw new UploadFailedError(
         error instanceof Error ? error.message : "Unknown upload error",
@@ -578,6 +616,9 @@ export class SubmissionService {
     penaltyResult: PenaltyResult | null,
     submissionNumber: number,
   ): Promise<Submission> {
+    // Flatten the penalty result into the two scalar columns the DB stores:
+    // isLate (boolean flag for display) and penaltyApplied (% that will be deducted from the grade).
+    // If there's no penalty, both default to safe zero-values.
     return await this.submissionRepo.createSubmission({
       assignmentId,
       studentId,
@@ -598,7 +639,12 @@ export class SubmissionService {
   private async runTestsAndApplyPenalty(
     submissionId: number,
     penaltyResult: PenaltyResult | null,
+    totalScore: number,
   ): Promise<boolean> {
+    // STEP 1: Send the submission to the code executor (Judge0).
+    // runTestsForSubmission writes the grade and individual test results to the DB.
+    // We return false on failure rather than throwing — a test-runner crash is non-fatal;
+    // the submission was already saved and the student can still see their file.
     try {
       await this.codeTestService.runTestsForSubmission(submissionId)
     } catch (error) {
@@ -606,17 +652,20 @@ export class SubmissionService {
       return false
     }
 
+    // STEP 2: If there's no late penalty (or it's 0%), nothing to deduct — we're done
     if (!penaltyResult || penaltyResult.penaltyPercent === 0) {
       return true
     }
 
-    const updatedSubmission =
-      await this.submissionRepo.getSubmissionById(submissionId)
+    // STEP 3: Re-fetch the submission to get the grade that runTestsForSubmission just wrote,
+    // then deduct the late penalty percentage and persist the adjusted grade
+    const updatedSubmission = await this.submissionRepo.getSubmissionById(submissionId)
 
     if (updatedSubmission && updatedSubmission.grade !== null) {
       const penalizedGrade = this.latePenaltyService.applyPenalty(
         updatedSubmission.grade,
         penaltyResult,
+        totalScore,
       )
       await this.submissionRepo.updateGrade(submissionId, penalizedGrade)
     }
@@ -634,16 +683,18 @@ export class SubmissionService {
   ): Promise<void> {
     for (const sub of submissions) {
       try {
-        // Delete database records first (authoritative source of truth)
+        // STEP 1: Remove the DB records first — the DB is the authoritative source of truth.
+        // Deleting test results before the submission satisfies the foreign-key constraint.
         await this.testResultRepo.deleteBySubmissionId(sub.id)
         await this.submissionRepo.delete(sub.id)
 
-        // Best-effort file cleanup (non-critical)
+        // STEP 2: Best-effort file cleanup from Supabase Storage.
+        // File deletion is non-critical — if it fails, the DB record is already gone
+        // so the orphaned file won't be visible or accessible to any user.
         if (sub.filePath) {
           try {
             await this.storageService.deleteFiles("submissions", [sub.filePath])
           } catch (fileError) {
-            // Log but don't fail - file cleanup is non-critical
             logger.error(
               `Failed to delete file for submission ${sub.id}: ${sub.filePath}`,
               fileError,
@@ -665,6 +716,10 @@ export class SubmissionService {
   private async triggerAutomaticSimilarityAnalysis(
     assignmentId: number,
   ): Promise<void> {
+    // The plagiarism service decides internally whether a new run is warranted
+    // (e.g. minimum submission threshold, cooldown window).
+    // Errors are swallowed here — a plagiarism scheduling failure must never roll back
+    // a student's successful submission.
     try {
       await this.plagiarismAutoAnalysisService.scheduleFromSubmission(
         assignmentId,
@@ -686,18 +741,26 @@ export class SubmissionService {
     studentId: number,
     penaltyResult: PenaltyResult | null,
   ): Promise<void> {
+    // STEP 1: Fetch the class and student records in parallel — both are needed to build
+    // the notification message (class name for context, student name for the message body)
     const [classData, student] = await Promise.all([
       this.classRepo.getClassById(assignment.classId),
       this.userRepo.getUserById(studentId),
     ])
 
+    // If the class record is missing (e.g. deleted mid-flight), silently skip —
+    // we can't identify the teacher to notify
     if (!classData) return
 
     const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
-    const isLate = penaltyResult !== null
 
+    // STEP 2: Choose the notification type based on whether a penalty was applied.
+    // This lets the teacher's notification centre distinguish on-time from late submissions.
+    const isLate = penaltyResult !== null
     const notificationType = isLate ? "LATE_SUBMISSION_RECEIVED" as const : "NEW_SUBMISSION_RECEIVED" as const
 
+    // STEP 3: Build the notification payload — late submissions include timestamp and due-date
+    // fields so the teacher can see exactly how late the student was
     const notificationData = {
       submissionId: submission.id,
       assignmentId: assignment.id,
@@ -712,6 +775,8 @@ export class SubmissionService {
       }),
     }
 
+    // STEP 4: Fire both the in-app notification and the email in parallel.
+    // settlePromisesAndLogRejections ensures one channel failing doesn't suppress the other.
     await settlePromisesAndLogRejections([
       this.notificationService.createNotification(classData.teacherId, notificationType, notificationData),
       this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, notificationType, notificationData),

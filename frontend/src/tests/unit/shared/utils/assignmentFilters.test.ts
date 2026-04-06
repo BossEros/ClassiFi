@@ -6,7 +6,7 @@ import {
   filterTeacherAssignmentsByTimeline,
   calculateTeacherFilterCounts,
 } from "@/shared/utils/assignmentFilters"
-import type { Assignment } from "@/shared/types/class"
+import type { Assignment } from "@/data/api/class.types"
 
 describe("assignmentFilters", () => {
   beforeEach(() => {

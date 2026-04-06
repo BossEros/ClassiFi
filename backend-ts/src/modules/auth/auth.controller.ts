@@ -3,11 +3,9 @@ import { container } from "tsyringe"
 import { AuthService } from "@/modules/auth/auth.service.js"
 import {
   RegisterRequestSchema,
-  LoginRequestSchema,
   ForgotPasswordRequestSchema,
   VerifyRequestSchema,
   type RegisterRequest,
-  type LoginRequest,
   type ForgotPasswordRequest,
   type VerifyRequest,
 } from "@/modules/auth/auth.schema.js"
@@ -17,8 +15,7 @@ import { validateBody } from "@/api/plugins/zod-validation.js"
 
 /**
  * Registers all authentication-related routes under /api/v1/auth/*.
- * Handles user registration, login, token verification, password reset,
- * and logout operations.
+ * Handles user registration, token verification, and password reset.
  *
  * @param app - Fastify application instance to register routes on.
  */
@@ -43,27 +40,6 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         message: "Registration successful",
         user: registrationResult.userData,
         token: registrationResult.token,
-      })
-    },
-  })
-
-  /**
-   * POST /login
-   * Login with email and password
-   */
-  app.post("/login", {
-    preHandler: validateBody(LoginRequestSchema),
-    handler: async (request, reply) => {
-      const { email: userEmail, password: userPassword } =
-        request.validatedBody as LoginRequest
-
-      const loginResult = await authService.loginUser(userEmail, userPassword)
-
-      return reply.send({
-        success: true,
-        message: "Login successful",
-        user: loginResult.userData,
-        token: loginResult.token,
       })
     },
   })
@@ -110,16 +86,4 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     },
   })
 
-  /**
-   * POST /logout
-   * Logout user
-   */
-  app.post("/logout", {
-    handler: async (_request, reply) => {
-      return reply.send({
-        success: true,
-        message: "Logout successful. Clear session on client.",
-      })
-    },
-  })
 }

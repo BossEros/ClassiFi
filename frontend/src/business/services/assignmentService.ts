@@ -1,39 +1,43 @@
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import type {
   Submission,
   SubmissionHistoryResponse,
   AssignmentDetail,
   SubmitAssignmentRequest,
   SubmissionContent,
-} from "@/business/models/assignment/types"
-import { validateFile } from "@/business/validation/submissionFileValidation"
+} from "@/data/api/assignment.types"
+import { validateFile } from "@/shared/utils/fileValidationUtils"
 export { validateFile }
 
+// Re-export types for presentation layer
+export type { ProgrammingLanguage, Submission, AssignmentDetail, AssignmentTestCase } from "@/data/api/assignment.types"
+
 /**
- * Submits an assignment with file upload
+ * Submits a student's code file for a specific assignment.
+ * Validates the assignment ID, student ID, and file type against the required
+ * programming language before uploading to the repository.
  *
- * @param request - Submit assignment request containing all necessary data
- * @returns Submission data
+ * @param request - The submission request containing the assignment ID, student ID, file, and programming language.
+ * @returns The created submission object with status and metadata.
+ * @throws Error if ID validation fails, file validation fails, or the server rejects the submission.
  */
 export async function submitAssignment(
   request: SubmitAssignmentRequest,
 ): Promise<Submission> {
-  // Validate inputs
+  // STEP 1: Verify both IDs are valid non-zero integers before touching the network
   validateId(request.assignmentId, "assignment")
   validateId(request.studentId, "student")
 
-  // Validate file
-  const validationError = validateFile(
-    request.file,
-    request.programmingLanguage,
-  )
-
+  // STEP 2: Confirm the uploaded file extension matches the assignment's required language
+  // (e.g. Java assignments only accept .java files)
+  const validationError = validateFile(request.file, request.programmingLanguage)
   if (validationError) {
     throw new Error(validationError)
   }
 
-  // Submit to repository
+  // STEP 3: All client-side checks passed — hand off to the repository to package
+  // the payload and POST it to the backend
   const response = await assignmentRepository.submitAssignmentWithFile(request)
 
   if (response.error) {
@@ -48,11 +52,14 @@ export async function submitAssignment(
 }
 
 /**
- * Gets submission history for a student and assignment
+ * Retrieves the full submission history for a specific student on a given assignment.
+ * Returns all attempts in chronological order so the student can track their progress
+ * and see feedback from previous submissions.
  *
- * @param assignmentId - ID of the assignment
- * @param studentId - ID of the student
- * @returns Submission history data
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param studentId - The unique identifier of the student.
+ * @returns An object containing the list of past submissions and related metadata.
+ * @throws Error if either ID is invalid or the data cannot be fetched.
  */
 export async function getSubmissionHistory(
   assignmentId: number,
@@ -79,11 +86,13 @@ export async function getSubmissionHistory(
 }
 
 /**
- * Gets all submissions by a student
+ * Retrieves all submissions made by a specific student across all assignments.
+ * Useful for building student activity views or teacher grading dashboards.
  *
- * @param studentId - ID of the student
- * @param latestOnly - If true, only return latest submission per assignment
- * @returns List of submissions
+ * @param studentId - The unique identifier of the student.
+ * @param latestOnly - If true, returns only the most recent submission per assignment to avoid duplicates (defaults to true).
+ * @returns An array of submission objects sorted by submission date.
+ * @throws Error if the student ID is invalid or the data cannot be retrieved.
  */
 export async function getStudentSubmissions(
   studentId: number,
@@ -108,11 +117,13 @@ export async function getStudentSubmissions(
 }
 
 /**
- * Gets all submissions for an assignment (typically for teachers)
+ * Retrieves all student submissions for a given assignment.
+ * Primarily used by teachers to review and grade submitted work.
  *
- * @param assignmentId - ID of the assignment
- * @param latestOnly - If true, only return latest submission per student
- * @returns List of submissions
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param latestOnly - If true, returns only the latest submission per student to avoid duplicates (defaults to true).
+ * @returns An array of submission objects from all students who submitted.
+ * @throws Error if the assignment ID is invalid or the data cannot be retrieved.
  */
 export async function getAssignmentSubmissions(
   assignmentId: number,
@@ -137,11 +148,14 @@ export async function getAssignmentSubmissions(
 }
 
 /**
- * Gets assignment details by ID
+ * Retrieves the full details of an assignment by its ID.
+ * The response is personalized based on the requesting user's context —
+ * for example, a student sees their own submission status alongside the assignment info.
  *
- * @param assignmentId - ID of the assignment
- * @param userId - ID of the user requesting details
- * @returns Assignment details
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param userId - The ID of the user making the request (used for role-based personalization).
+ * @returns The detailed assignment object including instructions, deadline, and submission status.
+ * @throws Error if the assignment is not found or the data cannot be fetched.
  */
 export async function getAssignmentById(
   assignmentId: number,
@@ -166,10 +180,12 @@ export async function getAssignmentById(
 }
 
 /**
- * Gets submission content for preview
+ * Fetches the source code content of a submission for in-browser preview.
+ * Used to display submitted code in the Monaco editor without requiring a file download.
  *
- * @param submissionId - ID of the submission
- * @returns Object containing content and language
+ * @param submissionId - The unique identifier of the submission.
+ * @returns An object containing the source code string and the programming language.
+ * @throws Error if the submission ID is invalid or the content cannot be retrieved.
  */
 export async function getSubmissionContent(
   submissionId: number,
@@ -191,10 +207,12 @@ export async function getSubmissionContent(
 }
 
 /**
- * Gets submission download URL
+ * Generates a secure, time-limited download URL for a submission's source code file.
+ * Used to allow teachers or students to download the submitted file to their local machine.
  *
- * @param submissionId - ID of the submission
- * @returns Download URL
+ * @param submissionId - The unique identifier of the submission.
+ * @returns A temporary download URL for the submission file.
+ * @throws Error if the submission ID is invalid or the URL cannot be generated.
  */
 export async function getSubmissionDownloadUrl(
   submissionId: number,
@@ -216,11 +234,13 @@ export async function getSubmissionDownloadUrl(
 }
 
 /**
- * Sends reminder notifications to students who haven't submitted an assignment
+ * Sends reminder notifications to all students who have not yet submitted a given assignment.
+ * Allows teachers to nudge students before or after the deadline to encourage completion.
  *
- * @param assignmentId - ID of the assignment
- * @param teacherId - ID of the teacher sending the reminder
- * @returns Success status and message
+ * @param assignmentId - The unique identifier of the assignment.
+ * @param teacherId - The unique identifier of the teacher triggering the reminder.
+ * @returns An object indicating success and the notification message dispatched.
+ * @throws Error if either ID is invalid or the notifications could not be sent.
  */
 export async function sendReminderToNonSubmitters(
   assignmentId: number,
@@ -246,11 +266,13 @@ export async function sendReminderToNonSubmitters(
 }
 
 /**
- * Saves teacher feedback for a submission
+ * Saves or updates a teacher's written feedback for a specific submission.
+ * The feedback text is trimmed and must be non-empty before being persisted.
  *
- * @param submissionId - ID of the submission
- * @param feedback - Teacher's feedback
- * @returns Updated submission
+ * @param submissionId - The unique identifier of the submission to attach feedback to.
+ * @param feedback - The teacher's written feedback text (must not be blank).
+ * @returns The updated submission object with the new feedback applied.
+ * @throws Error if the feedback is empty or the update fails.
  */
 export async function saveSubmissionFeedback(
   submissionId: number,

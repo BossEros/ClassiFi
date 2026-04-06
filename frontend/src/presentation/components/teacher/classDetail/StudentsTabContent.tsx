@@ -2,7 +2,7 @@ import { Search, Users } from "lucide-react"
 import { StudentListItem } from "@/presentation/components/shared/dashboard/StudentListItem"
 import { Pagination } from "@/presentation/components/ui/Pagination"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
-import type { EnrolledStudent } from "@/business/models/dashboard/types"
+import type { EnrolledStudent } from "@/data/api/class.types"
 
 interface StudentsTabContentProps {
   students: EnrolledStudent[]
@@ -133,3 +133,4 @@ export function StudentsTabContent({
     </div>
   )
 }
+

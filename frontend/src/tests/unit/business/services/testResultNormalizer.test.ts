@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest"
 
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
-import type { RawTestResult } from "@/shared/types/testCase"
+import type { RawTestResult } from "@/data/api/test-case.types"
 
 describe("testNormalization", () => {
   // ============================================================================

@@ -10,7 +10,7 @@ import {
 import { Button } from "@/presentation/components/ui/Button"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
-import type { User } from "@/business/models/auth/types"
+import type { User } from "@/data/api/auth.types"
 import {
   User as UserIcon,
   Lock,
@@ -38,7 +38,7 @@ import {
 } from "@/presentation/utils/imageValidation"
 import { Eye, EyeOff } from "lucide-react"
 import { changePassword } from "@/business/services/authService"
-import type { ChangePasswordRequest } from "@/business/models/auth/types"
+import type { ChangePasswordRequest } from "@/data/api/auth.types"
 import type { FieldErrors } from "react-hook-form"
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
 import {
@@ -1114,8 +1114,8 @@ function NotificationPreferences() {
           ? !user.inAppNotificationsEnabled
           : user.inAppNotificationsEnabled,
       )
-    } catch (error) {
-      console.error("Failed to update notification preference:", error)
+    } catch {
+      // Keep the current toggle state when the preference update fails.
     } finally {
       setUpdating(false)
     }
@@ -1409,5 +1409,4 @@ export function SettingsPage() {
     </DashboardLayout>
   )
 }
-
 

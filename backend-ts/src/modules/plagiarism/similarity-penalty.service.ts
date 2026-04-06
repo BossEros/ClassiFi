@@ -9,10 +9,12 @@ import { TestResultRepository } from "@/modules/test-cases/test-result.repositor
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import {
   normalizeSimilarityPenaltyConfig,
+  DEFAULT_SIMILARITY_PENALTY_CONFIG,
   type SimilarityPenaltyConfig,
 } from "@/modules/assignments/similarity-penalty-config.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
-import type { Assignment, Submission } from "@/models/index.js"
+import type { Assignment } from "@/modules/assignments/assignment.model.js"
+import type { Submission } from "@/modules/submissions/submission.model.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
@@ -42,6 +44,90 @@ export class SimilarityPenaltyService {
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
+
+  /**
+   * Returns the system-wide default similarity penalty configuration.
+   */
+  getDefaultConfig(): SimilarityPenaltyConfig {
+    return normalizeSimilarityPenaltyConfig(DEFAULT_SIMILARITY_PENALTY_CONFIG)
+  }
+
+  /**
+   * Retrieves the similarity penalty configuration for an assignment.
+   * Falls back to the system default when no custom config has been set.
+   *
+   * @param assignmentId - The assignment to fetch the config for.
+   * @returns The enabled flag and the resolved config.
+   */
+  async getAssignmentConfig(
+    assignmentId: number,
+  ): Promise<{ enabled: boolean; config: SimilarityPenaltyConfig }> {
+    const storedConfig =
+      await this.assignmentRepo.getSimilarityPenaltyConfig(assignmentId)
+
+    if (!storedConfig) {
+      return { enabled: false, config: this.getDefaultConfig() }
+    }
+
+    return {
+      enabled: storedConfig.enabled,
+      config: normalizeSimilarityPenaltyConfig(storedConfig.config),
+    }
+  }
+
+  /**
+   * Persists the similarity penalty configuration for an assignment.
+   * Validates band values before writing.
+   *
+   * @param assignmentId - The assignment to configure.
+   * @param enabled - Whether similarity penalty enforcement is active.
+   * @param config - The penalty config to store, or null to reset to default.
+   * @returns true when the update succeeded.
+   */
+  async setAssignmentConfig(
+    assignmentId: number,
+    enabled: boolean,
+    config: SimilarityPenaltyConfig | null,
+  ): Promise<boolean> {
+    const configToValidate = config ?? DEFAULT_SIMILARITY_PENALTY_CONFIG
+
+    if (
+      configToValidate.warningThreshold < 0 ||
+      configToValidate.warningThreshold > 1
+    ) {
+      throw new Error(
+        "Invalid similarity penalty configuration: warningThreshold must be between 0 and 1",
+      )
+    }
+
+    if (configToValidate.maxPenaltyPercent < 0 || configToValidate.maxPenaltyPercent > 100) {
+      throw new Error(
+        "Invalid similarity penalty configuration: maxPenaltyPercent must be between 0 and 100",
+      )
+    }
+
+    for (const band of configToValidate.deductionBands) {
+      if (band.minHybridScore < 0 || band.minHybridScore > 1) {
+        throw new Error(
+          "Invalid similarity penalty configuration: band minHybridScore must be between 0 and 1",
+        )
+      }
+
+      if (band.penaltyPercent < 0 || band.penaltyPercent > 100) {
+        throw new Error(
+          "Invalid similarity penalty configuration: band penaltyPercent must be between 0 and 100",
+        )
+      }
+    }
+
+    const normalizedConfig = config ? normalizeSimilarityPenaltyConfig(config) : null
+
+    return await this.assignmentRepo.setSimilarityPenaltyConfig(
+      assignmentId,
+      enabled,
+      normalizedConfig,
+    )
+  }
 
   async syncAssignmentPenaltyState(assignmentId: number): Promise<void> {
     // STEP 1: Load the assignment and its current set of latest submissions
@@ -91,25 +177,31 @@ export class SimilarityPenaltyService {
       return
     }
 
-    // STEP 3: Load the normalized penalty configuration and build a lookup set of latest submission IDs
+    // STEP 3: Load the normalized penalty configuration and build lookup structures
     const similarityPenaltyConfig = normalizeSimilarityPenaltyConfig(
-      undefined,
+      assignment.similarityPenaltyConfig,
     )
     const latestSubmissionIds = new Set(
       latestSubmissions.map((latestSubmission) => latestSubmission.id),
+    )
+    const submissionTimestampMap = new Map(
+      latestSubmissions.map((latestSubmission) => [
+        latestSubmission.id,
+        latestSubmission.submittedAt,
+      ]),
     )
 
     if (latestSubmissionIds.size === 0) {
       return
     }
 
-    // STEP 4: Fetch all similarity results from this report and build a worst-case penalty map
-    // Each submission maps to the highest-priority penalty candidate found across all its pairs
+    // STEP 4: Fetch all similarity results from this report and build a worst-case penalty map.
+    // Only the submission that was submitted LATER in each flagged pair is penalized.
+    // This protects the earlier submitter: if someone copies their work and submits after them,
+    // only the later submitter is penalized — not the original author.
+    // If timestamps are identical or unavailable, neither student is penalized.
     const reportResults = await this.similarityRepo.getResultsByReport(reportId)
-    const candidateBySubmissionId = new Map<
-      number,
-      SubmissionPenaltyCandidate
-    >()
+    const candidateBySubmissionId = new Map<number, SubmissionPenaltyCandidate>()
 
     for (const reportResult of reportResults) {
       if (
@@ -133,14 +225,19 @@ export class SimilarityPenaltyService {
         continue
       }
 
-      this.recordHigherPriorityCandidate(
-        candidateBySubmissionId,
+      const laterSubmissionId = this.resolveLaterSubmission(
         reportResult.submission1Id,
-        penaltyCandidate,
+        reportResult.submission2Id,
+        submissionTimestampMap,
       )
+
+      if (laterSubmissionId === null) {
+        continue
+      }
+
       this.recordHigherPriorityCandidate(
         candidateBySubmissionId,
-        reportResult.submission2Id,
+        laterSubmissionId,
         penaltyCandidate,
       )
     }
@@ -157,20 +254,26 @@ export class SimilarityPenaltyService {
       }
 
       const penaltyCandidate = candidateBySubmissionId.get(latestSubmission.id)
+      const similarityPenaltyPercent = penaltyCandidate?.penaltyPercent ?? 0
       const adjustedGrade = penaltyCandidate
         ? this.applySimilarityPenalty(
             automaticGrade,
             penaltyCandidate.penaltyPercent,
+            assignment.totalScore ?? 100,
           )
         : automaticGrade
 
+      await this.submissionRepo.updateSimilarityPenalty(
+        latestSubmission.id,
+        similarityPenaltyPercent,
+      )
       await this.submissionRepo.updateGrade(latestSubmission.id, adjustedGrade)
       await this.notifySimilarityDeductionIfNeeded(
         latestSubmission,
         assignment,
         automaticGrade,
         adjustedGrade,
-        penaltyCandidate?.penaltyPercent ?? 0,
+        similarityPenaltyPercent,
         penaltyCandidate
           ? Math.round(penaltyCandidate.sourceHybridScore * 100)
           : 0,
@@ -225,6 +328,25 @@ export class SimilarityPenaltyService {
     }
   }
 
+  /**
+   * Determines which of two submissions was submitted later.
+   * Returns the ID of the later submission, or null if timestamps are unavailable
+   * or identical (no basis to assign blame to either student).
+   */
+  private resolveLaterSubmission(
+    submission1Id: number,
+    submission2Id: number,
+    submissionTimestampMap: Map<number, Date>,
+  ): number | null {
+    const time1 = submissionTimestampMap.get(submission1Id)
+    const time2 = submissionTimestampMap.get(submission2Id)
+
+    if (!time1 || !time2) return null
+    if (time1.getTime() === time2.getTime()) return null
+
+    return time1 > time2 ? submission1Id : submission2Id
+  }
+
   private recordHigherPriorityCandidate(
     candidateBySubmissionId: Map<number, SubmissionPenaltyCandidate>,
     submissionId: number,
@@ -264,6 +386,7 @@ export class SimilarityPenaltyService {
         continue
       }
 
+      await this.submissionRepo.updateSimilarityPenalty(latestSubmission.id, 0)
       await this.submissionRepo.updateGrade(latestSubmission.id, automaticGrade)
     }
   }
@@ -291,22 +414,17 @@ export class SimilarityPenaltyService {
       return automaticGrade
     }
 
-    return Math.max(
-      0,
-      Math.round(
-        automaticGrade * ((100 - (submission.penaltyApplied ?? 0)) / 100),
-      ),
-    )
+    const latePenaltyPoints = Math.round(totalScore * ((submission.penaltyApplied ?? 0) / 100))
+    return Math.max(0, automaticGrade - latePenaltyPoints)
   }
 
   private applySimilarityPenalty(
     automaticGrade: number,
     penaltyPercent: number,
+    totalScore: number,
   ): number {
-    return Math.max(
-      0,
-      Math.round(automaticGrade * ((100 - penaltyPercent) / 100)),
-    )
+    const penaltyPoints = Math.round(totalScore * (penaltyPercent / 100))
+    return Math.max(0, automaticGrade - penaltyPoints)
   }
 
   private async notifySimilarityDeductionIfNeeded(

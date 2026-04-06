@@ -1,7 +1,7 @@
 import * as assignmentService from "./assignmentService"
 import * as classService from "./classService"
 import * as studentDashboardService from "./studentDashboardService"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
 import {
   startOfMonth,
   endOfMonth,
@@ -15,13 +15,15 @@ import type {
   AssignmentStatus,
   ClassInfo,
   DateRange,
-} from "@/business/models/calendar/types"
-import type { Assignment, Class } from "@/business/models/dashboard/types"
-import type { Submission } from "@/business/models/assignment/types"
-import type { CalendarView } from "@/business/models/calendar/types"
-import { isValidClass as isValidClassValue } from "@/business/services/calendar/classMappers"
+  CalendarView,
+} from "@/data/api/calendar.types"
+import type { Assignment, Class } from "@/data/api/class.types"
+import type { Submission } from "@/data/api/assignment.types"
 import { formatCalendarDate as formatCalendarDateValue } from "@/shared/utils/calendarDateUtils"
 import { getClassColor as getClassColorValue } from "@/shared/utils/colorUtils"
+
+// Re-export types for presentation layer
+export type { CalendarEvent, ClassInfo, CalendarView } from "@/data/api/calendar.types"
 
 /**
  * Fetches calendar events for a date range based on user role.
@@ -52,8 +54,6 @@ export async function getCalendarEvents(
       return await getTeacherCalendarEvents(startDate, endDate, userId)
     }
   } catch (error) {
-    console.error("Error fetching calendar events:", error)
-
     // Provide user-friendly error message
     if (error instanceof Error) {
       // Normalize error message to lowercase for case-insensitive matching
@@ -114,8 +114,7 @@ async function getStudentCalendarEvents(
   let submissions: Submission[] = []
   try {
     submissions = await assignmentService.getStudentSubmissions(studentId, true)
-  } catch (error) {
-    console.warn("Error fetching student submissions:", error)
+  } catch {
     // Continue without submissions - assignments will show as not-started
   }
 
@@ -170,12 +169,7 @@ async function getTeacherCalendarEvents(
         submittedCount,
         totalStudents,
       )
-    } catch (error) {
-      // Log error but continue processing other assignments
-      console.error(
-        `Error fetching counts for assignment ${assignment.id}:`,
-        error,
-      )
+    } catch {
       return null
     }
   })
@@ -202,7 +196,6 @@ async function getTeacherCalendarEvents(
  * @param view - View mode ('month' | 'week' | 'day')
  * @returns DateRange object with start and end dates
  *
- * Requirements: 3.1, 3.2, 3.5
  */
 export function getDateRangeForView(date: Date, view: CalendarView): DateRange {
   switch (view) {
@@ -247,7 +240,6 @@ export function getDateRangeForView(date: Date, view: CalendarView): DateRange {
  * @param classId - Class identifier
  * @returns Hex color string from the color palette
  *
- * Requirements: 4.3, 5.4, 7.5
  */
 export function getClassColor(classId: number): string {
   return getClassColorValue(classId)
@@ -303,7 +295,6 @@ export function calculateSubmissionStatus(
  * - Day: "October 16, 2023"
  * - Default (no view): "January 15, 2024 at 11:59 PM"
  *
- * Requirements: 3.4, 9.4
  */
 export function formatCalendarDate(date: Date, view?: CalendarView): string {
   return formatCalendarDateValue(date, view)
@@ -339,8 +330,7 @@ export async function getClassesForFilter(
       isEnrolled: userRole === "student",
       isTeaching: userRole === "teacher",
     }))
-  } catch (error) {
-    console.error("Error fetching classes for filter:", error)
+  } catch {
     // Return empty array instead of throwing - allows calendar to still function
     return []
   }
@@ -353,20 +343,42 @@ export async function getClassesForFilter(
 /**
  * Type guard to validate if an object matches the Class interface structure.
  *
- * @param obj - Object to validate
- * @returns True if object has required Class properties
+ * @param value - Unknown candidate value.
+ * @returns True when the value matches required Class fields.
  */
-function isValidClass(obj: unknown): obj is Class {
-  return isValidClassValue(obj)
+export function isValidClass(value: unknown): value is Class {
+  if (typeof value !== "object" || value === null) {
+    return false
+  }
+
+  const candidate = value as Record<string, unknown>
+
+  const checks = {
+    id: typeof candidate.id === "number",
+    teacherId: typeof candidate.teacherId === "number",
+    className: typeof candidate.className === "string",
+    classCode: typeof candidate.classCode === "string",
+    description:
+      candidate.description === null ||
+      typeof candidate.description === "string",
+    isActive: typeof candidate.isActive === "boolean",
+    createdAt: typeof candidate.createdAt === "string",
+    semester: typeof candidate.semester === "number",
+    academicYear: typeof candidate.academicYear === "string",
+    schedule:
+      typeof candidate.schedule === "object" && candidate.schedule !== null,
+  }
+
+  return Object.values(checks).every((passed) => passed === true)
 }
 
 /**
- * Safely maps and validates response data to Class array.
+ * Safely maps unknown class array data to validated Class records.
  *
- * @param classes - Array of class objects from API response
- * @returns Validated array of Class objects
+ * @param classes - Unknown class array payload.
+ * @returns Valid Class array.
  */
-function mapToClassArray(classes: unknown[]): Class[] {
+export function mapToClassArray(classes: unknown[]): Class[] {
   return classes.filter(isValidClass)
 }
 
@@ -386,19 +398,10 @@ async function fetchEnrolledClasses(studentId: number): Promise<Class[]> {
 
   // Safely validate and map the response to Class array
   if (!Array.isArray(classesResponse.classes)) {
-    console.warn("Invalid classes response: expected array")
     return []
   }
 
-  const validClasses = mapToClassArray(classesResponse.classes)
-
-  if (validClasses.length !== classesResponse.classes.length) {
-    console.warn(
-      `Filtered out ${classesResponse.classes.length - validClasses.length} invalid class objects`,
-    )
-  }
-
-  return validClasses
+  return mapToClassArray(classesResponse.classes)
 }
 
 /**
@@ -425,13 +428,10 @@ async function fetchAssignmentsForClasses(
           msg.includes("permission") ||
           msg.includes("403")
         ) {
-          console.warn(`No access to assignments for class ${cls.id}`)
           return []
         }
       }
 
-      // Log other errors but continue
-      console.error(`Error fetching assignments for class ${cls.id}:`, error)
       return []
     }
   })
@@ -456,28 +456,15 @@ async function fetchAssignmentCounts(
     const [submissions, students] = await Promise.all([
       assignmentService
         .getAssignmentSubmissions(assignmentId, true)
-        .catch((err) => {
-          console.warn(
-            `Error fetching submissions for assignment ${assignmentId}:`,
-            err,
-          )
-          return []
-        }),
-      classService.getClassStudents(classId).catch((err) => {
-        console.warn(`Error fetching students for class ${classId}:`, err)
-        return []
-      }),
+        .catch(() => []),
+      classService.getClassStudents(classId).catch(() => []),
     ])
 
     return {
       submittedCount: submissions.length,
       totalStudents: students.length,
     }
-  } catch (error) {
-    console.error(
-      `Error fetching counts for assignment ${assignmentId}:`,
-      error,
-    )
+  } catch {
     return {
       submittedCount: 0,
       totalStudents: 0,
@@ -495,12 +482,10 @@ function isValidCalendarEvent(event: CalendarEvent): boolean {
   try {
     // Check required fields
     if (!event.id || typeof event.id !== "number") {
-      console.warn("Invalid event: missing or invalid id", event)
       return false
     }
 
     if (!event.title || typeof event.title !== "string") {
-      console.warn("Invalid event: missing or invalid title", event)
       return false
     }
 
@@ -509,22 +494,18 @@ function isValidCalendarEvent(event: CalendarEvent): boolean {
       !(event.timing.start instanceof Date) ||
       isNaN(event.timing.start.getTime())
     ) {
-      console.warn("Invalid event: missing or invalid timing.start", event)
       return false
     }
 
     if (!event.classInfo?.id || typeof event.classInfo.id !== "number") {
-      console.warn("Invalid event: missing or invalid classInfo.id", event)
       return false
     }
 
     if (!event.classInfo?.name || typeof event.classInfo.name !== "string") {
-      console.warn("Invalid event: missing or invalid classInfo.name", event)
       return false
     }
 
     if (!event.classInfo?.color || typeof event.classInfo.color !== "string") {
-      console.warn("Invalid event: missing or invalid classInfo.color", event)
       return false
     }
 
@@ -532,16 +513,11 @@ function isValidCalendarEvent(event: CalendarEvent): boolean {
       !event.assignment?.assignmentId ||
       typeof event.assignment.assignmentId !== "number"
     ) {
-      console.warn(
-        "Invalid event: missing or invalid assignment.assignmentId",
-        event,
-      )
       return false
     }
 
     return true
-  } catch (error) {
-    console.error("Error validating calendar event:", error, event)
+  } catch {
     return false
   }
 }
@@ -555,11 +531,6 @@ function isValidCalendarEvent(event: CalendarEvent): boolean {
  */
 function filterValidEvents(events: CalendarEvent[]): CalendarEvent[] {
   const validEvents = events.filter(isValidCalendarEvent)
-
-  const invalidCount = events.length - validEvents.length
-  if (invalidCount > 0) {
-    console.warn(`Filtered out ${invalidCount} invalid calendar event(s)`)
-  }
 
   return validEvents
 }

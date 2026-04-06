@@ -3,7 +3,6 @@ import type {
   JoinClassResponse,
 } from "@/data/repositories/studentDashboardRepository"
 import * as dashboardRepository from "@/data/repositories/studentDashboardRepository"
-import { validateClassJoinCode } from "@/business/validation/classValidation"
 
 /**
  * Fetches the complete dashboard overview for a specific student.
@@ -16,14 +15,9 @@ import { validateClassJoinCode } from "@/business/validation/classValidation"
 export async function getDashboardData(
   studentId: number,
 ): Promise<StudentDashboardBackendResponse> {
-  try {
-    return await dashboardRepository.getCompleteDashboardDataForStudentId(
-      studentId,
-    )
-  } catch (error) {
-    console.error("Error fetching student dashboard data:", error)
-    throw error
-  }
+  return await dashboardRepository.getCompleteDashboardDataForStudentId(
+    studentId,
+  )
 }
 
 /**
@@ -38,15 +32,10 @@ export async function getEnrolledClasses(
   studentId: number,
   limit?: number,
 ): Promise<dashboardRepository.ClassListResponse> {
-  try {
-    return await dashboardRepository.getAllEnrolledClassesForStudentId(
-      studentId,
-      limit,
-    )
-  } catch (error) {
-    console.error("Error fetching enrolled classes:", error)
-    throw error
-  }
+  return await dashboardRepository.getAllEnrolledClassesForStudentId(
+    studentId,
+    limit,
+  )
 }
 
 /**
@@ -61,15 +50,10 @@ export async function getPendingAssignments(
   studentId: number,
   limit: number = 10,
 ): Promise<dashboardRepository.AssignmentListResponse> {
-  try {
-    return await dashboardRepository.getAllPendingAssignmentsForStudentId(
-      studentId,
-      limit,
-    )
-  } catch (error) {
-    console.error("Error fetching pending assignments:", error)
-    throw error
-  }
+  return await dashboardRepository.getAllPendingAssignmentsForStudentId(
+    studentId,
+    limit,
+  )
 }
 
 /**
@@ -86,12 +70,17 @@ export async function joinClass(
 ): Promise<JoinClassResponse> {
   try {
     // Validate class code format (6-8 alphanumeric characters)
-    const codeError = validateClassJoinCode(classCode)
+    const trimmedCode = classCode ? classCode.trim() : ""
+    const classCodePattern = /^[A-Za-z0-9]{6,8}$/
 
-    if (codeError) {
+    if (!trimmedCode) {
+      return { success: false, message: "Class code is required" }
+    }
+
+    if (!classCodePattern.test(trimmedCode)) {
       return {
         success: false,
-        message: codeError,
+        message: "Invalid class code format. Please enter a 6-8 character alphanumeric code.",
       }
     }
 
@@ -99,8 +88,7 @@ export async function joinClass(
       studentId,
       classCode,
     )
-  } catch (error) {
-    console.error("Error joining class:", error)
+  } catch {
 
     return {
       success: false,
@@ -125,8 +113,7 @@ export async function leaveClass(
       studentId,
       classId,
     )
-  } catch (error) {
-    console.error("Error leaving class:", error)
+  } catch {
 
     return {
       success: false,

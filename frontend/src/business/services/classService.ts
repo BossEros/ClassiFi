@@ -1,37 +1,27 @@
 ﻿import * as classRepository from "@/data/repositories/classRepository"
 import * as assignmentRepository from "@/data/repositories/assignmentRepository"
-import {
-  validateCreateAssignmentData,
-  validateUpdateAssignmentData,
-} from "@/business/validation/assignmentValidation"
-import {
-  validateClassName,
-  validateClassDescription,
-  validateClassCode,
-  validateSemester,
-  validateAcademicYear,
-  validateSchedule,
-  normalizeClassDescriptionForUpdate,
-} from "@/business/validation/classValidation"
-import { validateId } from "@/business/validation/commonValidation"
+import { validateId } from "@/shared/utils/idUtils"
+import { normalizeClassDescriptionForUpdate } from "@/shared/utils/classDescriptionUtils"
 import type {
   Class,
   Assignment,
   EnrolledStudent,
   ClassDetailData,
-} from "@/business/models/dashboard/types"
+  CreateClassRequest,
+  UpdateClassRequest,
+} from "@/data/api/class.types"
 import type {
   CreateAssignmentRequest,
   UpdateAssignmentRequest,
-} from "@/business/models/assignment/types"
-import type {
-  CreateClassRequest,
-  UpdateClassRequest,
-} from "@/business/models/class/types"
-import type { GradeEntry, GradebookStudent } from "@/shared/types/gradebook"
+} from "@/data/api/assignment.types"
+import type { GradeEntry, GradebookStudent } from "@/data/api/gradebook.types"
 
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }
+
+// Re-export class types for presentation layer
+export { parseISODate } from "@/data/api/class.types"
+export type { DayOfWeek, Class, Assignment, EnrolledStudent, ClassDetailData, Module, ClassTab, Task, NavigationItem } from "@/data/api/class.types"
 
 const ASSIGNMENT_INSTRUCTIONS_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
 const ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES = [
@@ -51,29 +41,8 @@ const ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES = [
 export async function createClass(
   createClassData: CreateClassRequest,
 ): Promise<Class> {
-  // Validate required fields using centralized validators
+  // Validate required fields
   validateId(createClassData.teacherId, "teacher")
-
-  const classNameError = validateClassName(createClassData.className)
-  if (classNameError) throw new Error(classNameError)
-
-  if (createClassData.description) {
-    const descriptionError = validateClassDescription(
-      createClassData.description,
-    )
-    if (descriptionError) throw new Error(descriptionError)
-  }
-
-  const classCodeError = validateClassCode(createClassData.classCode)
-  if (classCodeError) throw new Error(classCodeError)
-  const semesterError = validateSemester(createClassData.semester)
-  if (semesterError) throw new Error(semesterError)
-
-  const academicYearError = validateAcademicYear(createClassData.academicYear)
-  if (academicYearError) throw new Error(academicYearError)
-
-  const scheduleError = validateSchedule(createClassData.schedule)
-  if (scheduleError) throw new Error(scheduleError)
 
   // All validations passed, call repository
   return await classRepository.createNewClass(createClassData)
@@ -250,14 +219,6 @@ export async function updateClass(
 export async function createAssignment(
   createAssignmentData: CreateAssignmentRequest,
 ): Promise<Assignment> {
-  // Validate all fields
-  const validation = validateCreateAssignmentData(createAssignmentData)
-
-  if (!validation.isValid) {
-    const firstError = validation.errors[0]
-    throw new Error(firstError.message)
-  }
-
   // Validate IDs
   validateId(createAssignmentData.classId, "class")
   validateId(createAssignmentData.teacherId, "teacher")
@@ -288,6 +249,7 @@ export async function createAssignment(
       allowLateSubmissions: createAssignmentData.allowLateSubmissions,
       latePenaltyConfig: createAssignmentData.latePenaltyConfig,
       enableSimilarityPenalty: createAssignmentData.enableSimilarityPenalty,
+      similarityPenaltyConfig: createAssignmentData.similarityPenaltyConfig,
       moduleId: createAssignmentData.moduleId ?? null,
     },
   )
@@ -346,9 +308,6 @@ export async function updateAssignment(
 ): Promise<Assignment> {
   validateId(assignmentId, "assignment")
 
-  // Validate all fields using centralized validation
-  validateUpdateAssignmentData(updateAssignmentData)
-
   // Pass directly to repository (backend uses camelCase)
   return await assignmentRepository.updateAssignmentDetailsById(assignmentId, {
     teacherId: updateAssignmentData.teacherId,
@@ -376,6 +335,7 @@ export async function updateAssignment(
     allowLateSubmissions: updateAssignmentData.allowLateSubmissions,
     latePenaltyConfig: updateAssignmentData.latePenaltyConfig,
     enableSimilarityPenalty: updateAssignmentData.enableSimilarityPenalty,
+    similarityPenaltyConfig: updateAssignmentData.similarityPenaltyConfig,
     moduleId: updateAssignmentData.moduleId ?? undefined,
   })
 }

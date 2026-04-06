@@ -1,14 +1,13 @@
 import { db } from "@/shared/database.js"
-import { eq, and, sql, isNotNull, inArray } from "drizzle-orm"
-import {
-  submissions,
-  assignments,
-  enrollments,
-  users,
-  classes,
-} from "@/models/index.js"
+import { eq, and, sql, isNotNull, inArray, max } from "drizzle-orm"
+import { users } from "@/modules/users/user.model.js"
+import { classes } from "@/modules/classes/class.model.js"
+import { assignments } from "@/modules/assignments/assignment.model.js"
+import { enrollments } from "@/modules/enrollments/enrollment.model.js"
+import { submissions } from "@/modules/submissions/submission.model.js"
+import { similarityResults } from "@/modules/plagiarism/similarity-result.model.js"
 import { injectable } from "tsyringe"
-import { buildSubmissionGradeComputation } from "@/modules/submissions/submission-grade.js"
+import { buildSubmissionGradeComputation, type GradeBreakdown } from "@/modules/submissions/submission-grade.js"
 
 /** Assignment summary for gradebook */
 export interface GradebookAssignment {
@@ -32,8 +31,11 @@ export interface GradebookSubmission {
   assignmentId: number
   studentId: number
   grade: number | null
+  originalGrade: number | null
   overrideGrade: number | null
   isGradeOverridden: boolean
+  penaltyApplied: number | null
+  similarityPenaltyApplied: number | null
   submittedAt: Date | null
 }
 
@@ -42,6 +44,7 @@ export interface StudentGrade {
   assignmentId: number
   submissionId: number | null
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   submittedAt: Date | null
 }
@@ -79,11 +82,15 @@ export interface ClassAssignmentInfo {
 
 /** Student submission for grade lookup */
 export interface StudentSubmissionInfo {
+  id: number
   assignmentId: number
   grade: number | null
+  originalGrade: number | null
   overrideGrade: number | null
   isGradeOverridden: boolean
   overrideReason: string | null
+  penaltyApplied: number | null
+  similarityPenaltyApplied: number | null
   submittedAt: Date | null
 }
 
@@ -94,6 +101,7 @@ export interface StudentAssignmentGrade {
   totalScore: number
   deadline: Date | null
   grade: number | null
+  gradeBreakdown: GradeBreakdown
   isOverridden: boolean
   feedback: string | null
   submittedAt: Date | null
@@ -131,10 +139,14 @@ export class GradebookRepository {
     const enrolledStudents = await this.getEnrolledStudents(classId)
     const submissionMap = await this.buildSubmissionMap(classAssignments)
 
+    const submissionIds = [...submissionMap.values()].map((s) => s.id)
+    const similarityScoreMap = await this.getMaxSimilarityScores(submissionIds)
+
     const students = this.buildStudentGrades(
       enrolledStudents,
       classAssignments,
       submissionMap,
+      similarityScoreMap,
     )
 
     return {
@@ -201,8 +213,11 @@ export class GradebookRepository {
         assignmentId: submissions.assignmentId,
         studentId: submissions.studentId,
         grade: submissions.grade,
+        originalGrade: submissions.originalGrade,
         overrideGrade: submissions.overrideGrade,
         isGradeOverridden: submissions.isGradeOverridden,
+        penaltyApplied: submissions.penaltyApplied,
+        similarityPenaltyApplied: submissions.similarityPenaltyApplied,
         submittedAt: submissions.submittedAt,
       })
       .from(submissions)
@@ -228,6 +243,7 @@ export class GradebookRepository {
     enrolledStudents: EnrolledStudent[],
     classAssignments: GradebookAssignment[],
     submissionMap: Map<string, GradebookSubmission>,
+    similarityScoreMap: Map<number, number>,
   ): GradebookStudent[] {
     return enrolledStudents.map((student) => ({
       id: student.id,
@@ -237,14 +253,19 @@ export class GradebookRepository {
         const sub = submissionMap.get(`${student.id}-${assignment.id}`)
         const gradeComputation = buildSubmissionGradeComputation({
           grade: sub?.grade,
+          originalGrade: sub?.originalGrade ?? null,
           isGradeOverridden: sub?.isGradeOverridden ?? false,
           overrideGrade: sub?.overrideGrade ?? null,
+          penaltyApplied: sub?.penaltyApplied ?? null,
+          similarityPenaltyApplied: sub?.similarityPenaltyApplied ?? null,
+          similarityScore: sub ? (similarityScoreMap.get(sub.id) ?? null) : null,
         })
 
         return {
           assignmentId: assignment.id,
           submissionId: sub?.id ?? null,
           grade: gradeComputation.effectiveGrade,
+          gradeBreakdown: gradeComputation.gradeBreakdown,
           isOverridden: sub?.isGradeOverridden ?? false,
           submittedAt: sub?.submittedAt ?? null,
         }
@@ -273,10 +294,14 @@ export class GradebookRepository {
     )
     const assignmentsByClass = this.groupAssignmentsByClass(allAssignments)
 
+    const submissionIds = [...submissionMap.values()].map((s) => s.id)
+    const similarityScoreMap = await this.getMaxSimilarityScores(submissionIds)
+
     return this.buildStudentClassGrades(
       studentClasses,
       assignmentsByClass,
       submissionMap,
+      similarityScoreMap,
     )
   }
 
@@ -343,11 +368,15 @@ export class GradebookRepository {
 
     const studentSubmissions = await this.db
       .select({
+        id: submissions.id,
         assignmentId: submissions.assignmentId,
         grade: submissions.grade,
+        originalGrade: submissions.originalGrade,
         overrideGrade: submissions.overrideGrade,
         isGradeOverridden: submissions.isGradeOverridden,
         overrideReason: submissions.overrideReason,
+        penaltyApplied: submissions.penaltyApplied,
+        similarityPenaltyApplied: submissions.similarityPenaltyApplied,
         submittedAt: submissions.submittedAt,
       })
       .from(submissions)
@@ -387,6 +416,7 @@ export class GradebookRepository {
     studentClasses: StudentClassInfo[],
     assignmentsByClass: Map<number, ClassAssignmentInfo[]>,
     submissionMap: Map<number, StudentSubmissionInfo>,
+    similarityScoreMap: Map<number, number>,
   ): StudentClassGrades[] {
     return studentClasses.map((cls) => {
       const classAssignments = assignmentsByClass.get(cls.classId) || []
@@ -398,8 +428,12 @@ export class GradebookRepository {
           const sub = submissionMap.get(a.id)
           const gradeComputation = buildSubmissionGradeComputation({
             grade: sub?.grade,
+            originalGrade: sub?.originalGrade ?? null,
             isGradeOverridden: sub?.isGradeOverridden ?? false,
             overrideGrade: sub?.overrideGrade ?? null,
+            penaltyApplied: sub?.penaltyApplied ?? null,
+            similarityPenaltyApplied: sub?.similarityPenaltyApplied ?? null,
+            similarityScore: sub ? (similarityScoreMap.get(sub.id) ?? null) : null,
           })
 
           return {
@@ -408,6 +442,7 @@ export class GradebookRepository {
             totalScore: a.totalScore,
             deadline: a.deadline,
             grade: gradeComputation.effectiveGrade,
+            gradeBreakdown: gradeComputation.gradeBreakdown,
             isOverridden: sub?.isGradeOverridden ?? false,
             feedback: sub?.overrideReason ?? null,
             submittedAt: sub?.submittedAt ?? null,
@@ -415,6 +450,52 @@ export class GradebookRepository {
         }),
       }
     })
+  }
+
+  /**
+   * Get the maximum hybrid similarity score (0-100) for each submission.
+   * Queries similarity_results where submission appears as either pair member.
+   *
+   * @param submissionIds - Submission IDs to look up.
+   * @returns Map of submissionId to max similarity score (0-100).
+   */
+  private async getMaxSimilarityScores(
+    submissionIds: number[],
+  ): Promise<Map<number, number>> {
+    if (submissionIds.length === 0) return new Map()
+
+    const asFirst = await this.db
+      .select({
+        submissionId: similarityResults.submission1Id,
+        maxScore: max(similarityResults.hybridScore),
+      })
+      .from(similarityResults)
+      .where(inArray(similarityResults.submission1Id, submissionIds))
+      .groupBy(similarityResults.submission1Id)
+
+    const asSecond = await this.db
+      .select({
+        submissionId: similarityResults.submission2Id,
+        maxScore: max(similarityResults.hybridScore),
+      })
+      .from(similarityResults)
+      .where(inArray(similarityResults.submission2Id, submissionIds))
+      .groupBy(similarityResults.submission2Id)
+
+    const scoreMap = new Map<number, number>()
+
+    for (const row of [...asFirst, ...asSecond]) {
+      if (row.submissionId != null && row.maxScore != null) {
+        const score = Math.round(Number(row.maxScore) * 100)
+        const existing = scoreMap.get(row.submissionId)
+
+        if (existing === undefined || score > existing) {
+          scoreMap.set(row.submissionId, score)
+        }
+      }
+    }
+
+    return scoreMap
   }
 
   /**

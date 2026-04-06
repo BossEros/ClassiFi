@@ -2,12 +2,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 
 import * as adminService from "@/business/services/adminService"
 import * as adminRepository from "@/data/repositories/adminRepository"
-import * as authValidation from "@/business/validation/authValidation"
 import type { AdminUser, AdminClass, CreateClassData } from "@/data/api/admin.types"
 
 // Mock dependencies
 vi.mock("@/data/repositories/adminRepository")
-vi.mock("@/business/validation/authValidation")
 
 // Local Factories (or import if available)
 const createMockAdminUser = (overrides?: Partial<AdminUser>): AdminUser => ({
@@ -87,9 +85,7 @@ describe("adminService", () => {
       role: "student" as const,
     }
 
-    it("creates user successfully when validation passes", async () => {
-      vi.mocked(authValidation.validateEmail).mockReturnValue(null)
-      vi.mocked(authValidation.validateRole).mockReturnValue(null)
+    it("creates user successfully", async () => {
       const newUser = createMockAdminUser(createData)
       vi.mocked(adminRepository.createNewUserAccount).mockResolvedValue({
         success: true,
@@ -98,42 +94,27 @@ describe("adminService", () => {
 
       const result = await adminService.createUser(createData)
 
-      expect(authValidation.validateEmail).toHaveBeenCalledWith(
-        createData.email,
-      )
-      expect(authValidation.validateRole).toHaveBeenCalledWith(createData.role)
       expect(adminRepository.createNewUserAccount).toHaveBeenCalledWith(
         createData,
       )
       expect(result).toEqual(newUser)
     })
 
-    it("throws error when email validation fails", async () => {
-      vi.mocked(authValidation.validateEmail).mockReturnValue("Invalid email")
+    it("throws error when user creation fails", async () => {
+      vi.mocked(adminRepository.createNewUserAccount).mockResolvedValue({
+        success: false,
+        user: null as any,
+      })
 
       await expect(adminService.createUser(createData)).rejects.toThrow(
-        "Invalid email",
+        "Failed to create user: no user returned",
       )
-
-      expect(adminRepository.createNewUserAccount).not.toHaveBeenCalled()
-    })
-
-    it("throws error when role validation fails", async () => {
-      vi.mocked(authValidation.validateEmail).mockReturnValue(null)
-      vi.mocked(authValidation.validateRole).mockReturnValue("Invalid role")
-
-      await expect(adminService.createUser(createData)).rejects.toThrow(
-        "Invalid role",
-      )
-
-      expect(adminRepository.createNewUserAccount).not.toHaveBeenCalled()
     })
   })
 
   describe("updateUserRole", () => {
     it("updates role successfully", async () => {
       const updatedUser = createMockAdminUser({ role: "teacher" })
-      vi.mocked(authValidation.validateRole).mockReturnValue(null)
       vi.mocked(adminRepository.updateUserRoleById).mockResolvedValue({
         success: true,
         user: updatedUser as any,
@@ -149,7 +130,6 @@ describe("adminService", () => {
     })
 
     it("throws error when update fails", async () => {
-      vi.mocked(authValidation.validateRole).mockReturnValue(null)
       vi.mocked(adminRepository.updateUserRoleById).mockResolvedValue({
         success: false,
         user: null as any,

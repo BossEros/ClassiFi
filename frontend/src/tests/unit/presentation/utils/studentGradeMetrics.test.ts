@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { calculateStudentGradeSummaryMetrics } from "@/presentation/utils/studentGradeMetrics"
-import type { StudentGradeEntry } from "@/shared/types/gradebook"
+import type { StudentGradeEntry } from "@/data/api/gradebook.types"
 
 function createStudentGradeEntry(
   overrides: Partial<StudentGradeEntry> = {},
@@ -11,6 +11,15 @@ function createStudentGradeEntry(
     totalScore: 100,
     deadline: "2026-03-20T12:00:00Z",
     grade: null,
+    gradeBreakdown: {
+      originalGrade: null,
+      latePenaltyPercent: 0,
+      similarityPenaltyPercent: 0,
+      similarityScore: null,
+      finalGrade: null,
+      effectiveGrade: null,
+      isOverridden: false,
+    },
     isOverridden: false,
     feedback: null,
     submittedAt: null,

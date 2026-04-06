@@ -309,7 +309,7 @@ describe("gradebookRepository", () => {
         await gradebookRepository.getLatePenaltyConfigurationForAssignmentId(1)
 
       expect(apiClient.get).toHaveBeenCalledWith(
-        "/gradebook/assignments/1/late-penalty",
+        "/assignments/1/late-penalty",
       )
       expect(result.enabled).toBe(true)
       expect(result.config).toEqual(mockConfig)
@@ -376,7 +376,7 @@ describe("gradebookRepository", () => {
       ).resolves.toBeUndefined()
 
       expect(apiClient.put).toHaveBeenCalledWith(
-        "/gradebook/assignments/1/late-penalty",
+        "/assignments/1/late-penalty",
         { enabled: true, config },
       )
     })
@@ -393,7 +393,7 @@ describe("gradebookRepository", () => {
       )
 
       expect(apiClient.put).toHaveBeenCalledWith(
-        "/gradebook/assignments/1/late-penalty",
+        "/assignments/1/late-penalty",
         { enabled: false, config: undefined },
       )
     })
