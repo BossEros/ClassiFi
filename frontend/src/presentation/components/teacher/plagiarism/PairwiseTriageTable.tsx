@@ -526,5 +526,3 @@ export function PairwiseTriageTable({
 
 export default PairwiseTriageTable
 
-
-

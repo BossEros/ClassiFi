@@ -16,6 +16,10 @@ import type {
   DeleteAccountResponse,
 } from "@/data/api/auth.types"
 
+// Re-export types and values for presentation layer
+export { VALID_ROLES } from "@/data/api/auth.types"
+export type { UserRole, User, ChangePasswordRequest, RegistrationStep, RegistrationStepInfo } from "@/data/api/auth.types"
+
 const emailConfirmationRequiredLoginMessage =
   "Please confirm your email before signing in. Check your inbox or spam folder for the verification link."
 const invalidLoginCredentialsMessage = "Incorrect email or password."

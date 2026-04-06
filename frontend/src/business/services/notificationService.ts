@@ -4,6 +4,9 @@ import type {
   NotificationType,
 } from "@/data/api/notification.types"
 
+// Re-export types for presentation layer
+export type { Notification } from "@/data/api/notification.types"
+
 /**
  * Fetches notifications with pagination.
  *

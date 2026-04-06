@@ -939,4 +939,3 @@ export function ClassDetailPage() {
   )
 }
 
-

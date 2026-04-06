@@ -10,6 +10,9 @@ import type {
 import type { TestResultsResponse } from "@/data/api/test-case.types"
 import { normalizeTestResult } from "@/business/services/testResultNormalizer"
 
+// Re-export types for presentation layer
+export type { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from "@/data/api/test-case.types"
+
 /**
  * Maps raw API test execution data into a typed TestExecutionSummary.
  * Resolves field name aliases (e.g., `passed` vs `passedCount`, `percentage` vs `score`)

@@ -22,6 +22,9 @@ import type { Submission } from "@/data/api/assignment.types"
 import { formatCalendarDate as formatCalendarDateValue } from "@/shared/utils/calendarDateUtils"
 import { getClassColor as getClassColorValue } from "@/shared/utils/colorUtils"
 
+// Re-export types for presentation layer
+export type { CalendarEvent, ClassInfo, CalendarView } from "@/data/api/calendar.types"
+
 /**
  * Fetches calendar events for a date range based on user role.
  * Aggregates data from existing services and transforms to calendar events.

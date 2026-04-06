@@ -10,6 +10,9 @@ import type {
 import { validateFile } from "@/shared/utils/fileValidationUtils"
 export { validateFile }
 
+// Re-export types for presentation layer
+export type { ProgrammingLanguage, Submission, AssignmentDetail, AssignmentTestCase } from "@/data/api/assignment.types"
+
 /**
  * Submits a student's code file for a specific assignment.
  * Validates the assignment ID, student ID, and file type against the required

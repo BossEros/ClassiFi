@@ -728,4 +728,3 @@ export function AdminClassFormPage() {
 
 export default AdminClassFormPage
 
-

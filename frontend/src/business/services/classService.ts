@@ -19,6 +19,10 @@ import type { GradeEntry, GradebookStudent } from "@/data/api/gradebook.types"
 // Re-export shared types for Gradebook
 export type { GradeEntry, GradebookStudent }
 
+// Re-export class types for presentation layer
+export { parseISODate } from "@/data/api/class.types"
+export type { DayOfWeek, Class, Assignment, EnrolledStudent, ClassDetailData, Module, ClassTab, Task, NavigationItem } from "@/data/api/class.types"
+
 const ASSIGNMENT_INSTRUCTIONS_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024
 const ASSIGNMENT_INSTRUCTIONS_IMAGE_ALLOWED_TYPES = [
   "image/jpeg",

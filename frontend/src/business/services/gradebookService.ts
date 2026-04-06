@@ -9,6 +9,7 @@ import type {
 
 // Re-export types for presentation layer
 export type { ClassGradebook, StudentClassGrades, StudentRank }
+export type { LatePenaltyConfig, PenaltyTier, SimilarityPenaltyConfig, SimilarityPenaltyBand, GradeBreakdown, GradebookAssignment, GradebookStudent, GradeEntry, StudentGradeEntry } from "@/data/api/gradebook.types"
 
 // ============================================================================
 // Class Gradebook Functions

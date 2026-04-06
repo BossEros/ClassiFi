@@ -1410,5 +1410,3 @@ export function SettingsPage() {
   )
 }
 
-
-

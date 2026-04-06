@@ -114,4 +114,3 @@ export function formatTimeRange(startTime: string, endTime: string): string {
   return `${formattedStart} ${startPeriod} - ${formattedEnd}`
 }
 
-
