@@ -227,7 +227,7 @@ export async function getLatePenaltyConfigurationForAssignmentId(
   assignmentId: number,
 ): Promise<{ enabled: boolean; config: LatePenaltyConfig | null }> {
   const apiResponse = await apiClient.get<LatePenaltyConfigResponse>(
-    `/gradebook/assignments/${assignmentId}/late-penalty`,
+    `/assignments/${assignmentId}/late-penalty`,
   )
   const data = unwrapApiResponse(
     apiResponse,
@@ -262,6 +262,6 @@ export async function updateLatePenaltyConfigurationForAssignmentId(
   const apiResponse = await apiClient.put<{
     success: boolean
     message?: string
-  }>(`/gradebook/assignments/${assignmentId}/late-penalty`, requestBody)
+  }>(`/assignments/${assignmentId}/late-penalty`, requestBody)
   unwrapApiResponse(apiResponse, "Failed to update late penalty config")
 }

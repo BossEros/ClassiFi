@@ -148,23 +148,29 @@ export function useAssignmentSubmissionFlow({
     const retryDelayMs = 1000
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      // Honour a cancellation triggered from outside (e.g. component unmount or a new submission)
       if (signal.aborted) return false
 
       try {
+        // STEP 1: Ask the backend whether the test runner has finished for this submission
         const testResults = await getTestResultsForSubmission(submissionId)
 
+        // STEP 2: Re-check abort after the async call — the component may have unmounted while we waited
         if (signal.aborted) return false
 
+        // STEP 3: Results are ready — push them into state so the results card can render
         setSubmissionTestResults(testResults)
         return true
       } catch {
-
+        // Backend returned an error — the test runner hasn't finished yet.
+        // Wait 1s before the next attempt; skip the delay on the last attempt.
         if (attempt < maxRetries) {
           await abortableDelay(retryDelayMs, signal)
         }
       }
     }
 
+    // All retries exhausted without a successful response
     return false
   }
 
@@ -178,89 +184,74 @@ export function useAssignmentSubmissionFlow({
     }
   }
 
+  // Kicks off a poll for test results after a submission is created.
+  // The backend runs tests asynchronously, so we retry until the results are ready.
+  const pollForSubmissionTestResults = async (submissionId: number): Promise<void> => {
+    // Cancel any previous poll that might still be running from an earlier submission
+    submissionAbortRef.current?.abort()
+    submissionAbortRef.current = new AbortController()
+    const signal = submissionAbortRef.current.signal
+
+    // Clear any leftover retry timers from a previous attempt
+    timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
+    timeoutIdsRef.current = []
+
+    const didLoadTestResults = await fetchTestResultsWithRetry(submissionId, signal)
+
+    // Always clean up timer references once the poll finishes, success or not
+    timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
+    timeoutIdsRef.current = []
+
+    if (didLoadTestResults) {
+      showToast("Assignment submitted successfully!")
+    } else if (!signal.aborted) {
+      setResultsError("Failed to load test results after multiple attempts. Please refresh the page.")
+      showToast("Submission successful, but test results failed to load", "error")
+    }
+  }
+
   // Handle form submission
   const handleSubmit = async () => {
-    // Validate form
-    if (!selectedFile || !user || !assignmentId || !assignment) {
-      return
-    }
+    // Don't do anything if the student hasn't selected a file or the page is still loading
+    if (!selectedFile || !user || !assignmentId || !assignment) return
 
-    // Validate file
-    const validationError = validateFile(
-      selectedFile,
-      assignment.programmingLanguage,
-    )
-
-    // Set file error if validation fails
+    // STEP 1: Run client-side file validation before hitting the backend
+    const validationError = validateFile(selectedFile, assignment.programmingLanguage)
     if (validationError) {
       setFileError(validationError)
       return
     }
 
-    // Try to submit the assignment
     try {
-      // Set loading state
+      // STEP 2: Show a loading spinner and clear any stale errors from a previous attempt
       setIsSubmitting(true)
       setError(null)
       setResultsError(null)
 
-      // Parse IDs
-      const assignmentIdNumber = parseInt(assignmentId, 10)
-      const userIdNumber = parseInt(user.id, 10)
-
-      // Submit assignment
+      // STEP 3: Upload the file — the backend validates the assignment window,
+      // runs the test cases, grades the submission, and writes everything to the DB
       const submission = await submitAssignment({
-        assignmentId: assignmentIdNumber,
-        studentId: userIdNumber,
+        assignmentId: parseInt(assignmentId, 10),
+        studentId: parseInt(user.id, 10),
         file: selectedFile,
         programmingLanguage: assignment.programmingLanguage,
       })
 
-      // Update submissions state
-      setSubmissions((previousSubmissions) => [
-        submission,
-        ...previousSubmissions,
-      ])
+      // STEP 4: Prepend the new submission to the history list and reset the form
+      setSubmissions((previousSubmissions) => [submission, ...previousSubmissions])
+      clearSubmissionForm()
 
-      const hasTestCases = (assignment?.testCases?.length ?? 0) > 0
-
-      if (!hasTestCases) {
-        clearSubmissionForm()
-        setResultsError(null)
+      // STEP 5: If the assignment has no test cases, we're done — nothing to poll for
+      if ((assignment.testCases?.length ?? 0) === 0) {
         setSubmissionTestResults(null)
         showToast("Assignment submitted successfully!")
-
         return
       }
 
-      // Clear submission form
-      clearSubmissionForm()
-
-      // Create abort controller for test results polling
-      submissionAbortRef.current = new AbortController()
-      const signal = submissionAbortRef.current.signal
-
-      timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
-      timeoutIdsRef.current = []
-
-      const didLoadTestResults = await fetchTestResultsWithRetry(submission.id, signal)
-
-      // Clean up timeout references
-      timeoutIdsRef.current.forEach((timeoutId) => clearTimeout(timeoutId))
-      timeoutIdsRef.current = []
-
-      if (didLoadTestResults) {
-        showToast("Assignment submitted successfully!")
-      } else if (!signal.aborted) {
-        setResultsError("Failed to load test results after multiple attempts. Please refresh the page.")
-        showToast("Submission successful, but test results failed to load", "error")
-      }
+      // STEP 6: Poll until the backend finishes running the test cases and the results are ready
+      await pollForSubmissionTestResults(submission.id)
     } catch (submissionError) {
-      setError(
-        submissionError instanceof Error
-          ? submissionError.message
-          : "Failed to submit assignment",
-      )
+      setError(submissionError instanceof Error ? submissionError.message : "Failed to submit assignment")
     } finally {
       setIsSubmitting(false)
     }

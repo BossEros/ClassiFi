@@ -45,10 +45,15 @@ export async function submitAssignmentWithFile(
   submissionRequest: SubmitAssignmentRequest,
 ): Promise<ApiResponse<SubmitAssignmentResponse>> {
   try {
-    const submissionFormData =
-      buildSubmissionFormDataFromRequest(submissionRequest)
+    // STEP 1: Pack the assignment ID, student ID, and uploaded file into a multipart FormData
+    // payload — the backend expects this as a multipart/form-data POST, not JSON
+    const submissionFormData = buildSubmissionFormDataFromRequest(submissionRequest)
+
+    // STEP 2: Pull the JWT from the active Supabase session so the backend can authenticate the request
     const authenticationToken = await retrieveAuthenticationTokenFromSession()
 
+    // STEP 3: POST the multipart payload — the backend validates the assignment window,
+    // saves the file to storage, queues test execution, and returns the new submission record
     const httpResponse = await fetch(`${API_BASE_URL}/submissions`, {
       method: "POST",
       headers: authenticationToken
@@ -57,6 +62,7 @@ export async function submitAssignmentWithFile(
       body: submissionFormData,
     })
 
+    // STEP 4: Parse the response body and normalize it into a typed ApiResponse
     const responseData = await httpResponse.json()
 
     if (!httpResponse.ok) {

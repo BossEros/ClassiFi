@@ -22,21 +22,19 @@ export { validateFile }
 export async function submitAssignment(
   request: SubmitAssignmentRequest,
 ): Promise<Submission> {
-  // Ensure both IDs are valid non-zero numbers before hitting the API
+  // STEP 1: Verify both IDs are valid non-zero integers before touching the network
   validateId(request.assignmentId, "assignment")
   validateId(request.studentId, "student")
 
-  // Confirm the file type is compatible with the assignment's programming language
-  const validationError = validateFile(
-    request.file,
-    request.programmingLanguage,
-  )
-
+  // STEP 2: Confirm the uploaded file extension matches the assignment's required language
+  // (e.g. Java assignments only accept .java files)
+  const validationError = validateFile(request.file, request.programmingLanguage)
   if (validationError) {
     throw new Error(validationError)
   }
 
-  // All checks passed — upload the file and create the submission record
+  // STEP 3: All client-side checks passed — hand off to the repository to package
+  // the payload and POST it to the backend
   const response = await assignmentRepository.submitAssignmentWithFile(request)
 
   if (response.error) {
