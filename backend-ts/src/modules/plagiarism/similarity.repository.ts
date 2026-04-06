@@ -29,7 +29,9 @@ const logger = createLogger("SimilarityRepository")
 export interface CrossClassResultWithContext {
   result: SimilarityResult
   submission1StudentName: string
+  submission1SubmittedAt: Date | null
   submission2StudentName: string
+  submission2SubmittedAt: Date | null
   submission1ClassName: string
   submission2ClassName: string
   submission1ClassCode: string
@@ -288,6 +290,7 @@ export class SimilarityRepository extends BaseRepository<
         .select({
           submissionId: submissions.id,
           studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student1_name"),
+          submittedAt: submissions.submittedAt,
           className: classes.className,
           classCode: classes.classCode,
           assignmentName: assignments.assignmentName,
@@ -303,6 +306,7 @@ export class SimilarityRepository extends BaseRepository<
         .select({
           submissionId: submissions.id,
           studentName: sql<string>`concat(${users.firstName}, ' ', ${users.lastName})`.as("student2_name"),
+          submittedAt: submissions.submittedAt,
           className: classes.className,
           classCode: classes.classCode,
           assignmentName: assignments.assignmentName,
@@ -318,10 +322,12 @@ export class SimilarityRepository extends BaseRepository<
       .select({
         result: similarityResults,
         submission1StudentName: sub1.studentName,
+        submission1SubmittedAt: sub1.submittedAt,
         submission1ClassName: sub1.className,
         submission1ClassCode: sub1.classCode,
         submission1AssignmentName: sub1.assignmentName,
         submission2StudentName: sub2.studentName,
+        submission2SubmittedAt: sub2.submittedAt,
         submission2ClassName: sub2.className,
         submission2ClassCode: sub2.classCode,
         submission2AssignmentName: sub2.assignmentName,

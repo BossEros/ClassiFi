@@ -81,8 +81,20 @@ export interface CrossClassResultDTO {
 export interface CrossClassResultDetailsResponse {
   result: CrossClassResultDTO
   fragments: PlagiarismFragmentDTO[]
-  leftFile: { filename: string; content: string; lineCount: number; studentName: string }
-  rightFile: { filename: string; content: string; lineCount: number; studentName: string }
+  leftFile: {
+    filename: string
+    content: string
+    lineCount: number
+    studentName: string
+    submittedAt: string | null
+  }
+  rightFile: {
+    filename: string
+    content: string
+    lineCount: number
+    studentName: string
+    submittedAt: string | null
+  }
 }
 
 // ============================================================================
@@ -410,12 +422,14 @@ export class CrossClassSimilarityService {
         content: leftContent,
         lineCount: leftContent.split("\n").length,
         studentName: contextRow?.submission1StudentName ?? "Unknown",
+        submittedAt: contextRow?.submission1SubmittedAt?.toISOString() ?? null,
       },
       rightFile: {
         filename: `submission_${result.submission2Id}`,
         content: rightContent,
         lineCount: rightContent.split("\n").length,
         studentName: contextRow?.submission2StudentName ?? "Unknown",
+        submittedAt: contextRow?.submission2SubmittedAt?.toISOString() ?? null,
       },
     }
   }

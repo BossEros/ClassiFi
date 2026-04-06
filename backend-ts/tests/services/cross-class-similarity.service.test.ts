@@ -91,7 +91,9 @@ describe("CrossClassSimilarityService", () => {
         isFlagged: true,
       },
       submission1StudentName: "John Doe",
+      submission1SubmittedAt: new Date("2026-03-31T09:00:00.000Z"),
       submission2StudentName: "Jane Smith",
+      submission2SubmittedAt: new Date("2026-03-31T10:30:00.000Z"),
       submission1ClassName: "BSCS 3A",
       submission2ClassName: "BSCS 3B",
       submission1AssignmentName: "FizzBuzz",
@@ -115,9 +117,12 @@ describe("CrossClassSimilarityService", () => {
     getCrossClassResultsWithContext: ReturnType<typeof vi.fn>
     getLatestCrossClassReport: ReturnType<typeof vi.fn>
     deleteCrossClassReportsExcept: ReturnType<typeof vi.fn>
+    getResultWithFragments: ReturnType<typeof vi.fn>
+    getReportById: ReturnType<typeof vi.fn>
   }
   let mockFileService: {
     fetchSubmissionFiles: ReturnType<typeof vi.fn>
+    downloadSubmissionFiles: ReturnType<typeof vi.fn>
   }
   let mockSemanticClient: {
     getEmbedding: ReturnType<typeof vi.fn>
@@ -175,7 +180,27 @@ describe("CrossClassSimilarityService", () => {
     }
 
     mockSubmissionRepo = {
-      getSubmissionWithStudent: vi.fn().mockResolvedValue(null),
+      getSubmissionWithStudent: vi
+        .fn()
+        .mockImplementation(async (submissionId: number) => {
+          if (submissionId === 101) {
+            return {
+              submission: {
+                filePath: "submissions/101.py",
+              },
+            }
+          }
+
+          if (submissionId === 201) {
+            return {
+              submission: {
+                filePath: "submissions/201.py",
+              },
+            }
+          }
+
+          return null
+        }),
       getLatestSubmissionSnapshotsByAssignmentIds: vi.fn().mockResolvedValue([]),
     }
 
@@ -186,6 +211,27 @@ describe("CrossClassSimilarityService", () => {
         .mockResolvedValue(mockCrossClassResultWithContext),
       getLatestCrossClassReport: vi.fn().mockResolvedValue(null),
       deleteCrossClassReportsExcept: vi.fn().mockResolvedValue(0),
+      getResultWithFragments: vi.fn().mockResolvedValue({
+        result: {
+          id: 1886,
+          reportId: 400,
+          submission1Id: 101,
+          submission2Id: 201,
+          structuralScore: "0.9100",
+          semanticScore: "0.8300",
+          hybridScore: "0.8860",
+          overlap: 18,
+          longestFragment: 6,
+          isFlagged: true,
+        },
+        fragments: [],
+      }),
+      getReportById: vi.fn().mockResolvedValue({
+        id: 400,
+        assignmentId: 104,
+        teacherId: 47,
+        reportType: "cross-class",
+      }),
     }
 
     vi.mocked(createPlagiarismDetector).mockReturnValue({
@@ -204,6 +250,9 @@ describe("CrossClassSimilarityService", () => {
 
           return []
         }),
+      downloadSubmissionFiles: vi
+        .fn()
+        .mockResolvedValue(["print('left')", "print('right')"]),
     }
 
     mockSemanticClient = {
@@ -342,5 +391,17 @@ describe("CrossClassSimilarityService", () => {
     // With embedding caching, each unique submission is embedded once.
     // Two submissions (101 and 201) → 2 embedding calls.
     expect(mockSemanticClient.getEmbedding).toHaveBeenCalledTimes(2)
+  })
+
+  it("includes submission timestamps in cross-class result details", async () => {
+    const service = createService()
+
+    const result = await service.getResultDetails(1886, 47)
+
+    expect(mockSimilarityRepo.getResultWithFragments).toHaveBeenCalledWith(1886)
+    expect(result.leftFile.studentName).toBe("John Doe")
+    expect(result.leftFile.submittedAt).toBe("2026-03-31T09:00:00.000Z")
+    expect(result.rightFile.studentName).toBe("Jane Smith")
+    expect(result.rightFile.submittedAt).toBe("2026-03-31T10:30:00.000Z")
   })
 })
