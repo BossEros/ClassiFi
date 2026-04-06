@@ -94,12 +94,8 @@ async function runWithTimeout<T>(
  * @returns A promise that resolves when all routes are registered.
  */
 export async function submissionRoutes(app: FastifyInstance): Promise<void> {
-  const submissionService = container.resolve<SubmissionService>(
-    DI_TOKENS.services.submission,
-  )
-  const codeTestService = container.resolve<CodeTestService>(
-    DI_TOKENS.services.codeTest,
-  )
+  const submissionService = container.resolve<SubmissionService>(DI_TOKENS.services.submission,)
+  const codeTestService = container.resolve<CodeTestService>(DI_TOKENS.services.codeTest,)
   const hiddenDetailAuthorizedRoles = new Set(["teacher", "admin"])
 
   /**
@@ -111,38 +107,25 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       // STEP 1: Pull the uploaded file out of the multipart form.
       // If the student somehow sent the request without a file, bail out immediately.
       const uploadedFile = await request.file()
-
       if (!uploadedFile) {
         throw new BadRequestError("No file uploaded")
       }
 
       // STEP 2: Extract the assignment ID and student ID that came along with the file.
       // These are sent as extra form fields alongside the file in the multipart request.
-      const assignmentIdField = uploadedFile.fields.assignment_id as
-        | MultipartField
-        | undefined
-      const studentIdField = uploadedFile.fields.student_id as
-        | MultipartField
-        | undefined
+      const assignmentId = parsePositiveInt((uploadedFile.fields.assignment_id as MultipartField | undefined)?.value, "Assignment ID")
+      const studentId = parsePositiveInt((uploadedFile.fields.student_id as MultipartField | undefined)?.value, "Student ID")
 
-      const assignmentId = parsePositiveInt(
-        assignmentIdField?.value,
-        "Assignment ID",
-      )
-      const studentId = parsePositiveInt(studentIdField?.value, "Student ID")
-
-      // STEP 3: Load the file contents into memory as a buffer.
-      // We need the raw bytes to upload it to storage.
-      const fileBuffer = await uploadedFile.toBuffer()
-
-      // STEP 4: Hand everything off to the service.
-      // It validates the assignment window, uploads the file to storage, and writes the DB record.
+      // STEP 3: Hand everything off to the service.
+      // The file is read into a Buffer here because the service needs the raw bytes twice:
+      // once for the size validation check, and once to upload to Supabase Storage.
+      // A stream can only be consumed once, so it must be fully loaded into memory first.
       const submission = await submissionService.submitAssignment(
         assignmentId,
         studentId,
         {
           filename: uploadedFile.filename,
-          data: fileBuffer,
+          data: await uploadedFile.toBuffer(),
           mimetype: uploadedFile.mimetype,
         },
       )
