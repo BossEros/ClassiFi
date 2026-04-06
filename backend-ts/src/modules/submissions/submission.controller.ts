@@ -46,6 +46,47 @@ interface MultipartField {
 }
 
 /**
+ * Thrown when a test execution run exceeds the configured time limit.
+ * Having a dedicated class lets the catch block do a clean `instanceof` check
+ * instead of pattern-matching against an error message string.
+ */
+class TestExecutionTimeoutError extends Error {
+  constructor(timeoutSeconds: number) {
+    super(
+      `Tests did not complete within ${timeoutSeconds} seconds. ` +
+        `This may indicate an infinite loop, excessive computation, or system overload.`,
+    )
+    this.name = "TestExecutionTimeoutError"
+  }
+}
+
+/**
+ * Races a promise against a timeout. Throws TestExecutionTimeoutError if the
+ * timeout fires first. Always cleans up the timer regardless of outcome.
+ *
+ * @param operation - The async operation to run.
+ * @param timeoutSeconds - How long to wait before giving up.
+ */
+async function runWithTimeout<T>(
+  operation: Promise<T>,
+  timeoutSeconds: number,
+): Promise<T> {
+  let timeoutId: NodeJS.Timeout | undefined
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new TestExecutionTimeoutError(timeoutSeconds))
+    }, timeoutSeconds * 1000)
+  })
+
+  try {
+    return await Promise.race([operation, timeoutPromise])
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+/**
  * Registers all submission-related routes.
  * Handles assignment submissions, history, downloads, and test execution.
  *
@@ -67,12 +108,16 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
    */
   app.post("/", {
     handler: async (request, reply) => {
+      // STEP 1: Pull the uploaded file out of the multipart form.
+      // If the student somehow sent the request without a file, bail out immediately.
       const uploadedFile = await request.file()
 
       if (!uploadedFile) {
         throw new BadRequestError("No file uploaded")
       }
 
+      // STEP 2: Extract the assignment ID and student ID that came along with the file.
+      // These are sent as extra form fields alongside the file in the multipart request.
       const assignmentIdField = uploadedFile.fields.assignment_id as
         | MultipartField
         | undefined
@@ -86,8 +131,12 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       )
       const studentId = parsePositiveInt(studentIdField?.value, "Student ID")
 
+      // STEP 3: Load the file contents into memory as a buffer.
+      // We need the raw bytes to upload it to storage.
       const fileBuffer = await uploadedFile.toBuffer()
 
+      // STEP 4: Hand everything off to the service.
+      // It validates the assignment window, uploads the file to storage, and writes the DB record.
       const submission = await submissionService.submitAssignment(
         assignmentId,
         studentId,
@@ -240,6 +289,9 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
       const { submissionId } = request.validatedParams as SubmissionIdParam
       const { includeHiddenDetails } =
         request.validatedQuery as TestResultsQuery
+
+      // Only teachers and admins are allowed to see hidden test case details (input/expected output).
+      // If a student sends includeHiddenDetails=true, the flag gets silently ignored here.
       const requesterRole = request.user?.role ?? "student"
       const shouldIncludeHiddenDetails =
         includeHiddenDetails && hiddenDetailAuthorizedRoles.has(requesterRole)
@@ -249,6 +301,7 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
         shouldIncludeHiddenDetails,
       )
 
+      // null means the submission exists but tests haven't been run yet
       if (!testResultsData) {
         throw new NotFoundError("No test results found for this submission")
       }
@@ -270,26 +323,13 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const { submissionId } = request.validatedParams as SubmissionIdParam
 
-      // Create cancelable timeout promise
-      const timeoutMs = settings.testExecutionTimeoutSeconds * 1000
-      let timeoutId: NodeJS.Timeout | undefined
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        timeoutId = setTimeout(() => {
-          reject(
-            new Error(
-              `Test execution exceeded timeout of ${settings.testExecutionTimeoutSeconds} seconds`,
-            ),
-          )
-        }, timeoutMs)
-      })
-
       try {
-        // Race between test execution and timeout
-        const executedTestResults = await Promise.race([
+        // Run all test cases, but give up if Judge0 takes longer than the configured limit.
+        // runWithTimeout handles the timer setup, the race, and the cleanup internally.
+        const executedTestResults = await runWithTimeout(
           codeTestService.runTestsForSubmission(submissionId),
-          timeoutPromise,
-        ])
+          settings.testExecutionTimeoutSeconds,
+        )
 
         return reply.send({
           success: true,
@@ -297,25 +337,17 @@ export async function submissionRoutes(app: FastifyInstance): Promise<void> {
           data: executedTestResults,
         })
       } catch (error) {
-        // Check if it's a timeout error
-        if (
-          error instanceof Error &&
-          error.message.includes("exceeded timeout")
-        ) {
+        // The test run timed out — tell the student clearly so they know what happened
+        if (error instanceof TestExecutionTimeoutError) {
           return reply.status(504).send({
             success: false,
             message: "Test execution timeout",
-            error: `Tests did not complete within ${settings.testExecutionTimeoutSeconds} seconds. This may indicate an infinite loop, excessive computation, or system overload.`,
+            error: error.message,
           })
         }
 
-        // Re-throw other errors to be handled by global error handler
+        // Something else went wrong — let the global error handler deal with it
         throw error
-      } finally {
-        // Always clear the timeout to prevent unhandled rejection leaks
-        if (timeoutId !== undefined) {
-          clearTimeout(timeoutId)
-        }
       }
     },
   })
