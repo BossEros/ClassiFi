@@ -83,6 +83,14 @@ export const SummaryResponseSchema = z.object({
 
 export type SummaryResponse = z.infer<typeof SummaryResponseSchema>
 
+/** Scoring weights schema */
+export const ScoringWeightsSchema = z.object({
+  structuralWeight: z.number(),
+  semanticWeight: z.number(),
+})
+
+export type ScoringWeights = z.infer<typeof ScoringWeightsSchema>
+
 /** Analyze response schema */
 export const AnalyzeResponseSchema = z.object({
   success: z.literal(true),
@@ -94,6 +102,7 @@ export const AnalyzeResponseSchema = z.object({
   submissions: z.array(FileResponseSchema),
   pairs: z.array(PairResponseSchema),
   warnings: z.array(z.string()),
+  scoringWeights: ScoringWeightsSchema,
 })
 
 export type AnalyzeResponse = z.infer<typeof AnalyzeResponseSchema>

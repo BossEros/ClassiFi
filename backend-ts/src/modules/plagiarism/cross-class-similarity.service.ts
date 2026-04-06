@@ -77,6 +77,7 @@ export interface CrossClassAnalysisResponse {
     maxSimilarity: number
   }
   results: CrossClassResultDTO[]
+  scoringWeights: { structuralWeight: number; semanticWeight: number }
 }
 
 /** Cross-class pair result for API responses */
@@ -981,6 +982,10 @@ export class CrossClassSimilarityService {
         maxSimilarity: 0,
       },
       results: [],
+      scoringWeights: {
+        structuralWeight: settings.plagiarismStructuralWeight,
+        semanticWeight: settings.plagiarismSemanticWeight,
+      },
     }
   }
 
@@ -1023,6 +1028,10 @@ export class CrossClassSimilarityService {
       results: resultsWithContext.map((row) =>
         this.mapResultWithContextToDTO(row.result, row),
       ),
+      scoringWeights: {
+        structuralWeight: settings.plagiarismStructuralWeight,
+        semanticWeight: settings.plagiarismSemanticWeight,
+      },
     }
   }
 

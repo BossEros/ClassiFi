@@ -8,9 +8,11 @@ import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
+  ChevronDown,
   Download,
   FileCode,
   GitCompare,
+  Info,
   Layers,
   Loader2,
   School,
@@ -53,6 +55,10 @@ interface LocationState {
 
 /** Code comparison view mode */
 type CodeViewMode = "match" | "diff"
+
+function formatWeightPercent(weight: number): string {
+  return `${Math.round(weight * 100)}%`
+}
 
 function buildClassReportFileName(
   assignmentName: string | undefined,
@@ -98,6 +104,7 @@ export function SimilarityResultsPage() {
   const [isDownloadingClassReport, setIsDownloadingClassReport] =
     useState(false)
   const [isDownloadingPairReport, setIsDownloadingPairReport] = useState(false)
+  const [isMethodologyExpanded, setIsMethodologyExpanded] = useState(false)
   const comparisonSectionRef = useRef<HTMLDivElement | null>(null)
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [isRefetchingResults, setIsRefetchingResults] = useState(false)
@@ -463,6 +470,112 @@ export function SimilarityResultsPage() {
         </Card>
 
         <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
+          <CardContent className="p-0">
+            <button
+              type="button"
+              onClick={() => setIsMethodologyExpanded((prev) => !prev)}
+              className={`flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-slate-50 ${isMethodologyExpanded ? "rounded-t-xl" : "rounded-xl"}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-50">
+                  <Info className="h-4 w-4 text-teal-600" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    How Scoring Works
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Understand how similarity scores are calculated
+                  </p>
+                </div>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${
+                  isMethodologyExpanded ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {isMethodologyExpanded && (
+              <div className="border-t border-slate-200 px-6 pb-6 pt-4">
+                <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-semibold text-teal-800">
+                      Overall Similarity Formula
+                    </h4>
+                    <div className="mb-3 rounded-lg bg-white px-3 py-2 font-mono text-sm text-slate-700">
+                      <span className="font-semibold text-teal-700">
+                        {formatWeightPercent(results.scoringWeights.structuralWeight)}
+                      </span>{" "}
+                      Structural +{" "}
+                      <span className="font-semibold text-indigo-700">
+                        {formatWeightPercent(results.scoringWeights.semanticWeight)}
+                      </span>{" "}
+                      Semantic
+                    </div>
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      The Overall Similarity score is a weighted hybrid of both
+                      analyses. Pairs meeting or exceeding the threshold set
+                      by the slider above are flagged as suspicious.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-semibold text-sky-800">
+                      Structural Analysis ({formatWeightPercent(results.scoringWeights.structuralWeight)})
+                    </h4>
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Uses <span className="font-semibold">k-gram fingerprinting</span>{" "}
+                      (Winnowing algorithm) to compare code structure. It detects
+                      copied code patterns even when variables are renamed,
+                      statements are reordered, or formatting is changed. Template
+                      and boilerplate code is automatically excluded.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-semibold text-indigo-800">
+                      Semantic Analysis ({formatWeightPercent(results.scoringWeights.semanticWeight)})
+                    </h4>
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Uses <span className="font-semibold">AI (GraphCodeBERT)</span>{" "}
+                      to understand code meaning. It catches submissions that solve
+                      problems the same way even when written with completely
+                      different syntax, variable names, or code structure.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-5 md:grid-cols-2">
+                  <div className="rounded-xl border border-slate-300 bg-slate-50 p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-semibold text-slate-700">
+                      Total Overlap
+                    </h4>
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Shows how much total code content is shared between two
+                      submissions. The signal level (High / Medium / Low) is
+                      length-aware, meaning short and long submissions are
+                      compared fairly using normalization.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-300 bg-slate-50 p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-semibold text-slate-700">
+                      Longest Fragment
+                    </h4>
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Identifies the longest continuous stretch of matching code
+                      between two submissions. Large uninterrupted matches are a
+                      strong indicator of direct copying.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
           <CardContent className="p-6">
             <PairwiseTriageTable
               pairs={results.pairs}
@@ -470,6 +583,7 @@ export function SimilarityResultsPage() {
               minimumSimilarityPercent={minimumSimilarityPercent}
               showThresholdControl={false}
               selectedPairId={selectedPair?.id ?? null}
+              scoringWeights={results.scoringWeights}
             />
           </CardContent>
         </Card>

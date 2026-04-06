@@ -19,6 +19,12 @@ export interface PairResponse {
   longest: number
 }
 
+/** Weights used to compute the hybrid similarity score */
+export interface ScoringWeights {
+  structuralWeight: number
+  semanticWeight: number
+}
+
 export interface AnalyzeResponse {
   reportId: string
   isReusedReport: boolean
@@ -33,6 +39,7 @@ export interface AnalyzeResponse {
   submissions: FileResponse[]
   pairs: PairResponse[]
   warnings: string[]
+  scoringWeights: ScoringWeights
 }
 
 export interface AssignmentSimilarityStatusResponse {

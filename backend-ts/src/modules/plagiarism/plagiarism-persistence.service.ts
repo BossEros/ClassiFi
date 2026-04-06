@@ -24,6 +24,7 @@ import type { Submission } from "@/modules/submissions/submission.model.js"
 import type { TransactionContext } from "@/shared/transaction.js"
 import type { AnalyzeResponse } from "@/modules/plagiarism/plagiarism.service.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { settings } from "@/shared/config.js"
 
 @injectable()
 export class PlagiarismPersistenceService {
@@ -300,6 +301,10 @@ export class PlagiarismPersistenceService {
       submissions: submissionDTOs,
       pairs,
       warnings: [],
+      scoringWeights: {
+        structuralWeight: settings.plagiarismStructuralWeight,
+        semanticWeight: settings.plagiarismSemanticWeight,
+      },
     }
   }
 

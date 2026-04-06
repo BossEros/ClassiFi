@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react"
-import { ArrowDown, ArrowRight, ArrowUp, CircleHelp, Clock } from "lucide-react"
+import { ArrowDown, ArrowRight, ArrowUp, CircleHelp } from "lucide-react"
 import type { PairResponse } from "@/business/services/plagiarismService"
+import type { ScoringWeights } from "@/data/api/plagiarism.types"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Select } from "@/presentation/components/ui/Select"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
@@ -15,7 +16,6 @@ import {
   getSignalLevel,
   type SimilaritySignalLevel,
 } from "@/presentation/utils/plagiarismSignalUtils"
-import { formatTimeDifference } from "@/presentation/utils/timeUtils"
 
 type SortKey =
   | "similarity"
@@ -40,6 +40,8 @@ interface PairwiseTriageTableProps {
   isLoading?: boolean
   /** Optional selected pair id for row highlighting. */
   selectedPairId?: number | null
+  /** Optional scoring weights from the backend to display dynamic weight labels. */
+  scoringWeights?: ScoringWeights
 }
 
 const similarityThresholdOptions = [
@@ -75,22 +77,6 @@ function getPairStudentNames(pair: PairResponse): {
   }
 }
 
-function getSubmissionOrderLabel(pair: PairResponse): string | null {
-  const leftTime = pair.leftFile.submittedAt
-  const rightTime = pair.rightFile.submittedAt
-
-  if (!leftTime || !rightTime) return null
-
-  const leftDate = new Date(leftTime)
-  const rightDate = new Date(rightTime)
-  const diffMs = Math.abs(leftDate.getTime() - rightDate.getTime())
-
-  if (diffMs < 1000) return null
-
-  const earlier = leftDate < rightDate ? pair.leftFile.studentName?.trim() : pair.rightFile.studentName?.trim()
-
-  return `${earlier || "Unknown"} submitted ${formatTimeDifference(diffMs)} earlier`
-}
 
 function getPairStructuralSimilarityRatio(pair: PairResponse): number {
   return normalizeSimilarityToRatio(pair.structuralScore)
@@ -124,6 +110,25 @@ function getSignalBadgeClassName(level: SimilaritySignalLevel): string {
     default:
       return "border border-emerald-200 bg-emerald-50 text-emerald-700"
   }
+}
+
+function formatWeightPercent(weight: number): string {
+  return `${Math.round(weight * 100)}%`
+}
+
+function getOverallSimilarityTooltipText(scoringWeights?: ScoringWeights): string {
+  const structuralLabel = scoringWeights ? formatWeightPercent(scoringWeights.structuralWeight) : "70%"
+  const semanticLabel = scoringWeights ? formatWeightPercent(scoringWeights.semanticWeight) : "30%"
+
+  return `Overall Similarity = ${structuralLabel} Structural + ${semanticLabel} Semantic. This hybrid score combines both analyses to produce a single confidence metric.`
+}
+
+function getStructuralSimilarityTooltipText(): string {
+  return "Structural Similarity measures how closely two code files share the same code structure using k-gram fingerprinting (Winnowing algorithm). It detects copied patterns, renamed variables, and reordered statements."
+}
+
+function getSemanticSimilarityTooltipText(): string {
+  return "Semantic Similarity uses AI (GraphCodeBERT) to detect meaning-level similarity. It catches code that solves problems the same way even if written with different syntax or structure."
 }
 
 function getTotalOverlapTooltipText(): string {
@@ -172,6 +177,7 @@ export function PairwiseTriageTable({
   showThresholdControl = true,
   isLoading = false,
   selectedPairId,
+  scoringWeights,
 }: PairwiseTriageTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("similarity")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
@@ -303,6 +309,13 @@ export function PairwiseTriageTable({
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>Overall Similarity</span>
+                      <span
+                        title={getOverallSimilarityTooltipText(scoringWeights)}
+                        aria-label={getOverallSimilarityTooltipText(scoringWeights)}
+                        className="text-slate-500"
+                      >
+                        <CircleHelp className="h-3.5 w-3.5" />
+                      </span>
                       <SortIndicator
                         column="similarity"
                         currentSort={sortKey}
@@ -316,6 +329,13 @@ export function PairwiseTriageTable({
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>Structural Similarity</span>
+                      <span
+                        title={getStructuralSimilarityTooltipText()}
+                        aria-label={getStructuralSimilarityTooltipText()}
+                        className="text-slate-500"
+                      >
+                        <CircleHelp className="h-3.5 w-3.5" />
+                      </span>
                       <SortIndicator
                         column="structuralSimilarity"
                         currentSort={sortKey}
@@ -329,6 +349,13 @@ export function PairwiseTriageTable({
                   >
                     <span className="inline-flex items-center gap-1.5">
                       <span>Semantic Similarity</span>
+                      <span
+                        title={getSemanticSimilarityTooltipText()}
+                        aria-label={getSemanticSimilarityTooltipText()}
+                        className="text-slate-500"
+                      >
+                        <CircleHelp className="h-3.5 w-3.5" />
+                      </span>
                       <SortIndicator
                         column="semanticSimilarity"
                         currentSort={sortKey}
@@ -421,12 +448,6 @@ export function PairwiseTriageTable({
                           <div className="text-sm font-medium text-slate-900">
                             {pairStudentNames.left} vs {pairStudentNames.right}
                           </div>
-                          {getSubmissionOrderLabel(pair) && (
-                            <div className="mt-0.5 flex items-center gap-1 text-xs text-slate-400">
-                              <Clock className="h-3 w-3" />
-                              <span>{getSubmissionOrderLabel(pair)}</span>
-                            </div>
-                          )}
                         </td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex justify-center">

@@ -133,6 +133,7 @@ const mockResults = {
     },
   ],
   warnings: [],
+  scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
 }
 
 const mockPairDetails = {
@@ -219,6 +220,7 @@ const mockCrossClassReport = {
       isFlagged: true,
     },
   ],
+  scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
 }
 
 describe("similarityReportPdf", () => {

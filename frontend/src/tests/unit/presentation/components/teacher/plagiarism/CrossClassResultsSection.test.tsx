@@ -55,6 +55,7 @@ const mockReport = {
       isFlagged: true,
     },
   ],
+  scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
 }
 
 const mockDetails = {

@@ -33,6 +33,12 @@ import type { MatchFragment } from "@/modules/plagiarism/match-fragment.model.js
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { settings } from "@/shared/config.js"
 
+/** Weights used to compute the hybrid similarity score */
+export interface ScoringWeights {
+  structuralWeight: number
+  semanticWeight: number
+}
+
 /** Response for analyze endpoint */
 export interface AnalyzeResponse {
   reportId: string
@@ -43,6 +49,7 @@ export interface AnalyzeResponse {
   submissions: PlagiarismFileDTO[]
   pairs: PlagiarismPairDTO[]
   warnings: string[]
+  scoringWeights: ScoringWeights
 }
 
 /** Response with pair details and fragments */
@@ -390,6 +397,10 @@ export class PlagiarismService {
         ),
       },
       submissions: this.mapReportFilesToDTOs(report.files),
+      scoringWeights: {
+        structuralWeight: settings.plagiarismStructuralWeight,
+        semanticWeight: settings.plagiarismSemanticWeight,
+      },
       pairs: pairs.map((pair: Pair) => {
         const leftSubmissionId = parseInt(
           pair.leftFile.info?.submissionId || "0",

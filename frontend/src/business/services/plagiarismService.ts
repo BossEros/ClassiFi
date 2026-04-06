@@ -6,6 +6,7 @@ import type {
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
+  ScoringWeights,
 } from "@/data/api/plagiarism.types"
 
 export type {
@@ -14,6 +15,7 @@ export type {
   PairResponse,
   FileResponse,
   ResultDetailsResponse,
+  ScoringWeights,
 }
 
 /**
