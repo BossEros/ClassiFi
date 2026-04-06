@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import { Clock3 } from "lucide-react"
 import type { FilePair, MatchFragment } from "./types"
 import { PairCodeEditor } from "./PairCodeEditor"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
@@ -77,10 +78,7 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             color: isLight ? "#15803d" : "#6ee7b7",
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
+          <Clock3 size={16} />
           <span>
             <strong>{earlierStudentName}</strong> submitted{" "}
             <strong>{formatTimeDifference(timeDiffMs)}</strong> before{" "}

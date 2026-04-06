@@ -20,3 +20,17 @@ Expose submission timestamps through the cross-class result-details flow so the 
 - [x] Refactor `PlagiarismService` and `CrossClassSimilarityService` to use the shared helper
 - [ ] Run `backend-ts` typecheck and focused plagiarism service tests
   Note: `backend-ts` typecheck passed. Focused Vitest execution is still blocked in this environment by `spawn EPERM` while loading `vitest.config.ts` through Vite/esbuild.
+
+## Frontend Lint Boundary Remediation Plan
+
+### Goal
+
+Resolve the frontend lint failures by allowing shared frontend API contract imports from `src/data/api/*.types`, while still blocking repositories and other data internals from the presentation layer.
+
+### Checklist
+
+- [x] Inventory every presentation import that reaches into `src/data/api`
+- [x] Narrow the presentation-layer lint rule so `src/data/api/*.types` imports stay allowed
+- [x] Restore direct presentation imports from `src/data/api/*.types`
+- [x] Fix the remaining presentation lint issues (`react-refresh/only-export-components` and inline SVG icon usage)
+- [x] Run `frontend` lint and build to verify the remediation

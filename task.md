@@ -16,3 +16,7 @@
 - [x] Add regression tests for the new cross-class temporal metadata
 - [ ] Verify backend and frontend checks for the temporal analysis change
   Note: `backend-ts` `npm run typecheck` and `npm test` passed. `frontend` `npx tsc -b` and `npm run build` passed. `frontend` `npm test` is blocked in this sandbox by `spawn EPERM` while Vite/esbuild loads `vitest.config.ts`.
+- [x] Allow direct presentation imports from `@/data/api/*.types` in the lint config
+- [x] Restore direct presentation-layer `@/data/api/*.types` imports
+- [x] Remove remaining frontend lint warnings and presentation icon rule violations
+- [x] Re-run `frontend` lint and build for this remediation
