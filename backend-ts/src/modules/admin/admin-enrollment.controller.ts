@@ -13,11 +13,13 @@ import {
   StudentEnrollmentParamsSchema,
   EnrollmentFilterQuerySchema,
   TransferStudentBodySchema,
+  BulkEnrollStudentsBodySchema,
   type ClassParams,
   type EnrollStudentBody,
   type StudentEnrollmentParams,
   type EnrollmentFilterQuery,
   type TransferStudentBody,
+  type BulkEnrollStudentsBody,
 } from "@/modules/admin/admin.schema.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -127,6 +129,26 @@ export async function adminEnrollmentRoutes(
         success: true,
         message: "Student enrolled successfully",
       })
+    },
+  })
+
+  /**
+   * POST /classes/:id/students/bulk
+   * Bulk-enroll multiple students in a class
+   */
+  app.post("/classes/:id/students/bulk", {
+    preHandler: [
+      ...preHandlerMiddlewares,
+      validateParams(ClassParamsSchema),
+      validateBody(BulkEnrollStudentsBodySchema),
+    ],
+    handler: async (request, reply) => {
+      const { id: classId } = request.validatedParams as ClassParams
+      const { studentIds } = request.validatedBody as BulkEnrollStudentsBody
+
+      const bulkEnrollmentResult = await adminEnrollmentService.bulkEnrollStudents(classId, studentIds)
+
+      return reply.send({ success: true, ...bulkEnrollmentResult })
     },
   })
 

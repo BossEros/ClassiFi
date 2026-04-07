@@ -18,6 +18,7 @@ import type {
   PaginatedResult,
   AdminEnrollmentListItem,
   TransferStudentData,
+  BulkEnrollmentResult,
 } from "@/modules/admin/admin.types.js"
 import { withTransaction } from "@/shared/transaction.js"
 import { settings } from "@/shared/config.js"
@@ -145,8 +146,7 @@ export class AdminEnrollmentService {
   /**
    * Remove a student from a class (admin-initiated unenrollment).
    */
-  async removeStudentFromClass(classId: number, studentId: number): Promise<void> {
-    // STEP 1: Validate the class exists and confirm the student is currently enrolled
+  async removeStudentFromClass(classId: number, studentId: number): Promise<void> {    // STEP 1: Validate the class exists and confirm the student is currently enrolled
     const classData = await this.getValidatedClass(classId)
     await this.assertStudentIsEnrolled(studentId, classId)
 
@@ -200,6 +200,98 @@ export class AdminEnrollmentService {
       "Failed to send unenrollment notification to teacher",
       { teacherId: classData.teacherId, classId },
     )
+  }
+
+  /**
+   * Bulk-enroll multiple students into a class (admin-initiated).
+   *
+   * Processes each student independently so a single failure does not block the
+   * rest. Returns a per-student result set alongside an aggregated summary.
+   *
+   * @param classId - The class to enroll students into.
+   * @param studentIds - Array of student IDs to process.
+   * @returns Aggregated results including counts and per-student outcome details.
+   */
+  async bulkEnrollStudents(classId: number, studentIds: number[]): Promise<BulkEnrollmentResult> {
+    // STEP 1: Validate the target class once (must exist and be active)
+    const classData = await this.getValidatedClass(classId, { requireActive: true })
+
+    const teacher = await this.userRepo.getUserById(classData.teacherId)
+    const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
+
+    const results: BulkEnrollmentResult["results"] = []
+
+    // STEP 2: Process each student independently to avoid a single failure blocking others
+    for (const studentId of studentIds) {
+      try {
+        const student = await this.getValidatedStudent(studentId, { requireActive: true })
+        await this.assertStudentNotEnrolled(studentId, classId)
+
+        const createdEnrollment = await this.enrollmentRepo.enrollStudent(studentId, classId)
+        const studentName = `${student.firstName} ${student.lastName}`
+
+        results.push({ studentId, status: "enrolled" })
+
+        // STEP 3: Notify each successfully enrolled student and the teacher — fire-and-forget
+        const enrollmentData = {
+          classId,
+          className: classData.className,
+          enrollmentId: createdEnrollment.id,
+          instructorName: teacherName,
+          classUrl: `${settings.frontendUrl}/dashboard/classes/${classId}`,
+        }
+
+        fireAndForget(
+          settlePromisesAndLogRejections([
+            this.notificationService.createNotification(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+            this.notificationService.sendEmailNotificationIfEnabled(studentId, "ENROLLMENT_CONFIRMED", enrollmentData),
+          ], logger, "Failed to send bulk enrollment notification to student", { studentId, classId }),
+          logger,
+          "Failed to send bulk enrollment notification to student",
+          { studentId, classId },
+        )
+
+        const studentEnrolledData = {
+          classId,
+          className: classData.className,
+          studentName,
+          studentEmail: student.email,
+        }
+
+        fireAndForget(
+          settlePromisesAndLogRejections([
+            this.notificationService.createNotification(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+            this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, "STUDENT_ENROLLED", studentEnrolledData),
+          ], logger, "Failed to send bulk enrollment notification to teacher", { teacherId: classData.teacherId, classId }),
+          logger,
+          "Failed to send bulk enrollment notification to teacher",
+          { teacherId: classData.teacherId, classId },
+        )
+      } catch (error) {
+        const isAlreadyEnrolled = error instanceof AlreadyEnrolledError
+        const errorMessage = error instanceof Error ? error.message : "Unknown error"
+
+        results.push({
+          studentId,
+          status: isAlreadyEnrolled ? "skipped" : "failed",
+          reason: isAlreadyEnrolled ? "Student is already enrolled in this class" : errorMessage,
+        })
+      }
+    }
+
+    const enrolledCount = results.filter((r) => r.status === "enrolled").length
+    const skippedCount = results.filter((r) => r.status === "skipped").length
+    const failedCount = results.filter((r) => r.status === "failed").length
+
+    return {
+      summary: {
+        total: studentIds.length,
+        enrolled: enrolledCount,
+        skipped: skippedCount,
+        failed: failedCount,
+      },
+      results,
+    }
   }
 
   /**

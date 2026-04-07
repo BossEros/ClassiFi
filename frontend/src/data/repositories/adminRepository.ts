@@ -16,6 +16,7 @@ import type {
   AdminTeachersResponse,
   AdminEnrollmentRecord,
   TransferStudentData,
+  BulkEnrollmentResult,
 } from "@/data/api/admin.types"
 
 // ============ User Management ============
@@ -472,6 +473,25 @@ export async function enrollStudentInClassById(
   )
 
   return unwrapApiResponse(apiResponse, "Failed to enroll student")
+}
+
+/**
+ * Bulk-enrolls multiple students in a class from the admin panel.
+ *
+ * @param classId - The unique identifier of the class.
+ * @param studentIds - Array of student IDs to enroll.
+ * @returns Bulk enrollment result with per-student outcomes and a summary.
+ */
+export async function bulkEnrollStudentsInClassById(
+  classId: number,
+  studentIds: number[],
+): Promise<BulkEnrollmentResult & AdminResponse> {
+  const apiResponse = await apiClient.post<BulkEnrollmentResult & AdminResponse>(
+    `/admin/classes/${classId}/students/bulk`,
+    { studentIds },
+  )
+
+  return unwrapApiResponse(apiResponse, "Failed to bulk-enroll students")
 }
 
 /**
