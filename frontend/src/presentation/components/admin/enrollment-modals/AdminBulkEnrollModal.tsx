@@ -14,7 +14,6 @@ import type {
   AdminUser,
   BulkEnrollmentResult,
 } from "@/business/services/adminService"
-import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
 import { Avatar } from "@/presentation/components/ui/Avatar"
 import {
   convertToSingleLetterAbbr,
@@ -380,8 +379,8 @@ export function AdminBulkEnrollModal({
 }: AdminBulkEnrollModalProps) {
   const [studentSearchQuery, setStudentSearchQuery] = useState("")
   const [classSearchQuery, setClassSearchQuery] = useState("")
-  const [availableStudents, setAvailableStudents] = useState<AdminUser[]>([])
-  const [availableClasses, setAvailableClasses] = useState<AdminClass[]>([])
+  const [allStudents, setAllStudents] = useState<AdminUser[]>([])
+  const [allClasses, setAllClasses] = useState<AdminClass[]>([])
   const [selectedStudents, setSelectedStudents] = useState<AdminUser[]>([])
   const [selectedClass, setSelectedClass] = useState<AdminClass | null>(null)
   const [isStudentsLoading, setIsStudentsLoading] = useState(false)
@@ -391,16 +390,13 @@ export function AdminBulkEnrollModal({
   const [enrollmentResult, setEnrollmentResult] =
     useState<BulkEnrollmentResult | null>(null)
 
-  const debouncedStudentSearch = useDebouncedValue(studentSearchQuery, 300)
-  const debouncedClassSearch = useDebouncedValue(classSearchQuery, 300)
-
   // Reset on open/close
   useEffect(() => {
     if (!isOpen) {
       setStudentSearchQuery("")
       setClassSearchQuery("")
-      setAvailableStudents([])
-      setAvailableClasses([])
+      setAllStudents([])
+      setAllClasses([])
       setSelectedStudents([])
       setSelectedClass(null)
       setStudentLoadError(null)
@@ -409,24 +405,36 @@ export function AdminBulkEnrollModal({
     }
   }, [isOpen])
 
-  // Load active students
+  // Load ALL active students once when the modal opens (paginate through all pages)
   useEffect(() => {
     if (!isOpen) return
 
-    const load = async () => {
+    const loadAllStudents = async () => {
       try {
         setIsStudentsLoading(true)
         setStudentLoadError(null)
 
-        const response = await adminService.getAllUsers({
+        const PAGE_SIZE = 100
+        const firstPage = await adminService.getAllUsers({
           page: 1,
-          limit: 8,
-          search: debouncedStudentSearch || undefined,
+          limit: PAGE_SIZE,
           role: "student",
           status: "active",
         })
 
-        setAvailableStudents(response.data)
+        const collected: AdminUser[] = [...firstPage.data]
+
+        for (let page = 2; page <= firstPage.totalPages; page++) {
+          const nextPage = await adminService.getAllUsers({
+            page,
+            limit: PAGE_SIZE,
+            role: "student",
+            status: "active",
+          })
+          collected.push(...nextPage.data)
+        }
+
+        setAllStudents(collected)
       } catch (err) {
         setStudentLoadError(
           err instanceof Error ? err.message : "Failed to load students",
@@ -436,26 +444,51 @@ export function AdminBulkEnrollModal({
       }
     }
 
-    void load()
-  }, [debouncedStudentSearch, isOpen])
+    void loadAllStudents()
+  }, [isOpen])
 
-  // Load active classes
+  // Filter students client-side based on search query
+  const availableStudents = useMemo(() => {
+    const trimmed = studentSearchQuery.trim().toLowerCase()
+    if (!trimmed) return allStudents
+
+    return allStudents.filter((student) => {
+      const fullName = `${student.firstName} ${student.lastName}`.toLowerCase()
+      return (
+        fullName.includes(trimmed) ||
+        student.email.toLowerCase().includes(trimmed)
+      )
+    })
+  }, [allStudents, studentSearchQuery])
+
+  // Load ALL active classes once when the modal opens (paginate through all pages)
   useEffect(() => {
     if (!isOpen) return
 
-    const load = async () => {
+    const loadAllClasses = async () => {
       try {
         setIsClassesLoading(true)
         setClassLoadError(null)
 
-        const response = await adminService.getAllClasses({
+        const PAGE_SIZE = 100
+        const firstPage = await adminService.getAllClasses({
           page: 1,
-          limit: 8,
-          search: debouncedClassSearch || undefined,
+          limit: PAGE_SIZE,
           status: "active",
         })
 
-        setAvailableClasses(response.data)
+        const collected: AdminClass[] = [...firstPage.data]
+
+        for (let page = 2; page <= firstPage.totalPages; page++) {
+          const nextPage = await adminService.getAllClasses({
+            page,
+            limit: PAGE_SIZE,
+            status: "active",
+          })
+          collected.push(...nextPage.data)
+        }
+
+        setAllClasses(collected)
       } catch (err) {
         setClassLoadError(
           err instanceof Error ? err.message : "Failed to load classes",
@@ -465,8 +498,21 @@ export function AdminBulkEnrollModal({
       }
     }
 
-    void load()
-  }, [debouncedClassSearch, isOpen])
+    void loadAllClasses()
+  }, [isOpen])
+
+  // Filter classes client-side based on search query
+  const availableClasses = useMemo(() => {
+    const trimmed = classSearchQuery.trim().toLowerCase()
+    if (!trimmed) return allClasses
+
+    return allClasses.filter((cls) => {
+      return (
+        cls.className.toLowerCase().includes(trimmed) ||
+        cls.classCode.toLowerCase().includes(trimmed)
+      )
+    })
+  }, [allClasses, classSearchQuery])
 
   const selectedStudentIds = useMemo(
     () => selectedStudents.map((s) => s.id),
