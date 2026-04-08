@@ -51,7 +51,6 @@ describe("PlagiarismPersistenceService", () => {
         teacherId: 200,
         totalSubmissions: 2,
         totalComparisons: 1,
-        flaggedPairs: 0,
         averageSimilarity: "0.0000",
         highestSimilarity: "0.0000",
         generatedAt: new Date("2026-03-20T08:00:00.000Z"),
@@ -72,7 +71,6 @@ describe("PlagiarismPersistenceService", () => {
           rightCovered: 22,
           leftTotal: 40,
           rightTotal: 42,
-          isFlagged: false,
           analyzedAt: new Date("2026-03-20T08:00:00.000Z"),
         },
       ])
@@ -141,7 +139,6 @@ describe("PlagiarismPersistenceService", () => {
         teacherId: 200,
         totalSubmissions: 3,
         totalComparisons: 2,
-        flaggedPairs: 2,
         averageSimilarity: "0.5600",
         highestSimilarity: "0.5600",
         generatedAt: new Date("2026-03-20T08:00:00.000Z"),
@@ -162,7 +159,6 @@ describe("PlagiarismPersistenceService", () => {
           rightCovered: 22,
           leftTotal: 40,
           rightTotal: 42,
-          isFlagged: true,
           analyzedAt: new Date("2026-03-20T08:00:00.000Z"),
         },
         {
@@ -179,7 +175,6 @@ describe("PlagiarismPersistenceService", () => {
           rightCovered: 28,
           leftTotal: 45,
           rightTotal: 44,
-          isFlagged: false,
           analyzedAt: new Date("2026-03-20T08:00:00.000Z"),
         },
       ])
@@ -271,7 +266,6 @@ describe("PlagiarismPersistenceService", () => {
           }),
         ]),
       )
-      expect(report?.summary.suspiciousPairs).toBe(1)
       expect(report?.summary.averageSimilarity).toBe(0.494)
       expect(report?.summary.maxSimilarity).toBe(0.56)
     })

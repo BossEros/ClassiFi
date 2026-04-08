@@ -35,7 +35,6 @@ export const similarityReports = pgTable(
     matchedAssignmentIds: jsonb("matched_assignment_ids").$type<number[]>(),
     totalSubmissions: integer("total_submissions").notNull(),
     totalComparisons: integer("total_comparisons").notNull(),
-    flaggedPairs: integer("flagged_pairs").default(0).notNull(),
     averageSimilarity: numeric("average_similarity", {
       precision: 5,
       scale: 4,
@@ -59,7 +58,6 @@ export const similarityReports = pgTable(
     ),
     check("check_total_submissions", sql`${table.totalSubmissions} >= 0`),
     check("check_total_comparisons", sql`${table.totalComparisons} >= 0`),
-    check("check_flagged_pairs", sql`${table.flaggedPairs} >= 0`),
     index("idx_similarity_reports_assignment").on(table.assignmentId),
     index("idx_similarity_reports_teacher").on(table.teacherId),
     index("idx_similarity_reports_date").on(table.generatedAt),

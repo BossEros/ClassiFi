@@ -3,7 +3,6 @@ import {
   pgTable,
   serial,
   integer,
-  boolean,
   timestamp,
   numeric,
   unique,
@@ -46,7 +45,6 @@ export const similarityResults = pgTable(
     rightCovered: integer("right_covered").notNull(),
     leftTotal: integer("left_total").notNull(),
     rightTotal: integer("right_total").notNull(),
-    isFlagged: boolean("is_flagged").default(false).notNull(),
     analyzedAt: timestamp("analyzed_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

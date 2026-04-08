@@ -10,7 +10,6 @@ vi.mock("../../src/shared/config.js", () => ({
   settings: {
     plagiarismStructuralWeight: 0.7,
     plagiarismSemanticWeight: 0.3,
-    plagiarismHybridThreshold: 0.5,
     semanticSimilarityMaxConcurrentRequests: 4,
   },
 }))
@@ -166,7 +165,6 @@ describe("PlagiarismService", () => {
       expect(result).toBeDefined()
       expect(result.reportId).toBeDefined()
       expect(result.pairs[0].hybridScore).toBe(0.56)
-      expect(result.summary.suspiciousPairs).toBe(1)
       expect(result.summary.averageSimilarity).toBe(0.56)
       expect(result.summary.maxSimilarity).toBe(0.56)
       expect(
@@ -229,7 +227,6 @@ describe("PlagiarismService", () => {
 
       const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1)
 
-      expect(result.summary.suspiciousPairs).toBe(0)
       expect(result.summary.averageSimilarity).toBe(0.42)
       expect(result.summary.maxSimilarity).toBe(0.42)
       expect(result.pairs[0].structuralScore).toBe(0.6)
@@ -245,7 +242,6 @@ describe("PlagiarismService", () => {
         summary: {
           totalFiles: 2,
           totalPairs: 1,
-          suspiciousPairs: 1,
           averageSimilarity: 0.8,
           maxSimilarity: 0.8,
         },

@@ -388,7 +388,6 @@ export class PlagiarismService {
       summary: {
         totalFiles: report.files.length,
         totalPairs: pairs.length,
-        suspiciousPairs: pairSimilaritySummary.suspiciousPairs,
         averageSimilarity: parseFloat(
           pairSimilaritySummary.averageSimilarity.toFixed(4),
         ),

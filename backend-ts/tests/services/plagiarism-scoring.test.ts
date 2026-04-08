@@ -4,7 +4,6 @@ vi.mock("../../src/shared/config.js", () => ({
   settings: {
     plagiarismStructuralWeight: 0.7,
     plagiarismSemanticWeight: 0.3,
-    plagiarismHybridThreshold: 0.5,
   },
 }))
 
@@ -31,7 +30,6 @@ describe("plagiarism-scoring", () => {
       structuralScore: 0.9,
       semanticScore: 0.4,
       hybridScore: 0.75,
-      isSuspicious: true,
     })
   })
 
@@ -46,17 +44,14 @@ describe("plagiarism-scoring", () => {
           structuralScore: 0.9,
           semanticScore: 0.4,
           hybridScore: 0.75,
-          isSuspicious: true,
         },
         {
           structuralScore: 0.6,
           semanticScore: 0,
           hybridScore: 0.42,
-          isSuspicious: false,
         },
       ]),
     ).toEqual({
-      suspiciousPairs: 1,
       averageSimilarity: 0.585,
       maxSimilarity: 0.75,
     })

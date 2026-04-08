@@ -76,7 +76,6 @@ describe("SimilarityRepository", () => {
         teacherId: 1,
         totalSubmissions: 10,
         totalComparisons: 45,
-        flaggedPairs: 3,
         averageSimilarity: "0.35",
         highestSimilarity: "0.85",
         generatedAt: new Date(),
@@ -93,7 +92,6 @@ describe("SimilarityRepository", () => {
         teacherId: 1,
         totalSubmissions: 10,
         totalComparisons: 45,
-        flaggedPairs: 3,
         averageSimilarity: "0.35",
         highestSimilarity: "0.85",
       })
