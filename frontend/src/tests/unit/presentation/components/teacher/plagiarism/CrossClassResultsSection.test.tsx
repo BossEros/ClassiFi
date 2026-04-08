@@ -30,7 +30,6 @@ const mockReport = {
   summary: {
     totalSubmissions: 2,
     totalComparisons: 1,
-    flaggedPairs: 1,
     averageSimilarity: 0.93,
     maxSimilarity: 0.93,
   },
@@ -52,7 +51,6 @@ const mockReport = {
       hybridScore: 0.93,
       overlap: 41,
       longestFragment: 16,
-      isFlagged: true,
     },
   ],
   scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
