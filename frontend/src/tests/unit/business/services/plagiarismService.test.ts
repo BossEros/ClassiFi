@@ -27,7 +27,6 @@ describe("plagiarismService", () => {
       summary: {
         totalFiles: 10,
         totalPairs: 5,
-        suspiciousPairs: 2,
         averageSimilarity: 45.5,
         maxSimilarity: 85.0,
       },

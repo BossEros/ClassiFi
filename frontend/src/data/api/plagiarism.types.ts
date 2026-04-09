@@ -32,7 +32,6 @@ export interface AnalyzeResponse {
   summary: {
     totalFiles: number
     totalPairs: number
-    suspiciousPairs: number
     averageSimilarity: number
     maxSimilarity: number
   }

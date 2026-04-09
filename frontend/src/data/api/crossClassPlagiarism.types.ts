@@ -16,7 +16,6 @@ export interface CrossClassResultDTO {
   hybridScore: number
   overlap: number
   longestFragment: number
-  isFlagged: boolean
 }
 
 /** Cross-class analysis response from the backend */
@@ -34,7 +33,6 @@ export interface CrossClassAnalysisResponse {
   summary: {
     totalSubmissions: number
     totalComparisons: number
-    flaggedPairs: number
     averageSimilarity: number
     maxSimilarity: number
   }

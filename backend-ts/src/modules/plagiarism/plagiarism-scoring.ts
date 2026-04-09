@@ -13,12 +13,10 @@ export interface PairSimilarityScoreBreakdown {
   structuralScore: number
   semanticScore: number
   hybridScore: number
-  isSuspicious: boolean
 }
 
 /** Hybrid-score summary for an analyzed assignment report. */
 export interface PairSimilaritySummary {
-  suspiciousPairs: number
   averageSimilarity: number
   maxSimilarity: number
 }
@@ -67,21 +65,11 @@ export function calculateHybridSimilarityScore(
 }
 
 /**
- * Determine whether a hybrid similarity score should be flagged as suspicious.
- *
- * @param hybridScore - The hybrid similarity score to evaluate.
- * @returns `true` when the score reaches the configured suspicious threshold.
- */
-export function isSuspiciousHybridSimilarity(hybridScore: number): boolean {
-  return hybridScore >= settings.plagiarismHybridThreshold
-}
-
-/**
  * Build the full score breakdown for a plagiarism pair.
  *
  * @param structuralScore - The structural similarity score in the range `[0, 1]`.
  * @param semanticScore - The semantic similarity score in the range `[0, 1]`.
- * @returns The structural, semantic, hybrid, and suspicious-flag breakdown.
+ * @returns The structural, semantic, and hybrid score breakdown.
  */
 export function buildPairSimilarityScoreBreakdown(
   structuralScore: number,
@@ -96,7 +84,6 @@ export function buildPairSimilarityScoreBreakdown(
     structuralScore,
     semanticScore,
     hybridScore,
-    isSuspicious: isSuspiciousHybridSimilarity(hybridScore),
   }
 }
 
@@ -111,15 +98,11 @@ export function summarizePairSimilarityScores(
 ): PairSimilaritySummary {
   if (pairScoreBreakdowns.length === 0) {
     return {
-      suspiciousPairs: 0,
       averageSimilarity: 0,
       maxSimilarity: 0,
     }
   }
 
-  const suspiciousPairs = pairScoreBreakdowns.filter(
-    (pairScoreBreakdown) => pairScoreBreakdown.isSuspicious,
-  ).length
   const totalHybridScore = pairScoreBreakdowns.reduce(
     (sum, pairScoreBreakdown) => sum + pairScoreBreakdown.hybridScore,
     0,
@@ -131,7 +114,6 @@ export function summarizePairSimilarityScores(
   )
 
   return {
-    suspiciousPairs,
     averageSimilarity: Number(
       (totalHybridScore / pairScoreBreakdowns.length).toFixed(6),
     ),

@@ -37,7 +37,6 @@ const mockResults = {
   summary: {
     totalFiles: 3,
     totalPairs: 3,
-    suspiciousPairs: 2,
     averageSimilarity: 0.86,
     maxSimilarity: 0.95,
   },
@@ -195,7 +194,6 @@ const mockCrossClassReport = {
   summary: {
     totalSubmissions: 4,
     totalComparisons: 6,
-    flaggedPairs: 1,
     averageSimilarity: 0.84,
     maxSimilarity: 0.96,
   },
@@ -217,7 +215,6 @@ const mockCrossClassReport = {
       hybridScore: 0.92,
       overlap: 28,
       longestFragment: 11,
-      isFlagged: true,
     },
   ],
   scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },

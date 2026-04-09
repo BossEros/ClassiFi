@@ -269,7 +269,7 @@ export function buildCrossClassReportData(
 ): ClassSimilarityReportData {
   const { report, teacher, minimumSimilarityPercent } = options
   const flaggedResults = report.results.filter(
-    (r) => r.isFlagged && r.hybridScore * 100 >= minimumSimilarityPercent,
+    (r) => r.hybridScore * 100 >= minimumSimilarityPercent,
   )
   const maxCrossClassOverlap = Math.max(
     ...flaggedResults.map((result) => result.overlap),
@@ -304,7 +304,7 @@ export function buildCrossClassReportData(
     reportMetadata,
     summaryMetrics: [
       { label: "Submissions", value: String(report.summary.totalSubmissions) },
-      { label: "Suspicious Pairs", value: String(report.summary.flaggedPairs) },
+      { label: "Suspicious Pairs", value: String(flaggedResults.length) },
       {
         label: "Average Similarity",
         value: formatPercent(report.summary.averageSimilarity),

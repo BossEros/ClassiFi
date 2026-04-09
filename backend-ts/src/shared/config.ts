@@ -82,14 +82,6 @@ const EnvSchema = z
         (v) => Number.isFinite(v) && v >= 0 && v <= 1,
         "PLAGIARISM_SEMANTIC_WEIGHT must be between 0 and 1",
       ),
-    PLAGIARISM_HYBRID_THRESHOLD: z
-      .string()
-      .default("0.5")
-      .transform(Number)
-      .refine(
-        (v) => Number.isFinite(v) && v >= 0 && v <= 1,
-        "PLAGIARISM_HYBRID_THRESHOLD must be between 0 and 1",
-      ),
 
     // Test Execution Timeout (in seconds)
     TEST_EXECUTION_TIMEOUT_SECONDS: z
@@ -235,7 +227,6 @@ export const settings = {
   semanticSimilarityMaxRetries: env.SEMANTIC_SIMILARITY_MAX_RETRIES,
   plagiarismStructuralWeight: env.PLAGIARISM_STRUCTURAL_WEIGHT,
   plagiarismSemanticWeight: env.PLAGIARISM_SEMANTIC_WEIGHT,
-  plagiarismHybridThreshold: env.PLAGIARISM_HYBRID_THRESHOLD,
 
   // Test Execution
   testExecutionTimeoutSeconds: env.TEST_EXECUTION_TIMEOUT_SECONDS,

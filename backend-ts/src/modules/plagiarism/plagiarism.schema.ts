@@ -76,7 +76,6 @@ export type PairResponse = z.infer<typeof PairResponseSchema>
 export const SummaryResponseSchema = z.object({
   totalFiles: z.number(),
   totalPairs: z.number(),
-  suspiciousPairs: z.number(),
   averageSimilarity: z.number(),
   maxSimilarity: z.number(),
 })

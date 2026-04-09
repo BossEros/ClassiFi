@@ -153,7 +153,6 @@ export class PlagiarismPersistenceService {
         teacherId: resolvedTeacherId,
         totalSubmissions: report.files.length,
         totalComparisons: pairs.length,
-        flaggedPairs: pairSimilaritySummary.suspiciousPairs,
         averageSimilarity: formatSimilarityScore(pairSimilaritySummary.averageSimilarity, 4),
         highestSimilarity: formatSimilarityScore(pairSimilaritySummary.maxSimilarity, 4),
       })
@@ -294,7 +293,6 @@ export class PlagiarismPersistenceService {
       summary: {
         totalFiles: report.totalSubmissions,
         totalPairs: report.totalComparisons,
-        suspiciousPairs: pairSimilaritySummary.suspiciousPairs,
         averageSimilarity: pairSimilaritySummary.averageSimilarity,
         maxSimilarity: pairSimilaritySummary.maxSimilarity,
       },
@@ -506,7 +504,6 @@ export class PlagiarismPersistenceService {
         rightCovered: pair.rightCovered,
         leftTotal: pair.leftTotal,
         rightTotal: pair.rightTotal,
-        isFlagged: pairScoreBreakdown.isSuspicious,
       })
     }
 

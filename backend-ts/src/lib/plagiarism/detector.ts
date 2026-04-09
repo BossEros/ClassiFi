@@ -20,7 +20,7 @@ import {
  * const detector = new PlagiarismDetector({ language: 'java' });
  * const report = await detector.analyze(files);
  *
- * for (const pair of report.getSuspiciousPairs(0.5)) {
+ * for (const pair of report.getTopPairs(10)) {
  *   console.log(`${pair.leftFile.filename} <-> ${pair.rightFile.filename}: ${pair.similarity}`);
  * }
  * ```
