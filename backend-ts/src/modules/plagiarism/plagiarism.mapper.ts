@@ -7,6 +7,8 @@ export const PLAGIARISM_CONFIG = {
   DEFAULT_KGRAM_LENGTH: 23,
   /** Default number of k-grams in a window */
   DEFAULT_KGRAMS_IN_WINDOW: 17,
+  /** Minimum number of k-gram pairs required for a fragment to be reported */
+  MIN_FRAGMENT_LENGTH: 2,
   /** Minimum number of files required for analysis */
   MINIMUM_FILES_REQUIRED: 2,
 } as const
@@ -28,6 +30,7 @@ export function createPlagiarismDetector(
     language,
     kgramLength: kgramLength ?? PLAGIARISM_CONFIG.DEFAULT_KGRAM_LENGTH,
     kgramsInWindow: kgramsInWindow ?? PLAGIARISM_CONFIG.DEFAULT_KGRAMS_IN_WINDOW,
+    minFragmentLength: PLAGIARISM_CONFIG.MIN_FRAGMENT_LENGTH,
   })
 }
 
