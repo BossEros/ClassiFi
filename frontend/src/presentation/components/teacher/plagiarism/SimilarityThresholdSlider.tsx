@@ -11,6 +11,8 @@ interface SimilarityThresholdSliderProps {
   size?: "default" | "large"
   /** Optional wrapper class for layout-specific sizing. */
   className?: string
+  /** When true, renders a short description explaining what the threshold controls. */
+  showHelperText?: boolean
   /** Called whenever the threshold changes. */
   onMinimumSimilarityPercentChange: (minimumSimilarityPercent: number) => void
 }
@@ -28,6 +30,7 @@ export function SimilarityThresholdSlider({
   step = 1,
   size = "default",
   className,
+  showHelperText = false,
   onMinimumSimilarityPercentChange,
 }: SimilarityThresholdSliderProps) {
   const isLargeSlider = size === "large"
@@ -69,6 +72,14 @@ export function SimilarityThresholdSlider({
         <span>{min}%</span>
         <span>{max}%</span>
       </div>
+
+      {showHelperText && (
+        <p className={isLargeSlider ? "mt-3 text-sm text-slate-500" : "mt-2 text-xs text-slate-500"}>
+          Only submission pairs whose hybrid similarity score meets or exceeds
+          this percentage will appear in the results. Drag right to focus on the
+          most suspicious pairs; drag left to include more comparisons.
+        </p>
+      )}
     </div>
   )
 }

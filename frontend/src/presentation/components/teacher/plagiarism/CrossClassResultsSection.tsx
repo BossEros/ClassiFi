@@ -517,6 +517,7 @@ export function CrossClassResultsSection({
           min={25}
           max={100}
           size="large"
+          showHelperText
           onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
         />
       </div>

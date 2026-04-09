@@ -215,8 +215,11 @@ export function SimilarityGraphView({
           Similarity Graph
         </h2>
         <p className="max-w-3xl text-sm text-slate-500">
-          Explore submission similarity as a graph. The shared threshold slider
-          updates this graph and the pairwise triage table at the same time.
+          Explore submission similarity as a graph. Each edge connects two
+          submissions whose hybrid similarity meets or exceeds the threshold.
+          Raise the threshold to focus on the most suspicious pairs; lower it to
+          reveal more connections. The slider also updates the pairwise triage
+          table simultaneously.
         </p>
       </div>
 
@@ -422,6 +425,7 @@ export function SimilarityGraphView({
               minimumSimilarityPercent={minimumSimilarityPercent}
               min={SIMILARITY_GRAPH_MIN_THRESHOLD_PERCENT}
               max={SIMILARITY_GRAPH_MAX_THRESHOLD_PERCENT}
+              showHelperText
               onMinimumSimilarityPercentChange={
                 onMinimumSimilarityPercentChange
               }
