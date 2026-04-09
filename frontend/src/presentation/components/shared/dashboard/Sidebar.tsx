@@ -116,6 +116,7 @@ interface SidebarProps {
   isCollapsed?: boolean
   onToggleCollapse?: () => void
   onRegisterMobileToggle?: (toggleFn: () => void) => void
+  onMobileOpenChange?: (isOpen: boolean) => void
 }
 
 interface SidebarNavItemProps {
@@ -128,6 +129,7 @@ interface SidebarContentProps {
   isCollapsed: boolean
   onToggleCollapse?: () => void
   onRegisterMobileToggle?: (toggleFn: () => void) => void
+  onMobileOpenChange?: (isOpen: boolean) => void
   user: User | null
 }
 
@@ -168,6 +170,7 @@ export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
   onRegisterMobileToggle,
+  onMobileOpenChange,
 }: SidebarProps) {
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
@@ -179,6 +182,7 @@ export function Sidebar({
       isCollapsed={isCollapsed}
       onToggleCollapse={onToggleCollapse}
       onRegisterMobileToggle={onRegisterMobileToggle}
+      onMobileOpenChange={onMobileOpenChange}
       user={user}
     />
   )
@@ -188,6 +192,7 @@ function SidebarContent({
   isCollapsed,
   onToggleCollapse,
   onRegisterMobileToggle,
+  onMobileOpenChange,
   user,
 }: SidebarContentProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -210,6 +215,11 @@ function SidebarContent({
   useEffect(() => {
     onRegisterMobileToggle?.(toggleMobileSidebar)
   }, [onRegisterMobileToggle, toggleMobileSidebar])
+
+  // Notify parent of mobile open state changes
+  useEffect(() => {
+    onMobileOpenChange?.(isMobileOpen)
+  }, [isMobileOpen, onMobileOpenChange])
 
   // Close sidebar on Escape key
   const handleEscapeKey = useCallback((event: KeyboardEvent) => {

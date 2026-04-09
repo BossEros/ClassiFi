@@ -227,14 +227,6 @@ export default function AdminEnrollmentsPage() {
               <Users className="h-4 w-4" />
               Enroll Students
             </button>
-            { /*<button
-              type="button"
-              onClick={() => setIsEnrollModalOpen(true)}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700"
-            >
-              <UserPlus className="h-4 w-4" />
-              Enroll Student
-            </button> */ }
           </div>
         </div>
 
