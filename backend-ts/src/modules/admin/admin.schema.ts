@@ -306,6 +306,44 @@ export const EnrollStudentBodySchema = z.object({
 export type EnrollStudentBody = z.infer<typeof EnrollStudentBodySchema>
 
 /**
+ * Request body schema for bulk-enrolling multiple students in a class.
+ * Used by POST /admin/classes/:id/students/bulk endpoint.
+ *
+ * @property studentIds - Array of student IDs to enroll. Must contain at least one ID.
+ */
+export const BulkEnrollStudentsBodySchema = z.object({
+  studentIds: z
+    .array(z.number().int().positive())
+    .min(1, "At least one student ID is required"),
+})
+export type BulkEnrollStudentsBody = z.infer<typeof BulkEnrollStudentsBodySchema>
+
+/**
+ * Result item for a single student in a bulk enrollment operation.
+ */
+export const BulkEnrollmentResultItemSchema = z.object({
+  studentId: z.number(),
+  status: z.enum(["enrolled", "skipped", "failed"]),
+  reason: z.string().optional(),
+})
+export type BulkEnrollmentResultItem = z.infer<typeof BulkEnrollmentResultItemSchema>
+
+/**
+ * Response schema for the bulk enrollment endpoint.
+ * Returns per-student results and a summary of the operation.
+ */
+export const BulkEnrollmentResponseSchema = z.object({
+  success: z.boolean(),
+  summary: z.object({
+    total: z.number(),
+    enrolled: z.number(),
+    skipped: z.number(),
+    failed: z.number(),
+  }),
+  results: z.array(BulkEnrollmentResultItemSchema),
+})
+
+/**
  * Admin enrollment list item schema.
  * Represents a single enrollment row in the standalone admin enrollment workspace.
  */

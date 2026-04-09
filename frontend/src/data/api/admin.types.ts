@@ -99,6 +99,24 @@ export interface TransferStudentData {
   toClassId: number
 }
 
+export type BulkEnrollmentResultStatus = "enrolled" | "skipped" | "failed"
+
+export interface BulkEnrollmentResultItem {
+  studentId: number
+  status: BulkEnrollmentResultStatus
+  reason?: string
+}
+
+export interface BulkEnrollmentResult {
+  summary: {
+    total: number
+    enrolled: number
+    skipped: number
+    failed: number
+  }
+  results: BulkEnrollmentResultItem[]
+}
+
 export interface AdminStats {
   totalUsers: number
   totalStudents: number

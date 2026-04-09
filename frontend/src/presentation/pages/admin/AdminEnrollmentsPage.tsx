@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { RefreshCw, UserPlus, XCircle } from "lucide-react"
+import { RefreshCw, UserPlus, Users, XCircle } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
@@ -8,12 +8,13 @@ import { useRequestState } from "@/presentation/hooks/shared/useRequestState"
 import { AdminEnrollmentFilters } from "@/presentation/components/admin/AdminEnrollmentFilters"
 import { AdminEnrollmentTable } from "@/presentation/components/admin/AdminEnrollmentTable"
 import {
+  AdminBulkEnrollModal,
   AdminEnrollStudentModal,
   AdminRemoveEnrollmentModal,
   AdminTransferEnrollmentModal,
 } from "@/presentation/components/admin/enrollment-modals"
 import * as adminService from "@/business/services/adminService"
-import type { AdminEnrollmentRecord } from "@/business/services/adminService"
+import type { AdminEnrollmentRecord, BulkEnrollmentResult } from "@/business/services/adminService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
@@ -32,6 +33,7 @@ export default function AdminEnrollmentsPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [totalEnrollments, setTotalEnrollments] = useState(0)
   const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false)
+  const [isBulkEnrollModalOpen, setIsBulkEnrollModalOpen] = useState(false)
   const [transferEnrollment, setTransferEnrollment] = useState<AdminEnrollmentRecord | null>(null)
   const [removeEnrollment, setRemoveEnrollment] = useState<AdminEnrollmentRecord | null>(null)
   const [isEnrollmentActionSubmitting, setIsEnrollmentActionSubmitting] = useState(false)
@@ -114,6 +116,36 @@ export default function AdminEnrollmentsPage() {
     }
   }
 
+  const handleBulkEnrollment = async (selection: {
+    classId: number
+    studentIds: number[]
+  }): Promise<BulkEnrollmentResult> => {
+    try {
+      setIsEnrollmentActionSubmitting(true)
+      const result = await adminService.bulkEnrollStudents(
+        selection.classId,
+        selection.studentIds,
+      )
+      await fetchEnrollments()
+      const { enrolled, skipped, failed } = result.summary
+      showToast(
+        `Bulk enrollment complete: ${enrolled} enrolled, ${skipped} skipped, ${failed} failed`,
+        enrolled > 0 ? "success" : "error",
+      )
+      return result
+    } catch (submissionError) {
+      const errorMessage =
+        submissionError instanceof Error
+          ? submissionError.message
+          : "Failed to bulk-enroll students"
+      setError(errorMessage)
+      showToast(errorMessage, "error")
+      throw submissionError
+    } finally {
+      setIsEnrollmentActionSubmitting(false)
+    }
+  }
+
   const handleTransferEnrollment = async (selection: { toClassId: number }) => {
     if (!transferEnrollment) return
 
@@ -189,6 +221,14 @@ export default function AdminEnrollmentsPage() {
             </button>
             <button
               type="button"
+              onClick={() => setIsBulkEnrollModalOpen(true)}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600/10 px-4 py-2.5 text-sm font-semibold text-teal-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-100"
+            >
+              <Users className="h-4 w-4" />
+              Bulk Enroll
+            </button>
+            <button
+              type="button"
               onClick={() => setIsEnrollModalOpen(true)}
               className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700"
             >
@@ -233,6 +273,13 @@ export default function AdminEnrollmentsPage() {
         isSubmitting={isEnrollmentActionSubmitting}
         onClose={() => setIsEnrollModalOpen(false)}
         onConfirm={handleManualEnrollment}
+      />
+
+      <AdminBulkEnrollModal
+        isOpen={isBulkEnrollModalOpen}
+        isSubmitting={isEnrollmentActionSubmitting}
+        onClose={() => setIsBulkEnrollModalOpen(false)}
+        onConfirm={handleBulkEnrollment}
       />
 
       <AdminTransferEnrollmentModal
