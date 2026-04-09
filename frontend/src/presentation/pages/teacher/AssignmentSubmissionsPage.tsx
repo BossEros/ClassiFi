@@ -596,8 +596,8 @@ export function AssignmentSubmissionsPage() {
 
       if (!results.isReusedReport) {
         showToast(
-          `Analysis complete! Found ${results.summary.suspiciousPairs} suspicious pairs.`,
-          results.summary.suspiciousPairs > 0 ? "info" : "success",
+          `Analysis complete! ${results.summary.totalPairs} pairs compared.`,
+          "success",
         )
       }
 

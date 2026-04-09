@@ -30,7 +30,6 @@ describe("crossClassPlagiarismService", () => {
     summary: {
       totalSubmissions: 7,
       totalComparisons: 10,
-      flaggedPairs: 4,
       averageSimilarity: 0.52,
       maxSimilarity: 0.99,
     },
@@ -52,7 +51,6 @@ describe("crossClassPlagiarismService", () => {
         hybridScore: 0.93,
         overlap: 41,
         longestFragment: 16,
-        isFlagged: true,
       },
     ],
     scoringWeights: { structuralWeight: 0.7, semanticWeight: 0.3 },
@@ -140,7 +138,6 @@ describe("crossClassPlagiarismService", () => {
         hybridScore: 0.93,
         overlap: 41,
         longestFragment: 16,
-        isFlagged: true,
       },
       fragments: [],
       leftFile: {

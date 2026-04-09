@@ -238,7 +238,7 @@ export function CrossClassResultsSection({
     if (!report) return []
 
     return report.results.filter(
-      (result) => result.isFlagged && result.hybridScore * 100 >= minimumSimilarityPercent,
+      (result) => result.hybridScore * 100 >= minimumSimilarityPercent,
     )
   }, [report, minimumSimilarityPercent])
   const suspiciousPairCount = flaggedResults.length
@@ -517,6 +517,7 @@ export function CrossClassResultsSection({
           min={25}
           max={100}
           size="large"
+          showHelperText
           onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
         />
       </div>

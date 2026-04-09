@@ -84,7 +84,6 @@ export interface PlagiarismFragmentDTO {
 export interface PlagiarismSummaryDTO {
   totalFiles: number
   totalPairs: number
-  suspiciousPairs: number
   averageSimilarity: number
   maxSimilarity: number
 }

@@ -58,7 +58,6 @@ const mockData = vi.hoisted(() => {
     summary: {
       totalFiles: 2,
       totalPairs: 1,
-      suspiciousPairs: 1,
       averageSimilarity: 0.89,
       maxSimilarity: 0.9,
     },
@@ -328,7 +327,6 @@ describe("SimilarityResultsPage", () => {
         ...mockData.results.summary,
         totalFiles: 4,
         totalPairs: 2,
-        suspiciousPairs: 2,
       },
       submissions: [
         mockData.pair.leftFile,

@@ -271,14 +271,13 @@ This flow uses in-memory scheduling plus periodic reconciliation and does not re
 - **`SEMANTIC_SIMILARITY_MAX_RETRIES`** (default: `1`) retries transient semantic failures (timeouts/5xx/429) before using fallback `semanticScore=0`.
 - **`PLAGIARISM_STRUCTURAL_WEIGHT`** (default: `0.7`) sets the structural contribution to hybrid plagiarism scoring.
 - **`PLAGIARISM_SEMANTIC_WEIGHT`** (default: `0.3`) sets the semantic contribution to hybrid plagiarism scoring.
-- **`PLAGIARISM_HYBRID_THRESHOLD`** (default: `0.5`) controls suspicious-pair flagging and report summaries based on hybrid score.
 
 **Behavior**:
 - Submission success is not blocked by similarity scheduling failures.
 - Rapid submission bursts for the same assignment are coalesced into one run.
 - Reconciliation re-triggers analysis if reports are stale or missing after restarts.
 - Assignment report persistence acquires an assignment-scoped transaction lock to prevent duplicate latest reports during concurrent analysis runs.
-- Assignment report `flaggedPairs`, `averageSimilarity`, `highestSimilarity`, and pair ordering now follow the weighted hybrid score instead of structural score alone.
+- Assignment report `averageSimilarity`, `highestSimilarity`, and pair ordering follow the weighted hybrid score instead of structural score alone.
 - When an assignment enables similarity deduction, persisted assignment reports also refresh latest-submission similarity penalties through `SimilarityPenaltyService`.
 
 ### Programming Language Support

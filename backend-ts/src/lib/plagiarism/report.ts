@@ -33,13 +33,6 @@ export class Report {
   }
 
   /**
-   * Get pairs with similarity above a threshold.
-   */
-  public getSuspiciousPairs(threshold = 0.5): Pair[] {
-    return this.getPairs().filter((p) => p.similarity >= threshold)
-  }
-
-  /**
    * Get fragments for a specific pair.
    */
   public getFragments(pair: Pair): Fragment[] {
@@ -51,12 +44,10 @@ export class Report {
    */
   public getSummary(): ReportSummary {
     const pairs = this.getPairs()
-    const suspicious = this.getSuspiciousPairs(0.5)
 
     return {
       totalFiles: this.files.length,
       totalPairs: pairs.length,
-      suspiciousPairs: suspicious.length,
       averageSimilarity:
         pairs.length > 0
           ? pairs.reduce((sum, p) => sum + p.similarity, 0) / pairs.length
@@ -74,7 +65,6 @@ export class Report {
 export interface ReportSummary {
   totalFiles: number
   totalPairs: number
-  suspiciousPairs: number
   averageSimilarity: number
   maxSimilarity: number
   language: string

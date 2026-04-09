@@ -72,7 +72,6 @@ export interface CrossClassAnalysisResponse {
   summary: {
     totalSubmissions: number
     totalComparisons: number
-    flaggedPairs: number
     averageSimilarity: number
     maxSimilarity: number
   }
@@ -98,7 +97,6 @@ export interface CrossClassResultDTO {
   hybridScore: number
   overlap: number
   longestFragment: number
-  isFlagged: boolean
 }
 
 /** Result details including file contents and fragment positions */
@@ -805,7 +803,6 @@ export class CrossClassSimilarityService {
         matchedAssignmentIds,
         totalSubmissions: this.countUniqueSubmissions(crossClassPairs),
         totalComparisons: crossClassPairs.length,
-        flaggedPairs: summary.suspiciousPairs,
         averageSimilarity: formatSimilarityScore(summary.averageSimilarity, 4),
         highestSimilarity: formatSimilarityScore(summary.maxSimilarity, 4),
       })
@@ -892,7 +889,6 @@ export class CrossClassSimilarityService {
         rightCovered: crossClassPair.pair.rightCovered,
         leftTotal: crossClassPair.pair.leftTotal,
         rightTotal: crossClassPair.pair.rightTotal,
-        isFlagged: breakdown.isSuspicious,
       }
     })
   }
@@ -977,7 +973,6 @@ export class CrossClassSimilarityService {
       summary: {
         totalSubmissions: 0,
         totalComparisons: 0,
-        flaggedPairs: 0,
         averageSimilarity: 0,
         maxSimilarity: 0,
       },
@@ -1017,7 +1012,6 @@ export class CrossClassSimilarityService {
       summary: {
         totalSubmissions: (dbReport as SimilarityReport).totalSubmissions ?? 0,
         totalComparisons: (dbReport as SimilarityReport).totalComparisons ?? 0,
-        flaggedPairs: (dbReport as SimilarityReport).flaggedPairs ?? 0,
         averageSimilarity: parseFloat(
           (dbReport as SimilarityReport).averageSimilarity ?? "0",
         ),
@@ -1045,7 +1039,6 @@ export class CrossClassSimilarityService {
       hybridScore: string
       overlap: number
       longestFragment: number
-      isFlagged: boolean
     },
     context?: CrossClassResultWithContext,
   ): CrossClassResultDTO {
@@ -1066,7 +1059,6 @@ export class CrossClassSimilarityService {
       hybridScore: parseFloat(result.hybridScore),
       overlap: result.overlap,
       longestFragment: result.longestFragment,
-      isFlagged: result.isFlagged,
     }
   }
 

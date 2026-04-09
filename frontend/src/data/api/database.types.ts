@@ -85,7 +85,8 @@ export type Database = {
           is_active: boolean
           schedule: Json
           semester: number
-          teacher_id: number
+          teacher_id: number
+
         }
         Insert: {
           academic_year: string
@@ -97,7 +98,8 @@ export type Database = {
           is_active?: boolean
           schedule: Json
           semester: number
-          teacher_id: number
+          teacher_id: number
+
         }
         Update: {
           academic_year?: string
@@ -109,7 +111,8 @@ export type Database = {
           is_active?: boolean
           schedule?: Json
           semester?: number
-          teacher_id?: number
+          teacher_id?: number
+
         }
         Relationships: [
           {
@@ -214,7 +217,6 @@ export type Database = {
         Row: {
           assignment_id: number
           average_similarity: number | null
-          flagged_pairs: number
           generated_at: string
           highest_similarity: number | null
           id: number
@@ -226,7 +228,6 @@ export type Database = {
         Insert: {
           assignment_id: number
           average_similarity?: number | null
-          flagged_pairs?: number
           generated_at?: string
           highest_similarity?: number | null
           id?: number
@@ -238,7 +239,6 @@ export type Database = {
         Update: {
           assignment_id?: number
           average_similarity?: number | null
-          flagged_pairs?: number
           generated_at?: string
           highest_similarity?: number | null
           id?: number
@@ -269,7 +269,6 @@ export type Database = {
           analyzed_at: string
           hybrid_score: number
           id: number
-          is_flagged: boolean
           left_covered: number
           left_total: number
           longest_fragment: number
@@ -286,7 +285,6 @@ export type Database = {
           analyzed_at?: string
           hybrid_score: number
           id?: number
-          is_flagged?: boolean
           left_covered?: number
           left_total?: number
           longest_fragment?: number
@@ -303,7 +301,6 @@ export type Database = {
           analyzed_at?: string
           hybrid_score?: number
           id?: number
-          is_flagged?: boolean
           left_covered?: number
           left_total?: number
           longest_fragment?: number
