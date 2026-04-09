@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { RefreshCw, UserPlus, Users, XCircle } from "lucide-react"
+import { RefreshCw, Users, XCircle } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
