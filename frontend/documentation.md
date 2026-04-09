@@ -374,7 +374,7 @@ Cross-class analysis extends the per-assignment similarity workflow to compare s
 
 ### Plagiarism Detection
 
-The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly while still seeing Dolos-style graph relationships:
+The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly while still seeing graph relationships:
 
 - **Assignment-level summary cards**: Suspicious pairs, analyzed submissions, and maximum similarity.
 - **Similarity graph view**: A native React SVG graph that derives nodes from the analyzed-submission list and edges from the active pair results.

@@ -10,14 +10,14 @@ export interface DetectorOptions {
   /**
    * Length of k-grams (number of consecutive tokens).
    * Larger values = fewer but more specific matches.
-   * Default: 23 (same as Dolos)
+   * Default: 23
    */
   kgramLength?: number
 
   /**
    * Window size for the Winnow algorithm.
    * Smaller values = more fingerprints, higher precision but slower.
-   * Default: 17 (same as Dolos)
+   * Default: 17
    */
   kgramsInWindow?: number
 
@@ -62,12 +62,10 @@ export interface DetectorOptions {
 
 /**
  * Resolved options with defaults applied.
- * Default values match Dolos exactly.
  */
 export class Options implements Required<
   Omit<DetectorOptions, "maxFingerprintPercentage" | "maxFingerprintCount">
 > {
-  // Dolos default values
   public static readonly defaultKgramLength = 23
   public static readonly defaultKgramsInWindow = 17
   public static readonly defaultMinFragmentLength = 0

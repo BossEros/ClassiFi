@@ -39,7 +39,6 @@ interface PairCodeEditorProps {
  * Code editor with highlighted matching fragments.
  * Uses Monaco editor for syntax highlighting and navigation.
  *
- * This is a React port of Dolos's PairCodeMatchEditor.vue component.
  * Features:
  * - Click to select fragment
  * - Hover highlighting
@@ -66,7 +65,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
   const decorationsRef = useRef<string[]>([])
   const isLight = variant === "light"
 
-  // Sort fragments by start position (same as Dolos)
+  // Sort fragments by start position
   const sortedFragments = [...fragments].sort((a, b) => {
     const aRegion = side === "left" ? a.leftSelection : a.rightSelection
     const bRegion = side === "left" ? b.leftSelection : b.rightSelection
@@ -84,7 +83,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     [side],
   )
 
-  // Find fragment at a cursor position (smallest-match-first, same as Dolos)
+  // Find fragment at a cursor position (smallest-match-first)
   const getFragmentAtPosition = useCallback(
     (lineNumber: number, column: number): MatchFragment | null => {
       let smallestMatch: MatchFragment | null = null
@@ -118,7 +117,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
 
         if (!inColRange) continue
 
-        // Check if this is the smallest match (same as Dolos)
+        // Check if this is the smallest match
         const length =
           (region.endRow - region.startRow + 1) * 10000 +
           (region.endCol - region.startCol + 1)
@@ -133,7 +132,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     [sortedFragments, getRegion],
   )
 
-  // Build selections for multi-line fragments (same as Dolos)
+  // Build selections for multi-line fragments
   const buildSelections = useCallback(() => {
     const selections: Array<{
       fragment: MatchFragment | "ignored"
@@ -213,7 +212,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
     return selections
   }, [sortedFragments, ignoredRegions, getRegion])
 
-  // Compare fragments for equality (same as Dolos)
+  // Compare fragments for equality
   const areFragmentsEqual = (
     a: MatchFragment | null,
     b: MatchFragment | null,
@@ -348,7 +347,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       }),
     )
 
-    // Tab to go to next match (same as Dolos)
+    // Tab to go to next match
     disposables.push(
       editorRef.current.addAction({
         id: "match-next",
@@ -374,7 +373,7 @@ export const PairCodeEditor: React.FC<PairCodeEditorProps> = ({
       }),
     )
 
-    // Shift+Tab to go to previous match (same as Dolos)
+    // Shift+Tab to go to previous match
     disposables.push(
       editorRef.current.addAction({
         id: "match-previous",
