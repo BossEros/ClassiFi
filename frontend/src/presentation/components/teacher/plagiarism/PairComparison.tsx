@@ -21,8 +21,6 @@ interface PairComparisonProps {
  * This is the main component for displaying plagiarism detection results.
  * It shows two code editors side by side with synchronized selection and
  * highlighting of matching code regions.
- *
- * This is a React port of Dolos's CompareCard.vue component.
  */
 export const PairComparison: React.FC<PairComparisonProps> = ({
   pair,

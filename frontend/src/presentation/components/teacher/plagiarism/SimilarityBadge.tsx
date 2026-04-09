@@ -14,7 +14,7 @@ interface SimilarityBadgeProps {
 /**
  * Badge displaying similarity percentage with color coding.
  *
- * Colors match Dolos exactly:
+ * Color coding:
  * - Green (< 50%): Low similarity, likely original
  * - Yellow/Warning (50-75%): Moderate similarity, needs review
  * - Red/Error (>= 75%): High similarity, likely plagiarism
@@ -27,7 +27,7 @@ export const SimilarityBadge: React.FC<SimilarityBadgeProps> = ({
 }) => {
   const percentage = Math.round(similarity * 100)
 
-  // Determine color based on similarity level (same as Dolos)
+  // Determine color based on similarity level
   const getColor = (): string => {
     if (similarity >= 0.75) return "#ef4444" // error (red)
     if (similarity >= 0.5) return "#f59e0b" // warning (amber/yellow)
@@ -49,7 +49,7 @@ export const SimilarityBadge: React.FC<SimilarityBadgeProps> = ({
     large: { fontSize: "16px", padding: "6px 14px", height: "30px" },
   }
 
-  // Progress bar style (like Dolos v-progress-linear)
+  // Progress bar style
   if (asProgress) {
     const color = getColor()
     return (

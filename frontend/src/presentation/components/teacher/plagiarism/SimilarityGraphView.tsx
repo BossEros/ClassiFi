@@ -38,7 +38,7 @@ interface GraphTooltipState {
 }
 
 /**
- * Interactive similarity graph that mirrors Dolos-style threshold clustering in native React.
+ * Interactive similarity graph with threshold-based clustering in native React.
  *
  * @param props - Pair data, shared threshold state, and review callbacks.
  * @returns Responsive SVG graph with threshold slider, singleton toggle, tooltips, and selection details.

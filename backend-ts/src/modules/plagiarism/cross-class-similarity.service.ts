@@ -137,6 +137,8 @@ interface CrossClassDetectorPair {
   leftSubmissionId: number
   rightSubmissionId: number
   pairKey: string
+  /** Whether the detector's left/right was swapped to achieve ascending-ID ordering. */
+  isSwapped: boolean
 }
 
 /**
@@ -652,6 +654,7 @@ export class CrossClassSimilarityService {
         leftSubmissionId: normalized.submission1Id,
         rightSubmissionId: normalized.submission2Id,
         pairKey: normalized.pairKey,
+        isSwapped: normalized.isSwapped,
       })
     }
 
@@ -885,10 +888,10 @@ export class CrossClassSimilarityService {
         hybridScore: formatSimilarityScore(breakdown.hybridScore, 6),
         overlap: crossClassPair.pair.overlap,
         longestFragment: crossClassPair.pair.longest,
-        leftCovered: crossClassPair.pair.leftCovered,
-        rightCovered: crossClassPair.pair.rightCovered,
-        leftTotal: crossClassPair.pair.leftTotal,
-        rightTotal: crossClassPair.pair.rightTotal,
+        leftCovered: crossClassPair.isSwapped ? crossClassPair.pair.rightCovered : crossClassPair.pair.leftCovered,
+        rightCovered: crossClassPair.isSwapped ? crossClassPair.pair.leftCovered : crossClassPair.pair.rightCovered,
+        leftTotal: crossClassPair.isSwapped ? crossClassPair.pair.rightTotal : crossClassPair.pair.leftTotal,
+        rightTotal: crossClassPair.isSwapped ? crossClassPair.pair.leftTotal : crossClassPair.pair.rightTotal,
       }
     })
   }
@@ -932,19 +935,37 @@ export class CrossClassSimilarityService {
 
       // Each fragment stores the exact row/col positions of a matched block in both files.
       // These positions are used by the frontend to highlight matching code in the diff view.
+      // If the submission IDs were swapped during normalization, the detector's
+      // left/right fragment positions are also flipped relative to the stored row.
+      // We flip them back here so the diff view renders correctly in the frontend.
       for (const fragment of detectorFragments) {
-        allFragments.push({
-          similarityResultId: insertedResult.id,
-          leftStartRow: fragment.leftSelection.startRow,
-          leftStartCol: fragment.leftSelection.startCol,
-          leftEndRow: fragment.leftSelection.endRow,
-          leftEndCol: fragment.leftSelection.endCol,
-          rightStartRow: fragment.rightSelection.startRow,
-          rightStartCol: fragment.rightSelection.startCol,
-          rightEndRow: fragment.rightSelection.endRow,
-          rightEndCol: fragment.rightSelection.endCol,
-          length: fragment.length,
-        })
+        if (crossClassPair.isSwapped) {
+          allFragments.push({
+            similarityResultId: insertedResult.id,
+            leftStartRow: fragment.rightSelection.startRow,
+            leftStartCol: fragment.rightSelection.startCol,
+            leftEndRow: fragment.rightSelection.endRow,
+            leftEndCol: fragment.rightSelection.endCol,
+            rightStartRow: fragment.leftSelection.startRow,
+            rightStartCol: fragment.leftSelection.startCol,
+            rightEndRow: fragment.leftSelection.endRow,
+            rightEndCol: fragment.leftSelection.endCol,
+            length: fragment.length,
+          })
+        } else {
+          allFragments.push({
+            similarityResultId: insertedResult.id,
+            leftStartRow: fragment.leftSelection.startRow,
+            leftStartCol: fragment.leftSelection.startCol,
+            leftEndRow: fragment.leftSelection.endRow,
+            leftEndCol: fragment.leftSelection.endCol,
+            rightStartRow: fragment.rightSelection.startRow,
+            rightStartCol: fragment.rightSelection.startCol,
+            rightEndRow: fragment.rightSelection.endRow,
+            rightEndCol: fragment.rightSelection.endCol,
+            length: fragment.length,
+          })
+        }
       }
     }
 

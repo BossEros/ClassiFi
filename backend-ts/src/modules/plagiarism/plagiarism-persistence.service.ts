@@ -491,6 +491,8 @@ export class PlagiarismPersistenceService {
         semanticScore,
       )
 
+      const isSwapped = normalizedSubmissionPair.isSwapped
+
       resultsToInsert.push({
         reportId,
         submission1Id: normalizedSubmissionPair.submission1Id,
@@ -500,10 +502,10 @@ export class PlagiarismPersistenceService {
         hybridScore: formatSimilarityScore(pairScoreBreakdown.hybridScore, 6),
         overlap: pair.overlap,
         longestFragment: pair.longest,
-        leftCovered: pair.leftCovered,
-        rightCovered: pair.rightCovered,
-        leftTotal: pair.leftTotal,
-        rightTotal: pair.rightTotal,
+        leftCovered: isSwapped ? pair.rightCovered : pair.leftCovered,
+        rightCovered: isSwapped ? pair.leftCovered : pair.rightCovered,
+        leftTotal: isSwapped ? pair.rightTotal : pair.leftTotal,
+        rightTotal: isSwapped ? pair.leftTotal : pair.rightTotal,
       })
     }
 
