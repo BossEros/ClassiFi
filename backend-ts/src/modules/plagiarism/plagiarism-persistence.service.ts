@@ -9,6 +9,7 @@ import { Report, Pair } from "@/lib/plagiarism/index.js"
 import {
   type PlagiarismFileDTO,
   type PlagiarismPairDTO,
+  PLAGIARISM_CONFIG,
 } from "@/modules/plagiarism/plagiarism.mapper.js"
 import {
   buildPairSimilarityScoreBreakdown,
@@ -533,7 +534,7 @@ export class PlagiarismPersistenceService {
         continue
       }
 
-      const fragments = pair.buildFragments()
+      const fragments = pair.buildFragments(PLAGIARISM_CONFIG.MIN_FRAGMENT_LENGTH)
 
       for (const fragment of fragments) {
         // If the submission IDs were swapped during normalization, the detector’s
