@@ -59,4 +59,15 @@ export interface PendingTaskDTO {
   totalStudents: number
 }
 
+export interface AllTeacherAssignmentDTO {
+  id: number
+  assignmentName: string
+  className: string
+  classId: number
+  deadline: string | null
+  submissionCount: number
+  totalStudents: number
+  programmingLanguage: string
+}
+
 
