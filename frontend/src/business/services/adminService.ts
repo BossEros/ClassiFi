@@ -12,8 +12,9 @@ import type {
   ClassAssignment,
   AdminEnrollmentRecord,
   TransferStudentData,
+  BulkEnrollmentResult,
 } from "@/data/api/admin.types"
-export type { AdminUser, AdminStats, ActivityItem, AdminClass, PaginatedResponse, CreateUserData, CreateClassData, UpdateClassData, EnrolledStudent, ClassAssignment, AdminEnrollmentRecord, TransferStudentData } from "@/data/api/admin.types"
+export type { AdminUser, AdminStats, ActivityItem, AdminClass, PaginatedResponse, CreateUserData, CreateClassData, UpdateClassData, EnrolledStudent, ClassAssignment, AdminEnrollmentRecord, TransferStudentData, BulkEnrollmentResult } from "@/data/api/admin.types"
 import { validateId } from "@/shared/utils/idUtils"
 
 // ============ User Management ============
@@ -502,6 +503,30 @@ export async function addStudentToClass(
   validateId(studentId, "student")
 
   await adminRepository.enrollStudentInClassById(classId, studentId)
+}
+
+/**
+ * Bulk-enrolls multiple students into a specific class.
+ *
+ * Each student is processed independently on the server so a single failure
+ * does not block the others. Returns a detailed result with per-student
+ * outcomes and an aggregated summary.
+ *
+ * @param classId - The unique identifier of the target class.
+ * @param studentIds - Array of student IDs to enroll.
+ * @returns A `BulkEnrollmentResult` containing the summary and per-student outcomes.
+ */
+export async function bulkEnrollStudents(
+  classId: number,
+  studentIds: number[],
+): Promise<BulkEnrollmentResult> {
+  validateId(classId, "class")
+
+  if (studentIds.length === 0) {
+    throw new Error("At least one student must be selected for bulk enrollment")
+  }
+
+  return await adminRepository.bulkEnrollStudentsInClassById(classId, studentIds)
 }
 
 /**
