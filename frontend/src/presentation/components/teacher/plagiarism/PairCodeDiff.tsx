@@ -24,7 +24,6 @@ interface PairCodeDiffProps {
 
 /**
  * Monaco diff editor showing differences between two files.
- * This is a React port of Dolos's PairCodeDiff.vue component.
  *
  * Shows a side-by-side diff view highlighting:
  * - Added lines (green)

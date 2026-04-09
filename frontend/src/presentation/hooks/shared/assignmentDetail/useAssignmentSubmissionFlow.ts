@@ -43,6 +43,7 @@ interface UseAssignmentSubmissionFlowResult {
   expandedSubmissionTests: Set<number>
   expandedInitialTests: Set<number>
   handleFileSelect: (event: ChangeEvent<HTMLInputElement>) => void
+  handleFileDrop: (file: File) => void
   clearSelectedFile: () => void
   handleSubmit: () => Promise<void>
   handleRunPreviewTests: () => Promise<void>
@@ -109,6 +110,21 @@ export function useAssignmentSubmissionFlow({
       return
     }
 
+    if (assignment) {
+      const validationError = validateFile(file, assignment.programmingLanguage)
+      if (validationError) {
+        setFileError(validationError)
+        setSelectedFile(null)
+        return
+      }
+    }
+
+    setFileError(null)
+    setSelectedFile(file)
+  }
+
+  // Handle file drop from drag-and-drop
+  const handleFileDrop = (file: File) => {
     if (assignment) {
       const validationError = validateFile(file, assignment.programmingLanguage)
       if (validationError) {
@@ -337,6 +353,7 @@ export function useAssignmentSubmissionFlow({
     expandedSubmissionTests,
     expandedInitialTests,
     handleFileSelect,
+    handleFileDrop,
     clearSelectedFile,
     handleSubmit,
     handleRunPreviewTests,

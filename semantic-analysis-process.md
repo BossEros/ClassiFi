@@ -1,6 +1,6 @@
 # Semantic Analysis Process — ClassiFi
 
-This document explains the end-to-end process of **semantic analysis** in ClassiFi, powered by a fine-tuned **GraphCodeBERT** model. Semantic analysis complements the structural analysis (Dolos) by understanding the _meaning_ of code rather than its textual structure.
+This document explains the end-to-end process of **semantic analysis** in ClassiFi, powered by a fine-tuned **GraphCodeBERT** model. Semantic analysis complements the structural analysis (Winnowing) by understanding the _meaning_ of code rather than its textual structure.
 
 ---
 
@@ -55,9 +55,9 @@ The entry point in the backend is:
 PlagiarismController → PlagiarismService.analyzeAssignmentSubmissions()
 ```
 
-### Step 2 — Structural Analysis Runs First (Dolos)
+### Step 2 — Structural Analysis Runs First
 
-Before semantic analysis begins, the **structural analysis** (Dolos) runs and produces:
+Before semantic analysis begins, the **structural analysis** (Winnowing) runs and produces:
 - A list of submission **pairs** (every unique combination of two submissions)
 - A **structural similarity score** for each pair (token-overlap-based)
 
@@ -196,7 +196,7 @@ Once the backend receives the semantic score, it combines it with the structural
 │  Clamped to [0.0, 1.0]                                      │
 │                                                             │
 │  Example:                                                   │
-│  ├─ Structural (Dolos):    0.85                             │
+│  ├─ Structural (Winnowing): 0.85                             │
 │  ├─ Semantic (GCBERT):     0.72                             │
 │  └─ Hybrid: (0.7 × 0.85) + (0.3 × 0.72) = 0.811           │
 │                                                             │
@@ -205,7 +205,7 @@ Once the backend receives the semantic score, it combines it with the structural
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Why 70/30?** Structural analysis (Dolos) is more reliable for detecting direct copy-paste and token-level matches. Semantic analysis catches cases where code is _rewritten_ but functionally identical — padding with a lighter weight prevents false positives from the ML model.
+**Why 70/30?** Structural analysis (Winnowing) is more reliable for detecting direct copy-paste and token-level matches. Semantic analysis catches cases where code is _rewritten_ but functionally identical — padding with a lighter weight prevents false positives from the ML model.
 
 ### Step 7 — Database Persistence
 
@@ -221,7 +221,7 @@ All three scores are persisted in the `similarity_results` table:
 │ report_id        │ integer  │ FK → similarity_reports        │
 │ submission1_id   │ integer  │ FK → submissions (lower ID)    │
 │ submission2_id   │ integer  │ FK → submissions (higher ID)   │
-│ structural_score │ numeric  │ Dolos token-overlap score      │
+│ structural_score │ numeric  │ Structural token-overlap score │
 │ semantic_score   │ numeric  │ GraphCodeBERT cosine score     │
 │ hybrid_score     │ numeric  │ Weighted combination           │
 │ is_flagged       │ boolean  │ true if hybrid ≥ 0.50          │
@@ -265,7 +265,7 @@ The frontend fetches and displays all three scores for each submission pair, all
 │  ┌────────────────────────┐    ┌─────────────────────────────────┐      │
 │  │ PlagiarismService      │    │ Auto-Analysis Service           │      │
 │  │                        │    │ (debounce 45s, reconcile 3min)  │      │
-│  │ 1. Run Dolos           │    └─────────────────────────────────┘      │
+│  │ 1. Run Winnowing       │    └─────────────────────────────────┘      │
 │  │ 2. computeSemanticScr. │                                             │
 │  │ 3. calculateHybrid()   │                                             │
 │  │ 4. persistReport()     │                                             │
@@ -316,7 +316,7 @@ The frontend fetches and displays all three scores for each submission pair, all
 
 ## Key Differences: Structural vs. Semantic Analysis
 
-| Aspect | Structural (Dolos) | Semantic (GraphCodeBERT) |
+| Aspect | Structural (Winnowing) | Semantic (GraphCodeBERT) |
 |---|---|---|
 | **What it detects** | Token-level overlap, copy-paste, renamed variables | _Meaning_-level similarity, rewritten code |
 | **How it works** | Tokenize → suffix tree matching → overlap ratio | Encode → embedding space → cosine distance |
@@ -345,7 +345,7 @@ The frontend fetches and displays all three scores for each submission pair, all
 ## Summary
 
 1. **Trigger** → Manual or auto (45s debounce after submission)
-2. **Structural first** → Dolos runs and produces pairs with structural scores
+2. **Structural first** → Structural analysis (Winnowing) runs and produces pairs with structural scores
 3. **Semantic scoring** → Backend sends each pair's source code to the Python semantic service via HTTP
 4. **GraphCodeBERT inference** → Each snippet is tokenized (max 512 tokens), encoded to a 768-dim vector, and cosine similarity is computed between the two vectors
 5. **Hybrid combination** → `0.70 × structural + 0.30 × semantic`, flagged if ≥ 0.50
