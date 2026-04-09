@@ -129,7 +129,7 @@ function AdminDeleteUserModal({
       {/* Modal */}
       <div
         className={cn(
-          "relative w-full max-w-md mx-4 p-6",
+          "relative w-full max-w-160 mx-4 p-6",
           "rounded-3xl border border-rose-200 bg-white",
           "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",
@@ -521,7 +521,7 @@ function AdminEditUserModal({
         onClick={onClose}
       />
 
-      <div className="relative w-full max-w-md transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
+      <div className="relative w-full max-w-160 transform overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-xl transition-all">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold tracking-tight text-slate-900">

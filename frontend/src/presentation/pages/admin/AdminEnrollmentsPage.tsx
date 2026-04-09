@@ -129,7 +129,7 @@ export default function AdminEnrollmentsPage() {
       await fetchEnrollments()
       const { enrolled, skipped, failed } = result.summary
       showToast(
-        `Bulk enrollment complete: ${enrolled} enrolled, ${skipped} skipped, ${failed} failed`,
+        `Enrollment complete: ${enrolled} enrolled, ${skipped} skipped, ${failed} failed`,
         enrolled > 0 ? "success" : "error",
       )
       return result
@@ -137,7 +137,7 @@ export default function AdminEnrollmentsPage() {
       const errorMessage =
         submissionError instanceof Error
           ? submissionError.message
-          : "Failed to bulk-enroll students"
+          : "Failed to enroll student/s"
       setError(errorMessage)
       showToast(errorMessage, "error")
       throw submissionError
