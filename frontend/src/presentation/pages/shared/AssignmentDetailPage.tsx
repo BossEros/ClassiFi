@@ -452,6 +452,7 @@ export function AssignmentDetailPage() {
     expandedSubmissionTests,
     expandedInitialTests,
     handleFileSelect,
+    handleFileDrop,
     clearSelectedFile,
     handleSubmit,
     handleRunPreviewTests,
@@ -766,6 +767,11 @@ export function AssignmentDetailPage() {
                     <CheckCircle className="h-4 w-4 text-violet-700" />
                     <span>{assignmentTotalScore} Points</span>
                   </div>
+
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3.5 py-2 text-sm font-semibold text-orange-800 shadow-sm">
+                    <FileCode className="h-4 w-4 text-orange-700" />
+                    <span className="capitalize">{tempAssignment.programmingLanguage}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -878,6 +884,7 @@ export function AssignmentDetailPage() {
                   isRunningPreview={isRunningPreview}
                   isSubmitting={isSubmitting}
                   onFileSelect={handleFileSelect}
+                  onFileDrop={handleFileDrop}
                   onFilePreview={() =>
                     openFilePreview(
                       selectedFile,
