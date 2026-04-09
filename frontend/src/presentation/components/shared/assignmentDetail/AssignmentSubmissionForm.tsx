@@ -1,4 +1,5 @@
-import type { ChangeEvent, RefObject } from "react"
+import type { ChangeEvent, DragEvent, RefObject } from "react"
+import { useState } from "react"
 import { CheckCircle, Eye, FileCode, Play, RefreshCw, Upload, UploadCloud } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card"
 import { Button } from "@/presentation/components/ui/Button"
@@ -18,6 +19,7 @@ interface AssignmentSubmissionFormProps {
   isRunningPreview: boolean
   isSubmitting: boolean
   onFileSelect: (event: ChangeEvent<HTMLInputElement>) => void
+  onFileDrop: (file: File) => void
   onFilePreview: () => void
   onClearFile: () => void
   onRunPreviewTests: () => void
@@ -60,12 +62,31 @@ export function AssignmentSubmissionForm({
   isRunningPreview,
   isSubmitting,
   onFileSelect,
+  onFileDrop,
   onFilePreview,
   onClearFile,
   onRunPreviewTests,
   onSubmit,
 }: AssignmentSubmissionFormProps) {
   const isLight = variant === "light"
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragOver = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault()
+    setIsDragging(false)
+    const file = event.dataTransfer.files?.[0]
+    if (file) onFileDrop(file)
+  }
 
   if (isTeacher) {
     return null
@@ -100,11 +121,18 @@ export function AssignmentSubmissionForm({
           <div>
             <label
               htmlFor="file-upload"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
               className={cn(
                 "group block w-full cursor-pointer rounded-xl border border-dashed p-8 transition-all",
                 isLight
-                  ? "border-2 border-teal-300 bg-gradient-to-br from-teal-50 via-white to-slate-50 shadow-sm hover:border-teal-500 hover:from-teal-100 hover:to-slate-100"
-                  : "border-white/20 hover:border-teal-500/50 hover:bg-white/[0.02]",
+                  ? isDragging
+                    ? "border-2 border-teal-500 bg-teal-100 shadow-sm"
+                    : "border-2 border-teal-300 bg-gradient-to-br from-teal-50 via-white to-slate-50 shadow-sm hover:border-teal-500 hover:from-teal-100 hover:to-slate-100"
+                  : isDragging
+                    ? "border-teal-500/70 bg-white/[0.05]"
+                    : "border-white/20 hover:border-teal-500/50 hover:bg-white/[0.02]",
               )}
             >
               <input
@@ -125,7 +153,9 @@ export function AssignmentSubmissionForm({
                 >
                   <Upload className={`h-7 w-7 ${isLight ? "text-teal-700" : "text-teal-400"}`} />
                 </div>
-                <p className={`mb-1 text-base font-semibold ${isLight ? "text-slate-900" : "text-gray-200"}`}>Click to select file</p>
+                <p className={`mb-1 text-base font-semibold ${isLight ? "text-slate-900" : "text-gray-200"}`}>
+                  {isDragging ? "Drop file here" : "Click or drag file here"}
+                </p>
                 <p className={`text-sm font-medium ${isLight ? "text-slate-600" : "text-gray-500"}`}>
                   {getAcceptedLabel(programmingLanguage)}
                 </p>
