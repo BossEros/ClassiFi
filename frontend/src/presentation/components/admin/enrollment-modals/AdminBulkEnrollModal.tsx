@@ -544,8 +544,8 @@ export function AdminBulkEnrollModal({
 
   return (
     <EnrollmentModalFrame
-      title="Bulk Enrollment"
-      description="Select multiple active students and an active class to enroll them all at once. Already-enrolled students are automatically skipped."
+      title="Enroll Students"
+      description="Select active students and an active class to enroll them. Already-enrolled students are automatically skipped."
       isOpen={isOpen}
       isBusy={isSubmitting}
       onClose={onClose}

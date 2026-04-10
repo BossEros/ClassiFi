@@ -177,8 +177,8 @@ export function StudentDashboardPage() {
           ) : pendingAssignments.length > 0 ? (
             <>
               {/* Mobile card layout */}
-              <div className="space-y-3 lg:hidden">
-                {sortedAssignments.slice(0, 5).map((assignment) => {
+              <div className="max-h-[500px] overflow-y-auto lg:hidden">
+                {sortedAssignments.map((assignment) => {
                   const deadlineStatus = getDeadlineStatus(assignment.deadline)
 
                   return (
@@ -219,9 +219,9 @@ export function StudentDashboardPage() {
               </div>
 
               {/* Desktop table layout */}
-              <div className="hidden lg:block overflow-x-auto">
+              <div className="hidden lg:block overflow-y-auto max-h-[318px]">
                 <table className="w-full">
-                  <thead className="bg-slate-100 text-left">
+                  <thead className="bg-slate-100 text-left sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
                         Assignment Name
@@ -253,7 +253,7 @@ export function StudentDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedAssignments.slice(0, 5).map((assignment) => {
+                    {sortedAssignments.map((assignment) => {
                       const deadlineStatus = getDeadlineStatus(assignment.deadline)
                       const deadlineBadgeClass = getDeadlineBadgeClass(deadlineStatus)
 

@@ -64,9 +64,12 @@ describe("studentDashboardRepository", () => {
       const result =
         await studentDashboardRepository.getCompleteDashboardDataForStudentId(1)
 
-      expect(apiClient.get).toHaveBeenCalledWith(
-        "/student/dashboard/1?enrolledClassesLimit=12&pendingAssignmentsLimit=10",
-      )
+      expect(apiClient.get).toHaveBeenCalledTimes(1)
+      const calledUrl = vi.mocked(apiClient.get).mock.calls[0]?.[0] as string
+      expect(calledUrl).toMatch(/^\/student\/dashboard\/1\?/)
+      const searchParams = new URLSearchParams(calledUrl.split("?")[1])
+      expect(searchParams.get("enrolledClassesLimit")).toBe("12")
+      expect(searchParams.get("pendingAssignmentsLimit")).toBe("100")
       expect(result).toEqual(mockDashboardResponse)
     })
 
@@ -82,9 +85,12 @@ describe("studentDashboardRepository", () => {
         15,
       )
 
-      expect(apiClient.get).toHaveBeenCalledWith(
-        "/student/dashboard/1?enrolledClassesLimit=20&pendingAssignmentsLimit=15",
-      )
+      expect(apiClient.get).toHaveBeenCalledTimes(1)
+      const calledUrl = vi.mocked(apiClient.get).mock.calls[0]?.[0] as string
+      expect(calledUrl).toMatch(/^\/student\/dashboard\/1\?/)
+      const searchParams = new URLSearchParams(calledUrl.split("?")[1])
+      expect(searchParams.get("enrolledClassesLimit")).toBe("20")
+      expect(searchParams.get("pendingAssignmentsLimit")).toBe("15")
     })
 
     it("throws error when API returns error", async () => {

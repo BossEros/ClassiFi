@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { Menu } from "lucide-react"
 import { Sidebar } from "./Sidebar"
 import { cn } from "@/shared/utils/cn"
 
@@ -19,6 +20,7 @@ export function DashboardLayout({
     const saved = localStorage.getItem("sidebarCollapsed")
     return saved === "true"
   })
+  const [mobileSidebarToggle, setMobileSidebarToggle] = useState<(() => void) | null>(null)
 
   useEffect(() => {
     localStorage.setItem("sidebarCollapsed", String(isCollapsed))
@@ -28,11 +30,13 @@ export function DashboardLayout({
     setIsCollapsed((prev) => !prev)
   }
 
+  const handleRegisterMobileToggle = (toggleFn: () => void) => {
+    setMobileSidebarToggle(() => toggleFn)
+  }
+
   return (
     <div className="h-screen overflow-hidden bg-[#F9FAFB] flex">
-      {/* Sidebar — On mobile: fixed overlay via the Sidebar's own positioning.
-          On lg+: sits in the normal flex flow with a set width. The outer div
-          is sized only on lg+ so the sidebar never pushes content on mobile. */}
+      {/* Sidebar */}
       <div
         className={cn(
           "flex-shrink-0 transition-all duration-300",
@@ -43,6 +47,7 @@ export function DashboardLayout({
         <Sidebar
           isCollapsed={isCollapsed}
           onToggleCollapse={handleToggleCollapse}
+          onRegisterMobileToggle={handleRegisterMobileToggle}
         />
       </div>
 
@@ -51,7 +56,23 @@ export function DashboardLayout({
 
       {/* Right side: Top bar + main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="relative z-20">{topBar?.main}</div>
+        <div className="relative z-20 flex items-stretch">
+          {/* Mobile sidebar toggle — lives in the top bar row on mobile only */}
+          {mobileSidebarToggle && (
+            <button
+              onClick={mobileSidebarToggle}
+              className={cn(
+                "lg:hidden flex h-16 w-14 shrink-0 items-center justify-center border-b border-r border-slate-200 bg-[#FCFDFD] text-slate-700 transition-colors hover:bg-slate-100",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-teal-600",
+              )}
+              aria-label="Open menu"
+              aria-controls="dashboard-sidebar"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+          <div className="flex-1 min-w-0">{topBar?.main}</div>
+        </div>
         <main
           className={cn("flex-1 min-w-0 overflow-y-auto", "h-full", className)}
         >

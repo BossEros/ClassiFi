@@ -3,7 +3,6 @@ import { NavLink, useLocation } from "react-router-dom"
 import {
   Home,
   BookOpen,
-  Menu,
   Users,
   GraduationCap,
   Calendar,
@@ -116,6 +115,8 @@ const adminNavigationItems = [
 interface SidebarProps {
   isCollapsed?: boolean
   onToggleCollapse?: () => void
+  onRegisterMobileToggle?: (toggleFn: () => void) => void
+  onMobileOpenChange?: (isOpen: boolean) => void
 }
 
 interface SidebarNavItemProps {
@@ -127,6 +128,8 @@ interface SidebarNavItemProps {
 interface SidebarContentProps {
   isCollapsed: boolean
   onToggleCollapse?: () => void
+  onRegisterMobileToggle?: (toggleFn: () => void) => void
+  onMobileOpenChange?: (isOpen: boolean) => void
   user: User | null
 }
 
@@ -166,6 +169,8 @@ function SidebarNavItem({
 export function Sidebar({
   isCollapsed = false,
   onToggleCollapse,
+  onRegisterMobileToggle,
+  onMobileOpenChange,
 }: SidebarProps) {
   const user = useAuthStore((state) => state.user)
   const location = useLocation()
@@ -176,6 +181,8 @@ export function Sidebar({
       key={sidebarInstanceKey}
       isCollapsed={isCollapsed}
       onToggleCollapse={onToggleCollapse}
+      onRegisterMobileToggle={onRegisterMobileToggle}
+      onMobileOpenChange={onMobileOpenChange}
       user={user}
     />
   )
@@ -184,6 +191,8 @@ export function Sidebar({
 function SidebarContent({
   isCollapsed,
   onToggleCollapse,
+  onRegisterMobileToggle,
+  onMobileOpenChange,
   user,
 }: SidebarContentProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
@@ -201,6 +210,16 @@ function SidebarContent({
   const toggleMobileSidebar = useCallback(() => {
     setIsMobileOpen((previousIsMobileOpen) => !previousIsMobileOpen)
   }, [])
+
+  // Register the toggle function with the parent so it can be placed in the top bar
+  useEffect(() => {
+    onRegisterMobileToggle?.(toggleMobileSidebar)
+  }, [onRegisterMobileToggle, toggleMobileSidebar])
+
+  // Notify parent of mobile open state changes
+  useEffect(() => {
+    onMobileOpenChange?.(isMobileOpen)
+  }, [isMobileOpen, onMobileOpenChange])
 
   // Close sidebar on Escape key
   const handleEscapeKey = useCallback((event: KeyboardEvent) => {
@@ -274,22 +293,6 @@ function SidebarContent({
 
   return (
     <>
-      {/* Mobile menu button */}
-      {!isMobileOpen && (
-        <button
-          onClick={toggleMobileSidebar}
-          className={cn(
-            "fixed left-3 top-3 z-[70] flex h-11 w-11 items-center justify-center rounded-lg border border-slate-300/90 bg-white/95 text-slate-800 shadow-lg shadow-slate-300/80 backdrop-blur-sm transition-all duration-200 hover:border-slate-400 hover:bg-white lg:hidden",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 focus-visible:ring-offset-[#FCFDFD]",
-          )}
-          aria-label="Open menu"
-          aria-expanded={isMobileOpen}
-          aria-controls="dashboard-sidebar"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
-
       {/* Sidebar */}
       <aside
         id="dashboard-sidebar"

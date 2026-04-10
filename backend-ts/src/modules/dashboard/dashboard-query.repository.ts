@@ -5,6 +5,19 @@ import { classes, type Class } from "@/modules/classes/class.model.js"
 import { enrollments } from "@/modules/enrollments/enrollment.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
 import { db } from "@/shared/database.js"
+/**
+ * All assignments read model for teacher assignments page.
+ */
+export interface TeacherAllAssignmentReadModel {
+  id: number
+  assignmentName: string
+  className: string
+  classId: number
+  deadline: Date | null
+  programmingLanguage: Assignment["programmingLanguage"]
+  submissionCount: number
+  studentCount: number
+}
 
 /**
  * Pending assignment read model for student dashboard.
@@ -80,10 +93,67 @@ export class DashboardQueryRepository {
   }
 
   /**
+   * Returns all assignments for a teacher with submission and student counts.
+   */
+  async getAllAssignmentsForTeacher(
+    teacherId: number,
+    limit: number = 200,
+  ): Promise<TeacherAllAssignmentReadModel[]> {
+    const studentCountSubquery = db
+      .select({
+        classId: enrollments.classId,
+        count: sql<number>`count(*)`.as("student_count"),
+      })
+      .from(enrollments)
+      .groupBy(enrollments.classId)
+      .as("student_counts")
+
+    const submissionCountSubquery = db
+      .select({
+        assignmentId: submissions.assignmentId,
+        count: sql<number>`count(*)`.as("submission_count"),
+      })
+      .from(submissions)
+      .where(eq(submissions.isLatest, true))
+      .groupBy(submissions.assignmentId)
+      .as("submission_counts")
+
+    const results = await db
+      .select({
+        id: assignments.id,
+        assignmentName: assignments.assignmentName,
+        className: classes.className,
+        classId: classes.id,
+        deadline: assignments.deadline,
+        programmingLanguage: assignments.programmingLanguage,
+        submissionCount: sql<number>`COALESCE(${submissionCountSubquery.count}, 0)`,
+        studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
+      })
+      .from(assignments)
+      .innerJoin(classes, eq(assignments.classId, classes.id))
+      .leftJoin(studentCountSubquery, eq(classes.id, studentCountSubquery.classId))
+      .leftJoin(submissionCountSubquery, eq(assignments.id, submissionCountSubquery.assignmentId))
+      .where(
+        and(
+          eq(classes.teacherId, teacherId),
+          eq(classes.isActive, true),
+          eq(assignments.isActive, true),
+        ),
+      )
+      .orderBy(sql`${assignments.deadline} ASC NULLS LAST`)
+      .limit(limit)
+
+    return results.map((row) => ({
+      ...row,
+      submissionCount: Number(row.submissionCount),
+      studentCount: Number(row.studentCount),
+    }))
+  }
+
+  /**
    * Returns recent classes with student and assignment counts in one query.
    */
-  async getRecentClassesForTeacher(
-    teacherId: number,
+  async getRecentClassesForTeacher(    teacherId: number,
     limit: number,
   ): Promise<TeacherRecentClassReadModel[]> {
     const studentCountSubquery = db

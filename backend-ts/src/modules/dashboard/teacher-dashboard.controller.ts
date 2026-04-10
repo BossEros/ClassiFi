@@ -109,4 +109,23 @@ export async function teacherDashboardRoutes(
       })
     },
   })
+
+  /**
+   * GET /:teacherId/assignments
+   * Get all assignments for a teacher across active classes
+   */
+  app.get("/:teacherId/assignments", {
+    preHandler: [validateParams(TeacherIdParamSchema)],
+    handler: async (request, reply) => {
+      const { teacherId } = request.validatedParams as TeacherIdParam
+
+      const allAssignments = await teacherDashboardService.getAllAssignments(teacherId)
+
+      return reply.send({
+        success: true,
+        message: "All assignments retrieved successfully",
+        assignments: allAssignments,
+      })
+    },
+  })
 }
