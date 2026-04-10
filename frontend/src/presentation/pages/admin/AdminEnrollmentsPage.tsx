@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { RefreshCw, UserPlus, Users, XCircle } from "lucide-react"
+import { RefreshCw, Users, XCircle } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { useDebouncedValue } from "@/presentation/hooks/shared/useDebouncedValue"
@@ -129,7 +129,7 @@ export default function AdminEnrollmentsPage() {
       await fetchEnrollments()
       const { enrolled, skipped, failed } = result.summary
       showToast(
-        `Bulk enrollment complete: ${enrolled} enrolled, ${skipped} skipped, ${failed} failed`,
+        `Enrollment complete: ${enrolled} enrolled, ${skipped} skipped, ${failed} failed`,
         enrolled > 0 ? "success" : "error",
       )
       return result
@@ -137,7 +137,7 @@ export default function AdminEnrollmentsPage() {
       const errorMessage =
         submissionError instanceof Error
           ? submissionError.message
-          : "Failed to bulk-enroll students"
+          : "Failed to enroll student/s"
       setError(errorMessage)
       showToast(errorMessage, "error")
       throw submissionError
@@ -222,18 +222,10 @@ export default function AdminEnrollmentsPage() {
             <button
               type="button"
               onClick={() => setIsBulkEnrollModalOpen(true)}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600/10 px-4 py-2.5 text-sm font-semibold text-teal-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-100"
-            >
-              <Users className="h-4 w-4" />
-              Bulk Enroll
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsEnrollModalOpen(true)}
               className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-teal-500/30 bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-teal-200/60 transition-all duration-200 hover:-translate-y-0.5 hover:bg-teal-700"
             >
-              <UserPlus className="h-4 w-4" />
-              Enroll Student
+              <Users className="h-4 w-4" />
+              Enroll Students
             </button>
           </div>
         </div>

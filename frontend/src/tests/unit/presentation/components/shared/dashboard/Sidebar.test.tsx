@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, useNavigate } from "react-router-dom"
+import { useCallback, useRef, useState } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { Sidebar } from "@/presentation/components/shared/dashboard/Sidebar"
 import { useAuthStore } from "@/shared/store/useAuthStore"
@@ -30,23 +31,71 @@ function mockMatchMedia(matchesDesktopViewport: boolean) {
   }))
 }
 
+/**
+ * Wraps Sidebar with an "Open menu" button that simulates what DashboardLayout
+ * does — it receives the mobile toggle function via onRegisterMobileToggle and
+ * renders it in the top bar. The button is hidden while the mobile drawer is
+ * open (via onMobileOpenChange), matching the original DashboardLayout behaviour
+ * the tests rely on.
+ */
+function SidebarWithMobileToggle({ isCollapsed = false }: { isCollapsed?: boolean }) {
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const mobileToggleRef = useRef<(() => void) | null>(null)
+
+  const handleRegisterMobileToggle = useCallback((toggleFn: () => void) => {
+    mobileToggleRef.current = toggleFn
+  }, [])
+
+  return (
+    <>
+      {!isMobileOpen && (
+        <button aria-label="Open menu" onClick={() => mobileToggleRef.current?.()}>
+          Open menu
+        </button>
+      )}
+      <Sidebar
+        isCollapsed={isCollapsed}
+        onToggleCollapse={vi.fn()}
+        onRegisterMobileToggle={handleRegisterMobileToggle}
+        onMobileOpenChange={setIsMobileOpen}
+      />
+    </>
+  )
+}
+
 function renderSidebar(isCollapsed = false) {
   return render(
     <MemoryRouter initialEntries={["/dashboard"]}>
-      <Sidebar isCollapsed={isCollapsed} onToggleCollapse={vi.fn()} />
+      <SidebarWithMobileToggle isCollapsed={isCollapsed} />
     </MemoryRouter>,
   )
 }
 
 function SidebarRouteChangeHarness() {
   const navigate = useNavigate()
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const mobileToggleRef = useRef<(() => void) | null>(null)
+
+  const handleRegisterMobileToggle = useCallback((toggleFn: () => void) => {
+    mobileToggleRef.current = toggleFn
+  }, [])
 
   return (
     <>
       <button onClick={() => navigate("/dashboard/classes")}>
         Navigate to classes
       </button>
-      <Sidebar isCollapsed={false} onToggleCollapse={vi.fn()} />
+      {!isMobileOpen && (
+        <button aria-label="Open menu" onClick={() => mobileToggleRef.current?.()}>
+          Open menu
+        </button>
+      )}
+      <Sidebar
+        isCollapsed={false}
+        onToggleCollapse={vi.fn()}
+        onRegisterMobileToggle={handleRegisterMobileToggle}
+        onMobileOpenChange={setIsMobileOpen}
+      />
     </>
   )
 }

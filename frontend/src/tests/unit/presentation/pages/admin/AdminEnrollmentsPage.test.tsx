@@ -128,7 +128,10 @@ describe("AdminEnrollmentsPage", () => {
     })
     vi.mocked(adminService.transferStudent).mockResolvedValue(undefined)
     vi.mocked(adminService.removeStudentFromClass).mockResolvedValue(undefined)
-    vi.mocked(adminService.addStudentToClass).mockResolvedValue(undefined)
+    vi.mocked(adminService.bulkEnrollStudents).mockResolvedValue({
+      summary: { total: 0, enrolled: 0, skipped: 0, failed: 0 },
+      results: [],
+    })
     vi.mocked(adminService.getAllUsers).mockResolvedValue({
       success: true,
       data: [mockStudentOption],
@@ -151,27 +154,33 @@ describe("AdminEnrollmentsPage", () => {
     expect(screen.getByText("Active Enrollment")).toBeInTheDocument()
   })
 
-  it("enrolls a selected student into a selected class", async () => {
+  it("bulk enrolls selected students into a selected class", async () => {
     const user = userEvent.setup()
+
+    vi.mocked(adminService.bulkEnrollStudents).mockResolvedValue({
+      summary: { total: 1, enrolled: 1, skipped: 0, failed: 0 },
+      results: [{ studentId: 11, status: "enrolled" }],
+    })
+
     renderAdminEnrollmentsPage()
 
     await waitFor(() => {
       expect(screen.getByText("Jane Doe")).toBeInTheDocument()
     })
 
-    await user.click(screen.getByRole("button", { name: /^Enroll Student$/i }))
+    await user.click(screen.getByRole("button", { name: /^Enroll Students$/i }))
 
-    const enrollmentDialog = await screen.findByRole("dialog", { name: /Manual Enrollment/i })
+    const enrollmentDialog = await screen.findByRole("dialog", { name: /Enroll Students/i })
 
-    expect(within(enrollmentDialog).getByText("Select Student")).toBeInTheDocument()
-    expect(within(enrollmentDialog).getByText("Select Class")).toBeInTheDocument()
+    expect(within(enrollmentDialog).getByText("Select Students")).toBeInTheDocument()
+    expect(within(enrollmentDialog).getByText("Select Target Class")).toBeInTheDocument()
 
     await user.click(within(enrollmentDialog).getByRole("button", { name: /Select student Alexa Santos/i }))
     await user.click(within(enrollmentDialog).getByRole("button", { name: /Select class Algorithms/i }))
-    await user.click(within(enrollmentDialog).getByRole("button", { name: /^Enroll Student$/i }))
+    await user.click(within(enrollmentDialog).getByRole("button", { name: /Enroll 1 Student$/i }))
 
     await waitFor(() => {
-      expect(adminService.addStudentToClass).toHaveBeenCalledWith(2, 11)
+      expect(adminService.bulkEnrollStudents).toHaveBeenCalledWith(2, [11])
     })
   })
 

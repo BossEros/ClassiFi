@@ -57,7 +57,7 @@ export function useTopBar({
 
   return {
     main: (
-      <div className="h-16 shrink-0 border-b border-slate-200 bg-[#FCFDFD] px-4 pl-14 sm:pl-4 lg:px-8">
+      <div className="h-16 shrink-0 border-b border-slate-200 bg-[#FCFDFD] px-4 lg:px-8">
         <div className="flex h-full w-full items-center justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
             {isMobileViewport && currentMobileBreadcrumb ? (

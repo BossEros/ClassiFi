@@ -710,37 +710,64 @@ export function AssignmentSubmissionsPage() {
               {assignment.assignmentName}
             </h1>
 
-            <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-800 shadow-sm">
-              <Calendar className="h-4 w-4 text-blue-700" />
-              <span>
-                {assignment.deadline
-                  ? `Due ${formatDeadline(assignment.deadline)}`
-                  : "No deadline"}
-              </span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-sm font-semibold text-blue-800 shadow-sm">
+                <Calendar className="h-4 w-4 text-blue-700" />
+                <span>
+                  {assignment.deadline
+                    ? `Due ${formatDeadline(assignment.deadline)}`
+                    : "No deadline"}
+                </span>
+              </div>
+
+              {canManageAssignment && (
+                <div className="lg:hidden">
+                  <DropdownMenu
+                    items={[
+                      {
+                        id: "edit-assignment",
+                        label: "Edit Assignment",
+                        icon: Edit,
+                        onClick: handleEditAssignment,
+                      },
+                      {
+                        id: "delete-assignment",
+                        label: "Delete Assignment",
+                        icon: Trash2,
+                        variant: "danger",
+                        onClick: handleDeleteAssignmentClick,
+                      },
+                    ]}
+                    triggerLabel="Assignment actions"
+                    variant="light"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
           {canManageAssignment && (
-            <DropdownMenu
-              items={[
-                {
-                  id: "edit-assignment",
-                  label: "Edit Assignment",
-                  icon: Edit,
-                  onClick: handleEditAssignment,
-                },
-                {
-                  id: "delete-assignment",
-                  label: "Delete Assignment",
-                  icon: Trash2,
-                  variant: "danger",
-                  onClick: handleDeleteAssignmentClick,
-                },
-              ]}
-              triggerLabel="Assignment actions"
-              variant="light"
-              className="flex-shrink-0 self-start"
-            />
+            <div className="hidden lg:block flex-shrink-0 self-start">
+              <DropdownMenu
+                items={[
+                  {
+                    id: "edit-assignment",
+                    label: "Edit Assignment",
+                    icon: Edit,
+                    onClick: handleEditAssignment,
+                  },
+                  {
+                    id: "delete-assignment",
+                    label: "Delete Assignment",
+                    icon: Trash2,
+                    variant: "danger",
+                    onClick: handleDeleteAssignmentClick,
+                  },
+                ]}
+                triggerLabel="Assignment actions"
+                variant="light"
+              />
+            </div>
           )}
         </div>
 

@@ -70,3 +70,25 @@ export async function getPendingTasks(
     studentCount: task.totalStudents,
   })) as unknown as Task[]
 }
+
+/**
+ * Retrieves all assignments across all active classes for the teacher.
+ * Includes submission counts, total students, and deadline information.
+ *
+ * @param teacherId - The unique identifier of the teacher.
+ * @returns A list of all teacher assignments.
+ * @throws Error if the assignments cannot be fetched.
+ */
+export async function getAllTeacherAssignments(
+  teacherId: number,
+): Promise<Task[]> {
+  validateId(teacherId, "teacher")
+
+  const response =
+    await dashboardRepository.getAllAssignmentsForTeacherId(teacherId)
+
+  return response.assignments.map((assignment) => ({
+    ...assignment,
+    studentCount: assignment.totalStudents,
+  })) as unknown as Task[]
+}

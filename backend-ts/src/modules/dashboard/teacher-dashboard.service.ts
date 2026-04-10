@@ -7,6 +7,7 @@ import {
   toDashboardClassDTO,
   type DashboardClassDTO,
   type PendingTaskDTO,
+  type AllTeacherAssignmentDTO,
 } from "@/modules/dashboard/dashboard.mapper.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -112,6 +113,26 @@ export class TeacherDashboardService {
       deadline: t.deadline?.toISOString() ?? null,
       submissionCount: t.submissionCount,
       totalStudents: t.studentCount,
+    }))
+  }
+
+  /** Get all assignments for a teacher across all active classes */
+  async getAllAssignments(teacherId: number): Promise<AllTeacherAssignmentDTO[]> {
+    if (!this.dashboardQueryRepo) {
+      return []
+    }
+
+    const allAssignments = await this.dashboardQueryRepo.getAllAssignmentsForTeacher(teacherId)
+
+    return allAssignments.map((a) => ({
+      id: a.id,
+      assignmentName: a.assignmentName,
+      className: a.className,
+      classId: a.classId,
+      deadline: a.deadline?.toISOString() ?? null,
+      submissionCount: a.submissionCount,
+      totalStudents: a.studentCount,
+      programmingLanguage: a.programmingLanguage,
     }))
   }
 }

@@ -85,7 +85,7 @@ function DeleteClassModalContent({
 
       <div
         className={cn(
-          "relative w-full max-w-md mx-4 p-6",
+          "relative w-full max-w-160 mx-4 p-6",
           "rounded-3xl border border-rose-200 bg-white",
           "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",

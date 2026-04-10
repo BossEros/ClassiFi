@@ -5,6 +5,21 @@ import type {
   TeacherDashboardTaskListResponse,
 } from "@/data/api/dashboard.types"
 
+export interface TeacherAllAssignmentsResponse {
+  success: boolean
+  message?: string
+  assignments: {
+    id: number
+    assignmentName: string
+    className: string
+    classId: number
+    deadline: string | null
+    submissionCount: number
+    totalStudents: number
+    programmingLanguage: string
+  }[]
+}
+
 // Export response types for consumers
 export type {
   TeacherDashboardResponse,
@@ -70,4 +85,20 @@ export async function getPendingTasksForTeacherId(
   )
 
   return unwrapApiResponse(apiResponse, "Failed to fetch pending tasks")
+}
+
+/**
+ * Retrieves all assignments for a teacher across all active classes.
+ *
+ * @param teacherId - The unique identifier of the teacher.
+ * @returns Response containing all teacher assignments with submission counts.
+ */
+export async function getAllAssignmentsForTeacherId(
+  teacherId: number,
+): Promise<TeacherAllAssignmentsResponse> {
+  const apiResponse = await apiClient.get<TeacherAllAssignmentsResponse>(
+    `/teacher/dashboard/${teacherId}/assignments`,
+  )
+
+  return unwrapApiResponse(apiResponse, "Failed to fetch all assignments")
 }

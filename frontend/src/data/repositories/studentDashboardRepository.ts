@@ -33,7 +33,7 @@ export type {
 export async function getCompleteDashboardDataForStudentId(
   studentId: number,
   maximumEnrolledClassesCount: number = 12,
-  maximumPendingAssignmentsCount: number = 10,
+  maximumPendingAssignmentsCount: number = 100,
 ): Promise<StudentDashboardBackendResponse> {
   const apiResponse = await apiClient.get<StudentDashboardBackendResponse>(
     `/student/dashboard/${studentId}?enrolledClassesLimit=${maximumEnrolledClassesCount}&pendingAssignmentsLimit=${maximumPendingAssignmentsCount}`,
