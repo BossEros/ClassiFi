@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { Clock3 } from "lucide-react"
+import React, { useState, useMemo } from "react"
+import { Clock3, ChevronLeft, ChevronRight } from "lucide-react"
 import type { FilePair, MatchFragment } from "./types"
 import { PairCodeEditor } from "./PairCodeEditor"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
@@ -36,6 +36,42 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
   const isLight = variant === "light"
   const isTabletOrBelow = useIsTabletOrBelow()
 
+  // Sort fragments by length descending so the strongest match is navigated to first.
+  const sortedByStrength = useMemo(
+    () => [...pair.fragments].sort((a, b) => b.length - a.length),
+    [pair.fragments],
+  )
+
+  const totalFragments = sortedByStrength.length
+
+  const selectedFragmentIndex = useMemo(() => {
+    if (!selectedFragment) return -1
+    return sortedByStrength.findIndex((f) => f.id === selectedFragment.id)
+  }, [selectedFragment, sortedByStrength])
+
+  const navigateToFragment = (index: number) => {
+    const fragment = sortedByStrength[index]
+    if (fragment) setSelectedFragment(fragment)
+  }
+
+  const handlePreviousFragment = () => {
+    if (totalFragments === 0) return
+    if (selectedFragmentIndex <= 0) {
+      navigateToFragment(totalFragments - 1)
+    } else {
+      navigateToFragment(selectedFragmentIndex - 1)
+    }
+  }
+
+  const handleNextFragment = () => {
+    if (totalFragments === 0) return
+    if (selectedFragmentIndex === -1 || selectedFragmentIndex >= totalFragments - 1) {
+      navigateToFragment(0)
+    } else {
+      navigateToFragment(selectedFragmentIndex + 1)
+    }
+  }
+
   const temporalOrder = getTemporalOrder(
     pair.leftFile.submittedAt,
     pair.rightFile.submittedAt,
@@ -51,6 +87,11 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
     : temporalOrder === "right"
       ? pair.rightFile.studentName
       : null
+
+  const labelColor = isLight ? "#64748b" : "#9ca3af"
+  const valueColor = isLight ? "#0f172a" : "#f1f5f9"
+  const borderColor = isLight ? "#e2e8f0" : "rgba(255,255,255,0.08)"
+  const bgColor = isLight ? "#f8fafc" : "rgba(255,255,255,0.05)"
 
   return (
     <div
@@ -86,6 +127,87 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
           </span>
         </div>
       )}
+
+      {/* Fragment navigation bar */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          padding: "10px 14px",
+          backgroundColor: bgColor,
+          borderRadius: "8px",
+          border: `1px solid ${borderColor}`,
+          fontSize: "13px",
+        }}
+      >
+        {/* Fragment navigator */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <button
+            onClick={handlePreviousFragment}
+            disabled={totalFragments === 0}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "26px",
+              height: "26px",
+              borderRadius: "6px",
+              border: `1px solid ${borderColor}`,
+              background: "transparent",
+              cursor: totalFragments === 0 ? "not-allowed" : "pointer",
+              color: labelColor,
+              opacity: totalFragments === 0 ? 0.4 : 1,
+            }}
+            aria-label="Previous fragment"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <span style={{ color: labelColor }}>
+            {totalFragments === 0 ? (
+              <span>No fragments</span>
+            ) : selectedFragmentIndex === -1 ? (
+              <span>
+                <strong style={{ color: valueColor }}>{totalFragments}</strong>{" "}
+                matching fragment{totalFragments !== 1 ? "s" : ""}
+              </span>
+            ) : (
+              <span>
+                Fragment{" "}
+                <strong style={{ color: valueColor }}>{selectedFragmentIndex + 1}</strong>
+                {" / "}
+                <strong style={{ color: valueColor }}>{totalFragments}</strong>
+                {" — "}
+                <strong style={{ color: valueColor }}>{sortedByStrength[selectedFragmentIndex].length}</strong>{" "}
+                k-grams
+              </span>
+            )}
+          </span>
+          <button
+            onClick={handleNextFragment}
+            disabled={totalFragments === 0}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "26px",
+              height: "26px",
+              borderRadius: "6px",
+              border: `1px solid ${borderColor}`,
+              background: "transparent",
+              cursor: totalFragments === 0 ? "not-allowed" : "pointer",
+              color: labelColor,
+              opacity: totalFragments === 0 ? 0.4 : 1,
+            }}
+            aria-label="Next fragment"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
       {/* Side-by-side editors (stacked on mobile) */}
       <div
         style={{
@@ -150,17 +272,17 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
       <div
         style={{
           padding: "8px 12px",
-          backgroundColor: isLight ? "#f8fafc" : "rgba(255, 255, 255, 0.05)",
+          backgroundColor: bgColor,
           borderRadius: "6px",
           fontSize: "13px",
-          color: isLight ? "#64748b" : "#9ca3af",
-          border: isLight ? "1px solid #e2e8f0" : undefined,
+          color: labelColor,
+          border: isLight ? `1px solid ${borderColor}` : undefined,
         }}
       >
-        <strong style={{ color: isLight ? "#0f172a" : "#fff" }}>Tip:</strong>{" "}
+        <strong style={{ color: valueColor }}>Tip:</strong>{" "}
         Shared fragments are highlighted in sky blue. Click any highlighted
-        block to lock in a stronger outline and keep both editors centered on
-        the same region.
+        block or use the arrows above to navigate between matches.
+        Fragments are ordered strongest first.
       </div>
     </div>
   )
