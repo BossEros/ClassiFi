@@ -120,9 +120,9 @@ export class GradebookService {
       throw new Error("Assignment not found")
     }
 
-    // STEP 2: Validate the override grade is within the assignment's score bounds
-    if (grade < 0 || grade > assignment.totalScore) {
-      throw new Error(`Grade must be between 0 and ${assignment.totalScore}`)
+    // STEP 2: Validate the override grade is a whole number within the assignment's score bounds
+    if (!Number.isInteger(grade) || grade < 0 || grade > assignment.totalScore) {
+      throw new Error(`Grade must be a whole number between 0 and ${assignment.totalScore}`)
     }
 
     // STEP 3: Persist the grade override and create an in-app notification in a single transaction
@@ -202,9 +202,9 @@ export class GradebookService {
       throw new Error("Assignment not found")
     }
 
-    // STEP 2: Validate grade is within the assignment's score bounds
-    if (grade < 0 || grade > assignment.totalScore) {
-      throw new Error(`Grade must be between 0 and ${assignment.totalScore}`)
+    // STEP 2: Validate grade is a whole number within the assignment's score bounds
+    if (!Number.isInteger(grade) || grade < 0 || grade > assignment.totalScore) {
+      throw new Error(`Grade must be a whole number between 0 and ${assignment.totalScore}`)
     }
 
     // STEP 3: Apply the stored late penalty to arrive at the final grade.

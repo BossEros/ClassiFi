@@ -1,15 +1,20 @@
 import { z } from "zod"
 
 function parseGradeValue(gradeValue: string): number {
-  return Number.parseFloat(gradeValue)
+  return Number.parseInt(gradeValue, 10)
+}
+
+function isWholeNumber(gradeValue: string): boolean {
+  const parsed = Number(gradeValue)
+  return !Number.isNaN(parsed) && Number.isInteger(parsed)
 }
 
 export function createGradeOverrideFormSchema(totalScore: number) {
   return z.object({
     grade: z
       .string()
-      .refine((gradeValue) => !Number.isNaN(parseGradeValue(gradeValue)), {
-        message: "Please enter a valid grade",
+      .refine((gradeValue) => isWholeNumber(gradeValue), {
+        message: "Grade must be a whole number",
       })
       .refine(
         (gradeValue) => {
@@ -32,8 +37,8 @@ export function createSetGradeFormSchema(totalScore: number) {
   return z.object({
     grade: z
       .string()
-      .refine((gradeValue) => !Number.isNaN(parseGradeValue(gradeValue)), {
-        message: "Please enter a valid grade",
+      .refine((gradeValue) => isWholeNumber(gradeValue), {
+        message: "Grade must be a whole number",
       })
       .refine(
         (gradeValue) => {

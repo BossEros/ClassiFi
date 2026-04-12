@@ -149,7 +149,7 @@ export type LatePenaltyConfigResponse = z.infer<
 
 /** Grade override request body */
 export const GradeOverrideBodySchema = z.object({
-  grade: z.number().min(0),
+  grade: z.number().int().min(0),
   feedback: z.string().nullable().optional(),
 })
 
@@ -157,7 +157,7 @@ export type GradeOverrideBody = z.infer<typeof GradeOverrideBodySchema>
 
 /** Manual grade request body (for submissions with no auto-calculated grade) */
 export const SetManualGradeBodySchema = z.object({
-  grade: z.number().min(0),
+  grade: z.number().int().min(0),
 })
 
 export type SetManualGradeBody = z.infer<typeof SetManualGradeBodySchema>

@@ -120,8 +120,8 @@ export function GradeOverrideModal({
             <input
               type="number"
               id="grade"
-              step="0.01"
-              inputMode="decimal"
+              step="1"
+              inputMode="numeric"
               {...gradeField}
               value={grade}
               onChange={(event) => {
