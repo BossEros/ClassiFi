@@ -17,6 +17,7 @@ export interface PendingTeacherTask {
   classId: number
   className: string
   studentCount: number
+  submittedCount: number
   submissionCount: number
 }
 
@@ -140,12 +141,14 @@ export class AssignmentRepository extends BaseRepository<
     limit: number = 10,
   ): Promise<PendingTeacherTask[]> {
     const studentCountsSubquery = this.buildStudentCountsSubquery()
+    const submittedCountsSubquery = this.buildSubmittedCountsSubquery()
     const submissionCountsSubquery = this.buildSubmissionCountsSubquery()
 
     const results = await this.executePendingTasksQuery(
       teacherId,
       limit,
       studentCountsSubquery,
+      submittedCountsSubquery,
       submissionCountsSubquery,
     )
 
@@ -162,6 +165,19 @@ export class AssignmentRepository extends BaseRepository<
       .from(enrollments)
       .groupBy(enrollments.classId)
       .as("studentCounts")
+  }
+
+  /** Subquery: Count latest ungraded submissions per assignment */
+  private buildSubmittedCountsSubquery() {
+    return this.db
+      .select({
+        assignmentId: submissions.assignmentId,
+        count: sql<number>`count(*)`.as("submittedCount"),
+      })
+      .from(submissions)
+      .where(eq(submissions.isLatest, true))
+      .groupBy(submissions.assignmentId)
+      .as("submittedCounts")
   }
 
   /** Subquery: Count latest ungraded submissions per assignment */
@@ -188,6 +204,7 @@ export class AssignmentRepository extends BaseRepository<
     teacherId: number,
     limit: number,
     studentCountsSubquery: ReturnType<typeof this.buildStudentCountsSubquery>,
+    submittedCountsSubquery: ReturnType<typeof this.buildSubmittedCountsSubquery>,
     submissionCountsSubquery: ReturnType<
       typeof this.buildSubmissionCountsSubquery
     >,
@@ -200,6 +217,7 @@ export class AssignmentRepository extends BaseRepository<
         classId: classes.id,
         className: classes.className,
         studentCount: sql<number>`COALESCE(${studentCountsSubquery.count}, 0)`,
+        submittedCount: sql<number>`COALESCE(${submittedCountsSubquery.count}, 0)`,
         submissionCount: sql<number>`COALESCE(${submissionCountsSubquery.count}, 0)`,
       })
       .from(assignments)
@@ -207,6 +225,10 @@ export class AssignmentRepository extends BaseRepository<
       .leftJoin(
         studentCountsSubquery,
         eq(classes.id, studentCountsSubquery.classId),
+      )
+      .leftJoin(
+        submittedCountsSubquery,
+        eq(assignments.id, submittedCountsSubquery.assignmentId),
       )
       .leftJoin(
         submissionCountsSubquery,
@@ -232,6 +254,7 @@ export class AssignmentRepository extends BaseRepository<
     classId: number
     className: string
     studentCount: number
+    submittedCount: number
     submissionCount: number
   }): PendingTeacherTask => ({
     id: row.id,
@@ -240,6 +263,7 @@ export class AssignmentRepository extends BaseRepository<
     classId: row.classId,
     className: row.className,
     studentCount: Number(row.studentCount),
+    submittedCount: Number(row.submittedCount),
     submissionCount: Number(row.submissionCount),
   })
 

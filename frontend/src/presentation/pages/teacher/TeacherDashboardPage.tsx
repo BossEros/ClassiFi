@@ -223,7 +223,7 @@ export function TeacherDashboardPage() {
                         <span
                           className={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${pendingBadgeClass}`}
                         >
-                          {pendingCount} Pending
+                          {pendingCount} Ungraded
                         </span>
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3">
@@ -270,7 +270,7 @@ export function TeacherDashboardPage() {
                       >
                         <button
                           type="button"
-                          className="inline-flex cursor-pointer select-none items-center gap-1 hover:text-slate-800"
+                          className="inline-flex cursor-pointer select-none items-center gap-1 uppercase tracking-wide hover:text-slate-800"
                           onClick={() => setDeadlineSort(prev => prev === "asc" ? "desc" : "asc")}
                           aria-label="Sort by deadline"
                         >
@@ -283,7 +283,7 @@ export function TeacherDashboardPage() {
                         </button>
                       </th>
                       <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                        Pending Submissions
+                        Ungraded Submissions
                       </th>
                       <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
                         Action
@@ -322,7 +322,7 @@ export function TeacherDashboardPage() {
                               className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${pendingBadgeClass}`}
                             >
                               <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />
-                              {pendingCount} Pending
+                              {pendingCount} Ungraded
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
