@@ -57,17 +57,16 @@ function GradeCell({ grade, totalScore, deadline, variant = "dark" }: GradeCellP
 
   const percentage = totalScore > 0 ? (grade.grade / totalScore) * 100 : 0
   const colorClass = getGradeColorClass(percentage, variant)
-  const hasDeductions =
-    grade.gradeBreakdown &&
-    (grade.gradeBreakdown.latePenaltyPercent > 0 || grade.gradeBreakdown.similarityPenaltyPercent > 0)
+  const hasBreakdown =
+    grade.gradeBreakdown && grade.gradeBreakdown.originalGrade !== null
 
   return (
     <div ref={cellRef} className="relative inline-block">
       <button
         type="button"
-        onClick={() => hasDeductions && setIsBreakdownVisible((prev) => !prev)}
-        className={`inline-flex items-center justify-center min-w-[48px] h-8 px-2 rounded text-sm font-medium ${colorClass} ${hasDeductions ? "cursor-pointer" : "cursor-default"}`}
-        title={`${grade.grade}/${totalScore} (${Math.round(percentage)}%)${hasDeductions ? " — click to see breakdown" : ""}`}
+        onClick={() => hasBreakdown && setIsBreakdownVisible((prev) => !prev)}
+        className={`inline-flex items-center justify-center min-w-[48px] h-8 px-2 rounded text-sm font-medium ${colorClass} ${hasBreakdown ? "cursor-pointer" : "cursor-default"}`}
+        title={`${grade.grade}/${totalScore} (${Math.round(percentage)}%)${hasBreakdown ? " — click to see breakdown" : ""}`}
       >
         <span>{grade.grade}</span>
         {grade.isOverridden && (

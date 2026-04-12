@@ -992,8 +992,6 @@ export function AssignmentDetailPage() {
                             )}
 
                             {activeSubmission?.gradeBreakdown &&
-                              (activeSubmission.gradeBreakdown.latePenaltyPercent > 0 ||
-                                activeSubmission.gradeBreakdown.similarityPenaltyPercent > 0) &&
                               activeSubmission.gradeBreakdown.originalGrade !== null && (
                                 <>
                                   <button

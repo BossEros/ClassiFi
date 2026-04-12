@@ -63,7 +63,7 @@ export function GradeOverrideModal({
 
   const handleValidSubmit = (formValues: GradeOverrideFormValues) => {
     setError(null)
-    onSubmit(Number.parseFloat(formValues.grade), formValues.feedback.trim() || null)
+    onSubmit(Number.parseInt(formValues.grade, 10), formValues.feedback.trim() || null)
   }
 
   const handleInvalidSubmit = (validationErrors: FieldErrors<GradeOverrideFormValues>) => {
@@ -128,6 +128,9 @@ export function GradeOverrideModal({
                 gradeField.onChange(event)
                 if (error) setError(null)
               }}
+              onKeyDown={(event) => {
+                if (event.key === "." || event.key === ",") event.preventDefault()
+              }}
               min={0}
               max={totalScore}
               disabled={isSubmitting}
@@ -141,7 +144,7 @@ export function GradeOverrideModal({
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 error && "border-red-500/50 focus:border-red-500 focus:ring-red-500/20",
               )}
-              placeholder="0.00"
+              placeholder="0"
             />
             <div className="pointer-events-none absolute right-4 top-1/2 flex -translate-y-1/2 items-center gap-2">
               <span className={`font-medium ${isLight ? "text-slate-400" : "text-slate-600"}`}>/</span>
