@@ -210,7 +210,7 @@ function GradebookTable({
       </div>
 
       {/* Desktop table layout */}
-      <div className="hidden lg:block overflow-x-auto">
+      <div className="hidden lg:block overflow-auto max-h-[calc(100vh-240px)]">
         <table className="w-full">
           <thead className="sticky top-0 z-10">
             <tr
