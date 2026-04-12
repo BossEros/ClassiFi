@@ -155,6 +155,13 @@ export const GradeOverrideBodySchema = z.object({
 
 export type GradeOverrideBody = z.infer<typeof GradeOverrideBodySchema>
 
+/** Manual grade request body (for submissions with no auto-calculated grade) */
+export const SetManualGradeBodySchema = z.object({
+  grade: z.number().min(0),
+})
+
+export type SetManualGradeBody = z.infer<typeof SetManualGradeBodySchema>
+
 /** Late penalty config update request body */
 export const LatePenaltyUpdateBodySchema = z.object({
   enabled: z.boolean(),

@@ -211,6 +211,27 @@ export async function removeGradeOverrideForSubmissionById(
   unwrapApiResponse(apiResponse, "Failed to remove grade override")
 }
 
+/**
+ * Sets a manual grade directly on a submission that has no auto-calculated grade
+ * (i.e. assignments with no test cases). Writes to the grade column — does NOT
+ * set the override flag.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @param gradeValue - The grade value to set.
+ * @throws Error if the API call fails.
+ */
+export async function setManualGradeForSubmissionById(
+  submissionId: number,
+  gradeValue: number,
+): Promise<void> {
+  const requestBody = { grade: gradeValue }
+  const apiResponse = await apiClient.post<{
+    success: boolean
+    message?: string
+  }>(`/gradebook/submissions/${submissionId}/grade`, requestBody)
+  unwrapApiResponse(apiResponse, "Failed to set grade")
+}
+
 // ============================================================================
 // Late Penalty Configuration Functions
 // ============================================================================

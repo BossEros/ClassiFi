@@ -6,6 +6,7 @@ import {
   getStudentRank,
   overrideGrade,
   removeGradeOverride,
+  setManualGrade,
   downloadGradebookCSV,
   type ClassGradebook,
   type StudentClassGrades,
@@ -167,9 +168,29 @@ export function useGradeOverride(onSuccess?: () => void) {
     [onSuccess],
   )
 
+  const setGrade = useCallback(
+    async (submissionId: number, grade: number) => {
+      try {
+        setIsOverriding(true)
+        setError(null)
+        await setManualGrade(submissionId, grade)
+        onSuccess?.()
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to set grade"
+        setError(errorMessage)
+        throw err
+      } finally {
+        setIsOverriding(false)
+      }
+    },
+    [onSuccess],
+  )
+
   return {
     override,
     removeOverride,
+    setGrade,
     isOverriding,
     error,
   }
