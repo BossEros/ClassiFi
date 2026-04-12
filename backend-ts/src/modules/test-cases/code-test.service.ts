@@ -96,7 +96,7 @@ export class CodeTestService {
     const testCases = await this.testCaseRepo.getByAssignmentId(submission.assignmentId)
 
     if (testCases.length === 0) {
-      return this.handleNoTestCases(submissionId, assignment.totalScore ?? 100)
+      return this.handleNoTestCases(submissionId)
     }
 
     // STEP 3: Download the student's code file from storage and preprocess it if needed.
@@ -156,12 +156,12 @@ export class CodeTestService {
     // STEP 1: Grab all the test cases the teacher set up for this assignment
     const testCases = await this.testCaseRepo.getByAssignmentId(assignmentId)
 
-    // If the teacher hasn't added any test cases yet, just return a perfect score so it doesn't block the student
+    // If the teacher hasn't added any test cases, return an empty result — nothing to run
     if (testCases.length === 0) {
       return {
         passed: 0,
         total: 0,
-        percentage: 100,
+        percentage: 0,
         results: [],
       }
     }
@@ -229,7 +229,7 @@ export class CodeTestService {
           submissionId,
           passed: 0,
           total: 0,
-          percentage: 100,
+          percentage: 0,
           results: [],
         }
       }
@@ -307,21 +307,19 @@ export class CodeTestService {
 
   /**
    * Handle case when assignment has no test cases.
+   * Grade is intentionally left as null — manual grading by the teacher is required.
    */
   private async handleNoTestCases(
     submissionId: number,
-    totalScore: number,
   ): Promise<TestExecutionSummary> {
-    // Award the student full marks — if the teacher set up no tests, we can't penalize anyone
-    await this.submissionRepo.updateOriginalGrade(submissionId, totalScore)
-    await this.submissionRepo.updateGrade(submissionId, totalScore)
-
-    // Return a "perfect" summary so the caller always gets a consistent object shape back
+    // No test cases means no automated score can be computed.
+    // Leave the grade as null so the gradebook shows this as "Pending Review",
+    // prompting the teacher to grade it manually.
     return {
       submissionId,
       passed: 0,
       total: 0,
-      percentage: 100,
+      percentage: 0,
       results: [],
     }
   }
