@@ -1,4 +1,4 @@
-import { eq, and, desc, inArray, sql, or, gt } from "drizzle-orm"
+import { eq, and, desc, inArray, sql, gt, isNull } from "drizzle-orm"
 import { assignments, type Assignment, type NewAssignment, type LatePenaltyConfig } from "@/modules/assignments/assignment.model.js"
 import { classes } from "@/modules/classes/class.model.js"
 import { submissions } from "@/modules/submissions/submission.model.js"
@@ -164,7 +164,7 @@ export class AssignmentRepository extends BaseRepository<
       .as("studentCounts")
   }
 
-  /** Subquery: Count latest submissions per assignment */
+  /** Subquery: Count latest ungraded submissions per assignment */
   private buildSubmissionCountsSubquery() {
     return this.db
       .select({
@@ -172,7 +172,13 @@ export class AssignmentRepository extends BaseRepository<
         count: sql<number>`count(*)`.as("submissionCount"),
       })
       .from(submissions)
-      .where(eq(submissions.isLatest, true))
+      .where(
+        and(
+          eq(submissions.isLatest, true),
+          isNull(submissions.grade),
+          eq(submissions.isGradeOverridden, false),
+        ),
+      )
       .groupBy(submissions.assignmentId)
       .as("submissionCounts")
   }
@@ -186,8 +192,6 @@ export class AssignmentRepository extends BaseRepository<
       typeof this.buildSubmissionCountsSubquery
     >,
   ) {
-    const now = new Date()
-
     return await this.db
       .select({
         id: assignments.id,
@@ -213,10 +217,7 @@ export class AssignmentRepository extends BaseRepository<
           eq(classes.teacherId, teacherId),
           eq(classes.isActive, true),
           eq(assignments.isActive, true),
-          or(
-            gt(assignments.deadline, now),
-            gt(sql`COALESCE(${submissionCountsSubquery.count}, 0)`, 0),
-          ),
+          gt(sql`COALESCE(${submissionCountsSubquery.count}, 0)`, 0),
         ),
       )
       .orderBy(sql`${assignments.deadline} ASC NULLS LAST`)

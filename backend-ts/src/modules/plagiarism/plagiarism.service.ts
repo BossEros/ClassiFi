@@ -77,6 +77,10 @@ export interface ResultDetailsResponse {
     hybridScore: string
     overlap: number
     longestFragment: number
+    leftCovered: number
+    rightCovered: number
+    leftTotal: number
+    rightTotal: number
   }
   fragments: PlagiarismFragmentDTO[]
   leftFile: {
@@ -205,6 +209,10 @@ export class PlagiarismService {
         hybridScore: result.hybridScore,
         overlap: result.overlap,
         longestFragment: result.longestFragment,
+        leftCovered: result.leftCovered,
+        rightCovered: result.rightCovered,
+        leftTotal: result.leftTotal,
+        rightTotal: result.rightTotal,
       },
       fragments: fragments.map((fragment: MatchFragment) => ({
         id: fragment.id,
@@ -500,7 +508,7 @@ export class PlagiarismService {
    */
   private async computeSemanticScores(
     pairs: Pair[],
-    _language: LanguageName,
+    language: LanguageName,
   ): Promise<Map<string, number>> {
     // Step 1: Collect the unique submissions and normalized pair entries.
     const submissionContentMap = new Map<string, string>()
@@ -541,6 +549,7 @@ export class PlagiarismService {
         settings.semanticSimilarityMaxConcurrentRequests ?? 4,
       pairEntries,
       submissionContentById: submissionContentMap,
+      language,
     })
   }
 }

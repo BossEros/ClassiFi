@@ -97,6 +97,10 @@ export interface CrossClassResultDTO {
   hybridScore: number
   overlap: number
   longestFragment: number
+  leftCovered: number
+  rightCovered: number
+  leftTotal: number
+  rightTotal: number
 }
 
 /** Result details including file contents and fragment positions */
@@ -301,7 +305,7 @@ export class CrossClassSimilarityService {
     // For pairs that passed the structural threshold, compute a semantic similarity score
     // using the GraphCodeBERT microservice. This gives a deeper, meaning-based comparison
     // beyond just code structure.
-    const semanticScores = await this.computeSemanticScores(crossClassPairs)
+    const semanticScores = await this.computeSemanticScores(crossClassPairs, language)
 
     // STEP 7: Persistence
     // Save the report, per-pair results, and matching code fragment positions to the database
@@ -673,10 +677,12 @@ export class CrossClassSimilarityService {
    * then pairwise cosine similarity is computed locally.
    *
    * @param crossClassPairs - The cross-class pairs to score.
+   * @param language - The programming language of the submissions.
    * @returns A map from pair key to semantic score.
    */
   private async computeSemanticScores(
     crossClassPairs: CrossClassDetectorPair[],
+    language: LanguageName,
   ): Promise<Map<string, number>> {
     const semanticScores = new Map<string, number>()
 
@@ -732,6 +738,7 @@ export class CrossClassSimilarityService {
         settings.semanticSimilarityMaxConcurrentRequests ?? 4,
       pairEntries: qualifiedPairEntries,
       submissionContentById: submissionContentMap,
+      language,
     })
 
     // Step 3: Merge the computed scores into the final result map.
@@ -1060,6 +1067,10 @@ export class CrossClassSimilarityService {
       hybridScore: string
       overlap: number
       longestFragment: number
+      leftCovered: number
+      rightCovered: number
+      leftTotal: number
+      rightTotal: number
     },
     context?: CrossClassResultWithContext,
   ): CrossClassResultDTO {
@@ -1080,6 +1091,10 @@ export class CrossClassSimilarityService {
       hybridScore: parseFloat(result.hybridScore),
       overlap: result.overlap,
       longestFragment: result.longestFragment,
+      leftCovered: result.leftCovered,
+      rightCovered: result.rightCovered,
+      leftTotal: result.leftTotal,
+      rightTotal: result.rightTotal,
     }
   }
 
