@@ -63,7 +63,7 @@ export function GradeOverrideModal({
 
   const handleValidSubmit = (formValues: GradeOverrideFormValues) => {
     setError(null)
-    onSubmit(Number.parseInt(formValues.grade, 10), formValues.feedback.trim() || null)
+    onSubmit(Number.parseFloat(formValues.grade), formValues.feedback.trim() || null)
   }
 
   const handleInvalidSubmit = (validationErrors: FieldErrors<GradeOverrideFormValues>) => {
@@ -120,17 +120,15 @@ export function GradeOverrideModal({
             <input
               type="number"
               id="grade"
-              step="1"
-              inputMode="numeric"
+              step="any"
+              inputMode="decimal"
               {...gradeField}
               value={grade}
               onChange={(event) => {
                 gradeField.onChange(event)
                 if (error) setError(null)
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "." || event.key === ",") event.preventDefault()
-              }}
+              }
+              }
               min={0}
               max={totalScore}
               disabled={isSubmitting}

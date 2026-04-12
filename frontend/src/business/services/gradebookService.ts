@@ -134,8 +134,8 @@ export async function overrideGrade(
 ): Promise<void> {
   validateId(submissionId, "submission")
 
-  if (!Number.isInteger(grade) || grade < 0 || grade > 100) {
-    throw new Error("Grade must be a whole number between 0 and 100")
+  if (grade < 0 || grade > 100) {
+    throw new Error("Grade must be between 0 and 100")
   }
   return gradebookRepository.setGradeOverrideForSubmissionById(
     submissionId,
@@ -174,8 +174,8 @@ export async function setManualGrade(
 ): Promise<void> {
   validateId(submissionId, "submission")
 
-  if (!Number.isInteger(grade) || grade < 0 || grade > 100) {
-    throw new Error("Grade must be a whole number between 0 and 100")
+  if (grade < 0 || grade > 100) {
+    throw new Error("Grade must be between 0 and 100")
   }
   return gradebookRepository.setManualGradeForSubmissionById(submissionId, grade)
 }

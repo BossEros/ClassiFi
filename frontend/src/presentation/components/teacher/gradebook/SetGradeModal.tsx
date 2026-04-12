@@ -55,7 +55,7 @@ export function SetGradeModal({
 
   const handleValidSubmit = (formValues: SetGradeFormValues) => {
     setError(null)
-    onSubmit(Number.parseInt(formValues.grade, 10))
+    onSubmit(Number.parseFloat(formValues.grade))
   }
 
   const handleInvalidSubmit = (validationErrors: FieldErrors<SetGradeFormValues>) => {
@@ -112,17 +112,15 @@ export function SetGradeModal({
             <input
               type="number"
               id="grade"
-              step="1"
-              inputMode="numeric"
+              step="any"
+              inputMode="decimal"
               {...gradeField}
               value={grade}
               onChange={(event) => {
                 gradeField.onChange(event)
                 if (error) setError(null)
-              }}
-              onKeyDown={(event) => {
-                if (event.key === "." || event.key === ",") event.preventDefault()
-              }}
+              }
+              }
               min={0}
               max={totalScore}
               disabled={isSubmitting}

@@ -6,6 +6,7 @@ import type { AssignmentRepository } from "../../src/modules/assignments/assignm
 import type { LatePenaltyService } from "../../src/modules/assignments/late-penalty.service.js"
 import type { TestResultRepository } from "../../src/modules/test-cases/test-result.repository.js"
 import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
+import type { PlagiarismAutoAnalysisService } from "../../src/modules/plagiarism/plagiarism-auto-analysis.service.js"
 
 vi.mock("../../src/shared/transaction.js", () => ({
   withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) =>
@@ -61,6 +62,10 @@ describe("GradebookService", () => {
       getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()),
     }
 
+    const mockPlagiarismAutoAnalysisService = {
+      scheduleFromSubmission: vi.fn(),
+    }
+
     gradebookService = new GradebookService(
       mockGradebookRepo as GradebookRepository,
       mockSubmissionRepo as SubmissionRepository,
@@ -69,6 +74,7 @@ describe("GradebookService", () => {
       mockTestResultRepo as TestResultRepository,
       mockNotificationService as NotificationService,
       mockSimilarityRepo,
+      mockPlagiarismAutoAnalysisService as PlagiarismAutoAnalysisService,
     )
   })
 
@@ -267,7 +273,7 @@ describe("GradebookService", () => {
 
       await expect(
         gradebookService.overrideGrade(1, -10, null),
-      ).rejects.toThrow("Grade must be between 0 and 100")
+      ).rejects.toThrow("Grade must be a whole number between 0 and 100")
     })
 
     it("should throw error if grade exceeds totalScore", async () => {
@@ -276,7 +282,7 @@ describe("GradebookService", () => {
 
       await expect(
         gradebookService.overrideGrade(1, 150, null),
-      ).rejects.toThrow("Grade must be between 0 and 100")
+      ).rejects.toThrow("Grade must be a whole number between 0 and 100")
     })
 
     it("should allow grade at boundary (0)", async () => {
