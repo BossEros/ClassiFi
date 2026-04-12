@@ -55,6 +55,7 @@ export interface PendingTaskDTO {
   className: string
   classId: number
   deadline: string | null
+  submittedCount: number
   submissionCount: number
   totalStudents: number
 }

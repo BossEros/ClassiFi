@@ -443,7 +443,8 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
       <div className="lg:hidden divide-y divide-slate-200">
         {paginatedTasks.map((task) => {
           const deadlineStatus = getDeadlineStatus(task.deadline)
-          const submitted = task.submissionCount ?? 0
+          const submitted = task.submittedCount ?? 0
+          const ungraded = task.submissionCount ?? 0
           const total = task.studentCount ?? 0
 
           return (
@@ -459,6 +460,9 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
                 </span>
                 <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${getSubmissionProgressClass(submitted, total)}`}>
                   {submitted}/{total} submitted
+                </span>
+                <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${getSubmissionProgressClass(ungraded, total)}`}>
+                  {ungraded} ungraded
                 </span>
               </div>
               <button
@@ -497,7 +501,10 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
             </span>
           </th>
           <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
-            Submissions
+            Submitted
+          </th>
+          <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wide text-slate-600">
+            Ungraded Submissions
           </th>
           <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
             Action
@@ -507,7 +514,8 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
       <tbody>
         {paginatedTasks.map((task) => {
           const deadlineStatus = getDeadlineStatus(task.deadline)
-          const submitted = task.submissionCount ?? 0
+          const submitted = task.submittedCount ?? 0
+          const ungraded = task.submissionCount ?? 0
           const total = task.studentCount ?? 0
 
           return (
@@ -536,6 +544,13 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
                   className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getSubmissionProgressClass(submitted, total)}`}
                 >
                   {submitted} / {total} submitted
+                </span>
+              </td>
+              <td className="px-6 py-4">
+                <span
+                  className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getSubmissionProgressClass(ungraded, total)}`}
+                >
+                  {ungraded} ungraded
                 </span>
               </td>
               <td className="px-6 py-4 text-right">

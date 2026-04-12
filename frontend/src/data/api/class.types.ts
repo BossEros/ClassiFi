@@ -55,6 +55,7 @@ export interface Assignment {
   deadline: ISODateString | null
   programmingLanguage: string
   hasSubmitted?: boolean
+  submittedCount?: number
   submissionCount?: number
   studentCount?: number
   instructions?: string | null
@@ -134,6 +135,7 @@ export interface TaskDTO {
   deadline: string | null
   programmingLanguage: string
   hasSubmitted?: boolean
+  submittedCount?: number
   submissionCount?: number
   studentCount?: number
 }

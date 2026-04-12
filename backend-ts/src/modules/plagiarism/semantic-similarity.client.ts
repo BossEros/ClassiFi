@@ -38,8 +38,12 @@ export class SemanticSimilarityClient {
    *
    * Returns a value in [0.0, 1.0] representing how semantically similar
    * the two submissions are. Falls back to 0 on timeout/service errors.
+   *
+   * @param code1 - The first code snippet.
+   * @param code2 - The second code snippet.
+   * @param language - The programming language of the submissions (python, java, or c).
    */
-  async getSemanticScore(code1: string, code2: string): Promise<number> {
+  async getSemanticScore(code1: string, code2: string, language?: string): Promise<number> {
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -47,7 +51,7 @@ export class SemanticSimilarityClient {
         const response = await fetch(`${this.serviceUrl}/similarity`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code1, code2 }),
+          body: JSON.stringify({ code1, code2, language: language ?? null }),
           signal: AbortSignal.timeout(this.timeoutMs),
         })
 
@@ -115,8 +119,11 @@ export class SemanticSimilarityClient {
    * Returns a 768-dimensional vector, or null on failure.
    * Clients can cache embeddings per-submission and compute pairwise
    * cosine similarity locally, reducing model calls from O(n²) to O(n).
+   *
+   * @param code - The source code snippet to embed.
+   * @param language - The programming language of the submission (python, java, or c).
    */
-  async getEmbedding(code: string): Promise<number[] | null> {
+  async getEmbedding(code: string, language?: string): Promise<number[] | null> {
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -124,7 +131,7 @@ export class SemanticSimilarityClient {
         const response = await fetch(`${this.serviceUrl}/embed`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, language: language ?? null }),
           signal: AbortSignal.timeout(this.timeoutMs),
         })
 

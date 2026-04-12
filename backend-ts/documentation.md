@@ -913,6 +913,7 @@ class PlagiarismService {
 - Calculates structural, semantic, and weighted hybrid similarity metrics
 - Returns reusable report metadata (`reportId`, `generatedAt`, submissions, pairs) needed by the frontend evidence-export workflow
 - Supports Python, Java, and C programming languages
+- Passes the assignment's programming language to the semantic similarity microservice, enabling language-aware logging and future per-language optimisations in the GraphCodeBERT inference pipeline
 
 ### CrossClassSimilarityService
 
@@ -932,6 +933,7 @@ class CrossClassSimilarityService {
 - Identifies matching assignments by name in other classes taught by the same teacher.
 - Cross-class reports are persisted as historical records and are never automatically overwritten by newer runs.
 - Use `getLatestReport` when the frontend needs the newest result without triggering a new write.
+- Passes the assignment's programming language through to the semantic embedding pipeline so cross-class semantic scores are language-aware.
 
 ### PlagiarismAutoAnalysisService
 
@@ -1417,6 +1419,45 @@ npm run typecheck
 
 ---
 
+## Semantic Similarity Microservice
+
+The backend delegates semantic code similarity scoring to a Python FastAPI sidecar located at `../semantic-service/`.
+
+### Overview
+
+- **Model**: Fine-tuned [GraphCodeBERT](https://github.com/microsoft/CodeBERT) (`microsoft/graphcodebert-base`) for code clone detection
+- **Languages**: Python, Java, and C
+- **Inference**: CLS-token embeddings (768-dim) with pairwise cosine similarity
+- **Training**: DFG-augmented attention masks, CosineEmbeddingLoss, code_length=256, dfg_length=64
+
+### Endpoints
+
+| Method | Path          | Description                              |
+| ------ | ------------- | ---------------------------------------- |
+| GET    | `/health`     | Model readiness check                    |
+| POST   | `/similarity` | Compute cosine similarity between two code snippets |
+| POST   | `/embed`      | Extract CLS embedding for a single snippet (cacheable) |
+
+Both `/similarity` and `/embed` accept an optional `language` field (`"python"`, `"java"`, or `"c"`) for logging and future per-language optimisations.
+
+### Backend Integration
+
+The backend communicates with the semantic service through:
+- `semantic-similarity.client.ts` — HTTP client with configurable timeout/retries
+- `semantic-scoring.ts` — Embedding cache strategy (O(n) embeddings for O(n²) pairs) and pairwise cosine computation
+
+Both modules forward the assignment's programming language to the microservice.
+
+### Training & Evaluation Scripts
+
+| Script | Description |
+| ------ | ----------- |
+| `semantic-service/train_multilingual.py` | Standalone training script — reproduces the fine-tuning pipeline from `notebook.ipynb`. Trains GraphCodeBERT on Python, Java, and C clone pairs with DFG-augmented features. |
+| `semantic-service/evaluate_multilingual.py` | Per-language evaluation — reports Accuracy, Precision, Recall, F1, ROC-AUC, and Average Precision for each language individually and in aggregate. |
+| `semantic-service/evaluate_semantic_hybrid.py` | Overall ablation study — compares structural-only, semantic-only, and hybrid (70/30) approaches on the full test set. |
+
+---
+
 ## Technology Stack
 
 | Component           | Technology       | Version |
@@ -1431,6 +1472,7 @@ npm run typecheck
 | Storage             | Supabase Storage | 2.x     |
 | Code Execution      | Judge0           | Latest  |
 | Code Analysis       | Tree-Sitter      | 0.25.x  |
+| Semantic Analysis   | GraphCodeBERT    | Base    |
 | Dependency Injection| tsyringe         | 4.x     |
 | Testing             | Vitest           | 4.x     |
 | API Documentation   | Swagger/OpenAPI  | 3.x     |

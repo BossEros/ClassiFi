@@ -510,6 +510,27 @@ export class SubmissionRepository extends BaseRepository<
   }
 
   /**
+   * Set a manual grade on a submission that has no auto-calculated grade.
+   * Writes directly to the grade column — does NOT set the override flag.
+   * Use this for assignments with no test cases where the teacher is the
+   * sole grade source.
+   *
+   * @param submissionId - The submission to update.
+   * @param originalGrade - The raw grade entered by the teacher (before any late penalty).
+   * @param gradeAfterLatePenalty - The final stored grade after the late penalty has been deducted.
+   */
+  async setManualGrade(
+    submissionId: number,
+    originalGrade: number,
+    gradeAfterLatePenalty: number,
+  ): Promise<void> {
+    await this.db
+      .update(submissions)
+      .set({ grade: gradeAfterLatePenalty, originalGrade })
+      .where(eq(submissions.id, submissionId))
+  }
+
+  /**
    * Remove a grade override from a submission.
    * Clears the override flag and reason. The grade should be recalculated separately.
    */

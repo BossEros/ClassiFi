@@ -13,6 +13,8 @@ import {
   SubmissionIdParamSchema,
   GradeOverrideBodySchema,
   type GradeOverrideBody,
+  SetManualGradeBodySchema,
+  type SetManualGradeBody,
 } from "@/modules/gradebook/gradebook.schema.js"
 import { z } from "zod"
 
@@ -135,6 +137,29 @@ export async function gradebookRoutes(app: FastifyInstance): Promise<void> {
         rank: calculatedRankData?.rank ?? null,
         totalStudents: calculatedRankData?.totalStudents ?? null,
         percentile: calculatedRankData?.percentile ?? null,
+      })
+    },
+  })
+
+  /**
+   * POST /submissions/:submissionId/grade
+   * Set a manual grade for a submission with no auto-calculated grade
+   */
+  app.post("/submissions/:submissionId/grade", {
+    preHandler: [
+      validateParams(SubmissionIdParamSchema),
+      validateBody(SetManualGradeBodySchema),
+    ],
+    handler: async (request, reply) => {
+      const { submissionId } = request.validatedParams as SubmissionIdParam
+      const { grade: manualGradeValue } =
+        request.validatedBody as SetManualGradeBody
+
+      await gradebookService.setManualGrade(submissionId, manualGradeValue)
+
+      return reply.send({
+        success: true,
+        message: "Grade set successfully",
       })
     },
   })

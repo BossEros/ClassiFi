@@ -9,6 +9,7 @@ import {
 } from "@/modules/assignments/late-penalty.service.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
+import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
@@ -71,6 +72,8 @@ export class GradebookService {
     private notificationService: NotificationService,
     @inject(DI_TOKENS.repositories.similarity)
     private similarityRepo: SimilarityRepository,
+    @inject(DI_TOKENS.services.plagiarismAutoAnalysis)
+    private plagiarismAutoAnalysisService: PlagiarismAutoAnalysisService,
   ) {}
 
   /**
@@ -117,9 +120,9 @@ export class GradebookService {
       throw new Error("Assignment not found")
     }
 
-    // STEP 2: Validate the override grade is within the assignment's score bounds
-    if (grade < 0 || grade > assignment.totalScore) {
-      throw new Error(`Grade must be between 0 and ${assignment.totalScore}`)
+    // STEP 2: Validate the override grade is a whole number within the assignment's score bounds
+    if (!Number.isInteger(grade) || grade < 0 || grade > assignment.totalScore) {
+      throw new Error(`Grade must be a whole number between 0 and ${assignment.totalScore}`)
     }
 
     // STEP 3: Persist the grade override and create an in-app notification in a single transaction
@@ -175,6 +178,110 @@ export class GradebookService {
         logger.error("Failed to send grade notification email", {
           submissionId,
           studentId: submission.studentId,
+          error,
+        })
+      })
+  }
+
+  /**
+   * Set a manual grade for a submission that has no auto-calculated grade (e.g. no test cases).
+   * Writes directly to the grade column — does NOT set the override flag.
+   * Only the class teacher should be able to do this (enforced at controller level).
+   */
+  async setManualGrade(submissionId: number, grade: number): Promise<void> {
+    // STEP 1: Load the submission and its parent assignment
+    const submission = await this.submissionRepo.getSubmissionById(submissionId)
+    if (!submission) {
+      throw new Error("Submission not found")
+    }
+
+    const assignment = await this.assignmentRepo.getAssignmentById(
+      submission.assignmentId,
+    )
+    if (!assignment) {
+      throw new Error("Assignment not found")
+    }
+
+    // STEP 2: Validate grade is a whole number within the assignment's score bounds
+    if (!Number.isInteger(grade) || grade < 0 || grade > assignment.totalScore) {
+      throw new Error(`Grade must be a whole number between 0 and ${assignment.totalScore}`)
+    }
+
+    // STEP 3: Apply the stored late penalty to arrive at the final grade.
+    // penaltyApplied is a percentage (e.g. 20 means 20% of totalScore deducted).
+    // This mirrors the auto-graded flow where the late penalty is deducted after the raw score is computed.
+    const latePenaltyPoints = Math.round(
+      assignment.totalScore * ((submission.penaltyApplied ?? 0) / 100),
+    )
+    const gradeAfterLatePenalty = Math.max(0, grade - latePenaltyPoints)
+
+    // STEP 4: Persist and create an in-app notification in a single transaction
+    try {
+      await withTransaction(async (transactionContext) => {
+        const transactionSubmissionRepo =
+          this.submissionRepo.withContext(transactionContext)
+        const transactionNotificationService =
+          this.notificationService.withContext(transactionContext)
+
+        await transactionSubmissionRepo.setManualGrade(
+          submissionId,
+          grade,
+          gradeAfterLatePenalty,
+        )
+        await transactionNotificationService.createNotification(
+          submission.studentId,
+          "SUBMISSION_GRADED",
+          {
+            submissionId: submission.id,
+            assignmentId: assignment.id,
+            assignmentTitle: assignment.assignmentName,
+            grade,
+            maxGrade: assignment.totalScore,
+            submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          },
+        )
+      })
+    } catch (error) {
+      logger.error("Failed to persist manual grade notification", {
+        submissionId,
+        studentId: submission.studentId,
+        error,
+      })
+      throw error
+    }
+
+    // STEP 5: Send an email notification to the student (fire-and-forget)
+    void this.notificationService
+      .sendEmailNotificationIfEnabled(
+        submission.studentId,
+        "SUBMISSION_GRADED",
+        {
+          submissionId: submission.id,
+          assignmentId: assignment.id,
+          assignmentTitle: assignment.assignmentName,
+          grade,
+          maxGrade: assignment.totalScore,
+          submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        },
+      )
+      .catch((error) => {
+        logger.error("Failed to send manual grade notification email", {
+          submissionId,
+          studentId: submission.studentId,
+          error,
+        })
+      })
+
+    // STEP 6: Re-trigger similarity analysis now that a grade exists.
+    // This is necessary because when the student originally submitted, grade was null so
+    // the automatic analysis skipped this submission. The debounce collapses rapid
+    // teacher grading into a single analysis run.
+    void this.plagiarismAutoAnalysisService
+      .scheduleFromSubmission(assignment.id)
+      .catch((error) => {
+        logger.error("Failed to schedule similarity analysis after manual grade", {
+          submissionId,
+          assignmentId: assignment.id,
           error,
         })
       })

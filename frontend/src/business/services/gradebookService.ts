@@ -134,7 +134,7 @@ export async function overrideGrade(
 ): Promise<void> {
   validateId(submissionId, "submission")
 
-  if (!Number.isFinite(grade) || grade < 0 || grade > 100) {
+  if (grade < 0 || grade > 100) {
     throw new Error("Grade must be between 0 and 100")
   }
   return gradebookRepository.setGradeOverrideForSubmissionById(
@@ -156,6 +156,28 @@ export async function overrideGrade(
 export async function removeGradeOverride(submissionId: number): Promise<void> {
   validateId(submissionId, "submission")
   return gradebookRepository.removeGradeOverrideForSubmissionById(submissionId)
+}
+
+/**
+ * Sets a manual grade on a submission that has no auto-calculated grade.
+ * Writes directly to the grade column — does NOT set the override flag.
+ * Use for assignments with no test cases where the teacher is the sole grade source.
+ *
+ * @param submissionId - The unique identifier of the submission.
+ * @param grade - The grade value (must be between 0 and the assignment's total score).
+ * @returns A promise that resolves when the grade is saved.
+ * @throws Error if the grade is out of range or the update fails.
+ */
+export async function setManualGrade(
+  submissionId: number,
+  grade: number,
+): Promise<void> {
+  validateId(submissionId, "submission")
+
+  if (grade < 0 || grade > 100) {
+    throw new Error("Grade must be between 0 and 100")
+  }
+  return gradebookRepository.setManualGradeForSubmissionById(submissionId, grade)
 }
 
 // ============================================================================

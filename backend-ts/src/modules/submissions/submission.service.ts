@@ -2,8 +2,6 @@ import { inject, injectable } from "tsyringe"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { AssignmentRepository } from "@/modules/assignments/assignment.repository.js"
 import { EnrollmentRepository } from "@/modules/enrollments/enrollment.repository.js"
-import { ClassRepository } from "@/modules/classes/class.repository.js"
-import { UserRepository } from "@/modules/users/user.repository.js"
 import { TestResultRepository } from "@/modules/test-cases/test-result.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { CodeTestService } from "@/modules/test-cases/code-test.service.js"
@@ -38,7 +36,6 @@ import {
   SubmissionFileNotFoundError,
 } from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
-import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import type { NotificationService } from "@/modules/notifications/notification.service.js"
 import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
@@ -62,8 +59,6 @@ export class SubmissionService {
     private assignmentRepo: AssignmentRepository,
     @inject(DI_TOKENS.repositories.enrollment)
     private enrollmentRepo: EnrollmentRepository,
-    @inject(DI_TOKENS.repositories.class) private classRepo: ClassRepository,
-    @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.repositories.testResult)
     private testResultRepo: TestResultRepository,
     @inject(DI_TOKENS.services.storage)
@@ -151,19 +146,6 @@ export class SubmissionService {
 
     // STEP 10: Kick off background plagiarism analysis for the assignment
     await this.triggerAutomaticSimilarityAnalysis(assignmentId)
-
-    // STEP 11: Notify the teacher of the new submission (fire-and-forget — does not block the response)
-    fireAndForget(
-      this.sendSubmissionReceivedNotification(
-        updatedSubmission ?? submission,
-        assignment,
-        studentId,
-        penaltyResult,
-      ),
-      logger,
-      "Failed to send submission notification to teacher",
-      { submissionId: submission.id },
-    )
 
     return toSubmissionDTO(updatedSubmission ?? submission)
   }
@@ -730,60 +712,5 @@ export class SubmissionService {
         error,
       })
     }
-  }
-
-  /**
-   * Sends NEW_SUBMISSION_RECEIVED or LATE_SUBMISSION_RECEIVED notification to the teacher.
-   */
-  private async sendSubmissionReceivedNotification(
-    submission: Submission,
-    assignment: Assignment,
-    studentId: number,
-    penaltyResult: PenaltyResult | null,
-  ): Promise<void> {
-    // STEP 1: Fetch the class and student records in parallel — both are needed to build
-    // the notification message (class name for context, student name for the message body)
-    const [classData, student] = await Promise.all([
-      this.classRepo.getClassById(assignment.classId),
-      this.userRepo.getUserById(studentId),
-    ])
-
-    // If the class record is missing (e.g. deleted mid-flight), silently skip —
-    // we can't identify the teacher to notify
-    if (!classData) return
-
-    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
-
-    // STEP 2: Choose the notification type based on whether a penalty was applied.
-    // This lets the teacher's notification centre distinguish on-time from late submissions.
-    const isLate = penaltyResult !== null
-    const notificationType = isLate ? "LATE_SUBMISSION_RECEIVED" as const : "NEW_SUBMISSION_RECEIVED" as const
-
-    // STEP 3: Build the notification payload — late submissions include timestamp and due-date
-    // fields so the teacher can see exactly how late the student was
-    const notificationData = {
-      submissionId: submission.id,
-      assignmentId: assignment.id,
-      assignmentTitle: assignment.assignmentName,
-      studentName,
-      className: classData.className,
-      classId: classData.id,
-      submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}/submissions/${submission.id}`,
-      ...(isLate && {
-        submittedAt: submission.submittedAt.toISOString(),
-        dueDate: assignment.deadline?.toISOString() ?? "No deadline",
-      }),
-    }
-
-    // STEP 4: Fire both the in-app notification and the email in parallel.
-    // settlePromisesAndLogRejections ensures one channel failing doesn't suppress the other.
-    await settlePromisesAndLogRejections([
-      this.notificationService.createNotification(classData.teacherId, notificationType, notificationData),
-      this.notificationService.sendEmailNotificationIfEnabled(classData.teacherId, notificationType, notificationData),
-    ], logger, "Failed to send submission notification to teacher", {
-      teacherId: classData.teacherId,
-      submissionId: submission.id,
-      notificationType,
-    })
   }
 }
