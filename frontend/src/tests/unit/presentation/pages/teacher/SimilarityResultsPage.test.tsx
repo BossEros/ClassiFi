@@ -84,6 +84,10 @@ const mockData = vi.hoisted(() => {
       structuralScore: "0.90",
       overlap: 40,
       longestFragment: 15,
+      leftCovered: 40,
+      rightCovered: 32,
+      leftTotal: 120,
+      rightTotal: 110,
     },
     fragments: [
       {

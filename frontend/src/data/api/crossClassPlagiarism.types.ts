@@ -16,6 +16,10 @@ export interface CrossClassResultDTO {
   hybridScore: number
   overlap: number
   longestFragment: number
+  leftCovered: number
+  rightCovered: number
+  leftTotal: number
+  rightTotal: number
 }
 
 /** Cross-class analysis response from the backend */

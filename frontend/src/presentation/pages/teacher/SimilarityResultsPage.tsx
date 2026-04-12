@@ -206,6 +206,10 @@ export function SimilarityResultsPage() {
         similarity: parseFloat(details.result.structuralScore),
         overlap: details.result.overlap,
         longest: details.result.longestFragment,
+        leftCovered: details.result.leftCovered,
+        rightCovered: details.result.rightCovered,
+        leftTotal: details.result.leftTotal,
+        rightTotal: details.result.rightTotal,
         fragments: details.fragments.map((fragment, index) => ({
           id: fragment.id || index,
           leftSelection: fragment.leftSelection,
