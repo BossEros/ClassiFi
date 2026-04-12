@@ -200,7 +200,7 @@ export function GradeOverrideModal({
           id="grade-override-modal-title"
           className={`mb-1 text-center text-xl font-semibold ${isLight ? "text-slate-900" : "text-white"}`}
         >
-          Override Grade
+          {currentGrade === null ? "Set Grade" : "Override Grade"}
         </h2>
 
         <div className="mb-6 text-center">
@@ -216,7 +216,7 @@ export function GradeOverrideModal({
               htmlFor="grade"
               className={`mb-2 flex items-center justify-between text-sm font-medium ${isLight ? "text-slate-700" : "text-slate-300"}`}
             >
-              <span>New Grade</span>
+              <span>{currentGrade === null ? "Grade" : "New Grade"}</span>
               <span className={`text-xs font-normal ${isLight ? "text-slate-400" : "text-slate-500"}`}>Max: {totalScore}</span>
             </label>
 
@@ -256,37 +256,39 @@ export function GradeOverrideModal({
             </div>
           </div>
 
-          <div>
-            <label
-              htmlFor="feedback"
-              className={`mb-2 flex items-center justify-between text-sm font-medium ${isLight ? "text-slate-700" : "text-slate-300"}`}
-            >
-              <span>Feedback</span>
-              <span className={`text-xs font-normal ${isLight ? "text-slate-400" : "text-slate-500"}`}>Optional</span>
-            </label>
-            <textarea
-              id="feedback"
-              {...feedbackField}
-              value={feedback}
-              onChange={(event) => {
-                feedbackField.onChange(event)
-                if (error) {
-                  setError(null)
-                }
-              }}
-              disabled={isSubmitting}
-              rows={3}
-              className={cn(
-                "w-full resize-none rounded-xl px-4 py-3 text-sm",
-                isLight
-                  ? "border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400"
-                  : "border border-white/10 bg-slate-950/50 text-white placeholder-slate-500",
-                "transition-all duration-200 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50",
-                "disabled:cursor-not-allowed disabled:opacity-50",
-              )}
-              placeholder="Explain the reason for this grade override..."
-            />
-          </div>
+          {currentGrade !== null && (
+            <div>
+              <label
+                htmlFor="feedback"
+                className={`mb-2 flex items-center justify-between text-sm font-medium ${isLight ? "text-slate-700" : "text-slate-300"}`}
+              >
+                <span>Feedback</span>
+                <span className={`text-xs font-normal ${isLight ? "text-slate-400" : "text-slate-500"}`}>Optional</span>
+              </label>
+              <textarea
+                id="feedback"
+                {...feedbackField}
+                value={feedback}
+                onChange={(event) => {
+                  feedbackField.onChange(event)
+                  if (error) {
+                    setError(null)
+                  }
+                }}
+                disabled={isSubmitting}
+                rows={3}
+                className={cn(
+                  "w-full resize-none rounded-xl px-4 py-3 text-sm",
+                  isLight
+                    ? "border border-slate-300 bg-slate-50 text-slate-900 placeholder-slate-400"
+                    : "border border-white/10 bg-slate-950/50 text-white placeholder-slate-500",
+                  "transition-all duration-200 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/50",
+                  "disabled:cursor-not-allowed disabled:opacity-50",
+                )}
+                placeholder="Explain the reason for this grade override..."
+              />
+            </div>
+          )}
 
           {error && (
             <div className={cn("rounded-lg border p-3", isLight ? "border-rose-200 bg-rose-50" : "border-red-500/20 bg-red-500/10")}>
@@ -321,7 +323,7 @@ export function GradeOverrideModal({
                 "disabled:cursor-not-allowed disabled:transform-none disabled:opacity-50 disabled:shadow-none",
               )}
             >
-              {isSubmitting ? "Saving..." : "Confirm Override"}
+              {isSubmitting ? "Saving..." : currentGrade === null ? "Set Grade" : "Confirm Override"}
             </button>
           </div>
 

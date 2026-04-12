@@ -1034,9 +1034,11 @@ export function AssignmentDetailPage() {
                             onClick={handleOpenOverrideModal}
                             className="h-9 w-full bg-blue-600 text-xs hover:bg-blue-700"
                           >
-                            Override Score
+                            {activeSubmission?.grade !== null && activeSubmission?.grade !== undefined
+                              ? "Override Score"
+                              : "Set Grade"}
                           </Button>
-                          {activeSubmission?.isGradeOverridden && (
+                          {activeSubmission?.isGradeOverridden && (assignment?.testCases?.length ?? 0) > 0 && (
                             <p className="text-xs text-blue-700">
                               Score has a manual override
                             </p>
