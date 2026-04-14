@@ -1,39 +1,44 @@
 /**
- * TC-008: Registration Rejects Password Confirmation Mismatch
+ * TC-008: Class Creation Rejects Non-Positive Schedule Duration
  *
- * Module: Authentication
- * Unit: Register user
- * Date Tested: 4/11/26
- * Description: Verify that the registration form rejects a confirm-password value that does not match the password field.
- * Expected Result: Registration validation fails with the password-mismatch message on the confirm-password field.
+ * Module: Class Management
+ * Unit: Create class
+ * Date Tested: 4/14/26
+ * Description: Verify that class creation rejects a schedule where the end time is not after the start time.
+ * Expected Result: A schedule time-order error is shown for the class time.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-008 Unit Test Pass - Registration Password Confirmation Mismatch Rejected
- * Suggested Figure Title (System UI): Authentication UI - Registration Form Showing Password Mismatch Validation
+ * Suggested Figure Title (Test Pass): TC-008 Unit Test Pass - Non-Positive Schedule Duration Rejected
+ * Suggested Figure Title (System UI): Class Management UI - Create Class Form Showing Schedule Time Order Error
  */
 
 import { describe, expect, it } from "vitest"
-import { registerFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
+import { teacherClassFormSchema } from "../../frontend/src/presentation/schemas/class/classSchemas"
 
-describe("TC-008: Registration Rejects Password Confirmation Mismatch", () => {
-  it("should reject registration when confirm password does not match the password", () => {
-    const registrationParseResult = registerFormSchema.safeParse({
-      role: "student",
-      firstName: "Juan",
-      lastName: "Dela Cruz",
-      email: "student@classifi.com",
-      password: "Password1!",
-      confirmPassword: "Password2!",
+describe("TC-008: Class Creation Rejects Non-Positive Schedule Duration", () => {
+  it("should reject class creation when the end time matches the start time", () => {
+    const classParseResult = teacherClassFormSchema.safeParse({
+      className: "Introduction to Programming",
+      description: "Morning programming class",
+      classCode: "ABC12345",
+      semester: 1,
+      academicYear: "2025-2026",
+      schedule: {
+        days: ["monday"],
+        startTime: "10:00",
+        endTime: "10:00",
+      },
     })
 
-    expect(registrationParseResult.success).toBe(false)
+    expect(classParseResult.success).toBe(false)
 
-    if (!registrationParseResult.success) {
-      expect(registrationParseResult.error.issues[0]?.message).toBe(
-        "Passwords do not match",
+    if (!classParseResult.success) {
+      expect(classParseResult.error.issues[0]?.message).toBe(
+        "End time must be after start time",
       )
-      expect(registrationParseResult.error.issues[0]?.path).toEqual([
-        "confirmPassword",
+      expect(classParseResult.error.issues[0]?.path).toEqual([
+        "schedule",
+        "endTime",
       ])
     }
   })

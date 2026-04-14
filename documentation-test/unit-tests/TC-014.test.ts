@@ -1,70 +1,105 @@
 /**
- * TC-014: Submit to Inactive Assignment
+ * TC-014: Grade Override Succeeds
  *
- * Module: Code Submission
- * Unit: Submit Code File
- * Date Tested: 3/28/26
- * Description: Verify error handling when submitting to an inactive assignment.
- * Expected Result: User sees "This assignment is no longer active" message.
+ * Module: Gradebook
+ * Unit: Override grade
+ * Date Tested: 4/13/26
+ * Description: Verify that a teacher can override a grade.
+ * Expected Result: The grade override is saved successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-014 Unit Test Pass - Submission to Inactive Assignment Rejected
- * Suggested Figure Title (System UI): Code Submission UI - Inactive Assignment Error State
+ * Suggested Figure Title (Test Pass): TC-014 Unit Test Pass - Grade Override Succeeds
+ * Suggested Figure Title (System UI): Gradebook UI - Override Grade Dialog with Valid Input
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { AssignmentInactiveError } from "../../backend-ts/src/shared/errors.js"
-import { createMockAssignment } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/modules/submissions/submission.repository.js")
-vi.mock("../../backend-ts/src/modules/assignments/assignment.repository.js")
-vi.mock("../../backend-ts/src/modules/enrollments/enrollment.repository.js")
-vi.mock("../../backend-ts/src/modules/classes/class.repository.js")
-vi.mock("../../backend-ts/src/modules/test-cases/test-result.repository.js")
-vi.mock("../../backend-ts/src/services/code-test.service.js")
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { GradebookService } from "../../backend-ts/src/modules/gradebook/gradebook.service.js"
+import type { GradebookRepository } from "../../backend-ts/src/modules/gradebook/gradebook-query.repository.js"
+import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
+import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
+import type { LatePenaltyService } from "../../backend-ts/src/modules/assignments/late-penalty.service.js"
+import type { TestResultRepository } from "../../backend-ts/src/modules/test-cases/test-result.repository.js"
+import type { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
+
 vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
-}))
-vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
-  supabase: { storage: { from: vi.fn(() => ({ upload: vi.fn(), createSignedUrl: vi.fn() })) } },
+  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) =>
+    callback({}),
+  ),
 }))
 
-describe("TC-014: Submit to Inactive Assignment", () => {
-  let submissionService: SubmissionService
-  let mockAssignmentRepo: any
-
-  const validFile = {
-    filename: "solution.py",
-    data: Buffer.from('print("hello")'),
-    mimetype: "text/x-python",
+describe("TC-014: Grade Override Succeeds", () => {
+  let gradebookService: GradebookService
+  let mockSubmissionRepo: {
+    getSubmissionById: ReturnType<typeof vi.fn>
+    setGradeOverride: ReturnType<typeof vi.fn>
+    removeGradeOverride: ReturnType<typeof vi.fn>
+    updateGrade: ReturnType<typeof vi.fn>
+    withContext: ReturnType<typeof vi.fn>
+  }
+  let mockAssignmentRepo: {
+    getAssignmentById: ReturnType<typeof vi.fn>
+  }
+  let mockNotificationService: {
+    createNotification: ReturnType<typeof vi.fn>
+    sendEmailNotificationIfEnabled: ReturnType<typeof vi.fn>
+    withContext: ReturnType<typeof vi.fn>
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
-    mockAssignmentRepo = { getAssignmentById: vi.fn() }
+    mockSubmissionRepo = {
+      getSubmissionById: vi.fn(),
+      setGradeOverride: vi.fn(),
+      removeGradeOverride: vi.fn(),
+      updateGrade: vi.fn(),
+      withContext: vi.fn().mockReturnThis(),
+    }
 
-    submissionService = new SubmissionService(
-      { getLatestSubmission: vi.fn(), getSubmissionCount: vi.fn(), createSubmission: vi.fn(), getSubmissionHistory: vi.fn(), getSubmissionsWithStudentInfo: vi.fn(), getSubmissionsByStudent: vi.fn(), getSubmissionById: vi.fn(), saveTeacherFeedback: vi.fn(), updateGrade: vi.fn(), delete: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      mockAssignmentRepo,
-      { isEnrolled: vi.fn() } as any,
-      { deleteBySubmissionId: vi.fn() } as any,
-      { upload: vi.fn(), uploadSubmission: vi.fn(), download: vi.fn(), deleteFiles: vi.fn(), getSignedUrl: vi.fn(), deleteSubmissionFiles: vi.fn(), deleteAvatar: vi.fn() } as any,
-      { runTestsForSubmission: vi.fn() } as any,
-      { calculatePenalty: vi.fn(), getDefaultConfig: vi.fn(), applyPenalty: vi.fn(), getAssignmentPenaltyConfig: vi.fn(), setAssignmentPenaltyConfig: vi.fn() } as any,
-      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      { scheduleFromSubmission: vi.fn() } as any,
+    mockAssignmentRepo = {
+      getAssignmentById: vi.fn(),
+    }
+
+    mockNotificationService = {
+      createNotification: vi.fn().mockResolvedValue({}),
+      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+      withContext: vi.fn().mockReturnThis(),
+    }
+
+    gradebookService = new GradebookService(
+      {
+        getClassGradebook: vi.fn(),
+        getStudentGrades: vi.fn(),
+        getStudentRank: vi.fn(),
+      } as unknown as GradebookRepository,
+      mockSubmissionRepo as unknown as SubmissionRepository,
+      mockAssignmentRepo as unknown as AssignmentRepository,
+      {} as unknown as LatePenaltyService,
+      { calculateScore: vi.fn() } as unknown as TestResultRepository,
+      mockNotificationService as unknown as NotificationService,
+      { getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()) } as any,
     )
   })
 
-  afterEach(() => { vi.resetAllMocks() })
+  it("should save the new override grade", async () => {
+    mockSubmissionRepo.getSubmissionById.mockResolvedValue({
+      id: 1,
+      assignmentId: 1,
+      studentId: 10,
+      grade: 85,
+      isGradeOverridden: false,
+    })
 
-  it("should throw AssignmentInactiveError when assignment is inactive", async () => {
-    const inactiveAssignment = createMockAssignment({ isActive: false })
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(inactiveAssignment)
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue({
+      id: 1,
+      assignmentName: "Test Assignment",
+      totalScore: 100,
+    })
 
-    const submitPromise = submissionService.submitAssignment(1, 1, validFile)
+    await gradebookService.overrideGrade(1, 95, "Excellent work!")
 
-    await expect(submitPromise).rejects.toThrow(AssignmentInactiveError)
-    await expect(submitPromise).rejects.toThrow("no longer active")
+    expect(mockSubmissionRepo.setGradeOverride).toHaveBeenCalledWith(
+      1,
+      95,
+      "Excellent work!",
+    )
   })
 })

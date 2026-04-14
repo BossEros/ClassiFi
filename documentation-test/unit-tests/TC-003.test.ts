@@ -1,80 +1,40 @@
 /**
- * TC-003: Login User Successfully
+ * TC-003: Registration Rejects Confirm Password Mismatch
  *
  * Module: Authentication
- * Unit: Login user
- * Date Tested: 3/28/26
- * Description: Verify that login works with correct credentials.
- * Expected Result: User can access the dashboard after login.
+ * Unit: Register user
+ * Date Tested: 4/13/26
+ * Description: Verify that registration rejects a mismatched confirm password.
+ * Expected Result: A confirm password mismatch error is shown.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-003 Unit Test Pass - Login with Valid Credentials
- * Suggested Figure Title (System UI): Authentication UI - Login Form for Valid Sign-In
+ * Suggested Figure Title (Test Pass): TC-003 Unit Test Pass - Registration Confirm Password Mismatch Rejected
+ * Suggested Figure Title (System UI): Authentication UI - Registration Form Showing Confirm Password Error
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { AuthService } from "../../backend-ts/src/modules/auth/auth.service.js"
-import { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
-import { SupabaseAuthAdapter } from "../../backend-ts/src/services/supabase-auth.adapter.js"
-import { createMockUser } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/modules/users/user.repository.js", async (importOriginal) => {
-  const original = await importOriginal<typeof import("../../backend-ts/src/modules/users/user.repository.js")>()
-  return { ...original, UserRepository: vi.fn() }
-})
-vi.mock("../../backend-ts/src/services/supabase-auth.adapter.js")
-vi.mock("../../backend-ts/src/shared/config.js", () => ({
-  settings: { frontendUrl: "http://localhost:3000" },
-}))
+import { describe, expect, it } from "vitest"
+import { registerFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
 
-describe("TC-003: Login User Successfully", () => {
-  let authService: AuthService
-  let mockUserRepo: any
-  let mockAuthAdapter: any
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockUserRepo = {
-      checkEmailExists: vi.fn(),
-      createUser: vi.fn(),
-      getUserBySupabaseId: vi.fn(),
-    }
-    mockAuthAdapter = {
-      signUp: vi.fn(),
-      signInWithPassword: vi.fn(),
-      getUser: vi.fn(),
-      getAdminUserById: vi.fn(),
-      resetPasswordForEmail: vi.fn(),
-      deleteUser: vi.fn(),
-    }
-    authService = new AuthService(
-      mockUserRepo as UserRepository,
-      mockAuthAdapter as SupabaseAuthAdapter,
-      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-    )
-  })
-
-  afterEach(() => {
-    vi.resetAllMocks()
-  })
-
-  it("should successfully login a user with valid credentials", async () => {
-    const mockUser = createMockUser()
-    const supabaseUserId = "supabase-id"
-    const accessToken = "test-access-token"
-
-    mockAuthAdapter.signInWithPassword.mockResolvedValue({
-      accessToken,
-      user: { id: supabaseUserId },
+describe("TC-003: Registration Rejects Confirm Password Mismatch", () => {
+  it("should reject registration when confirm password does not match", () => {
+    const registrationParseResult = registerFormSchema.safeParse({
+      role: "student",
+      firstName: "Juan",
+      lastName: "Dela Cruz",
+      email: "student@classifi.com",
+      password: "Password1!",
+      confirmPassword: "Password2!",
     })
-    mockUserRepo.getUserBySupabaseId.mockResolvedValue(mockUser)
 
-    const result = await authService.loginUser("test@example.com", "password123")
+    expect(registrationParseResult.success).toBe(false)
 
-    expect(result.userData.email).toBe(mockUser.email)
-    expect(result.token).toBe(accessToken)
-    expect(mockAuthAdapter.signInWithPassword).toHaveBeenCalledWith(
-      "test@example.com",
-      "password123",
-    )
+    if (!registrationParseResult.success) {
+      expect(registrationParseResult.error.issues[0]?.message).toBe(
+        "Passwords do not match",
+      )
+      expect(registrationParseResult.error.issues[0]?.path).toEqual([
+        "confirmPassword",
+      ])
+    }
   })
 })

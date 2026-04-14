@@ -1,81 +1,37 @@
 /**
- * TC-012: Delete Class
+ * TC-012: Change Password Rejects Weak Password
  *
- * Module: Class Management
- * Unit: Create, Update, and Delete Class
- * Date Tested: 3/28/26
- * Description: Verify that a class owner can delete their class.
- * Expected Result: Class record is removed from the database.
+ * Module: User Management
+ * Unit: Change password
+ * Date Tested: 4/13/26
+ * Description: Verify that change password rejects a weak password.
+ * Expected Result: A password requirement error is shown for the new password.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-012 Unit Test Pass - Class Deleted Successfully
- * Suggested Figure Title (System UI): Class Management UI - Delete Class Action
+ * Suggested Figure Title (Test Pass): TC-012 Unit Test Pass - Weak New Password Rejected
+ * Suggested Figure Title (System UI): User Settings UI - Change Password Form Showing Password Rule Error
  */
-import { describe, it, expect, beforeEach, vi } from "vitest"
-import type { MockedObject } from "vitest"
-import { ClassService } from "../../backend-ts/src/modules/classes/class.service.js"
-import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
-import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
-import type { EnrollmentRepository } from "../../backend-ts/src/modules/enrollments/enrollment.repository.js"
-import type { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
-import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
-import type { StorageService } from "../../backend-ts/src/services/storage.service.js"
-import { NotClassOwnerError } from "../../backend-ts/src/shared/errors.js"
-import { createMockClass } from "../../backend-ts/tests/utils/factories.js"
 
-describe("TC-012: Delete Class", () => {
-  let classService: ClassService
-  let mockClassRepo: Partial<MockedObject<ClassRepository>>
-  let mockAssignmentRepo: Partial<MockedObject<AssignmentRepository>>
-  let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
-  let mockStorageService: Partial<MockedObject<StorageService>>
+import { describe, expect, it } from "vitest"
+import { changePasswordFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
 
-  beforeEach(() => {
-    mockClassRepo = {
-      createClass: vi.fn(),
-      getClassById: vi.fn(),
-      checkClassCodeExists: vi.fn(),
-      getStudentCount: vi.fn(),
-      getClassesWithStudentCounts: vi.fn(),
-      updateClass: vi.fn(),
-      deleteClass: vi.fn(),
-    } as any
-    mockAssignmentRepo = { getAssignmentsByClassId: vi.fn() } as any
-    mockSubmissionRepo = {
-      getSubmissionsByClass: vi.fn(),
-      getLatestSubmissionCountsByAssignmentIds: vi.fn(),
-      getLatestSubmissionsByStudentAndAssignmentIds: vi.fn(),
-    } as any
-    mockStorageService = { deleteSubmissionFiles: vi.fn(), deleteAssignmentInstructionsImage: vi.fn() } as any
+describe("TC-012: Change Password Rejects Weak Password", () => {
+  it("should reject password change when the new password has no uppercase letter", () => {
+    const passwordParseResult = changePasswordFormSchema.safeParse({
+      currentPassword: "CurrentPass1!",
+      newPassword: "newpass1!",
+      confirmPassword: "newpass1!",
+    })
 
-    classService = new ClassService(
-      mockClassRepo as unknown as ClassRepository,
-      mockAssignmentRepo as unknown as AssignmentRepository,
-      {} as unknown as EnrollmentRepository,
-      {} as unknown as UserRepository,
-      mockSubmissionRepo as unknown as SubmissionRepository,
-      mockStorageService as unknown as StorageService,      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,    )
-  })
+    expect(passwordParseResult.success).toBe(false)
 
-  it("should delete class successfully when teacher is owner", async () => {
-    const existingClass = createMockClass({ teacherId: 1 })
-    mockClassRepo.getClassById!.mockResolvedValue(existingClass)
-    mockClassRepo.deleteClass!.mockResolvedValue(true)
-    mockSubmissionRepo.getSubmissionsByClass!.mockResolvedValue([])
-    mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue([])
-
-    await classService.deleteClass(1, 1)
-
-    expect(mockClassRepo.deleteClass).toHaveBeenCalledWith(1)
-  })
-
-  it("should throw NotClassOwnerError if teacher is not owner", async () => {
-    const existingClass = createMockClass({ teacherId: 1 })
-    mockClassRepo.getClassById!.mockResolvedValue(existingClass)
-
-    const deleteClassPromise = classService.deleteClass(1, 999)
-
-    await expect(deleteClassPromise).rejects.toThrow(NotClassOwnerError)
-    await expect(deleteClassPromise).rejects.toThrow("not the owner")
+    if (!passwordParseResult.success) {
+      expect(passwordParseResult.error.issues[0]?.message).toBe(
+        "Password must contain at least one uppercase letter",
+      )
+      expect(passwordParseResult.error.issues[0]?.path).toEqual([
+        "newPassword",
+      ])
+    }
   })
 })
