@@ -1004,7 +1004,7 @@ interface BulkCreateUserResult {
 interface AdminBulkCreateUsersModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (createdUserCount: number) => void
 }
 
 const ROLE_OPTIONS: { value: BulkCreateUserRow["role"]; label: string }[] = [
@@ -1180,8 +1180,12 @@ function AdminBulkCreateUsersModal({ isOpen, onClose, onSuccess }: AdminBulkCrea
   }
 
   const handleDone = () => {
-    const hasCreated = results?.some((r) => r.status === "created")
-    if (hasCreated) onSuccess()
+    const hasCreated = createdCount > 0
+
+    if (hasCreated) {
+      onSuccess(createdCount)
+    }
+
     handleClose()
   }
 
@@ -1926,9 +1930,14 @@ export function AdminUsersPage() {
         <AdminBulkCreateUsersModal
           isOpen={showBulkCreateModal}
           onClose={() => setShowBulkCreateModal(false)}
-          onSuccess={() => {
+          onSuccess={(createdUserCount) => {
             void fetchUsers()
-            showToast("Bulk user creation complete", "success")
+            showToast(
+              createdUserCount === 1
+                ? "User created successfully"
+                : `${createdUserCount} users created successfully`,
+              "success",
+            )
           }}
         />
 
