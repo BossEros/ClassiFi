@@ -994,7 +994,7 @@ export function AssignmentDetailPage() {
 
                             {activeSubmission?.isGradeOverridden && (
                               <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-                                This score was manually adjusted by the teacher.
+                                Displayed score includes a manual override.
                               </div>
                             )}
 

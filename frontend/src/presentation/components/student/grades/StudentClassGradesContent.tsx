@@ -290,7 +290,7 @@ function AssignmentGradeRow({
                       : "border-white/10 bg-slate-900/60 text-blue-300",
                   )}
                 >
-                  Final score includes a manual override.
+                  Displayed score includes a manual override.
                 </div>
               ) : null}
             </div>

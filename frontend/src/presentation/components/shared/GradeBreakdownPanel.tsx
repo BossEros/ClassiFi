@@ -1,4 +1,4 @@
-import { FlaskConical, Clock3, Search, TrendingDown } from "lucide-react"
+import { CheckCircle2, Clock3, FlaskConical, Search, TrendingDown, User } from "lucide-react"
 import { cn } from "@/shared/utils/cn"
 import type { GradeBreakdown } from "@/data/api/gradebook.types"
 
@@ -38,8 +38,8 @@ function formatLateDuration(submittedAt: Date, deadline: Date): string | null {
 }
 
 /**
- * Renders a grade breakdown panel showing how the final grade was computed
- * from the original test score, late penalty, and similarity penalty.
+ * Renders a grade breakdown panel showing how the displayed grade was computed
+ * from the original test score, automatic deductions, and an optional manual override.
  * Always renders when an original grade is available, even without deductions.
  */
 export function GradeBreakdownPanel({
@@ -55,16 +55,23 @@ export function GradeBreakdownPanel({
   const hasLatePenalty = breakdown.latePenaltyPercent > 0
   const hasSimilarityPenalty = breakdown.similarityPenaltyPercent > 0
   const hasOriginalGrade = breakdown.originalGrade !== null
+  const hasManualOverride =
+    breakdown.isOverridden && breakdown.effectiveGrade !== null
+  const isDark = variant === "dark"
 
   if (!hasOriginalGrade) return null
 
-  const originalScore = breakdown.originalGrade!
+  const originalScore = breakdown.originalGrade
   const latePenaltyPoints =
     hasLatePenalty ? Math.round(totalScore * (breakdown.latePenaltyPercent / 100)) : 0
   const similarityPenaltyPoints =
     hasSimilarityPenalty ? Math.round(totalScore * (breakdown.similarityPenaltyPercent / 100)) : 0
-  const finalGrade = breakdown.finalGrade ?? breakdown.effectiveGrade ?? 0
-  const finalPercent = totalScore > 0 ? Math.round((finalGrade / totalScore) * 100) : 0
+  const automaticFinalGrade = breakdown.finalGrade ?? breakdown.effectiveGrade ?? 0
+  const displayedGrade = breakdown.effectiveGrade ?? breakdown.finalGrade ?? 0
+  const displayedPercent =
+    totalScore > 0 ? Math.round((displayedGrade / totalScore) * 100) : 0
+  const summaryLabel = hasManualOverride ? "Displayed Grade" : "Final Grade"
+  const dividerClassName = cn("border-t", isDark ? "border-white/10" : "border-slate-100")
 
   const lateReason =
     hasLatePenalty && submittedAt && deadline
@@ -82,7 +89,10 @@ export function GradeBreakdownPanel({
       ? `Passed ${testsPassed}/${testsTotal} test cases`
       : null
 
-  const isDark = variant === "dark"
+  const automaticFinalReason =
+    hasLatePenalty || hasSimilarityPenalty
+      ? "Score after automatic deductions"
+      : "Score before any manual adjustment"
 
   return (
     <div
@@ -95,7 +105,6 @@ export function GradeBreakdownPanel({
       )}
     >
       <div className="space-y-3">
-        {/* Test score row */}
         <BreakdownRow
           icon={<FlaskConical className="h-3.5 w-3.5" />}
           iconBg={isDark ? "bg-emerald-500/20 text-emerald-400" : "bg-emerald-50 text-emerald-600"}
@@ -105,41 +114,56 @@ export function GradeBreakdownPanel({
           variant={variant}
         />
 
-        {/* Late penalty row */}
         {hasLatePenalty && (
           <BreakdownRow
             icon={<Clock3 className="h-3.5 w-3.5" />}
             iconBg={isDark ? "bg-orange-500/20 text-orange-400" : "bg-orange-50 text-orange-600"}
             label={`Late Penalty (${breakdown.latePenaltyPercent}%)`}
-            value={`−${latePenaltyPoints}`}
+            value={`-${latePenaltyPoints}`}
             reason={lateReason}
             isDeduction
             variant={variant}
           />
         )}
 
-        {/* Similarity penalty row */}
         {hasSimilarityPenalty && (
           <BreakdownRow
             icon={<Search className="h-3.5 w-3.5" />}
             iconBg={isDark ? "bg-rose-500/20 text-rose-400" : "bg-rose-50 text-rose-600"}
             label={`Similarity Penalty (${breakdown.similarityPenaltyPercent}%)`}
-            value={`−${similarityPenaltyPoints}`}
+            value={`-${similarityPenaltyPoints}`}
             reason={similarityReason}
             isDeduction
             variant={variant}
           />
         )}
 
-        {/* Divider */}
-        <div
-          className={cn(
-            "border-t",
-            isDark ? "border-white/10" : "border-slate-100",
-          )}
-        />
+        <div className={dividerClassName} />
 
-        {/* Final grade row with progress bar */}
+        {hasManualOverride && (
+          <>
+            <BreakdownRow
+              icon={<TrendingDown className="h-3.5 w-3.5" />}
+              iconBg={isDark ? "bg-sky-500/20 text-sky-400" : "bg-sky-50 text-sky-600"}
+              label="Automatic Final"
+              value={`${automaticFinalGrade} / ${totalScore}`}
+              reason={automaticFinalReason}
+              variant={variant}
+            />
+
+            <BreakdownRow
+              icon={<User className="h-3.5 w-3.5" />}
+              iconBg={isDark ? "bg-violet-500/20 text-violet-400" : "bg-violet-50 text-violet-600"}
+              label="Manual Override"
+              value={`${displayedGrade} / ${totalScore}`}
+              reason="Manual score adjustment applied"
+              variant={variant}
+            />
+
+            <div className={dividerClassName} />
+          </>
+        )}
+
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <span
@@ -154,9 +178,9 @@ export function GradeBreakdownPanel({
                   isDark ? "bg-teal-500/20 text-teal-400" : "bg-teal-50 text-teal-600",
                 )}
               >
-                <TrendingDown className="h-3.5 w-3.5" />
+                <CheckCircle2 className="h-3.5 w-3.5" />
               </span>
-              Final Grade
+              {summaryLabel}
             </span>
             <span
               className={cn(
@@ -164,11 +188,10 @@ export function GradeBreakdownPanel({
                 isDark ? "text-white" : "text-slate-900",
               )}
             >
-              {finalGrade} / {totalScore}
+              {displayedGrade} / {totalScore}
             </span>
           </div>
 
-          {/* Progress bar */}
           <div
             className={cn(
               "h-1.5 w-full overflow-hidden rounded-full",
@@ -178,17 +201,17 @@ export function GradeBreakdownPanel({
             <div
               className={cn(
                 "h-full rounded-full transition-all",
-                finalPercent >= 90
+                displayedPercent >= 90
                   ? "bg-emerald-500"
-                  : finalPercent >= 75
+                  : displayedPercent >= 75
                     ? "bg-sky-500"
-                    : finalPercent >= 60
+                    : displayedPercent >= 60
                       ? "bg-amber-500"
-                      : finalPercent >= 40
+                      : displayedPercent >= 40
                         ? "bg-orange-500"
                         : "bg-rose-500",
               )}
-              style={{ width: `${Math.min(finalPercent, 100)}%` }}
+              style={{ width: `${Math.min(displayedPercent, 100)}%` }}
             />
           </div>
         </div>
@@ -258,4 +281,3 @@ function BreakdownRow({
     </div>
   )
 }
-
