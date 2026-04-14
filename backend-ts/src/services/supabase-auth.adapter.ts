@@ -24,6 +24,10 @@ export interface SignUpOptions {
   emailRedirectTo?: string
 }
 
+export interface PasswordRecoveryLinkResult {
+  actionLink: string
+}
+
 @injectable()
 export class SupabaseAuthAdapter {
   /**
@@ -67,9 +71,8 @@ export class SupabaseAuthAdapter {
    * Returns null when the user is not found or the lookup fails.
    */
   async getAdminUserById(supabaseUserId: string): Promise<AuthUser | null> {
-    const { data, error } = await supabase.auth.admin.getUserById(
-      supabaseUserId,
-    )
+    const { data, error } =
+      await supabase.auth.admin.getUserById(supabaseUserId)
 
     if (error || !data.user) {
       return null
@@ -230,18 +233,30 @@ export class SupabaseAuthAdapter {
   }
 
   /**
-   * Send password reset email.
+   * Generate a password recovery link without sending the default Supabase email.
    */
-  async resetPasswordForEmail(
+  async generatePasswordRecoveryLink(
     email: string,
     redirectTo: string,
-  ): Promise<void> {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo,
+  ): Promise<PasswordRecoveryLinkResult> {
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: {
+        redirectTo,
+      },
     })
 
-    if (error) {
-      throw new Error(error.message)
+    const actionLink = data?.properties?.action_link
+
+    if (error || !actionLink) {
+      throw new Error(
+        error?.message ?? "Failed to generate password recovery link",
+      )
+    }
+
+    return {
+      actionLink,
     }
   }
 }

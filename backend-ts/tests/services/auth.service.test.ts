@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { AuthService } from "../../src/modules/auth/auth.service.js"
 import { UserRepository } from "../../src/modules/users/user.repository.js"
 import { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
+import type { IEmailService } from "../../src/services/interfaces/email.interface.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import { createMockUser, createMockTeacher } from "../utils/factories.js"
 import {
   UserAlreadyExistsError,
@@ -38,6 +40,8 @@ describe("AuthService", () => {
   let authService: AuthService
   let mockUserRepo: any
   let mockAuthAdapter: any
+  let mockEmailService: IEmailService
+  let mockNotificationService: NotificationService
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -46,6 +50,8 @@ describe("AuthService", () => {
       checkEmailExists: vi.fn(),
       createUser: vi.fn(),
       getUserBySupabaseId: vi.fn(),
+      getUserByEmail: vi.fn(),
+      getUsersByRole: vi.fn().mockResolvedValue([]),
     }
 
     mockAuthAdapter = {
@@ -53,13 +59,24 @@ describe("AuthService", () => {
       signInWithPassword: vi.fn(),
       getUser: vi.fn(),
       getAdminUserById: vi.fn(),
-      resetPasswordForEmail: vi.fn(),
+      generatePasswordRecoveryLink: vi.fn(),
       deleteUser: vi.fn(),
     }
+
+    mockEmailService = {
+      sendEmail: vi.fn().mockResolvedValue(undefined),
+    }
+
+    mockNotificationService = {
+      createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn(),
+    } as unknown as NotificationService
 
     authService = new AuthService(
       mockUserRepo as UserRepository,
       mockAuthAdapter as SupabaseAuthAdapter,
+      mockEmailService,
+      mockNotificationService,
     )
   })
 
@@ -482,30 +499,46 @@ describe("AuthService", () => {
 
   // ============ requestPasswordReset Tests ============
   describe("requestPasswordReset", () => {
-    it("should call Supabase resetPasswordForEmail with correct parameters", async () => {
+    it("should generate a recovery link and send the reset email", async () => {
       const email = "reset@example.com"
-      mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined)
+      mockUserRepo.getUserByEmail.mockResolvedValue(createMockUser({ email }))
+      mockAuthAdapter.generatePasswordRecoveryLink.mockResolvedValue({
+        actionLink: "http://localhost:3000/reset-password?token=abc",
+      })
 
       await authService.requestPasswordReset(email)
 
-      expect(mockAuthAdapter.resetPasswordForEmail).toHaveBeenCalledWith(
+      expect(mockAuthAdapter.generatePasswordRecoveryLink).toHaveBeenCalledWith(
         email,
         "http://localhost:3000/reset-password",
+      )
+      expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: email,
+          subject: "Reset Your Password",
+          html: expect.stringContaining("Reset Your Password"),
+        }),
       )
     })
 
     it("should not throw error even if email does not exist (security)", async () => {
       const email = "nonexistent@example.com"
-      mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined)
+      mockUserRepo.getUserByEmail.mockResolvedValue(undefined)
 
       await expect(
         authService.requestPasswordReset(email),
       ).resolves.not.toThrow()
+
+      expect(
+        mockAuthAdapter.generatePasswordRecoveryLink,
+      ).not.toHaveBeenCalled()
+      expect(mockEmailService.sendEmail).not.toHaveBeenCalled()
     })
 
-    it("should propagate Supabase errors", async () => {
+    it("should propagate link generation errors", async () => {
       const email = "error@example.com"
-      mockAuthAdapter.resetPasswordForEmail.mockRejectedValue(
+      mockUserRepo.getUserByEmail.mockResolvedValue(createMockUser({ email }))
+      mockAuthAdapter.generatePasswordRecoveryLink.mockRejectedValue(
         new Error("Rate limit exceeded"),
       )
 

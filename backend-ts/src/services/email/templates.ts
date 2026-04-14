@@ -29,18 +29,52 @@ export function sanitizeEmailSubject(subject: string): string {
   return subject.replace(/[\r\n]+/g, " ").trim()
 }
 
+const classifiEmailTheme = {
+  brandPrimary: "#0d9488",
+  brandPrimaryHover: "#0f766e",
+  brandPrimaryLight: "#14b8a6",
+  brandSecondary: "#f59e0b",
+  success: "#10b981",
+  warning: "#f59e0b",
+  error: "#f43f5e",
+  info: "#0ea5e9",
+  shellBackground: "#11211F",
+  shellBackgroundSecondary: "#17312D",
+  shellBackgroundTertiary: "#0E1B19",
+  authSurface: "#F4F7F6",
+  authSurfaceMuted: "#EDF3F1",
+  authBorder: "#D7E2DE",
+  authBorderStrong: "#B8C8C2",
+  titleText: "#13211E",
+  bodyText: "#5F746E",
+  labelText: "#334944",
+  tertiaryText: "#6A817A",
+  footerText: "#B8CCC6",
+  footerTextMuted: "#8DA39D",
+  white: "#FFFFFF",
+} as const
+
+/**
+ * Resolves the email-safe application name with a defensive fallback.
+ *
+ * @returns The application name shown in shared email chrome.
+ */
+function getEmailApplicationName(): string {
+  const configuredApplicationName = settings.appName?.trim()
+
+  return configuredApplicationName || "ClassiFi"
+}
+
 /**
  * Base HTML email template wrapper with professional styling.
  * Provides consistent, responsive design across all emails.
  *
  * @param content - The main email content HTML
- * @param accentColor - Optional accent color for the header (defaults to teal)
  * @returns Complete HTML email string
  */
-function baseEmailTemplate(
-  content: string,
-  accentColor: string = "#0d9488",
-): string {
+function baseEmailTemplate(content: string): string {
+  const emailApplicationName = getEmailApplicationName()
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -48,263 +82,272 @@ function baseEmailTemplate(
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${escapeHtml(settings.appName)} Notification</title>
+  <title>${escapeHtml(emailApplicationName)} Notification</title>
   <!--[if mso]>
   <style type="text/css">
-    body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
+    body, table, td, p, a, h1, h2, span { font-family: Arial, Helvetica, sans-serif !important; }
   </style>
   <![endif]-->
   <style>
-    /* Reset styles */
     body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-    
-    /* Base styles */
+
     body {
       margin: 0 !important;
       padding: 0 !important;
       width: 100% !important;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       line-height: 1.6;
-      color: #1f2937;
-      background-color: #f9fafb;
+      color: ${classifiEmailTheme.bodyText};
+      background-color: ${classifiEmailTheme.shellBackground};
     }
-    
-    /* Container */
+
+    .preheader {
+      display: none !important;
+      visibility: hidden;
+      opacity: 0;
+      color: transparent;
+      height: 0;
+      width: 0;
+      overflow: hidden;
+      mso-hide: all;
+    }
+
     .email-wrapper {
       width: 100%;
-      background-color: #f9fafb;
-      padding: 20px 0;
+      background-color: ${classifiEmailTheme.shellBackground};
+      background-image: linear-gradient(135deg, ${classifiEmailTheme.shellBackground} 0%, ${classifiEmailTheme.shellBackgroundSecondary} 58%, ${classifiEmailTheme.shellBackgroundTertiary} 100%);
+      padding: 24px 0;
     }
-    
+
     .email-container {
       max-width: 600px;
       margin: 0 auto;
-      background-color: #ffffff;
-      border-radius: 12px;
+      background-color: ${classifiEmailTheme.authSurface};
+      border: 1px solid ${classifiEmailTheme.authBorder};
+      border-radius: 24px;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 18px 40px rgba(7, 16, 15, 0.28);
     }
-    
-    /* Header */
+
+    .top-accent {
+      height: 6px;
+      background-color: ${classifiEmailTheme.brandPrimary};
+      background-image: linear-gradient(90deg, ${classifiEmailTheme.brandPrimary} 0%, ${adjustBrightness(classifiEmailTheme.brandPrimary, 16)} 100%);
+    }
+
     .header {
-      background: linear-gradient(135deg, ${accentColor} 0%, ${adjustBrightness(accentColor, 20)} 100%);
-      padding: 32px 40px;
-      text-align: center;
+      padding: 28px 32px 24px;
+      background-color: ${classifiEmailTheme.authSurfaceMuted};
+      border-bottom: 1px solid ${classifiEmailTheme.authBorder};
     }
-    
+
     .logo {
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 700;
-      color: #ffffff;
+      color: ${classifiEmailTheme.titleText};
       margin: 0;
       letter-spacing: -0.5px;
+      font-family: "Expletus Sans", "Trebuchet MS", "Avenir Next", Arial, sans-serif;
     }
-    
-    .tagline {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.9);
-      margin: 8px 0 0 0;
-      font-weight: 400;
-    }
-    
-    /* Content */
+
     .content {
-      padding: 40px;
+      padding: 32px;
     }
-    
+
     .content h1 {
       font-size: 24px;
       font-weight: 700;
-      color: #111827;
+      color: ${classifiEmailTheme.titleText};
       margin: 0 0 16px 0;
       line-height: 1.3;
     }
-    
+
     .content h2 {
       font-size: 20px;
       font-weight: 600;
-      color: #1f2937;
+      color: ${classifiEmailTheme.titleText};
       margin: 24px 0 12px 0;
     }
-    
+
     .content p {
       font-size: 16px;
-      color: #4b5563;
+      color: ${classifiEmailTheme.bodyText};
       margin: 0 0 16px 0;
       line-height: 1.6;
     }
-    
-    /* Info card */
+
+    .content strong {
+      color: ${classifiEmailTheme.titleText};
+    }
+
     .info-card {
-      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
+      background-color: ${classifiEmailTheme.authSurfaceMuted};
+      background-image: linear-gradient(135deg, ${classifiEmailTheme.authSurfaceMuted} 0%, ${classifiEmailTheme.white} 100%);
+      border: 1px solid ${classifiEmailTheme.authBorder};
+      border-radius: 16px;
       padding: 24px;
       margin: 24px 0;
     }
-    
+
     .info-card-row {
       display: table;
       width: 100%;
       padding: 12px 0;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid ${classifiEmailTheme.authBorder};
     }
-    
+
     .info-card-row:last-child {
       border-bottom: none;
       padding-bottom: 0;
     }
-    
+
     .info-card-row:first-child {
       padding-top: 0;
     }
-    
+
     .info-label {
       display: table-cell;
       width: 40%;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
-      color: #6b7280;
+      color: ${classifiEmailTheme.tertiaryText};
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.08em;
       vertical-align: middle;
     }
-    
+
     .info-value {
       display: table-cell;
       width: 60%;
       font-size: 16px;
       font-weight: 600;
-      color: #111827;
+      color: ${classifiEmailTheme.titleText};
       text-align: right;
       vertical-align: middle;
     }
-    
-    /* Score display */
+
     .score-display {
       text-align: center;
       padding: 32px;
-      background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-      border-radius: 8px;
+      background-color: ${classifiEmailTheme.white};
+      background-image: linear-gradient(135deg, ${classifiEmailTheme.authSurfaceMuted} 0%, ${classifiEmailTheme.white} 100%);
+      border-radius: 16px;
       margin: 24px 0;
-      border: 2px solid #e5e7eb;
+      border: 1px solid ${classifiEmailTheme.authBorderStrong};
     }
-    
+
     .score-number {
       font-size: 48px;
       font-weight: 700;
       margin: 0;
       line-height: 1;
     }
-    
+
     .score-percentage {
       font-size: 20px;
-      color: #6b7280;
+      color: ${classifiEmailTheme.bodyText};
       margin: 8px 0 0 0;
       font-weight: 500;
     }
-    
-    /* Button */
+
     .button {
       display: inline-block;
-      background: ${accentColor};
+      background-color: ${classifiEmailTheme.brandPrimary};
+      background-image: linear-gradient(180deg, ${classifiEmailTheme.brandPrimary} 0%, ${adjustBrightness(classifiEmailTheme.brandPrimary, -8)} 100%);
       color: #ffffff !important;
-      padding: 14px 32px;
+      padding: 14px 28px;
       text-decoration: none;
-      border-radius: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
       margin: 24px 0;
       font-weight: 600;
       font-size: 16px;
       text-align: center;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 12px 24px rgba(7, 16, 15, 0.14);
     }
-    
-    .button:hover {
-      background: ${adjustBrightness(accentColor, -10)};
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Alert box */
+
     .alert {
       padding: 16px 20px;
-      border-radius: 8px;
+      border-radius: 12px;
       margin: 20px 0;
       font-size: 14px;
       line-height: 1.5;
+      border: 1px solid transparent;
     }
-    
+
     .alert-info {
-      background: #dbeafe;
-      border-left: 4px solid #3b82f6;
-      color: #1e40af;
+      background: #e7f6fc;
+      border-color: #b9e5f7;
+      color: #135e79;
     }
-    
+
     .alert-warning {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      color: #92400e;
+      background: #fff4de;
+      border-color: #f7d49f;
+      color: #8a5200;
     }
-    
+
     .alert-success {
-      background: #d1fae5;
-      border-left: 4px solid #10b981;
-      color: #065f46;
+      background: #eaf7f1;
+      border-color: #bfe6cf;
+      color: #166534;
     }
-    
-    /* Divider */
+
+    .alert-danger {
+      background: #fdecef;
+      border-color: #f6c1cf;
+      color: #b42318;
+    }
+
     .divider {
       height: 1px;
-      background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+      background: linear-gradient(to right, transparent, ${classifiEmailTheme.authBorderStrong}, transparent);
       margin: 32px 0;
     }
-    
-    /* Footer */
+
     .footer {
-      background: #f9fafb;
-      padding: 32px 40px;
-      text-align: center;
-      border-top: 1px solid #e5e7eb;
+      background-color: ${classifiEmailTheme.shellBackground};
+      background-image: linear-gradient(135deg, ${classifiEmailTheme.shellBackground} 0%, ${classifiEmailTheme.shellBackgroundSecondary} 100%);
+      padding: 28px 32px 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
-    
+
     .footer p {
       font-size: 14px;
-      color: #6b7280;
+      color: ${classifiEmailTheme.footerText};
       margin: 8px 0;
       line-height: 1.5;
     }
-    
-    .footer-links {
-      margin: 16px 0 0 0;
+
+    .footer strong {
+      color: ${classifiEmailTheme.white};
     }
-    
-    .footer-link {
-      color: ${accentColor};
-      text-decoration: none;
-      font-weight: 500;
-      margin: 0 12px;
+
+    .footer-note {
+      font-size: 12px !important;
+      color: ${classifiEmailTheme.footerTextMuted} !important;
+      margin-top: 16px !important;
     }
-    
-    /* Responsive */
+
     @media only screen and (max-width: 600px) {
       .email-container {
-        border-radius: 0 !important;
+        border-radius: 20px !important;
       }
-      
+
       .content, .header, .footer {
         padding: 24px !important;
       }
-      
+
       .content h1 {
         font-size: 20px !important;
       }
-      
+
       .score-number {
         font-size: 36px !important;
       }
-      
+
       .button {
         display: block !important;
         width: 100% !important;
@@ -314,27 +357,24 @@ function baseEmailTemplate(
   </style>
 </head>
 <body>
+  <div class="preheader">${escapeHtml(emailApplicationName)} notification</div>
   <div class="email-wrapper">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr>
-        <td align="center">
+        <td align="center" style="padding: 0 16px;">
           <div class="email-container">
+            <div class="top-accent"></div>
             <div class="header">
-              <h1 class="logo">${escapeHtml(settings.appName)}</h1>
-              <p class="tagline">Your Coding Education Platform</p>
+              <h1 class="logo">${escapeHtml(emailApplicationName)}</h1>
             </div>
             <div class="content">
               ${content}
             </div>
             <div class="footer">
-              <p><strong>This is an automated notification from ${escapeHtml(settings.appName)}.</strong></p>
-              <p>If you have questions, please contact your instructor or visit our help center.</p>
-              <div class="footer-links">
-                <a href="#" class="footer-link">Help Center</a>
-                <a href="#" class="footer-link">Contact Support</a>
-              </div>
-              <p style="margin-top: 20px; font-size: 12px; color: #9ca3af;">
-                © ${new Date().getFullYear()} ${escapeHtml(settings.appName)}. All rights reserved.
+              <p><strong>This is an automated notification from ${escapeHtml(emailApplicationName)}.</strong></p>
+              <p>You can manage your notification preferences from your ClassiFi account settings.</p>
+              <p class="footer-note">
+                &copy; ${new Date().getFullYear()} ${escapeHtml(emailApplicationName)}. All rights reserved.
               </p>
             </div>
           </div>
@@ -365,6 +405,65 @@ function adjustBrightness(hex: string, percent: number): string {
 }
 
 /**
+ * Generates an HTML email template for password reset emails.
+ *
+ * @param data - Password reset email data
+ * @param data.resetUrl - The password reset URL
+ * @returns The generated HTML email string
+ */
+export function passwordResetEmailTemplate(data: { resetUrl: string }): string {
+  const content = `
+    <h1>Reset Your Password</h1>
+    <p>We received a request to reset your password. If you made this request, use the button below to choose a new password.</p>
+
+    <center>
+      <a href="${escapeHtml(data.resetUrl)}" class="button">Reset Password</a>
+    </center>
+
+    <div class="alert alert-info">
+      <strong>Note:</strong> If you did not request a password reset, you can safely ignore this email.
+    </div>
+  `
+
+  return baseEmailTemplate(content)
+}
+
+/**
+ * Generates an HTML email template for password changed notifications.
+ * Intended for Supabase-hosted security notification configuration so the
+ * password changed email matches the rest of the ClassiFi email system.
+ *
+ * @param data - Password changed notification data
+ * @param data.email - The account email address displayed in the notification
+ * @returns The generated HTML email string
+ */
+export function passwordChangedNotificationEmailTemplate(data: {
+  email: string
+}): string {
+  const content = `
+    <h1>Your Password Has Been Changed</h1>
+    <p>This is a confirmation that the password for your account <strong>${escapeHtml(data.email)}</strong> was just changed.</p>
+
+    <div class="alert alert-warning">
+      <strong>Didn’t make this change?</strong> Reset your password immediately and review your recent account activity.
+    </div>
+  `
+
+  return baseEmailTemplate(content)
+}
+
+/**
+ * Generates the Supabase-hosted password changed notification template content.
+ * This preserves Supabase template variables so the HTML can be copied into the
+ * hosted Auth Email Templates configuration without modification.
+ *
+ * @returns The generated HTML email string for Supabase configuration
+ */
+export function supabasePasswordChangedNotificationEmailTemplate(): string {
+  return passwordChangedNotificationEmailTemplate({ email: "{{ .Email }}" })
+}
+
+/**
  * Generates an HTML email template for assignment creation notifications.
  *
  * @param data - Assignment notification data
@@ -381,7 +480,7 @@ export function assignmentCreatedEmailTemplate(data: {
   assignmentUrl: string
 }): string {
   const content = `
-    <h1>📚 New Assignment Posted</h1>
+    <h1>New Assignment Posted</h1>
     <p>Your teacher has created a new assignment in <strong>${escapeHtml(data.className)}</strong>. Make sure to review the requirements and submit your work before the deadline.</p>
     
     <div class="info-card">
@@ -395,7 +494,7 @@ export function assignmentCreatedEmailTemplate(data: {
       </div>
       <div class="info-card-row">
         <span class="info-label">Due Date</span>
-        <span class="info-value">📅 ${escapeHtml(data.dueDate)}</span>
+        <span class="info-value">${escapeHtml(data.dueDate)}</span>
       </div>
     </div>
     
@@ -404,11 +503,11 @@ export function assignmentCreatedEmailTemplate(data: {
     </center>
     
     <div class="alert alert-info">
-      <strong>💡 Pro Tip:</strong> Start early to avoid last-minute stress. Review the test cases and requirements carefully before submitting.
+      <strong>Pro tip:</strong> Start early to avoid last-minute stress. Review the test cases and requirements carefully before submitting.
     </div>
   `
 
-  return baseEmailTemplate(content, "#0d9488")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -431,34 +530,31 @@ export function submissionGradedEmailTemplate(data: {
     data.maxGrade > 0 ? Math.round((data.grade / data.maxGrade) * 100) : 0
 
   // Determine color based on grade
-  let scoreColor = "#10b981" // Green for good grades
+  let scoreColor: string = classifiEmailTheme.success
   let alertType = "alert-success"
-  let emoji = "🎉"
+  let alertLead = "Keep going:"
   let message = "Excellent work! Keep up the great performance."
 
   if (percentage < 60) {
-    scoreColor = "#ef4444" // Red for low grades
-    alertType = "alert-warning"
-    emoji = "📚"
+    scoreColor = classifiEmailTheme.error
+    alertType = "alert-danger"
+    alertLead = "Review focus:"
     message =
       "Don't worry! Review the feedback and test results to improve next time."
   } else if (percentage < 80) {
-    scoreColor = "#f59e0b" // Orange for medium grades
+    scoreColor = classifiEmailTheme.warning
     alertType = "alert-info"
-    emoji = "💪"
+    alertLead = "Next step:"
     message = "Good effort! Review the feedback to see where you can improve."
   }
 
   const content = `
-    <h1>✅ Your Assignment Has Been Graded</h1>
+    <h1>Your Assignment Has Been Graded</h1>
     <p>Your submission for <strong>${escapeHtml(data.assignmentTitle)}</strong> has been reviewed and graded by your instructor.</p>
     
     <div class="score-display" style="border-color: ${scoreColor};">
       <p class="score-number" style="color: ${scoreColor};">
         ${String(data.grade)}/${String(data.maxGrade)}
-      </p>
-      <p class="score-percentage" style="color: ${scoreColor};">
-        ${String(percentage)}%
       </p>
     </div>
     
@@ -467,17 +563,17 @@ export function submissionGradedEmailTemplate(data: {
     </center>
     
     <div class="alert ${alertType}">
-      <strong>${emoji} ${message}</strong>
+      <strong>${alertLead} ${message}</strong>
     </div>
     
     <div class="divider"></div>
     
-    <p style="font-size: 14px; color: #6b7280;">
+    <p style="font-size: 14px; color: ${classifiEmailTheme.bodyText};">
       <strong>What's next?</strong> Review your submission to see detailed feedback, test results, and areas for improvement. Use this feedback to enhance your coding skills.
     </p>
   `
 
-  return baseEmailTemplate(content, scoreColor)
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -493,21 +589,21 @@ export function classAnnouncementEmailTemplate(data: {
   message: string
 }): string {
   const content = `
-    <h1>📢 Class Announcement</h1>
+    <h1>Class Announcement</h1>
     <p>Your instructor has posted an important announcement in <strong>${escapeHtml(data.className)}</strong>.</p>
     
     <div class="info-card">
-      <p style="font-size: 16px; color: #1f2937; line-height: 1.6; margin: 0;">
+      <p style="font-size: 16px; color: ${classifiEmailTheme.titleText}; line-height: 1.6; margin: 0;">
         ${escapeHtml(data.message)}
       </p>
     </div>
     
     <div class="alert alert-info">
-      <strong>📌 Note:</strong> Make sure to read this announcement carefully as it may contain important information about assignments, deadlines, or class policies.
+      <strong>Note:</strong> Make sure to read this announcement carefully as it may contain important information about assignments, deadlines, or class policies.
     </div>
   `
 
-  return baseEmailTemplate(content, "#3b82f6")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -525,30 +621,30 @@ export function deadlineReminderEmailTemplate(data: {
   assignmentUrl: string
 }): string {
   const content = `
-    <h1>⏰ Assignment Deadline Reminder</h1>
+    <h1>Assignment Deadline Reminder</h1>
     <p>This is a friendly reminder that your assignment <strong>${escapeHtml(data.assignmentTitle)}</strong> is due soon!</p>
     
-    <div class="info-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b;">
-      <div class="info-card-row" style="border-color: #fbbf24;">
-        <span class="info-label" style="color: #92400e;">Assignment</span>
-        <span class="info-value" style="color: #78350f;">${escapeHtml(data.assignmentTitle)}</span>
+    <div class="info-card" style="background: linear-gradient(135deg, #fff4de 0%, #fffbeb 100%); border-color: #f7d49f;">
+      <div class="info-card-row" style="border-color: #f7d49f;">
+        <span class="info-label" style="color: #8a5200;">Assignment</span>
+        <span class="info-value" style="color: ${classifiEmailTheme.titleText};">${escapeHtml(data.assignmentTitle)}</span>
       </div>
       <div class="info-card-row" style="border-bottom: none;">
-        <span class="info-label" style="color: #92400e;">Due Date</span>
-        <span class="info-value" style="color: #78350f;">⏰ ${escapeHtml(data.dueDate)}</span>
+        <span class="info-label" style="color: #8a5200;">Due Date</span>
+        <span class="info-value" style="color: ${classifiEmailTheme.titleText};">${escapeHtml(data.dueDate)}</span>
       </div>
     </div>
     
     <center>
-      <a href="${escapeHtml(data.assignmentUrl)}" class="button" style="background: #f59e0b;">Submit Assignment Now</a>
+      <a href="${escapeHtml(data.assignmentUrl)}" class="button">Submit Assignment Now</a>
     </center>
     
     <div class="alert alert-warning">
-      <strong>⚠️ Important:</strong> Late submissions may incur penalties. Make sure to submit your work before the deadline to receive full credit.
+      <strong>Important:</strong> Late submissions may incur penalties. Make sure to submit your work before the deadline to receive full credit.
     </div>
   `
 
-  return baseEmailTemplate(content, "#f59e0b")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -566,7 +662,7 @@ export function enrollmentConfirmedEmailTemplate(data: {
   classUrl: string
 }): string {
   const content = `
-    <h1>🎓 Welcome to ${escapeHtml(data.className)}!</h1>
+    <h1>Welcome to ${escapeHtml(data.className)}</h1>
     <p>Congratulations! You have been successfully enrolled in <strong>${escapeHtml(data.className)}</strong>. We're excited to have you in the class.</p>
     
     <div class="info-card">
@@ -576,7 +672,7 @@ export function enrollmentConfirmedEmailTemplate(data: {
       </div>
       <div class="info-card-row" style="border-bottom: none;">
         <span class="info-label">Instructor</span>
-        <span class="info-value">👨‍🏫 ${escapeHtml(data.instructorName)}</span>
+        <span class="info-value">${escapeHtml(data.instructorName)}</span>
       </div>
     </div>
     
@@ -585,21 +681,21 @@ export function enrollmentConfirmedEmailTemplate(data: {
     </center>
     
     <div class="alert alert-success">
-      <strong>🚀 Getting Started:</strong> Visit your class dashboard to view assignments, announcements, and course materials. Don't hesitate to reach out to your instructor if you have any questions.
+      <strong>Getting started:</strong> Visit your class dashboard to view assignments, announcements, and course materials. Don't hesitate to reach out to your instructor if you have any questions.
     </div>
     
     <div class="divider"></div>
     
     <h2>What's Next?</h2>
-    <p style="font-size: 14px; color: #4b5563;">
-      • Check for any pending assignments<br>
-      • Review the class syllabus and requirements<br>
-      • Introduce yourself to your instructor and classmates<br>
-      • Set up your development environment
+    <p style="font-size: 14px; color: ${classifiEmailTheme.bodyText};">
+      - Check for any pending assignments<br>
+      - Review the class syllabus and requirements<br>
+      - Introduce yourself to your instructor and classmates<br>
+      - Set up your development environment
     </p>
   `
 
-  return baseEmailTemplate(content, "#10b981")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -617,7 +713,7 @@ export function submissionFeedbackGivenEmailTemplate(data: {
   submissionUrl: string
 }): string {
   const content = `
-    <h1>💬 Your Teacher Left Feedback</h1>
+    <h1>Your Teacher Left Feedback</h1>
     <p><strong>${escapeHtml(data.teacherName)}</strong> has left feedback on your submission for <strong>${escapeHtml(data.assignmentTitle)}</strong>.</p>
 
     <div class="info-card">
@@ -627,7 +723,7 @@ export function submissionFeedbackGivenEmailTemplate(data: {
       </div>
       <div class="info-card-row" style="border-bottom: none;">
         <span class="info-label">From</span>
-        <span class="info-value">👨‍🏫 ${escapeHtml(data.teacherName)}</span>
+        <span class="info-value">${escapeHtml(data.teacherName)}</span>
       </div>
     </div>
 
@@ -636,11 +732,11 @@ export function submissionFeedbackGivenEmailTemplate(data: {
     </center>
 
     <div class="alert alert-info">
-      <strong>💡 Tip:</strong> Feedback from your teacher can help you improve your understanding. Make sure to read it carefully and apply the suggestions in future submissions.
+      <strong>Tip:</strong> Feedback from your teacher can help you improve your understanding. Make sure to read it carefully and apply the suggestions in future submissions.
     </div>
   `
 
-  return baseEmailTemplate(content, "#0d9488")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -660,7 +756,7 @@ export function assignmentUpdatedEmailTemplate(data: {
   assignmentUrl: string
 }): string {
   const content = `
-    <h1>📝 Assignment Updated</h1>
+    <h1>Assignment Updated</h1>
     <p>Your teacher has updated the assignment <strong>${escapeHtml(data.assignmentTitle)}</strong> in <strong>${escapeHtml(data.className)}</strong>. Please review the changes.</p>
     
     <div class="info-card">
@@ -674,7 +770,7 @@ export function assignmentUpdatedEmailTemplate(data: {
       </div>
       <div class="info-card-row">
         <span class="info-label">Due Date</span>
-        <span class="info-value">📅 ${escapeHtml(data.dueDate)}</span>
+        <span class="info-value">${escapeHtml(data.dueDate)}</span>
       </div>
     </div>
     
@@ -683,11 +779,11 @@ export function assignmentUpdatedEmailTemplate(data: {
     </center>
     
     <div class="alert alert-info">
-      <strong>📌 Note:</strong> Make sure to review the updated requirements and adjust your submission accordingly.
+      <strong>Note:</strong> Make sure to review the updated requirements and adjust your submission accordingly.
     </div>
   `
 
-  return baseEmailTemplate(content, "#6366f1")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -707,7 +803,7 @@ export function newSubmissionReceivedEmailTemplate(data: {
   submissionUrl: string
 }): string {
   const content = `
-    <h1>📥 New Submission Received</h1>
+    <h1>New Submission Received</h1>
     <p><strong>${escapeHtml(data.studentName)}</strong> has submitted their work for <strong>${escapeHtml(data.assignmentTitle)}</strong> in <strong>${escapeHtml(data.className)}</strong>.</p>
     
     <div class="info-card">
@@ -730,7 +826,7 @@ export function newSubmissionReceivedEmailTemplate(data: {
     </center>
   `
 
-  return baseEmailTemplate(content, "#0d9488")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -754,34 +850,34 @@ export function lateSubmissionReceivedEmailTemplate(data: {
   submissionUrl: string
 }): string {
   const content = `
-    <h1>⚠️ Late Submission Received</h1>
+    <h1>Late Submission Received</h1>
     <p><strong>${escapeHtml(data.studentName)}</strong> submitted <strong>${escapeHtml(data.assignmentTitle)}</strong> in <strong>${escapeHtml(data.className)}</strong> after the deadline.</p>
     
-    <div class="info-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-color: #f59e0b;">
-      <div class="info-card-row" style="border-color: #fbbf24;">
-        <span class="info-label" style="color: #92400e;">Student</span>
-        <span class="info-value" style="color: #78350f;">${escapeHtml(data.studentName)}</span>
+    <div class="info-card" style="background: linear-gradient(135deg, #fff4de 0%, #fffbeb 100%); border-color: #f7d49f;">
+      <div class="info-card-row" style="border-color: #f7d49f;">
+        <span class="info-label" style="color: #8a5200;">Student</span>
+        <span class="info-value" style="color: ${classifiEmailTheme.titleText};">${escapeHtml(data.studentName)}</span>
       </div>
-      <div class="info-card-row" style="border-color: #fbbf24;">
-        <span class="info-label" style="color: #92400e;">Assignment</span>
-        <span class="info-value" style="color: #78350f;">${escapeHtml(data.assignmentTitle)}</span>
+      <div class="info-card-row" style="border-color: #f7d49f;">
+        <span class="info-label" style="color: #8a5200;">Assignment</span>
+        <span class="info-value" style="color: ${classifiEmailTheme.titleText};">${escapeHtml(data.assignmentTitle)}</span>
       </div>
-      <div class="info-card-row" style="border-color: #fbbf24;">
-        <span class="info-label" style="color: #92400e;">Due Date</span>
-        <span class="info-value" style="color: #78350f;">📅 ${escapeHtml(data.dueDate)}</span>
+      <div class="info-card-row" style="border-color: #f7d49f;">
+        <span class="info-label" style="color: #8a5200;">Due Date</span>
+        <span class="info-value" style="color: ${classifiEmailTheme.titleText};">${escapeHtml(data.dueDate)}</span>
       </div>
       <div class="info-card-row" style="border-bottom: none;">
-        <span class="info-label" style="color: #92400e;">Submitted</span>
-        <span class="info-value" style="color: #78350f;">🕐 ${escapeHtml(data.submittedAt)}</span>
+        <span class="info-label" style="color: #8a5200;">Submitted</span>
+        <span class="info-value" style="color: ${classifiEmailTheme.titleText};">${escapeHtml(data.submittedAt)}</span>
       </div>
     </div>
     
     <center>
-      <a href="${escapeHtml(data.submissionUrl)}" class="button" style="background: #f59e0b;">Review Late Submission</a>
+      <a href="${escapeHtml(data.submissionUrl)}" class="button">Review Late Submission</a>
     </center>
   `
 
-  return baseEmailTemplate(content, "#f59e0b")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -803,14 +899,14 @@ export function similarityDetectedEmailTemplate(data: {
   submissionUrl: string
 }): string {
   const content = `
-    <h1>🔍 Similarity Alert</h1>
+    <h1>Similarity Alert</h1>
     <p>A high code similarity score has been detected for a submission in <strong>${escapeHtml(data.className)}</strong>.</p>
     
-    <div class="score-display" style="border-color: #ef4444;">
-      <p class="score-number" style="color: #ef4444;">
+    <div class="score-display" style="border-color: ${classifiEmailTheme.error};">
+      <p class="score-number" style="color: ${classifiEmailTheme.error};">
         ${String(data.similarityPercentage)}%
       </p>
-      <p class="score-percentage" style="color: #ef4444;">
+      <p class="score-percentage" style="color: ${classifiEmailTheme.error};">
         Similarity Score
       </p>
     </div>
@@ -831,15 +927,15 @@ export function similarityDetectedEmailTemplate(data: {
     </div>
     
     <center>
-      <a href="${escapeHtml(data.submissionUrl)}" class="button" style="background: #ef4444;">Review Submission</a>
+      <a href="${escapeHtml(data.submissionUrl)}" class="button">Review Submission</a>
     </center>
     
     <div class="alert alert-warning">
-      <strong>⚠️ Action Required:</strong> Please review this submission to determine if academic integrity policies apply.
+      <strong>Action required:</strong> Please review this submission to determine if academic integrity policies apply.
     </div>
   `
 
-  return baseEmailTemplate(content, "#ef4444")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -857,7 +953,7 @@ export function studentEnrolledEmailTemplate(data: {
   studentEmail: string
 }): string {
   const content = `
-    <h1>👋 New Student Enrolled</h1>
+    <h1>New Student Enrolled</h1>
     <p>A new student has joined your class <strong>${escapeHtml(data.className)}</strong>.</p>
     
     <div class="info-card">
@@ -876,11 +972,11 @@ export function studentEnrolledEmailTemplate(data: {
     </div>
     
     <div class="alert alert-success">
-      <strong>🎉 Welcome!</strong> You may want to greet the new student and share any important class information.
+      <strong>Welcome:</strong> You may want to greet the new student and share any important class information.
     </div>
   `
 
-  return baseEmailTemplate(content, "#10b981")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -898,7 +994,7 @@ export function studentUnenrolledEmailTemplate(data: {
   studentEmail: string
 }): string {
   const content = `
-    <h1>👤 Student Left Class</h1>
+    <h1>Student Left Class</h1>
     <p><strong>${escapeHtml(data.studentName)}</strong> has left your class <strong>${escapeHtml(data.className)}</strong>.</p>
     
     <div class="info-card">
@@ -917,7 +1013,7 @@ export function studentUnenrolledEmailTemplate(data: {
     </div>
   `
 
-  return baseEmailTemplate(content, "#6b7280")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -935,7 +1031,7 @@ export function newUserRegisteredEmailTemplate(data: {
   userRole: string
 }): string {
   const content = `
-    <h1>🆕 New User Registration</h1>
+    <h1>New User Registration</h1>
     <p>A new user has registered on the platform.</p>
     
     <div class="info-card">
@@ -954,7 +1050,7 @@ export function newUserRegisteredEmailTemplate(data: {
     </div>
   `
 
-  return baseEmailTemplate(content, "#8b5cf6")
+  return baseEmailTemplate(content)
 }
 
 /**
@@ -970,7 +1066,7 @@ export function removedFromClassEmailTemplate(data: {
   instructorName: string
 }): string {
   const content = `
-    <h1>📋 Class Enrollment Update</h1>
+    <h1>Class Enrollment Update</h1>
     <p>You have been removed from <strong>${escapeHtml(data.className)}</strong> by <strong>${escapeHtml(data.instructorName)}</strong>.</p>
     
     <div class="info-card">
@@ -985,9 +1081,9 @@ export function removedFromClassEmailTemplate(data: {
     </div>
     
     <div class="alert alert-info">
-      <strong>ℹ️ Note:</strong> If you believe this was done in error, please contact your instructor directly.
+      <strong>Note:</strong> If you believe this was done in error, please contact your instructor directly.
     </div>
   `
 
-  return baseEmailTemplate(content, "#6b7280")
+  return baseEmailTemplate(content)
 }

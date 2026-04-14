@@ -52,8 +52,8 @@ describe("SubmissionService", () => {
   let mockAssignmentRepo: any
   let mockEnrollmentRepo: any
   let mockTestResultRepo: any
-  let mockClassRepo: any
-  let mockUserRepo: any
+  let _mockClassRepo: any
+  let _mockUserRepo: any
   let mockStorageService: any
   let mockCodeTestService: any
   let mockLatePenaltyService: any
@@ -86,11 +86,11 @@ describe("SubmissionService", () => {
       isEnrolled: vi.fn(),
     }
 
-    mockClassRepo = {
+    _mockClassRepo = {
       getClassById: vi.fn(),
     }
 
-    mockUserRepo = {
+    _mockUserRepo = {
       getUserById: vi.fn(),
     }
 
@@ -124,8 +124,15 @@ describe("SubmissionService", () => {
         rejectAfterHours: 120,
       }),
       applyPenalty: vi.fn(
-        (score: number, penalty: { penaltyPercent: number }, totalScore: number) =>
-          Math.max(0, score - Math.round(totalScore * (penalty.penaltyPercent / 100))),
+        (
+          score: number,
+          penalty: { penaltyPercent: number },
+          totalScore: number,
+        ) =>
+          Math.max(
+            0,
+            score - Math.round(totalScore * (penalty.penaltyPercent / 100)),
+          ),
       ),
       getAssignmentPenaltyConfig: vi.fn(),
       setAssignmentPenaltyConfig: vi.fn(),
@@ -142,7 +149,9 @@ describe("SubmissionService", () => {
     }
 
     mockSimilarityRepo = {
-      getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()),
+      getMaxSimilarityScoresBySubmissionIds: vi
+        .fn()
+        .mockResolvedValue(new Map()),
     }
 
     submissionService = new SubmissionService(
@@ -696,7 +705,9 @@ describe("SubmissionService", () => {
     beforeEach(() => {
       mockSubmissionRepo.getSubmissionById.mockResolvedValue(submission)
       mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
-      mockSubmissionRepo.saveTeacherFeedback.mockResolvedValue(updatedSubmission)
+      mockSubmissionRepo.saveTeacherFeedback.mockResolvedValue(
+        updatedSubmission,
+      )
     })
 
     it("uses dashboard assignment URL for feedback notification", async () => {
@@ -711,9 +722,7 @@ describe("SubmissionService", () => {
         20,
         "SUBMISSION_FEEDBACK_GIVEN",
         expect.objectContaining({
-          submissionUrl: expect.stringContaining(
-            "/dashboard/assignments/10",
-          ),
+          submissionUrl: expect.stringContaining("/dashboard/assignments/10"),
         }),
       )
       expect(
@@ -722,15 +731,17 @@ describe("SubmissionService", () => {
         20,
         "SUBMISSION_FEEDBACK_GIVEN",
         expect.objectContaining({
-          submissionUrl: expect.stringContaining(
-            "/dashboard/assignments/10",
-          ),
+          submissionUrl: expect.stringContaining("/dashboard/assignments/10"),
         }),
       )
     })
 
     it("trims teacher name and feedback before saving and notifying", async () => {
-      await submissionService.saveTeacherFeedback(5, "  Teacher Name  ", "  Great work  ")
+      await submissionService.saveTeacherFeedback(
+        5,
+        "  Teacher Name  ",
+        "  Great work  ",
+      )
 
       expect(mockSubmissionRepo.saveTeacherFeedback).toHaveBeenCalledWith(
         5,
