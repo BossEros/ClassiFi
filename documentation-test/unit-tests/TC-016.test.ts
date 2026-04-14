@@ -1,80 +1,36 @@
 /**
- * TC-016: Invalid File Type Rejection
+ * TC-016: Join Class Button Stays Disabled When Class Code Is Empty
  *
- * Module: Code Submission
- * Unit: Submit Code File
- * Date Tested: 3/28/26
- * Description: Verify error handling when submitting an invalid file type.
- * Expected Result: User sees "Invalid file type" message.
+ * Module: Student Dashboard
+ * Unit: Join class
+ * Date Tested: 4/13/26
+ * Description: Verify that the Join Class button stays disabled when the class code is empty.
+ * Expected Result: The Join Class button remains disabled until a class code is entered.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-016 Unit Test Pass - Invalid File Type Rejected
- * Suggested Figure Title (System UI): Code Submission UI - Invalid File Type Validation Message
+ * Suggested Figure Title (Test Pass): TC-016 Unit Test Pass - Join Class Button Disabled With Empty Code
+ * Suggested Figure Title (System UI): Student Dashboard UI - Join Class Button Disabled With Empty Code
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { InvalidFileTypeError } from "../../backend-ts/src/shared/errors.js"
-import { createMockAssignment } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/modules/submissions/submission.repository.js")
-vi.mock("../../backend-ts/src/modules/assignments/assignment.repository.js")
-vi.mock("../../backend-ts/src/modules/enrollments/enrollment.repository.js")
-vi.mock("../../backend-ts/src/modules/classes/class.repository.js")
-vi.mock("../../backend-ts/src/modules/test-cases/test-result.repository.js")
-vi.mock("../../backend-ts/src/services/code-test.service.js")
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
-}))
-vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
-  supabase: { storage: { from: vi.fn(() => ({ upload: vi.fn(), createSignedUrl: vi.fn() })) } },
-}))
+import { readFileSync } from "node:fs"
+import { resolve, dirname } from "node:path"
+import { fileURLToPath } from "node:url"
+import { describe, expect, it } from "vitest"
 
-describe("TC-016: Invalid File Type Rejection", () => {
-  let submissionService: SubmissionService
-  let mockAssignmentRepo: any
-  let mockEnrollmentRepo: any
-  let mockSubmissionRepo: any
+const currentDirectory = dirname(fileURLToPath(import.meta.url))
+const studentClassesPagePath = resolve(
+  currentDirectory,
+  "../../frontend/src/presentation/pages/student/StudentClassesPage.tsx",
+)
 
-  const futureDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+describe("TC-016: Join Class Button Stays Disabled When Class Code Is Empty", () => {
+  it("should keep the Join Class button disabled when the class code is blank", () => {
+    const studentClassesPageSource = readFileSync(studentClassesPagePath, "utf8")
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockAssignmentRepo = { getAssignmentById: vi.fn() }
-    mockEnrollmentRepo = { isEnrolled: vi.fn() }
-    mockSubmissionRepo = {
-      getLatestSubmission: vi.fn(), getSubmissionCount: vi.fn(),
-      createSubmission: vi.fn(), getSubmissionHistory: vi.fn(),
-      getSubmissionsWithStudentInfo: vi.fn(), getSubmissionsByStudent: vi.fn(),
-      getSubmissionById: vi.fn(), saveTeacherFeedback: vi.fn(),
-      updateGrade: vi.fn(), delete: vi.fn(), withContext: vi.fn().mockReturnThis(),
-    }
-
-    submissionService = new SubmissionService(
-      mockSubmissionRepo, mockAssignmentRepo, mockEnrollmentRepo,
-      { deleteBySubmissionId: vi.fn() } as any,
-      { upload: vi.fn(), uploadSubmission: vi.fn(), download: vi.fn(), deleteFiles: vi.fn(), getSignedUrl: vi.fn(), deleteSubmissionFiles: vi.fn(), deleteAvatar: vi.fn() } as any,
-      { runTestsForSubmission: vi.fn() } as any,
-      { calculatePenalty: vi.fn(), getDefaultConfig: vi.fn(), applyPenalty: vi.fn(), getAssignmentPenaltyConfig: vi.fn(), setAssignmentPenaltyConfig: vi.fn() } as any,
-      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      { scheduleFromSubmission: vi.fn() } as any,
+    expect(studentClassesPageSource).toContain('const classCodeValue = watch("classCode")')
+    expect(studentClassesPageSource).toContain(
+      'disabled={isSubmitting || !classCodeValue.trim()}',
     )
-  })
-
-  afterEach(() => { vi.resetAllMocks() })
-
-  it("should throw InvalidFileTypeError for wrong file extension", async () => {
-    const assignment = createMockAssignment({
-      isActive: true, deadline: futureDeadline, programmingLanguage: "python",
-    })
-    const wrongFile = { filename: "solution.java", data: Buffer.from("class Solution {}"), mimetype: "text/x-java" }
-
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
-    mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
-    mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
-
-    const submitPromise = submissionService.submitAssignment(1, 1, wrongFile)
-
-    await expect(submitPromise).rejects.toThrow(InvalidFileTypeError)
-    await expect(submitPromise).rejects.toThrow("Invalid file type")
+    expect(studentClassesPageSource).toContain("Join Class")
   })
 })

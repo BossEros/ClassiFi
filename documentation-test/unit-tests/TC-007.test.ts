@@ -1,39 +1,44 @@
 /**
- * TC-007: Registration Rejects Weak Password
+ * TC-007: Class Creation Rejects Missing Schedule Day
  *
- * Module: Authentication
- * Unit: Register user
- * Date Tested: 4/11/26
- * Description: Verify that the registration form rejects a password that does not meet the required strength rules.
- * Expected Result: Registration validation fails with the explicit password-strength message.
+ * Module: Class Management
+ * Unit: Create class
+ * Date Tested: 4/13/26
+ * Description: Verify that class creation rejects a missing schedule day.
+ * Expected Result: A required field error is shown for the schedule day.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-007 Unit Test Pass - Registration Weak Password Rejected
- * Suggested Figure Title (System UI): Authentication UI - Registration Form Showing Password Strength Validation
+ * Suggested Figure Title (Test Pass): TC-007 Unit Test Pass - Missing Schedule Day Rejected
+ * Suggested Figure Title (System UI): Class Management UI - Create Class Form Showing Schedule Day Error
  */
 
 import { describe, expect, it } from "vitest"
-import { registerFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
+import { teacherClassFormSchema } from "../../frontend/src/presentation/schemas/class/classSchemas"
 
-describe("TC-007: Registration Rejects Weak Password", () => {
-  it("should reject registration when the password does not contain an uppercase letter", () => {
-    const registrationParseResult = registerFormSchema.safeParse({
-      role: "student",
-      firstName: "Juan",
-      lastName: "Dela Cruz",
-      email: "student@classifi.com",
-      password: "password1!",
-      confirmPassword: "password1!",
+describe("TC-007: Class Creation Rejects Missing Schedule Day", () => {
+  it("should reject class creation when no schedule day is selected", () => {
+    const classParseResult = teacherClassFormSchema.safeParse({
+      className: "Introduction to Programming",
+      description: "Morning programming class",
+      classCode: "ABC12345",
+      semester: 1,
+      academicYear: "2025-2026",
+      schedule: {
+        days: [],
+        startTime: "08:00",
+        endTime: "10:00",
+      },
     })
 
-    expect(registrationParseResult.success).toBe(false)
+    expect(classParseResult.success).toBe(false)
 
-    if (!registrationParseResult.success) {
-      expect(registrationParseResult.error.issues[0]?.message).toBe(
-        "Password must contain at least one uppercase letter",
+    if (!classParseResult.success) {
+      expect(classParseResult.error.issues[0]?.message).toBe(
+        "At least one schedule day is required",
       )
-      expect(registrationParseResult.error.issues[0]?.path).toEqual([
-        "password",
+      expect(classParseResult.error.issues[0]?.path).toEqual([
+        "schedule",
+        "days",
       ])
     }
   })

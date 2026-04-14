@@ -1,135 +1,75 @@
 /**
- * IT-003: Code Test Execution → Submission Graded Notification Flow
+ * IT-003: Password Reset Request Is Sent
  *
- * Module: Code Submission
- * Unit: Run Automated Correctness Tests
- * Date Tested: 3/29/26
- * Description: Verify that running tests for a submission grades the student and sends a notification.
- * Expected Result: Student receives a "submission graded" in-app notification and email.
+ * Module: Authentication
+ * Unit: Password reset
+ * Date Tested: 4/13/26
+ * Description: Verify that a password reset request is sent.
+ * Expected Result: A password reset email is sent to the user's email address.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-003 Integration Test Pass - Automated Correctness Test Grades Submission and Notifies Student
- * Suggested Figure Title (System UI): Code Submission UI - Submission Test Result and Grading Outcome
+ * Suggested Figure Title (Test Pass): IT-003 Integration Test Pass - Password Reset Request Is Sent
+ * Suggested Figure Title (System UI): Authentication UI - User Getting Password Reset Email
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { container } from "tsyringe"
-import { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import { CodeTestService } from "../../backend-ts/src/modules/test-cases/code-test.service.js"
-import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
-}))
-vi.mock("../../backend-ts/src/shared/database.js", () => ({
-  db: {
-    transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => callback({})),
-  },
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AuthService } from "../../backend-ts/src/modules/auth/auth.service.js"
+import { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
+import { SupabaseAuthAdapter } from "../../backend-ts/src/services/supabase-auth.adapter.js"
+
+vi.mock("../../backend-ts/src/modules/users/user.repository.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../backend-ts/src/modules/users/user.repository.js")>()
+  return { ...original, UserRepository: vi.fn() }
+})
+vi.mock("../../backend-ts/src/services/supabase-auth.adapter.js")
+vi.mock("../../backend-ts/src/shared/config.js", () => ({
+  settings: { frontendUrl: "http://localhost:3000" },
 }))
 
-describe("IT-003: Code Test Execution → Submission Graded Notification Flow", () => {
-  let codeTestService: CodeTestService
-  let mockNotificationRepo: any
-  let mockEmailService: any
-  let mockExecutor: any
-  let mockTestCaseRepo: any
-  let mockTestResultRepo: any
-  let mockSubmissionRepo: any
-  let mockAssignmentRepo: any
-  let mockStorageService: any
+describe("IT-003: Password Reset Request Is Sent", () => {
+  let authService: AuthService
+  let mockUserRepo: any
+  let mockAuthAdapter: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockNotificationRepo = {
-      create: vi.fn(),
-      findById: vi.fn(),
-      findByUserId: vi.fn(),
-      countByUserId: vi.fn(),
-      countUnreadByUserId: vi.fn(),
-      markAsRead: vi.fn(),
-      markAllAsReadByUserId: vi.fn(),
-      delete: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
+    mockUserRepo = {
+      checkEmailExists: vi.fn(),
+      createUser: vi.fn(),
+      getUserBySupabaseId: vi.fn(),
+    }
+    mockAuthAdapter = {
+      signUp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      getUser: vi.fn(),
+      getAdminUserById: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
+      deleteUser: vi.fn(),
     }
 
-    const mockUserRepo = {
-      getUserById: vi.fn().mockResolvedValue({
-        id: 10,
-        email: "student@test.com",
-        emailNotificationsEnabled: true,
-        inAppNotificationsEnabled: true,
-      }),
-      withContext: vi.fn().mockReturnThis(),
-    }
-
-    mockEmailService = { sendEmail: vi.fn().mockResolvedValue(undefined) }
-
-    mockExecutor = {
-      executeBatch: vi.fn().mockResolvedValue([
-        { stdout: "4", stderr: "", exitCode: 0, executionTimeMs: 10, memoryUsedKb: 512 },
-        { stdout: "9", stderr: "", exitCode: 0, executionTimeMs: 10, memoryUsedKb: 512 },
-      ]),
-    }
-
-    mockTestCaseRepo = {
-      getByAssignmentId: vi.fn().mockResolvedValue([
-        { id: 1, assignmentId: 1, name: "Test 1", input: "2", expectedOutput: "4", isHidden: false, timeLimit: 2 },
-        { id: 2, assignmentId: 1, name: "Test 2", input: "3", expectedOutput: "9", isHidden: false, timeLimit: 2 },
-      ]),
-    }
-
-    mockTestResultRepo = {
-      deleteBySubmissionId: vi.fn().mockResolvedValue(undefined),
-      createMany: vi.fn().mockResolvedValue(undefined),
-      calculateScore: vi.fn().mockResolvedValue({ passed: 2, total: 2, percentage: 100 }),
-    }
-
-    const mockTransactionalSubmissionRepo = { updateGrade: vi.fn().mockResolvedValue(undefined), updateOriginalGrade: vi.fn().mockResolvedValue(undefined) }
-    mockSubmissionRepo = {
-      getSubmissionById: vi.fn().mockResolvedValue(
-        createMockSubmission({ id: 1, assignmentId: 1, studentId: 10, filePath: "submissions/1/code.py" }),
-      ),
-      withContext: vi.fn().mockReturnValue(mockTransactionalSubmissionRepo),
-    }
-
-    mockAssignmentRepo = {
-      getAssignmentById: vi.fn().mockResolvedValue(
-        createMockAssignment({ id: 1, assignmentName: "Functions Exercise", totalScore: 100 }),
-      ),
-    }
-
-    mockStorageService = {
-      download: vi.fn().mockResolvedValue("def square(n): return n * n"),
-    }
-
-    mockNotificationRepo.create.mockImplementation(async (data: any) => ({
-      id: 1, userId: data.userId, type: data.type, title: data.title,
-      message: data.message, metadata: data.metadata, isRead: false, readAt: null, createdAt: new Date(),
-    }))
-
-    const notificationService = new NotificationService(mockNotificationRepo, mockUserRepo as any, mockEmailService)
-
-    codeTestService = new CodeTestService(
-      mockExecutor,
-      mockTestCaseRepo,
-      mockTestResultRepo,
-      mockSubmissionRepo,
-      mockAssignmentRepo,
-      mockStorageService,
-      notificationService,
+    authService = new AuthService(
+      mockUserRepo as UserRepository,
+      mockAuthAdapter as SupabaseAuthAdapter,
+      {
+        createNotification: vi.fn(),
+        sendEmailNotificationIfEnabled: vi.fn(),
+        withContext: vi.fn().mockReturnThis(),
+      } as any,
     )
   })
 
-  afterEach(() => { container.clearInstances() })
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
 
-  it("grades the submission and notifies the student when tests pass", async () => {
-    const result = await codeTestService.runTestsForSubmission(1)
+  it("should send the reset request with the correct redirect url", async () => {
+    mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined)
 
-    expect(result.passed).toBe(2)
-    expect(result.total).toBe(2)
-    expect(mockNotificationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 10, type: "SUBMISSION_GRADED" }),
+    await authService.requestPasswordReset("reset@example.com")
+
+    expect(mockAuthAdapter.resetPasswordForEmail).toHaveBeenCalledWith(
+      "reset@example.com",
+      "http://localhost:3000/reset-password",
     )
-    expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(1)
   })
 })

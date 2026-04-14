@@ -1,38 +1,42 @@
 /**
- * TC-006: Registration Rejects Invalid Email Format
+ * TC-006: Class Creation Rejects Empty Class Name
  *
- * Module: Authentication
- * Unit: Register user
- * Date Tested: 4/11/26
- * Description: Verify that the registration form rejects an email address with an invalid format.
- * Expected Result: Registration validation fails with the explicit invalid email message.
+ * Module: Class Management
+ * Unit: Create class
+ * Date Tested: 4/13/26
+ * Description: Verify that class creation rejects an empty class name.
+ * Expected Result: A required field error is shown for the class name.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-006 Unit Test Pass - Registration Invalid Email Format Rejected
- * Suggested Figure Title (System UI): Authentication UI - Registration Form Showing Invalid Email Validation
+ * Suggested Figure Title (Test Pass): TC-006 Unit Test Pass - Empty Class Name Rejected
+ * Suggested Figure Title (System UI): Class Management UI - Create Class Form Showing Class Name Error
  */
 
 import { describe, expect, it } from "vitest"
-import { registerFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
+import { teacherClassFormSchema } from "../../frontend/src/presentation/schemas/class/classSchemas"
 
-describe("TC-006: Registration Rejects Invalid Email Format", () => {
-  it("should reject registration when the email address format is invalid", () => {
-    const registrationParseResult = registerFormSchema.safeParse({
-      role: "student",
-      firstName: "Juan",
-      lastName: "Dela Cruz",
-      email: "invalid-email",
-      password: "Password1!",
-      confirmPassword: "Password1!",
+describe("TC-006: Class Creation Rejects Empty Class Name", () => {
+  it("should reject class creation when the class name is empty", () => {
+    const classParseResult = teacherClassFormSchema.safeParse({
+      className: "   ",
+      description: "Morning programming class",
+      classCode: "ABC12345",
+      semester: 1,
+      academicYear: "2025-2026",
+      schedule: {
+        days: ["monday"],
+        startTime: "08:00",
+        endTime: "10:00",
+      },
     })
 
-    expect(registrationParseResult.success).toBe(false)
+    expect(classParseResult.success).toBe(false)
 
-    if (!registrationParseResult.success) {
-      expect(registrationParseResult.error.issues[0]?.message).toBe(
-        "Invalid email format. Please enter a valid email address",
+    if (!classParseResult.success) {
+      expect(classParseResult.error.issues[0]?.message).toBe(
+        "Class name is required",
       )
-      expect(registrationParseResult.error.issues[0]?.path).toEqual(["email"])
+      expect(classParseResult.error.issues[0]?.path).toEqual(["className"])
     }
   })
 })

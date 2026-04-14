@@ -1,71 +1,34 @@
 /**
- * TC-015: Submit Past Deadline
+ * TC-015: Login Rejects Invalid Email
  *
- * Module: Code Submission
- * Unit: Submit Code File
- * Date Tested: 3/28/26
- * Description: Verify error handling when submitting past the deadline.
- * Expected Result: User sees "Deadline has passed" message.
+ * Module: Authentication
+ * Unit: Login user
+ * Date Tested: 4/13/26
+ * Description: Verify that login rejects an invalid email.
+ * Expected Result: An invalid email error is shown in the email field.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-015 Unit Test Pass - Late Submission Rejected After Deadline
- * Suggested Figure Title (System UI): Code Submission UI - Deadline Passed Error State
+ * Suggested Figure Title (Test Pass): TC-015 Unit Test Pass - Login Invalid Email Rejected
+ * Suggested Figure Title (System UI): Authentication UI - Login Form Showing Invalid Email Error
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { DeadlinePassedError } from "../../backend-ts/src/shared/errors.js"
-import { createMockAssignment } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/modules/submissions/submission.repository.js")
-vi.mock("../../backend-ts/src/modules/assignments/assignment.repository.js")
-vi.mock("../../backend-ts/src/modules/enrollments/enrollment.repository.js")
-vi.mock("../../backend-ts/src/modules/classes/class.repository.js")
-vi.mock("../../backend-ts/src/modules/test-cases/test-result.repository.js")
-vi.mock("../../backend-ts/src/services/code-test.service.js")
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
-}))
-vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
-  supabase: { storage: { from: vi.fn(() => ({ upload: vi.fn(), createSignedUrl: vi.fn() })) } },
-}))
+import { describe, expect, it } from "vitest"
+import { loginFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
 
-describe("TC-015: Submit Past Deadline", () => {
-  let submissionService: SubmissionService
-  let mockAssignmentRepo: any
+describe("TC-015: Login Rejects Invalid Email", () => {
+  it("should reject login when the email format is invalid", () => {
+    const loginParseResult = loginFormSchema.safeParse({
+      email: "invalid-email",
+      password: "Password1!",
+    })
 
-  const validFile = {
-    filename: "solution.py",
-    data: Buffer.from('print("hello")'),
-    mimetype: "text/x-python",
-  }
+    expect(loginParseResult.success).toBe(false)
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockAssignmentRepo = { getAssignmentById: vi.fn() }
-
-    submissionService = new SubmissionService(
-      { getLatestSubmission: vi.fn(), getSubmissionCount: vi.fn(), createSubmission: vi.fn(), getSubmissionHistory: vi.fn(), getSubmissionsWithStudentInfo: vi.fn(), getSubmissionsByStudent: vi.fn(), getSubmissionById: vi.fn(), saveTeacherFeedback: vi.fn(), updateGrade: vi.fn(), delete: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      mockAssignmentRepo,
-      { isEnrolled: vi.fn() } as any,
-      { deleteBySubmissionId: vi.fn() } as any,
-      { upload: vi.fn(), uploadSubmission: vi.fn(), download: vi.fn(), deleteFiles: vi.fn(), getSignedUrl: vi.fn(), deleteSubmissionFiles: vi.fn(), deleteAvatar: vi.fn() } as any,
-      { runTestsForSubmission: vi.fn() } as any,
-      { calculatePenalty: vi.fn(), getDefaultConfig: vi.fn(), applyPenalty: vi.fn(), getAssignmentPenaltyConfig: vi.fn(), setAssignmentPenaltyConfig: vi.fn() } as any,
-      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
-      { scheduleFromSubmission: vi.fn() } as any,
-    )
-  })
-
-  afterEach(() => { vi.resetAllMocks() })
-
-  it("should throw DeadlinePassedError when deadline has passed", async () => {
-    const pastDeadline = new Date(Date.now() - 1000)
-    const assignment = createMockAssignment({ isActive: true, deadline: pastDeadline })
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
-
-    const submitPromise = submissionService.submitAssignment(1, 1, validFile)
-
-    await expect(submitPromise).rejects.toThrow(DeadlinePassedError)
-    await expect(submitPromise).rejects.toThrow("deadline")
+    if (!loginParseResult.success) {
+      expect(loginParseResult.error.issues[0]?.message).toBe(
+        "Invalid email format. Please enter a valid email address",
+      )
+      expect(loginParseResult.error.issues[0]?.path).toEqual(["email"])
+    }
   })
 })

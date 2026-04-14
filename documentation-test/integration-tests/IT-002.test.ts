@@ -1,81 +1,92 @@
 /**
- * IT-002: Grade Override → Notification + Email Flow
+ * IT-002: Registration Creates User Successfully
  *
- * Module: Gradebook
- * Unit: Override Grade
- * Date Tested: 3/28/26
- * Description: Verify that overriding a grade triggers notification and email.
- * Expected Result: Student receives notification and email.
+ * Module: Authentication
+ * Unit: Register user
+ * Date Tested: 4/13/26
+ * Description: Verify that registration creates a user when the data is valid.
+ * Expected Result: A new user account is created successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-002 Integration Test Pass - Grade Override Triggers Notification and Email
- * Suggested Figure Title (System UI): Gradebook UI - Grade Override Reflected in Student Grade View
+ * Suggested Figure Title (Test Pass): IT-002 Integration Test Pass - Registration Creates User Successfully
+ * Suggested Figure Title (System UI): Authentication UI - Registration Form with Successful Submission
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { container } from "tsyringe"
-import { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import { GradebookService } from "../../backend-ts/src/modules/gradebook/gradebook.service.js"
 
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AuthService } from "../../backend-ts/src/modules/auth/auth.service.js"
+import { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
+import { SupabaseAuthAdapter } from "../../backend-ts/src/services/supabase-auth.adapter.js"
+import { createMockUser } from "../../backend-ts/tests/utils/factories.js"
+
+vi.mock("../../backend-ts/src/modules/users/user.repository.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../backend-ts/src/modules/users/user.repository.js")>()
+  return { ...original, UserRepository: vi.fn() }
+})
+vi.mock("../../backend-ts/src/services/supabase-auth.adapter.js")
+vi.mock("../../backend-ts/src/shared/config.js", () => ({
+  settings: { frontendUrl: "http://localhost:3000" },
 }))
 
-describe("IT-002: Grade Override → Notification + Email Flow", () => {
-  let gradebookService: GradebookService
-  let mockNotificationRepo: any
-  let mockEmailService: any
-  let mockSubmissionRepo: any
-  let mockAssignmentRepo: any
+describe("IT-002: Registration Creates User Successfully", () => {
+  let authService: AuthService
+  let mockUserRepo: any
+  let mockAuthAdapter: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockNotificationRepo = {
-      create: vi.fn(), findByUserId: vi.fn(), countByUserId: vi.fn(),
-      countUnreadByUserId: vi.fn(), markAsRead: vi.fn(),
-      markAllAsReadByUserId: vi.fn(), delete: vi.fn(), findById: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
+    mockUserRepo = {
+      checkEmailExists: vi.fn(),
+      createUser: vi.fn(),
+      getUserBySupabaseId: vi.fn(),
+      getUsersByRole: vi.fn().mockResolvedValue([]),
     }
-    const mockUserRepo = {
-      getUserById: vi.fn((userId: number) => Promise.resolve({
-        id: userId, email: `user${userId}@test.com`,
-        emailNotificationsEnabled: true, inAppNotificationsEnabled: true,
-      })),
-      withContext: vi.fn().mockReturnThis(),
+    mockAuthAdapter = {
+      signUp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      getUser: vi.fn(),
+      getAdminUserById: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
+      deleteUser: vi.fn(),
     }
-    mockEmailService = { sendEmail: vi.fn().mockResolvedValue(undefined) }
-    mockSubmissionRepo = {
-      getSubmissionById: vi.fn(), setGradeOverride: vi.fn(),
-      updateGrade: vi.fn(), removeGradeOverride: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
-    }
-    mockAssignmentRepo = { getAssignmentById: vi.fn() }
 
-    const notificationService = new NotificationService(mockNotificationRepo, mockUserRepo as any, mockEmailService)
-
-    gradebookService = new GradebookService(
-      {} as any, mockSubmissionRepo, mockAssignmentRepo,
-      {} as any, {} as any, notificationService,
+    authService = new AuthService(
+      mockUserRepo as UserRepository,
+      mockAuthAdapter as SupabaseAuthAdapter,
+      {
+        createNotification: vi.fn(),
+        sendEmailNotificationIfEnabled: vi.fn(),
+        withContext: vi.fn().mockReturnThis(),
+      } as any,
     )
-
-    mockNotificationRepo.create.mockImplementation(async (data: any) => ({
-      id: 1, userId: data.userId, type: data.type, title: data.title,
-      message: data.message, metadata: data.metadata, isRead: false, readAt: null, createdAt: new Date(),
-    }))
   })
 
-  afterEach(() => { container.clearInstances() })
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
 
-  it("creates grade notification and sends email when grade is overridden", async () => {
-    mockSubmissionRepo.getSubmissionById.mockResolvedValue({ id: 1, assignmentId: 1, studentId: 10 })
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue({ id: 1, assignmentName: "Test Assignment", totalScore: 100 })
-    mockSubmissionRepo.setGradeOverride.mockResolvedValue(undefined)
+  it("should create a new user record after successful signup", async () => {
+    const mockUser = createMockUser({ email: "new@example.com" })
 
-    await gradebookService.overrideGrade(1, 85, "Great job")
+    mockUserRepo.checkEmailExists.mockResolvedValue(false)
+    mockUserRepo.createUser.mockResolvedValue(mockUser)
+    mockAuthAdapter.signUp.mockResolvedValue({
+      user: { id: "supabase-user-1" },
+      token: "access-token",
+    })
+    mockAuthAdapter.getAdminUserById.mockResolvedValue({
+      id: "supabase-user-1",
+      email: "new@example.com",
+    })
 
-    expect(mockNotificationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 10, type: "SUBMISSION_GRADED" }),
-    )
-    expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(1)
+    const result = await authService.registerUser({
+      email: "new@example.com",
+      password: "Password1!",
+      firstName: "New",
+      lastName: "User",
+      role: "student",
+    })
+
+    expect(result.userData.email).toBe("new@example.com")
+    expect(mockUserRepo.createUser).toHaveBeenCalled()
   })
 })
