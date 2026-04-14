@@ -149,8 +149,6 @@ describe("SubmissionService", () => {
       mockSubmissionRepo,
       mockAssignmentRepo,
       mockEnrollmentRepo,
-      mockClassRepo,
-      mockUserRepo,
       mockTestResultRepo,
       mockStorageService,
       mockCodeTestService,

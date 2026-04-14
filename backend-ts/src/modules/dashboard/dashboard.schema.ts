@@ -75,6 +75,7 @@ export const DashboardTaskResponseSchema = z.object({
   className: z.string(),
   classId: z.number(),
   deadline: z.string().nullable(),
+  submittedCount: z.number(),
   submissionCount: z.number(),
   totalStudents: z.number(),
 })

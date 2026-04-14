@@ -1,7 +1,7 @@
 import { cosineSimilarity } from "@/modules/plagiarism/semantic-similarity.client.js"
 
 export interface SemanticEmbeddingClient {
-  getEmbedding(code: string): Promise<number[] | null>
+  getEmbedding(code: string, language?: string): Promise<number[] | null>
 }
 
 export interface SemanticScorePairEntry {
@@ -15,6 +15,7 @@ export interface ComputeSemanticScoresFromEmbeddingsOptions {
   maxConcurrentRequests: number
   pairEntries: SemanticScorePairEntry[]
   submissionContentById: Map<string, string>
+  language?: string
 }
 
 /**
@@ -32,6 +33,7 @@ export async function computeSemanticScoresFromEmbeddings({
   maxConcurrentRequests,
   pairEntries,
   submissionContentById,
+  language,
 }: ComputeSemanticScoresFromEmbeddingsOptions): Promise<Map<string, number>> {
   const semanticScores = new Map<string, number>()
 
@@ -45,6 +47,7 @@ export async function computeSemanticScoresFromEmbeddings({
     embeddingClient,
     maxConcurrentRequests,
     submissionContentById,
+    language,
   })
 
   // Step 3: Compute one semantic score for each prepared pair.
@@ -69,12 +72,14 @@ interface BuildEmbeddingCacheOptions {
   embeddingClient: SemanticEmbeddingClient
   maxConcurrentRequests: number
   submissionContentById: Map<string, string>
+  language?: string
 }
 
 async function buildEmbeddingCache({
   embeddingClient,
   maxConcurrentRequests,
   submissionContentById,
+  language,
 }: BuildEmbeddingCacheOptions): Promise<Map<string, number[]>> {
   // Step 1: Prepare the cache and list of submissions to embed.
   const embeddingBySubmissionId = new Map<string, number[]>()
@@ -101,7 +106,7 @@ async function buildEmbeddingCache({
         }
 
         // Step 2b: Request the embedding and save it in the cache.
-        const embedding = await embeddingClient.getEmbedding(submissionContent)
+        const embedding = await embeddingClient.getEmbedding(submissionContent, language)
 
         if (embedding) {
           embeddingBySubmissionId.set(submissionId, embedding)

@@ -55,6 +55,10 @@ export interface ResultDetailsResponse {
     structuralScore: string
     overlap: number
     longestFragment: number
+    leftCovered: number
+    rightCovered: number
+    leftTotal: number
+    rightTotal: number
   }
   fragments: Array<{
     id: number

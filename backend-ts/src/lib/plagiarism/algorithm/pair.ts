@@ -151,8 +151,9 @@ export class Pair extends Identifiable {
 
   /**
    * Build matching fragments from shared fingerprints.
+   * Fragments with k-gram pairs at or below the threshold are excluded.
    *
-   * @param minimumOccurrences Minimum k-grams required for a fragment
+   * @param minimumOccurrences Fragments with this many k-gram pairs or fewer are excluded.
    */
   public buildFragments(minimumOccurrences = 1): Array<Fragment> {
     const fragmentStart: Map<LeftRight, Fragment> = new Map()
@@ -182,9 +183,9 @@ export class Pair extends Identifiable {
     // Remove nested fragments
     this.squash(fragmentStart, fragmentEnd)
 
-    // Filter by minimum occurrences
+    // Filter by minimum occurrences (exclude fragments at or below the threshold)
     for (const fragment of fragmentStart.values()) {
-      if (fragment.pairs.length < minimumOccurrences) {
+      if (fragment.pairs.length <= minimumOccurrences) {
         this.removeFragment(fragmentStart, fragmentEnd, fragment)
       }
     }

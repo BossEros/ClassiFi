@@ -90,7 +90,7 @@ describe("CodeTestService", () => {
         submissionId: 10,
         passed: 0,
         total: 0,
-        percentage: 100,
+        percentage: 0,
         results: [],
       })
 

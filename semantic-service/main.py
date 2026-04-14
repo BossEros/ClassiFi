@@ -33,13 +33,19 @@ async def health() -> HealthResponse:
 @app.post("/similarity", response_model=SimilarityResponse, tags=["Similarity"])
 async def compute_similarity(request: SimilarityRequest) -> SimilarityResponse:
     """
-    Compute the semantic similarity score for a pair of Python code submissions.
+    Compute the semantic similarity score for a pair of source code submissions.
+
+    Supports Python, Java, and C code. The optional ``language`` field is used
+    for logging and future language-specific optimisations; the underlying
+    GraphCodeBERT model produces meaningful embeddings for all three languages.
 
     Returns a score in [0.0, 1.0] representing the model's confidence that
     the two submissions are semantically similar (plagiarised).
     """
     try:
-        score = predictor.compute_similarity(request.code1, request.code2)
+        score = predictor.compute_similarity(request.code1, request.code2, request.language)
+
+        logger.info("Similarity computed", extra={"language": request.language, "score": score})
 
         return SimilarityResponse(score=score)
     except Exception as exc:
@@ -52,11 +58,14 @@ async def embed_code(request: EmbedRequest) -> EmbedResponse:
     """
     Return the 768-dimensional CLS embedding for a single code snippet.
 
+    Supports Python, Java, and C code. The optional ``language`` field is used
+    for logging and future language-specific optimisations.
+
     Clients can cache embeddings per-submission and compute pairwise cosine
     similarity locally, reducing model forward passes from O(n²) to O(n).
     """
     try:
-        embedding = predictor.embed(request.code)
+        embedding = predictor.embed(request.code, request.language)
 
         return EmbedResponse(embedding=embedding)
     except Exception as exc:

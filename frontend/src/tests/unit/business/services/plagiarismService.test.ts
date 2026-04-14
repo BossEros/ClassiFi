@@ -142,6 +142,10 @@ describe("plagiarismService", () => {
         structuralScore: "85.00",
         overlap: 35,
         longestFragment: 12,
+        leftCovered: 35,
+        rightCovered: 28,
+        leftTotal: 100,
+        rightTotal: 90,
       },
       fragments: [
         {

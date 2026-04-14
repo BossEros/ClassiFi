@@ -403,7 +403,10 @@ export class SimilarityPenaltyService {
     if (testSummary.total > 0) {
       automaticGrade = Math.floor((testSummary.passed / testSummary.total) * totalScore)
     } else if (submission.grade !== null) {
-      automaticGrade = totalScore
+      // No test cases — teacher set the grade manually.
+      // Use originalGrade (the raw teacher input before penalties) when available,
+      // because submission.grade already has the late penalty baked in.
+      automaticGrade = submission.originalGrade ?? submission.grade
     }
 
     if (automaticGrade === null) {

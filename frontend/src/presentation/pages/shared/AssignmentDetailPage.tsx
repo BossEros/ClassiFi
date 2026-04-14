@@ -39,6 +39,7 @@ import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentD
 import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow"
 import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview"
 import { GradeOverrideModal } from "@/presentation/components/teacher/gradebook/GradeOverrideModal"
+import { SetGradeModal } from "@/presentation/components/teacher/gradebook/SetGradeModal"
 import { useGradeOverride } from "@/presentation/hooks/teacher/useGradebook"
 import type { Submission } from "@/data/api/assignment.types"
 import { getMonacoLanguage } from "@/presentation/utils/monacoUtils"
@@ -471,7 +472,7 @@ export function AssignmentDetailPage() {
 
   const [isOverrideModalOpen, setIsOverrideModalOpen] = useState(false)
   const [isBreakdownExpanded, setIsBreakdownExpanded] = useState(false)
-  const { override, removeOverride, isOverriding } = useGradeOverride()
+  const { override, removeOverride, setGrade, isOverriding } = useGradeOverride()
 
   const {
     showPreview,
@@ -602,30 +603,36 @@ export function AssignmentDetailPage() {
     setIsOverrideModalOpen(false)
   }
 
+  const handleSetGradeSubmit = async (gradeValue: number) => {
+    if (!activeSubmission) return
+
+    try {
+      await setGrade(activeSubmission.id, gradeValue)
+      await refreshTeacherSubmissions()
+      showToast("Grade set successfully", "success")
+      setIsOverrideModalOpen(false)
+    } catch (setGradeError) {
+      showToast(
+        setGradeError instanceof Error ? setGradeError.message : "Failed to set grade",
+        "error",
+      )
+    }
+  }
+
   const handleOverrideSubmit = async (
     overriddenGradeValue: number,
     overrideFeedbackText: string | null,
   ) => {
-    if (!activeSubmission) {
-      return
-    }
+    if (!activeSubmission) return
 
     try {
-      await override(
-        activeSubmission.id,
-        overriddenGradeValue,
-        overrideFeedbackText,
-      )
-
+      await override(activeSubmission.id, overriddenGradeValue, overrideFeedbackText)
       await refreshTeacherSubmissions()
-
       showToast("Score overridden successfully", "success")
       setIsOverrideModalOpen(false)
     } catch (overrideError) {
       showToast(
-        overrideError instanceof Error
-          ? overrideError.message
-          : "Failed to override score",
+        overrideError instanceof Error ? overrideError.message : "Failed to override score",
         "error",
       )
     }
@@ -992,8 +999,6 @@ export function AssignmentDetailPage() {
                             )}
 
                             {activeSubmission?.gradeBreakdown &&
-                              (activeSubmission.gradeBreakdown.latePenaltyPercent > 0 ||
-                                activeSubmission.gradeBreakdown.similarityPenaltyPercent > 0) &&
                               activeSubmission.gradeBreakdown.originalGrade !== null && (
                                 <>
                                   <button
@@ -1041,9 +1046,11 @@ export function AssignmentDetailPage() {
                             onClick={handleOpenOverrideModal}
                             className="h-9 w-full bg-blue-600 text-xs hover:bg-blue-700"
                           >
-                            Override Score
+                            {activeSubmission?.grade !== null && activeSubmission?.grade !== undefined
+                              ? "Override Score"
+                              : "Set Grade"}
                           </Button>
-                          {activeSubmission?.isGradeOverridden && (
+                          {activeSubmission?.isGradeOverridden && (assignment?.testCases?.length ?? 0) > 0 && (
                             <p className="text-xs text-blue-700">
                               Score has a manual override
                             </p>
@@ -1113,16 +1120,25 @@ export function AssignmentDetailPage() {
         variant="light"
       />
 
-      {activeSubmission && isTeacher && (
+      {activeSubmission && isTeacher && displayedSubmissionGrade === null && (
+        <SetGradeModal
+          isOpen={isOverrideModalOpen}
+          onClose={handleCloseOverrideModal}
+          onSubmit={handleSetGradeSubmit}
+          variant="light"
+          isSubmitting={isOverriding}
+          studentName={activeSubmission.studentName || "Student"}
+          assignmentName={tempAssignment.assignmentName}
+          totalScore={assignmentTotalScore}
+        />
+      )}
+
+      {activeSubmission && isTeacher && displayedSubmissionGrade !== null && (
         <GradeOverrideModal
           isOpen={isOverrideModalOpen}
           onClose={handleCloseOverrideModal}
           onSubmit={handleOverrideSubmit}
-          onRemoveOverride={
-            activeSubmission.isGradeOverridden
-              ? handleRemoveOverride
-              : undefined
-          }
+          onRemoveOverride={activeSubmission.isGradeOverridden ? handleRemoveOverride : undefined}
           variant="light"
           isSubmitting={isOverriding}
           studentName={activeSubmission.studentName || "Student"}

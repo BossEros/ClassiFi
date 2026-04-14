@@ -79,7 +79,11 @@ export class DashboardQueryRepository {
           eq(enrollments.studentId, studentId),
           eq(classes.isActive, true),
           eq(assignments.isActive, true),
-          or(gt(assignments.deadline, now), isNull(assignments.deadline)),
+          or(
+            gt(assignments.deadline, now),
+            isNull(assignments.deadline),
+            eq(assignments.allowLateSubmissions, true),
+          ),
           isNull(submissions.id),
         ),
       )

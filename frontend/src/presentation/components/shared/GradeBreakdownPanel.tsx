@@ -40,7 +40,7 @@ function formatLateDuration(submittedAt: Date, deadline: Date): string | null {
 /**
  * Renders a grade breakdown panel showing how the final grade was computed
  * from the original test score, late penalty, and similarity penalty.
- * Only renders when at least one deduction exists.
+ * Always renders when an original grade is available, even without deductions.
  */
 export function GradeBreakdownPanel({
   breakdown,
@@ -54,10 +54,9 @@ export function GradeBreakdownPanel({
 }: GradeBreakdownPanelProps) {
   const hasLatePenalty = breakdown.latePenaltyPercent > 0
   const hasSimilarityPenalty = breakdown.similarityPenaltyPercent > 0
-  const hasDeductions = hasLatePenalty || hasSimilarityPenalty
   const hasOriginalGrade = breakdown.originalGrade !== null
 
-  if (!hasDeductions || !hasOriginalGrade) return null
+  if (!hasOriginalGrade) return null
 
   const originalScore = breakdown.originalGrade!
   const latePenaltyPoints =

@@ -47,6 +47,14 @@ export interface FilePair {
   overlap: number
   longest: number
   fragments: MatchFragment[]
+  /** How many k-grams from the left file are matched */
+  leftCovered?: number
+  /** How many k-grams from the right file are matched */
+  rightCovered?: number
+  /** Total k-grams in the left file */
+  leftTotal?: number
+  /** Total k-grams in the right file */
+  rightTotal?: number
 }
 
 /**
