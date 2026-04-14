@@ -55,6 +55,17 @@ const classifiEmailTheme = {
 } as const
 
 /**
+ * Resolves the email-safe application name with a defensive fallback.
+ *
+ * @returns The application name shown in shared email chrome.
+ */
+function getEmailApplicationName(): string {
+  const configuredApplicationName = settings.appName?.trim()
+
+  return configuredApplicationName || "ClassiFi"
+}
+
+/**
  * Base HTML email template wrapper with professional styling.
  * Provides consistent, responsive design across all emails.
  *
@@ -62,6 +73,8 @@ const classifiEmailTheme = {
  * @returns Complete HTML email string
  */
 function baseEmailTemplate(content: string): string {
+  const emailApplicationName = getEmailApplicationName()
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -69,7 +82,7 @@ function baseEmailTemplate(content: string): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>${escapeHtml(settings.appName)} Notification</title>
+  <title>${escapeHtml(emailApplicationName)} Notification</title>
   <!--[if mso]>
   <style type="text/css">
     body, table, td, p, a, h1, h2, span { font-family: Arial, Helvetica, sans-serif !important; }
@@ -344,7 +357,7 @@ function baseEmailTemplate(content: string): string {
   </style>
 </head>
 <body>
-  <div class="preheader">${escapeHtml(settings.appName)} notification</div>
+  <div class="preheader">${escapeHtml(emailApplicationName)} notification</div>
   <div class="email-wrapper">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
       <tr>
@@ -352,16 +365,16 @@ function baseEmailTemplate(content: string): string {
           <div class="email-container">
             <div class="top-accent"></div>
             <div class="header">
-              <h1 class="logo">${escapeHtml(settings.appName)}</h1>
+              <h1 class="logo">${escapeHtml(emailApplicationName)}</h1>
             </div>
             <div class="content">
               ${content}
             </div>
             <div class="footer">
-              <p><strong>This is an automated notification from ${escapeHtml(settings.appName)}.</strong></p>
+              <p><strong>This is an automated notification from ${escapeHtml(emailApplicationName)}.</strong></p>
               <p>You can manage your notification preferences from your ClassiFi account settings.</p>
               <p class="footer-note">
-                &copy; ${new Date().getFullYear()} ${escapeHtml(settings.appName)}. All rights reserved.
+                &copy; ${new Date().getFullYear()} ${escapeHtml(emailApplicationName)}. All rights reserved.
               </p>
             </div>
           </div>
