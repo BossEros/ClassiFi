@@ -7,6 +7,11 @@ import {
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
+import type { IEmailService } from "@/services/interfaces/email.interface.js"
+import {
+  passwordResetEmailTemplate,
+  sanitizeEmailSubject,
+} from "@/services/email/templates.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { settlePromisesAndLogRejections } from "@/shared/utils.js"
@@ -94,6 +99,8 @@ export class AuthService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.adapters.supabaseAuth)
     private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.services.email)
+    private emailService: IEmailService,
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
@@ -131,7 +138,10 @@ export class AuthService {
 
     // STEP 5: Notify admin users about the new registration (fire-and-forget)
     this.notifyAdminsOfNewRegistration(user).catch((error) =>
-      logger.error("Failed to send new user registration notifications to admins", { userId: user.id, error }),
+      logger.error(
+        "Failed to send new user registration notifications to admins",
+        { userId: user.id, error },
+      ),
     )
 
     return {
@@ -272,15 +282,13 @@ export class AuthService {
    * Retry local user creation when the referenced Supabase auth row
    * has not become visible to the database foreign-key check yet.
    */
-  private async createLocalUserWithSyncRetry(
-    data: {
-      supabaseUserId: string
-      email: string
-      firstName: string
-      lastName: string
-      role: UserRole
-    },
-  ): Promise<User> {
+  private async createLocalUserWithSyncRetry(data: {
+    supabaseUserId: string
+    email: string
+    firstName: string
+    lastName: string
+    role: UserRole
+  }): Promise<User> {
     let latestError: unknown
 
     for (
@@ -324,8 +332,7 @@ export class AuthService {
   ): Promise<void> {
     const retryDelayMs = this.getLocalUserSyncRetryDelayMs(attemptNumber)
 
-    const supabaseUser =
-      await this.authAdapter.getAdminUserById(supabaseUserId)
+    const supabaseUser = await this.authAdapter.getAdminUserById(supabaseUserId)
 
     if (!supabaseUser) {
       logger.warn(
@@ -342,7 +349,9 @@ export class AuthService {
   private getLocalUserSyncRetryDelayMs(attemptNumber: number): number {
     return (
       LOCAL_USER_SYNC_RETRY_DELAYS_MS[attemptNumber - 1] ??
-      LOCAL_USER_SYNC_RETRY_DELAYS_MS[LOCAL_USER_SYNC_RETRY_DELAYS_MS.length - 1]
+      LOCAL_USER_SYNC_RETRY_DELAYS_MS[
+        LOCAL_USER_SYNC_RETRY_DELAYS_MS.length - 1
+      ]
     )
   }
 
@@ -382,8 +391,7 @@ export class AuthService {
     }
 
     return (
-      error.code === "23503" &&
-      error.constraint === "fk_users_supabase_user_id"
+      error.code === "23503" && error.constraint === "fk_users_supabase_user_id"
     )
   }
 
@@ -437,10 +445,24 @@ export class AuthService {
 
   /** Request a password reset email */
   async requestPasswordReset(email: string): Promise<void> {
-    await this.authAdapter.resetPasswordForEmail(
+    const user = await this.userRepo.getUserByEmail(email)
+
+    if (!user) {
+      return
+    }
+
+    const { actionLink } = await this.authAdapter.generatePasswordRecoveryLink(
       email,
       buildFrontendAuthRedirectUrl("/reset-password"),
     )
+
+    await this.emailService.sendEmail({
+      to: email,
+      subject: sanitizeEmailSubject("Reset Your Password"),
+      html: passwordResetEmailTemplate({
+        resetUrl: actionLink,
+      }),
+    })
   }
 
   /**
@@ -463,8 +485,16 @@ export class AuthService {
     }
 
     const notificationPromises = adminUsers.flatMap((admin) => [
-      this.notificationService.createNotification(admin.id, "NEW_USER_REGISTERED", notificationData),
-      this.notificationService.sendEmailNotificationIfEnabled(admin.id, "NEW_USER_REGISTERED", notificationData),
+      this.notificationService.createNotification(
+        admin.id,
+        "NEW_USER_REGISTERED",
+        notificationData,
+      ),
+      this.notificationService.sendEmailNotificationIfEnabled(
+        admin.id,
+        "NEW_USER_REGISTERED",
+        notificationData,
+      ),
     ])
 
     await settlePromisesAndLogRejections(
