@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
@@ -77,6 +77,13 @@ export function AssignmentsTabContent({
   const hasVisibleAssignments = groupedAssignments.current.length > 0 || groupedAssignments.past.length > 0
   const shouldShowNoFilterResultsState = assignments.length > 0 && !hasVisibleAssignments
   const hasModules = modules.length > 0
+  const isListViewDisabled = isTeacher && !hasModules
+
+  useEffect(() => {
+    if (isListViewDisabled && viewMode === "list") {
+      setViewMode("module")
+    }
+  }, [isListViewDisabled, viewMode])
 
   const toggleModuleExpanded = (moduleId: number) => {
     setHasToggledModules(true)
@@ -105,7 +112,12 @@ export function AssignmentsTabContent({
             Assignments
           </h2>
           <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
-            <ViewToggle activeView={viewMode} onViewChange={setViewMode} variant={variant} />
+            <ViewToggle
+              activeView={viewMode}
+              onViewChange={setViewMode}
+              isListViewDisabled={isListViewDisabled}
+              variant={variant}
+            />
           </div>
         </div>
 

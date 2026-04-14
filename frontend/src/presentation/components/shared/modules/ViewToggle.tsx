@@ -6,6 +6,7 @@ export type AssignmentViewMode = "module" | "list"
 interface ViewToggleProps {
   activeView: AssignmentViewMode
   onViewChange: (view: AssignmentViewMode) => void
+  isListViewDisabled?: boolean
   variant?: "dark" | "light"
 }
 
@@ -14,9 +15,15 @@ interface ViewToggleProps {
  *
  * @param activeView - The currently active view mode.
  * @param onViewChange - Callback when the view mode is changed.
+ * @param isListViewDisabled - Whether the list view tab should be disabled.
  * @param variant - Visual variant for light/dark backgrounds.
  */
-export function ViewToggle({ activeView, onViewChange, variant = "light" }: ViewToggleProps) {
+export function ViewToggle({
+  activeView,
+  onViewChange,
+  isListViewDisabled = false,
+  variant = "light",
+}: ViewToggleProps) {
   const isLight = variant === "light"
 
   const baseButtonClass = cn(
@@ -31,6 +38,10 @@ export function ViewToggle({ activeView, onViewChange, variant = "light" }: View
   const inactiveClass = isLight
     ? "text-slate-600 hover:text-slate-800 hover:bg-white/60"
     : "text-slate-400 hover:text-white hover:bg-white/5"
+
+  const disabledClass = isLight
+    ? "cursor-not-allowed text-slate-400 opacity-60"
+    : "cursor-not-allowed text-slate-500 opacity-60"
 
   return (
     <div
@@ -53,8 +64,14 @@ export function ViewToggle({ activeView, onViewChange, variant = "light" }: View
       <button
         role="tab"
         aria-selected={activeView === "list"}
+        aria-disabled={isListViewDisabled}
+        disabled={isListViewDisabled}
         onClick={() => onViewChange("list")}
-        className={cn(baseButtonClass, activeView === "list" ? activeClass : inactiveClass)}
+        className={cn(
+          baseButtonClass,
+          activeView === "list" ? activeClass : inactiveClass,
+          isListViewDisabled && disabledClass,
+        )}
       >
         <List className="h-4 w-4" />
         List
