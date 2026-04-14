@@ -347,16 +347,12 @@ export class ClassService {
       throw new BadRequestError("Failed to remove student from class")
     }
 
-    // STEP 4: Notify student and teacher (fire-and-forget — does not block the response)
-    const [teacher, student] = await Promise.all([
+    // STEP 4: Notify the removed student (fire-and-forget — does not block the response)
+    const [teacher] = await Promise.all([
       this.userRepo.getUserById(teacherId),
-      this.userRepo.getUserById(studentId),
     ])
     const teacherName = teacher ? `${teacher.firstName} ${teacher.lastName}` : "Unknown"
-    const studentName = student ? `${student.firstName} ${student.lastName}` : "Unknown"
-    const studentEmail = student?.email ?? ""
 
-    // Send REMOVED_FROM_CLASS to student
     const removedData = {
       classId,
       className: existingClass.className,
@@ -374,27 +370,6 @@ export class ClassService {
       logger,
       "Failed to send removal notification to student",
       { studentId, classId },
-    )
-
-    // Send STUDENT_UNENROLLED to teacher
-    const unenrolledData = {
-      classId,
-      className: existingClass.className,
-      studentName,
-      studentEmail,
-    }
-
-    fireAndForget(
-      settlePromisesAndLogRejections([
-        this.notificationService.createNotification(teacherId, "STUDENT_UNENROLLED", unenrolledData),
-        this.notificationService.sendEmailNotificationIfEnabled(teacherId, "STUDENT_UNENROLLED", unenrolledData),
-      ], logger, "Failed to send unenrollment notification to teacher", {
-        teacherId,
-        classId,
-      }),
-      logger,
-      "Failed to send unenrollment notification to teacher",
-      { teacherId, classId },
     )
   }
 }
