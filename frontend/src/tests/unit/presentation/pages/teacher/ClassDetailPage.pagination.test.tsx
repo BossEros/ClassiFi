@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { ClassDetailPage } from "@/presentation/pages/teacher/ClassDetailPage"
 import * as classService from "@/business/services/classService"
 import * as moduleService from "@/business/services/moduleService"
-import type { ISODateString, DayOfWeek } from "@/data/api/class.types"
+import type { ISODateString, DayOfWeek, Module } from "@/data/api/class.types"
 
 vi.mock("@/business/services/classService")
 vi.mock("@/business/services/moduleService")
@@ -38,6 +38,16 @@ const mockClassInfo = {
     startTime: "09:00",
     endTime: "10:30",
   },
+}
+
+const sampleModule: Module = {
+  id: 101,
+  name: "Module 1",
+  classId: 1,
+  isPublished: true,
+  assignments: [],
+  createdAt: "2026-01-01T00:00:00.000Z" as ISODateString,
+  updatedAt: "2026-01-01T00:00:00.000Z" as ISODateString,
 }
 
 const generateMockStudents = (count: number) => {
@@ -85,12 +95,15 @@ describe("ClassDetailPage - Pagination", () => {
   })
 
   it("shows teacher timeline filters and hides student status filters", async () => {
+    vi.mocked(moduleService.getModulesByClassId).mockResolvedValue([sampleModule])
+
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
       assignments: [
         {
           id: 1,
           classId: 1,
+          moduleId: sampleModule.id,
           assignmentName: "Teacher Assignment",
           deadline: "2099-03-01T12:00:00.000Z" as ISODateString,
           programmingLanguage: "python",
@@ -113,12 +126,15 @@ describe("ClassDetailPage - Pagination", () => {
   })
 
   it("filters teacher assignments by timeline", async () => {
+    vi.mocked(moduleService.getModulesByClassId).mockResolvedValue([sampleModule])
+
     vi.mocked(classService.getClassDetailData).mockResolvedValue({
       classInfo: mockClassInfo,
       assignments: [
         {
           id: 1,
           classId: 1,
+          moduleId: sampleModule.id,
           assignmentName: "Current Assignment",
           deadline: "2099-12-01T12:00:00.000Z" as ISODateString,
           programmingLanguage: "python",
@@ -126,6 +142,7 @@ describe("ClassDetailPage - Pagination", () => {
         {
           id: 2,
           classId: 1,
+          moduleId: sampleModule.id,
           assignmentName: "Past Assignment",
           deadline: "2024-01-01T12:00:00.000Z" as ISODateString,
           programmingLanguage: "python",
