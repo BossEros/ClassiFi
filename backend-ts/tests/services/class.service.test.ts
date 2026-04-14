@@ -7,6 +7,7 @@ import type { EnrollmentRepository } from "../../src/modules/enrollments/enrollm
 import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { StorageService } from "../../src/services/storage.service.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import {
   BadRequestError,
   ClassNotFoundError,
@@ -28,6 +29,7 @@ describe("ClassService", () => {
   let mockUserRepo: Partial<MockedObject<UserRepository>>
   let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
   let mockStorageService: Partial<MockedObject<StorageService>>
+  let mockNotificationService: Partial<MockedObject<NotificationService>>
 
   beforeEach(() => {
     mockClassRepo = {
@@ -62,6 +64,10 @@ describe("ClassService", () => {
       deleteSubmissionFiles: vi.fn(),
       deleteAssignmentInstructionsImage: vi.fn(),
     } as any
+    mockNotificationService = {
+      createNotification: vi.fn().mockResolvedValue(null),
+      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
+    } as any
 
     classService = new ClassService(
       mockClassRepo as unknown as ClassRepository,
@@ -70,6 +76,7 @@ describe("ClassService", () => {
       mockUserRepo as unknown as UserRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
       mockStorageService as unknown as StorageService,
+      mockNotificationService as unknown as NotificationService,
     )
   })
 
@@ -491,6 +498,77 @@ describe("ClassService", () => {
       await expect(classService.deleteClass(1, 999)).rejects.toThrow(
         NotClassOwnerError,
       )
+    })
+  })
+
+  describe("removeStudent", () => {
+    it("should remove the student and notify only the removed student", async () => {
+      const existingClass = createMockClass({ id: 15, teacherId: 21, className: "Algorithms" })
+      const teacher = createMockTeacher({ id: 21, firstName: "Tina", lastName: "Teacher" })
+      const student = createMockUser({
+        id: 34,
+        role: "student",
+        firstName: "Sam",
+        lastName: "Student",
+        email: "sam.student@classifi.test",
+      })
+
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
+      mockEnrollmentRepo.isEnrolled!.mockResolvedValue(true)
+      mockEnrollmentRepo.unenrollStudent!.mockResolvedValue(true)
+      mockUserRepo.getUserById!
+        .mockResolvedValueOnce(teacher)
+        .mockResolvedValueOnce(student)
+
+      await classService.removeStudent({
+        classId: 15,
+        studentId: 34,
+        teacherId: 21,
+      })
+
+      expect(mockEnrollmentRepo.unenrollStudent).toHaveBeenCalledWith(34, 15)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledTimes(1)
+      expect(mockNotificationService.sendEmailNotificationIfEnabled).toHaveBeenCalledTimes(1)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        34,
+        "REMOVED_FROM_CLASS",
+        {
+          classId: 15,
+          className: "Algorithms",
+          instructorName: "Tina Teacher",
+        },
+      )
+      expect(mockNotificationService.sendEmailNotificationIfEnabled).toHaveBeenCalledWith(
+        34,
+        "REMOVED_FROM_CLASS",
+        {
+          classId: 15,
+          className: "Algorithms",
+          instructorName: "Tina Teacher",
+        },
+      )
+      expect(mockNotificationService.createNotification).not.toHaveBeenCalledWith(
+        21,
+        "STUDENT_UNENROLLED",
+        expect.anything(),
+      )
+    })
+
+    it("should throw StudentNotInClassError when the student is not enrolled", async () => {
+      const existingClass = createMockClass({ id: 15, teacherId: 21 })
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
+      mockEnrollmentRepo.isEnrolled!.mockResolvedValue(false)
+
+      await expect(
+        classService.removeStudent({
+          classId: 15,
+          studentId: 34,
+          teacherId: 21,
+        }),
+      ).rejects.toThrow(StudentNotInClassError)
+
+      expect(mockEnrollmentRepo.unenrollStudent).not.toHaveBeenCalled()
+      expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
     })
   })
 })

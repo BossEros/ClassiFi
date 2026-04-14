@@ -1027,6 +1027,12 @@ class NotificationService {
 **Notification Types**:
 - `ASSIGNMENT_CREATED` - Sent to all enrolled students when teacher creates assignment
 - `SUBMISSION_GRADED` - Sent to student when their submission is graded
+- `STUDENT_UNENROLLED` - Sent to the teacher when a student leaves voluntarily or is removed by an admin
+- `REMOVED_FROM_CLASS` - Sent to the student when a teacher or admin removes them from a class
+
+Teacher-initiated class-roster removals:
+- When a teacher removes a student from their own class roster, the backend does not send that same teacher a redundant `STUDENT_UNENROLLED` notification.
+- The removed student still receives the `REMOVED_FROM_CLASS` notification.
 
 Similarity-deduction notification behavior:
 - When automatic similarity deduction changes a student's visible score, the student also receives a `SUBMISSION_GRADED` notification explaining that the score was updated after similarity review.
