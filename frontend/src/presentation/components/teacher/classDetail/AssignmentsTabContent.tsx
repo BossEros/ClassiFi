@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { ClipboardList, Plus } from "lucide-react"
 import { Button } from "@/presentation/components/ui/Button"
 import { AssignmentFilterBar } from "@/presentation/components/shared/dashboard/AssignmentFilterBar"
@@ -78,12 +78,8 @@ export function AssignmentsTabContent({
   const shouldShowNoFilterResultsState = assignments.length > 0 && !hasVisibleAssignments
   const hasModules = modules.length > 0
   const isListViewDisabled = isTeacher && !hasModules
-
-  useEffect(() => {
-    if (isListViewDisabled && viewMode === "list") {
-      setViewMode("module")
-    }
-  }, [isListViewDisabled, viewMode])
+  const activeViewMode: AssignmentViewMode =
+    isListViewDisabled && viewMode === "list" ? "module" : viewMode
 
   const toggleModuleExpanded = (moduleId: number) => {
     setHasToggledModules(true)
@@ -113,7 +109,7 @@ export function AssignmentsTabContent({
           </h2>
           <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
             <ViewToggle
-              activeView={viewMode}
+              activeView={activeViewMode}
               onViewChange={setViewMode}
               isListViewDisabled={isListViewDisabled}
               variant={variant}
@@ -121,7 +117,7 @@ export function AssignmentsTabContent({
           </div>
         </div>
 
-        {viewMode === "list" && (
+        {activeViewMode === "list" && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {isTeacher ? (
               <AssignmentFilterBar
@@ -154,7 +150,7 @@ export function AssignmentsTabContent({
       </div>
 
       {/* Module View */}
-      {viewMode === "module" && (
+      {activeViewMode === "module" && (
         hasModules ? (
           <div className="space-y-4">
             {modules.map((module) => (
@@ -200,7 +196,7 @@ export function AssignmentsTabContent({
       )}
 
       {/* List View */}
-      {viewMode === "list" && (
+      {activeViewMode === "list" && (
         shouldShowNoFilterResultsState ? (
           <div className="py-12 text-center">
             <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}>
