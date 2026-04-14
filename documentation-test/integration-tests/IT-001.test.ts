@@ -1,110 +1,83 @@
 /**
- * IT-001: Assignment Creation → Student Notification Flow
+ * IT-001: Registration Rejects Existing Email
  *
- * Module: Assignment Management
- * Unit: Create, Update, and Delete Assignment
- * Date Tested: 3/28/26
- * Description: Verify that creating an assignment notifies enrolled students.
- * Expected Result: Notifications and emails are sent to students.
+ * Module: Authentication
+ * Unit: Register user
+ * Date Tested: 4/13/26
+ * Description: Verify that registration rejects an email that is already used.
+ * Expected Result: The system shows that the email is already in use.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-001 Integration Test Pass - Assignment Creation Triggers Student Notifications
- * Suggested Figure Title (System UI): Assignment Management UI - Newly Created Assignment with Student Notification Context
+ * Suggested Figure Title (Test Pass): IT-001 Integration Test Pass - Registration Rejects Existing Email
+ * Suggested Figure Title (System UI): Authentication UI - Registration Form Showing Existing Email Error
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { container } from "tsyringe"
-import { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import { AssignmentService } from "../../backend-ts/src/modules/assignments/assignment.service.js"
 
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { AuthService } from "../../backend-ts/src/modules/auth/auth.service.js"
+import { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
+import { SupabaseAuthAdapter } from "../../backend-ts/src/services/supabase-auth.adapter.js"
+import { UserAlreadyExistsError } from "../../backend-ts/src/shared/errors.js"
+
+vi.mock("../../backend-ts/src/modules/users/user.repository.js", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../../backend-ts/src/modules/users/user.repository.js")>()
+  return { ...original, UserRepository: vi.fn() }
+})
+vi.mock("../../backend-ts/src/services/supabase-auth.adapter.js")
+vi.mock("../../backend-ts/src/shared/config.js", () => ({
+  settings: { frontendUrl: "http://localhost:3000" },
 }))
 
-describe("IT-001: Assignment Creation → Student Notification Flow", () => {
-  let assignmentService: AssignmentService
-  let mockNotificationRepo: any
-  let mockEmailService: any
-  let mockAssignmentRepo: any
-  let mockClassRepo: any
-  let mockEnrollmentRepo: any
+describe("IT-001: Registration Rejects Existing Email", () => {
+  let authService: AuthService
+  let mockUserRepo: any
+  let mockAuthAdapter: any
 
   beforeEach(() => {
     vi.clearAllMocks()
-
-    mockNotificationRepo = {
-      create: vi.fn(), findByUserId: vi.fn(), countByUserId: vi.fn(),
-      countUnreadByUserId: vi.fn(), markAsRead: vi.fn(),
-      markAllAsReadByUserId: vi.fn(), delete: vi.fn(), findById: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
+    mockUserRepo = {
+      checkEmailExists: vi.fn(),
+      createUser: vi.fn(),
+      getUserBySupabaseId: vi.fn(),
+      getUsersByRole: vi.fn().mockResolvedValue([]),
     }
-    const mockUserRepo = {
-      getUserById: vi.fn((userId: number) => Promise.resolve({
-        id: userId, email: `user${userId}@test.com`,
-        emailNotificationsEnabled: true, inAppNotificationsEnabled: true,
-      })),
-      withContext: vi.fn().mockReturnThis(),
+    mockAuthAdapter = {
+      signUp: vi.fn(),
+      signInWithPassword: vi.fn(),
+      getUser: vi.fn(),
+      getAdminUserById: vi.fn(),
+      resetPasswordForEmail: vi.fn(),
+      deleteUser: vi.fn(),
     }
-    mockEmailService = { sendEmail: vi.fn().mockResolvedValue(undefined) }
-    mockAssignmentRepo = {
-      createAssignment: vi.fn(), getAssignmentById: vi.fn(),
-      updateAssignment: vi.fn(), deleteAssignment: vi.fn(),
-      getAssignmentsByClassId: vi.fn(), getAssignmentsByTeacherId: vi.fn(),
-      getAssignmentsByStudentId: vi.fn(), updateLastReminderSentAt: vi.fn(),
-    }
-    mockClassRepo = { getClassById: vi.fn() }
-    mockEnrollmentRepo = { getEnrolledStudentsWithInfo: vi.fn(), isEnrolled: vi.fn() }
 
-    container.registerInstance("NotificationRepository", mockNotificationRepo)
-    container.registerInstance("UserRepository", mockUserRepo)
-    container.registerInstance("EmailService", mockEmailService)
-    container.registerInstance("AssignmentRepository", mockAssignmentRepo)
-    container.registerInstance("ClassRepository", mockClassRepo)
-    container.registerInstance("EnrollmentRepository", mockEnrollmentRepo)
-    container.registerInstance("SubmissionRepository", {} as any)
-    container.registerInstance("StorageService", { deleteAssignmentInstructionsImage: vi.fn() } as any)
-    container.registerInstance("TestCaseRepository", {} as any)
-    container.registerInstance("ModuleRepository", {
-      getModuleById: vi.fn().mockResolvedValue({ id: 1, classId: 1, name: "Module 1", isPublished: true, createdAt: new Date(), updatedAt: new Date() }),
-    } as any)
-    container.registerInstance("TestResultRepository", {} as any)
-    container.registerInstance("LatePenaltyService", {} as any)
-    container.registerInstance("SimilarityPenaltyService", {} as any)
-
-    const notificationService = new NotificationService(mockNotificationRepo, mockUserRepo as any, mockEmailService)
-    container.registerInstance("NotificationService", notificationService)
-
-    assignmentService = container.resolve(AssignmentService)
-
-    mockNotificationRepo.create.mockImplementation(async (data: any) => ({
-      id: data.userId, userId: data.userId, type: data.type, title: data.title,
-      message: data.message, metadata: data.metadata, isRead: false, readAt: null, createdAt: new Date(),
-    }))
+    authService = new AuthService(
+      mockUserRepo as UserRepository,
+      mockAuthAdapter as SupabaseAuthAdapter,
+      {
+        createNotification: vi.fn(),
+        sendEmailNotificationIfEnabled: vi.fn(),
+        withContext: vi.fn().mockReturnThis(),
+      } as any,
+    )
   })
 
-  afterEach(() => { container.clearInstances() })
+  afterEach(() => {
+    vi.resetAllMocks()
+  })
 
-  it("creates notifications for all enrolled students when assignment is created", async () => {
-    mockAssignmentRepo.createAssignment.mockResolvedValue({
-      id: 1, classId: 1, teacherId: 1, assignmentName: "Test Assignment",
-      createdAt: new Date(), isActive: true,
-    })
-    mockClassRepo.getClassById.mockResolvedValue({ id: 1, teacherId: 1, className: "Test Class" })
-    mockEnrollmentRepo.getEnrolledStudentsWithInfo.mockResolvedValue([
-      { user: { id: 10 } }, { user: { id: 11 } },
-    ])
+  it("should stop the registration flow when the email already exists", async () => {
+    mockUserRepo.checkEmailExists.mockResolvedValue(true)
 
-    const result = await assignmentService.createAssignment({
-      classId: 1, teacherId: 1, moduleId: 1, assignmentName: "Test Assignment",
-      instructions: "Test instructions", programmingLanguage: "python" as const,
-      deadline: new Date("2024-12-31"), allowResubmission: true, maxAttempts: null,
-      templateCode: null, totalScore: 100, scheduledDate: null,
-      allowLateSubmissions: false, latePenaltyConfig: null, instructionsImageUrl: null,
-    })
+    await expect(
+      authService.registerUser({
+        email: "existing@example.com",
+        password: "Password1!",
+        firstName: "Existing",
+        lastName: "User",
+        role: "student",
+      }),
+    ).rejects.toThrow(UserAlreadyExistsError)
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
-
-    expect(result.id).toBe(1)
-    expect(mockNotificationRepo.create).toHaveBeenCalledTimes(2)
-    expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(2)
+    expect(mockAuthAdapter.signUp).not.toHaveBeenCalled()
+    expect(mockUserRepo.createUser).not.toHaveBeenCalled()
   })
 })

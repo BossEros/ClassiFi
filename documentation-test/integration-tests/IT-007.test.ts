@@ -1,93 +1,69 @@
 /**
- * IT-007: User Account Deletion → Complete Resource Cleanup Flow
+ * IT-007: Teacher Deletes Class Successfully
  *
- * Module: User Management
- * Unit: Delete Account
- * Date Tested: 4/10/26
- * Description: Verify that deleting a user account removes all associated files, data records, and login credentials.
- * Expected Result: All associated resources are cleaned up and the account is fully deleted.
+ * Module: Class Management
+ * Unit: Delete class
+ * Date Tested: 4/13/26
+ * Description: Verify that a teacher can delete a class successfully.
+ * Expected Result: The class and related data are deleted successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-007 Integration Test Pass - Account Deletion Cleans Up All Related Resources
- * Suggested Figure Title (System UI): User Settings UI - Delete Account Confirmation Flow
+ * Suggested Figure Title (Test Pass): IT-007 Integration Test Pass - Teacher Deletes Class Successfully
+ * Suggested Figure Title (System UI): Class Management UI - Class Page with Delete Class Success Toast Notification
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { UserService } from "../../backend-ts/src/modules/users/user.service.js"
-import { UserNotFoundError } from "../../backend-ts/src/shared/errors.js"
-import { createMockUser, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
 
-describe("IT-007: User Account Deletion → Complete Resource Cleanup Flow", () => {
-  let userService: UserService
-  let mockUserRepo: any
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { ClassService } from "../../backend-ts/src/modules/classes/class.service.js"
+import { createMockClass } from "../../backend-ts/tests/utils/factories.js"
+
+describe("IT-007: Teacher Deletes Class Successfully", () => {
+  let classService: ClassService
+  let mockClassRepo: any
+  let mockAssignmentRepo: any
   let mockSubmissionRepo: any
   let mockStorageService: any
-  let mockAuthAdapter: any
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
-    mockUserRepo = {
-      getUserById: vi.fn(),
-      deleteUser: vi.fn().mockResolvedValue(true),
-      updateUser: vi.fn(),
+    mockClassRepo = {
+      getClassById: vi.fn(),
+      deleteClass: vi.fn(),
+      createClass: vi.fn(),
+      getStudentCount: vi.fn(),
+      getClassesWithStudentCounts: vi.fn(),
+      updateClass: vi.fn(),
     }
-
+    mockAssignmentRepo = { getAssignmentsByClassId: vi.fn() }
     mockSubmissionRepo = {
-      getSubmissionsByStudent: vi.fn().mockResolvedValue([]),
+      getSubmissionsByClass: vi.fn(),
+      getLatestSubmissionCountsByAssignmentIds: vi.fn(),
+      getLatestSubmissionsByStudentAndAssignmentIds: vi.fn(),
     }
-
     mockStorageService = {
-      deleteAvatar: vi.fn().mockResolvedValue(undefined),
-      deleteSubmissionFiles: vi.fn().mockResolvedValue(undefined),
+      deleteSubmissionFiles: vi.fn(),
+      deleteAssignmentInstructionsImage: vi.fn(),
     }
 
-    mockAuthAdapter = {
-      deleteUser: vi.fn().mockResolvedValue(undefined),
-    }
-
-    userService = new UserService(
-      mockUserRepo,
+    classService = new ClassService(
+      mockClassRepo,
+      mockAssignmentRepo,
+      {} as any,
+      {} as any,
       mockSubmissionRepo,
       mockStorageService,
-      mockAuthAdapter,
+      {} as any,
     )
   })
 
-  afterEach(() => { vi.clearAllMocks() })
+  it("should delete the class after cleaning up related files", async () => {
+    mockClassRepo.getClassById.mockResolvedValue(
+      createMockClass({ id: 1, teacherId: 4 }),
+    )
+    mockSubmissionRepo.getSubmissionsByClass.mockResolvedValue([])
+    mockAssignmentRepo.getAssignmentsByClassId.mockResolvedValue([])
+    mockClassRepo.deleteClass.mockResolvedValue(true)
 
-  it("should delete avatar, submission files, local DB record, and Supabase auth in sequence", async () => {
-    const user = createMockUser({
-      id: 10,
-      supabaseUserId: "supabase-user-10",
-      avatarUrl: "https://cdn.example.com/avatars/10.png",
-    })
+    await classService.deleteClass(1, 4)
 
-    const submissions = [
-      createMockSubmission({ filePath: "submissions/10/1.py" }),
-      createMockSubmission({ filePath: "submissions/10/2.py" }),
-    ]
-
-    mockUserRepo.getUserById.mockResolvedValue(user)
-    mockSubmissionRepo.getSubmissionsByStudent.mockResolvedValue(submissions)
-
-    await userService.deleteAccount(10)
-
-    expect(mockStorageService.deleteAvatar).toHaveBeenCalledWith(user.avatarUrl)
-    expect(mockSubmissionRepo.getSubmissionsByStudent).toHaveBeenCalledWith(10, false)
-    expect(mockStorageService.deleteSubmissionFiles).toHaveBeenCalledWith([
-      "submissions/10/1.py",
-      "submissions/10/2.py",
-    ])
-    expect(mockUserRepo.deleteUser).toHaveBeenCalledWith(10)
-    expect(mockAuthAdapter.deleteUser).toHaveBeenCalledWith("supabase-user-10")
-  })
-
-  it("should throw UserNotFoundError when the user does not exist", async () => {
-    mockUserRepo.getUserById.mockResolvedValue(undefined)
-
-    await expect(userService.deleteAccount(999)).rejects.toThrow(UserNotFoundError)
-
-    expect(mockStorageService.deleteAvatar).not.toHaveBeenCalled()
-    expect(mockAuthAdapter.deleteUser).not.toHaveBeenCalled()
+    expect(mockClassRepo.deleteClass).toHaveBeenCalledWith(1)
   })
 })
