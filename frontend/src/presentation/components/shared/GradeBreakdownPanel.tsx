@@ -9,6 +9,7 @@ interface GradeBreakdownPanelProps {
   deadline?: string | Date | null
   testsPassed?: number | null
   testsTotal?: number | null
+  overrideReason?: string | null
   variant?: "dark" | "light"
   className?: string
 }
@@ -49,6 +50,7 @@ export function GradeBreakdownPanel({
   deadline,
   testsPassed,
   testsTotal,
+  overrideReason,
   variant = "light",
   className,
 }: GradeBreakdownPanelProps) {
@@ -70,7 +72,7 @@ export function GradeBreakdownPanel({
   const displayedGrade = breakdown.effectiveGrade ?? breakdown.finalGrade ?? 0
   const displayedPercent =
     totalScore > 0 ? Math.round((displayedGrade / totalScore) * 100) : 0
-  const summaryLabel = hasManualOverride ? "Displayed Grade" : "Final Grade"
+  const summaryLabel = "Final Grade"
   const dividerClassName = cn("border-t", isDark ? "border-white/10" : "border-slate-100")
 
   const lateReason =
@@ -156,7 +158,11 @@ export function GradeBreakdownPanel({
               iconBg={isDark ? "bg-violet-500/20 text-violet-400" : "bg-violet-50 text-violet-600"}
               label="Manual Override"
               value={`${displayedGrade} / ${totalScore}`}
-              reason="Manual score adjustment applied"
+              reason={
+                overrideReason?.trim()
+                  ? `Reason: ${overrideReason.trim()}`
+                  : "Reason: Manual score adjustment applied"
+              }
               variant={variant}
             />
 
@@ -242,42 +248,43 @@ function BreakdownRow({
   const isDark = variant === "dark"
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between gap-2">
-        <span className="flex items-center gap-2 text-xs">
-          <span
-            className={cn(
-              "inline-flex h-6 w-6 items-center justify-center rounded-md",
-              iconBg,
-            )}
-          >
-            {icon}
-          </span>
-          <span className={isDark ? "text-slate-300" : "text-slate-600"}>
-            {label}
-          </span>
-        </span>
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1">
+      <span
+        className={cn(
+          "inline-flex h-6 w-6 items-center justify-center rounded-md",
+          iconBg,
+        )}
+      >
+        {icon}
+      </span>
+      <span
+        className={cn(
+          "min-w-0 justify-self-start pt-1 text-left text-xs",
+          isDark ? "text-slate-300" : "text-slate-600",
+        )}
+      >
+        {label}
+      </span>
+      <span
+        className={cn(
+          "pt-1 text-xs font-semibold tabular-nums text-right",
+          isDeduction
+            ? isDark ? "text-red-400" : "text-rose-600"
+            : isDark ? "text-slate-200" : "text-slate-800",
+        )}
+      >
+        {value}
+      </span>
+      {reason ? (
         <span
           className={cn(
-            "text-xs font-semibold tabular-nums",
-            isDeduction
-              ? isDark ? "text-red-400" : "text-rose-600"
-              : isDark ? "text-slate-200" : "text-slate-800",
-          )}
-        >
-          {value}
-        </span>
-      </div>
-      {reason && (
-        <p
-          className={cn(
-            "ml-8 text-[11px] italic",
+            "col-start-2 min-w-0 justify-self-start pr-2 text-left text-[11px] italic leading-4",
             isDark ? "text-slate-500" : "text-slate-400",
           )}
         >
           {reason}
-        </p>
-      )}
+        </span>
+      ) : null}
     </div>
   )
 }

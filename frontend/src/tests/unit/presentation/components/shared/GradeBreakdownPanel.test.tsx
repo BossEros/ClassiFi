@@ -37,7 +37,7 @@ describe("GradeBreakdownPanel", () => {
     expect(screen.queryByText("Manual Override")).not.toBeInTheDocument()
   })
 
-  it("shows automatic and displayed scores as separate steps when a manual override exists", () => {
+  it("shows automatic and final scores as separate steps when a manual override exists", () => {
     render(
       <GradeBreakdownPanel
         breakdown={createGradeBreakdown({
@@ -45,16 +45,16 @@ describe("GradeBreakdownPanel", () => {
           isOverridden: true,
         })}
         totalScore={100}
+        overrideReason="Rounded up after manual review"
       />,
     )
 
     expect(screen.getByText("Automatic Final")).toBeInTheDocument()
     expect(screen.getByText("Manual Override")).toBeInTheDocument()
-    expect(screen.getByText("Displayed Grade")).toBeInTheDocument()
-    expect(screen.getByText("Manual score adjustment applied")).toBeInTheDocument()
+    expect(screen.getByText("Final Grade")).toBeInTheDocument()
+    expect(screen.getByText("Rounded up after manual review")).toBeInTheDocument()
     expect(screen.getByText("77 / 100")).toBeInTheDocument()
     expect(screen.getAllByText("85 / 100")).toHaveLength(2)
-    expect(screen.queryByText("Final Grade")).not.toBeInTheDocument()
   })
 
   it("renders nothing when there is no original grade to explain", () => {

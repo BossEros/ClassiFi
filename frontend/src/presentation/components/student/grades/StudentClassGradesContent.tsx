@@ -2,6 +2,8 @@ import {
   AlertTriangle,
   BarChart3,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
   Clock3,
   Download,
@@ -168,8 +170,12 @@ function AssignmentGradeRow({
   assignment: StudentGradeEntry
   variant?: "dark" | "light"
 }) {
+  const [isGradeBreakdownExpanded, setIsGradeBreakdownExpanded] = useState(false)
   const hasGrade = assignment.grade !== null && assignment.grade !== undefined
   const hasSubmission = Boolean(assignment.submittedAt)
+  const hasGradeBreakdown =
+    assignment.gradeBreakdown?.originalGrade !== null &&
+    assignment.gradeBreakdown?.originalGrade !== undefined
   const percentage =
     hasGrade && assignment.totalScore > 0
       ? ((assignment.grade ?? 0) / assignment.totalScore) * 100
@@ -320,7 +326,7 @@ function AssignmentGradeRow({
         </div>
       </div>
 
-      {assignment.feedback ? (
+      {assignment.feedback && !assignment.isOverridden ? (
         <div
           className={cn(
             "mt-4 rounded-xl border px-3 py-3",
@@ -348,14 +354,40 @@ function AssignmentGradeRow({
         </div>
       ) : null}
 
-      {assignment.gradeBreakdown ? (
-        <GradeBreakdownPanel
-          breakdown={assignment.gradeBreakdown}
-          totalScore={assignment.totalScore}
-          submittedAt={assignment.submittedAt}
-          deadline={assignment.deadline}
-          variant={variant}
-        />
+      {hasGradeBreakdown ? (
+        <>
+          <button
+            type="button"
+            onClick={() => setIsGradeBreakdownExpanded((previousValue) => !previousValue)}
+            className={cn(
+              "mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-all",
+              isGradeBreakdownExpanded
+                ? "border border-teal-200 bg-teal-50 text-teal-800"
+                : variant === "light"
+                  ? "border border-slate-200 bg-white text-slate-600 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700"
+                  : "border border-white/10 bg-white/5 text-slate-200 hover:border-teal-400/40 hover:bg-teal-500/10 hover:text-teal-200",
+            )}
+            aria-expanded={isGradeBreakdownExpanded}
+          >
+            {isGradeBreakdownExpanded ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+            {isGradeBreakdownExpanded ? "Hide" : "View"} Grade Breakdown
+          </button>
+
+          {isGradeBreakdownExpanded ? (
+            <GradeBreakdownPanel
+              breakdown={assignment.gradeBreakdown}
+              totalScore={assignment.totalScore}
+              submittedAt={assignment.submittedAt}
+              deadline={assignment.deadline}
+              overrideReason={assignment.feedback}
+              variant={variant}
+            />
+          ) : null}
+        </>
       ) : null}
     </div>
   )
