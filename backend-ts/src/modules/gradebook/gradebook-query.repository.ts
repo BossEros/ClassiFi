@@ -34,6 +34,7 @@ export interface GradebookSubmission {
   originalGrade: number | null
   overrideGrade: number | null
   isGradeOverridden: boolean
+  overrideReason: string | null
   penaltyApplied: number | null
   similarityPenaltyApplied: number | null
   submittedAt: Date | null
@@ -46,6 +47,7 @@ export interface StudentGrade {
   grade: number | null
   gradeBreakdown: GradeBreakdown
   isOverridden: boolean
+  overrideReason: string | null
   submittedAt: Date | null
 }
 
@@ -216,6 +218,7 @@ export class GradebookRepository {
         originalGrade: submissions.originalGrade,
         overrideGrade: submissions.overrideGrade,
         isGradeOverridden: submissions.isGradeOverridden,
+        overrideReason: submissions.overrideReason,
         penaltyApplied: submissions.penaltyApplied,
         similarityPenaltyApplied: submissions.similarityPenaltyApplied,
         submittedAt: submissions.submittedAt,
@@ -267,6 +270,7 @@ export class GradebookRepository {
           grade: gradeComputation.effectiveGrade,
           gradeBreakdown: gradeComputation.gradeBreakdown,
           isOverridden: sub?.isGradeOverridden ?? false,
+          overrideReason: sub?.overrideReason ?? null,
           submittedAt: sub?.submittedAt ?? null,
         }
       }),

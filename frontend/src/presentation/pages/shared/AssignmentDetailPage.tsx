@@ -1027,6 +1027,7 @@ export function AssignmentDetailPage() {
                                       deadline={assignment?.deadline}
                                       testsPassed={submissionTestResults?.passed}
                                       testsTotal={submissionTestResults?.total}
+                                      overrideReason={activeSubmission.overrideReason}
                                       variant="light"
                                     />
                                   )}
