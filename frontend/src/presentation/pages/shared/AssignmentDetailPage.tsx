@@ -912,7 +912,7 @@ export function AssignmentDetailPage() {
                 <CardContent>
                   <div className="block w-full space-y-4">
                     {tempAssignment.instructions && (
-                      <p className="whitespace-pre-wrap break-words leading-relaxed text-slate-600">
+                      <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
                         {tempAssignment.instructions}
                       </p>
                     )}
