@@ -13,6 +13,7 @@ export interface GradebookGradeDTO {
   grade: number | null
   gradeBreakdown: GradeBreakdown
   isOverridden: boolean
+  overrideReason: string | null
   submittedAt: string | null
 }
 
@@ -64,6 +65,7 @@ export function toClassGradebookDTO(gradebook: {
       grade: number | null
       gradeBreakdown: GradeBreakdown
       isOverridden: boolean
+      overrideReason: string | null
       submittedAt: Date | null
     }>
   }>
@@ -85,6 +87,7 @@ export function toClassGradebookDTO(gradebook: {
         grade: g.grade,
         gradeBreakdown: g.gradeBreakdown,
         isOverridden: g.isOverridden,
+        overrideReason: g.overrideReason,
         submittedAt: g.submittedAt?.toISOString() ?? null,
       })),
     })),

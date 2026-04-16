@@ -9,6 +9,9 @@ import { registerFormSchema, type RegisterFormValues } from "@/presentation/sche
 import type { RegistrationStep, RegistrationStepInfo } from "@/data/api/auth.types";
 import { authTheme } from "@/presentation/constants/authTheme";
 
+const pendingTeacherApprovalRegistrationMessage =
+  "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin"
+
 // Inlined from src/presentation/components/auth/forms/RegisterForm.tsx
 interface RegisterFormProps {
   onSuccess?: () => void
@@ -564,7 +567,9 @@ function RegisterForm({ onSuccess, onBackToLogin }: RegisterFormProps) {
               Account Creation Complete
             </h1>
             <p className="text-[#5F746E]">
-              Click the button to proceed to the login page.
+              {roleValue === "teacher"
+                ? pendingTeacherApprovalRegistrationMessage
+                : "Click the button to proceed to the login page."}
             </p>
           </div>
 

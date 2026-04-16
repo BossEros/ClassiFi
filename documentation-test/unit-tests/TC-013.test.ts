@@ -1,116 +1,37 @@
 /**
- * TC-013: Submit Assignment Successfully
+ * TC-013: Change Password Rejects Confirm Password Mismatch
  *
- * Module: Code Submission
- * Unit: Submit Code File
- * Date Tested: 3/28/26
- * Description: Verify that a valid assignment submission is processed.
- * Expected Result: Submission is created and tests are executed.
+ * Module: User Management
+ * Unit: Change password
+ * Date Tested: 4/13/26
+ * Description: Verify that change password rejects a mismatched confirm password.
+ * Expected Result: A confirm password mismatch error is shown.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-013 Unit Test Pass - Code File Submitted Successfully
- * Suggested Figure Title (System UI): Code Submission UI - Assignment Submission Form with Successful Upload
+ * Suggested Figure Title (Test Pass): TC-013 Unit Test Pass - Confirm Password Mismatch Rejected
+ * Suggested Figure Title (System UI): User Settings UI - Change Password Form Showing Confirm Password Error
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/modules/submissions/submission.repository.js")
-vi.mock("../../backend-ts/src/modules/assignments/assignment.repository.js")
-vi.mock("../../backend-ts/src/modules/enrollments/enrollment.repository.js")
-vi.mock("../../backend-ts/src/modules/classes/class.repository.js")
-vi.mock("../../backend-ts/src/modules/test-cases/test-result.repository.js")
-vi.mock("../../backend-ts/src/services/code-test.service.js")
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
-}))
-vi.mock("../../backend-ts/src/shared/supabase.js", () => ({
-  supabase: { storage: { from: vi.fn(() => ({ upload: vi.fn(), createSignedUrl: vi.fn() })) } },
-}))
+import { describe, expect, it } from "vitest"
+import { changePasswordFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
 
-describe("TC-013: Submit Assignment Successfully", () => {
-  let submissionService: SubmissionService
-  let mockSubmissionRepo: any
-  let mockAssignmentRepo: any
-  let mockEnrollmentRepo: any
-  let mockTestResultRepo: any
-  let mockStorageService: any
-  let mockCodeTestService: any
-  let mockLatePenaltyService: any
-  let mockNotificationService: any
-  let mockPlagiarismAutoAnalysisService: any
-
-  const validFile = {
-    filename: "solution.py",
-    data: Buffer.from('print("hello")'),
-    mimetype: "text/x-python",
-  }
-  const futureDeadline = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockSubmissionRepo = {
-      getLatestSubmission: vi.fn(), getSubmissionCount: vi.fn(),
-      createSubmission: vi.fn(), getSubmissionHistory: vi.fn(),
-      getSubmissionsWithStudentInfo: vi.fn(), getSubmissionsByStudent: vi.fn(),
-      getSubmissionById: vi.fn(), saveTeacherFeedback: vi.fn(),
-      updateGrade: vi.fn(), delete: vi.fn(), withContext: vi.fn().mockReturnThis(),
-    }
-    mockAssignmentRepo = { getAssignmentById: vi.fn() }
-    mockEnrollmentRepo = { isEnrolled: vi.fn() }
-    mockTestResultRepo = { deleteBySubmissionId: vi.fn() }
-    mockStorageService = {
-      upload: vi.fn().mockResolvedValue("path/to/file"),
-      uploadSubmission: vi.fn().mockResolvedValue("path/to/file"),
-      download: vi.fn(), deleteFiles: vi.fn(),
-      getSignedUrl: vi.fn().mockResolvedValue("https://example.com/signed-url"),
-      deleteSubmissionFiles: vi.fn(), deleteAvatar: vi.fn(),
-    }
-    mockCodeTestService = { runTestsForSubmission: vi.fn() }
-    mockLatePenaltyService = {
-      calculatePenalty: vi.fn().mockReturnValue({ isLate: false, hoursLate: 0, penaltyPercent: 0, isRejected: false }),
-      getDefaultConfig: vi.fn().mockReturnValue({ tiers: [{ hoursLate: 24, penaltyPercent: 10 }], rejectAfterHours: 120 }),
-      applyPenalty: vi.fn((score: number, penalty: number) => score * (1 - penalty / 100)),
-      getAssignmentPenaltyConfig: vi.fn(), setAssignmentPenaltyConfig: vi.fn(),
-    }
-    mockNotificationService = {
-      createNotification: vi.fn(),
-      sendEmailNotificationIfEnabled: vi.fn().mockResolvedValue(undefined),
-      withContext: vi.fn().mockReturnThis(),
-    }
-    mockPlagiarismAutoAnalysisService = { scheduleFromSubmission: vi.fn() }
-
-    submissionService = new SubmissionService(
-      mockSubmissionRepo, mockAssignmentRepo, mockEnrollmentRepo,
-      { getClassById: vi.fn() } as any,
-      { getUserById: vi.fn() } as any,
-      mockTestResultRepo,
-      mockStorageService, mockCodeTestService, mockLatePenaltyService,
-      mockNotificationService, mockPlagiarismAutoAnalysisService,
-      { getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()) } as any,
-    )
-  })
-
-  afterEach(() => { vi.resetAllMocks() })
-
-  it("should submit assignment successfully", async () => {
-    const assignment = createMockAssignment({
-      id: 1, isActive: true, deadline: futureDeadline, programmingLanguage: "python", allowResubmission: true,
+describe("TC-013: Change Password Rejects Confirm Password Mismatch", () => {
+  it("should reject password change when confirm password does not match", () => {
+    const passwordParseResult = changePasswordFormSchema.safeParse({
+      currentPassword: "CurrentPass1!",
+      newPassword: "NewPass1!",
+      confirmPassword: "OtherPass1!",
     })
-    const mockSubmission = createMockSubmission({ id: 1 })
 
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
-    mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
-    mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
-    mockSubmissionRepo.createSubmission.mockResolvedValue(mockSubmission)
+    expect(passwordParseResult.success).toBe(false)
 
-    const result = await submissionService.submitAssignment(1, 1, validFile)
-
-    expect(result).toBeDefined()
-    expect(result.id).toBe(mockSubmission.id)
-    expect(mockSubmissionRepo.createSubmission).toHaveBeenCalled()
-    expect(mockStorageService.uploadSubmission).toHaveBeenCalledWith(1, 1, 1, "solution.py", validFile.data, "text/x-python")
-    expect(mockCodeTestService.runTestsForSubmission).toHaveBeenCalledWith(mockSubmission.id)
-    expect(mockPlagiarismAutoAnalysisService.scheduleFromSubmission).toHaveBeenCalledWith(1)
+    if (!passwordParseResult.success) {
+      expect(passwordParseResult.error.issues[0]?.message).toBe(
+        "Passwords do not match",
+      )
+      expect(passwordParseResult.error.issues[0]?.path).toEqual([
+        "confirmPassword",
+      ])
+    }
   })
 })

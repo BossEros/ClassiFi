@@ -14,6 +14,7 @@ export interface GradeEntry {
   grade: number | null
   gradeBreakdown: GradeBreakdown
   isOverridden: boolean
+  overrideReason: string | null
   submittedAt: string | null
 }
 

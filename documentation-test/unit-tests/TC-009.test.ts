@@ -1,34 +1,53 @@
 /**
- * TC-009: Forgot Password Rejects Invalid Email Format
+ * TC-009: Assignment Creation Rejects Empty Title
  *
- * Module: Authentication
- * Unit: Password Reset
- * Date Tested: 4/11/26
- * Description: Verify that the forgot-password form rejects an email address with an invalid format.
- * Expected Result: Forgot-password validation fails with the explicit invalid email message.
+ * Module: Assignment Management
+ * Unit: Create assignment
+ * Date Tested: 4/13/26
+ * Description: Verify that assignment creation rejects an empty title.
+ * Expected Result: A required field error is shown for the assignment title.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-009 Unit Test Pass - Forgot Password Invalid Email Format Rejected
- * Suggested Figure Title (System UI): Authentication UI - Forgot Password Form Showing Invalid Email Validation
+ * Suggested Figure Title (Test Pass): TC-009 Unit Test Pass - Empty Assignment Title Rejected
+ * Suggested Figure Title (System UI): Assignment Management UI - Create Assignment Form Showing Title Error
  */
 
 import { describe, expect, it } from "vitest"
-import { forgotPasswordFormSchema } from "../../frontend/src/presentation/schemas/auth/authSchemas"
+import { assignmentFormSchema } from "../../frontend/src/presentation/schemas/assignment/assignmentSchemas"
 
-describe("TC-009: Forgot Password Rejects Invalid Email Format", () => {
-  it("should reject forgot password submission when the email address format is invalid", () => {
-    const forgotPasswordParseResult = forgotPasswordFormSchema.safeParse({
-      email: "invalid-email",
+describe("TC-009: Assignment Creation Rejects Empty Title", () => {
+  it("should reject assignment creation when the title is empty", () => {
+    const assignmentParseResult = assignmentFormSchema.safeParse({
+      assignmentName: "   ",
+      instructions: "Solve the given problem.",
+      instructionsImageUrl: null,
+      programmingLanguage: "python",
+      deadline: "",
+      allowResubmission: true,
+      maxAttempts: null,
+      templateCode: "",
+      totalScore: 100,
+      scheduledDate: null,
+      allowLateSubmissions: false,
+      latePenaltyConfig: { tiers: [], rejectAfterHours: null },
+      enableSimilarityPenalty: false,
+      similarityPenaltyConfig: {
+        warningThreshold: 75,
+        deductionBands: [],
+        maxPenaltyPercent: 20,
+        applyHighestPairOnly: true,
+      },
+      moduleId: 1,
     })
 
-    expect(forgotPasswordParseResult.success).toBe(false)
+    expect(assignmentParseResult.success).toBe(false)
 
-    if (!forgotPasswordParseResult.success) {
-      expect(forgotPasswordParseResult.error.issues[0]?.message).toBe(
-        "Invalid email format. Please enter a valid email address",
+    if (!assignmentParseResult.success) {
+      expect(assignmentParseResult.error.issues[0]?.message).toBe(
+        "Assignment title is required",
       )
-      expect(forgotPasswordParseResult.error.issues[0]?.path).toEqual([
-        "email",
+      expect(assignmentParseResult.error.issues[0]?.path).toEqual([
+        "assignmentName",
       ])
     }
   })

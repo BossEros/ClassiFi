@@ -249,7 +249,7 @@ function CollapsibleInstructions({
         <CardContent id={instructionsPanelId}>
           <div className="space-y-4">
             {normalizedInstructions ? (
-              <p className="whitespace-pre-wrap break-words text-base leading-7 text-slate-600">
+              <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
                 {normalizedInstructions}
               </p>
             ) : (

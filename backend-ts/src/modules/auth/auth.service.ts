@@ -7,6 +7,11 @@ import {
 import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
+import type { IEmailService } from "@/services/interfaces/email.interface.js"
+import {
+  passwordResetEmailTemplate,
+  sanitizeEmailSubject,
+} from "@/services/email/templates.js"
 import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { settlePromisesAndLogRejections } from "@/shared/utils.js"
@@ -15,6 +20,7 @@ import {
   InvalidCredentialsError,
   UserNotFoundError,
   InvalidRoleError,
+  TeacherApprovalPendingError,
 } from "@/shared/errors.js"
 import type { User } from "@/modules/users/user.model.js"
 import type { RegisterUserServiceDTO } from "@/modules/auth/auth.dtos.js"
@@ -23,6 +29,8 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 const logger = createLogger("AuthService")
 const LOCAL_USER_SYNC_MAX_ATTEMPTS = 5
 const LOCAL_USER_SYNC_RETRY_DELAYS_MS = [150, 300, 600, 1200] as const
+const PENDING_TEACHER_APPROVAL_MESSAGE =
+  "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin"
 
 /** Auth result type */
 interface AuthResult {
@@ -94,6 +102,8 @@ export class AuthService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.adapters.supabaseAuth)
     private authAdapter: SupabaseAuthAdapter,
+    @inject(DI_TOKENS.services.email)
+    private emailService: IEmailService,
     @inject(DI_TOKENS.services.notification)
     private notificationService: NotificationService,
   ) {}
@@ -127,17 +137,30 @@ export class AuthService {
       firstName,
       lastName,
       role,
+      this.getInitialUserActiveState(role),
     )
 
-    // STEP 5: Notify admin users about the new registration (fire-and-forget)
-    this.notifyAdminsOfNewRegistration(user).catch((error) =>
-      logger.error("Failed to send new user registration notifications to admins", { userId: user.id, error }),
-    )
+    // STEP 5: Notify admin users about teacher approval requests (fire-and-forget)
+    if (role === "teacher") {
+      this.notifyAdminsOfTeacherRegistration(user).catch((error) =>
+        logger.error(
+          "Failed to send teacher registration approval notifications to admins",
+          { userId: user.id, error },
+        ),
+      )
+    }
 
     return {
       userData: toUserDTO(user),
       token: token ?? null,
     }
+  }
+
+  /**
+   * Resolve the initial active state for a newly registered user.
+   */
+  private getInitialUserActiveState(role: UserRole): boolean {
+    return role !== "teacher"
   }
 
   /**
@@ -247,6 +270,7 @@ export class AuthService {
     firstName: string,
     lastName: string,
     role: UserRole,
+    isActive: boolean,
   ): Promise<User> {
     try {
       return await this.createLocalUserWithSyncRetry({
@@ -255,6 +279,7 @@ export class AuthService {
         firstName,
         lastName,
         role,
+        isActive,
       })
     } catch (error: unknown) {
       // Rollback Supabase user to prevent orphaned records
@@ -272,15 +297,14 @@ export class AuthService {
    * Retry local user creation when the referenced Supabase auth row
    * has not become visible to the database foreign-key check yet.
    */
-  private async createLocalUserWithSyncRetry(
-    data: {
-      supabaseUserId: string
-      email: string
-      firstName: string
-      lastName: string
-      role: UserRole
-    },
-  ): Promise<User> {
+  private async createLocalUserWithSyncRetry(data: {
+    supabaseUserId: string
+    email: string
+    firstName: string
+    lastName: string
+    role: UserRole
+    isActive: boolean
+  }): Promise<User> {
     let latestError: unknown
 
     for (
@@ -324,8 +348,7 @@ export class AuthService {
   ): Promise<void> {
     const retryDelayMs = this.getLocalUserSyncRetryDelayMs(attemptNumber)
 
-    const supabaseUser =
-      await this.authAdapter.getAdminUserById(supabaseUserId)
+    const supabaseUser = await this.authAdapter.getAdminUserById(supabaseUserId)
 
     if (!supabaseUser) {
       logger.warn(
@@ -342,7 +365,9 @@ export class AuthService {
   private getLocalUserSyncRetryDelayMs(attemptNumber: number): number {
     return (
       LOCAL_USER_SYNC_RETRY_DELAYS_MS[attemptNumber - 1] ??
-      LOCAL_USER_SYNC_RETRY_DELAYS_MS[LOCAL_USER_SYNC_RETRY_DELAYS_MS.length - 1]
+      LOCAL_USER_SYNC_RETRY_DELAYS_MS[
+        LOCAL_USER_SYNC_RETRY_DELAYS_MS.length - 1
+      ]
     )
   }
 
@@ -382,8 +407,7 @@ export class AuthService {
     }
 
     return (
-      error.code === "23503" &&
-      error.constraint === "fk_users_supabase_user_id"
+      error.code === "23503" && error.constraint === "fk_users_supabase_user_id"
     )
   }
 
@@ -407,6 +431,8 @@ export class AuthService {
     if (!user) {
       throw new UserNotFoundError(supabaseUser.id)
     }
+
+    this.ensureTeacherAccountIsApproved(user)
 
     // STEP 3: Return the user profile DTO and access token
     return {
@@ -432,15 +458,40 @@ export class AuthService {
       throw new UserNotFoundError(supabaseUser.id)
     }
 
+    this.ensureTeacherAccountIsApproved(user)
+
     return toUserDTO(user)
+  }
+
+  /**
+   * Block teacher accounts that are still pending admin approval.
+   */
+  private ensureTeacherAccountIsApproved(user: User): void {
+    if (user.role === "teacher" && !user.isActive) {
+      throw new TeacherApprovalPendingError()
+    }
   }
 
   /** Request a password reset email */
   async requestPasswordReset(email: string): Promise<void> {
-    await this.authAdapter.resetPasswordForEmail(
+    const user = await this.userRepo.getUserByEmail(email)
+
+    if (!user) {
+      return
+    }
+
+    const { actionLink } = await this.authAdapter.generatePasswordRecoveryLink(
       email,
       buildFrontendAuthRedirectUrl("/reset-password"),
     )
+
+    await this.emailService.sendEmail({
+      to: email,
+      subject: sanitizeEmailSubject("Reset Your Password"),
+      html: passwordResetEmailTemplate({
+        resetUrl: actionLink,
+      }),
+    })
   }
 
   /**
@@ -448,7 +499,7 @@ export class AuthService {
    *
    * @param user - The newly registered user.
    */
-  private async notifyAdminsOfNewRegistration(user: User): Promise<void> {
+  private async notifyAdminsOfTeacherRegistration(user: User): Promise<void> {
     const adminUsers = await this.userRepo.getUsersByRole("admin")
 
     if (adminUsers.length === 0) {
@@ -463,15 +514,26 @@ export class AuthService {
     }
 
     const notificationPromises = adminUsers.flatMap((admin) => [
-      this.notificationService.createNotification(admin.id, "NEW_USER_REGISTERED", notificationData),
-      this.notificationService.sendEmailNotificationIfEnabled(admin.id, "NEW_USER_REGISTERED", notificationData),
+      this.notificationService.createNotification(
+        admin.id,
+        "NEW_USER_REGISTERED",
+        notificationData,
+      ),
+      this.notificationService.sendEmailNotificationIfEnabled(
+        admin.id,
+        "NEW_USER_REGISTERED",
+        notificationData,
+      ),
     ])
 
     await settlePromisesAndLogRejections(
       notificationPromises,
       logger,
-      "Failed to notify admins of new registration",
-      { userId: user.id },
+      "Failed to notify admins of teacher approval request",
+      {
+        userId: user.id,
+        approvalMessage: PENDING_TEACHER_APPROVAL_MESSAGE,
+      },
     )
   }
 }

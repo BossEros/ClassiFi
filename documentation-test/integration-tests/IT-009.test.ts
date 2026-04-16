@@ -1,76 +1,73 @@
 /**
- * IT-009: Teacher Dashboard → Recent Classes with Assignment Counts Flow
+ * IT-009: Teacher Updates Assignment Successfully
  *
- * Module: Dashboard
- * Unit: View Dashboard
- * Date Tested: 4/10/26
- * Description: Verify that the teacher dashboard shows recent classes with student counts and pending ungraded assignments.
- * Expected Result: Dashboard returns classes with assignment counts and pending task details.
+ * Module: Assignment Management
+ * Unit: Update assignment
+ * Date Tested: 4/13/26
+ * Description: Verify that a teacher can update an assignment successfully.
+ * Expected Result: The assignment information is updated successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-009 Integration Test Pass - Teacher Dashboard Aggregation Returns Recent Classes and Tasks
- * Suggested Figure Title (System UI): Dashboard UI - Teacher Dashboard Showing Recent Classes and Pending Tasks
- */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { TeacherDashboardService } from "../../backend-ts/src/modules/dashboard/teacher-dashboard.service.js"
-import { createMockClass, createMockAssignment } from "../../backend-ts/tests/utils/factories.js"
+ * Suggested Figure Title (Test Pass): IT-009 Integration Test Pass - Teacher Updates Assignment Successfully
+ * Suggested Figure Title (System UI): Assignment Management UI - Class Page with Assignment Update Success Toast Notification
+ */ 
 
-describe("IT-009: Teacher Dashboard → Recent Classes with Assignment Counts Flow", () => {
-  let teacherDashboardService: TeacherDashboardService
-  let mockClassRepo: any
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { AssignmentService } from "../../backend-ts/src/modules/assignments/assignment.service.js"
+import { createMockAssignment, createMockClass } from "../../backend-ts/tests/utils/factories.js"
+
+describe("IT-009: Teacher Updates Assignment Successfully", () => {
+  let assignmentService: AssignmentService
   let mockAssignmentRepo: any
+  let mockClassRepo: any
+  let mockEnrollmentRepo: any
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
-    mockClassRepo = {
-      getRecentClassesWithStudentCounts: vi.fn(),
-      getClassesByTeacher: vi.fn().mockResolvedValue([]),
-    }
-
     mockAssignmentRepo = {
-      getAssignmentsByClassIds: vi.fn().mockResolvedValue([]),
-      getPendingTasksForTeacher: vi.fn().mockResolvedValue([]),
+      getAssignmentById: vi.fn(),
+      updateAssignment: vi.fn(),
+      createAssignment: vi.fn(),
+      deleteAssignment: vi.fn(),
+      getAssignmentsByClassId: vi.fn(),
+      updateLastReminderSentAt: vi.fn(),
+    }
+    mockClassRepo = { getClassById: vi.fn() }
+    mockEnrollmentRepo = { getEnrolledStudentsWithInfo: vi.fn() }
+
+    assignmentService = new AssignmentService(
+      mockAssignmentRepo,
+      mockClassRepo,
+      { getByAssignmentId: vi.fn() } as any,
+      mockEnrollmentRepo,
+      {} as any,
+      { getModuleById: vi.fn() } as any,
+      { deleteAssignmentInstructionsImage: vi.fn() } as any,
+      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn() } as any,
+      { syncAssignmentPenaltyState: vi.fn() } as any,
+    )
+  })
+
+  it("should update an existing assignment", async () => {
+    const existingAssignment = createMockAssignment({ id: 1, classId: 1 })
+    const updatedAssignment = {
+      ...existingAssignment,
+      assignmentName: "Updated Assignment",
     }
 
-    teacherDashboardService = new TeacherDashboardService(mockClassRepo, mockAssignmentRepo)
-  })
+    mockAssignmentRepo.getAssignmentById.mockResolvedValue(existingAssignment)
+    mockClassRepo.getClassById.mockResolvedValue(
+      createMockClass({ id: 1, teacherId: 3 }),
+    )
+    mockAssignmentRepo.updateAssignment.mockResolvedValue(updatedAssignment)
+    mockEnrollmentRepo.getEnrolledStudentsWithInfo.mockResolvedValue([])
 
-  afterEach(() => { vi.clearAllMocks() })
+    const result = await assignmentService.updateAssignment({
+      assignmentId: 1,
+      teacherId: 3,
+      assignmentName: "Updated Assignment",
+    })
 
-  it("should aggregate class and assignment data into the dashboard response", async () => {
-    const class1 = { ...createMockClass({ id: 1, teacherId: 2 }), studentCount: 15 }
-    const class2 = { ...createMockClass({ id: 2, teacherId: 2 }), studentCount: 22 }
-    const assignments = [
-      createMockAssignment({ id: 10, classId: 1 }),
-      createMockAssignment({ id: 11, classId: 1 }),
-      createMockAssignment({ id: 12, classId: 2 }),
-    ]
-
-    mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue([class1, class2])
-    mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue(assignments)
-    mockAssignmentRepo.getPendingTasksForTeacher.mockResolvedValue([
-      { assignmentId: 10, assignmentName: "Recursion Lab", classId: 1, className: "CS101", ungraded: 8 },
-      { assignmentId: 12, assignmentName: "Data Structures Quiz", classId: 2, className: "CS201", ungraded: 3 },
-    ])
-
-    const result = await teacherDashboardService.getDashboardData(2)
-
-    expect(result.recentClasses).toHaveLength(2)
-    expect(result.recentClasses[0].id).toBe(1)
-    expect(result.recentClasses[1].id).toBe(2)
-    expect(result.pendingTasks).toHaveLength(2)
-    expect(result.pendingTasks[0].assignmentName).toBe("Recursion Lab")
-    expect(result.pendingTasks[1].assignmentName).toBe("Data Structures Quiz")
-  })
-
-  it("should call the class and assignment repos with the correct teacher ID and limits", async () => {
-    mockClassRepo.getRecentClassesWithStudentCounts.mockResolvedValue([])
-    mockAssignmentRepo.getAssignmentsByClassIds.mockResolvedValue([])
-
-    await teacherDashboardService.getDashboardData(2, 6, 5)
-
-    expect(mockClassRepo.getRecentClassesWithStudentCounts).toHaveBeenCalledWith(2, 6)
-    expect(mockAssignmentRepo.getPendingTasksForTeacher).toHaveBeenCalledWith(2, 5)
+    expect(result.assignmentName).toBe("Updated Assignment")
+    expect(mockAssignmentRepo.updateAssignment).toHaveBeenCalled()
   })
 })

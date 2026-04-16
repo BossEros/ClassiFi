@@ -17,6 +17,7 @@ export interface CreateUserRepoData {
   firstName: string
   lastName: string
   role: UserRole
+  isActive?: boolean
 }
 
 /** Data for updating an existing user at repository level */
@@ -76,6 +77,7 @@ export class UserRepository extends BaseRepository<
         firstName: data.firstName,
         lastName: data.lastName,
         role: data.role,
+        isActive: data.isActive ?? true,
       })
       .returning()
 

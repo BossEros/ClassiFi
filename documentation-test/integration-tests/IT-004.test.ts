@@ -1,125 +1,73 @@
 /**
- * IT-004: Teacher Feedback → Student Notification Flow
+ * IT-004: Teacher Creates Class Successfully
  *
- * Module: Notifications
- * Unit: View and Manage Notifications
- * Date Tested: 3/29/26
- * Description: Verify that saving teacher feedback notifies the student via in-app and email.
- * Expected Result: Student receives a "feedback given" in-app notification and email.
+ * Module: Class Management
+ * Unit: Create class
+ * Date Tested: 4/13/26
+ * Description: Verify that a teacher can create a class successfully.
+ * Expected Result: A new class is created successfully.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): IT-004 Integration Test Pass - Teacher Feedback Triggers Student Notification
- * Suggested Figure Title (System UI): Notifications UI - Teacher Feedback Notification Display
+ * Suggested Figure Title (Test Pass): IT-004 Integration Test Pass - Teacher Creates Class Successfully
+ * Suggested Figure Title (System UI): Class Management UI - Created Class Shown in Teacher Classes View
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest"
-import { container } from "tsyringe"
-import { NotificationService } from "../../backend-ts/src/modules/notifications/notification.service.js"
-import { SubmissionService } from "../../backend-ts/src/modules/submissions/submission.service.js"
-import { createMockAssignment, createMockSubmission } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/shared/transaction.js", () => ({
-  withTransaction: vi.fn(async (callback: (ctx: unknown) => Promise<unknown>) => callback({})),
-}))
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { MockedObject } from "vitest"
+import { ClassService } from "../../backend-ts/src/modules/classes/class.service.js"
+import type { ClassRepository } from "../../backend-ts/src/modules/classes/class.repository.js"
+import type { AssignmentRepository } from "../../backend-ts/src/modules/assignments/assignment.repository.js"
+import type { EnrollmentRepository } from "../../backend-ts/src/modules/enrollments/enrollment.repository.js"
+import type { UserRepository } from "../../backend-ts/src/modules/users/user.repository.js"
+import type { SubmissionRepository } from "../../backend-ts/src/modules/submissions/submission.repository.js"
+import type { StorageService } from "../../backend-ts/src/services/storage.service.js"
+import { createMockClass, createMockTeacher } from "../../backend-ts/tests/utils/factories.js"
 
-describe("IT-004: Teacher Feedback → Student Notification Flow", () => {
-  let submissionService: SubmissionService
-  let mockNotificationRepo: any
-  let mockEmailService: any
-  let mockSubmissionRepo: any
-  let mockAssignmentRepo: any
+describe("IT-004: Teacher Creates Class Successfully", () => {
+  let classService: ClassService
+  let mockClassRepo: Partial<MockedObject<ClassRepository>>
+  let mockUserRepo: Partial<MockedObject<UserRepository>>
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    mockClassRepo = {
+      createClass: vi.fn(),
+      getStudentCount: vi.fn(),
+      getClassById: vi.fn(),
+      getClassesWithStudentCounts: vi.fn(),
+      updateClass: vi.fn(),
+      deleteClass: vi.fn(),
+    } as any
+    mockUserRepo = { getUserById: vi.fn() } as any
 
-    mockNotificationRepo = {
-      create: vi.fn(),
-      findById: vi.fn(),
-      findByUserId: vi.fn(),
-      countByUserId: vi.fn(),
-      countUnreadByUserId: vi.fn(),
-      markAsRead: vi.fn(),
-      markAllAsReadByUserId: vi.fn(),
-      delete: vi.fn(),
-      withContext: vi.fn().mockReturnThis(),
-    }
-
-    const mockUserRepo = {
-      getUserById: vi.fn().mockResolvedValue({
-        id: 10,
-        email: "student@test.com",
-        emailNotificationsEnabled: true,
-        inAppNotificationsEnabled: true,
-      }),
-      withContext: vi.fn().mockReturnThis(),
-    }
-
-    mockEmailService = { sendEmail: vi.fn().mockResolvedValue(undefined) }
-
-    const mockTransactionalNotificationRepo = {
-      ...mockNotificationRepo,
-      create: vi.fn().mockImplementation(async (data: any) => ({
-        id: 1, userId: data.userId, type: data.type, title: data.title,
-        message: data.message, metadata: data.metadata, isRead: false, readAt: null, createdAt: new Date(),
-      })),
-      withContext: vi.fn().mockReturnThis(),
-    }
-
-    const notificationService = new NotificationService(
-      mockNotificationRepo,
-      mockUserRepo as any,
-      mockEmailService,
-    )
-
-    const savedSubmission = createMockSubmission({
-      id: 1, assignmentId: 1, studentId: 10, teacherFeedback: "Great structured approach!",
-    })
-
-    const mockTransactionalSubmissionRepo = {
-      saveTeacherFeedback: vi.fn().mockResolvedValue(savedSubmission),
-    }
-
-    mockSubmissionRepo = {
-      getSubmissionById: vi.fn().mockResolvedValue(
-        createMockSubmission({ id: 1, assignmentId: 1, studentId: 10 }),
-      ),
-      withContext: vi.fn().mockReturnValue(mockTransactionalSubmissionRepo),
-    }
-
-    mockAssignmentRepo = {
-      getAssignmentById: vi.fn().mockResolvedValue(
-        createMockAssignment({ id: 1, assignmentName: "Functions Exercise", totalScore: 100 }),
-      ),
-    }
-
-    mockNotificationRepo.create.mockImplementation(async (data: any) => ({
-      id: 1, userId: data.userId, type: data.type, title: data.title,
-      message: data.message, metadata: data.metadata, isRead: false, readAt: null, createdAt: new Date(),
-    }))
-
-    submissionService = new SubmissionService(
-      mockSubmissionRepo,
-      mockAssignmentRepo,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      notificationService,
-      { scheduleFromSubmission: vi.fn().mockResolvedValue(undefined) } as any,
-      { getMaxSimilarityScoresBySubmissionIds: vi.fn().mockResolvedValue(new Map()) } as any,
+    classService = new ClassService(
+      mockClassRepo as ClassRepository,
+      { getAssignmentsByClassId: vi.fn() } as unknown as AssignmentRepository,
+      { isEnrolled: vi.fn(), unenrollStudent: vi.fn(), getEnrolledStudentsWithInfo: vi.fn() } as unknown as EnrollmentRepository,
+      mockUserRepo as UserRepository,
+      { getSubmissionsByClass: vi.fn(), getLatestSubmissionCountsByAssignmentIds: vi.fn(), getLatestSubmissionsByStudentAndAssignmentIds: vi.fn() } as unknown as SubmissionRepository,
+      { deleteSubmissionFiles: vi.fn(), deleteAssignmentInstructionsImage: vi.fn() } as unknown as StorageService,
+      { createNotification: vi.fn(), sendEmailNotificationIfEnabled: vi.fn(), withContext: vi.fn().mockReturnThis() } as any,
     )
   })
 
-  afterEach(() => { container.clearInstances() })
+  it("should create a class and return the new class data", async () => {
+    const teacher = createMockTeacher()
+    const createdClass = createMockClass({ teacherId: teacher.id })
 
-  it("notifies student with in-app notification and email when teacher saves feedback", async () => {
-    await submissionService.saveTeacherFeedback(1, "Prof. Smith", "Great structured approach!")
+    mockUserRepo.getUserById!.mockResolvedValue(teacher)
+    mockClassRepo.createClass!.mockResolvedValue(createdClass)
+    mockClassRepo.getStudentCount!.mockResolvedValue(0)
 
-    expect(mockNotificationRepo.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: 10, type: "SUBMISSION_FEEDBACK_GIVEN" }),
-    )
-    expect(mockEmailService.sendEmail).toHaveBeenCalledTimes(1)
+    const result = await classService.createClass({
+      teacherId: teacher.id,
+      className: createdClass.className,
+      classCode: "ABC12345",
+      semester: createdClass.semester,
+      academicYear: createdClass.academicYear,
+      schedule: createdClass.schedule,
+    })
+
+    expect(result.id).toBe(createdClass.id)
+    expect(mockClassRepo.createClass).toHaveBeenCalled()
   })
 })

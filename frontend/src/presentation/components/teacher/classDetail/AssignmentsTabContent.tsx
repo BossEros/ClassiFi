@@ -77,6 +77,9 @@ export function AssignmentsTabContent({
   const hasVisibleAssignments = groupedAssignments.current.length > 0 || groupedAssignments.past.length > 0
   const shouldShowNoFilterResultsState = assignments.length > 0 && !hasVisibleAssignments
   const hasModules = modules.length > 0
+  const isListViewDisabled = isTeacher && !hasModules
+  const activeViewMode: AssignmentViewMode =
+    isListViewDisabled && viewMode === "list" ? "module" : viewMode
 
   const toggleModuleExpanded = (moduleId: number) => {
     setHasToggledModules(true)
@@ -105,11 +108,16 @@ export function AssignmentsTabContent({
             Assignments
           </h2>
           <div className="flex items-center gap-3 w-full sm:w-auto sm:ml-auto">
-            <ViewToggle activeView={viewMode} onViewChange={setViewMode} variant={variant} />
+            <ViewToggle
+              activeView={activeViewMode}
+              onViewChange={setViewMode}
+              isListViewDisabled={isListViewDisabled}
+              variant={variant}
+            />
           </div>
         </div>
 
-        {viewMode === "list" && (
+        {activeViewMode === "list" && (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {isTeacher ? (
               <AssignmentFilterBar
@@ -142,7 +150,7 @@ export function AssignmentsTabContent({
       </div>
 
       {/* Module View */}
-      {viewMode === "module" && (
+      {activeViewMode === "module" && (
         hasModules ? (
           <div className="space-y-4">
             {modules.map((module) => (
@@ -188,7 +196,7 @@ export function AssignmentsTabContent({
       )}
 
       {/* List View */}
-      {viewMode === "list" && (
+      {activeViewMode === "list" && (
         shouldShowNoFilterResultsState ? (
           <div className="py-12 text-center">
             <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${isLight ? "border border-slate-200 bg-slate-100" : "bg-white/5"}`}>

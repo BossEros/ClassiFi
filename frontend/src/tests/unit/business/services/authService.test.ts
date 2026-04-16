@@ -23,6 +23,7 @@ describe("authService", () => {
     firstName: "Test",
     lastName: "User",
     role: "student",
+    isActive: true,
     emailNotificationsEnabled: true,
     inAppNotificationsEnabled: true,
     createdAt: new Date(),
@@ -137,6 +138,32 @@ describe("authService", () => {
       expect(result.message).toBe("Network error")
     })
 
+    it("should sign out and clear local state when teacher access is pending approval", async () => {
+      useAuthStore.setState({ user: mockUser, isAuthenticated: true })
+      vi.mocked(
+        authRepository.authenticateUserWithEmailAndPassword,
+      ).mockResolvedValue({
+        success: false,
+        message:
+          "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+      })
+      vi.mocked(
+        authRepository.signOutCurrentUserAndClearSession,
+      ).mockResolvedValue(undefined)
+
+      const result = await authService.loginUser(credentials)
+
+      expect(result.success).toBe(false)
+      expect(result.message).toBe(
+        "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+      )
+      expect(
+        authRepository.signOutCurrentUserAndClearSession,
+      ).toHaveBeenCalled()
+      expect(useAuthStore.getState().user).toBeNull()
+      expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    })
+
     it("should convert thrown unconfirmed email errors into the same clear next-step message", async () => {
       vi.mocked(
         authRepository.authenticateUserWithEmailAndPassword,
@@ -209,6 +236,27 @@ describe("authService", () => {
 
       expect(result.success).toBe(false)
       expect(result.message).toBe("Email already exists")
+    })
+
+    it("should not persist session for inactive teacher registrations", async () => {
+      vi.mocked(authRepository.registerNewUserAccount).mockResolvedValue({
+        success: true,
+        token: mockToken,
+        user: {
+          ...mockUser,
+          role: "teacher",
+          isActive: false,
+        },
+      })
+
+      const result = await authService.registerUser({
+        ...registrationData,
+        role: "teacher",
+      })
+
+      expect(result.success).toBe(true)
+      expect(mockStorage.setItem).not.toHaveBeenCalled()
+      expect(useAuthStore.getState().user).toBeNull()
     })
 
     it("should not persist session when response is success but user payload is missing", async () => {

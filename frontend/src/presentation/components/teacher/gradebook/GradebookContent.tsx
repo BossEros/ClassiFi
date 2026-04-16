@@ -79,12 +79,13 @@ function GradeCell({ grade, totalScore, deadline, variant = "dark" }: GradeCellP
       </button>
 
       {isBreakdownVisible && grade.gradeBreakdown && (
-        <div className="absolute left-1/2 z-50 mt-1 w-56 -translate-x-1/2 drop-shadow-lg">
+        <div className="absolute left-1/2 z-50 mt-1 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 drop-shadow-lg">
           <GradeBreakdownPanel
             breakdown={grade.gradeBreakdown}
             totalScore={totalScore}
             submittedAt={grade.submittedAt}
             deadline={deadline}
+            overrideReason={grade.overrideReason}
             variant={variant}
           />
         </div>

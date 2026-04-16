@@ -1,143 +1,45 @@
 /**
- * TC-018: Plagiarism Detection - Analyze Files
+ * TC-018: Class Creation Rejects Invalid Time Order
  *
- * Module: Similarity Detection
- * Unit: Structural Analysis
- * Date Tested: 3/28/26
- * Description: Verify that files are analyzed for structural similarity.
- * Expected Result: Similarity report is shown after analysis.
+ * Module: Class Management
+ * Unit: Create class
+ * Date Tested: 4/13/26
+ * Description: Verify that class creation rejects an invalid time order.
+ * Expected Result: A time order error is shown for the class schedule.
  * Actual Result: As Expected.
  * Remarks: Passed
- * Suggested Figure Title (Test Pass): TC-018 Unit Test Pass - Structural Similarity Analysis Completed
- * Suggested Figure Title (System UI): Similarity Detection UI - Pairwise Analysis Results View
+ * Suggested Figure Title (Test Pass): TC-018 Unit Test Pass - Invalid Class Time Order Rejected
+ * Suggested Figure Title (System UI): Class Management UI - Create Class Form Showing Time Order Error
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
-import { PlagiarismService } from "../../backend-ts/src/modules/plagiarism/plagiarism.service.js"
-import { createMockAssignment } from "../../backend-ts/tests/utils/factories.js"
 
-vi.mock("../../backend-ts/src/modules/assignments/assignment.repository.js")
-vi.mock("../../backend-ts/src/modules/plagiarism/plagiarism-persistence.service.js")
-vi.mock("../../backend-ts/src/modules/plagiarism/plagiarism-submission-file.service.js")
-vi.mock("../../backend-ts/src/shared/config.js", () => ({
-  settings: {
-    plagiarismStructuralWeight: 0.7,
-    plagiarismSemanticWeight: 0.3,
-    semanticSimilarityMaxConcurrentRequests: 4,
-  },
-}))
-vi.mock("../../backend-ts/src/modules/plagiarism/plagiarism.mapper.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../backend-ts/src/modules/plagiarism/plagiarism.mapper.js")>()
-  return { ...actual, createPlagiarismDetector: vi.fn() }
-})
+import { describe, expect, it } from "vitest"
+import { teacherClassFormSchema } from "../../frontend/src/presentation/schemas/class/classSchemas"
 
-const mockReport = {
-  getSummary: () => ({
-    totalFiles: 2,
-    totalPairs: 1,
-    averageSimilarity: 0.8,
-    maxSimilarity: 0.8,
-    warnings: [],
-  }),
-  getPairs: () => [
-    {
-      id: 1,
-      similarity: 0.8,
-      overlap: 50,
-      longest: 10,
-      leftCovered: 40,
-      rightCovered: 45,
-      leftTotal: 80,
-      rightTotal: 90,
-      leftFile: {
-        path: "student-a.py",
-        filename: "student-a.py",
-        content: 'print("hello")',
-        lineCount: 1,
-        info: { submissionId: "1", studentId: "1", studentName: "Student A" },
+describe("TC-018: Class Creation Rejects Invalid Time Order", () => {
+  it("should reject class creation when the end time is earlier than the start time", () => {
+    const classParseResult = teacherClassFormSchema.safeParse({
+      className: "Introduction to Programming",
+      description: "Morning programming class",
+      classCode: "ABC12345",
+      semester: 1,
+      academicYear: "2025-2026",
+      schedule: {
+        days: ["monday"],
+        startTime: "10:00",
+        endTime: "08:00",
       },
-      rightFile: {
-        path: "student-b.py",
-        filename: "student-b.py",
-        content: 'print("hello")',
-        lineCount: 1,
-        info: { submissionId: "2", studentId: "2", studentName: "Student B" },
-      },
-      buildFragments: () => [],
-    },
-  ],
-  getFragments: () => [],
-  files: [{ path: "student-a.py" }, { path: "student-b.py" }],
-}
+    })
 
-describe("TC-018: Plagiarism Detection - Analyze Files", () => {
-  let plagiarismService: PlagiarismService
-  let mockAssignmentRepo: any
-  let mockFileService: any
-  let mockPersistenceService: any
-  let mockSimilarityPenaltyService: any
-  let mockSemanticClient: any
-  let mockDetector: any
+    expect(classParseResult.success).toBe(false)
 
-  beforeEach(async () => {
-    vi.clearAllMocks()
-
-    mockDetector = { analyze: vi.fn().mockResolvedValue(mockReport) }
-
-    const { createPlagiarismDetector } = await import("../../backend-ts/src/modules/plagiarism/plagiarism.mapper.js")
-    vi.mocked(createPlagiarismDetector).mockReturnValue(mockDetector as any)
-
-    mockAssignmentRepo = { getAssignmentById: vi.fn() }
-
-    mockFileService = {
-      fetchSubmissionFiles: vi.fn().mockResolvedValue([
-        { path: "student-a.py", content: 'print("hello")', info: {} },
-        { path: "student-b.py", content: 'print("hello")', info: {} },
-      ]),
+    if (!classParseResult.success) {
+      expect(classParseResult.error.issues[0]?.message).toBe(
+        "End time must be after start time",
+      )
+      expect(classParseResult.error.issues[0]?.path).toEqual([
+        "schedule",
+        "endTime",
+      ])
     }
-
-    mockPersistenceService = {
-      getReusableAssignmentReport: vi.fn().mockResolvedValue(null),
-      persistReport: vi.fn().mockResolvedValue({
-        dbReport: { id: 1, generatedAt: new Date("2026-03-10T10:00:00.000Z") },
-        resultIdMap: new Map(),
-      }),
-    }
-
-    mockSimilarityPenaltyService = {
-      applyAssignmentPenaltyFromReport: vi.fn().mockResolvedValue(undefined),
-      syncAssignmentPenaltyState: vi.fn().mockResolvedValue(undefined),
-    }
-
-    mockSemanticClient = {
-      getEmbedding: vi.fn().mockResolvedValue(null),
-      getSemanticScore: vi.fn().mockResolvedValue(0),
-    }
-
-    plagiarismService = new PlagiarismService(
-      mockAssignmentRepo,
-      mockFileService,
-      mockPersistenceService,
-      mockSimilarityPenaltyService,
-      mockSemanticClient,
-    )
-  })
-
-  afterEach(() => { vi.clearAllMocks() })
-
-  it("should return a similarity report after analyzing files", async () => {
-    const assignment = createMockAssignment({ programmingLanguage: "python" })
-    mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
-
-    const result = await plagiarismService.analyzeAssignmentSubmissions(1, 1)
-
-    expect(result).toBeDefined()
-    expect(result.reportId).toBeDefined()
-    expect(result.summary.totalFiles).toBeGreaterThanOrEqual(2)
-    expect(result.summary.totalPairs).toBeGreaterThanOrEqual(1)
-    expect(result.pairs).toHaveLength(1)
-    expect(result.pairs[0].structuralScore).toBeDefined()
-    expect(mockFileService.fetchSubmissionFiles).toHaveBeenCalledWith(1)
-    expect(mockDetector.analyze).toHaveBeenCalled()
-    expect(mockPersistenceService.persistReport).toHaveBeenCalled()
   })
 })

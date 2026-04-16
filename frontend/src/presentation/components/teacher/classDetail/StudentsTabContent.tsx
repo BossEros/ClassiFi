@@ -37,6 +37,10 @@ export function StudentsTabContent({
 }: StudentsTabContentProps) {
   const isLight = variant === "light"
 
+  // Preserve the teacher-only remove action inputs so the trash button can be restored quickly later.
+  void isTeacher
+  void onRemoveStudent
+
   if (students.length === 0) {
     return (
       <div className="py-12 text-center">
@@ -106,9 +110,11 @@ export function StudentsTabContent({
                 student={student}
                 isLast={index === paginatedStudents.length - 1}
                 gridTemplate={studentGridTemplate}
+                /*
                 onRemove={
                   isTeacher ? () => onRemoveStudent(student) : undefined
                 }
+                */
                 variant={variant}
               />
             ))}

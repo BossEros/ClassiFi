@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, Trash2, UserPlus, Users, Upload, Download, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { Avatar } from "@/presentation/components/ui/Avatar";
@@ -358,6 +358,68 @@ const INITIAL_EDIT_FORM_VALUES: AdminEditUserFormValues = {
   isActive: false,
 }
 
+interface UserStatusDisplay {
+  badgeLabel: string
+  badgeDotClassName: string
+  badgeTextClassName: string
+  cardTitle: string
+  cardDescription: string
+  cardDescriptionClassName: string
+  cardContainerClassName: string
+  cardIconContainerClassName: string
+  cardIconClassName: string
+  toggleTrackClassName: string
+}
+
+function getUserStatusDisplay(role: string, isActive: boolean): UserStatusDisplay {
+  const isPendingTeacherApproval = role === "teacher" && !isActive
+
+  if (isActive) {
+    return {
+      badgeLabel: "Active",
+      badgeDotClassName: "bg-emerald-500",
+      badgeTextClassName: "text-emerald-700",
+      cardTitle: "Active Account",
+      cardDescription: "User has full system access",
+      cardDescriptionClassName: "text-emerald-700/80",
+      cardContainerClassName:
+        "border-emerald-200 bg-emerald-50 hover:bg-emerald-100",
+      cardIconContainerClassName: "bg-emerald-100",
+      cardIconClassName: "text-emerald-700",
+      toggleTrackClassName: "border-emerald-300 bg-emerald-500",
+    }
+  }
+
+  if (isPendingTeacherApproval) {
+    return {
+      badgeLabel: "Pending Approval",
+      badgeDotClassName: "bg-amber-500",
+      badgeTextClassName: "text-amber-700",
+      cardTitle: "Pending Approval",
+      cardDescription: "Teacher access will unlock once approved by an admin",
+      cardDescriptionClassName: "text-amber-700/80",
+      cardContainerClassName:
+        "border-amber-200 bg-amber-50 hover:bg-amber-100",
+      cardIconContainerClassName: "bg-amber-100",
+      cardIconClassName: "text-amber-700",
+      toggleTrackClassName: "border-amber-300 bg-amber-200",
+    }
+  }
+
+  return {
+    badgeLabel: "Inactive",
+    badgeDotClassName: "bg-slate-400",
+    badgeTextClassName: "text-slate-500",
+    cardTitle: "Suspended Account",
+    cardDescription: "User access is currently blocked",
+    cardDescriptionClassName: "text-rose-700/80",
+    cardContainerClassName: "border-rose-200 bg-rose-50 hover:bg-rose-100",
+    cardIconContainerClassName: "bg-rose-100",
+    cardIconClassName: "text-rose-700",
+    toggleTrackClassName: "border-rose-300 bg-rose-200",
+  }
+}
+
 
 
 function AdminEditUserModal({
@@ -384,6 +446,7 @@ function AdminEditUserModal({
   const email = watch("email")
   const role = watch("role")
   const isActive = watch("isActive")
+  const userStatusDisplay = getUserStatusDisplay(role, isActive)
 
   useEffect(() => {
     if (!user) {
@@ -673,34 +736,30 @@ function AdminEditUserModal({
                     if (error) setError(null)
                   }}
                   className={`group flex w-full items-center justify-between rounded-2xl border p-3 transition-all ${
-                    isActive
-                      ? "border-emerald-200 bg-emerald-50 hover:bg-emerald-100"
-                      : "border-rose-200 bg-rose-50 hover:bg-rose-100"
+                    userStatusDisplay.cardContainerClassName
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
-                      className={`rounded-lg p-2 ${isActive ? "bg-emerald-100" : "bg-rose-100"}`}
+                      className={`rounded-lg p-2 ${userStatusDisplay.cardIconContainerClassName}`}
                     >
                       <Power
-                        className={`h-4 w-4 ${isActive ? "text-emerald-700" : "text-rose-700"}`}
+                        className={`h-4 w-4 ${userStatusDisplay.cardIconClassName}`}
                       />
                     </div>
                     <div className="text-left">
                       <div className="text-sm font-medium text-slate-900">
-                        {isActive ? "Active Account" : "Suspended Account"}
+                        {userStatusDisplay.cardTitle}
                       </div>
                       <div
-                        className={`text-xs ${isActive ? "text-emerald-700/80" : "text-rose-700/80"}`}
+                        className={`text-xs ${userStatusDisplay.cardDescriptionClassName}`}
                       >
-                        {isActive
-                          ? "User has full system access"
-                          : "User access is currently blocked"}
+                        {userStatusDisplay.cardDescription}
                       </div>
                     </div>
                   </div>
                   <div
-                    className={`relative h-6 w-11 rounded-full border transition-colors ${isActive ? "border-emerald-300 bg-emerald-500" : "border-rose-300 bg-rose-200"}`}
+                    className={`relative h-6 w-11 rounded-full border transition-colors ${userStatusDisplay.toggleTrackClassName}`}
                   >
                     <div
                       className={`absolute top-0.5 w-4.5 h-4.5 rounded-full bg-white transition-transform shadow-sm ${isActive ? "left-[22px]" : "left-0.5"}`}
@@ -1004,7 +1063,7 @@ interface BulkCreateUserResult {
 interface AdminBulkCreateUsersModalProps {
   isOpen: boolean
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (createdUserCount: number) => void
 }
 
 const ROLE_OPTIONS: { value: BulkCreateUserRow["role"]; label: string }[] = [
@@ -1180,8 +1239,12 @@ function AdminBulkCreateUsersModal({ isOpen, onClose, onSuccess }: AdminBulkCrea
   }
 
   const handleDone = () => {
-    const hasCreated = results?.some((r) => r.status === "created")
-    if (hasCreated) onSuccess()
+    const hasCreated = createdCount > 0
+
+    if (hasCreated) {
+      onSuccess(createdCount)
+    }
+
     handleClose()
   }
 
@@ -1446,10 +1509,12 @@ function AdminBulkCreateUsersModal({ isOpen, onClose, onSuccess }: AdminBulkCrea
 
 export function AdminUsersPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const showToast = useToastStore((state) => state.showToast)
   const currentUser = useAuthStore((state) => state.user)
   const [users, setUsers] = useState<AdminUser[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
+  const initialSearchQuery = searchParams.get("search") ?? ""
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery)
   const [roleFilter, setRoleFilter] = useState<
     "all" | "student" | "teacher" | "admin"
   >("all")
@@ -1468,10 +1533,22 @@ export function AdminUsersPage() {
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
+  const lastAppliedSearchQueryRef = useRef(initialSearchQuery)
 
   const limit = 10
 
   const debouncedSearch = useDebouncedValue(searchQuery, 300)
+  const searchQueryFromUrl = searchParams.get("search") ?? ""
+
+  useEffect(() => {
+    if (lastAppliedSearchQueryRef.current === searchQueryFromUrl) {
+      return
+    }
+
+    lastAppliedSearchQueryRef.current = searchQueryFromUrl
+    setSearchQuery(searchQueryFromUrl)
+    setPage(1)
+  }, [searchQueryFromUrl])
 
   useEffect(() => {
     setPage(1)
@@ -1749,7 +1826,13 @@ export function AdminUsersPage() {
                     </tr>
                   ))
                 ) : users.length > 0 ? (
-                  users.map((user) => (
+                  users.map((user) => {
+                    const userStatusDisplay = getUserStatusDisplay(
+                      user.role,
+                      user.isActive,
+                    )
+
+                    return (
                     <tr
                       key={user.id}
                       className="group transition-colors duration-200 hover:bg-slate-100"
@@ -1786,12 +1869,12 @@ export function AdminUsersPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
                           <div
-                            className={`h-2 w-2 rounded-full ${user.isActive ? "bg-emerald-500" : "bg-slate-400"}`}
+                            className={`h-2 w-2 rounded-full ${userStatusDisplay.badgeDotClassName}`}
                           />
                           <span
-                            className={`text-[11px] font-medium ${user.isActive ? "text-emerald-700" : "text-slate-500"}`}
+                            className={`text-[11px] font-medium ${userStatusDisplay.badgeTextClassName}`}
                           >
-                            {user.isActive ? "Active" : "Inactive"}
+                            {userStatusDisplay.badgeLabel}
                           </span>
                         </div>
                       </td>
@@ -1819,7 +1902,8 @@ export function AdminUsersPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    )
+                  })
                 ) : (
                   <tr>
                     <td
@@ -1926,9 +2010,14 @@ export function AdminUsersPage() {
         <AdminBulkCreateUsersModal
           isOpen={showBulkCreateModal}
           onClose={() => setShowBulkCreateModal(false)}
-          onSuccess={() => {
+          onSuccess={(createdUserCount) => {
             void fetchUsers()
-            showToast("Bulk user creation complete", "success")
+            showToast(
+              createdUserCount === 1
+                ? "User created successfully"
+                : `${createdUserCount} users created successfully`,
+              "success",
+            )
           }}
         />
 

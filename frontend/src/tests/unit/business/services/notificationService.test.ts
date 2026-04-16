@@ -349,11 +349,55 @@ describe("notificationService", () => {
       expect(result).toBe("UserPlus")
     })
 
+    it("returns ShieldAlert icon for NEW_USER_REGISTERED", () => {
+      const result = notificationService.getNotificationIcon(
+        "NEW_USER_REGISTERED",
+      )
+
+      expect(result).toBe("ShieldAlert")
+    })
+
     it("returns Bell icon for unknown notification type", () => {
       // @ts-expect-error Testing fallback behavior for unknown type input
       const result = notificationService.getNotificationIcon("UNKNOWN_TYPE")
 
       expect(result).toBe("Bell")
+    })
+  })
+
+  describe("getNotificationNavigationUrl", () => {
+    it("returns the assignment details route for assignment notifications", () => {
+      const result =
+        notificationService.getNotificationNavigationUrl(mockNotification)
+
+      expect(result).toBe("/dashboard/assignments/1")
+    })
+
+    it("returns the admin users search route for teacher approval notifications", () => {
+      const teacherApprovalNotification: Notification = {
+        id: 2,
+        userId: 10,
+        type: "NEW_USER_REGISTERED",
+        title: "Teacher Approval Required",
+        message: "Taylor Teacher is awaiting approval.",
+        metadata: {
+          userId: 44,
+          userName: "Taylor Teacher",
+          userEmail: "teacher@classifi.test",
+          userRole: "teacher",
+        },
+        isRead: false,
+        readAt: null,
+        createdAt: "2026-04-16T00:00:00Z",
+      }
+
+      const result = notificationService.getNotificationNavigationUrl(
+        teacherApprovalNotification,
+      )
+
+      expect(result).toBe(
+        "/dashboard/users?search=teacher%40classifi.test",
+      )
     })
   })
 })

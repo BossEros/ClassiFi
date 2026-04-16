@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { AuthService } from "../../src/modules/auth/auth.service.js"
 import { UserRepository } from "../../src/modules/users/user.repository.js"
 import { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
+import type { IEmailService } from "../../src/services/interfaces/email.interface.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import { createMockUser, createMockTeacher } from "../utils/factories.js"
 import {
   UserAlreadyExistsError,
@@ -9,6 +11,7 @@ import {
   UserNotFoundError,
   EmailNotVerifiedError,
   InvalidRoleError,
+  TeacherApprovalPendingError,
 } from "../../src/shared/errors.js"
 
 // Mock the UserRepository class but preserve USER_ROLES constant
@@ -38,6 +41,8 @@ describe("AuthService", () => {
   let authService: AuthService
   let mockUserRepo: any
   let mockAuthAdapter: any
+  let mockEmailService: IEmailService
+  let mockNotificationService: NotificationService
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -46,6 +51,8 @@ describe("AuthService", () => {
       checkEmailExists: vi.fn(),
       createUser: vi.fn(),
       getUserBySupabaseId: vi.fn(),
+      getUserByEmail: vi.fn(),
+      getUsersByRole: vi.fn().mockResolvedValue([]),
     }
 
     mockAuthAdapter = {
@@ -53,13 +60,24 @@ describe("AuthService", () => {
       signInWithPassword: vi.fn(),
       getUser: vi.fn(),
       getAdminUserById: vi.fn(),
-      resetPasswordForEmail: vi.fn(),
+      generatePasswordRecoveryLink: vi.fn(),
       deleteUser: vi.fn(),
     }
+
+    mockEmailService = {
+      sendEmail: vi.fn().mockResolvedValue(undefined),
+    }
+
+    mockNotificationService = {
+      createNotification: vi.fn(),
+      sendEmailNotificationIfEnabled: vi.fn(),
+    } as unknown as NotificationService
 
     authService = new AuthService(
       mockUserRepo as UserRepository,
       mockAuthAdapter as SupabaseAuthAdapter,
+      mockEmailService,
+      mockNotificationService,
     )
   })
 
@@ -106,6 +124,7 @@ describe("AuthService", () => {
         firstName: validRegistration.firstName,
         lastName: validRegistration.lastName,
         role: validRegistration.role,
+        isActive: true,
       })
       expect(mockAuthAdapter.signUp).toHaveBeenCalledWith(
         validRegistration.email,
@@ -119,6 +138,10 @@ describe("AuthService", () => {
           emailRedirectTo: "http://localhost:3000/login",
         },
       )
+      expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).not.toHaveBeenCalled()
     })
 
     it("should throw UserAlreadyExistsError if email exists", async () => {
@@ -342,8 +365,9 @@ describe("AuthService", () => {
     })
 
     it("should work for teacher role", async () => {
-      const mockTeacher = createMockTeacher()
+      const mockTeacher = createMockTeacher({ isActive: false })
       mockUserRepo.checkEmailExists.mockResolvedValue(false)
+      mockUserRepo.getUsersByRole.mockResolvedValue([createMockUser({ role: "admin" })])
       mockUserRepo.createUser.mockResolvedValue(mockTeacher)
 
       mockAuthAdapter.signUp.mockResolvedValue({
@@ -359,7 +383,22 @@ describe("AuthService", () => {
         role: "teacher",
       })
 
+      await Promise.resolve()
+
       expect(result.userData.role).toBe("teacher")
+      expect(result.userData.isActive).toBe(false)
+      expect(mockUserRepo.createUser).toHaveBeenCalledWith({
+        supabaseUserId: "teacher-supabase-id",
+        email: "teacher@example.com",
+        firstName: "Test",
+        lastName: "Teacher",
+        role: "teacher",
+        isActive: false,
+      })
+      expect(mockNotificationService.createNotification).toHaveBeenCalled()
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalled()
     })
   })
 
@@ -445,6 +484,23 @@ describe("AuthService", () => {
         ),
       ).rejects.toThrow(UserNotFoundError)
     })
+
+    it("should throw TeacherApprovalPendingError for inactive teacher accounts", async () => {
+      mockAuthAdapter.signInWithPassword.mockResolvedValue({
+        accessToken: "token",
+        user: { id: "pending-teacher-id" },
+      })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockTeacher({ isActive: false }),
+      )
+
+      await expect(
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
+      ).rejects.toThrow(TeacherApprovalPendingError)
+    })
   })
 
   // ============ verifyToken Tests ============
@@ -478,34 +534,61 @@ describe("AuthService", () => {
         authService.verifyToken("valid-token-orphan-user"),
       ).rejects.toThrow(UserNotFoundError)
     })
+
+    it("should throw TeacherApprovalPendingError for inactive teacher accounts", async () => {
+      mockAuthAdapter.getUser.mockResolvedValue({ id: "pending-teacher-id" })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockTeacher({ isActive: false }),
+      )
+
+      await expect(authService.verifyToken("valid-token")).rejects.toThrow(
+        TeacherApprovalPendingError,
+      )
+    })
   })
 
   // ============ requestPasswordReset Tests ============
   describe("requestPasswordReset", () => {
-    it("should call Supabase resetPasswordForEmail with correct parameters", async () => {
+    it("should generate a recovery link and send the reset email", async () => {
       const email = "reset@example.com"
-      mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined)
+      mockUserRepo.getUserByEmail.mockResolvedValue(createMockUser({ email }))
+      mockAuthAdapter.generatePasswordRecoveryLink.mockResolvedValue({
+        actionLink: "http://localhost:3000/reset-password?token=abc",
+      })
 
       await authService.requestPasswordReset(email)
 
-      expect(mockAuthAdapter.resetPasswordForEmail).toHaveBeenCalledWith(
+      expect(mockAuthAdapter.generatePasswordRecoveryLink).toHaveBeenCalledWith(
         email,
         "http://localhost:3000/reset-password",
+      )
+      expect(mockEmailService.sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: email,
+          subject: "Reset Your Password",
+          html: expect.stringContaining("Reset Your Password"),
+        }),
       )
     })
 
     it("should not throw error even if email does not exist (security)", async () => {
       const email = "nonexistent@example.com"
-      mockAuthAdapter.resetPasswordForEmail.mockResolvedValue(undefined)
+      mockUserRepo.getUserByEmail.mockResolvedValue(undefined)
 
       await expect(
         authService.requestPasswordReset(email),
       ).resolves.not.toThrow()
+
+      expect(
+        mockAuthAdapter.generatePasswordRecoveryLink,
+      ).not.toHaveBeenCalled()
+      expect(mockEmailService.sendEmail).not.toHaveBeenCalled()
     })
 
-    it("should propagate Supabase errors", async () => {
+    it("should propagate link generation errors", async () => {
       const email = "error@example.com"
-      mockAuthAdapter.resetPasswordForEmail.mockRejectedValue(
+      mockUserRepo.getUserByEmail.mockResolvedValue(createMockUser({ email }))
+      mockAuthAdapter.generatePasswordRecoveryLink.mockRejectedValue(
         new Error("Rate limit exceeded"),
       )
 
