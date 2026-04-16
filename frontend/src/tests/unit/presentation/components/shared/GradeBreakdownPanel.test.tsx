@@ -52,7 +52,9 @@ describe("GradeBreakdownPanel", () => {
     expect(screen.getByText("Automatic Final")).toBeInTheDocument()
     expect(screen.getByText("Manual Override")).toBeInTheDocument()
     expect(screen.getByText("Final Grade")).toBeInTheDocument()
-    expect(screen.getByText("Rounded up after manual review")).toBeInTheDocument()
+    expect(
+      screen.getByText("Reason: Rounded up after manual review"),
+    ).toBeInTheDocument()
     expect(screen.getByText("77 / 100")).toBeInTheDocument()
     expect(screen.getAllByText("85 / 100")).toHaveLength(2)
   })
