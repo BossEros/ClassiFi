@@ -138,5 +138,36 @@ describe("plagiarismGraphUtils", () => {
       layoutWithSingletons.nodes.find((node) => node.studentName === "Dina")?.isVisible,
     ).toBe(true)
   })
+
+  it("keeps graph edges and cluster membership synchronized for displayed 100% matches", () => {
+    const displayedHundredPercentPairs = [
+      createPair(1, 1, "Alice", 2, "Bob", 1),
+      createPair(2, 1, "Alice", 3, "Cara", 0.996),
+      createPair(3, 2, "Bob", 3, "Cara", 0.996),
+    ]
+
+    const graphData = buildSimilarityGraphData(
+      submissions,
+      displayedHundredPercentPairs,
+      100,
+    )
+
+    expect(graphData.edges.map((edge) => edge.edgeId)).toEqual([1, 2, 3])
+    expect(graphData.clusters).toHaveLength(1)
+    expect(graphData.clusters[0].nodes.map((node) => node.studentName)).toEqual([
+      "Alice",
+      "Bob",
+      "Cara",
+    ])
+    expect(graphData.clusters[0].edges.map((edge) => edge.edgeId)).toEqual([
+      1,
+      2,
+      3,
+    ])
+    expect(graphData.singletonNodes.map((node) => node.studentName)).toEqual([
+      "Dina",
+      "Eli",
+    ])
+  })
 })
 
