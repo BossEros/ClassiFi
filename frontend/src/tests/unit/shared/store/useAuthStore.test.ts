@@ -8,6 +8,7 @@ const mockUser: User = {
   lastName: "Doe",
   email: "john@example.com",
   role: "student",
+  isActive: true,
   emailNotificationsEnabled: true,
   inAppNotificationsEnabled: true,
   createdAt: new Date("2024-01-01"),

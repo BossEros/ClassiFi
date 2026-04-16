@@ -28,31 +28,12 @@ export function NotificationItem({
     notification.createdAt,
   )
 
-  const getNavigationUrl = (): string | null => {
-    switch (notification.type) {
-      case "ASSIGNMENT_CREATED":
-        return `/dashboard/assignments/${notification.metadata.assignmentId}`
-      case "SUBMISSION_GRADED":
-        return `/dashboard/assignments/${notification.metadata.assignmentId}`
-      case "SUBMISSION_FEEDBACK_GIVEN":
-        return `/dashboard/assignments/${notification.metadata.assignmentId}`
-      case "CLASS_ANNOUNCEMENT":
-        return `/dashboard/classes/${notification.metadata.classId}`
-      case "DEADLINE_REMINDER":
-        return `/dashboard/assignments/${notification.metadata.assignmentId}`
-      case "ENROLLMENT_CONFIRMED":
-        return `/dashboard/classes/${notification.metadata.classId}`
-      default:
-        return null
-    }
-  }
-
   const handleClick = () => {
     if (!notification.isRead) {
       onMarkAsRead(notification.id)
     }
 
-    const url = getNavigationUrl()
+    const url = notificationService.getNotificationNavigationUrl(notification)
     if (url) {
       navigate(url)
     }

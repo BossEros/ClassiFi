@@ -317,6 +317,18 @@ The programming language is specified at assignment creation and enforced during
 | POST   | `/auth/forgot-password` | Request password reset    |
 | POST   | `/auth/logout`          | Logout (client-side)      |
 
+Teacher self-registration approval behavior:
+
+- Student self-registrations create active accounts immediately.
+- Teacher self-registrations create inactive accounts by setting `users.is_active = false`.
+- Teacher registration still returns success so the UI can complete the sign-up flow, but inactive teachers cannot access the system yet.
+- Both `/auth/login` and `/auth/verify` reject inactive teacher accounts with `403` and this exact message:
+  - `Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin`
+- In v1, `users.is_active` doubles as both the approval gate and the general access gate for teachers. This means all inactive teachers are treated as pending administrator approval until a separate approval state is introduced.
+- Admin approval in v1 reuses the existing user status toggle (`PATCH /admin/users/:id/status`) to activate the teacher account.
+- When an admin activates an inactive teacher account, the backend sends the teacher an approval email so they know they can sign in.
+- The approval confirmation is email-only in v1 and does not create an in-app notification record.
+
 ### User Management
 
 | Method | Endpoint                            | Description                                |
@@ -508,6 +520,7 @@ The notification system provides real-time updates to users about important even
 | -------------------- | -------------------------- | ----------------- |
 | `ASSIGNMENT_CREATED` | Teacher creates assignment | Enrolled students |
 | `SUBMISSION_GRADED`  | Submission receives grade  | Student           |
+| `NEW_USER_REGISTERED` | Teacher self-registers and awaits approval | Admins |
 
 **Features**:
 
@@ -517,6 +530,11 @@ The notification system provides real-time updates to users about important even
 - Pagination support for notification history
 - User-specific notification filtering
 - Authorization checks (users can only access their own notifications)
+
+Teacher approval notification behavior:
+
+- Admin registration notifications are sent only for teacher self-signups in v1.
+- The reused `NEW_USER_REGISTERED` template is approval-oriented and tells admins that a teacher account request is awaiting review and activation.
 
 **Email Configuration**:
 
@@ -1076,6 +1094,8 @@ class NotificationService {
 - `SUBMISSION_GRADED` - Sent to student when their submission is graded
 - `STUDENT_UNENROLLED` - Sent to the teacher when a student leaves voluntarily or is removed by an admin
 - `REMOVED_FROM_CLASS` - Sent to the student when a teacher or admin removes them from a class
+- `NEW_USER_REGISTERED` - Sent to admins only when a self-registered teacher account is awaiting approval
+- `TEACHER_APPROVED` - Email-only notification sent to a teacher when an admin activates their pending account
 
 Teacher-initiated class-roster removals:
 
@@ -1097,6 +1117,11 @@ Similarity-deduction notification behavior:
 
 - Email delivery is attempted only after grade/feedback write transactions commit
 - Failed email attempts are logged and do not partially commit the caller's primary write
+
+Teacher approval notification behavior:
+
+- Admin registration notifications are sent only for teacher self-signups in v1.
+- The reused `NEW_USER_REGISTERED` template is approval-oriented and tells admins that a teacher account request is awaiting review and activation.
 
 **Preference Resolution**:
 

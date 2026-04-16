@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useId, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import {
   AlertCircle,
@@ -13,6 +13,7 @@ import {
   Download,
   Eye,
   FileCode,
+  Info,
   MessageSquare,
   Monitor,
   RefreshCw,
@@ -210,6 +211,86 @@ function CodePreviewModal({
         </div>
       </div>
     </div>
+  )
+}
+
+interface CollapsibleSimilarityPolicyProps {
+  deductionStartPct: number
+  maxPenaltyPct: number
+  deductionBands: { id: string; minHybridScore: number; penaltyPercent: number }[]
+  defaultExpanded?: boolean
+}
+
+function CollapsibleSimilarityPolicy({
+  deductionStartPct,
+  maxPenaltyPct,
+  deductionBands,
+  defaultExpanded = false,
+}: CollapsibleSimilarityPolicyProps) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+  const similarityPolicyPanelId = useId()
+  const hasDeductionBands = deductionBands.length > 0
+
+  const handleToggleExpanded = () => {
+    setIsExpanded((previousValue) => !previousValue)
+  }
+
+  return (
+    <Card className="mb-6 border-slate-200 bg-slate-50/90 shadow-sm">
+      <div className="px-6 py-5">
+        <button
+          type="button"
+          onClick={handleToggleExpanded}
+          aria-expanded={isExpanded}
+          aria-controls={similarityPolicyPanelId}
+          className="flex w-full items-center justify-between gap-4 text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <Info className="h-4 w-4 text-slate-600" />
+            <h2 className="text-lg font-semibold text-slate-900">
+              Similarity policy for this assignment
+            </h2>
+          </div>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 text-slate-400 transition-transform duration-200",
+              isExpanded && "rotate-180",
+            )}
+          />
+        </button>
+      </div>
+      {isExpanded && (
+        <CardContent id={similarityPolicyPanelId}>
+          <div className="space-y-3 text-sm leading-6 text-slate-700">
+            <p>
+              Automatic deductions start at {deductionStartPct}% similarity and
+              are capped at {maxPenaltyPct}% of the assignment score.
+            </p>
+            {hasDeductionBands && (
+              <div className="space-y-1">
+                <p className="font-semibold text-slate-950">Deduction bands:</p>
+                {deductionBands.map((deductionBand, deductionBandIndex) => {
+                  const minimumSimilarityPercent = Math.round(
+                    deductionBand.minHybridScore * 100,
+                  )
+                  const nextDeductionBand = deductionBands[deductionBandIndex + 1]
+                  const maximumSimilarityPercent = nextDeductionBand
+                    ? Math.round(nextDeductionBand.minHybridScore * 100) - 1
+                    : 100
+
+                  return (
+                    <p key={deductionBand.id}>
+                      {minimumSimilarityPercent}% - {maximumSimilarityPercent}% Similarity -{" "}
+                      {deductionBand.penaltyPercent}% deduction
+                    </p>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
   )
 }
 
@@ -504,9 +585,10 @@ export function AssignmentDetailPage() {
 
   const similarityConfig = tempAssignment.similarityPenaltyConfig
   const firstDeductionBand = similarityConfig?.deductionBands?.[0]
-  const warningThresholdPct = similarityConfig ? Math.round(similarityConfig.warningThreshold * 100) : 75
+  const sortedDeductionBands = [...(similarityConfig?.deductionBands ?? [])].sort(
+    (leftBand, rightBand) => leftBand.minHybridScore - rightBand.minHybridScore,
+  )
   const deductionStartPct = firstDeductionBand ? Math.round(firstDeductionBand.minHybridScore * 100) : 85
-  const warningEndPct = deductionStartPct - 1
   const maxPenaltyPct = similarityConfig?.maxPenaltyPercent ?? 20
 
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
@@ -811,23 +893,11 @@ export function AssignmentDetailPage() {
           )}
 
           {tempAssignment.enableSimilarityPenalty && (
-            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-amber-950">
-                    Similarity-based deduction is enabled for this assignment
-                  </p>
-                  <p className="text-sm leading-6 text-amber-900">
-                    Similarity does not zero the score by itself. Matches from{" "}
-                    {warningThresholdPct}% to {warningEndPct}% are
-                    warning-only, and deductions begin at {deductionStartPct}%.
-                    Template code is excluded and the automatic deduction is
-                    capped at {maxPenaltyPct}%.
-                  </p>
-                </div>
-              </div>
-            </div>
+            <CollapsibleSimilarityPolicy
+              deductionStartPct={deductionStartPct}
+              maxPenaltyPct={maxPenaltyPct}
+              deductionBands={sortedDeductionBands}
+            />
           )}
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -842,7 +912,7 @@ export function AssignmentDetailPage() {
                 <CardContent>
                   <div className="block w-full space-y-4">
                     {tempAssignment.instructions && (
-                      <p className="whitespace-pre-wrap break-words leading-relaxed text-slate-600">
+                      <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-600">
                         {tempAssignment.instructions}
                       </p>
                     )}
@@ -991,13 +1061,6 @@ export function AssignmentDetailPage() {
                                 /{assignmentTotalScore}
                               </span>
                             </div>
-
-                            {activeSubmission?.isGradeOverridden && (
-                              <div className="rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
-                                This score was manually adjusted by the teacher.
-                              </div>
-                            )}
-
                             {activeSubmission?.gradeBreakdown &&
                               activeSubmission.gradeBreakdown.originalGrade !== null && (
                                 <>
@@ -1027,6 +1090,7 @@ export function AssignmentDetailPage() {
                                       deadline={assignment?.deadline}
                                       testsPassed={submissionTestResults?.passed}
                                       testsTotal={submissionTestResults?.total}
+                                      overrideReason={activeSubmission.overrideReason}
                                       variant="light"
                                     />
                                   )}

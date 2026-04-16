@@ -174,6 +174,7 @@ test.describe("Registration", () => {
               firstName: "Jane",
               lastName: "Smith",
               role: "student",
+              isActive: true,
             },
           }),
         })
@@ -230,6 +231,7 @@ test.describe("Registration", () => {
               firstName: "John",
               lastName: "Doe",
               role: "teacher",
+              isActive: false,
             },
           }),
         })
@@ -253,7 +255,11 @@ test.describe("Registration", () => {
       await page.getByRole("button", { name: /next/i }).click()
 
       // Verify completion screen
-      await expect(page.getByText(/check your email|registration complete|account created/i)).toBeVisible({ timeout: 10000 })
+      await expect(
+        page.getByText(
+          "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+        ),
+      ).toBeVisible({ timeout: 10000 })
     })
   })
 

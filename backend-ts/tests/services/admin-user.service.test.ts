@@ -5,6 +5,7 @@ import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { UserService } from "../../src/modules/users/user.service.js"
 import type { ClassService } from "../../src/modules/classes/class.service.js"
 import type { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
+import type { NotificationService } from "../../src/modules/notifications/notification.service.js"
 import {
   UserNotFoundError,
   InvalidRoleError,
@@ -16,6 +17,7 @@ describe("AdminUserService", () => {
   let mockUserRepo: Partial<MockedObject<UserRepository>>
   let mockUserService: Partial<MockedObject<UserService>>
   let mockClassService: Partial<MockedObject<ClassService>>
+  let mockNotificationService: Partial<MockedObject<NotificationService>>
   let mockAuthAdapter: Partial<MockedObject<SupabaseAuthAdapter>>
 
   const mockUser = createMockUser()
@@ -43,6 +45,10 @@ describe("AdminUserService", () => {
       deleteClassesByTeacher: vi.fn(),
     } as any
 
+    mockNotificationService = {
+      sendEmailNotificationIfEnabled: vi.fn(),
+    } as any
+
     mockAuthAdapter = {
       createUser: vi.fn(),
       updateUserEmail: vi.fn(),
@@ -52,6 +58,7 @@ describe("AdminUserService", () => {
       mockUserRepo as unknown as UserRepository,
       mockUserService as unknown as UserService,
       mockClassService as unknown as ClassService,
+      mockNotificationService as unknown as NotificationService,
       mockAuthAdapter as unknown as SupabaseAuthAdapter,
     )
   })
@@ -244,15 +251,49 @@ describe("AdminUserService", () => {
   describe("toggleUserStatus", () => {
     it("should toggle user active status", async () => {
       const toggledUser = { ...mockUser, isActive: false }
+      mockUserRepo.getUserById!.mockResolvedValue(mockUser)
       mockUserRepo.toggleActiveStatus!.mockResolvedValue(toggledUser)
 
       const result = await adminUserService.toggleUserStatus(1)
 
       expect(result.isActive).toBe(false)
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).not.toHaveBeenCalled()
+    })
+
+    it("should send an approval email when an inactive teacher is activated", async () => {
+      const pendingTeacher = createMockTeacher({ id: 25, isActive: false })
+      const approvedTeacher = { ...pendingTeacher, isActive: true }
+      mockUserRepo.getUserById!.mockResolvedValue(pendingTeacher)
+      mockUserRepo.toggleActiveStatus!.mockResolvedValue(approvedTeacher)
+
+      const result = await adminUserService.toggleUserStatus(25)
+
+      expect(result.isActive).toBe(true)
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledWith(25, "TEACHER_APPROVED", {
+        teacherName: `${approvedTeacher.firstName} ${approvedTeacher.lastName}`,
+        loginUrl: "http://localhost:5173/login",
+      })
+    })
+
+    it("should not send an approval email when a teacher is deactivated", async () => {
+      const activeTeacher = createMockTeacher({ id: 30, isActive: true })
+      const deactivatedTeacher = { ...activeTeacher, isActive: false }
+      mockUserRepo.getUserById!.mockResolvedValue(activeTeacher)
+      mockUserRepo.toggleActiveStatus!.mockResolvedValue(deactivatedTeacher)
+
+      await adminUserService.toggleUserStatus(30)
+
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).not.toHaveBeenCalled()
     })
 
     it("should throw UserNotFoundError when user does not exist", async () => {
-      mockUserRepo.toggleActiveStatus!.mockResolvedValue(null)
+      mockUserRepo.getUserById!.mockResolvedValue(null)
 
       await expect(
         adminUserService.toggleUserStatus(999),

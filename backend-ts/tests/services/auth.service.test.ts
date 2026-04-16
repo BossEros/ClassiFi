@@ -11,6 +11,7 @@ import {
   UserNotFoundError,
   EmailNotVerifiedError,
   InvalidRoleError,
+  TeacherApprovalPendingError,
 } from "../../src/shared/errors.js"
 
 // Mock the UserRepository class but preserve USER_ROLES constant
@@ -123,6 +124,7 @@ describe("AuthService", () => {
         firstName: validRegistration.firstName,
         lastName: validRegistration.lastName,
         role: validRegistration.role,
+        isActive: true,
       })
       expect(mockAuthAdapter.signUp).toHaveBeenCalledWith(
         validRegistration.email,
@@ -136,6 +138,10 @@ describe("AuthService", () => {
           emailRedirectTo: "http://localhost:3000/login",
         },
       )
+      expect(mockNotificationService.createNotification).not.toHaveBeenCalled()
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).not.toHaveBeenCalled()
     })
 
     it("should throw UserAlreadyExistsError if email exists", async () => {
@@ -359,8 +365,9 @@ describe("AuthService", () => {
     })
 
     it("should work for teacher role", async () => {
-      const mockTeacher = createMockTeacher()
+      const mockTeacher = createMockTeacher({ isActive: false })
       mockUserRepo.checkEmailExists.mockResolvedValue(false)
+      mockUserRepo.getUsersByRole.mockResolvedValue([createMockUser({ role: "admin" })])
       mockUserRepo.createUser.mockResolvedValue(mockTeacher)
 
       mockAuthAdapter.signUp.mockResolvedValue({
@@ -376,7 +383,22 @@ describe("AuthService", () => {
         role: "teacher",
       })
 
+      await Promise.resolve()
+
       expect(result.userData.role).toBe("teacher")
+      expect(result.userData.isActive).toBe(false)
+      expect(mockUserRepo.createUser).toHaveBeenCalledWith({
+        supabaseUserId: "teacher-supabase-id",
+        email: "teacher@example.com",
+        firstName: "Test",
+        lastName: "Teacher",
+        role: "teacher",
+        isActive: false,
+      })
+      expect(mockNotificationService.createNotification).toHaveBeenCalled()
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalled()
     })
   })
 
@@ -462,6 +484,23 @@ describe("AuthService", () => {
         ),
       ).rejects.toThrow(UserNotFoundError)
     })
+
+    it("should throw TeacherApprovalPendingError for inactive teacher accounts", async () => {
+      mockAuthAdapter.signInWithPassword.mockResolvedValue({
+        accessToken: "token",
+        user: { id: "pending-teacher-id" },
+      })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockTeacher({ isActive: false }),
+      )
+
+      await expect(
+        authService.loginUser(
+          validCredentials.email,
+          validCredentials.password,
+        ),
+      ).rejects.toThrow(TeacherApprovalPendingError)
+    })
   })
 
   // ============ verifyToken Tests ============
@@ -494,6 +533,17 @@ describe("AuthService", () => {
       await expect(
         authService.verifyToken("valid-token-orphan-user"),
       ).rejects.toThrow(UserNotFoundError)
+    })
+
+    it("should throw TeacherApprovalPendingError for inactive teacher accounts", async () => {
+      mockAuthAdapter.getUser.mockResolvedValue({ id: "pending-teacher-id" })
+      mockUserRepo.getUserBySupabaseId.mockResolvedValue(
+        createMockTeacher({ isActive: false }),
+      )
+
+      await expect(authService.verifyToken("valid-token")).rejects.toThrow(
+        TeacherApprovalPendingError,
+      )
     })
   })
 

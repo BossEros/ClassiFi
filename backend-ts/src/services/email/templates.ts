@@ -1031,12 +1031,12 @@ export function newUserRegisteredEmailTemplate(data: {
   userRole: string
 }): string {
   const content = `
-    <h1>New User Registration</h1>
-    <p>A new user has registered on the platform.</p>
+    <h1>Teacher Approval Required</h1>
+    <p>A new teacher account request has been submitted and is awaiting administrator review.</p>
     
     <div class="info-card">
       <div class="info-card-row">
-        <span class="info-label">Name</span>
+        <span class="info-label">Teacher</span>
         <span class="info-value">${escapeHtml(data.userName)}</span>
       </div>
       <div class="info-card-row">
@@ -1048,6 +1048,42 @@ export function newUserRegisteredEmailTemplate(data: {
         <span class="info-value">${escapeHtml(data.userRole)}</span>
       </div>
     </div>
+
+    <div class="alert alert-warning">
+      <strong>Action required:</strong> Review this teacher account in the admin panel and activate it when approved.
+    </div>
+  `
+
+  return baseEmailTemplate(content)
+}
+
+/**
+ * Generates an HTML email template for teacher approval notifications.
+ *
+ * @param data - Approval email data
+ * @param data.teacherName - The teacher whose account was approved
+ * @param data.loginUrl - The login page URL
+ * @returns The generated HTML email string
+ */
+export function teacherApprovedEmailTemplate(data: {
+  teacherName: string
+  loginUrl: string
+}): string {
+  const content = `
+    <h1>Your Teacher Account Has Been Approved</h1>
+    <p>Hello <strong>${escapeHtml(data.teacherName)}</strong>, your account request has been reviewed and approved by the administrator.</p>
+
+    <div class="alert alert-success">
+      <strong>You may now sign in and start using the system.</strong>
+    </div>
+
+    <center>
+      <a href="${escapeHtml(data.loginUrl)}" class="button">Sign In to ClassiFi</a>
+    </center>
+
+    <p style="font-size: 14px; color: ${classifiEmailTheme.bodyText};">
+      If you did not request this account, please contact the administrator immediately.
+    </p>
   `
 
   return baseEmailTemplate(content)

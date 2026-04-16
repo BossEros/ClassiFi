@@ -1,6 +1,5 @@
 import { cn } from "@/shared/utils/cn"
 import { Avatar } from "@/presentation/components/ui/Avatar"
-import { Trash2 } from "lucide-react"
 import type { EnrolledStudent } from "@/data/api/class.types"
 
 interface StudentListItemProps {
@@ -37,6 +36,9 @@ export function StudentListItem({
   const initials =
     `${student.firstName?.[0] ?? ""}${student.lastName?.[0] ?? ""}`.toUpperCase() ||
     "?"
+
+  // Preserve the remove callback contract so the trash action can be restored quickly later.
+  void onRemove
 
   return (
     <div
@@ -77,7 +79,8 @@ export function StudentListItem({
         </span>
       </div>
 
-      {/* Remove Button */}
+      {/* Remove Button - intentionally commented out for now so it can be restored quickly later. */}
+      {/*
       <div className="flex justify-end">
         {onRemove && (
           <button
@@ -92,6 +95,7 @@ export function StudentListItem({
           </button>
         )}
       </div>
+      */}
     </div>
   )
 }

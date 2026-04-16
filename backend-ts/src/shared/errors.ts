@@ -73,6 +73,15 @@ export class EmailNotVerifiedError extends ApiError {
   }
 }
 
+export class TeacherApprovalPendingError extends ForbiddenError {
+  constructor() {
+    super(
+      "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+    )
+    this.name = "TeacherApprovalPendingError"
+  }
+}
+
 // ============ Class Errors ============
 
 export class ClassNotFoundError extends NotFoundError {

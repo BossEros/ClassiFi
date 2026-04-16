@@ -67,6 +67,7 @@ describe("authRepository", () => {
     firstName: "John",
     lastName: "Doe",
     role: "student" as const,
+    isActive: true,
     createdAt: new Date("2024-01-01"),
   }
 

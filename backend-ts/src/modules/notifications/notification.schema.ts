@@ -19,6 +19,7 @@ export const NotificationTypeSchema = z.enum([
   "STUDENT_ENROLLED",
   "STUDENT_UNENROLLED",
   "NEW_USER_REGISTERED",
+  "TEACHER_APPROVED",
   "REMOVED_FROM_CLASS",
 ])
 

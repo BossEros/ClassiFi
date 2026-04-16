@@ -13,6 +13,7 @@ const testUser: User = {
   firstName: "Taylor",
   lastName: "Nguyen",
   role: "teacher",
+  isActive: true,
   emailNotificationsEnabled: true,
   inAppNotificationsEnabled: true,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),

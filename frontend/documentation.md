@@ -154,6 +154,8 @@ Routing is composed in `src/app/App.tsx`, which mounts route groups from `src/ap
 - `RoleBasedClassDetailPage` renders `AdminClassDetailPage` for admins and the shared teacher/student class detail page for everyone else.
 - `AuthRedirectHandler` normalizes Supabase email-confirmation and recovery links into the correct reset or confirmation pages.
 - Shared pages such as assignment detail, settings, notifications, and calendar are intentionally routed once and adapt based on user role and available permissions.
+- Teacher self-registration completes normally, but the frontend does not persist a local auth session for teacher accounts returned with `isActive = false`.
+- If backend verification rejects a teacher with pending approval, the frontend immediately clears the Supabase session, clears local auth state, and shows the exact backend message unchanged.
 
 ### Key Routes
 
@@ -451,6 +453,7 @@ Real-time notification system that keeps users informed about important events:
 | -------------------- | -------------------------- | -------------------------------------- |
 | `ASSIGNMENT_CREATED` | Teacher creates assignment | Assignment title, class name, due date |
 | `SUBMISSION_GRADED`  | Submission receives grade or has its visible score updated after similarity review | Assignment title, updated score, feedback |
+| `NEW_USER_REGISTERED` | Teacher self-registers and awaits approval | Teacher name/email and approval-needed context for admins |
 
 #### Features
 
@@ -462,6 +465,13 @@ Real-time notification system that keeps users informed about important events:
 - **Accessibility**: Keyboard navigation and screen reader support
 - **Time Formatting**: Human-readable relative timestamps
 - **Icon Mapping**: Type-specific icons for visual clarity
+
+Teacher approval UX notes:
+
+- The registration completion step uses a teacher-specific success message when the new account is inactive:
+  - `Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin`
+- Admin user management reuses the existing status toggle as the v1 approval action.
+- In the admin users table and edit modal, inactive teachers are labeled `Pending Approval` instead of generic suspended wording.
 
 #### Usage Example
 
