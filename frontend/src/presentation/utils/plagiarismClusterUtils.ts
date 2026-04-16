@@ -59,6 +59,18 @@ export function getPairOverallSimilarityRatio(pair: PairResponse): number {
 }
 
 /**
+ * Converts a similarity ratio into the same whole-number percentage shown in the UI.
+ *
+ * @param similarityRatio - Normalized similarity ratio between 0 and 1.
+ * @returns Rounded whole-number percentage between 0 and 100.
+ */
+export function getDisplayedSimilarityPercent(similarityRatio: number): number {
+  const clampedSimilarityRatio = Math.max(0, Math.min(1, similarityRatio))
+
+  return Math.round(clampedSimilarityRatio * 100)
+}
+
+/**
  * Returns the pairs that meet the active minimum similarity threshold.
  *
  * @param pairs - Pairwise similarity results for an assignment.
@@ -69,13 +81,15 @@ export function getThresholdQualifiedPairs(
   pairs: PairResponse[],
   minimumSimilarityPercent: number,
 ): PairResponse[] {
-  const minimumSimilarityRatio = Math.max(
+  const minimumDisplayedSimilarityPercent = Math.max(
     0,
-    Math.min(1, minimumSimilarityPercent / 100),
+    Math.min(100, Math.round(minimumSimilarityPercent)),
   )
 
   return pairs.filter(
-    (pair) => getPairOverallSimilarityRatio(pair) >= minimumSimilarityRatio,
+    (pair) =>
+      getDisplayedSimilarityPercent(getPairOverallSimilarityRatio(pair)) >=
+      minimumDisplayedSimilarityPercent,
   )
 }
 
