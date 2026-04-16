@@ -23,6 +23,8 @@ export type { UserRole, User, ChangePasswordRequest, RegistrationStep, Registrat
 const emailConfirmationRequiredLoginMessage =
   "Please confirm your email before signing in. Check your inbox or spam folder for the verification link."
 const invalidLoginCredentialsMessage = "Incorrect email or password."
+const pendingTeacherApprovalLoginMessage =
+  "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin"
 
 /**
  * Converts provider-specific authentication failures into clear, actionable messages.
@@ -64,6 +66,29 @@ function normalizeAuthenticationFailureMessage(
 }
 
 /**
+ * Determine whether the auth response represents a blocked inactive teacher.
+ *
+ * @param authenticationFailureMessage - The backend-provided failure message.
+ * @returns True when the message matches the teacher approval block.
+ */
+function isPendingTeacherApprovalFailure(
+  authenticationFailureMessage?: string,
+): boolean {
+  return authenticationFailureMessage === pendingTeacherApprovalLoginMessage
+}
+
+/**
+ * Clear local auth state and any active Supabase session after a blocked sign-in.
+ */
+async function clearBlockedAuthenticationAttempt(): Promise<void> {
+  try {
+    await authRepository.signOutCurrentUserAndClearSession()
+  } finally {
+    clearLocalAuthenticationSession()
+  }
+}
+
+/**
  * Authenticates a user with email and password.
  * Validates credentials locally before attempting login with the repository.
  * Stores auth token and user data on success.
@@ -86,6 +111,10 @@ export async function loginUser(
     }
 
     if (!response.success) {
+      if (isPendingTeacherApprovalFailure(response.message)) {
+        await clearBlockedAuthenticationAttempt()
+      }
+
       return {
         ...response,
         message: normalizeAuthenticationFailureMessage(response.message),
@@ -94,12 +123,18 @@ export async function loginUser(
 
     return response
   } catch (error) {
+    const normalizedAuthenticationFailureMessage =
+      error instanceof Error
+        ? normalizeAuthenticationFailureMessage(error.message)
+        : "Login failed"
+
+    if (isPendingTeacherApprovalFailure(normalizedAuthenticationFailureMessage)) {
+      await clearBlockedAuthenticationAttempt()
+    }
+
     return {
       success: false,
-      message:
-        error instanceof Error
-          ? normalizeAuthenticationFailureMessage(error.message)
-          : "Login failed",
+      message: normalizedAuthenticationFailureMessage,
     }
   }
 }
@@ -119,7 +154,12 @@ export async function registerUser(
     const response =
       await authRepository.registerNewUserAccount(registrationRequest)
 
-    if (response.success && response.token && response.user) {
+    if (
+      response.success &&
+      response.token &&
+      response.user &&
+      !(response.user.role === "teacher" && !response.user.isActive)
+    ) {
       persistAuthenticationSession(response.token, response.user)
     }
 
@@ -199,7 +239,10 @@ export async function verifySession(): Promise<boolean> {
  * Persists user data to local storage.
  * Token is managed by Supabase's secure session storage.
  */
-function persistAuthenticationSession(_token: string, user: User): void {
+function persistAuthenticationSession(
+  _token: string | null | undefined,
+  user: User,
+): void {
   useAuthStore.getState().login(user)
 }
 

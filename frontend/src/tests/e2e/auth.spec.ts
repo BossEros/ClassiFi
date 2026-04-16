@@ -85,4 +85,129 @@ test.describe("Authentication", () => {
       page.getByRole("button", { name: /signing in/i }),
     ).toBeVisible()
   })
+
+  test("should block inactive teachers with the administrator approval message", async ({
+    page,
+  }) => {
+    await page.route("**/auth/v1/token**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          access_token: "teacher-token",
+          refresh_token: "teacher-refresh-token",
+          token_type: "bearer",
+          expires_in: 3600,
+          user: {
+            id: "teacher-supabase-id",
+            email: "teacher@example.com",
+          },
+        }),
+      })
+    })
+
+    await page.route("**/auth/v1/logout", async (route) => {
+      await route.fulfill({
+        status: 204,
+        body: "",
+      })
+    })
+
+    await page.route("**/api/v1/auth/verify", async (route) => {
+      await route.fulfill({
+        status: 403,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: false,
+          message:
+            "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+        }),
+      })
+    })
+
+    await page.locator("#email").fill("teacher@example.com")
+    await page.locator("#password").fill("TeacherPass123!")
+    await page.getByRole("button", { name: /sign in/i }).click()
+
+    await expect(
+      page.getByText(
+        "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
+      ),
+    ).toBeVisible({ timeout: 10000 })
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test("should allow approved teachers to sign in", async ({ page }) => {
+    await page.route("**/auth/v1/token**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          access_token: "teacher-token",
+          refresh_token: "teacher-refresh-token",
+          token_type: "bearer",
+          expires_in: 3600,
+          user: {
+            id: "teacher-supabase-id",
+            email: "teacher@example.com",
+          },
+        }),
+      })
+    })
+
+    await page.route("**/api/v1/auth/verify", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          user: {
+            id: "2",
+            email: "teacher@example.com",
+            firstName: "Teacher",
+            lastName: "Approved",
+            role: "teacher",
+            isActive: true,
+            emailNotificationsEnabled: true,
+            inAppNotificationsEnabled: true,
+            createdAt: new Date().toISOString(),
+          },
+        }),
+      })
+    })
+
+    await page.route("**/api/v1/teacher/dashboard/**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          data: {
+            recentClasses: [],
+            pendingTasks: [],
+          },
+        }),
+      })
+    })
+
+    await page.route("**/api/v1/notifications/unread-count", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          unreadCount: 0,
+        }),
+      })
+    })
+
+    await page.locator("#email").fill("teacher@example.com")
+    await page.locator("#password").fill("TeacherPass123!")
+    await page.getByRole("button", { name: /sign in/i }).click()
+
+    await expect(page).toHaveURL(/\/dashboard/, { timeout: 10000 })
+    await expect(page.getByText(/welcome back, teacher/i)).toBeVisible({
+      timeout: 10000,
+    })
+  })
 })

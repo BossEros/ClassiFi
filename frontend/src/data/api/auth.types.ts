@@ -21,6 +21,7 @@ export interface User {
   firstName: string
   lastName: string
   role: UserRole
+  isActive: boolean
   avatarUrl?: string
   emailNotificationsEnabled: boolean
   inAppNotificationsEnabled: boolean
@@ -103,7 +104,7 @@ export interface AuthSuccess {
   success: true
   message?: string
   user: User
-  token: string
+  token?: string | null
 }
 
 /**

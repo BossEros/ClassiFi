@@ -1,5 +1,6 @@
 import { notificationRepository } from "@/data/repositories/notificationRepository"
 import type {
+  Notification,
   NotificationListResponse,
   NotificationType,
 } from "@/data/api/notification.types"
@@ -127,7 +128,48 @@ export function getNotificationIcon(type: NotificationType): string {
     CLASS_ANNOUNCEMENT: "Megaphone",
     DEADLINE_REMINDER: "Clock",
     ENROLLMENT_CONFIRMED: "UserPlus",
+    NEW_USER_REGISTERED: "ShieldAlert",
   }
 
   return iconMap[type] || "Bell"
+}
+
+/**
+ * Resolves the dashboard navigation target for a notification.
+ *
+ * @param notification - The notification being opened.
+ * @returns The dashboard URL to open, or null when the notification is informational only.
+ */
+export function getNotificationNavigationUrl(
+  notification: Notification,
+): string | null {
+  switch (notification.type) {
+    case "ASSIGNMENT_CREATED":
+      return `/dashboard/assignments/${notification.metadata.assignmentId}`
+    case "SUBMISSION_GRADED":
+      return `/dashboard/assignments/${notification.metadata.assignmentId}`
+    case "SUBMISSION_FEEDBACK_GIVEN":
+      return `/dashboard/assignments/${notification.metadata.assignmentId}`
+    case "CLASS_ANNOUNCEMENT":
+      return `/dashboard/classes/${notification.metadata.classId}`
+    case "DEADLINE_REMINDER":
+      return `/dashboard/assignments/${notification.metadata.assignmentId}`
+    case "ENROLLMENT_CONFIRMED":
+      return `/dashboard/classes/${notification.metadata.classId}`
+    case "NEW_USER_REGISTERED": {
+      const searchValue =
+        notification.metadata.userEmail.trim() ||
+        notification.metadata.userName.trim()
+
+      if (!searchValue) {
+        return "/dashboard/users"
+      }
+
+      const searchParams = new URLSearchParams({ search: searchValue })
+
+      return `/dashboard/users?${searchParams.toString()}`
+    }
+    default:
+      return null
+  }
 }

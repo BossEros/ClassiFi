@@ -46,6 +46,13 @@ export interface EnrollmentConfirmedMetadata {
   classUrl: string
 }
 
+export interface NewUserRegisteredMetadata {
+  userId: number
+  userName: string
+  userEmail: string
+  userRole: string
+}
+
 interface BaseNotification {
   id: number
   userId: number
@@ -80,6 +87,10 @@ export type Notification =
   | (BaseNotification & {
       type: "ENROLLMENT_CONFIRMED"
       metadata: EnrollmentConfirmedMetadata
+    })
+  | (BaseNotification & {
+      type: "NEW_USER_REGISTERED"
+      metadata: NewUserRegisteredMetadata
     })
 
 export function isNotificationType<T extends Notification["type"]>(

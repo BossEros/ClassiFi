@@ -13,6 +13,7 @@ import {
   studentEnrolledEmailTemplate,
   studentUnenrolledEmailTemplate,
   newUserRegisteredEmailTemplate,
+  teacherApprovedEmailTemplate,
   removedFromClassEmailTemplate,
 } from "@/services/email/templates.js"
 
@@ -145,6 +146,12 @@ export interface NewUserRegisteredPayload {
   userRole: string
 }
 
+/** Payload for TEACHER_APPROVED notification (teacher email only) */
+export interface TeacherApprovedPayload {
+  teacherName: string
+  loginUrl: string
+}
+
 /** Payload for REMOVED_FROM_CLASS notification (student) */
 export interface RemovedFromClassPayload {
   classId: number
@@ -170,6 +177,7 @@ export type NotificationDataByType = {
   STUDENT_ENROLLED: StudentEnrolledPayload
   STUDENT_UNENROLLED: StudentUnenrolledPayload
   NEW_USER_REGISTERED: NewUserRegisteredPayload
+  TEACHER_APPROVED: TeacherApprovedPayload
   REMOVED_FROM_CLASS: RemovedFromClassPayload
 }
 
@@ -436,9 +444,9 @@ export const NOTIFICATION_TYPES: {
 
   NEW_USER_REGISTERED: {
     type: "NEW_USER_REGISTERED",
-    titleTemplate: () => "New User Registration",
+    titleTemplate: () => "Teacher Approval Required",
     messageTemplate: (data) =>
-      `A new ${data.userRole} "${data.userName}" (${data.userEmail}) has registered.`,
+      `${data.userName} (${data.userEmail}) registered as a teacher and is awaiting administrator approval.`,
     emailTemplate: (data) => newUserRegisteredEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
@@ -446,6 +454,19 @@ export const NOTIFICATION_TYPES: {
       userName: data.userName,
       userEmail: data.userEmail,
       userRole: data.userRole,
+    }),
+  },
+
+  TEACHER_APPROVED: {
+    type: "TEACHER_APPROVED",
+    titleTemplate: () => "Teacher Account Approved",
+    messageTemplate: () =>
+      "Your account has been approved by the administrator. You may now sign in to the system.",
+    emailTemplate: (data) => teacherApprovedEmailTemplate(data),
+    channels: ["EMAIL"],
+    metadata: (data) => ({
+      teacherName: data.teacherName,
+      loginUrl: data.loginUrl,
     }),
   },
 

@@ -8,12 +8,14 @@ import { UserService } from "@/modules/users/user.service.js"
 import { ClassService } from "@/modules/classes/class.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
 import { UserNotFoundError, InvalidRoleError } from "@/shared/errors.js"
+import { NotificationService } from "@/modules/notifications/notification.service.js"
 import type {
   UserFilterOptions,
   PaginatedResult,
   CreateUserData,
 } from "@/modules/admin/admin.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { settings } from "@/shared/config.js"
 
 @injectable()
 export class AdminUserService {
@@ -21,6 +23,8 @@ export class AdminUserService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.services.user) private userService: UserService,
     @inject(DI_TOKENS.services.class) private classService: ClassService,
+    @inject(DI_TOKENS.services.notification)
+    private notificationService: NotificationService,
     @inject(DI_TOKENS.adapters.supabaseAuth)
     private authAdapter: SupabaseAuthAdapter,
   ) {}
@@ -139,10 +143,31 @@ export class AdminUserService {
    * Delegates to UserRepository for clean separation.
    */
   async toggleUserStatus(userId: number): Promise<UserDTO> {
+    const existingUser = await this.userRepo.getUserById(userId)
+
+    if (!existingUser) {
+      throw new UserNotFoundError(userId)
+    }
+
     const updated = await this.userRepo.toggleActiveStatus(userId)
 
     if (!updated) {
       throw new UserNotFoundError(userId)
+    }
+
+    if (
+      existingUser.role === "teacher" &&
+      !existingUser.isActive &&
+      updated.isActive
+    ) {
+      await this.notificationService.sendEmailNotificationIfEnabled(
+        updated.id,
+        "TEACHER_APPROVED",
+        {
+          teacherName: `${updated.firstName} ${updated.lastName}`.trim(),
+          loginUrl: `${settings.frontendUrl}/login`,
+        },
+      )
     }
 
     return toUserDTO(updated)
