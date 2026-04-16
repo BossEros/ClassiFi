@@ -2,6 +2,7 @@ import type { FileResponse, PairResponse } from "@/data/api/plagiarism.types"
 import {
   buildSimilarityClusters,
   getPairOverallSimilarityRatio,
+  getThresholdQualifiedPairs,
   type SimilarityCluster,
   type SimilarityClusterMember,
 } from "@/presentation/utils/plagiarismClusterUtils"
@@ -141,15 +142,16 @@ export function buildSimilarityGraphData(
 ): SimilarityGraphData {
   const thresholdRatio = Math.max(
     0,
-    Math.min(1, minimumSimilarityPercent / 100),
+    Math.min(1, Math.round(minimumSimilarityPercent) / 100),
   )
   const allMembers = buildAllSubmissionMembers(submissions, pairs)
   const strongestOverallBySubmissionId = buildSimilarityMetricsBySubmissionId(
     pairs,
     () => true,
   )
-  const visiblePairs = pairs.filter(
-    (pair) => getPairOverallSimilarityRatio(pair) >= thresholdRatio,
+  const visiblePairs = getThresholdQualifiedPairs(
+    pairs,
+    minimumSimilarityPercent,
   )
   const visibleSimilarityBySubmissionId = buildSimilarityMetricsBySubmissionId(
     visiblePairs,

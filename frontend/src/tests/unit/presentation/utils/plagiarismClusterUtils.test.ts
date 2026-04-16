@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest"
 import type { PairResponse } from "@/data/api/plagiarism.types"
 import {
   buildSimilarityClusters,
+  getDisplayedSimilarityPercent,
   getPairOverallSimilarityRatio,
+  getThresholdQualifiedPairs,
 } from "@/presentation/utils/plagiarismClusterUtils"
 
 function createPair(
@@ -67,6 +69,45 @@ describe("plagiarismClusterUtils", () => {
 
     expect(getPairOverallSimilarityRatio(pair)).toBeCloseTo(0.91)
     expect(buildSimilarityClusters([pair], 90)).toHaveLength(1)
+  })
+
+  it("matches threshold qualification to the displayed whole-number percentage", () => {
+    const roundedHundredPercentPair = createPair(
+      1,
+      10,
+      "Eli",
+      11,
+      "Finn",
+      0.996,
+      1,
+    )
+    const ninetyNinePercentPair = createPair(
+      2,
+      12,
+      "Gia",
+      13,
+      "Hale",
+      0.994,
+      1,
+    )
+
+    expect(
+      getDisplayedSimilarityPercent(
+        getPairOverallSimilarityRatio(roundedHundredPercentPair),
+      ),
+    ).toBe(100)
+    expect(
+      getDisplayedSimilarityPercent(
+        getPairOverallSimilarityRatio(ninetyNinePercentPair),
+      ),
+    ).toBe(99)
+
+    expect(
+      getThresholdQualifiedPairs(
+        [roundedHundredPercentPair, ninetyNinePercentPair],
+        100,
+      ).map((pair) => pair.id),
+    ).toEqual([1])
   })
 
   it("sorts larger clusters before smaller ones", () => {
