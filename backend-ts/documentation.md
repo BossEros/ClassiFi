@@ -1564,6 +1564,10 @@ The backend communicates with the semantic service through:
 - `semantic-similarity.client.ts` — HTTP client with configurable timeout/retries
 - `semantic-scoring.ts` — Embedding cache strategy (O(n) embeddings for O(n²) pairs) and pairwise cosine computation
 
+- `semantic-masking.ts` â€” blanks ignored structural/template regions before embeddings are requested so semantic and hybrid scores stay aligned with teacher-template suppression
+
+Semantic embeddings are generated from masked submission text instead of raw source whenever structural analysis has already marked template or common-code regions as ignored.
+
 Both modules forward the assignment's programming language to the microservice.
 
 ### Training & Evaluation Scripts

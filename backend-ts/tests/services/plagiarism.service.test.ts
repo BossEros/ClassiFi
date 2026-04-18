@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { PlagiarismService } from "../../src/modules/plagiarism/plagiarism.service.js"
 import { createPlagiarismDetector } from "../../src/modules/plagiarism/plagiarism.mapper.js"
+import {
+  File,
+  Region,
+  SharedFingerprint,
+  TokenizedFile,
+} from "../../src/lib/plagiarism/index.js"
+import type { FileEntry } from "../../src/lib/plagiarism/index.js"
 import { createMockAssignment } from "../utils/factories.js"
 import { AssignmentNotFoundError } from "../../src/shared/errors.js"
 
@@ -17,13 +24,19 @@ vi.mock("../../src/shared/config.js", () => ({
 // Mock new services
 vi.mock("../../src/modules/plagiarism/plagiarism-persistence.service.js")
 vi.mock("../../src/modules/plagiarism/plagiarism-submission-file.service.js")
-vi.mock("../../src/modules/plagiarism/plagiarism.mapper.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../src/modules/plagiarism/plagiarism.mapper.js")>()
-  return {
-    ...actual,
-    createPlagiarismDetector: vi.fn(),
-  }
-})
+vi.mock(
+  "../../src/modules/plagiarism/plagiarism.mapper.js",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("../../src/modules/plagiarism/plagiarism.mapper.js")
+      >()
+    return {
+      ...actual,
+      createPlagiarismDetector: vi.fn(),
+    }
+  },
+)
 
 // Mock PlagiarismDetector
 const mockReport = {
@@ -81,6 +94,51 @@ const mockReport = {
 
 const mockDetector = {
   analyze: vi.fn().mockResolvedValue(mockReport),
+}
+
+function buildTokenizedFile(
+  path: string,
+  content: string,
+  submissionId: string,
+): TokenizedFile {
+  const originalFile = new File(path, content, { submissionId })
+  const placeholderRegion = new Region(0, 0, 0, 0)
+
+  return new TokenizedFile(originalFile, ["token"], [placeholderRegion])
+}
+
+function buildIgnoredFileEntry(
+  file: TokenizedFile,
+  ignoredRegions: Region[],
+): FileEntry {
+  const ignoredFingerprints = ignoredRegions.map(
+    (ignoredRegion, ignoredIndex) => {
+      const ignoredFingerprint = new SharedFingerprint(ignoredIndex + 1, null)
+      ignoredFingerprint.add({
+        file,
+        side: {
+          index: ignoredIndex,
+          start: ignoredIndex,
+          stop: ignoredIndex,
+          location: ignoredRegion,
+          data: null,
+        },
+      })
+
+      return ignoredFingerprint
+    },
+  )
+
+  return {
+    file,
+    kgrams: [],
+    shared: new Set(),
+    ignored: new Set(ignoredFingerprints),
+    ignoredKgramIndices: new Set(
+      ignoredRegions.map((_, ignoredIndex) => ignoredIndex),
+    ),
+    isIgnored: false,
+  }
 }
 
 describe("PlagiarismService", () => {
@@ -234,6 +292,75 @@ describe("PlagiarismService", () => {
       expect(result.pairs[0].hybridScore).toBe(0.42)
     })
 
+    it("masks ignored structural regions before requesting semantic embeddings", async () => {
+      const assignment = createMockAssignment({
+        programmingLanguage: "python",
+        templateCode: "template_line()",
+      })
+      const mockFiles = [
+        { path: "p1", content: "c1", info: {} },
+        { path: "p2", content: "c2", info: {} },
+      ]
+      const leftContent = "template_line()\nreal_work()\n"
+      const rightContent = "template_line()\nother_work()\n"
+      const leftFile = buildTokenizedFile("left.py", leftContent, "21")
+      const rightFile = buildTokenizedFile("right.py", rightContent, "22")
+      const maskedSemanticReport = {
+        files: [{ path: "left.py" }, { path: "right.py" }],
+        getPairs: () => [
+          {
+            id: 1,
+            similarity: 0.7,
+            overlap: 20,
+            longest: 6,
+            leftCovered: 25,
+            rightCovered: 24,
+            leftTotal: 60,
+            rightTotal: 58,
+            leftFile: {
+              path: leftFile.path,
+              filename: leftFile.filename,
+              content: leftFile.content,
+              lineCount: leftFile.lineCount,
+              info: leftFile.info,
+            },
+            rightFile: {
+              path: rightFile.path,
+              filename: rightFile.filename,
+              content: rightFile.content,
+              lineCount: rightFile.lineCount,
+              info: rightFile.info,
+            },
+            leftEntry: buildIgnoredFileEntry(leftFile, [
+              new Region(0, 0, 0, 15),
+            ]),
+            rightEntry: buildIgnoredFileEntry(rightFile, [
+              new Region(0, 0, 0, 15),
+            ]),
+            buildFragments: () => [],
+          },
+        ],
+      }
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockFileService.fetchSubmissionFiles.mockResolvedValue(mockFiles)
+      mockDetector.analyze.mockResolvedValueOnce(maskedSemanticReport)
+      mockSemanticClient.getEmbedding.mockResolvedValue(null)
+
+      await plagiarismService.analyzeAssignmentSubmissions(1, 1)
+
+      expect(mockSemanticClient.getEmbedding).toHaveBeenNthCalledWith(
+        1,
+        "               \nreal_work()\n",
+        "python",
+      )
+      expect(mockSemanticClient.getEmbedding).toHaveBeenNthCalledWith(
+        2,
+        "               \nother_work()\n",
+        "python",
+      )
+    })
+
     it("should reuse the existing assignment report when it is current", async () => {
       const assignment = createMockAssignment({ programmingLanguage: "python" })
       const reusableReport = {
@@ -348,7 +475,9 @@ describe("PlagiarismService", () => {
         maxInFlightRequests = Math.max(maxInFlightRequests, inFlightRequests)
         await new Promise((resolve) => setTimeout(resolve, 5))
         inFlightRequests -= 1
-        return Array(768).fill(0).map(() => Math.random())
+        return Array(768)
+          .fill(0)
+          .map(() => Math.random())
       })
 
       await plagiarismService.analyzeAssignmentSubmissions(1, 1)

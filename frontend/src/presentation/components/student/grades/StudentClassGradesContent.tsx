@@ -473,8 +473,8 @@ export function StudentClassGradesContent({
 
   if (error) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="text-center max-w-md">
+      <div className="flex w-full items-center justify-center px-4 py-20">
+        <div className="w-full max-w-xl text-center">
           <div
             className={cn(
               "mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full",
@@ -498,7 +498,7 @@ export function StudentClassGradesContent({
           </p>
           <p
             className={cn(
-              "mb-4 text-sm",
+              "mb-4 text-sm leading-6 break-words whitespace-normal",
               variant === "light" ? "text-slate-500" : "text-gray-500",
             )}
           >
