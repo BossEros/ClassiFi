@@ -94,8 +94,8 @@ export class Pair extends Identifiable {
     // Calculate coverage statistics
     this.leftCovered = left.length
     this.rightCovered = right.length
-    this.leftIgnored = leftEntry.ignored.size
-    this.rightIgnored = rightEntry.ignored.size
+    this.leftIgnored = leftEntry.ignoredKgramIndices.size
+    this.rightIgnored = rightEntry.ignoredKgramIndices.size
     this.leftTotal = leftEntry.kgrams.length
     this.rightTotal = rightEntry.kgrams.length
 
