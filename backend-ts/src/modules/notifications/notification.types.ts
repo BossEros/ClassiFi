@@ -17,6 +17,38 @@ import {
   removedFromClassEmailTemplate,
 } from "@/services/email/templates.js"
 
+function formatMatchedStudentNames(
+  matchedStudentNames: string[] | undefined,
+): string {
+  if (!matchedStudentNames || matchedStudentNames.length === 0) {
+    return "another student"
+  }
+
+  if (matchedStudentNames.length === 1) {
+    return matchedStudentNames[0]
+  }
+
+  if (matchedStudentNames.length === 2) {
+    return `${matchedStudentNames[0]} and ${matchedStudentNames[1]}`
+  }
+
+  return `${matchedStudentNames.slice(0, -1).join(", ")}, and ${matchedStudentNames.at(-1)}`
+}
+
+function formatScoreChangeMessage(
+  assignmentTitle: string,
+  maxGrade: number,
+  nextGrade: number,
+  previousGrade: number | undefined,
+  actorDescription: string,
+): string {
+  if (previousGrade === undefined) {
+    return `Your score for "${assignmentTitle}" was updated ${actorDescription} to ${nextGrade}/${maxGrade}.`
+  }
+
+  return `Your score for "${assignmentTitle}" was updated ${actorDescription} from ${previousGrade}/${maxGrade} to ${nextGrade}/${maxGrade}.`
+}
+
 // ============================================================================
 // Notification Payload Types (Discriminated Union)
 // ============================================================================
@@ -32,6 +64,13 @@ export interface AssignmentCreatedPayload {
 }
 
 /** Payload for SUBMISSION_GRADED notification */
+export type SubmissionGradedReason =
+  | "automatic_grade"
+  | "manual_grade"
+  | "grade_override"
+  | "late_penalty_applied"
+  | "similarity_deduction"
+
 export interface SubmissionGradedPayload {
   submissionId: number
   assignmentId: number
@@ -39,9 +78,12 @@ export interface SubmissionGradedPayload {
   grade: number
   maxGrade: number
   submissionUrl: string
-  reason?: "similarity_deduction"
+  reason: SubmissionGradedReason
   previousGrade?: number
   deductedPoints?: number
+  similarityPercentage?: number
+  latenessText?: string
+  matchedStudentNames?: string[]
 }
 
 /** Payload for SUBMISSION_FEEDBACK_GIVEN notification */
@@ -256,14 +298,49 @@ export const NOTIFICATION_TYPES: {
 
   SUBMISSION_GRADED: {
     type: "SUBMISSION_GRADED",
-    titleTemplate: (data) =>
-      data.reason === "similarity_deduction"
-        ? "Score Updated After Similarity Review"
-        : "Assignment Graded",
-    messageTemplate: (data) =>
-      data.reason === "similarity_deduction"
-        ? `Your submission for "${data.assignmentTitle}" was reviewed for similarity and your score changed from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade}.`
-        : `Your submission for "${data.assignmentTitle}" has been graded. Score: ${data.grade}/${data.maxGrade}`,
+    titleTemplate: (data) => {
+      switch (data.reason) {
+        case "automatic_grade":
+          return "Assignment Graded"
+        case "manual_grade":
+          return "Teacher Grade Posted"
+        case "grade_override":
+          return "Score Updated by Your Teacher"
+        case "late_penalty_applied":
+          return "Late Penalty Applied"
+        case "similarity_deduction":
+          return "Score Updated After Similarity Review"
+      }
+    },
+    messageTemplate: (data) => {
+      switch (data.reason) {
+        case "automatic_grade":
+          return `Your submission for "${data.assignmentTitle}" has been graded. Score: ${data.grade}/${data.maxGrade}.`
+        case "manual_grade":
+          return `Your teacher graded your submission for "${data.assignmentTitle}". Score: ${data.grade}/${data.maxGrade}.`
+        case "grade_override":
+          return formatScoreChangeMessage(
+            data.assignmentTitle,
+            data.maxGrade,
+            data.grade,
+            data.previousGrade,
+            "by your teacher",
+          )
+        case "late_penalty_applied":
+          return data.previousGrade === undefined
+            ? `A late penalty was applied to your submission for "${data.assignmentTitle}". Final score: ${data.grade}/${data.maxGrade}. ${data.latenessText}.`
+            : `Your score for "${data.assignmentTitle}" was reduced from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade} due to late submission. ${data.latenessText}.`
+        case "similarity_deduction": {
+          const matchedStudentsText = formatMatchedStudentNames(
+            data.matchedStudentNames,
+          )
+
+          return data.previousGrade === undefined
+            ? `Your score for "${data.assignmentTitle}" was updated after similarity review to ${data.grade}/${data.maxGrade}. You had ${data.similarityPercentage}% source code similarity with ${matchedStudentsText}.`
+            : `Your score for "${data.assignmentTitle}" changed from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade} after similarity review. You had ${data.similarityPercentage}% source code similarity with ${matchedStudentsText}.`
+        }
+      }
+    },
     emailTemplate: (data) => submissionGradedEmailTemplate(data),
     channels: ["EMAIL", "IN_APP"],
     metadata: (data) => ({
@@ -276,6 +353,9 @@ export const NOTIFICATION_TYPES: {
       reason: data.reason,
       previousGrade: data.previousGrade,
       deductedPoints: data.deductedPoints,
+      similarityPercentage: data.similarityPercentage,
+      latenessText: data.latenessText,
+      matchedStudentNames: data.matchedStudentNames,
     }),
   },
 

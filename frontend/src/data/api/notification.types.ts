@@ -7,6 +7,13 @@ export interface AssignmentCreatedMetadata {
   assignmentUrl: string
 }
 
+export type SubmissionGradedReason =
+  | "automatic_grade"
+  | "manual_grade"
+  | "grade_override"
+  | "late_penalty_applied"
+  | "similarity_deduction"
+
 export interface SubmissionGradedMetadata {
   assignmentId: number
   assignmentTitle: string
@@ -14,9 +21,12 @@ export interface SubmissionGradedMetadata {
   grade: number
   maxGrade: number
   submissionUrl: string
-  reason?: "similarity_deduction"
+  reason: SubmissionGradedReason
   previousGrade?: number
   deductedPoints?: number
+  similarityPercentage?: number
+  latenessText?: string
+  matchedStudentNames?: string[]
 }
 
 export interface SubmissionFeedbackGivenMetadata {

@@ -510,6 +510,87 @@ export function assignmentCreatedEmailTemplate(data: {
   return baseEmailTemplate(content)
 }
 
+function formatEmailNameList(names: string[] | undefined): string {
+  if (!names || names.length === 0) {
+    return "another student"
+  }
+
+  if (names.length === 1) {
+    return names[0]
+  }
+
+  if (names.length === 2) {
+    return `${names[0]} and ${names[1]}`
+  }
+
+  return `${names.slice(0, -1).join(", ")}, and ${names.at(-1)}`
+}
+
+function getSubmissionGradedHeading(
+  reason: "automatic_grade" | "manual_grade" | "grade_override" | "late_penalty_applied" | "similarity_deduction",
+): string {
+  switch (reason) {
+    case "automatic_grade":
+      return "Your Assignment Has Been Graded"
+    case "manual_grade":
+      return "Your Teacher Posted a Grade"
+    case "grade_override":
+      return "Your Score Was Updated"
+    case "late_penalty_applied":
+      return "Late Penalty Applied"
+    case "similarity_deduction":
+      return "Score Updated After Similarity Review"
+  }
+}
+
+function getSubmissionGradedIntroText(
+  data: {
+    assignmentTitle: string
+    grade: number
+    maxGrade: number
+    reason: "automatic_grade" | "manual_grade" | "grade_override" | "late_penalty_applied" | "similarity_deduction"
+    previousGrade?: number
+    similarityPercentage?: number
+    latenessText?: string
+  },
+  matchedStudentNamesText: string,
+): string {
+  switch (data.reason) {
+    case "automatic_grade":
+      return `Your submission for "${data.assignmentTitle}" has been graded.`
+    case "manual_grade":
+      return `Your teacher graded your submission for "${data.assignmentTitle}".`
+    case "grade_override":
+      return data.previousGrade === undefined
+        ? `Your score for "${data.assignmentTitle}" was updated by your teacher to ${data.grade}/${data.maxGrade}.`
+        : `Your score for "${data.assignmentTitle}" was updated by your teacher from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade}.`
+    case "late_penalty_applied":
+      return data.previousGrade === undefined
+        ? `A late penalty was applied to your submission for "${data.assignmentTitle}". Final score: ${data.grade}/${data.maxGrade}. ${data.latenessText}.`
+        : `Your score for "${data.assignmentTitle}" was reduced from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade} due to late submission. ${data.latenessText}.`
+    case "similarity_deduction":
+      return data.previousGrade === undefined
+        ? `Your score for "${data.assignmentTitle}" was updated after similarity review to ${data.grade}/${data.maxGrade}. You had ${data.similarityPercentage}% source code similarity with ${matchedStudentNamesText}.`
+        : `Your score for "${data.assignmentTitle}" changed from ${data.previousGrade}/${data.maxGrade} to ${data.grade}/${data.maxGrade} after similarity review. You had ${data.similarityPercentage}% source code similarity with ${matchedStudentNamesText}.`
+  }
+}
+
+function getSubmissionGradedGuidanceText(
+  reason: "automatic_grade" | "manual_grade" | "grade_override" | "late_penalty_applied" | "similarity_deduction",
+): string {
+  switch (reason) {
+    case "automatic_grade":
+    case "manual_grade":
+      return "Review your submission to see detailed feedback, test results, and areas for improvement."
+    case "grade_override":
+      return "Review your updated submission details to see the latest score and any teacher notes."
+    case "late_penalty_applied":
+      return "Review the submission details for the grading breakdown, including the late penalty that affected your score."
+    case "similarity_deduction":
+      return "Review the submission details for the updated score and the similarity review outcome."
+  }
+}
+
 /**
  * Generates an HTML email template for submission graded notifications.
  *
@@ -525,6 +606,12 @@ export function submissionGradedEmailTemplate(data: {
   grade: number
   maxGrade: number
   submissionUrl: string
+  reason: "automatic_grade" | "manual_grade" | "grade_override" | "late_penalty_applied" | "similarity_deduction"
+  previousGrade?: number
+  deductedPoints?: number
+  similarityPercentage?: number
+  latenessText?: string
+  matchedStudentNames?: string[]
 }): string {
   const percentage =
     data.maxGrade > 0 ? Math.round((data.grade / data.maxGrade) * 100) : 0
@@ -548,9 +635,15 @@ export function submissionGradedEmailTemplate(data: {
     message = "Good effort! Review the feedback to see where you can improve."
   }
 
+  const matchedStudentNamesText = formatEmailNameList(data.matchedStudentNames)
+
+  const headingText = getSubmissionGradedHeading(data.reason)
+  const introText = getSubmissionGradedIntroText(data, matchedStudentNamesText)
+  const guidanceText = getSubmissionGradedGuidanceText(data.reason)
+
   const content = `
-    <h1>Your Assignment Has Been Graded</h1>
-    <p>Your submission for <strong>${escapeHtml(data.assignmentTitle)}</strong> has been reviewed and graded by your instructor.</p>
+    <h1>${escapeHtml(headingText)}</h1>
+    <p>${escapeHtml(introText)}</p>
     
     <div class="score-display" style="border-color: ${scoreColor};">
       <p class="score-number" style="color: ${scoreColor};">
@@ -563,13 +656,13 @@ export function submissionGradedEmailTemplate(data: {
     </center>
     
     <div class="alert ${alertType}">
-      <strong>${alertLead} ${message}</strong>
+      <strong>${alertLead} ${escapeHtml(message)}</strong>
     </div>
     
     <div class="divider"></div>
     
     <p style="font-size: 14px; color: ${classifiEmailTheme.bodyText};">
-      <strong>What's next?</strong> Review your submission to see detailed feedback, test results, and areas for improvement. Use this feedback to enhance your coding skills.
+      <strong>What's next?</strong> ${escapeHtml(guidanceText)}
     </p>
   `
 

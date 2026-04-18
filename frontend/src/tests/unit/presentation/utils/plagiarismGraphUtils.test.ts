@@ -1,6 +1,10 @@
 ﻿import { describe, expect, it } from "vitest"
 import type { FileResponse, PairResponse } from "@/data/api/plagiarism.types"
 import {
+  getDefaultSimilarityGraphSelection,
+  getPairsForSimilarityGraphSelection,
+  getSimilarityGraphSelectionForPair,
+  isSimilarityGraphSelectionValid,
   buildSimilarityGraphData,
   layoutSimilarityGraph,
 } from "@/presentation/utils/plagiarismGraphUtils"
@@ -168,6 +172,89 @@ describe("plagiarismGraphUtils", () => {
       "Dina",
       "Eli",
     ])
+  })
+
+  it("defaults to the strongest visible cluster when clusters are present", () => {
+    const pairs = [
+      createPair(1, 1, "Alice", 2, "Bob", 0.96),
+      createPair(2, 4, "Dina", 5, "Eli", 0.88),
+    ]
+
+    const graphData = buildSimilarityGraphData(submissions, pairs, 75)
+
+    expect(getDefaultSimilarityGraphSelection(graphData, true)).toEqual({
+      type: "cluster",
+      clusterId: 1,
+    })
+  })
+
+  it("falls back to the first visible isolated submission when no pairs qualify", () => {
+    const lowSimilarityPairs = [createPair(1, 1, "Alice", 2, "Bob", 0.4)]
+
+    const graphData = buildSimilarityGraphData(submissions, lowSimilarityPairs, 75)
+
+    expect(getDefaultSimilarityGraphSelection(graphData, true)).toEqual({
+      type: "node",
+      submissionId: 1,
+      clusterId: null,
+    })
+  })
+
+  it("filters threshold-qualified pairs by cluster and node selection", () => {
+    const pairs = [
+      createPair(1, 1, "Alice", 2, "Bob", 0.96),
+      createPair(2, 2, "Bob", 3, "Cara", 0.94),
+      createPair(3, 4, "Dina", 5, "Eli", 0.88),
+    ]
+
+    const graphData = buildSimilarityGraphData(submissions, pairs, 75)
+
+    expect(
+      getPairsForSimilarityGraphSelection(graphData, {
+        type: "cluster",
+        clusterId: 1,
+      }).map((pair) => pair.id),
+    ).toEqual([1, 2])
+    expect(
+      getPairsForSimilarityGraphSelection(graphData, {
+        type: "node",
+        submissionId: 2,
+        clusterId: 1,
+      }).map((pair) => pair.id),
+    ).toEqual([1, 2])
+  })
+
+  it("derives a cluster selection from a reviewed threshold-qualified pair", () => {
+    const pairs = [
+      createPair(1, 1, "Alice", 2, "Bob", 0.96),
+      createPair(2, 2, "Bob", 3, "Cara", 0.94),
+    ]
+
+    const graphData = buildSimilarityGraphData(submissions, pairs, 75)
+
+    expect(getSimilarityGraphSelectionForPair(graphData, 1)).toEqual({
+      type: "cluster",
+      clusterId: 1,
+    })
+  })
+
+  it("invalidates isolated-submission selection when isolated submissions are hidden", () => {
+    const graphData = buildSimilarityGraphData(submissions, [], 75)
+
+    expect(
+      isSimilarityGraphSelectionValid(
+        graphData,
+        { type: "node", submissionId: 1, clusterId: null },
+        false,
+      ),
+    ).toBe(false)
+    expect(
+      isSimilarityGraphSelectionValid(
+        graphData,
+        { type: "node", submissionId: 1, clusterId: null },
+        true,
+      ),
+    ).toBe(true)
   })
 })
 

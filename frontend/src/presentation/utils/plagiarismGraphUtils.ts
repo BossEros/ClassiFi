@@ -7,7 +7,7 @@ import {
   type SimilarityClusterMember,
 } from "@/presentation/utils/plagiarismClusterUtils"
 
-export const SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT = 75
+export const SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT = 95
 export const SIMILARITY_GRAPH_MIN_THRESHOLD_PERCENT = 25
 export const SIMILARITY_GRAPH_MAX_THRESHOLD_PERCENT = 100
 
@@ -79,6 +79,11 @@ export interface SimilarityGraphData {
   clusters: SimilarityGraphCluster[]
   singletonNodes: SimilarityGraphNode[]
 }
+
+export type SimilarityGraphSelection =
+  | { type: "none" }
+  | { type: "cluster"; clusterId: number }
+  | { type: "node"; submissionId: number; clusterId: number | null }
 
 /**
  * Positioned node ready for SVG rendering.
@@ -251,6 +256,204 @@ export function buildSimilarityGraphData(
     edges: edges.sort((leftEdge, rightEdge) => rightEdge.similarity - leftEdge.similarity),
     clusters: graphClusters,
     singletonNodes: nodes.filter((node) => node.visiblePairCount === 0),
+  }
+}
+
+/**
+ * Creates the empty graph-selection state.
+ *
+ * @returns Empty graph selection.
+ */
+export function createEmptySimilarityGraphSelection(): SimilarityGraphSelection {
+  return { type: "none" }
+}
+
+/**
+ * Compares two graph selections for value equality.
+ *
+ * @param leftSelection - Left-hand selection.
+ * @param rightSelection - Right-hand selection.
+ * @returns True when both selections represent the same graph context.
+ */
+export function areSimilarityGraphSelectionsEqual(
+  leftSelection: SimilarityGraphSelection,
+  rightSelection: SimilarityGraphSelection,
+): boolean {
+  if (leftSelection.type !== rightSelection.type) {
+    return false
+  }
+
+  switch (leftSelection.type) {
+    case "none":
+      return true
+    case "cluster":
+      return (
+        rightSelection.type === "cluster" &&
+        leftSelection.clusterId === rightSelection.clusterId
+      )
+    case "node":
+      return (
+        rightSelection.type === "node" &&
+        leftSelection.submissionId === rightSelection.submissionId &&
+        leftSelection.clusterId === rightSelection.clusterId
+      )
+  }
+}
+
+/**
+ * Returns the top threshold-qualified pairs shown by the active graph.
+ *
+ * @param graphData - Threshold-qualified graph data.
+ * @param limit - Maximum number of pairs to return.
+ * @returns Highest-ranked threshold-qualified pairs.
+ */
+export function getTopSuspiciousPairs(
+  graphData: SimilarityGraphData,
+  limit = 3,
+): PairResponse[] {
+  return graphData.edges.slice(0, Math.max(limit, 0)).map((edge) => edge.pair)
+}
+
+/**
+ * Validates whether the provided graph selection still points at visible graph content.
+ *
+ * @param graphData - Threshold-qualified graph data.
+ * @param selection - Current graph selection.
+ * @param showSingletons - Whether isolated submissions are visible in the graph.
+ * @returns True when the selection is still valid for the active graph state.
+ */
+export function isSimilarityGraphSelectionValid(
+  graphData: SimilarityGraphData,
+  selection: SimilarityGraphSelection,
+  showSingletons: boolean,
+): boolean {
+  if (selection.type === "none") {
+    return true
+  }
+
+  if (selection.type === "cluster") {
+    return graphData.clusters.some(
+      (cluster) => cluster.clusterId === selection.clusterId,
+    )
+  }
+
+  const selectedNode = graphData.nodes.find(
+    (node) => node.submissionId === selection.submissionId,
+  )
+
+  if (!selectedNode) {
+    return false
+  }
+
+  if (selectedNode.clusterId !== null) {
+    return graphData.clusters.some(
+      (cluster) => cluster.clusterId === selectedNode.clusterId,
+    )
+  }
+
+  return showSingletons && selectedNode.visiblePairCount === 0
+}
+
+/**
+ * Resolves the default graph selection for the active threshold and singleton visibility.
+ *
+ * @param graphData - Threshold-qualified graph data.
+ * @param showSingletons - Whether isolated submissions are visible in the graph.
+ * @returns The best default selection for first-load or invalid-selection recovery.
+ */
+export function getDefaultSimilarityGraphSelection(
+  graphData: SimilarityGraphData,
+  showSingletons: boolean,
+): SimilarityGraphSelection {
+  const strongestCluster = graphData.clusters[0]
+  if (strongestCluster) {
+    return { type: "cluster", clusterId: strongestCluster.clusterId }
+  }
+
+  const strongestVisiblePair = graphData.edges[0]
+  if (strongestVisiblePair) {
+    if (strongestVisiblePair.clusterId !== null) {
+      return {
+        type: "cluster",
+        clusterId: strongestVisiblePair.clusterId,
+      }
+    }
+
+    return {
+      type: "node",
+      submissionId: strongestVisiblePair.sourceId,
+      clusterId: null,
+    }
+  }
+
+  if (showSingletons && graphData.singletonNodes.length > 0) {
+    const firstVisibleSingleton = graphData.singletonNodes[0]
+    return {
+      type: "node",
+      submissionId: firstVisibleSingleton.submissionId,
+      clusterId: null,
+    }
+  }
+
+  return createEmptySimilarityGraphSelection()
+}
+
+/**
+ * Filters threshold-qualified pairs using the active graph selection.
+ *
+ * @param graphData - Threshold-qualified graph data.
+ * @param selection - Active graph selection.
+ * @returns Threshold-qualified pairs scoped to the active graph selection.
+ */
+export function getPairsForSimilarityGraphSelection(
+  graphData: SimilarityGraphData,
+  selection: SimilarityGraphSelection,
+): PairResponse[] {
+  if (selection.type === "none") {
+    return graphData.edges.map((edge) => edge.pair)
+  }
+
+  if (selection.type === "cluster") {
+    const selectedCluster = graphData.clusters.find(
+      (cluster) => cluster.clusterId === selection.clusterId,
+    )
+
+    return selectedCluster?.edges.map((edge) => edge.pair) ?? []
+  }
+
+  return graphData.edges
+    .filter(
+      (edge) =>
+        edge.sourceId === selection.submissionId ||
+        edge.targetId === selection.submissionId,
+    )
+    .map((edge) => edge.pair)
+}
+
+/**
+ * Resolves the graph selection that best represents a reviewed threshold-qualified pair.
+ *
+ * @param graphData - Threshold-qualified graph data.
+ * @param pairId - Similarity pair identifier.
+ * @returns Matching graph selection for the pair.
+ */
+export function getSimilarityGraphSelectionForPair(
+  graphData: SimilarityGraphData,
+  pairId: number,
+): SimilarityGraphSelection {
+  const selectedEdge = graphData.edges.find((edge) => edge.edgeId === pairId)
+  if (!selectedEdge) {
+    return createEmptySimilarityGraphSelection()
+  }
+
+  if (selectedEdge.clusterId !== null) {
+    return { type: "cluster", clusterId: selectedEdge.clusterId }
+  }
+
+  return {
+    type: "node",
+    submissionId: selectedEdge.sourceId,
+    clusterId: null,
   }
 }
 

@@ -1,34 +1,37 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react"
-import type {
-  FileResponse,
-  PairResponse,
-} from "@/business/services/plagiarismService"
+import type { PairResponse } from "@/business/services/plagiarismService"
 import {
-  buildSimilarityGraphData,
+  getDefaultSimilarityGraphSelection,
   layoutSimilarityGraph,
   SIMILARITY_GRAPH_MAX_THRESHOLD_PERCENT,
   SIMILARITY_GRAPH_MIN_THRESHOLD_PERCENT,
   type PositionedSimilarityGraphNode,
+  type SimilarityGraphData,
+  type SimilarityGraphSelection,
 } from "@/presentation/utils/plagiarismGraphUtils"
 import { SimilarityThresholdSlider } from "./SimilarityThresholdSlider"
 import { SimilarityBadge } from "./SimilarityBadge"
 import { Info, MousePointerClick } from "lucide-react"
 
 interface SimilarityGraphViewProps {
-  /** All analyzed submissions so true singleton nodes can be rendered. */
-  submissions: FileResponse[]
-  /** Pairwise similarity results for the assignment. */
-  pairs: PairResponse[]
+  /** Threshold-qualified graph data shared with the page. */
+  graphData: SimilarityGraphData
   /** Active threshold percentage shared with the rest of the page. */
   minimumSimilarityPercent: number
   /** Triggered when the shared threshold changes. */
   onMinimumSimilarityPercentChange: (minimumSimilarityPercent: number) => void
   /** Opens the detailed review flow for a specific pair. */
   onReviewPair: (pair: PairResponse) => void
+  /** Controlled graph selection from the page. */
+  selection: SimilarityGraphSelection
+  /** Triggered when the graph selection changes. */
+  onSelectionChange: (selection: SimilarityGraphSelection) => void
   /** Optional selected pair identifier from the comparison panel. */
   selectedPairId?: number | null
+  /** Whether singleton submissions are shown in the graph. */
+  showSingletons: boolean
   /** Notifies the parent whenever the singleton toggle changes. */
-  onShowSingletonsChange?: (showSingletons: boolean) => void
+  onShowSingletonsChange: (showSingletons: boolean) => void
 }
 
 interface GraphTooltipState {
@@ -40,16 +43,18 @@ interface GraphTooltipState {
 /**
  * Interactive similarity graph with threshold-based clustering in native React.
  *
- * @param props - Pair data, shared threshold state, and review callbacks.
- * @returns Responsive SVG graph with threshold slider, singleton toggle, tooltips, and selection details.
+ * @param props - Graph data, shared threshold state, selection state, and review callbacks.
+ * @returns Responsive SVG graph with threshold slider, suspicious-pairs shortcuts, and controlled review context.
  */
 export function SimilarityGraphView({
-  submissions,
-  pairs,
+  graphData,
   minimumSimilarityPercent,
   onMinimumSimilarityPercentChange,
   onReviewPair,
+  selection,
+  onSelectionChange,
   selectedPairId = null,
+  showSingletons,
   onShowSingletonsChange,
 }: SimilarityGraphViewProps) {
   const graphContainerRef = useRef<HTMLDivElement | null>(null)
@@ -57,20 +62,10 @@ export function SimilarityGraphView({
     width: 960,
     height: 560,
   })
-  const [showSingletons, setShowSingletons] = useState(true)
-  const [selectedNodeId, setSelectedNodeId] = useState<number | null>(null)
-  const [selectedClusterId, setSelectedClusterId] = useState<number | null>(
-    null,
-  )
   const [tooltipState, setTooltipState] = useState<GraphTooltipState | null>(
     null,
   )
 
-  const graphData = useMemo(
-    () =>
-      buildSimilarityGraphData(submissions, pairs, minimumSimilarityPercent),
-    [minimumSimilarityPercent, pairs, submissions],
-  )
   const graphLayout = useMemo(
     () =>
       layoutSimilarityGraph(graphData, {
@@ -98,31 +93,20 @@ export function SimilarityGraphView({
       ),
     [graphLayout.edges, visibleNodeById],
   )
-  const selectedPairEdge = useMemo(() => {
-    if (selectedPairId === null) {
-      return null
-    }
-
-    return (
-      graphData.edges.find((edge) => edge.edgeId === selectedPairId) ?? null
-    )
-  }, [graphData.edges, selectedPairId])
   const effectiveSelectedNodeId =
-    selectedNodeId !== null && visibleNodeById.has(selectedNodeId)
-      ? selectedNodeId
+    selection.type === "node" && visibleNodeById.has(selection.submissionId)
+      ? selection.submissionId
       : null
-  const effectiveSelectedClusterId =
-    selectedPairEdge?.clusterId ??
-    (selectedClusterId !== null &&
-    graphLayout.clusters.some(
-      (cluster) => cluster.clusterId === selectedClusterId,
-    )
-      ? selectedClusterId
-      : null)
   const selectedNode =
     effectiveSelectedNodeId !== null
       ? (visibleNodeById.get(effectiveSelectedNodeId) ?? null)
       : null
+  const effectiveSelectedClusterId =
+    selection.type === "cluster"
+      ? selection.clusterId
+      : selection.type === "node"
+        ? selection.clusterId
+        : null
   const selectedCluster =
     effectiveSelectedClusterId !== null
       ? (graphLayout.clusters.find(
@@ -133,6 +117,14 @@ export function SimilarityGraphView({
     tooltipState !== null
       ? (visibleNodeById.get(tooltipState.nodeId) ?? null)
       : null
+  const strongestVisiblePair = graphData.edges[0]?.pair ?? null
+  const fallbackSingletonSelection = useMemo(
+    () => getDefaultSimilarityGraphSelection(graphData, true),
+    [graphData],
+  )
+  const hasVisibleReviewContent =
+    graphData.edges.length > 0 ||
+    (showSingletons && graphData.singletonNodes.length > 0)
 
   useEffect(() => {
     const container = graphContainerRef.current
@@ -159,10 +151,8 @@ export function SimilarityGraphView({
     }
   }, [])
 
-
   const handleCanvasReset = () => {
-    setSelectedNodeId(null)
-    setSelectedClusterId(null)
+    onSelectionChange({ type: "none" })
     setTooltipState(null)
   }
 
@@ -170,8 +160,11 @@ export function SimilarityGraphView({
     submissionId: number
     clusterId: number | null
   }) => {
-    setSelectedNodeId(node.submissionId)
-    setSelectedClusterId(node.clusterId)
+    onSelectionChange({
+      type: "node",
+      submissionId: node.submissionId,
+      clusterId: node.clusterId,
+    })
   }
 
   const handleNodeHover = (
@@ -195,8 +188,31 @@ export function SimilarityGraphView({
   }
 
   const handleEdgeReview = (pair: PairResponse, clusterId: number | null) => {
-    setSelectedNodeId(null)
-    setSelectedClusterId(clusterId)
+    if (clusterId !== null) {
+      onSelectionChange({ type: "cluster", clusterId })
+    } else {
+      onSelectionChange({
+        type: "node",
+        submissionId: pair.leftFile.id,
+        clusterId: null,
+      })
+    }
+
+    onReviewPair(pair)
+  }
+
+  const handleTopPairReview = (pair: PairResponse) => {
+    const matchingEdge = graphData.edges.find((edge) => edge.edgeId === pair.id)
+    if (matchingEdge && matchingEdge.clusterId !== null) {
+      onSelectionChange({ type: "cluster", clusterId: matchingEdge.clusterId })
+    } else {
+      onSelectionChange({
+        type: "node",
+        submissionId: pair.leftFile.id,
+        clusterId: null,
+      })
+    }
+
     onReviewPair(pair)
   }
 
@@ -215,11 +231,9 @@ export function SimilarityGraphView({
           Similarity Graph
         </h2>
         <p className="max-w-3xl text-sm text-slate-500">
-          Explore submission similarity as a graph. Each edge connects two
-          submissions whose hybrid similarity meets or exceeds the threshold.
-          Raise the threshold to focus on the most suspicious pairs; lower it to
-          reveal more connections. The slider also updates the pairwise triage
-          table simultaneously.
+          Explore submission similarity as a graph. Each line connects two
+          submissions that meet the current threshold. Click a line to review a
+          pair, or click a submission to inspect its matching context.
         </p>
       </div>
 
@@ -244,8 +258,8 @@ export function SimilarityGraphView({
                   </h3>
 
                   <p className="mx-auto mt-3 text-pretty text-sm leading-6 text-slate-600 sm:text-[15px]">
-                    Lower the threshold or enable singleton nodes to inspect the
-                    available submissions in this similarity result set.
+                    Lower the threshold or enable isolated submissions to inspect
+                    the available submissions in this similarity result set.
                   </p>
                 </div>
               </div>
@@ -268,6 +282,7 @@ export function SimilarityGraphView({
                   {graphLayout.clusters.map((cluster) => {
                     const isSelectedCluster =
                       cluster.clusterId === effectiveSelectedClusterId
+
                     return (
                       <circle
                         key={cluster.clusterId}
@@ -282,8 +297,10 @@ export function SimilarityGraphView({
                         className="cursor-pointer transition-all duration-200"
                         onClick={(event) => {
                           event.stopPropagation()
-                          setSelectedNodeId(null)
-                          setSelectedClusterId(cluster.clusterId)
+                          onSelectionChange({
+                            type: "cluster",
+                            clusterId: cluster.clusterId,
+                          })
                         }}
                       />
                     )
@@ -330,7 +347,7 @@ export function SimilarityGraphView({
                   })}
 
                   {visibleNodes.map((node) => {
-                    const isSelectedNode = node.submissionId === selectedNodeId
+                    const isSelectedNode = node.submissionId === effectiveSelectedNodeId
                     const isNodeInSelectedCluster =
                       effectiveSelectedClusterId !== null &&
                       node.clusterId === effectiveSelectedClusterId
@@ -433,16 +450,14 @@ export function SimilarityGraphView({
 
             <label className="inline-flex cursor-pointer items-center gap-3">
               <span className="text-sm font-medium text-slate-700">
-                Allow Singleton
+                Show isolated submissions
               </span>
               <span className="relative inline-flex items-center">
                 <input
                   type="checkbox"
                   checked={showSingletons}
                   onChange={(event) => {
-                    const next = event.target.checked
-                    setShowSingletons(next)
-                    onShowSingletonsChange?.(next)
+                    onShowSingletonsChange(event.target.checked)
                   }}
                   className="peer sr-only"
                 />
@@ -455,7 +470,7 @@ export function SimilarityGraphView({
             <div className="flex items-center gap-2">
               <MousePointerClick className="h-4 w-4 text-teal-600" />
               <h3 className="text-lg font-semibold text-slate-900">
-                Selection Details
+                Review Context
               </h3>
             </div>
 
@@ -463,7 +478,7 @@ export function SimilarityGraphView({
               <div className="mt-4 space-y-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Selected node
+                    Focused submission
                   </p>
                   <h4 className="mt-1 text-lg font-semibold text-slate-900">
                     {selectedNode.studentName}
@@ -507,26 +522,36 @@ export function SimilarityGraphView({
                   </div>
                 </div>
 
-                {reviewableNodePair ? (
+                <div className="flex flex-col gap-2">
+                  {reviewableNodePair ? (
+                    <button
+                      type="button"
+                      onClick={() => onReviewPair(reviewableNodePair)}
+                      className="w-full rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
+                    >
+                      Review strongest pair
+                    </button>
+                  ) : (
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                      No pair is available to review for this submission at the
+                      current threshold.
+                    </div>
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => onReviewPair(reviewableNodePair)}
-                    className="w-full rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
+                    onClick={handleCanvasReset}
+                    className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-50"
                   >
-                    Review strongest pair for this node
+                    Show all pairs
                   </button>
-                ) : (
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    No pair is available to review for this node at the current
-                    threshold.
-                  </div>
-                )}
+                </div>
               </div>
             ) : selectedCluster ? (
               <div className="mt-4 space-y-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Selected cluster
+                    Focused cluster
                   </p>
                   <h4 className="mt-1 text-lg font-semibold text-slate-900">
                     {selectedCluster.label}
@@ -566,21 +591,73 @@ export function SimilarityGraphView({
                   </div>
                 </div>
 
-                {reviewableClusterPair && (
+                <div className="flex flex-col gap-2">
+                  {reviewableClusterPair && (
+                    <button
+                      type="button"
+                      onClick={() => onReviewPair(reviewableClusterPair)}
+                      className="w-full rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
+                    >
+                      Review strongest pair
+                    </button>
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => onReviewPair(reviewableClusterPair)}
+                    onClick={handleCanvasReset}
+                    className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors duration-200 hover:bg-slate-50"
+                  >
+                    Show all pairs
+                  </button>
+                </div>
+              </div>
+            ) : hasVisibleReviewContent ? (
+              <div className="mt-4 space-y-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Overview
+                  </p>
+                  <h4 className="mt-1 text-lg font-semibold text-slate-900">
+                    All threshold-qualified pairs
+                  </h4>
+                  <p className="text-sm text-slate-500">
+                    {graphData.edges.length} qualifying pairs across{" "}
+                    {graphData.clusters.length} visible clusters
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <SelectionMetricCard
+                    label="Pairs"
+                    value={graphData.edges.length}
+                  />
+                  <SelectionMetricCard
+                    label="Clusters"
+                    value={graphData.clusters.length}
+                  />
+                </div>
+
+                {strongestVisiblePair ? (
+                  <button
+                    type="button"
+                    onClick={() => handleTopPairReview(strongestVisiblePair)}
                     className="w-full rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
                   >
-                    Review strongest pair in this cluster
+                    Review strongest pair
                   </button>
-                )}
+                ) : fallbackSingletonSelection.type === "node" ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectionChange(fallbackSingletonSelection)}
+                    className="w-full rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-700 shadow-sm transition-colors duration-200 hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
+                  >
+                    View top isolated submission
+                  </button>
+                ) : null}
               </div>
             ) : (
               <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                Select a node or cluster to inspect the submissions behind the
-                graph. The graph stays synchronized with the active similarity
-                threshold.
+                No reviewable graph context is visible at the current threshold.
               </div>
             )}
           </div>
@@ -607,6 +684,3 @@ function SelectionMetricCard({ label, value }: SelectionMetricCardProps) {
 }
 
 export default SimilarityGraphView
-
-
-

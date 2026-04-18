@@ -41,6 +41,10 @@ import type { NotificationService } from "@/modules/notifications/notification.s
 import type { PlagiarismAutoAnalysisService } from "@/modules/plagiarism/plagiarism-auto-analysis.service.js"
 import { settings } from "@/shared/config.js"
 import { withTransaction } from "@/shared/transaction.js"
+import {
+  buildSubmissionNotificationUrl,
+  formatSubmissionLatenessText,
+} from "@/modules/notifications/submission-grade-notification.js"
 
 const logger = createLogger("SubmissionService")
 const MAX_TEACHER_NAME_LENGTH = 100
@@ -131,6 +135,7 @@ export class SubmissionService {
     // STEP 8: Run automated test cases and apply any late-penalty deduction to the grade
     const testsPassed = await this.runTestsAndApplyPenalty(
       submission.id,
+      assignment,
       penaltyResult,
       assignment.totalScore ?? 100,
     )
@@ -620,6 +625,7 @@ export class SubmissionService {
    */
   private async runTestsAndApplyPenalty(
     submissionId: number,
+    assignment: Assignment,
     penaltyResult: PenaltyResult | null,
     totalScore: number,
   ): Promise<boolean> {
@@ -644,15 +650,79 @@ export class SubmissionService {
     const updatedSubmission = await this.submissionRepo.getSubmissionById(submissionId)
 
     if (updatedSubmission && updatedSubmission.grade !== null) {
+      const originalAutomaticGrade = updatedSubmission.grade
       const penalizedGrade = this.latePenaltyService.applyPenalty(
         updatedSubmission.grade,
         penaltyResult,
         totalScore,
       )
       await this.submissionRepo.updateGrade(submissionId, penalizedGrade)
+      await this.notifyLatePenaltyApplied(
+        updatedSubmission,
+        assignment,
+        originalAutomaticGrade,
+        penalizedGrade,
+        penaltyResult,
+      )
     }
 
     return true
+  }
+
+  private async notifyLatePenaltyApplied(
+    submission: Submission,
+    assignment: Assignment,
+    previousGrade: number,
+    adjustedGrade: number,
+    penaltyResult: PenaltyResult,
+  ): Promise<void> {
+    if (adjustedGrade >= previousGrade) {
+      return
+    }
+
+    const latePenaltyNotificationPayload = {
+      submissionId: submission.id,
+      assignmentId: assignment.id,
+      assignmentTitle: assignment.assignmentName,
+      grade: adjustedGrade,
+      maxGrade: assignment.totalScore ?? 100,
+      submissionUrl: buildSubmissionNotificationUrl(
+        settings.frontendUrl,
+        assignment.id,
+      ),
+      reason: "late_penalty_applied" as const,
+      previousGrade,
+      deductedPoints: previousGrade - adjustedGrade,
+      latenessText: formatSubmissionLatenessText(penaltyResult.hoursLate),
+    }
+
+    try {
+      await this.notificationService.createNotification(
+        submission.studentId,
+        "SUBMISSION_GRADED",
+        latePenaltyNotificationPayload,
+      )
+    } catch (error) {
+      logger.error("Failed to persist late penalty notification", {
+        submissionId: submission.id,
+        studentId: submission.studentId,
+        error,
+      })
+    }
+
+    void this.notificationService
+      .sendEmailNotificationIfEnabled(
+        submission.studentId,
+        "SUBMISSION_GRADED",
+        latePenaltyNotificationPayload,
+      )
+      .catch((error) => {
+        logger.error("Failed to send late penalty notification email", {
+          submissionId: submission.id,
+          studentId: submission.studentId,
+          error,
+        })
+      })
   }
 
   /**

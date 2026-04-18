@@ -519,7 +519,7 @@ The notification system provides real-time updates to users about important even
 | Type                 | Trigger Event              | Recipients        |
 | -------------------- | -------------------------- | ----------------- |
 | `ASSIGNMENT_CREATED` | Teacher creates assignment | Enrolled students |
-| `SUBMISSION_GRADED`  | Submission receives grade  | Student           |
+| `SUBMISSION_GRADED`  | Submission grade changes with explicit grading reason metadata | Student |
 | `NEW_USER_REGISTERED` | Teacher self-registers and awaits approval | Admins |
 
 **Features**:
@@ -1091,7 +1091,12 @@ class NotificationService {
 **Notification Types**:
 
 - `ASSIGNMENT_CREATED` - Sent to all enrolled students when teacher creates assignment
-- `SUBMISSION_GRADED` - Sent to student when their submission is graded
+- `SUBMISSION_GRADED` - Sent to students for grade lifecycle events with explicit `reason` metadata:
+  - `automatic_grade` when tests produce the first score
+  - `manual_grade` when a teacher sets a score directly
+  - `grade_override` when a teacher replaces the displayed score
+  - `late_penalty_applied` when the visible score is reduced after lateness is applied
+  - `similarity_deduction` when the visible score is reduced after similarity review
 - `STUDENT_UNENROLLED` - Sent to the teacher when a student leaves voluntarily or is removed by an admin
 - `REMOVED_FROM_CLASS` - Sent to the student when a teacher or admin removes them from a class
 - `NEW_USER_REGISTERED` - Sent to admins only when a self-registered teacher account is awaiting approval
@@ -1105,7 +1110,23 @@ Teacher-initiated class-roster removals:
 Similarity-deduction notification behavior:
 
 - When automatic similarity deduction changes a student's visible score, the student also receives a `SUBMISSION_GRADED` notification explaining that the score was updated after similarity review.
+- Similarity-deduction metadata includes the previous score, updated score, similarity percentage, and the matched student name or names used in the message copy.
 - The notification is sent only when the displayed score actually changes; repeated penalty syncs with the same grade do not create duplicate notices.
+
+Late-penalty notification behavior:
+
+- Automatic grading still emits the initial `automatic_grade` notification with the raw computed score.
+- If a late penalty reduces that visible score afterward, the student receives a second `SUBMISSION_GRADED` notification with `reason: "late_penalty_applied"`.
+- Late-penalty metadata includes the previous score, adjusted score, and human-readable lateness text such as `You submitted 5 hours late`.
+
+Manual grading notification behavior:
+
+- Teacher-set scores emit `reason: "manual_grade"` with the teacher-entered score.
+- If the stored late penalty reduces that teacher-entered score, the student also receives a follow-up `late_penalty_applied` notification describing the deduction.
+
+Grade-override notification behavior:
+
+- Teacher overrides emit `reason: "grade_override"` and include both the previous displayed score and the new overridden score when available.
 
 **Email Providers**:
 

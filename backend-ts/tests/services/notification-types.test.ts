@@ -57,6 +57,7 @@ describe("Notification Types Registry", () => {
       submissionUrl: "https://app.com/submissions/1",
       submissionId: 1,
       assignmentId: 1,
+      reason: "automatic_grade" as const,
     }
 
     it("should generate correct title", () => {
@@ -85,7 +86,51 @@ describe("Notification Types Registry", () => {
         grade: 85,
         maxGrade: 100,
         submissionUrl: "https://app.com/submissions/1",
+        reason: "automatic_grade",
+        previousGrade: undefined,
+        deductedPoints: undefined,
+        similarityPercentage: undefined,
+        latenessText: undefined,
+        matchedStudentNames: undefined,
       })
+    })
+
+    it("should generate manual-grade messaging", () => {
+      expect(
+        config.titleTemplate({ ...testData, reason: "manual_grade" }),
+      ).toBe("Teacher Grade Posted")
+      expect(
+        config.messageTemplate({ ...testData, reason: "manual_grade" }),
+      ).toContain("Your teacher graded your submission")
+    })
+
+    it("should generate grade-override messaging", () => {
+      const overrideData = {
+        ...testData,
+        reason: "grade_override" as const,
+        previousGrade: 70,
+        grade: 90,
+      }
+
+      expect(config.titleTemplate(overrideData)).toBe(
+        "Score Updated by Your Teacher",
+      )
+      expect(config.messageTemplate(overrideData)).toContain("from 70/100 to 90/100")
+    })
+
+    it("should generate late-penalty messaging with lateness context", () => {
+      const latePenaltyData = {
+        ...testData,
+        reason: "late_penalty_applied" as const,
+        previousGrade: 90,
+        grade: 80,
+        latenessText: "You submitted 5 hours late",
+      }
+
+      expect(config.titleTemplate(latePenaltyData)).toBe("Late Penalty Applied")
+      expect(config.messageTemplate(latePenaltyData)).toContain(
+        "You submitted 5 hours late",
+      )
     })
 
     it("should generate similarity deduction messaging when requested", () => {
@@ -95,13 +140,16 @@ describe("Notification Types Registry", () => {
         previousGrade: 85,
         deductedPoints: 21,
         grade: 64,
+        similarityPercentage: 100,
+        matchedStudentNames: ["Alice Student", "Bob Student"],
       }
 
       expect(config.titleTemplate(similarityUpdateData)).toBe(
         "Score Updated After Similarity Review",
       )
+      expect(config.messageTemplate(similarityUpdateData)).toContain("100% source code similarity")
       expect(config.messageTemplate(similarityUpdateData)).toContain(
-        "reviewed for similarity",
+        "Alice Student and Bob Student",
       )
       expect(config.messageTemplate(similarityUpdateData)).toContain("85/100")
       expect(config.messageTemplate(similarityUpdateData)).toContain("64/100")

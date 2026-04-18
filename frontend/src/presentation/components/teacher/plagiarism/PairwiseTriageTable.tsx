@@ -10,6 +10,7 @@ import {
   getThresholdQualifiedPairs,
   normalizeSimilarityToRatio,
 } from "@/presentation/utils/plagiarismClusterUtils"
+import { SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT } from "@/presentation/utils/plagiarismGraphUtils"
 import {
   getNormalizedLongestRatio,
   getNormalizedOverlapRatio,
@@ -42,6 +43,10 @@ interface PairwiseTriageTableProps {
   selectedPairId?: number | null
   /** Optional scoring weights from the backend to display dynamic weight labels. */
   scoringWeights?: ScoringWeights
+  /** Optional active graph filter summary shown above the table. */
+  filterSummary?: string | null
+  /** Optional callback that resets the active graph filter. */
+  onClearFilter?: () => void
 }
 
 const similarityThresholdOptions = [
@@ -178,11 +183,13 @@ export function PairwiseTriageTable({
   isLoading = false,
   selectedPairId,
   scoringWeights,
+  filterSummary,
+  onClearFilter,
 }: PairwiseTriageTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("similarity")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const [internalMinimumSimilarityPercent, setInternalMinimumSimilarityPercent] =
-    useState(75)
+    useState(SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
   const isControlledThreshold = typeof minimumSimilarityPercent === "number"
@@ -272,6 +279,20 @@ export function PairwiseTriageTable({
               ? "Review high-similarity student pairs and open code comparison details."
               : `Review high-similarity student pairs using the shared ${effectiveMinimumSimilarityPercent}% graph threshold.`}
           </p>
+          {filterSummary ? (
+            <div className="mt-3 inline-flex flex-wrap items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm text-teal-800">
+              <span>{filterSummary}</span>
+              {onClearFilter ? (
+                <button
+                  type="button"
+                  onClick={onClearFilter}
+                  className="font-semibold text-teal-700 underline-offset-2 transition-colors hover:text-teal-900 hover:underline"
+                >
+                  Show all pairs
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {showThresholdControl && (
@@ -437,16 +458,31 @@ export function PairwiseTriageTable({
                     return (
                       <tr
                         key={pair.id}
+                        aria-selected={isSelectedPair}
                         className={`cursor-pointer border-b border-slate-100 transition-colors duration-200 ${
                           isSelectedPair
-                            ? "bg-teal-50 ring-inset"
+                            ? "bg-teal-50/90"
                             : "hover:bg-slate-50/80"
                         }`}
                         onClick={() => onPairSelect(pair)}
                       >
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-900">
-                            {pairStudentNames.left} vs {pairStudentNames.right}
+                        <td
+                          className={`py-4 pr-6 ${
+                            isSelectedPair
+                              ? "border-l-4 border-teal-600 pl-5"
+                              : "px-6"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`text-sm font-medium ${
+                                isSelectedPair
+                                  ? "text-teal-900"
+                                  : "text-slate-900"
+                              }`}
+                            >
+                              {pairStudentNames.left} vs {pairStudentNames.right}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
