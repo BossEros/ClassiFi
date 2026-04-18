@@ -71,17 +71,14 @@ describe("PairComparison", () => {
     render(<PairComparison pair={pairFixture} variant="light" />)
 
     const user = userEvent.setup()
+    const previousFragmentButton = screen.getByRole("button", {
+      name: "Previous fragment",
+    })
     await user.click(screen.getByRole("button", { name: "Next fragment" }))
 
-    expect(
-      screen.getByText((_, element) => {
-        if (element?.tagName !== "SPAN") {
-          return false
-        }
-
-        return element.textContent === "Fragment 1 / 2"
-      }),
-    ).toBeInTheDocument()
+    expect(previousFragmentButton.parentElement).toHaveTextContent(
+      "Fragment 1 / 2",
+    )
 
     expect(
       screen.queryByText(/structural fingerprint/i),
