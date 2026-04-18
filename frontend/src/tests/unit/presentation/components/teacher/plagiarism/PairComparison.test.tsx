@@ -81,7 +81,8 @@ describe("PairComparison", () => {
     )
 
     expect(
-      screen.queryByText(/structural fingerprint/i),
-    ).not.toBeInTheDocument()
+      previousFragmentButton.parentElement,
+    ).not.toHaveTextContent(/structural fingerprint/i)
+    expect(screen.getByText(/matched structural fingerprints/i)).toBeInTheDocument()
   })
 })
