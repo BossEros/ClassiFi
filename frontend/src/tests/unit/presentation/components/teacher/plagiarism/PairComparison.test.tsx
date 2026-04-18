@@ -74,9 +74,13 @@ describe("PairComparison", () => {
     await user.click(screen.getByRole("button", { name: "Next fragment" }))
 
     expect(
-      screen.getByText((_, element) =>
-        element?.textContent?.includes("Fragment 1 / 2") ?? false,
-      ),
+      screen.getByText((_, element) => {
+        if (element?.tagName !== "SPAN") {
+          return false
+        }
+
+        return element.textContent === "Fragment 1 / 2"
+      }),
     ).toBeInTheDocument()
 
     expect(

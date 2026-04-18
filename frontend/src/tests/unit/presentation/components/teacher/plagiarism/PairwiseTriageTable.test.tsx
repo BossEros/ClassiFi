@@ -35,7 +35,7 @@ const pairFixture: PairResponse = {
   },
   structuralScore: 0.94,
   semanticScore: 0.88,
-  hybridScore: 0.92,
+  hybridScore: 0.97,
   overlap: 20,
   longest: 8,
 }

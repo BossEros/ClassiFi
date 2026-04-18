@@ -44,9 +44,9 @@ const mockData = vi.hoisted(() => {
       lineCount: 10,
       studentName: "Student B",
     },
-    structuralScore: 0.9,
-    semanticScore: 0.88,
-    hybridScore: 0.89,
+    structuralScore: 0.97,
+    semanticScore: 0.96,
+    hybridScore: 0.97,
     overlap: 40,
     longest: 15,
   }
@@ -58,8 +58,8 @@ const mockData = vi.hoisted(() => {
     summary: {
       totalFiles: 2,
       totalPairs: 1,
-      averageSimilarity: 0.89,
-      maxSimilarity: 0.9,
+      averageSimilarity: 0.97,
+      maxSimilarity: 0.97,
     },
     submissions: [
       pair.leftFile,
@@ -335,8 +335,8 @@ describe("SimilarityResultsPage", () => {
 
     expect(screen.getByText("Submissions: 3")).toBeInTheDocument()
     expect(screen.getByText("Suspicious Pair: 1")).toBeInTheDocument()
-    expect(screen.getByText("Average Similarity: 89.0%")).toBeInTheDocument()
-    expect(screen.getByText("Max Similarity: 90.0%")).toBeInTheDocument()
+    expect(screen.getByText("Average Similarity: 97.0%")).toBeInTheDocument()
+    expect(screen.getByText("Max Similarity: 97.0%")).toBeInTheDocument()
     expect(
       screen.getByText("Similarity Graph: 95% / 3 submissions"),
     ).toBeInTheDocument()
@@ -350,8 +350,8 @@ describe("SimilarityResultsPage", () => {
   it("renders the average similarity card before the max similarity card", async () => {
     renderSimilarityResultsPage()
 
-    const averageSimilarityCard = screen.getByText("Average Similarity: 89.0%")
-    const maxSimilarityCard = screen.getByText("Max Similarity: 90.0%")
+    const averageSimilarityCard = screen.getByText("Average Similarity: 97.0%")
+    const maxSimilarityCard = screen.getByText("Max Similarity: 97.0%")
     const averageCardPosition = averageSimilarityCard.compareDocumentPosition(
       maxSimilarityCard,
     )
@@ -422,9 +422,9 @@ describe("SimilarityResultsPage", () => {
         lineCount: 9,
         studentName: "Student D",
       },
-      structuralScore: 0.84,
-      semanticScore: 0.82,
-      hybridScore: 0.83,
+      structuralScore: 0.96,
+      semanticScore: 0.95,
+      hybridScore: 0.96,
       overlap: 12,
       longest: 4,
     }
@@ -470,9 +470,9 @@ describe("SimilarityResultsPage", () => {
         lineCount: 9,
         studentName: "Student D",
       },
-      structuralScore: 0.84,
-      semanticScore: 0.82,
-      hybridScore: 0.83,
+      structuralScore: 0.96,
+      semanticScore: 0.95,
+      hybridScore: 0.96,
       overlap: 12,
       longest: 4,
     }
