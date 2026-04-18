@@ -22,6 +22,7 @@ import { fireAndForget, settlePromisesAndLogRejections } from "@/shared/utils.js
 interface SubmissionPenaltyCandidate {
   penaltyPercent: number
   sourceHybridScore: number
+  matchedSubmissionIds: number[]
 }
 
 const logger = createLogger("SimilarityPenaltyService")
@@ -184,6 +185,12 @@ export class SimilarityPenaltyService {
     const latestSubmissionIds = new Set(
       latestSubmissions.map((latestSubmission) => latestSubmission.id),
     )
+    const studentIdBySubmissionId = new Map(
+      latestSubmissions.map((latestSubmission) => [
+        latestSubmission.id,
+        latestSubmission.studentId,
+      ]),
+    )
     const submissionTimestampMap = new Map(
       latestSubmissions.map((latestSubmission) => [
         latestSubmission.id,
@@ -235,12 +242,26 @@ export class SimilarityPenaltyService {
         continue
       }
 
+      const matchedSubmissionId =
+        laterSubmissionId === reportResult.submission1Id
+          ? reportResult.submission2Id
+          : reportResult.submission1Id
+
       this.recordHigherPriorityCandidate(
         candidateBySubmissionId,
         laterSubmissionId,
-        penaltyCandidate,
+        {
+          ...penaltyCandidate,
+          matchedSubmissionIds: [matchedSubmissionId],
+        },
       )
     }
+
+    const matchedStudentNamesBySubmissionId =
+      await this.buildMatchedStudentNamesBySubmissionId(
+        candidateBySubmissionId,
+        studentIdBySubmissionId,
+      )
 
     // STEP 5: Apply the penalty to each submission's automatic grade and notify the student
     for (const latestSubmission of latestSubmissions) {
@@ -277,6 +298,9 @@ export class SimilarityPenaltyService {
         penaltyCandidate
           ? Math.round(penaltyCandidate.sourceHybridScore * 100)
           : 0,
+        penaltyCandidate
+          ? matchedStudentNamesBySubmissionId.get(latestSubmission.id) ?? []
+          : [],
       )
     }
   }
@@ -325,6 +349,7 @@ export class SimilarityPenaltyService {
     return {
       penaltyPercent,
       sourceHybridScore: hybridScore,
+      matchedSubmissionIds: [],
     }
   }
 
@@ -369,7 +394,79 @@ export class SimilarityPenaltyService {
       nextCandidate.sourceHybridScore > existingCandidate.sourceHybridScore
     ) {
       candidateBySubmissionId.set(submissionId, nextCandidate)
+      return
     }
+
+    if (
+      nextCandidate.penaltyPercent === existingCandidate.penaltyPercent &&
+      nextCandidate.sourceHybridScore === existingCandidate.sourceHybridScore
+    ) {
+      candidateBySubmissionId.set(submissionId, {
+        ...existingCandidate,
+        matchedSubmissionIds: Array.from(
+          new Set([
+            ...existingCandidate.matchedSubmissionIds,
+            ...nextCandidate.matchedSubmissionIds,
+          ]),
+        ),
+      })
+    }
+  }
+
+  private async buildMatchedStudentNamesBySubmissionId(
+    candidateBySubmissionId: Map<number, SubmissionPenaltyCandidate>,
+    studentIdBySubmissionId: Map<number, number>,
+  ): Promise<Map<number, string[]>> {
+    const uniqueStudentIds = new Set<number>()
+
+    candidateBySubmissionId.forEach((candidate) => {
+      candidate.matchedSubmissionIds.forEach((matchedSubmissionId) => {
+        const matchedStudentId = studentIdBySubmissionId.get(matchedSubmissionId)
+
+        if (matchedStudentId !== undefined) {
+          uniqueStudentIds.add(matchedStudentId)
+        }
+      })
+    })
+
+    const studentRecords = await Promise.all(
+      Array.from(uniqueStudentIds).map(async (studentId) => [
+        studentId,
+        await this.userRepo.getUserById(studentId),
+      ] as const),
+    )
+    const studentNameByStudentId = new Map(
+      studentRecords.map(([studentId, studentRecord]) => [
+        studentId,
+        this.buildStudentDisplayName(studentRecord?.firstName, studentRecord?.lastName),
+      ]),
+    )
+
+    return new Map(
+      Array.from(candidateBySubmissionId.entries()).map(
+        ([submissionId, candidate]) => [
+          submissionId,
+          candidate.matchedSubmissionIds
+            .map((matchedSubmissionId) => studentIdBySubmissionId.get(matchedSubmissionId))
+            .filter((studentId): studentId is number => studentId !== undefined)
+            .map(
+              (studentId) =>
+                studentNameByStudentId.get(studentId) ?? "another student",
+            ),
+        ],
+      ),
+    )
+  }
+
+  private buildStudentDisplayName(
+    firstName: string | null | undefined,
+    lastName: string | null | undefined,
+  ): string {
+    const combinedName = [firstName?.trim(), lastName?.trim()]
+      .filter((namePart): namePart is string => Boolean(namePart))
+      .join(" ")
+
+    return combinedName || "another student"
   }
 
   private async restoreAutomaticGrades(
@@ -437,6 +534,7 @@ export class SimilarityPenaltyService {
     adjustedGrade: number,
     penaltyPercent: number,
     similarityPercentage: number,
+    matchedStudentNames: string[],
   ): Promise<void> {
     if (penaltyPercent <= 0 || submission.isGradeOverridden) {
       return
@@ -456,6 +554,8 @@ export class SimilarityPenaltyService {
       reason: "similarity_deduction" as const,
       previousGrade: automaticGrade,
       deductedPoints: automaticGrade - adjustedGrade,
+      similarityPercentage,
+      matchedStudentNames,
     }
 
     try {

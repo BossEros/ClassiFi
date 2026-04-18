@@ -15,6 +15,10 @@ import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { withTransaction } from "@/shared/transaction.js"
 import { buildSubmissionGradeComputation, type GradeBreakdown } from "@/modules/submissions/submission-grade.js"
+import {
+  buildSubmissionNotificationUrl,
+  formatSubmissionLatenessText,
+} from "@/modules/notifications/submission-grade-notification.js"
 
 const logger = createLogger("GradebookService")
 
@@ -147,7 +151,12 @@ export class GradebookService {
             assignmentTitle: assignment.assignmentName,
             grade,
             maxGrade: assignment.totalScore,
-            submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+            submissionUrl: buildSubmissionNotificationUrl(
+              settings.frontendUrl,
+              assignment.id,
+            ),
+            reason: "grade_override",
+            previousGrade: submission.grade ?? undefined,
           },
         )
       })
@@ -171,7 +180,12 @@ export class GradebookService {
           assignmentTitle: assignment.assignmentName,
           grade,
           maxGrade: assignment.totalScore,
-          submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          submissionUrl: buildSubmissionNotificationUrl(
+            settings.frontendUrl,
+            assignment.id,
+          ),
+          reason: "grade_override",
+          previousGrade: submission.grade ?? undefined,
         },
       )
       .catch((error) => {
@@ -237,7 +251,11 @@ export class GradebookService {
             assignmentTitle: assignment.assignmentName,
             grade,
             maxGrade: assignment.totalScore,
-            submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+            submissionUrl: buildSubmissionNotificationUrl(
+              settings.frontendUrl,
+              assignment.id,
+            ),
+            reason: "manual_grade",
           },
         )
       })
@@ -261,7 +279,11 @@ export class GradebookService {
           assignmentTitle: assignment.assignmentName,
           grade,
           maxGrade: assignment.totalScore,
-          submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          submissionUrl: buildSubmissionNotificationUrl(
+            settings.frontendUrl,
+            assignment.id,
+          ),
+          reason: "manual_grade",
         },
       )
       .catch((error) => {
@@ -271,6 +293,55 @@ export class GradebookService {
           error,
         })
       })
+
+    if (gradeAfterLatePenalty !== grade) {
+      const latePenaltyNotificationPayload = {
+        submissionId: submission.id,
+        assignmentId: assignment.id,
+        assignmentTitle: assignment.assignmentName,
+        grade: gradeAfterLatePenalty,
+        maxGrade: assignment.totalScore,
+        submissionUrl: buildSubmissionNotificationUrl(
+          settings.frontendUrl,
+          assignment.id,
+        ),
+        reason: "late_penalty_applied" as const,
+        previousGrade: grade,
+        deductedPoints: grade - gradeAfterLatePenalty,
+        latenessText: this.buildSubmissionLatenessText(
+          submission.submittedAt,
+          assignment.deadline,
+        ),
+      }
+
+      try {
+        await this.notificationService.createNotification(
+          submission.studentId,
+          "SUBMISSION_GRADED",
+          latePenaltyNotificationPayload,
+        )
+      } catch (error) {
+        logger.error("Failed to persist late penalty notification", {
+          submissionId,
+          studentId: submission.studentId,
+          error,
+        })
+      }
+
+      void this.notificationService
+        .sendEmailNotificationIfEnabled(
+          submission.studentId,
+          "SUBMISSION_GRADED",
+          latePenaltyNotificationPayload,
+        )
+        .catch((error) => {
+          logger.error("Failed to send late penalty notification email", {
+            submissionId,
+            studentId: submission.studentId,
+            error,
+          })
+        })
+    }
 
     // STEP 6: Re-trigger similarity analysis now that a grade exists.
     // This is necessary because when the student originally submitted, grade was null so
@@ -296,6 +367,22 @@ export class GradebookService {
       throw new Error("Submission not found")
     }
     await this.submissionRepo.removeGradeOverride(submissionId)
+  }
+
+  private buildSubmissionLatenessText(
+    submittedAt: Date,
+    deadline: Date | null | undefined,
+  ): string {
+    if (!deadline) {
+      return "You submitted late"
+    }
+
+    const hoursLate = Math.max(
+      0,
+      (submittedAt.getTime() - deadline.getTime()) / (1000 * 60 * 60),
+    )
+
+    return formatSubmissionLatenessText(hoursLate)
   }
 
   /**

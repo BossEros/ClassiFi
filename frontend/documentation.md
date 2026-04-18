@@ -452,7 +452,15 @@ Real-time notification system that keeps users informed about important events:
 | Type                 | Trigger                    | Content                                |
 | -------------------- | -------------------------- | -------------------------------------- |
 | `ASSIGNMENT_CREATED` | Teacher creates assignment | Assignment title, class name, due date |
-| `SUBMISSION_GRADED`  | Submission receives grade or has its visible score updated after similarity review | Assignment title, updated score, feedback |
+| `SUBMISSION_GRADED`  | Submission score changes for automatic grading, teacher grading, overrides, late penalties, or similarity review | Assignment title, updated score, reason-specific metadata |
+
+`SUBMISSION_GRADED` metadata now includes a required `reason` field:
+
+- `automatic_grade` for the first auto-graded score
+- `manual_grade` when a teacher grades directly
+- `grade_override` when a teacher replaces the visible score
+- `late_penalty_applied` when lateness reduces the visible score and includes human-readable lateness text
+- `similarity_deduction` when similarity review reduces the visible score and includes the matched student name or names
 | `NEW_USER_REGISTERED` | Teacher self-registers and awaits approval | Teacher name/email and approval-needed context for admins |
 
 #### Features

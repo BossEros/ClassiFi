@@ -54,6 +54,11 @@ describe("SimilarityPenaltyService", () => {
     mockUserRepo = {
       getUserById: vi.fn(),
     }
+    mockUserRepo.getUserById.mockImplementation(async (userId: number) => ({
+      id: userId,
+      firstName: `Student${userId}`,
+      lastName: "User",
+    }))
 
     mockTestResultRepo = {
       calculateScore: vi.fn(),
@@ -317,6 +322,8 @@ describe("SimilarityPenaltyService", () => {
         previousGrade: 80,
         grade: 60,
         deductedPoints: 20,
+        similarityPercentage: 100,
+        matchedStudentNames: ["Student501 User"],
       }),
     )
     expect(

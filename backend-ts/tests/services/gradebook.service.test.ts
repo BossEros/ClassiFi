@@ -210,6 +210,8 @@ describe("GradebookService", () => {
           grade: 95,
           maxGrade: 100,
           submissionUrl: expect.stringContaining("/dashboard/assignments/1"),
+          reason: "grade_override",
+          previousGrade: 85,
         }),
       )
       expect(
@@ -221,6 +223,8 @@ describe("GradebookService", () => {
           submissionId: 1,
           assignmentId: 1,
           grade: 95,
+          reason: "grade_override",
+          previousGrade: 85,
         }),
       )
     })
@@ -310,6 +314,27 @@ describe("GradebookService", () => {
         1,
         100,
         "Perfect!",
+      )
+    })
+
+    it("falls back gracefully when overriding an ungraded submission", async () => {
+      mockSubmissionRepo.getSubmissionById.mockResolvedValue({
+        ...mockSubmission,
+        grade: null,
+      })
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(mockAssignment)
+      mockNotificationService.createNotification.mockResolvedValue({})
+
+      await gradebookService.overrideGrade(1, 88, "Manual review")
+
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        10,
+        "SUBMISSION_GRADED",
+        expect.objectContaining({
+          reason: "grade_override",
+          previousGrade: undefined,
+          grade: 88,
+        }),
       )
     })
   })
