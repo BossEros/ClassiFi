@@ -458,16 +458,31 @@ export function PairwiseTriageTable({
                     return (
                       <tr
                         key={pair.id}
+                        aria-selected={isSelectedPair}
                         className={`cursor-pointer border-b border-slate-100 transition-colors duration-200 ${
                           isSelectedPair
-                            ? "bg-teal-50 ring-inset"
+                            ? "bg-teal-50/90"
                             : "hover:bg-slate-50/80"
                         }`}
                         onClick={() => onPairSelect(pair)}
                       >
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-slate-900">
-                            {pairStudentNames.left} vs {pairStudentNames.right}
+                        <td
+                          className={`py-4 pr-6 ${
+                            isSelectedPair
+                              ? "border-l-4 border-teal-600 pl-5"
+                              : "px-6"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`text-sm font-medium ${
+                                isSelectedPair
+                                  ? "text-teal-900"
+                                  : "text-slate-900"
+                              }`}
+                            >
+                              {pairStudentNames.left} vs {pairStudentNames.right}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
