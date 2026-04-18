@@ -74,6 +74,10 @@ const mockData = vi.hoisted(() => {
     ],
     pairs: [pair],
     warnings: [],
+    scoringWeights: {
+      structuralWeight: 0.7,
+      semanticWeight: 0.3,
+    },
   }
 
   const details = {
@@ -199,20 +203,72 @@ vi.mock("@/presentation/components/ui/Card", () => ({
 vi.mock("@/presentation/components/teacher/plagiarism", () => ({
   PairwiseTriageTable: ({
     onPairSelect,
+    pairs,
+    filterSummary,
+    onClearFilter,
   }: {
     onPairSelect: (pair: typeof mockData.pair) => void
+    pairs: Array<typeof mockData.pair>
+    filterSummary?: string | null
+    onClearFilter?: () => void
   }) => (
-    <button onClick={() => onPairSelect(mockData.pair)}>Select Pair</button>
+    <div>
+      <div>Pair Table Count: {pairs.length}</div>
+      {filterSummary ? <div>{filterSummary}</div> : null}
+      {onClearFilter ? (
+        <button onClick={onClearFilter}>Clear Graph Filter</button>
+      ) : null}
+      <button
+        onClick={() => onPairSelect(pairs[0] ?? mockData.pair)}
+        disabled={pairs.length === 0}
+      >
+        Select Pair
+      </button>
+    </div>
   ),
   SimilarityGraphView: ({
     minimumSimilarityPercent,
-    submissions,
+    graphData,
+    selection,
+    showSingletons,
+    onSelectionChange,
+    onShowSingletonsChange,
   }: {
     minimumSimilarityPercent: number
-    submissions: Array<{ id: number }>
+    graphData: { nodes: Array<{ id?: number; submissionId?: number }> }
+    selection: { type: "none" | "cluster" | "node"; clusterId?: number | null }
+    showSingletons: boolean
+    onSelectionChange: (selection: {
+      type: "none" | "cluster" | "node"
+      clusterId?: number | null
+      submissionId?: number
+    }) => void
+    onShowSingletonsChange: (showSingletons: boolean) => void
   }) => (
     <div>
-      Similarity Graph: {minimumSimilarityPercent}% / {submissions.length} submissions
+      <div>
+        Similarity Graph: {minimumSimilarityPercent}% / {graphData.nodes.length} submissions
+      </div>
+      <div>
+        Graph Selection:{" "}
+        {selection.type === "cluster"
+          ? `cluster-${selection.clusterId}`
+          : selection.type === "node"
+            ? "node"
+            : "none"}
+      </div>
+      <div>Show Singletons: {showSingletons ? "on" : "off"}</div>
+      <button
+        onClick={() => onSelectionChange({ type: "cluster", clusterId: 1 })}
+      >
+        Focus Cluster
+      </button>
+      <button onClick={() => onSelectionChange({ type: "none" })}>
+        Clear Selection
+      </button>
+      <button onClick={() => onShowSingletonsChange(!showSingletons)}>
+        Toggle Singletons
+      </button>
     </div>
   ),
   PairComparison: () => <div>Pair Comparison</div>,
@@ -282,8 +338,10 @@ describe("SimilarityResultsPage", () => {
     expect(screen.getByText("Average Similarity: 89.0%")).toBeInTheDocument()
     expect(screen.getByText("Max Similarity: 90.0%")).toBeInTheDocument()
     expect(
-      screen.getByText("Similarity Graph: 75% / 3 submissions"),
+      screen.getByText("Similarity Graph: 95% / 3 submissions"),
     ).toBeInTheDocument()
+    expect(screen.getByText("Graph Selection: cluster-1")).toBeInTheDocument()
+    expect(screen.getByText("Show Singletons: off")).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: "Download Class Report" }),
     ).toBeInTheDocument()
@@ -344,6 +402,103 @@ describe("SimilarityResultsPage", () => {
     renderSimilarityResultsPage(thresholdQualifiedResults)
 
     expect(screen.getByText("Suspicious Pair: 1")).toBeInTheDocument()
+  })
+
+  it("auto-selects the strongest visible cluster and filters the table to that context", async () => {
+    const secondaryPair = {
+      ...mockData.pair,
+      id: 202,
+      leftFile: {
+        id: 31,
+        path: "student-c.py",
+        filename: "student-c.py",
+        lineCount: 8,
+        studentName: "Student C",
+      },
+      rightFile: {
+        id: 32,
+        path: "student-d.py",
+        filename: "student-d.py",
+        lineCount: 9,
+        studentName: "Student D",
+      },
+      structuralScore: 0.84,
+      semanticScore: 0.82,
+      hybridScore: 0.83,
+      overlap: 12,
+      longest: 4,
+    }
+
+    renderSimilarityResultsPage({
+      ...mockData.results,
+      summary: {
+        ...mockData.results.summary,
+        totalFiles: 4,
+        totalPairs: 2,
+      },
+      submissions: [
+        mockData.pair.leftFile,
+        mockData.pair.rightFile,
+        secondaryPair.leftFile,
+        secondaryPair.rightFile,
+      ],
+      pairs: [mockData.pair, secondaryPair],
+    })
+
+    expect(screen.getByText("Graph Selection: cluster-1")).toBeInTheDocument()
+    expect(screen.getByText("Pair Table Count: 1")).toBeInTheDocument()
+    expect(
+      screen.getByText("Showing 1 threshold-qualified pair from Cluster 1."),
+    ).toBeInTheDocument()
+  })
+
+  it("clears the graph-driven table filter back to all threshold-qualified pairs", async () => {
+    const secondaryPair = {
+      ...mockData.pair,
+      id: 202,
+      leftFile: {
+        id: 31,
+        path: "student-c.py",
+        filename: "student-c.py",
+        lineCount: 8,
+        studentName: "Student C",
+      },
+      rightFile: {
+        id: 32,
+        path: "student-d.py",
+        filename: "student-d.py",
+        lineCount: 9,
+        studentName: "Student D",
+      },
+      structuralScore: 0.84,
+      semanticScore: 0.82,
+      hybridScore: 0.83,
+      overlap: 12,
+      longest: 4,
+    }
+
+    renderSimilarityResultsPage({
+      ...mockData.results,
+      summary: {
+        ...mockData.results.summary,
+        totalFiles: 4,
+        totalPairs: 2,
+      },
+      submissions: [
+        mockData.pair.leftFile,
+        mockData.pair.rightFile,
+        secondaryPair.leftFile,
+        secondaryPair.rightFile,
+      ],
+      pairs: [mockData.pair, secondaryPair],
+    })
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Clear Graph Filter" }),
+    )
+
+    expect(screen.getByText("Graph Selection: none")).toBeInTheDocument()
+    expect(screen.getByText("Pair Table Count: 2")).toBeInTheDocument()
   })
 
   it("auto-scrolls to comparison section when a pair is selected", async () => {
@@ -407,13 +562,13 @@ describe("SimilarityResultsPage", () => {
       expect(buildClassSimilarityReportDataMock).toHaveBeenCalledWith(
         expect.objectContaining({
           results: mockData.results,
-          minimumSimilarityPercent: 75,
+          minimumSimilarityPercent: 95,
           assignment: mockData.assignment,
         }),
       )
       expect(downloadPdfDocumentMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          fileName: "similarity-review-similarity-threshold-75.pdf",
+          fileName: "similarity-review-similarity-threshold-95.pdf",
         }),
       )
     })
@@ -433,7 +588,7 @@ describe("SimilarityResultsPage", () => {
         expect.objectContaining({
           results: mockData.results,
           selectedPair: mockData.pair,
-          minimumSimilarityPercent: 75,
+          minimumSimilarityPercent: 95,
           assignment: mockData.assignment,
         }),
       )

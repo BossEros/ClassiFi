@@ -212,7 +212,7 @@ Admin enrollment workspace behavior:
 ### Feature Components
 
 - **`CodeEditor`**: (Monaco) Used in `AssignmentDetailPage` for coding tasks with syntax highlighting for Python, Java, and C.
-- **`SimilarityGraphView`**: SVG graph surface that renders suspicious links and optional singleton submissions for assignment-level plagiarism review.
+- **`SimilarityGraphView`**: Controlled SVG graph overview with a compact right-rail workflow for threshold control and review context before pairwise drill-down.
 - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination.
 - **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
@@ -379,13 +379,14 @@ Cross-class analysis extends the per-assignment similarity workflow to compare s
 The plagiarism detection workflow is pairwise-triage-first so teachers can review high-risk matches quickly while still seeing graph relationships:
 
 - **Assignment-level summary cards**: Suspicious pairs, analyzed submissions, and maximum similarity.
-- **Similarity graph view**: A native React SVG graph that derives nodes from the analyzed-submission list and edges from the active pair results.
+- **Similarity graph overview**: A native React SVG graph that derives nodes from the analyzed-submission list and edges from the active pair results, while keeping graph selection in page state so the graph and triage table stay synchronized.
 - **Shared draggable threshold**: The `Threshold >= X%` slider drives the graph and pairwise table together so review surfaces never drift out of sync.
-- **Singleton visibility toggle**: `Allow Singleton` lets teachers reveal isolated submissions, including true zero-pair submissions returned by the backend.
-- **Hover and selection details**: Hovering a node shows quick similarity context; clicking a node or cluster opens richer details and shortcut actions for review.
+- **Isolated submission toggle**: `Show isolated submissions` lets teachers reveal isolated submissions, including true zero-pair submissions returned by the backend.
+- **Right-rail review context**: The graph card keeps a populated `Review Context` panel with full student names, member pills, reset access, and review shortcuts so teachers are never dropped into a blank side panel.
+- **Hover and selection details**: Hovering a node shows quick similarity context; clicking a node or cluster narrows the pairwise table and refreshes the review-context panel.
 - **Edge-driven review**: Clicking a graph edge jumps directly into pairwise code comparison for that specific submission pair.
 - **Pairwise triage table**: Shows `Student A vs Student B` rows directly for assignment-level review and reuses the shared threshold from the graph view.
-- **Default high-similarity filter**: Starts at `75%` to reduce noise in larger classes.
+- **Default high-similarity filter**: Starts at `95%` to keep the first graph view focused on the strongest matches.
 - **Fast triage controls**: Sortable `Overall Similarity`, `Structural Similarity`, and `Semantic Similarity` scores, along with qualitative `Total Shared Chunks` and `Longest Continuous Shared Block` signals (with plain-language tooltips), and paginated results.
 - **Details on demand**: `Compare Code` (or row click) opens side-by-side match/diff inspection with fragment context and auto-scrolls to the comparison panel.
 - **Class PDF export**: `Download Class Report` exports the active threshold view only, including summary metrics, a static graph, and the threshold-qualified pair table.
@@ -633,7 +634,7 @@ Specialized types for the class detail page redesign:
 1. **Navigate to Results**: From the assignment submissions page, click `Check Similarities` for a fresh run or `Review Similarities` when a reusable report already exists.
 2. **Triage Pairwise Results** (Default View):
    - Review direct `Student A vs Student B` pair rows sorted by highest similarity.
-   - Start with the default `75% and above` threshold, then relax or tighten as needed.
+   - Start with the default `95% and above` threshold, then relax or tighten as needed.
    - Use student-name search and sorting to prioritize suspicious pairs quickly.
    - Use the graph and table together; they share one threshold and selection flow.
 3. **Compare Code**:

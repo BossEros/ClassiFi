@@ -10,6 +10,7 @@ import {
   getThresholdQualifiedPairs,
   normalizeSimilarityToRatio,
 } from "@/presentation/utils/plagiarismClusterUtils"
+import { SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT } from "@/presentation/utils/plagiarismGraphUtils"
 import {
   getNormalizedLongestRatio,
   getNormalizedOverlapRatio,
@@ -42,6 +43,10 @@ interface PairwiseTriageTableProps {
   selectedPairId?: number | null
   /** Optional scoring weights from the backend to display dynamic weight labels. */
   scoringWeights?: ScoringWeights
+  /** Optional active graph filter summary shown above the table. */
+  filterSummary?: string | null
+  /** Optional callback that resets the active graph filter. */
+  onClearFilter?: () => void
 }
 
 const similarityThresholdOptions = [
@@ -178,11 +183,13 @@ export function PairwiseTriageTable({
   isLoading = false,
   selectedPairId,
   scoringWeights,
+  filterSummary,
+  onClearFilter,
 }: PairwiseTriageTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>("similarity")
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc")
   const [internalMinimumSimilarityPercent, setInternalMinimumSimilarityPercent] =
-    useState(75)
+    useState(SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
   const isControlledThreshold = typeof minimumSimilarityPercent === "number"
@@ -272,6 +279,20 @@ export function PairwiseTriageTable({
               ? "Review high-similarity student pairs and open code comparison details."
               : `Review high-similarity student pairs using the shared ${effectiveMinimumSimilarityPercent}% graph threshold.`}
           </p>
+          {filterSummary ? (
+            <div className="mt-3 inline-flex flex-wrap items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-2 text-sm text-teal-800">
+              <span>{filterSummary}</span>
+              {onClearFilter ? (
+                <button
+                  type="button"
+                  onClick={onClearFilter}
+                  className="font-semibold text-teal-700 underline-offset-2 transition-colors hover:text-teal-900 hover:underline"
+                >
+                  Show all pairs
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         {showThresholdControl && (
