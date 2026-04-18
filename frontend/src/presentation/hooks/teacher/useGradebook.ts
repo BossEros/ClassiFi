@@ -78,15 +78,14 @@ export function useStudentGrades(studentId: number, classId?: number) {
       setError(null)
 
       if (classId) {
-        // Fetch grades for specific class with rank
-        const [classGrades, rankData] = await Promise.all([
+        const [classGrades, studentRank] = await Promise.all([
           getStudentClassGrades(studentId, classId),
           getStudentRank(studentId, classId),
         ])
+
         setGrades(classGrades ? [classGrades] : [])
-        setRank(rankData)
+        setRank(studentRank)
       } else {
-        // Fetch all grades
         const allGrades = await getStudentGrades(studentId)
         setGrades(allGrades)
         setRank(null)

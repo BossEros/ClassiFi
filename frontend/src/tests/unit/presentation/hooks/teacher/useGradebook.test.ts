@@ -106,6 +106,10 @@ describe("useGradebook Hooks", () => {
         mockStudentId,
         mockClassId,
       )
+      expect(gradebookService.getStudentRank).toHaveBeenCalledWith(
+        mockStudentId,
+        mockClassId,
+      )
     })
   })
 
