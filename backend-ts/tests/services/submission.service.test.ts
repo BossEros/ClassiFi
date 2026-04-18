@@ -301,6 +301,69 @@ describe("SubmissionService", () => {
       expect(mockLatePenaltyService.calculatePenalty).toHaveBeenCalled()
     })
 
+    it("should notify the student when a late penalty changes the visible score after auto grading", async () => {
+      const lateDeadline = new Date("2026-01-01T10:00:00Z")
+      const assignment = createMockAssignment({
+        id: 1,
+        isActive: true,
+        deadline: lateDeadline,
+        programmingLanguage: "python",
+        allowLateSubmissions: true,
+        totalScore: 100,
+      })
+      const createdSubmission = createMockSubmission({
+        id: 901,
+        assignmentId: 1,
+        studentId: 77,
+        submittedAt: new Date("2026-01-01T15:00:00Z"),
+      })
+      const gradedSubmission = {
+        ...createdSubmission,
+        grade: 90,
+      }
+
+      mockAssignmentRepo.getAssignmentById.mockResolvedValue(assignment)
+      mockEnrollmentRepo.isEnrolled.mockResolvedValue(true)
+      mockSubmissionRepo.getSubmissionHistory.mockResolvedValue([])
+      mockSubmissionRepo.createSubmission.mockResolvedValue(createdSubmission)
+      mockCodeTestService.runTestsForSubmission.mockResolvedValue(undefined)
+      mockLatePenaltyService.calculatePenalty.mockReturnValue({
+        isLate: true,
+        hoursLate: 5,
+        penaltyPercent: 10,
+        gradeMultiplier: 0.9,
+        tierLabel: "Up to 24 hours late (-10%)",
+      })
+      mockSubmissionRepo.getSubmissionById
+        .mockResolvedValueOnce(gradedSubmission)
+        .mockResolvedValueOnce({ ...gradedSubmission, grade: 80 })
+
+      await submissionService.submitAssignment(1, 77, validFile)
+
+      expect(mockSubmissionRepo.updateGrade).toHaveBeenCalledWith(901, 80)
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith(
+        77,
+        "SUBMISSION_GRADED",
+        expect.objectContaining({
+          reason: "late_penalty_applied",
+          previousGrade: 90,
+          grade: 80,
+          latenessText: "You submitted 5 hours late",
+        }),
+      )
+      expect(
+        mockNotificationService.sendEmailNotificationIfEnabled,
+      ).toHaveBeenCalledWith(
+        77,
+        "SUBMISSION_GRADED",
+        expect.objectContaining({
+          reason: "late_penalty_applied",
+          previousGrade: 90,
+          grade: 80,
+        }),
+      )
+    })
+
     it("should allow submission when deadline is null", async () => {
       const assignment = createMockAssignment({
         isActive: true,

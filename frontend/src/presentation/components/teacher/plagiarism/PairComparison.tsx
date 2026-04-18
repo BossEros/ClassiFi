@@ -1,9 +1,12 @@
-import React, { useState, useMemo } from "react"
-import { Clock3, ChevronLeft, ChevronRight } from "lucide-react"
-import type { FilePair, MatchFragment } from "./types"
+import React, { useMemo, useState } from "react"
+import { ChevronLeft, ChevronRight, Clock3 } from "lucide-react"
 import { PairCodeEditor } from "./PairCodeEditor"
+import type { FilePair, MatchFragment } from "./types"
 import { useIsTabletOrBelow } from "@/presentation/hooks/shared/useMediaQuery"
-import { getTemporalOrder, formatTimeDifference } from "@/presentation/utils/timeUtils"
+import {
+  formatTimeDifference,
+  getTemporalOrder,
+} from "@/presentation/utils/timeUtils"
 
 interface PairComparisonProps {
   /** The file pair to compare */
@@ -15,6 +18,7 @@ interface PairComparisonProps {
   /** Visual theme variant for comparison chrome. */
   variant?: "dark" | "light"
 }
+
 /**
  * Side-by-side code comparison view with highlighted matching fragments.
  *
@@ -38,7 +42,7 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
 
   // Sort fragments by length descending so the strongest match is navigated to first.
   const sortedByStrength = useMemo(
-    () => [...pair.fragments].sort((a, b) => b.length - a.length),
+    () => [...pair.fragments].sort((leftFragment, rightFragment) => rightFragment.length - leftFragment.length),
     [pair.fragments],
   )
 
@@ -46,16 +50,19 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
 
   const selectedFragmentIndex = useMemo(() => {
     if (!selectedFragment) return -1
-    return sortedByStrength.findIndex((f) => f.id === selectedFragment.id)
+    return sortedByStrength.findIndex(
+      (fragment) => fragment.id === selectedFragment.id,
+    )
   }, [selectedFragment, sortedByStrength])
 
-  const navigateToFragment = (index: number) => {
-    const fragment = sortedByStrength[index]
+  const navigateToFragment = (fragmentIndex: number) => {
+    const fragment = sortedByStrength[fragmentIndex]
     if (fragment) setSelectedFragment(fragment)
   }
 
   const handlePreviousFragment = () => {
     if (totalFragments === 0) return
+
     if (selectedFragmentIndex <= 0) {
       navigateToFragment(totalFragments - 1)
     } else {
@@ -65,7 +72,11 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
 
   const handleNextFragment = () => {
     if (totalFragments === 0) return
-    if (selectedFragmentIndex === -1 || selectedFragmentIndex >= totalFragments - 1) {
+
+    if (
+      selectedFragmentIndex === -1 ||
+      selectedFragmentIndex >= totalFragments - 1
+    ) {
       navigateToFragment(0)
     } else {
       navigateToFragment(selectedFragmentIndex + 1)
@@ -79,14 +90,18 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
 
   const timeDiffMs =
     pair.leftFile.submittedAt && pair.rightFile.submittedAt
-      ? Math.abs(new Date(pair.leftFile.submittedAt).getTime() - new Date(pair.rightFile.submittedAt).getTime())
+      ? Math.abs(
+          new Date(pair.leftFile.submittedAt).getTime() -
+            new Date(pair.rightFile.submittedAt).getTime(),
+        )
       : 0
 
-  const earlierStudentName = temporalOrder === "left"
-    ? pair.leftFile.studentName
-    : temporalOrder === "right"
-      ? pair.rightFile.studentName
-      : null
+  const earlierStudentName =
+    temporalOrder === "left"
+      ? pair.leftFile.studentName
+      : temporalOrder === "right"
+        ? pair.rightFile.studentName
+        : null
 
   const labelColor = isLight ? "#64748b" : "#9ca3af"
   const valueColor = isLight ? "#0f172a" : "#f1f5f9"
@@ -112,7 +127,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             padding: "10px 14px",
             backgroundColor: isLight ? "#f0fdf4" : "rgba(16, 185, 129, 0.08)",
             borderRadius: "8px",
-            border: isLight ? "1px solid #bbf7d0" : "1px solid rgba(52, 211, 153, 0.20)",
+            border: isLight
+              ? "1px solid #bbf7d0"
+              : "1px solid rgba(52, 211, 153, 0.20)",
             fontSize: "13px",
             color: isLight ? "#15803d" : "#6ee7b7",
           }}
@@ -122,7 +139,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             <strong>{earlierStudentName}</strong> submitted{" "}
             <strong>{formatTimeDifference(timeDiffMs)}</strong> before{" "}
             <strong>
-              {temporalOrder === "left" ? pair.rightFile.studentName : pair.leftFile.studentName}
+              {temporalOrder === "left"
+                ? pair.rightFile.studentName
+                : pair.leftFile.studentName}
             </strong>
           </span>
         </div>
@@ -176,12 +195,11 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             ) : (
               <span>
                 Fragment{" "}
-                <strong style={{ color: valueColor }}>{selectedFragmentIndex + 1}</strong>
+                <strong style={{ color: valueColor }}>
+                  {selectedFragmentIndex + 1}
+                </strong>
                 {" / "}
                 <strong style={{ color: valueColor }}>{totalFragments}</strong>
-                {" — "}
-                <strong style={{ color: valueColor }}>{sortedByStrength[selectedFragmentIndex].length}</strong>{" "}
-                k-grams
               </span>
             )}
           </span>
@@ -238,7 +256,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             language={language}
             height={editorHeight}
             variant={variant}
-            submittedFirst={temporalOrder === null ? null : temporalOrder === "left"}
+            submittedFirst={
+              temporalOrder === null ? null : temporalOrder === "left"
+            }
           />
         </div>
 
@@ -264,7 +284,9 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
             language={language}
             height={editorHeight}
             variant={variant}
-            submittedFirst={temporalOrder === null ? null : temporalOrder === "right"}
+            submittedFirst={
+              temporalOrder === null ? null : temporalOrder === "right"
+            }
           />
         </div>
       </div>
@@ -281,8 +303,10 @@ export const PairComparison: React.FC<PairComparisonProps> = ({
       >
         <strong style={{ color: valueColor }}>Tip:</strong>{" "}
         Shared fragments are highlighted in sky blue. Click any highlighted
-        block or use the arrows above to navigate between matches.
-        Fragments are ordered strongest first.
+        block or use the arrows above to navigate between matches. Counts are
+        based on matched structural fingerprints from the detector, so a
+        smaller count can still span more visible lines of code. Fragments are
+        ordered strongest first.
       </div>
     </div>
   )

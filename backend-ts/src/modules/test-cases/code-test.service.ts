@@ -25,6 +25,7 @@ import { settings } from "@/shared/config.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 import { withTransaction } from "@/shared/transaction.js"
+import { buildSubmissionNotificationUrl } from "@/modules/notifications/submission-grade-notification.js"
 
 const logger = createLogger("CodeTestService")
 
@@ -438,7 +439,11 @@ export class CodeTestService {
           assignmentTitle: assignment.assignmentName,
           grade,
           maxGrade: totalScore,
-          submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+          submissionUrl: buildSubmissionNotificationUrl(
+            settings.frontendUrl,
+            assignment.id,
+          ),
+          reason: "automatic_grade",
         },
       )
     })
@@ -454,7 +459,11 @@ export class CodeTestService {
         assignmentTitle: assignment.assignmentName,
         grade,
         maxGrade: totalScore,
-        submissionUrl: `${settings.frontendUrl}/dashboard/assignments/${assignment.id}`,
+        submissionUrl: buildSubmissionNotificationUrl(
+          settings.frontendUrl,
+          assignment.id,
+        ),
+        reason: "automatic_grade",
       },
     ).catch((error) => {
       logger.error("Failed to send grade notification email", {

@@ -57,6 +57,7 @@ test.describe("Shared Pages", () => {
       grade: 90,
       maxGrade: 100,
       submissionUrl: "/dashboard/assignments/100",
+      reason: "automatic_grade",
     },
   }
 

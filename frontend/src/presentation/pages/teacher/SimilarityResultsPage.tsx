@@ -46,8 +46,18 @@ import { useAuthStore } from "@/shared/store/useAuthStore"
 import { useToastStore } from "@/shared/store/useToastStore"
 import type { AssignmentDetail } from "@/data/api/assignment.types"
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload"
-import { getThresholdQualifiedPairs } from "@/presentation/utils/plagiarismClusterUtils"
 import { detectLanguageFromFilename } from "@/shared/utils/languageDetection"
+import {
+  areSimilarityGraphSelectionsEqual,
+  buildSimilarityGraphData,
+  createEmptySimilarityGraphSelection,
+  getDefaultSimilarityGraphSelection,
+  getPairsForSimilarityGraphSelection,
+  getSimilarityGraphSelectionForPair,
+  isSimilarityGraphSelectionValid,
+  SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT,
+  type SimilarityGraphSelection,
+} from "@/presentation/utils/plagiarismGraphUtils"
 
 interface LocationState {
   results: AnalyzeResponse
@@ -98,8 +108,15 @@ export function SimilarityResultsPage() {
   const [pairDetails, setPairDetails] = useState<FilePair | null>(null)
   const [codeViewMode, setCodeViewMode] = useState<CodeViewMode>("match")
   const [detailsError, setDetailsError] = useState<string | null>(null)
-  const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(75)
-  const [showSingletons, setShowSingletons] = useState(true)
+  const [minimumSimilarityPercent, setMinimumSimilarityPercent] = useState(
+    SIMILARITY_GRAPH_DEFAULT_THRESHOLD_PERCENT,
+  )
+  const [showSingletons, setShowSingletons] = useState(false)
+  const [graphSelection, setGraphSelection] = useState<SimilarityGraphSelection>(
+    () => createEmptySimilarityGraphSelection(),
+  )
+  const [hasInitializedGraphSelection, setHasInitializedGraphSelection] =
+    useState(false)
   const [comparisonScrollToken, setComparisonScrollToken] = useState(0)
   const [isDownloadingClassReport, setIsDownloadingClassReport] =
     useState(false)
@@ -118,6 +135,11 @@ export function SimilarityResultsPage() {
       setResults(locationState.results)
     }
   }, [locationState])
+
+  useEffect(() => {
+    setGraphSelection(createEmptySimilarityGraphSelection())
+    setHasInitializedGraphSelection(false)
+  }, [assignmentId, results?.reportId])
 
   useEffect(() => {
     if (results || !assignmentId) {
@@ -174,6 +196,11 @@ export function SimilarityResultsPage() {
   }, [comparisonScrollToken])
 
   const handleViewDetails = async (pair: PairResponse) => {
+    if (graphData) {
+      setGraphSelection(getSimilarityGraphSelectionForPair(graphData, pair.id))
+      setHasInitializedGraphSelection(true)
+    }
+
     setSelectedPair(pair)
     setComparisonScrollToken((previousToken) => previousToken + 1)
     setIsLoadingDetails(true)
@@ -306,16 +333,105 @@ export function SimilarityResultsPage() {
     return detectLanguageFromFilename(pairDetails.leftFile.filename)
   }, [pairDetails])
 
-  const suspiciousPairCount = useMemo(() => {
+  const graphData = useMemo(() => {
     if (!results) {
+      return null
+    }
+
+    return buildSimilarityGraphData(
+      results.submissions,
+      results.pairs,
+      minimumSimilarityPercent,
+    )
+  }, [minimumSimilarityPercent, results])
+
+  const suspiciousPairCount = useMemo(() => {
+    if (!graphData) {
       return 0
     }
 
-    return getThresholdQualifiedPairs(
-      results.pairs,
-      minimumSimilarityPercent,
-    ).length
-  }, [minimumSimilarityPercent, results])
+    return graphData.edges.length
+  }, [graphData])
+
+  useEffect(() => {
+    if (!graphData) {
+      return
+    }
+
+    const defaultGraphSelection = getDefaultSimilarityGraphSelection(
+      graphData,
+      showSingletons,
+    )
+
+    if (!hasInitializedGraphSelection) {
+      setGraphSelection(defaultGraphSelection)
+      setHasInitializedGraphSelection(true)
+      return
+    }
+
+    if (graphSelection.type === "none") {
+      return
+    }
+
+    if (
+      isSimilarityGraphSelectionValid(
+        graphData,
+        graphSelection,
+        showSingletons,
+      )
+    ) {
+      return
+    }
+
+    if (
+      areSimilarityGraphSelectionsEqual(graphSelection, defaultGraphSelection)
+    ) {
+      return
+    }
+
+    setGraphSelection(defaultGraphSelection)
+  }, [
+    graphData,
+    graphSelection,
+    hasInitializedGraphSelection,
+    showSingletons,
+  ])
+
+  const filteredPairs = useMemo(() => {
+    if (!graphData) {
+      return []
+    }
+
+    return getPairsForSimilarityGraphSelection(graphData, graphSelection)
+  }, [graphData, graphSelection])
+
+  const pairFilterSummary = useMemo(() => {
+    if (!graphData || graphSelection.type === "none") {
+      return null
+    }
+
+    if (graphSelection.type === "cluster") {
+      const selectedCluster = graphData.clusters.find(
+        (cluster) => cluster.clusterId === graphSelection.clusterId,
+      )
+
+      if (!selectedCluster) {
+        return null
+      }
+
+      return `Showing ${filteredPairs.length} threshold-qualified pair${filteredPairs.length === 1 ? "" : "s"} from ${selectedCluster.label}.`
+    }
+
+    const selectedNode = graphData.nodes.find(
+      (node) => node.submissionId === graphSelection.submissionId,
+    )
+
+    if (!selectedNode) {
+      return null
+    }
+
+    return `Showing ${filteredPairs.length} threshold-qualified pair${filteredPairs.length === 1 ? "" : "s"} for ${selectedNode.studentName}.`
+  }, [filteredPairs.length, graphData, graphSelection])
 
   const breadcrumbItems = [
     { label: "Classes", to: "/dashboard/classes" },
@@ -380,6 +496,10 @@ export function SimilarityResultsPage() {
         </Card>
       </DashboardLayout>
     )
+  }
+
+  if (!graphData) {
+    return null
   }
 
   return (
@@ -460,15 +580,23 @@ export function SimilarityResultsPage() {
         <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
           <CardContent className="p-6">
             <SimilarityGraphView
-              submissions={results.submissions}
-              pairs={results.pairs}
+              graphData={graphData}
               minimumSimilarityPercent={minimumSimilarityPercent}
               onMinimumSimilarityPercentChange={setMinimumSimilarityPercent}
               onReviewPair={(pair) => {
                 void handleViewDetails(pair)
               }}
+              selection={graphSelection}
+              onSelectionChange={(selection) => {
+                setGraphSelection(selection)
+                setHasInitializedGraphSelection(true)
+              }}
               selectedPairId={selectedPair?.id ?? null}
-              onShowSingletonsChange={setShowSingletons}
+              showSingletons={showSingletons}
+              onShowSingletonsChange={(nextShowSingletons) => {
+                setShowSingletons(nextShowSingletons)
+                setHasInitializedGraphSelection(true)
+              }}
             />
           </CardContent>
         </Card>
@@ -582,12 +710,17 @@ export function SimilarityResultsPage() {
         <Card className="border-slate-300 bg-white shadow-md shadow-slate-200/80">
           <CardContent className="p-6">
             <PairwiseTriageTable
-              pairs={results.pairs}
+              pairs={filteredPairs}
               onPairSelect={handleViewDetails}
               minimumSimilarityPercent={minimumSimilarityPercent}
               showThresholdControl={false}
               selectedPairId={selectedPair?.id ?? null}
               scoringWeights={results.scoringWeights}
+              filterSummary={pairFilterSummary}
+              onClearFilter={() => {
+                setGraphSelection(createEmptySimilarityGraphSelection())
+                setHasInitializedGraphSelection(true)
+              }}
             />
           </CardContent>
         </Card>
