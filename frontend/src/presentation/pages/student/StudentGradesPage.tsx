@@ -108,15 +108,17 @@ export function StudentGradesPage() {
         </div>
       ) : error ? (
         /* Error State */
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center max-w-md">
+        <div className="flex w-full items-center justify-center px-4 py-20">
+          <div className="w-full max-w-xl text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
               <AlertTriangle className="w-8 h-8 text-red-400" />
             </div>
             <p className="text-slate-200 font-medium mb-2">
               Error Loading Grades
             </p>
-            <p className="text-sm text-slate-400">{error}</p>
+            <p className="text-sm leading-6 text-slate-400 break-words whitespace-normal">
+              {error}
+            </p>
           </div>
         </div>
       ) : (

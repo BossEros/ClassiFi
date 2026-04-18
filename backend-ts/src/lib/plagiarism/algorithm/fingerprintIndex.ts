@@ -80,6 +80,7 @@ export class FingerprintIndex {
         isIgnored: false,
         shared: new Set<SharedFingerprint>(),
         ignored: new Set<SharedFingerprint>(),
+        ignoredKgramIndices: new Set<number>(),
       }
 
       this.files.set(file.id, entry)
@@ -105,6 +106,7 @@ export class FingerprintIndex {
       isIgnored: true,
       shared: new Set<SharedFingerprint>(),
       ignored: new Set<SharedFingerprint>(),
+      ignoredKgramIndices: new Set<number>(),
     }
 
     this.ignoredFiles.set(file.id, entry)
@@ -155,47 +157,87 @@ export class FingerprintIndex {
 
       shared.add(part)
 
-      // STEP 6: Decide if this fingerprint should count as a real match or be suppressed.
-      // Suppress if: the file is a boilerplate/template, the hash appears in too many files,
-      // or it was manually blocklisted. Otherwise, add it to this file's active match set.
-      if (
-        entry.isIgnored ||
-        shared.fileCount() > this.maxFingerprintFileCount ||
-        this.ignoredHashes.has(hash)
-      ) {
-        this.ignoreSharedFingerprint(shared)
-      } else {
-        entry.shared.add(shared)
-      }
+      // STEP 6: Reconcile the fingerprint state. This keeps shared/ignored sets and
+      // ignored k-gram bookkeeping aligned after every new occurrence.
+      this.syncSharedFingerprintIgnoreState(shared)
 
       kgram += 1
     }
   }
 
   /**
-   * Mark a shared fingerprint as ignored.
+   * Returns whether a shared fingerprint should currently be suppressed.
    */
-  private ignoreSharedFingerprint(shared: SharedFingerprint): void {
+  private shouldIgnoreSharedFingerprint(shared: SharedFingerprint): boolean {
+    if (this.ignoredHashes.has(shared.hash)) {
+      return true
+    }
+
+    if (shared.fileCount() > this.maxFingerprintFileCount) {
+      return true
+    }
+
+    return shared.files().some((file) => this.ignoredFiles.has(file.id))
+  }
+
+  /**
+   * Synchronize ignored/shared bookkeeping for a fingerprint after rules or occurrences change.
+   */
+  private syncSharedFingerprintIgnoreState(shared: SharedFingerprint): void {
+    if (this.shouldIgnoreSharedFingerprint(shared)) {
+      this.applyIgnoredSharedFingerprint(shared)
+      return
+    }
+
+    this.applyActiveSharedFingerprint(shared)
+  }
+
+  /**
+   * Marks a fingerprint as ignored and records its ignored k-gram positions per file.
+   */
+  private applyIgnoredSharedFingerprint(shared: SharedFingerprint): void {
     shared.ignored = true
-    for (const other of shared.files()) {
-      if (!this.ignoredFiles.has(other.id)) {
-        const otherEntry = this.files.get(other.id)!
-        otherEntry.shared.delete(shared)
-        otherEntry.ignored.add(shared)
+
+    for (const file of shared.files()) {
+      const trackedFileEntry = this.getTrackedFileEntry(file)
+      trackedFileEntry.shared.delete(shared)
+      trackedFileEntry.ignored.add(shared)
+
+      for (const occurrence of shared.occurrencesOf(file)) {
+        trackedFileEntry.ignoredKgramIndices.add(occurrence.side.index)
       }
     }
   }
 
   /**
-   * Un-ignore a shared fingerprint.
+   * Restores a fingerprint to the active shared set and clears its ignored k-gram bookkeeping.
    */
-  private unIgnoreSharedFingerprint(shared: SharedFingerprint): void {
+  private applyActiveSharedFingerprint(shared: SharedFingerprint): void {
     shared.ignored = false
-    for (const other of shared.files()) {
-      const otherEntry = this.files.get(other.id)!
-      otherEntry.ignored.delete(shared)
-      otherEntry.shared.add(shared)
+
+    for (const file of shared.files()) {
+      const trackedFileEntry = this.getTrackedFileEntry(file)
+      trackedFileEntry.ignored.delete(shared)
+
+      for (const occurrence of shared.occurrencesOf(file)) {
+        trackedFileEntry.ignoredKgramIndices.delete(occurrence.side.index)
+      }
+
+      if (!trackedFileEntry.isIgnored) {
+        trackedFileEntry.shared.add(shared)
+      }
     }
+  }
+
+  /**
+   * Resolve a tracked file entry regardless of whether it is analyzable or ignored boilerplate.
+   */
+  private getTrackedFileEntry(file: TokenizedFile): FileEntry {
+    const trackedFileEntry =
+      this.files.get(file.id) || this.ignoredFiles.get(file.id)
+    assertDefined(trackedFileEntry, `File not found in index: ${file.path}`)
+
+    return trackedFileEntry
   }
 
   /**
@@ -206,7 +248,7 @@ export class FingerprintIndex {
       this.ignoredHashes.add(hash)
       const shared = this.index.get(hash)
       if (shared) {
-        this.ignoreSharedFingerprint(shared)
+        this.syncSharedFingerprintIgnoreState(shared)
       }
     }
   }
@@ -223,19 +265,7 @@ export class FingerprintIndex {
       maxFingerprintFileCount || Number.MAX_SAFE_INTEGER
 
     for (const shared of this.index.values()) {
-      if (!this.ignoredHashes.has(shared.hash)) {
-        if (
-          shared.fileCount() > this.maxFingerprintFileCount &&
-          !shared.ignored
-        ) {
-          this.ignoreSharedFingerprint(shared)
-        } else if (
-          shared.fileCount() <= this.maxFingerprintFileCount &&
-          shared.ignored
-        ) {
-          this.unIgnoreSharedFingerprint(shared)
-        }
-      }
+      this.syncSharedFingerprintIgnoreState(shared)
     }
   }
 

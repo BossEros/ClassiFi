@@ -33,7 +33,7 @@ export interface MatchFragment {
   id: number
   leftSelection: CodeRegion
   rightSelection: CodeRegion
-  length: number // Number of k-grams in this fragment
+  length: number // Number of matched structural fingerprints in this fragment
 }
 
 /**

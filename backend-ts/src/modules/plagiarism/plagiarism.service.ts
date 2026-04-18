@@ -9,6 +9,7 @@ import {
   computeSemanticScoresFromEmbeddings,
   type SemanticScorePairEntry,
 } from "@/modules/plagiarism/semantic-scoring.js"
+import { buildMaskedSubmissionContentById } from "@/modules/plagiarism/semantic-masking.js"
 import {
   PLAGIARISM_LANGUAGE_MAP,
   createPlagiarismDetector,
@@ -512,6 +513,7 @@ export class PlagiarismService {
   ): Promise<Map<string, number>> {
     // Step 1: Collect the unique submissions and normalized pair entries.
     const submissionContentMap = new Map<string, string>()
+    const maskedSubmissionContentById = buildMaskedSubmissionContentById(pairs)
     const pairEntries: SemanticScorePairEntry[] = []
     const seenPairKeys = new Set<string>()
 
@@ -533,8 +535,16 @@ export class PlagiarismService {
       seenPairKeys.add(normalizedSubmissionPair.pairKey)
 
       // Step 1c: Save the code once per submission and track the pair to score.
-      submissionContentMap.set(leftSubmissionId, pair.leftFile.content)
-      submissionContentMap.set(rightSubmissionId, pair.rightFile.content)
+      submissionContentMap.set(
+        leftSubmissionId,
+        maskedSubmissionContentById.get(leftSubmissionId) ??
+          pair.leftFile.content,
+      )
+      submissionContentMap.set(
+        rightSubmissionId,
+        maskedSubmissionContentById.get(rightSubmissionId) ??
+          pair.rightFile.content,
+      )
       pairEntries.push({
         pairKey: normalizedSubmissionPair.pairKey,
         leftSubmissionId,

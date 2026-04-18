@@ -14,5 +14,6 @@ export interface FileEntry {
   kgrams: Array<Range>
   shared: Set<SharedFingerprint>
   ignored: Set<SharedFingerprint>
+  ignoredKgramIndices: Set<number>
   isIgnored: boolean
 }
