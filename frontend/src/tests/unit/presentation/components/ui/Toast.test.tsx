@@ -196,16 +196,18 @@ describe("ToastContainer", () => {
 
     const toastContainer = container.firstChild
 
-    expect(toastContainer).toHaveClass("inset-x-3")
+    expect(toastContainer).toHaveClass("inset-x-0")
+    expect(toastContainer).toHaveClass("px-3")
 
     const toastStack = toastContainer?.firstChild
 
     expect(toastStack).toHaveClass("w-full")
+    expect(toastStack).toHaveClass("max-w-[min(100%,28rem)]")
 
     const toastCard = screen.getByText("Toast 1").closest('[role="status"]')
 
-    expect(toastCard).toHaveClass("ml-auto")
-    expect(toastCard).toHaveClass("max-w-sm")
+    expect(toastCard).toHaveClass("w-full")
+    expect(toastCard).toHaveClass("max-w-full")
   })
 
   it("passes onDismiss to each toast", () => {

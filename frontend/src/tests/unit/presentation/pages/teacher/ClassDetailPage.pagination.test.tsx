@@ -83,6 +83,21 @@ const waitForClassHeading = async () => {
   })
 }
 
+const expectRenderedStudentCopies = async (
+  studentNames: string[],
+  expectedCopyCount: number = 2,
+) => {
+  await waitFor(() => {
+    for (const studentName of studentNames) {
+      expect(screen.getAllByText(studentName)).toHaveLength(expectedCopyCount)
+    }
+  })
+}
+
+const expectStudentToBeAbsent = (studentName: string) => {
+  expect(screen.queryAllByText(studentName)).toHaveLength(0)
+}
+
 const switchAssignmentsToListView = async () => {
   await userEvent.click(screen.getByRole("tab", { name: /list/i }))
 }
@@ -185,10 +200,7 @@ describe("ClassDetailPage - Pagination", () => {
     const studentsTab = screen.getByRole("tab", { name: /students/i })
     await userEvent.click(studentsTab)
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 1")).toBeInTheDocument()
-      expect(screen.getByText("Student 10")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 1", "Student 10"])
 
     expect(screen.queryByLabelText("Previous page")).not.toBeInTheDocument()
     expect(screen.queryByLabelText("Next page")).not.toBeInTheDocument()
@@ -210,12 +222,9 @@ describe("ClassDetailPage - Pagination", () => {
     const studentsTab = screen.getByRole("tab", { name: /students/i })
     await userEvent.click(studentsTab)
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 1")).toBeInTheDocument()
-      expect(screen.getByText("Student 10")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 1", "Student 10"])
 
-    expect(screen.queryByText("Student 11")).not.toBeInTheDocument()
+    expectStudentToBeAbsent("Student 11")
     expect(screen.getByLabelText("Previous page")).toBeInTheDocument()
     expect(screen.getByLabelText("Next page")).toBeInTheDocument()
     expect(screen.getByText("Showing 1-10 of 25 students")).toBeInTheDocument()
@@ -237,18 +246,13 @@ describe("ClassDetailPage - Pagination", () => {
     const studentsTab = screen.getByRole("tab", { name: /students/i })
     await userEvent.click(studentsTab)
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 1")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 1"])
 
     await userEvent.click(screen.getByLabelText("Next page"))
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 11")).toBeInTheDocument()
-      expect(screen.getByText("Student 20")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 11", "Student 20"])
 
-    expect(screen.queryByText("Student 1")).not.toBeInTheDocument()
+    expectStudentToBeAbsent("Student 1")
     expect(screen.getByText("Showing 11-20 of 25 students")).toBeInTheDocument()
   })
 
@@ -268,16 +272,11 @@ describe("ClassDetailPage - Pagination", () => {
     const studentsTab = screen.getByRole("tab", { name: /students/i })
     await userEvent.click(studentsTab)
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 1")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 1"])
 
     await userEvent.click(screen.getByLabelText("Page 3"))
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 21")).toBeInTheDocument()
-      expect(screen.getByText("Student 25")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 21", "Student 25"])
 
     expect(screen.getByText("Showing 21-25 of 25 students")).toBeInTheDocument()
   })
@@ -298,23 +297,17 @@ describe("ClassDetailPage - Pagination", () => {
     const studentsTab = screen.getByRole("tab", { name: /students/i })
     await userEvent.click(studentsTab)
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 1")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 1"])
 
     await userEvent.click(screen.getByLabelText("Next page"))
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 11")).toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 11"])
 
     await userEvent.click(screen.getByRole("tab", { name: /assignments/i }))
     await userEvent.click(studentsTab)
 
-    await waitFor(() => {
-      expect(screen.getByText("Student 1")).toBeInTheDocument()
-      expect(screen.queryByText("Student 11")).not.toBeInTheDocument()
-    })
+    await expectRenderedStudentCopies(["Student 1"])
+    expectStudentToBeAbsent("Student 11")
 
     expect(screen.getByText("Showing 1-10 of 25 students")).toBeInTheDocument()
   })
