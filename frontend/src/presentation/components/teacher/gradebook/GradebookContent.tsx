@@ -1,8 +1,15 @@
 import { useState, useRef, useEffect } from "react";
-import { Download, BarChart3, RefreshCw, FileText, ChevronDown } from "lucide-react";
+import {
+  Download,
+  BarChart3,
+  RefreshCw,
+  FileText,
+  ChevronDown,
+} from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/presentation/components/ui/Card";
 import { Button } from "@/presentation/components/ui/Button";
 import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teacher/useGradebook";
+import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload";
 import type { GradebookAssignment, GradebookStudent, GradeEntry } from "@/data/api/gradebook.types";
@@ -21,6 +28,7 @@ interface GradeCellProps {
 function GradeCell({ grade, totalScore, deadline, variant = "dark" }: GradeCellProps) {
   const [isBreakdownVisible, setIsBreakdownVisible] = useState(false)
   const cellRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -79,7 +87,13 @@ function GradeCell({ grade, totalScore, deadline, variant = "dark" }: GradeCellP
       </button>
 
       {isBreakdownVisible && grade.gradeBreakdown && (
-        <div className="absolute left-1/2 z-50 mt-1 w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 drop-shadow-lg">
+        <div
+          className={`absolute z-50 mt-1 w-80 max-w-[calc(100vw-2rem)] drop-shadow-lg ${
+            isMobile
+              ? "right-0"
+              : "left-1/2 -translate-x-1/2"
+          }`}
+        >
           <GradeBreakdownPanel
             breakdown={grade.gradeBreakdown}
             totalScore={totalScore}
@@ -125,6 +139,149 @@ interface GradebookTableProps {
   variant?: "dark" | "light"
 }
 
+function calculateStudentAverage(
+  assignments: GradebookAssignment[],
+  grades: GradeEntry[],
+): number | null {
+  const validGrades = grades.filter((gradeEntry) => gradeEntry.grade !== null)
+  if (validGrades.length === 0) return null
+
+  const totalPercentage = validGrades.reduce((sum, gradeEntry) => {
+    const matchingAssignment = assignments.find(
+      (assignment) => assignment.id === gradeEntry.assignmentId,
+    )
+    if (!matchingAssignment || matchingAssignment.totalScore === 0) {
+      return sum
+    }
+
+    return (
+      sum + ((gradeEntry.grade as number) / matchingAssignment.totalScore) * 100
+    )
+  }, 0)
+
+  return Math.round(totalPercentage / validGrades.length)
+}
+
+interface MobileGradebookStudentCardProps {
+  assignments: GradebookAssignment[]
+  student: GradebookStudent
+  variant?: "dark" | "light"
+}
+
+function MobileGradebookStudentCard({
+  assignments,
+  student,
+  variant = "dark",
+}: MobileGradebookStudentCardProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const average = calculateStudentAverage(assignments, student.grades)
+  const visibleAssignments = isExpanded ? assignments : assignments.slice(0, 4)
+  const hasHiddenAssignments = assignments.length > 4
+
+  return (
+    <div className="p-4">
+      <div
+        className={`rounded-2xl border p-4 shadow-sm ${
+          variant === "light"
+            ? "border-slate-200 bg-white"
+            : "border-white/10 bg-slate-900/50"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p
+              className={`truncate text-sm font-semibold ${
+                variant === "light" ? "text-slate-900" : "text-white"
+              }`}
+            >
+              {student.name}
+            </p>
+          </div>
+
+          {average !== null ? (
+            <span
+              className={`inline-flex items-center justify-center rounded-full px-3 py-1.5 text-xs font-semibold ${getAverageColorClass(average, variant)}`}
+            >
+              Average: {average}%
+            </span>
+          ) : (
+            <span
+              className={`text-xs ${
+                variant === "light" ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
+              No grades
+            </span>
+          )}
+        </div>
+
+        <div className="mt-4 space-y-2">
+          {visibleAssignments.map((assignment) => {
+            const grade = student.grades.find(
+              (gradeEntry) => gradeEntry.assignmentId === assignment.id,
+            )
+
+            return (
+              <div
+                key={assignment.id}
+                className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-3 ${
+                  variant === "light"
+                    ? "border-slate-200 bg-slate-50"
+                    : "border-white/10 bg-white/5"
+                }`}
+              >
+                <div className="min-w-0">
+                  <p
+                    className={`truncate text-sm font-medium ${
+                      variant === "light" ? "text-slate-800" : "text-white"
+                    }`}
+                    title={assignment.name}
+                  >
+                    {assignment.name}
+                  </p>
+                  <p
+                    className={`mt-1 text-xs ${
+                      variant === "light" ? "text-slate-500" : "text-gray-400"
+                    }`}
+                  >
+                    /{assignment.totalScore}
+                  </p>
+                </div>
+
+                <GradeCell
+                  grade={grade ?? null}
+                  totalScore={assignment.totalScore}
+                  deadline={assignment.deadline}
+                  variant={variant}
+                />
+              </div>
+            )
+          })}
+        </div>
+
+        {hasHiddenAssignments ? (
+          <button
+            type="button"
+            onClick={() => setIsExpanded((previous) => !previous)}
+            className={`mt-4 inline-flex items-center gap-2 text-sm font-semibold ${
+              variant === "light"
+                ? "text-teal-700 hover:text-teal-800"
+                : "text-teal-400 hover:text-teal-300"
+            }`}
+          >
+            <ChevronDown
+              className={`h-4 w-4 transition-transform duration-200 ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+            />
+            {isExpanded ? "Show fewer scores" : "Show all scores"}
+          </button>
+        ) : null}
+      </div>
+    </div>
+  )
+}
+
 
 
 function GradebookTable({
@@ -132,27 +289,6 @@ function GradebookTable({
   students,
   variant = "dark",
 }: GradebookTableProps) {
-  // Calculate averages for each student
-  const calculateStudentAverage = (grades: GradeEntry[]) => {
-    const validGrades = grades.filter((g) => g.grade !== null)
-    if (validGrades.length === 0) return null
-
-    // Find corresponding assignment for each grade to get totalScore
-    const total = validGrades.reduce((sum, g) => {
-      const assignment = assignments.find((a) => a.id === g.assignmentId)
-      if (!assignment) return sum
-
-      // Guard against division by zero - skip assignments with totalScore of 0
-      if (assignment.totalScore === 0) {
-        return sum
-      }
-
-      return sum + ((g.grade as number) / assignment.totalScore) * 100
-    }, 0)
-
-    return Math.round(total / validGrades.length)
-  }
-
   if (assignments.length === 0) {
     return (
       <div
@@ -168,43 +304,13 @@ function GradebookTable({
       {/* Mobile card layout */}
       <div className="lg:hidden divide-y divide-slate-200">
         {students.map((student) => {
-          const average = calculateStudentAverage(student.grades)
-
           return (
-            <div key={`mobile-${student.id}`} className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className={`text-sm font-semibold ${variant === "light" ? "text-slate-800" : "text-white"}`}>
-                  {student.name}
-                </p>
-                {average !== null ? (
-                  <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded text-xs font-semibold ${getAverageColorClass(average, variant)}`}>
-                    Avg: {average}%
-                  </span>
-                ) : (
-                  <span className={`text-xs ${variant === "light" ? "text-slate-400" : "text-gray-500"}`}>
-                    No grades
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {assignments.map((assignment) => {
-                  const grade = student.grades.find((g) => g.assignmentId === assignment.id)
-
-                  return (
-                    <div
-                      key={assignment.id}
-                      className={`flex items-center gap-1.5 rounded-md px-2 py-1 text-xs ${variant === "light" ? "bg-slate-50 border border-slate-200" : "bg-white/5"}`}
-                      title={assignment.name}
-                    >
-                      <span className={`truncate max-w-[80px] ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}>
-                        {assignment.name}
-                      </span>
-                      <GradeCell grade={grade ?? null} totalScore={assignment.totalScore} deadline={assignment.deadline} variant={variant} />
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+            <MobileGradebookStudentCard
+              key={`mobile-${student.id}`}
+              assignments={assignments}
+              student={student}
+              variant={variant}
+            />
           )
         })}
       </div>
@@ -252,7 +358,7 @@ function GradebookTable({
             className={variant === "light" ? "divide-y divide-slate-200" : "divide-y divide-white/5"}
           >
             {students.map((student) => {
-              const average = calculateStudentAverage(student.grades)
+              const average = calculateStudentAverage(assignments, student.grades)
 
               return (
                 <tr
@@ -350,6 +456,7 @@ export function GradebookContent({
   variant = "dark",
 }: GradebookContentProps) {
   const showToast = useToastStore((state) => state.showToast)
+  const isMobile = useIsMobile()
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
   const exportMenuRef = useRef<HTMLDivElement>(null)
@@ -474,16 +581,18 @@ export function GradebookContent({
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            onClick={refetch}
-            className={`h-10 w-auto px-4 ${variant === "light" ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" : "bg-white/10 hover:bg-white/20"}`}
-            disabled={gradebookLoading}
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${gradebookLoading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+          {!isMobile && (
+            <Button
+              onClick={refetch}
+              className={`h-10 w-auto px-4 ${variant === "light" ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50" : "bg-white/10 hover:bg-white/20"}`}
+              disabled={gradebookLoading}
+            >
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${gradebookLoading ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
+          )}
           <div className="relative" ref={exportMenuRef}>
             <Button
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
