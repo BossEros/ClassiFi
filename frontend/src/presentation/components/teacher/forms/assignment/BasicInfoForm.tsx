@@ -1,4 +1,4 @@
-import { FileCode, FileUp, Calendar, Code, Image as ImageIcon, ChevronDown, Upload, Trash2, LoaderCircle, Monitor } from "lucide-react";
+import { FileCode, FileUp, Calendar, Code, Image as ImageIcon, ChevronDown, Upload, Trash2, LoaderCircle } from "lucide-react";
 import Editor from "@monaco-editor/react";
 import { useFormContext } from "react-hook-form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/presentation/components/ui/Card";
@@ -26,6 +26,7 @@ import { Eye, Terminal } from "lucide-react";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
 import { testCaseFormSchema, type TestCaseFormValues } from "@/presentation/schemas/assignment/assignmentSchemas";
 import { assignmentFormTheme } from "@/presentation/constants/assignmentFormTheme";
+import { DesktopOnlyFeatureNotice } from "@/presentation/components/shared/DesktopOnlyFeatureNotice";
 
 // Inlined from src/presentation/components/teacher/forms/testCases/TestCaseList.tsx
 // Inlined from src/presentation/components/teacher/forms/testCases/DeleteTestCaseModal.tsx
@@ -1236,7 +1237,7 @@ export function BasicInfoForm({
                   >
                     Scheduled Release
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="hidden text-xs text-slate-500 sm:block">
                     Automatically publish this assignment at a future date and
                     time
                   </p>
@@ -1332,16 +1333,11 @@ export function BasicInfoForm({
 
         <div className="space-y-2 border-t border-slate-200 pt-4">
           {/* Mobile notice */}
-          <div className="lg:hidden rounded-xl border border-sky-200 bg-sky-50 p-4">
-            <div className="flex items-start gap-3">
-              <Monitor className="h-5 w-5 text-sky-600 mt-0.5 shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-sky-800">Template Code</p>
-                <p className="text-xs text-sky-600 mt-1">
-                  The code editor for template code is available on desktop.
-                </p>
-              </div>
-            </div>
+          <div className="lg:hidden">
+            <DesktopOnlyFeatureNotice
+              title="Template Code"
+              description="The code editor for template code is available on desktop."
+            />
           </div>
 
           {/* Desktop toggle + editor */}

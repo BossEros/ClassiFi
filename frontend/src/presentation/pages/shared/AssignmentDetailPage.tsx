@@ -15,7 +15,6 @@ import {
   FileCode,
   Info,
   MessageSquare,
-  Monitor,
   RefreshCw,
   Save,
   ScrollText,
@@ -36,6 +35,7 @@ import { useToastStore } from "@/shared/store/useToastStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
 import { AssignmentSubmissionForm } from "@/presentation/components/shared/assignmentDetail/AssignmentSubmissionForm"
 import { AssignmentTestResultsCard } from "@/presentation/components/shared/assignmentDetail/AssignmentTestResultsCard"
+import { DesktopOnlyFeatureNotice } from "@/presentation/components/shared/DesktopOnlyFeatureNotice"
 import { useAssignmentDetailData } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentDetailData"
 import { useAssignmentSubmissionFlow } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentSubmissionFlow"
 import { useAssignmentCodePreview } from "@/presentation/hooks/shared/assignmentDetail/useAssignmentCodePreview"
@@ -51,6 +51,7 @@ import {
 import { cn } from "@/shared/utils/cn"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { GradeBreakdownPanel } from "@/presentation/components/shared/GradeBreakdownPanel"
+import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery"
 
 interface CodePreviewModalProps {
   isOpen: boolean
@@ -494,6 +495,7 @@ function getDisplayedSubmissionGrade(
 export function AssignmentDetailPage() {
   const navigate = useNavigate()
   const { assignmentId } = useParams<{ assignmentId: string }>()
+  const isMobileViewport = useIsMobile()
   const [searchParams] = useSearchParams()
   const showToast = useToastStore((state) => state.showToast)
   const selectedSubmissionIdValue = searchParams.get("submissionId")
@@ -865,7 +867,7 @@ export function AssignmentDetailPage() {
               </div>
             </div>
 
-            {isTeacher && selectedSubmissionId === null && (
+            {isTeacher && selectedSubmissionId === null && !isMobileViewport && (
               <Button
                 onClick={() =>
                   showToast("Checking for similarities...", "info")
@@ -900,6 +902,15 @@ export function AssignmentDetailPage() {
             />
           )}
 
+          {isTeacher && isMobileViewport ? (
+            <div className="mb-6">
+              <DesktopOnlyFeatureNotice
+                title="Similarity Review"
+                description="Similarity review is available on desktop."
+              />
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="space-y-6 lg:col-span-2">
               <Card className="w-full border-slate-200 bg-white shadow-sm">
@@ -930,49 +941,29 @@ export function AssignmentDetailPage() {
                 </CardContent>
               </Card>
 
-              {/* Mobile: show desktop prompt instead of submission form */}
-              <div className="lg:hidden rounded-xl border border-sky-200 bg-sky-50 p-4">
-                <div className="flex items-start gap-3">
-                  <Monitor className="h-5 w-5 shrink-0 text-sky-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-sky-900">
-                      Code submission requires a desktop
-                    </p>
-                    <p className="mt-1 text-xs text-sky-700">
-                      Open this page on a computer to write and submit your
-                      code. You can still view assignment details, instructions,
-                      and your submission status here.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Desktop: full submission form */}
-              <div className="hidden lg:block">
-                <AssignmentSubmissionForm
-                  isTeacher={isTeacher}
-                  canResubmit={canResubmit}
-                  hasSubmitted={hasSubmitted}
-                  variant="light"
-                  programmingLanguage={tempAssignment.programmingLanguage}
-                  fileInputRef={fileInputRef}
-                  selectedFile={selectedFile}
-                  fileError={fileError}
-                  isRunningPreview={isRunningPreview}
-                  isSubmitting={isSubmitting}
-                  onFileSelect={handleFileSelect}
-                  onFileDrop={handleFileDrop}
-                  onFilePreview={() =>
-                    openFilePreview(
-                      selectedFile,
-                      assignment?.programmingLanguage,
-                    )
-                  }
-                  onClearFile={handleClearFile}
-                  onRunPreviewTests={handleRunPreviewTests}
-                  onSubmit={handleSubmit}
-                />
-              </div>
+              <AssignmentSubmissionForm
+                isTeacher={isTeacher}
+                canResubmit={canResubmit}
+                hasSubmitted={hasSubmitted}
+                variant="light"
+                programmingLanguage={tempAssignment.programmingLanguage}
+                fileInputRef={fileInputRef}
+                selectedFile={selectedFile}
+                fileError={fileError}
+                isRunningPreview={isRunningPreview}
+                isSubmitting={isSubmitting}
+                onFileSelect={handleFileSelect}
+                onFileDrop={handleFileDrop}
+                onFilePreview={() =>
+                  openFilePreview(
+                    selectedFile,
+                    assignment?.programmingLanguage,
+                  )
+                }
+                onClearFile={handleClearFile}
+                onRunPreviewTests={handleRunPreviewTests}
+                onSubmit={handleSubmit}
+              />
             </div>
 
             <div className="space-y-6">

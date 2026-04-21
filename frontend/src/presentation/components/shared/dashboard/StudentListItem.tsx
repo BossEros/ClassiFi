@@ -9,6 +9,7 @@ interface StudentListItemProps {
   isLast?: boolean
   className?: string
   gridTemplate?: string
+  layoutMode?: "table" | "card"
   variant?: "dark" | "light"
 }
 
@@ -30,6 +31,7 @@ export function StudentListItem({
   isLast = false,
   className,
   gridTemplate = "400px 1fr 150px 60px",
+  layoutMode = "table",
   variant = "dark",
 }: StudentListItemProps) {
   // Generate initials from first and last name
@@ -40,6 +42,48 @@ export function StudentListItem({
   // Preserve the remove callback contract so the trash action can be restored quickly later.
   void onRemove
 
+  if (layoutMode === "card") {
+    return (
+      <div
+        onClick={onClick}
+        className={cn(
+          "rounded-xl border p-4 transition-all duration-200",
+          variant === "light"
+            ? "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+            : "border-white/10 bg-slate-900/50 hover:bg-white/5",
+          onClick && "cursor-pointer",
+          className,
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <Avatar
+            src={student.avatarUrl ?? undefined}
+            fallback={initials}
+            alt={student.fullName}
+            size="md"
+          />
+
+          <div className="min-w-0 flex-1">
+            <h4
+              className={`truncate text-sm font-semibold ${
+                variant === "light" ? "text-slate-900" : "text-white"
+              }`}
+            >
+              {student.fullName}
+            </h4>
+            <p
+              className={`mt-1 break-all text-sm ${
+                variant === "light" ? "text-slate-500" : "text-gray-400"
+              }`}
+            >
+              {student.email}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       onClick={onClick}
@@ -48,7 +92,9 @@ export function StudentListItem({
         "transition-all duration-200",
         variant === "light" ? "hover:bg-slate-50" : "hover:bg-white/5",
         !isLast &&
-          (variant === "light" ? "border-b border-slate-100" : "border-b border-white/5"),
+          (variant === "light"
+            ? "border-b border-slate-100"
+            : "border-b border-white/5"),
         onClick && "cursor-pointer",
         className,
       )}
@@ -62,19 +108,27 @@ export function StudentListItem({
           alt={student.fullName}
           size="md"
         />
-        <h4 className={`whitespace-nowrap text-sm font-semibold ${variant === "light" ? "text-slate-900" : "text-white"}`}>
+        <h4
+          className={`whitespace-nowrap text-sm font-semibold ${variant === "light" ? "text-slate-900" : "text-white"}`}
+        >
           {student.fullName}
         </h4>
       </div>
 
       {/* Email Address */}
       <div className="min-w-0">
-        <p className={`truncate text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}>{student.email}</p>
+        <p
+          className={`truncate text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+        >
+          {student.email}
+        </p>
       </div>
 
       {/* Role Badge */}
       <div>
-        <span className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${variant === "light" ? "border border-sky-200 bg-sky-50 text-sky-700" : "border border-teal-500/30 bg-teal-500/20 text-teal-400"}`}>
+        <span
+          className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${variant === "light" ? "border border-sky-200 bg-sky-50 text-sky-700" : "border border-teal-500/30 bg-teal-500/20 text-teal-400"}`}
+        >
           Student
         </span>
       </div>
@@ -99,4 +153,3 @@ export function StudentListItem({
     </div>
   )
 }
-

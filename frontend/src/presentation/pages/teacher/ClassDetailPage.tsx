@@ -15,6 +15,7 @@ import type { ClassTab } from "@/data/api/class.types";
 import { getClassDetailData, deleteClass } from "@/business/services/classService";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar";
+import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery";
 import type { User } from "@/data/api/auth.types";
 import type { Class, Assignment, EnrolledStudent } from "@/data/api/class.types";
 import type { Module } from "@/data/api/class.types";
@@ -464,6 +465,7 @@ export function ClassDetailPage() {
   const parsedClassId = classId ? parseInt(classId, 10) : 0
   const currentUser = useAuthStore((state) => state.user)
   const showToast = useToastStore((state) => state.showToast)
+  const isMobileViewport = useIsMobile()
 
   const [user, setUser] = useState<User | null>(null)
   const [classInfo, setClassInfo] = useState<Class | null>(null)
@@ -493,6 +495,9 @@ export function ClassDetailPage() {
   const isTeacher = user?.role === "teacher" || user?.role === "admin"
   const isStudent = user?.role === "student"
   const isLightClassView = true
+  const visibleClassTabs = isMobileViewport
+    ? (["assignments", "grades"] as const satisfies ClassTab[])
+    : undefined
 
   // Derived state for filtered and grouped assignments
   const filteredAssignments = useMemo(
@@ -594,6 +599,16 @@ export function ClassDetailPage() {
 
     fetchClassData()
   }, [navigate, classId, currentUser])
+
+  useEffect(() => {
+    if (
+      isMobileViewport &&
+      activeTab !== "assignments" &&
+      activeTab !== "grades"
+    ) {
+      setActiveTab("assignments")
+    }
+  }, [activeTab, isMobileViewport])
 
   const handleRemoveStudentClick = (student: EnrolledStudent) => {
     setStudentToRemove(student)
@@ -811,6 +826,7 @@ export function ClassDetailPage() {
             onTabChange={handleTabChange}
             variant={isLightClassView ? "light" : "dark"}
             showIcons={!isLightClassView}
+            visibleTabs={visibleClassTabs ? [...visibleClassTabs] : undefined}
           >
             {/* Assignments Tab */}
             {activeTab === "assignments" && (

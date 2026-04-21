@@ -41,6 +41,8 @@ import {
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { useToastStore } from "@/shared/store/useToastStore"
 import { useTopBar } from "@/presentation/components/shared/dashboard/TopBar"
+import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery"
+import { DesktopOnlyFeatureNotice } from "@/presentation/components/shared/DesktopOnlyFeatureNotice"
 import { DropdownMenu } from "@/presentation/components/ui/DropdownMenu"
 import type {
   AssignmentDetail,
@@ -277,7 +279,7 @@ function CollapsibleInstructions({
 interface AssignmentSubmissionsTableProps {
   submissions: Submission[]
   deadline: Date | null
-  maxGrade?: number
+  maxScore?: number
   studentAvatarUrlById: Record<number, string | null>
   currentPage: number
   totalPages: number
@@ -287,7 +289,7 @@ interface AssignmentSubmissionsTableProps {
   onViewDetails: (submission: Submission) => void
 }
 
-function getSubmissionGradeTextClass(percentage: number): string {
+function getSubmissionScoreTextClass(percentage: number): string {
   if (percentage >= 90) return "text-emerald-700"
   if (percentage >= 80) return "text-teal-700"
   if (percentage >= 70) return "text-amber-700"
@@ -298,7 +300,7 @@ function getSubmissionGradeTextClass(percentage: number): string {
 function AssignmentSubmissionsTable({
   submissions,
   deadline,
-  maxGrade = 100,
+  maxScore = 100,
   studentAvatarUrlById,
   currentPage,
   totalPages,
@@ -309,7 +311,86 @@ function AssignmentSubmissionsTable({
 }: AssignmentSubmissionsTableProps) {
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-2xl border border-slate-300 bg-white shadow-md shadow-slate-200/80">
+      <div className="space-y-3 md:hidden">
+        {submissions.map((submission) => {
+          const isLate = isLateSubmission(submission.submittedAt, deadline)
+          const submissionScorePercentage = getGradePercentage(
+            submission.grade,
+            maxScore,
+          )
+          const submissionScoreClass =
+            submission.grade === null || submission.grade === undefined
+              ? "text-slate-400"
+              : getSubmissionScoreTextClass(submissionScorePercentage)
+
+          return (
+            <Card
+              key={submission.id}
+              className="border-slate-300 bg-white shadow-md shadow-slate-200/70"
+            >
+              <CardContent className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <Avatar
+                      src={
+                        studentAvatarUrlById[submission.studentId] ?? undefined
+                      }
+                      alt={submission.studentName || "Unknown Student"}
+                      fallback={(submission.studentName || "Unknown Student")
+                        .split(" ")
+                        .map((namePart) => namePart[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                      size="sm"
+                      className="border border-slate-200"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {submission.studentName || "Unknown Student"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <span
+                    className={cn(
+                      "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+                      isLate
+                        ? "bg-amber-50 text-amber-700 ring-1 ring-amber-200"
+                        : "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+                    )}
+                  >
+                    {isLate ? (
+                      <AlertCircle className="h-3.5 w-3.5" />
+                    ) : (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    )}
+                    <span>{isLate ? "Late" : "On Time"}</span>
+                  </span>
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Score
+                  </p>
+                  <p className={cn("mt-1 text-sm font-semibold", submissionScoreClass)}>
+                    {formatGrade(submission.grade, maxScore)}
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => onViewDetails(submission)}
+                  className="w-full border border-teal-200 bg-teal-50 text-teal-700 shadow-sm hover:border-teal-300 hover:bg-teal-100 hover:text-teal-800"
+                >
+                  View Details
+                </Button>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto rounded-2xl border border-slate-300 bg-white shadow-md shadow-slate-200/80 md:block">
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-300 bg-slate-200/85">
@@ -320,7 +401,7 @@ function AssignmentSubmissionsTable({
                 Status
               </th>
               <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
-                Grade
+                Score
               </th>
               <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-700">
                 Action
@@ -331,14 +412,14 @@ function AssignmentSubmissionsTable({
           <tbody>
             {submissions.map((submission) => {
               const isLate = isLateSubmission(submission.submittedAt, deadline)
-              const submissionGradePercentage = getGradePercentage(
+              const submissionScorePercentage = getGradePercentage(
                 submission.grade,
-                maxGrade,
+                maxScore,
               )
-              const submissionGradeClass =
+              const submissionScoreClass =
                 submission.grade === null || submission.grade === undefined
                   ? "text-slate-400"
-                  : getSubmissionGradeTextClass(submissionGradePercentage)
+                  : getSubmissionScoreTextClass(submissionScorePercentage)
 
               return (
                 <tr
@@ -390,10 +471,10 @@ function AssignmentSubmissionsTable({
                   <td
                     className={cn(
                       "px-6 py-4 text-center text-sm font-semibold",
-                      submissionGradeClass,
+                      submissionScoreClass,
                     )}
                   >
-                    {formatGrade(submission.grade, maxGrade)}
+                    {formatGrade(submission.grade, maxScore)}
                   </td>
 
                   <td className="px-6 py-4 text-center">
@@ -431,6 +512,7 @@ const SUBMISSIONS_PER_PAGE = 10
 export function AssignmentSubmissionsPage() {
   const { assignmentId } = useParams<{ assignmentId: string }>()
   const navigate = useNavigate()
+  const isMobileViewport = useIsMobile()
   const currentUser = useAuthStore((state) => state.user)
   const canManageAssignment =
     currentUser?.role === "teacher" || currentUser?.role === "admin"
@@ -840,28 +922,37 @@ export function AssignmentSubmissionsPage() {
             />
           </div>
 
-          <Button
-            onClick={handleCheckSimilarities}
-            disabled={totalSubmissions < 2 || isAnalyzing}
-            className="flex items-center justify-center gap-2 bg-teal-600 text-white shadow-sm hover:bg-teal-700 sm:ml-auto"
-          >
-            {isAnalyzing ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Analyzing...</span>
-              </>
-            ) : (
-              <>
-                <Shield className="w-4 h-4" />
-                <span>
-                  {hasReusableSimilarityReport
-                    ? "Review Similarities"
-                    : "Check Similarities"}
-                </span>
-              </>
-            )}
-          </Button>
+          {!isMobileViewport ? (
+            <Button
+              onClick={handleCheckSimilarities}
+              disabled={totalSubmissions < 2 || isAnalyzing}
+              className="flex items-center justify-center gap-2 bg-teal-600 text-white shadow-sm hover:bg-teal-700 sm:ml-auto"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <Shield className="w-4 h-4" />
+                  <span>
+                    {hasReusableSimilarityReport
+                      ? "Review Similarities"
+                      : "Check Similarities"}
+                  </span>
+                </>
+              )}
+            </Button>
+          ) : null}
         </div>
+
+        {isMobileViewport ? (
+          <DesktopOnlyFeatureNotice
+            title="Similarity Review"
+            description="Similarity review is available on desktop."
+          />
+        ) : null}
 
         {/* Submissions Grid */}
         <div className="mt-8">
@@ -902,7 +993,7 @@ export function AssignmentSubmissionsPage() {
               deadline={
                 assignment.deadline ? new Date(assignment.deadline) : null
               }
-              maxGrade={assignment.totalScore ?? 100}
+              maxScore={assignment.totalScore ?? 100}
               studentAvatarUrlById={studentAvatarUrlById}
               currentPage={currentSubmissionPage}
               totalPages={totalSubmissionPages}

@@ -222,6 +222,7 @@ describe("ClassService", () => {
 
   describe("getClassAssignments", () => {
     it("should return assignments with submission and student counts", async () => {
+      const existingClass = createMockClass({ id: 1, className: "Mobile Systems" })
       const classAssignments = [
         {
           id: 11,
@@ -244,6 +245,7 @@ describe("ClassService", () => {
         },
       ]
 
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
@@ -255,6 +257,7 @@ describe("ClassService", () => {
       const result = await classService.getClassAssignments(1)
 
       expect(result).toHaveLength(1)
+      expect(result[0].className).toBe("Mobile Systems")
       expect(result[0].submissionCount).toBe(12)
       expect(result[0].studentCount).toBe(30)
       expect(
@@ -263,6 +266,10 @@ describe("ClassService", () => {
     })
 
     it("should default submission count to zero when no submissions exist", async () => {
+      const existingClass = createMockClass({
+        id: 1,
+        className: "Software Engineering",
+      })
       const classAssignments = [
         {
           id: 22,
@@ -285,6 +292,7 @@ describe("ClassService", () => {
         },
       ]
 
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
@@ -296,13 +304,27 @@ describe("ClassService", () => {
       const result = await classService.getClassAssignments(1)
 
       expect(result).toHaveLength(1)
+      expect(result[0].className).toBe("Software Engineering")
       expect(result[0].submissionCount).toBe(0)
       expect(result[0].studentCount).toBe(18)
+    })
+
+    it("should throw ClassNotFoundError when the class does not exist", async () => {
+      mockClassRepo.getClassById!.mockResolvedValue(undefined)
+
+      await expect(classService.getClassAssignments(999)).rejects.toThrow(
+        ClassNotFoundError,
+      )
+      expect(mockAssignmentRepo.getAssignmentsByClassId).not.toHaveBeenCalled()
     })
   })
 
   describe("getClassAssignmentsForStudent", () => {
     it("should enrich class assignments with student submission metadata", async () => {
+      const existingClass = createMockClass({
+        id: 1,
+        className: "Intro to Programming",
+      })
       const classAssignments = [
         {
           id: 11,
@@ -345,6 +367,7 @@ describe("ClassService", () => {
         feedbackGivenAt: null,
       }
 
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
@@ -362,6 +385,7 @@ describe("ClassService", () => {
       expect(result).toHaveLength(1)
       expect(result[0].submissionCount).toBe(12)
       expect(result[0].studentCount).toBe(30)
+      expect(result[0].className).toBe("Intro to Programming")
       expect(result[0].hasSubmitted).toBe(true)
       expect(result[0].submittedAt).toBe("2026-01-02T10:00:00.000Z")
       expect(result[0].grade).toBe(91)
@@ -371,6 +395,7 @@ describe("ClassService", () => {
     })
 
     it("should set default student fields when no latest submission exists", async () => {
+      const existingClass = createMockClass({ id: 1, className: "Discrete Math" })
       const classAssignments = [
         {
           id: 22,
@@ -393,6 +418,7 @@ describe("ClassService", () => {
         },
       ]
 
+      mockClassRepo.getClassById!.mockResolvedValue(existingClass)
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
@@ -408,6 +434,7 @@ describe("ClassService", () => {
       const result = await classService.getClassAssignmentsForStudent(1, 77)
 
       expect(result).toHaveLength(1)
+      expect(result[0].className).toBe("Discrete Math")
       expect(result[0].hasSubmitted).toBe(false)
       expect(result[0].submittedAt).toBeNull()
       expect(result[0].grade).toBeNull()

@@ -9,6 +9,7 @@ import {
 } from "@/presentation/constants/schedule.constants"
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import type { DayOfWeek } from "@/data/api/class.types"
+import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery"
 
 interface ClassHeaderProps {
   className?: string
@@ -51,6 +52,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
 }) => {
   const [hasCopied, setHasCopied] = useState(false)
   const showToast = useToastStore((state) => state.showToast)
+  const isMobileViewport = useIsMobile()
 
   const handleCopyCode = async () => {
     if (!classCode) return
@@ -79,6 +81,92 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
     .join("")
     .toUpperCase()
     .slice(0, 2)
+  const shouldUseCompactMobileLayout = isLight && isMobileViewport
+  const hasSchedule = Boolean(
+    schedule.days.length > 0 && schedule.startTime && schedule.endTime,
+  )
+
+  if (shouldUseCompactMobileLayout) {
+    return (
+      <section className={className}>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1 space-y-3">
+              {classCode ? (
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className="font-medium uppercase tracking-[0.16em] text-slate-400">
+                    Class Code
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono font-semibold tracking-wide text-slate-700 transition-colors hover:border-teal-200 hover:text-teal-700"
+                    title="Copy class code"
+                  >
+                    <span>{classCode}</span>
+                    {hasCopied ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5 text-slate-400" />
+                    )}
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <h1 className={dashboardTheme.pageTitle}>{classNameTitle}</h1>
+              </div>
+            </div>
+
+            {isTeacher ? (
+              <DropdownMenu
+                items={[
+                  {
+                    id: "edit",
+                    label: "Edit Class",
+                    icon: Edit,
+                    onClick: onEditClass || (() => {}),
+                  },
+                  {
+                    id: "delete",
+                    label: "Delete Class",
+                    icon: Trash2,
+                    variant: "danger",
+                    onClick: onDeleteClass || (() => {}),
+                  },
+                ]}
+                triggerLabel="Class actions"
+                variant="light"
+              />
+            ) : (
+              <DropdownMenu
+                items={[
+                  {
+                    id: "leave",
+                    label: "Leave Class",
+                    icon: LogOut,
+                    variant: "danger",
+                    onClick: onLeaveClass || (() => {}),
+                  },
+                ]}
+                triggerLabel="Class actions"
+                variant="light"
+              />
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {hasSchedule ? (
+              <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700">
+                <Clock className="h-4 w-4 text-teal-600" />
+                <span>{scheduleText}</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   if (isLight) {
     return (
@@ -111,9 +199,7 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
 
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
-                  <h1 className={dashboardTheme.pageTitle}>
-                    {classNameTitle}
-                  </h1>
+                  <h1 className={dashboardTheme.pageTitle}>{classNameTitle}</h1>
                 </div>
 
                 <div className="flex items-center gap-3 self-start">
@@ -205,15 +291,23 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
         {/* Left Side: Class Info */}
         <div className="flex flex-col gap-4 flex-1">
           <div className="flex items-center flex-wrap gap-3">
-            <h1 className={`text-3xl font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}>
+            <h1
+              className={`text-3xl font-bold tracking-tight ${isLight ? "text-slate-900" : "text-white"}`}
+            >
               {classNameTitle}
             </h1>
             {isTeacher && classCode && (
-              <div className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 md:ml-2 ${isLight ? "border-teal-100 bg-teal-50" : "border-white/10 bg-white/5"}`}>
-                <span className={`text-xs font-medium uppercase tracking-wider ${isLight ? "text-slate-500" : "text-slate-400"}`}>
+              <div
+                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 md:ml-2 ${isLight ? "border-teal-100 bg-teal-50" : "border-white/10 bg-white/5"}`}
+              >
+                <span
+                  className={`text-xs font-medium uppercase tracking-wider ${isLight ? "text-slate-500" : "text-slate-400"}`}
+                >
                   Class Code:
                 </span>
-                <span className={`text-sm font-mono font-bold tracking-wider ${isLight ? "text-teal-700" : "text-teal-400"}`}>
+                <span
+                  className={`text-sm font-mono font-bold tracking-wider ${isLight ? "text-teal-700" : "text-teal-400"}`}
+                >
                   {classCode}
                 </span>
                 <button
@@ -224,7 +318,9 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
                   title="Copy Class Code"
                 >
                   {hasCopied ? (
-                    <Check className={`w-4 h-4 ${isLight ? "text-emerald-600" : "text-emerald-400"}`} />
+                    <Check
+                      className={`w-4 h-4 ${isLight ? "text-emerald-600" : "text-emerald-400"}`}
+                    />
                   ) : (
                     <Copy className="w-4 h-4" />
                   )}
@@ -296,4 +392,3 @@ export const ClassHeader: React.FC<ClassHeaderProps> = ({
     </div>
   )
 }
-
