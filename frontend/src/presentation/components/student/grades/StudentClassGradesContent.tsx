@@ -526,29 +526,9 @@ export function StudentClassGradesContent({
           >
             My Grades
           </h2>
-          <p
-            className={cn(
-              "mt-1 text-sm",
-              variant === "light" ? "text-slate-500" : "text-slate-300",
-            )}
-          >
-            Track your scores and check what still needs grading.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
-            onClick={refetch}
-            className={cn(
-              "h-10 w-auto px-4",
-              variant === "light"
-                ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                : "bg-white/10 hover:bg-white/20",
-            )}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
-          </Button>
           <Button
             onClick={handleDownloadPdf}
             className="w-auto px-4 h-10"

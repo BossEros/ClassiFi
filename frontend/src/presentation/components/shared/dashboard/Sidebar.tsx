@@ -133,6 +133,17 @@ interface SidebarContentProps {
   user: User | null
 }
 
+function getVisibleNavigationItems(
+  navigationItems: NavigationItem[],
+  isDesktopViewport: boolean,
+): NavigationItem[] {
+  if (isDesktopViewport) {
+    return navigationItems
+  }
+
+  return navigationItems.filter((navigationItem) => navigationItem.id !== "calendar")
+}
+
 function SidebarNavItem({
   item,
   onClick,
@@ -291,6 +302,15 @@ function SidebarContent({
     }
   }, [isMobileOpen])
 
+  const navigationItems = getVisibleNavigationItems(
+    user?.role === "student"
+      ? studentNavigationItems
+      : user?.role === "admin"
+        ? adminNavigationItems
+        : teacherNavigationItems,
+    isDesktopViewport,
+  )
+
   return (
     <>
       {/* Sidebar */}
@@ -372,12 +392,7 @@ function SidebarContent({
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-          {(user?.role === "student"
-            ? studentNavigationItems
-            : user?.role === "admin"
-              ? adminNavigationItems
-              : teacherNavigationItems
-          ).map((item) => (
+          {navigationItems.map((item) => (
             <SidebarNavItem
               key={item.id}
               item={item}

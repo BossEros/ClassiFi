@@ -253,6 +253,12 @@ export class ClassService {
 
   /** Get all assignments for a class with class-level submission aggregates. */
   async getClassAssignments(classId: number): Promise<AssignmentDTO[]> {
+    const classData = await this.classRepo.getClassById(classId)
+
+    if (!classData) {
+      throw new ClassNotFoundError(classId)
+    }
+
     const assignments = await this.assignmentRepo.getAssignmentsByClassId(classId)
     const studentCount = await this.classRepo.getStudentCount(classId)
     const assignmentIds = assignments.map((assignment) => assignment.id)
@@ -264,6 +270,7 @@ export class ClassService {
       toAssignmentDTO(assignment, {
         submissionCount: submissionCounts.get(assignment.id) ?? 0,
         studentCount,
+        className: classData.className,
       }),
     )
   }
