@@ -31,6 +31,7 @@ import type {
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm"
 import {
   assignmentFormSchema,
+  assignmentEditFormSchema,
   type AssignmentFormValues,
 } from "@/presentation/schemas/assignment/assignmentSchemas"
 import { toLocalDateTimeString } from "@/presentation/utils/dateUtils"
@@ -93,7 +94,7 @@ export function useAssignmentForm() {
   const [showTemplateCode, setShowTemplateCode] = useState(false)
 
   const formMethods = useZodForm({
-    schema: assignmentFormSchema,
+    schema: isEditMode ? assignmentEditFormSchema : assignmentFormSchema,
     defaultValues: buildDefaultFormValues(),
     mode: "onSubmit",
   })

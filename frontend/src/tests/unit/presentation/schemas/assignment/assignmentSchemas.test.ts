@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  assignmentEditFormSchema,
   assignmentFormSchema,
   testCaseFormSchema,
 } from "@/presentation/schemas/assignment/assignmentSchemas"
@@ -129,6 +130,60 @@ describe("assignmentFormSchema", () => {
         "Max attempts must be between 1 and 99",
       )
     }
+  })
+
+  it("rejects past deadlines when creating an assignment", () => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    const parsedResult = assignmentFormSchema.safeParse({
+      ...buildValidAssignmentData(),
+      deadline: yesterday.toISOString().slice(0, 16),
+    })
+
+    expect(parsedResult.success).toBe(false)
+
+    if (!parsedResult.success) {
+      expect(parsedResult.error.issues[0]?.message).toBe(
+        "Deadline must be in the future",
+      )
+    }
+  })
+
+  it("rejects deadlines before the scheduled date", () => {
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+
+    const twoDaysLater = new Date()
+    twoDaysLater.setDate(twoDaysLater.getDate() + 2)
+
+    const parsedResult = assignmentFormSchema.safeParse({
+      ...buildValidAssignmentData(),
+      deadline: tomorrow.toISOString().slice(0, 16),
+      scheduledDate: twoDaysLater.toISOString().slice(0, 16),
+    })
+
+    expect(parsedResult.success).toBe(false)
+
+    if (!parsedResult.success) {
+      expect(parsedResult.error.issues[0]?.message).toBe(
+        "Deadline must be after scheduled date",
+      )
+    }
+  })
+})
+
+describe("assignmentEditFormSchema", () => {
+  it("accepts past deadlines when editing an assignment", () => {
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+
+    const parsedResult = assignmentEditFormSchema.safeParse({
+      ...buildValidAssignmentData(),
+      deadline: yesterday.toISOString().slice(0, 16),
+    })
+
+    expect(parsedResult.success).toBe(true)
   })
 })
 
