@@ -12,9 +12,11 @@ export interface TeacherAllAssignmentsResponse {
     id: number
     assignmentName: string
     className: string
+    classCode: string
     classId: number
     deadline: string | null
-    submissionCount: number
+    submittedCount: number
+    ungradedSubmissionCount: number
     totalStudents: number
     programmingLanguage: string
   }[]

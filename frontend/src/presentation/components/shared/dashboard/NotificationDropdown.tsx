@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import * as notificationService from "@/business/services/notificationService"
 import type { Notification } from "@/data/api/notification.types"
@@ -22,26 +22,10 @@ export function NotificationDropdown({
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const dropdownRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadNotifications()
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        onClose()
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside)
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [onClose])
+  }, [])
 
   const loadNotifications = async () => {
     try {
@@ -89,7 +73,6 @@ export function NotificationDropdown({
 
   return (
     <div
-      ref={dropdownRef}
       className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-96 rounded-lg border border-slate-300 bg-white shadow-2xl z-[9999]"
     >
       <div className="flex items-center justify-between border-b border-slate-200 p-4">

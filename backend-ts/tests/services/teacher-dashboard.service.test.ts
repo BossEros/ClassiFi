@@ -6,7 +6,6 @@ describe("TeacherDashboardService", () => {
   let dashboardService: TeacherDashboardService
   let mockClassRepo: any
   let mockAssignmentRepo: any
-  let mockSubmissionRepo: any
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -24,14 +23,10 @@ describe("TeacherDashboardService", () => {
       getPendingTasksForTeacher: vi.fn().mockResolvedValue([]),
     }
 
-    mockSubmissionRepo = {
-      getSubmissionsByAssignment: vi.fn().mockResolvedValue([]),
-    }
-
     dashboardService = new TeacherDashboardService(
       mockClassRepo,
       mockAssignmentRepo,
-      mockSubmissionRepo,
+      undefined,
     )
   })
 
@@ -179,6 +174,51 @@ describe("TeacherDashboardService", () => {
       const result = await dashboardService.getPendingTasks(1)
 
       expect(result[0].deadline).toBeNull()
+    })
+  })
+
+  describe("getAllAssignments", () => {
+    it("returns separate submitted and ungraded counts", async () => {
+      const mockDashboardQueryRepo = {
+        getAllAssignmentsForTeacher: vi.fn().mockResolvedValue([
+          {
+            id: 7,
+            assignmentName: "Loops",
+            className: "CS 101",
+            classCode: "CS101-A",
+            classId: 3,
+            deadline: new Date("2026-04-20T08:00:00.000Z"),
+            programmingLanguage: "python",
+            submittedCount: 41,
+            ungradedSubmissionCount: 0,
+            studentCount: 59,
+          },
+        ]),
+      }
+
+      dashboardService = new TeacherDashboardService(
+        mockClassRepo,
+        mockAssignmentRepo,
+        mockDashboardQueryRepo as any,
+      )
+
+      const result = await dashboardService.getAllAssignments(12)
+
+      expect(mockDashboardQueryRepo.getAllAssignmentsForTeacher).toHaveBeenCalledWith(12)
+      expect(result).toEqual([
+        {
+          id: 7,
+          assignmentName: "Loops",
+          className: "CS 101",
+          classCode: "CS101-A",
+          classId: 3,
+          deadline: "2026-04-20T08:00:00.000Z",
+          programmingLanguage: "python",
+          submittedCount: 41,
+          ungradedSubmissionCount: 0,
+          totalStudents: 59,
+        },
+      ])
     })
   })
 })

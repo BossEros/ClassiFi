@@ -104,4 +104,38 @@ describe("teacherDashboardService", () => {
       )
     })
   })
+
+  describe("getAllTeacherAssignments", () => {
+    it("maps submitted and ungraded counts for teacher assignments", async () => {
+      vi.mocked(
+        dashboardRepository.getAllAssignmentsForTeacherId,
+      ).mockResolvedValue({
+        success: true,
+        assignments: [
+          {
+            id: 15,
+            assignmentName: "Recursion",
+            className: "Algorithms",
+            classCode: "ALG-201",
+            classId: 4,
+            deadline: "2026-04-22T10:00:00.000Z",
+            submittedCount: 41,
+            ungradedSubmissionCount: 0,
+            totalStudents: 59,
+            programmingLanguage: "python",
+          },
+        ],
+      })
+
+      const result = await teacherDashboardService.getAllTeacherAssignments(2)
+
+      expect(
+        dashboardRepository.getAllAssignmentsForTeacherId,
+      ).toHaveBeenCalledWith(2)
+      expect(result[0].submittedCount).toBe(41)
+      expect(result[0].ungradedSubmissionCount).toBe(0)
+      expect(result[0].classCode).toBe("ALG-201")
+      expect(result[0].studentCount).toBe(59)
+    })
+  })
 })

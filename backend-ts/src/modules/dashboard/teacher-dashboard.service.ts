@@ -129,9 +129,11 @@ export class TeacherDashboardService {
       id: a.id,
       assignmentName: a.assignmentName,
       className: a.className,
+      classCode: a.classCode,
       classId: a.classId,
       deadline: a.deadline?.toISOString() ?? null,
-      submissionCount: a.submissionCount,
+      submittedCount: a.submittedCount,
+      ungradedSubmissionCount: a.ungradedSubmissionCount,
       totalStudents: a.studentCount,
       programmingLanguage: a.programmingLanguage,
     }))

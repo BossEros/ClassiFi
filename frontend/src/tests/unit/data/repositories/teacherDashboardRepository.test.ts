@@ -47,6 +47,19 @@ describe("teacherDashboardRepository", () => {
     submissionCount: 15,
   }
 
+  const mockTeacherAssignment = {
+    id: 9,
+    classId: 1,
+    assignmentName: "Functions",
+    deadline: "2026-04-25T12:00:00Z",
+    className: "Introduction to Programming",
+    classCode: "CS101",
+    submittedCount: 41,
+    ungradedSubmissionCount: 0,
+    totalStudents: 59,
+    programmingLanguage: "python",
+  }
+
   // ============================================================================
   // getCompleteDashboardDataForTeacherId Tests
   // ============================================================================
@@ -256,6 +269,28 @@ describe("teacherDashboardRepository", () => {
         await teacherDashboardRepository.getPendingTasksForTeacherId(1)
 
       expect(result.tasks[0].submissionCount).toBe(15)
+    })
+  })
+
+  describe("getAllAssignmentsForTeacherId", () => {
+    it("fetches teacher assignments with separate submitted and ungraded counts", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: {
+          success: true,
+          assignments: [mockTeacherAssignment],
+        },
+        status: 200,
+      })
+
+      const result =
+        await teacherDashboardRepository.getAllAssignmentsForTeacherId(1)
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/teacher/dashboard/1/assignments",
+      )
+      expect(result.assignments[0].submittedCount).toBe(41)
+      expect(result.assignments[0].ungradedSubmissionCount).toBe(0)
+      expect(result.assignments[0].classCode).toBe("CS101")
     })
   })
 })
