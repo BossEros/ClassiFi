@@ -409,7 +409,13 @@ Comprehensive settings page with:
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
 - **Notification preferences**: Two global delivery toggles for email and in-app notifications backed by `userService`
-- **Account deletion**: Self-service account removal with confirmation
+- **Account deletion**: Self-service account removal with confirmation for non-teacher roles
+
+Teacher account deletion UX notes:
+
+- Teachers no longer see the destructive self-delete danger zone in `SettingsPage`.
+- `SettingsPage` shows a management notice instead, explaining that teacher accounts can be removed only by an administrator.
+- Admin user deletion blocks teacher deletion when assigned classes remain and directs admins to reassign classes first.
 
 ### Notification System
 
@@ -575,7 +581,7 @@ Specialized types for the class detail page redesign:
    - Status badges indicate: pending (yellow, submitted but awaiting grade), not-started (gray), submitted (teal), or late (red, missed deadline with no submission)
 3. **Filter Assignments**:
    - Click "All Assignments" to view all assignments
-   - Click "Pending" to view tasks that still need submission (not-started + missed)
+   - Click "Pending" to view tasks that still need submission, including assignments inside an allowed late-submission window
    - Click "Submitted" to view assignments already submitted (graded and pending review)
    - Filter counts update dynamically based on assignment status
 4. **View Assignment Details**:

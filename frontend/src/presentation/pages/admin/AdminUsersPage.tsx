@@ -29,6 +29,7 @@ interface AdminDeleteUserModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
+  onManageClasses: () => void
   user: AdminUser | null
 }
 
@@ -44,6 +45,7 @@ function AdminDeleteUserModal({
   isOpen,
   onClose,
   onConfirm,
+  onManageClasses,
   user,
 }: AdminDeleteUserModalProps) {
   const { register, handleSubmit, watch, setValue, reset } = useZodForm({
@@ -57,6 +59,9 @@ function AdminDeleteUserModal({
 
   const confirmationField = register("confirmation")
   const confirmationValue = watch("confirmation")
+  const assignedClassCount = user?.assignedClassCount ?? 0
+  const isTeacherDeletionBlocked =
+    user?.role === "teacher" && assignedClassCount > 0
 
   // Reset form when modal opens/closes
   React.useEffect(() => {
@@ -156,7 +161,7 @@ function AdminDeleteUserModal({
         {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
-            {step === "warning" ? (
+            {step === "warning" || isTeacherDeletionBlocked ? (
               <AlertTriangle className="h-8 w-8 text-rose-600" />
             ) : (
               <Trash2 className="h-8 w-8 text-rose-600" />
@@ -169,10 +174,68 @@ function AdminDeleteUserModal({
           id="delete-user-title"
           className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
-          {step === "warning" ? "Delete User?" : "Confirm Deletion"}
+          {isTeacherDeletionBlocked
+            ? "Teacher Deletion Blocked"
+            : step === "warning"
+              ? "Delete User?"
+              : "Confirm Deletion"}
         </h2>
 
-        {step === "warning" ? (
+        {isTeacherDeletionBlocked ? (
+          <>
+            <div className="mb-4 text-center">
+              <p className="text-sm text-slate-500">
+                <span className="font-medium text-slate-900">
+                  {user.firstName} {user.lastName}
+                </span>{" "}
+                still owns{" "}
+                <span className="font-semibold text-rose-700">
+                  {assignedClassCount}
+                </span>{" "}
+                {assignedClassCount === 1 ? "class" : "classes"}.
+              </p>
+            </div>
+
+            <div className="mb-6 space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm text-slate-700">
+                This teacher account cannot be deleted yet. Reassign every
+                class to another teacher first, then return here to delete the
+                account safely.
+              </p>
+              <p className="text-sm text-slate-600">
+                This protects classes, assignments, submissions, and related
+                academic records from destructive removal.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className={cn(
+                  "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
+                  "border border-slate-300 bg-white text-slate-700",
+                  "hover:bg-slate-100 transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                )}
+              >
+                <X className="h-4 w-4" />
+                Close
+              </button>
+              <button
+                onClick={onManageClasses}
+                className={cn(
+                  "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
+                  "bg-teal-600 text-white",
+                  "hover:bg-teal-700 transition-colors duration-200",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600",
+                )}
+              >
+                <Users className="h-4 w-4" />
+                Manage Classes
+              </button>
+            </div>
+          </>
+        ) : step === "warning" ? (
           <>
             {/* User info */}
             <div className="text-center mb-4">
@@ -199,11 +262,11 @@ function AdminDeleteUserModal({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-rose-500">&bull;</span>
-                  All submissions and assignments
+                  Their submissions and personal account records
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-rose-500">&bull;</span>
-                  All class enrollments and associations
+                  Their enrollments and account associations
                 </li>
               </ul>
             </div>
@@ -2036,6 +2099,10 @@ export function AdminUsersPage() {
           isOpen={!!deletingUser}
           user={deletingUser}
           onClose={() => setDeletingUser(null)}
+          onManageClasses={() => {
+            setDeletingUser(null)
+            navigate("/dashboard/classes")
+          }}
           onConfirm={async () => {
             if (deletingUser) {
               await handleDeleteUser(deletingUser.id)

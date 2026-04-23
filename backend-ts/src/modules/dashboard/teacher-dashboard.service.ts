@@ -132,6 +132,8 @@ export class TeacherDashboardService {
       classCode: a.classCode,
       classId: a.classId,
       deadline: a.deadline?.toISOString() ?? null,
+      allowLateSubmissions: a.allowLateSubmissions,
+      latePenaltyConfig: a.latePenaltyConfig ?? null,
       submittedCount: a.submittedCount,
       ungradedSubmissionCount: a.ungradedSubmissionCount,
       totalStudents: a.studentCount,

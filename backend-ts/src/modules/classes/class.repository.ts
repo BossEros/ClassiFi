@@ -71,6 +71,16 @@ export class ClassRepository extends BaseRepository<
       .orderBy(desc(classes.createdAt))
   }
 
+  /** Get the total number of classes assigned to a teacher. */
+  async getAssignedClassCountByTeacher(teacherId: number): Promise<number> {
+    const [assignedClassCountRow] = await this.db
+      .select({ count: count() })
+      .from(classes)
+      .where(eq(classes.teacherId, teacherId))
+
+    return Number(assignedClassCountRow?.count ?? 0)
+  }
+
   /** Get most recent classes taught by a teacher */
   async getRecentClassesByTeacher(
     teacherId: number,
@@ -354,6 +364,7 @@ export class ClassRepository extends BaseRepository<
 
     // Build where conditions
     const conditions: ReturnType<typeof eq>[] = []
+    const teacherFullNameSearchPattern = search ? `%${search}%` : undefined
 
     if (search) {
       conditions.push(
@@ -361,6 +372,10 @@ export class ClassRepository extends BaseRepository<
           ilike(classes.className, `%${search}%`),
           ilike(classes.classCode, `%${search}%`),
           ilike(classes.description, `%${search}%`),
+          ilike(users.firstName, `%${search}%`),
+          ilike(users.lastName, `%${search}%`),
+          ilike(users.email, `%${search}%`),
+          sql`${users.firstName} || ' ' || ${users.lastName} ilike ${teacherFullNameSearchPattern}`,
         )!,
       )
     }
@@ -388,6 +403,7 @@ export class ClassRepository extends BaseRepository<
     const countResult = await this.db
       .select({ count: count() })
       .from(classes)
+      .leftJoin(users, eq(classes.teacherId, users.id))
       .where(whereClause)
 
     const total = Number(countResult[0]?.count ?? 0)

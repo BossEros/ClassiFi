@@ -4,6 +4,7 @@ import { AdminClassService } from "../../src/modules/admin/admin-class.service.j
 import type { ClassRepository } from "../../src/modules/classes/class.repository.js"
 import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
+import type { SimilarityRepository } from "../../src/modules/plagiarism/similarity.repository.js"
 import type { ClassService } from "../../src/modules/classes/class.service.js"
 import {
   ClassNotFoundError,
@@ -15,12 +16,18 @@ import {
   createMockTeacher,
   createMockUser,
 } from "../utils/factories.js"
+import { withTransaction } from "../../src/shared/transaction.js"
+
+vi.mock("../../src/shared/transaction.js", () => ({
+  withTransaction: vi.fn(async (callback) => await callback({} as any)),
+}))
 
 describe("AdminClassService", () => {
   let adminClassService: AdminClassService
   let mockClassRepo: Partial<MockedObject<ClassRepository>>
   let mockUserRepo: Partial<MockedObject<UserRepository>>
   let mockSubmissionRepo: Partial<MockedObject<SubmissionRepository>>
+  let mockSimilarityRepo: Partial<MockedObject<SimilarityRepository>>
   let mockClassService: Partial<MockedObject<ClassService>>
 
   const mockTeacher = createMockTeacher()
@@ -37,7 +44,11 @@ describe("AdminClassService", () => {
       createClass: vi.fn(),
       updateClass: vi.fn(),
       checkClassCodeExists: vi.fn(),
+      withContext: vi.fn(),
     } as any
+    mockClassRepo.withContext!.mockReturnValue(
+      mockClassRepo as unknown as ClassRepository,
+    )
 
     mockUserRepo = {
       getUserById: vi.fn(),
@@ -46,6 +57,14 @@ describe("AdminClassService", () => {
     mockSubmissionRepo = {
       getSubmissionsByAssignment: vi.fn(),
     } as any
+
+    mockSimilarityRepo = {
+      reassignReportOwnershipByClass: vi.fn(),
+      withContext: vi.fn(),
+    } as any
+    mockSimilarityRepo.withContext!.mockReturnValue(
+      mockSimilarityRepo as unknown as SimilarityRepository,
+    )
 
     mockClassService = {
       forceDeleteClass: vi.fn(),
@@ -56,6 +75,7 @@ describe("AdminClassService", () => {
       mockClassRepo as unknown as ClassRepository,
       mockUserRepo as unknown as UserRepository,
       mockSubmissionRepo as unknown as SubmissionRepository,
+      mockSimilarityRepo as unknown as SimilarityRepository,
       mockClassService as unknown as ClassService,
     )
   })
@@ -237,6 +257,25 @@ describe("AdminClassService", () => {
       await adminClassService.updateClass(1, { teacherId: 3 })
 
       expect(mockUserRepo.getUserById).toHaveBeenCalledWith(3)
+    })
+
+    it("should reassign stored similarity report ownership when teacher changes", async () => {
+      const newTeacher = createMockTeacher({ id: 3 })
+      mockClassRepo.getClassById!.mockResolvedValue(mockClass)
+      mockUserRepo.getUserById!.mockResolvedValue(newTeacher)
+      mockClassRepo.updateClass!.mockResolvedValue({
+        ...mockClass,
+        teacherId: 3,
+      })
+      mockSimilarityRepo.reassignReportOwnershipByClass!.mockResolvedValue(2)
+      mockClassRepo.getStudentCount!.mockResolvedValue(5)
+
+      await adminClassService.updateClass(1, { teacherId: 3 })
+
+      expect(withTransaction).toHaveBeenCalledTimes(1)
+      expect(
+        mockSimilarityRepo.reassignReportOwnershipByClass,
+      ).toHaveBeenCalledWith(1, 3)
     })
 
     it("should throw when reassigning to non-teacher role", async () => {

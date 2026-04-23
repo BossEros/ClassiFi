@@ -1,5 +1,6 @@
 ﻿import { z } from "zod"
 import { ClassScheduleSchema } from "@/api/schemas/common.schema.js"
+import { LatePenaltyConfigSchema } from "@/modules/assignments/assignment.schema.js"
 
 /** Dashboard class response */
 export const DashboardClassResponseSchema = z.object({
@@ -143,6 +144,35 @@ export const DashboardAssignmentListResponseSchema = z.object({
 
 export type DashboardAssignmentListResponse = z.infer<
   typeof DashboardAssignmentListResponseSchema
+>
+
+export const AllTeacherAssignmentResponseSchema = z.object({
+  id: z.number(),
+  assignmentName: z.string(),
+  className: z.string(),
+  classCode: z.string(),
+  classId: z.number(),
+  deadline: z.string().nullable(),
+  allowLateSubmissions: z.boolean(),
+  latePenaltyConfig: LatePenaltyConfigSchema.nullable(),
+  submittedCount: z.number(),
+  ungradedSubmissionCount: z.number(),
+  totalStudents: z.number(),
+  programmingLanguage: z.string(),
+})
+
+export type AllTeacherAssignmentResponse = z.infer<
+  typeof AllTeacherAssignmentResponseSchema
+>
+
+export const AllTeacherAssignmentListResponseSchema = z.object({
+  success: z.literal(true),
+  message: z.string(),
+  assignments: z.array(AllTeacherAssignmentResponseSchema),
+})
+
+export type AllTeacherAssignmentListResponse = z.infer<
+  typeof AllTeacherAssignmentListResponseSchema
 >
 
 /** Task list response schema */

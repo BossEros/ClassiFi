@@ -12,6 +12,7 @@ export interface AdminUser {
   avatarUrl: string | null
   isActive: boolean
   createdAt: string
+  assignedClassCount?: number
 }
 
 export interface CreateUserData {

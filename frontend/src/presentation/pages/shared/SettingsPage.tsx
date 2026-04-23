@@ -1208,6 +1208,8 @@ export function SettingsPage() {
 
   if (!user) return null
 
+  const shouldShowDeleteAccountDangerZone = user.role !== "teacher"
+
   return (
     <DashboardLayout topBar={topBar}>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1351,41 +1353,60 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* ===== DANGER ZONE ===== */}
-          <Card className="rounded-2xl border-rose-200 bg-white shadow-md shadow-rose-100/70">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-rose-700">
-                <AlertTriangle className="w-5 h-5" />
-                Danger Zone
-              </CardTitle>
-              <CardDescription className="text-rose-500">
-                Irreversible and destructive actions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100/60">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100">
-                    <Trash2 className="w-5 h-5 text-rose-600" />
+          {shouldShowDeleteAccountDangerZone ? (
+            <Card className="rounded-2xl border-rose-200 bg-white shadow-md shadow-rose-100/70">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-rose-700">
+                  <AlertTriangle className="w-5 h-5" />
+                  Danger Zone
+                </CardTitle>
+                <CardDescription className="text-rose-500">
+                  Irreversible and destructive actions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm shadow-rose-100/60">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100">
+                      <Trash2 className="w-5 h-5 text-rose-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-900">
+                        Delete Account
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Permanently delete your account and all associated data
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-900">
-                      Delete Account
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-600">
-                      Permanently delete your account and all associated data
-                    </p>
-                  </div>
+                  <Button
+                    onClick={() => setIsDeleteAccountOpen(true)}
+                    className="h-9 w-auto shrink-0 border border-rose-600 bg-rose-600 px-4 text-xs text-white hover:bg-rose-700 focus-visible:ring-rose-500 focus-visible:ring-offset-white"
+                  >
+                    Delete Account
+                  </Button>
                 </div>
-                <Button
-                  onClick={() => setIsDeleteAccountOpen(true)}
-                  className="h-9 w-auto shrink-0 border border-rose-600 bg-rose-600 px-4 text-xs text-white hover:bg-rose-700 focus-visible:ring-rose-500 focus-visible:ring-offset-white"
-                >
-                  Delete Account
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Shield className="w-5 h-5 text-teal-600" />
+                  Account Management
+                </CardTitle>
+                <CardDescription className="text-slate-500">
+                  Teacher accounts are protected from self-service deletion
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-slate-700 shadow-sm shadow-teal-100/60">
+                  Teacher accounts can only be removed by an administrator after
+                  all assigned classes have been reassigned to another teacher.
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 
