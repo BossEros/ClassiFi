@@ -52,11 +52,13 @@ export interface Assignment {
   moduleId: number | null
   assignmentName: string
   className?: string
+  classCode?: string
   deadline: ISODateString | null
   programmingLanguage: string
   hasSubmitted?: boolean
   submittedCount?: number
   submissionCount?: number
+  ungradedSubmissionCount?: number
   studentCount?: number
   instructions?: string | null
   instructionsImageUrl?: string | null
@@ -132,11 +134,13 @@ export interface TaskDTO {
   instructions: string | null
   instructionsImageUrl?: string | null
   className?: string
+  classCode?: string
   deadline: string | null
   programmingLanguage: string
   hasSubmitted?: boolean
   submittedCount?: number
   submissionCount?: number
+  ungradedSubmissionCount?: number
   studentCount?: number
 }
 

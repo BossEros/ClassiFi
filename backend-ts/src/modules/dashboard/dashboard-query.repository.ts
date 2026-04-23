@@ -12,10 +12,12 @@ export interface TeacherAllAssignmentReadModel {
   id: number
   assignmentName: string
   className: string
+  classCode: string
   classId: number
   deadline: Date | null
   programmingLanguage: Assignment["programmingLanguage"]
-  submissionCount: number
+  submittedCount: number
+  ungradedSubmissionCount: number
   studentCount: number
 }
 
@@ -115,7 +117,8 @@ export class DashboardQueryRepository {
     const submissionCountSubquery = db
       .select({
         assignmentId: submissions.assignmentId,
-        count: sql<number>`count(*)`.as("submission_count"),
+        submittedCount: sql<number>`count(*)`.as("submitted_count"),
+        ungradedSubmissionCount: sql<number>`sum(case when ${submissions.grade} is null then 1 else 0 end)`.as("ungraded_submission_count"),
       })
       .from(submissions)
       .where(eq(submissions.isLatest, true))
@@ -127,10 +130,12 @@ export class DashboardQueryRepository {
         id: assignments.id,
         assignmentName: assignments.assignmentName,
         className: classes.className,
+        classCode: classes.classCode,
         classId: classes.id,
         deadline: assignments.deadline,
         programmingLanguage: assignments.programmingLanguage,
-        submissionCount: sql<number>`COALESCE(${submissionCountSubquery.count}, 0)`,
+        submittedCount: sql<number>`COALESCE(${submissionCountSubquery.submittedCount}, 0)`,
+        ungradedSubmissionCount: sql<number>`COALESCE(${submissionCountSubquery.ungradedSubmissionCount}, 0)`,
         studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
       })
       .from(assignments)
@@ -149,7 +154,8 @@ export class DashboardQueryRepository {
 
     return results.map((row) => ({
       ...row,
-      submissionCount: Number(row.submissionCount),
+      submittedCount: Number(row.submittedCount),
+      ungradedSubmissionCount: Number(row.ungradedSubmissionCount),
       studentCount: Number(row.studentCount),
     }))
   }

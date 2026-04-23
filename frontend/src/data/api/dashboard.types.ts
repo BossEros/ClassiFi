@@ -38,8 +38,10 @@ export interface TeacherDashboardTaskResponse {
   isActive: boolean
   createdAt: string
   className?: string
+  classCode?: string
   submittedCount?: number
   submissionCount?: number
+  ungradedSubmissionCount?: number
   totalStudents?: number
 }
 

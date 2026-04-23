@@ -56,7 +56,7 @@ export function DashboardLayout({
 
       {/* Right side: Top bar + main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="relative z-20 flex items-stretch">
+        <div className="relative z-[100] flex items-stretch">
           {/* Mobile sidebar toggle — lives in the top bar row on mobile only */}
           {mobileSidebarToggle && (
             <button
