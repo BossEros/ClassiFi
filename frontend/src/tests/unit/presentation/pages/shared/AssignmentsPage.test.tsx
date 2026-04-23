@@ -1,7 +1,6 @@
 import type { ReactNode } from "react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor, within } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { MemoryRouter } from "react-router-dom"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import { AssignmentsPage } from "@/presentation/pages/shared/AssignmentsPage"
@@ -77,6 +76,14 @@ function renderAssignmentsPage() {
   )
 }
 
+async function findClassFilter() {
+  await vi.waitFor(() => {
+    expect(screen.getByLabelText("Filter by class")).toBeInTheDocument()
+  })
+
+  return screen.getByLabelText("Filter by class")
+}
+
 describe("AssignmentsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -108,7 +115,7 @@ describe("AssignmentsPage", () => {
 
     renderAssignmentsPage()
 
-    const classFilter = await screen.findByLabelText("Filter by class")
+    const classFilter = await findClassFilter()
     const classOptions = within(classFilter).getAllByRole("option").map((option) => option.textContent)
 
     expect(classOptions).toEqual(["All Classes", "Algorithms", "Databases"])
@@ -155,14 +162,10 @@ describe("AssignmentsPage", () => {
 
     renderAssignmentsPage()
 
-    const classFilter = await screen.findByLabelText("Filter by class")
-    const user = userEvent.setup({
-      advanceTimers: vi.advanceTimersByTime.bind(vi),
-    })
+    const classFilter = await findClassFilter()
+    fireEvent.change(classFilter, { target: { value: "Databases" } })
 
-    await user.selectOptions(classFilter, "Databases")
-
-    await waitFor(() => {
+    await vi.waitFor(() => {
       expect(screen.getByRole("button", { name: /All 1/i })).toBeInTheDocument()
       expect(screen.getByRole("button", { name: /Pending 1/i })).toBeInTheDocument()
       expect(screen.getByRole("button", { name: /Finished 0/i })).toBeInTheDocument()
