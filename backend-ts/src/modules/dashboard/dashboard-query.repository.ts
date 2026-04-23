@@ -16,6 +16,8 @@ export interface TeacherAllAssignmentReadModel {
   classId: number
   deadline: Date | null
   programmingLanguage: Assignment["programmingLanguage"]
+  allowLateSubmissions: boolean
+  latePenaltyConfig: Assignment["latePenaltyConfig"] | null
   submittedCount: number
   ungradedSubmissionCount: number
   studentCount: number
@@ -134,6 +136,8 @@ export class DashboardQueryRepository {
         classId: classes.id,
         deadline: assignments.deadline,
         programmingLanguage: assignments.programmingLanguage,
+        allowLateSubmissions: assignments.allowLateSubmissions,
+        latePenaltyConfig: assignments.latePenaltyConfig,
         submittedCount: sql<number>`COALESCE(${submissionCountSubquery.submittedCount}, 0)`,
         ungradedSubmissionCount: sql<number>`COALESCE(${submissionCountSubquery.ungradedSubmissionCount}, 0)`,
         studentCount: sql<number>`COALESCE(${studentCountSubquery.count}, 0)`,
@@ -154,6 +158,8 @@ export class DashboardQueryRepository {
 
     return results.map((row) => ({
       ...row,
+      allowLateSubmissions: row.allowLateSubmissions ?? false,
+      latePenaltyConfig: row.latePenaltyConfig ?? null,
       submittedCount: Number(row.submittedCount),
       ungradedSubmissionCount: Number(row.ungradedSubmissionCount),
       studentCount: Number(row.studentCount),

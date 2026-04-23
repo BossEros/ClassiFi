@@ -4,6 +4,7 @@ import type {
   TeacherDashboardClassListResponse,
   TeacherDashboardTaskListResponse,
 } from "@/data/api/dashboard.types"
+import type { LatePenaltyConfig } from "@/data/api/gradebook.types"
 
 export interface TeacherAllAssignmentsResponse {
   success: boolean
@@ -15,6 +16,8 @@ export interface TeacherAllAssignmentsResponse {
     classCode: string
     classId: number
     deadline: string | null
+    allowLateSubmissions: boolean
+    latePenaltyConfig: LatePenaltyConfig | null
     submittedCount: number
     ungradedSubmissionCount: number
     totalStudents: number

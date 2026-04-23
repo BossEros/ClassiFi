@@ -119,6 +119,11 @@ describe("teacherDashboardService", () => {
             classCode: "ALG-201",
             classId: 4,
             deadline: "2026-04-22T10:00:00.000Z",
+            allowLateSubmissions: true,
+            latePenaltyConfig: {
+              tiers: [{ id: "tier-1", hoursLate: 24, penaltyPercent: 10 }],
+              rejectAfterHours: 72,
+            },
             submittedCount: 41,
             ungradedSubmissionCount: 0,
             totalStudents: 59,
@@ -136,6 +141,8 @@ describe("teacherDashboardService", () => {
       expect(result[0].ungradedSubmissionCount).toBe(0)
       expect(result[0].classCode).toBe("ALG-201")
       expect(result[0].studentCount).toBe(59)
+      expect(result[0].allowLateSubmissions).toBe(true)
+      expect(result[0].latePenaltyConfig?.rejectAfterHours).toBe(72)
     })
   })
 })

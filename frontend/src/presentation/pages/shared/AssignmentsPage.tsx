@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
 import type { ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight, ChevronUp, ChevronDown, ClipboardList, Clock, CheckCircle2, XCircle, ListFilter, BookOpen } from "lucide-react"
+import { ArrowRight, ChevronUp, ChevronDown, ClipboardList, Clock, CheckCircle2, XCircle, ListFilter } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { AssignmentFilters } from "@/presentation/components/shared/dashboard/AssignmentFilters"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
@@ -13,12 +13,15 @@ import { getAllTeacherAssignments } from "@/business/services/teacherDashboardSe
 import { getEnrolledClasses } from "@/business/services/studentDashboardService"
 import { getAllClasses, getClassAssignments } from "@/business/services/classService"
 import type { Class, Task } from "@/data/api/class.types"
+import {
+  calculateTeacherAssignmentStatusCounts,
+  matchesTeacherAssignmentStatusFilter,
+  type TeacherAssignmentStatusFilter,
+} from "@/shared/utils/teacherAssignmentStatus"
 
 const ITEMS_PER_PAGE = 10
 
 type StudentStatusFilter = "all" | "pending" | "finished" | "missed"
-type TeacherStatusFilter = "all" | "pending" | "closed" | "no-submissions"
-
 function getDeadlineBadgeClass(deadlineStatus: string): string {
   if (deadlineStatus === "Overdue") {
     return "border-rose-300 bg-rose-100 text-rose-700"
@@ -72,7 +75,8 @@ export function AssignmentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedClass, setSelectedClass] = useState("all")
   const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>("all")
-  const [teacherStatusFilter, setTeacherStatusFilter] = useState<TeacherStatusFilter>("all")
+  const [teacherStatusFilter, setTeacherStatusFilter] =
+    useState<TeacherAssignmentStatusFilter>("all")
   const [currentPage, setCurrentPage] = useState(1)
 
   const isTeacher = user?.role === "teacher"
@@ -143,7 +147,7 @@ export function AssignmentsPage() {
 
   const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery])
 
-  const filteredTasks = useMemo(() => {
+  const tasksMatchingSearchAndClass = useMemo(() => {
     return tasks.filter((task) => {
       if (normalizedQuery) {
         const matchesName = task.assignmentName.toLowerCase().includes(normalizedQuery)
@@ -168,20 +172,19 @@ export function AssignmentsPage() {
         if (statusFilter === "missed" && (task.hasSubmitted || !deadlinePassed)) return false
       }
 
-      if (isTeacher && teacherStatusFilter !== "all") {
-        const now = new Date()
-        const deadlinePassed = task.deadline ? new Date(task.deadline) < now : false
-        const submitted = task.submissionCount ?? 0
-        const total = task.studentCount ?? 0
-
-        if (teacherStatusFilter === "pending" && (deadlinePassed || submitted >= total)) return false
-        if (teacherStatusFilter === "closed" && !deadlinePassed) return false
-        if (teacherStatusFilter === "no-submissions" && (deadlinePassed || submitted > 0)) return false
-      }
-
       return true
     })
-  }, [tasks, normalizedQuery, selectedClass, statusFilter, teacherStatusFilter, isTeacher])
+  }, [tasks, normalizedQuery, selectedClass, statusFilter, isTeacher])
+
+  const filteredTasks = useMemo(() => {
+    if (!isTeacher || teacherStatusFilter === "all") {
+      return tasksMatchingSearchAndClass
+    }
+
+    return tasksMatchingSearchAndClass.filter((task) =>
+      matchesTeacherAssignmentStatusFilter(task, teacherStatusFilter),
+    )
+  }, [tasksMatchingSearchAndClass, teacherStatusFilter, isTeacher])
 
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE))
 
@@ -200,7 +203,7 @@ export function AssignmentsPage() {
     setCurrentPage(1)
   }, [])
 
-  const handleTeacherStatusChange = useCallback((status: TeacherStatusFilter) => {
+  const handleTeacherStatusChange = useCallback((status: TeacherAssignmentStatusFilter) => {
     setTeacherStatusFilter(status)
     setCurrentPage(1)
   }, [])
@@ -233,25 +236,9 @@ export function AssignmentsPage() {
 
   const teacherStatusCounts = useMemo(() => {
     if (!isTeacher) return null
-    const now = new Date()
 
-    return {
-      all: tasks.length,
-      pending: tasks.filter((t) => {
-        const deadlinePassed = t.deadline ? new Date(t.deadline) < now : false
-        const submitted = t.submissionCount ?? 0
-        const total = t.studentCount ?? 0
-
-        return !deadlinePassed && submitted < total
-      }).length,
-      closed: tasks.filter((t) => !!t.deadline && new Date(t.deadline) < now).length,
-      "no-submissions": tasks.filter((t) => {
-        const deadlinePassed = t.deadline ? new Date(t.deadline) < now : false
-
-        return !deadlinePassed && (t.submissionCount ?? 0) === 0
-      }).length,
-    }
-  }, [tasks, isTeacher])
+    return calculateTeacherAssignmentStatusCounts(tasksMatchingSearchAndClass)
+  }, [tasksMatchingSearchAndClass, isTeacher])
 
   const hasActiveFilters =
     normalizedQuery.length > 0 ||
@@ -330,11 +317,11 @@ export function AssignmentsPage() {
               { key: "pending", label: "Pending", icon: <Clock className="h-3.5 w-3.5" /> },
               { key: "closed", label: "Closed", icon: <XCircle className="h-3.5 w-3.5" /> },
               { key: "no-submissions", label: "No Submissions", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-            ] as { key: TeacherStatusFilter; label: string; icon: ReactNode }[]
+            ] as { key: TeacherAssignmentStatusFilter; label: string; icon: ReactNode }[]
           ).map(({ key, label, icon }) => {
             const isActive = teacherStatusFilter === key
             const count = teacherStatusCounts[key]
-            const activeStyles: Record<TeacherStatusFilter, string> = {
+            const activeStyles: Record<TeacherAssignmentStatusFilter, string> = {
               all: "bg-slate-800 text-white border-slate-800",
               pending: "bg-amber-500 text-white border-amber-500",
               closed: "bg-slate-500 text-white border-slate-500",
@@ -477,12 +464,6 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
               <div>
                 <p className="text-sm font-semibold text-slate-900">{task.assignmentName}</p>
                 <p className="mt-0.5 text-xs text-slate-500">{task.className || "Unknown class"}</p>
-                {task.classCode ? (
-                  <div className="mt-1 flex items-center gap-1.5">
-                    <BookOpen className="h-3 w-3 text-slate-400" />
-                    <p className="text-xs text-slate-500">{task.classCode}</p>
-                  </div>
-                ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${getDeadlineBadgeClass(deadlineStatus)}`}>
@@ -560,17 +541,9 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
                 </p>
               </td>
               <td className="px-6 py-4">
-                <div className="space-y-1.5">
-                  <p className="text-sm text-slate-700">
-                    {task.className || "Unknown class"}
-                  </p>
-                  {task.classCode ? (
-                    <div className="flex items-center gap-1.5">
-                      <BookOpen className="h-3 w-3 text-slate-400" />
-                      <p className="text-xs text-slate-500">{task.classCode}</p>
-                    </div>
-                  ) : null}
-                </div>
+                <p className="text-sm text-slate-700">
+                  {task.className || "Unknown class"}
+                </p>
               </td>
               <td className="px-6 py-4">
                 <span

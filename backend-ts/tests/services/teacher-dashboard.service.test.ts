@@ -189,6 +189,11 @@ describe("TeacherDashboardService", () => {
             classId: 3,
             deadline: new Date("2026-04-20T08:00:00.000Z"),
             programmingLanguage: "python",
+            allowLateSubmissions: true,
+            latePenaltyConfig: {
+              tiers: [{ hoursLate: 24, penaltyPercent: 10 }],
+              rejectAfterHours: 72,
+            },
             submittedCount: 41,
             ungradedSubmissionCount: 0,
             studentCount: 59,
@@ -214,6 +219,11 @@ describe("TeacherDashboardService", () => {
           classId: 3,
           deadline: "2026-04-20T08:00:00.000Z",
           programmingLanguage: "python",
+          allowLateSubmissions: true,
+          latePenaltyConfig: {
+            tiers: [{ hoursLate: 24, penaltyPercent: 10 }],
+            rejectAfterHours: 72,
+          },
           submittedCount: 41,
           ungradedSubmissionCount: 0,
           totalStudents: 59,
