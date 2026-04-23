@@ -11,8 +11,8 @@ import { dashboardTheme } from "@/presentation/constants/dashboardTheme"
 import { getDeadlineStatus, formatDateTime } from "@/presentation/utils/dateUtils"
 import { getAllTeacherAssignments } from "@/business/services/teacherDashboardService"
 import { getEnrolledClasses } from "@/business/services/studentDashboardService"
-import { getClassAssignments } from "@/business/services/classService"
-import type { Task } from "@/data/api/class.types"
+import { getAllClasses, getClassAssignments } from "@/business/services/classService"
+import type { Class, Task } from "@/data/api/class.types"
 
 const ITEMS_PER_PAGE = 10
 
@@ -66,6 +66,7 @@ export function AssignmentsPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const [tasks, setTasks] = useState<Task[]>([])
+  const [teacherClasses, setTeacherClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -89,8 +90,13 @@ export function AssignmentsPage() {
         const userId = parseInt(user.id)
 
         if (isTeacher) {
-          const result = await getAllTeacherAssignments(userId)
-          setTasks(result)
+          const [teacherAssignmentList, teacherClassList] = await Promise.all([
+            getAllTeacherAssignments(userId),
+            getAllClasses(userId, true),
+          ])
+
+          setTasks(teacherAssignmentList)
+          setTeacherClasses(teacherClassList)
         } else {
           const enrolledClassesResponse = await getEnrolledClasses(userId)
           const allAssignments = await Promise.all(
@@ -99,6 +105,7 @@ export function AssignmentsPage() {
             ),
           )
           setTasks(allAssignments.flat())
+          setTeacherClasses([])
         }
       } catch {
         setError("Failed to load assignments. Please try refreshing the page.")
@@ -111,6 +118,20 @@ export function AssignmentsPage() {
   }, [navigate, user, isTeacher])
 
   const classOptions = useMemo(() => {
+    if (isTeacher) {
+      const sortedTeacherClasses = [...teacherClasses].sort((leftClass, rightClass) =>
+        leftClass.className.localeCompare(rightClass.className),
+      )
+
+      return [
+        { value: "all", label: "All Classes" },
+        ...sortedTeacherClasses.map((teacherClass) => ({
+          value: String(teacherClass.id),
+          label: teacherClass.className,
+        })),
+      ]
+    }
+
     const uniqueClasses = [...new Set(tasks.map((task) => task.className).filter(Boolean))]
     uniqueClasses.sort((a, b) => (a ?? "").localeCompare(b ?? ""))
 
@@ -118,7 +139,7 @@ export function AssignmentsPage() {
       { value: "all", label: "All Classes" },
       ...uniqueClasses.map((name) => ({ value: name!, label: name! })),
     ]
-  }, [tasks])
+  }, [isTeacher, tasks, teacherClasses])
 
   const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery])
 
@@ -130,7 +151,11 @@ export function AssignmentsPage() {
         if (!matchesName) return false
       }
 
-      if (selectedClass !== "all") {
+      if (isTeacher && selectedClass !== "all") {
+        if (task.classId !== Number(selectedClass)) return false
+      }
+
+      if (!isTeacher && selectedClass !== "all") {
         if (task.className !== selectedClass) return false
       }
 
