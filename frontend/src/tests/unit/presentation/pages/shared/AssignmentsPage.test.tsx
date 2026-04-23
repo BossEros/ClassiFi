@@ -166,12 +166,13 @@ describe("AssignmentsPage", () => {
     fireEvent.change(classFilter, { target: { value: "Databases" } })
 
     await vi.waitFor(() => {
-      expect(screen.getByRole("button", { name: /All 1/i })).toBeInTheDocument()
-      expect(screen.getByRole("button", { name: /Pending 1/i })).toBeInTheDocument()
-      expect(screen.getByRole("button", { name: /Finished 0/i })).toBeInTheDocument()
-      expect(screen.getByRole("button", { name: /Missed 0/i })).toBeInTheDocument()
-      expect(screen.getByText("DB Late But Open")).toBeInTheDocument()
-      expect(screen.getByText("Pending")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /All\s*1/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Pending\s*1/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Finished\s*0/i })).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: /Missed\s*0/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole("row", { name: /DB Late But Open Databases Pending .* Open/i }),
+      ).toBeInTheDocument()
     })
   })
 })
