@@ -36,6 +36,7 @@ export function AssignmentFormPage() {
     pendingTestCases,
     isLoadingTestCases,
     isUploadingInstructionsImage,
+    isTotalScoreLocked,
     isEditMode,
     assignmentId,
     showTemplateCode,
@@ -149,6 +150,7 @@ export function AssignmentFormPage() {
                 testCases={testCases}
                 pendingTestCases={pendingTestCases}
                 isLoadingTestCases={isLoadingTestCases}
+                isTotalScoreLocked={isTotalScoreLocked}
                 isEditMode={isEditMode}
                 assignmentId={assignmentId}
                 onAddTestCase={handleAddTestCase}
