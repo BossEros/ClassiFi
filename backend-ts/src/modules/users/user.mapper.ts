@@ -12,9 +12,13 @@ export interface UserDTO {
   emailNotificationsEnabled: boolean
   inAppNotificationsEnabled: boolean
   createdAt: string
+  assignedClassCount?: number
 }
 
-export function toUserDTO(user: User): UserDTO {
+export function toUserDTO(
+  user: User,
+  options: { assignedClassCount?: number } = {},
+): UserDTO {
   return {
     id: user.id,
     supabaseUserId: user.supabaseUserId,
@@ -27,6 +31,7 @@ export function toUserDTO(user: User): UserDTO {
     emailNotificationsEnabled: user.emailNotificationsEnabled ?? true,
     inAppNotificationsEnabled: user.inAppNotificationsEnabled ?? true,
     createdAt: user.createdAt?.toISOString() ?? new Date().toISOString(),
+    assignedClassCount: options.assignedClassCount,
   }
 }
 

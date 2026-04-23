@@ -409,7 +409,13 @@ Comprehensive settings page with:
 - **Avatar upload**: Profile picture management via Supabase Storage
 - **Password change**: Secure password update flow
 - **Notification preferences**: Two global delivery toggles for email and in-app notifications backed by `userService`
-- **Account deletion**: Self-service account removal with confirmation
+- **Account deletion**: Self-service account removal with confirmation for non-teacher roles
+
+Teacher account deletion UX notes:
+
+- Teachers no longer see the destructive self-delete danger zone in `SettingsPage`.
+- `SettingsPage` shows a management notice instead, explaining that teacher accounts can be removed only by an administrator.
+- Admin user deletion blocks teacher deletion when assigned classes remain and directs admins to reassign classes first.
 
 ### Notification System
 

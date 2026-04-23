@@ -71,7 +71,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     handler: async (request, reply) => {
       const authenticatedUserId = request.user!.id
 
-      await userService.deleteAccount(authenticatedUserId)
+      await userService.deleteOwnAccount(authenticatedUserId)
 
       return reply.send({
         success: true,

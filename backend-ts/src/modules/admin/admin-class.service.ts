@@ -2,6 +2,7 @@
 import { ClassRepository } from "@/modules/classes/class.repository.js"
 import { UserRepository } from "@/modules/users/user.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
+import { SimilarityRepository } from "@/modules/plagiarism/similarity.repository.js"
 import { ClassService } from "@/modules/classes/class.service.js"
 import { toClassDTO, type ClassDTO } from "@/modules/classes/class.mapper.js"
 import { generateUniqueClassCode } from "@/modules/classes/class-code.util.js"
@@ -17,6 +18,7 @@ import type {
   UpdateClassData,
 } from "@/modules/admin/admin.types.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
+import { withTransaction } from "@/shared/transaction.js"
 
 /**
  * Admin service for class oversight operations.
@@ -35,6 +37,8 @@ export class AdminClassService {
     @inject(DI_TOKENS.repositories.user) private userRepo: UserRepository,
     @inject(DI_TOKENS.repositories.submission)
     private submissionRepo: SubmissionRepository,
+    @inject(DI_TOKENS.repositories.similarity)
+    private similarityRepo: SimilarityRepository,
     @inject(DI_TOKENS.services.class) private classService: ClassService,
   ) {}
 
@@ -128,7 +132,10 @@ export class AdminClassService {
       throw new ClassNotFoundError(classId)
     }
 
-    if (data.teacherId && data.teacherId !== existingClass.teacherId) {
+    const isTeacherReassignment =
+      data.teacherId !== undefined && data.teacherId !== existingClass.teacherId
+
+    if (isTeacherReassignment && data.teacherId) {
       const newTeacher = await this.userRepo.getUserById(data.teacherId)
 
       if (!newTeacher) {
@@ -152,7 +159,30 @@ export class AdminClassService {
     if (data.schedule !== undefined) updateData.schedule = data.schedule
     if (data.teacherId !== undefined) updateData.teacherId = data.teacherId
 
-    const updated = await this.classRepo.updateClass(classId, updateData)
+    const updated = isTeacherReassignment
+      ? await withTransaction(async (transactionContext) => {
+          const classRepositoryWithContext =
+            this.classRepo.withContext(transactionContext)
+          const similarityRepositoryWithContext =
+            this.similarityRepo.withContext(transactionContext)
+
+          const updatedClass = await classRepositoryWithContext.updateClass(
+            classId,
+            updateData,
+          )
+
+          if (!updatedClass) {
+            throw new ClassNotFoundError(classId)
+          }
+
+          await similarityRepositoryWithContext.reassignReportOwnershipByClass(
+            classId,
+            updatedClass.teacherId,
+          )
+
+          return updatedClass
+        })
+      : await this.classRepo.updateClass(classId, updateData)
 
     if (!updated) {
       throw new ClassNotFoundError(classId)

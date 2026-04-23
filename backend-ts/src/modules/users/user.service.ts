@@ -3,7 +3,10 @@ import { UserRepository } from "@/modules/users/user.repository.js"
 import { SubmissionRepository } from "@/modules/submissions/submission.repository.js"
 import { StorageService } from "@/services/storage.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
-import { UserNotFoundError } from "@/shared/errors.js"
+import {
+  UserNotFoundError,
+  TeacherSelfDeletionNotAllowedError,
+} from "@/shared/errors.js"
 import { createLogger } from "@/shared/logger.js"
 import { DI_TOKENS } from "@/shared/di/tokens.js"
 
@@ -65,6 +68,27 @@ export class UserService {
     if (user.supabaseUserId) {
       await this.authAdapter.deleteUser(user.supabaseUserId)
     }
+  }
+
+  /**
+   * Delete the current user's own account.
+   * Teacher self-deletion is blocked because class ownership must be reassigned first.
+   *
+   * @throws {UserNotFoundError} If user not found
+   * @throws {TeacherSelfDeletionNotAllowedError} If the current user is a teacher
+   */
+  async deleteOwnAccount(userId: number): Promise<void> {
+    const user = await this.userRepo.getUserById(userId)
+
+    if (!user) {
+      throw new UserNotFoundError(userId)
+    }
+
+    if (user.role === "teacher") {
+      throw new TeacherSelfDeletionNotAllowedError()
+    }
+
+    await this.deleteAccount(userId)
   }
 
   /**

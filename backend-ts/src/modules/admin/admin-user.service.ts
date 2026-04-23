@@ -7,7 +7,11 @@ import { toUserDTO, type UserDTO } from "@/modules/users/user.mapper.js"
 import { UserService } from "@/modules/users/user.service.js"
 import { ClassService } from "@/modules/classes/class.service.js"
 import { SupabaseAuthAdapter } from "@/services/supabase-auth.adapter.js"
-import { UserNotFoundError, InvalidRoleError } from "@/shared/errors.js"
+import {
+  UserNotFoundError,
+  InvalidRoleError,
+  TeacherHasAssignedClassesError,
+} from "@/shared/errors.js"
 import { NotificationService } from "@/modules/notifications/notification.service.js"
 import type {
   UserFilterOptions,
@@ -47,9 +51,13 @@ export class AdminUserService {
       status: status === "all" ? undefined : status,
     })
 
+    const userDtos = await Promise.all(
+      result.data.map((userRecord) => this.buildUserDTO(userRecord)),
+    )
+
     return {
       ...result,
-      data: result.data.map((u) => toUserDTO(u)),
+      data: userDtos,
     }
   }
 
@@ -61,7 +69,8 @@ export class AdminUserService {
     if (!user) {
       throw new UserNotFoundError(userId)
     }
-    return toUserDTO(user)
+
+    return await this.buildUserDTO(user)
   }
 
   /**
@@ -213,9 +222,14 @@ export class AdminUserService {
       throw new UserNotFoundError(userId)
     }
 
-    // STEP 2: If the user is a teacher, cascade-delete all their classes and associated files first
+    // STEP 2: If the user is a teacher, block deletion until all owned classes are reassigned
     if (user.role === "teacher") {
-      await this.classService.deleteClassesByTeacher(userId)
+      const assignedClassCount =
+        await this.classService.getAssignedClassCountByTeacher(userId)
+
+      if (assignedClassCount > 0) {
+        throw new TeacherHasAssignedClassesError(assignedClassCount)
+      }
     }
 
     // STEP 3: Delete the account (handles storage cleanup and Supabase auth removal)
@@ -227,6 +241,20 @@ export class AdminUserService {
    */
   async getAllTeachers(): Promise<UserDTO[]> {
     const teachers = await this.userRepo.getUsersByRole("teacher")
-    return teachers.map((t) => toUserDTO(t))
+    return await Promise.all(
+      teachers.map((teacherRecord) => this.buildUserDTO(teacherRecord)),
+    )
+  }
+
+  /**
+   * Build a user DTO with assigned-class metadata for teacher accounts.
+   */
+  private async buildUserDTO(userRecord: Parameters<typeof toUserDTO>[0]): Promise<UserDTO> {
+    const assignedClassCount =
+      userRecord.role === "teacher"
+        ? await this.classService.getAssignedClassCountByTeacher(userRecord.id)
+        : 0
+
+    return toUserDTO(userRecord, { assignedClassCount })
   }
 }

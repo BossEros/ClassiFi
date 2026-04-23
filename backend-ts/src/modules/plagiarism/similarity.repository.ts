@@ -127,6 +127,30 @@ export class SimilarityRepository extends BaseRepository<
     return results[0]?.teacherId
   }
 
+  /**
+   * Reassign stored report ownership for all reports linked to assignments under a class.
+   * This keeps historical report access consistent after a class is transferred.
+   */
+  async reassignReportOwnershipByClass(
+    classId: number,
+    newTeacherId: number,
+  ): Promise<number> {
+    const updatedReports = await this.db
+      .update(similarityReports)
+      .set({ teacherId: newTeacherId })
+      .where(sql`
+        exists (
+          select 1
+          from ${assignments}
+          where ${assignments.id} = ${similarityReports.assignmentId}
+            and ${assignments.classId} = ${classId}
+        )
+      `)
+      .returning({ id: similarityReports.id })
+
+    return updatedReports.length
+  }
+
   /** Delete all intra-assignment reports for an assignment except the specified report. */
   async deleteReportsByAssignmentExcept(
     assignmentId: number,
