@@ -317,7 +317,7 @@ function SidebarContent({
       <aside
         id="dashboard-sidebar"
         className={cn(
-          "fixed inset-y-0 left-0 z-[60] lg:static",
+          "fixed inset-y-0 left-0 z-[120] lg:static lg:z-auto",
           "relative flex h-full w-72 flex-col bg-[#11211F] shadow-2xl backdrop-blur-xl lg:shadow-none",
           "transform transition-all duration-300 ease-in-out lg:transform-none",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
@@ -445,7 +445,7 @@ function SidebarContent({
       {/* Mobile overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-[50] bg-slate-950/55 backdrop-blur-[1px] lg:hidden"
+          className="fixed inset-0 z-[110] bg-slate-950/55 backdrop-blur-[1px] lg:hidden"
           onClick={closeMobileSidebar}
           aria-hidden="true"
         />
