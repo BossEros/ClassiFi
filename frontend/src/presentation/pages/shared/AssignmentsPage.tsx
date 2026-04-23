@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react"
 import type { ReactNode } from "react"
 import { useNavigate } from "react-router-dom"
-import { ArrowRight, ChevronUp, ChevronDown, ClipboardList, Clock, CheckCircle2, XCircle, ListFilter } from "lucide-react"
+import { ArrowRight, ChevronUp, ChevronDown, ClipboardList, Clock, CheckCircle2, XCircle, ListFilter, BookOpen } from "lucide-react"
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout"
 import { AssignmentFilters } from "@/presentation/components/shared/dashboard/AssignmentFilters"
 import { TablePaginationFooter } from "@/presentation/components/ui/TablePaginationFooter"
@@ -444,14 +444,20 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
         {paginatedTasks.map((task) => {
           const deadlineStatus = getDeadlineStatus(task.deadline)
           const submitted = task.submittedCount ?? 0
-          const ungraded = task.submissionCount ?? 0
+          const ungraded = task.ungradedSubmissionCount ?? 0
           const total = task.studentCount ?? 0
 
           return (
             <div key={`mobile-${task.id}`} className="p-4 space-y-3">
               <div>
                 <p className="text-sm font-semibold text-slate-900">{task.assignmentName}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{task.className || "Unknown class"}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{task.className || "Unknown class"}</p>
+                {task.classCode ? (
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <BookOpen className="h-3 w-3 text-slate-400" />
+                    <p className="text-xs text-slate-500">{task.classCode}</p>
+                  </div>
+                ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${getDeadlineBadgeClass(deadlineStatus)}`}>
@@ -515,7 +521,7 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
         {paginatedTasks.map((task) => {
           const deadlineStatus = getDeadlineStatus(task.deadline)
           const submitted = task.submittedCount ?? 0
-          const ungraded = task.submissionCount ?? 0
+          const ungraded = task.ungradedSubmissionCount ?? 0
           const total = task.studentCount ?? 0
 
           return (
@@ -528,8 +534,18 @@ function TeacherAssignmentsTable({ tasks, onNavigate, currentPage, itemsPerPage 
                   {task.assignmentName}
                 </p>
               </td>
-              <td className="px-6 py-4 text-sm text-slate-700">
-                {task.className || "Unknown class"}
+              <td className="px-6 py-4">
+                <div className="space-y-1.5">
+                  <p className="text-sm text-slate-700">
+                    {task.className || "Unknown class"}
+                  </p>
+                  {task.classCode ? (
+                    <div className="flex items-center gap-1.5">
+                      <BookOpen className="h-3 w-3 text-slate-400" />
+                      <p className="text-xs text-slate-500">{task.classCode}</p>
+                    </div>
+                  ) : null}
+                </div>
               </td>
               <td className="px-6 py-4">
                 <span
