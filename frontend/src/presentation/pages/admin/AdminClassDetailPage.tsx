@@ -324,8 +324,12 @@ function AdminRemoveStudentModal({
     return null
   }
 
-  return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+  if (typeof document === "undefined") {
+    return null
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[10000] grid place-items-center p-4">
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={!isRemoving ? onClose : undefined}
@@ -336,7 +340,11 @@ function AdminRemoveStudentModal({
         aria-modal="true"
         aria-labelledby="remove-student-title"
         aria-describedby="remove-student-description"
-        className="relative z-10 mx-4 w-full max-w-md overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        className="relative z-10 flex-shrink-0 overflow-hidden rounded-3xl border border-rose-200 bg-white shadow-xl animate-in fade-in-0 zoom-in-95 duration-200"
+        style={{
+          width: "min(448px, calc(100vw - 2rem))",
+          maxWidth: "calc(100vw - 2rem)",
+        }}
         onClick={(event) => event.stopPropagation()}
       >
         <button
@@ -420,7 +428,8 @@ function AdminRemoveStudentModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
