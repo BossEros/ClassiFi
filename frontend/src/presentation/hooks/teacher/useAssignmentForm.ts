@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"
 import { type ProgrammingLanguage } from "@/data/api/assignment.types"
-import { getAssignmentById } from "@/business/services/assignmentService"
+import {
+  getAssignmentById,
+  getAssignmentSubmissions,
+} from "@/business/services/assignmentService"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
   createAssignment,
@@ -92,6 +95,7 @@ export function useAssignmentForm() {
   const [isUploadingInstructionsImage, setIsUploadingInstructionsImage] =
     useState(false)
   const [showTemplateCode, setShowTemplateCode] = useState(false)
+  const [isTotalScoreLocked, setIsTotalScoreLocked] = useState(false)
 
   const formMethods = useZodForm({
     schema: isEditMode ? assignmentEditFormSchema : assignmentFormSchema,
@@ -143,12 +147,19 @@ export function useAssignmentForm() {
         setClassName(classData.className)
 
         if (isEditMode && assignmentId) {
-          const assignment = await getAssignmentById(
-            parseInt(assignmentId, 10),
-            parseInt(user.id, 10),
-          )
+          const parsedAssignmentId = parseInt(assignmentId, 10)
+          const [assignment, assignmentSubmissions] = await Promise.all([
+            getAssignmentById(parsedAssignmentId, parseInt(user.id, 10)),
+            getAssignmentSubmissions(parsedAssignmentId, false),
+          ])
 
           if (assignment) {
+            const hasExistingGradedSubmissions = assignmentSubmissions.some(
+              (submission) =>
+                submission.grade !== null && submission.grade !== undefined,
+            )
+
+            setIsTotalScoreLocked(hasExistingGradedSubmissions)
             reset({
               assignmentName: assignment.assignmentName,
               instructions: assignment.instructions,
@@ -179,6 +190,8 @@ export function useAssignmentForm() {
             })
             setShowTemplateCode(!!assignment.templateCode)
           }
+        } else {
+          setIsTotalScoreLocked(false)
         }
       } catch {
         setGeneralError("Failed to load data. Please try again.")
@@ -469,6 +482,7 @@ export function useAssignmentForm() {
     pendingTestCases,
     isLoadingTestCases,
     isUploadingInstructionsImage,
+    isTotalScoreLocked,
     isEditMode,
     assignmentId,
     showTemplateCode,
