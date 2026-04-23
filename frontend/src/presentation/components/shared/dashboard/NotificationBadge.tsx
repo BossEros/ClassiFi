@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Bell } from "lucide-react"
 import * as notificationService from "@/business/services/notificationService"
 import { NotificationDropdown } from "./NotificationDropdown"
@@ -11,6 +11,7 @@ export function NotificationBadge() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const notificationContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     loadUnreadCount()
@@ -20,6 +21,28 @@ export function NotificationBadge() {
 
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (!isOpen) {
+      return
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const clickedInsideNotificationContainer =
+        notificationContainerRef.current?.contains(event.target as Node) ??
+        false
+
+      if (!clickedInsideNotificationContainer) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen])
 
   const loadUnreadCount = async () => {
     try {
@@ -50,11 +73,13 @@ export function NotificationBadge() {
   const displayCount = unreadCount > 99 ? "99+" : unreadCount.toString()
 
   return (
-    <div className="relative z-[9999]">
+    <div ref={notificationContainerRef} className="relative z-[9999]">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((previousIsOpen) => !previousIsOpen)}
         className="relative cursor-pointer rounded-lg p-2 transition-colors hover:bg-slate-100"
         aria-label="Notifications"
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
         disabled={isLoading}
       >
         <Bell className="h-5 w-5 text-slate-600" />
