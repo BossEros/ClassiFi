@@ -806,6 +806,7 @@ function TestCaseList({
 interface BasicInfoFormProps {
   isLoading: boolean
   isUploadingInstructionsImage: boolean
+  isTotalScoreLocked: boolean
   showTemplateCode: boolean
   setShowTemplateCode: (show: boolean) => void
   onInstructionsImageUpload: (file: File) => Promise<void>
@@ -866,6 +867,7 @@ function mapMonacoLanguageToTemplatePath(monacoLanguage: string): string {
 export function BasicInfoForm({
   isLoading,
   isUploadingInstructionsImage,
+  isTotalScoreLocked,
   showTemplateCode,
   setShowTemplateCode,
   onInstructionsImageUpload,
@@ -1119,7 +1121,7 @@ export function BasicInfoForm({
                   }}
                   placeholder="Enter total score"
                   min="1"
-                  disabled={isLoading}
+                  disabled={isLoading || isTotalScoreLocked}
                   className={`h-11 w-full rounded-xl border bg-slate-50 pr-16 text-slate-800 placeholder:text-slate-400 shadow-sm transition-all duration-200 hover:border-slate-400 hover:bg-white focus:border-teal-500/60 focus:bg-white focus:ring-teal-500/20 ${
                     errors.totalScore ? "border-rose-400" : "border-slate-300"
                   }`}
@@ -1128,6 +1130,11 @@ export function BasicInfoForm({
                   Points
                 </div>
               </div>
+              {isTotalScoreLocked && (
+                <p className="text-xs text-amber-700">
+                  Total score is locked because this assignment already has graded submissions.
+                </p>
+              )}
               {errors.totalScore && (
                 <p className="text-xs text-rose-600">{errors.totalScore}</p>
               )}

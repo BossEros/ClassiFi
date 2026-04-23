@@ -94,6 +94,8 @@ describe("useAssignmentForm", () => {
         endTime: "10:00",
       },
     })
+
+    vi.mocked(assignmentService.getAssignmentSubmissions).mockResolvedValue([])
   })
 
   describe("Initialization", () => {

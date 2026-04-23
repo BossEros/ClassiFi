@@ -236,6 +236,7 @@ Admin enrollment workspace behavior:
   - Late submission policy toggle (`Allow late submissions`) with conditional late penalty configuration (penalty tiers + optional reject-after cutoff, no grace period)
   - Similarity deduction toggle (`Deduct score based on similarity score`) with helper copy explaining the capped hybrid-band policy
   - Optional deadline settings (assignment can be created without a deadline)
+  - Create flow requires any provided deadline to be in the future; edit flow allows keeping or saving an already-past deadline so teachers can revise expired assignments without reopening them
   - Resubmission settings
 - **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
 - **`AdminDeleteUserModal`**: Admin delete-user confirmation flow uses `react-hook-form` + Zod confirmation schema.
