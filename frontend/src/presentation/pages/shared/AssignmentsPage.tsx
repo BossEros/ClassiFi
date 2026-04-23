@@ -14,14 +14,19 @@ import { getEnrolledClasses } from "@/business/services/studentDashboardService"
 import { getAllClasses, getClassAssignments } from "@/business/services/classService"
 import type { Class, Task } from "@/data/api/class.types"
 import {
+  calculateStudentAssignmentStatusCounts,
+  isStudentAssignmentFinished,
+  isStudentAssignmentMissed,
+  matchesStudentAssignmentStatusFilter,
+  type StudentAssignmentStatusFilter,
+} from "@/shared/utils/studentAssignmentStatus"
+import {
   calculateTeacherAssignmentStatusCounts,
   matchesTeacherAssignmentStatusFilter,
   type TeacherAssignmentStatusFilter,
 } from "@/shared/utils/teacherAssignmentStatus"
 
 const ITEMS_PER_PAGE = 10
-
-type StudentStatusFilter = "all" | "pending" | "finished" | "missed"
 function getDeadlineBadgeClass(deadlineStatus: string): string {
   if (deadlineStatus === "Overdue") {
     return "border-rose-300 bg-rose-100 text-rose-700"
@@ -51,14 +56,11 @@ function getSubmissionProgressClass(submitted: number, total: number): string {
 }
 
 function getStudentStatusBadge(task: Task): { label: string; className: string } {
-  const now = new Date()
-  const deadlinePassed = task.deadline ? new Date(task.deadline) < now : false
-
-  if (task.hasSubmitted) {
+  if (isStudentAssignmentFinished(task)) {
     return { label: "Finished", className: "border-emerald-300 bg-emerald-100 text-emerald-700" }
   }
 
-  if (deadlinePassed) {
+  if (isStudentAssignmentMissed(task)) {
     return { label: "Missed", className: "border-rose-300 bg-rose-100 text-rose-700" }
   }
 
@@ -69,12 +71,13 @@ export function AssignmentsPage() {
   const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const [tasks, setTasks] = useState<Task[]>([])
-  const [teacherClasses, setTeacherClasses] = useState<Class[]>([])
+  const [availableClasses, setAvailableClasses] = useState<Class[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedClass, setSelectedClass] = useState("all")
-  const [statusFilter, setStatusFilter] = useState<StudentStatusFilter>("all")
+  const [statusFilter, setStatusFilter] =
+    useState<StudentAssignmentStatusFilter>("all")
   const [teacherStatusFilter, setTeacherStatusFilter] =
     useState<TeacherAssignmentStatusFilter>("all")
   const [currentPage, setCurrentPage] = useState(1)
@@ -100,7 +103,7 @@ export function AssignmentsPage() {
           ])
 
           setTasks(teacherAssignmentList)
-          setTeacherClasses(teacherClassList)
+          setAvailableClasses(teacherClassList)
         } else {
           const enrolledClassesResponse = await getEnrolledClasses(userId)
           const allAssignments = await Promise.all(
@@ -108,8 +111,9 @@ export function AssignmentsPage() {
               getClassAssignments(cls.id, userId),
             ),
           )
+
           setTasks(allAssignments.flat())
-          setTeacherClasses([])
+          setAvailableClasses(enrolledClassesResponse.classes)
         }
       } catch {
         setError("Failed to load assignments. Please try refreshing the page.")
@@ -121,31 +125,31 @@ export function AssignmentsPage() {
     fetchAssignments()
   }, [navigate, user, isTeacher])
 
-  const classOptions = useMemo(() => {
-    if (isTeacher) {
-      const sortedTeacherClasses = [...teacherClasses].sort((leftClass, rightClass) =>
-        leftClass.className.localeCompare(rightClass.className),
-      )
+  const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery])
 
+  const classOptions = useMemo(() => {
+    const sortedAvailableClasses = [...availableClasses].sort((leftClass, rightClass) =>
+      leftClass.className.localeCompare(rightClass.className),
+    )
+
+    if (isTeacher) {
       return [
         { value: "all", label: "All Classes" },
-        ...sortedTeacherClasses.map((teacherClass) => ({
-          value: String(teacherClass.id),
-          label: teacherClass.className,
+        ...sortedAvailableClasses.map((availableClass) => ({
+          value: String(availableClass.id),
+          label: availableClass.className,
         })),
       ]
     }
 
-    const uniqueClasses = [...new Set(tasks.map((task) => task.className).filter(Boolean))]
-    uniqueClasses.sort((a, b) => (a ?? "").localeCompare(b ?? ""))
-
     return [
       { value: "all", label: "All Classes" },
-      ...uniqueClasses.map((name) => ({ value: name!, label: name! })),
+      ...sortedAvailableClasses.map((availableClass) => ({
+        value: availableClass.className,
+        label: availableClass.className,
+      })),
     ]
-  }, [isTeacher, tasks, teacherClasses])
-
-  const normalizedQuery = useMemo(() => searchQuery.trim().toLowerCase(), [searchQuery])
+  }, [availableClasses, isTeacher])
 
   const tasksMatchingSearchAndClass = useMemo(() => {
     return tasks.filter((task) => {
@@ -163,28 +167,29 @@ export function AssignmentsPage() {
         if (task.className !== selectedClass) return false
       }
 
-      if (!isTeacher && statusFilter !== "all") {
-        const now = new Date()
-        const deadlinePassed = task.deadline ? new Date(task.deadline) < now : false
-
-        if (statusFilter === "pending" && (task.hasSubmitted || deadlinePassed)) return false
-        if (statusFilter === "finished" && !task.hasSubmitted) return false
-        if (statusFilter === "missed" && (task.hasSubmitted || !deadlinePassed)) return false
-      }
-
       return true
     })
-  }, [tasks, normalizedQuery, selectedClass, statusFilter, isTeacher])
+  }, [tasks, normalizedQuery, selectedClass, isTeacher])
 
   const filteredTasks = useMemo(() => {
-    if (!isTeacher || teacherStatusFilter === "all") {
+    if (isTeacher) {
+      if (teacherStatusFilter === "all") {
+        return tasksMatchingSearchAndClass
+      }
+
+      return tasksMatchingSearchAndClass.filter((task) =>
+        matchesTeacherAssignmentStatusFilter(task, teacherStatusFilter),
+      )
+    }
+
+    if (statusFilter === "all") {
       return tasksMatchingSearchAndClass
     }
 
     return tasksMatchingSearchAndClass.filter((task) =>
-      matchesTeacherAssignmentStatusFilter(task, teacherStatusFilter),
+      matchesStudentAssignmentStatusFilter(task, statusFilter),
     )
-  }, [tasksMatchingSearchAndClass, teacherStatusFilter, isTeacher])
+  }, [isTeacher, statusFilter, tasksMatchingSearchAndClass, teacherStatusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredTasks.length / ITEMS_PER_PAGE))
 
@@ -198,7 +203,7 @@ export function AssignmentsPage() {
     setCurrentPage(1)
   }, [])
 
-  const handleStatusChange = useCallback((status: StudentStatusFilter) => {
+  const handleStatusChange = useCallback((status: StudentAssignmentStatusFilter) => {
     setStatusFilter(status)
     setCurrentPage(1)
   }, [])
@@ -224,15 +229,9 @@ export function AssignmentsPage() {
 
   const studentStatusCounts = useMemo(() => {
     if (isTeacher) return null
-    const now = new Date()
 
-    return {
-      all: tasks.length,
-      pending: tasks.filter((t) => !t.hasSubmitted && (!t.deadline || new Date(t.deadline) >= now)).length,
-      finished: tasks.filter((t) => t.hasSubmitted).length,
-      missed: tasks.filter((t) => !t.hasSubmitted && !!t.deadline && new Date(t.deadline) < now).length,
-    }
-  }, [tasks, isTeacher])
+    return calculateStudentAssignmentStatusCounts(tasksMatchingSearchAndClass)
+  }, [isTeacher, tasksMatchingSearchAndClass])
 
   const teacherStatusCounts = useMemo(() => {
     if (!isTeacher) return null
@@ -272,11 +271,11 @@ export function AssignmentsPage() {
               { key: "pending", label: "Pending", icon: <Clock className="h-3.5 w-3.5" /> },
               { key: "finished", label: "Finished", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
               { key: "missed", label: "Missed", icon: <XCircle className="h-3.5 w-3.5" /> },
-            ] as { key: StudentStatusFilter; label: string; icon: ReactNode }[]
+            ] as { key: StudentAssignmentStatusFilter; label: string; icon: ReactNode }[]
           ).map(({ key, label, icon }) => {
             const isActive = statusFilter === key
             const count = studentStatusCounts[key]
-            const activeStyles: Record<StudentStatusFilter, string> = {
+            const activeStyles: Record<StudentAssignmentStatusFilter, string> = {
               all: "bg-slate-800 text-white border-slate-800",
               pending: "bg-amber-500 text-white border-amber-500",
               finished: "bg-emerald-500 text-white border-emerald-500",

@@ -575,7 +575,7 @@ Specialized types for the class detail page redesign:
    - Status badges indicate: pending (yellow, submitted but awaiting grade), not-started (gray), submitted (teal), or late (red, missed deadline with no submission)
 3. **Filter Assignments**:
    - Click "All Assignments" to view all assignments
-   - Click "Pending" to view tasks that still need submission (not-started + missed)
+   - Click "Pending" to view tasks that still need submission, including assignments inside an allowed late-submission window
    - Click "Submitted" to view assignments already submitted (graded and pending review)
    - Filter counts update dynamically based on assignment status
 4. **View Assignment Details**:

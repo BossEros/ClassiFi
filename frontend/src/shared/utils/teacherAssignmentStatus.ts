@@ -1,13 +1,14 @@
 import type { Task } from "@/data/api/class.types"
+import {
+  getAssignmentSubmissionCloseDate,
+  isAssignmentSubmissionOpen,
+} from "@/shared/utils/assignmentSubmissionWindow"
 
 export type TeacherAssignmentStatusFilter =
   | "all"
   | "pending"
   | "closed"
   | "no-submissions"
-
-const MILLISECONDS_PER_HOUR = 60 * 60 * 1000
-const DEFAULT_LATE_SUBMISSION_REJECT_AFTER_HOURS = 120
 
 /**
  * Returns the latest timestamp when students can still submit to an assignment.
@@ -16,27 +17,7 @@ const DEFAULT_LATE_SUBMISSION_REJECT_AFTER_HOURS = 120
  * @returns The close timestamp, or null when the assignment has no close boundary.
  */
 export function getTeacherAssignmentCloseDate(assignment: Task): Date | null {
-  if (!assignment.deadline) {
-    return null
-  }
-
-  const deadlineDate = new Date(assignment.deadline)
-
-  if (!assignment.allowLateSubmissions) {
-    return deadlineDate
-  }
-
-  const rejectAfterHours = assignment.latePenaltyConfig
-    ? assignment.latePenaltyConfig.rejectAfterHours
-    : DEFAULT_LATE_SUBMISSION_REJECT_AFTER_HOURS
-
-  if (rejectAfterHours === null) {
-    return null
-  }
-
-  return new Date(
-    deadlineDate.getTime() + rejectAfterHours * MILLISECONDS_PER_HOUR,
-  )
+  return getAssignmentSubmissionCloseDate(assignment)
 }
 
 /**
@@ -50,13 +31,7 @@ export function isTeacherAssignmentOpen(
   assignment: Task,
   currentDate: Date = new Date(),
 ): boolean {
-  const closeDate = getTeacherAssignmentCloseDate(assignment)
-
-  if (!closeDate) {
-    return true
-  }
-
-  return currentDate <= closeDate
+  return isAssignmentSubmissionOpen(assignment, currentDate)
 }
 
 /**
