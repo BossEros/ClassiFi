@@ -86,6 +86,7 @@ describe("AssignmentsPage", () => {
   })
 
   afterEach(() => {
+    vi.runOnlyPendingTimers()
     vi.useRealTimers()
   })
 
@@ -155,7 +156,11 @@ describe("AssignmentsPage", () => {
     renderAssignmentsPage()
 
     const classFilter = await screen.findByLabelText("Filter by class")
-    await userEvent.selectOptions(classFilter, "Databases")
+    const user = userEvent.setup({
+      advanceTimers: vi.advanceTimersByTime.bind(vi),
+    })
+
+    await user.selectOptions(classFilter, "Databases")
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /All 1/i })).toBeInTheDocument()
