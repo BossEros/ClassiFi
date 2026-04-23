@@ -9,6 +9,7 @@ import type { NotificationService } from "../../src/modules/notifications/notifi
 import {
   UserNotFoundError,
   InvalidRoleError,
+  TeacherHasAssignedClassesError,
 } from "../../src/shared/errors.js"
 import { createMockUser, createMockTeacher } from "../utils/factories.js"
 
@@ -43,7 +44,9 @@ describe("AdminUserService", () => {
 
     mockClassService = {
       deleteClassesByTeacher: vi.fn(),
+      getAssignedClassCountByTeacher: vi.fn(),
     } as any
+    mockClassService.getAssignedClassCountByTeacher!.mockResolvedValue(0)
 
     mockNotificationService = {
       sendEmailNotificationIfEnabled: vi.fn(),
@@ -83,6 +86,8 @@ describe("AdminUserService", () => {
 
       expect(result.data).toHaveLength(2)
       expect(result.data[0].email).toBe(mockUser.email)
+      expect(result.data[0].assignedClassCount).toBe(0)
+      expect(result.data[1].assignedClassCount).toBe(0)
       expect(mockUserRepo.getAllUsersFiltered).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -127,6 +132,7 @@ describe("AdminUserService", () => {
 
       expect(result.id).toBe(mockUser.id)
       expect(result.email).toBe(mockUser.email)
+      expect(result.assignedClassCount).toBe(0)
     })
 
     it("should throw UserNotFoundError when user does not exist", async () => {
@@ -346,22 +352,36 @@ describe("AdminUserService", () => {
       await adminUserService.deleteUser(1)
 
       expect(mockClassService.deleteClassesByTeacher).not.toHaveBeenCalled()
+      expect(
+        mockClassService.getAssignedClassCountByTeacher,
+      ).not.toHaveBeenCalled()
       expect(mockUserService.deleteAccount).toHaveBeenCalledWith(1)
     })
 
-    it("should delete teacher classes before deleting teacher", async () => {
+    it("should delete a teacher when no classes are assigned", async () => {
       mockUserRepo.getUserById!.mockResolvedValue(mockTeacher)
-      mockClassService.deleteClassesByTeacher!.mockResolvedValue(undefined)
+      mockClassService.getAssignedClassCountByTeacher!.mockResolvedValue(0)
       mockUserService.deleteAccount!.mockResolvedValue(undefined)
 
       await adminUserService.deleteUser(mockTeacher.id)
 
-      expect(mockClassService.deleteClassesByTeacher).toHaveBeenCalledWith(
+      expect(mockClassService.getAssignedClassCountByTeacher).toHaveBeenCalledWith(
         mockTeacher.id,
       )
       expect(mockUserService.deleteAccount).toHaveBeenCalledWith(
         mockTeacher.id,
       )
+    })
+
+    it("should block teacher deletion when classes are still assigned", async () => {
+      mockUserRepo.getUserById!.mockResolvedValue(mockTeacher)
+      mockClassService.getAssignedClassCountByTeacher!.mockResolvedValue(2)
+
+      await expect(adminUserService.deleteUser(mockTeacher.id)).rejects.toThrow(
+        TeacherHasAssignedClassesError,
+      )
+
+      expect(mockUserService.deleteAccount).not.toHaveBeenCalled()
     })
 
     it("should throw UserNotFoundError when user does not exist", async () => {
@@ -381,6 +401,7 @@ describe("AdminUserService", () => {
 
       expect(result).toHaveLength(1)
       expect(result[0].role).toBe("teacher")
+      expect(result[0].assignedClassCount).toBe(0)
       expect(mockUserRepo.getUsersByRole).toHaveBeenCalledWith("teacher")
     })
   })

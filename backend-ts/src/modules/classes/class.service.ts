@@ -113,6 +113,11 @@ export class ClassService {
     )
   }
 
+  /** Get the total number of classes assigned to a teacher across all statuses. */
+  async getAssignedClassCountByTeacher(teacherId: number): Promise<number> {
+    return await this.classRepo.getAssignedClassCountByTeacher(teacherId)
+  }
+
   /**
    * Verify that a class exists and belongs to the given teacher.
    *

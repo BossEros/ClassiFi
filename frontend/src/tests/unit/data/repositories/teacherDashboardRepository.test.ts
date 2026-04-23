@@ -54,6 +54,11 @@ describe("teacherDashboardRepository", () => {
     deadline: "2026-04-25T12:00:00Z",
     className: "Introduction to Programming",
     classCode: "CS101",
+    allowLateSubmissions: true,
+    latePenaltyConfig: {
+      tiers: [{ id: "tier-1", hoursLate: 24, penaltyPercent: 10 }],
+      rejectAfterHours: 72,
+    },
     submittedCount: 41,
     ungradedSubmissionCount: 0,
     totalStudents: 59,
@@ -291,6 +296,8 @@ describe("teacherDashboardRepository", () => {
       expect(result.assignments[0].submittedCount).toBe(41)
       expect(result.assignments[0].ungradedSubmissionCount).toBe(0)
       expect(result.assignments[0].classCode).toBe("CS101")
+      expect(result.assignments[0].allowLateSubmissions).toBe(true)
+      expect(result.assignments[0].latePenaltyConfig?.rejectAfterHours).toBe(72)
     })
   })
 })

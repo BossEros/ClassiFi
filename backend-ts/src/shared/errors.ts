@@ -32,6 +32,14 @@ export class ForbiddenError extends ApiError {
   }
 }
 
+/** 409 Conflict */
+export class ConflictError extends ApiError {
+  constructor(message: string = "Conflict") {
+    super(message, 409)
+    this.name = "ConflictError"
+  }
+}
+
 /** 404 Not Found */
 export class NotFoundError extends ApiError {
   constructor(message: string = "Not Found") {
@@ -79,6 +87,26 @@ export class TeacherApprovalPendingError extends ForbiddenError {
       "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin",
     )
     this.name = "TeacherApprovalPendingError"
+  }
+}
+
+export class TeacherSelfDeletionNotAllowedError extends ForbiddenError {
+  constructor() {
+    super(
+      "Teacher accounts cannot be deleted from personal settings. Please contact an administrator if account removal is required.",
+    )
+    this.name = "TeacherSelfDeletionNotAllowedError"
+  }
+}
+
+export class TeacherHasAssignedClassesError extends ConflictError {
+  constructor(assignedClassCount: number) {
+    const classLabel = assignedClassCount === 1 ? "class" : "classes"
+
+    super(
+      `Cannot delete teacher account while ${assignedClassCount} ${classLabel} are still assigned. Reassign all classes first.`,
+    )
+    this.name = "TeacherHasAssignedClassesError"
   }
 }
 

@@ -5,8 +5,15 @@ import type { UserRepository } from "../../src/modules/users/user.repository.js"
 import type { SubmissionRepository } from "../../src/modules/submissions/submission.repository.js"
 import type { StorageService } from "../../src/services/storage.service.js"
 import type { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
-import { UserNotFoundError } from "../../src/shared/errors.js"
-import { createMockUser, createMockSubmission } from "../utils/factories.js"
+import {
+  UserNotFoundError,
+  TeacherSelfDeletionNotAllowedError,
+} from "../../src/shared/errors.js"
+import {
+  createMockTeacher,
+  createMockUser,
+  createMockSubmission,
+} from "../utils/factories.js"
 
 describe("UserService", () => {
   let service: UserService
@@ -174,6 +181,40 @@ describe("UserService", () => {
       expect(userRepositoryMock.updateUser).toHaveBeenCalledWith(1, {
         avatarUrl: "https://cdn.classifi.com/avatars/1.png",
       })
+    })
+  })
+
+  describe("deleteOwnAccount", () => {
+    it("throws UserNotFoundError when user does not exist", async () => {
+      userRepositoryMock.getUserById!.mockResolvedValue(undefined)
+
+      await expect(service.deleteOwnAccount(404)).rejects.toThrow(
+        UserNotFoundError,
+      )
+    })
+
+    it("blocks teacher self-deletion", async () => {
+      userRepositoryMock.getUserById!.mockResolvedValue(
+        createMockTeacher({ id: 23 }),
+      )
+
+      await expect(service.deleteOwnAccount(23)).rejects.toThrow(
+        TeacherSelfDeletionNotAllowedError,
+      )
+    })
+
+    it("delegates student self-deletion to the standard account deletion flow", async () => {
+      const studentUser = createMockUser({ id: 24, role: "student" })
+
+      userRepositoryMock.getUserById!
+        .mockResolvedValueOnce(studentUser)
+        .mockResolvedValueOnce(studentUser)
+      submissionRepositoryMock.getSubmissionsByStudent!.mockResolvedValue([])
+      userRepositoryMock.deleteUser!.mockResolvedValue(true)
+
+      await service.deleteOwnAccount(24)
+
+      expect(userRepositoryMock.deleteUser).toHaveBeenCalledWith(24)
     })
   })
 

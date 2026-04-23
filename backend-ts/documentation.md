@@ -336,7 +336,13 @@ Teacher self-registration approval behavior:
 | GET    | `/user/me`                          | Get current user's profile                 |
 | PATCH  | `/user/me/avatar`                   | Update avatar URL                          |
 | PATCH  | `/user/me/notification-preferences` | Update user notification delivery settings |
-| DELETE | `/user/me`                          | Delete account                             |
+| DELETE | `/user/me`                          | Delete account (student/admin only)        |
+
+Account-deletion safety rules:
+
+- Teacher self-service account deletion is blocked from `DELETE /user/me`.
+- Teacher accounts can be deleted by admins only after every assigned class has been reassigned.
+- Admin deletion of a teacher with assigned classes returns `409 Conflict` and instructs the admin to reassign classes first.
 
 ### Classes
 
@@ -501,6 +507,7 @@ The plagiarism API now focuses on assignment-level review workflows:
 - Cross-class reports are retained as historical records so previously opened cross-class result IDs and report deep links remain valid even after newer cross-class comparisons are generated.
 - `GET /plagiarism/cross-class/reports/assignment/:assignmentId/latest` should be used by clients that want the newest saved cross-class comparison without triggering a fresh write.
 - Automatic similarity scheduling runs after successful submissions (when at least two latest submissions exist) and keeps manual analyze endpoint support for explicit teacher-initiated checks.
+- When an admin reassigns a class to another teacher, historical similarity report ownership for that class is also reassigned so report access follows the new class owner.
 
 ### Notifications
 
@@ -670,6 +677,12 @@ Notifications separate write commits from email delivery:
 | PUT    | `/admin/users/:id`      | Update user      |
 | PATCH  | `/admin/users/:id/role` | Update user role |
 | DELETE | `/admin/users/:id`      | Delete user      |
+
+Teacher deletion policy:
+
+- Admin user deletion no longer cascade-deletes a teacher's classes.
+- A teacher can be deleted only when their assigned class count is zero.
+- Class reassignment should be completed through the admin classes workflow before retrying deletion.
 
 #### Class Management
 

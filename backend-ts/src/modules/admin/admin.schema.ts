@@ -112,6 +112,7 @@ export const UserDTOSchema = z.object({
   avatarUrl: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   createdAt: z.string().optional(),
+  assignedClassCount: z.number().int().min(0).optional(),
 })
 export type UserDTO = z.infer<typeof UserDTOSchema>
 

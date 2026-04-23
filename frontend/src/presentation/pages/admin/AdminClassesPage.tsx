@@ -92,7 +92,7 @@ function AdminClassesFilters({
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search classes by name or code..."
+            placeholder="Search classes by name, code, or teacher..."
             value={searchQuery}
             onChange={(event) => onSearchQueryChange(event.target.value)}
             className="w-full rounded-xl border border-slate-400 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder-slate-400 shadow-md shadow-slate-200/70 transition-all hover:border-slate-500 hover:bg-white focus:border-transparent focus:outline-none focus:ring-4 focus:ring-teal-500/15"

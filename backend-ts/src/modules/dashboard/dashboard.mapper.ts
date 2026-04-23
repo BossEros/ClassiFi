@@ -1,4 +1,5 @@
-﻿import type { Class, ClassSchedule } from "@/modules/classes/class.model.js"
+import type { LatePenaltyConfig } from "@/modules/assignments/assignment.model.js"
+import type { Class, ClassSchedule } from "@/modules/classes/class.model.js"
 
 export interface DashboardClassDTO {
   id: number
@@ -67,10 +68,10 @@ export interface AllTeacherAssignmentDTO {
   classCode: string
   classId: number
   deadline: string | null
+  allowLateSubmissions: boolean
+  latePenaltyConfig: LatePenaltyConfig | null
   submittedCount: number
   ungradedSubmissionCount: number
   totalStudents: number
   programmingLanguage: string
 }
-
-
