@@ -512,6 +512,7 @@ export function AssignmentDetailPage() {
     user,
     assignment,
     submissions,
+    selectedStudentSubmissionCount,
     submissionTestResults,
     isLoading,
     error,
@@ -613,6 +614,10 @@ export function AssignmentDetailPage() {
   const selectedStudentName = activeSubmission?.studentName?.trim() || "Student"
   const isViewingTeacherSubmissionDetail =
     isTeacher && selectedSubmissionId !== null && Boolean(activeSubmission)
+  const displayedSubmissionCount =
+    isViewingTeacherSubmissionDetail
+      ? (selectedStudentSubmissionCount ?? activeSubmission?.submissionNumber ?? 1)
+      : submissions.length
 
   const userInitials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
@@ -984,7 +989,7 @@ export function AssignmentDetailPage() {
                             Submitted
                           </p>
                           <p className="text-sm text-slate-500">
-                            {submissions.length} submission(s)
+                            {displayedSubmissionCount} submission(s)
                           </p>
                         </div>
                       </div>

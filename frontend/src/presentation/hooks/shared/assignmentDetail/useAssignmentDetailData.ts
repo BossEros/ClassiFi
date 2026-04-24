@@ -24,6 +24,7 @@ interface UseAssignmentDetailDataResult {
   user: User | null
   assignment: AssignmentDetail | null
   submissions: Submission[]
+  selectedStudentSubmissionCount: number | null
   submissionTestResults: TestPreviewResult | null
   isLoading: boolean
   error: string | null
@@ -47,6 +48,8 @@ export function useAssignmentDetailData({
   const [user, setUser] = useState<User | null>(null)
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(null)
   const [submissions, setSubmissions] = useState<Submission[]>([])
+  const [selectedStudentSubmissionCount, setSelectedStudentSubmissionCount] =
+    useState<number | null>(null)
   const [submissionTestResults, setSubmissionTestResults] =
     useState<TestPreviewResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -80,6 +83,7 @@ export function useAssignmentDetailData({
         )
 
         setAssignment(assignmentData)
+        setSelectedStudentSubmissionCount(null)
 
         // Get submission history for student
         if (currentUser.role === "student") {
@@ -143,6 +147,22 @@ export function useAssignmentDetailData({
                 )
               : undefined) ?? allSubmissions[0]
 
+          if (selectedSubmissionId && selectedSubmission) {
+            try {
+              const selectedStudentSubmissionHistory =
+                await getSubmissionHistory(
+                  assignmentIdNumber,
+                  selectedSubmission.studentId,
+                )
+
+              setSelectedStudentSubmissionCount(
+                selectedStudentSubmissionHistory.submissions.length,
+              )
+            } catch {
+              setSelectedStudentSubmissionCount(null)
+            }
+          }
+
           try {
             const teacherSubmissionTestResults =
               await getTestResultsForSubmission(selectedSubmission.id, true)
@@ -171,6 +191,7 @@ export function useAssignmentDetailData({
     user,
     assignment,
     submissions,
+    selectedStudentSubmissionCount,
     submissionTestResults,
     isLoading,
     error,
