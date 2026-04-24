@@ -61,7 +61,7 @@ describe("studentDashboardService", () => {
 
       expect(
         dashboardRepository.getAllEnrolledClassesForStudentId,
-      ).toHaveBeenCalledWith(1, 5)
+      ).toHaveBeenCalledWith(1, 5, false)
       expect(result).toEqual(mockClasses)
     })
 

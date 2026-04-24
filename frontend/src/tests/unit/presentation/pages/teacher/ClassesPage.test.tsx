@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { useAuthStore } from "@/shared/store/useAuthStore"
@@ -86,7 +86,9 @@ describe("Teacher ClassesPage", () => {
       expect(classService.getAllClasses).toHaveBeenCalledWith(9, true)
     })
 
-    await user.click(screen.getByRole("button", { name: /archived/i }))
+    fireEvent.change(screen.getByRole("combobox"), {
+      target: { value: "archived" },
+    })
 
     await waitFor(() => {
       expect(classService.getAllClasses).toHaveBeenLastCalledWith(9, false)
