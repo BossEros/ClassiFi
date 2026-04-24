@@ -112,6 +112,30 @@ export const StudentDashboardQuerySchema = z.object({
 
 export type StudentDashboardQuery = z.infer<typeof StudentDashboardQuerySchema>
 
+/** Student enrolled classes query schema */
+export const StudentEnrolledClassesQuerySchema = z.object({
+  limit: z.coerce.number().int().positive().max(100).optional(),
+  includeArchived: z.preprocess((queryValue) => {
+    if (queryValue === undefined) {
+      return undefined
+    }
+
+    if (queryValue === true || queryValue === "true") {
+      return true
+    }
+
+    if (queryValue === false || queryValue === "false") {
+      return false
+    }
+
+    return queryValue
+  }, z.boolean().optional()),
+})
+
+export type StudentEnrolledClassesQuery = z.infer<
+  typeof StudentEnrolledClassesQuerySchema
+>
+
 /** Teacher dashboard query schema */
 export const TeacherDashboardQuerySchema = z.object({
   recentClassesLimit: z.coerce.number().int().positive().max(50).optional(),

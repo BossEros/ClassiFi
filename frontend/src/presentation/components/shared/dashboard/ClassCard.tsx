@@ -13,6 +13,7 @@ interface ClassCardProps {
   className?: string
   variant?: "default" | "dashboard"
   accentIndex?: number
+  isInteractionDisabled?: boolean
 }
 
 const codePatterns = [
@@ -75,8 +76,10 @@ export function ClassCard({
   className,
   variant = "default",
   accentIndex,
+  isInteractionDisabled = false,
 }: ClassCardProps) {
   const isArchived = !classItem.isActive
+  const isClickable = typeof onClick === "function" && !isInteractionDisabled
   const codePattern = codePatterns[classItem.id % codePatterns.length]
 
   const accentClassIndex =
@@ -94,13 +97,17 @@ export function ClassCard({
   if (variant === "dashboard") {
     return (
       <Card
-        variant="interactive"
-        onClick={onClick}
+        variant={isClickable ? "interactive" : "default"}
+        onClick={isClickable ? onClick : undefined}
+        aria-disabled={isInteractionDisabled || undefined}
         className={cn(
           "w-full min-h-[165px] overflow-hidden rounded-2xl border border-slate-200 border-l-4 bg-white shadow-sm",
-          "transition-all duration-200 hover:border-slate-300 hover:shadow-md",
+          "transition-all duration-200",
+          isClickable && "hover:border-slate-300 hover:shadow-md",
           dashboardAccentBorderClasses[accentClassIndex],
-          isArchived && "opacity-75 grayscale hover:grayscale-0",
+          isArchived && "opacity-75 grayscale",
+          isArchived && isClickable && "hover:grayscale-0",
+          !isClickable && "cursor-default",
           className,
         )}
       >
@@ -141,11 +148,15 @@ export function ClassCard({
 
   return (
     <Card
-      variant="interactive"
-      onClick={onClick}
+      variant={isClickable ? "interactive" : "default"}
+      onClick={isClickable ? onClick : undefined}
+      aria-disabled={isInteractionDisabled || undefined}
       className={cn(
-        "group relative w-full overflow-hidden border-white/10 bg-slate-800/50 backdrop-blur-md transition-all duration-300 hover:border-white/20",
-        isArchived && "opacity-75 grayscale hover:grayscale-0",
+        "group relative w-full overflow-hidden border-white/10 bg-slate-800/50 backdrop-blur-md transition-all duration-300",
+        isClickable && "hover:border-white/20",
+        isArchived && "opacity-75 grayscale",
+        isArchived && isClickable && "hover:grayscale-0",
+        !isClickable && "cursor-default",
         className,
       )}
     >
@@ -165,7 +176,12 @@ export function ClassCard({
       </div>
 
       <CardContent className="p-4">
-        <h3 className="mb-2 line-clamp-1 text-base font-bold tracking-tight text-white transition-colors group-hover:text-teal-200">
+        <h3
+          className={cn(
+            "mb-2 line-clamp-1 text-base font-bold tracking-tight text-white transition-colors",
+            isClickable && "group-hover:text-teal-200",
+          )}
+        >
           {classItem.className}
         </h3>
 
@@ -204,7 +220,12 @@ export function ClassCard({
         </div>
       </CardContent>
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-teal-500/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-0 bg-gradient-to-tr from-teal-500/5 via-transparent to-transparent transition-opacity duration-300",
+          isClickable ? "opacity-0 group-hover:opacity-100" : "opacity-0",
+        )}
+      />
     </Card>
   )
 }

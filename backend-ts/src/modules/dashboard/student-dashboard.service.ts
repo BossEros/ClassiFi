@@ -73,9 +73,13 @@ export class StudentDashboardService {
   async getEnrolledClasses(
     studentId: number,
     limit?: number,
+    includeArchived: boolean = false,
   ): Promise<DashboardClassDTO[]> {
     let classesWithDetails =
-      await this.classRepo.getClassesByStudentWithDetails(studentId, true)
+      await this.classRepo.getClassesByStudentWithDetails(
+        studentId,
+        !includeArchived,
+      )
 
     if (limit) {
       classesWithDetails = classesWithDetails.slice(0, limit)

@@ -357,6 +357,22 @@ Account-deletion safety rules:
 | GET    | `/classes/:id/assignments`    | Get class assignments |
 | POST   | `/classes/:id/assignments`    | Create assignment     |
 
+### Student Dashboard
+
+| Method | Endpoint                         | Description                               |
+| ------ | -------------------------------- | ----------------------------------------- |
+| GET    | `/student/dashboard/:studentId`  | Get student dashboard overview            |
+| GET    | `/student/dashboard/:studentId/classes` | Get enrolled classes for a student |
+| GET    | `/student/dashboard/:studentId/assignments` | Get pending assignments for a student |
+| POST   | `/student/dashboard/join`        | Join a class using a class code           |
+| POST   | `/student/dashboard/leave`       | Leave a class                             |
+
+Student enrolled-classes query behavior:
+
+- `GET /student/dashboard/:studentId/classes` remains active-only by default.
+- Pass `includeArchived=true` to include archived classes in the response alongside active enrollments.
+- This allows the student `My Classes` page to render both `Current classes` and `Archived classes` without changing the dashboard overview payload.
+
 **Class Detail Response** (`GET /classes/:id`):
 
 - Includes `instructorName` (teacher's full name)

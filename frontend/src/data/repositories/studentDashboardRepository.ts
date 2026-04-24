@@ -52,11 +52,22 @@ export async function getCompleteDashboardDataForStudentId(
 export async function getAllEnrolledClassesForStudentId(
   studentId: number,
   maximumClassesCount?: number,
+  includeArchived: boolean = false,
 ): Promise<ClassListResponse> {
-  let apiUrl = `/student/dashboard/${studentId}/classes`
+  const queryParameters = new URLSearchParams()
+
   if (maximumClassesCount) {
-    apiUrl += `?limit=${maximumClassesCount}`
+    queryParameters.set("limit", maximumClassesCount.toString())
   }
+
+  if (includeArchived) {
+    queryParameters.set("includeArchived", "true")
+  }
+
+  const queryString = queryParameters.toString()
+  const apiUrl = queryString
+    ? `/student/dashboard/${studentId}/classes?${queryString}`
+    : `/student/dashboard/${studentId}/classes`
 
   const apiResponse = await apiClient.get<ClassListResponse>(apiUrl)
 

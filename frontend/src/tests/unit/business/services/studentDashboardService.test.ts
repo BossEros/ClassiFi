@@ -61,8 +61,21 @@ describe("studentDashboardService", () => {
 
       expect(
         dashboardRepository.getAllEnrolledClassesForStudentId,
-      ).toHaveBeenCalledWith(1, 5)
+      ).toHaveBeenCalledWith(1, 5, false)
       expect(result).toEqual(mockClasses)
+    })
+
+    it("forwards the includeArchived flag when requested", async () => {
+      const mockClasses = { success: true, classes: [], total: 0 }
+      vi.mocked(
+        dashboardRepository.getAllEnrolledClassesForStudentId,
+      ).mockResolvedValue(mockClasses)
+
+      await studentDashboardService.getEnrolledClasses(1, undefined, true)
+
+      expect(
+        dashboardRepository.getAllEnrolledClassesForStudentId,
+      ).toHaveBeenCalledWith(1, undefined, true)
     })
 
     it("propagates error when fetch fails", async () => {
