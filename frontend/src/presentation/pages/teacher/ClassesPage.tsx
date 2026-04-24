@@ -155,7 +155,12 @@ export function ClassesPage() {
                   classItem={classItem}
                   variant="dashboard"
                   accentIndex={classIndex}
-                  onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
+                  onClick={
+                    classItem.isActive
+                      ? () => navigate(`/dashboard/classes/${classItem.id}`)
+                      : undefined
+                  }
+                  isInteractionDisabled={!classItem.isActive}
                 />
               ))}
             </div>
