@@ -15,9 +15,11 @@ import {
   JoinClassRequestSchema,
   LeaveClassRequestSchema,
   StudentDashboardQuerySchema,
+  StudentEnrolledClassesQuerySchema,
   type JoinClassRequest,
   type LeaveClassRequest,
   type StudentDashboardQuery,
+  type StudentEnrolledClassesQuery,
 } from "@/modules/dashboard/dashboard.schema.js"
 import { z } from "zod"
 
@@ -73,16 +75,18 @@ export async function studentDashboardRoutes(
   app.get("/:studentId/classes", {
     preHandler: [
       validateParams(StudentIdParamSchema),
-      validateQuery(LimitQuerySchema),
+      validateQuery(StudentEnrolledClassesQuerySchema),
     ],
     handler: async (request, reply) => {
       const { studentId } = request.validatedParams as StudentIdParam
-      const { limit: classesLimit = 12 } = request.validatedQuery as LimitQuery
+      const { limit: classesLimit = 12, includeArchived = false } =
+        request.validatedQuery as StudentEnrolledClassesQuery
 
       const enrolledClassesList =
         await studentDashboardService.getEnrolledClasses(
           studentId,
           classesLimit,
+          includeArchived,
         )
 
       return reply.send({

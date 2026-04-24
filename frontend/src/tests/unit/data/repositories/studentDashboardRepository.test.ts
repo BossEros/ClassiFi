@@ -152,6 +152,23 @@ describe("studentDashboardRepository", () => {
       )
     })
 
+    it("passes includeArchived query parameter when requested", async () => {
+      vi.mocked(apiClient.get).mockResolvedValue({
+        data: mockResponse,
+        status: 200,
+      })
+
+      await studentDashboardRepository.getAllEnrolledClassesForStudentId(
+        1,
+        5,
+        true,
+      )
+
+      expect(apiClient.get).toHaveBeenCalledWith(
+        "/student/dashboard/1/classes?limit=5&includeArchived=true",
+      )
+    })
+
     it("throws error when API fails", async () => {
       vi.mocked(apiClient.get).mockResolvedValue({
         error: "Unauthorized",

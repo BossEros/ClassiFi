@@ -11,8 +11,8 @@ import {
 } from "@/presentation/components/shared/dashboard/ClassFilters"
 import { useAuthStore } from "@/shared/store/useAuthStore"
 import {
-  getDashboardData,
   joinClass,
+  getEnrolledClasses,
 } from "@/business/services/studentDashboardService"
 import { useToastStore } from "@/shared/store/useToastStore"
 import type { Class } from "@/data/api/class.types"
@@ -216,8 +216,12 @@ export function StudentClassesPage() {
       try {
         setIsLoading(true)
         setError(null)
-        const data = await getDashboardData(parseInt(user.id))
-        setClasses(data.enrolledClasses as Class[])
+        const enrolledClassesResponse = await getEnrolledClasses(
+          parseInt(user.id),
+          undefined,
+          true,
+        )
+        setClasses(enrolledClassesResponse.classes as Class[])
       } catch {
         setError("Failed to load classes. Please try refreshing the page.")
       } finally {
@@ -287,7 +291,7 @@ export function StudentClassesPage() {
           }}
           statusLabels={{
             active: "Current classes",
-            archived: "Past classes",
+            archived: "Archived classes",
           }}
         />
       </div>
@@ -318,7 +322,12 @@ export function StudentClassesPage() {
                   classItem={classItem}
                   variant="dashboard"
                   accentIndex={classIndex}
-                  onClick={() => navigate(`/dashboard/classes/${classItem.id}`)}
+                  onClick={
+                    classItem.isActive
+                      ? () => navigate(`/dashboard/classes/${classItem.id}`)
+                      : undefined
+                  }
+                  isInteractionDisabled={!classItem.isActive}
                 />
               ))}
             </div>

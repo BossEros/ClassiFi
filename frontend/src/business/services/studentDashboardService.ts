@@ -31,10 +31,12 @@ export async function getDashboardData(
 export async function getEnrolledClasses(
   studentId: number,
   limit?: number,
+  includeArchived: boolean = false,
 ): Promise<dashboardRepository.ClassListResponse> {
   return await dashboardRepository.getAllEnrolledClassesForStudentId(
     studentId,
     limit,
+    includeArchived,
   )
 }
 

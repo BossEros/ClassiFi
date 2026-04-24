@@ -165,6 +165,30 @@ describe("StudentDashboardService", () => {
       expect(result).toHaveLength(2)
     })
 
+    it("should include archived classes when explicitly requested", async () => {
+      mockClassRepo.getClassesByStudentWithDetails.mockResolvedValue([
+        {
+          ...createMockClass({ id: 1, isActive: true }),
+          studentCount: 5,
+          teacherName: "Test Teacher",
+        },
+        {
+          ...createMockClass({ id: 2, isActive: false }),
+          studentCount: 5,
+          teacherName: "Test Teacher",
+        },
+      ])
+
+      const result = await dashboardService.getEnrolledClasses(1, undefined, true)
+
+      expect(mockClassRepo.getClassesByStudentWithDetails).toHaveBeenCalledWith(
+        1,
+        false,
+      )
+      expect(result).toHaveLength(2)
+      expect(result[1].isActive).toBe(false)
+    })
+
     it("should handle classes with teacher info from batch query", async () => {
       // With batch query, teacher info is always included
       const mockClassesWithDetails = [
