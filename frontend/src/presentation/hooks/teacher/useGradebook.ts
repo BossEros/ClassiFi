@@ -78,13 +78,21 @@ export function useStudentGrades(studentId: number, classId?: number) {
       setError(null)
 
       if (classId) {
-        const [classGrades, studentRank] = await Promise.all([
+        const [classGradesResult, studentRankResult] = await Promise.allSettled([
           getStudentClassGrades(studentId, classId),
           getStudentRank(studentId, classId),
         ])
 
-        setGrades(classGrades ? [classGrades] : [])
-        setRank(studentRank)
+        if (classGradesResult.status === "rejected") {
+          throw classGradesResult.reason
+        }
+
+        setGrades(classGradesResult.value ? [classGradesResult.value] : [])
+        setRank(
+          studentRankResult.status === "fulfilled"
+            ? studentRankResult.value
+            : null,
+        )
       } else {
         const allGrades = await getStudentGrades(studentId)
         setGrades(allGrades)
