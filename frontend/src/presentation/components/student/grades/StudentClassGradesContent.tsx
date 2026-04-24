@@ -635,7 +635,7 @@ export function StudentClassGradesContent({
                   variant === "light" ? "text-slate-900" : "text-gray-300",
                 )}
               >
-                No grade details yet
+                No assignments created yet
               </p>
               <p
                 className={cn(
@@ -643,8 +643,7 @@ export function StudentClassGradesContent({
                   variant === "light" ? "text-slate-500" : "text-gray-500",
                 )}
               >
-                Grades will appear here after assignments are created and
-                reviewed.
+                Your grades will appear here after your teacher adds assignments.
               </p>
             </div>
           )}

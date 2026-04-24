@@ -111,6 +111,29 @@ describe("useGradebook Hooks", () => {
         mockClassId,
       )
     })
+
+    it("should keep class grades when rank lookup fails", async () => {
+      const mockClassGrades = { ...mockGrades[0] }
+
+      vi.mocked(gradebookService.getStudentClassGrades).mockResolvedValue(
+        mockClassGrades as any,
+      )
+      vi.mocked(gradebookService.getStudentRank).mockRejectedValue(
+        new Error("Failed to fetch student rank: missing rank"),
+      )
+
+      const { result } = renderHook(() =>
+        useStudentGrades(mockStudentId, mockClassId),
+      )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.grades).toEqual([mockClassGrades])
+      expect(result.current.rank).toBeNull()
+      expect(result.current.error).toBeNull()
+    })
   })
 
   describe("useGradeOverride", () => {
