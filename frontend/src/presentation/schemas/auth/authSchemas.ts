@@ -95,12 +95,12 @@ export const changePasswordFormSchema = z
   )
 
 /**
- * Delete account confirmation form schema.
+ * Deactivate account confirmation form schema.
  */
 export const deleteAccountFormSchema = z.object({
   password: requiredPasswordSchema,
-  confirmation: z.string().regex(/^DELETE$/, {
-    message: "Please type DELETE to confirm account deletion",
+  confirmation: z.string().regex(/^DEACTIVATE$/, {
+    message: "Please type DEACTIVATE to confirm account deactivation",
   }),
 })
 
@@ -110,4 +110,6 @@ export type ResetPasswordFormValues = z.infer<typeof resetPasswordFormSchema>
 export type RegisterFormValues = z.infer<typeof registerFormSchema>
 export type ChangePasswordFormValues = z.infer<typeof changePasswordFormSchema>
 export type DeleteAccountFormValues = z.infer<typeof deleteAccountFormSchema>
+export const deactivateAccountFormSchema = deleteAccountFormSchema
+export type DeactivateAccountFormValues = DeleteAccountFormValues
 

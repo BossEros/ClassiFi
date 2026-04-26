@@ -7,7 +7,7 @@ import type { StorageService } from "../../src/services/storage.service.js"
 import type { SupabaseAuthAdapter } from "../../src/services/supabase-auth.adapter.js"
 import {
   UserNotFoundError,
-  TeacherSelfDeletionNotAllowedError,
+  SelfAccountDeactivationNotAllowedError,
 } from "../../src/shared/errors.js"
 import {
   createMockTeacher,
@@ -184,37 +184,56 @@ describe("UserService", () => {
     })
   })
 
-  describe("deleteOwnAccount", () => {
+  describe("deactivateOwnAccount", () => {
     it("throws UserNotFoundError when user does not exist", async () => {
       userRepositoryMock.getUserById!.mockResolvedValue(undefined)
 
-      await expect(service.deleteOwnAccount(404)).rejects.toThrow(
+      await expect(service.deactivateOwnAccount(404)).rejects.toThrow(
         UserNotFoundError,
       )
     })
 
-    it("blocks teacher self-deletion", async () => {
+    it("blocks teacher self-deactivation", async () => {
       userRepositoryMock.getUserById!.mockResolvedValue(
         createMockTeacher({ id: 23 }),
       )
 
-      await expect(service.deleteOwnAccount(23)).rejects.toThrow(
-        TeacherSelfDeletionNotAllowedError,
+      await expect(service.deactivateOwnAccount(23)).rejects.toThrow(
+        SelfAccountDeactivationNotAllowedError,
       )
     })
 
-    it("delegates student self-deletion to the standard account deletion flow", async () => {
+    it("blocks student self-deactivation without deleting records or files", async () => {
       const studentUser = createMockUser({ id: 24, role: "student" })
 
-      userRepositoryMock.getUserById!
-        .mockResolvedValueOnce(studentUser)
-        .mockResolvedValueOnce(studentUser)
-      submissionRepositoryMock.getSubmissionsByStudent!.mockResolvedValue([])
-      userRepositoryMock.deleteUser!.mockResolvedValue(true)
+      userRepositoryMock.getUserById!.mockResolvedValue(studentUser)
 
-      await service.deleteOwnAccount(24)
+      await expect(service.deactivateOwnAccount(24)).rejects.toThrow(
+        SelfAccountDeactivationNotAllowedError,
+      )
 
-      expect(userRepositoryMock.deleteUser).toHaveBeenCalledWith(24)
+      expect(userRepositoryMock.updateUser).not.toHaveBeenCalled()
+      expect(storageServiceMock.deleteAvatar).not.toHaveBeenCalled()
+      expect(
+        submissionRepositoryMock.getSubmissionsByStudent,
+      ).not.toHaveBeenCalled()
+      expect(storageServiceMock.deleteSubmissionFiles).not.toHaveBeenCalled()
+      expect(userRepositoryMock.deleteUser).not.toHaveBeenCalled()
+      expect(authAdapterMock.deleteUser).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("deleteOwnAccount", () => {
+    it("delegates to the self-service deactivation blocker for compatibility", async () => {
+      const studentUser = createMockUser({ id: 25, role: "student" })
+
+      userRepositoryMock.getUserById!.mockResolvedValue(studentUser)
+
+      await expect(service.deleteOwnAccount(25)).rejects.toThrow(
+        SelfAccountDeactivationNotAllowedError,
+      )
+
+      expect(userRepositoryMock.updateUser).not.toHaveBeenCalled()
     })
   })
 

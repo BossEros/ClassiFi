@@ -155,7 +155,7 @@ Routing is composed in `src/app/App.tsx`, which mounts route groups from `src/ap
 - `AuthRedirectHandler` normalizes Supabase email-confirmation and recovery links into the correct reset or confirmation pages.
 - Shared pages such as assignment detail, settings, notifications, and calendar are intentionally routed once and adapt based on user role and available permissions.
 - Teacher self-registration completes normally, but the frontend does not persist a local auth session for teacher accounts returned with `isActive = false`.
-- If backend verification rejects a teacher with pending approval, the frontend immediately clears the Supabase session, clears local auth state, and shows the exact backend message unchanged.
+- If backend verification rejects a teacher with pending approval or rejects a student/admin because the account is deactivated, the frontend immediately clears the Supabase session, clears local auth state, and shows the exact backend message unchanged.
 
 ### Key Routes
 
@@ -239,9 +239,9 @@ Admin enrollment workspace behavior:
   - Create flow requires any provided deadline to be in the future; edit flow allows keeping or saving an already-past deadline so teachers can revise expired assignments without reopening them
   - Resubmission settings
 - **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
-- **`AdminDeleteUserModal`**: Admin delete-user confirmation flow uses `react-hook-form` + Zod confirmation schema.
+- **`AdminDeactivateUserModal`**: Admin user deactivation confirmation flow uses `react-hook-form` + Zod confirmation schema and preserves academic records.
 - **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
-- **`DeleteAccountModal`**: Account deletion confirmation flow uses `react-hook-form` + Zod schema for password + destructive confirmation.
+- **Account Status settings card**: Settings explains that account deactivation is handled by administrators to protect class records, submissions, and enrollment history.
 - **`GradeOverrideModal`**: Shared grade-override input (used from teacher submission detail view) with `react-hook-form` + dynamic Zod schema and assignment-score bounds.
 
 Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:
@@ -345,6 +345,7 @@ The Business Layer contains services that encapsulate business logic and orchest
 4.  **Token**: Supabase manages the session (JWT). `supabaseAuthAdapter` listens for changes.
 5.  **Redirect**: On success, user is navigated to `/dashboard`.
 6.  **Persistence**: Session is persisted in LocalStorage/Cookies by Supabase client.
+7.  **Inactive account cleanup**: If backend profile verification rejects the sign-in because the teacher is pending approval or the student/admin account is deactivated, the frontend signs out from Supabase and clears local auth state before showing the backend message.
 
 ## Key Features
 

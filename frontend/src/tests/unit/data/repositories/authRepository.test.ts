@@ -639,11 +639,11 @@ describe("authRepository", () => {
   })
 
   // ============================================================================
-  // deleteUserAccountWithVerification Tests
+  // deactivateUserAccountWithVerification Tests
   // ============================================================================
 
-  describe("deleteUserAccountWithVerification", () => {
-    it("deletes account successfully", async () => {
+  describe("deactivateUserAccountWithVerification", () => {
+    it("deactivates account successfully", async () => {
       localStorageMock.setItem("user", JSON.stringify(mockUser))
 
       vi.mocked(supabaseAuthAdapter.signInWithPassword).mockResolvedValue({
@@ -654,12 +654,12 @@ describe("authRepository", () => {
         error: null,
       })
       vi.mocked(apiClient.delete).mockResolvedValue({
-        data: { success: true, message: "Account deleted" },
+        data: { success: true, message: "Account deactivated" },
         status: 200,
       })
       vi.mocked(supabaseAuthAdapter.signOut).mockResolvedValue({ error: null })
 
-      const result = await authRepository.deleteUserAccountWithVerification(
+      const result = await authRepository.deactivateUserAccountWithVerification(
         "user@example.com",
         "password123",
       )
@@ -672,7 +672,7 @@ describe("authRepository", () => {
       expect(supabaseAuthAdapter.signOut).toHaveBeenCalled()
       expect(localStorageMock.removeItem).toHaveBeenCalledWith("user")
       expect(result.signInError).toBeNull()
-      expect(result.deleteError).toBeNull()
+      expect(result.deactivateError).toBeNull()
     })
 
     it("returns error when re-authentication fails", async () => {
@@ -681,7 +681,7 @@ describe("authRepository", () => {
         error: createMockAuthError("Invalid password"),
       })
 
-      const result = await authRepository.deleteUserAccountWithVerification(
+      const result = await authRepository.deactivateUserAccountWithVerification(
         "user@example.com",
         "wrongPassword",
       )
@@ -690,7 +690,7 @@ describe("authRepository", () => {
       expect(apiClient.delete).not.toHaveBeenCalled()
     })
 
-    it("returns error when backend deletion fails", async () => {
+    it("returns error when backend deactivation fails", async () => {
       vi.mocked(supabaseAuthAdapter.signInWithPassword).mockResolvedValue({
         data: {
           user: mockSupabaseUser as SupabaseUser,
@@ -699,17 +699,17 @@ describe("authRepository", () => {
         error: null,
       })
       vi.mocked(apiClient.delete).mockResolvedValue({
-        error: "Cannot delete user with active data",
+        error: "Cannot deactivate user",
         status: 400,
       })
 
-      const result = await authRepository.deleteUserAccountWithVerification(
+      const result = await authRepository.deactivateUserAccountWithVerification(
         "user@example.com",
         "password123",
       )
 
       expect(result.signInError).toBeNull()
-      expect(result.deleteError).toBe("Cannot delete user with active data")
+      expect(result.deactivateError).toBe("Cannot deactivate user")
     })
   })
 

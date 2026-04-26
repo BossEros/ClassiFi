@@ -164,6 +164,32 @@ describe("authService", () => {
       expect(useAuthStore.getState().isAuthenticated).toBe(false)
     })
 
+    it("should sign out and clear local state when account is deactivated", async () => {
+      useAuthStore.setState({ user: mockUser, isAuthenticated: true })
+      vi.mocked(
+        authRepository.authenticateUserWithEmailAndPassword,
+      ).mockResolvedValue({
+        success: false,
+        message:
+          "Your account has been deactivated. Please contact an administrator.",
+      })
+      vi.mocked(
+        authRepository.signOutCurrentUserAndClearSession,
+      ).mockResolvedValue(undefined)
+
+      const result = await authService.loginUser(credentials)
+
+      expect(result.success).toBe(false)
+      expect(result.message).toBe(
+        "Your account has been deactivated. Please contact an administrator.",
+      )
+      expect(
+        authRepository.signOutCurrentUserAndClearSession,
+      ).toHaveBeenCalled()
+      expect(useAuthStore.getState().user).toBeNull()
+      expect(useAuthStore.getState().isAuthenticated).toBe(false)
+    })
+
     it("should convert thrown unconfirmed email errors into the same clear next-step message", async () => {
       vi.mocked(
         authRepository.authenticateUserWithEmailAndPassword,
@@ -736,120 +762,124 @@ describe("authService", () => {
     })
   })
 
-  describe("deleteAccount", () => {
+  describe("deactivateAccount", () => {
     const request: DeleteAccountRequest = {
-      confirmation: "DELETE",
+      confirmation: "DEACTIVATE",
       password: "Password1!",
     }
 
     it("should validate confirmation string", async () => {
-      const result = await authService.deleteAccount({
+      const result = await authService.deactivateAccount({
         ...request,
         confirmation: "NO",
       })
       expect(result.success).toBe(false)
-      expect(result.message).toContain("type DELETE")
+      expect(result.message).toContain("type DEACTIVATE")
     })
 
-    it("should call repository deleteAccount", async () => {
+    it("should call repository deactivateAccount", async () => {
       // Pre-populate Zustand store with user
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
-      // Fixed: match deleteAccount return type structure
       vi.mocked(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).mockResolvedValue({
         signInError: null,
+        deactivateError: null,
         deleteError: null,
         signOutError: null,
       })
 
-      const result = await authService.deleteAccount(request)
+      const result = await authService.deactivateAccount(request)
       expect(result.success).toBe(true)
       expect(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).toHaveBeenCalledWith(mockUser.email, request.password)
     })
 
     it("should reject missing password", async () => {
-      const result = await authService.deleteAccount({
+      const result = await authService.deactivateAccount({
         ...request,
         password: "   ",
       })
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Password is required to delete your account")
+      expect(result.message).toBe(
+        "Password is required to deactivate your account",
+      )
       expect(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).not.toHaveBeenCalled()
     })
 
-    it("should reject deletion when user is not logged in", async () => {
+    it("should reject deactivation when user is not logged in", async () => {
       useAuthStore.setState({ user: null, isAuthenticated: false })
 
-      const result = await authService.deleteAccount(request)
+      const result = await authService.deactivateAccount(request)
 
       expect(result.success).toBe(false)
       expect(result.message).toBe(
-        "You must be logged in to delete your account",
+        "You must be logged in to deactivate your account",
       )
       expect(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).not.toHaveBeenCalled()
     })
 
     it("should return password error when account verification fails", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
       vi.mocked(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).mockResolvedValue({
         signInError: { message: "Invalid credentials" } as any,
+        deactivateError: null,
         deleteError: null,
         signOutError: null,
       })
 
-      const result = await authService.deleteAccount(request)
+      const result = await authService.deactivateAccount(request)
 
       expect(result.success).toBe(false)
       expect(result.message).toBe("Password is incorrect.")
     })
 
-    it("should surface delete errors from repository", async () => {
+    it("should surface deactivate errors from repository", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
       vi.mocked(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).mockResolvedValue({
         signInError: null,
-        deleteError: "Delete failed",
+        deactivateError: "Deactivate failed",
+        deleteError: "Deactivate failed",
       })
 
-      const result = await authService.deleteAccount(request)
+      const result = await authService.deactivateAccount(request)
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Delete failed")
+      expect(result.message).toBe("Deactivate failed")
     })
 
     it("should return fallback message for non-error throwables", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
       vi.mocked(
-        authRepository.deleteUserAccountWithVerification,
+        authRepository.deactivateUserAccountWithVerification,
       ).mockRejectedValue("unexpected")
 
-      const result = await authService.deleteAccount(request)
+      const result = await authService.deactivateAccount(request)
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Failed to delete account")
+      expect(result.message).toBe("Failed to deactivate account")
     })
 
     it("should return thrown error message for Error instances", async () => {
       useAuthStore.setState({ user: mockUser, isAuthenticated: true })
       vi.mocked(
-        authRepository.deleteUserAccountWithVerification,
-      ).mockRejectedValue(new Error("Deletion unavailable"))
+        authRepository.deactivateUserAccountWithVerification,
+      ).mockRejectedValue(new Error("Deactivation unavailable"))
 
-      const result = await authService.deleteAccount(request)
+      const result = await authService.deactivateAccount(request)
 
       expect(result.success).toBe(false)
-      expect(result.message).toBe("Deletion unavailable")
+      expect(result.message).toBe("Deactivation unavailable")
     })
   })
 

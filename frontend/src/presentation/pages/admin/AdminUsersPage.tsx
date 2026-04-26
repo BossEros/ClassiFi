@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, Trash2, UserPlus, Users, Upload, Download, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon } from "lucide-react";
+import { Search, MoreVertical, Mail, Calendar, CheckCircle, XCircle, RefreshCw, Loader2, UserPlus, Users, Upload, Download, ChevronLeft, ChevronRight, Filter, ChevronDown, User as UserIcon } from "lucide-react";
 import { DashboardLayout } from "@/presentation/components/shared/dashboard/DashboardLayout";
 import { Avatar } from "@/presentation/components/ui/Avatar";
 import { useAuthStore } from "@/shared/store/useAuthStore";
@@ -16,7 +16,7 @@ import type { FieldErrors } from "react-hook-form";
 import { cn } from "@/shared/utils/cn";
 import { AlertTriangle, X, AlertCircle } from "lucide-react";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
-import { adminDeleteUserFormSchema, type AdminDeleteUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
+import { adminDeactivateUserFormSchema, type AdminDeactivateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
 import { Shield, Power } from "lucide-react";
 import { adminEditUserFormSchema, type AdminEditUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
@@ -24,8 +24,8 @@ import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { adminCreateUserFormSchema, type AdminCreateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 
-// Inlined from src/presentation/components/admin/AdminDeleteUserModal.tsx
-interface AdminDeleteUserModalProps {
+// Inlined from src/presentation/components/admin/AdminDeactivateUserModal.tsx
+interface AdminDeactivateUserModalProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => Promise<void>
@@ -35,48 +35,48 @@ interface AdminDeleteUserModalProps {
 
 
 
-const INITIAL_DELETE_USER_VALUES: AdminDeleteUserFormValues = {
+const INITIAL_DEACTIVATE_USER_VALUES: AdminDeactivateUserFormValues = {
   confirmation: "",
 }
 
 
 
-function AdminDeleteUserModal({
+function AdminDeactivateUserModal({
   isOpen,
   onClose,
   onConfirm,
   onManageClasses,
   user,
-}: AdminDeleteUserModalProps) {
+}: AdminDeactivateUserModalProps) {
   const { register, handleSubmit, watch, setValue, reset } = useZodForm({
-    schema: adminDeleteUserFormSchema,
-    defaultValues: INITIAL_DELETE_USER_VALUES,
+    schema: adminDeactivateUserFormSchema,
+    defaultValues: INITIAL_DEACTIVATE_USER_VALUES,
     mode: "onSubmit",
   })
-  const [isDeleting, setIsDeleting] = React.useState(false)
+  const [isDeactivating, setIsDeactivating] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [step, setStep] = React.useState<"warning" | "confirm">("warning")
 
   const confirmationField = register("confirmation")
   const confirmationValue = watch("confirmation")
   const assignedClassCount = user?.assignedClassCount ?? 0
-  const isTeacherDeletionBlocked =
+  const isTeacherDeactivationBlocked =
     user?.role === "teacher" && assignedClassCount > 0
 
   // Reset form when modal opens/closes
   React.useEffect(() => {
     if (!isOpen) {
-      reset(INITIAL_DELETE_USER_VALUES)
+      reset(INITIAL_DEACTIVATE_USER_VALUES)
       setError(null)
       setStep("warning")
-      setIsDeleting(false)
+      setIsDeactivating(false)
     }
   }, [isOpen, reset])
 
   // Close on escape key
   React.useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isDeleting) {
+      if (event.key === "Escape" && !isDeactivating) {
         onClose()
       }
     }
@@ -90,7 +90,7 @@ function AdminDeleteUserModal({
       document.removeEventListener("keydown", handleEscape)
       document.body.style.overflow = "unset"
     }
-  }, [isOpen, onClose, isDeleting])
+  }, [isOpen, onClose, isDeactivating])
 
   const handleContinue = () => {
     setStep("confirm")
@@ -98,19 +98,19 @@ function AdminDeleteUserModal({
 
   const handleValidSubmit = async () => {
     setError(null)
-    setIsDeleting(true)
+    setIsDeactivating(true)
 
     try {
       await onConfirm()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user")
-      setIsDeleting(false)
+      setError(err instanceof Error ? err.message : "Failed to deactivate user")
+      setIsDeactivating(false)
     }
   }
 
   const handleInvalidSubmit = (
-    validationErrors: FieldErrors<AdminDeleteUserFormValues>,
+    validationErrors: FieldErrors<AdminDeactivateUserFormValues>,
   ) => {
     const firstErrorMessage = getFirstFormErrorMessage(validationErrors)
 
@@ -119,7 +119,7 @@ function AdminDeleteUserModal({
     }
   }
 
-  const isConfirmDisabled = confirmationValue !== "DELETE" || isDeleting
+  const isConfirmDisabled = confirmationValue !== "DEACTIVATE" || isDeactivating
 
   if (!isOpen || !user) return null
 
@@ -128,7 +128,7 @@ function AdminDeleteUserModal({
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={!isDeleting ? onClose : undefined}
+        onClick={!isDeactivating ? onClose : undefined}
       />
 
       {/* Modal */}
@@ -141,12 +141,12 @@ function AdminDeleteUserModal({
         )}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="delete-user-title"
+        aria-labelledby="deactivate-user-title"
       >
         {/* Close button */}
         <button
           onClick={onClose}
-          disabled={isDeleting}
+          disabled={isDeactivating}
           className={cn(
             "absolute top-4 right-4 cursor-pointer rounded-lg p-1",
             "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
@@ -161,27 +161,27 @@ function AdminDeleteUserModal({
         {/* Icon */}
         <div className="flex justify-center mb-4">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
-            {step === "warning" || isTeacherDeletionBlocked ? (
+            {step === "warning" || isTeacherDeactivationBlocked ? (
               <AlertTriangle className="h-8 w-8 text-rose-600" />
             ) : (
-              <Trash2 className="h-8 w-8 text-rose-600" />
+              <Power className="h-8 w-8 text-rose-600" />
             )}
           </div>
         </div>
 
         {/* Title */}
         <h2
-          id="delete-user-title"
+          id="deactivate-user-title"
           className="mb-2 text-center text-xl font-semibold text-slate-900"
         >
-          {isTeacherDeletionBlocked
-            ? "Teacher Deletion Blocked"
+          {isTeacherDeactivationBlocked
+            ? "Teacher Deactivation Blocked"
             : step === "warning"
-              ? "Delete User?"
-              : "Confirm Deletion"}
+              ? "Deactivate User?"
+              : "Confirm Deactivation"}
         </h2>
 
-        {isTeacherDeletionBlocked ? (
+        {isTeacherDeactivationBlocked ? (
           <>
             <div className="mb-4 text-center">
               <p className="text-sm text-slate-500">
@@ -198,9 +198,9 @@ function AdminDeleteUserModal({
 
             <div className="mb-6 space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
               <p className="text-sm text-slate-700">
-                This teacher account cannot be deleted yet. Reassign every
-                class to another teacher first, then return here to delete the
-                account safely.
+                This teacher account cannot be deactivated yet. Reassign every
+                class to another teacher first, then return here to deactivate
+                the account safely.
               </p>
               <p className="text-sm text-slate-600">
                 This protects classes, assignments, submissions, and related
@@ -240,7 +240,7 @@ function AdminDeleteUserModal({
             {/* User info */}
             <div className="text-center mb-4">
               <p className="text-sm text-slate-500">
-                You are about to delete{" "}
+                You are about to deactivate{" "}
                 <span className="font-medium text-slate-900">
                   {user.firstName} {user.lastName}
                 </span>
@@ -249,26 +249,31 @@ function AdminDeleteUserModal({
 
             <div className="mb-6 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
               <p className="text-sm text-slate-600">
-                This action is{" "}
-                <span className="font-semibold text-rose-700">
-                  permanent and irreversible
-                </span>
-                . Deleting this user will remove:
+                This account will no longer be able to sign in, but academic
+                records are preserved. Deactivation keeps:
               </p>
               <ul className="space-y-2 text-sm text-slate-600">
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their profile and personal information
+                  Their profile and account history
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their submissions and personal account records
+                  Their submissions and grades
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their enrollments and account associations
+                  Their enrollments and class associations
                 </li>
               </ul>
+              <p className="text-sm text-slate-600">
+                An administrator can reactivate the account later by changing
+                its status back to{" "}
+                <span className="font-semibold text-rose-700">
+                  active
+                </span>
+                .
+              </p>
             </div>
 
             {/* Actions */}
@@ -303,9 +308,9 @@ function AdminDeleteUserModal({
           <>
             {/* Confirmation form */}
             <p className="mb-6 text-center text-sm text-slate-500">
-              To confirm deletion, please type{" "}
+              To confirm deactivation, please type{" "}
               <span className="font-mono font-semibold text-rose-700">
-                DELETE
+                DEACTIVATE
               </span>{" "}
               below.
             </p>
@@ -323,10 +328,11 @@ function AdminDeleteUserModal({
                 </div>
               )}
 
-              {/* Type DELETE */}
+              {/* Type DEACTIVATE */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-600">
-                  Type <span className="font-mono text-rose-700">DELETE</span>{" "}
+                  Type{" "}
+                  <span className="font-mono text-rose-700">DEACTIVATE</span>{" "}
                   to confirm
                 </label>
                 <input
@@ -346,10 +352,10 @@ function AdminDeleteUserModal({
                     "text-slate-900 placeholder-slate-300",
                     "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
                     "transition-all duration-200",
-                    confirmationValue === "DELETE" && "border-rose-400",
+                    confirmationValue === "DEACTIVATE" && "border-rose-400",
                   )}
-                  placeholder="DELETE"
-                  disabled={isDeleting}
+                  placeholder="DEACTIVATE"
+                  disabled={isDeactivating}
                   autoFocus
                 />
               </div>
@@ -358,7 +364,7 @@ function AdminDeleteUserModal({
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setStep("warning")}
-                  disabled={isDeleting}
+                  disabled={isDeactivating}
                   type="button"
                   className={cn(
                     "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
@@ -382,15 +388,15 @@ function AdminDeleteUserModal({
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
                 >
-                  {isDeleting ? (
+                  {isDeactivating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Deleting...
+                      Deactivating...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="w-4 h-4" />
-                      Delete User
+                      <Power className="w-4 h-4" />
+                      Deactivate User
                     </>
                   )}
                 </button>
@@ -1593,7 +1599,7 @@ export function AdminUsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showBulkCreateModal, setShowBulkCreateModal] = useState(false)
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null)
-  const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null)
+  const [deactivatingUser, setDeactivatingUser] = useState<AdminUser | null>(null)
   const [showFilterDropdown, setShowFilterDropdown] = useState(false)
   const { isLoading, error, setError, executeRequest } = useRequestState(true)
   const lastAppliedSearchQueryRef = useRef(initialSearchQuery)
@@ -1675,15 +1681,14 @@ export function AdminUsersPage() {
     })
   }
 
-  const handleDeleteUser = async (userId: number) => {
+  const handleDeactivateUser = async (userId: number) => {
     try {
       setActionLoading(userId)
-      await adminService.deleteUser(userId)
+      await adminService.deactivateUser(userId)
       await fetchUsers()
-      setTotal((t) => t - 1)
-      showToast("User deleted successfully", "success")
+      showToast("User deactivated successfully", "success")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete user")
+      setError(err instanceof Error ? err.message : "Failed to deactivate user")
       throw err
     } finally {
       setActionLoading(null)
@@ -2054,13 +2059,13 @@ export function AdminUsersPage() {
                   <div className="p-1">
                     <button
                       onClick={() => {
-                        setDeletingUser(user)
+                        setDeactivatingUser(user)
                         setActiveDropdown(null)
                       }}
                       className="group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm"
                     >
-                      <Trash2 className="w-4 h-4 group-hover/delete:animate-bounce" />
-                      Delete User
+                      <Power className="w-4 h-4 group-hover/delete:animate-bounce" />
+                      Deactivate User
                     </button>
                   </div>
                 </div>
@@ -2095,17 +2100,17 @@ export function AdminUsersPage() {
           }}
         />
 
-        <AdminDeleteUserModal
-          isOpen={!!deletingUser}
-          user={deletingUser}
-          onClose={() => setDeletingUser(null)}
+        <AdminDeactivateUserModal
+          isOpen={!!deactivatingUser}
+          user={deactivatingUser}
+          onClose={() => setDeactivatingUser(null)}
           onManageClasses={() => {
-            setDeletingUser(null)
+            setDeactivatingUser(null)
             navigate("/dashboard/classes")
           }}
           onConfirm={async () => {
-            if (deletingUser) {
-              await handleDeleteUser(deletingUser.id)
+            if (deactivatingUser) {
+              await handleDeactivateUser(deactivatingUser.id)
             }
           }}
         />

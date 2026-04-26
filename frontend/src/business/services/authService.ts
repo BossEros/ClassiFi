@@ -12,8 +12,8 @@ import type {
   ResetFlowResponse,
   ChangePasswordRequest,
   ChangePasswordResponse,
-  DeleteAccountRequest,
-  DeleteAccountResponse,
+  DeactivateAccountRequest,
+  DeactivateAccountResponse,
 } from "@/data/api/auth.types"
 
 // Re-export types and values for presentation layer
@@ -25,6 +25,8 @@ const emailConfirmationRequiredLoginMessage =
 const invalidLoginCredentialsMessage = "Incorrect email or password."
 const pendingTeacherApprovalLoginMessage =
   "Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin"
+const accountDeactivatedLoginMessage =
+  "Your account has been deactivated. Please contact an administrator."
 
 /**
  * Converts provider-specific authentication failures into clear, actionable messages.
@@ -78,6 +80,27 @@ function isPendingTeacherApprovalFailure(
 }
 
 /**
+ * Determine whether the auth response represents a blocked deactivated account.
+ *
+ * @param authenticationFailureMessage - The backend-provided failure message.
+ * @returns True when the message matches the deactivated account block.
+ */
+function isDeactivatedAccountFailure(
+  authenticationFailureMessage?: string,
+): boolean {
+  return authenticationFailureMessage === accountDeactivatedLoginMessage
+}
+
+function shouldClearBlockedAuthenticationAttempt(
+  authenticationFailureMessage?: string,
+): boolean {
+  return (
+    isPendingTeacherApprovalFailure(authenticationFailureMessage) ||
+    isDeactivatedAccountFailure(authenticationFailureMessage)
+  )
+}
+
+/**
  * Clear local auth state and any active Supabase session after a blocked sign-in.
  */
 async function clearBlockedAuthenticationAttempt(): Promise<void> {
@@ -111,7 +134,7 @@ export async function loginUser(
     }
 
     if (!response.success) {
-      if (isPendingTeacherApprovalFailure(response.message)) {
+      if (shouldClearBlockedAuthenticationAttempt(response.message)) {
         await clearBlockedAuthenticationAttempt()
       }
 
@@ -128,7 +151,11 @@ export async function loginUser(
         ? normalizeAuthenticationFailureMessage(error.message)
         : "Login failed"
 
-    if (isPendingTeacherApprovalFailure(normalizedAuthenticationFailureMessage)) {
+    if (
+      shouldClearBlockedAuthenticationAttempt(
+        normalizedAuthenticationFailureMessage,
+      )
+    ) {
       await clearBlockedAuthenticationAttempt()
     }
 
@@ -414,31 +441,31 @@ export async function changePassword(
 }
 
 /**
- * Permanently deletes the user's account.
- * Requires explicit confirmation string "DELETE" and password verification.
+ * Deactivates the user's account.
+ * Requires explicit confirmation string "DEACTIVATE" and password verification.
  *
- * @param deleteAccountRequest - The request containing confirmation string and password.
- * @returns The response indicating the success of the account deletion.
+ * @param deactivateAccountRequest - The request containing confirmation string and password.
+ * @returns The response indicating the success of the account deactivation.
  */
-export async function deleteAccount(
-  deleteAccountRequest: DeleteAccountRequest,
-): Promise<DeleteAccountResponse> {
+export async function deactivateAccount(
+  deactivateAccountRequest: DeactivateAccountRequest,
+): Promise<DeactivateAccountResponse> {
   // Validate confirmation text
-  if (deleteAccountRequest.confirmation !== "DELETE") {
+  if (deactivateAccountRequest.confirmation !== "DEACTIVATE") {
     return {
       success: false,
-      message: "Please type DELETE to confirm account deletion",
+      message: "Please type DEACTIVATE to confirm account deactivation",
     }
   }
 
   // Validate password is provided
   if (
-    !deleteAccountRequest.password ||
-    deleteAccountRequest.password.trim() === ""
+    !deactivateAccountRequest.password ||
+    deactivateAccountRequest.password.trim() === ""
   ) {
     return {
       success: false,
-      message: "Password is required to delete your account",
+      message: "Password is required to deactivate your account",
     }
   }
 
@@ -449,14 +476,14 @@ export async function deleteAccount(
     if (!currentUser?.email) {
       return {
         success: false,
-        message: "You must be logged in to delete your account",
+        message: "You must be logged in to deactivate your account",
       }
     }
 
-    const { signInError, deleteError } =
-      await authRepository.deleteUserAccountWithVerification(
+    const { signInError, deactivateError, deleteError } =
+      await authRepository.deactivateUserAccountWithVerification(
         currentUser.email,
-        deleteAccountRequest.password,
+        deactivateAccountRequest.password,
       )
 
     if (signInError) {
@@ -466,26 +493,30 @@ export async function deleteAccount(
       }
     }
 
-    if (deleteError) {
+    const accountActionError = deactivateError ?? deleteError
+
+    if (accountActionError) {
       return {
         success: false,
-        message: deleteError,
+        message: accountActionError,
       }
     }
 
     // Success - local session was already cleared by repository
     return {
       success: true,
-      message: "Your account has been permanently deleted.",
+      message: "Your account has been deactivated.",
     }
   } catch (error) {
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to delete account",
+        error instanceof Error ? error.message : "Failed to deactivate account",
     }
   }
 }
+
+export const deleteAccount = deactivateAccount
 
 /**
  * Validates the password reset session when a user clicks a reset link.

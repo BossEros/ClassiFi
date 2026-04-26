@@ -21,6 +21,7 @@ import {
   UserNotFoundError,
   InvalidRoleError,
   TeacherApprovalPendingError,
+  AccountDeactivatedError,
 } from "@/shared/errors.js"
 import type { User } from "@/modules/users/user.model.js"
 import type { RegisterUserServiceDTO } from "@/modules/auth/auth.dtos.js"
@@ -432,7 +433,7 @@ export class AuthService {
       throw new UserNotFoundError(supabaseUser.id)
     }
 
-    this.ensureTeacherAccountIsApproved(user)
+    this.ensureUserAccountCanAccessSystem(user)
 
     // STEP 3: Return the user profile DTO and access token
     return {
@@ -458,18 +459,26 @@ export class AuthService {
       throw new UserNotFoundError(supabaseUser.id)
     }
 
-    this.ensureTeacherAccountIsApproved(user)
+    this.ensureUserAccountCanAccessSystem(user)
 
     return toUserDTO(user)
   }
 
   /**
-   * Block teacher accounts that are still pending admin approval.
+   * Block inactive accounts from accessing the system.
+   * Inactive teachers keep the pending-approval message because teacher
+   * registration currently reuses the active flag as the approval gate.
    */
-  private ensureTeacherAccountIsApproved(user: User): void {
-    if (user.role === "teacher" && !user.isActive) {
+  private ensureUserAccountCanAccessSystem(user: User): void {
+    if (user.isActive) {
+      return
+    }
+
+    if (user.role === "teacher") {
       throw new TeacherApprovalPendingError()
     }
+
+    throw new AccountDeactivatedError()
   }
 
   /** Request a password reset email */

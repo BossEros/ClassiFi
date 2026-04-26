@@ -158,6 +158,19 @@ describe("adminService", () => {
     })
   })
 
+  describe("deactivateUser", () => {
+    it("deactivates a user through the repository", async () => {
+      vi.mocked(adminRepository.deactivateUserAccountById).mockResolvedValue({
+        success: true,
+        message: "User deactivated",
+      })
+
+      await adminService.deactivateUser(1)
+
+      expect(adminRepository.deactivateUserAccountById).toHaveBeenCalledWith(1)
+    })
+  })
+
   // ============================================================================
   // Class Management Tests
   // ============================================================================

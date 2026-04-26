@@ -26,7 +26,7 @@ import { DI_TOKENS } from "@/shared/di/tokens.js"
 /**
  * Registers admin user management routes for user CRUD operations.
  *
- * Provides endpoints for administrators to create, read, update, and delete users,
+ * Provides endpoints for administrators to create, read, update, and deactivate users,
  * as well as manage user roles, status, and retrieve teacher lists.
  * All routes require authentication and admin privileges.
  *
@@ -197,16 +197,19 @@ export async function adminUserRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * DELETE /users/:id
-   * Delete a user account
+   * Deactivate a user account
    */
   app.delete("/users/:id", {
     preHandler: [...preHandlerMiddlewares, validateParams(UserParamsSchema)],
     handler: async (request, reply) => {
       const { id: userId } = request.validatedParams as UserParams
 
-      await adminUserService.deleteUser(userId)
+      await adminUserService.deactivateUser(userId)
 
-      return reply.send({ success: true, message: "User deleted successfully" })
+      return reply.send({
+        success: true,
+        message: "User deactivated successfully",
+      })
     },
   })
 }

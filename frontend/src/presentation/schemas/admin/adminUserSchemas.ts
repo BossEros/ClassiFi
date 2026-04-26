@@ -35,17 +35,20 @@ export const adminEditUserFormSchema = z.object({
   isActive: z.boolean(),
 })
 
-export const adminDeleteUserFormSchema = z.object({
-  confirmation: z.string().regex(/^DELETE$/, {
-    message: "Please type DELETE to confirm",
+export const adminDeactivateUserFormSchema = z.object({
+  confirmation: z.string().regex(/^DEACTIVATE$/, {
+    message: "Please type DEACTIVATE to confirm",
   }),
 })
+
+export const adminDeleteUserFormSchema = adminDeactivateUserFormSchema
 
 export type AdminCreateUserFormValues = z.infer<
   typeof adminCreateUserFormSchema
 >
 export type AdminEditUserFormValues = z.infer<typeof adminEditUserFormSchema>
-export type AdminDeleteUserFormValues = z.infer<
-  typeof adminDeleteUserFormSchema
+export type AdminDeactivateUserFormValues = z.infer<
+  typeof adminDeactivateUserFormSchema
 >
+export type AdminDeleteUserFormValues = AdminDeactivateUserFormValues
 
