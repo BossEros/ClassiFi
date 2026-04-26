@@ -16,7 +16,7 @@ import type { FieldErrors } from "react-hook-form";
 import { cn } from "@/shared/utils/cn";
 import { AlertTriangle, X, AlertCircle } from "lucide-react";
 import { useZodForm } from "@/presentation/hooks/shared/useZodForm";
-import { adminDeactivateUserFormSchema, type AdminDeactivateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
+import { createAdminStatusConfirmationFormSchema, type AdminDeactivateUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
 import { getFirstFormErrorMessage } from "@/presentation/utils/formErrorMap";
 import { Shield, Power } from "lucide-react";
 import { adminEditUserFormSchema, type AdminEditUserFormValues } from "@/presentation/schemas/admin/adminUserSchemas";
@@ -48,8 +48,9 @@ function AdminDeactivateUserModal({
   onManageClasses,
   user,
 }: AdminDeactivateUserModalProps) {
+  const confirmationKeyword = user?.isActive ? "DEACTIVATE" : "ACTIVATE"
   const { register, handleSubmit, watch, setValue, reset } = useZodForm({
-    schema: adminDeactivateUserFormSchema,
+    schema: createAdminStatusConfirmationFormSchema(confirmationKeyword),
     defaultValues: INITIAL_DEACTIVATE_USER_VALUES,
     mode: "onSubmit",
   })
@@ -60,8 +61,12 @@ function AdminDeactivateUserModal({
   const confirmationField = register("confirmation")
   const confirmationValue = watch("confirmation")
   const assignedClassCount = user?.assignedClassCount ?? 0
+  const isActivatingAccount = Boolean(user && !user.isActive)
+  const userStatusActionDisplay = user
+    ? getUserStatusActionDisplay(user.role, user.isActive)
+    : null
   const isTeacherDeactivationBlocked =
-    user?.role === "teacher" && assignedClassCount > 0
+    user?.role === "teacher" && user.isActive && assignedClassCount > 0
 
   // Reset form when modal opens/closes
   React.useEffect(() => {
@@ -104,7 +109,11 @@ function AdminDeactivateUserModal({
       await onConfirm()
       onClose()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to deactivate user")
+      setError(
+        err instanceof Error
+          ? err.message
+          : (userStatusActionDisplay?.errorMessage ?? "Failed to update account"),
+      )
       setIsDeactivating(false)
     }
   }
@@ -119,7 +128,8 @@ function AdminDeactivateUserModal({
     }
   }
 
-  const isConfirmDisabled = confirmationValue !== "DEACTIVATE" || isDeactivating
+  const isConfirmDisabled =
+    confirmationValue !== confirmationKeyword || isDeactivating
 
   if (!isOpen || !user) return null
 
@@ -135,7 +145,9 @@ function AdminDeactivateUserModal({
       <div
         className={cn(
           "relative w-full max-w-160 mx-4 p-6",
-          "rounded-3xl border border-rose-200 bg-white",
+          isActivatingAccount
+            ? "rounded-3xl border border-teal-200 bg-white"
+            : "rounded-3xl border border-rose-200 bg-white",
           "shadow-xl",
           "animate-in fade-in-0 zoom-in-95 duration-200",
         )}
@@ -160,11 +172,26 @@ function AdminDeactivateUserModal({
 
         {/* Icon */}
         <div className="flex justify-center mb-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
+          <div
+            className={cn(
+              "flex h-16 w-16 items-center justify-center rounded-full",
+              isActivatingAccount ? "bg-teal-100" : "bg-rose-100",
+            )}
+          >
             {step === "warning" || isTeacherDeactivationBlocked ? (
-              <AlertTriangle className="h-8 w-8 text-rose-600" />
+              <AlertTriangle
+                className={cn(
+                  "h-8 w-8",
+                  isActivatingAccount ? "text-teal-600" : "text-rose-600",
+                )}
+              />
             ) : (
-              <Power className="h-8 w-8 text-rose-600" />
+              <Power
+                className={cn(
+                  "h-8 w-8",
+                  isActivatingAccount ? "text-teal-600" : "text-rose-600",
+                )}
+              />
             )}
           </div>
         </div>
@@ -177,8 +204,8 @@ function AdminDeactivateUserModal({
           {isTeacherDeactivationBlocked
             ? "Teacher Deactivation Blocked"
             : step === "warning"
-              ? "Deactivate User?"
-              : "Confirm Deactivation"}
+              ? (userStatusActionDisplay?.warningTitle ?? "Update Account Status")
+              : (userStatusActionDisplay?.confirmTitle ?? "Confirm Status Update")}
         </h2>
 
         {isTeacherDeactivationBlocked ? (
@@ -240,39 +267,43 @@ function AdminDeactivateUserModal({
             {/* User info */}
             <div className="text-center mb-4">
               <p className="text-sm text-slate-500">
-                You are about to deactivate{" "}
+                {userStatusActionDisplay?.warningDescription ??
+                  "You are about to update"}{" "}
                 <span className="font-medium text-slate-900">
                   {user.firstName} {user.lastName}
                 </span>
               </p>
             </div>
 
-            <div className="mb-6 space-y-3 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+            <div
+              className={cn(
+                "mb-6 space-y-3 rounded-2xl p-4",
+                isActivatingAccount
+                  ? "border border-teal-200 bg-teal-50"
+                  : "border border-rose-200 bg-rose-50",
+              )}
+            >
               <p className="text-sm text-slate-600">
-                This account will no longer be able to sign in, but academic
-                records are preserved. Deactivation keeps:
+                {userStatusActionDisplay?.impactDescription}
               </p>
-              <ul className="space-y-2 text-sm text-slate-600">
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their profile and account history
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their submissions and grades
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-rose-500">&bull;</span>
-                  Their enrollments and class associations
-                </li>
-              </ul>
+              {user.isActive ? (
+                <ul className="space-y-2 text-sm text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 text-rose-500">&bull;</span>
+                    Their profile and account history
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 text-rose-500">&bull;</span>
+                    Their submissions and grades
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="mt-0.5 text-rose-500">&bull;</span>
+                    Their enrollments and class associations
+                  </li>
+                </ul>
+              ) : null}
               <p className="text-sm text-slate-600">
-                An administrator can reactivate the account later by changing
-                its status back to{" "}
-                <span className="font-semibold text-rose-700">
-                  active
-                </span>
-                .
+                {userStatusActionDisplay?.confirmHint}
               </p>
             </div>
 
@@ -294,9 +325,15 @@ function AdminDeactivateUserModal({
                 onClick={handleContinue}
                 className={cn(
                   "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
-                  "bg-red-600 text-white",
-                  "hover:bg-red-700 transition-colors duration-200",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                  isActivatingAccount
+                    ? "bg-teal-600 text-white"
+                    : "bg-red-600 text-white",
+                  isActivatingAccount
+                    ? "hover:bg-teal-700 transition-colors duration-200"
+                    : "hover:bg-red-700 transition-colors duration-200",
+                  isActivatingAccount
+                    ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                    : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
                 )}
               >
                 <AlertTriangle className="h-4 w-4" />
@@ -308,9 +345,9 @@ function AdminDeactivateUserModal({
           <>
             {/* Confirmation form */}
             <p className="mb-6 text-center text-sm text-slate-500">
-              To confirm deactivation, please type{" "}
+              To confirm this account status change, please type{" "}
               <span className="font-mono font-semibold text-rose-700">
-                DEACTIVATE
+                {confirmationKeyword}
               </span>{" "}
               below.
             </p>
@@ -328,11 +365,13 @@ function AdminDeactivateUserModal({
                 </div>
               )}
 
-              {/* Type DEACTIVATE */}
+              {/* Type confirmation keyword */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-600">
                   Type{" "}
-                  <span className="font-mono text-rose-700">DEACTIVATE</span>{" "}
+                  <span className="font-mono text-rose-700">
+                    {confirmationKeyword}
+                  </span>{" "}
                   to confirm
                 </label>
                 <input
@@ -350,11 +389,14 @@ function AdminDeactivateUserModal({
                     "w-full px-4 py-3 rounded-lg font-mono",
                     "border border-slate-300 bg-white",
                     "text-slate-900 placeholder-slate-300",
-                    "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
+                    isActivatingAccount
+                      ? "focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      : "focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent",
                     "transition-all duration-200",
-                    confirmationValue === "DEACTIVATE" && "border-rose-400",
+                    confirmationValue === confirmationKeyword &&
+                      (isActivatingAccount ? "border-teal-400" : "border-rose-400"),
                   )}
-                  placeholder="DEACTIVATE"
+                  placeholder={confirmationKeyword}
                   disabled={isDeactivating}
                   autoFocus
                 />
@@ -382,21 +424,28 @@ function AdminDeactivateUserModal({
                   disabled={isConfirmDisabled}
                   className={cn(
                     "flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold",
-                    "bg-red-600 text-white",
-                    "hover:bg-red-700 transition-colors duration-200",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
+                    isActivatingAccount
+                      ? "bg-teal-600 text-white"
+                      : "bg-red-600 text-white",
+                    isActivatingAccount
+                      ? "hover:bg-teal-700 transition-colors duration-200"
+                      : "hover:bg-red-700 transition-colors duration-200",
+                    isActivatingAccount
+                      ? "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                      : "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                   )}
                 >
                   {isDeactivating ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Deactivating...
+                      {userStatusActionDisplay?.submitLoadingLabel ?? "Saving..."}
                     </>
                   ) : (
                     <>
                       <Power className="w-4 h-4" />
-                      Deactivate User
+                      {userStatusActionDisplay?.submitButtonLabel ??
+                        "Save Changes"}
                     </>
                   )}
                 </button>
@@ -438,6 +487,21 @@ interface UserStatusDisplay {
   cardIconContainerClassName: string
   cardIconClassName: string
   toggleTrackClassName: string
+}
+
+interface UserStatusActionDisplay {
+  menuLabel: string
+  warningTitle: string
+  confirmTitle: string
+  warningDescription: string
+  impactDescription: string
+  confirmHint: string
+  submitButtonLabel: string
+  submitLoadingLabel: string
+  successToastMessage: string
+  errorMessage: string
+  actionButtonClassName: string
+  actionIconClassName: string
 }
 
 function getUserStatusDisplay(role: string, isActive: boolean): UserStatusDisplay {
@@ -486,6 +550,55 @@ function getUserStatusDisplay(role: string, isActive: boolean): UserStatusDispla
     cardIconContainerClassName: "bg-rose-100",
     cardIconClassName: "text-rose-700",
     toggleTrackClassName: "border-rose-300 bg-rose-200",
+  }
+}
+
+function getUserStatusActionDisplay(
+  role: string,
+  isActive: boolean,
+): UserStatusActionDisplay {
+  const isPendingTeacherApproval = role === "teacher" && !isActive
+
+  if (isActive) {
+    return {
+      menuLabel: "Deactivate User",
+      warningTitle: "Deactivate User?",
+      confirmTitle: "Confirm Deactivation",
+      warningDescription: "You are about to deactivate",
+      impactDescription:
+        "This account will no longer be able to sign in, but academic records are preserved. Deactivation keeps:",
+      confirmHint:
+        "An administrator can reactivate the account later by changing its status back to active.",
+      submitButtonLabel: "Deactivate User",
+      submitLoadingLabel: "Deactivating...",
+      successToastMessage: "User deactivated successfully",
+      errorMessage: "Failed to deactivate user",
+      actionButtonClassName:
+        "group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm",
+      actionIconClassName: "w-4 h-4 group-hover/delete:animate-bounce",
+    }
+  }
+
+  return {
+    menuLabel: "Activate Account",
+    warningTitle: "Activate Account?",
+    confirmTitle: "Confirm Activation",
+    warningDescription: isPendingTeacherApproval
+      ? "You are about to approve and activate"
+      : "You are about to activate",
+    impactDescription: isPendingTeacherApproval
+      ? "This teacher will be able to sign in and start using ClassiFi once the account is activated."
+      : "This user will be able to sign in again and continue using their existing account and academic records.",
+    confirmHint: isPendingTeacherApproval
+      ? "Activating this account also completes the teacher approval step."
+      : "You can deactivate the account again later if access needs to be removed.",
+    submitButtonLabel: "Activate Account",
+    submitLoadingLabel: "Activating...",
+    successToastMessage: "Account activated successfully",
+    errorMessage: "Failed to activate account",
+    actionButtonClassName:
+      "group/activate flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-teal-700 transition-all duration-150 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-800 hover:shadow-sm",
+    actionIconClassName: "w-4 h-4 group-hover/activate:animate-bounce",
   }
 }
 
@@ -1681,14 +1794,21 @@ export function AdminUsersPage() {
     })
   }
 
-  const handleDeactivateUser = async (userId: number) => {
+  const handleToggleUserStatus = async (user: AdminUser) => {
+    const userStatusActionDisplay = getUserStatusActionDisplay(
+      user.role,
+      user.isActive,
+    )
+
     try {
-      setActionLoading(userId)
-      await adminService.deactivateUser(userId)
+      setActionLoading(user.id)
+      await adminService.toggleUserStatus(user.id)
       await fetchUsers()
-      showToast("User deactivated successfully", "success")
+      showToast(userStatusActionDisplay.successToastMessage, "success")
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to deactivate user")
+      setError(
+        err instanceof Error ? err.message : userStatusActionDisplay.errorMessage,
+      )
       throw err
     } finally {
       setActionLoading(null)
@@ -2029,6 +2149,11 @@ export function AdminUsersPage() {
             const user = users.find((u) => u.id === activeDropdown.id)
             if (!user) return null
 
+            const userStatusActionDisplay = getUserStatusActionDisplay(
+              user.role,
+              user.isActive,
+            )
+
             return (
               <div
                 className="fixed z-[100] w-60 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/90 ring-1 ring-slate-200/80 animate-in fade-in zoom-in-95 duration-200"
@@ -2062,10 +2187,10 @@ export function AdminUsersPage() {
                         setDeactivatingUser(user)
                         setActiveDropdown(null)
                       }}
-                      className="group/delete flex w-full cursor-pointer items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm text-rose-600 transition-all duration-150 hover:border-rose-200 hover:bg-rose-100 hover:text-rose-800 hover:shadow-sm"
+                      className={userStatusActionDisplay.actionButtonClassName}
                     >
-                      <Power className="w-4 h-4 group-hover/delete:animate-bounce" />
-                      Deactivate User
+                      <Power className={userStatusActionDisplay.actionIconClassName} />
+                      {userStatusActionDisplay.menuLabel}
                     </button>
                   </div>
                 </div>
@@ -2110,7 +2235,7 @@ export function AdminUsersPage() {
           }}
           onConfirm={async () => {
             if (deactivatingUser) {
-              await handleDeactivateUser(deactivatingUser.id)
+              await handleToggleUserStatus(deactivatingUser)
             }
           }}
         />

@@ -241,7 +241,7 @@ Admin enrollment workspace behavior:
 - **`AdminUserModal` / `AdminEditUserModal`**: Admin user create/edit flows use `react-hook-form` + Zod schemas.
 - **`AdminDeactivateUserModal`**: Admin user deactivation confirmation flow uses `react-hook-form` + Zod confirmation schema and preserves academic records.
 - **`ChangePasswordModal`**: Password change flow uses `react-hook-form` + Zod schema with strong-password and confirmation checks.
-- **Account Status settings card**: Settings explains that account deactivation is handled by administrators to protect class records, submissions, and enrollment history.
+- **Account Status settings card**: Student and teacher settings show a read-only account status card with the current access state and administrator contact guidance. Admin settings intentionally omit this card.
 - **`GradeOverrideModal`**: Shared grade-override input (used from teacher submission detail view) with `react-hook-form` + dynamic Zod schema and assignment-score bounds.
 
 Frontend form validation schemas are colocated in `src/presentation/schemas/*` by feature:
@@ -487,7 +487,7 @@ Teacher approval UX notes:
 
 - The registration completion step uses a teacher-specific success message when the new account is inactive:
   - `Your access is pending administrator approval. You will be able to sign in once your account has been reviewed and approved by the admin`
-- Admin user management reuses the existing status toggle as the v1 approval action.
+- Admin user management reuses the existing status toggle as the v1 approval action, showing `Activate Account` for inactive users and `Deactivate User` for active users.
 - In the admin users table and edit modal, inactive teachers are labeled `Pending Approval` instead of generic suspended wording.
 
 #### Usage Example

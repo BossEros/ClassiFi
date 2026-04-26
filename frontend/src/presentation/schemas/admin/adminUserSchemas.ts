@@ -35,11 +35,26 @@ export const adminEditUserFormSchema = z.object({
   isActive: z.boolean(),
 })
 
-export const adminDeactivateUserFormSchema = z.object({
-  confirmation: z.string().regex(/^DEACTIVATE$/, {
-    message: "Please type DEACTIVATE to confirm",
-  }),
-})
+/**
+ * Creates a confirmation schema for admin-triggered account status changes.
+ *
+ * @param confirmationKeyword - The exact keyword the admin must type to confirm the action.
+ * @returns A Zod schema that validates the confirmation input.
+ */
+export function createAdminStatusConfirmationFormSchema(
+  confirmationKeyword: "ACTIVATE" | "DEACTIVATE",
+) {
+  return z.object({
+    confirmation: z.string().regex(new RegExp(`^${confirmationKeyword}$`), {
+      message: `Please type ${confirmationKeyword} to confirm`,
+    }),
+  })
+}
+
+export const adminDeactivateUserFormSchema =
+  createAdminStatusConfirmationFormSchema("DEACTIVATE")
+export const adminActivateUserFormSchema =
+  createAdminStatusConfirmationFormSchema("ACTIVATE")
 
 export const adminDeleteUserFormSchema = adminDeactivateUserFormSchema
 

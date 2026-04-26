@@ -59,6 +59,41 @@ const LIGHT_MODAL_SECONDARY_BUTTON_CLASSES =
 const LIGHT_INPUT_BASE_CLASSES =
   "w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 shadow-sm shadow-slate-200/60 transition-all duration-200 placeholder:text-slate-400 focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
 
+interface AccountStatusContent {
+  badgeLabel: string
+  badgeClassName: string
+  message: string
+}
+
+function getAccountStatusContent(user: User): AccountStatusContent {
+  const isPendingTeacherApproval = user.role === "teacher" && !user.isActive
+
+  if (user.isActive) {
+    return {
+      badgeLabel: "Active",
+      badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      message:
+        "Your account is active. If you need help changing your access, contact your school administrator.",
+    }
+  }
+
+  if (isPendingTeacherApproval) {
+    return {
+      badgeLabel: "Pending Approval",
+      badgeClassName: "border-amber-200 bg-amber-50 text-amber-700",
+      message:
+        "Your account is waiting for administrator approval. Contact your school administrator if you need help with access.",
+    }
+  }
+
+  return {
+    badgeLabel: "Inactive",
+    badgeClassName: "border-slate-300 bg-slate-100 text-slate-600",
+    message:
+      "Your account is currently inactive. Contact your school administrator if you need help restoring access.",
+  }
+}
+
 // Inlined from src/presentation/components/shared/settings/AvatarUploadModal.tsx
 interface AvatarUploadModalProps {
   isOpen: boolean
@@ -843,6 +878,8 @@ export function SettingsPage() {
 
   if (!user) return null
 
+  const accountStatusContent = getAccountStatusContent(user)
+
   return (
     <DashboardLayout topBar={topBar}>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -986,25 +1023,41 @@ export function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-slate-900">
-                <Shield className="w-5 h-5 text-teal-600" />
-                Account Status
-              </CardTitle>
-              <CardDescription className="text-slate-500">
-                Account access is managed by school administrators
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 text-sm text-slate-700 shadow-sm shadow-teal-100/60">
-                Account deactivation is handled by administrators to protect
-                class records, submissions, and enrollment history. Please
-                contact your teacher or system administrator if you need account
-                assistance.
-              </div>
-            </CardContent>
-          </Card>
+          {user.role !== "admin" ? (
+            <Card className={cn("rounded-2xl", LIGHT_SURFACE_CARD_CLASSES)}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-slate-900">
+                  <Shield className="w-5 h-5 text-teal-600" />
+                  Account Status
+                </CardTitle>
+                <CardDescription className="text-slate-500">
+                  View your current account access status
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm shadow-slate-200/60">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">
+                        Current status
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {accountStatusContent.message}
+                      </p>
+                    </div>
+                    <span
+                      className={cn(
+                        "inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold",
+                        accountStatusContent.badgeClassName,
+                      )}
+                    >
+                      {accountStatusContent.badgeLabel}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
 
