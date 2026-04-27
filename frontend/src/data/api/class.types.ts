@@ -97,9 +97,12 @@ export interface EnrolledStudent {
   lastName: string
   email: string
   avatarUrl: string | null
+  isActive: boolean
   enrolledAt: ISODateString
   fullName?: string
 }
+
+export type ClassStudentStatusFilter = "active" | "inactive" | "all"
 
 export type AssignmentStatus = "pending" | "not-started" | "submitted" | "late"
 export type AssignmentFilter = "all" | "pending" | "submitted"

@@ -1,5 +1,10 @@
 import { apiClient, unwrapApiResponse } from "@/data/api/apiClient"
-import type { Class, Assignment, EnrolledStudent } from "@/data/api/class.types"
+import type {
+  Class,
+  Assignment,
+  EnrolledStudent,
+  ClassStudentStatusFilter,
+} from "@/data/api/class.types"
 import type {
   CreateClassRequest,
   UpdateClassRequest,
@@ -147,9 +152,14 @@ export async function getAllAssignmentsForClassId(
  */
 export async function getAllEnrolledStudentsForClassId(
   classId: number,
+  status?: ClassStudentStatusFilter,
 ): Promise<EnrolledStudent[]> {
+  const rosterApiUrl = status
+    ? `/classes/${classId}/students?status=${status}`
+    : `/classes/${classId}/students`
+
   const apiResponse = await apiClient.get<StudentListResponse>(
-    `/classes/${classId}/students`,
+    rosterApiUrl,
   )
   const data = unwrapApiResponse(
     apiResponse,

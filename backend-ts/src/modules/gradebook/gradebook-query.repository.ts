@@ -23,6 +23,7 @@ export interface EnrolledStudent {
   firstName: string
   lastName: string
   email: string
+  isActive: boolean
 }
 
 /** Submission data for gradebook lookup */
@@ -56,6 +57,7 @@ export interface GradebookStudent {
   id: number
   name: string
   email: string
+  isActive: boolean
   grades: StudentGrade[]
 }
 
@@ -189,6 +191,7 @@ export class GradebookRepository {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
+        isActive: users.isActive,
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
@@ -252,6 +255,7 @@ export class GradebookRepository {
       id: student.id,
       name: `${student.firstName} ${student.lastName}`,
       email: student.email,
+      isActive: student.isActive,
       grades: classAssignments.map((assignment) => {
         const sub = submissionMap.get(`${student.id}-${assignment.id}`)
         const gradeComputation = buildSubmissionGradeComputation({

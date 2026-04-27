@@ -177,6 +177,15 @@ function MobileGradebookStudentCard({
   const average = calculateStudentAverage(assignments, student.grades)
   const visibleAssignments = isExpanded ? assignments : assignments.slice(0, 4)
   const hasHiddenAssignments = assignments.length > 4
+  const statusLabel = student.isActive ? "Active" : "Inactive"
+  const statusBadgeClassName =
+    variant === "light"
+      ? student.isActive
+        ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+        : "border border-amber-200 bg-amber-50 text-amber-700"
+      : student.isActive
+        ? "border border-emerald-500/30 bg-emerald-500/15 text-emerald-300"
+        : "border border-amber-500/30 bg-amber-500/15 text-amber-300"
 
   return (
     <div className="p-4">
@@ -196,6 +205,11 @@ function MobileGradebookStudentCard({
             >
               {student.name}
             </p>
+            <span
+              className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusBadgeClassName}`}
+            >
+              {statusLabel}
+            </span>
           </div>
 
           {average !== null ? (
@@ -361,20 +375,41 @@ function GradebookTable({
               const average = calculateStudentAverage(assignments, student.grades)
 
               return (
-                <tr
-                  key={student.id}
-                  className={`transition-colors ${variant === "light" ? "hover:bg-slate-50" : "hover:bg-white/5"}`}
-                >
+            <tr
+              key={student.id}
+              className={`transition-colors ${
+                variant === "light"
+                  ? student.isActive
+                    ? "hover:bg-slate-50"
+                    : "bg-amber-50/60 hover:bg-amber-50"
+                  : student.isActive
+                    ? "hover:bg-white/5"
+                    : "bg-amber-500/5 hover:bg-amber-500/10"
+              }`}
+            >
                   <td
                     className={`sticky left-0 z-10 px-4 py-3 w-[180px] min-w-[180px] max-w-[180px] ${variant === "light" ? "border-r border-slate-200 bg-white" : "border-r border-white/5 bg-gray-900/95 backdrop-blur-sm"}`}
                   >
                     <div>
-                      <p
-                        className={`truncate text-sm font-medium ${variant === "light" ? "text-slate-800" : "text-white"}`}
-                        title={student.name}
-                      >
-                        {student.name}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p
+                          className={`truncate text-sm font-medium ${variant === "light" ? "text-slate-800" : "text-white"}`}
+                          title={student.name}
+                        >
+                          {student.name}
+                        </p>
+                        {!student.isActive && (
+                          <span
+                            className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                              variant === "light"
+                                ? "border border-amber-200 bg-amber-50 text-amber-700"
+                                : "border border-amber-500/30 bg-amber-500/15 text-amber-300"
+                            }`}
+                          >
+                            Inactive
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   {assignments.map((assignment) => {

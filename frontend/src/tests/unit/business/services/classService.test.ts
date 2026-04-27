@@ -55,6 +55,7 @@ describe("classService", () => {
     lastName: "Doe",
     email: "john@example.com",
     avatarUrl: null,
+    isActive: true,
     enrolledAt: toISO(new Date()),
   }
 
@@ -246,6 +247,18 @@ describe("classService", () => {
       expect(result[0].fullName).toBe("John Doe")
     })
 
+    it("passes the requested student status filter to the repository", async () => {
+      vi.mocked(
+        classRepository.getAllEnrolledStudentsForClassId,
+      ).mockResolvedValue([mockStudent])
+
+      await classService.getClassStudents(1, "inactive")
+
+      expect(
+        classRepository.getAllEnrolledStudentsForClassId,
+      ).toHaveBeenCalledWith(1, "inactive")
+    })
+
     it("handles empty student list", async () => {
       vi.mocked(
         classRepository.getAllEnrolledStudentsForClassId,
@@ -293,6 +306,9 @@ describe("classService", () => {
         1,
         undefined,
       )
+      expect(
+        classRepository.getAllEnrolledStudentsForClassId,
+      ).toHaveBeenCalledWith(1, "active")
     })
 
     it("passes studentId to assignment query when provided", async () => {
@@ -312,6 +328,9 @@ describe("classService", () => {
         1,
         7,
       )
+      expect(
+        classRepository.getAllEnrolledStudentsForClassId,
+      ).toHaveBeenCalledWith(1, "active")
       expect(result.assignments).toHaveLength(1)
     })
 

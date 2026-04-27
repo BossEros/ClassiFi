@@ -31,7 +31,12 @@ describe("gradebookRepository", () => {
         { assignmentId: 1, assignmentName: "Assignment 1", maxScore: 100 },
       ],
       students: [
-        { studentId: 1, studentName: "John Doe", grades: [{ grade: 95 }] },
+        {
+          studentId: 1,
+          studentName: "John Doe",
+          isActive: true,
+          grades: [{ grade: 95 }],
+        },
       ],
     }
 

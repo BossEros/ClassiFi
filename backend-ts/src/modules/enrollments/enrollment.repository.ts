@@ -19,6 +19,7 @@ import type {
   EnrollmentFilterOptions,
   PaginatedResult,
 } from "@/modules/admin/admin.types.js"
+import type { ClassStudentStatusFilter } from "@/modules/classes/class.dtos.js"
 
 /** Enrolled student with user information */
 export interface EnrolledStudentInfo {
@@ -152,7 +153,15 @@ export class EnrollmentRepository extends BaseRepository<
    */
   async getEnrolledStudentsWithInfo(
     classId: number,
+    status: ClassStudentStatusFilter = "all",
   ): Promise<EnrolledStudentInfo[]> {
+    const statusCondition =
+      status === "active"
+        ? eq(users.isActive, true)
+        : status === "inactive"
+          ? eq(users.isActive, false)
+          : undefined
+
     return await this.db
       .select({
         user: users,
@@ -160,7 +169,11 @@ export class EnrollmentRepository extends BaseRepository<
       })
       .from(enrollments)
       .innerJoin(users, eq(enrollments.studentId, users.id))
-      .where(eq(enrollments.classId, classId))
+      .where(
+        statusCondition
+          ? and(eq(enrollments.classId, classId), statusCondition)
+          : eq(enrollments.classId, classId),
+      )
       .orderBy(users.firstName)
   }
 
