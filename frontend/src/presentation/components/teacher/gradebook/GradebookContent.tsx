@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import {
   Download,
   BarChart3,
@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/presentation/components/ui/Card";
 import { Button } from "@/presentation/components/ui/Button";
-import { useClassGradebook, useGradebookExport } from "@/presentation/hooks/teacher/useGradebook";
+import { useClassGradebook } from "@/presentation/hooks/teacher/useGradebook";
 import { useIsMobile } from "@/presentation/hooks/shared/useMediaQuery";
 import { useToastStore } from "@/shared/store/useToastStore";
 import { downloadPdfDocument } from "@/presentation/utils/pdfDownload";
@@ -18,6 +18,12 @@ import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 import { buildGradeReportData, GradeReportDocument } from "./pdf/gradeReportPdf";
 import { GradeBreakdownPanel } from "@/presentation/components/shared/GradeBreakdownPanel";
 import { calculateTeacherGradebookAverage } from "@/presentation/utils/teacherGradebookAverage";
+import { Select } from "@/presentation/components/ui/Select";
+import {
+  sortTeacherGradebookStudents,
+  type TeacherGradebookSortOption,
+} from "@/presentation/utils/teacherGradebookOrdering";
+import { downloadTeacherGradebookCsvFile } from "@/presentation/utils/teacherGradebookCsv";
 
 interface GradeCellProps {
   grade: GradeEntry | null
@@ -474,7 +480,10 @@ export function GradebookContent({
   const showToast = useToastStore((state) => state.showToast)
   const isMobile = useIsMobile()
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false)
+  const [isExportingCsv, setIsExportingCsv] = useState(false)
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false)
+  const [studentSortOption, setStudentSortOption] =
+    useState<TeacherGradebookSortOption>("rank")
   const exportMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -503,15 +512,33 @@ export function GradebookContent({
     error: gradebookError,
     refetch,
   } = useClassGradebook(classId)
-
-  const { exportCSV, isExporting } = useGradebookExport()
+  const orderedStudents = useMemo(
+    () =>
+      gradebook
+        ? sortTeacherGradebookStudents(
+            gradebook.assignments,
+            gradebook.students,
+            studentSortOption,
+          )
+        : [],
+    [gradebook, studentSortOption],
+  )
 
   const handleExport = async () => {
+    if (!gradebook) return
+
     try {
-      await exportCSV(classId, `gradebook-${classCode || classId}.csv`)
+      setIsExportingCsv(true)
+      downloadTeacherGradebookCsvFile(
+        gradebook.assignments,
+        orderedStudents,
+        `gradebook-${classCode || classId}.csv`,
+      )
       showToast("Gradebook exported successfully")
     } catch {
       showToast("Failed to export gradebook", "error")
+    } finally {
+      setIsExportingCsv(false)
     }
   }
 
@@ -522,6 +549,7 @@ export function GradebookContent({
       setIsDownloadingPdf(true)
       const reportData = buildGradeReportData({
         gradebook,
+        students: orderedStudents,
         className,
         classCode,
         teacherName,
@@ -613,12 +641,12 @@ export function GradebookContent({
             <Button
               onClick={() => setIsExportMenuOpen((prev) => !prev)}
               className="w-auto px-4 h-10"
-              disabled={isExporting || isDownloadingPdf}
+              disabled={isExportingCsv || isDownloadingPdf}
             >
               <Download
-                className={`w-4 h-4 mr-2 ${isExporting || isDownloadingPdf ? "animate-bounce" : ""}`}
+                className={`w-4 h-4 mr-2 ${isExportingCsv || isDownloadingPdf ? "animate-bounce" : ""}`}
               />
-              {isExporting ? "Exporting..." : isDownloadingPdf ? "Preparing..." : "Export"}
+              {isExportingCsv ? "Exporting..." : isDownloadingPdf ? "Preparing..." : "Export"}
               <ChevronDown className="w-4 h-4 ml-1" />
             </Button>
 
@@ -635,7 +663,7 @@ export function GradebookContent({
                     setIsExportMenuOpen(false)
                     handleExport()
                   }}
-                  disabled={isExporting}
+                  disabled={isExportingCsv}
                   className={`flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors duration-150 cursor-pointer ${
                     variant === "light"
                       ? "text-slate-700 hover:bg-teal-100 hover:text-teal-800"
@@ -674,22 +702,53 @@ export function GradebookContent({
         }
       >
         <CardHeader className={variant === "light" ? "border-b border-slate-200" : undefined}>
-          <h2
-            className={`text-lg font-semibold ${variant === "light" ? "text-slate-900" : "text-white"}`}
-          >
-            Student Grades
-          </h2>
-          <p
-            className={`text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
-          >
-            Read-only grade overview
-          </p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h2
+                className={`text-lg font-semibold ${variant === "light" ? "text-slate-900" : "text-white"}`}
+              >
+                Student Grades
+              </h2>
+              <p
+                className={`text-sm ${variant === "light" ? "text-slate-500" : "text-gray-400"}`}
+              >
+                Read-only grade overview
+              </p>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2 whitespace-nowrap self-start md:self-center">
+              <label
+                htmlFor="teacher-gradebook-sort"
+                className={`shrink-0 text-xs font-semibold uppercase tracking-[0.14em] ${
+                  variant === "light" ? "text-slate-500" : "text-gray-400"
+                }`}
+              >
+                Sort by
+              </label>
+              <Select
+                id="teacher-gradebook-sort"
+                aria-label="Sort student grades"
+                value={studentSortOption}
+                onChange={(value) =>
+                  setStudentSortOption(value as TeacherGradebookSortOption)
+                }
+                options={[
+                  { value: "rank", label: "Rank" },
+                  { value: "name", label: "Last Name" },
+                ]}
+                variant={variant}
+                containerClassName="w-32 shrink-0"
+                iconClassName="right-3"
+                className="h-11 w-full min-w-0 pr-8"
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {gradebook && gradebook.students.length > 0 ? (
             <GradebookTable
               assignments={gradebook.assignments}
-              students={gradebook.students}
+              students={orderedStudents}
               variant={variant}
             />
           ) : (

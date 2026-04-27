@@ -216,9 +216,9 @@ Admin enrollment workspace behavior:
 - **`PairwiseTriageTable`**: Assignment-level table of student pairs with similarity threshold filtering, sorting, search, and pagination.
 - **`PairComparison`** and **`PairCodeDiff`**: Side-by-side code comparison surfaces for evidence review.
 - **Teacher PDF exports**: Threshold-aware class report download plus pairwise evidence download built with `@react-pdf/renderer`
-- **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export, ordered by class standing instead of alphabetical name order.
+- **`GradebookTable`**: Displays read-only student grades and averages for monitoring/export, with a teacher-controlled sort dropdown that can switch between class-standing rank order and alphabetical last-name order.
 - Teacher gradebook `Average` now represents a points-weighted current standing: assignments with no submission yet count as `0`, submitted work awaiting grading is excluded until a score exists, and the final percentage is computed from earned points over countable possible points.
-- **Teacher gradebook exports**: CSV exports include a `Status` column for `Active` / `Inactive` students. PDF exports include inactive students by default, label them explicitly, highlight their rows subtly, and keep summary metrics scoped to active students only.
+- **Teacher gradebook exports**: CSV exports include a `Status` column for `Active` / `Inactive` students. PDF exports include inactive students by default, label them explicitly, highlight their rows subtly, and keep summary metrics scoped to active students only. Both CSV and PDF follow the currently selected teacher gradebook sort order (`Rank` or `Last Name`).
 - **Teacher roster status filters**: The class `Students` tab exposes `Active` and `Inactive` filters only. The roster defaults to active students, while inactive/deactivated students are still reviewable through the inactive filter and are labeled with an explicit status badge.
 - **`StudentClassGradesContent`**: Student-only class grades tab that shows personal current grade, grading progress, pending review count, not-submitted count, assignment-level scores, late-penalty badges, similarity-deduction breakdowns, and teacher feedback without exposing any class ranking or peer data.
 - **`CollapsibleInstructions`**: Reusable instruction panel with left icon + right chevron toggle; supports `defaultExpanded` for page-specific defaults.
@@ -608,7 +608,7 @@ Specialized types for the class detail page redesign:
    - Class header displays instructor name, schedule (days and time), and class code
    - Access quick actions: View Gradebook, Edit Class, Delete Class
 - Gradebook provides a read-only grade overview and CSV export (no inline grade override actions)
-- Teacher gradebook rows are ordered by active-student class standing first, using the same points-weighted current-standing percentage shown in the `Average` column; alphabetical order is now only a tie-breaker.
+- Teacher gradebook defaults to active-student class standing first, using the same points-weighted current-standing percentage shown in the `Average` column; teachers can switch the view and exports to alphabetical last-name order from the `Student Grades` header dropdown.
 - The teacher `Average` column is not a graded-work-only average. It is a current-standing metric: missing work counts as zero immediately, pending-review submissions are excluded until graded, and assignment totals are weighted by their available points.
 - Inactive/deactivated students remain visible in the gradebook with an `Inactive` status label so historical records remain intact
    - Class code badge is styled with teal colors for easy visibility

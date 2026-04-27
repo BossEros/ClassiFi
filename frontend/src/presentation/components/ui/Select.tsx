@@ -15,12 +15,16 @@ export interface SelectProps extends Omit<
   onChange?: (value: string) => void
   placeholder?: string
   variant?: "dark" | "light"
+  containerClassName?: string
+  iconClassName?: string
 }
 
 const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
     {
       className,
+      containerClassName,
+      iconClassName,
       options,
       onChange,
       placeholder,
@@ -52,7 +56,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     }
 
     return (
-      <div className="relative w-full">
+      <div className={cn("relative w-full", containerClassName)}>
         <select
           className={cn(
             isLight
@@ -90,6 +94,7 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
                 ? "text-slate-400"
                 : "text-gray-500",
             disabled && "opacity-50",
+            iconClassName,
           )}
         />
       </div>

@@ -27,12 +27,19 @@ function formatDateTime(date: Date): string {
 export function buildGradeReportData(
   options: GradeReportBuilderOptions,
 ): GradeReportData {
-  const { gradebook, className, classCode, teacherName, downloadedAt } = options
+  const {
+    gradebook,
+    students = gradebook.students,
+    className,
+    classCode,
+    teacherName,
+    downloadedAt,
+  } = options
   const generatedAt = downloadedAt ?? new Date()
-  const activeStudentCount = gradebook.students.filter(
+  const activeStudentCount = students.filter(
     (student) => student.isActive,
   ).length
-  const inactiveStudentCount = gradebook.students.length - activeStudentCount
+  const inactiveStudentCount = students.length - activeStudentCount
 
   const title = className ? `Grade Report - ${className}` : "Grade Report"
 
@@ -41,7 +48,7 @@ export function buildGradeReportData(
     { label: "Class Code", value: classCode || "N/A" },
     { label: "Teacher", value: teacherName || "N/A" },
     { label: "Total Assignments", value: String(gradebook.assignments.length) },
-    { label: "Total Students", value: String(gradebook.students.length) },
+    { label: "Total Students", value: String(students.length) },
     {
       label: "Summary Scope",
       value: "Summary metrics include active students only",
@@ -50,7 +57,7 @@ export function buildGradeReportData(
   ]
 
   const activeStudentAverages: number[] = []
-  const studentRows: GradeReportStudentRow[] = gradebook.students.map(
+  const studentRows: GradeReportStudentRow[] = students.map(
     (student) => {
       const grades: GradeReportGradeCell[] = gradebook.assignments.map(
         (assignment) => {
