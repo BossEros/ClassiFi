@@ -17,6 +17,14 @@ interface StudentsTabContentProps {
   currentStudentPage: number
   totalStudentPages: number
   studentStatusFilter: Extract<ClassStudentStatusFilter, "active" | "inactive">
+  studentStatusCounts: Record<
+    Extract<ClassStudentStatusFilter, "active" | "inactive">,
+    number
+  >
+  loadedStudentStatuses: Record<
+    Extract<ClassStudentStatusFilter, "active" | "inactive">,
+    boolean
+  >
   isLoadingStudents: boolean
   studentGridTemplate: string
   onStudentSearchQueryChange: (value: string) => void
@@ -38,6 +46,8 @@ export function StudentsTabContent({
   currentStudentPage,
   totalStudentPages,
   studentStatusFilter,
+  studentStatusCounts,
+  loadedStudentStatuses,
   isLoadingStudents,
   studentGridTemplate,
   onStudentSearchQueryChange,
@@ -62,6 +72,10 @@ export function StudentsTabContent({
     studentStatusFilter === "inactive"
       ? "There are no deactivated students enrolled in this class right now."
       : "Share the class code with your students so they can join this class."
+  const searchPlaceholder =
+    studentStatusFilter === "inactive"
+      ? "Search inactive students..."
+      : "Search active students..."
 
   return (
     <div className="space-y-6">
@@ -86,9 +100,17 @@ export function StudentsTabContent({
 
           <div
             className={`inline-flex rounded-xl p-1 ${isLight ? "border border-slate-200 bg-slate-100" : "border border-white/10 bg-white/5"}`}
+            role="group"
+            aria-label="Filter enrolled students by account status"
           >
             {(["active", "inactive"] as const).map((statusOption) => {
               const isSelected = studentStatusFilter === statusOption
+              const hasLoadedStatusCount = loadedStudentStatuses[statusOption]
+              const statusCountLabel = hasLoadedStatusCount
+                ? String(studentStatusCounts[statusOption])
+                : "..."
+              const statusLabel =
+                statusOption === "active" ? "Active" : "Inactive"
 
               return (
                 <button
@@ -96,6 +118,8 @@ export function StudentsTabContent({
                   type="button"
                   onClick={() => onStudentStatusFilterChange(statusOption)}
                   disabled={isLoadingStudents}
+                  aria-pressed={isSelected}
+                  aria-label={`Show ${statusLabel.toLowerCase()} students (${statusCountLabel})`}
                   className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
                     isSelected
                       ? isLight
@@ -106,7 +130,20 @@ export function StudentsTabContent({
                         : "text-gray-400 hover:text-white"
                   }`}
                 >
-                  {statusOption === "active" ? "Active" : "Inactive"}
+                  <span>{statusLabel}</span>
+                  <span
+                    className={`ml-2 inline-flex min-w-8 justify-center rounded-full px-2 py-0.5 text-xs ${
+                      isSelected
+                        ? isLight
+                          ? "bg-teal-50 text-teal-700"
+                          : "bg-teal-500/20 text-teal-200"
+                        : isLight
+                          ? "bg-white text-slate-500"
+                          : "bg-white/10 text-slate-300"
+                    }`}
+                  >
+                    {statusCountLabel}
+                  </span>
                 </button>
               )
             })}
@@ -120,7 +157,7 @@ export function StudentsTabContent({
           <input
             id="student-search"
             type="text"
-            placeholder="Search students..."
+            placeholder={searchPlaceholder}
             value={studentSearchQuery}
             onChange={(event) => onStudentSearchQueryChange(event.target.value)}
             className={`h-11 w-full rounded-lg border pl-10 pr-4 text-sm transition-all focus:outline-none focus:ring-2 focus:border-transparent sm:h-10 sm:w-64 ${isLight ? "border-slate-300 bg-slate-50 text-slate-800 shadow-sm placeholder:text-slate-400 hover:border-slate-400 hover:bg-white focus:ring-teal-500/20" : "border-white/10 bg-white/5 text-white placeholder-gray-500 focus:ring-teal-500"}`}
