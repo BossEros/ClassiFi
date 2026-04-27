@@ -298,7 +298,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(18)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(18)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map(),
       )
@@ -373,7 +373,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(30)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(30)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map([[11, 12]]),
       )
@@ -424,7 +424,7 @@ describe("ClassService", () => {
       mockAssignmentRepo.getAssignmentsByClassId!.mockResolvedValue(
         classAssignments as any,
       )
-      mockClassRepo.getStudentCount!.mockResolvedValue(18)
+      mockClassRepo.getActiveStudentCount!.mockResolvedValue(18)
       mockSubmissionRepo.getLatestSubmissionCountsByAssignmentIds!.mockResolvedValue(
         new Map(),
       )
