@@ -17,6 +17,7 @@ import { X, Edit2 } from "lucide-react";
 import { dashboardTheme } from "@/presentation/constants/dashboardTheme";
 import { buildGradeReportData, GradeReportDocument } from "./pdf/gradeReportPdf";
 import { GradeBreakdownPanel } from "@/presentation/components/shared/GradeBreakdownPanel";
+import { calculateTeacherGradebookAverage } from "@/presentation/utils/teacherGradebookAverage";
 
 interface GradeCellProps {
   grade: GradeEntry | null
@@ -139,29 +140,6 @@ interface GradebookTableProps {
   variant?: "dark" | "light"
 }
 
-function calculateStudentAverage(
-  assignments: GradebookAssignment[],
-  grades: GradeEntry[],
-): number | null {
-  const validGrades = grades.filter((gradeEntry) => gradeEntry.grade !== null)
-  if (validGrades.length === 0) return null
-
-  const totalPercentage = validGrades.reduce((sum, gradeEntry) => {
-    const matchingAssignment = assignments.find(
-      (assignment) => assignment.id === gradeEntry.assignmentId,
-    )
-    if (!matchingAssignment || matchingAssignment.totalScore === 0) {
-      return sum
-    }
-
-    return (
-      sum + ((gradeEntry.grade as number) / matchingAssignment.totalScore) * 100
-    )
-  }, 0)
-
-  return Math.round(totalPercentage / validGrades.length)
-}
-
 interface MobileGradebookStudentCardProps {
   assignments: GradebookAssignment[]
   student: GradebookStudent
@@ -174,7 +152,7 @@ function MobileGradebookStudentCard({
   variant = "dark",
 }: MobileGradebookStudentCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
-  const average = calculateStudentAverage(assignments, student.grades)
+  const average = calculateTeacherGradebookAverage(assignments, student.grades)
   const visibleAssignments = isExpanded ? assignments : assignments.slice(0, 4)
   const hasHiddenAssignments = assignments.length > 4
   const statusLabel = student.isActive ? "Active" : "Inactive"
@@ -372,7 +350,10 @@ function GradebookTable({
             className={variant === "light" ? "divide-y divide-slate-200" : "divide-y divide-white/5"}
           >
             {students.map((student) => {
-              const average = calculateStudentAverage(assignments, student.grades)
+              const average = calculateTeacherGradebookAverage(
+                assignments,
+                student.grades,
+              )
 
               return (
             <tr

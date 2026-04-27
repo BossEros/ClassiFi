@@ -5,6 +5,17 @@
 - [x] Add/update focused backend and frontend tests
 - [x] Run required backend and frontend verification commands
 
+- [x] Add failing tests for teacher current-standing averages and exports
+- [x] Count no-submission work as zero in teacher gradebook averages and rank
+- [x] Exclude submitted-but-ungraded work from teacher averages until grading
+- [x] Align teacher CSV/PDF exports with the same current-standing policy
+- [x] Run required backend and frontend verification commands for the current-standing policy change
+
+- [x] Add failing tests for points-weighted teacher averages
+- [x] Replace equal-weight teacher averages with points-weighted current standing
+- [x] Keep missing-as-zero and pending-review exclusion under the weighted policy
+- [x] Run required backend and frontend verification commands for the weighted policy change
+
 Deactivate account verification notes:
 - `backend-ts`: `npm.cmd run typecheck` passed on 2026-04-26
 - `backend-ts`: `npm.cmd test` passed on 2026-04-26

@@ -5,6 +5,7 @@ export interface RankableGradebookAssignment {
 
 export interface RankableGradebookGrade {
   assignmentId: number
+  submissionId: number | null
   grade: number | null
 }
 
@@ -32,38 +33,36 @@ export function calculateStudentAveragePercentage(
   assignments: RankableGradebookAssignment[],
   grades: RankableGradebookGrade[],
 ): number | null {
-  const gradedPercentages = grades.reduce<number[]>(
-    (collectedPercentages, gradeEntry) => {
-      if (gradeEntry.grade === null) {
-        return collectedPercentages
-      }
+  let earnedPoints = 0
+  let possiblePoints = 0
 
-      const matchingAssignment = assignments.find(
-        (assignment) => assignment.id === gradeEntry.assignmentId,
-      )
-      if (!matchingAssignment || matchingAssignment.totalScore <= 0) {
-        return collectedPercentages
-      }
+  for (const assignment of assignments) {
+    if (assignment.totalScore <= 0) {
+      continue
+    }
 
-      collectedPercentages.push(
-        (gradeEntry.grade / matchingAssignment.totalScore) * 100,
-      )
+    const matchingGradeEntry = grades.find(
+      (gradeEntry) => gradeEntry.assignmentId === assignment.id,
+    )
 
-      return collectedPercentages
-    },
-    [],
-  )
+    if (!matchingGradeEntry || matchingGradeEntry.submissionId === null) {
+      possiblePoints += assignment.totalScore
+      continue
+    }
 
-  if (gradedPercentages.length === 0) {
+    if (matchingGradeEntry.grade === null) {
+      continue
+    }
+
+    possiblePoints += assignment.totalScore
+    earnedPoints += matchingGradeEntry.grade
+  }
+
+  if (possiblePoints === 0) {
     return null
   }
 
-  const totalPercentage = gradedPercentages.reduce(
-    (sum, percentage) => sum + percentage,
-    0,
-  )
-
-  return Math.round(totalPercentage / gradedPercentages.length)
+  return Math.round((earnedPoints / possiblePoints) * 100)
 }
 
 /**

@@ -10,6 +10,14 @@ const gradebookAssignments = [
   { id: 2, name: "Machine Problem", totalScore: 50, deadline: null },
 ]
 
+const weightedGradebookAssignments = [
+  { id: 1, name: "Assignment 1", totalScore: 100, deadline: null },
+  { id: 2, name: "Assignment 2", totalScore: 100, deadline: null },
+  { id: 3, name: "Assignment 3", totalScore: 100, deadline: null },
+  { id: 4, name: "Assignment 4", totalScore: 67, deadline: null },
+  { id: 5, name: "Assignment 5", totalScore: 100, deadline: null },
+]
+
 describe("gradebook ranking", () => {
   it("sorts active students by displayed average before inactive students", () => {
     const sortedStudents = sortGradebookStudentsByRank(gradebookAssignments, [
@@ -19,8 +27,8 @@ describe("gradebook ranking", () => {
         email: "zara@classifi.test",
         isActive: true,
         grades: [
-          { assignmentId: 1, grade: 90 },
-          { assignmentId: 2, grade: 45 },
+          { assignmentId: 1, submissionId: 31, grade: 90 },
+          { assignmentId: 2, submissionId: 32, grade: 45 },
         ],
       },
       {
@@ -29,8 +37,8 @@ describe("gradebook ranking", () => {
         email: "aaron@classifi.test",
         isActive: true,
         grades: [
-          { assignmentId: 1, grade: 100 },
-          { assignmentId: 2, grade: 50 },
+          { assignmentId: 1, submissionId: 21, grade: 100 },
+          { assignmentId: 2, submissionId: 22, grade: 50 },
         ],
       },
       {
@@ -39,8 +47,8 @@ describe("gradebook ranking", () => {
         email: "bella@classifi.test",
         isActive: false,
         grades: [
-          { assignmentId: 1, grade: 100 },
-          { assignmentId: 2, grade: 50 },
+          { assignmentId: 1, submissionId: 11, grade: 100 },
+          { assignmentId: 2, submissionId: 12, grade: 50 },
         ],
       },
     ])
@@ -60,8 +68,8 @@ describe("gradebook ranking", () => {
         email: "zoe@classifi.test",
         isActive: true,
         grades: [
-          { assignmentId: 1, grade: 80 },
-          { assignmentId: 2, grade: 40 },
+          { assignmentId: 1, submissionId: 21, grade: 80 },
+          { assignmentId: 2, submissionId: 22, grade: 40 },
         ],
       },
       {
@@ -70,8 +78,8 @@ describe("gradebook ranking", () => {
         email: "adam@classifi.test",
         isActive: true,
         grades: [
-          { assignmentId: 1, grade: 80 },
-          { assignmentId: 2, grade: 40 },
+          { assignmentId: 1, submissionId: 11, grade: 80 },
+          { assignmentId: 2, submissionId: 12, grade: 40 },
         ],
       },
     ])
@@ -82,7 +90,7 @@ describe("gradebook ranking", () => {
     ])
   })
 
-  it("returns a null rank when the student has no graded assignments yet", () => {
+  it("returns a null rank when the student has only pending-review submissions", () => {
     const rank = getStudentRankFromGradebook(
       gradebookAssignments,
       [
@@ -92,18 +100,18 @@ describe("gradebook ranking", () => {
           email: "ready@classifi.test",
           isActive: true,
           grades: [
-            { assignmentId: 1, grade: 90 },
-            { assignmentId: 2, grade: 45 },
+            { assignmentId: 1, submissionId: 11, grade: 90 },
+            { assignmentId: 2, submissionId: 12, grade: 45 },
           ],
         },
         {
           id: 2,
-          name: "New Student",
-          email: "new@classifi.test",
+          name: "Pending Student",
+          email: "pending@classifi.test",
           isActive: true,
           grades: [
-            { assignmentId: 1, grade: null },
-            { assignmentId: 2, grade: null },
+            { assignmentId: 1, submissionId: 21, grade: null },
+            { assignmentId: 2, submissionId: 22, grade: null },
           ],
         },
       ],
@@ -123,8 +131,8 @@ describe("gradebook ranking", () => {
           email: "top@classifi.test",
           isActive: true,
           grades: [
-            { assignmentId: 1, grade: 100 },
-            { assignmentId: 2, grade: 50 },
+            { assignmentId: 1, submissionId: 11, grade: 100 },
+            { assignmentId: 2, submissionId: 12, grade: 50 },
           ],
         },
         {
@@ -133,8 +141,8 @@ describe("gradebook ranking", () => {
           email: "target@classifi.test",
           isActive: true,
           grades: [
-            { assignmentId: 1, grade: 80 },
-            { assignmentId: 2, grade: 40 },
+            { assignmentId: 1, submissionId: 21, grade: 80 },
+            { assignmentId: 2, submissionId: 22, grade: 40 },
           ],
         },
         {
@@ -143,8 +151,8 @@ describe("gradebook ranking", () => {
           email: "third@classifi.test",
           isActive: true,
           grades: [
-            { assignmentId: 1, grade: 70 },
-            { assignmentId: 2, grade: 35 },
+            { assignmentId: 1, submissionId: 31, grade: 70 },
+            { assignmentId: 2, submissionId: 32, grade: 35 },
           ],
         },
       ],
@@ -152,13 +160,78 @@ describe("gradebook ranking", () => {
     )
 
     expect(calculateStudentAveragePercentage(gradebookAssignments, [
-      { assignmentId: 1, grade: 80 },
-      { assignmentId: 2, grade: 40 },
+      { assignmentId: 1, submissionId: 21, grade: 80 },
+      { assignmentId: 2, submissionId: 22, grade: 40 },
     ])).toBe(80)
     expect(studentRank).toEqual({
       rank: 2,
       totalStudents: 3,
       percentile: 67,
     })
+  })
+
+  it("counts missing assignments as zero while excluding submitted work awaiting grades", () => {
+    expect(
+      calculateStudentAveragePercentage(gradebookAssignments, [
+        { assignmentId: 1, submissionId: 11, grade: 100 },
+        { assignmentId: 2, submissionId: null, grade: null },
+      ]),
+    ).toBe(67)
+
+    expect(
+      calculateStudentAveragePercentage(gradebookAssignments, [
+        { assignmentId: 1, submissionId: 11, grade: 100 },
+        { assignmentId: 2, submissionId: 12, grade: null },
+      ]),
+    ).toBe(100)
+  })
+
+  it("uses a points-weighted total for teacher averages and rank", () => {
+    expect(
+      calculateStudentAveragePercentage(weightedGradebookAssignments, [
+        { assignmentId: 1, submissionId: 11, grade: 100 },
+        { assignmentId: 2, submissionId: 12, grade: 100 },
+        { assignmentId: 3, submissionId: 13, grade: 100 },
+        { assignmentId: 4, submissionId: null, grade: null },
+        { assignmentId: 5, submissionId: null, grade: null },
+      ]),
+    ).toBe(64)
+
+    const sortedStudents = sortGradebookStudentsByRank(
+      weightedGradebookAssignments,
+      [
+        {
+          id: 1,
+          name: "Three Perfect Hundreds",
+          email: "perfect@classifi.test",
+          isActive: true,
+          grades: [
+            { assignmentId: 1, submissionId: 11, grade: 100 },
+            { assignmentId: 2, submissionId: 12, grade: 100 },
+            { assignmentId: 3, submissionId: 13, grade: 100 },
+            { assignmentId: 4, submissionId: null, grade: null },
+            { assignmentId: 5, submissionId: null, grade: null },
+          ],
+        },
+        {
+          id: 2,
+          name: "Sixty One Percent Weighted",
+          email: "weighted@classifi.test",
+          isActive: true,
+          grades: [
+            { assignmentId: 1, submissionId: 21, grade: 100 },
+            { assignmentId: 2, submissionId: 22, grade: 100 },
+            { assignmentId: 3, submissionId: null, grade: null },
+            { assignmentId: 4, submissionId: 24, grade: 67 },
+            { assignmentId: 5, submissionId: null, grade: null },
+          ],
+        },
+      ],
+    )
+
+    expect(sortedStudents.map((student) => student.name)).toEqual([
+      "Three Perfect Hundreds",
+      "Sixty One Percent Weighted",
+    ])
   })
 })
